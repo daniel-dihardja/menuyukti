@@ -51,6 +51,21 @@ def _valid_campaign_brief_payload() -> dict:
             "country": "Germany",
             "currency": "EUR",
         },
+        "overallStrategy": {
+            "strategyFocus": "weekday_lunch",
+            "audiencePriority": [
+                "Weekday lunch nearby workers and office groups",
+                "Evening after-work diners",
+                "Weekend family groups",
+            ],
+            "coreMessage": "Promote a repeatable weekday lunch offer for nearby workers and small groups.",
+            "offerWindow": "11:00-14:00",
+            "cadenceGuidance": [
+                "Publish lunch-offer reels twice per week.",
+                "Prioritize weekday morning posting before the lunch window.",
+                "Keep the core lunch CTA consistent while rotating visuals and hero dishes.",
+            ],
+        },
         "contentPillars": ["Hero signatures", "Category variety", "Behind-the-scenes craft"],
         "audienceHypotheses": [
             "Lunch nearby workers",
@@ -113,13 +128,34 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
         yield (
             "values",
             {
-                "result_data": '{"venueSnapshot":{"venueName":"Cafe Alto","city":"Berlin","country":"Germany","currency":"EUR"},"contentPillars":["A","B","C"],"audienceHypotheses":["A","B","C"],"proofOrientedAngles":["A","B","C"],"toneGuardrails":["A","B","C"],"campaignObjective":"Increase reservations in conversion stage this month","targetSegments":["weekday lunch workers","weekend families","evening social groups"],"messageHierarchy":["hero promise","proof point","cta"],"offerAndCtaPlan":["margin-safe weekday menu","reserve via link","dm fallback"],"contentPillarPlan":["signature dishes -> Reel -> reserve CTA","social proof -> Carousel -> DM CTA","BTS prep -> Story -> walk-in CTA"],"measurementPlan":["track saves and shares weekly","track profile visits and DM starts weekly","if DM starts below threshold for 2 weeks then adjust CTA"],"testingPlan":["test lunch vs dinner windows","test Tue vs Thu posting","refresh hooks after weak 2-week performance"],"riskGuardrails":["avoid unverified claims","respect allergen and local promo rules","avoid discount-first copy"]}',
+                "result_data": '{"venueSnapshot":{"venueName":"Cafe Alto","city":"Berlin","country":"Germany","currency":"EUR"},"overallStrategy":{"strategyFocus":"weekday_lunch","audiencePriority":["weekday lunch workers","evening social groups","weekend families"],"coreMessage":"Promote a repeatable weekday lunch offer for nearby workers and small groups.","offerWindow":"11:00-14:00","cadenceGuidance":["Publish lunch-offer reels twice per week.","Prioritize weekday morning posting before the lunch window.","Keep the core lunch CTA consistent while rotating visuals and hero dishes."]},"contentPillars":["A","B","C"],"audienceHypotheses":["A","B","C"],"proofOrientedAngles":["A","B","C"],"toneGuardrails":["A","B","C"],"campaignObjective":"Increase reservations in conversion stage this month","targetSegments":["weekday lunch workers","weekend families","evening social groups"],"messageHierarchy":["hero promise","proof point","cta"],"offerAndCtaPlan":["margin-safe weekday menu","reserve via link","dm fallback"],"contentPillarPlan":["signature dishes -> Reel -> reserve CTA","social proof -> Carousel -> DM CTA","BTS prep -> Story -> walk-in CTA"],"measurementPlan":["track saves and shares weekly","track profile visits and DM starts weekly","if DM starts below threshold for 2 weeks then adjust CTA"],"testingPlan":["test lunch vs dinner windows","test Tue vs Thu posting","refresh hooks after weak 2-week performance"],"riskGuardrails":["avoid unverified claims","respect allergen and local promo rules","avoid discount-first copy"]}',
                 "milestone_data": {
                     "venueSnapshot": {
                         "venueName": "Cafe Alto",
                         "city": "Berlin",
                         "country": "Germany",
                         "currency": "EUR",
+                    },
+                    "overallStrategy": {
+                        "strategyFocus": "weekday_lunch",
+                        "audiencePriority": [
+                            "weekday lunch workers",
+                            "evening social groups",
+                            "weekend families",
+                        ],
+                        "coreMessage": (
+                            "Promote a repeatable weekday lunch offer for nearby workers "
+                            "and small groups."
+                        ),
+                        "offerWindow": "11:00-14:00",
+                        "cadenceGuidance": [
+                            "Publish lunch-offer reels twice per week.",
+                            "Prioritize weekday morning posting before the lunch window.",
+                            (
+                                "Keep the core lunch CTA consistent while rotating visuals "
+                                "and hero dishes."
+                            ),
+                        ],
                     },
                     "contentPillars": ["A", "B", "C"],
                     "audienceHypotheses": ["A", "B", "C"],
@@ -231,6 +267,7 @@ def test_output_schema_required_keys_and_types() -> None:
     assert error is None
     assert isinstance(normalized, dict)
     assert isinstance(normalized["venueSnapshot"], dict)
+    assert isinstance(normalized["overallStrategy"], dict)
     assert isinstance(normalized["contentPillars"], list)
     assert isinstance(normalized["audienceHypotheses"], list)
     assert isinstance(normalized["proofOrientedAngles"], list)

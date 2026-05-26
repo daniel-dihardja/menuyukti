@@ -50,7 +50,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
 )
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 def _trace(state: MenuTaggerState, step: str, **extra: Any) -> None:
@@ -280,57 +280,109 @@ def _filter_enum_values(
     return out
 
 
-def normalize_menu_tagger_tags(raw: dict[str, Any] | None) -> MenuTaggerTags:
-    kind = str((raw or {}).get("kind") or DEFAULT_KIND).strip()
+def _coerce_tags_object(raw: Any) -> dict[str, Any] | None:
+    if isinstance(raw, dict):
+        return raw
+    if not isinstance(raw, str):
+        return None
+
+    text = raw.strip()
+    if not text:
+        return None
+
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+        if not text:
+            return None
+
+    candidates = [text]
+    if not text.startswith("{"):
+        candidates.append("{" + text)
+    if not text.endswith("}"):
+        candidates.append(text + "}")
+    if not text.startswith("{") and not text.endswith("}"):
+        candidates.append("{" + text + "}")
+
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+        if isinstance(parsed, str):
+            nested = parsed.strip()
+            if nested and nested != candidate:
+                try:
+                    nested_parsed = json.loads(nested)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(nested_parsed, dict):
+                    return nested_parsed
+    return None
+
+
+def normalize_menu_tagger_tags(raw: dict[str, Any] | str | None) -> MenuTaggerTags:
+    raw_obj = _coerce_tags_object(raw)
+    kind = str((raw_obj or {}).get("kind") or DEFAULT_KIND).strip()
     if kind not in KIND_VALUES:
         kind = DEFAULT_KIND
-    reel_moment = str((raw or {}).get("reel_moment") or DEFAULT_REEL_MOMENT).strip()
+    reel_moment = str((raw_obj or {}).get("reel_moment") or DEFAULT_REEL_MOMENT).strip()
     if reel_moment not in REEL_MOMENT_VALUES:
         reel_moment = DEFAULT_REEL_MOMENT
-    serve_temp = str((raw or {}).get("serve_temp") or DEFAULT_SERVE_TEMP).strip()
+    serve_temp = str((raw_obj or {}).get("serve_temp") or DEFAULT_SERVE_TEMP).strip()
     if serve_temp not in SERVE_TEMP_VALUES:
         serve_temp = DEFAULT_SERVE_TEMP
     return {
         "kind": kind,  # type: ignore[typeddict-item]
         "ingredient": _filter_enum_values(
-            (raw or {}).get("ingredient")
-            if isinstance((raw or {}).get("ingredient"), list)
+            (raw_obj or {}).get("ingredient")
+            if isinstance((raw_obj or {}).get("ingredient"), list)
             else [],
             INGREDIENT_VALUES,
             max_count=MAX_INGREDIENT_TAGS,
         ),
         "taste": _filter_enum_values(
-            (raw or {}).get("taste") if isinstance((raw or {}).get("taste"), list) else [],
+            (raw_obj or {}).get("taste") if isinstance((raw_obj or {}).get("taste"), list) else [],
             TASTE_VALUES,
             max_count=MAX_TASTE_TAGS,
         ),
         "course": _filter_enum_values(
-            (raw or {}).get("course") if isinstance((raw or {}).get("course"), list) else [],
+            (raw_obj or {}).get("course") if isinstance((raw_obj or {}).get("course"), list) else [],
             COURSE_VALUES,
             max_count=MAX_COURSE_TAGS,
         ),
         "reel_moment": reel_moment,  # type: ignore[typeddict-item]
         "texture": _filter_enum_values(
-            (raw or {}).get("texture") if isinstance((raw or {}).get("texture"), list) else [],
+            (raw_obj or {}).get("texture") if isinstance((raw_obj or {}).get("texture"), list) else [],
             TEXTURE_VALUES,
             max_count=MAX_TEXTURE_TAGS,
         ),
         "prep_style": _filter_enum_values(
-            (raw or {}).get("prep_style")
-            if isinstance((raw or {}).get("prep_style"), list)
+            (raw_obj or {}).get("prep_style")
+            if isinstance((raw_obj or {}).get("prep_style"), list)
             else [],
             PREP_STYLE_VALUES,
             max_count=MAX_PREP_STYLE_TAGS,
         ),
         "occasion": _filter_enum_values(
-            (raw or {}).get("occasion") if isinstance((raw or {}).get("occasion"), list) else [],
+            (raw_obj or {}).get("occasion") if isinstance((raw_obj or {}).get("occasion"), list) else [],
             OCCASION_VALUES,
             max_count=MAX_OCCASION_TAGS,
         ),
         "serve_temp": serve_temp,  # type: ignore[typeddict-item]
         "content_angle": _filter_enum_values(
-            (raw or {}).get("content_angle")
-            if isinstance((raw or {}).get("content_angle"), list)
+            (raw_obj or {}).get("content_angle")
+            if isinstance((raw_obj or {}).get("content_angle"), list)
             else [],
             CONTENT_ANGLE_VALUES,
             max_count=MAX_CONTENT_ANGLE_TAGS,
@@ -430,7 +482,7 @@ def merge_tagged_items(
             "name": item["name"],
             "role": item["role"],
             "category": item["category"],
-            "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
+            "tags": normalize_menu_tagger_tags(tags_raw),
             "storytellingFit": storytelling_fit,
             "storytellingRationale": storytelling_rationale,
         }
@@ -479,6 +531,11 @@ class MenuTaggerItemDraft(BaseModel):
     role: Literal["star", "puzzle"]
     category: str
     tags: MenuTaggerTagsDraft
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _normalize_tags(cls, value: Any) -> MenuTaggerTags:
+        return normalize_menu_tagger_tags(value)
 
 
 class MenuTaggerDraftOutput(BaseModel):
@@ -563,7 +620,7 @@ def _sanitize_menu_tagger_payload(payload: dict[str, Any]) -> dict[str, Any]:
             "name": name,
             "role": role,  # type: ignore[typeddict-item]
             "category": category,
-            "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
+            "tags": normalize_menu_tagger_tags(tags_raw),
             "storytellingFit": storytelling_fit,
             "storytellingRationale": storytelling_rationale,
         }

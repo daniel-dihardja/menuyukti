@@ -81,13 +81,63 @@ def collect_matched_prior_rows(
 
 def extract_restaurant_campaign_brief_data(prior_milestones_json: str) -> dict[str, Any] | None:
     """Return campaign brief ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_restaurant_campaign_brief_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
+        return data
+    return None
+
+
+def extract_restaurant_campaign_brief_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the best matched prior campaign_brief row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"restaurant_campaign_brief"}))
-    for row in matched:
+    for row in reversed(matched):
         data = row.get("data")
         if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
-            return data
+            return row
     return None
+
+
+def campaign_brief_prior_error_message(
+    prior_milestones_json: str, *, milestone_id: str = "milestone"
+) -> str:
+    """Actionable error when a milestone cannot read prior campaign brief data."""
+    base = (
+        f"{milestone_id} requires a prior restaurant_campaign_brief milestone with saved data"
+    )
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place restaurant_campaign_brief before this milestone in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_campaign_brief_preset = any(
+        (
+            isinstance((preset_id := row.get("presetId")), str)
+            and preset_id.strip() == "restaurant_campaign_brief"
+        )
+        or (
+            isinstance(row.get("data"), dict)
+            and is_campaign_brief_milestone_data(row["data"])  # type: ignore[index]
+        )
+        for row in rows
+    )
+    if not has_campaign_brief_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add a restaurant_campaign_brief step before this milestone, run it successfully, "
+            "then run this milestone again."
+        )
+    return (
+        f"{base}. A restaurant_campaign_brief milestone appears earlier in the workflow "
+        "but its saved preset data is missing or invalid — open that step, "
+        "confirm the Data tab shows a campaign brief, and re-run restaurant_campaign_brief."
+    )
 
 
 def is_promotion_candidates_milestone_data(data: object) -> bool:
@@ -243,10 +293,16 @@ def reel_lineup_has_food_leads(data: dict[str, Any]) -> bool:
 
 
 def extract_reel_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return the first matched prior reel_lineup row, or ``None``."""
+    """Return the best matched prior reel_lineup row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"reel_lineup"}))
-    return matched[0] if matched else None
+    if not matched:
+        return None
+    for row in reversed(matched):
+        data = row.get("data")
+        if isinstance(data, dict) and reel_lineup_has_food_leads(data):
+            return row
+    return matched[-1]
 
 
 def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
@@ -258,6 +314,36 @@ def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | Non
     if isinstance(data, dict) and is_reel_lineup_milestone_data(data):
         return data
     return None
+
+
+def reel_lineup_prior_error_message(
+    prior_milestones_json: str, *, milestone_id: str = "milestone"
+) -> str:
+    """Actionable error when a milestone cannot read prior reel_lineup data."""
+    base = f"{milestone_id} requires a prior reel_lineup milestone with saved food groups"
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place reel_lineup before this milestone in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_reel_lineup_preset = any(
+        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "reel_lineup"
+        for row in rows
+    )
+    if not has_reel_lineup_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add a reel_lineup step before this milestone, run it successfully, "
+            "then run this milestone again."
+        )
+    return (
+        f"{base}. A reel_lineup milestone appears earlier in the workflow "
+        "but its saved preset data is missing or invalid — open that step, "
+        "confirm the Data tab shows food groups, and re-run reel_lineup."
+    )
 
 
 def is_post_lineup_milestone_data(data: object) -> bool:

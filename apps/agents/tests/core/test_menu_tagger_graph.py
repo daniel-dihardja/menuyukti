@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.menu_tagger.nodes import (
+    MenuTaggerDraftOutput,
     _sanitize_menu_tagger_payload,
     compute_used_tags,
     fetch_and_prepare,
@@ -259,6 +260,27 @@ def test_sanitize_menu_tagger_payload_preserves_storytelling() -> None:
     sanitized = _sanitize_menu_tagger_payload(payload)
     assert sanitized["items"][0]["storytellingFit"] == "strong"
     assert sanitized["items"][0]["storytellingRationale"] == "Hero narrative."
+
+
+def test_menu_tagger_draft_output_accepts_stringified_tags() -> None:
+    parsed = MenuTaggerDraftOutput.model_validate(
+        {
+            "items": [
+                {
+                    "name": "Nasi Goreng",
+                    "role": "star",
+                    "category": "Mains",
+                    "tags": '"kind": "food", "ingredient": ["rice"], "taste": ["savory"], '
+                    '"course": ["main"], "reel_moment": "toss_stir", "texture": ["juicy"], '
+                    '"prep_style": ["fried"], "occasion": ["dinner"], "serve_temp": "hot", '
+                    '"content_angle": ["signature"]',
+                }
+            ]
+        }
+    )
+    assert parsed.items[0].tags.kind == "food"
+    assert parsed.items[0].tags.reel_moment == "toss_stir"
+    assert parsed.items[0].tags.content_angle == ["signature"]
 
 
 def test_normalize_menu_tagger_tags_filters_unknown_enums() -> None:

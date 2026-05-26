@@ -298,6 +298,7 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
     t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
 
   const sourceTitle = data.sourceMenuTaggerTitle?.trim() || undefined
+  const sourceCampaignBriefTitle = data.sourceCampaignBriefTitle?.trim() || undefined
   const viewDetailsLabel = t('milestoneLineupPreviewViewDetails')
   const backLabel = t('milestoneLineupPreviewBackToList')
 
@@ -324,6 +325,14 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
           <p className={mp.bodySmall}>
             <span className={mp.rowKey}>{t('milestoneReelLineupPreviewSourceTitle')}:</span>{' '}
             {sourceTitle}
+          </p>
+        ) : null}
+        {sourceCampaignBriefTitle ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>
+              {t('milestoneReelLineupPreviewSourceCampaignBriefTitle')}:
+            </span>{' '}
+            {sourceCampaignBriefTitle}
           </p>
         ) : null}
       </div>

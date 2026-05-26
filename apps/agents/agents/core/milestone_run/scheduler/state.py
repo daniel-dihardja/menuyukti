@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 
 class SchedulerSlot(TypedDict):
+    kind: Literal["story", "post", "reel"]
     date: str
     time: str
     title: str
@@ -17,6 +18,8 @@ class SchedulerOutput(TypedDict):
     publicHolidays: list[dict[str, str]]
     slots: list[SchedulerSlot]
     sourceDatesTitle: NotRequired[str]
+    sourceCampaignBriefTitle: NotRequired[str]
+    sourceReelLineupTitle: NotRequired[str]
     sourcePostLineupTitle: NotRequired[str]
     sourceStoryLineupTitle: NotRequired[str]
 
@@ -34,10 +37,14 @@ class SchedulerState(TypedDict):
     prior_milestones_data: NotRequired[str]
     dates_data: NotRequired[dict[str, Any] | None]
     source_dates_title: NotRequired[str]
-    story_lineup_data: NotRequired[dict[str, Any] | None]
-    source_story_lineup_title: NotRequired[str]
+    campaign_brief_data: NotRequired[dict[str, Any] | None]
+    source_campaign_brief_title: NotRequired[str]
+    reel_lineup_data: NotRequired[dict[str, Any] | None]
+    source_reel_lineup_title: NotRequired[str]
     post_lineup_data: NotRequired[dict[str, Any] | None]
     source_post_lineup_title: NotRequired[str]
+    story_lineup_data: NotRequired[dict[str, Any] | None]
+    source_story_lineup_title: NotRequired[str]
     generated_output: NotRequired[SchedulerOutput | None]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | None]

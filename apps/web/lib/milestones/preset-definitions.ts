@@ -259,6 +259,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       goal: t('milestonePreset.reel_lineup.goal'),
       passCriteria: [
         {
+          requirement: t('milestonePreset.reel_lineup.criterionPriorCampaignBrief'),
+          status: 'open',
+        },
+        {
           requirement: t('milestonePreset.reel_lineup.criterionPriorMenuTagger'),
           status: 'open',
         },
@@ -276,6 +280,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.reel_lineup.criterionDrinkHook'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionSchedulingHints'),
           status: 'open',
         },
       ],
@@ -429,11 +437,19 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorStoryLineup'),
+          requirement: t('milestonePreset.scheduler.criterionPriorCampaignBrief'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.scheduler.criterionPriorReelLineup'),
           status: 'open',
         },
         {
           requirement: t('milestonePreset.scheduler.criterionWindowPresent'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.scheduler.criterionReelSlotKinds'),
           status: 'open',
         },
       ],

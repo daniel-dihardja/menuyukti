@@ -62,8 +62,58 @@ class CampaignBriefVenueSnapshot(BaseModel):
         return cleaned
 
 
+class CampaignBriefOverallStrategy(BaseModel):
+    strategyFocus: str
+    audiencePriority: list[str]
+    coreMessage: str
+    offerWindow: str
+    cadenceGuidance: list[str]
+
+    @staticmethod
+    def _normalize_unique(values: Any) -> list[str]:
+        if not isinstance(values, list):
+            return []
+        seen: set[str] = set()
+        normalized: list[str] = []
+        for raw in values:
+            text = str(raw).strip()
+            if not text:
+                continue
+            key = text.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized.append(text)
+        return normalized
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_arrays(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for key in ("audiencePriority", "cadenceGuidance"):
+            data[key] = cls._normalize_unique(data.get(key, []))
+        return data
+
+    @field_validator("strategyFocus", "coreMessage", "offerWindow")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+    @field_validator("audiencePriority", "cadenceGuidance")
+    @classmethod
+    def _validate_list_quality(cls, values: list[str]) -> list[str]:
+        if not (3 <= len(values) <= 5):
+            raise ValueError("must contain between 3 and 5 unique non-empty items")
+        return values
+
+
 class CampaignBriefMilestoneOutput(BaseModel):
     venueSnapshot: CampaignBriefVenueSnapshot
+    overallStrategy: CampaignBriefOverallStrategy | None = None
     contentPillars: list[str]
     audienceHypotheses: list[str]
     proofOrientedAngles: list[str]
@@ -488,6 +538,62 @@ class ReelLineupGroupItemOutput(BaseModel):
         return value
 
 
+class ReelLineupScheduleHintsOutput(BaseModel):
+    preferredWeekdays: list[
+        Literal[
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+    ] = Field(default_factory=list)
+    preferredTime: str
+    cadenceEligible: bool = True
+
+    @field_validator("preferredWeekdays")
+    @classmethod
+    def _validate_preferred_weekdays(
+        cls,
+        values: list[
+            Literal[
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
+        ],
+    ) -> list[
+        Literal[
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+    ]:
+        if not values:
+            raise ValueError("must contain at least one preferred weekday")
+        if len(set(values)) != len(values):
+            raise ValueError("preferredWeekdays must not contain duplicates")
+        return values
+
+    @field_validator("preferredTime")
+    @classmethod
+    def _validate_preferred_time(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("preferredTime must be non-empty")
+        return text
+
+
 class ReelLineupGroupMixOutput(BaseModel):
     priceLevels: list[Literal[1, 2, 3]]
     storytellingStrongCount: int = Field(ge=0)
@@ -507,6 +613,11 @@ class ReelLineupGroupOutput(BaseModel):
     anchor: ReelLineupAnchorOutput
     items: list[ReelLineupGroupItemOutput]
     mix: ReelLineupGroupMixOutput
+    strategyFocus: str | None = None
+    coreMessage: str | None = None
+    creativeRole: str | None = None
+    assetHint: str | None = None
+    scheduleHints: ReelLineupScheduleHintsOutput | None = None
 
     @field_validator("items")
     @classmethod
@@ -528,6 +639,7 @@ class ReelLineupMilestoneOutput(BaseModel):
     drinkGroups: list[ReelLineupGroupOutput] = Field(default_factory=list)
     unassignedItemNames: list[str] = Field(default_factory=list)
     sourceMenuTaggerTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
     notes: str | None = None
 
     @model_validator(mode="after")
@@ -600,9 +712,23 @@ class PostLineupMilestoneOutput(BaseModel):
 
 
 class SchedulerSlotOutput(BaseModel):
+    kind: Literal["story", "post", "reel"] | None = None
     date: str
     time: str
     title: str
+
+    @model_validator(mode="after")
+    def _fill_legacy_kind(self) -> SchedulerSlotOutput:
+        if self.kind is not None:
+            return self
+        title = self.title.strip()
+        if title.startswith("Post:"):
+            self.kind = "post"
+        elif title.startswith("Reel:"):
+            self.kind = "reel"
+        else:
+            self.kind = "story"
+        return self
 
 
 class SchedulerMilestoneOutput(BaseModel):
@@ -610,6 +736,8 @@ class SchedulerMilestoneOutput(BaseModel):
     endDate: str
     publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
     sourceDatesTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
+    sourceReelLineupTitle: str | None = None
     sourcePostLineupTitle: str | None = None
     sourceStoryLineupTitle: str | None = None
     slots: list[SchedulerSlotOutput] = Field(default_factory=list)

@@ -48,6 +48,22 @@ def _drink_groups(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [row for row in raw if isinstance(row, dict)]
 
 
+def _groups_have_schedule_hints(groups: list[dict[str, Any]]) -> bool:
+    if not groups:
+        return False
+    for group in groups:
+        hints = group.get("scheduleHints")
+        if not isinstance(hints, dict):
+            return False
+        weekdays = hints.get("preferredWeekdays")
+        preferred_time = str(hints.get("preferredTime") or "").strip()
+        if not isinstance(weekdays, list) or not weekdays or not preferred_time:
+            return False
+        if not str(group.get("strategyFocus") or "").strip():
+            return False
+    return True
+
+
 def _is_main_course_strong_story_lead(item: dict[str, Any]) -> bool:
     storytelling = str(item.get("storytellingFit") or "").strip().lower()
     if storytelling != "strong":
@@ -109,6 +125,29 @@ def try_reel_lineup_deterministic_verdict(
             return ("fail", "reel lineup data has no groups from prior menu_tagger items.")
         total = len(groups) + len(drink_groups)
         return ("pass", f"reel lineup produced {total} group(s) from tagged items.")
+
+    if "campaign" in norm and "brief" in norm:
+        source_title = str(data.get("sourceCampaignBriefTitle") or "").strip()
+        if source_title and _groups_have_schedule_hints(groups):
+            return (
+                "pass",
+                "reel lineup references campaign brief strategy and includes food-group scheduling hints.",
+            )
+        return (
+            "fail",
+            "reel lineup is missing sourceCampaignBriefTitle or campaign-aware food-group scheduling hints.",
+        )
+
+    if "schedule" in norm or "cadence" in norm or "weekday" in norm:
+        if _groups_have_schedule_hints(groups):
+            return (
+                "pass",
+                "each food reel group includes strategy focus plus preferred weekdays/time scheduling hints.",
+            )
+        return (
+            "fail",
+            "one or more food reel groups is missing strategy focus or preferred weekday/time hints.",
+        )
 
     if (
         ("up to" in norm or "at most" in norm)

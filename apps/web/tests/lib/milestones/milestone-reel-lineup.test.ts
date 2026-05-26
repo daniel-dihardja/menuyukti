@@ -25,6 +25,14 @@ describe('reel_lineup preset', () => {
       foodLeads: [],
       drinkLeads: [],
     })
-    expect(fields.passCriteria?.length).toBe(5)
+    expect(fields.passCriteria?.map((row) => row.requirement)).toEqual([
+      'milestonePreset.reel_lineup.criterionPriorCampaignBrief',
+      'milestonePreset.reel_lineup.criterionPriorMenuTagger',
+      'milestonePreset.reel_lineup.criterionHookGroupCount',
+      'milestonePreset.reel_lineup.criterionMainCourseHook',
+      'milestonePreset.reel_lineup.criterionDrinkHookGroupCount',
+      'milestonePreset.reel_lineup.criterionDrinkHook',
+      'milestonePreset.reel_lineup.criterionSchedulingHints',
+    ])
   })
 })

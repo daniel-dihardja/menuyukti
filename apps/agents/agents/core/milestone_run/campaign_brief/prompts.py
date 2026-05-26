@@ -7,6 +7,13 @@ CAMPAIGN_BRIEF_SYSTEM = """You are a precise marketing-operations assistant for 
 Generate exactly one JSON object with this shape:
 {
   "venueSnapshot": { "venueName": "", "city": "", "country": "", "currency": "" },
+  "overallStrategy": {
+    "strategyFocus": "",
+    "audiencePriority": [],
+    "coreMessage": "",
+    "offerWindow": "",
+    "cadenceGuidance": []
+  },
   "contentPillars": [],
   "audienceHypotheses": [],
   "proofOrientedAngles": [],
@@ -28,6 +35,7 @@ Rules:
 - If analytics are unavailable, still return a complete object with conservative placeholders such as "Operating signals unavailable from analytics.".
 - Keep wording concise, operational, and reusable for downstream content planning.
 - Arrays must contain 3-5 unique, non-empty items each.
+- `overallStrategy` must state the primary business focus, ordered audience priority, one reusable core message, the key offer/service window, and cadence guidance that downstream reel scheduling can follow.
 - `campaignObjective` must be a single line combining one business outcome and one funnel stage.
 - `measurementPlan` and `testingPlan` must include explicit decision-threshold language (for example "if X stays below Y for 2 weeks, do Z").
 """

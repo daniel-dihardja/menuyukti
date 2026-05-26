@@ -156,6 +156,16 @@ export function useMilestoneItemDrafts(
   const debounceTimerRef = useRef<number | null>(null)
   const flushChainRef = useRef<Promise<unknown>>(Promise.resolve())
 
+  const handleDatesDraftChange = useCallback((next: { startDate: string; endDate: string }) => {
+    inputDraftRef.current = next
+    setInputDraft(next)
+  }, [])
+
+  const handleOptionalNotesDraftChange = useCallback((next: string) => {
+    optionalNotesDraftRef.current = next
+    setOptionalNotesDraft(next)
+  }, [])
+
   const serverDatesInput = datesInputFromMilestone(milestone.milestoneInput)
   const inputDirty =
     inputDraft.startDate !== serverDatesInput.startDate ||
@@ -365,6 +375,7 @@ export function useMilestoneItemDrafts(
   const handlePromotionCandidatesDraftChange = useCallback(
     (next: PromotionCandidatesInputDraft) => {
       promotionCandidatesFocusedRef.current = true
+      promotionCandidatesDraftRef.current = next
       setPromotionCandidatesDraft(next)
     },
     [],
@@ -375,7 +386,7 @@ export function useMilestoneItemDrafts(
       return {
         type: 'dates',
         draft: inputDraft,
-        setDraft: setInputDraft,
+        setDraft: handleDatesDraftChange,
         saveStatus: inputSaveStatus,
         saving: savingInput,
       }
@@ -398,7 +409,7 @@ export function useMilestoneItemDrafts(
       return {
         type: 'optional_notes',
         draft: optionalNotesDraft,
-        setDraft: setOptionalNotesDraft,
+        setDraft: handleOptionalNotesDraftChange,
         onBlur: handleOptionalNotesBlur,
         onFocus: handleOptionalNotesFocus,
         copy: {
@@ -413,7 +424,9 @@ export function useMilestoneItemDrafts(
     return { type: 'none' }
   }, [
     campaignBriefMainCategory,
+    handleDatesDraftChange,
     handleOptionalNotesBlur,
+    handleOptionalNotesDraftChange,
     handleOptionalNotesFocus,
     handlePromotionCandidatesDraftChange,
     handlePromotionCandidatesNotesBlur,

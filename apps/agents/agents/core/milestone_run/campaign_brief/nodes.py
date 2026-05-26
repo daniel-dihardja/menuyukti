@@ -16,6 +16,7 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_llm_from_milestone_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import (
+    CampaignBriefOverallStrategy,
     CampaignBriefVenueSnapshot,
     validate_skill_output,
 )
@@ -39,6 +40,7 @@ class CampaignBriefDraftOutput(BaseModel):
     """LLM-generated campaign brief body before deterministic campaign-window merge."""
 
     venueSnapshot: CampaignBriefVenueSnapshot
+    overallStrategy: CampaignBriefOverallStrategy | None = None
     contentPillars: list[str]
     audienceHypotheses: list[str]
     proofOrientedAngles: list[str]
@@ -68,6 +70,22 @@ _CAMPAIGN_BRIEF_LIST_FIELDS: tuple[str, ...] = (
 )
 
 _UNCATEGORIZED_MAIN_CATEGORY = "(uncategorized)"
+
+_DEFAULT_CAMPAIGN_STRATEGY = {
+    "strategyFocus": "weekday_lunch",
+    "audiencePriority": [
+        "Weekday lunch nearby workers and office groups",
+        "Evening after-work diners",
+        "Weekend family groups",
+    ],
+    "coreMessage": "Promote a repeatable weekday lunch offer for nearby workers and small groups.",
+    "offerWindow": "11:00-14:00",
+    "cadenceGuidance": [
+        "Publish lunch-offer reels twice per week.",
+        "Prioritize weekday morning posting before the lunch window.",
+        "Keep the core lunch CTA consistent while rotating visuals and hero dishes.",
+    ],
+}
 
 
 def _extract_top_revenue_category(signals_raw: dict[str, Any] | None) -> str:
@@ -378,6 +396,24 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
         venue_snapshot.setdefault("city", str(location_fallback.get("city") or "").strip())
         venue_snapshot.setdefault("country", str(location_fallback.get("country") or "").strip())
         venue_snapshot.setdefault("currency", str(location_fallback.get("currency") or "").strip())
+        overall_strategy = payload.get("overallStrategy")
+        if not isinstance(overall_strategy, dict):
+            overall_strategy = {}
+            payload["overallStrategy"] = overall_strategy
+        if not str(overall_strategy.get("strategyFocus") or "").strip():
+            overall_strategy["strategyFocus"] = str(_DEFAULT_CAMPAIGN_STRATEGY["strategyFocus"])
+        if not isinstance(overall_strategy.get("audiencePriority"), list) or len(
+            [item for item in overall_strategy.get("audiencePriority", []) if str(item).strip()]
+        ) < 3:
+            overall_strategy["audiencePriority"] = list(_DEFAULT_CAMPAIGN_STRATEGY["audiencePriority"])
+        if not str(overall_strategy.get("coreMessage") or "").strip():
+            overall_strategy["coreMessage"] = str(_DEFAULT_CAMPAIGN_STRATEGY["coreMessage"])
+        if not str(overall_strategy.get("offerWindow") or "").strip():
+            overall_strategy["offerWindow"] = str(_DEFAULT_CAMPAIGN_STRATEGY["offerWindow"])
+        if not isinstance(overall_strategy.get("cadenceGuidance"), list) or len(
+            [item for item in overall_strategy.get("cadenceGuidance", []) if str(item).strip()]
+        ) < 3:
+            overall_strategy["cadenceGuidance"] = list(_DEFAULT_CAMPAIGN_STRATEGY["cadenceGuidance"])
         payload.setdefault("contentPillars", [])
         payload.setdefault("audienceHypotheses", [])
         payload.setdefault("proofOrientedAngles", [])

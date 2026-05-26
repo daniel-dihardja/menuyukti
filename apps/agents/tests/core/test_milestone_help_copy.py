@@ -13,6 +13,12 @@ def test_resolve_what_it_does_preset_catalog() -> None:
     assert "custom should not win" not in text
 
 
+def test_scheduler_help_mentions_reels_and_campaign_brief() -> None:
+    text = resolve_what_it_does("scheduler", None)
+    assert "Campaign Brief" in text
+    assert "twice-weekly lunch cadence" in text
+
+
 def test_resolve_what_it_does_custom_when_no_catalog() -> None:
     assert resolve_what_it_does("dates", "  My custom goal  ") == "My custom goal"
 

@@ -62,25 +62,52 @@ def try_scheduler_deterministic_verdict(
             "Scheduler data is missing startDate or endDate from the prior dates milestone.",
         )
 
-    if "prior" in normalized and "story" in normalized and "lineup" in normalized:
-        source_title = str(data.get("sourceStoryLineupTitle") or "").strip()
+    if "prior" in normalized and "campaign" in normalized and "brief" in normalized:
+        source_title = str(data.get("sourceCampaignBriefTitle") or "").strip()
         if source_title:
             return (
                 "pass",
-                "Scheduler data references a prior story_lineup milestone via sourceStoryLineupTitle.",
+                "Scheduler data references a prior restaurant_campaign_brief milestone.",
+            )
+        return (
+            "fail",
+            "Scheduler data is missing sourceCampaignBriefTitle from the prior campaign brief.",
+        )
+
+    if "prior" in normalized and "reel" in normalized and "lineup" in normalized:
+        source_title = str(data.get("sourceReelLineupTitle") or "").strip()
+        if source_title:
+            return (
+                "pass",
+                "Scheduler data references a prior reel_lineup milestone via sourceReelLineupTitle.",
             )
         slots = data.get("slots")
         if isinstance(slots, list) and any(
-            isinstance(slot, dict) and str(slot.get("title") or "").startswith("Story:")
+            isinstance(slot, dict) and str(slot.get("kind") or "").strip() == "reel"
             for slot in slots
         ):
             return (
                 "pass",
-                "Scheduler slots include Story greeting entries from story_lineup.",
+                "Scheduler slots include reel entries from reel_lineup.",
             )
         return (
             "fail",
-            "Scheduler data is missing story_lineup reference or Story slots.",
+            "Scheduler data is missing reel_lineup reference or reel slots.",
+        )
+
+    if "reel" in normalized and ("kind" in normalized or "typed" in normalized or "slot" in normalized):
+        slots = data.get("slots")
+        if isinstance(slots, list) and any(
+            isinstance(slot, dict) and str(slot.get("kind") or "").strip() == "reel"
+            for slot in slots
+        ):
+            return (
+                "pass",
+                "Scheduler data includes explicit reel slots with kind='reel'.",
+            )
+        return (
+            "fail",
+            "Scheduler data must include explicit reel slots with kind='reel'.",
         )
 
     return None

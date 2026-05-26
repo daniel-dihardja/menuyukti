@@ -39,9 +39,10 @@ describe('schedulerHourIndexFromTime', () => {
 })
 
 describe('schedulerSlotKind', () => {
-  it('classifies Post-prefixed titles as post slots', () => {
+  it('returns the explicit post slot kind', () => {
     expect(
       schedulerSlotKind({
+        kind: 'post',
         date: '2026-06-01',
         time: '10:00',
         title: 'Post: monthly top menu',
@@ -49,38 +50,55 @@ describe('schedulerSlotKind', () => {
     ).toBe('post')
   })
 
-  it('classifies Story-prefixed titles as story slots', () => {
+  it('returns the explicit story slot kind', () => {
     expect(
       schedulerSlotKind({
+        kind: 'story',
         date: '2026-06-15',
         time: '10:00',
         title: 'Story: sending happy Easter Sunday',
       }),
     ).toBe('story')
   })
+
+  it('returns the explicit reel slot kind', () => {
+    expect(
+      schedulerSlotKind({
+        kind: 'reel',
+        date: '2026-06-16',
+        time: '11:00',
+        title: 'Reel: Ribeye lunch offer (11:00-14:00) [hero]',
+      }),
+    ).toBe('reel')
+  })
 })
 
 describe('schedulerSlotClassName', () => {
-  it('returns distinct classes for post and story slots', () => {
+  it('returns distinct classes for post, story, and reel slots', () => {
     const storyClass = schedulerSlotClassName('story')
     const postClass = schedulerSlotClassName('post')
+    const reelClass = schedulerSlotClassName('reel')
     expect(storyClass).toContain('sky')
     expect(postClass).toContain('violet')
+    expect(reelClass).toContain('emerald')
     expect(storyClass).not.toEqual(postClass)
+    expect(reelClass).not.toEqual(postClass)
   })
 })
 
 describe('schedulerSlotsForDate', () => {
   const slots = [
     {
+      kind: 'story' as const,
       date: '2026-06-15',
       time: '10:00',
       title: 'Story: sending happy Easter Sunday',
     },
     {
+      kind: 'reel' as const,
       date: '2026-06-20',
       time: '10:00',
-      title: 'Story: sending happy Memorial Day',
+      title: 'Reel: Burger lunch offer (11:00-14:00) [proof]',
     },
   ]
 

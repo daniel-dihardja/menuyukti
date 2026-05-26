@@ -13,6 +13,6 @@ Instagram in the context of that campaign brief (hooks, narrative, emotional pul
 Do not invent dishes or facts not implied by the name and brief. If the name is generic for the \
 brief, explain that briefly.
 
-Output structured verdicts only: one entry per name in the provided list, with \
-`storytellingFit` either \"strong\" or \"weak\", and a short `storytellingRationale` \
-(one or two sentences, plain language)."""
+Output structured verdicts only: one entry per name in the provided list. For each entry include \
+the exact `name`, `storytellingFit` as either \"strong\" or \"weak\", and a short \
+`storytellingRationale` (one or two sentences, plain language)."""

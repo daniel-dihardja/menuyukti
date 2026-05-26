@@ -16,6 +16,22 @@ class ReelLineupGroupItem(TypedDict):
     reelMoment: NotRequired[str]
 
 
+class ReelLineupScheduleHints(TypedDict):
+    preferredWeekdays: list[
+        Literal[
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+    ]
+    preferredTime: str
+    cadenceEligible: bool
+
+
 class ReelLineupGroupMix(TypedDict):
     priceLevels: list[Literal[1, 2, 3]]
     storytellingStrongCount: int
@@ -35,12 +51,21 @@ class ReelLineupGroup(TypedDict):
     anchor: ReelLineupAnchor
     items: list[ReelLineupGroupItem]
     mix: ReelLineupGroupMix
+    strategyFocus: NotRequired[str]
+    coreMessage: NotRequired[str]
+    creativeRole: NotRequired[str]
+    assetHint: NotRequired[str]
+    scheduleHints: NotRequired[ReelLineupScheduleHints]
 
 
 class ReelLineupOutput(TypedDict):
+    foodLeads: list[dict[str, Any]]
+    drinkLeads: list[dict[str, Any]]
     groups: list[ReelLineupGroup]
+    drinkGroups: list[ReelLineupGroup]
     unassignedItemNames: list[str]
     sourceMenuTaggerTitle: NotRequired[str]
+    sourceCampaignBriefTitle: NotRequired[str]
     notes: NotRequired[str]
 
 
@@ -56,6 +81,8 @@ class ReelLineupState(TypedDict):
     traceparent: NotRequired[str | None]
     prior_milestones_data: NotRequired[str]
     owner_notes_markdown: NotRequired[str]
+    campaign_brief_data: NotRequired[dict[str, Any] | None]
+    source_campaign_brief_title: NotRequired[str]
     menu_tagger_items: NotRequired[list[dict[str, Any]]]
     source_menu_tagger_title: NotRequired[str]
     generated_output: NotRequired[ReelLineupOutput | None]
