@@ -15,6 +15,8 @@ import {
   schedulerHourIndexFromTime,
   schedulerHourLabels,
   schedulerSlotClassName,
+  schedulerSlotDisplayTime,
+  schedulerSlotDisplayTitle,
   schedulerSlotKind,
   schedulerSlotsByDate,
 } from '@/lib/milestones/scheduler-calendar'
@@ -28,6 +30,7 @@ export type SchedulerCalendarWeekGridProps = {
   locale: string
   slots?: SchedulerMilestoneData['slots']
   className?: string
+  onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
 }
 
 function formatDayHeader(isoDate: string, locale: string): { weekday: string; day: string } {
@@ -52,6 +55,7 @@ export function SchedulerCalendarWeekGrid({
   locale,
   slots = [],
   className,
+  onSlotClick,
 }: SchedulerCalendarWeekGridProps) {
   const t = useTranslations('analytics.workflows.chat')
 
@@ -123,6 +127,7 @@ export function SchedulerCalendarWeekGrid({
             slotsByDate={slotsByDate}
             timeColumnLabel={t('milestoneSchedulerPreviewTimeColumnLabel')}
             slotAriaLabel={(title, time) => t('milestoneSchedulerPreviewSlotAria', { title, time })}
+            onSlotClick={onSlotClick}
           />
         ))}
       </div>
@@ -137,6 +142,7 @@ type SchedulerHourRowProps = {
   slotsByDate: ReturnType<typeof schedulerSlotsByDate>
   timeColumnLabel: string
   slotAriaLabel: (title: string, time: string) => string
+  onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
 }
 
 function SchedulerHourRow({
@@ -146,6 +152,7 @@ function SchedulerHourRow({
   slotsByDate,
   timeColumnLabel,
   slotAriaLabel,
+  onSlotClick,
 }: SchedulerHourRowProps) {
   const rowIndex = hourIndex + 2
 
@@ -172,22 +179,35 @@ function SchedulerHourRow({
             role="gridcell"
             aria-disabled={!day.inWindow}
             className={cn(
-              'pointer-events-none relative border-b border-r border-border/60 p-0.5 last:border-r-0',
+              'relative border-b border-r border-border/60 p-0.5 last:border-r-0',
               !day.inWindow && 'bg-muted/30',
             )}
             style={{ gridRow: rowIndex, gridColumn: dayIndex + 2 }}
           >
             {slotsInHour.map((slot) => (
-              <div
+              <button
                 key={`${slot.date}-${slot.time}-${slot.title}`}
-                aria-label={slotAriaLabel(slot.title, slot.time)}
-                className={cn(
-                  'rounded-md border px-1.5 py-1 text-xs leading-snug',
-                  schedulerSlotClassName(schedulerSlotKind(slot)),
+                type="button"
+                aria-label={slotAriaLabel(
+                  schedulerSlotDisplayTitle(slot),
+                  schedulerSlotDisplayTime(slot),
                 )}
+                className={cn(
+                  'w-full rounded-md border px-1.5 py-1 text-left text-xs leading-snug',
+                  schedulerSlotClassName(schedulerSlotKind(slot)),
+                  onSlotClick &&
+                    'cursor-pointer hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                )}
+                onClick={
+                  onSlotClick
+                    ? () => {
+                        onSlotClick(slot)
+                      }
+                    : undefined
+                }
               >
-                <span className="line-clamp-2 font-medium">{slot.title}</span>
-              </div>
+                <span className="line-clamp-2 font-medium">{schedulerSlotDisplayTitle(slot)}</span>
+              </button>
             ))}
           </div>
         )

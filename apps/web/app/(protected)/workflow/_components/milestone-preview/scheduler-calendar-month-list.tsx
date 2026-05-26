@@ -10,6 +10,8 @@ import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
   schedulerSlotClassName,
+  schedulerSlotDisplayTime,
+  schedulerSlotDisplayTitle,
   schedulerSlotKind,
   schedulerSlotsForDate,
 } from '@/lib/milestones/scheduler-calendar'
@@ -21,6 +23,7 @@ export type SchedulerCalendarMonthListProps = {
   locale: string
   slots?: SchedulerMilestoneData['slots']
   className?: string
+  onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
 }
 
 function formatDayHeader(isoDate: string, locale: string): { weekday: string; day: string } {
@@ -45,6 +48,7 @@ export function SchedulerCalendarMonthList({
   locale,
   slots = [],
   className,
+  onSlotClick,
 }: SchedulerCalendarMonthListProps) {
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd).filter((day) => day.inMonth),
@@ -88,16 +92,29 @@ export function SchedulerCalendarMonthList({
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 {daySlots.length > 0 ? (
                   daySlots.map((slot) => (
-                    <p
+                    <button
                       key={`${slot.date}-${slot.time}-${slot.title}`}
+                      type="button"
                       className={cn(
-                        'min-w-0 max-w-full break-words rounded-md border px-2 py-0.5 text-xs font-medium leading-snug',
+                        'flex min-w-0 max-w-full flex-col items-start break-words rounded-md border px-2 py-0.5 text-left text-xs font-medium leading-snug',
                         schedulerSlotClassName(schedulerSlotKind(slot)),
+                        onSlotClick &&
+                          'cursor-pointer hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       )}
-                      title={slot.title}
+                      title={schedulerSlotDisplayTitle(slot)}
+                      onClick={
+                        onSlotClick
+                          ? () => {
+                              onSlotClick(slot)
+                            }
+                          : undefined
+                      }
                     >
-                      {slot.title}
-                    </p>
+                      <span className="mb-0.5 text-[10px] font-semibold opacity-80">
+                        {schedulerSlotDisplayTime(slot)}
+                      </span>
+                      <span className="w-full">{schedulerSlotDisplayTitle(slot)}</span>
+                    </button>
                   ))
                 ) : (
                   <span className="text-xs text-muted-foreground/60" aria-hidden>

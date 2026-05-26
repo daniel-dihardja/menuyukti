@@ -1645,6 +1645,8 @@
         "milestoneSchedulerPreviewWeekRange": "{start} – {end}",
         "milestoneSchedulerPreviewTimeColumnLabel": "Time",
         "milestoneSchedulerPreviewSlotAria": "{title} at {time}",
+        "milestoneSchedulerPreviewBackToCalendar": "Back to calendar",
+        "milestoneSchedulerPreviewDateEmpty": "No scheduled entries on this date.",
         "milestoneSchedulerPreviewNoPriorDatesTitle": "No dates milestone found",
         "milestoneSchedulerPreviewNoPriorDatesBody": "Add a **dates** milestone before this one in the timeline and set a start and end date.",
         "milestoneSchedulerPreviewIncompleteWindowTitle": "Campaign window incomplete",
