@@ -5,6 +5,7 @@ import { Separator } from '@workspace/ui/components/separator'
 import { cn } from '@workspace/ui/lib/utils'
 import { GitBranch, Sparkles } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
+import type { ReactElement } from 'react'
 
 import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
@@ -14,6 +15,41 @@ import { LandingFooter } from '@/app/_components/landing/landing-footer'
 import { LandingHowTwoSteps } from '@/app/_components/landing/landing-how-two-steps'
 import { LandingProductPillars } from '@/app/_components/landing/landing-product-pillars'
 import { routes } from '@/lib/routes'
+
+const AUTOMATION_HIGHLIGHT_TERMS = [
+  'deterministic analytics',
+  'sales signals',
+  'local pulse',
+  'workflows',
+  'milestone',
+  'milestones',
+  'analytics',
+  'deterministic',
+  'agentic',
+  'ai',
+] as const
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function highlightAutomationTerms(text: string): Array<string | ReactElement> {
+  const sortedTerms = [...AUTOMATION_HIGHLIGHT_TERMS].sort((a, b) => b.length - a.length)
+  const pattern = new RegExp(`\\b(${sortedTerms.map(escapeRegex).join('|')})\\b`, 'gi')
+  const segments = text.split(pattern)
+
+  return segments.map((segment, index) => {
+    const isMatch = sortedTerms.some((term) => term.toLowerCase() === segment.toLowerCase())
+
+    if (!isMatch) return segment
+
+    return (
+      <strong key={`${segment}-${index}`} className="font-semibold text-foreground">
+        {segment}
+      </strong>
+    )
+  })
+}
 
 export default async function LandingPage() {
   const t = await getTranslations('landing')
@@ -79,14 +115,14 @@ export default async function LandingPage() {
 
   const howSteps = [
     {
-      title: t('how.steps.studio.title'),
-      description: t('how.steps.studio.description'),
-      Icon: Sparkles,
-    },
-    {
       title: t('how.steps.workflows.title'),
       description: t('how.steps.workflows.description'),
       Icon: GitBranch,
+    },
+    {
+      title: t('how.steps.studio.title'),
+      description: t('how.steps.studio.description'),
+      Icon: Sparkles,
     },
   ] as const
 
@@ -98,6 +134,33 @@ export default async function LandingPage() {
     { question: t('faq.q5'), answer: t('faq.a5') },
     { question: t('faq.q6'), answer: t('faq.a6') },
   ]
+
+  const automationItems = [
+    {
+      title: t('automation.items.campaignBrief.title'),
+      description: t('automation.items.campaignBrief.description'),
+    },
+    {
+      title: t('automation.items.promotionRanking.title'),
+      description: t('automation.items.promotionRanking.description'),
+    },
+    {
+      title: t('automation.items.storytellingStrength.title'),
+      description: t('automation.items.storytellingStrength.description'),
+    },
+    {
+      title: t('automation.items.timingCadence.title'),
+      description: t('automation.items.timingCadence.description'),
+    },
+    {
+      title: t('automation.items.copyAndVisualPrep.title'),
+      description: t('automation.items.copyAndVisualPrep.description'),
+    },
+    {
+      title: t('automation.items.humanControl.title'),
+      description: t('automation.items.humanControl.description'),
+    },
+  ] as const
 
   return (
     <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-clip bg-background pb-[max(6rem,env(safe-area-inset-bottom,0px))] text-foreground md:pb-0">
@@ -193,6 +256,43 @@ export default async function LandingPage() {
                 <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
               </Button>
             </div>
+          </div>
+        </section>
+
+        <section className="bg-muted/40 py-20 md:py-24">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="text-balance text-3xl font-bold leading-tight md:text-4xl">
+                {t('automation.title')}
+              </h2>
+              <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
+                {highlightAutomationTerms(t('automation.subtitle'))}
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-4 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
+              {automationItems.map((item) => (
+                <article key={item.title} className="rounded-xl border bg-card p-5 shadow-sm">
+                  <h3 className="text-base font-semibold leading-snug">
+                    {highlightAutomationTerms(item.title)}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/75">
+                    {highlightAutomationTerms(item.description)}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-background py-14 md:py-16">
+          <div className="mx-auto max-w-4xl px-6 text-center">
+            <p className="text-pretty text-lg leading-relaxed text-foreground/85 md:text-xl">
+              {t('problem')}
+            </p>
+            <p className="mx-auto mt-5 max-w-3xl text-pretty text-base leading-relaxed text-foreground/75 md:text-lg">
+              {t('solution')}
+            </p>
           </div>
         </section>
 
