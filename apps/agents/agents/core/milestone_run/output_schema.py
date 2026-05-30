@@ -373,6 +373,23 @@ class CultureHooksMilestoneOutput(BaseModel):
 
 
 _IG_USERNAME_RE = re.compile(r"^[a-zA-Z0-9._]+$")
+IG_PROFILE_BIO_MAX_CHARS = 150
+
+
+def clamp_ig_profile_bio_text(value: str, *, max_chars: int = IG_PROFILE_BIO_MAX_CHARS) -> str:
+    """Trim and clamp Instagram bio copy to the platform character limit."""
+    text = value.strip()
+    if not text:
+        return text
+    if len(text) <= max_chars:
+        return text
+    truncated = text[:max_chars].rstrip()
+    last_space = truncated.rfind(" ")
+    if last_space >= max_chars - 30:
+        word_boundary = truncated[:last_space].rstrip()
+        if word_boundary:
+            return word_boundary
+    return truncated
 
 
 class IgProfileUsernameSuggestion(BaseModel):
@@ -410,11 +427,9 @@ class IgProfileBio(BaseModel):
     @field_validator("text")
     @classmethod
     def _validate_bio_text(cls, value: str) -> str:
-        text = value.strip()
+        text = clamp_ig_profile_bio_text(value)
         if not text:
             raise ValueError("bio text must be non-empty")
-        if len(text) > 150:
-            raise ValueError("bio text must be at most 150 characters")
         return text
 
     @field_validator("hook", "valueProp", "cta", "tone")

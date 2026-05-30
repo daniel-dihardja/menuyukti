@@ -12,10 +12,13 @@ from agents_app.agents.core.milestone_run.ig_profile.state import IgProfileOutpu
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_llm_from_milestone_run_config,
 )
-from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.core.milestone_run.output_schema import (
+    clamp_ig_profile_bio_text,
+    validate_skill_output,
+)
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 def _trace(state: IgProfileState, step: str, **extra: Any) -> None:
@@ -85,6 +88,11 @@ class IgProfileBioDraft(BaseModel):
     valueProp: str
     cta: str
     tone: str
+
+    @field_validator("text")
+    @classmethod
+    def _clamp_bio_text(cls, value: str) -> str:
+        return clamp_ig_profile_bio_text(value)
 
 
 class IgProfileDraftOutput(BaseModel):

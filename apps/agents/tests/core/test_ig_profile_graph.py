@@ -165,12 +165,14 @@ def test_output_schema_rejects_wrong_bio_count() -> None:
     assert error is not None
 
 
-def test_output_schema_rejects_bio_over_150_chars() -> None:
+def test_output_schema_clamps_bio_over_150_chars() -> None:
     payload = _valid_ig_profile_payload()
-    payload["bios"][0]["text"] = "x" * 151
+    payload["bios"][2]["text"] = "x" * 151
     normalized, error = validate_skill_output("ig_profile", payload)
-    assert normalized is None
-    assert error is not None
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert len(normalized["bios"][2]["text"]) <= 150
+    assert normalized["bios"][2]["text"]
 
 
 @pytest.mark.asyncio
