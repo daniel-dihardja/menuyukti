@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 import { AccountMenu } from '@/components/account/account-menu'
+import { HeaderStylePaletteToggle } from '@/components/style-palette-toggle'
 import { Button } from '@workspace/ui/components/button'
 import { Separator } from '@workspace/ui/components/separator'
 import {
@@ -72,6 +73,7 @@ export function MainHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">
+          <HeaderStylePaletteToggle />
           {showMobileMainMenu ? (
             <div className="sm:hidden">
               <Sheet>

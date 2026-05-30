@@ -29,7 +29,7 @@ export function LandingFeatureHighlights({
   return (
     <section
       id="feature-highlights"
-      className="bg-muted py-24"
+      className="bg-secondary py-24"
       aria-labelledby="feature-highlights-heading"
     >
       <div className="mx-auto max-w-6xl px-6">

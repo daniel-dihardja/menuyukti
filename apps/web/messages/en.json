@@ -666,6 +666,15 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "stylePalette": {
+    "label": "Color style",
+    "amber": "Golden Amber",
+    "coral": "Coral & Peach",
+    "sage": "Farm & Herb",
+    "terracotta": "Mediterranean Clay",
+    "bistro": "Wine Bistro",
+    "espresso": "Roastery"
+  },
   "sidebar": {
     "groupLabel": "Menuyukti",
     "dashboard": "Dashboard",

@@ -172,7 +172,7 @@ export default async function LandingPage() {
       </a>
 
       <main id="main-content" className="min-w-0 w-full overflow-x-clip">
-        <section className="relative w-full min-w-0 overflow-x-clip bg-gradient-to-b from-muted/30 to-background">
+        <section className="relative w-full min-w-0 overflow-x-clip bg-gradient-to-b from-hero-gradient-from to-hero-gradient-to">
           <div
             className={cn(
               'relative mx-auto flex w-full min-w-0 max-w-6xl flex-col items-center',

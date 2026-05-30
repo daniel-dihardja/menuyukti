@@ -20,6 +20,7 @@ import * as React from 'react'
 import { useCloseMobileSidebarOnNavigate } from '@/hooks/use-close-mobile-sidebar-on-navigate'
 
 import { NavMain } from './nav-main'
+import { SidebarStylePaletteToggle } from './style-palette-toggle'
 import { SidebarThemeToggle } from './sidebar-theme-toggle'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -67,6 +68,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <Separator className="bg-sidebar-border" />
       <SidebarFooter className="pb-2">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarStylePaletteToggle />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarThemeToggle />
           </SidebarMenuItem>

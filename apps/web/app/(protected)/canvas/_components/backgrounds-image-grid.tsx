@@ -129,7 +129,7 @@ export function BackgroundsImageGrid({
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className={`${overlayIconButtonBase} bg-white/95 text-neutral-950 hover:bg-white hover:text-neutral-950`}
+                        className={`${overlayIconButtonBase} bg-background/95 text-foreground hover:bg-background hover:text-foreground`}
                         aria-label={t('grid.viewLarge')}
                         onClick={() => onPreview(item)}
                       >
@@ -139,7 +139,7 @@ export function BackgroundsImageGrid({
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className={`${overlayIconButtonBase} bg-white/95 text-neutral-950 hover:bg-white hover:text-neutral-950`}
+                        className={`${overlayIconButtonBase} bg-background/95 text-foreground hover:bg-background hover:text-foreground`}
                         aria-label={t('grid.download')}
                         asChild
                       >
