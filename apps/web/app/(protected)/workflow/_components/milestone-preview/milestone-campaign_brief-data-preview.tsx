@@ -196,12 +196,6 @@ export function MilestoneCampaignBriefDataPreview({
   data,
 }: MilestoneCampaignBriefDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
-
-  if (!hasCampaignBriefPreviewContent(data)) {
-    return <CampaignBriefPreviewEmptyState />
-  }
-  const formatHelpAriaLabel = (sectionTitle: string) =>
-    t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
   const labels = useMemo<CampaignBriefPreviewLabels>(
     () => ({
       venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
@@ -246,6 +240,13 @@ export function MilestoneCampaignBriefDataPreview({
     }),
     [t],
   )
+
+  if (!hasCampaignBriefPreviewContent(data)) {
+    return <CampaignBriefPreviewEmptyState />
+  }
+
+  const formatHelpAriaLabel = (sectionTitle: string) =>
+    t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
   const a = formatHelpAriaLabel
 
   const showVenue = hasCampaignBriefVenueSnapshotContent(data.venueSnapshot)

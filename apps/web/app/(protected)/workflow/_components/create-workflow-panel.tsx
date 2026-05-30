@@ -29,6 +29,7 @@ import { LocationSelect } from '../../analytics/sales/location-select'
 import {
   BLANK_PRESET_SELECTION_KEY,
   WORKFLOW_IMPORT_PRESETS,
+  WORKFLOW_STRATEGY_OPTIONS,
   presetSelectionKey,
   workflowTitleFromPresetPayload,
 } from '@/lib/workflows/presets'
@@ -150,6 +151,11 @@ function CreateWorkflowDataAndTemplateSection({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={BLANK_PRESET_SELECTION_KEY}>{tNew('noPreset')}</SelectItem>
+              {WORKFLOW_STRATEGY_OPTIONS.map((strategy) => (
+                <SelectItem key={strategy.id} value={presetSelectionKey(strategy.id)}>
+                  {tNew(strategy.labelKey)}
+                </SelectItem>
+              ))}
               {WORKFLOW_IMPORT_PRESETS.map((preset) => (
                 <SelectItem key={preset.id} value={presetSelectionKey(preset.id)}>
                   {workflowTitleFromPresetPayload(preset.payload) ??

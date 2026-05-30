@@ -147,6 +147,6 @@ export type TimelineMilestone = {
 export type TimelineWorkspaceProps = {
   isLoading?: boolean
   loadError?: string | null
-  /** Placed after the create milestone control in the toolbar and beside create in the empty state. */
+  /** Placed after milestone controls in the toolbar when the timeline has milestones. */
   timelineTrailing?: ReactNode
 }

@@ -67,7 +67,7 @@ export function TimelineWorkspace({
           actions={toolbarActions}
           count={milestones.length}
           title={t('timelineToolbarTitle')}
-          trailingSlot={timelineTrailing}
+          trailingSlot={showTimeline ? timelineTrailing : null}
         />
         <TimelineInlineErrors errors={toErrorMap(errors)} show={showTimeline} />
         {isLoading ? (
@@ -75,10 +75,7 @@ export function TimelineWorkspace({
         ) : loadError ? (
           <TimelineWorkspaceLoadError message={loadError} />
         ) : milestones.length === 0 ? (
-          <TimelineWorkspaceEmpty
-            createError={errors.createError}
-            timelineTrailing={timelineTrailing}
-          />
+          <TimelineWorkspaceEmpty createError={errors.createError} />
         ) : (
           <TimelineWorkspaceMilestoneList />
         )}

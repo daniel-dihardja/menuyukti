@@ -1,9 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-
-import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
 import { WorkflowTimelineSkeleton } from '../workflow-workspace-skeleton'
 import { TimelineBody } from './timeline-body'
@@ -23,13 +20,7 @@ export function TimelineWorkspaceLoadError({ message }: { message: string }) {
   )
 }
 
-export function TimelineWorkspaceEmpty({
-  createError,
-  timelineTrailing,
-}: {
-  createError: string | null
-  timelineTrailing: ReactNode
-}) {
+export function TimelineWorkspaceEmpty({ createError }: { createError: string | null }) {
   const t = useTranslations('analytics.workflows.chat')
   return (
     <div
@@ -43,13 +34,6 @@ export function TimelineWorkspaceEmpty({
         </h3>
         <p className="text-muted-foreground text-sm">{t('timelineEmptyDescription')}</p>
       </div>
-      {timelineTrailing ? (
-        <TooltipProvider delayDuration={300}>
-          <div className="flex w-full max-w-md items-center justify-end gap-2">
-            {timelineTrailing}
-          </div>
-        </TooltipProvider>
-      ) : null}
       {createError ? (
         <p className="max-w-md text-destructive text-sm" role="alert">
           {createError}
