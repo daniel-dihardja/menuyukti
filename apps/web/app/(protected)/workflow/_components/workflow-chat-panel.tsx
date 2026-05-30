@@ -197,6 +197,16 @@ export function WorkflowChatPanel({
     [setSelectedMilestoneId],
   )
 
+  const handleRunMilestone = useCallback(
+    async (milestoneId: string, chatModel?: ChatGatewayModelId) => {
+      void setSelectedMilestoneId(milestoneId)
+      await ops.handleRunMilestone(milestoneId, chatModel)
+    },
+    [ops.handleRunMilestone, setSelectedMilestoneId],
+  )
+
+  const timelineOps = useMemo(() => ({ ...ops, handleRunMilestone }), [ops, handleRunMilestone])
+
   /** `useChat` keeps the first `transport` instance; a ref keeps milestone/workflow ids fresh per request. */
   const chatApiContextRef = useRef({
     workflowId,
@@ -379,7 +389,7 @@ export function WorkflowChatPanel({
     isChatBusy,
     selectedMilestoneId,
     handleSelectMilestone,
-    ops,
+    timelineOps,
   )
 
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])

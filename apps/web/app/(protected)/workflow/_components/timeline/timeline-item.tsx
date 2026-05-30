@@ -255,10 +255,8 @@ function TimelineItemInner({
         <Collapsible className="min-w-0 w-full" onOpenChange={setUserOpen} open={open}>
           <Card
             className={cn(
-              'min-w-0 w-full gap-0 border py-4 shadow-none ring-2 transition-[background-color,box-shadow,border-color]',
-              isSelected
-                ? 'border-primary bg-accent/50 ring-ring/50'
-                : 'ring-transparent hover:bg-accent/30',
+              'min-w-0 w-full gap-0 border py-4 shadow-none transition-[background-color,border-color]',
+              isSelected ? 'border-primary bg-accent/50' : 'hover:bg-accent/30',
             )}
           >
             <TimelineItemHeaderProvider
