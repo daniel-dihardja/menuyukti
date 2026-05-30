@@ -1310,6 +1310,13 @@
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
         "stopChatAriaLabel": "Stop generating",
         "submitChatAriaLabel": "Send message",
+        "mobileChatOpenLabel": "Workflow assistant",
+        "mobileChatOpenAriaLabel": "Open workflow assistant",
+        "mobileChatSheetTitle": "Workflow assistant",
+        "mobileChatSheetDescription": "Chat with the workflow assistant to plan milestones and get help.",
+        "mobileChatCloseAriaLabel": "Close assistant",
+        "mobileChatEmptyHint": "Ask about milestones, data, or next steps.",
+        "mobileChatContinueHint": "Continue conversation",
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {

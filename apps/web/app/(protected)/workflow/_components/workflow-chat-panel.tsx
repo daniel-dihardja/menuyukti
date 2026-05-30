@@ -137,6 +137,7 @@ export function WorkflowChatPanel({
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
   const [text, setText] = useState('')
+  const [mobileChatOpen, setMobileChatOpen] = useState(false)
   const [, startPreviewTransition] = useTransition()
 
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
@@ -555,7 +556,11 @@ export function WorkflowChatPanel({
       <WorkflowChatMentionProvider>
         <WorkflowChatLayout
           chatPane={chatPane}
+          hasChatMessages={messages.length > 0}
+          isChatBusy={isChatBusy}
           isDesktop={isDesktop}
+          mobileChatOpen={mobileChatOpen}
+          onMobileChatOpenChange={setMobileChatOpen}
           previewPane={<WorkflowPreviewPanelBodyLazy />}
           previewPanelRef={previewPanelRef}
           timelinePane={

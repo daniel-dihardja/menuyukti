@@ -207,7 +207,7 @@ export function WorkflowChatComposerMenus({
       </PopoverAnchor>
       <PopoverContent
         align="start"
-        className="max-w-md min-w-56 overflow-hidden p-0"
+        className="w-[var(--radix-popover-trigger-width)] max-w-[var(--radix-popover-trigger-width)] overflow-hidden p-0 md:w-auto md:max-w-md md:min-w-56"
         onOpenAutoFocus={(ev) => ev.preventDefault()}
         side="top"
       >
@@ -222,7 +222,7 @@ export function WorkflowChatComposerMenus({
                   <CommandItem
                     key={cmd.id}
                     className={cn(
-                      'flex flex-col gap-1 items-start',
+                      'flex w-full flex-col items-start gap-1',
                       i === slashActiveIndex && 'bg-accent text-accent-foreground',
                     )}
                     onSelect={() => onSelectSlashCommand(`/${cmd.id}`)}
@@ -241,7 +241,7 @@ export function WorkflowChatComposerMenus({
                       <CommandItem
                         key={m.id}
                         className={cn(
-                          'items-start',
+                          'w-full items-start',
                           i === mentionActiveIndex && 'bg-accent text-accent-foreground',
                         )}
                         onSelect={() => onSelectMention(m.id)}
