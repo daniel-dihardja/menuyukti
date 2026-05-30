@@ -1,5 +1,6 @@
 """Streaming chat HTTP endpoint."""
 
+import asyncio
 import json
 from collections.abc import AsyncIterator
 from typing import Annotated, Any, Literal
@@ -129,6 +130,8 @@ async def _stream_chat_events(
             elif isinstance(text, list):
                 # Skip non-text blocks in streaming for now
                 continue
+    except asyncio.CancelledError:
+        raise
     finally:
         chat_http_client_var.reset(token)
 

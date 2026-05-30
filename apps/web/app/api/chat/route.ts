@@ -55,11 +55,16 @@ async function parsePythonSSEAndForward(
   controller: ReadableStreamDefaultController<Uint8Array>,
   textPartId: string,
   encoder: TextEncoder,
+  abortSignal: AbortSignal,
 ): Promise<void> {
   const decoder = new TextDecoder()
   let buffer = ''
   try {
     while (true) {
+      if (abortSignal.aborted) {
+        await reader.cancel()
+        return
+      }
       const { done, value } = await reader.read()
       if (done) break
       buffer += decoder.decode(value, { stream: true })
@@ -225,12 +230,29 @@ export async function POST(req: Request) {
         return
       }
 
-      await parsePythonSSEAndForward(reader, controller, textPartId, encoder)
-
-      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
-      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })))
-      controller.enqueue(encoder.encode(sseLine(SSE_DONE)))
-      controller.close()
+      try {
+        await parsePythonSSEAndForward(reader, controller, textPartId, encoder, req.signal)
+        if (req.signal.aborted) {
+          return
+        }
+        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
+        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })))
+        controller.enqueue(encoder.encode(sseLine(SSE_DONE)))
+        controller.close()
+      } catch (err) {
+        if (req.signal.aborted) {
+          try {
+            controller.close()
+          } catch {
+            // stream may already be closed
+          }
+          return
+        }
+        throw err
+      }
+    },
+    cancel() {
+      void agentRes.body?.cancel()
     },
   })
 

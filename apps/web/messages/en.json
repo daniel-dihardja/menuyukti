@@ -1308,6 +1308,8 @@
         "clearChatAriaLabel": "Clear chat",
         "clearChatLabel": "Clear chat",
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
+        "stopChatAriaLabel": "Stop generating",
+        "submitChatAriaLabel": "Send message",
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {

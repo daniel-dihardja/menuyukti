@@ -95,8 +95,8 @@ export function AgentChat() {
     setAgentThreadId(crypto.randomUUID())
   }, [stop, clearError, setMessages])
 
-  const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const isChatBusy = status === 'streaming' || status === 'submitted'
+  const isSubmitDisabled = !text.trim() && !isChatBusy
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
   return (

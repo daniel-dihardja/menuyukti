@@ -378,8 +378,8 @@ export function WorkflowChatPanel({
     }
   }, [workflowId, stop, clearError, setMessages])
 
-  const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const isChatBusy = status === 'streaming' || status === 'submitted'
+  const isSubmitDisabled = !text.trim() && !isChatBusy
 
   const timelineSlices = useWorkflowTimelineProviderSlices(
     milestoneUi,
@@ -534,7 +534,12 @@ export function WorkflowChatPanel({
                 {t('clearChatLabel')}
               </PromptInputButton>
             </PromptInputTools>
-            <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
+            <PromptInputSubmit
+              aria-label={isChatBusy ? t('stopChatAriaLabel') : t('submitChatAriaLabel')}
+              disabled={isSubmitDisabled}
+              onStop={stop}
+              status={status}
+            />
           </PromptInputFooter>
         </PromptInput>
       </div>
