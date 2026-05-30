@@ -47,6 +47,7 @@ export type TimelineActions = {
   onUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
   onRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+  onStopMilestoneRun: () => void
 }
 
 /** Workflow + milestone list state + errors (excludes chat streaming and action refs). */

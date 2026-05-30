@@ -24,6 +24,7 @@ type TimelineItemHeaderContextValue = {
   onMilestoneRunChatModelChange: (id: ChatGatewayModelId) => void
   actions: {
     run?: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+    stopRun?: () => void
     deleteMilestone?: (id: string) => void | Promise<void>
   }
 }

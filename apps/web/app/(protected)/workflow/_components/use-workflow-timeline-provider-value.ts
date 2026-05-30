@@ -25,6 +25,7 @@ export type WorkflowTimelineOpsHandles = {
   handleUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
   handleHydrateMilestoneData: (id: string) => Promise<void>
   handleRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+  handleStopMilestoneRun: () => void
 }
 
 export type WorkflowTimelineProviderSlices = {

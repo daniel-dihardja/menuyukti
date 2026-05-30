@@ -73,6 +73,7 @@ function TimelineItemInner({
     onUpdateMilestoneInput,
     onMoveMilestone,
     onRunMilestone,
+    onStopMilestoneRun,
   } = actions
 
   const [milestoneRunChatModel, setMilestoneRunChatModel] = useState<ChatGatewayModelId>(
@@ -274,6 +275,7 @@ function TimelineItemInner({
                 onMilestoneRunChatModelChange: setMilestoneRunChatModel,
                 actions: {
                   run: isChatBusy ? undefined : handleRunMilestoneWithInputFlush,
+                  stopRun: isMilestoneRunning ? onStopMilestoneRun : undefined,
                   deleteMilestone: onDeleteMilestone,
                 },
               }}

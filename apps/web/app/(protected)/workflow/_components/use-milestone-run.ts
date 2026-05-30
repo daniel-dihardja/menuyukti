@@ -1,7 +1,7 @@
 'use client'
 
 import type { Dispatch } from 'react'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
@@ -21,6 +21,12 @@ export function useMilestoneRun(
   dispatch: Dispatch<WorkflowMilestoneAction>,
   { workflowId, locationId, t }: MilestoneOpsContext,
 ) {
+  const abortRef = useRef<AbortController | null>(null)
+
+  const handleStopMilestoneRun = useCallback(() => {
+    abortRef.current?.abort()
+  }, [])
+
   const handleHydrateMilestoneData = useCallback(
     async (milestoneId: string) => {
       try {
@@ -78,6 +84,11 @@ export function useMilestoneRun(
 
   const handleRunMilestone = useCallback(
     async (milestoneId: string, chatModel: ChatGatewayModelId = DEFAULT_CHAT_GATEWAY_MODEL) => {
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+      const { signal } = controller
+
       dispatch({
         type: 'PATCH',
         patch: {
@@ -93,7 +104,9 @@ export function useMilestoneRun(
           prev.map((m) => (m.id === milestoneId ? { ...m, status: 'pending' as const } : m)),
       })
       try {
-        const hydrateRes = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`)
+        const hydrateRes = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
+          signal,
+        })
         const hydrateBody = (await hydrateRes.json().catch(() => null)) as {
           message?: string
           goal?: string
@@ -113,6 +126,7 @@ export function useMilestoneRun(
             milestoneInput: hydrateBody?.milestoneInput ?? undefined,
             milestoneData: hydrateBody?.milestoneData,
           }),
+          signal,
         })
         if (!res.ok) {
           const body = (await res.json().catch(() => null)) as { error?: string } | null
@@ -237,6 +251,22 @@ export function useMilestoneRun(
           await handleHydrateMilestoneData(milestoneId)
         }
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          dispatch({
+            type: 'UPDATE_MILESTONES',
+            updater: (prev) =>
+              prev.map((m) => {
+                if (m.id !== milestoneId) {
+                  return m
+                }
+                return {
+                  ...m,
+                  status: deriveMilestoneRailStatus(m.passCriteria, m.resultMarkdown),
+                }
+              }),
+          })
+          return
+        }
         dispatch({
           type: 'PATCH',
           patch: {
@@ -249,11 +279,14 @@ export function useMilestoneRun(
             prev.map((m) => (m.id === milestoneId ? { ...m, status: 'empty' as const } : m)),
         })
       } finally {
+        if (abortRef.current === controller) {
+          abortRef.current = null
+        }
         dispatch({ type: 'PATCH', patch: { runningMilestoneId: null, runningStep: null } })
       }
     },
     [workflowId, dispatch, locationId, t, handleHydrateMilestoneData],
   )
 
-  return { handleRunMilestone, handleHydrateMilestoneData }
+  return { handleRunMilestone, handleStopMilestoneRun, handleHydrateMilestoneData }
 }

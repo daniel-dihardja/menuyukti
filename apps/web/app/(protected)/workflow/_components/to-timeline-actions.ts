@@ -13,5 +13,6 @@ export function toTimelineActions(ops: WorkflowTimelineOpsHandles): TimelineActi
     onUpdateMilestoneInput: ops.handleUpdateMilestoneInput,
     onHydrateMilestoneData: ops.handleHydrateMilestoneData,
     onRunMilestone: ops.handleRunMilestone,
+    onStopMilestoneRun: ops.handleStopMilestoneRun,
   }
 }

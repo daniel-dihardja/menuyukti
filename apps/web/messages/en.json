@@ -1806,6 +1806,8 @@
         "milestoneResultEmpty": "No result yet.",
         "milestonePlayTooltip": "Run this milestone",
         "milestonePlayAriaLabel": "Run milestone",
+        "milestoneStopTooltip": "Stop this milestone run",
+        "milestoneStopAriaLabel": "Stop milestone run",
         "milestoneRunUserMessage": "Run this milestone now.",
         "milestoneRunError": "Could not run milestone evaluation. Please try again.",
         "milestoneDataDescriptionLocationProfile": "Uses your latest analytics run and operating profile metrics. Generate to fill milestone data, then adjust fields in the preview if needed. Adjust the goal and criteria as needed before you run evaluation.",
