@@ -33,6 +33,7 @@ import {
   MilestoneCampaignBriefInput,
   type MilestoneCampaignBriefInputProps,
 } from './milestone-campaign-brief-input'
+import { MilestoneReelLineupInput, type ReelLineupInputDraft } from './milestone-reel-lineup-input'
 import type { PassCriteriaRow, TimelineMilestone } from './types'
 import type { CampaignBriefInputDraft } from '@/lib/milestones/campaign-brief-input'
 
@@ -63,6 +64,15 @@ export type MilestoneInputModel =
       type: 'campaign_brief'
       draft: CampaignBriefInputDraft
       onChange: MilestoneCampaignBriefInputProps['onDraftChange']
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
+      type: 'reel_lineup'
+      draft: ReelLineupInputDraft
+      onChange: (next: ReelLineupInputDraft) => void
       onNotesBlur: () => void
       onNotesFocus: () => void
       saveStatus: FieldSaveStatusVariant
@@ -253,6 +263,23 @@ function MilestoneInputTabContent({
       return (
         <>
           <MilestoneCampaignBriefInput
+            disabled={isMilestoneRunning}
+            draft={inputModel.draft}
+            onDraftChange={inputModel.onChange}
+            onNotesBlur={inputModel.onNotesBlur}
+            onNotesFocus={inputModel.onNotesFocus}
+          />
+          <FieldSaveStatus
+            className="text-muted-foreground"
+            messages={fieldSaveMessages(t)}
+            status={inputModel.saveStatus}
+          />
+        </>
+      )
+    case 'reel_lineup':
+      return (
+        <>
+          <MilestoneReelLineupInput
             disabled={isMilestoneRunning}
             draft={inputModel.draft}
             onDraftChange={inputModel.onChange}

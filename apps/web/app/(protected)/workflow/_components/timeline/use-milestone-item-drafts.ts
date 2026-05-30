@@ -14,10 +14,13 @@ import { extractCampaignBriefMainCategory } from '@/lib/milestones/campaign-brie
 import {
   milestonePresetHasDefaultOptionalNotesInput,
   normalizePromotionCandidatesInput,
+  normalizeReelLineupInput,
   normalizedPromotionCandidatesInputsEqual,
+  normalizedReelLineupInputsEqual,
   optionalNotesFromMilestoneInput,
   promotionCandidatesDraftFromNormalized,
   promotionCandidatesInputFromMilestoneInput,
+  reelLineupInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -26,6 +29,7 @@ import type { TimelineActions } from '../timeline-context'
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { MilestoneInputModel } from './milestone-item-tabs'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
+import type { ReelLineupInputDraft } from './milestone-reel-lineup-input'
 import type { TimelineMilestone } from './types'
 
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
@@ -55,6 +59,10 @@ function promotionCandidatesInputEqual(
   )
 }
 
+function reelLineupInputEqual(a: ReelLineupInputDraft, b: ReelLineupInputDraft): boolean {
+  return normalizedReelLineupInputsEqual(normalizeReelLineupInput(a), normalizeReelLineupInput(b))
+}
+
 export function useMilestoneItemDrafts(
   milestone: TimelineMilestone,
   {
@@ -81,6 +89,7 @@ export function useMilestoneItemDrafts(
   const isDatesPreset = inputType === 'dates'
   const isPromotionCandidatesPreset = inputType === 'promotion_candidates'
   const isCampaignBriefPreset = inputType === 'campaign_brief'
+  const isReelLineupPreset = inputType === 'reel_lineup'
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
@@ -91,6 +100,9 @@ export function useMilestoneItemDrafts(
     )
   const [campaignBriefDraft, setCampaignBriefDraft] = useState<CampaignBriefInputDraft>(() =>
     campaignBriefInputFromMilestoneInput(milestone.milestoneInput),
+  )
+  const [reelLineupDraft, setReelLineupDraft] = useState<ReelLineupInputDraft>(() =>
+    reelLineupInputFromMilestoneInput(milestone.milestoneInput),
   )
   const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
     milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
@@ -108,11 +120,15 @@ export function useMilestoneItemDrafts(
     if (milestone.presetId === 'restaurant_campaign_brief') {
       setCampaignBriefDraft(campaignBriefInputFromMilestoneInput(milestone.milestoneInput))
     }
+    if (milestone.presetId === 'reel_lineup') {
+      setReelLineupDraft(reelLineupInputFromMilestoneInput(milestone.milestoneInput))
+    }
   }, [milestone.id, milestone.milestoneInput, milestone.presetId])
 
   const previousMilestoneIdRef = useRef(milestone.id)
   const promotionCandidatesFocusedRef = useRef(false)
   const campaignBriefFocusedRef = useRef(false)
+  const reelLineupFocusedRef = useRef(false)
   const optionalNotesFocusedRef = useRef(false)
 
   useEffect(() => {
@@ -158,6 +174,27 @@ export function useMilestoneItemDrafts(
   }, [milestone.presetId, milestone.id, milestone.milestoneInput])
 
   useEffect(() => {
+    if (milestone.presetId !== 'reel_lineup') {
+      previousMilestoneIdRef.current = milestone.id
+      return
+    }
+    const server = reelLineupInputFromMilestoneInput(milestone.milestoneInput)
+    setReelLineupDraft((prev) => {
+      if (previousMilestoneIdRef.current !== milestone.id) {
+        previousMilestoneIdRef.current = milestone.id
+        return server
+      }
+      if (!reelLineupInputEqual(prev, server)) {
+        if (!reelLineupFocusedRef.current) {
+          return server
+        }
+        return prev
+      }
+      return prev
+    })
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
+
+  useEffect(() => {
     if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
       previousMilestoneIdRef.current = milestone.id
       return
@@ -188,6 +225,8 @@ export function useMilestoneItemDrafts(
   promotionCandidatesDraftRef.current = promotionCandidatesDraft
   const campaignBriefDraftRef = useRef(campaignBriefDraft)
   campaignBriefDraftRef.current = campaignBriefDraft
+  const reelLineupDraftRef = useRef(reelLineupDraft)
+  reelLineupDraftRef.current = reelLineupDraft
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
   const debounceTimerRef = useRef<number | null>(null)
@@ -237,6 +276,14 @@ export function useMilestoneItemDrafts(
       normalizeCampaignBriefInput(server),
     )
   }, [campaignBriefDraft, isCampaignBriefPreset, milestone.milestoneInput])
+
+  const reelLineupDirty = useMemo(() => {
+    if (!isReelLineupPreset) {
+      return false
+    }
+    const server = reelLineupInputFromMilestoneInput(milestone.milestoneInput)
+    return !reelLineupInputEqual(reelLineupDraft, server)
+  }, [isReelLineupPreset, milestone.milestoneInput, reelLineupDraft])
 
   const performMilestoneInputFlush = useCallback(
     async ({
@@ -312,6 +359,22 @@ export function useMilestoneItemDrafts(
         }
         return ok
       }
+      if (m.presetId === 'reel_lineup') {
+        const server = reelLineupInputFromMilestoneInput(m.milestoneInput)
+        const normalizedDraft = normalizeReelLineupInput(reelLineupDraftRef.current)
+        const normalizedServer = normalizeReelLineupInput(server)
+        if (normalizedReelLineupInputsEqual(normalizedDraft, normalizedServer)) {
+          return true
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'reel_lineup',
+          value: normalizedDraft,
+        })
+        if (!ok) {
+          setReelLineupDraft(server)
+        }
+        return ok
+      }
       if (milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
         const server = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId)
         const trimmedDraft = optionalNotesDraftRef.current.trim()
@@ -365,9 +428,11 @@ export function useMilestoneItemDrafts(
       (isDatesPreset && inputDirty) ||
       (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
       (isCampaignBriefPreset && campaignBriefDirty) ||
+      (isReelLineupPreset && reelLineupDirty) ||
       (!isDatesPreset &&
         !isPromotionCandidatesPreset &&
         !isCampaignBriefPreset &&
+        !isReelLineupPreset &&
         usesOptionalNotesInput &&
         optionalNotesDirty)
     if (!dirty) {
@@ -389,12 +454,15 @@ export function useMilestoneItemDrafts(
     optionalNotesDraft,
     campaignBriefDirty,
     campaignBriefDraft,
+    reelLineupDirty,
+    reelLineupDraft,
     promotionCandidatesDirty,
     promotionCandidatesDraft,
     flushMilestoneInputSave,
     inputDirty,
     inputDraft,
     isCampaignBriefPreset,
+    isReelLineupPreset,
     isPromotionCandidatesPreset,
     usesOptionalNotesInput,
     isDatesPreset,
@@ -420,6 +488,7 @@ export function useMilestoneItemDrafts(
     : (isDatesPreset && inputDirty) ||
         (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
         (isCampaignBriefPreset && campaignBriefDirty) ||
+        (isReelLineupPreset && reelLineupDirty) ||
         (usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
@@ -466,6 +535,21 @@ export function useMilestoneItemDrafts(
     campaignBriefFocusedRef.current = true
   }, [])
 
+  const handleReelLineupNotesBlur = useCallback(() => {
+    reelLineupFocusedRef.current = false
+    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
+  }, [flushMilestoneInputSave])
+
+  const handleReelLineupNotesFocus = useCallback(() => {
+    reelLineupFocusedRef.current = true
+  }, [])
+
+  const handleReelLineupDraftChange = useCallback((next: ReelLineupInputDraft) => {
+    reelLineupFocusedRef.current = true
+    reelLineupDraftRef.current = next
+    setReelLineupDraft(next)
+  }, [])
+
   const inputModel = useMemo((): MilestoneInputModel => {
     if (isDatesPreset) {
       return {
@@ -499,6 +583,17 @@ export function useMilestoneItemDrafts(
         saving: savingInput,
       }
     }
+    if (isReelLineupPreset) {
+      return {
+        type: 'reel_lineup',
+        draft: reelLineupDraft,
+        onChange: handleReelLineupDraftChange,
+        onNotesBlur: handleReelLineupNotesBlur,
+        onNotesFocus: handleReelLineupNotesFocus,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
     if (usesOptionalNotesInput && milestone.presetId) {
       const presetId = milestone.presetId
       const base = `milestonePreset.${presetId}` as const
@@ -525,6 +620,9 @@ export function useMilestoneItemDrafts(
     handleCampaignBriefNotesBlur,
     handleCampaignBriefNotesFocus,
     handleDatesDraftChange,
+    handleReelLineupDraftChange,
+    handleReelLineupNotesBlur,
+    handleReelLineupNotesFocus,
     handleOptionalNotesBlur,
     handleOptionalNotesDraftChange,
     handleOptionalNotesFocus,
@@ -535,10 +633,12 @@ export function useMilestoneItemDrafts(
     inputSaveStatus,
     isCampaignBriefPreset,
     isDatesPreset,
+    isReelLineupPreset,
     isPromotionCandidatesPreset,
     milestone.presetId,
     optionalNotesDraft,
     promotionCandidatesDraft,
+    reelLineupDraft,
     savingInput,
     t,
     usesOptionalNotesInput,

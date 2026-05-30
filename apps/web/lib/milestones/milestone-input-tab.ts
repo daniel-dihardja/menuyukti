@@ -1,5 +1,8 @@
 import type { MilestoneInput } from '@/lib/graphql/node-schemas'
-import { promotionCandidatesMilestoneInputValueSchema } from '@/lib/graphql/node-schemas'
+import {
+  promotionCandidatesMilestoneInputValueSchema,
+  reelLineupMilestoneInputValueSchema,
+} from '@/lib/graphql/node-schemas'
 import {
   milestonePresetInputType,
   type MilestonePresetId,
@@ -12,7 +15,6 @@ export function milestonePresetHasDefaultOptionalNotesInput(
   | 'culture_hooks'
   | 'ig_profile'
   | 'menu_tagger'
-  | 'reel_lineup'
   | 'post_lineup'
   | 'story_lineup'
   | 'scheduler' {
@@ -26,7 +28,6 @@ export function optionalNotesFromMilestoneInput(
     | 'culture_hooks'
     | 'ig_profile'
     | 'menu_tagger'
-    | 'reel_lineup'
     | 'post_lineup'
     | 'story_lineup'
     | 'scheduler',
@@ -36,6 +37,55 @@ export function optionalNotesFromMilestoneInput(
   }
   const n = (raw.value as { notes?: unknown }).notes
   return typeof n === 'string' ? n : ''
+}
+
+const DEFAULT_REEL_LINEUP_INPUT = {
+  notes: '',
+  targetGroupCount: 4 as const,
+}
+
+export function reelLineupInputFromMilestoneInput(raw: MilestoneInput | undefined): {
+  notes: string
+  targetGroupCount: 4 | 5 | 6 | 7 | 8
+} {
+  if (raw?.type !== 'reel_lineup' || raw.value == null || typeof raw.value !== 'object') {
+    return { ...DEFAULT_REEL_LINEUP_INPUT }
+  }
+  const parsed = reelLineupMilestoneInputValueSchema.safeParse(raw.value)
+  if (!parsed.success) {
+    const legacyNotes = (raw.value as { notes?: unknown }).notes
+    return {
+      notes: typeof legacyNotes === 'string' ? legacyNotes : '',
+      targetGroupCount: 4,
+    }
+  }
+  return {
+    notes: parsed.data.notes,
+    targetGroupCount: parsed.data.targetGroupCount,
+  }
+}
+
+export function normalizeReelLineupInput(value: {
+  notes: string
+  targetGroupCount?: 4 | 5 | 6 | 7 | 8
+}): {
+  notes: string
+  targetGroupCount: 4 | 5 | 6 | 7 | 8
+} {
+  const count = value.targetGroupCount
+  const targetGroupCount =
+    count === 4 || count === 5 || count === 6 || count === 7 || count === 8 ? count : 4
+  return {
+    notes: value.notes.trim(),
+    targetGroupCount,
+  }
+}
+
+export function normalizedReelLineupInputsEqual(
+  a: { notes: string; targetGroupCount: 4 | 5 | 6 | 7 | 8 },
+  b: { notes: string; targetGroupCount: 4 | 5 | 6 | 7 | 8 },
+): boolean {
+  return a.notes === b.notes && a.targetGroupCount === b.targetGroupCount
 }
 
 const DEFAULT_PROMOTION_CANDIDATES_INPUT = {

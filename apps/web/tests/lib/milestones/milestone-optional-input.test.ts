@@ -16,7 +16,7 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_tagger')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('reel_lineup')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('reel_lineup')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_lineup')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)

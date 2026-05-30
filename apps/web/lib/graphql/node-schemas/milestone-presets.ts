@@ -79,8 +79,21 @@ export const menuTaggerMilestoneInputValueSchema = z.object({
 
 export type MenuTaggerMilestoneInputValue = z.infer<typeof menuTaggerMilestoneInputValueSchema>
 
+export const REEL_LINEUP_MIN_GROUP_COUNT = 4
+export const REEL_LINEUP_DEFAULT_GROUP_COUNT = 4
+export const REEL_LINEUP_MAX_GROUP_COUNT = 8
+
+export const reelLineupTargetGroupCountSchema = z
+  .number()
+  .int()
+  .min(REEL_LINEUP_MIN_GROUP_COUNT)
+  .max(REEL_LINEUP_MAX_GROUP_COUNT)
+
+export type ReelLineupTargetGroupCount = z.infer<typeof reelLineupTargetGroupCountSchema>
+
 export const reelLineupMilestoneInputValueSchema = z.object({
   notes: z.string(),
+  targetGroupCount: reelLineupTargetGroupCountSchema.default(REEL_LINEUP_DEFAULT_GROUP_COUNT),
 })
 
 export type ReelLineupMilestoneInputValue = z.infer<typeof reelLineupMilestoneInputValueSchema>
@@ -356,6 +369,7 @@ export const reelLineupGroupSchema = z.object({
   anchor: reelLineupAnchorSchema,
   items: z.array(reelLineupGroupItemSchema).min(1).max(5),
   mix: reelLineupGroupMixSchema,
+  clusterDescription: z.string().trim().min(40).optional(),
   strategyFocus: z.string().trim().min(1).optional(),
   coreMessage: z.string().trim().min(1).optional(),
   creativeRole: z.string().trim().min(1).optional(),
@@ -371,6 +385,8 @@ export const reelLineupMilestoneDataSchema = z.object({
   groups: z.array(reelLineupGroupSchema),
   drinkGroups: z.array(reelLineupGroupSchema).default([]),
   unassignedItemNames: z.array(z.string().trim().min(1)),
+  topFoodLeadNames: z.array(z.string().trim().min(1)).max(5).default([]),
+  targetGroupCount: reelLineupTargetGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),

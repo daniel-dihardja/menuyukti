@@ -9,8 +9,13 @@ DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
 REEL_LINEUP_GROUP_MIN_SIZE = 1
 REEL_LINEUP_GROUP_MAX_SIZE = 5
-REEL_LINEUP_MAX_LEADS = 5
-REEL_LINEUP_MAX_DRINK_LEADS = 3
+REEL_LINEUP_MIN_GROUP_COUNT = 4
+REEL_LINEUP_DEFAULT_GROUP_COUNT = 4
+REEL_LINEUP_MAX_GROUP_COUNT = 8
+# Backward-compatible alias used in older call sites/tests.
+REEL_LINEUP_MIN_GROUPS = REEL_LINEUP_MIN_GROUP_COUNT
+REEL_LINEUP_TOP_LEADS = 5
+REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN = 40
 
 
 def _normalize_requirement(requirement: str) -> str:
@@ -21,15 +26,31 @@ def is_reel_lineup_milestone_data(data: dict[str, Any]) -> bool:
     return isinstance(data.get("groups"), list)
 
 
+def _target_group_count(data: dict[str, Any]) -> int:
+    raw = data.get("targetGroupCount")
+    if isinstance(raw, int) and raw >= REEL_LINEUP_MIN_GROUP_COUNT:
+        return min(raw, REEL_LINEUP_MAX_GROUP_COUNT)
+    return REEL_LINEUP_DEFAULT_GROUP_COUNT
+
+
 def enrich_reel_lineup_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
     if not is_reel_lineup_milestone_data(data):
         return data
     enriched = dict(data)
+    target = _target_group_count(data)
+    top_names = data.get("topFoodLeadNames")
+    top_food_lead_names: list[str] = []
+    if isinstance(top_names, list):
+        top_food_lead_names = [
+            str(name).strip() for name in top_names if str(name).strip()
+        ][:REEL_LINEUP_TOP_LEADS]
     enriched["_evalHints"] = {
         "groupSizeRange": [REEL_LINEUP_GROUP_MIN_SIZE, REEL_LINEUP_GROUP_MAX_SIZE],
-        "maxLeadGroups": REEL_LINEUP_MAX_LEADS,
-        "maxDrinkLeadGroups": REEL_LINEUP_MAX_DRINK_LEADS,
+        "minFoodGroups": target,
+        "targetGroupCount": target,
+        "topFoodLeadNames": top_food_lead_names,
         "leadIsFirstItem": True,
+        "clusterDescriptionMinLength": REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN,
     }
     return enriched
 
@@ -41,11 +62,16 @@ def _groups(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [row for row in raw if isinstance(row, dict)]
 
 
-def _drink_groups(data: dict[str, Any]) -> list[dict[str, Any]]:
-    raw = data.get("drinkGroups")
-    if not isinstance(raw, list):
-        return []
-    return [row for row in raw if isinstance(row, dict)]
+def _top_food_lead_names(data: dict[str, Any]) -> set[str]:
+    raw = data.get("topFoodLeadNames")
+    if isinstance(raw, list) and raw:
+        return {str(name).strip().casefold() for name in raw if str(name).strip()}
+    hints = data.get("_evalHints")
+    if isinstance(hints, dict):
+        hint_names = hints.get("topFoodLeadNames")
+        if isinstance(hint_names, list):
+            return {str(name).strip().casefold() for name in hint_names if str(name).strip()}
+    return set()
 
 
 def _groups_have_schedule_hints(groups: list[dict[str, Any]]) -> bool:
@@ -64,46 +90,46 @@ def _groups_have_schedule_hints(groups: list[dict[str, Any]]) -> bool:
     return True
 
 
-def _is_main_course_strong_story_lead(item: dict[str, Any]) -> bool:
-    storytelling = str(item.get("storytellingFit") or "").strip().lower()
-    if storytelling != "strong":
-        return False
-    reel_moment = str(item.get("reelMoment") or "").strip()
-    return bool(reel_moment)
+def _groups_have_cluster_descriptions(groups: list[dict[str, Any]]) -> list[str]:
+    issues: list[str] = []
+    for group in groups:
+        group_id = str(group.get("id") or "group")
+        description = str(group.get("clusterDescription") or "").strip()
+        if len(description) < REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN:
+            issues.append(f"{group_id} is missing a sufficient clusterDescription")
+    return issues
 
 
-def _is_drink_hook_lead(item: dict[str, Any]) -> bool:
-    reel_moment = str(item.get("reelMoment") or "").strip()
-    return bool(reel_moment)
-
-
-def _validate_hook_groups(
+def _validate_food_groups(
     groups: list[dict[str, Any]],
     *,
-    validate_lead: Any,
+    top5_names: set[str],
     empty_message: str,
-    lead_issue_suffix: str,
 ) -> list[str]:
     issues: list[str] = []
     for group in groups:
+        group_id = str(group.get("id") or "group")
         items = group.get("items")
         if not isinstance(items, list) or not items:
-            issues.append(f"{group.get('id') or 'group'} has no items")
+            issues.append(f"{group_id} has no items")
             continue
-        if len(items) != 1:
-            issues.append(f"{group.get('id') or 'group'} must currently have one hook item")
+        if not (REEL_LINEUP_GROUP_MIN_SIZE <= len(items) <= REEL_LINEUP_GROUP_MAX_SIZE):
+            issues.append(
+                f"{group_id} must contain between {REEL_LINEUP_GROUP_MIN_SIZE} and "
+                f"{REEL_LINEUP_GROUP_MAX_SIZE} items"
+            )
             continue
         first = items[0] if isinstance(items[0], dict) else {}
         if int(first.get("position") or 0) != 1:
-            issues.append(f"{group.get('id') or 'group'} hook is not at position 1")
+            issues.append(f"{group_id} lead is not at position 1")
             continue
-        if not validate_lead(first):
-            issues.append(f"{group.get('id') or 'group'} {lead_issue_suffix}")
+        first_name = str(first.get("name") or "").strip()
+        if top5_names and first_name.casefold() not in top5_names:
+            issues.append(f"{group_id} lead {first_name!r} is not in topFoodLeadNames")
             continue
         lead_name = str(group.get("leadName") or "").strip()
-        first_name = str(first.get("name") or "").strip()
         if lead_name and first_name and lead_name.casefold() != first_name.casefold():
-            issues.append(f"{group.get('id') or 'group'} leadName does not match hook item")
+            issues.append(f"{group_id} leadName does not match position-1 item")
     if not groups and empty_message:
         issues.append(empty_message)
     return issues
@@ -118,13 +144,12 @@ def try_reel_lineup_deterministic_verdict(
 
     norm = _normalize_requirement(requirement)
     groups = _groups(data)
-    drink_groups = _drink_groups(data)
+    top5_names = _top_food_lead_names(data)
 
     if "menu_tagger" in norm and ("prior" in norm or "earlier" in norm or "run used" in norm):
-        if not groups and not drink_groups:
+        if not groups:
             return ("fail", "reel lineup data has no groups from prior menu_tagger items.")
-        total = len(groups) + len(drink_groups)
-        return ("pass", f"reel lineup produced {total} group(s) from tagged items.")
+        return ("pass", f"reel lineup produced {len(groups)} food cluster(s) from tagged items.")
 
     if "campaign" in norm and "brief" in norm:
         source_title = str(data.get("sourceCampaignBriefTitle") or "").strip()
@@ -150,37 +175,64 @@ def try_reel_lineup_deterministic_verdict(
         )
 
     if (
+        ("at least" in norm or "least" in norm or "minimum" in norm)
+        and ("group" in norm or "cluster" in norm or "reel" in norm)
+        and "drink" not in norm
+        and "beverage" not in norm
+    ):
+        min_groups = _target_group_count(data)
+        if len(groups) < min_groups:
+            return (
+                "fail",
+                f"reel lineup has {len(groups)} food groups; minimum is {min_groups}.",
+            )
+        return (
+            "pass",
+            f"reel lineup produced {len(groups)} food cluster(s) (at least {min_groups}).",
+        )
+
+    if (
         ("up to" in norm or "at most" in norm)
         and "5" in norm
         and ("group" in norm or "hook" in norm or "reel" in norm)
         and "drink" not in norm
         and "beverage" not in norm
     ):
-        if len(groups) > REEL_LINEUP_MAX_LEADS:
-            return (
-                "fail",
-                f"reel lineup has {len(groups)} food groups; maximum is {REEL_LINEUP_MAX_LEADS}.",
-            )
         if not groups:
-            return ("fail", "no reel lineup food hook groups to validate.")
+            return ("fail", "no reel lineup food clusters to validate.")
         return (
             "pass",
-            f"reel lineup produced {len(groups)} food hook group(s) (at most {REEL_LINEUP_MAX_LEADS}).",
+            f"reel lineup produced {len(groups)} food cluster(s).",
+        )
+
+    if "clusterdescription" in norm.replace(" ", "") or (
+        "cluster" in norm and "description" in norm
+    ):
+        issues = _groups_have_cluster_descriptions(groups)
+        if issues:
+            return ("fail", "; ".join(issues[:4]))
+        if not groups:
+            return ("fail", "no reel lineup food clusters to validate.")
+        return (
+            "pass",
+            "each food cluster includes a clusterDescription explaining grouping and venue fit.",
         )
 
     if (
-        ("up to" in norm or "at most" in norm)
-        and "3" in norm
-        and ("drink" in norm or "beverage" in norm)
+        "top" in norm
+        and "5" in norm
+        and ("position" in norm or "lead" in norm or "hook" in norm or "popularity" in norm)
     ):
-        if len(drink_groups) > REEL_LINEUP_MAX_DRINK_LEADS:
-            return (
-                "fail",
-                f"reel lineup has {len(drink_groups)} drink groups; maximum is {REEL_LINEUP_MAX_DRINK_LEADS}.",
-            )
+        issues = _validate_food_groups(
+            groups,
+            top5_names=top5_names,
+            empty_message="no reel lineup food clusters to validate.",
+        )
+        if issues:
+            return ("fail", "; ".join(issues[:4]))
         return (
             "pass",
-            f"reel lineup produced {len(drink_groups)} drink hook group(s) (at most {REEL_LINEUP_MAX_DRINK_LEADS}).",
+            "each food cluster position-1 item is a top-5 food lead by popularity ranking.",
         )
 
     if (
@@ -188,33 +240,24 @@ def try_reel_lineup_deterministic_verdict(
         and "storytelling" in norm
         and ("position" in norm or "lead" in norm or "hook" in norm)
     ):
-        issues = _validate_hook_groups(
+        issues = _validate_food_groups(
             groups,
-            validate_lead=_is_main_course_strong_story_lead,
-            empty_message="no reel lineup food hook groups to validate.",
-            lead_issue_suffix="hook lacks strong storytelling",
+            top5_names=top5_names,
+            empty_message="no reel lineup food clusters to validate.",
         )
         if issues:
             return ("fail", "; ".join(issues[:4]))
         return (
             "pass",
-            "each food hook group lead is a main-course item with strong storytelling at position 1.",
+            "each food cluster has a valid position-1 lead from the top-5 food lead pool.",
         )
 
     if ("drink" in norm or "beverage" in norm) and (
         "position" in norm or "hook" in norm or "group" in norm
     ):
-        issues = _validate_hook_groups(
-            drink_groups,
-            validate_lead=_is_drink_hook_lead,
-            empty_message="",
-            lead_issue_suffix="drink hook lacks reel moment",
-        )
-        if issues:
-            return ("fail", "; ".join(issues[:4]))
-        return (
-            "pass",
-            "each drink hook group has a position-1 beverage lead with a reel moment (storytelling fit not required).",
-        )
+        drink_groups = data.get("drinkGroups")
+        if isinstance(drink_groups, list) and drink_groups:
+            return ("fail", "reel lineup should not include drink groups.")
+        return ("pass", "reel lineup contains no drink groups (food-only clusters).")
 
     return None

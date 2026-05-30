@@ -628,11 +628,24 @@ class ReelLineupGroupOutput(BaseModel):
     anchor: ReelLineupAnchorOutput
     items: list[ReelLineupGroupItemOutput]
     mix: ReelLineupGroupMixOutput
+    clusterDescription: str
     strategyFocus: str | None = None
     coreMessage: str | None = None
     creativeRole: str | None = None
     assetHint: str | None = None
     scheduleHints: ReelLineupScheduleHintsOutput | None = None
+
+    @field_validator("clusterDescription", mode="before")
+    @classmethod
+    def _normalize_cluster_description(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("clusterDescription")
+    @classmethod
+    def _validate_cluster_description(cls, value: str) -> str:
+        if len(value) < 40:
+            raise ValueError("clusterDescription must be at least 40 characters")
+        return value
 
     @field_validator("items")
     @classmethod
@@ -653,6 +666,8 @@ class ReelLineupMilestoneOutput(BaseModel):
     groups: list[ReelLineupGroupOutput]
     drinkGroups: list[ReelLineupGroupOutput] = Field(default_factory=list)
     unassignedItemNames: list[str] = Field(default_factory=list)
+    topFoodLeadNames: list[str] = Field(default_factory=list, max_length=5)
+    targetGroupCount: int | None = Field(default=None, ge=4, le=8)
     sourceMenuTaggerTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
     notes: str | None = None

@@ -52,6 +52,7 @@ type GroupCardLabels = {
   hookBadgeLabel: string
   leadLabel: string
   groupTitle: string
+  clusterDescriptionLabel: string
   roleStarLabel: string
   rolePuzzleLabel: string
   storytellingStrongLabel: string
@@ -73,7 +74,15 @@ function ReelLineupGroupCard({
       <CardHeader className="px-4 pb-0">
         <ReelLineupGroupCardHeader group={group} labels={labels} hideTitle />
       </CardHeader>
-      <CardContent className="px-4 pt-0">
+      <CardContent className="flex flex-col gap-4 px-4 pt-0">
+        {group.clusterDescription?.trim() ? (
+          <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-muted/20 p-3">
+            <p className={mp.sectionTitle}>{labels.clusterDescriptionLabel}</p>
+            <p className={`${mp.body} text-pretty text-foreground`}>
+              {group.clusterDescription.trim()}
+            </p>
+          </div>
+        ) : null}
         <ul className={`${mp.listDecimal} flex flex-col gap-2`}>
           {group.items.map((item) => {
             const isLead = item.position === 1
@@ -279,6 +288,7 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
   const labels = useMemo(
     () => ({
       hookBadgeLabel: t('milestoneReelLineupPreviewHookBadge'),
+      clusterDescriptionLabel: t('milestoneReelLineupPreviewClusterDescription'),
       roleStarLabel: t('milestoneMenuTaggerPreviewRoleStar'),
       rolePuzzleLabel: t('milestoneMenuTaggerPreviewRolePuzzle'),
       storytellingStrongLabel: t('milestonePromotionCandidatesPreviewStorytellingStrong'),

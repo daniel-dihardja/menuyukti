@@ -48,6 +48,7 @@ export type MilestonePresetInputType =
   | 'dates'
   | 'promotion_candidates'
   | 'campaign_brief'
+  | 'reel_lineup'
   | 'optional_notes'
   | 'none'
 
@@ -255,14 +256,14 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
   reel_lineup: {
     id: 'reel_lineup',
     icon: Clapperboard,
-    inputType: 'optional_notes',
+    inputType: 'reel_lineup',
     dataSchema: reelLineupMilestoneDataSchema,
     emptyData: EMPTY_REEL_LINEUP_DATA,
     getCreateFields: (t) => ({
       name: t('milestonePreset.reel_lineup.title'),
       milestoneInput: {
         type: 'reel_lineup',
-        value: { notes: '' },
+        value: { notes: '', targetGroupCount: 4 },
       },
       milestoneData: EMPTY_REEL_LINEUP_DATA,
       goal: t('milestonePreset.reel_lineup.goal'),
@@ -280,15 +281,11 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionMainCourseHook'),
+          requirement: t('milestonePreset.reel_lineup.criterionTopFiveLead'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionDrinkHookGroupCount'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.reel_lineup.criterionDrinkHook'),
+          requirement: t('milestonePreset.reel_lineup.criterionClusterDescription'),
           status: 'open',
         },
         {
