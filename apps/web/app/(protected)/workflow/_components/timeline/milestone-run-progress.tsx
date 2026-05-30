@@ -31,18 +31,15 @@ export const MILESTONE_RUN_STEP_KEYS = [
 
 export type MilestoneRunStepKey = (typeof MILESTONE_RUN_STEP_KEYS)[number]
 
-export function milestoneRunStepKeys(
-  presetId: string | null | undefined,
-): readonly MilestoneRunStepKey[] {
+export function milestoneRunStepKeys(): readonly MilestoneRunStepKey[] {
   return MILESTONE_RUN_STEP_KEYS
 }
 
-export function milestoneRunStepIndex(step: string | null, presetId?: string | null): number {
+export function milestoneRunStepIndex(step: string | null): number {
   if (!step) {
     return 0
   }
-  const keys = milestoneRunStepKeys(presetId)
-  const i = keys.indexOf(step as MilestoneRunStepKey)
+  const i = MILESTONE_RUN_STEP_KEYS.indexOf(step as MilestoneRunStepKey)
   return i === -1 ? 0 : i
 }
 
@@ -196,15 +193,13 @@ function CampaignBriefReflectionLog({
 
 function MilestoneEvalProgressStrip({
   runningStep,
-  presetId,
   runningLabelKey,
 }: {
   runningStep: string | null
-  presetId?: string | null
   runningLabelKey: 'runningLabel' | 'campaignBriefEvalRunningLabel'
 }) {
   const t = useTranslations('analytics.workflows.milestoneRun')
-  const stepKeys = milestoneRunStepKeys(presetId)
+  const stepKeys = milestoneRunStepKeys()
   const labelKeys: Record<MilestoneRunStepKey, string> = {
     fetch_context: 'stepFetchContext',
     evaluate_criterion: 'stepEvaluateCriteria',
@@ -213,7 +208,7 @@ function MilestoneEvalProgressStrip({
     store_result: 'stepStoreResult',
   }
   const labels = stepKeys.map((key) => t(labelKeys[key]))
-  const currentIdx = milestoneRunStepIndex(runningStep, presetId)
+  const currentIdx = milestoneRunStepIndex(runningStep)
 
   return (
     <div aria-live="polite" className="bg-muted/30 px-3 py-3 md:px-6" role="status">
@@ -353,7 +348,6 @@ export function MilestoneRunProgressStrip({
     return (
       <div className="bg-muted/30">
         <MilestoneEvalProgressStrip
-          presetId={presetId}
           runningLabelKey="campaignBriefEvalRunningLabel"
           runningStep={runningStep}
         />
@@ -370,11 +364,5 @@ export function MilestoneRunProgressStrip({
     )
   }
 
-  return (
-    <MilestoneEvalProgressStrip
-      presetId={presetId}
-      runningLabelKey="runningLabel"
-      runningStep={runningStep}
-    />
-  )
+  return <MilestoneEvalProgressStrip runningLabelKey="runningLabel" runningStep={runningStep} />
 }

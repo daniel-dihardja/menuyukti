@@ -203,7 +203,7 @@ export function WorkflowChatPanel({
       void setSelectedMilestoneId(milestoneId)
       await ops.handleRunMilestone(milestoneId, chatModel)
     },
-    [ops.handleRunMilestone, setSelectedMilestoneId],
+    [ops, setSelectedMilestoneId],
   )
 
   const timelineOps = useMemo(() => ({ ...ops, handleRunMilestone }), [ops, handleRunMilestone])

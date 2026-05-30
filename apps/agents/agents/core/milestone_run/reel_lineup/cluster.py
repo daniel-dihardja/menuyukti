@@ -158,9 +158,13 @@ def _ensure_top5_lead(
     corrected = top5_names[cluster_index % len(top5_names)]
     corrected_key = _name_key(corrected)
     new_supporting = [name for name in supporting_names if _name_key(name) != corrected_key]
-    if lead_key and lead_key != corrected_key and _resolve_food_item(by_name, lead_name):
-        if lead_key not in {_name_key(name) for name in new_supporting}:
-            new_supporting.insert(0, _item_name(_resolve_food_item(by_name, lead_name) or {"name": lead_name}))
+    if (
+        lead_key
+        and lead_key != corrected_key
+        and _resolve_food_item(by_name, lead_name)
+        and lead_key not in {_name_key(name) for name in new_supporting}
+    ):
+        new_supporting.insert(0, _item_name(_resolve_food_item(by_name, lead_name) or {"name": lead_name}))
     return corrected, new_supporting[: REEL_LINEUP_GROUP_MAX_SIZE - 1]
 
 
