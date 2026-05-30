@@ -21,6 +21,9 @@ export type TimelineMilestoneState = Pick<
   | 'movingMilestoneId'
   | 'runningMilestoneId'
   | 'runningStep'
+  | 'runningStepIteration'
+  | 'runningReflectionRounds'
+  | 'runningReflectionAddressing'
 >
 
 export type TimelineErrors = Pick<

@@ -29,7 +29,12 @@ import {
   MilestonePromotionCandidatesInput,
   type PromotionCandidatesInputDraft,
 } from './milestone-promotion-candidates-input'
+import {
+  MilestoneCampaignBriefInput,
+  type MilestoneCampaignBriefInputProps,
+} from './milestone-campaign-brief-input'
 import type { PassCriteriaRow, TimelineMilestone } from './types'
+import type { CampaignBriefInputDraft } from '@/lib/milestones/campaign-brief-input'
 
 export type CampaignWindowInput = {
   startDate: string
@@ -55,6 +60,15 @@ export type MilestoneInputModel =
       saving: boolean
     }
   | {
+      type: 'campaign_brief'
+      draft: CampaignBriefInputDraft
+      onChange: MilestoneCampaignBriefInputProps['onDraftChange']
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
       type: 'optional_notes'
       draft: string
       setDraft: (v: string) => void
@@ -70,9 +84,13 @@ export type MilestoneInputModel =
     }
   | { type: 'none' }
 
+export type MilestoneItemTabValue = 'input' | 'goal' | 'pass' | 'result' | 'help'
+
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
 export type MilestoneItemTabsModel = {
   milestone: TimelineMilestone
+  activeTab: MilestoneItemTabValue
+  onActiveTabChange: (value: MilestoneItemTabValue) => void
   goalFieldId: string
   addCriteriaInputId: string
   addCriteriaInputRef: RefObject<HTMLInputElement | null>
@@ -231,6 +249,23 @@ function MilestoneInputTabContent({
           />
         </>
       )
+    case 'campaign_brief':
+      return (
+        <>
+          <MilestoneCampaignBriefInput
+            disabled={isMilestoneRunning}
+            draft={inputModel.draft}
+            onDraftChange={inputModel.onChange}
+            onNotesBlur={inputModel.onNotesBlur}
+            onNotesFocus={inputModel.onNotesFocus}
+          />
+          <FieldSaveStatus
+            className="text-muted-foreground"
+            messages={fieldSaveMessages(t)}
+            status={inputModel.saveStatus}
+          />
+        </>
+      )
     case 'optional_notes':
       return (
         <FieldGroup className="gap-4">
@@ -264,6 +299,8 @@ function MilestoneInputTabContent({
 export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
   const {
     milestone,
+    activeTab,
+    onActiveTabChange,
     goalFieldId,
     addCriteriaInputId,
     addCriteriaInputRef,
@@ -285,7 +322,11 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
 
   return (
     <CardContent className="min-w-0 px-3 pt-4 pb-0 md:px-6">
-      <Tabs className="min-w-0 gap-4" defaultValue="input">
+      <Tabs
+        className="min-w-0 gap-4"
+        onValueChange={(value) => onActiveTabChange(value as MilestoneItemTabValue)}
+        value={activeTab}
+      >
         <TabsList
           className="w-full min-w-0 max-w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
           variant="line"

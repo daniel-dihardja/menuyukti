@@ -9,7 +9,6 @@ import {
 export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
 ): presetId is
-  | 'restaurant_campaign_brief'
   | 'culture_hooks'
   | 'ig_profile'
   | 'menu_tagger'

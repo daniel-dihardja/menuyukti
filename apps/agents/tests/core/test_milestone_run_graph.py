@@ -131,6 +131,57 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
 
 
 @pytest.mark.asyncio
+async def test_fetch_children_uses_row_first_pass_criterias() -> None:
+    """Regression: row-level passCriterias must not be wiped by legacy data-only parsing."""
+    from agents_app.agents.core.milestone_run.graph import _fetch_children
+
+    client = MagicMock(spec=AsyncMock)
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "workflow_id": None,
+        "milestone_input": None,
+        "request_goal": None,
+    }
+    row_level_criteria = [
+        {"id": "c1", "requirement": "Campaign objective names dual outcomes", "status": "open"},
+        {"id": "c2", "requirement": "Content pillars are listed", "status": "open"},
+    ]
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
+            new=AsyncMock(
+                return_value={
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [
+                        {"id": "c1", "requirement": "Campaign objective names dual outcomes"},
+                        {"id": "c2", "requirement": "Content pillars are listed"},
+                    ],
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "passCriterias": row_level_criteria,
+                    "data": {"presetId": "restaurant_campaign_brief"},
+                }
+            ),
+        ),
+    ):
+        out = await _fetch_children(state, client=client)  # type: ignore[arg-type]
+
+    assert out["criteria"] == [
+        {"id": "c1", "requirement": "Campaign objective names dual outcomes"},
+        {"id": "c2", "requirement": "Content pillars are listed"},
+    ]
+    assert out["preset_id"] == "restaurant_campaign_brief"
+
+
+@pytest.mark.asyncio
 async def test_graph_raises_for_unknown_preset() -> None:
     client = MagicMock(spec=AsyncMock)
     with (

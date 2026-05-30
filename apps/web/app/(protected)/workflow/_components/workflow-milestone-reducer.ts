@@ -1,4 +1,5 @@
 import type { TimelineMilestone } from './timeline/types'
+import type { CampaignBriefReflectionRound } from '@/lib/milestones/campaign-brief-reflection-run'
 
 export type WorkflowMilestoneUiState = {
   milestones: TimelineMilestone[]
@@ -16,6 +17,12 @@ export type WorkflowMilestoneUiState = {
   movingMilestoneId: string | null
   runningMilestoneId: string | null
   runningStep: string | null
+  /** Reflect loop pass from SSE (critique / revise). */
+  runningStepIteration: number | null
+  /** Quality critique rounds streamed during campaign-brief reflection. */
+  runningReflectionRounds: CampaignBriefReflectionRound[]
+  /** Feedback items being addressed during reflect_revise. */
+  runningReflectionAddressing: Array<{ criterionId: string; feedback: string }>
   milestoneRunError: string | null
   /** Shown after a run when fixed skills were used and some criteria failed (informational). */
   milestoneRunCriteriaHint: string | null
@@ -42,6 +49,9 @@ export function createInitialWorkflowMilestoneUiState(
     movingMilestoneId: null,
     runningMilestoneId: null,
     runningStep: null,
+    runningStepIteration: null,
+    runningReflectionRounds: [],
+    runningReflectionAddressing: [],
     milestoneRunError: null,
     milestoneRunCriteriaHint: null,
     savingMilestoneSettingsMilestoneId: null,

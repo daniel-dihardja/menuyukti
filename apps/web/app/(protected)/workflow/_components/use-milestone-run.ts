@@ -16,12 +16,18 @@ import type {
   TimelineMilestone,
 } from './timeline/types'
 import type { WorkflowMilestoneAction } from './workflow-milestone-reducer'
+import {
+  parseReflectionCritiqueSummaryPayload,
+  upsertReflectionRound,
+  type CampaignBriefReflectionRound,
+} from '@/lib/milestones/campaign-brief-reflection-run'
 
 export function useMilestoneRun(
   dispatch: Dispatch<WorkflowMilestoneAction>,
   { workflowId, locationId, t }: MilestoneOpsContext,
 ) {
   const abortRef = useRef<AbortController | null>(null)
+  const reflectionRoundsRef = useRef<CampaignBriefReflectionRound[]>([])
 
   const handleStopMilestoneRun = useCallback(() => {
     abortRef.current?.abort()
@@ -89,13 +95,17 @@ export function useMilestoneRun(
       abortRef.current = controller
       const { signal } = controller
 
+      reflectionRoundsRef.current = []
       dispatch({
         type: 'PATCH',
         patch: {
           milestoneRunError: null,
           milestoneRunCriteriaHint: null,
           runningMilestoneId: milestoneId,
-          runningStep: 'fetch_context',
+          runningStep: null,
+          runningStepIteration: null,
+          runningReflectionRounds: [],
+          runningReflectionAddressing: [],
         },
       })
       dispatch({
@@ -163,7 +173,49 @@ export function useMilestoneRun(
               throw new Error(payload.error)
             }
             if (typeof payload.step === 'string') {
-              dispatch({ type: 'PATCH', patch: { runningStep: payload.step } })
+              if (payload.step === 'reflect_critique_summary') {
+                const round = parseReflectionCritiqueSummaryPayload(payload)
+                if (round) {
+                  reflectionRoundsRef.current = upsertReflectionRound(
+                    reflectionRoundsRef.current,
+                    round,
+                  )
+                  dispatch({
+                    type: 'PATCH',
+                    patch: {
+                      runningReflectionRounds: reflectionRoundsRef.current,
+                      runningReflectionAddressing: [],
+                    },
+                  })
+                }
+                continue
+              }
+
+              const stepPatch: {
+                runningStep: string
+                runningStepIteration?: number
+                runningReflectionRounds?: CampaignBriefReflectionRound[]
+                runningReflectionAddressing?: Array<{ criterionId: string; feedback: string }>
+              } = { runningStep: payload.step }
+              if (typeof payload.iteration === 'number' && Number.isFinite(payload.iteration)) {
+                stepPatch.runningStepIteration = payload.iteration
+              }
+              if (payload.step === 'reflect_revise' && Array.isArray(payload.addressing)) {
+                const addressing = payload.addressing
+                  .filter(
+                    (row): row is { id?: unknown; feedback?: unknown } =>
+                      row != null && typeof row === 'object',
+                  )
+                  .map((row) => ({
+                    criterionId: typeof row.id === 'string' ? row.id : '',
+                    feedback: typeof row.feedback === 'string' ? row.feedback.trim() : '',
+                  }))
+                  .filter((row) => row.criterionId)
+                if (addressing.length > 0) {
+                  stepPatch.runningReflectionAddressing = addressing
+                }
+              }
+              dispatch({ type: 'PATCH', patch: stepPatch })
             }
             if (payload.done === true) {
               runCompleted = true
@@ -282,7 +334,15 @@ export function useMilestoneRun(
         if (abortRef.current === controller) {
           abortRef.current = null
         }
-        dispatch({ type: 'PATCH', patch: { runningMilestoneId: null, runningStep: null } })
+        dispatch({
+          type: 'PATCH',
+          patch: {
+            runningMilestoneId: null,
+            runningStep: null,
+            runningStepIteration: null,
+            runningReflectionAddressing: [],
+          },
+        })
       }
     },
     [workflowId, dispatch, locationId, t, handleHydrateMilestoneData],

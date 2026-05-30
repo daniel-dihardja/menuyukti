@@ -128,6 +128,25 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
                             "milestoneInput.value.ignoredMenuItems must contain "
                             "only strings when provided."
                         )
+            reflection = value.get("reflection")
+            if reflection is not None:
+                if not isinstance(reflection, dict):
+                    return "milestoneInput.value.reflection must be an object when provided."
+                enabled = reflection.get("enabled")
+                if enabled is not None and not isinstance(enabled, bool):
+                    return "milestoneInput.value.reflection.enabled must be a boolean when provided."
+                max_revisions = reflection.get("maxRevisions")
+                if max_revisions is not None:
+                    if not isinstance(max_revisions, int) or isinstance(max_revisions, bool):
+                        return (
+                            "milestoneInput.value.reflection.maxRevisions must be an "
+                            "integer when provided."
+                        )
+                    if not (0 <= max_revisions <= 3):
+                        return (
+                            "milestoneInput.value.reflection.maxRevisions must be "
+                            "between 0 and 3 when provided."
+                        )
 
     return None
 

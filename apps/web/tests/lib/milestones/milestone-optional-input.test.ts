@@ -11,7 +11,7 @@ import { getMilestonePresetCreateFields } from '@/lib/milestones/preset-definiti
 
 describe('milestone optional notes', () => {
   it('milestonePresetHasDefaultOptionalNotesInput includes supported presets', () => {
-    expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
@@ -235,7 +235,10 @@ describe('milestone optional notes', () => {
     const fields = getMilestonePresetCreateFields('restaurant_campaign_brief', (k) => k)
     expect(fields.milestoneInput).toEqual({
       type: 'restaurant_campaign_brief',
-      value: { notes: '' },
+      value: {
+        notes: '',
+        reflection: { enabled: true, maxRevisions: 2 },
+      },
     })
   })
 

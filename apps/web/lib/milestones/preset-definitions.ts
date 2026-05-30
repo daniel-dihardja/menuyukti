@@ -15,6 +15,7 @@ import {
 import type { z } from 'zod'
 
 import type { PassCriteriaRow } from '@/app/(protected)/workflow/_components/timeline/types'
+import { DEFAULT_CAMPAIGN_BRIEF_REFLECTION } from '@/lib/milestones/campaign-brief-input'
 import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import {
   MENU_TAGGER_TAXONOMY_VERSION,
@@ -43,7 +44,12 @@ import {
 export type { MilestonePresetId }
 export { MILESTONE_PRESET_IDS }
 
-export type MilestonePresetInputType = 'dates' | 'promotion_candidates' | 'optional_notes' | 'none'
+export type MilestonePresetInputType =
+  | 'dates'
+  | 'promotion_candidates'
+  | 'campaign_brief'
+  | 'optional_notes'
+  | 'none'
 
 export function isMilestonePresetId(value: string): value is MilestonePresetId {
   return (MILESTONE_PRESET_IDS as readonly string[]).includes(value)
@@ -167,14 +173,17 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
   restaurant_campaign_brief: {
     id: 'restaurant_campaign_brief',
     icon: ClipboardList,
-    inputType: 'optional_notes',
+    inputType: 'campaign_brief',
     dataSchema: campaignBriefMilestoneDataSchema,
     emptyData: EMPTY_CAMPAIGN_BRIEF_DATA,
     getCreateFields: (t) => ({
       name: t('milestonePreset.restaurant_campaign_brief.title'),
       milestoneInput: {
         type: 'restaurant_campaign_brief',
-        value: { notes: '' },
+        value: {
+          notes: '',
+          reflection: { ...DEFAULT_CAMPAIGN_BRIEF_REFLECTION },
+        },
       },
       milestoneData: EMPTY_CAMPAIGN_BRIEF_DATA,
       goal: t('milestonePreset.restaurant_campaign_brief.goal'),

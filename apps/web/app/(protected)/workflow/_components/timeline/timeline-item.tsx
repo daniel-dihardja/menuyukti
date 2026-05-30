@@ -20,13 +20,14 @@ import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '
 import { MilestoneItemHeader } from './milestone-item-header'
 import { MilestoneItemMobileRunModel } from './milestone-item-mobile-run-model'
 import { TimelineItemHeaderProvider } from './timeline-item-header-context'
-import { MilestoneItemTabs } from './milestone-item-tabs'
+import { MilestoneItemTabs, type MilestoneItemTabValue } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
 import { useMilestoneItemDrafts } from './use-milestone-item-drafts'
 import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './types'
 
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import { campaignBriefInputFromMilestoneInput } from '@/lib/milestones/campaign-brief-input'
 
 export type TimelineItemProps = {
   milestone: TimelineMilestone
@@ -56,6 +57,9 @@ function TimelineItemInner({
     savingDataMilestoneId,
     runningMilestoneId,
     runningStep,
+    runningStepIteration,
+    runningReflectionRounds,
+    runningReflectionAddressing,
   } = milestoneState
   const isSelected = milestone.id === selectedMilestoneId
   const showDelete = Boolean(actions.onDeleteMilestone)
@@ -87,7 +91,13 @@ function TimelineItemInner({
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
   const addCriteriaInputRef = useRef<HTMLInputElement>(null)
+  const wasMilestoneRunningRef = useRef(false)
+  const [activeTab, setActiveTab] = useState<MilestoneItemTabValue>('input')
   const isMilestoneRunning = runningMilestoneId === milestone.id
+  const campaignBriefInput =
+    milestone.presetId === 'restaurant_campaign_brief'
+      ? campaignBriefInputFromMilestoneInput(milestone.milestoneInput)
+      : null
   /** Keep the card expanded for the whole run; user can collapse again after the run ends. */
   const open = isMilestoneRunning || userOpen
   const status: TimelineMilestoneStatus = milestone.status ?? 'empty'
@@ -141,6 +151,18 @@ function TimelineItemInner({
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
+
+  useEffect(() => {
+    setActiveTab('input')
+  }, [milestone.id])
+
+  useEffect(() => {
+    if (wasMilestoneRunningRef.current && !isMilestoneRunning && milestone.resultMarkdown?.trim()) {
+      setActiveTab('result')
+      setUserOpen(true)
+    }
+    wasMilestoneRunningRef.current = isMilestoneRunning
+  }, [isMilestoneRunning, milestone.resultMarkdown])
 
   const handleAddPassCriterion = async () => {
     if (!onUpdatePassCriteria || savingPassCriteria) {
@@ -284,7 +306,16 @@ function TimelineItemInner({
               {isMilestoneRunning ? (
                 <>
                   <Separator />
-                  <MilestoneRunProgressStrip runningStep={runningStep} />
+                  <MilestoneRunProgressStrip
+                    passCriteria={criteriaRows}
+                    presetId={milestone.presetId}
+                    reflectionAddressing={runningReflectionAddressing}
+                    reflectionEnabled={campaignBriefInput?.reflection.enabled}
+                    reflectionMaxRevisions={campaignBriefInput?.reflection.maxRevisions}
+                    reflectionRounds={runningReflectionRounds}
+                    runningStep={runningStep}
+                    runningStepIteration={runningStepIteration}
+                  />
                 </>
               ) : null}
               <CollapsibleContent
@@ -295,6 +326,7 @@ function TimelineItemInner({
                 <Separator />
                 <MilestoneItemTabs
                   model={{
+                    activeTab,
                     addCriteriaInputId,
                     addCriteriaInputRef,
                     criteriaRows,
@@ -307,6 +339,7 @@ function TimelineItemInner({
                     inputModel,
                     isMilestoneRunning,
                     milestone,
+                    onActiveTabChange: setActiveTab,
                     savingGoal,
                     savingPassCriteria,
                     setGoalDraft,

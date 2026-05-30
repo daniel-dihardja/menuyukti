@@ -6,7 +6,11 @@ import json
 from typing import Any
 
 import httpx
+from agents_app.agents.core.campaign_brief.objective import normalize_campaign_objective
 from agents_app.agents.core.milestone_run.campaign_brief.prompts import CAMPAIGN_BRIEF_SYSTEM
+from agents_app.agents.core.milestone_run.campaign_brief.reflect_config import (
+    parse_reflection_config,
+)
 from agents_app.agents.core.milestone_run.campaign_brief.state import CampaignBriefState
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_location_operating_signals,
@@ -338,7 +342,7 @@ async def fetch_and_prepare(
     state: CampaignBriefState, *, client: httpx.AsyncClient
 ) -> dict[str, Any]:
     """Fetch location + signals and normalize them into deterministic markdown context."""
-    _trace(state, "execute_skill", skill_id="campaign_brief")
+    _trace(state, "prepare_brief_context")
     location_data = await graphql_post(
         client,
         LOCATION_QUERY,
@@ -358,15 +362,23 @@ async def fetch_and_prepare(
         signals=signals,
         milestone_input=state.get("milestone_input"),
     )
+    reflection_enabled, reflection_max_revisions = parse_reflection_config(
+        state.get("milestone_input")
+    )
     return {
         "location_raw": location_raw,
         "signals_raw": signals,
         "signal_markdown": signal_markdown,
+        "reflection_enabled": reflection_enabled,
+        "reflection_max_revisions": reflection_max_revisions,
+        "reflection_iteration": 0,
+        "reflection_critiques": [],
     }
 
 
 async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
     """Generate strictly structured campaign-brief JSON from deterministic signal context."""
+    _trace(state, "generate_draft")
     _trace_agent_event(state, "chat_model_start")
     # Generate only creative brief fields here; campaign window + holidays are merged deterministically later.
     llm = structured_llm_from_milestone_run_config().with_structured_output(
@@ -384,6 +396,7 @@ async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
 
 async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Validate/coerce and persist with milestone_run's existing write path helper."""
+    _trace(state, "store_brief")
     payload = state.get("generated_output") or {}
     location_raw = state.get("location_raw")
     location_fallback = location_raw if isinstance(location_raw, dict) else {}
@@ -431,6 +444,8 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
             payload["campaignObjective"] = (
                 "Increase reservations with a conversion-focused campaign objective."
             )
+        else:
+            payload["campaignObjective"] = normalize_campaign_objective(objective)
         signals_raw = state.get("signals_raw")
         payload["mainCategory"] = _extract_top_revenue_category(
             signals_raw if isinstance(signals_raw, dict) else None

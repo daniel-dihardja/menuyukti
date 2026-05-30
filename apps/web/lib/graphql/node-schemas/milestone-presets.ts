@@ -45,8 +45,16 @@ export const MILESTONE_PRESET_IDS = milestonePresetIdSchema.options
  * Optional owner notes on the milestone Input tab (`value.notes`).
  * Campaign dates live on the separate `dates` milestone, not here.
  */
+export const campaignBriefReflectionInputSchema = z.object({
+  enabled: z.boolean(),
+  maxRevisions: z.number().int().min(0).max(3),
+})
+
+export type CampaignBriefReflectionInput = z.infer<typeof campaignBriefReflectionInputSchema>
+
 export const campaignBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),
+  reflection: campaignBriefReflectionInputSchema.optional(),
 })
 
 export type CampaignBriefMilestoneInputValue = z.infer<
