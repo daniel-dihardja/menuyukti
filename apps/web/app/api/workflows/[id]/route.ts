@@ -58,6 +58,9 @@ export async function PATCH(req: Request, context: RouteContext) {
       await graphqlQuery<UpdateNodeDataRaw>(UPDATE_NODE_MUTATION, variables, userId),
     )
 
+    if (node.locationId != null) {
+      revalidateLocationScopedLists(userId, node.locationId)
+    }
     revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
     return NextResponse.json(updated.updateNode)
