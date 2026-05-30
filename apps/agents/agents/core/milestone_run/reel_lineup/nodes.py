@@ -73,9 +73,7 @@ async def fetch_and_prepare(state: ReelLineupState, *, client: httpx.AsyncClient
     prior_json = str(state.get("prior_milestones_data") or "")
     campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
     if campaign_brief_data is None:
-        raise ValueError(
-            campaign_brief_prior_error_message(prior_json, milestone_id="reel_lineup")
-        )
+        raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="reel_lineup"))
 
     menu_tagger_data = extract_menu_tagger_data(prior_json)
     if menu_tagger_data is None:

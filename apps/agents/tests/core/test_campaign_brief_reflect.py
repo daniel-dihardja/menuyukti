@@ -113,18 +113,14 @@ def test_route_after_reflect_stops_at_max_revisions() -> None:
 
 @pytest.mark.asyncio
 async def test_reflect_critique_parallel_results() -> None:
-    mock_llm = MagicMock()
-    mock_llm.with_structured_output.return_value = mock_llm
-    mock_llm.ainvoke = AsyncMock(return_value=QualityVerdict(quality_pass=False, feedback="Too generic"))
-
     with (
         patch(
             "agents_app.agents.core.milestone_run.campaign_brief.reflect.get_stream_writer",
             return_value=lambda _x: None,
         ),
         patch(
-            "agents_app.agents.core.milestone_run.campaign_brief.reflect.structured_llm_from_milestone_run_config",
-            return_value=mock_llm,
+            "agents_app.agents.core.milestone_run.campaign_brief.reflect.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=QualityVerdict(quality_pass=False, feedback="Too generic")),
         ),
     ):
         out = await reflect_critique(_base_state())
@@ -135,11 +131,8 @@ async def test_reflect_critique_parallel_results() -> None:
 
 @pytest.mark.asyncio
 async def test_reflect_revise_keeps_draft_when_revision_invalid() -> None:
-    mock_llm = MagicMock()
-    mock_llm.with_structured_output.return_value = mock_llm
-    mock_llm.ainvoke = AsyncMock(
-        return_value=MagicMock(model_dump=lambda **_: {"campaignObjective": ""})
-    )
+    invalid = MagicMock()
+    invalid.model_dump = MagicMock(return_value={"campaignObjective": ""})
 
     prior = _base_state(
         reflection_critiques=[
@@ -152,8 +145,8 @@ async def test_reflect_revise_keeps_draft_when_revision_invalid() -> None:
             return_value=lambda _x: None,
         ),
         patch(
-            "agents_app.agents.core.milestone_run.campaign_brief.reflect.structured_llm_from_milestone_run_config",
-            return_value=mock_llm,
+            "agents_app.agents.core.milestone_run.campaign_brief.reflect.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=invalid),
         ),
     ):
         out = await reflect_revise(prior)

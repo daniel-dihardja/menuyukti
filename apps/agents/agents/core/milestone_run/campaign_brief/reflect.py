@@ -7,6 +7,7 @@ import json
 from typing import Any, Literal
 
 from agents_app.agents.core.campaign_brief.objective import normalize_campaign_objective
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.campaign_brief.nodes import CampaignBriefDraftOutput
 from agents_app.agents.core.milestone_run.campaign_brief.reflect_prompts import (
     REFLECT_QUALITY_SYSTEM,
@@ -19,7 +20,7 @@ from agents_app.agents.core.milestone_run.campaign_brief.state import (
     ReflectionCritique,
 )
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_llm_from_milestone_run_config,
+    structured_ainvoke_from_run_config,
 )
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
@@ -33,7 +34,9 @@ class QualityVerdict(BaseModel):
     feedback: str = Field(description="One short sentence explaining pass or what to improve")
 
 
-def route_after_generate(state: CampaignBriefState) -> Literal["reflect_critique", "persist_result"]:
+def route_after_generate(
+    state: CampaignBriefState,
+) -> Literal["reflect_critique", "persist_result"]:
     if bool(state.get("reflection_enabled")):
         return "reflect_critique"
     return "persist_result"
@@ -55,7 +58,6 @@ def _draft_json(state: CampaignBriefState) -> str:
 
 
 async def _critique_one(
-    structured_llm: Any,
     *,
     goal: str,
     signal_markdown: str,
@@ -64,16 +66,21 @@ async def _critique_one(
     requirement: str,
     iteration: int,
 ) -> ReflectionCritique:
-    verdict: QualityVerdict = await structured_llm.ainvoke(
-        [
-            SystemMessage(content=REFLECT_QUALITY_SYSTEM),
-            HumanMessage(
-                content=reflect_quality_human_message(
-                    goal, signal_markdown, draft_json, requirement
-                )
-            ),
-        ]
-    )
+    try:
+        verdict = await structured_ainvoke_from_run_config(
+            QualityVerdict,
+            [
+                SystemMessage(content=REFLECT_QUALITY_SYSTEM),
+                HumanMessage(
+                    content=reflect_quality_human_message(
+                        goal, signal_markdown, draft_json, requirement
+                    )
+                ),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     writer = get_stream_writer()
     writer(
         {
@@ -108,14 +115,12 @@ async def reflect_critique(state: CampaignBriefState) -> dict[str, Any]:
     if not criteria:
         return {"reflection_critiques": []}
 
-    structured_llm = structured_llm_from_milestone_run_config().with_structured_output(QualityVerdict)
     goal = str(state.get("goal", ""))
     signal_markdown = str(state.get("signal_markdown", ""))
     draft_json = _draft_json(state)
 
     tasks = [
         _critique_one(
-            structured_llm,
             goal=goal,
             signal_markdown=signal_markdown,
             draft_json=draft_json,
@@ -148,11 +153,7 @@ async def reflect_critique(state: CampaignBriefState) -> dict[str, Any]:
 async def reflect_revise(state: CampaignBriefState) -> dict[str, Any]:
     """Revise draft when quality critique found failures and revisions remain."""
     critiques = state.get("reflection_critiques") or []
-    failures = [
-        row
-        for row in critiques
-        if isinstance(row, dict) and not row.get("quality_pass")
-    ]
+    failures = [row for row in critiques if isinstance(row, dict) and not row.get("quality_pass")]
     iteration = int(state.get("reflection_iteration") or 0)
     max_revisions = int(state.get("reflection_max_revisions") or 0)
 
@@ -172,20 +173,24 @@ async def reflect_revise(state: CampaignBriefState) -> dict[str, Any]:
         }
     )
 
-    llm = structured_llm_from_milestone_run_config().with_structured_output(CampaignBriefDraftOutput)
-    revised = await llm.ainvoke(
-        [
-            SystemMessage(content=REFLECT_REVISE_SYSTEM),
-            HumanMessage(
-                content=reflect_revise_human_message(
-                    str(state.get("goal", "")),
-                    str(state.get("signal_markdown", "")),
-                    _draft_json(state),
-                    failures,
-                )
-            ),
-        ]
-    )
+    try:
+        revised = await structured_ainvoke_from_run_config(
+            CampaignBriefDraftOutput,
+            [
+                SystemMessage(content=REFLECT_REVISE_SYSTEM),
+                HumanMessage(
+                    content=reflect_revise_human_message(
+                        str(state.get("goal", "")),
+                        str(state.get("signal_markdown", "")),
+                        _draft_json(state),
+                        failures,
+                    )
+                ),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     candidate = revised.model_dump(exclude_none=True)
     if not isinstance(candidate, dict) or not candidate.get("campaignObjective"):
         return {"reflection_iteration": iteration + 1}

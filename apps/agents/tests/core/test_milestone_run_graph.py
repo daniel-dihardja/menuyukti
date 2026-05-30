@@ -77,16 +77,13 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
 
     with (
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
             new=AsyncMock(
                 return_value={
-                    "data": {
-                        "goal": "G1",
-                        "presetId": preset_id,
-                        "passCriterias": [
-                            {"id": "c1", "requirement": "Must have data", "status": "open"}
-                        ],
-                    }
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [{"id": "c1", "requirement": "Must have data"}],
+                    "preset_id": preset_id,
                 }
             ),
         ),
@@ -144,10 +141,6 @@ async def test_fetch_children_uses_row_first_pass_criterias() -> None:
         "milestone_input": None,
         "request_goal": None,
     }
-    row_level_criteria = [
-        {"id": "c1", "requirement": "Campaign objective names dual outcomes", "status": "open"},
-        {"id": "c2", "requirement": "Content pillars are listed", "status": "open"},
-    ]
     with (
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_context",
@@ -159,15 +152,7 @@ async def test_fetch_children_uses_row_first_pass_criterias() -> None:
                         {"id": "c1", "requirement": "Campaign objective names dual outcomes"},
                         {"id": "c2", "requirement": "Content pillars are listed"},
                     ],
-                }
-            ),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(
-                return_value={
-                    "passCriterias": row_level_criteria,
-                    "data": {"presetId": "restaurant_campaign_brief"},
+                    "preset_id": "restaurant_campaign_brief",
                 }
             ),
         ),
@@ -186,16 +171,13 @@ async def test_graph_raises_for_unknown_preset() -> None:
     client = MagicMock(spec=AsyncMock)
     with (
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
             new=AsyncMock(
                 return_value={
-                    "data": {
-                        "goal": "G1",
-                        "presetId": "unknown_preset",
-                        "passCriterias": [
-                            {"id": "c1", "requirement": "Must have data", "status": "open"}
-                        ],
-                    }
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [{"id": "c1", "requirement": "Must have data"}],
+                    "preset_id": "unknown_preset",
                 }
             ),
         ),

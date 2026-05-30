@@ -91,16 +91,13 @@ async def test_routing_ig_profile_uses_dedicated_graph_path() -> None:
 
     with (
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
             new=AsyncMock(
                 return_value={
-                    "data": {
-                        "goal": "G1",
-                        "presetId": "ig_profile",
-                        "passCriterias": [
-                            {"id": "c1", "requirement": "Must have usernames", "status": "open"}
-                        ],
-                    }
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [{"id": "c1", "requirement": "Must have usernames"}],
+                    "preset_id": "ig_profile",
                 }
             ),
         ),
@@ -182,22 +179,18 @@ async def test_generate_profile_returns_new_shape() -> None:
         "criteria": [],
         "generation_context_markdown": "Context from campaign brief",
     }
+    draft = MagicMock()
+    draft.model_dump = MagicMock(return_value=_valid_ig_profile_payload())
     with (
         patch(
-            "agents_app.agents.core.milestone_run.ig_profile.nodes.structured_llm_from_milestone_run_config",
-        ) as mock_get_llm,
+            "agents_app.agents.core.milestone_run.ig_profile.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=draft),
+        ),
         patch(
             "agents_app.agents.core.milestone_run.ig_profile.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
     ):
-        mock_llm = MagicMock()
-        mock_structured = MagicMock()
-        mock_structured.ainvoke = AsyncMock(
-            return_value=MagicMock(model_dump=MagicMock(return_value=_valid_ig_profile_payload()))
-        )
-        mock_llm.with_structured_output.return_value = mock_structured
-        mock_get_llm.return_value = mock_llm
         out = await generate_profile(state)  # type: ignore[arg-type]
     assert out["generated_output"]["bios"][0]["text"]
     assert len(out["generated_output"]["bios"]) == 3

@@ -95,7 +95,9 @@ def try_scheduler_deterministic_verdict(
             "Scheduler data is missing reel_lineup reference or reel slots.",
         )
 
-    if "reel" in normalized and ("kind" in normalized or "typed" in normalized or "slot" in normalized):
+    if "reel" in normalized and (
+        "kind" in normalized or "typed" in normalized or "slot" in normalized
+    ):
         slots = data.get("slots")
         if isinstance(slots, list) and any(
             isinstance(slot, dict) and str(slot.get("kind") or "").strip() == "reel"

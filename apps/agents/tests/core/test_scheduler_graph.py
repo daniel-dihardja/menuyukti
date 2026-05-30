@@ -63,7 +63,11 @@ def _prior_json() -> str:
                             ),
                         ],
                     },
-                    "contentPillars": ["Hero signatures", "Category variety", "Behind-the-scenes craft"],
+                    "contentPillars": [
+                        "Hero signatures",
+                        "Category variety",
+                        "Behind-the-scenes craft",
+                    ],
                     "audienceHypotheses": [
                         "Lunch nearby workers",
                         "Weekend family groups",
@@ -74,7 +78,11 @@ def _prior_json() -> str:
                         "Weekend mix supports bundles",
                         "Meal-period demand shapes timing",
                     ],
-                    "toneGuardrails": ["Be specific", "Keep copy concise", "Use operational language"],
+                    "toneGuardrails": [
+                        "Be specific",
+                        "Keep copy concise",
+                        "Use operational language",
+                    ],
                     "campaignObjective": "Increase reservations in conversion stage this month",
                     "mainCategory": "Mains",
                     "targetSegments": [
@@ -328,7 +336,9 @@ async def test_fetch_and_prepare_raises_without_prior_campaign_brief() -> None:
             "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
-        pytest.raises(ValueError, match="scheduler requires a prior restaurant_campaign_brief milestone"),
+        pytest.raises(
+            ValueError, match="scheduler requires a prior restaurant_campaign_brief milestone"
+        ),
     ):
         await fetch_and_prepare(
             _base_state(prior_milestones_data=prior),
@@ -439,7 +449,7 @@ async def test_build_snapshot_repeats_monthly_top_menu_on_first_of_each_month() 
             "date": "2026-07-01",
             "time": "10:00",
             "title": "Monthly top menu",
-        }
+        },
     ]
 
 

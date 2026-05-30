@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
@@ -74,16 +74,14 @@ async def test_select_public_holiday_stories_calls_llm() -> None:
     draft = StoryLineupHolidayGreetingsDraft(
         holidayGreetings=[HolidayGreetingPick(date="2026-06-15", holidayName="Easter Sunday")]
     )
-    mock_llm = MagicMock()
-    mock_llm.ainvoke = AsyncMock(return_value=draft)
     with (
         patch(
             "agents_app.agents.core.milestone_run.story_lineup.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
         patch(
-            "agents_app.agents.core.milestone_run.story_lineup.nodes.structured_llm_from_milestone_run_config",
-            return_value=MagicMock(with_structured_output=MagicMock(return_value=mock_llm)),
+            "agents_app.agents.core.milestone_run.story_lineup.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=draft),
         ),
     ):
         result = await select_public_holiday_stories(

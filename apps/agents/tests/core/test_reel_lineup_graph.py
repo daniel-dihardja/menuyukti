@@ -80,12 +80,24 @@ def _campaign_brief_data() -> dict:
             ],
         },
         "contentPillars": ["Hero signatures", "Category variety", "Behind-the-scenes craft"],
-        "audienceHypotheses": ["Lunch nearby workers", "Weekend family groups", "Evening social dining"],
-        "proofOrientedAngles": ["Top sellers lead conversions", "Weekend mix supports bundles", "Meal-period demand shapes timing"],
+        "audienceHypotheses": [
+            "Lunch nearby workers",
+            "Weekend family groups",
+            "Evening social dining",
+        ],
+        "proofOrientedAngles": [
+            "Top sellers lead conversions",
+            "Weekend mix supports bundles",
+            "Meal-period demand shapes timing",
+        ],
         "toneGuardrails": ["Be specific", "Keep copy concise", "Use operational language"],
         "campaignObjective": "Increase reservations in conversion stage this month",
         "mainCategory": "Mains",
-        "targetSegments": ["Weekday lunch workers", "Weekend family groups", "Evening social diners"],
+        "targetSegments": [
+            "Weekday lunch workers",
+            "Weekend family groups",
+            "Evening social diners",
+        ],
         "messageHierarchy": [
             "Hero promise tied to signature dishes",
             "Proof from top menu and category signals",

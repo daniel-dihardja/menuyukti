@@ -69,8 +69,15 @@ async def test_routing_dates_uses_dedicated_graph_path() -> None:
 
     with (
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(return_value={"data": {"goal": "G1", "presetId": "dates"}}),
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
+            new=AsyncMock(
+                return_value={
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [],
+                    "preset_id": "dates",
+                }
+            ),
         ),
         patch(
             "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",

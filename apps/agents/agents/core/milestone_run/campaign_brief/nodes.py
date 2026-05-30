@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 from agents_app.agents.core.campaign_brief.objective import normalize_campaign_objective
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.campaign_brief.prompts import CAMPAIGN_BRIEF_SYSTEM
 from agents_app.agents.core.milestone_run.campaign_brief.reflect_config import (
     parse_reflection_config,
@@ -17,7 +18,7 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_llm_from_milestone_run_config,
+    structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import (
     CampaignBriefOverallStrategy,
@@ -381,15 +382,17 @@ async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
     _trace(state, "generate_draft")
     _trace_agent_event(state, "chat_model_start")
     # Generate only creative brief fields here; campaign window + holidays are merged deterministically later.
-    llm = structured_llm_from_milestone_run_config().with_structured_output(
-        CampaignBriefDraftOutput
-    )
-    generated = await llm.ainvoke(
-        [
-            SystemMessage(content=CAMPAIGN_BRIEF_SYSTEM),
-            HumanMessage(content=str(state.get("signal_markdown", ""))),
-        ]
-    )
+    try:
+        generated = await structured_ainvoke_from_run_config(
+            CampaignBriefDraftOutput,
+            [
+                SystemMessage(content=CAMPAIGN_BRIEF_SYSTEM),
+                HumanMessage(content=str(state.get("signal_markdown", ""))),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     _trace_agent_event(state, "chat_model_end")
     return {"generated_output": generated.model_dump(exclude_none=True)}
 
@@ -415,18 +418,30 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
             payload["overallStrategy"] = overall_strategy
         if not str(overall_strategy.get("strategyFocus") or "").strip():
             overall_strategy["strategyFocus"] = str(_DEFAULT_CAMPAIGN_STRATEGY["strategyFocus"])
-        if not isinstance(overall_strategy.get("audiencePriority"), list) or len(
-            [item for item in overall_strategy.get("audiencePriority", []) if str(item).strip()]
-        ) < 3:
-            overall_strategy["audiencePriority"] = list(_DEFAULT_CAMPAIGN_STRATEGY["audiencePriority"])
+        if (
+            not isinstance(overall_strategy.get("audiencePriority"), list)
+            or len(
+                [item for item in overall_strategy.get("audiencePriority", []) if str(item).strip()]
+            )
+            < 3
+        ):
+            overall_strategy["audiencePriority"] = list(
+                _DEFAULT_CAMPAIGN_STRATEGY["audiencePriority"]
+            )
         if not str(overall_strategy.get("coreMessage") or "").strip():
             overall_strategy["coreMessage"] = str(_DEFAULT_CAMPAIGN_STRATEGY["coreMessage"])
         if not str(overall_strategy.get("offerWindow") or "").strip():
             overall_strategy["offerWindow"] = str(_DEFAULT_CAMPAIGN_STRATEGY["offerWindow"])
-        if not isinstance(overall_strategy.get("cadenceGuidance"), list) or len(
-            [item for item in overall_strategy.get("cadenceGuidance", []) if str(item).strip()]
-        ) < 3:
-            overall_strategy["cadenceGuidance"] = list(_DEFAULT_CAMPAIGN_STRATEGY["cadenceGuidance"])
+        if (
+            not isinstance(overall_strategy.get("cadenceGuidance"), list)
+            or len(
+                [item for item in overall_strategy.get("cadenceGuidance", []) if str(item).strip()]
+            )
+            < 3
+        ):
+            overall_strategy["cadenceGuidance"] = list(
+                _DEFAULT_CAMPAIGN_STRATEGY["cadenceGuidance"]
+            )
         payload.setdefault("contentPillars", [])
         payload.setdefault("audienceHypotheses", [])
         payload.setdefault("proofOrientedAngles", [])

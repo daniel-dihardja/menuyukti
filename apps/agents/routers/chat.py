@@ -7,8 +7,9 @@ from typing import Annotated, Any, Literal
 
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
-from agents_app.agents.core.chat.graph import incremental_user_message
+from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.http_context import chat_http_client_var
+from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -42,7 +43,7 @@ class ChatRequest(BaseModel):
     )
 
 
-def _sse_data_line(payload: dict[str, str]) -> str:
+def _sse_data_line(payload: object) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
@@ -85,7 +86,7 @@ def _runnable_config(
     }
     if chat_gateway_model is not None:
         configurable["chat_gateway_model"] = chat_gateway_model
-    return RunnableConfig(configurable=configurable)
+    return RunnableConfig(configurable=configurable, recursion_limit=CHAT_RECURSION_LIMIT)
 
 
 def _resolved_chat_gateway_model(raw: str | None) -> str | None:
@@ -132,6 +133,8 @@ async def _stream_chat_events(
                 continue
     except asyncio.CancelledError:
         raise
+    except Exception as exc:
+        yield _sse_data_line(structured_error_payload(exc))
     finally:
         chat_http_client_var.reset(token)
 
@@ -169,13 +172,20 @@ async def chat_stream(
         chat_gateway_model=gateway_model,
     )
 
+    async def event_stream():
+        try:
+            async for line in _stream_chat_events(
+                graph,
+                [human],
+                runnable_config=cfg,
+                http_client=client,
+            ):
+                yield line
+        except Exception as exc:
+            yield _sse_data_line(structured_error_payload(exc))
+
     return StreamingResponse(
-        _stream_chat_events(
-            graph,
-            [human],
-            runnable_config=cfg,
-            http_client=client,
-        ),
+        event_stream(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

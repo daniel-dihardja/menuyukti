@@ -24,16 +24,9 @@ def make_milestone_run_tools(
     *,
     client: httpx.AsyncClient,
 ) -> list[BaseTool]:
-    """Build bound tools that read/write :class:`~agents_app.agents.core.milestone_run.state.MilestoneRunState` fields.
+    """Build LangChain read/write tools for **unit tests and legacy callers only**.
 
-    **Core reads** (always): ``read_goal``, ``read_criteria``, ``read_data``, ``read_prior_milestones_data`` \
-    — use ``context`` for ``goal``, ``criteria``, ``prior_milestones_data``. ``read_data`` returns only output written in \
-    this run (``result_data`` / session ``raw_data`` after ``write_result_data``), not pre-loaded stored milestone JSON.
-
-    **Write** (always): ``write_result_data`` persists milestone data (``result_data``, ``milestonedata_written``). \
-    Criterion verdicts, summary, and the result node come from the graph ``finalize_eval`` step.
-
-    When ``TAVILY_API_KEY`` is set, ``search_web`` (Tavily) is inserted after the read tools and before ``write_result_data``.
+    Production milestone runs use dedicated preset ``StateGraph`` modules, not this ReAct bundle.
     """
     optional_web = make_search_web_tool()
     reads: list[BaseTool] = [

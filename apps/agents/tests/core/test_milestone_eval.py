@@ -29,8 +29,8 @@ def _base_state(**overrides: Any) -> MilestoneEvalState:
     return base  # type: ignore[return-value]
 
 
-def test_route_after_fetch_empty_goes_to_synthesize() -> None:
-    assert nodes.route_after_fetch(_base_state()) == "synthesize"
+def test_route_after_fetch_empty_goes_to_update_criteria() -> None:
+    assert nodes.route_after_fetch(_base_state()) == "update_criteria"
 
 
 def test_route_after_fetch_emits_send_workers() -> None:

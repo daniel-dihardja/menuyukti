@@ -105,9 +105,7 @@ def campaign_brief_prior_error_message(
     prior_milestones_json: str, *, milestone_id: str = "milestone"
 ) -> str:
     """Actionable error when a milestone cannot read prior campaign brief data."""
-    base = (
-        f"{milestone_id} requires a prior restaurant_campaign_brief milestone with saved data"
-    )
+    base = f"{milestone_id} requires a prior restaurant_campaign_brief milestone with saved data"
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     if not rows:
         return (
@@ -122,8 +120,7 @@ def campaign_brief_prior_error_message(
             and preset_id.strip() == "restaurant_campaign_brief"
         )
         or (
-            isinstance(row.get("data"), dict)
-            and is_campaign_brief_milestone_data(row["data"])  # type: ignore[index]
+            isinstance(row.get("data"), dict) and is_campaign_brief_milestone_data(row["data"])  # type: ignore[index]
         )
         for row in rows
     )

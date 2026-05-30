@@ -275,9 +275,7 @@ def _build_post_slots(
         return []
 
     valid_posts = [
-        post
-        for post in posts
-        if isinstance(post, dict) and str(post.get("title") or "").strip()
+        post for post in posts if isinstance(post, dict) and str(post.get("title") or "").strip()
     ]
     if not valid_posts:
         return []
