@@ -11,7 +11,7 @@ export type StylePalette = (typeof STYLE_PALETTES)[number]
 
 export const STYLE_PALETTE_STORAGE_KEY = 'menuyukti-style-palette'
 
-export const DEFAULT_STYLE_PALETTE: StylePalette = 'amber'
+export const DEFAULT_STYLE_PALETTE: StylePalette = 'espresso'
 
 /** Primary swatch per palette for menu previews (OKLCH CSS color). */
 export const STYLE_PALETTE_SWATCHES: Record<StylePalette, string> = {
