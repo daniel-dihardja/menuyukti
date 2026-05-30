@@ -83,11 +83,13 @@ export const REEL_LINEUP_MIN_GROUP_COUNT = 4
 export const REEL_LINEUP_DEFAULT_GROUP_COUNT = 4
 export const REEL_LINEUP_MAX_GROUP_COUNT = 8
 
-export const reelLineupTargetGroupCountSchema = z
-  .number()
-  .int()
-  .min(REEL_LINEUP_MIN_GROUP_COUNT)
-  .max(REEL_LINEUP_MAX_GROUP_COUNT)
+export const reelLineupTargetGroupCountSchema = z.union([
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+  z.literal(8),
+])
 
 export type ReelLineupTargetGroupCount = z.infer<typeof reelLineupTargetGroupCountSchema>
 

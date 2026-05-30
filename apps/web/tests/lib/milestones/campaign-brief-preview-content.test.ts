@@ -21,7 +21,7 @@ const emptyBrief = {
   measurementPlan: [],
   testingPlan: [],
   riskGuardrails: [],
-} as const
+}
 
 describe('hasCampaignBriefPreviewContent', () => {
   it('returns false for seeded empty brief before a run', () => {

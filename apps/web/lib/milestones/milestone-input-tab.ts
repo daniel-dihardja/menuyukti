@@ -1,4 +1,4 @@
-import type { MilestoneInput } from '@/lib/graphql/node-schemas'
+import type { MilestoneInput, ReelLineupTargetGroupCount } from '@/lib/graphql/node-schemas'
 import {
   promotionCandidatesMilestoneInputValueSchema,
   reelLineupMilestoneInputValueSchema,
@@ -46,7 +46,7 @@ const DEFAULT_REEL_LINEUP_INPUT = {
 
 export function reelLineupInputFromMilestoneInput(raw: MilestoneInput | undefined): {
   notes: string
-  targetGroupCount: 4 | 5 | 6 | 7 | 8
+  targetGroupCount: ReelLineupTargetGroupCount
 } {
   if (raw?.type !== 'reel_lineup' || raw.value == null || typeof raw.value !== 'object') {
     return { ...DEFAULT_REEL_LINEUP_INPUT }
@@ -67,13 +67,13 @@ export function reelLineupInputFromMilestoneInput(raw: MilestoneInput | undefine
 
 export function normalizeReelLineupInput(value: {
   notes: string
-  targetGroupCount?: 4 | 5 | 6 | 7 | 8
+  targetGroupCount?: ReelLineupTargetGroupCount
 }): {
   notes: string
-  targetGroupCount: 4 | 5 | 6 | 7 | 8
+  targetGroupCount: ReelLineupTargetGroupCount
 } {
   const count = value.targetGroupCount
-  const targetGroupCount =
+  const targetGroupCount: ReelLineupTargetGroupCount =
     count === 4 || count === 5 || count === 6 || count === 7 || count === 8 ? count : 4
   return {
     notes: value.notes.trim(),
@@ -82,8 +82,8 @@ export function normalizeReelLineupInput(value: {
 }
 
 export function normalizedReelLineupInputsEqual(
-  a: { notes: string; targetGroupCount: 4 | 5 | 6 | 7 | 8 },
-  b: { notes: string; targetGroupCount: 4 | 5 | 6 | 7 | 8 },
+  a: { notes: string; targetGroupCount: ReelLineupTargetGroupCount },
+  b: { notes: string; targetGroupCount: ReelLineupTargetGroupCount },
 ): boolean {
   return a.notes === b.notes && a.targetGroupCount === b.targetGroupCount
 }

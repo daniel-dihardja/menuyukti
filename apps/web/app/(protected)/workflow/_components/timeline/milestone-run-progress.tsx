@@ -56,13 +56,16 @@ type MilestoneRunProgressStripProps = {
 
 function criterionShortLabel(criterionId: string, passCriteria: PassCriteriaRow[]): string {
   const row = passCriteria.find((item) => item.id === criterionId)
-  if (!row?.requirement.trim()) {
+  const requirement = row?.requirement.trim()
+  if (!requirement) {
     return criterionId
   }
-  return row.requirement
-    .replace(/\*\*/g, '')
-    .replace(/\[(.*?)\]\(.*?\)/g, '$1')
-    .split('\n')[0]
+  return (
+    requirement
+      .replace(/\*\*/g, '')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+      .split('\n')[0] ?? requirement
+  )
     .trim()
     .slice(0, 140)
 }
