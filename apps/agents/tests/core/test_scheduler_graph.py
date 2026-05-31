@@ -261,17 +261,58 @@ def _prior_json() -> str:
                             ],
                         },
                         {
-                            "id": "weekday-lunch-post",
+                            "id": "weekday-lunch-post-week-2026-06-01",
                             "format": "carousel",
                             "intent": "weekday_lunch_post",
                             "title": "Weekday lunch at Cafe Alto",
                             "description": "Weekday lunch carousel for nearby workers.",
                             "captionGuidance": "Keep copy concise; mention the lunch offer window.",
                             "groupIds": ["group-1"],
-                            "scheduleHints": {
-                                "preferredWeekdays": ["tuesday"],
-                                "preferredTime": "10:00",
-                            },
+                            "slides": [
+                                {
+                                    "dishName": "Ribeye",
+                                    "imageBrief": "Lunch photography brief.",
+                                }
+                            ],
+                        },
+                        {
+                            "id": "weekday-lunch-post-week-2026-06-08",
+                            "format": "carousel",
+                            "intent": "weekday_lunch_post",
+                            "title": "Weekday lunch at Cafe Alto",
+                            "description": "Weekday lunch carousel for nearby workers.",
+                            "captionGuidance": "Keep copy concise; mention the lunch offer window.",
+                            "groupIds": ["group-1"],
+                            "slides": [
+                                {
+                                    "dishName": "Ribeye",
+                                    "imageBrief": "Lunch photography brief.",
+                                }
+                            ],
+                        },
+                        {
+                            "id": "weekday-lunch-post-week-2026-06-15",
+                            "format": "carousel",
+                            "intent": "weekday_lunch_post",
+                            "title": "Weekday lunch at Cafe Alto",
+                            "description": "Weekday lunch carousel for nearby workers.",
+                            "captionGuidance": "Keep copy concise; mention the lunch offer window.",
+                            "groupIds": ["group-1"],
+                            "slides": [
+                                {
+                                    "dishName": "Ribeye",
+                                    "imageBrief": "Lunch photography brief.",
+                                }
+                            ],
+                        },
+                        {
+                            "id": "weekday-lunch-post-week-2026-06-22",
+                            "format": "carousel",
+                            "intent": "weekday_lunch_post",
+                            "title": "Weekday lunch at Cafe Alto",
+                            "description": "Weekday lunch carousel for nearby workers.",
+                            "captionGuidance": "Keep copy concise; mention the lunch offer window.",
+                            "groupIds": ["group-1"],
                             "slides": [
                                 {
                                     "dishName": "Ribeye",
@@ -322,7 +363,7 @@ _EXPECTED_MONTHLY_POST_DETAIL = {
 }
 
 _EXPECTED_WEEKLY_POST_DETAIL = {
-    "id": "weekday-lunch-post",
+    "id": "weekday-lunch-post-week-2026-06-01",
     "format": "carousel",
     "intent": "weekday_lunch_post",
     "title": "Weekday lunch at Cafe Alto",
@@ -434,34 +475,22 @@ async def test_build_snapshot_creates_post_and_story_slots_without_reels() -> No
     assert normalized["sourcePostLineupTitle"] == "Monthly Post Lineup"
     assert normalized["sourceStoryLineupTitle"] == "Holiday Story Lineup"
     assert not any(slot.get("kind") == "reel" for slot in normalized["slots"])
-    assert normalized["slots"][:4] == [
-        {
-            "kind": "post",
-            "date": "2026-06-01",
-            "time": "10:00",
-            "title": "Monthly top menu",
-            "post": _EXPECTED_MONTHLY_POST_DETAIL,
-        },
-        {
-            "kind": "post",
-            "date": "2026-06-02",
-            "time": "10:00",
-            "title": "Weekday lunch at Cafe Alto",
-            "post": _EXPECTED_WEEKLY_POST_DETAIL,
-        },
-        {
-            "kind": "post",
-            "date": "2026-06-09",
-            "time": "10:00",
-            "title": "Weekday lunch at Cafe Alto",
-            "post": _EXPECTED_WEEKLY_POST_DETAIL,
-        },
-        {
-            "kind": "story",
-            "date": "2026-06-15",
-            "time": "10:00",
-            "title": "Story: sending happy Easter Sunday",
-        },
+    post_slots = [slot for slot in normalized["slots"] if slot.get("kind") == "post"]
+    assert post_slots[0] == {
+        "kind": "post",
+        "date": "2026-06-01",
+        "time": "10:00",
+        "title": "Monthly top menu",
+        "post": _EXPECTED_MONTHLY_POST_DETAIL,
+    }
+    weekly_post_slots = [
+        slot for slot in post_slots if slot["title"] == "Weekday lunch at Cafe Alto"
+    ]
+    assert [slot["date"] for slot in weekly_post_slots] == [
+        "2026-06-04",
+        "2026-06-11",
+        "2026-06-18",
+        "2026-06-25",
     ]
     assert {
         "kind": "story",
@@ -538,7 +567,7 @@ async def test_persist_result_upserts_scheduler_payload() -> None:
 
 
 @pytest.mark.asyncio
-async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
+async def test_build_weekly_post_slots_uses_campaign_weeks() -> None:
     from agents_app.agents.core.milestone_run.scheduler.nodes import _build_weekly_post_slots
 
     post_lineup_data = {
@@ -548,9 +577,6 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
                 "format": "carousel",
                 "intent": "weekday_lunch_post",
                 "title": "Week 1 lunch",
-                "date": "2026-06-02",
-                "fixdate": True,
-                "scheduleHints": {"preferredWeekdays": ["tuesday"], "preferredTime": "10:00"},
                 "slides": [
                     {
                         "dishName": "Ribeye",
@@ -564,9 +590,61 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
                 "format": "carousel",
                 "intent": "weekday_lunch_post",
                 "title": "Week 2 lunch",
-                "date": "2026-06-09",
+                "slides": [
+                    {
+                        "dishName": "Burger",
+                        "imageBrief": "Week 2 lunch photography brief.",
+                    }
+                ],
+                "groupIds": ["group-1"],
+            },
+        ]
+    }
+
+    slots = _build_weekly_post_slots(
+        post_lineup_data,
+        campaign_brief_data=_prior_json_campaign_brief(),
+        start_date="2026-06-01",
+        end_date="2026-06-14",
+    )
+    assert [slot["date"] for slot in slots] == ["2026-06-04", "2026-06-11"]
+    assert all(slot["time"] == "10:00" for slot in slots)
+
+
+def _prior_json_campaign_brief() -> dict:
+    return json.loads(_prior_json())[1]["data"]
+
+
+@pytest.mark.asyncio
+async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
+    from agents_app.agents.core.milestone_run.scheduler.nodes import _build_weekly_post_slots
+
+    post_lineup_data = {
+        "posts": [
+            {
+                "id": "weekday-lunch-post-week-2026-06-01",
+                "format": "carousel",
+                "intent": "weekday_lunch_post",
+                "title": "Week 1 lunch",
+                "date": "2026-06-04",
                 "fixdate": True,
-                "scheduleHints": {"preferredWeekdays": ["tuesday"], "preferredTime": "10:00"},
+                "scheduleHints": {"preferredWeekdays": ["thursday"], "preferredTime": "10:00"},
+                "slides": [
+                    {
+                        "dishName": "Ribeye",
+                        "imageBrief": "Week 1 lunch photography brief.",
+                    }
+                ],
+                "groupIds": ["group-1"],
+            },
+            {
+                "id": "weekday-lunch-post-week-2026-06-08",
+                "format": "carousel",
+                "intent": "weekday_lunch_post",
+                "title": "Week 2 lunch",
+                "date": "2026-06-11",
+                "fixdate": True,
+                "scheduleHints": {"preferredWeekdays": ["thursday"], "preferredTime": "10:00"},
                 "slides": [
                     {
                         "dishName": "Burger",
@@ -587,7 +665,7 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
     assert slots == [
         {
             "kind": "post",
-            "date": "2026-06-02",
+            "date": "2026-06-04",
             "time": "10:00",
             "title": "Week 1 lunch",
             "post": {
@@ -606,7 +684,7 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
         },
         {
             "kind": "post",
-            "date": "2026-06-09",
+            "date": "2026-06-11",
             "time": "10:00",
             "title": "Week 2 lunch",
             "post": {

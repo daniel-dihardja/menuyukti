@@ -36,7 +36,7 @@ _INDEX_WEEKDAY: dict[int, WeekdayName] = {
     6: "sunday",
 }
 
-_DEFAULT_WEEKDAY_LUNCH_DAYS: list[WeekdayName] = ["tuesday"]
+_DEFAULT_WEEKDAY_LUNCH_DAYS: list[WeekdayName] = ["thursday"]
 _DEFAULT_WEEKLY_POST_TIME = "10:00"
 
 
@@ -113,7 +113,7 @@ def _pick_post_date(
 ) -> str | None:
     preferred_indexes = [_WEEKDAY_INDEX[day] for day in preferred_weekdays if day in _WEEKDAY_INDEX]
     if not preferred_indexes:
-        preferred_indexes = [_WEEKDAY_INDEX["tuesday"]]
+        preferred_indexes = [_WEEKDAY_INDEX["thursday"]]
 
     range_start = max(week_start, window_start)
     range_end = min(week_end, window_end)

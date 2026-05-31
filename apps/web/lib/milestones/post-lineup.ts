@@ -5,13 +5,7 @@ import type {
 } from '@/lib/graphql/node-schemas'
 import { postLineupMilestoneDataSchema } from '@/lib/graphql/node-schemas'
 
-import {
-  type CampaignWeek,
-  campaignWeeks,
-  parseIsoDateOnly,
-  preferredTimeForStrategy,
-  weekdayNameFromDate,
-} from '@/lib/milestones/dates-window'
+import { type CampaignWeek, campaignWeeks } from '@/lib/milestones/dates-window'
 
 export const POST_LINEUP_PINNED_POST_ID = 'pinned-monthly-menu'
 export const POST_LINEUP_WEEKLY_POST_ID_PREFIX = 'weekday-lunch-post-week'
@@ -82,37 +76,6 @@ type PostLineupPlanPost = {
   description?: string
   captionGuidance?: string
   weekIndex?: number
-}
-
-function strategyFocus(campaignBriefData?: {
-  overallStrategy?: { strategyFocus?: string }
-}): string {
-  const raw = campaignBriefData?.overallStrategy?.strategyFocus?.trim().toLowerCase() ?? ''
-  if (!raw) {
-    return 'weekday_lunch'
-  }
-  const normalized = raw.replace(/-/g, ' ').split(/\s+/).join('_')
-  if (normalized.includes('weekend')) {
-    return 'weekend_family'
-  }
-  if (normalized.includes('evening') || normalized.includes('dinner')) {
-    return 'evening_dinner'
-  }
-  return 'weekday_lunch'
-}
-
-function preferredTimeForStrategyFromBrief(campaignBriefData?: {
-  overallStrategy?: { strategyFocus?: string }
-}): string {
-  return preferredTimeForStrategy(strategyFocus(campaignBriefData))
-}
-
-function weekdayNameFromIsoDate(isoDate: string) {
-  const date = parseIsoDateOnly(isoDate)
-  if (!date) {
-    return 'tuesday' as const
-  }
-  return weekdayNameFromDate(date)
 }
 
 function weeklyPlanByIndex(
@@ -191,7 +154,7 @@ export function buildPostLineupFromPlan(
   const groupsById = new Map(groups.map((group) => [group.id, group]))
   const foodLeadsByName = new Map(foodLeads.map((item) => [nameKey(item.name), item]))
 
-  const buildPost = (plan: PostLineupPlanPost, postId: string, week?: CampaignWeek) => {
+  const buildPost = (plan: PostLineupPlanPost, postId: string) => {
     const selectedGroups = plan.groupIds.map((groupId) => {
       const group = groupsById.get(groupId)
       if (!group) {
@@ -237,18 +200,6 @@ export function buildPostLineupFromPlan(
       groupIds: plan.groupIds,
     }
 
-    if (plan.intent === 'weekday_lunch_post' && week) {
-      return {
-        ...post,
-        date: week.postDate,
-        fixdate: true as const,
-        scheduleHints: {
-          preferredWeekdays: [weekdayNameFromIsoDate(week.postDate)],
-          preferredTime: preferredTimeForStrategyFromBrief(options?.campaignBriefData),
-        },
-      }
-    }
-
     return post
   }
 
@@ -259,7 +210,7 @@ export function buildPostLineupFromPlan(
   const posts = [
     buildPost(monthlyPost, POST_LINEUP_PINNED_POST_ID),
     ...weeklyPlanByIndex(weeklyPosts, weeks).map(({ week, plan }) =>
-      buildPost(plan, `${POST_LINEUP_WEEKLY_POST_ID_PREFIX}-${week.weekStart}`, week),
+      buildPost(plan, `${POST_LINEUP_WEEKLY_POST_ID_PREFIX}-${week.weekStart}`),
     ),
   ]
 

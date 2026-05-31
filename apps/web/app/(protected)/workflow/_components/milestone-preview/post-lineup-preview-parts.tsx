@@ -51,24 +51,13 @@ export function PostLineupPostCopy({ post }: { post: PostLineupPost }) {
   )
 }
 
-export function PostLineupPostBadges({
-  post,
-  showScheduledDate = false,
-}: {
-  post: PostLineupPost
-  showScheduledDate?: boolean
-}) {
+export function PostLineupPostBadges({ post }: { post: PostLineupPost }) {
   const t = useTranslations('analytics.workflows.chat')
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
       <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
-      {showScheduledDate && post.date?.trim() ? (
-        <Badge variant="outline">
-          {t('milestonePostLineupPreviewScheduledDate', { date: post.date })}
-        </Badge>
-      ) : null}
     </div>
   )
 }

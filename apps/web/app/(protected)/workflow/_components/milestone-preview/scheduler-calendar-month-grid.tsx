@@ -120,16 +120,16 @@ export function SchedulerCalendarMonthGrid({
                   : undefined
               }
             >
-              <span className="text-sm font-semibold">{dayNumber}</span>
+              <span className="shrink-0 text-sm font-semibold">{dayNumber}</span>
               {daySlots.length > 0 ? (
-                <div className="mt-1 space-y-0.5">
-                  {daySlots.slice(0, 1).map((slot) => (
+                <div className="mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+                  {daySlots.map((slot, slotIndex) => (
                     <button
-                      key={`${slot.date}-${slot.time}-${slot.title}`}
+                      key={`${slot.date}-${slot.time}-${slot.title}-${slotIndex}`}
                       type="button"
                       title={schedulerSlotDisplayTitle(slot)}
                       className={cn(
-                        'flex w-full flex-col items-start rounded-md border px-1 py-0.5 text-left text-xs font-medium leading-snug',
+                        'flex w-full shrink-0 flex-col items-start rounded-md border px-1 py-0.5 text-left text-xs font-medium leading-snug',
                         schedulerSlotClassName(schedulerSlotKind(slot)),
                         onSlotClick &&
                           'cursor-pointer hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -152,9 +152,6 @@ export function SchedulerCalendarMonthGrid({
                       <span className="w-full truncate">{schedulerSlotDisplayTitle(slot)}</span>
                     </button>
                   ))}
-                  {daySlots.length > 1 ? (
-                    <span className="block size-1.5 rounded-full bg-primary" aria-hidden />
-                  ) : null}
                 </div>
               ) : null}
             </div>

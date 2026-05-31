@@ -46,7 +46,7 @@ function PostCard({
         <CardTitle className="text-base">
           {t('milestonePostLineupPreviewPostTitle', { number: index + 1, title: post.title })}
         </CardTitle>
-        <PostLineupPostBadges post={post} showScheduledDate />
+        <PostLineupPostBadges post={post} />
       </CardHeader>
       <CardContent className="flex flex-col gap-3 px-4 pt-0">
         <PostLineupPostCopy post={post} />
@@ -173,19 +173,14 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
                     : t('milestonePostLineupPreviewPostListMeta', {
                         number: index + 1,
                         slideCount: post.slides.length,
-                        hasDate: post.date?.trim() ? 'true' : 'false',
-                        date: post.date?.trim() ?? '',
+                        hasDate: 'false',
+                        date: '',
                       })
                 }
                 meta={
                   <>
                     <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
                     <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
-                    {post.date?.trim() ? (
-                      <Badge variant="outline">
-                        {t('milestonePostLineupPreviewScheduledDate', { date: post.date })}
-                      </Badge>
-                    ) : null}
                   </>
                 }
                 viewDetailsLabel={viewDetailsLabel}

@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import re
-from datetime import timedelta
 from typing import Any, Literal
 
-from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks, parse_iso_date
+from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks
 
 DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
@@ -148,16 +147,6 @@ def try_post_lineup_deterministic_verdict(
                     f"post lineup must include one weekday lunch post per week; "
                     f"expected {expected}, got {len(weekly_posts)}.",
                 )
-            missing_fixdate = [
-                post
-                for post in weekly_posts
-                if post.get("fixdate") is not True or not str(post.get("date") or "").strip()
-            ]
-            if missing_fixdate:
-                return (
-                    "fail",
-                    "weekday lunch posts must include fixdate true and a date within the campaign window.",
-                )
             return (
                 "pass",
                 f"post lineup includes {len(weekly_posts)} weekday lunch posts (one per campaign week).",
@@ -192,25 +181,18 @@ def try_post_lineup_deterministic_verdict(
         weekly_posts = _weekly_posts(posts)
         if not weekly_posts:
             return ("fail", "post lineup has no weekday_lunch_post entries to validate.")
-        window_start = parse_iso_date(start_date) if start_date else None
-        window_end = parse_iso_date(end_date) if end_date else None
-        seen_weeks: set[str] = set()
-        for post in weekly_posts:
-            if post.get("fixdate") is not True:
-                return ("fail", "weekday lunch posts must have fixdate true.")
-            post_date_text = str(post.get("date") or "").strip()
-            if not post_date_text:
-                return ("fail", "weekday lunch posts must include date.")
-            post_date = parse_iso_date(post_date_text)
-            if post_date is None:
-                return ("fail", "weekday lunch post date must be a valid ISO date.")
-            if window_start and window_end and (post_date < window_start or post_date > window_end):
-                return ("fail", "weekday lunch post date must fall within the campaign window.")
-            week_start = (post_date - timedelta(days=post_date.weekday())).isoformat()
-            if week_start in seen_weeks:
-                return ("fail", "weekday lunch post dates must fall in distinct calendar weeks.")
-            seen_weeks.add(week_start)
-        return ("pass", "every weekday lunch post has fixdate true and a valid date.")
+        if start_date and end_date:
+            expected = count_campaign_weeks(start_date, end_date)
+            if len(weekly_posts) != expected:
+                return (
+                    "fail",
+                    f"post lineup must include one weekday lunch post per week; "
+                    f"expected {expected}, got {len(weekly_posts)}.",
+                )
+        return (
+            "pass",
+            "weekday lunch posts are defined by intent; scheduler assigns publish dates.",
+        )
 
     if "slide" in norm and ("group" in norm or "groups" in norm):
         if not posts:

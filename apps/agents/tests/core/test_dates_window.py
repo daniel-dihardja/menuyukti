@@ -11,18 +11,18 @@ from agents_app.agents.core.milestone_run.dates_window import (
 
 def test_campaign_weeks_june_2026_window() -> None:
     weeks = campaign_weeks("2026-06-01", "2026-06-30")
-    assert len(weeks) == 5
+    assert len(weeks) == 4
     assert weeks[0].week_index == 1
     assert weeks[0].week_start == "2026-06-01"
-    assert weeks[0].post_date == "2026-06-02"
-    assert weeks[-1].week_start == "2026-06-29"
-    assert weeks[-1].post_date == "2026-06-30"
+    assert weeks[0].post_date == "2026-06-04"
+    assert weeks[-1].week_start == "2026-06-22"
+    assert weeks[-1].post_date == "2026-06-25"
 
 
 def test_campaign_weeks_partial_first_week() -> None:
     weeks = campaign_weeks("2026-06-04", "2026-06-10")
     assert len(weeks) == 1
-    assert weeks[0].post_date == "2026-06-09"
+    assert weeks[0].post_date == "2026-06-04"
 
 
 def test_campaign_weeks_weekend_family_strategy() -> None:

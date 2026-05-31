@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from datetime import timedelta
 from typing import Any, Literal
 
 from agents_app.agents.core.milestone_run.dates_window import parse_iso_date
@@ -841,21 +840,28 @@ class PostLineupMilestoneOutput(BaseModel):
         if window_start is None or window_end is None:
             raise ValueError("startDate and endDate must be valid ISO dates")
 
+        from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks
+        from agents_app.agents.core.milestone_run.post_lineup.build import (
+            POST_LINEUP_WEEKLY_POST_ID_PREFIX,
+        )
+
+        expected_weeks = count_campaign_weeks(self.startDate, self.endDate)
+        if len(weekly_posts) != expected_weeks:
+            raise ValueError(
+                "must contain one weekday_lunch_post per campaign week in the dates window"
+            )
+
         seen_week_starts: set[str] = set()
+        prefix = f"{POST_LINEUP_WEEKLY_POST_ID_PREFIX}-"
         for post in weekly_posts:
-            if post.fixdate is not True:
-                raise ValueError("weekday_lunch_post entries must have fixdate true")
-            post_date_text = str(post.date or "").strip()
-            if not post_date_text:
-                raise ValueError("weekday_lunch_post entries must include date")
-            post_date = parse_iso_date(post_date_text)
-            if post_date is None:
-                raise ValueError("weekday_lunch_post date must be a valid ISO date")
-            if post_date < window_start or post_date > window_end:
-                raise ValueError("weekday_lunch_post date must fall within startDate and endDate")
-            week_start = (post_date - timedelta(days=post_date.weekday())).isoformat()
+            post_id = str(post.id or "").strip()
+            if not post_id.startswith(prefix):
+                raise ValueError("weekday_lunch_post id must encode campaign week start")
+            week_start = post_id[len(prefix) :]
+            if parse_iso_date(week_start) is None:
+                raise ValueError("weekday_lunch_post id week start must be a valid ISO date")
             if week_start in seen_week_starts:
-                raise ValueError("weekday_lunch_post dates must fall in distinct calendar weeks")
+                raise ValueError("weekday_lunch_post entries must map to distinct calendar weeks")
             seen_week_starts.add(week_start)
 
         return self

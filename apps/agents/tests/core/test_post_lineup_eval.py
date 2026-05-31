@@ -11,19 +11,13 @@ START_DATE = "2026-06-01"
 END_DATE = "2026-06-30"
 
 
-def _weekly_post(date: str, title: str) -> dict:
+def _weekly_post(week_start: str, title: str) -> dict:
     return {
-        "id": f"weekday-lunch-post-week-{date}",
+        "id": f"weekday-lunch-post-week-{week_start}",
         "format": "carousel",
         "intent": "weekday_lunch_post",
         "title": title,
         "groupIds": ["group-1"],
-        "date": date,
-        "fixdate": True,
-        "scheduleHints": {
-            "preferredWeekdays": ["tuesday"],
-            "preferredTime": "10:00",
-        },
         "slides": [{"dishName": "Ribeye", "imageBrief": "Lunch photo brief."}],
     }
 
@@ -45,11 +39,10 @@ def _sample_data() -> dict:
                     {"dishName": "Burger", "imageBrief": "Stack photo brief."},
                 ],
             },
-            _weekly_post("2026-06-02", "Week 1 lunch"),
-            _weekly_post("2026-06-09", "Week 2 lunch"),
-            _weekly_post("2026-06-16", "Week 3 lunch"),
-            _weekly_post("2026-06-23", "Week 4 lunch"),
-            _weekly_post("2026-06-30", "Week 5 lunch"),
+            _weekly_post("2026-06-01", "Week 1 lunch"),
+            _weekly_post("2026-06-08", "Week 2 lunch"),
+            _weekly_post("2026-06-15", "Week 3 lunch"),
+            _weekly_post("2026-06-22", "Week 4 lunch"),
         ],
         "sourceMenuClustererTitle": "Menu clusterer",
         "sourceCampaignBriefTitle": "Campaign brief",
@@ -58,8 +51,8 @@ def _sample_data() -> dict:
 
 def test_enrich_post_lineup_eval_payload() -> None:
     enriched = enrich_post_lineup_eval_payload(_sample_data())
-    assert enriched["_evalHints"]["postCount"] == 6
-    assert enriched["_evalHints"]["expectedWeeklyPostCount"] == 5
+    assert enriched["_evalHints"]["postCount"] == 5
+    assert enriched["_evalHints"]["expectedWeeklyPostCount"] == 4
 
 
 def test_try_post_lineup_deterministic_verdict_dates_prior() -> None:
@@ -97,7 +90,7 @@ def test_try_post_lineup_deterministic_verdict_weekly_fixdate() -> None:
     )
     assert verdict == (
         "pass",
-        "every weekday lunch post has fixdate true and a valid date.",
+        "weekday lunch posts are defined by intent; scheduler assigns publish dates.",
     )
 
 

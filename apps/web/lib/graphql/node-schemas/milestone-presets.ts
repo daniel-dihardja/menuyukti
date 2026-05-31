@@ -4,7 +4,7 @@
 
 import { z } from 'zod'
 
-import { weekStartIsoForDate } from '@/lib/milestones/dates-window'
+import { countCampaignWeeks, parseIsoDateOnly } from '@/lib/milestones/dates-window'
 import {
   MENU_TAGGER_TAXONOMY_VERSION,
   computeMenuTaggerUsedTags,
@@ -433,6 +433,8 @@ export const postLineupPostSchema = z.object({
 
 export type PostLineupPost = z.infer<typeof postLineupPostSchema>
 
+const POST_LINEUP_WEEKLY_POST_ID_PREFIX = 'weekday-lunch-post-week'
+
 export const postLineupMilestoneDataSchema = z
   .object({
     posts: z.array(postLineupPostSchema),
@@ -477,45 +479,40 @@ export const postLineupMilestoneDataSchema = z
       })
     }
 
+    const expectedWeeks = countCampaignWeeks(startDate, endDate)
+    if (weeklyPosts.length !== expectedWeeks) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'must contain one weekday_lunch_post per campaign week in the dates window',
+        path: ['posts'],
+      })
+    }
+
     const seenWeekStarts = new Set<string>()
+    const idPrefix = `${POST_LINEUP_WEEKLY_POST_ID_PREFIX}-`
     weeklyPosts.forEach((post, index) => {
-      if (post.fixdate !== true) {
+      if (!post.id.startsWith(idPrefix)) {
         ctx.addIssue({
           code: 'custom',
-          message: 'weekday_lunch_post entries must have fixdate true',
-          path: ['posts', index, 'fixdate'],
-        })
-      }
-      const postDate = post.date?.trim()
-      if (!postDate) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'weekday_lunch_post entries must include date',
-          path: ['posts', index, 'date'],
+          message: 'weekday_lunch_post id must encode campaign week start',
+          path: ['posts', index, 'id'],
         })
         return
       }
-      if (postDate < startDate || postDate > endDate) {
+      const weekStart = post.id.slice(idPrefix.length)
+      if (!parseIsoDateOnly(weekStart)) {
         ctx.addIssue({
           code: 'custom',
-          message: 'weekday_lunch_post date must fall within startDate and endDate',
-          path: ['posts', index, 'date'],
-        })
-      }
-      const weekStart = weekStartIsoForDate(postDate)
-      if (!weekStart) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'weekday_lunch_post date must be a valid ISO date',
-          path: ['posts', index, 'date'],
+          message: 'weekday_lunch_post id week start must be a valid ISO date',
+          path: ['posts', index, 'id'],
         })
         return
       }
       if (seenWeekStarts.has(weekStart)) {
         ctx.addIssue({
           code: 'custom',
-          message: 'weekday_lunch_post dates must fall in distinct calendar weeks',
-          path: ['posts', index, 'date'],
+          message: 'weekday_lunch_post entries must map to distinct calendar weeks',
+          path: ['posts', index, 'id'],
         })
       }
       seenWeekStarts.add(weekStart)

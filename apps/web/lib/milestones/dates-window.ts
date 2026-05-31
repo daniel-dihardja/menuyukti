@@ -107,7 +107,7 @@ export function campaignWeeks(startDate: string, endDate: string): CampaignWeek[
     return []
   }
 
-  const preferredWeekdays: WeekdayName[] = ['tuesday']
+  const preferredWeekdays: WeekdayName[] = ['thursday']
   const minWeek = startOfWeekMonday(windowStart)
   const maxWeek = startOfWeekMonday(windowEnd)
 
@@ -137,7 +137,7 @@ export function countCampaignWeeks(startDate: string, endDate: string): number {
 }
 
 export function weekdayNameFromDate(date: Date): WeekdayName {
-  return INDEX_WEEKDAY[jsWeekdayIndex(date)] ?? 'tuesday'
+  return INDEX_WEEKDAY[jsWeekdayIndex(date)] ?? 'thursday'
 }
 
 export function preferredTimeForStrategy(strategyFocus: string): string {

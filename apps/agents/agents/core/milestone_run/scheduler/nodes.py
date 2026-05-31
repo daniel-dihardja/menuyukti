@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import json
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
 
 import httpx
+from agents_app.agents.core.milestone_run.dates_window import (
+    campaign_weeks,
+    preferred_time_for_strategy,
+)
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.core.milestone_run.post_lineup.build import POST_LINEUP_WEEKLY_POST_ID_PREFIX
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     campaign_brief_prior_error_message,
     dates_prior_error_message,
@@ -24,19 +29,8 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
 from agents_app.agents.core.milestone_run.scheduler.state import SchedulerOutput, SchedulerState
 from langgraph.config import get_stream_writer
 
-DEFAULT_REEL_SLOT_TIME = "11:00"
-DEFAULT_REEL_WEEKDAYS = ("tuesday",)
 DEFAULT_POST_SLOT_TIME = "10:00"
 DEFAULT_STORY_SLOT_TIME = "10:00"
-_WEEKDAY_INDEX = {
-    "monday": 0,
-    "tuesday": 1,
-    "wednesday": 2,
-    "thursday": 3,
-    "friday": 4,
-    "saturday": 5,
-    "sunday": 6,
-}
 
 
 def _trace(state: SchedulerState, step: str, **extra: Any) -> None:
@@ -66,111 +60,6 @@ def _parse_iso_date(value: str) -> date | None:
         return None
 
 
-def _dates_in_window(start_date: str, end_date: str) -> list[str]:
-    start = _parse_iso_date(start_date)
-    end = _parse_iso_date(end_date)
-    if start is None or end is None or start > end:
-        return []
-    dates: list[str] = []
-    cursor = start
-    while cursor <= end:
-        dates.append(cursor.isoformat())
-        cursor += timedelta(days=1)
-    return dates
-
-
-def _overall_strategy(campaign_brief_data: dict[str, Any] | None) -> dict[str, Any]:
-    if not isinstance(campaign_brief_data, dict):
-        return {}
-    overall = campaign_brief_data.get("overallStrategy")
-    return overall if isinstance(overall, dict) else {}
-
-
-def _strategy_focus(campaign_brief_data: dict[str, Any] | None) -> str:
-    overall = _overall_strategy(campaign_brief_data)
-    raw = str(overall.get("strategyFocus") or "").strip().lower()
-    if not raw:
-        return "weekday_lunch"
-
-    normalized = "_".join(raw.replace("-", " ").split())
-    if "weekend" in normalized:
-        return "weekend_family"
-    if "evening" in normalized or "dinner" in normalized:
-        return "evening_dinner"
-    if "lunch" in normalized or normalized == "weekday":
-        return "weekday_lunch"
-    return "weekday_lunch"
-
-
-def _offer_window(campaign_brief_data: dict[str, Any] | None) -> str:
-    overall = _overall_strategy(campaign_brief_data)
-    return str(overall.get("offerWindow") or "").strip() or "11:00-14:00"
-
-
-def _preferred_weekdays(campaign_brief_data: dict[str, Any] | None) -> list[str]:
-    focus = _strategy_focus(campaign_brief_data)
-    if focus == "weekday_lunch":
-        return list(DEFAULT_REEL_WEEKDAYS)
-    if focus == "weekend_family":
-        return ["friday", "sunday"]
-    if focus == "evening_dinner":
-        return ["wednesday", "friday"]
-    return list(DEFAULT_REEL_WEEKDAYS)
-
-
-def _preferred_time(campaign_brief_data: dict[str, Any] | None) -> str:
-    focus = _strategy_focus(campaign_brief_data)
-    if focus == "weekday_lunch":
-        return DEFAULT_REEL_SLOT_TIME
-    if focus == "weekend_family":
-        return "09:30"
-    if focus == "evening_dinner":
-        return "17:30"
-    return DEFAULT_REEL_SLOT_TIME
-
-
-def _eligible_food_groups(menu_clusterer_data: dict[str, Any] | None) -> list[dict[str, Any]]:
-    raw_groups = (
-        menu_clusterer_data.get("groups") if isinstance(menu_clusterer_data, dict) else None
-    )
-    if not isinstance(raw_groups, list):
-        return []
-    groups: list[dict[str, Any]] = []
-    for group in raw_groups:
-        if not isinstance(group, dict):
-            continue
-        hints = group.get("scheduleHints")
-        if isinstance(hints, dict) and hints.get("cadenceEligible") is False:
-            continue
-        groups.append(group)
-    return groups
-
-
-def _slot_dates(start_date: str, end_date: str, preferred_weekdays: list[str]) -> list[str]:
-    weekday_indexes = {_WEEKDAY_INDEX[day] for day in preferred_weekdays if day in _WEEKDAY_INDEX}
-    if not weekday_indexes:
-        weekday_indexes = {_WEEKDAY_INDEX[day] for day in DEFAULT_REEL_WEEKDAYS}
-    return [
-        iso_date
-        for iso_date in _dates_in_window(start_date, end_date)
-        if (_parse_iso_date(iso_date) or date.min).weekday() in weekday_indexes
-    ]
-
-
-def _slot_title(group: dict[str, Any], campaign_brief_data: dict[str, Any] | None) -> str:
-    lead_name = str(group.get("leadName") or "Lunch offer").strip() or "Lunch offer"
-    focus = str(group.get("strategyFocus") or "").strip() or _strategy_focus(campaign_brief_data)
-    role = str(group.get("creativeRole") or "").strip()
-    offer_window = _offer_window(campaign_brief_data)
-    if focus == "weekday_lunch":
-        title = f"Reel: {lead_name} lunch offer ({offer_window})"
-    else:
-        title = f"Reel: {lead_name} {focus.replace('_', ' ')}"
-    if role:
-        title = f"{title} [{role}]"
-    return title
-
-
 def _first_of_month_dates(start_date: str, end_date: str) -> list[str]:
     start = _parse_iso_date(start_date)
     end = _parse_iso_date(end_date)
@@ -187,33 +76,6 @@ def _first_of_month_dates(start_date: str, end_date: str) -> list[str]:
         else:
             cursor = date(cursor.year, cursor.month + 1, 1)
     return dates
-
-
-def _build_reel_slots(
-    menu_clusterer_data: dict[str, Any],
-    campaign_brief_data: dict[str, Any] | None,
-    *,
-    start_date: str,
-    end_date: str,
-) -> list[dict[str, str]]:
-    groups = _eligible_food_groups(menu_clusterer_data)
-    if not groups:
-        return []
-    preferred_weekdays = _preferred_weekdays(campaign_brief_data)
-    preferred_time = _preferred_time(campaign_brief_data)
-    dates = _slot_dates(start_date, end_date, preferred_weekdays)
-    slots: list[dict[str, str]] = []
-    for index, iso_date in enumerate(dates):
-        group = groups[index % len(groups)]
-        slots.append(
-            {
-                "kind": "reel",
-                "date": iso_date,
-                "time": preferred_time,
-                "title": _slot_title(group, campaign_brief_data),
-            }
-        )
-    return slots
 
 
 def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
@@ -326,26 +188,13 @@ def _build_monthly_post_slots(
     return slots
 
 
-def _weekly_post_schedule(
-    post: dict[str, Any],
-    *,
-    campaign_brief_data: dict[str, Any] | None,
-) -> tuple[list[str], str]:
-    hints = post.get("scheduleHints")
-    if isinstance(hints, dict):
-        raw_weekdays = hints.get("preferredWeekdays")
-        if isinstance(raw_weekdays, list):
-            cleaned = [
-                str(value).strip().lower()
-                for value in raw_weekdays
-                if str(value).strip().lower() in _WEEKDAY_INDEX
-            ]
-            if cleaned:
-                preferred_time = (
-                    str(hints.get("preferredTime") or "").strip() or DEFAULT_POST_SLOT_TIME
-                )
-                return cleaned, preferred_time
-    return _preferred_weekdays(campaign_brief_data), DEFAULT_POST_SLOT_TIME
+def _week_start_from_post_id(post: dict[str, Any]) -> str | None:
+    post_id = str(post.get("id") or "").strip()
+    prefix = f"{POST_LINEUP_WEEKLY_POST_ID_PREFIX}-"
+    if not post_id.startswith(prefix):
+        return None
+    week_start = post_id[len(prefix) :]
+    return week_start if _parse_iso_date(week_start) is not None else None
 
 
 def _build_weekly_post_slots(
@@ -397,23 +246,31 @@ def _build_weekly_post_slots(
             )
         return slots
 
-    post = valid_posts[0]
-    preferred_weekdays, preferred_time = _weekly_post_schedule(
-        post,
-        campaign_brief_data=campaign_brief_data,
-    )
-    dates = _slot_dates(start_date, end_date, preferred_weekdays)
-    title = str(post.get("title") or "").strip()
-    return [
-        _post_slot_payload(post, iso_date=iso_date, preferred_time=preferred_time)
-        or {
-            "kind": "post",
-            "date": iso_date,
-            "time": preferred_time,
-            "title": title,
-        }
-        for iso_date in dates
-    ]
+    weeks = campaign_weeks(start_date, end_date, campaign_brief_data=campaign_brief_data)
+    preferred_time = preferred_time_for_strategy(campaign_brief_data)
+    posts_by_week: dict[str, dict[str, Any]] = {}
+    unmatched: list[dict[str, Any]] = []
+    for post in valid_posts:
+        week_start = _week_start_from_post_id(post)
+        if week_start is not None and week_start not in posts_by_week:
+            posts_by_week[week_start] = post
+        else:
+            unmatched.append(post)
+
+    slots: list[dict[str, str]] = []
+    for week in weeks:
+        post = posts_by_week.get(week.week_start)
+        if post is None and unmatched:
+            post = unmatched.pop(0)
+        if post is None:
+            continue
+        iso_date = week.post_date
+        if iso_date < start_date or iso_date > end_date:
+            continue
+        slot = _post_slot_payload(post, iso_date=iso_date, preferred_time=preferred_time)
+        if slot is not None:
+            slots.append(slot)
+    return slots
 
 
 def _build_post_slots(

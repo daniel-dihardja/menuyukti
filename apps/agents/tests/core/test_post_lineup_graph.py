@@ -187,8 +187,8 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     assert len(weekly_posts) == len(weeks)
     assert all(post["description"] for post in weekly_posts)
     assert all(post["captionGuidance"] for post in weekly_posts)
-    assert all(post["fixdate"] is True for post in weekly_posts)
-    assert all(post.get("date") for post in weekly_posts)
+    assert all(post.get("date") is None for post in weekly_posts)
+    assert all(post.get("fixdate") is not True for post in weekly_posts)
     assert normalized["startDate"] == START_DATE
     assert normalized["endDate"] == END_DATE
     assert normalized["sourceDatesTitle"] == "Campaign dates"
@@ -312,7 +312,7 @@ async def test_fetch_and_prepare_loads_dates_groups_and_brief() -> None:
     assert len(prepared["groups"]) == 2
     assert prepared["start_date"] == START_DATE
     assert prepared["end_date"] == END_DATE
-    assert len(prepared["campaign_weeks"]) == 5
+    assert len(prepared["campaign_weeks"]) == 4
     assert prepared["source_campaign_brief_title"] == "Campaign brief"
     assert prepared["source_menu_clusterer_title"] == "Menu clusterer"
     assert prepared["source_dates_title"] == "Campaign dates"

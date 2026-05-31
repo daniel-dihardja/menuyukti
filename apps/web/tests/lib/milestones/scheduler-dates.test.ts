@@ -78,7 +78,7 @@ describe('resolvePostLineupPostsForScheduler', () => {
       milestone('1', 'post_lineup', {
         data: {
           startDate: '2026-06-01',
-          endDate: '2026-06-30',
+          endDate: '2026-06-14',
           posts: [
             {
               id: 'post-1',
@@ -89,13 +89,19 @@ describe('resolvePostLineupPostsForScheduler', () => {
               slides: [{ dishName: 'Ribeye', imageBrief: 'Hero brief.' }],
             },
             {
-              id: 'post-2',
+              id: 'weekday-lunch-post-week-2026-06-01',
               format: 'carousel',
               intent: 'weekday_lunch_post',
               title: 'Weekday lunch',
               groupIds: ['group-1'],
-              fixdate: true,
-              date: '2026-06-02',
+              slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
+            },
+            {
+              id: 'weekday-lunch-post-week-2026-06-08',
+              format: 'carousel',
+              intent: 'weekday_lunch_post',
+              title: 'Weekday lunch',
+              groupIds: ['group-1'],
               slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
             },
           ],
@@ -114,13 +120,19 @@ describe('resolvePostLineupPostsForScheduler', () => {
         slides: [{ dishName: 'Ribeye', imageBrief: 'Hero brief.' }],
       },
       {
-        id: 'post-2',
+        id: 'weekday-lunch-post-week-2026-06-01',
         format: 'carousel',
         intent: 'weekday_lunch_post',
         title: 'Weekday lunch',
         groupIds: ['group-1'],
-        fixdate: true,
-        date: '2026-06-02',
+        slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
+      },
+      {
+        id: 'weekday-lunch-post-week-2026-06-08',
+        format: 'carousel',
+        intent: 'weekday_lunch_post',
+        title: 'Weekday lunch',
+        groupIds: ['group-1'],
         slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
       },
     ])

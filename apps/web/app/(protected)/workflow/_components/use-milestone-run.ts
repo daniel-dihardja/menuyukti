@@ -139,13 +139,21 @@ export function useMilestoneRun(
             goal: hydrateBody?.goal ?? '',
             model: chatModel,
             milestoneInput: hydrateBody?.milestoneInput ?? undefined,
-            milestoneData: hydrateBody?.milestoneData,
+            milestoneData: hydrateBody?.milestoneData ?? undefined,
           }),
           signal,
         })
         if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null
-          throw new Error(body?.error ?? t('milestoneRunError'))
+          const body = (await res.json().catch(() => null)) as {
+            error?: string
+            issues?: Array<{ message?: string; path?: Array<string | number> }>
+          } | null
+          const issueHint = body?.issues?.[0]?.message
+          throw new Error(
+            issueHint
+              ? `${body?.error ?? t('milestoneRunError')}: ${issueHint}`
+              : (body?.error ?? t('milestoneRunError')),
+          )
         }
         if (!res.body) {
           throw new Error(t('milestoneRunError'))

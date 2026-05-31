@@ -6,12 +6,7 @@ import re
 import unicodedata
 from typing import Any, Literal
 
-from agents_app.agents.core.milestone_run.dates_window import (
-    CampaignWeek,
-    parse_iso_date,
-    preferred_time_for_strategy,
-    weekday_name_from_date,
-)
+from agents_app.agents.core.milestone_run.dates_window import CampaignWeek
 
 POST_LINEUP_PINNED_POST_ID = "pinned-monthly-menu"
 POST_LINEUP_WEEKLY_POST_ID_PREFIX = "weekday-lunch-post-week"
@@ -139,8 +134,6 @@ def _build_post_from_plan(
     groups_by_id: dict[str, dict[str, Any]],
     food_leads_by_name: dict[str, dict[str, Any]],
     post_id: str,
-    campaign_week: CampaignWeek | None = None,
-    campaign_brief_data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(plan_post, dict):
         raise ValueError("post_lineup plan post must be an object")
@@ -180,17 +173,6 @@ def _build_post_from_plan(
         "slides": slides,
         "groupIds": group_ids,
     }
-
-    if intent == "weekday_lunch_post" and campaign_week is not None:
-        post_date = parse_iso_date(campaign_week.post_date)
-        weekday = weekday_name_from_date(post_date) if post_date is not None else "tuesday"
-        preferred_time = preferred_time_for_strategy(campaign_brief_data)
-        post["date"] = campaign_week.post_date
-        post["fixdate"] = True
-        post["scheduleHints"] = {
-            "preferredWeekdays": [weekday],
-            "preferredTime": preferred_time,
-        }
 
     return post
 
@@ -282,8 +264,6 @@ def build_post_lineup_from_plan(
                 groups_by_id=groups_by_id,
                 food_leads_by_name=food_leads_by_name,
                 post_id=f"{POST_LINEUP_WEEKLY_POST_ID_PREFIX}-{week.week_start}",
-                campaign_week=week,
-                campaign_brief_data=campaign_brief_data,
             )
         )
 
