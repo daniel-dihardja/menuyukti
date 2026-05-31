@@ -93,32 +93,10 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
     },
   ] as const
 
-  const analyticsComparisonPoints = [
-    {
-      pos: t('analyticsComparison.points.overview.pos'),
-      menuyukti: t('analyticsComparison.points.overview.menuyukti'),
-    },
-    {
-      pos: t('analyticsComparison.points.menuDepth.pos'),
-      menuyukti: t('analyticsComparison.points.menuDepth.menuyukti'),
-    },
-    {
-      pos: t('analyticsComparison.points.timing.pos'),
-      menuyukti: t('analyticsComparison.points.timing.menuyukti'),
-    },
-    {
-      pos: t('analyticsComparison.points.categories.pos'),
-      menuyukti: t('analyticsComparison.points.categories.menuyukti'),
-    },
-    {
-      pos: t('analyticsComparison.points.semantics.pos'),
-      menuyukti: t('analyticsComparison.points.semantics.menuyukti'),
-    },
-    {
-      pos: t('analyticsComparison.points.strategy.pos'),
-      menuyukti: t('analyticsComparison.points.strategy.menuyukti'),
-    },
-  ] as const
+  const analyticsComparisonPosBullets = t.raw('analyticsComparison.posBullets') as string[]
+  const analyticsComparisonMenuyuktiBullets = t.raw(
+    'analyticsComparison.menuyuktiBullets',
+  ) as string[]
 
   const workflowsBullets = [
     {
@@ -297,7 +275,8 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
           subtitle={t('analyticsComparison.subtitle')}
           posColumnTitle={t('analyticsComparison.posColumnTitle')}
           menuyuktiColumnTitle={t('analyticsComparison.menuyuktiColumnTitle')}
-          points={analyticsComparisonPoints}
+          posBullets={analyticsComparisonPosBullets}
+          menuyuktiBullets={analyticsComparisonMenuyuktiBullets}
           impactTitle={t('analyticsComparison.impactTitle')}
           impactDescription={t('analyticsComparison.impactDescription')}
         />

@@ -2,17 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/componen
 import { cn } from '@workspace/ui/lib/utils'
 import { BarChart3, Sparkles } from 'lucide-react'
 
-export type AnalyticsComparisonPoint = {
-  pos: string
-  menuyukti: string
-}
-
-type LandingAnalyticsComparisonProps = {
+export type LandingAnalyticsComparisonProps = {
   title: string
   subtitle: string
   posColumnTitle: string
   menuyuktiColumnTitle: string
-  points: readonly AnalyticsComparisonPoint[]
+  posBullets: readonly string[]
+  menuyuktiBullets: readonly string[]
   impactTitle: string
   impactDescription: string
 }
@@ -22,7 +18,8 @@ export function LandingAnalyticsComparison({
   subtitle,
   posColumnTitle,
   menuyuktiColumnTitle,
-  points,
+  posBullets,
+  menuyuktiBullets,
   impactTitle,
   impactDescription,
 }: LandingAnalyticsComparisonProps) {
@@ -54,13 +51,13 @@ export function LandingAnalyticsComparison({
               <CardTitle className="text-lg leading-snug">{posColumnTitle}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <ul className="space-y-4">
-                {points.map((point, index) => (
+              <ul className="list-disc space-y-3 pl-5 marker:text-muted-foreground">
+                {posBullets.map((bullet, index) => (
                   <li
                     key={`pos-${index}`}
-                    className="text-pretty text-sm leading-relaxed text-foreground/75 md:text-base"
+                    className="text-pretty pl-1 text-sm leading-relaxed text-foreground/75 md:text-base"
                   >
-                    {point.pos}
+                    {bullet}
                   </li>
                 ))}
               </ul>
@@ -75,13 +72,13 @@ export function LandingAnalyticsComparison({
               <CardTitle className="text-lg leading-snug">{menuyuktiColumnTitle}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <ul className="space-y-4">
-                {points.map((point, index) => (
+              <ul className="list-disc space-y-3 pl-5 marker:text-primary">
+                {menuyuktiBullets.map((bullet, index) => (
                   <li
                     key={`menuyukti-${index}`}
-                    className="text-pretty text-sm leading-relaxed text-foreground/85 md:text-base"
+                    className="text-pretty pl-1 text-sm leading-relaxed text-foreground/85 md:text-base"
                   >
-                    {point.menuyukti}
+                    {bullet}
                   </li>
                 ))}
               </ul>

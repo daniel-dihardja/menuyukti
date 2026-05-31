@@ -198,32 +198,23 @@
       "subtitle": "Your POS is built for operations—ringing orders, closing shifts, and accounting. Menuyukti adds the analytics layer on top, whether you're building a workflow from scratch or extending one you already use.",
       "posColumnTitle": "Typical POS reporting",
       "menuyuktiColumnTitle": "Menuyukti agent signals",
-      "points": {
-        "overview": {
-          "pos": "Daily and weekly totals: revenue, covers, and top sellers by quantity or amount.",
-          "menuyukti": "Structured sales signals composed for campaign planning—not just a spreadsheet for the back office."
-        },
-        "menuDepth": {
-          "pos": "Item-level counts and ranks, sometimes with basic margin if COGS are entered in the POS.",
-          "menuyukti": "Menu engineering matrix: stars, puzzles, plow horses, and low performers—so promotion picks follow portfolio logic, not just bestseller lists."
-        },
-        "timing": {
-          "pos": "Shift summaries or hour-of-day charts when the POS includes timestamps—mainly for staffing and prep.",
-          "menuyukti": "Hourly demand heatmaps, weekday and daypart patterns, and recommended posting windows aligned to when guests actually order."
-        },
-        "categories": {
-          "pos": "Category or section sales for inventory and menu mix review.",
-          "menuyukti": "Category mix trends, rising items, and focus categories that feed brief pillars and content themes."
-        },
-        "semantics": {
-          "pos": "Menu items as flat line names—no reel hooks, prep style, or occasion metadata for content planning.",
-          "menuyukti": "Semantic tags on each promotion pick—reel moment, prep style, taste, occasion, and more—then Reel clusters that group dishes into shootable series for the month."
-        },
-        "strategy": {
-          "pos": "Operational insight: what to prep, reorder, or discount—rarely connected to social content.",
-          "menuyukti": "Ranked promotion candidates, items to avoid, and schedule-ready signals that flow into briefs, shortlists, and draft copy in Workflows."
-        }
-      },
+      "posBullets": [
+        "Daily and weekly totals: revenue, covers, and top sellers by quantity or amount",
+        "Item-level counts and ranks, sometimes with basic margin if COGS are entered in the POS",
+        "Shift summaries or hour-of-day charts when the POS includes timestamps—mainly for staffing and prep",
+        "Category or section sales for inventory and menu mix review",
+        "Menu items as flat line names—no reel hooks, prep style, or occasion metadata for content planning",
+        "Operational insight: what to prep, reorder, or discount—rarely connected to social content"
+      ],
+      "menuyuktiBullets": [
+        "Structured sales signals composed for campaign planning—not just a spreadsheet for the back office",
+        "Menu engineering matrix: stars, puzzles, plow horses, and low performers—so promotion picks follow portfolio logic, not just bestseller lists",
+        "Hourly demand heatmaps, weekday and daypart patterns, and recommended posting windows aligned to when guests actually order",
+        "Category mix trends, rising items, and focus categories that feed brief pillars and content themes",
+        "Semantic tags on each promotion pick—reel moment, prep style, taste, occasion, and more",
+        "Reel clusters that group dishes into shootable series for the month",
+        "Ranked promotion candidates, items to avoid, and schedule-ready signals that flow into briefs, shortlists, and draft copy in Workflows"
+      ],
       "impactTitle": "Same export, different strategy depth",
       "impactDescription": "POS dashboards answer how the business performed. Menuyukti answers what to feature, how to group dishes into Reel clusters, when to post, and why—so your Instagram partner can plan with evidence, and the owner can see the reasoning behind every pick."
     },

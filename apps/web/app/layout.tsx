@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist_Mono, Plus_Jakarta_Sans } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 
@@ -7,10 +7,11 @@ import { RootShell, RootShellFallback } from '@/app/_components/root-shell'
 import { stylePaletteScript } from '@/lib/style-palette'
 import { getTranslations } from 'next-intl/server'
 
-const fontSans = Geist({
+const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 const fontMono = Geist_Mono({
