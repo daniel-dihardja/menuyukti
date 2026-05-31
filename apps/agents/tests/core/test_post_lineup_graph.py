@@ -112,7 +112,10 @@ def _weekly_posts_for_window() -> list[dict]:
             "intent": "weekday_lunch_post",
             "title": f"Week {week.week_index} lunch at Cafe Alto",
             "groupIds": ["group-1" if week.week_index % 2 else "group-2"],
-            "rationale": f"Lunch concept for week {week.week_index}.",
+            "description": f"Lunch carousel for week {week.week_index} highlighting hero mains.",
+            "captionGuidance": (
+                "Keep copy concise; lead with lunch offer window 11:00-14:00 and a clear reservation CTA."
+            ),
         }
         for week in weeks
     ]
@@ -155,6 +158,10 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
             "intent": "pinned_monthly_menu",
             "title": "Cafe Alto signature menu",
             "groupIds": ["group-1", "group-2"],
+            "description": "Monthly pin showcasing signature mains from hero groups.",
+            "captionGuidance": (
+                "Be specific about hero signatures; use operational language and invite reservations."
+            ),
         },
         weekly_posts=_weekly_posts_for_window(),
         campaign_weeks=weeks,
@@ -175,7 +182,11 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     weekly_posts = [post for post in normalized["posts"] if post["intent"] == "weekday_lunch_post"]
     assert monthly["format"] == "carousel"
     assert len(monthly["slides"]) == 2
+    assert monthly["description"]
+    assert monthly["captionGuidance"]
     assert len(weekly_posts) == len(weeks)
+    assert all(post["description"] for post in weekly_posts)
+    assert all(post["captionGuidance"] for post in weekly_posts)
     assert all(post["fixdate"] is True for post in weekly_posts)
     assert all(post.get("date") for post in weekly_posts)
     assert normalized["startDate"] == START_DATE
@@ -213,7 +224,8 @@ async def test_plan_posts_mocks_llm_and_persists() -> None:
             intent="pinned_monthly_menu",
             title="Cafe Alto signature menu",
             groupIds=["group-1", "group-2"],
-            rationale="Monthly signatures from hero groups.",
+            description="Monthly signatures from hero groups.",
+            captionGuidance="Be specific; lead with hero mains and a reservation CTA.",
         ),
         weeklyPosts=[
             PostLineupPostPlanDraft(
@@ -221,7 +233,8 @@ async def test_plan_posts_mocks_llm_and_persists() -> None:
                 intent="weekday_lunch_post",
                 title=f"Week {week.week_index} lunch at Cafe Alto",
                 groupIds=["group-1"],
-                rationale=f"Lunch hero group supports week {week.week_index}.",
+                description=f"Lunch hero group supports week {week.week_index}.",
+                captionGuidance="Keep copy concise; mention lunch offer window and weekday timing.",
             )
             for week in weeks
         ],

@@ -153,6 +153,14 @@ def _build_post_from_plan(
     if not title:
         raise ValueError(f"post_lineup plan for {intent} must include a non-empty title")
 
+    description = str(plan_post.get("description") or "").strip()
+    if not description:
+        raise ValueError(f"post_lineup plan for {intent} must include a non-empty description")
+
+    caption_guidance = str(plan_post.get("captionGuidance") or "").strip()
+    if not caption_guidance:
+        raise ValueError(f"post_lineup plan for {intent} must include non-empty captionGuidance")
+
     raw_group_ids = plan_post.get("groupIds")
     if not isinstance(raw_group_ids, list):
         raise ValueError(f"post_lineup plan for {intent} must include groupIds")
@@ -167,6 +175,8 @@ def _build_post_from_plan(
         "format": "carousel",
         "intent": intent,
         "title": title,
+        "description": description,
+        "captionGuidance": caption_guidance,
         "slides": slides,
         "groupIds": group_ids,
     }

@@ -772,16 +772,25 @@ class PostLineupPostOutput(BaseModel):
     format: Literal["carousel"]
     intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
     title: str
+    description: str
+    captionGuidance: str
     slides: list[PostLineupSlideOutput]
     groupIds: list[str] = Field(default_factory=list)
     date: str | None = None
     fixdate: bool | None = None
     scheduleHints: PostLineupScheduleHintsOutput | None = None
 
-    @field_validator("id", "title", "date", mode="before")
+    @field_validator("id", "title", "description", "captionGuidance", "date", mode="before")
     @classmethod
     def _normalize_text(cls, value: Any) -> str:
         return str(value or "").strip()
+
+    @field_validator("title", "description", "captionGuidance")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
 
     @field_validator("groupIds", mode="before")
     @classmethod

@@ -25,7 +25,10 @@ function tag(
   }
 }
 
-function foodLead(name: string, reelMoment = 'sizzle'): MenuTaggerItem {
+function foodLead(
+  name: string,
+  reelMoment: MenuTaggerItem['tags']['reel_moment'] = 'sizzle',
+): MenuTaggerItem {
   return {
     name,
     role: 'star',
@@ -36,7 +39,11 @@ function foodLead(name: string, reelMoment = 'sizzle'): MenuTaggerItem {
   }
 }
 
-function group(id: string, name: string, reelMoment = 'sizzle'): MenuClustererGroup {
+function group(
+  id: string,
+  name: string,
+  reelMoment: MenuTaggerItem['tags']['reel_moment'] = 'sizzle',
+): MenuClustererGroup {
   return {
     id,
     leadName: name,
@@ -76,8 +83,8 @@ describe('buildPostLineupFromPlan', () => {
         title: `Week ${week.weekIndex} lunch offer`,
         groupIds: ['group-1'],
       })),
-      [group('group-1', 'Ribeye'), group('group-2', 'Burger', 'stack')],
-      [foodLead('Ribeye'), foodLead('Burger', 'stack')],
+      [group('group-1', 'Ribeye'), group('group-2', 'Burger', 'layer_build')],
+      [foodLead('Ribeye'), foodLead('Burger', 'layer_build')],
       {
         startDate: START_DATE,
         endDate: END_DATE,
@@ -96,6 +103,37 @@ describe('buildPostLineupFromPlan', () => {
     expect(result.startDate).toBe(START_DATE)
     expect(result.endDate).toBe(END_DATE)
     expect(result.sourceDatesTitle).toBe('Campaign dates')
+    expect(postLineupMilestoneDataSchema.safeParse(result).success).toBe(true)
+  })
+
+  it('passes through description and captionGuidance when provided', () => {
+    const weeks = campaignWeeks(START_DATE, END_DATE)
+    const result = buildPostLineupFromPlan(
+      {
+        intent: 'pinned_monthly_menu',
+        title: 'Monthly signature menu',
+        groupIds: ['group-1'],
+        description: 'Monthly pin concept summary.',
+        captionGuidance: 'Lead with hero mains and a reservation CTA.',
+      },
+      weeks.map((week) => ({
+        weekIndex: week.weekIndex,
+        intent: 'weekday_lunch_post',
+        title: `Week ${week.weekIndex} lunch offer`,
+        groupIds: ['group-1'],
+        description: `Lunch concept for week ${week.weekIndex}.`,
+        captionGuidance: 'Keep copy concise; mention lunch offer window.',
+      })),
+      [group('group-1', 'Ribeye')],
+      [foodLead('Ribeye')],
+      { startDate: START_DATE, endDate: END_DATE },
+    )
+
+    expect(result.posts[0]?.description).toBe('Monthly pin concept summary.')
+    expect(result.posts[0]?.captionGuidance).toBe('Lead with hero mains and a reservation CTA.')
+    const weekly = result.posts.find((post) => post.intent === 'weekday_lunch_post')
+    expect(weekly?.description).toContain('Lunch concept')
+    expect(weekly?.captionGuidance).toContain('lunch offer window')
     expect(postLineupMilestoneDataSchema.safeParse(result).success).toBe(true)
   })
 

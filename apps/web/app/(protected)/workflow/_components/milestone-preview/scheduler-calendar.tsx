@@ -49,7 +49,11 @@ import {
 import { SchedulerCalendarMonthGrid } from './scheduler-calendar-month-grid'
 import { SchedulerCalendarMonthList } from './scheduler-calendar-month-list'
 import { SchedulerCalendarWeekGrid } from './scheduler-calendar-week-grid'
-import { PostLineupPostBadges, PostLineupSlides } from './post-lineup-preview-parts'
+import {
+  PostLineupPostBadges,
+  PostLineupPostCopy,
+  PostLineupSlides,
+} from './post-lineup-preview-parts'
 
 export type SchedulerCalendarViewMode = 'week' | 'month'
 
@@ -104,7 +108,8 @@ function SchedulerPostSlotDetailCard({
       </div>
       <p className="mb-3 text-base font-semibold text-foreground">{post.title}</p>
       <PostLineupPostBadges post={post} />
-      <div className="mt-3">
+      <div className="mt-3 flex flex-col gap-3">
+        <PostLineupPostCopy post={post} />
         <PostLineupSlides
           post={post}
           roleStarLabel={roleStarLabel}

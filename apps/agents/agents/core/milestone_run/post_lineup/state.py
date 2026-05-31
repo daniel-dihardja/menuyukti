@@ -34,6 +34,8 @@ class PostLineupPost(TypedDict):
     format: Literal["carousel"]
     intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
     title: str
+    description: str
+    captionGuidance: str
     slides: list[PostLineupSlide]
     groupIds: list[str]
     date: NotRequired[str]

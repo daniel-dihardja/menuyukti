@@ -424,6 +424,8 @@ export const postLineupPostSchema = z.object({
   format: postLineupPostFormatSchema,
   intent: postLineupPostIntentSchema,
   title: z.string().trim().min(1),
+  description: z.string().trim().min(1).optional(),
+  captionGuidance: z.string().trim().min(1).optional(),
   slides: z.array(postLineupSlideSchema).min(1).max(5),
   groupIds: z.array(z.string().trim().min(1)).min(1),
   date: z.string().optional(),

@@ -24,6 +24,33 @@ export function postIntentBadgeLabel(
   return t('milestonePostLineupPreviewPinnedBadge')
 }
 
+export function PostLineupPostCopy({ post }: { post: PostLineupPost }) {
+  const t = useTranslations('analytics.workflows.chat')
+  const description = post.description?.trim()
+  const captionGuidance = post.captionGuidance?.trim()
+
+  if (!description && !captionGuidance) {
+    return null
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {description ? (
+        <div className="flex flex-col gap-1">
+          <p className={mp.sectionTitle}>{t('milestonePostLineupPreviewDescription')}</p>
+          <p className={mp.body}>{description}</p>
+        </div>
+      ) : null}
+      {captionGuidance ? (
+        <div className="flex flex-col gap-1">
+          <p className={mp.sectionTitle}>{t('milestonePostLineupPreviewCaptionGuidance')}</p>
+          <p className={mp.body}>{captionGuidance}</p>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function PostLineupPostBadges({
   post,
   showScheduledDate = false,

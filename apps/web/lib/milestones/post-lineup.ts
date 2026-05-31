@@ -79,6 +79,8 @@ type PostLineupPlanPost = {
   intent: 'pinned_monthly_menu' | 'weekday_lunch_post'
   title: string
   groupIds: string[]
+  description?: string
+  captionGuidance?: string
   weekIndex?: number
 }
 
@@ -229,6 +231,8 @@ export function buildPostLineupFromPlan(
       format: 'carousel' as const,
       intent: plan.intent,
       title: plan.title,
+      ...(plan.description?.trim() ? { description: plan.description.trim() } : {}),
+      ...(plan.captionGuidance?.trim() ? { captionGuidance: plan.captionGuidance.trim() } : {}),
       slides,
       groupIds: plan.groupIds,
     }

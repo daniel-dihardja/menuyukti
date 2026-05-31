@@ -19,6 +19,7 @@ import { milestonePreviewTypography as mp } from './milestone-preview-typography
 import {
   postIntentBadgeLabel,
   PostLineupPostBadges,
+  PostLineupPostCopy,
   PostLineupSlides,
 } from './post-lineup-preview-parts'
 
@@ -47,7 +48,8 @@ function PostCard({
         </CardTitle>
         <PostLineupPostBadges post={post} showScheduledDate />
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 px-4 pt-0">
+      <CardContent className="flex flex-col gap-3 px-4 pt-0">
+        <PostLineupPostCopy post={post} />
         <PostLineupSlides
           post={post}
           roleStarLabel={roleStarLabel}
@@ -165,12 +167,16 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
               <MilestonePreviewListRow
                 key={id}
                 title={post.title}
-                description={t('milestonePostLineupPreviewPostListMeta', {
-                  number: index + 1,
-                  slideCount: post.slides.length,
-                  hasDate: Boolean(post.date?.trim()),
-                  date: post.date?.trim() ?? '',
-                })}
+                description={
+                  post.description?.trim()
+                    ? post.description.trim()
+                    : t('milestonePostLineupPreviewPostListMeta', {
+                        number: index + 1,
+                        slideCount: post.slides.length,
+                        hasDate: post.date?.trim() ? 'true' : 'false',
+                        date: post.date?.trim() ?? '',
+                      })
+                }
                 meta={
                   <>
                     <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>

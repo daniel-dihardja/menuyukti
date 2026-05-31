@@ -129,6 +129,9 @@ def _build_generation_context(
         "audienceHypotheses": campaign_brief_data.get("audienceHypotheses"),
         "proofOrientedAngles": campaign_brief_data.get("proofOrientedAngles"),
         "mainCategory": campaign_brief_data.get("mainCategory"),
+        "toneGuardrails": campaign_brief_data.get("toneGuardrails"),
+        "messageHierarchy": campaign_brief_data.get("messageHierarchy"),
+        "offerAndCtaPlan": campaign_brief_data.get("offerAndCtaPlan"),
     }
     compact_groups = [_compact_group(group) for group in groups]
     sections = [
@@ -150,7 +153,8 @@ class PostLineupPostPlanDraft(BaseModel):
     intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
     title: str
     groupIds: list[str] = Field(min_length=1)
-    rationale: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    captionGuidance: str = Field(min_length=1)
     weekIndex: int | None = None
 
 
@@ -167,7 +171,8 @@ def _merge_correction_message(error: ValueError, *, expected_week_count: int) ->
             f"Return a corrected JSON object only. weeklyPosts must contain exactly "
             f"{expected_week_count} entries (one per week in the campaign window). "
             "Use valid groupIds from the provided groups, keep required intents, "
-            "match weekIndex values from the week plan, and provide non-empty titles."
+            "match weekIndex values from the week plan, and provide non-empty titles, "
+            "descriptions, and captionGuidance."
         )
     )
 
