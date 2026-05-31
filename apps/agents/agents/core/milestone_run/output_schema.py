@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import re
+from datetime import timedelta
 from typing import Any, Literal
 
+from agents_app.agents.core.milestone_run.dates_window import parse_iso_date
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 
@@ -772,9 +774,11 @@ class PostLineupPostOutput(BaseModel):
     title: str
     slides: list[PostLineupSlideOutput]
     groupIds: list[str] = Field(default_factory=list)
+    date: str | None = None
+    fixdate: bool | None = None
     scheduleHints: PostLineupScheduleHintsOutput | None = None
 
-    @field_validator("id", "title", mode="before")
+    @field_validator("id", "title", "date", mode="before")
     @classmethod
     def _normalize_text(cls, value: Any) -> str:
         return str(value or "").strip()
@@ -805,20 +809,54 @@ class PostLineupPostOutput(BaseModel):
 
 class PostLineupMilestoneOutput(BaseModel):
     posts: list[PostLineupPostOutput]
+    startDate: str
+    endDate: str
     sourceMenuClustererTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
+    sourceDatesTitle: str | None = None
     notes: str | None = None
 
-    @field_validator("posts")
+    @field_validator("startDate", "endDate", mode="before")
     @classmethod
-    def _validate_posts(cls, values: list[PostLineupPostOutput]) -> list[PostLineupPostOutput]:
-        if len(values) != 2:
-            raise ValueError("must contain exactly 2 posts")
-        intents = {post.intent for post in values}
-        required = {"pinned_monthly_menu", "weekday_lunch_post"}
-        if intents != required:
-            raise ValueError("must include one pinned_monthly_menu and one weekday_lunch_post")
-        return values
+    def _normalize_window_dates(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @model_validator(mode="after")
+    def _validate_post_lineup_structure(self) -> PostLineupMilestoneOutput:
+        if not self.startDate or not self.endDate:
+            raise ValueError("startDate and endDate must be non-empty")
+
+        monthly_posts = [post for post in self.posts if post.intent == "pinned_monthly_menu"]
+        weekly_posts = [post for post in self.posts if post.intent == "weekday_lunch_post"]
+
+        if len(monthly_posts) != 1:
+            raise ValueError("must contain exactly one pinned_monthly_menu post")
+        if len(weekly_posts) < 1:
+            raise ValueError("must contain at least one weekday_lunch_post for the campaign window")
+
+        window_start = parse_iso_date(self.startDate)
+        window_end = parse_iso_date(self.endDate)
+        if window_start is None or window_end is None:
+            raise ValueError("startDate and endDate must be valid ISO dates")
+
+        seen_week_starts: set[str] = set()
+        for post in weekly_posts:
+            if post.fixdate is not True:
+                raise ValueError("weekday_lunch_post entries must have fixdate true")
+            post_date_text = str(post.date or "").strip()
+            if not post_date_text:
+                raise ValueError("weekday_lunch_post entries must include date")
+            post_date = parse_iso_date(post_date_text)
+            if post_date is None:
+                raise ValueError("weekday_lunch_post date must be a valid ISO date")
+            if post_date < window_start or post_date > window_end:
+                raise ValueError("weekday_lunch_post date must fall within startDate and endDate")
+            week_start = (post_date - timedelta(days=post_date.weekday())).isoformat()
+            if week_start in seen_week_starts:
+                raise ValueError("weekday_lunch_post dates must fall in distinct calendar weeks")
+            seen_week_starts.add(week_start)
+
+        return self
 
 
 class SchedulerSlotOutput(BaseModel):

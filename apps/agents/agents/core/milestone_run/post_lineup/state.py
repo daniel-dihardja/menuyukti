@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Literal, NotRequired, TypedDict
 
+from agents_app.agents.core.milestone_run.dates_window import CampaignWeek
+
 
 class PostLineupSlide(TypedDict):
     dishName: str
@@ -34,13 +36,18 @@ class PostLineupPost(TypedDict):
     title: str
     slides: list[PostLineupSlide]
     groupIds: list[str]
+    date: NotRequired[str]
+    fixdate: NotRequired[bool]
     scheduleHints: NotRequired[PostLineupScheduleHints]
 
 
 class PostLineupOutput(TypedDict):
     posts: list[PostLineupPost]
+    startDate: NotRequired[str]
+    endDate: NotRequired[str]
     sourceMenuClustererTitle: NotRequired[str]
     sourceCampaignBriefTitle: NotRequired[str]
+    sourceDatesTitle: NotRequired[str]
     notes: NotRequired[str]
 
 
@@ -56,6 +63,11 @@ class PostLineupState(TypedDict):
     traceparent: NotRequired[str | None]
     prior_milestones_data: NotRequired[str]
     owner_notes_markdown: NotRequired[str]
+    dates_data: NotRequired[dict[str, Any]]
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
+    source_dates_title: NotRequired[str]
+    campaign_weeks: NotRequired[list[CampaignWeek]]
     campaign_brief_data: NotRequired[dict[str, Any]]
     source_campaign_brief_title: NotRequired[str]
     groups: NotRequired[list[dict[str, Any]]]

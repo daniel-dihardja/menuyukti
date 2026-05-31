@@ -7,6 +7,7 @@ from typing import Any, Literal
 
 import httpx
 from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
+from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
@@ -17,6 +18,9 @@ from agents_app.agents.core.milestone_run.post_lineup.prompts import format_post
 from agents_app.agents.core.milestone_run.post_lineup.state import PostLineupOutput, PostLineupState
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     campaign_brief_prior_error_message,
+    dates_prior_error_message,
+    extract_dates_data,
+    extract_dates_row,
     extract_menu_clusterer_data,
     extract_menu_clusterer_row,
     extract_restaurant_campaign_brief_data,
@@ -113,6 +117,9 @@ def _build_generation_context(
     *,
     campaign_brief_data: dict[str, Any],
     groups: list[dict[str, Any]],
+    start_date: str,
+    end_date: str,
+    weeks: list[dict[str, Any]],
     owner_notes_markdown: str,
 ) -> str:
     brief_excerpt = {
@@ -125,6 +132,10 @@ def _build_generation_context(
     }
     compact_groups = [_compact_group(group) for group in groups]
     sections = [
+        "## Campaign window\n```json\n"
+        f"{json.dumps({'startDate': start_date, 'endDate': end_date, 'weekCount': len(weeks)}, ensure_ascii=False, indent=2)}\n```",
+        "## Week plan (one weekly post per week)\n```json\n"
+        f"{json.dumps(weeks, ensure_ascii=False, indent=2)}\n```",
         "## Campaign brief (excerpt)\n```json\n"
         f"{json.dumps(brief_excerpt, ensure_ascii=False, indent=2)}\n```",
         "## Menu clusterer groups\n```json\n"
@@ -140,20 +151,23 @@ class PostLineupPostPlanDraft(BaseModel):
     title: str
     groupIds: list[str] = Field(min_length=1)
     rationale: str = Field(min_length=1)
+    weekIndex: int | None = None
 
 
 class PostLineupDraftOutput(BaseModel):
     monthlyPost: PostLineupPostPlanDraft
-    weeklyPost: PostLineupPostPlanDraft
+    weeklyPosts: list[PostLineupPostPlanDraft]
 
 
-def _merge_correction_message(error: ValueError) -> HumanMessage:
+def _merge_correction_message(error: ValueError, *, expected_week_count: int) -> HumanMessage:
     return HumanMessage(
         content=(
             "Your previous post lineup plan could not be merged with the menu clusterer data.\n\n"
             f"Error: {error}\n\n"
-            "Return a corrected JSON object only. Use valid groupIds from the provided groups, "
-            "keep both required intents, and provide non-empty titles."
+            f"Return a corrected JSON object only. weeklyPosts must contain exactly "
+            f"{expected_week_count} entries (one per week in the campaign window). "
+            "Use valid groupIds from the provided groups, keep required intents, "
+            "match weekIndex values from the week plan, and provide non-empty titles."
         )
     )
 
@@ -172,17 +186,22 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
     _trace(state, "execute_skill", skill_id="post_lineup")
 
     prior_json = str(state.get("prior_milestones_data") or "")
+    dates_data = extract_dates_data(prior_json)
+    if dates_data is None:
+        raise ValueError(dates_prior_error_message(prior_json, milestone_id="post_lineup"))
+
+    start_date = str(dates_data.get("startDate") or "").strip()
+    end_date = str(dates_data.get("endDate") or "").strip()
+    if not start_date or not end_date:
+        raise ValueError("post_lineup requires prior dates milestone with startDate and endDate")
+
     campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
     if campaign_brief_data is None:
-        raise ValueError(
-            campaign_brief_prior_error_message(prior_json, milestone_id="post_lineup")
-        )
+        raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="post_lineup"))
 
     menu_clusterer_data = extract_menu_clusterer_data(prior_json)
     if menu_clusterer_data is None:
-        raise ValueError(
-            "post_lineup requires a prior menu_clusterer milestone with saved groups"
-        )
+        raise ValueError("post_lineup requires a prior menu_clusterer milestone with saved groups")
 
     groups = _groups(menu_clusterer_data)
     if not groups:
@@ -191,6 +210,14 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
     food_leads = _food_leads(menu_clusterer_data)
     if not food_leads:
         raise ValueError("post_lineup requires at least one food lead in prior menu_clusterer data")
+
+    computed_weeks = campaign_weeks(
+        start_date,
+        end_date,
+        campaign_brief_data=campaign_brief_data,
+    )
+    if not computed_weeks:
+        raise ValueError("post_lineup requires a valid campaign window with at least one week")
 
     campaign_brief_row = extract_restaurant_campaign_brief_row(prior_json)
     source_campaign_brief_title = ""
@@ -206,8 +233,20 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
         if isinstance(title, str) and title.strip():
             source_menu_clusterer_title = title.strip()
 
+    dates_row = extract_dates_row(prior_json)
+    source_dates_title = ""
+    if isinstance(dates_row, dict):
+        title = dates_row.get("title")
+        if isinstance(title, str) and title.strip():
+            source_dates_title = title.strip()
+
     return {
         "owner_notes_markdown": _fmt_owner_notes(state),
+        "dates_data": dates_data,
+        "start_date": start_date,
+        "end_date": end_date,
+        "source_dates_title": source_dates_title,
+        "campaign_weeks": computed_weeks,
         "campaign_brief_data": campaign_brief_data,
         "source_campaign_brief_title": source_campaign_brief_title,
         "groups": groups,
@@ -228,6 +267,26 @@ async def plan_posts(state: PostLineupState) -> dict[str, Any]:
     if not food_leads:
         raise ValueError("post_lineup requires food_leads")
 
+    start_date = str(state.get("start_date") or "").strip()
+    end_date = str(state.get("end_date") or "").strip()
+    if not start_date or not end_date:
+        raise ValueError("post_lineup requires start_date and end_date from prior dates milestone")
+
+    campaign_weeks_list = state.get("campaign_weeks") or []
+    if not campaign_weeks_list:
+        raise ValueError("post_lineup requires campaign_weeks")
+
+    week_plan = [
+        {
+            "weekIndex": week.week_index,
+            "weekStart": week.week_start,
+            "weekEnd": week.week_end,
+            "postDate": week.post_date,
+        }
+        for week in campaign_weeks_list
+    ]
+    expected_week_count = len(week_plan)
+
     owner_notes = ""
     owner_md = str(state.get("owner_notes_markdown") or "").strip()
     if owner_md:
@@ -236,6 +295,9 @@ async def plan_posts(state: PostLineupState) -> dict[str, Any]:
     generation_context = _build_generation_context(
         campaign_brief_data=campaign_brief_data,
         groups=groups,
+        start_date=start_date,
+        end_date=end_date,
+        weeks=week_plan,
         owner_notes_markdown=str(state.get("owner_notes_markdown") or ""),
     )
 
@@ -251,7 +313,9 @@ async def plan_posts(state: PostLineupState) -> dict[str, Any]:
     for attempt in range(1, POST_LINEUP_MERGE_MAX_ATTEMPTS + 1):
         messages = list(base_messages)
         if merge_error is not None:
-            messages.append(_merge_correction_message(merge_error))
+            messages.append(
+                _merge_correction_message(merge_error, expected_week_count=expected_week_count)
+            )
         try:
             generated = await structured_ainvoke_from_run_config(
                 PostLineupDraftOutput,
@@ -263,20 +327,27 @@ async def plan_posts(state: PostLineupState) -> dict[str, Any]:
 
         try:
             monthly_post = generated.monthlyPost.model_dump()
-            weekly_post = generated.weeklyPost.model_dump()
+            weekly_posts = [post.model_dump() for post in generated.weeklyPosts]
             if monthly_post.get("intent") != "pinned_monthly_menu":
                 raise ValueError("monthlyPost intent must be pinned_monthly_menu")
-            if weekly_post.get("intent") != "weekday_lunch_post":
-                raise ValueError("weeklyPost intent must be weekday_lunch_post")
+            if len(weekly_posts) != expected_week_count:
+                raise ValueError(
+                    f"weeklyPosts must contain exactly {expected_week_count} entries; "
+                    f"got {len(weekly_posts)}"
+                )
 
             payload = build_post_lineup_from_plan(
                 monthly_post=monthly_post,
-                weekly_post=weekly_post,
+                weekly_posts=weekly_posts,
+                campaign_weeks=campaign_weeks_list,
                 groups=groups,
                 food_leads=food_leads,
                 campaign_brief_data=campaign_brief_data,
+                start_date=start_date,
+                end_date=end_date,
                 source_menu_clusterer_title=str(state.get("source_menu_clusterer_title") or ""),
                 source_campaign_brief_title=str(state.get("source_campaign_brief_title") or ""),
+                source_dates_title=str(state.get("source_dates_title") or ""),
                 notes=owner_notes,
             )
             normalized = _normalize_generated_output(payload)

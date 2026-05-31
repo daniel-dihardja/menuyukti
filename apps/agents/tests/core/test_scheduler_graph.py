@@ -553,3 +553,57 @@ async def test_build_snapshot_treats_human_readable_weekday_lunch_focus_as_tuesd
 
     reel_dates = [slot["date"] for slot in normalized["slots"] if slot["kind"] == "reel"]
     assert reel_dates == ["2026-06-02", "2026-06-09", "2026-06-16", "2026-06-23", "2026-06-30"]
+
+
+@pytest.mark.asyncio
+async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
+    from agents_app.agents.core.milestone_run.scheduler.nodes import _build_weekly_post_slots
+
+    post_lineup_data = {
+        "posts": [
+            {
+                "id": "weekday-lunch-post-week-2026-06-01",
+                "format": "carousel",
+                "intent": "weekday_lunch_post",
+                "title": "Week 1 lunch",
+                "date": "2026-06-02",
+                "fixdate": True,
+                "scheduleHints": {"preferredWeekdays": ["tuesday"], "preferredTime": "10:00"},
+                "slides": [],
+                "groupIds": ["group-1"],
+            },
+            {
+                "id": "weekday-lunch-post-week-2026-06-08",
+                "format": "carousel",
+                "intent": "weekday_lunch_post",
+                "title": "Week 2 lunch",
+                "date": "2026-06-09",
+                "fixdate": True,
+                "scheduleHints": {"preferredWeekdays": ["tuesday"], "preferredTime": "10:00"},
+                "slides": [],
+                "groupIds": ["group-1"],
+            },
+        ]
+    }
+
+    slots = _build_weekly_post_slots(
+        post_lineup_data,
+        menu_clusterer_data=None,
+        campaign_brief_data=None,
+        start_date="2026-06-01",
+        end_date="2026-06-30",
+    )
+    assert slots == [
+        {
+            "kind": "post",
+            "date": "2026-06-02",
+            "time": "10:00",
+            "title": "Week 1 lunch",
+        },
+        {
+            "kind": "post",
+            "date": "2026-06-09",
+            "time": "10:00",
+            "title": "Week 2 lunch",
+        },
+    ]

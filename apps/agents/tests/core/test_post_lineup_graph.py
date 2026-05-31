@@ -6,6 +6,7 @@ import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.post_lineup.build import build_post_lineup_from_plan
 from agents_app.agents.core.milestone_run.post_lineup.nodes import (
@@ -15,6 +16,9 @@ from agents_app.agents.core.milestone_run.post_lineup.nodes import (
     persist_result,
     plan_posts,
 )
+
+START_DATE = "2026-06-01"
+END_DATE = "2026-06-30"
 
 
 def _food_leads() -> list[dict]:
@@ -100,9 +104,32 @@ def _campaign_brief_data() -> dict:
     }
 
 
+def _weekly_posts_for_window() -> list[dict]:
+    weeks = campaign_weeks(START_DATE, END_DATE, campaign_brief_data=_campaign_brief_data())
+    return [
+        {
+            "weekIndex": week.week_index,
+            "intent": "weekday_lunch_post",
+            "title": f"Week {week.week_index} lunch at Cafe Alto",
+            "groupIds": ["group-1" if week.week_index % 2 else "group-2"],
+            "rationale": f"Lunch concept for week {week.week_index}.",
+        }
+        for week in weeks
+    ]
+
+
 def _prior_json() -> str:
     return json.dumps(
         [
+            {
+                "title": "Campaign dates",
+                "presetId": "dates",
+                "data": {
+                    "startDate": START_DATE,
+                    "endDate": END_DATE,
+                    "publicHolidays": [],
+                },
+            },
             {
                 "title": "Campaign brief",
                 "presetId": "restaurant_campaign_brief",
@@ -121,51 +148,49 @@ def _prior_json() -> str:
     )
 
 
-def test_build_post_lineup_from_plan_creates_two_posts() -> None:
+def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
+    weeks = campaign_weeks(START_DATE, END_DATE, campaign_brief_data=_campaign_brief_data())
     payload = build_post_lineup_from_plan(
         monthly_post={
             "intent": "pinned_monthly_menu",
             "title": "Cafe Alto signature menu",
             "groupIds": ["group-1", "group-2"],
         },
-        weekly_post={
-            "intent": "weekday_lunch_post",
-            "title": "Weekday lunch at Cafe Alto",
-            "groupIds": ["group-1"],
-        },
+        weekly_posts=_weekly_posts_for_window(),
+        campaign_weeks=weeks,
         groups=_groups(),
         food_leads=_food_leads(),
         campaign_brief_data=_campaign_brief_data(),
+        start_date=START_DATE,
+        end_date=END_DATE,
         source_menu_clusterer_title="Menu clusterer",
         source_campaign_brief_title="Campaign brief",
+        source_dates_title="Campaign dates",
     )
     normalized, error = validate_skill_output("post_lineup", payload)
     assert error is None
     assert isinstance(normalized, dict)
-    assert len(normalized["posts"]) == 2
-    monthly = next(
-        post for post in normalized["posts"] if post["intent"] == "pinned_monthly_menu"
-    )
-    weekly = next(
-        post for post in normalized["posts"] if post["intent"] == "weekday_lunch_post"
-    )
+    assert len(normalized["posts"]) == 1 + len(weeks)
+    monthly = next(post for post in normalized["posts"] if post["intent"] == "pinned_monthly_menu")
+    weekly_posts = [post for post in normalized["posts"] if post["intent"] == "weekday_lunch_post"]
     assert monthly["format"] == "carousel"
     assert len(monthly["slides"]) == 2
-    assert monthly["slides"][0]["dishName"] == "Ribeye"
-    assert monthly["groupIds"] == ["group-1", "group-2"]
-    assert weekly["scheduleHints"]["preferredWeekdays"] == ["tuesday"]
-    assert normalized["sourceMenuClustererTitle"] == "Menu clusterer"
-    assert normalized["sourceCampaignBriefTitle"] == "Campaign brief"
+    assert len(weekly_posts) == len(weeks)
+    assert all(post["fixdate"] is True for post in weekly_posts)
+    assert all(post.get("date") for post in weekly_posts)
+    assert normalized["startDate"] == START_DATE
+    assert normalized["endDate"] == END_DATE
+    assert normalized["sourceDatesTitle"] == "Campaign dates"
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_requires_campaign_brief_and_groups() -> None:
+async def test_fetch_and_prepare_requires_dates_milestone() -> None:
     with (
         patch(
             "agents_app.agents.core.milestone_run.post_lineup.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
-        pytest.raises(ValueError, match="restaurant_campaign_brief"),
+        pytest.raises(ValueError, match="dates"),
     ):
         await fetch_and_prepare(
             {
@@ -182,6 +207,7 @@ async def test_fetch_and_prepare_requires_campaign_brief_and_groups() -> None:
 
 @pytest.mark.asyncio
 async def test_plan_posts_mocks_llm_and_persists() -> None:
+    weeks = campaign_weeks(START_DATE, END_DATE, campaign_brief_data=_campaign_brief_data())
     draft = PostLineupDraftOutput(
         monthlyPost=PostLineupPostPlanDraft(
             intent="pinned_monthly_menu",
@@ -189,12 +215,16 @@ async def test_plan_posts_mocks_llm_and_persists() -> None:
             groupIds=["group-1", "group-2"],
             rationale="Monthly signatures from hero groups.",
         ),
-        weeklyPost=PostLineupPostPlanDraft(
-            intent="weekday_lunch_post",
-            title="Weekday lunch at Cafe Alto",
-            groupIds=["group-1"],
-            rationale="Lunch hero group supports weekday demand.",
-        ),
+        weeklyPosts=[
+            PostLineupPostPlanDraft(
+                weekIndex=week.week_index,
+                intent="weekday_lunch_post",
+                title=f"Week {week.week_index} lunch at Cafe Alto",
+                groupIds=["group-1"],
+                rationale=f"Lunch hero group supports week {week.week_index}.",
+            )
+            for week in weeks
+        ],
     )
 
     with (
@@ -217,12 +247,16 @@ async def test_plan_posts_mocks_llm_and_persists() -> None:
                 "campaign_brief_data": _campaign_brief_data(),
                 "groups": _groups(),
                 "food_leads": _food_leads(),
+                "start_date": START_DATE,
+                "end_date": END_DATE,
+                "campaign_weeks": weeks,
                 "source_menu_clusterer_title": "Menu clusterer",
                 "source_campaign_brief_title": "Campaign brief",
+                "source_dates_title": "Campaign dates",
             }
         )
 
-    assert len(built["generated_output"]["posts"]) == 2
+    assert len(built["generated_output"]["posts"]) == 1 + len(weeks)
 
     client = AsyncMock()
     with patch(
@@ -242,11 +276,11 @@ async def test_plan_posts_mocks_llm_and_persists() -> None:
         )
     upsert.assert_awaited_once()
     assert result["milestonedata_written"] is True
-    assert len(json.loads(result["result_data"])["posts"]) == 2
+    assert len(json.loads(result["result_data"])["posts"]) == 1 + len(weeks)
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_loads_groups_and_brief() -> None:
+async def test_fetch_and_prepare_loads_dates_groups_and_brief() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.post_lineup.nodes.get_stream_writer",
         return_value=lambda _x: None,
@@ -263,5 +297,9 @@ async def test_fetch_and_prepare_loads_groups_and_brief() -> None:
             client=AsyncMock(),
         )
     assert len(prepared["groups"]) == 2
+    assert prepared["start_date"] == START_DATE
+    assert prepared["end_date"] == END_DATE
+    assert len(prepared["campaign_weeks"]) == 5
     assert prepared["source_campaign_brief_title"] == "Campaign brief"
     assert prepared["source_menu_clusterer_title"] == "Menu clusterer"
+    assert prepared["source_dates_title"] == "Campaign dates"

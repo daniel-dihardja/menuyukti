@@ -12,13 +12,12 @@ import {
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
-  postLineupMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
 import { EMPTY_MENU_CLUSTERER_DATA } from '@/lib/milestones/menu-clusterer'
-import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
+import { parsePostLineupMilestoneDataOrNull } from '@/lib/milestones/post-lineup'
 import { EMPTY_STORY_LINEUP_DATA } from '@/lib/milestones/story-lineup'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import {
@@ -235,10 +234,8 @@ export async function GET(_req: Request, context: RouteContext) {
       }
     }
     if (presetId === 'post_lineup') {
-      const plParsed = postLineupMilestoneDataSchema.safeParse(milestoneData)
-      if (!plParsed.success) {
-        milestoneData = EMPTY_POST_LINEUP_DATA
-      }
+      const rawPostLineup = milestoneData ?? (mpd != null && typeof mpd === 'object' ? mpd : null)
+      milestoneData = parsePostLineupMilestoneDataOrNull(rawPostLineup)
     }
     if (presetId === 'story_lineup') {
       const slParsed = storyLineupMilestoneDataSchema.safeParse(milestoneData)

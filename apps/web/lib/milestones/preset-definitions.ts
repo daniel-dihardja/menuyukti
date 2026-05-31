@@ -311,6 +311,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       goal: t('milestonePreset.post_lineup.goal'),
       passCriteria: [
         {
+          requirement: t('milestonePreset.post_lineup.criterionPriorDates'),
+          status: 'open',
+        },
+        {
           requirement: t('milestonePreset.post_lineup.criterionPriorCampaignBrief'),
           status: 'open',
         },
@@ -320,6 +324,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.post_lineup.criterionCarouselPost'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionWeeklyFixdate'),
           status: 'open',
         },
         {
@@ -501,7 +509,7 @@ export function normalizeMilestonePresetData(
   }
   const def = MILESTONE_PRESET_REGISTRY[presetId]
   const parsed = def.dataSchema.safeParse(data)
-  return parsed.success ? (parsed.data as MilestonedataValue) : def.emptyData
+  return parsed.success ? (parsed.data as MilestonedataValue) : undefined
 }
 
 /**

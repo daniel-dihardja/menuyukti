@@ -59,6 +59,11 @@ function PostCard({
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
           <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
+          {post.date?.trim() ? (
+            <Badge variant="outline">
+              {t('milestonePostLineupPreviewScheduledDate', { date: post.date })}
+            </Badge>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2 px-4 pt-0">
@@ -207,6 +212,21 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
             {data.sourceCampaignBriefTitle}
           </p>
         ) : null}
+        {data.startDate && data.endDate ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{t('milestonePostLineupPreviewCampaignWindow')}:</span>{' '}
+            {t('milestonePostLineupPreviewCampaignWindowValue', {
+              startDate: data.startDate,
+              endDate: data.endDate,
+            })}
+          </p>
+        ) : null}
+        {data.sourceDatesTitle ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{t('milestonePostLineupPreviewSourceDatesTitle')}:</span>{' '}
+            {data.sourceDatesTitle}
+          </p>
+        ) : null}
       </div>
 
       <Separator />
@@ -226,11 +246,18 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
                 description={t('milestonePostLineupPreviewPostListMeta', {
                   number: index + 1,
                   slideCount: post.slides.length,
+                  hasDate: Boolean(post.date?.trim()),
+                  date: post.date?.trim() ?? '',
                 })}
                 meta={
                   <>
                     <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
                     <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
+                    {post.date?.trim() ? (
+                      <Badge variant="outline">
+                        {t('milestonePostLineupPreviewScheduledDate', { date: post.date })}
+                      </Badge>
+                    ) : null}
                   </>
                 }
                 viewDetailsLabel={viewDetailsLabel}

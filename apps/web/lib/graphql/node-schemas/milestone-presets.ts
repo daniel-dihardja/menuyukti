@@ -4,6 +4,7 @@
 
 import { z } from 'zod'
 
+import { weekStartIsoForDate } from '@/lib/milestones/dates-window'
 import {
   MENU_TAGGER_TAXONOMY_VERSION,
   computeMenuTaggerUsedTags,
@@ -425,36 +426,101 @@ export const postLineupPostSchema = z.object({
   title: z.string().trim().min(1),
   slides: z.array(postLineupSlideSchema).min(1).max(5),
   groupIds: z.array(z.string().trim().min(1)).min(1),
+  date: z.string().optional(),
+  fixdate: z.boolean().optional(),
   scheduleHints: postLineupScheduleHintsSchema.optional(),
 })
 
 export type PostLineupPost = z.infer<typeof postLineupPostSchema>
 
-export const postLineupMilestoneDataSchema = z.object({
-  posts: z.array(postLineupPostSchema).superRefine((posts, ctx) => {
+export const postLineupMilestoneDataSchema = z
+  .object({
+    posts: z.array(postLineupPostSchema),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    sourceMenuClustererTitle: z.string().optional(),
+    sourceCampaignBriefTitle: z.string().optional(),
+    sourceDatesTitle: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const { posts, startDate, endDate } = data
     if (posts.length === 0) {
       return
     }
-    if (posts.length !== 2) {
+
+    if (!startDate?.trim() || !endDate?.trim()) {
       ctx.addIssue({
         code: 'custom',
-        message: 'must contain exactly 2 posts',
+        message: 'startDate and endDate are required when posts are present',
+        path: ['startDate'],
       })
       return
     }
-    const hasMonthly = posts.some((post) => post.intent === 'pinned_monthly_menu')
-    const hasWeekly = posts.some((post) => post.intent === 'weekday_lunch_post')
-    if (!hasMonthly || !hasWeekly) {
+
+    const monthlyPosts = posts.filter((post) => post.intent === 'pinned_monthly_menu')
+    const weeklyPosts = posts.filter((post) => post.intent === 'weekday_lunch_post')
+
+    if (monthlyPosts.length !== 1) {
       ctx.addIssue({
         code: 'custom',
-        message: 'must include one pinned_monthly_menu and one weekday_lunch_post',
+        message: 'must contain exactly one pinned_monthly_menu post',
+        path: ['posts'],
       })
     }
-  }),
-  sourceMenuClustererTitle: z.string().optional(),
-  sourceCampaignBriefTitle: z.string().optional(),
-  notes: z.string().optional(),
-})
+
+    if (weeklyPosts.length < 1) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'must contain at least one weekday_lunch_post for the campaign window',
+        path: ['posts'],
+      })
+    }
+
+    const seenWeekStarts = new Set<string>()
+    weeklyPosts.forEach((post, index) => {
+      if (post.fixdate !== true) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_lunch_post entries must have fixdate true',
+          path: ['posts', index, 'fixdate'],
+        })
+      }
+      const postDate = post.date?.trim()
+      if (!postDate) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_lunch_post entries must include date',
+          path: ['posts', index, 'date'],
+        })
+        return
+      }
+      if (postDate < startDate || postDate > endDate) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_lunch_post date must fall within startDate and endDate',
+          path: ['posts', index, 'date'],
+        })
+      }
+      const weekStart = weekStartIsoForDate(postDate)
+      if (!weekStart) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_lunch_post date must be a valid ISO date',
+          path: ['posts', index, 'date'],
+        })
+        return
+      }
+      if (seenWeekStarts.has(weekStart)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_lunch_post dates must fall in distinct calendar weeks',
+          path: ['posts', index, 'date'],
+        })
+      }
+      seenWeekStarts.add(weekStart)
+    })
+  })
 
 export type PostLineupMilestoneData = z.infer<typeof postLineupMilestoneDataSchema>
 

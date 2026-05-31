@@ -319,7 +319,9 @@ def _weekly_post_schedule(
                 if str(value).strip().lower() in _WEEKDAY_INDEX
             ]
             if cleaned:
-                preferred_time = str(hints.get("preferredTime") or "").strip() or DEFAULT_POST_SLOT_TIME
+                preferred_time = (
+                    str(hints.get("preferredTime") or "").strip() or DEFAULT_POST_SLOT_TIME
+                )
                 return cleaned, preferred_time
     return _preferred_weekdays(menu_clusterer_data, campaign_brief_data), DEFAULT_POST_SLOT_TIME
 
@@ -345,6 +347,33 @@ def _build_weekly_post_slots(
     ]
     if not valid_posts:
         return []
+
+    fixdated_posts = [
+        post
+        for post in valid_posts
+        if post.get("fixdate") is True and str(post.get("date") or "").strip()
+    ]
+    if fixdated_posts:
+        slots: list[dict[str, str]] = []
+        for post in fixdated_posts:
+            iso_date = str(post.get("date") or "").strip()
+            if iso_date < start_date or iso_date > end_date:
+                continue
+            hints = post.get("scheduleHints")
+            preferred_time = DEFAULT_POST_SLOT_TIME
+            if isinstance(hints, dict):
+                time = str(hints.get("preferredTime") or "").strip()
+                if time:
+                    preferred_time = time
+            slots.append(
+                {
+                    "kind": "post",
+                    "date": iso_date,
+                    "time": preferred_time,
+                    "title": str(post.get("title") or "").strip(),
+                }
+            )
+        return slots
 
     post = valid_posts[0]
     preferred_weekdays, preferred_time = _weekly_post_schedule(
