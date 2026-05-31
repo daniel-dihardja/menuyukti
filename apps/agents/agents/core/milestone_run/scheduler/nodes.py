@@ -9,6 +9,9 @@ from typing import Any
 import httpx
 from agents_app.agents.core.milestone_run.dates_window import (
     campaign_weeks,
+    holiday_dates,
+    interval_block_starts,
+    pick_least_busy_date,
     preferred_time_for_strategy,
 )
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
@@ -299,7 +302,16 @@ def _build_post_slots(
     return slots
 
 
-def _build_story_slots(
+def _slot_counts(slots: list[dict[str, str]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for slot in slots:
+        iso_date = str(slot.get("date") or "").strip()
+        if iso_date:
+            counts[iso_date] = counts.get(iso_date, 0) + 1
+    return counts
+
+
+def _build_fixdate_story_slots(
     story_lineup_data: dict[str, Any] | None,
     *,
     start_date: str,
@@ -312,6 +324,8 @@ def _build_story_slots(
     slots: list[dict[str, str]] = []
     for story in stories:
         if not isinstance(story, dict):
+            continue
+        if story.get("fixdate") is not True:
             continue
         title = str(story.get("title") or "").strip()
         iso_date = str(story.get("date") or "").strip()
@@ -329,6 +343,90 @@ def _build_story_slots(
             }
         )
     return slots
+
+
+def _build_interval_story_slots(
+    story_lineup_data: dict[str, Any] | None,
+    *,
+    start_date: str,
+    end_date: str,
+    public_holidays: list[Any],
+    existing_slots: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    stories = story_lineup_data.get("stories") if isinstance(story_lineup_data, dict) else None
+    if not isinstance(stories, list):
+        return []
+
+    holidays = holiday_dates(public_holidays)
+    occupied_counts = _slot_counts(existing_slots)
+    slots: list[dict[str, str]] = []
+
+    for story in stories:
+        if not isinstance(story, dict):
+            continue
+        if story.get("fixdate") is True:
+            continue
+        if str(story.get("reason") or "").strip() != "user_review":
+            continue
+        title = str(story.get("title") or "").strip()
+        if not title:
+            continue
+
+        raw_interval = story.get("intervalWeeks")
+        interval_weeks = 4
+        if isinstance(raw_interval, int) and raw_interval > 0:
+            interval_weeks = raw_interval
+        elif isinstance(raw_interval, float) and raw_interval > 0:
+            interval_weeks = int(raw_interval)
+
+        time = str(story.get("time") or "").strip() or DEFAULT_STORY_SLOT_TIME
+        for block_start, block_end in interval_block_starts(
+            start_date,
+            end_date,
+            interval_weeks=interval_weeks,
+        ):
+            iso_date = pick_least_busy_date(
+                block_start,
+                block_end,
+                occupied_counts=occupied_counts,
+                holiday_dates=holidays,
+            )
+            if iso_date is None:
+                continue
+            slots.append(
+                {
+                    "kind": "story",
+                    "date": iso_date,
+                    "time": time,
+                    "title": title,
+                }
+            )
+            occupied_counts[iso_date] = occupied_counts.get(iso_date, 0) + 1
+
+    return slots
+
+
+def _build_story_slots(
+    story_lineup_data: dict[str, Any] | None,
+    *,
+    start_date: str,
+    end_date: str,
+    public_holidays: list[Any],
+    existing_slots: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    fixdate_slots = _build_fixdate_story_slots(
+        story_lineup_data,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    interval_slots = _build_interval_story_slots(
+        story_lineup_data,
+        start_date=start_date,
+        end_date=end_date,
+        public_holidays=public_holidays,
+        existing_slots=[*existing_slots, *fixdate_slots],
+    )
+    return [*fixdate_slots, *interval_slots]
 
 
 async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -406,19 +504,20 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
         public_holidays = []
 
     slots: list[dict[str, str]] = []
-    slots.extend(
-        _build_post_slots(
-            state.get("post_lineup_data"),
-            campaign_brief_data=campaign_brief_data,
-            start_date=start_date,
-            end_date=end_date,
-        )
+    post_slots = _build_post_slots(
+        state.get("post_lineup_data"),
+        campaign_brief_data=campaign_brief_data,
+        start_date=start_date,
+        end_date=end_date,
     )
+    slots.extend(post_slots)
     slots.extend(
         _build_story_slots(
             state.get("story_lineup_data"),
             start_date=start_date,
             end_date=end_date,
+            public_holidays=public_holidays,
+            existing_slots=post_slots,
         )
     )
 

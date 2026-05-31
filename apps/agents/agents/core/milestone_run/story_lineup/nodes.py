@@ -30,6 +30,9 @@ from langgraph.config import get_stream_writer
 from pydantic import BaseModel
 
 HAPPY_HOLIDAY_STORY_TIME = "10:00"
+USER_REVIEW_STORY_TIME = "14:00"
+USER_REVIEW_STORY_ID = "story-user-review"
+USER_REVIEW_INTERVAL_WEEKS = 4
 
 
 def _trace(state: StoryLineupState, step: str, **extra: Any) -> None:
@@ -164,6 +167,17 @@ def _build_public_holiday_stories(
     return stories
 
 
+def _build_user_review_story() -> dict[str, Any]:
+    return {
+        "id": USER_REVIEW_STORY_ID,
+        "title": "Story: positive customer review",
+        "fixdate": False,
+        "reason": "user_review",
+        "intervalWeeks": USER_REVIEW_INTERVAL_WEEKS,
+        "time": USER_REVIEW_STORY_TIME,
+    }
+
+
 async def fetch_and_prepare(
     state: StoryLineupState, *, client: httpx.AsyncClient
 ) -> dict[str, Any]:
@@ -260,7 +274,7 @@ async def build_lineup(state: StoryLineupState) -> dict[str, Any]:
         end_date=end_date,
     )
 
-    payload: dict[str, Any] = {"stories": stories}
+    payload: dict[str, Any] = {"stories": [_build_user_review_story(), *stories]}
     source_title = str(state.get("source_dates_title") or "").strip()
     if source_title:
         payload["sourceDatesTitle"] = source_title

@@ -5,6 +5,9 @@ from __future__ import annotations
 from agents_app.agents.core.milestone_run.dates_window import (
     campaign_weeks,
     count_campaign_weeks,
+    holiday_dates,
+    interval_block_starts,
+    pick_least_busy_date,
     preferred_weekdays_for_strategy,
 )
 
@@ -37,3 +40,44 @@ def test_count_campaign_weeks_matches_list_length() -> None:
     start = "2026-06-01"
     end = "2026-06-30"
     assert count_campaign_weeks(start, end) == len(campaign_weeks(start, end))
+
+
+def test_holiday_dates_extracts_iso_dates() -> None:
+    dates = holiday_dates(
+        [
+            {"date": "2026-06-15", "name": "Easter Sunday"},
+            {"date": "invalid", "name": "Skip"},
+        ]
+    )
+    assert dates == {"2026-06-15"}
+
+
+def test_interval_block_starts_four_week_blocks() -> None:
+    blocks = interval_block_starts("2026-06-01", "2026-06-30", interval_weeks=4)
+    assert blocks == [("2026-06-01", "2026-06-28")]
+
+    long_blocks = interval_block_starts("2026-06-01", "2026-08-31", interval_weeks=4)
+    assert len(long_blocks) == 3
+    assert long_blocks[0] == ("2026-06-01", "2026-06-28")
+    assert long_blocks[1] == ("2026-06-29", "2026-07-26")
+    assert long_blocks[2] == ("2026-07-27", "2026-08-23")
+
+
+def test_pick_least_busy_date_prefers_wednesday_and_avoids_holidays() -> None:
+    picked = pick_least_busy_date(
+        "2026-06-01",
+        "2026-06-30",
+        occupied_counts={"2026-06-04": 1, "2026-06-11": 1},
+        holiday_dates={"2026-06-15"},
+    )
+    assert picked == "2026-06-03"
+
+
+def test_pick_least_busy_date_prefers_lower_traffic_among_same_weekday() -> None:
+    picked = pick_least_busy_date(
+        "2026-06-01",
+        "2026-06-30",
+        occupied_counts={"2026-06-03": 2, "2026-06-10": 0, "2026-06-17": 1},
+        holiday_dates=set(),
+    )
+    assert picked == "2026-06-10"

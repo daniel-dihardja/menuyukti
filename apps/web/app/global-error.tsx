@@ -32,7 +32,9 @@ export default function RootGlobalError({
       <body className={`${fontSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ErrorFallback
           description={copy.description}
-          digestLabel={copy.digestLabel}
+          digestLabel={
+            error.digest ? copy.digestLabel.replace('{digest}', error.digest) : undefined
+          }
           error={error}
           reset={reset}
           title={copy.title}

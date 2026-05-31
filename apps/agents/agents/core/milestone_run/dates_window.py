@@ -184,3 +184,90 @@ def count_campaign_weeks(
             campaign_brief_data=campaign_brief_data,
         )
     )
+
+
+_USER_REVIEW_PREFERRED_WEEKDAYS: list[WeekdayName] = [
+    "wednesday",
+    "tuesday",
+    "friday",
+    "thursday",
+    "monday",
+]
+
+
+def holiday_dates(public_holidays: list[Any]) -> set[str]:
+    dates: set[str] = set()
+    for holiday in public_holidays:
+        if not isinstance(holiday, dict):
+            continue
+        parsed = parse_iso_date(str(holiday.get("date") or ""))
+        if parsed is not None:
+            dates.add(parsed.isoformat())
+    return dates
+
+
+def pick_least_busy_date(
+    block_start: str,
+    block_end: str,
+    *,
+    occupied_counts: dict[str, int],
+    holiday_dates: set[str],
+    preferred_weekdays: list[WeekdayName] | None = None,
+) -> str | None:
+    start = parse_iso_date(block_start)
+    end = parse_iso_date(block_end)
+    if start is None or end is None or start > end:
+        return None
+
+    weekdays = preferred_weekdays or list(_USER_REVIEW_PREFERRED_WEEKDAYS)
+    preferred_indexes = {_WEEKDAY_INDEX[day] for day in weekdays if day in _WEEKDAY_INDEX}
+
+    def _score(iso_date: str, weekday_index: int) -> tuple[int, int, str]:
+        weekday_rank = (
+            weekdays.index(_INDEX_WEEKDAY[weekday_index])
+            if weekday_index in preferred_indexes
+            else len(weekdays)
+        )
+        return (weekday_rank, occupied_counts.get(iso_date, 0), iso_date)
+
+    candidates: list[tuple[tuple[int, int, str], str]] = []
+    cursor = start
+    while cursor <= end:
+        iso = cursor.isoformat()
+        if iso not in holiday_dates:
+            candidates.append((_score(iso, cursor.weekday()), iso))
+        cursor += timedelta(days=1)
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: item[0])
+    return candidates[0][1]
+
+
+def interval_block_starts(
+    start_date: str,
+    end_date: str,
+    *,
+    interval_weeks: int,
+) -> list[tuple[str, str]]:
+    """Return (block_start, block_end) ISO date pairs for non-overlapping interval blocks."""
+    if interval_weeks < 1:
+        return []
+
+    window_start = parse_iso_date(start_date)
+    window_end = parse_iso_date(end_date)
+    if window_start is None or window_end is None or window_start > window_end:
+        return []
+
+    block_days = interval_weeks * 7
+    blocks: list[tuple[str, str]] = []
+    cursor = window_start
+    while cursor <= window_end:
+        block_end = min(cursor + timedelta(days=block_days - 1), window_end)
+        block_length = (block_end - cursor).days + 1
+        if block_length < block_days:
+            break
+        blocks.append((cursor.isoformat(), block_end.isoformat()))
+        cursor = block_end + timedelta(days=1)
+    return blocks

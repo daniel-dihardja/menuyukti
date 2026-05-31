@@ -924,9 +924,10 @@ class StoryLineupStoryOutput(BaseModel):
     title: str
     date: str | None = None
     fixdate: bool = False
-    reason: Literal["public_holiday"] | None = None
+    reason: Literal["public_holiday", "user_review"] | None = None
     holidayName: str | None = None
     time: str | None = None
+    intervalWeeks: int | None = None
 
     @field_validator("id", "title", mode="before")
     @classmethod

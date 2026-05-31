@@ -16,7 +16,7 @@ export default function GlobalError({
   return (
     <ErrorFallback
       description={t('description')}
-      digestLabel={t('digestLabel')}
+      digestLabel={error.digest ? t('digestLabel', { digest: error.digest }) : undefined}
       error={error}
       reset={reset}
       title={t('title')}

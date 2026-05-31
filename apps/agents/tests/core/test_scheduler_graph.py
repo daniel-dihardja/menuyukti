@@ -330,6 +330,14 @@ def _prior_json() -> str:
                 "data": {
                     "stories": [
                         {
+                            "id": "story-user-review",
+                            "title": "Story: positive customer review",
+                            "fixdate": False,
+                            "reason": "user_review",
+                            "intervalWeeks": 4,
+                            "time": "14:00",
+                        },
+                        {
                             "id": "story-public-holiday-2026-06-15-easter-sunday",
                             "title": "Story: sending happy Easter Sunday",
                             "date": "2026-06-15",
@@ -498,6 +506,38 @@ async def test_build_snapshot_creates_post_and_story_slots_without_reels() -> No
         "time": "10:00",
         "title": "Story: sending happy Easter Sunday",
     } in normalized["slots"]
+    assert {
+        "kind": "story",
+        "date": "2026-06-03",
+        "time": "14:00",
+        "title": "Story: positive customer review",
+    } in normalized["slots"]
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_schedules_user_review_every_four_weeks() -> None:
+    prior = json.loads(_prior_json())
+    prior[0]["data"]["endDate"] = "2026-08-31"
+    result = await build_snapshot(
+        _base_state(
+            dates_data=prior[0]["data"],
+            campaign_brief_data=prior[1]["data"],
+            post_lineup_data=prior[3]["data"],
+            story_lineup_data=prior[4]["data"],
+        )
+    )
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
+    user_review_slots = [
+        slot
+        for slot in normalized["slots"]
+        if slot.get("title") == "Story: positive customer review"
+    ]
+    assert len(user_review_slots) == 3
+    assert user_review_slots[0]["date"] == "2026-06-03"
+    assert user_review_slots[1]["date"] == "2026-07-08"
+    assert user_review_slots[2]["date"] == "2026-07-29"
 
 
 @pytest.mark.asyncio

@@ -368,6 +368,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           requirement: t('milestonePreset.story_lineup.criterionPublicHolidayFixdate'),
           status: 'open',
         },
+        {
+          requirement: t('milestonePreset.story_lineup.criterionUserReviewStory'),
+          status: 'open',
+        },
       ],
     }),
   },

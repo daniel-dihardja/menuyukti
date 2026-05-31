@@ -521,7 +521,7 @@ export const postLineupMilestoneDataSchema = z
 
 export type PostLineupMilestoneData = z.infer<typeof postLineupMilestoneDataSchema>
 
-export const storyLineupStoryReasonSchema = z.literal('public_holiday')
+export const storyLineupStoryReasonSchema = z.enum(['public_holiday', 'user_review'])
 
 export const storyLineupStorySchema = z.object({
   id: z.string().trim().min(1),
@@ -531,6 +531,7 @@ export const storyLineupStorySchema = z.object({
   reason: storyLineupStoryReasonSchema.optional(),
   holidayName: z.string().optional(),
   time: z.string().optional(),
+  intervalWeeks: z.number().int().positive().optional(),
 })
 
 export type StoryLineupStory = z.infer<typeof storyLineupStorySchema>

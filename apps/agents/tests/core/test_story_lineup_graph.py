@@ -10,7 +10,9 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.story_lineup.nodes import (
     HolidayGreetingPick,
     StoryLineupHolidayGreetingsDraft,
+    USER_REVIEW_STORY_ID,
     _build_public_holiday_stories,
+    _build_user_review_story,
     _fmt_owner_holiday_notes,
     build_lineup,
     fetch_and_prepare,
@@ -130,6 +132,14 @@ def test_fmt_owner_holiday_notes_uses_story_lineup_input() -> None:
     assert "Mark Easter Sunday" in text
 
 
+def test_build_user_review_story_is_deterministic() -> None:
+    story = _build_user_review_story()
+    assert story["id"] == USER_REVIEW_STORY_ID
+    assert story["reason"] == "user_review"
+    assert story["fixdate"] is False
+    assert story["intervalWeeks"] == 4
+
+
 @pytest.mark.asyncio
 async def test_build_lineup_persists_stories() -> None:
     result = await build_lineup(
@@ -155,8 +165,10 @@ async def test_build_lineup_persists_stories() -> None:
     assert error is None
     assert isinstance(normalized, dict)
     assert normalized["sourceDatesTitle"] == "Campaign dates"
-    assert len(normalized["stories"]) == 1
-    assert normalized["stories"][0]["fixdate"] is True
+    assert len(normalized["stories"]) == 2
+    assert normalized["stories"][0]["reason"] == "user_review"
+    assert normalized["stories"][0]["fixdate"] is False
+    assert normalized["stories"][1]["fixdate"] is True
 
 
 @pytest.mark.asyncio

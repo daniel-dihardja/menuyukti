@@ -36,20 +36,25 @@ function StoryDetail({
   story,
   labels,
   formatDate,
+  formatInterval,
 }: {
   story: StoryLineupStory
   labels: {
     fixdate: string
     publicHoliday: string
+    userReview: string
+    intervalLabel: string
     dateLabel: string
     timeLabel: string
     holidayLabel: string
   }
   formatDate: (value: string) => string
+  formatInterval: (weeks: number) => string
 }) {
   const schedule = formatStorySchedule(story, formatDate)
 
-  const hasBadges = story.fixdate || story.reason === 'public_holiday'
+  const hasBadges =
+    story.fixdate || story.reason === 'public_holiday' || story.reason === 'user_review'
 
   return (
     <Card className="gap-3 py-4 shadow-none">
@@ -59,6 +64,9 @@ function StoryDetail({
             {story.fixdate ? <Badge variant="secondary">{labels.fixdate}</Badge> : null}
             {story.reason === 'public_holiday' ? (
               <Badge variant="outline">{labels.publicHoliday}</Badge>
+            ) : null}
+            {story.reason === 'user_review' ? (
+              <Badge variant="outline">{labels.userReview}</Badge>
             ) : null}
           </div>
         </CardHeader>
@@ -72,6 +80,12 @@ function StoryDetail({
         {story.time?.trim() && !story.date?.trim() ? (
           <p className={mp.bodySmall}>
             <span className={mp.rowKey}>{labels.timeLabel}:</span> {story.time}
+          </p>
+        ) : null}
+        {story.intervalWeeks != null && story.intervalWeeks > 0 ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{labels.intervalLabel}:</span>{' '}
+            {formatInterval(story.intervalWeeks)}
           </p>
         ) : null}
         {story.holidayName ? (
@@ -96,12 +110,16 @@ export function MilestoneStoryLineupDataPreview({ data }: MilestoneStoryLineupDa
       sourceDates: t('milestoneStoryLineupPreviewSourceDates'),
       fixdate: t('milestoneStoryLineupPreviewFixdateBadge'),
       publicHoliday: t('milestoneStoryLineupPreviewPublicHolidayBadge'),
+      userReview: t('milestoneStoryLineupPreviewUserReviewBadge'),
+      intervalLabel: t('milestoneStoryLineupPreviewIntervalLabel'),
       dateLabel: t('milestoneStoryLineupPreviewDateLabel'),
       timeLabel: t('milestoneStoryLineupPreviewTimeLabel'),
       holidayLabel: t('milestoneStoryLineupPreviewHolidayLabel'),
     }),
     [t],
   )
+
+  const formatInterval = (weeks: number) => t('milestoneStoryLineupPreviewIntervalValue', { weeks })
 
   const listItems = useMemo(
     () => (data.stories ?? []).map((story) => ({ id: story.id, story })),
@@ -147,6 +165,9 @@ export function MilestoneStoryLineupDataPreview({ data }: MilestoneStoryLineupDa
                         {story.reason === 'public_holiday' ? (
                           <Badge variant="outline">{labels.publicHoliday}</Badge>
                         ) : null}
+                        {story.reason === 'user_review' ? (
+                          <Badge variant="outline">{labels.userReview}</Badge>
+                        ) : null}
                       </>
                     }
                     viewDetailsLabel={viewDetailsLabel}
@@ -158,7 +179,12 @@ export function MilestoneStoryLineupDataPreview({ data }: MilestoneStoryLineupDa
           }
           detail={
             selectedStory ? (
-              <StoryDetail story={selectedStory} labels={labels} formatDate={formatDate} />
+              <StoryDetail
+                story={selectedStory}
+                labels={labels}
+                formatDate={formatDate}
+                formatInterval={formatInterval}
+              />
             ) : null
           }
         />

@@ -1454,10 +1454,11 @@
             "inputLabel": "Holiday story notes",
             "inputDescription": "Optional guidance for which public holidays from the prior **dates** milestone should get an Instagram Story greeting. Name holidays to include or skip; leave empty to let the run decide from the holiday list alone.",
             "inputPlaceholder": "e.g. Mark Easter Sunday and Christmas Day; skip Memorial Day and remembrance days…",
-            "goal": "Read the campaign window and public holidays from a prior **dates** milestone, then decide which holidays deserve a cheerful Instagram Story greeting. Save each selected story in **stories** with **fixdate** set so the scheduler can place it on the holiday date. Place this milestone after **dates** and before **scheduler** in the timeline.",
+            "goal": "Read the campaign window and public holidays from a prior **dates** milestone, then decide which holidays deserve a cheerful Instagram Story greeting. Always include one **user_review** story (positive customer feedback screenshot) with **fixdate** false so the scheduler can place it every four weeks. Save each selected holiday story in **stories** with **fixdate** set so the scheduler can place it on the holiday date. Place this milestone after **dates** and before **scheduler** in the timeline.",
             "criterionPriorDates": "Run used a prior **dates** milestone with saved start, end, and public holidays.",
             "criterionStoriesPresent": "**stories** lists every selected public-holiday Story with a non-empty **title**.",
-            "criterionPublicHolidayFixdate": "Each public-holiday story has **fixdate** true and a **date** matching the holiday in the dates milestone."
+            "criterionPublicHolidayFixdate": "Each public-holiday story has **fixdate** true and a **date** matching the holiday in the dates milestone.",
+            "criterionUserReviewStory": "**stories** always includes one **user_review** story with **fixdate** false."
           },
           "post_lineup": {
             "label": "Post lineup",
@@ -1810,10 +1811,13 @@
         "milestoneMenuClustererPreviewNotes": "Notes",
         "milestoneMenuClustererPreviewNoNotes": "No notes added.",
         "milestoneStoryLineupPreviewHeading": "Instagram Stories lineup",
-        "milestoneStoryLineupPreviewEmpty": "No stories selected yet. Run Story lineup after Dates to pick public-holiday Story greetings.",
+        "milestoneStoryLineupPreviewEmpty": "No stories yet. Run Story lineup after Dates to build the user-review story and pick public-holiday Story greetings.",
         "milestoneStoryLineupPreviewSourceDates": "Source dates milestone",
         "milestoneStoryLineupPreviewFixdateBadge": "Fixed date",
         "milestoneStoryLineupPreviewPublicHolidayBadge": "Public holiday",
+        "milestoneStoryLineupPreviewUserReviewBadge": "User review",
+        "milestoneStoryLineupPreviewIntervalLabel": "Schedule interval",
+        "milestoneStoryLineupPreviewIntervalValue": "Every {weeks, plural, one {# week} other {# weeks}}",
         "milestonePostLineupPreviewSummary": "{postCount, plural, =0 {No posts} one {# post concept} other {# post concepts}} · {slideCount, plural, =0 {no slides} one {# slide} other {# slides}}",
         "milestonePostLineupPreviewSourceTitle": "Source menu clusterer",
         "milestonePostLineupPreviewSourceCampaignBriefTitle": "Source campaign brief",
