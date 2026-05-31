@@ -146,9 +146,9 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Running restaurant Instagram is a full-time job—and the tools weren't built for it",
-      "subtitle": "Menuyukti gives owners and Instagram partners one shared workspace: upload sales reports, run AI workflows, and build a monthly content schedule backed by what actually sells.",
-      "badge": "Shared workspace · Owner + Instagram partner · Monthly planning",
+      "headline": "Running restaurant Instagram is a full-time job—without a system for the monthly plan",
+      "subtitle": "Turn last month's sales into this month's Instagram schedule. One shared workspace for owners and Instagram partners—whether you're building that workflow for the first time or tightening one you already run.",
+      "badge": "Shared workspace · POS to plan · Owner + Instagram partner",
       "ctaSecondary": "Sign in",
       "viewLarger": "View larger",
       "carouselLabel": "Product screenshots",
@@ -185,17 +185,17 @@
     },
     "pain": {
       "title": "Restaurant Instagram is time-consuming",
-      "subtitle": "Most owners and partners are doing the work with tools—and playbooks—built for online businesses, not restaurants.",
-      "item1Title": "Hours every week, not a skill gap",
+      "subtitle": "Whether you start from a POS export or already have your own process, owners and Instagram partners—freelancers, social managers, or agencies—rarely have a dedicated system for turning sales data into a monthly Instagram plan.",
+      "item1Title": "The work adds up every week",
       "item1Description": "Planning posts, picking dishes to feature, and keeping the feed fresh adds up to hours every week—on top of everything else that comes with running a restaurant.",
       "item2Title": "Offline-first needs a different playbook",
       "item2Description": "Restaurants sell on the floor, not in a checkout flow. What to promote and when to post should follow menu performance and local demand—not the templates online-only brands run on.",
-      "item3Title": "Basic sales data, not promotion intelligence",
-      "item3Description": "Many restaurants split the work—the owner has the POS export, the partner runs Instagram. That report has totals, not granular analytics like menu engineering, demand timing, and ranked promotion picks. Without that layer, both sides do their part but the feed still runs on guesswork."
+      "item3Title": "Sales data, plus the layer Instagram planning needs",
+      "item3Description": "When the work is split, the owner has the POS export and the Instagram partner runs the feed. The export shows what sold—the next step is granular analytics like menu engineering, demand timing, and ranked promotion picks that both sides can plan from in one place."
     },
     "analyticsComparison": {
       "title": "POS reports show what sold. Menuyukti shows what to promote.",
-      "subtitle": "Your POS is built for operations—ringing orders, closing shifts, and accounting. Menuyukti adds the analytics layer agents need to turn the same export into a monthly Instagram strategy.",
+      "subtitle": "Your POS is built for operations—ringing orders, closing shifts, and accounting. Menuyukti adds the analytics layer on top, whether you're building a workflow from scratch or extending one you already use.",
       "posColumnTitle": "Typical POS reporting",
       "menuyuktiColumnTitle": "Menuyukti agent signals",
       "points": {
@@ -225,18 +225,18 @@
         }
       },
       "impactTitle": "Same export, different strategy depth",
-      "impactDescription": "POS dashboards answer how the business performed. Menuyukti answers what to feature, how to group dishes into Reel clusters, when to post, and why—so the partner plans from evidence instead of habit, and the owner can see the reasoning behind every pick."
+      "impactDescription": "POS dashboards answer how the business performed. Menuyukti answers what to feature, how to group dishes into Reel clusters, when to post, and why—so your Instagram partner can plan with evidence, and the owner can see the reasoning behind every pick."
     },
     "bridge": {
       "title": "One workspace for the owner and the Instagram partner",
-      "subtitle": "Whether one person or two share the work, Menuyukti plans your month from sales data—the way restaurant marketing works, not how online brands grow.",
+      "subtitle": "Whether one person wears both hats or owner and Instagram partner work separately, Menuyukti connects sales data to a monthly plan—the way restaurant marketing works, not how online brands grow.",
       "owner": {
         "title": "Restaurant owner",
         "description": "Upload last month's sales report at the start of each month and keep the business context in one shared place."
       },
       "partner": {
         "title": "Instagram partner",
-        "description": "Pick a strategy template, attach the latest sales report, adjust inputs, and run the pipeline to generate the month's schedule."
+        "description": "Freelancer, social manager, or agency—the person who runs the restaurant's Instagram. Pick a strategy template, attach the latest sales report, adjust inputs, and run the pipeline to generate the month's schedule."
       }
     },
     "pillars": {
@@ -441,7 +441,7 @@
     "faq": {
       "title": "Common questions",
       "q1": "What data do I need to upload?",
-      "a1": "At the start of each month, the owner uploads last month's POS sales report (where your POS format is supported). That report powers demand, mix, and timing signals for the partner's monthly workflow run.",
+      "a1": "At the start of each month, the owner uploads last month's POS sales report (where your POS format is supported). That report powers demand, mix, and timing signals for the Instagram partner's monthly workflow run.",
       "q2": "Do I need sales data to use Studio?",
       "a2": "No. Studio works with your product photos and briefs without any sales upload. Connecting analytics to a workflow unlocks evidence-backed briefs, promotion ideas, and schedules.",
       "q3": "Is this just another chat tool?",
@@ -449,20 +449,20 @@
       "q4": "What is a workflow milestone?",
       "a4": "A milestone is one step in your campaign timeline with a goal, optional pass criteria, and saved output. The agent runs the step with context from prior milestones, and you can review, edit, and rerun as needed.",
       "q5": "Who is Menuyukti built for?",
-      "a5": "Restaurant owners and the Instagram partners they work with—small to mid-sized restaurants that need a shared workspace for monthly planning backed by real sales data, not guesswork.",
+      "a5": "Restaurant owners and the Instagram partners they work with—freelancers, social managers, or agencies at small to mid-sized restaurants that need a shared workspace for monthly planning backed by real sales data, not guesswork.",
       "q6": "Can I chat without opening a workflow?",
       "a6": "Yes. You can use Advisor chat when you need quick help, and use Workflows when you want a full milestone timeline with persistent outputs."
     },
     "how": {
       "title": "Your monthly rhythm",
-      "subtitle": "A simple two-step loop at the start of each month—owner supplies the data, partner runs the pipeline.",
+      "subtitle": "A simple two-step loop at the start of each month—the owner supplies the data, the Instagram partner runs the pipeline.",
       "steps": {
         "ownerUpload": {
           "title": "1. Owner uploads last month's sales report",
           "description": "On the first of the month, upload the POS export from the previous month so the workspace has fresh menu performance data."
         },
         "partnerRun": {
-          "title": "2. Partner runs the monthly strategy workflow",
+          "title": "2. Instagram partner runs the monthly strategy workflow",
           "description": "Create a new workflow from the strategy template, select the latest sales report, adjust inputs if needed, and rerun the pipeline to generate the month's Instagram schedule."
         }
       }
