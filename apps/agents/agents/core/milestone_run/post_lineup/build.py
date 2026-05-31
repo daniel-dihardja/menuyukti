@@ -200,19 +200,19 @@ def _weekly_plan_by_index(
 
     paired: list[tuple[CampaignWeek, dict[str, Any]]] = []
     for week in campaign_weeks:
-        plan = by_index.get(week.week_index)
-        if plan is None and unmatched:
-            plan = unmatched.pop(0)
-        if plan is None:
+        week_plan: dict[str, Any] | None = by_index.get(week.week_index)
+        if week_plan is None and unmatched:
+            week_plan = unmatched.pop(0)
+        if week_plan is None:
             raise ValueError(
                 f"post_lineup weeklyPosts missing entry for weekIndex {week.week_index}"
             )
-        intent = str(plan.get("intent") or "").strip()
+        intent = str(week_plan.get("intent") or "").strip()
         if intent != "weekday_lunch_post":
             raise ValueError(
                 f"weeklyPosts entry for week {week.week_index} must be weekday_lunch_post"
             )
-        paired.append((week, plan))
+        paired.append((week, week_plan))
 
     if unmatched:
         raise ValueError("post_lineup weeklyPosts has entries that do not match campaign weeks")

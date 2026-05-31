@@ -226,8 +226,8 @@ def _build_weekly_post_slots(
         for post in valid_posts
         if post.get("fixdate") is True and str(post.get("date") or "").strip()
     ]
+    slots: list[dict[str, str]] = []
     if fixdated_posts:
-        slots: list[dict[str, str]] = []
         for post in fixdated_posts:
             iso_date = str(post.get("date") or "").strip()
             if iso_date < start_date or iso_date > end_date:
@@ -260,17 +260,16 @@ def _build_weekly_post_slots(
         else:
             unmatched.append(post)
 
-    slots: list[dict[str, str]] = []
     for week in weeks:
-        post = posts_by_week.get(week.week_start)
-        if post is None and unmatched:
-            post = unmatched.pop(0)
-        if post is None:
+        week_post: dict[str, Any] | None = posts_by_week.get(week.week_start)
+        if week_post is None and unmatched:
+            week_post = unmatched.pop(0)
+        if week_post is None:
             continue
         iso_date = week.post_date
         if iso_date < start_date or iso_date > end_date:
             continue
-        slot = _post_slot_payload(post, iso_date=iso_date, preferred_time=preferred_time)
+        slot = _post_slot_payload(week_post, iso_date=iso_date, preferred_time=preferred_time)
         if slot is not None:
             slots.append(slot)
     return slots
