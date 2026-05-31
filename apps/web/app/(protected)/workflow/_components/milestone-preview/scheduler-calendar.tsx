@@ -35,7 +35,6 @@ import {
   resolveSchedulerPostDetail,
   schedulerSlotClassName,
   schedulerSlotDisplayTime,
-  schedulerSlotDisplayTitle,
   schedulerSlotKind,
   schedulerSlotTypeLabel,
   schedulerSlotsForDate,
@@ -48,6 +47,7 @@ import {
 
 import { SchedulerCalendarMonthGrid } from './scheduler-calendar-month-grid'
 import { SchedulerCalendarMonthList } from './scheduler-calendar-month-list'
+import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
 import { SchedulerCalendarWeekGrid } from './scheduler-calendar-week-grid'
 import {
   PostLineupPostBadges,
@@ -171,7 +171,7 @@ function SchedulerCalendarDateDetail({
                     schedulerSlotClassName(schedulerSlotKind(slot)),
                   )}
                 >
-                  {schedulerSlotDisplayTitle(slot)}
+                  <SchedulerSlotDisplayTitle slot={slot} />
                 </p>
                 {isPostSlot ? (
                   <p className="mt-2 text-sm text-muted-foreground">

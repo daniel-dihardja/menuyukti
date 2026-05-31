@@ -16,6 +16,8 @@ import {
   schedulerSlotsForDate,
 } from '@/lib/milestones/scheduler-calendar'
 
+import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
+
 export type SchedulerCalendarMonthListProps = {
   monthStartIso: string
   windowStart: string
@@ -113,7 +115,7 @@ export function SchedulerCalendarMonthList({
                       <span className="mb-0.5 text-[10px] font-semibold opacity-80">
                         {schedulerSlotDisplayTime(slot)}
                       </span>
-                      <span className="w-full">{schedulerSlotDisplayTitle(slot)}</span>
+                      <SchedulerSlotDisplayTitle slot={slot} className="w-full" />
                     </button>
                   ))
                 ) : (

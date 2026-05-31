@@ -52,9 +52,18 @@ function schedulerSlotName(title: string): string {
   return normalized || trimmed
 }
 
+export function schedulerSlotDisplayTitleParts(slot: SchedulerSlot): {
+  typeLabel: string
+  name: string
+} {
+  return {
+    typeLabel: schedulerSlotTypeLabel(schedulerSlotKind(slot)),
+    name: schedulerSlotName(slot.title),
+  }
+}
+
 export function schedulerSlotDisplayTitle(slot: SchedulerSlot): string {
-  const typeLabel = schedulerSlotTypeLabel(schedulerSlotKind(slot))
-  const name = schedulerSlotName(slot.title)
+  const { typeLabel, name } = schedulerSlotDisplayTitleParts(slot)
   return name ? `${typeLabel}: ${name}` : typeLabel
 }
 

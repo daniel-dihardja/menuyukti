@@ -17,6 +17,7 @@ import {
   schedulerSlotClassName,
   schedulerSlotDisplayTime,
   schedulerSlotDisplayTitle,
+  schedulerSlotDisplayTitleParts,
   schedulerSlotKind,
   schedulerSlotsByDate,
   schedulerSlotsForDate,
@@ -193,6 +194,19 @@ describe('schedulerSlotClassName', () => {
     expect(reelClass).toContain('orange')
     expect(storyClass).not.toEqual(postClass)
     expect(reelClass).not.toEqual(postClass)
+  })
+})
+
+describe('schedulerSlotDisplayTitleParts', () => {
+  it('returns type label and name separately', () => {
+    expect(
+      schedulerSlotDisplayTitleParts({
+        kind: 'story',
+        date: '2026-06-15',
+        time: '10:00',
+        title: 'Public holiday greetings',
+      }),
+    ).toEqual({ typeLabel: 'Story', name: 'Public holiday greetings' })
   })
 })
 

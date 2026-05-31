@@ -17,6 +17,8 @@ import {
   schedulerWeekdayLabels,
 } from '@/lib/milestones/scheduler-calendar'
 
+import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
+
 export type SchedulerCalendarMonthGridProps = {
   monthStartIso: string
   windowStart: string
@@ -149,7 +151,7 @@ export function SchedulerCalendarMonthGrid({
                       <span className="mb-0.5 text-[10px] font-semibold opacity-80">
                         {schedulerSlotDisplayTime(slot)}
                       </span>
-                      <span className="w-full truncate">{schedulerSlotDisplayTitle(slot)}</span>
+                      <SchedulerSlotDisplayTitle slot={slot} className="w-full truncate" />
                     </button>
                   ))}
                 </div>

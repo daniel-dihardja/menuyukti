@@ -21,6 +21,8 @@ import {
   schedulerSlotsByDate,
 } from '@/lib/milestones/scheduler-calendar'
 
+import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
+
 const TIME_GUTTER_WIDTH_PX = 52
 
 export type SchedulerCalendarWeekGridProps = {
@@ -206,7 +208,7 @@ function SchedulerHourRow({
                     : undefined
                 }
               >
-                <span className="line-clamp-2 font-medium">{schedulerSlotDisplayTitle(slot)}</span>
+                <SchedulerSlotDisplayTitle slot={slot} className="line-clamp-2 font-medium" />
               </button>
             ))}
           </div>
