@@ -31,6 +31,7 @@
   --warning: oklch(0.666 0.179 58.318);
   --warning-foreground: oklch(0.99 0.01 90);
   --border: oklch(0.9 0.025 80);
+  --card-border: oklch(0.86 0.028 78);
   --input: oklch(0.9 0.025 80);
   --ring: oklch(0.58 0.17 58);
   --chart-1: oklch(0.62 0.17 58);
@@ -72,6 +73,7 @@
   --warning: oklch(0.702 0.189 70.08);
   --warning-foreground: oklch(0.2 0.03 55);
   --border: oklch(0.96 0.015 85 / 12%);
+  --card-border: oklch(0.34 0.028 55);
   --input: oklch(0.96 0.015 85 / 16%);
   --ring: oklch(0.78 0.14 68);
   --chart-1: oklch(0.78 0.14 68);
@@ -446,6 +448,292 @@ html.dark[data-palette='espresso'] {
   --sidebar-ring: oklch(0.72 0.1 70);
 }
 
+/* Saffron Spark — turmeric gold, sharp kitchen wit; chart violet hints at AI insight */
+html[data-palette='saffron'] {
+  --background: oklch(0.99 0.018 95);
+  --foreground: oklch(0.27 0.04 62);
+  --card: oklch(1 0.014 96);
+  --card-foreground: oklch(0.27 0.04 62);
+  --popover: oklch(1 0.014 96);
+  --popover-foreground: oklch(0.27 0.04 62);
+  --primary: oklch(0.64 0.17 75);
+  --primary-foreground: oklch(0.99 0.01 95);
+  --secondary: oklch(0.96 0.035 92);
+  --secondary-foreground: oklch(0.32 0.05 62);
+  --muted: oklch(0.96 0.035 92);
+  --muted-foreground: oklch(0.5 0.04 62);
+  --accent: oklch(0.94 0.06 88);
+  --accent-foreground: oklch(0.32 0.05 62);
+  --border: oklch(0.9 0.03 90);
+  --input: oklch(0.9 0.03 90);
+  --ring: oklch(0.64 0.17 75);
+  --chart-1: oklch(0.64 0.17 75);
+  --chart-2: oklch(0.68 0.14 55);
+  --chart-3: oklch(0.62 0.12 145);
+  --chart-4: oklch(0.58 0.1 35);
+  --chart-5: oklch(0.52 0.12 285);
+  --hero-gradient-from: oklch(0.97 0.05 92);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.98 0.02 94);
+  --sidebar-foreground: oklch(0.27 0.04 62);
+  --sidebar-primary: oklch(0.64 0.17 75);
+  --sidebar-primary-foreground: oklch(0.99 0.01 95);
+  --sidebar-accent: oklch(0.94 0.06 88);
+  --sidebar-accent-foreground: oklch(0.32 0.05 62);
+  --sidebar-border: oklch(0.9 0.03 90);
+  --sidebar-ring: oklch(0.64 0.17 75);
+}
+
+html.dark[data-palette='saffron'] {
+  --background: oklch(0.17 0.03 62);
+  --foreground: oklch(0.96 0.02 92);
+  --card: oklch(0.22 0.035 62);
+  --card-foreground: oklch(0.96 0.02 92);
+  --popover: oklch(0.22 0.035 62);
+  --popover-foreground: oklch(0.96 0.02 92);
+  --primary: oklch(0.78 0.15 78);
+  --primary-foreground: oklch(0.2 0.04 62);
+  --secondary: oklch(0.28 0.035 62);
+  --secondary-foreground: oklch(0.96 0.02 92);
+  --muted: oklch(0.28 0.035 62);
+  --muted-foreground: oklch(0.68 0.04 88);
+  --accent: oklch(0.3 0.045 75);
+  --accent-foreground: oklch(0.96 0.02 92);
+  --border: oklch(0.96 0.02 92 / 12%);
+  --input: oklch(0.96 0.02 92 / 16%);
+  --ring: oklch(0.78 0.15 78);
+  --chart-1: oklch(0.78 0.15 78);
+  --chart-2: oklch(0.72 0.13 55);
+  --chart-3: oklch(0.66 0.11 145);
+  --chart-4: oklch(0.64 0.1 35);
+  --chart-5: oklch(0.62 0.12 285);
+  --hero-gradient-from: oklch(0.22 0.045 65);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.2 0.035 62);
+  --sidebar-foreground: oklch(0.96 0.02 92);
+  --sidebar-primary: oklch(0.78 0.15 78);
+  --sidebar-primary-foreground: oklch(0.2 0.04 62);
+  --sidebar-accent: oklch(0.28 0.035 62);
+  --sidebar-accent-foreground: oklch(0.96 0.02 92);
+  --sidebar-border: oklch(0.96 0.02 92 / 12%);
+  --sidebar-ring: oklch(0.78 0.15 78);
+}
+
+/* Golden Nectar — honey apricot, feed-ready warmth; appetite-first restaurant feel */
+html[data-palette='nectar'] {
+  --background: oklch(0.99 0.022 85);
+  --foreground: oklch(0.28 0.045 48);
+  --card: oklch(1 0.018 86);
+  --card-foreground: oklch(0.28 0.045 48);
+  --popover: oklch(1 0.018 86);
+  --popover-foreground: oklch(0.28 0.045 48);
+  --primary: oklch(0.66 0.19 55);
+  --primary-foreground: oklch(0.99 0.01 85);
+  --secondary: oklch(0.96 0.04 82);
+  --secondary-foreground: oklch(0.33 0.055 48);
+  --muted: oklch(0.96 0.04 82);
+  --muted-foreground: oklch(0.52 0.045 48);
+  --accent: oklch(0.95 0.06 78);
+  --accent-foreground: oklch(0.33 0.055 48);
+  --border: oklch(0.91 0.035 82);
+  --input: oklch(0.91 0.035 82);
+  --ring: oklch(0.66 0.19 55);
+  --chart-1: oklch(0.66 0.19 55);
+  --chart-2: oklch(0.7 0.16 40);
+  --chart-3: oklch(0.6 0.12 145);
+  --chart-4: oklch(0.58 0.14 25);
+  --chart-5: oklch(0.54 0.1 200);
+  --hero-gradient-from: oklch(0.97 0.05 80);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.98 0.025 84);
+  --sidebar-foreground: oklch(0.28 0.045 48);
+  --sidebar-primary: oklch(0.66 0.19 55);
+  --sidebar-primary-foreground: oklch(0.99 0.01 85);
+  --sidebar-accent: oklch(0.95 0.06 78);
+  --sidebar-accent-foreground: oklch(0.33 0.055 48);
+  --sidebar-border: oklch(0.91 0.035 82);
+  --sidebar-ring: oklch(0.66 0.19 55);
+}
+
+html.dark[data-palette='nectar'] {
+  --background: oklch(0.18 0.035 48);
+  --foreground: oklch(0.96 0.02 82);
+  --card: oklch(0.23 0.04 48);
+  --card-foreground: oklch(0.96 0.02 82);
+  --popover: oklch(0.23 0.04 48);
+  --popover-foreground: oklch(0.96 0.02 82);
+  --primary: oklch(0.76 0.16 58);
+  --primary-foreground: oklch(0.2 0.045 48);
+  --secondary: oklch(0.29 0.04 48);
+  --secondary-foreground: oklch(0.96 0.02 82);
+  --muted: oklch(0.29 0.04 48);
+  --muted-foreground: oklch(0.68 0.045 78);
+  --accent: oklch(0.31 0.05 55);
+  --accent-foreground: oklch(0.96 0.02 82);
+  --border: oklch(0.96 0.02 82 / 12%);
+  --input: oklch(0.96 0.02 82 / 16%);
+  --ring: oklch(0.76 0.16 58);
+  --chart-1: oklch(0.76 0.16 58);
+  --chart-2: oklch(0.72 0.14 40);
+  --chart-3: oklch(0.64 0.11 145);
+  --chart-4: oklch(0.66 0.12 25);
+  --chart-5: oklch(0.6 0.1 200);
+  --hero-gradient-from: oklch(0.23 0.05 50);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.21 0.04 48);
+  --sidebar-foreground: oklch(0.96 0.02 82);
+  --sidebar-primary: oklch(0.76 0.16 58);
+  --sidebar-primary-foreground: oklch(0.2 0.045 48);
+  --sidebar-accent: oklch(0.29 0.04 48);
+  --sidebar-accent-foreground: oklch(0.96 0.02 82);
+  --sidebar-border: oklch(0.96 0.02 82 / 12%);
+  --sidebar-ring: oklch(0.76 0.16 58);
+}
+
+/* Open Hearth — ember flame, oatmeal calm; simple surfaces, cozy dining room */
+html[data-palette='hearth'] {
+  --background: oklch(0.98 0.012 55);
+  --foreground: oklch(0.29 0.035 42);
+  --card: oklch(0.99 0.01 56);
+  --card-foreground: oklch(0.29 0.035 42);
+  --popover: oklch(0.99 0.01 56);
+  --popover-foreground: oklch(0.29 0.035 42);
+  --primary: oklch(0.57 0.16 42);
+  --primary-foreground: oklch(0.99 0.01 55);
+  --secondary: oklch(0.95 0.02 52);
+  --secondary-foreground: oklch(0.34 0.04 42);
+  --muted: oklch(0.95 0.02 52);
+  --muted-foreground: oklch(0.52 0.03 42);
+  --accent: oklch(0.93 0.035 48);
+  --accent-foreground: oklch(0.34 0.04 42);
+  --border: oklch(0.9 0.022 52);
+  --input: oklch(0.9 0.022 52);
+  --ring: oklch(0.57 0.16 42);
+  --chart-1: oklch(0.57 0.16 42);
+  --chart-2: oklch(0.62 0.12 65);
+  --chart-3: oklch(0.55 0.09 145);
+  --chart-4: oklch(0.58 0.1 25);
+  --chart-5: oklch(0.52 0.08 200);
+  --hero-gradient-from: oklch(0.96 0.028 50);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.97 0.015 54);
+  --sidebar-foreground: oklch(0.29 0.035 42);
+  --sidebar-primary: oklch(0.57 0.16 42);
+  --sidebar-primary-foreground: oklch(0.99 0.01 55);
+  --sidebar-accent: oklch(0.93 0.035 48);
+  --sidebar-accent-foreground: oklch(0.34 0.04 42);
+  --sidebar-border: oklch(0.9 0.022 52);
+  --sidebar-ring: oklch(0.57 0.16 42);
+}
+
+html.dark[data-palette='hearth'] {
+  --background: oklch(0.17 0.028 42);
+  --foreground: oklch(0.96 0.015 55);
+  --card: oklch(0.22 0.032 42);
+  --card-foreground: oklch(0.96 0.015 55);
+  --popover: oklch(0.22 0.032 42);
+  --popover-foreground: oklch(0.96 0.015 55);
+  --primary: oklch(0.72 0.14 44);
+  --primary-foreground: oklch(0.2 0.035 42);
+  --secondary: oklch(0.28 0.03 42);
+  --secondary-foreground: oklch(0.96 0.015 55);
+  --muted: oklch(0.28 0.03 42);
+  --muted-foreground: oklch(0.68 0.035 52);
+  --accent: oklch(0.3 0.038 45);
+  --accent-foreground: oklch(0.96 0.015 55);
+  --border: oklch(0.96 0.015 55 / 12%);
+  --input: oklch(0.96 0.015 55 / 16%);
+  --ring: oklch(0.72 0.14 44);
+  --chart-1: oklch(0.72 0.14 44);
+  --chart-2: oklch(0.68 0.11 65);
+  --chart-3: oklch(0.62 0.09 145);
+  --chart-4: oklch(0.64 0.1 25);
+  --chart-5: oklch(0.58 0.08 200);
+  --hero-gradient-from: oklch(0.22 0.04 42);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.2 0.03 42);
+  --sidebar-foreground: oklch(0.96 0.015 55);
+  --sidebar-primary: oklch(0.72 0.14 44);
+  --sidebar-primary-foreground: oklch(0.2 0.035 42);
+  --sidebar-accent: oklch(0.28 0.03 42);
+  --sidebar-accent-foreground: oklch(0.96 0.015 55);
+  --sidebar-border: oklch(0.96 0.015 55 / 12%);
+  --sidebar-ring: oklch(0.72 0.14 44);
+}
+
+/* Brass Ledger — manila parchment, ink brown, polished copper; flat ledger surfaces */
+html[data-palette='brass'] {
+  --background: oklch(0.97 0.018 82);
+  --foreground: oklch(0.26 0.04 52);
+  --card: oklch(0.99 0.012 84);
+  --card-foreground: oklch(0.26 0.04 52);
+  --popover: oklch(0.99 0.012 84);
+  --popover-foreground: oklch(0.26 0.04 52);
+  --primary: oklch(0.55 0.13 62);
+  --primary-foreground: oklch(0.98 0.014 82);
+  --secondary: oklch(0.94 0.025 78);
+  --secondary-foreground: oklch(0.32 0.045 52);
+  --muted: oklch(0.94 0.025 78);
+  --muted-foreground: oklch(0.48 0.035 52);
+  --accent: oklch(0.92 0.045 70);
+  --accent-foreground: oklch(0.32 0.045 52);
+  --border: oklch(0.87 0.032 75);
+  --card-border: oklch(0.81 0.042 72);
+  --input: oklch(0.87 0.032 75);
+  --ring: oklch(0.55 0.13 62);
+  --chart-1: oklch(0.55 0.13 62);
+  --chart-2: oklch(0.6 0.11 48);
+  --chart-3: oklch(0.52 0.09 145);
+  --chart-4: oklch(0.58 0.12 38);
+  --chart-5: oklch(0.5 0.11 265);
+  --hero-gradient-from: oklch(0.95 0.035 80);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.96 0.02 81);
+  --sidebar-foreground: oklch(0.26 0.04 52);
+  --sidebar-primary: oklch(0.55 0.13 62);
+  --sidebar-primary-foreground: oklch(0.98 0.014 82);
+  --sidebar-accent: oklch(0.92 0.045 70);
+  --sidebar-accent-foreground: oklch(0.32 0.045 52);
+  --sidebar-border: oklch(0.87 0.032 75);
+  --sidebar-ring: oklch(0.55 0.13 62);
+}
+
+html.dark[data-palette='brass'] {
+  --background: oklch(0.15 0.028 52);
+  --foreground: oklch(0.96 0.018 78);
+  --card: oklch(0.19 0.032 52);
+  --card-foreground: oklch(0.96 0.018 78);
+  --popover: oklch(0.19 0.032 52);
+  --popover-foreground: oklch(0.96 0.018 78);
+  --primary: oklch(0.74 0.12 68);
+  --primary-foreground: oklch(0.17 0.035 52);
+  --secondary: oklch(0.26 0.032 52);
+  --secondary-foreground: oklch(0.96 0.018 78);
+  --muted: oklch(0.26 0.032 52);
+  --muted-foreground: oklch(0.66 0.04 72);
+  --accent: oklch(0.28 0.04 58);
+  --accent-foreground: oklch(0.96 0.018 78);
+  --border: oklch(0.96 0.018 78 / 14%);
+  --card-border: oklch(0.35 0.032 52);
+  --input: oklch(0.96 0.018 78 / 18%);
+  --ring: oklch(0.74 0.12 68);
+  --chart-1: oklch(0.74 0.12 68);
+  --chart-2: oklch(0.68 0.11 48);
+  --chart-3: oklch(0.62 0.09 145);
+  --chart-4: oklch(0.66 0.11 38);
+  --chart-5: oklch(0.6 0.11 265);
+  --hero-gradient-from: oklch(0.2 0.04 54);
+  --hero-gradient-to: var(--background);
+  --sidebar: oklch(0.17 0.032 52);
+  --sidebar-foreground: oklch(0.96 0.018 78);
+  --sidebar-primary: oklch(0.74 0.12 68);
+  --sidebar-primary-foreground: oklch(0.17 0.035 52);
+  --sidebar-accent: oklch(0.26 0.032 52);
+  --sidebar-accent-foreground: oklch(0.96 0.018 78);
+  --sidebar-border: oklch(0.96 0.018 78 / 14%);
+  --sidebar-ring: oklch(0.74 0.12 68);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -468,6 +756,7 @@ html.dark[data-palette='espresso'] {
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
+  --color-card-border: var(--card-border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);

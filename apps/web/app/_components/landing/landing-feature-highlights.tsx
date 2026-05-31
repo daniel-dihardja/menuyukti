@@ -45,7 +45,7 @@ export function LandingFeatureHighlights({
 
         <div className="mt-12 flex flex-col gap-6">
           {cards.map((card) => (
-            <Card key={card.title} className="overflow-hidden border-border/80 shadow-none">
+            <Card key={card.title} className="overflow-hidden shadow-none">
               <div className="border-b border-border bg-background p-2">
                 <div className="overflow-hidden rounded-md border border-border">
                   <Image

@@ -72,7 +72,7 @@ export function DashboardPwaGuide() {
         })}
       </ToggleGroup>
 
-      <Card className="gap-0 py-0 shadow-sm">
+      <Card className="gap-0 py-0 shadow-none">
         <CardHeader className="flex flex-row items-start gap-3 border-b px-4 py-4 sm:px-6">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
             <PlatformIcon aria-hidden className="text-foreground" />

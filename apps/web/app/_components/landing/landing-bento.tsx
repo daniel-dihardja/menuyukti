@@ -38,10 +38,7 @@ export function LandingBento({
           {items.map((item, i) => {
             const Icon = icons[i]!
             return (
-              <Card
-                key={item.title}
-                className="border-border/60 shadow-none transition-colors hover:border-primary/25"
-              >
+              <Card key={item.title} className="shadow-none transition-colors">
                 <CardHeader>
                   <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10">
                     <Icon className="size-5 text-primary" aria-hidden />

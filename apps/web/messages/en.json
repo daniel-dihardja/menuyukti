@@ -717,9 +717,13 @@
   "stylePalette": {
     "label": "Color style",
     "amber": "Golden Amber",
+    "saffron": "Saffron Spark",
+    "nectar": "Golden Nectar",
     "coral": "Coral & Peach",
-    "sage": "Farm & Herb",
+    "hearth": "Open Hearth",
     "terracotta": "Mediterranean Clay",
+    "brass": "Brass Ledger",
+    "sage": "Farm & Herb",
     "bistro": "Wine Bistro",
     "espresso": "Roastery"
   },

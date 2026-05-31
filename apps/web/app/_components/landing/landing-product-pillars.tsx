@@ -49,7 +49,7 @@ export function LandingProductPillars({
         </p>
 
         <div className="mt-12 flex flex-col gap-6">
-          <Card className="border-primary/20 shadow-none">
+          <Card className="shadow-none">
             <CardHeader className="gap-3 md:p-8">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
                 <FeaturedIcon className="size-5 text-primary" aria-hidden />

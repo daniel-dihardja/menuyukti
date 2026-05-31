@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import { cn } from '@workspace/ui/lib/utils'
 import { BarChart3, Sparkles } from 'lucide-react'
 
 export type LandingAnalyticsComparisonProps = {
@@ -64,7 +63,7 @@ export function LandingAnalyticsComparison({
             </CardContent>
           </Card>
 
-          <Card className={cn('border-primary/25 shadow-none')}>
+          <Card className="border-primary shadow-none">
             <CardHeader className="gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
                 <Sparkles className="size-5 text-primary" aria-hidden />
@@ -86,7 +85,7 @@ export function LandingAnalyticsComparison({
           </Card>
         </div>
 
-        <div className="mx-auto mt-10 max-w-3xl rounded-xl border bg-card p-6 text-center md:mt-12 md:p-8">
+        <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-solid border-card-border bg-card p-6 text-center md:mt-12 md:p-8">
           <h3 className="text-balance text-lg font-semibold leading-snug md:text-xl">
             {impactTitle}
           </h3>

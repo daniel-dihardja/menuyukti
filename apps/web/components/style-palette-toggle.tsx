@@ -41,7 +41,7 @@ function PaletteMenuItems() {
   )
 }
 
-const paletteMenuClassName = 'max-h-[min(20rem,70vh)] min-w-[12.5rem] overflow-y-auto'
+const paletteMenuClassName = 'max-h-[min(28rem,75vh)] min-w-[12.5rem] overflow-y-auto'
 
 function usePaletteTriggerIcon() {
   const { palette } = useStylePalette()

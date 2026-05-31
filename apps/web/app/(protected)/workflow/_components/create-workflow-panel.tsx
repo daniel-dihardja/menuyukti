@@ -268,7 +268,7 @@ export function CreateWorkflowPanel({
   const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
 
   return (
-    <Card className="overflow-hidden border bg-card shadow-sm ring-1 ring-border/50">
+    <Card className="overflow-hidden bg-card shadow-none">
       <CardHeader className="border-border/60 border-b bg-muted/20 px-5 py-5 sm:px-6">
         <CardTitle className="text-balance font-semibold text-xl tracking-tight">
           {tPanel('title')}
