@@ -7,7 +7,6 @@ export type ErrorFallbackProps = {
   title: string
   description: string
   tryAgainLabel: string
-  digest?: string
   digestLabel?: string
   error: Error & { digest?: string }
   reset: () => void
@@ -18,7 +17,6 @@ export function ErrorFallback({
   title,
   description,
   tryAgainLabel,
-  digest,
   digestLabel,
   error,
   reset,
