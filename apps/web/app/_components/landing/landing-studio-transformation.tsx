@@ -45,7 +45,7 @@ export function LandingStudioTransformation({
               <span className="text-sm font-semibold uppercase tracking-wide text-primary">
                 {step.label}
               </span>
-              <div className="overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
+              <div className="overflow-hidden rounded-2xl border border-border bg-muted/20">
                 <div className="relative aspect-[4/5] w-full min-h-[280px] sm:min-h-[360px] md:aspect-[3/4] md:min-h-0">
                   <Image
                     src={step.imageSrc}

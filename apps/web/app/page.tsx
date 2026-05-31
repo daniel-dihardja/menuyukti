@@ -8,6 +8,10 @@ import { getTranslations } from 'next-intl/server'
 import type { ReactElement } from 'react'
 
 import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
+import {
+  LandingHeroHeadline,
+  parseLandingHeroHeadlineVariant,
+} from '@/app/_components/landing/landing-hero-headline'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFeatureSpotlight } from '@/app/_components/landing/landing-feature-spotlight'
 import { LandingStudioTransformation } from '@/app/_components/landing/landing-studio-transformation'
@@ -51,8 +55,13 @@ function highlightAutomationTerms(text: string): Array<string | ReactElement> {
   })
 }
 
-export default async function LandingPage() {
+type LandingPageProps = {
+  searchParams: Promise<{ heroHeadline?: string | string[] }>
+}
+
+export default async function LandingPage({ searchParams }: LandingPageProps) {
   const t = await getTranslations('landing')
+  const heroHeadlineVariant = parseLandingHeroHeadlineVariant((await searchParams).heroHeadline)
 
   const pillarItems = [
     {
@@ -189,9 +198,9 @@ export default async function LandingPage() {
               <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
               {t('hero.badge')}
             </Badge>
-            <h1 className="w-full min-w-0 text-balance text-4xl font-bold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]">
+            <LandingHeroHeadline variant={heroHeadlineVariant}>
               {t('hero.headline')}
-            </h1>
+            </LandingHeroHeadline>
 
             <p className="mx-auto mt-5 max-w-2xl text-pretty text-center text-lg leading-relaxed text-foreground/80 md:mt-6 md:text-xl md:leading-relaxed">
               {t('hero.subtitle')}
@@ -272,7 +281,7 @@ export default async function LandingPage() {
 
             <div className="mt-10 grid gap-4 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
               {automationItems.map((item) => (
-                <article key={item.title} className="rounded-xl border bg-card p-5 shadow-sm">
+                <article key={item.title} className="rounded-xl border bg-card p-5">
                   <h3 className="text-base font-semibold leading-snug">
                     {highlightAutomationTerms(item.title)}
                   </h3>

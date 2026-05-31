@@ -42,7 +42,7 @@ export function LandingProductPillars({ title, subtitle, items }: LandingProduct
           {items.map((item) => {
             const Icon = pillarIcons[item.id]
             return (
-              <Card key={item.id} className="shadow-md">
+              <Card key={item.id} className="shadow-none">
                 <CardHeader className="gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
                     <Icon className="size-5 text-primary" aria-hidden />

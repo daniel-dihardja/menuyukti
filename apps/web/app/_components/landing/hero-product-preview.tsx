@@ -108,7 +108,7 @@ export function HeroProductPreview({
               </button>
             ) : null}
 
-            <div className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
+            <div className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-border bg-muted/20">
               <div className="relative aspect-video w-full min-w-0 bg-muted/30">
                 <CarouselContent className="ml-0">
                   {slides.map((slide, index) => (
@@ -229,7 +229,7 @@ export function HeroProductPreview({
                 alt={activeSlide.alt}
                 width={3840}
                 height={2160}
-                className="h-auto max-h-[calc(100dvh-5.5rem)] w-auto max-w-full object-contain shadow-lg sm:max-h-[calc(96dvh-5.5rem)]"
+                className="h-auto max-h-[calc(100dvh-5.5rem)] w-auto max-w-full object-contain sm:max-h-[calc(96dvh-5.5rem)]"
                 sizes="100vw"
                 quality={90}
                 priority
