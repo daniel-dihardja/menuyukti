@@ -35,11 +35,13 @@ def _build_image_brief(item: dict[str, Any]) -> str:
 def build_post_lineup(
     food_leads: list[dict[str, Any]],
     *,
-    source_reel_lineup_title: str = "",
+    source_menu_clusterer_title: str = "",
     notes: str = "",
 ) -> dict[str, Any]:
     if not food_leads:
-        raise ValueError("post_lineup requires at least one food lead from prior reel_lineup data")
+        raise ValueError(
+            "post_lineup requires at least one food lead from prior menu_clusterer data"
+        )
 
     slides: list[dict[str, Any]] = []
     for item in food_leads[:POST_LINEUP_MAX_SLIDES]:
@@ -74,9 +76,9 @@ def build_post_lineup(
             }
         ],
     }
-    source_title = source_reel_lineup_title.strip()
+    source_title = source_menu_clusterer_title.strip()
     if source_title:
-        payload["sourceReelLineupTitle"] = source_title
+        payload["sourceMenuClustererTitle"] = source_title
     owner_notes = notes.strip()
     if owner_notes:
         payload["notes"] = owner_notes

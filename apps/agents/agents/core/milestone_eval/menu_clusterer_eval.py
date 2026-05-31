@@ -1,4 +1,4 @@
-"""Deterministic pass/fail checks for reel_lineup milestone criteria."""
+"""Deterministic pass/fail checks for menu_clusterer milestone criteria."""
 
 from __future__ import annotations
 
@@ -7,50 +7,50 @@ from typing import Any, Literal
 
 DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
-REEL_LINEUP_GROUP_MIN_SIZE = 1
-REEL_LINEUP_GROUP_MAX_SIZE = 5
-REEL_LINEUP_MIN_GROUP_COUNT = 4
-REEL_LINEUP_DEFAULT_GROUP_COUNT = 4
-REEL_LINEUP_MAX_GROUP_COUNT = 8
+MENU_CLUSTERER_GROUP_MIN_SIZE = 1
+MENU_CLUSTERER_GROUP_MAX_SIZE = 5
+MENU_CLUSTERER_MIN_GROUP_COUNT = 4
+MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 4
+MENU_CLUSTERER_MAX_GROUP_COUNT = 8
 # Backward-compatible alias used in older call sites/tests.
-REEL_LINEUP_MIN_GROUPS = REEL_LINEUP_MIN_GROUP_COUNT
-REEL_LINEUP_TOP_LEADS = 5
-REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN = 40
+MENU_CLUSTERER_MIN_GROUPS = MENU_CLUSTERER_MIN_GROUP_COUNT
+MENU_CLUSTERER_TOP_LEADS = 5
+MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN = 40
 
 
 def _normalize_requirement(requirement: str) -> str:
     return re.sub(r"\*+", "", requirement).strip().lower()
 
 
-def is_reel_lineup_milestone_data(data: dict[str, Any]) -> bool:
+def is_menu_clusterer_milestone_data(data: dict[str, Any]) -> bool:
     return isinstance(data.get("groups"), list)
 
 
 def _target_group_count(data: dict[str, Any]) -> int:
     raw = data.get("targetGroupCount")
-    if isinstance(raw, int) and raw >= REEL_LINEUP_MIN_GROUP_COUNT:
-        return min(raw, REEL_LINEUP_MAX_GROUP_COUNT)
-    return REEL_LINEUP_DEFAULT_GROUP_COUNT
+    if isinstance(raw, int) and raw >= MENU_CLUSTERER_MIN_GROUP_COUNT:
+        return min(raw, MENU_CLUSTERER_MAX_GROUP_COUNT)
+    return MENU_CLUSTERER_DEFAULT_GROUP_COUNT
 
 
-def enrich_reel_lineup_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
-    if not is_reel_lineup_milestone_data(data):
+def enrich_menu_clusterer_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
+    if not is_menu_clusterer_milestone_data(data):
         return data
     enriched = dict(data)
     target = _target_group_count(data)
     top_names = data.get("topFoodLeadNames")
     top_food_lead_names: list[str] = []
     if isinstance(top_names, list):
-        top_food_lead_names = [
-            str(name).strip() for name in top_names if str(name).strip()
-        ][:REEL_LINEUP_TOP_LEADS]
+        top_food_lead_names = [str(name).strip() for name in top_names if str(name).strip()][
+            :MENU_CLUSTERER_TOP_LEADS
+        ]
     enriched["_evalHints"] = {
-        "groupSizeRange": [REEL_LINEUP_GROUP_MIN_SIZE, REEL_LINEUP_GROUP_MAX_SIZE],
+        "groupSizeRange": [MENU_CLUSTERER_GROUP_MIN_SIZE, MENU_CLUSTERER_GROUP_MAX_SIZE],
         "minFoodGroups": target,
         "targetGroupCount": target,
         "topFoodLeadNames": top_food_lead_names,
         "leadIsFirstItem": True,
-        "clusterDescriptionMinLength": REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN,
+        "clusterDescriptionMinLength": MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN,
     }
     return enriched
 
@@ -95,7 +95,7 @@ def _groups_have_cluster_descriptions(groups: list[dict[str, Any]]) -> list[str]
     for group in groups:
         group_id = str(group.get("id") or "group")
         description = str(group.get("clusterDescription") or "").strip()
-        if len(description) < REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN:
+        if len(description) < MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN:
             issues.append(f"{group_id} is missing a sufficient clusterDescription")
     return issues
 
@@ -113,10 +113,10 @@ def _validate_food_groups(
         if not isinstance(items, list) or not items:
             issues.append(f"{group_id} has no items")
             continue
-        if not (REEL_LINEUP_GROUP_MIN_SIZE <= len(items) <= REEL_LINEUP_GROUP_MAX_SIZE):
+        if not (MENU_CLUSTERER_GROUP_MIN_SIZE <= len(items) <= MENU_CLUSTERER_GROUP_MAX_SIZE):
             issues.append(
-                f"{group_id} must contain between {REEL_LINEUP_GROUP_MIN_SIZE} and "
-                f"{REEL_LINEUP_GROUP_MAX_SIZE} items"
+                f"{group_id} must contain between {MENU_CLUSTERER_GROUP_MIN_SIZE} and "
+                f"{MENU_CLUSTERER_GROUP_MAX_SIZE} items"
             )
             continue
         first = items[0] if isinstance(items[0], dict) else {}
@@ -135,11 +135,11 @@ def _validate_food_groups(
     return issues
 
 
-def try_reel_lineup_deterministic_verdict(
+def try_menu_clusterer_deterministic_verdict(
     requirement: str,
     data: dict[str, Any],
 ) -> DeterministicVerdict | None:
-    if not is_reel_lineup_milestone_data(data):
+    if not is_menu_clusterer_milestone_data(data):
         return None
 
     norm = _normalize_requirement(requirement)
@@ -148,19 +148,19 @@ def try_reel_lineup_deterministic_verdict(
 
     if "menu_tagger" in norm and ("prior" in norm or "earlier" in norm or "run used" in norm):
         if not groups:
-            return ("fail", "reel lineup data has no groups from prior menu_tagger items.")
-        return ("pass", f"reel lineup produced {len(groups)} food cluster(s) from tagged items.")
+            return ("fail", "menu clusterer data has no groups from prior menu_tagger items.")
+        return ("pass", f"menu clusterer produced {len(groups)} food cluster(s) from tagged items.")
 
     if "campaign" in norm and "brief" in norm:
         source_title = str(data.get("sourceCampaignBriefTitle") or "").strip()
         if source_title and _groups_have_schedule_hints(groups):
             return (
                 "pass",
-                "reel lineup references campaign brief strategy and includes food-group scheduling hints.",
+                "menu clusterer references campaign brief strategy and includes food-group scheduling hints.",
             )
         return (
             "fail",
-            "reel lineup is missing sourceCampaignBriefTitle or campaign-aware food-group scheduling hints.",
+            "menu clusterer is missing sourceCampaignBriefTitle or campaign-aware food-group scheduling hints.",
         )
 
     if "schedule" in norm or "cadence" in norm or "weekday" in norm:
@@ -184,11 +184,11 @@ def try_reel_lineup_deterministic_verdict(
         if len(groups) < min_groups:
             return (
                 "fail",
-                f"reel lineup has {len(groups)} food groups; minimum is {min_groups}.",
+                f"menu clusterer has {len(groups)} food groups; minimum is {min_groups}.",
             )
         return (
             "pass",
-            f"reel lineup produced {len(groups)} food cluster(s) (at least {min_groups}).",
+            f"menu clusterer produced {len(groups)} food cluster(s) (at least {min_groups}).",
         )
 
     if (
@@ -199,10 +199,10 @@ def try_reel_lineup_deterministic_verdict(
         and "beverage" not in norm
     ):
         if not groups:
-            return ("fail", "no reel lineup food clusters to validate.")
+            return ("fail", "no menu clusterer food clusters to validate.")
         return (
             "pass",
-            f"reel lineup produced {len(groups)} food cluster(s).",
+            f"menu clusterer produced {len(groups)} food cluster(s).",
         )
 
     if "clusterdescription" in norm.replace(" ", "") or (
@@ -212,7 +212,7 @@ def try_reel_lineup_deterministic_verdict(
         if issues:
             return ("fail", "; ".join(issues[:4]))
         if not groups:
-            return ("fail", "no reel lineup food clusters to validate.")
+            return ("fail", "no menu clusterer food clusters to validate.")
         return (
             "pass",
             "each food cluster includes a clusterDescription explaining grouping and venue fit.",
@@ -226,7 +226,7 @@ def try_reel_lineup_deterministic_verdict(
         issues = _validate_food_groups(
             groups,
             top5_names=top5_names,
-            empty_message="no reel lineup food clusters to validate.",
+            empty_message="no menu clusterer food clusters to validate.",
         )
         if issues:
             return ("fail", "; ".join(issues[:4]))
@@ -243,7 +243,7 @@ def try_reel_lineup_deterministic_verdict(
         issues = _validate_food_groups(
             groups,
             top5_names=top5_names,
-            empty_message="no reel lineup food clusters to validate.",
+            empty_message="no menu clusterer food clusters to validate.",
         )
         if issues:
             return ("fail", "; ".join(issues[:4]))
@@ -257,7 +257,7 @@ def try_reel_lineup_deterministic_verdict(
     ):
         drink_groups = data.get("drinkGroups")
         if isinstance(drink_groups, list) and drink_groups:
-            return ("fail", "reel lineup should not include drink groups.")
-        return ("pass", "reel lineup contains no drink groups (food-only clusters).")
+            return ("fail", "menu clusterer should not include drink groups.")
+        return ("pass", "menu clusterer contains no drink groups (food-only clusters).")
 
     return None

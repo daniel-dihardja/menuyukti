@@ -1,10 +1,10 @@
-"""Tests for deterministic reel_lineup milestone eval."""
+"""Tests for deterministic menu_clusterer milestone eval."""
 
 from __future__ import annotations
 
-from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
-    enrich_reel_lineup_eval_payload,
-    try_reel_lineup_deterministic_verdict,
+from agents_app.agents.core.milestone_eval.menu_clusterer_eval import (
+    enrich_menu_clusterer_eval_payload,
+    try_menu_clusterer_deterministic_verdict,
 )
 
 _CLUSTER_DESCRIPTION = (
@@ -99,8 +99,8 @@ def _extra_groups() -> list[dict]:
     return groups
 
 
-def test_enrich_reel_lineup_eval_payload_adds_hints() -> None:
-    enriched = enrich_reel_lineup_eval_payload(_sample_payload())
+def test_enrich_menu_clusterer_eval_payload_adds_hints() -> None:
+    enriched = enrich_menu_clusterer_eval_payload(_sample_payload())
     assert enriched["_evalHints"]["minFoodGroups"] == 4
     assert enriched["_evalHints"]["topFoodLeadNames"] == [
         "Wings",
@@ -112,7 +112,7 @@ def test_enrich_reel_lineup_eval_payload_adds_hints() -> None:
 
 
 def test_prior_menu_tagger_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Run used a prior menu_tagger milestone with tagged items.",
         _sample_payload(),
     )
@@ -121,7 +121,7 @@ def test_prior_menu_tagger_verdict_passes() -> None:
 
 
 def test_min_four_groups_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Data includes at least 4 food Reel clusters.",
         _sample_payload(),
     )
@@ -133,7 +133,7 @@ def test_min_groups_verdict_uses_target_group_count_from_data() -> None:
     payload = _sample_payload()
     payload["targetGroupCount"] = 6
     payload["groups"] = payload["groups"][:5]
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Data includes the configured number of food Reel clusters (minimum 4, from Input tab target group count).",
         payload,
     )
@@ -142,7 +142,7 @@ def test_min_groups_verdict_uses_target_group_count_from_data() -> None:
 
     payload["groups"] = _sample_payload()["groups"] + _extra_groups()
     payload["groups"] = payload["groups"][:6]
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Data includes the configured number of food Reel clusters (minimum 4, from Input tab target group count).",
         payload,
     )
@@ -153,7 +153,7 @@ def test_min_groups_verdict_uses_target_group_count_from_data() -> None:
 def test_min_four_groups_verdict_fails() -> None:
     payload = _sample_payload()
     payload["groups"] = payload["groups"][:2]
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Data includes at least 4 food Reel clusters.",
         payload,
     )
@@ -162,7 +162,7 @@ def test_min_four_groups_verdict_fails() -> None:
 
 
 def test_campaign_brief_strategy_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Data references a prior campaign brief and carries campaign-aware scheduling hints.",
         _sample_payload(),
     )
@@ -171,7 +171,7 @@ def test_campaign_brief_strategy_verdict_passes() -> None:
 
 
 def test_schedule_hints_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Each food group includes strategy focus plus preferred weekday and time schedule hints.",
         _sample_payload(),
     )
@@ -180,7 +180,7 @@ def test_schedule_hints_verdict_passes() -> None:
 
 
 def test_top_five_lead_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Each food cluster's position-1 item is a top-5 food item by popularity.",
         _sample_payload(),
     )
@@ -189,7 +189,7 @@ def test_top_five_lead_verdict_passes() -> None:
 
 
 def test_cluster_description_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Each food cluster includes a clusterDescription explaining grouping rationale.",
         _sample_payload(),
     )
@@ -200,7 +200,7 @@ def test_cluster_description_verdict_passes() -> None:
 def test_cluster_description_verdict_fails_when_missing() -> None:
     payload = _sample_payload()
     payload["groups"][0]["clusterDescription"] = "too short"
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Each food cluster includes a clusterDescription explaining grouping rationale.",
         payload,
     )
@@ -209,7 +209,7 @@ def test_cluster_description_verdict_fails_when_missing() -> None:
 
 
 def test_multi_item_group_passes_top_five_check() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Each food cluster's position-1 item is a top-5 food item by popularity.",
         _sample_payload(),
     )
@@ -218,7 +218,7 @@ def test_multi_item_group_passes_top_five_check() -> None:
 
 
 def test_drink_criteria_passes_with_empty_drink_groups() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
+    verdict = try_menu_clusterer_deterministic_verdict(
         "Each drink group's position-1 item is a tagged beverage drink with a reel moment.",
         _sample_payload(),
     )

@@ -12,31 +12,31 @@ import {
 } from '@workspace/ui/components/select'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-import type { ReelLineupTargetGroupCount } from '@/lib/graphql/node-schemas'
+import type { MenuClustererTargetGroupCount } from '@/lib/graphql/node-schemas'
 
-export type ReelLineupInputDraft = {
+export type MenuClustererInputDraft = {
   notes: string
-  targetGroupCount: ReelLineupTargetGroupCount
+  targetGroupCount: MenuClustererTargetGroupCount
 }
 
-const TARGET_GROUP_COUNT_OPTIONS: ReelLineupTargetGroupCount[] = [4, 5, 6, 7, 8]
+const TARGET_GROUP_COUNT_OPTIONS: MenuClustererTargetGroupCount[] = [4, 5, 6, 7, 8]
 
-export type MilestoneReelLineupInputProps = {
-  draft: ReelLineupInputDraft
-  onDraftChange: (next: ReelLineupInputDraft) => void
+export type MilestoneMenuClustererInputProps = {
+  draft: MenuClustererInputDraft
+  onDraftChange: (next: MenuClustererInputDraft) => void
   onNotesBlur: () => void
   onNotesFocus: () => void
   disabled?: boolean
 }
 
-export function MilestoneReelLineupInput({
+export function MilestoneMenuClustererInput({
   draft,
   onDraftChange,
   onNotesBlur,
   onNotesFocus,
   disabled = false,
-}: MilestoneReelLineupInputProps) {
-  const t = useTranslations('analytics.workflows.chat.milestonePreset.reel_lineup')
+}: MilestoneMenuClustererInputProps) {
+  const t = useTranslations('analytics.workflows.chat.milestonePreset.menu_clusterer')
 
   return (
     <FieldGroup className="gap-4">
@@ -50,7 +50,7 @@ export function MilestoneReelLineupInput({
             if (parsed >= 4 && parsed <= 8) {
               onDraftChange({
                 ...draft,
-                targetGroupCount: parsed as ReelLineupTargetGroupCount,
+                targetGroupCount: parsed as MenuClustererTargetGroupCount,
               })
             }
           }}

@@ -123,8 +123,8 @@ def _prior_json() -> str:
                 },
             },
             {
-                "title": "Lunch Reel Lineup",
-                "presetId": "reel_lineup",
+                "title": "Lunch Menu Clusterer",
+                "presetId": "menu_clusterer",
                 "data": {
                     "foodLeads": [
                         {
@@ -259,7 +259,7 @@ def _prior_json() -> str:
                             ],
                         }
                     ],
-                    "sourceReelLineupTitle": "Lunch Reel Lineup",
+                    "sourceMenuClustererTitle": "Lunch Menu Clusterer",
                 },
             },
             {
@@ -299,7 +299,7 @@ def _base_state(**overrides: object) -> dict[str, object]:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_reel_lineup() -> None:
+async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_menu_clusterer() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
         return_value=lambda _x: None,
@@ -310,10 +310,10 @@ async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_reel_lineu
         )
         assert result["source_dates_title"] == "Campaign dates"
         assert result["source_campaign_brief_title"] == "Campaign brief"
-        assert result["source_reel_lineup_title"] == "Lunch Reel Lineup"
+        assert result["source_menu_clusterer_title"] == "Lunch Menu Clusterer"
         assert result["source_post_lineup_title"] == "Monthly Post Lineup"
         assert result["source_story_lineup_title"] == "Holiday Story Lineup"
-        assert len(result["reel_lineup_data"]["groups"]) == 2
+        assert len(result["menu_clusterer_data"]["groups"]) == 2
 
 
 @pytest.mark.asyncio
@@ -347,14 +347,14 @@ async def test_fetch_and_prepare_raises_without_prior_campaign_brief() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_raises_without_prior_reel_lineup() -> None:
+async def test_fetch_and_prepare_raises_without_prior_menu_clusterer() -> None:
     prior = json.dumps(json.loads(_prior_json())[:2])
     with (
         patch(
             "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
-        pytest.raises(ValueError, match="scheduler requires a prior reel_lineup milestone"),
+        pytest.raises(ValueError, match="scheduler requires a prior menu_clusterer milestone"),
     ):
         await fetch_and_prepare(
             _base_state(prior_milestones_data=prior),
@@ -363,18 +363,18 @@ async def test_fetch_and_prepare_raises_without_prior_reel_lineup() -> None:
 
 
 @pytest.mark.asyncio
-async def test_build_snapshot_creates_reel_slots_from_reel_lineup() -> None:
+async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
     prior = json.loads(_prior_json())
     result = await build_snapshot(
         _base_state(
             dates_data=prior[0]["data"],
             campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
+            menu_clusterer_data=prior[2]["data"],
             post_lineup_data=prior[3]["data"],
             story_lineup_data=prior[4]["data"],
             source_dates_title="Campaign dates",
             source_campaign_brief_title="Campaign brief",
-            source_reel_lineup_title="Lunch Reel Lineup",
+            source_menu_clusterer_title="Lunch Menu Clusterer",
             source_post_lineup_title="Monthly Post Lineup",
             source_story_lineup_title="Holiday Story Lineup",
         )
@@ -383,7 +383,7 @@ async def test_build_snapshot_creates_reel_slots_from_reel_lineup() -> None:
     assert error is None
     assert isinstance(normalized, dict)
     assert normalized["sourceCampaignBriefTitle"] == "Campaign brief"
-    assert normalized["sourceReelLineupTitle"] == "Lunch Reel Lineup"
+    assert normalized["sourceMenuClustererTitle"] == "Lunch Menu Clusterer"
     assert normalized["sourcePostLineupTitle"] == "Monthly Post Lineup"
     assert normalized["sourceStoryLineupTitle"] == "Holiday Story Lineup"
     assert normalized["slots"][:4] == [
@@ -428,7 +428,7 @@ async def test_build_snapshot_repeats_monthly_top_menu_on_first_of_each_month() 
         _base_state(
             dates_data=prior[0]["data"],
             campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
+            menu_clusterer_data=prior[2]["data"],
             post_lineup_data=prior[3]["data"],
             story_lineup_data=prior[4]["data"],
         )
@@ -489,7 +489,7 @@ async def test_build_snapshot_rotates_groups_across_two_month_window() -> None:
         _base_state(
             dates_data=prior[0]["data"],
             campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
+            menu_clusterer_data=prior[2]["data"],
         )
     )
     normalized, error = validate_skill_output("scheduler", result["generated_output"])
@@ -509,7 +509,7 @@ async def test_build_snapshot_treats_human_readable_weekday_lunch_focus_as_tuesd
         _base_state(
             dates_data=prior[0]["data"],
             campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
+            menu_clusterer_data=prior[2]["data"],
         )
     )
 

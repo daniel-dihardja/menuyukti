@@ -22,7 +22,7 @@ import {
   emptyMenuTaggerUsedTags,
 } from '@/lib/milestones/menu-tagger-taxonomy'
 import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
-import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
+import { EMPTY_MENU_CLUSTERER_DATA } from '@/lib/milestones/menu-clusterer'
 import { EMPTY_STORY_LINEUP_DATA } from '@/lib/milestones/story-lineup'
 import {
   campaignBriefMilestoneDataSchema,
@@ -31,7 +31,7 @@ import {
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
-  reelLineupMilestoneDataSchema,
+  menuClustererMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   type MilestoneInput,
@@ -48,7 +48,7 @@ export type MilestonePresetInputType =
   | 'dates'
   | 'promotion_candidates'
   | 'campaign_brief'
-  | 'reel_lineup'
+  | 'menu_clusterer'
   | 'optional_notes'
   | 'none'
 
@@ -253,43 +253,43 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       ],
     }),
   },
-  reel_lineup: {
-    id: 'reel_lineup',
+  menu_clusterer: {
+    id: 'menu_clusterer',
     icon: Clapperboard,
-    inputType: 'reel_lineup',
-    dataSchema: reelLineupMilestoneDataSchema,
-    emptyData: EMPTY_REEL_LINEUP_DATA,
+    inputType: 'menu_clusterer',
+    dataSchema: menuClustererMilestoneDataSchema,
+    emptyData: EMPTY_MENU_CLUSTERER_DATA,
     getCreateFields: (t) => ({
-      name: t('milestonePreset.reel_lineup.title'),
+      name: t('milestonePreset.menu_clusterer.title'),
       milestoneInput: {
-        type: 'reel_lineup',
+        type: 'menu_clusterer',
         value: { notes: '', targetGroupCount: 4 },
       },
-      milestoneData: EMPTY_REEL_LINEUP_DATA,
-      goal: t('milestonePreset.reel_lineup.goal'),
+      milestoneData: EMPTY_MENU_CLUSTERER_DATA,
+      goal: t('milestonePreset.menu_clusterer.goal'),
       passCriteria: [
         {
-          requirement: t('milestonePreset.reel_lineup.criterionPriorCampaignBrief'),
+          requirement: t('milestonePreset.menu_clusterer.criterionPriorCampaignBrief'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionPriorMenuTagger'),
+          requirement: t('milestonePreset.menu_clusterer.criterionPriorMenuTagger'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionHookGroupCount'),
+          requirement: t('milestonePreset.menu_clusterer.criterionHookGroupCount'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionTopFiveLead'),
+          requirement: t('milestonePreset.menu_clusterer.criterionTopFiveLead'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionClusterDescription'),
+          requirement: t('milestonePreset.menu_clusterer.criterionClusterDescription'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionSchedulingHints'),
+          requirement: t('milestonePreset.menu_clusterer.criterionSchedulingHints'),
           status: 'open',
         },
       ],
@@ -311,7 +311,7 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       goal: t('milestonePreset.post_lineup.goal'),
       passCriteria: [
         {
-          requirement: t('milestonePreset.post_lineup.criterionPriorReelLineup'),
+          requirement: t('milestonePreset.post_lineup.criterionPriorMenuClusterer'),
           status: 'open',
         },
         {
@@ -447,7 +447,7 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorReelLineup'),
+          requirement: t('milestonePreset.scheduler.criterionPriorMenuClusterer'),
           status: 'open',
         },
         {

@@ -7,15 +7,15 @@ import re
 import unicodedata
 from typing import Any, Literal, Protocol
 
-REEL_LINEUP_PROFILE_ID: Literal["hook_reel"] = "hook_reel"
-REEL_LINEUP_TOP_LEADS = 5
-REEL_LINEUP_MIN_GROUP_COUNT = 4
-REEL_LINEUP_DEFAULT_GROUP_COUNT = 4
-REEL_LINEUP_MAX_GROUP_COUNT = 8
+MENU_CLUSTERER_PROFILE_ID: Literal["hook_reel"] = "hook_reel"
+MENU_CLUSTERER_TOP_LEADS = 5
+MENU_CLUSTERER_MIN_GROUP_COUNT = 4
+MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 4
+MENU_CLUSTERER_MAX_GROUP_COUNT = 8
 # Backward-compatible alias used in older call sites/tests.
-REEL_LINEUP_MIN_GROUPS = REEL_LINEUP_MIN_GROUP_COUNT
-REEL_LINEUP_GROUP_MAX_SIZE = 5
-REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN = 40
+MENU_CLUSTERER_MIN_GROUPS = MENU_CLUSTERER_MIN_GROUP_COUNT
+MENU_CLUSTERER_GROUP_MAX_SIZE = 5
+MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN = 40
 _DEFAULT_STRATEGY_FOCUS = "weekday_lunch"
 _DEFAULT_CORE_MESSAGE = "Weekday lunch offer for nearby workers and small groups."
 _DEFAULT_OFFER_WINDOW = "11:00-14:00"
@@ -32,7 +32,7 @@ _CREATIVE_ROLE_SEQUENCE = (
 )
 
 
-class ReelLineupClusterDraftLike(Protocol):
+class MenuClustererClusterDraftLike(Protocol):
     themeLabel: str
     leadItemName: str
     supportingItemNames: list[str]
@@ -77,17 +77,17 @@ def _name_key(name: str) -> str:
 
 def resolve_target_group_count(raw: int | None, *, food_item_count: int) -> int:
     """Clamp configured target to menu size and allowed range (default 4)."""
-    count = REEL_LINEUP_DEFAULT_GROUP_COUNT if raw is None else int(raw)
-    count = max(REEL_LINEUP_MIN_GROUP_COUNT, min(REEL_LINEUP_MAX_GROUP_COUNT, count))
+    count = MENU_CLUSTERER_DEFAULT_GROUP_COUNT if raw is None else int(raw)
+    count = max(MENU_CLUSTERER_MIN_GROUP_COUNT, min(MENU_CLUSTERER_MAX_GROUP_COUNT, count))
     if food_item_count > 0:
         count = min(count, food_item_count)
-    return max(REEL_LINEUP_MIN_GROUP_COUNT, count)
+    return max(MENU_CLUSTERER_MIN_GROUP_COUNT, count)
 
 
 def rank_top_food_leads(
     items: list[dict[str, Any]],
     *,
-    limit: int = REEL_LINEUP_TOP_LEADS,
+    limit: int = MENU_CLUSTERER_TOP_LEADS,
 ) -> list[dict[str, Any]]:
     """Rank food items by popularity desc, strong storytelling tie-break, then name."""
     food = food_items_only(items)
@@ -120,7 +120,9 @@ def _resolve_food_item(by_name: dict[str, dict[str, Any]], name: str) -> dict[st
     if hit is not None:
         return hit
     prefix_matches = [
-        item for item_key, item in by_name.items() if item_key.startswith(key) or key.startswith(item_key)
+        item
+        for item_key, item in by_name.items()
+        if item_key.startswith(key) or key.startswith(item_key)
     ]
     if len(prefix_matches) == 1:
         return prefix_matches[0]
@@ -148,12 +150,12 @@ def _ensure_top5_lead(
 
     if strict:
         raise ValueError(
-            f"cluster {cluster_index + 1} lead {lead_name!r} must be one of the top-{REEL_LINEUP_TOP_LEADS} food leads"
+            f"cluster {cluster_index + 1} lead {lead_name!r} must be one of the top-{MENU_CLUSTERER_TOP_LEADS} food leads"
         )
 
     top5_names = [_item_name(item) for item in top5_leads if _item_name(item)]
     if not top5_names:
-        raise ValueError("reel_lineup requires at least one top food lead")
+        raise ValueError("menu_clusterer requires at least one top food lead")
 
     corrected = top5_names[cluster_index % len(top5_names)]
     corrected_key = _name_key(corrected)
@@ -164,8 +166,10 @@ def _ensure_top5_lead(
         and _resolve_food_item(by_name, lead_name)
         and lead_key not in {_name_key(name) for name in new_supporting}
     ):
-        new_supporting.insert(0, _item_name(_resolve_food_item(by_name, lead_name) or {"name": lead_name}))
-    return corrected, new_supporting[: REEL_LINEUP_GROUP_MAX_SIZE - 1]
+        new_supporting.insert(
+            0, _item_name(_resolve_food_item(by_name, lead_name) or {"name": lead_name})
+        )
+    return corrected, new_supporting[: MENU_CLUSTERER_GROUP_MAX_SIZE - 1]
 
 
 def _overall_strategy(campaign_brief_data: dict[str, Any] | None) -> dict[str, Any]:
@@ -292,7 +296,7 @@ def _finalize_cluster_group(
     return {
         "id": f"group-{index + 1}",
         "leadName": _item_name(lead_item),
-        "profileId": REEL_LINEUP_PROFILE_ID,
+        "profileId": MENU_CLUSTERER_PROFILE_ID,
         "anchor": {"dimension": "reel_moment", "value": reel_moment},
         "items": group_items,
         "mix": _compute_mix(group_items),
@@ -314,7 +318,7 @@ def _finalize_cluster_group(
 
 
 def merge_llm_clusters(
-    draft_clusters: list[ReelLineupClusterDraftLike],
+    draft_clusters: list[MenuClustererClusterDraftLike],
     *,
     menu_tagger_items: list[dict[str, Any]],
     top5_leads: list[dict[str, Any]],
@@ -323,26 +327,26 @@ def merge_llm_clusters(
     source_campaign_brief_title: str = "",
     notes: str = "",
     strict_top5_leads: bool = False,
-    min_groups: int = REEL_LINEUP_DEFAULT_GROUP_COUNT,
+    min_groups: int = MENU_CLUSTERER_DEFAULT_GROUP_COUNT,
     target_group_count: int | None = None,
 ) -> dict[str, Any]:
     food_items = food_items_only(menu_tagger_items)
     resolved_min = resolve_target_group_count(min_groups, food_item_count=len(food_items))
     if len(draft_clusters) < resolved_min:
         raise ValueError(
-            f"reel_lineup requires at least {resolved_min} food clusters; "
+            f"menu_clusterer requires at least {resolved_min} food clusters; "
             f"got {len(draft_clusters)}"
         )
 
     if len(food_items) < resolved_min:
         raise ValueError(
-            f"reel_lineup requires at least {resolved_min} tagged food items; "
+            f"menu_clusterer requires at least {resolved_min} tagged food items; "
             f"got {len(food_items)}"
         )
 
     by_name = _items_by_name(food_items)
     if not _top5_name_keys(top5_leads):
-        raise ValueError("reel_lineup requires at least one top food lead")
+        raise ValueError("menu_clusterer requires at least one top food lead")
 
     groups: list[dict[str, Any]] = []
     food_leads: list[dict[str, Any]] = []
@@ -351,7 +355,9 @@ def merge_llm_clusters(
     for index, cluster in enumerate(draft_clusters):
         lead_name = str(cluster.leadItemName or "").strip()
         supporting_names = [
-            str(raw_name or "").strip() for raw_name in (cluster.supportingItemNames or []) if str(raw_name or "").strip()
+            str(raw_name or "").strip()
+            for raw_name in (cluster.supportingItemNames or [])
+            if str(raw_name or "").strip()
         ]
         lead_name, supporting_names = _ensure_top5_lead(
             lead_name,
@@ -366,10 +372,10 @@ def merge_llm_clusters(
             raise ValueError(f"cluster {index + 1} lead {lead_name!r} is not a tagged food item")
 
         description = str(cluster.clusterDescription or "").strip()
-        if len(description) < REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN:
+        if len(description) < MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN:
             raise ValueError(
                 f"cluster {index + 1} clusterDescription must be at least "
-                f"{REEL_LINEUP_CLUSTER_DESCRIPTION_MIN_LEN} characters"
+                f"{MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN} characters"
             )
 
         supporting: list[dict[str, Any]] = []
@@ -387,12 +393,14 @@ def merge_llm_clusters(
                 )
             supporting.append(item)
             seen_in_group.add(name_key)
-            if len(supporting) >= REEL_LINEUP_GROUP_MAX_SIZE - 1:
+            if len(supporting) >= MENU_CLUSTERER_GROUP_MAX_SIZE - 1:
                 break
 
         group_size = 1 + len(supporting)
-        if group_size > REEL_LINEUP_GROUP_MAX_SIZE:
-            raise ValueError(f"cluster {index + 1} exceeds maximum group size of {REEL_LINEUP_GROUP_MAX_SIZE}")
+        if group_size > MENU_CLUSTERER_GROUP_MAX_SIZE:
+            raise ValueError(
+                f"cluster {index + 1} exceeds maximum group size of {MENU_CLUSTERER_GROUP_MAX_SIZE}"
+            )
 
         theme_label = str(cluster.themeLabel or "").strip()
         groups.append(
@@ -433,5 +441,7 @@ def merge_llm_clusters(
     note_text = notes.strip()
     if note_text:
         payload["notes"] = note_text
-    payload["targetGroupCount"] = target_group_count if target_group_count is not None else resolved_min
+    payload["targetGroupCount"] = (
+        target_group_count if target_group_count is not None else resolved_min
+    )
     return payload

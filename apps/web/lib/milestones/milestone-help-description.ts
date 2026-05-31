@@ -6,7 +6,7 @@ export const PRESET_GOAL_TRANSLATION_KEYS = {
   restaurant_campaign_brief: 'milestonePreset.restaurant_campaign_brief.goal',
   promotion_candidates: 'milestonePreset.promotion_candidates.goal',
   menu_tagger: 'milestonePreset.menu_tagger.goal',
-  reel_lineup: 'milestonePreset.reel_lineup.goal',
+  menu_clusterer: 'milestonePreset.menu_clusterer.goal',
   post_lineup: 'milestonePreset.post_lineup.goal',
   story_lineup: 'milestonePreset.story_lineup.goal',
   culture_hooks: 'milestonePreset.culture_hooks.goal',

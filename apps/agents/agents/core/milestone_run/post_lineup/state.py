@@ -22,7 +22,7 @@ class PostLineupPost(TypedDict):
 
 class PostLineupOutput(TypedDict):
     posts: list[PostLineupPost]
-    sourceReelLineupTitle: NotRequired[str]
+    sourceMenuClustererTitle: NotRequired[str]
     notes: NotRequired[str]
 
 
@@ -39,7 +39,7 @@ class PostLineupState(TypedDict):
     prior_milestones_data: NotRequired[str]
     owner_notes_markdown: NotRequired[str]
     food_leads: NotRequired[list[dict[str, Any]]]
-    source_reel_lineup_title: NotRequired[str]
+    source_menu_clusterer_title: NotRequired[str]
     generated_output: NotRequired[PostLineupOutput | None]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | None]

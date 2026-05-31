@@ -14,13 +14,13 @@ import { extractCampaignBriefMainCategory } from '@/lib/milestones/campaign-brie
 import {
   milestonePresetHasDefaultOptionalNotesInput,
   normalizePromotionCandidatesInput,
-  normalizeReelLineupInput,
+  normalizeMenuClustererInput,
   normalizedPromotionCandidatesInputsEqual,
-  normalizedReelLineupInputsEqual,
+  normalizedMenuClustererInputsEqual,
   optionalNotesFromMilestoneInput,
   promotionCandidatesDraftFromNormalized,
   promotionCandidatesInputFromMilestoneInput,
-  reelLineupInputFromMilestoneInput,
+  menuClustererInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -29,7 +29,7 @@ import type { TimelineActions } from '../timeline-context'
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { MilestoneInputModel } from './milestone-item-tabs'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
-import type { ReelLineupInputDraft } from './milestone-reel-lineup-input'
+import type { MenuClustererInputDraft } from './milestone-menu-clusterer-input'
 import type { TimelineMilestone } from './types'
 
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
@@ -59,8 +59,11 @@ function promotionCandidatesInputEqual(
   )
 }
 
-function reelLineupInputEqual(a: ReelLineupInputDraft, b: ReelLineupInputDraft): boolean {
-  return normalizedReelLineupInputsEqual(normalizeReelLineupInput(a), normalizeReelLineupInput(b))
+function menuClustererInputEqual(a: MenuClustererInputDraft, b: MenuClustererInputDraft): boolean {
+  return normalizedMenuClustererInputsEqual(
+    normalizeMenuClustererInput(a),
+    normalizeMenuClustererInput(b),
+  )
 }
 
 export function useMilestoneItemDrafts(
@@ -89,7 +92,7 @@ export function useMilestoneItemDrafts(
   const isDatesPreset = inputType === 'dates'
   const isPromotionCandidatesPreset = inputType === 'promotion_candidates'
   const isCampaignBriefPreset = inputType === 'campaign_brief'
-  const isReelLineupPreset = inputType === 'reel_lineup'
+  const isMenuClustererPreset = inputType === 'menu_clusterer'
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
@@ -101,8 +104,8 @@ export function useMilestoneItemDrafts(
   const [campaignBriefDraft, setCampaignBriefDraft] = useState<CampaignBriefInputDraft>(() =>
     campaignBriefInputFromMilestoneInput(milestone.milestoneInput),
   )
-  const [reelLineupDraft, setReelLineupDraft] = useState<ReelLineupInputDraft>(() =>
-    reelLineupInputFromMilestoneInput(milestone.milestoneInput),
+  const [menuClustererDraft, setMenuClustererDraft] = useState<MenuClustererInputDraft>(() =>
+    menuClustererInputFromMilestoneInput(milestone.milestoneInput),
   )
   const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
     milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
@@ -120,15 +123,15 @@ export function useMilestoneItemDrafts(
     if (milestone.presetId === 'restaurant_campaign_brief') {
       setCampaignBriefDraft(campaignBriefInputFromMilestoneInput(milestone.milestoneInput))
     }
-    if (milestone.presetId === 'reel_lineup') {
-      setReelLineupDraft(reelLineupInputFromMilestoneInput(milestone.milestoneInput))
+    if (milestone.presetId === 'menu_clusterer') {
+      setMenuClustererDraft(menuClustererInputFromMilestoneInput(milestone.milestoneInput))
     }
   }, [milestone.id, milestone.milestoneInput, milestone.presetId])
 
   const previousMilestoneIdRef = useRef(milestone.id)
   const promotionCandidatesFocusedRef = useRef(false)
   const campaignBriefFocusedRef = useRef(false)
-  const reelLineupFocusedRef = useRef(false)
+  const menuClustererFocusedRef = useRef(false)
   const optionalNotesFocusedRef = useRef(false)
 
   useEffect(() => {
@@ -174,18 +177,18 @@ export function useMilestoneItemDrafts(
   }, [milestone.presetId, milestone.id, milestone.milestoneInput])
 
   useEffect(() => {
-    if (milestone.presetId !== 'reel_lineup') {
+    if (milestone.presetId !== 'menu_clusterer') {
       previousMilestoneIdRef.current = milestone.id
       return
     }
-    const server = reelLineupInputFromMilestoneInput(milestone.milestoneInput)
-    setReelLineupDraft((prev) => {
+    const server = menuClustererInputFromMilestoneInput(milestone.milestoneInput)
+    setMenuClustererDraft((prev) => {
       if (previousMilestoneIdRef.current !== milestone.id) {
         previousMilestoneIdRef.current = milestone.id
         return server
       }
-      if (!reelLineupInputEqual(prev, server)) {
-        if (!reelLineupFocusedRef.current) {
+      if (!menuClustererInputEqual(prev, server)) {
+        if (!menuClustererFocusedRef.current) {
           return server
         }
         return prev
@@ -225,8 +228,8 @@ export function useMilestoneItemDrafts(
   promotionCandidatesDraftRef.current = promotionCandidatesDraft
   const campaignBriefDraftRef = useRef(campaignBriefDraft)
   campaignBriefDraftRef.current = campaignBriefDraft
-  const reelLineupDraftRef = useRef(reelLineupDraft)
-  reelLineupDraftRef.current = reelLineupDraft
+  const menuClustererDraftRef = useRef(menuClustererDraft)
+  menuClustererDraftRef.current = menuClustererDraft
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
   const debounceTimerRef = useRef<number | null>(null)
@@ -277,13 +280,13 @@ export function useMilestoneItemDrafts(
     )
   }, [campaignBriefDraft, isCampaignBriefPreset, milestone.milestoneInput])
 
-  const reelLineupDirty = useMemo(() => {
-    if (!isReelLineupPreset) {
+  const menuClustererDirty = useMemo(() => {
+    if (!isMenuClustererPreset) {
       return false
     }
-    const server = reelLineupInputFromMilestoneInput(milestone.milestoneInput)
-    return !reelLineupInputEqual(reelLineupDraft, server)
-  }, [isReelLineupPreset, milestone.milestoneInput, reelLineupDraft])
+    const server = menuClustererInputFromMilestoneInput(milestone.milestoneInput)
+    return !menuClustererInputEqual(menuClustererDraft, server)
+  }, [isMenuClustererPreset, milestone.milestoneInput, menuClustererDraft])
 
   const performMilestoneInputFlush = useCallback(
     async ({
@@ -359,19 +362,19 @@ export function useMilestoneItemDrafts(
         }
         return ok
       }
-      if (m.presetId === 'reel_lineup') {
-        const server = reelLineupInputFromMilestoneInput(m.milestoneInput)
-        const normalizedDraft = normalizeReelLineupInput(reelLineupDraftRef.current)
-        const normalizedServer = normalizeReelLineupInput(server)
-        if (normalizedReelLineupInputsEqual(normalizedDraft, normalizedServer)) {
+      if (m.presetId === 'menu_clusterer') {
+        const server = menuClustererInputFromMilestoneInput(m.milestoneInput)
+        const normalizedDraft = normalizeMenuClustererInput(menuClustererDraftRef.current)
+        const normalizedServer = normalizeMenuClustererInput(server)
+        if (normalizedMenuClustererInputsEqual(normalizedDraft, normalizedServer)) {
           return true
         }
         const ok = await onUpdate(m.id, {
-          type: 'reel_lineup',
+          type: 'menu_clusterer',
           value: normalizedDraft,
         })
         if (!ok) {
-          setReelLineupDraft(server)
+          setMenuClustererDraft(server)
         }
         return ok
       }
@@ -428,11 +431,11 @@ export function useMilestoneItemDrafts(
       (isDatesPreset && inputDirty) ||
       (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
       (isCampaignBriefPreset && campaignBriefDirty) ||
-      (isReelLineupPreset && reelLineupDirty) ||
+      (isMenuClustererPreset && menuClustererDirty) ||
       (!isDatesPreset &&
         !isPromotionCandidatesPreset &&
         !isCampaignBriefPreset &&
-        !isReelLineupPreset &&
+        !isMenuClustererPreset &&
         usesOptionalNotesInput &&
         optionalNotesDirty)
     if (!dirty) {
@@ -454,15 +457,15 @@ export function useMilestoneItemDrafts(
     optionalNotesDraft,
     campaignBriefDirty,
     campaignBriefDraft,
-    reelLineupDirty,
-    reelLineupDraft,
+    menuClustererDirty,
+    menuClustererDraft,
     promotionCandidatesDirty,
     promotionCandidatesDraft,
     flushMilestoneInputSave,
     inputDirty,
     inputDraft,
     isCampaignBriefPreset,
-    isReelLineupPreset,
+    isMenuClustererPreset,
     isPromotionCandidatesPreset,
     usesOptionalNotesInput,
     isDatesPreset,
@@ -488,7 +491,7 @@ export function useMilestoneItemDrafts(
     : (isDatesPreset && inputDirty) ||
         (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
         (isCampaignBriefPreset && campaignBriefDirty) ||
-        (isReelLineupPreset && reelLineupDirty) ||
+        (isMenuClustererPreset && menuClustererDirty) ||
         (usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
@@ -535,19 +538,19 @@ export function useMilestoneItemDrafts(
     campaignBriefFocusedRef.current = true
   }, [])
 
-  const handleReelLineupNotesBlur = useCallback(() => {
-    reelLineupFocusedRef.current = false
+  const handleMenuClustererNotesBlur = useCallback(() => {
+    menuClustererFocusedRef.current = false
     void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
   }, [flushMilestoneInputSave])
 
-  const handleReelLineupNotesFocus = useCallback(() => {
-    reelLineupFocusedRef.current = true
+  const handleMenuClustererNotesFocus = useCallback(() => {
+    menuClustererFocusedRef.current = true
   }, [])
 
-  const handleReelLineupDraftChange = useCallback((next: ReelLineupInputDraft) => {
-    reelLineupFocusedRef.current = true
-    reelLineupDraftRef.current = next
-    setReelLineupDraft(next)
+  const handleMenuClustererDraftChange = useCallback((next: MenuClustererInputDraft) => {
+    menuClustererFocusedRef.current = true
+    menuClustererDraftRef.current = next
+    setMenuClustererDraft(next)
   }, [])
 
   const inputModel = useMemo((): MilestoneInputModel => {
@@ -583,13 +586,13 @@ export function useMilestoneItemDrafts(
         saving: savingInput,
       }
     }
-    if (isReelLineupPreset) {
+    if (isMenuClustererPreset) {
       return {
-        type: 'reel_lineup',
-        draft: reelLineupDraft,
-        onChange: handleReelLineupDraftChange,
-        onNotesBlur: handleReelLineupNotesBlur,
-        onNotesFocus: handleReelLineupNotesFocus,
+        type: 'menu_clusterer',
+        draft: menuClustererDraft,
+        onChange: handleMenuClustererDraftChange,
+        onNotesBlur: handleMenuClustererNotesBlur,
+        onNotesFocus: handleMenuClustererNotesFocus,
         saveStatus: inputSaveStatus,
         saving: savingInput,
       }
@@ -620,9 +623,9 @@ export function useMilestoneItemDrafts(
     handleCampaignBriefNotesBlur,
     handleCampaignBriefNotesFocus,
     handleDatesDraftChange,
-    handleReelLineupDraftChange,
-    handleReelLineupNotesBlur,
-    handleReelLineupNotesFocus,
+    handleMenuClustererDraftChange,
+    handleMenuClustererNotesBlur,
+    handleMenuClustererNotesFocus,
     handleOptionalNotesBlur,
     handleOptionalNotesDraftChange,
     handleOptionalNotesFocus,
@@ -633,12 +636,12 @@ export function useMilestoneItemDrafts(
     inputSaveStatus,
     isCampaignBriefPreset,
     isDatesPreset,
-    isReelLineupPreset,
+    isMenuClustererPreset,
     isPromotionCandidatesPreset,
     milestone.presetId,
     optionalNotesDraft,
     promotionCandidatesDraft,
-    reelLineupDraft,
+    menuClustererDraft,
     savingInput,
     t,
     usesOptionalNotesInput,

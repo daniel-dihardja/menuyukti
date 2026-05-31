@@ -144,13 +144,15 @@ def try_campaign_brief_deterministic_verdict(
             "cadenceGuidance",
         )
         missing = [key for key in required if not str(strategy.get(key) or "").strip()]
-        if isinstance(strategy.get("audiencePriority"), list) and len(
-            _unique_non_empty_strings(strategy.get("audiencePriority"))
-        ) < 3:
+        if (
+            isinstance(strategy.get("audiencePriority"), list)
+            and len(_unique_non_empty_strings(strategy.get("audiencePriority"))) < 3
+        ):
             missing.append("audiencePriority items")
-        if isinstance(strategy.get("cadenceGuidance"), list) and len(
-            _unique_non_empty_strings(strategy.get("cadenceGuidance"))
-        ) < 3:
+        if (
+            isinstance(strategy.get("cadenceGuidance"), list)
+            and len(_unique_non_empty_strings(strategy.get("cadenceGuidance"))) < 3
+        ):
             missing.append("cadenceGuidance items")
         if missing:
             return ("fail", f"overallStrategy missing required fields: {', '.join(missing)}.")

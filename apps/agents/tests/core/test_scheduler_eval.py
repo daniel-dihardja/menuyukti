@@ -23,7 +23,7 @@ def _sample_payload() -> dict:
         ],
         "sourceDatesTitle": "Campaign dates",
         "sourceCampaignBriefTitle": "Campaign brief",
-        "sourceReelLineupTitle": "Lunch Reel Lineup",
+        "sourceMenuClustererTitle": "Lunch Menu Clusterer",
     }
 
 
@@ -69,9 +69,9 @@ def test_prior_campaign_brief_verdict_passes() -> None:
     assert verdict[0] == "pass"
 
 
-def test_prior_reel_lineup_verdict_passes() -> None:
+def test_prior_menu_clusterer_verdict_passes() -> None:
     verdict = try_scheduler_deterministic_verdict(
-        "Run used a prior reel lineup milestone.",
+        "Run used a prior menu clusterer milestone.",
         _sample_payload(),
     )
     assert verdict is not None

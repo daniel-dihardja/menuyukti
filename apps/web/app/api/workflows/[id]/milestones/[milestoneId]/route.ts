@@ -11,13 +11,13 @@ import {
   milestonedataValueSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
-  reelLineupMilestoneDataSchema,
+  menuClustererMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
-import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
+import { EMPTY_MENU_CLUSTERER_DATA } from '@/lib/milestones/menu-clusterer'
 import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
 import { EMPTY_STORY_LINEUP_DATA } from '@/lib/milestones/story-lineup'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
@@ -228,10 +228,10 @@ export async function GET(_req: Request, context: RouteContext) {
         }
       }
     }
-    if (presetId === 'reel_lineup') {
-      const rlParsed = reelLineupMilestoneDataSchema.safeParse(milestoneData)
+    if (presetId === 'menu_clusterer') {
+      const rlParsed = menuClustererMilestoneDataSchema.safeParse(milestoneData)
       if (!rlParsed.success) {
-        milestoneData = EMPTY_REEL_LINEUP_DATA
+        milestoneData = EMPTY_MENU_CLUSTERER_DATA
       }
     }
     if (presetId === 'post_lineup') {

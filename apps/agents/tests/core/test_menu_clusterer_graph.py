@@ -1,4 +1,4 @@
-"""Tests for reel_lineup clustering and graph nodes."""
+"""Tests for menu_clusterer clustering and graph nodes."""
 
 from __future__ import annotations
 
@@ -6,18 +6,18 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
-from agents_app.agents.core.milestone_run.reel_lineup.cluster import (
+from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     merge_llm_clusters,
     rank_top_food_leads,
 )
-from agents_app.agents.core.milestone_run.reel_lineup.nodes import (
-    ReelLineupClusterDraft,
-    _reel_lineup_draft_output_model,
+from agents_app.agents.core.milestone_run.menu_clusterer.nodes import (
+    MenuClustererClusterDraft,
+    _menu_clusterer_draft_output_model,
     build_lineup,
     fetch_and_prepare,
     persist_result,
 )
+from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 
 _CLUSTER_DESCRIPTION = (
     "Groups signature mains for Cafe Alto weekday lunch workers using shared savory tags "
@@ -139,27 +139,27 @@ def _prior_json() -> str:
     )
 
 
-def _draft_clusters() -> list[ReelLineupClusterDraft]:
+def _draft_clusters() -> list[MenuClustererClusterDraft]:
     return [
-        ReelLineupClusterDraft(
+        MenuClustererClusterDraft(
             themeLabel="Hero signatures",
             leadItemName="Wings",
             supportingItemNames=["Ribeye"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
-        ReelLineupClusterDraft(
+        MenuClustererClusterDraft(
             themeLabel="Category variety",
             leadItemName="Ribeye",
             supportingItemNames=["Burger", "Fries"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
-        ReelLineupClusterDraft(
+        MenuClustererClusterDraft(
             themeLabel="Proof angle",
             leadItemName="Burger",
             supportingItemNames=["Salad"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
-        ReelLineupClusterDraft(
+        MenuClustererClusterDraft(
             themeLabel="Side pairings",
             leadItemName="Wings",
             supportingItemNames=["Fries", "Salad"],
@@ -182,7 +182,7 @@ def test_merge_llm_clusters_builds_multi_item_groups_with_descriptions() -> None
         campaign_brief_data=_campaign_brief_data(),
         source_campaign_brief_title="Campaign brief",
     )
-    normalized, error = validate_skill_output("reel_lineup", payload)
+    normalized, error = validate_skill_output("menu_clusterer", payload)
     assert error is None
     assert isinstance(normalized, dict)
     assert len(normalized["groups"]) == 4
@@ -210,7 +210,7 @@ def test_merge_llm_clusters_rejects_non_top5_lead_when_strict() -> None:
     ]
     top5 = rank_top_food_leads(items)
     clusters = _draft_clusters()
-    clusters[0] = ReelLineupClusterDraft(
+    clusters[0] = MenuClustererClusterDraft(
         themeLabel="Invalid",
         leadItemName="Soup",
         supportingItemNames=[],
@@ -238,7 +238,7 @@ def test_merge_llm_clusters_auto_corrects_non_top5_lead() -> None:
     ]
     top5 = rank_top_food_leads(items)
     clusters = _draft_clusters()
-    clusters[0] = ReelLineupClusterDraft(
+    clusters[0] = MenuClustererClusterDraft(
         themeLabel="Invalid",
         leadItemName="Soup",
         supportingItemNames=[],
@@ -256,7 +256,7 @@ def test_merge_llm_clusters_auto_corrects_non_top5_lead() -> None:
 async def test_fetch_and_prepare_requires_menu_tagger() -> None:
     with (
         patch(
-            "agents_app.agents.core.milestone_run.reel_lineup.nodes.get_stream_writer",
+            "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
         pytest.raises(ValueError, match="menu_tagger"),
@@ -288,7 +288,7 @@ async def test_fetch_and_prepare_requires_menu_tagger() -> None:
 async def test_fetch_and_prepare_requires_campaign_brief() -> None:
     with (
         patch(
-            "agents_app.agents.core.milestone_run.reel_lineup.nodes.get_stream_writer",
+            "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
         pytest.raises(ValueError, match="restaurant_campaign_brief"),
@@ -322,7 +322,7 @@ async def test_fetch_and_prepare_requires_campaign_brief() -> None:
 
 @pytest.mark.asyncio
 async def test_build_lineup_and_persist() -> None:
-    draft_model = _reel_lineup_draft_output_model(4)
+    draft_model = _menu_clusterer_draft_output_model(4)
     draft = draft_model(clusters=_draft_clusters())
     state = {
         "milestone_id": "m1",
@@ -340,11 +340,11 @@ async def test_build_lineup_and_persist() -> None:
     }
     with (
         patch(
-            "agents_app.agents.core.milestone_run.reel_lineup.nodes.get_stream_writer",
+            "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
         patch(
-            "agents_app.agents.core.milestone_run.reel_lineup.nodes.structured_ainvoke_from_run_config",
+            "agents_app.agents.core.milestone_run.menu_clusterer.nodes.structured_ainvoke_from_run_config",
             new=AsyncMock(return_value=draft),
         ),
     ):
@@ -353,7 +353,7 @@ async def test_build_lineup_and_persist() -> None:
     assert built["generated_output"]["groups"][0]["scheduleHints"]["preferredTime"] == "11:00"
 
     with patch(
-        "agents_app.agents.core.milestone_run.reel_lineup.nodes.upsert_milestonedata_node",
+        "agents_app.agents.core.milestone_run.menu_clusterer.nodes.upsert_milestonedata_node",
         new=AsyncMock(),
     ) as upsert:
         saved = await persist_result({**state, **built}, client=MagicMock())  # type: ignore[arg-type]

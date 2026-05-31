@@ -269,7 +269,7 @@ def extract_menu_tagger_data(prior_milestones_json: str) -> dict[str, Any] | Non
     return None
 
 
-def is_reel_lineup_milestone_data(data: object) -> bool:
+def is_menu_clusterer_milestone_data(data: object) -> bool:
     if not isinstance(data, dict):
         return False
     food_leads = data.get("foodLeads")
@@ -277,7 +277,7 @@ def is_reel_lineup_milestone_data(data: object) -> bool:
     return isinstance(food_leads, list) and isinstance(groups, list)
 
 
-def reel_lineup_has_food_leads(data: dict[str, Any]) -> bool:
+def menu_clusterer_has_food_leads(data: dict[str, Any]) -> bool:
     food_leads = data.get("foodLeads")
     if not isinstance(food_leads, list):
         return False
@@ -289,57 +289,58 @@ def reel_lineup_has_food_leads(data: dict[str, Any]) -> bool:
     return False
 
 
-def extract_reel_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return the best matched prior reel_lineup row, or ``None``."""
+def extract_menu_clusterer_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the best matched prior menu_clusterer row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
-    matched, _ = collect_matched_prior_rows(rows, frozenset({"reel_lineup"}))
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"menu_clusterer"}))
     if not matched:
         return None
     for row in reversed(matched):
         data = row.get("data")
-        if isinstance(data, dict) and reel_lineup_has_food_leads(data):
+        if isinstance(data, dict) and menu_clusterer_has_food_leads(data):
             return row
     return matched[-1]
 
 
-def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return reel_lineup ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_reel_lineup_row(prior_milestones_json)
+def extract_menu_clusterer_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return menu_clusterer ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_menu_clusterer_row(prior_milestones_json)
     if row is None:
         return None
     data = row.get("data")
-    if isinstance(data, dict) and is_reel_lineup_milestone_data(data):
+    if isinstance(data, dict) and is_menu_clusterer_milestone_data(data):
         return data
     return None
 
 
-def reel_lineup_prior_error_message(
+def menu_clusterer_prior_error_message(
     prior_milestones_json: str, *, milestone_id: str = "milestone"
 ) -> str:
-    """Actionable error when a milestone cannot read prior reel_lineup data."""
-    base = f"{milestone_id} requires a prior reel_lineup milestone with saved food groups"
+    """Actionable error when a milestone cannot read prior menu_clusterer data."""
+    base = f"{milestone_id} requires a prior menu_clusterer milestone with saved food groups"
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     if not rows:
         return (
             f"{base}. No earlier milestones were returned for this workflow step — "
-            "place reel_lineup before this milestone in the timeline."
+            "place menu_clusterer before this milestone in the timeline."
         )
 
     titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
-    has_reel_lineup_preset = any(
-        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "reel_lineup"
+    has_menu_clusterer_preset = any(
+        isinstance((preset_id := row.get("presetId")), str)
+        and preset_id.strip() == "menu_clusterer"
         for row in rows
     )
-    if not has_reel_lineup_preset:
+    if not has_menu_clusterer_preset:
         return (
             f"{base}. Earlier milestones are: {', '.join(titles)}. "
-            "Add a reel_lineup step before this milestone, run it successfully, "
+            "Add a menu_clusterer step before this milestone, run it successfully, "
             "then run this milestone again."
         )
     return (
-        f"{base}. A reel_lineup milestone appears earlier in the workflow "
+        f"{base}. A menu_clusterer milestone appears earlier in the workflow "
         "but its saved preset data is missing or invalid — open that step, "
-        "confirm the Data tab shows food groups, and re-run reel_lineup."
+        "confirm the Data tab shows food groups, and re-run menu_clusterer."
     )
 
 

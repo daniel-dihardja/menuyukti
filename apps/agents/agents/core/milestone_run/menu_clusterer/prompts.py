@@ -1,8 +1,8 @@
-"""Prompts for reel_lineup LLM food cluster generation."""
+"""Prompts for menu_clusterer LLM food cluster generation."""
 
 from __future__ import annotations
 
-REEL_LINEUP_SYSTEM_TEMPLATE = """You are a restaurant Instagram Reel strategist.
+MENU_CLUSTERER_SYSTEM_TEMPLATE = """You are a restaurant Instagram Reel strategist.
 
 Your task: group tagged menu food items into exactly {target_group_count} distinct Reel clusters for a venue campaign. Each cluster is a short multi-dish lineup (2 to 5 items) meant to rotate as hook Reels.
 
@@ -41,8 +41,8 @@ OUTPUT FORMAT — return exactly one JSON object matching the schema
 """
 
 
-def format_reel_lineup_system(*, target_group_count: int, min_group_count: int = 4) -> str:
-    return REEL_LINEUP_SYSTEM_TEMPLATE.format(
+def format_menu_clusterer_system(*, target_group_count: int, min_group_count: int = 4) -> str:
+    return MENU_CLUSTERER_SYSTEM_TEMPLATE.format(
         target_group_count=target_group_count,
         min_group_count=min_group_count,
     )

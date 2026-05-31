@@ -83,8 +83,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.promotion_candidates.label')
     case 'menu_tagger':
       return t('milestonePreset.menu_tagger.label')
-    case 'reel_lineup':
-      return t('milestonePreset.reel_lineup.label')
+    case 'menu_clusterer':
+      return t('milestonePreset.menu_clusterer.label')
     case 'post_lineup':
       return t('milestonePreset.post_lineup.label')
     case 'story_lineup':

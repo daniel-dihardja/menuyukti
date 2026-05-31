@@ -1,11 +1,11 @@
-"""State schema for dedicated reel_lineup milestone execution."""
+"""State schema for dedicated menu_clusterer milestone execution."""
 
 from __future__ import annotations
 
 from typing import Any, Literal, NotRequired, TypedDict
 
 
-class ReelLineupGroupItem(TypedDict):
+class MenuClustererGroupItem(TypedDict):
     name: str
     role: Literal["star", "puzzle"]
     category: str
@@ -16,7 +16,7 @@ class ReelLineupGroupItem(TypedDict):
     reelMoment: NotRequired[str]
 
 
-class ReelLineupScheduleHints(TypedDict):
+class MenuClustererScheduleHints(TypedDict):
     preferredWeekdays: list[
         Literal[
             "monday",
@@ -32,38 +32,38 @@ class ReelLineupScheduleHints(TypedDict):
     cadenceEligible: bool
 
 
-class ReelLineupGroupMix(TypedDict):
+class MenuClustererGroupMix(TypedDict):
     priceLevels: list[Literal[1, 2, 3]]
     storytellingStrongCount: int
     starCount: int
     puzzleCount: int
 
 
-class ReelLineupAnchor(TypedDict):
+class MenuClustererAnchor(TypedDict):
     dimension: Literal["reel_moment"]
     value: str
 
 
-class ReelLineupGroup(TypedDict):
+class MenuClustererGroup(TypedDict):
     id: str
     leadName: str
     profileId: Literal["hook_reel"]
-    anchor: ReelLineupAnchor
-    items: list[ReelLineupGroupItem]
-    mix: ReelLineupGroupMix
+    anchor: MenuClustererAnchor
+    items: list[MenuClustererGroupItem]
+    mix: MenuClustererGroupMix
     clusterDescription: str
     strategyFocus: NotRequired[str]
     coreMessage: NotRequired[str]
     creativeRole: NotRequired[str]
     assetHint: NotRequired[str]
-    scheduleHints: NotRequired[ReelLineupScheduleHints]
+    scheduleHints: NotRequired[MenuClustererScheduleHints]
 
 
-class ReelLineupOutput(TypedDict):
+class MenuClustererOutput(TypedDict):
     foodLeads: list[dict[str, Any]]
     drinkLeads: list[dict[str, Any]]
-    groups: list[ReelLineupGroup]
-    drinkGroups: list[ReelLineupGroup]
+    groups: list[MenuClustererGroup]
+    drinkGroups: list[MenuClustererGroup]
     unassignedItemNames: list[str]
     topFoodLeadNames: NotRequired[list[str]]
     targetGroupCount: NotRequired[int]
@@ -72,7 +72,7 @@ class ReelLineupOutput(TypedDict):
     notes: NotRequired[str]
 
 
-class ReelLineupState(TypedDict):
+class MenuClustererState(TypedDict):
     milestone_id: str
     location_id: int
     user_id: str
@@ -89,7 +89,7 @@ class ReelLineupState(TypedDict):
     menu_tagger_items: NotRequired[list[dict[str, Any]]]
     source_menu_tagger_title: NotRequired[str]
     target_group_count: NotRequired[int]
-    generated_output: NotRequired[ReelLineupOutput | None]
+    generated_output: NotRequired[MenuClustererOutput | None]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | None]
     milestonedata_written: bool

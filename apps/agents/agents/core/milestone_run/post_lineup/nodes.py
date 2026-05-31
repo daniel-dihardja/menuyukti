@@ -11,8 +11,8 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.post_lineup.build import build_post_lineup
 from agents_app.agents.core.milestone_run.post_lineup.state import PostLineupOutput, PostLineupState
 from agents_app.agents.core.milestone_run.prior_context_inject import (
-    extract_reel_lineup_data,
-    extract_reel_lineup_row,
+    extract_menu_clusterer_data,
+    extract_menu_clusterer_row,
 )
 from langgraph.config import get_stream_writer
 
@@ -68,25 +68,27 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
     _trace(state, "execute_skill", skill_id="post_lineup")
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    reel_lineup_data = extract_reel_lineup_data(prior_json)
-    if reel_lineup_data is None:
-        raise ValueError("post_lineup requires a prior reel_lineup milestone with saved food leads")
+    menu_clusterer_data = extract_menu_clusterer_data(prior_json)
+    if menu_clusterer_data is None:
+        raise ValueError(
+            "post_lineup requires a prior menu_clusterer milestone with saved food leads"
+        )
 
-    food_leads = _food_leads(reel_lineup_data)
+    food_leads = _food_leads(menu_clusterer_data)
     if not food_leads:
-        raise ValueError("post_lineup requires at least one food lead in prior reel_lineup data")
+        raise ValueError("post_lineup requires at least one food lead in prior menu_clusterer data")
 
-    reel_lineup_row = extract_reel_lineup_row(prior_json)
+    menu_clusterer_row = extract_menu_clusterer_row(prior_json)
     source_title = ""
-    if isinstance(reel_lineup_row, dict):
-        title = reel_lineup_row.get("title")
+    if isinstance(menu_clusterer_row, dict):
+        title = menu_clusterer_row.get("title")
         if isinstance(title, str) and title.strip():
             source_title = title.strip()
 
     return {
         "owner_notes_markdown": _fmt_owner_notes(state),
         "food_leads": food_leads,
-        "source_reel_lineup_title": source_title,
+        "source_menu_clusterer_title": source_title,
     }
 
 
@@ -100,7 +102,7 @@ async def build_posts(state: PostLineupState) -> dict[str, Any]:
 
     generated_output = build_post_lineup(
         food_leads=food_leads,
-        source_reel_lineup_title=str(state.get("source_reel_lineup_title") or ""),
+        source_menu_clusterer_title=str(state.get("source_menu_clusterer_title") or ""),
         notes=owner_notes,
     )
     normalized = _normalize_generated_output(generated_output)

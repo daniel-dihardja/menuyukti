@@ -28,7 +28,7 @@ export const milestonePresetIdSchema = z.enum([
   'restaurant_campaign_brief',
   'promotion_candidates',
   'menu_tagger',
-  'reel_lineup',
+  'menu_clusterer',
   'post_lineup',
   'story_lineup',
   'culture_hooks',
@@ -79,11 +79,11 @@ export const menuTaggerMilestoneInputValueSchema = z.object({
 
 export type MenuTaggerMilestoneInputValue = z.infer<typeof menuTaggerMilestoneInputValueSchema>
 
-export const REEL_LINEUP_MIN_GROUP_COUNT = 4
-export const REEL_LINEUP_DEFAULT_GROUP_COUNT = 4
-export const REEL_LINEUP_MAX_GROUP_COUNT = 8
+export const MENU_CLUSTERER_MIN_GROUP_COUNT = 4
+export const MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 4
+export const MENU_CLUSTERER_MAX_GROUP_COUNT = 8
 
-export const reelLineupTargetGroupCountSchema = z.union([
+export const menuClustererTargetGroupCountSchema = z.union([
   z.literal(4),
   z.literal(5),
   z.literal(6),
@@ -91,14 +91,16 @@ export const reelLineupTargetGroupCountSchema = z.union([
   z.literal(8),
 ])
 
-export type ReelLineupTargetGroupCount = z.infer<typeof reelLineupTargetGroupCountSchema>
+export type MenuClustererTargetGroupCount = z.infer<typeof menuClustererTargetGroupCountSchema>
 
-export const reelLineupMilestoneInputValueSchema = z.object({
+export const menuClustererMilestoneInputValueSchema = z.object({
   notes: z.string(),
-  targetGroupCount: reelLineupTargetGroupCountSchema.default(REEL_LINEUP_DEFAULT_GROUP_COUNT),
+  targetGroupCount: menuClustererTargetGroupCountSchema.default(MENU_CLUSTERER_DEFAULT_GROUP_COUNT),
 })
 
-export type ReelLineupMilestoneInputValue = z.infer<typeof reelLineupMilestoneInputValueSchema>
+export type MenuClustererMilestoneInputValue = z.infer<
+  typeof menuClustererMilestoneInputValueSchema
+>
 
 export const postLineupMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -319,21 +321,21 @@ export const menuTaggerMilestoneDataSchema = z.object({
 
 export type MenuTaggerMilestoneData = z.infer<typeof menuTaggerMilestoneDataSchema>
 
-export const reelLineupProfileIdSchema = z.literal('hook_reel')
+export const menuClustererProfileIdSchema = z.literal('hook_reel')
 
-export const reelLineupAnchorSchema = z.object({
+export const menuClustererAnchorSchema = z.object({
   dimension: z.literal('reel_moment'),
   value: z.string().trim().min(1),
 })
 
-export const reelLineupGroupMixSchema = z.object({
+export const menuClustererGroupMixSchema = z.object({
   priceLevels: z.array(z.union([z.literal(1), z.literal(2), z.literal(3)])),
   storytellingStrongCount: z.number().int().nonnegative(),
   starCount: z.number().int().nonnegative(),
   puzzleCount: z.number().int().nonnegative(),
 })
 
-export const reelLineupGroupItemSchema = z.object({
+export const menuClustererGroupItemSchema = z.object({
   name: z.string().trim().min(1),
   role: menuTaggerItemRoleSchema,
   category: z.string().trim().min(1),
@@ -344,9 +346,9 @@ export const reelLineupGroupItemSchema = z.object({
   reelMoment: z.string().trim().min(1).optional(),
 })
 
-export type ReelLineupGroupItem = z.infer<typeof reelLineupGroupItemSchema>
+export type MenuClustererGroupItem = z.infer<typeof menuClustererGroupItemSchema>
 
-export const reelLineupWeekdaySchema = z.enum([
+export const menuClustererWeekdaySchema = z.enum([
   'monday',
   'tuesday',
   'wednesday',
@@ -356,45 +358,45 @@ export const reelLineupWeekdaySchema = z.enum([
   'sunday',
 ])
 
-export const reelLineupScheduleHintsSchema = z.object({
-  preferredWeekdays: z.array(reelLineupWeekdaySchema),
+export const menuClustererScheduleHintsSchema = z.object({
+  preferredWeekdays: z.array(menuClustererWeekdaySchema),
   preferredTime: z.string().trim().min(1),
   cadenceEligible: z.boolean().default(true),
 })
 
-export type ReelLineupScheduleHints = z.infer<typeof reelLineupScheduleHintsSchema>
+export type MenuClustererScheduleHints = z.infer<typeof menuClustererScheduleHintsSchema>
 
-export const reelLineupGroupSchema = z.object({
+export const menuClustererGroupSchema = z.object({
   id: z.string().trim().min(1),
   leadName: z.string().trim().min(1),
-  profileId: reelLineupProfileIdSchema,
-  anchor: reelLineupAnchorSchema,
-  items: z.array(reelLineupGroupItemSchema).min(1).max(5),
-  mix: reelLineupGroupMixSchema,
+  profileId: menuClustererProfileIdSchema,
+  anchor: menuClustererAnchorSchema,
+  items: z.array(menuClustererGroupItemSchema).min(1).max(5),
+  mix: menuClustererGroupMixSchema,
   clusterDescription: z.string().trim().min(40).optional(),
   strategyFocus: z.string().trim().min(1).optional(),
   coreMessage: z.string().trim().min(1).optional(),
   creativeRole: z.string().trim().min(1).optional(),
   assetHint: z.string().trim().min(1).optional(),
-  scheduleHints: reelLineupScheduleHintsSchema.optional(),
+  scheduleHints: menuClustererScheduleHintsSchema.optional(),
 })
 
-export type ReelLineupGroup = z.infer<typeof reelLineupGroupSchema>
+export type MenuClustererGroup = z.infer<typeof menuClustererGroupSchema>
 
-export const reelLineupMilestoneDataSchema = z.object({
+export const menuClustererMilestoneDataSchema = z.object({
   foodLeads: z.array(menuTaggerItemSchema).default([]),
   drinkLeads: z.array(menuTaggerItemSchema).default([]),
-  groups: z.array(reelLineupGroupSchema),
-  drinkGroups: z.array(reelLineupGroupSchema).default([]),
+  groups: z.array(menuClustererGroupSchema),
+  drinkGroups: z.array(menuClustererGroupSchema).default([]),
   unassignedItemNames: z.array(z.string().trim().min(1)),
   topFoodLeadNames: z.array(z.string().trim().min(1)).max(5).default([]),
-  targetGroupCount: reelLineupTargetGroupCountSchema.optional(),
+  targetGroupCount: menuClustererTargetGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),
 })
 
-export type ReelLineupMilestoneData = z.infer<typeof reelLineupMilestoneDataSchema>
+export type MenuClustererMilestoneData = z.infer<typeof menuClustererMilestoneDataSchema>
 
 export const postLineupPostFormatSchema = z.literal('carousel')
 
@@ -421,7 +423,7 @@ export type PostLineupPost = z.infer<typeof postLineupPostSchema>
 
 export const postLineupMilestoneDataSchema = z.object({
   posts: z.array(postLineupPostSchema),
-  sourceReelLineupTitle: z.string().optional(),
+  sourceMenuClustererTitle: z.string().optional(),
   notes: z.string().optional(),
 })
 
@@ -491,7 +493,7 @@ export const schedulerMilestoneDataSchema = z.object({
   publicHolidays: z.array(campaignWindowPublicHolidaySchema).default([]),
   sourceDatesTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
-  sourceReelLineupTitle: z.string().optional(),
+  sourceMenuClustererTitle: z.string().optional(),
   sourcePostLineupTitle: z.string().optional(),
   sourceStoryLineupTitle: z.string().optional(),
   slots: z.array(schedulerSlotSchema).default([]),

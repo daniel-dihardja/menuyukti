@@ -33,7 +33,10 @@ import {
   MilestoneCampaignBriefInput,
   type MilestoneCampaignBriefInputProps,
 } from './milestone-campaign-brief-input'
-import { MilestoneReelLineupInput, type ReelLineupInputDraft } from './milestone-reel-lineup-input'
+import {
+  MilestoneMenuClustererInput,
+  type MenuClustererInputDraft,
+} from './milestone-menu-clusterer-input'
 import type { PassCriteriaRow, TimelineMilestone } from './types'
 import type { CampaignBriefInputDraft } from '@/lib/milestones/campaign-brief-input'
 
@@ -70,9 +73,9 @@ export type MilestoneInputModel =
       saving: boolean
     }
   | {
-      type: 'reel_lineup'
-      draft: ReelLineupInputDraft
-      onChange: (next: ReelLineupInputDraft) => void
+      type: 'menu_clusterer'
+      draft: MenuClustererInputDraft
+      onChange: (next: MenuClustererInputDraft) => void
       onNotesBlur: () => void
       onNotesFocus: () => void
       saveStatus: FieldSaveStatusVariant
@@ -276,10 +279,10 @@ function MilestoneInputTabContent({
           />
         </>
       )
-    case 'reel_lineup':
+    case 'menu_clusterer':
       return (
         <>
-          <MilestoneReelLineupInput
+          <MilestoneMenuClustererInput
             disabled={isMilestoneRunning}
             draft={inputModel.draft}
             onDraftChange={inputModel.onChange}

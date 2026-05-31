@@ -31,12 +31,12 @@ function buildImageBrief(item: MenuTaggerItem): string {
 export function buildPostLineup(
   foodLeads: MenuTaggerItem[],
   options?: {
-    sourceReelLineupTitle?: string
+    sourceMenuClustererTitle?: string
     notes?: string
   },
 ): PostLineupMilestoneData {
   if (foodLeads.length === 0) {
-    throw new Error('post_lineup requires at least one food lead from prior reel_lineup data')
+    throw new Error('post_lineup requires at least one food lead from prior menu_clusterer data')
   }
 
   const slides = foodLeads.slice(0, POST_LINEUP_MAX_SLIDES).map((item) => ({
@@ -46,7 +46,7 @@ export function buildPostLineup(
     imageBrief: buildImageBrief(item),
   }))
 
-  const sourceReelLineupTitle = options?.sourceReelLineupTitle?.trim()
+  const sourceMenuClustererTitle = options?.sourceMenuClustererTitle?.trim()
   const notes = options?.notes?.trim()
 
   return {
@@ -59,7 +59,7 @@ export function buildPostLineup(
         slides,
       },
     ],
-    ...(sourceReelLineupTitle ? { sourceReelLineupTitle } : {}),
+    ...(sourceMenuClustererTitle ? { sourceMenuClustererTitle } : {}),
     ...(notes ? { notes } : {}),
   }
 }

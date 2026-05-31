@@ -74,12 +74,12 @@ def try_scheduler_deterministic_verdict(
             "Scheduler data is missing sourceCampaignBriefTitle from the prior campaign brief.",
         )
 
-    if "prior" in normalized and "reel" in normalized and "lineup" in normalized:
-        source_title = str(data.get("sourceReelLineupTitle") or "").strip()
+    if "prior" in normalized and ("menu_clusterer" in normalized or "menu clusterer" in normalized):
+        source_title = str(data.get("sourceMenuClustererTitle") or "").strip()
         if source_title:
             return (
                 "pass",
-                "Scheduler data references a prior reel_lineup milestone via sourceReelLineupTitle.",
+                "Scheduler data references a prior menu clusterer milestone via sourceMenuClustererTitle.",
             )
         slots = data.get("slots")
         if isinstance(slots, list) and any(
@@ -88,11 +88,11 @@ def try_scheduler_deterministic_verdict(
         ):
             return (
                 "pass",
-                "Scheduler slots include reel entries from reel_lineup.",
+                "Scheduler slots include reel entries from menu clusterer.",
             )
         return (
             "fail",
-            "Scheduler data is missing reel_lineup reference or reel slots.",
+            "Scheduler data is missing menu clusterer reference or reel slots.",
         )
 
     if "reel" in normalized and (

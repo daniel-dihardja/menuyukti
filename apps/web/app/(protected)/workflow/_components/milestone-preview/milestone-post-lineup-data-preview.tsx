@@ -183,10 +183,10 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
             helpText={postsHelpTitle}
           />
         </div>
-        {data.sourceReelLineupTitle ? (
+        {data.sourceMenuClustererTitle ? (
           <p className={mp.bodySmall}>
             <span className={mp.rowKey}>{t('milestonePostLineupPreviewSourceTitle')}:</span>{' '}
-            {data.sourceReelLineupTitle}
+            {data.sourceMenuClustererTitle}
           </p>
         ) : null}
       </div>

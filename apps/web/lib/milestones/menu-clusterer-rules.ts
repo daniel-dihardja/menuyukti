@@ -1,8 +1,8 @@
 import type { MenuTaggerItem } from '@/lib/graphql/node-schemas'
 
-export const REEL_LINEUP_PROFILE_ID = 'hook_reel' as const
-export const REEL_LINEUP_MAX_LEADS = 5
-export const REEL_LINEUP_MAX_DRINK_LEADS = 3
+export const MENU_CLUSTERER_PROFILE_ID = 'hook_reel' as const
+export const MENU_CLUSTERER_MAX_LEADS = 5
+export const MENU_CLUSTERER_MAX_DRINK_LEADS = 3
 
 type MenuTaggerItemLike = Pick<MenuTaggerItem, 'tags' | 'storytellingFit'>
 

@@ -14,6 +14,7 @@ from agents_app.agents.core.milestone_run.culture_hooks.graph import build_cultu
 from agents_app.agents.core.milestone_run.dates.graph import build_dates_graph
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
 from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profile_graph
+from agents_app.agents.core.milestone_run.menu_clusterer.graph import build_menu_clusterer_graph
 from agents_app.agents.core.milestone_run.menu_tagger.graph import build_menu_tagger_graph
 from agents_app.agents.core.milestone_run.post_lineup.graph import build_post_lineup_graph
 from agents_app.agents.core.milestone_run.presets.registry import (
@@ -26,7 +27,6 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
 from agents_app.agents.core.milestone_run.promotion_candidates.graph import (
     build_promotion_candidates_graph,
 )
-from agents_app.agents.core.milestone_run.reel_lineup.graph import build_reel_lineup_graph
 from agents_app.agents.core.milestone_run.scheduler.graph import build_scheduler_graph
 from agents_app.agents.core.milestone_run.state import MilestoneRunState
 from agents_app.agents.core.milestone_run.story_lineup.graph import build_story_lineup_graph
@@ -161,7 +161,7 @@ async def _run_menu_tagger(
     }
 
 
-async def _run_reel_lineup(
+async def _run_menu_clusterer(
     state: MilestoneRunState, *, client: httpx.AsyncClient
 ) -> dict[str, Any]:
     initial = _base_initial(state)
@@ -169,7 +169,7 @@ async def _run_reel_lineup(
     initial["result_data"] = ""
     initial["milestonedata_written"] = False
     final_sub = await _stream_subgraph(
-        build_reel_lineup_graph(client),
+        build_menu_clusterer_graph(client),
         initial,
         state=state,
     )
@@ -422,7 +422,7 @@ def _register_preset_runners() -> None:
     register_preset_runner("restaurant_campaign_brief", _run_campaign_brief)
     register_preset_runner("promotion_candidates", _run_promotion_candidates)
     register_preset_runner("menu_tagger", _run_menu_tagger)
-    register_preset_runner("reel_lineup", _run_reel_lineup)
+    register_preset_runner("menu_clusterer", _run_menu_clusterer)
     register_preset_runner("post_lineup", _run_post_lineup)
     register_preset_runner("story_lineup", _run_story_lineup)
     register_preset_runner("scheduler", _run_scheduler)

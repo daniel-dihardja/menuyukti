@@ -1,7 +1,7 @@
-import type { MilestoneInput, ReelLineupTargetGroupCount } from '@/lib/graphql/node-schemas'
+import type { MilestoneInput, MenuClustererTargetGroupCount } from '@/lib/graphql/node-schemas'
 import {
   promotionCandidatesMilestoneInputValueSchema,
-  reelLineupMilestoneInputValueSchema,
+  menuClustererMilestoneInputValueSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   milestonePresetInputType,
@@ -39,19 +39,19 @@ export function optionalNotesFromMilestoneInput(
   return typeof n === 'string' ? n : ''
 }
 
-const DEFAULT_REEL_LINEUP_INPUT = {
+const DEFAULT_MENU_CLUSTERER_INPUT = {
   notes: '',
   targetGroupCount: 4 as const,
 }
 
-export function reelLineupInputFromMilestoneInput(raw: MilestoneInput | undefined): {
+export function menuClustererInputFromMilestoneInput(raw: MilestoneInput | undefined): {
   notes: string
-  targetGroupCount: ReelLineupTargetGroupCount
+  targetGroupCount: MenuClustererTargetGroupCount
 } {
-  if (raw?.type !== 'reel_lineup' || raw.value == null || typeof raw.value !== 'object') {
-    return { ...DEFAULT_REEL_LINEUP_INPUT }
+  if (raw?.type !== 'menu_clusterer' || raw.value == null || typeof raw.value !== 'object') {
+    return { ...DEFAULT_MENU_CLUSTERER_INPUT }
   }
-  const parsed = reelLineupMilestoneInputValueSchema.safeParse(raw.value)
+  const parsed = menuClustererMilestoneInputValueSchema.safeParse(raw.value)
   if (!parsed.success) {
     const legacyNotes = (raw.value as { notes?: unknown }).notes
     return {
@@ -65,15 +65,15 @@ export function reelLineupInputFromMilestoneInput(raw: MilestoneInput | undefine
   }
 }
 
-export function normalizeReelLineupInput(value: {
+export function normalizeMenuClustererInput(value: {
   notes: string
-  targetGroupCount?: ReelLineupTargetGroupCount
+  targetGroupCount?: MenuClustererTargetGroupCount
 }): {
   notes: string
-  targetGroupCount: ReelLineupTargetGroupCount
+  targetGroupCount: MenuClustererTargetGroupCount
 } {
   const count = value.targetGroupCount
-  const targetGroupCount: ReelLineupTargetGroupCount =
+  const targetGroupCount: MenuClustererTargetGroupCount =
     count === 4 || count === 5 || count === 6 || count === 7 || count === 8 ? count : 4
   return {
     notes: value.notes.trim(),
@@ -81,9 +81,9 @@ export function normalizeReelLineupInput(value: {
   }
 }
 
-export function normalizedReelLineupInputsEqual(
-  a: { notes: string; targetGroupCount: ReelLineupTargetGroupCount },
-  b: { notes: string; targetGroupCount: ReelLineupTargetGroupCount },
+export function normalizedMenuClustererInputsEqual(
+  a: { notes: string; targetGroupCount: MenuClustererTargetGroupCount },
+  b: { notes: string; targetGroupCount: MenuClustererTargetGroupCount },
 ): boolean {
   return a.notes === b.notes && a.targetGroupCount === b.targetGroupCount
 }

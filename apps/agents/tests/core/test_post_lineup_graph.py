@@ -47,7 +47,9 @@ def _food_leads() -> list[dict]:
 
 
 def test_build_post_lineup_creates_carousel_from_food_leads() -> None:
-    payload = build_post_lineup(food_leads=_food_leads(), source_reel_lineup_title="Reel lineup")
+    payload = build_post_lineup(
+        food_leads=_food_leads(), source_menu_clusterer_title="Menu clusterer"
+    )
     normalized, error = validate_skill_output("post_lineup", payload)
     assert error is None
     assert isinstance(normalized, dict)
@@ -58,17 +60,17 @@ def test_build_post_lineup_creates_carousel_from_food_leads() -> None:
     assert len(post["slides"]) == 2
     assert post["slides"][0]["dishName"] == "Ribeye"
     assert post["slides"][0]["imageBrief"]
-    assert normalized["sourceReelLineupTitle"] == "Reel lineup"
+    assert normalized["sourceMenuClustererTitle"] == "Menu clusterer"
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_requires_reel_lineup() -> None:
+async def test_fetch_and_prepare_requires_menu_clusterer() -> None:
     with (
         patch(
             "agents_app.agents.core.milestone_run.post_lineup.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
-        pytest.raises(ValueError, match="reel_lineup"),
+        pytest.raises(ValueError, match="menu_clusterer"),
     ):
         await fetch_and_prepare(
             {
@@ -88,8 +90,8 @@ async def test_build_posts_and_persist_result() -> None:
     prior = json.dumps(
         [
             {
-                "title": "Reel lineup",
-                "presetId": "reel_lineup",
+                "title": "Menu clusterer",
+                "presetId": "menu_clusterer",
                 "data": {"foodLeads": _food_leads(), "groups": [], "unassignedItemNames": []},
             }
         ]
@@ -117,7 +119,7 @@ async def test_build_posts_and_persist_result() -> None:
             "goal": "",
             "criteria": [],
             "food_leads": prepared["food_leads"],
-            "source_reel_lineup_title": prepared["source_reel_lineup_title"],
+            "source_menu_clusterer_title": prepared["source_menu_clusterer_title"],
         }
     )
     client = AsyncMock()

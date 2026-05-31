@@ -530,7 +530,7 @@ class MenuTaggerMilestoneOutput(BaseModel):
         return values
 
 
-class ReelLineupGroupItemOutput(BaseModel):
+class MenuClustererGroupItemOutput(BaseModel):
     name: str
     role: Literal["star", "puzzle"]
     category: str
@@ -553,7 +553,7 @@ class ReelLineupGroupItemOutput(BaseModel):
         return value
 
 
-class ReelLineupScheduleHintsOutput(BaseModel):
+class MenuClustererScheduleHintsOutput(BaseModel):
     preferredWeekdays: list[
         Literal[
             "monday",
@@ -609,31 +609,31 @@ class ReelLineupScheduleHintsOutput(BaseModel):
         return text
 
 
-class ReelLineupGroupMixOutput(BaseModel):
+class MenuClustererGroupMixOutput(BaseModel):
     priceLevels: list[Literal[1, 2, 3]]
     storytellingStrongCount: int = Field(ge=0)
     starCount: int = Field(ge=0)
     puzzleCount: int = Field(ge=0)
 
 
-class ReelLineupAnchorOutput(BaseModel):
+class MenuClustererAnchorOutput(BaseModel):
     dimension: Literal["reel_moment"]
     value: str
 
 
-class ReelLineupGroupOutput(BaseModel):
+class MenuClustererGroupOutput(BaseModel):
     id: str
     leadName: str
     profileId: Literal["hook_reel"]
-    anchor: ReelLineupAnchorOutput
-    items: list[ReelLineupGroupItemOutput]
-    mix: ReelLineupGroupMixOutput
+    anchor: MenuClustererAnchorOutput
+    items: list[MenuClustererGroupItemOutput]
+    mix: MenuClustererGroupMixOutput
     clusterDescription: str
     strategyFocus: str | None = None
     coreMessage: str | None = None
     creativeRole: str | None = None
     assetHint: str | None = None
-    scheduleHints: ReelLineupScheduleHintsOutput | None = None
+    scheduleHints: MenuClustererScheduleHintsOutput | None = None
 
     @field_validator("clusterDescription", mode="before")
     @classmethod
@@ -650,8 +650,8 @@ class ReelLineupGroupOutput(BaseModel):
     @field_validator("items")
     @classmethod
     def _validate_items(
-        cls, values: list[ReelLineupGroupItemOutput]
-    ) -> list[ReelLineupGroupItemOutput]:
+        cls, values: list[MenuClustererGroupItemOutput]
+    ) -> list[MenuClustererGroupItemOutput]:
         if not (1 <= len(values) <= 5):
             raise ValueError("each group must contain between 1 and 5 items")
         positions = [item.position for item in values]
@@ -660,11 +660,11 @@ class ReelLineupGroupOutput(BaseModel):
         return values
 
 
-class ReelLineupMilestoneOutput(BaseModel):
+class MenuClustererMilestoneOutput(BaseModel):
     foodLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
     drinkLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
-    groups: list[ReelLineupGroupOutput]
-    drinkGroups: list[ReelLineupGroupOutput] = Field(default_factory=list)
+    groups: list[MenuClustererGroupOutput]
+    drinkGroups: list[MenuClustererGroupOutput] = Field(default_factory=list)
     unassignedItemNames: list[str] = Field(default_factory=list)
     topFoodLeadNames: list[str] = Field(default_factory=list, max_length=5)
     targetGroupCount: int | None = Field(default=None, ge=4, le=8)
@@ -673,7 +673,7 @@ class ReelLineupMilestoneOutput(BaseModel):
     notes: str | None = None
 
     @model_validator(mode="after")
-    def _validate_lead_group_alignment(self) -> ReelLineupMilestoneOutput:
+    def _validate_lead_group_alignment(self) -> MenuClustererMilestoneOutput:
         if len(self.foodLeads) != len(self.groups):
             raise ValueError("foodLeads length must match groups length")
         if len(self.drinkLeads) != len(self.drinkGroups):
@@ -730,7 +730,7 @@ class PostLineupPostOutput(BaseModel):
 
 class PostLineupMilestoneOutput(BaseModel):
     posts: list[PostLineupPostOutput]
-    sourceReelLineupTitle: str | None = None
+    sourceMenuClustererTitle: str | None = None
     notes: str | None = None
 
     @field_validator("posts")
@@ -767,7 +767,7 @@ class SchedulerMilestoneOutput(BaseModel):
     publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
     sourceDatesTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
-    sourceReelLineupTitle: str | None = None
+    sourceMenuClustererTitle: str | None = None
     sourcePostLineupTitle: str | None = None
     sourceStoryLineupTitle: str | None = None
     slots: list[SchedulerSlotOutput] = Field(default_factory=list)
@@ -812,7 +812,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "campaign_brief": CampaignBriefMilestoneOutput,
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "menu_tagger": MenuTaggerMilestoneOutput,
-    "reel_lineup": ReelLineupMilestoneOutput,
+    "menu_clusterer": MenuClustererMilestoneOutput,
     "post_lineup": PostLineupMilestoneOutput,
     "story_lineup": StoryLineupMilestoneOutput,
     "scheduler": SchedulerMilestoneOutput,

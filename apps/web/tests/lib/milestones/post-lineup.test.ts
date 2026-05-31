@@ -35,7 +35,7 @@ function foodLead(name: string): MenuTaggerItem {
 describe('buildPostLineup', () => {
   it('creates one carousel post with one slide per food lead', () => {
     const result = buildPostLineup([foodLead('Ribeye'), foodLead('Burger')], {
-      sourceReelLineupTitle: 'Reel lineup',
+      sourceMenuClustererTitle: 'Menu clusterer',
     })
 
     expect(result.posts).toHaveLength(1)
@@ -44,7 +44,7 @@ describe('buildPostLineup', () => {
     expect(result.posts[0]?.slides).toHaveLength(2)
     expect(result.posts[0]?.slides[0]?.dishName).toBe('Ribeye')
     expect(result.posts[0]?.slides[0]?.imageBrief).toContain('Ribeye')
-    expect(result.sourceReelLineupTitle).toBe('Reel lineup')
+    expect(result.sourceMenuClustererTitle).toBe('Menu clusterer')
     expect(postLineupMilestoneDataSchema.safeParse(result).success).toBe(true)
   })
 

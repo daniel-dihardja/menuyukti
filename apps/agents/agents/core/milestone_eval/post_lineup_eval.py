@@ -72,12 +72,14 @@ def try_post_lineup_deterministic_verdict(
     first_post = posts[0] if posts else {}
     slides = _slides(first_post)
 
-    if "reel_lineup" in norm and ("prior" in norm or "earlier" in norm or "run used" in norm):
+    if ("menu_clusterer" in norm or "menu clusterer" in norm) and (
+        "prior" in norm or "earlier" in norm or "run used" in norm
+    ):
         if not posts:
-            return ("fail", "post lineup data has no posts from prior reel_lineup food leads.")
+            return ("fail", "post lineup data has no posts from prior menu clusterer food leads.")
         return (
             "pass",
-            f"post lineup produced {len(posts)} post concept(s) from reel lineup food leads.",
+            f"post lineup produced {len(posts)} post concept(s) from menu clusterer food leads.",
         )
 
     if "carousel" in norm and ("post" in norm or "posts" in norm):

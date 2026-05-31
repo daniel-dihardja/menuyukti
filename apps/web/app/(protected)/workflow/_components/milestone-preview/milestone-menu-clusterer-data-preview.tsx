@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 import { cn } from '@workspace/ui/lib/utils'
 
-import type { ReelLineupGroup, ReelLineupMilestoneData } from '@/lib/graphql/node-schemas'
+import type { MenuClustererGroup, MenuClustererMilestoneData } from '@/lib/graphql/node-schemas'
 import { formatMenuTaggerTagLabel } from '@/lib/milestones/menu-tagger-items'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
@@ -21,8 +21,8 @@ import {
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 import { PRICE_LEVEL_TONE } from './promotion-candidates-preview-filters'
 
-export type MilestoneReelLineupDataPreviewProps = {
-  data: ReelLineupMilestoneData
+export type MilestoneMenuClustererDataPreviewProps = {
+  data: MenuClustererMilestoneData
 }
 
 type ReelGroupListId = `food:${string}` | `drink:${string}`
@@ -62,17 +62,17 @@ type GroupCardLabels = {
   priceLabels: { low: string; mid: string; high: string }
 }
 
-function ReelLineupGroupCard({
+function MenuClustererGroupCard({
   group,
   labels,
 }: {
-  group: ReelLineupGroup
+  group: MenuClustererGroup
   labels: GroupCardLabels
 }) {
   return (
     <Card className="gap-3 py-4 shadow-none">
       <CardHeader className="px-4 pb-0">
-        <ReelLineupGroupCardHeader group={group} labels={labels} hideTitle />
+        <MenuClustererGroupCardHeader group={group} labels={labels} hideTitle />
       </CardHeader>
       <CardContent className="flex flex-col gap-4 px-4 pt-0">
         {group.clusterDescription?.trim() ? (
@@ -149,12 +149,12 @@ function ReelLineupGroupCard({
   )
 }
 
-function ReelLineupGroupCardHeader({
+function MenuClustererGroupCardHeader({
   group,
   labels,
   hideTitle = false,
 }: {
-  group: ReelLineupGroup
+  group: MenuClustererGroup
   labels: GroupCardLabels
   hideTitle?: boolean
 }) {
@@ -174,7 +174,7 @@ function ReelLineupGroupCardHeader({
   )
 }
 
-function ReelLineupEmptyState({ title, body }: { title: string; body: string }) {
+function MenuClustererEmptyState({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-3 py-4">
       <p className="text-base font-semibold text-foreground">{title}</p>
@@ -183,12 +183,12 @@ function ReelLineupEmptyState({ title, body }: { title: string; body: string }) 
   )
 }
 
-type ReelLineupGroupsSectionProps = {
+type MenuClustererGroupsSectionProps = {
   sectionKey: 'food' | 'drink'
   title: string
   emptyTitle: string
   emptyBody: string
-  groups: ReelLineupGroup[]
+  groups: MenuClustererGroup[]
   leadLabel: string
   labels: Omit<GroupCardLabels, 'groupTitle' | 'leadLabel'>
   viewDetailsLabel: string
@@ -197,7 +197,7 @@ type ReelLineupGroupsSectionProps = {
   listMetaLabel: (leadLabel: string, leadName: string, anchor: string, itemCount: number) => string
 }
 
-function ReelLineupGroupsSection({
+function MenuClustererGroupsSection({
   sectionKey,
   title,
   emptyTitle,
@@ -209,7 +209,7 @@ function ReelLineupGroupsSection({
   backLabel,
   groupTitleForId,
   listMetaLabel,
-}: ReelLineupGroupsSectionProps) {
+}: MenuClustererGroupsSectionProps) {
   const listItems = useMemo(
     () =>
       groups.map((group) => ({
@@ -223,7 +223,7 @@ function ReelLineupGroupsSection({
 
   const selectedGroup = listItems.find((item) => item.id === selectedId)?.group
   const detailTitle = selectedGroup ? groupTitleForId(selectedGroup.id) : title
-  const detailTitleId = `reel-lineup-${sectionKey}-detail-title`
+  const detailTitleId = `menu-clusterer-${sectionKey}-detail-title`
 
   return (
     <div className="flex flex-col gap-3">
@@ -236,7 +236,7 @@ function ReelLineupGroupsSection({
         onBack={clear}
         list={
           groups.length === 0 ? (
-            <ReelLineupEmptyState title={emptyTitle} body={emptyBody} />
+            <MenuClustererEmptyState title={emptyTitle} body={emptyBody} />
           ) : (
             <div className="flex flex-col gap-2">
               {listItems.map(({ id, group }) => (
@@ -258,7 +258,7 @@ function ReelLineupGroupsSection({
         }
         detail={
           selectedGroup ? (
-            <ReelLineupGroupCard
+            <MenuClustererGroupCard
               group={selectedGroup}
               labels={{
                 ...labels,
@@ -273,7 +273,9 @@ function ReelLineupGroupsSection({
   )
 }
 
-export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupDataPreviewProps) {
+export function MilestoneMenuClustererDataPreview({
+  data,
+}: MilestoneMenuClustererDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
 
   const drinkGroups = useMemo(() => data.drinkGroups ?? [], [data.drinkGroups])
@@ -287,14 +289,15 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
 
   const labels = useMemo(
     () => ({
-      hookBadgeLabel: t('milestoneReelLineupPreviewHookBadge'),
-      clusterDescriptionLabel: t('milestoneReelLineupPreviewClusterDescription'),
+      hookBadgeLabel: t('milestoneMenuClustererPreviewHookBadge'),
+      clusterDescriptionLabel: t('milestoneMenuClustererPreviewClusterDescription'),
       roleStarLabel: t('milestoneMenuTaggerPreviewRoleStar'),
       rolePuzzleLabel: t('milestoneMenuTaggerPreviewRolePuzzle'),
       storytellingStrongLabel: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
       storytellingWeakLabel: t('milestonePromotionCandidatesPreviewStorytellingWeak'),
-      popularityLabel: (value: number) => t('milestoneReelLineupPreviewPopularityLabel', { value }),
-      reelMomentLabel: t('milestoneReelLineupPreviewReelMomentLabel'),
+      popularityLabel: (value: number) =>
+        t('milestoneMenuClustererPreviewPopularityLabel', { value }),
+      reelMomentLabel: t('milestoneMenuClustererPreviewReelMomentLabel'),
       priceLabels: {
         low: t('milestonePromotionCandidatesPreviewPriceLevelLow'),
         mid: t('milestonePromotionCandidatesPreviewPriceLevelMid'),
@@ -313,7 +316,7 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
   const backLabel = t('milestoneLineupPreviewBackToList')
 
   const listMetaLabel = (leadLabel: string, leadName: string, anchor: string, itemCount: number) =>
-    t('milestoneReelLineupPreviewGroupListMeta', {
+    t('milestoneMenuClustererPreviewGroupListMeta', {
       leadLabel,
       leadName,
       anchor,
@@ -324,7 +327,7 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
     <div className="flex flex-col gap-5 text-base">
       <div className={`${mp.insetCard} flex flex-col gap-2`}>
         <p className={`${mp.bodySmall} text-pretty text-foreground`}>
-          {t('milestoneReelLineupPreviewSummary', {
+          {t('milestoneMenuClustererPreviewSummary', {
             foodGroupCount: data.groups.length,
             drinkGroupCount: drinkGroups.length,
             assignedCount,
@@ -333,45 +336,45 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
         </p>
         {sourceTitle ? (
           <p className={mp.bodySmall}>
-            <span className={mp.rowKey}>{t('milestoneReelLineupPreviewSourceTitle')}:</span>{' '}
+            <span className={mp.rowKey}>{t('milestoneMenuClustererPreviewSourceTitle')}:</span>{' '}
             {sourceTitle}
           </p>
         ) : null}
         {sourceCampaignBriefTitle ? (
           <p className={mp.bodySmall}>
             <span className={mp.rowKey}>
-              {t('milestoneReelLineupPreviewSourceCampaignBriefTitle')}:
+              {t('milestoneMenuClustererPreviewSourceCampaignBriefTitle')}:
             </span>{' '}
             {sourceCampaignBriefTitle}
           </p>
         ) : null}
       </div>
 
-      <ReelLineupGroupsSection
+      <MenuClustererGroupsSection
         sectionKey="food"
-        title={t('milestoneReelLineupPreviewFoodSectionTitle')}
-        emptyTitle={t('milestoneReelLineupPreviewFoodEmptyTitle')}
-        emptyBody={t('milestoneReelLineupPreviewFoodEmptyBody')}
+        title={t('milestoneMenuClustererPreviewFoodSectionTitle')}
+        emptyTitle={t('milestoneMenuClustererPreviewFoodEmptyTitle')}
+        emptyBody={t('milestoneMenuClustererPreviewFoodEmptyBody')}
         groups={data.groups}
-        leadLabel={t('milestoneReelLineupPreviewLeadDishLabel')}
+        leadLabel={t('milestoneMenuClustererPreviewLeadDishLabel')}
         labels={labels}
         viewDetailsLabel={viewDetailsLabel}
         backLabel={backLabel}
-        groupTitleForId={(id) => t('milestoneReelLineupPreviewGroupTitle', { id })}
+        groupTitleForId={(id) => t('milestoneMenuClustererPreviewGroupTitle', { id })}
         listMetaLabel={listMetaLabel}
       />
 
-      <ReelLineupGroupsSection
+      <MenuClustererGroupsSection
         sectionKey="drink"
-        title={t('milestoneReelLineupPreviewDrinkSectionTitle')}
-        emptyTitle={t('milestoneReelLineupPreviewDrinkEmptyTitle')}
-        emptyBody={t('milestoneReelLineupPreviewDrinkEmptyBody')}
+        title={t('milestoneMenuClustererPreviewDrinkSectionTitle')}
+        emptyTitle={t('milestoneMenuClustererPreviewDrinkEmptyTitle')}
+        emptyBody={t('milestoneMenuClustererPreviewDrinkEmptyBody')}
         groups={drinkGroups}
-        leadLabel={t('milestoneReelLineupPreviewLeadDrinkLabel')}
+        leadLabel={t('milestoneMenuClustererPreviewLeadDrinkLabel')}
         labels={labels}
         viewDetailsLabel={viewDetailsLabel}
         backLabel={backLabel}
-        groupTitleForId={(id) => t('milestoneReelLineupPreviewGroupTitle', { id })}
+        groupTitleForId={(id) => t('milestoneMenuClustererPreviewGroupTitle', { id })}
         listMetaLabel={listMetaLabel}
       />
 
@@ -381,11 +384,11 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
           <div className="flex flex-col gap-2">
             <div className="flex min-w-0 items-center gap-0.5">
               <p className={`min-w-0 flex-1 ${mp.sectionTitle}`}>
-                {t('milestoneReelLineupPreviewUnassignedTitle')}
+                {t('milestoneMenuClustererPreviewUnassignedTitle')}
               </p>
               <MilestonePreviewHelpTrigger
-                ariaLabel={formatHelpAriaLabel(t('milestoneReelLineupPreviewUnassignedTitle'))}
-                helpText={t('milestoneReelLineupPreviewHelpUnassigned')}
+                ariaLabel={formatHelpAriaLabel(t('milestoneMenuClustererPreviewUnassignedTitle'))}
+                helpText={t('milestoneMenuClustererPreviewHelpUnassigned')}
               />
             </div>
             <div className="flex flex-wrap gap-1">
@@ -402,9 +405,9 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
       <Separator />
 
       <div className="flex flex-col gap-2">
-        <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewNotes')}</p>
+        <p className={mp.sectionTitle}>{t('milestoneMenuClustererPreviewNotes')}</p>
         <p className={mp.body}>
-          {data.notes?.trim() ? data.notes.trim() : t('milestoneReelLineupPreviewNoNotes')}
+          {data.notes?.trim() ? data.notes.trim() : t('milestoneMenuClustererPreviewNoNotes')}
         </p>
       </div>
     </div>

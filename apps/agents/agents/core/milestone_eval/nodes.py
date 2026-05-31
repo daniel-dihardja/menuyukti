@@ -29,6 +29,10 @@ from agents_app.agents.core.milestone_eval.ig_profile_eval import (
     parse_milestone_data_from_eval_raw,
     try_ig_profile_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_eval.menu_clusterer_eval import (
+    enrich_menu_clusterer_eval_payload,
+    try_menu_clusterer_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.menu_tagger_eval import (
     enrich_menu_tagger_eval_payload,
     try_menu_tagger_deterministic_verdict,
@@ -42,10 +46,6 @@ from agents_app.agents.core.milestone_eval.prompts import (
     SYNTHESIS_SYSTEM,
     eval_human_message,
     synthesis_human_message,
-)
-from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
-    enrich_reel_lineup_eval_payload,
-    try_reel_lineup_deterministic_verdict,
 )
 from agents_app.agents.core.milestone_eval.scheduler_eval import (
     enrich_scheduler_eval_payload,
@@ -70,7 +70,7 @@ def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
         enrich_scheduler_eval_payload(
             enrich_story_lineup_eval_payload(
                 enrich_post_lineup_eval_payload(
-                    enrich_reel_lineup_eval_payload(
+                    enrich_menu_clusterer_eval_payload(
                         enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
                     )
                 )
@@ -107,7 +107,7 @@ _OWNER_NOTES_INPUT_TYPES = frozenset(
         "restaurant_campaign_brief",
         "culture_hooks",
         "menu_tagger",
-        "reel_lineup",
+        "menu_clusterer",
         "post_lineup",
         "story_lineup",
         "scheduler",
@@ -274,7 +274,7 @@ async def evaluate_criterion(
         if deterministic is None:
             deterministic = try_menu_tagger_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
-            deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
+            deterministic = try_menu_clusterer_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_post_lineup_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:

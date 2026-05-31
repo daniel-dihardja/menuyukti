@@ -3,7 +3,7 @@ import type {
   MilestonePresetId,
   MenuTaggerMilestoneData,
   PostLineupMilestoneData,
-  ReelLineupMilestoneData,
+  MenuClustererMilestoneData,
   StoryLineupMilestoneData,
   SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
@@ -110,7 +110,7 @@ export type IgProfileMilestoneData = {
 export type {
   MenuTaggerMilestoneData,
   PostLineupMilestoneData,
-  ReelLineupMilestoneData,
+  MenuClustererMilestoneData,
   StoryLineupMilestoneData,
 }
 
@@ -119,7 +119,7 @@ export type MilestoneDataValue =
   | CampaignBriefMilestoneData
   | PromotionCandidatesMilestoneData
   | MenuTaggerMilestoneData
-  | ReelLineupMilestoneData
+  | MenuClustererMilestoneData
   | PostLineupMilestoneData
   | StoryLineupMilestoneData
   | CultureHooksMilestoneData

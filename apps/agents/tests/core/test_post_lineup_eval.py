@@ -37,14 +37,14 @@ def test_enrich_post_lineup_eval_payload() -> None:
     assert enriched["_evalHints"]["slideCount"] == 2
 
 
-def test_try_post_lineup_deterministic_verdict_prior_reel_lineup() -> None:
+def test_try_post_lineup_deterministic_verdict_prior_menu_clusterer() -> None:
     verdict = try_post_lineup_deterministic_verdict(
-        "Run used a prior reel_lineup milestone with foodLeads.",
+        "Run used a prior menu_clusterer milestone with foodLeads.",
         _sample_data(),
     )
     assert verdict == (
         "pass",
-        "post lineup produced 1 post concept(s) from reel lineup food leads.",
+        "post lineup produced 1 post concept(s) from menu clusterer food leads.",
     )
 
 

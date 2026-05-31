@@ -1,22 +1,22 @@
-"""Dedicated LangGraph for reel_lineup execution."""
+"""Dedicated LangGraph for menu_clusterer execution."""
 
 from __future__ import annotations
 
 from functools import partial
 
 import httpx
-from agents_app.agents.core.milestone_run.reel_lineup.nodes import (
+from agents_app.agents.core.milestone_run.menu_clusterer.nodes import (
     build_lineup,
     fetch_and_prepare,
     persist_result,
 )
-from agents_app.agents.core.milestone_run.reel_lineup.state import ReelLineupState
+from agents_app.agents.core.milestone_run.menu_clusterer.state import MenuClustererState
 from langgraph.graph import END, START, StateGraph
 
 
-def build_reel_lineup_graph(client: httpx.AsyncClient):
-    """Compile dedicated reel_lineup graph."""
-    builder = StateGraph(ReelLineupState)
+def build_menu_clusterer_graph(client: httpx.AsyncClient):
+    """Compile dedicated menu_clusterer graph."""
+    builder = StateGraph(MenuClustererState)
     builder.add_node("fetch_and_prepare", partial(fetch_and_prepare, client=client))
     builder.add_node("build_lineup", build_lineup)
     builder.add_node("persist_result", partial(persist_result, client=client))

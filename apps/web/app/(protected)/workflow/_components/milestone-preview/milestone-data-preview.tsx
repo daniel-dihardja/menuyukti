@@ -15,7 +15,7 @@ import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-previ
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestonePostLineupDataPreview } from './milestone-post-lineup-data-preview'
 import { MilestoneStoryLineupDataPreview } from './milestone-story-lineup-data-preview'
-import { MilestoneReelLineupDataPreview } from './milestone-reel-lineup-data-preview'
+import { MilestoneMenuClustererDataPreview } from './milestone-menu-clusterer-data-preview'
 import { MilestoneSchedulerDataPreview } from './milestone-scheduler-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 
@@ -62,10 +62,10 @@ function renderParsedPreview(
           data={data as Parameters<typeof MilestoneMenuTaggerDataPreview>[0]['data']}
         />
       )
-    case 'reel_lineup':
+    case 'menu_clusterer':
       return (
-        <MilestoneReelLineupDataPreview
-          data={data as Parameters<typeof MilestoneReelLineupDataPreview>[0]['data']}
+        <MilestoneMenuClustererDataPreview
+          data={data as Parameters<typeof MilestoneMenuClustererDataPreview>[0]['data']}
         />
       )
     case 'post_lineup':
