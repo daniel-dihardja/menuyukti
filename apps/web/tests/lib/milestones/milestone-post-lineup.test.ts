@@ -22,6 +22,6 @@ describe('post_lineup preset', () => {
       value: { notes: '' },
     })
     expect(fields.milestoneData).toMatchObject({ posts: [] })
-    expect(fields.passCriteria?.length).toBe(4)
+    expect(fields.passCriteria?.length).toBe(5)
   })
 })

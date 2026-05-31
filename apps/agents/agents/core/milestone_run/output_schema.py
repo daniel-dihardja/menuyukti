@@ -706,17 +706,92 @@ class PostLineupSlideOutput(BaseModel):
         return value
 
 
+class PostLineupScheduleHintsOutput(BaseModel):
+    preferredWeekdays: list[
+        Literal[
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+    ] = Field(default_factory=list)
+    preferredTime: str
+
+    @field_validator("preferredWeekdays")
+    @classmethod
+    def _validate_preferred_weekdays(
+        cls,
+        values: list[
+            Literal[
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
+        ],
+    ) -> list[
+        Literal[
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+    ]:
+        if not values:
+            raise ValueError("must contain at least one preferred weekday")
+        if len(set(values)) != len(values):
+            raise ValueError("preferredWeekdays must not contain duplicates")
+        return values
+
+    @field_validator("preferredTime", mode="before")
+    @classmethod
+    def _normalize_preferred_time(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("preferredTime")
+    @classmethod
+    def _validate_preferred_time(cls, value: str) -> str:
+        if not value:
+            raise ValueError("preferredTime must be non-empty")
+        return value
+
+
 class PostLineupPostOutput(BaseModel):
     id: str
     format: Literal["carousel"]
-    intent: Literal["pinned_monthly_menu"]
+    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
     title: str
     slides: list[PostLineupSlideOutput]
+    groupIds: list[str] = Field(default_factory=list)
+    scheduleHints: PostLineupScheduleHintsOutput | None = None
 
     @field_validator("id", "title", mode="before")
     @classmethod
     def _normalize_text(cls, value: Any) -> str:
         return str(value or "").strip()
+
+    @field_validator("groupIds", mode="before")
+    @classmethod
+    def _normalize_group_ids(cls, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    @field_validator("groupIds")
+    @classmethod
+    def _validate_group_ids(cls, values: list[str]) -> list[str]:
+        if not values:
+            raise ValueError("must contain at least one group id")
+        return values
 
     @field_validator("slides")
     @classmethod
@@ -731,13 +806,18 @@ class PostLineupPostOutput(BaseModel):
 class PostLineupMilestoneOutput(BaseModel):
     posts: list[PostLineupPostOutput]
     sourceMenuClustererTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
     notes: str | None = None
 
     @field_validator("posts")
     @classmethod
     def _validate_posts(cls, values: list[PostLineupPostOutput]) -> list[PostLineupPostOutput]:
-        if not values:
-            raise ValueError("must contain at least one post")
+        if len(values) != 2:
+            raise ValueError("must contain exactly 2 posts")
+        intents = {post.intent for post in values}
+        required = {"pinned_monthly_menu", "weekday_lunch_post"}
+        if intents != required:
+            raise ValueError("must include one pinned_monthly_menu and one weekday_lunch_post")
         return values
 
 

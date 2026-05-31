@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from agents_app.agents.core.milestone_eval.post_lineup_eval import (
     enrich_post_lineup_eval_payload,
-    is_post_lineup_milestone_data,
     try_post_lineup_deterministic_verdict,
 )
 
@@ -16,44 +15,52 @@ def _sample_data() -> dict:
                 "id": "pinned-monthly-menu",
                 "format": "carousel",
                 "intent": "pinned_monthly_menu",
-                "title": "Monthly top menu",
+                "title": "Cafe Alto signature menu",
+                "groupIds": ["group-1", "group-2"],
                 "slides": [
-                    {"dishName": "Ribeye", "imageBrief": "Hero steak photo"},
-                    {"dishName": "Burger", "imageBrief": "Stacked burger photo"},
+                    {"dishName": "Ribeye", "imageBrief": "Hero photo brief."},
+                    {"dishName": "Burger", "imageBrief": "Stack photo brief."},
                 ],
-            }
-        ]
+            },
+            {
+                "id": "weekday-lunch-post",
+                "format": "carousel",
+                "intent": "weekday_lunch_post",
+                "title": "Weekday lunch at Cafe Alto",
+                "groupIds": ["group-1"],
+                "scheduleHints": {
+                    "preferredWeekdays": ["tuesday"],
+                    "preferredTime": "10:00",
+                },
+                "slides": [{"dishName": "Ribeye", "imageBrief": "Lunch photo brief."}],
+            },
+        ],
+        "sourceMenuClustererTitle": "Menu clusterer",
+        "sourceCampaignBriefTitle": "Campaign brief",
     }
-
-
-def test_is_post_lineup_milestone_data() -> None:
-    assert is_post_lineup_milestone_data(_sample_data()) is True
-    assert is_post_lineup_milestone_data({"groups": []}) is False
 
 
 def test_enrich_post_lineup_eval_payload() -> None:
     enriched = enrich_post_lineup_eval_payload(_sample_data())
-    assert enriched["_evalHints"]["postCount"] == 1
-    assert enriched["_evalHints"]["slideCount"] == 2
+    assert enriched["_evalHints"]["postCount"] == 2
+    assert enriched["_evalHints"]["intents"] == ["pinned_monthly_menu", "weekday_lunch_post"]
 
 
-def test_try_post_lineup_deterministic_verdict_prior_menu_clusterer() -> None:
+def test_try_post_lineup_deterministic_verdict_campaign_brief_prior() -> None:
     verdict = try_post_lineup_deterministic_verdict(
-        "Run used a prior menu_clusterer milestone with foodLeads.",
+        "Run used a prior restaurant_campaign_brief milestone for location context.",
         _sample_data(),
     )
-    assert verdict == (
-        "pass",
-        "post lineup produced 1 post concept(s) from menu clusterer food leads.",
-    )
+    assert verdict == ("pass", "post lineup used prior restaurant_campaign_brief context for post planning.")
 
 
-def test_try_post_lineup_deterministic_verdict_carousel() -> None:
+def test_try_post_lineup_deterministic_verdict_two_carousel_posts() -> None:
     verdict = try_post_lineup_deterministic_verdict(
-        "posts includes at least one carousel post concept.",
+        "posts includes two carousel post concepts: pinned_monthly_menu and weekday_lunch_post.",
         _sample_data(),
     )
-    assert verdict == ("pass", "post lineup includes 1 carousel post(s).")
+    assert verdict is not None
+    assert verdict[0] == "pass"
 
 
 def test_try_post_lineup_deterministic_verdict_slide_fields() -> None:

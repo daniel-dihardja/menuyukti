@@ -251,13 +251,31 @@ def _prior_json() -> str:
                             "format": "carousel",
                             "intent": "pinned_monthly_menu",
                             "title": "Monthly top menu",
+                            "groupIds": ["group-1"],
                             "slides": [
                                 {
                                     "dishName": "Ribeye",
                                     "imageBrief": "Hero menu photography brief.",
                                 }
                             ],
-                        }
+                        },
+                        {
+                            "id": "weekday-lunch-post",
+                            "format": "carousel",
+                            "intent": "weekday_lunch_post",
+                            "title": "Weekday lunch at Cafe Alto",
+                            "groupIds": ["group-1"],
+                            "scheduleHints": {
+                                "preferredWeekdays": ["tuesday"],
+                                "preferredTime": "10:00",
+                            },
+                            "slides": [
+                                {
+                                    "dishName": "Ribeye",
+                                    "imageBrief": "Lunch photography brief.",
+                                }
+                            ],
+                        },
                     ],
                     "sourceMenuClustererTitle": "Lunch Menu Clusterer",
                 },
@@ -386,7 +404,7 @@ async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
     assert normalized["sourceMenuClustererTitle"] == "Lunch Menu Clusterer"
     assert normalized["sourcePostLineupTitle"] == "Monthly Post Lineup"
     assert normalized["sourceStoryLineupTitle"] == "Holiday Story Lineup"
-    assert normalized["slots"][:4] == [
+    assert normalized["slots"][:6] == [
         {
             "kind": "post",
             "date": "2026-06-01",
@@ -394,10 +412,22 @@ async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
             "title": "Monthly top menu",
         },
         {
+            "kind": "post",
+            "date": "2026-06-02",
+            "time": "10:00",
+            "title": "Weekday lunch at Cafe Alto",
+        },
+        {
             "kind": "reel",
             "date": "2026-06-02",
             "time": "11:00",
             "title": "Reel: Ribeye lunch offer (11:00-14:00) [hero]",
+        },
+        {
+            "kind": "post",
+            "date": "2026-06-09",
+            "time": "10:00",
+            "title": "Weekday lunch at Cafe Alto",
         },
         {
             "kind": "reel",
@@ -436,7 +466,11 @@ async def test_build_snapshot_repeats_monthly_top_menu_on_first_of_each_month() 
     normalized, error = validate_skill_output("scheduler", result["generated_output"])
     assert error is None
     assert isinstance(normalized, dict)
-    monthly_post_slots = [slot for slot in normalized["slots"] if slot["kind"] == "post"]
+    monthly_post_slots = [
+        slot
+        for slot in normalized["slots"]
+        if slot["kind"] == "post" and slot["title"] == "Monthly top menu"
+    ]
     assert monthly_post_slots == [
         {
             "kind": "post",

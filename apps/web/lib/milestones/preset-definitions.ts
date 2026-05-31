@@ -311,6 +311,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       goal: t('milestonePreset.post_lineup.goal'),
       passCriteria: [
         {
+          requirement: t('milestonePreset.post_lineup.criterionPriorCampaignBrief'),
+          status: 'open',
+        },
+        {
           requirement: t('milestonePreset.post_lineup.criterionPriorMenuClusterer'),
           status: 'open',
         },

@@ -268,7 +268,7 @@ def _build_reel_slots(
     return slots
 
 
-def _build_post_slots(
+def _build_monthly_post_slots(
     post_lineup_data: dict[str, Any] | None,
     *,
     start_date: str,
@@ -279,7 +279,11 @@ def _build_post_slots(
         return []
 
     valid_posts = [
-        post for post in posts if isinstance(post, dict) and str(post.get("title") or "").strip()
+        post
+        for post in posts
+        if isinstance(post, dict)
+        and str(post.get("intent") or "").strip() == "pinned_monthly_menu"
+        and str(post.get("title") or "").strip()
     ]
     if not valid_posts:
         return []
@@ -296,6 +300,96 @@ def _build_post_slots(
                 "title": str(post.get("title") or "").strip(),
             }
         )
+    return slots
+
+
+def _weekly_post_schedule(
+    post: dict[str, Any],
+    *,
+    menu_clusterer_data: dict[str, Any] | None,
+    campaign_brief_data: dict[str, Any] | None,
+) -> tuple[list[str], str]:
+    hints = post.get("scheduleHints")
+    if isinstance(hints, dict):
+        raw_weekdays = hints.get("preferredWeekdays")
+        if isinstance(raw_weekdays, list):
+            cleaned = [
+                str(value).strip().lower()
+                for value in raw_weekdays
+                if str(value).strip().lower() in _WEEKDAY_INDEX
+            ]
+            if cleaned:
+                preferred_time = str(hints.get("preferredTime") or "").strip() or DEFAULT_POST_SLOT_TIME
+                return cleaned, preferred_time
+    return _preferred_weekdays(menu_clusterer_data, campaign_brief_data), DEFAULT_POST_SLOT_TIME
+
+
+def _build_weekly_post_slots(
+    post_lineup_data: dict[str, Any] | None,
+    *,
+    menu_clusterer_data: dict[str, Any] | None,
+    campaign_brief_data: dict[str, Any] | None,
+    start_date: str,
+    end_date: str,
+) -> list[dict[str, str]]:
+    posts = post_lineup_data.get("posts") if isinstance(post_lineup_data, dict) else None
+    if not isinstance(posts, list):
+        return []
+
+    valid_posts = [
+        post
+        for post in posts
+        if isinstance(post, dict)
+        and str(post.get("intent") or "").strip() == "weekday_lunch_post"
+        and str(post.get("title") or "").strip()
+    ]
+    if not valid_posts:
+        return []
+
+    post = valid_posts[0]
+    preferred_weekdays, preferred_time = _weekly_post_schedule(
+        post,
+        menu_clusterer_data=menu_clusterer_data,
+        campaign_brief_data=campaign_brief_data,
+    )
+    dates = _slot_dates(start_date, end_date, preferred_weekdays)
+    title = str(post.get("title") or "").strip()
+    return [
+        {
+            "kind": "post",
+            "date": iso_date,
+            "time": preferred_time,
+            "title": title,
+        }
+        for iso_date in dates
+    ]
+
+
+def _build_post_slots(
+    post_lineup_data: dict[str, Any] | None,
+    *,
+    menu_clusterer_data: dict[str, Any] | None,
+    campaign_brief_data: dict[str, Any] | None,
+    start_date: str,
+    end_date: str,
+) -> list[dict[str, str]]:
+    slots: list[dict[str, str]] = []
+    slots.extend(
+        _build_monthly_post_slots(
+            post_lineup_data,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
+    slots.extend(
+        _build_weekly_post_slots(
+            post_lineup_data,
+            menu_clusterer_data=menu_clusterer_data,
+            campaign_brief_data=campaign_brief_data,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    )
     return slots
 
 
@@ -431,6 +525,8 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     slots.extend(
         _build_post_slots(
             state.get("post_lineup_data"),
+            menu_clusterer_data=menu_clusterer_data,
+            campaign_brief_data=campaign_brief_data,
             start_date=start_date,
             end_date=end_date,
         )

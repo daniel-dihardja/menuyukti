@@ -400,7 +400,14 @@ export type MenuClustererMilestoneData = z.infer<typeof menuClustererMilestoneDa
 
 export const postLineupPostFormatSchema = z.literal('carousel')
 
-export const postLineupPostIntentSchema = z.literal('pinned_monthly_menu')
+export const postLineupPostIntentSchema = z.enum(['pinned_monthly_menu', 'weekday_lunch_post'])
+
+export const postLineupScheduleHintsSchema = z.object({
+  preferredWeekdays: z.array(menuClustererWeekdaySchema).min(1),
+  preferredTime: z.string().trim().min(1),
+})
+
+export type PostLineupScheduleHints = z.infer<typeof postLineupScheduleHintsSchema>
 
 export const postLineupSlideSchema = z.object({
   dishName: z.string().trim().min(1),
@@ -417,13 +424,35 @@ export const postLineupPostSchema = z.object({
   intent: postLineupPostIntentSchema,
   title: z.string().trim().min(1),
   slides: z.array(postLineupSlideSchema).min(1).max(5),
+  groupIds: z.array(z.string().trim().min(1)).min(1),
+  scheduleHints: postLineupScheduleHintsSchema.optional(),
 })
 
 export type PostLineupPost = z.infer<typeof postLineupPostSchema>
 
 export const postLineupMilestoneDataSchema = z.object({
-  posts: z.array(postLineupPostSchema),
+  posts: z.array(postLineupPostSchema).superRefine((posts, ctx) => {
+    if (posts.length === 0) {
+      return
+    }
+    if (posts.length !== 2) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'must contain exactly 2 posts',
+      })
+      return
+    }
+    const hasMonthly = posts.some((post) => post.intent === 'pinned_monthly_menu')
+    const hasWeekly = posts.some((post) => post.intent === 'weekday_lunch_post')
+    if (!hasMonthly || !hasWeekly) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'must include one pinned_monthly_menu and one weekday_lunch_post',
+      })
+    }
+  }),
   sourceMenuClustererTitle: z.string().optional(),
+  sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),
 })
 

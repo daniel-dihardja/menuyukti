@@ -27,6 +27,16 @@ const ROLE_BADGE_CLASS = {
     'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
 } as const
 
+function postIntentBadgeLabel(
+  intent: PostLineupPost['intent'],
+  t: ReturnType<typeof useTranslations>,
+): string {
+  if (intent === 'weekday_lunch_post') {
+    return t('milestonePostLineupPreviewWeeklyLunchBadge')
+  }
+  return t('milestonePostLineupPreviewPinnedBadge')
+}
+
 function PostCard({
   post,
   index,
@@ -48,7 +58,7 @@ function PostCard({
         </CardTitle>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
-          <Badge variant="secondary">{t('milestonePostLineupPreviewPinnedBadge')}</Badge>
+          <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-2 px-4 pt-0">
@@ -189,6 +199,14 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
             {data.sourceMenuClustererTitle}
           </p>
         ) : null}
+        {data.sourceCampaignBriefTitle ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>
+              {t('milestonePostLineupPreviewSourceCampaignBriefTitle')}:
+            </span>{' '}
+            {data.sourceCampaignBriefTitle}
+          </p>
+        ) : null}
       </div>
 
       <Separator />
@@ -212,7 +230,7 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
                 meta={
                   <>
                     <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
-                    <Badge variant="secondary">{t('milestonePostLineupPreviewPinnedBadge')}</Badge>
+                    <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
                   </>
                 }
                 viewDetailsLabel={viewDetailsLabel}
