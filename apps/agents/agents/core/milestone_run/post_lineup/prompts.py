@@ -18,8 +18,12 @@ HARD RULES
 - Each post must reference one or more valid groupIds from the provided menu clusterer groups only.
 - Do not invent group IDs, menu items, or venue facts absent from the input.
 - Titles must be concise, specific to the venue context, and suitable for Instagram feed posts (not Reel hooks).
-- monthlyPost: showcase signature dishes for the month (hero signatures, proof, variety).
-- weeklyPosts: support weekday lunch demand (align with offer window and lunch audience from the campaign brief).
+- monthlyPost.groupIds must list every menu clusterer group that is a static hero cluster:
+  anchor reel_moment "static_hero" and/or items with reelMoment "static_hero".
+  If no static_hero groups exist, use the group with creativeRole "hero" only.
+- Do not include variety, proof, value, or other non-hero groups in the monthly pin.
+- The monthly pin merges signature / highlighted items from those hero clusters only (no variety group).
+- weeklyPosts: support weekday lunch demand (align with offer window and lunch audience from the campaign brief); typically one groupId per week.
 - description: 2–4 sentences summarizing what the carousel communicates, why these dishes/groups, and how it fits the post intent.
 - captionGuidance: actionable guidance for writing the Instagram caption — grounded in campaign brief tone guardrails, message hierarchy, offer/CTA plan, and content pillars. Adapt to post intent. Provide guidance only (bullets or short paragraph); do not write the finished caption or invent facts beyond the input.
 
@@ -30,8 +34,8 @@ OUTPUT FORMAT — return exactly one JSON object matching the schema
   "monthlyPost": {
     "intent": "pinned_monthly_menu",
     "title": "Venue-aware monthly signature menu title",
-    "groupIds": ["group-1"],
-    "description": "What this monthly pin carousel communicates and why these groups fit.",
+    "groupIds": ["group-1", "group-4"],
+    "description": "Merge all static-hero signature clusters for the monthly pin; explain why these hero groups fit.",
     "captionGuidance": "Tone, hook angle, proof point, and CTA guidance from the campaign brief for this monthly pin post."
   },
   "weeklyPosts": [

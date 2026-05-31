@@ -8,7 +8,11 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
-from agents_app.agents.core.milestone_run.post_lineup.build import build_post_lineup_from_plan
+from agents_app.agents.core.milestone_run.post_lineup.build import (
+    build_post_lineup_from_plan,
+    normalize_monthly_pin_group_ids,
+    validate_monthly_pin_groups,
+)
 from agents_app.agents.core.milestone_run.post_lineup.nodes import (
     PostLineupDraftOutput,
     PostLineupPostPlanDraft,
@@ -49,6 +53,13 @@ def _food_leads() -> list[dict]:
             "storytellingFit": "strong",
             "tags": {**shared_tags, "ingredient": ["bread"], "reel_moment": "stack"},
         },
+        {
+            "name": "Caesar Salad",
+            "role": "puzzle",
+            "category": "SALADS",
+            "storytellingFit": "moderate",
+            "tags": {**shared_tags, "course": ["starter"], "reel_moment": "fresh"},
+        },
     ]
 
 
@@ -57,19 +68,22 @@ def _groups() -> list[dict]:
         {
             "id": "group-1",
             "leadName": "Ribeye",
+            "creativeRole": "hero",
+            "anchor": {"dimension": "reel_moment", "value": "static_hero"},
             "items": [
                 {
                     "name": "Ribeye",
                     "role": "star",
                     "category": "MAINS",
                     "storytellingFit": "strong",
-                    "reelMoment": "sizzle",
+                    "reelMoment": "static_hero",
                 }
             ],
         },
         {
             "id": "group-2",
             "leadName": "Burger",
+            "creativeRole": "proof",
             "items": [
                 {
                     "name": "Burger",
@@ -77,6 +91,35 @@ def _groups() -> list[dict]:
                     "category": "MAINS",
                     "storytellingFit": "strong",
                     "reelMoment": "stack",
+                }
+            ],
+        },
+        {
+            "id": "group-3",
+            "leadName": "Caesar Salad",
+            "creativeRole": "variety",
+            "items": [
+                {
+                    "name": "Caesar Salad",
+                    "role": "puzzle",
+                    "category": "SALADS",
+                    "storytellingFit": "moderate",
+                    "reelMoment": "fresh",
+                }
+            ],
+        },
+        {
+            "id": "group-4",
+            "leadName": "Burger",
+            "creativeRole": "proof",
+            "anchor": {"dimension": "reel_moment", "value": "static_hero"},
+            "items": [
+                {
+                    "name": "Burger",
+                    "role": "star",
+                    "category": "MAINS",
+                    "storytellingFit": "strong",
+                    "reelMoment": "static_hero",
                 }
             ],
         },
@@ -157,8 +200,8 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
         monthly_post={
             "intent": "pinned_monthly_menu",
             "title": "Cafe Alto signature menu",
-            "groupIds": ["group-1", "group-2"],
-            "description": "Monthly pin showcasing signature mains from hero groups.",
+            "groupIds": ["group-1", "group-3"],
+            "description": "Monthly pin showcasing signature mains from static-hero groups.",
             "captionGuidance": (
                 "Be specific about hero signatures; use operational language and invite reservations."
             ),
@@ -181,7 +224,10 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     monthly = next(post for post in normalized["posts"] if post["intent"] == "pinned_monthly_menu")
     weekly_posts = [post for post in normalized["posts"] if post["intent"] == "weekday_lunch_post"]
     assert monthly["format"] == "carousel"
+    assert monthly["groupIds"] == ["group-1", "group-4"]
     assert len(monthly["slides"]) == 2
+    assert monthly["slides"][0]["dishName"] == "Ribeye"
+    assert monthly["slides"][1]["dishName"] == "Burger"
     assert monthly["description"]
     assert monthly["captionGuidance"]
     assert len(weekly_posts) == len(weeks)
@@ -192,6 +238,41 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     assert normalized["startDate"] == START_DATE
     assert normalized["endDate"] == END_DATE
     assert normalized["sourceDatesTitle"] == "Campaign dates"
+
+
+def test_normalize_monthly_pin_merges_all_static_hero_groups() -> None:
+    groups = _groups()
+    groups_by_id = {group["id"]: group for group in groups}
+    assert normalize_monthly_pin_group_ids(["group-1"], groups_by_id) == [
+        "group-1",
+        "group-4",
+    ]
+
+
+def test_normalize_monthly_pin_strips_variety_from_llm_plan() -> None:
+    groups = _groups()
+    groups_by_id = {group["id"]: group for group in groups}
+    assert normalize_monthly_pin_group_ids(["group-2", "group-3"], groups_by_id) == [
+        "group-1",
+        "group-4",
+    ]
+
+
+def test_validate_monthly_pin_groups_accepts_hero_when_no_static_hero() -> None:
+    hero_only = [
+        {
+            "id": "group-1",
+            "creativeRole": "hero",
+            "items": [{"name": "Ribeye", "reelMoment": "sizzle"}],
+        }
+    ]
+    validate_monthly_pin_groups(hero_only)
+
+
+def test_validate_monthly_pin_groups_rejects_non_hero_clusters() -> None:
+    proof_only = [_groups()[1]]
+    with pytest.raises(ValueError, match="static_hero|hero"):
+        validate_monthly_pin_groups(proof_only)
 
 
 @pytest.mark.asyncio
@@ -223,8 +304,8 @@ async def test_plan_posts_mocks_llm_and_persists() -> None:
         monthlyPost=PostLineupPostPlanDraft(
             intent="pinned_monthly_menu",
             title="Cafe Alto signature menu",
-            groupIds=["group-1", "group-2"],
-            description="Monthly signatures from hero groups.",
+            groupIds=["group-1", "group-4"],
+            description="Monthly signatures from static-hero groups.",
             captionGuidance="Be specific; lead with hero mains and a reservation CTA.",
         ),
         weeklyPosts=[
@@ -309,7 +390,7 @@ async def test_fetch_and_prepare_loads_dates_groups_and_brief() -> None:
             },
             client=AsyncMock(),
         )
-    assert len(prepared["groups"]) == 2
+    assert len(prepared["groups"]) == 4
     assert prepared["start_date"] == START_DATE
     assert prepared["end_date"] == END_DATE
     assert len(prepared["campaign_weeks"]) == 4

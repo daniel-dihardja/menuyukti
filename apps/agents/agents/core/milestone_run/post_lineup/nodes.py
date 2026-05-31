@@ -13,7 +13,10 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
-from agents_app.agents.core.milestone_run.post_lineup.build import build_post_lineup_from_plan
+from agents_app.agents.core.milestone_run.post_lineup.build import (
+    build_post_lineup_from_plan,
+    validate_monthly_pin_groups,
+)
 from agents_app.agents.core.milestone_run.post_lineup.prompts import format_post_lineup_system
 from agents_app.agents.core.milestone_run.post_lineup.state import PostLineupOutput, PostLineupState
 from agents_app.agents.core.milestone_run.prior_context_inject import (
@@ -85,6 +88,15 @@ def _groups(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [row for row in raw_groups if isinstance(row, dict)]
 
 
+def _compact_food_lead(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "name": str(item.get("name") or "").strip(),
+        "role": item.get("role"),
+        "category": item.get("category"),
+        "storytellingFit": item.get("storytellingFit"),
+    }
+
+
 def _compact_group(group: dict[str, Any]) -> dict[str, Any]:
     raw_items = group.get("items")
     items: list[dict[str, Any]] = []
@@ -117,6 +129,7 @@ def _build_generation_context(
     *,
     campaign_brief_data: dict[str, Any],
     groups: list[dict[str, Any]],
+    food_leads: list[dict[str, Any]],
     start_date: str,
     end_date: str,
     weeks: list[dict[str, Any]],
@@ -134,6 +147,12 @@ def _build_generation_context(
         "offerAndCtaPlan": campaign_brief_data.get("offerAndCtaPlan"),
     }
     compact_groups = [_compact_group(group) for group in groups]
+    compact_leads = [_compact_food_lead(item) for item in food_leads]
+    role_by_group_id = [
+        f"{group['id']}: creativeRole={group.get('creativeRole') or 'unknown'}"
+        for group in compact_groups
+        if group.get("id")
+    ]
     sections = [
         "## Campaign window\n```json\n"
         f"{json.dumps({'startDate': start_date, 'endDate': end_date, 'weekCount': len(weeks)}, ensure_ascii=False, indent=2)}\n```",
@@ -141,8 +160,12 @@ def _build_generation_context(
         f"{json.dumps(weeks, ensure_ascii=False, indent=2)}\n```",
         "## Campaign brief (excerpt)\n```json\n"
         f"{json.dumps(brief_excerpt, ensure_ascii=False, indent=2)}\n```",
+        "## Top food leads (signature pool from menu tagger)\n```json\n"
+        f"{json.dumps(compact_leads, ensure_ascii=False, indent=2)}\n```",
         "## Menu clusterer groups\n```json\n"
         f"{json.dumps(compact_groups, ensure_ascii=False, indent=2)}\n```",
+        "## Group creativeRole map (monthly pin: static_hero / hero only)\n"
+        + ("\n".join(role_by_group_id) if role_by_group_id else "_No groups._"),
     ]
     if owner_notes_markdown.strip():
         sections.append(owner_notes_markdown.strip())
@@ -172,7 +195,9 @@ def _merge_correction_message(error: ValueError, *, expected_week_count: int) ->
             f"{expected_week_count} entries (one per week in the campaign window). "
             "Use valid groupIds from the provided groups, keep required intents, "
             "match weekIndex values from the week plan, and provide non-empty titles, "
-            "descriptions, and captionGuidance."
+            "descriptions, and captionGuidance. "
+            "monthlyPost.groupIds must include all static_hero groups (hero-only); "
+            "do not include variety, proof, or value groups."
         )
     )
 
@@ -297,9 +322,12 @@ async def plan_posts(state: PostLineupState) -> dict[str, Any]:
     if owner_md:
         owner_notes = owner_md.split("\n\n", 2)[-1].strip() if "\n\n" in owner_md else owner_md
 
+    validate_monthly_pin_groups(groups)
+
     generation_context = _build_generation_context(
         campaign_brief_data=campaign_brief_data,
         groups=groups,
+        food_leads=food_leads,
         start_date=start_date,
         end_date=end_date,
         weeks=week_plan,

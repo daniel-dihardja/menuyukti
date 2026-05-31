@@ -33,7 +33,7 @@ def _sample_data() -> dict:
                 "format": "carousel",
                 "intent": "pinned_monthly_menu",
                 "title": "Cafe Alto signature menu",
-                "groupIds": ["group-1", "group-2"],
+                "groupIds": ["group-1", "group-4"],
                 "slides": [
                     {"dishName": "Ribeye", "imageBrief": "Hero photo brief."},
                     {"dishName": "Burger", "imageBrief": "Stack photo brief."},

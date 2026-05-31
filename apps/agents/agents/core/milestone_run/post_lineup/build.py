@@ -65,6 +65,80 @@ def _groups_by_id(groups: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return by_id
 
 
+def _creative_role(group: dict[str, Any]) -> str:
+    return str(group.get("creativeRole") or "").strip().lower()
+
+
+def _is_static_hero_group(group: dict[str, Any]) -> bool:
+    anchor = group.get("anchor")
+    if isinstance(anchor, dict):
+        dimension = str(anchor.get("dimension") or "").strip()
+        value = str(anchor.get("value") or "").strip().lower()
+        if dimension == "reel_moment" and value == "static_hero":
+            return True
+    raw_items = group.get("items")
+    if isinstance(raw_items, list):
+        for item in raw_items:
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("reelMoment") or "").strip().lower() == "static_hero":
+                return True
+    return False
+
+
+def _static_hero_group_ids_in_order(groups: list[dict[str, Any]]) -> list[str]:
+    ids: list[str] = []
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        group_id = str(group.get("id") or "").strip()
+        if group_id and _is_static_hero_group(group):
+            ids.append(group_id)
+    return ids
+
+
+def _hero_creative_role_group_ids_in_order(groups: list[dict[str, Any]]) -> list[str]:
+    ids: list[str] = []
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        group_id = str(group.get("id") or "").strip()
+        if group_id and _creative_role(group) == "hero":
+            ids.append(group_id)
+    return ids
+
+
+def validate_monthly_pin_groups(groups: list[dict[str, Any]]) -> None:
+    """Fail fast when menu clusterer output cannot satisfy the monthly pin."""
+    if _static_hero_group_ids_in_order(groups):
+        return
+    if _hero_creative_role_group_ids_in_order(groups):
+        return
+    raise ValueError(
+        "post_lineup monthly pin requires at least one static_hero menu clusterer group "
+        "or a group with creativeRole hero"
+    )
+
+
+def normalize_monthly_pin_group_ids(
+    group_ids: list[str],
+    groups_by_id: dict[str, dict[str, Any]],
+) -> list[str]:
+    """Resolve monthly pin to all static-hero groups (hero-only; no variety)."""
+    groups = list(groups_by_id.values())
+    validate_monthly_pin_groups(groups)
+
+    canonical = _static_hero_group_ids_in_order(groups)
+    if not canonical:
+        canonical = _hero_creative_role_group_ids_in_order(groups)
+
+    if not canonical:
+        raise ValueError(
+            "post_lineup monthly pin requires at least one static_hero or hero group"
+        )
+    return canonical
+
+
 def _slides_from_groups(
     selected_groups: list[dict[str, Any]],
     *,
@@ -158,6 +232,8 @@ def _build_post_from_plan(
     if not isinstance(raw_group_ids, list):
         raise ValueError(f"post_lineup plan for {intent} must include groupIds")
     group_ids = [str(value).strip() for value in raw_group_ids if str(value).strip()]
+    if intent == "pinned_monthly_menu":
+        group_ids = normalize_monthly_pin_group_ids(group_ids, groups_by_id)
     selected_groups = _resolve_groups(group_ids, groups_by_id)
     slides = _slides_from_groups(selected_groups, food_leads_by_name=food_leads_by_name)
     if not slides:
