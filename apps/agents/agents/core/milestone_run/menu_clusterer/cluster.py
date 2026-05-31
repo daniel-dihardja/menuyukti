@@ -1,4 +1,4 @@
-"""Build reel lineup food clusters from menu tagger items and LLM draft."""
+"""Build food menu clusters from menu tagger items and LLM draft."""
 
 from __future__ import annotations
 
@@ -426,9 +426,7 @@ def merge_llm_clusters(
 
     payload: dict[str, Any] = {
         "foodLeads": food_leads,
-        "drinkLeads": [],
         "groups": groups,
-        "drinkGroups": [],
         "unassignedItemNames": unassigned_item_names,
         "topFoodLeadNames": top_food_lead_names,
     }

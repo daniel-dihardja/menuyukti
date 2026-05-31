@@ -25,7 +25,7 @@ export type MilestoneMenuClustererDataPreviewProps = {
   data: MenuClustererMilestoneData
 }
 
-type ReelGroupListId = `food:${string}` | `drink:${string}`
+type ReelGroupListId = `food:${string}`
 
 const ROLE_BADGE_CLASS = {
   star: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100',
@@ -278,13 +278,9 @@ export function MilestoneMenuClustererDataPreview({
 }: MilestoneMenuClustererDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
 
-  const drinkGroups = useMemo(() => data.drinkGroups ?? [], [data.drinkGroups])
-
   const assignedCount = useMemo(
-    () =>
-      data.groups.reduce((sum, group) => sum + group.items.length, 0) +
-      drinkGroups.reduce((sum, group) => sum + group.items.length, 0),
-    [data.groups, drinkGroups],
+    () => data.groups.reduce((sum, group) => sum + group.items.length, 0),
+    [data.groups],
   )
 
   const labels = useMemo(
@@ -329,7 +325,6 @@ export function MilestoneMenuClustererDataPreview({
         <p className={`${mp.bodySmall} text-pretty text-foreground`}>
           {t('milestoneMenuClustererPreviewSummary', {
             foodGroupCount: data.groups.length,
-            drinkGroupCount: drinkGroups.length,
             assignedCount,
             unassignedCount: data.unassignedItemNames.length,
           })}
@@ -357,20 +352,6 @@ export function MilestoneMenuClustererDataPreview({
         emptyBody={t('milestoneMenuClustererPreviewFoodEmptyBody')}
         groups={data.groups}
         leadLabel={t('milestoneMenuClustererPreviewLeadDishLabel')}
-        labels={labels}
-        viewDetailsLabel={viewDetailsLabel}
-        backLabel={backLabel}
-        groupTitleForId={(id) => t('milestoneMenuClustererPreviewGroupTitle', { id })}
-        listMetaLabel={listMetaLabel}
-      />
-
-      <MenuClustererGroupsSection
-        sectionKey="drink"
-        title={t('milestoneMenuClustererPreviewDrinkSectionTitle')}
-        emptyTitle={t('milestoneMenuClustererPreviewDrinkEmptyTitle')}
-        emptyBody={t('milestoneMenuClustererPreviewDrinkEmptyBody')}
-        groups={drinkGroups}
-        leadLabel={t('milestoneMenuClustererPreviewLeadDrinkLabel')}
         labels={labels}
         viewDetailsLabel={viewDetailsLabel}
         backLabel={backLabel}

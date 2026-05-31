@@ -28,7 +28,6 @@ describe('menu_clusterer preset', () => {
     })
     expect(fields.milestoneData).toMatchObject({
       foodLeads: [],
-      drinkLeads: [],
     })
     expect(fields.passCriteria?.map((row) => row.requirement)).toEqual([
       'milestonePreset.menu_clusterer.criterionPriorCampaignBrief',

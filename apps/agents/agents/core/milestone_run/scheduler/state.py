@@ -49,8 +49,6 @@ class SchedulerState(TypedDict):
     source_dates_title: NotRequired[str]
     campaign_brief_data: NotRequired[dict[str, Any] | None]
     source_campaign_brief_title: NotRequired[str]
-    menu_clusterer_data: NotRequired[dict[str, Any] | None]
-    source_menu_clusterer_title: NotRequired[str]
     post_lineup_data: NotRequired[dict[str, Any] | None]
     source_post_lineup_title: NotRequired[str]
     story_lineup_data: NotRequired[dict[str, Any] | None]

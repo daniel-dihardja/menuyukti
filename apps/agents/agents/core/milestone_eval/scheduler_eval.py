@@ -74,42 +74,4 @@ def try_scheduler_deterministic_verdict(
             "Scheduler data is missing sourceCampaignBriefTitle from the prior campaign brief.",
         )
 
-    if "prior" in normalized and ("menu_clusterer" in normalized or "menu clusterer" in normalized):
-        source_title = str(data.get("sourceMenuClustererTitle") or "").strip()
-        if source_title:
-            return (
-                "pass",
-                "Scheduler data references a prior menu clusterer milestone via sourceMenuClustererTitle.",
-            )
-        slots = data.get("slots")
-        if isinstance(slots, list) and any(
-            isinstance(slot, dict) and str(slot.get("kind") or "").strip() == "reel"
-            for slot in slots
-        ):
-            return (
-                "pass",
-                "Scheduler slots include reel entries from menu clusterer.",
-            )
-        return (
-            "fail",
-            "Scheduler data is missing menu clusterer reference or reel slots.",
-        )
-
-    if "reel" in normalized and (
-        "kind" in normalized or "typed" in normalized or "slot" in normalized
-    ):
-        slots = data.get("slots")
-        if isinstance(slots, list) and any(
-            isinstance(slot, dict) and str(slot.get("kind") or "").strip() == "reel"
-            for slot in slots
-        ):
-            return (
-                "pass",
-                "Scheduler data includes explicit reel slots with kind='reel'.",
-            )
-        return (
-            "fail",
-            "Scheduler data must include explicit reel slots with kind='reel'.",
-        )
-
     return None

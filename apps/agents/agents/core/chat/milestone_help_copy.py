@@ -48,10 +48,9 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "and three bio variations — aligned with brand, audience, and campaign objective."
     ),
     "scheduler": (
-        "Reads the campaign window from dates plus business strategy from Campaign Brief and "
-        "food-group rotation hints from Menu clusterer. It schedules food reels as a recurring "
-        "twice-weekly lunch cadence with explicit `reel` slot kinds between the start and end "
-        "dates."
+        "Reads the campaign window from dates, business strategy from Campaign Brief, and "
+        "saved post and story lineups. It places feed posts and Stories on the calendar between "
+        "the start and end dates. Reel scheduling will use a dedicated reel milestone later."
     ),
 }
 

@@ -263,7 +263,7 @@ async def fetch_and_prepare(
     }
 
 
-async def build_lineup(state: MenuClustererState) -> dict[str, Any]:
+async def build_clusters(state: MenuClustererState) -> dict[str, Any]:
     menu_tagger_items = state.get("menu_tagger_items") or []
     campaign_brief_data = state.get("campaign_brief_data")
     if not isinstance(campaign_brief_data, dict):
@@ -291,7 +291,7 @@ async def build_lineup(state: MenuClustererState) -> dict[str, Any]:
         min_group_count=MENU_CLUSTERER_MIN_GROUP_COUNT,
     )
 
-    _trace(state, "build_lineup_generate", targetGroupCount=target_group_count)
+    _trace(state, "build_clusters_generate", targetGroupCount=target_group_count)
     _trace_agent_event(state, "chat_model_start")
 
     base_messages: list[BaseMessage] = [

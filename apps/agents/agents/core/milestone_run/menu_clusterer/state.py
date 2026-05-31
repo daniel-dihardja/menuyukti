@@ -61,9 +61,7 @@ class MenuClustererGroup(TypedDict):
 
 class MenuClustererOutput(TypedDict):
     foodLeads: list[dict[str, Any]]
-    drinkLeads: list[dict[str, Any]]
     groups: list[MenuClustererGroup]
-    drinkGroups: list[MenuClustererGroup]
     unassignedItemNames: list[str]
     topFoodLeadNames: NotRequired[list[str]]
     targetGroupCount: NotRequired[int]

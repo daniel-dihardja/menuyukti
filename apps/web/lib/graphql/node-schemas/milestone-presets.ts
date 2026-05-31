@@ -386,9 +386,7 @@ export type MenuClustererGroup = z.infer<typeof menuClustererGroupSchema>
 
 export const menuClustererMilestoneDataSchema = z.object({
   foodLeads: z.array(menuTaggerItemSchema).default([]),
-  drinkLeads: z.array(menuTaggerItemSchema).default([]),
   groups: z.array(menuClustererGroupSchema),
-  drinkGroups: z.array(menuClustererGroupSchema).default([]),
   unassignedItemNames: z.array(z.string().trim().min(1)),
   topFoodLeadNames: z.array(z.string().trim().min(1)).max(5).default([]),
   targetGroupCount: menuClustererTargetGroupCountSchema.optional(),

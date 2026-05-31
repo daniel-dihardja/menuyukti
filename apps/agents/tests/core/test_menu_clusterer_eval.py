@@ -55,7 +55,6 @@ def _sample_payload() -> dict:
             },
             *_extra_groups(),
         ],
-        "drinkGroups": [],
         "unassignedItemNames": ["Wings"],
         "topFoodLeadNames": ["Wings", "Ribeye", "Burger", "Fries", "Salad"],
         "sourceCampaignBriefTitle": "Campaign brief",
@@ -216,11 +215,3 @@ def test_multi_item_group_passes_top_five_check() -> None:
     assert verdict is not None
     assert verdict[0] == "pass"
 
-
-def test_drink_criteria_passes_with_empty_drink_groups() -> None:
-    verdict = try_menu_clusterer_deterministic_verdict(
-        "Each drink group's position-1 item is a tagged beverage drink with a reel moment.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"

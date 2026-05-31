@@ -459,15 +459,7 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorMenuClusterer'),
-          status: 'open',
-        },
-        {
           requirement: t('milestonePreset.scheduler.criterionWindowPresent'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.scheduler.criterionReelSlotKinds'),
           status: 'open',
         },
       ],

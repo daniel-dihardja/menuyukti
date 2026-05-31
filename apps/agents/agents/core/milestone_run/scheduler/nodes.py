@@ -14,15 +14,12 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     dates_prior_error_message,
     extract_dates_data,
     extract_dates_row,
-    extract_menu_clusterer_data,
-    extract_menu_clusterer_row,
     extract_post_lineup_data,
     extract_post_lineup_row,
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
     extract_story_lineup_data,
     extract_story_lineup_row,
-    menu_clusterer_prior_error_message,
 )
 from agents_app.agents.core.milestone_run.scheduler.state import SchedulerOutput, SchedulerState
 from langgraph.config import get_stream_writer
@@ -110,70 +107,21 @@ def _offer_window(campaign_brief_data: dict[str, Any] | None) -> str:
     return str(overall.get("offerWindow") or "").strip() or "11:00-14:00"
 
 
-def _preferred_weekdays(
-    menu_clusterer_data: dict[str, Any] | None,
-    campaign_brief_data: dict[str, Any] | None,
-) -> list[str]:
+def _preferred_weekdays(campaign_brief_data: dict[str, Any] | None) -> list[str]:
     focus = _strategy_focus(campaign_brief_data)
-    chosen: list[str]
     if focus == "weekday_lunch":
-        chosen = list(DEFAULT_REEL_WEEKDAYS)
-    else:
-        groups = (
-            menu_clusterer_data.get("groups") if isinstance(menu_clusterer_data, dict) else None
-        )
-        if isinstance(groups, list):
-            for group in groups:
-                if not isinstance(group, dict):
-                    continue
-                hints = group.get("scheduleHints")
-                if not isinstance(hints, dict):
-                    continue
-                raw = hints.get("preferredWeekdays")
-                if isinstance(raw, list):
-                    cleaned = [
-                        str(value).strip().lower()
-                        for value in raw
-                        if str(value).strip().lower() in _WEEKDAY_INDEX
-                    ]
-                    if cleaned:
-                        chosen = cleaned
-                        break
-            else:
-                if focus == "weekend_family":
-                    chosen = ["friday", "sunday"]
-                elif focus == "evening_dinner":
-                    chosen = ["wednesday", "friday"]
-                else:
-                    chosen = list(DEFAULT_REEL_WEEKDAYS)
-        else:
-            if focus == "weekend_family":
-                chosen = ["friday", "sunday"]
-            elif focus == "evening_dinner":
-                chosen = ["wednesday", "friday"]
-            else:
-                chosen = list(DEFAULT_REEL_WEEKDAYS)
-    return chosen
+        return list(DEFAULT_REEL_WEEKDAYS)
+    if focus == "weekend_family":
+        return ["friday", "sunday"]
+    if focus == "evening_dinner":
+        return ["wednesday", "friday"]
+    return list(DEFAULT_REEL_WEEKDAYS)
 
 
-def _preferred_time(
-    menu_clusterer_data: dict[str, Any] | None,
-    campaign_brief_data: dict[str, Any] | None,
-) -> str:
+def _preferred_time(campaign_brief_data: dict[str, Any] | None) -> str:
     focus = _strategy_focus(campaign_brief_data)
     if focus == "weekday_lunch":
         return DEFAULT_REEL_SLOT_TIME
-    groups = menu_clusterer_data.get("groups") if isinstance(menu_clusterer_data, dict) else None
-    if isinstance(groups, list):
-        for group in groups:
-            if not isinstance(group, dict):
-                continue
-            hints = group.get("scheduleHints")
-            if not isinstance(hints, dict):
-                continue
-            text = str(hints.get("preferredTime") or "").strip()
-            if text:
-                return text
     if focus == "weekend_family":
         return "09:30"
     if focus == "evening_dinner":
@@ -251,8 +199,8 @@ def _build_reel_slots(
     groups = _eligible_food_groups(menu_clusterer_data)
     if not groups:
         return []
-    preferred_weekdays = _preferred_weekdays(menu_clusterer_data, campaign_brief_data)
-    preferred_time = _preferred_time(menu_clusterer_data, campaign_brief_data)
+    preferred_weekdays = _preferred_weekdays(campaign_brief_data)
+    preferred_time = _preferred_time(campaign_brief_data)
     dates = _slot_dates(start_date, end_date, preferred_weekdays)
     slots: list[dict[str, str]] = []
     for index, iso_date in enumerate(dates):
@@ -381,7 +329,6 @@ def _build_monthly_post_slots(
 def _weekly_post_schedule(
     post: dict[str, Any],
     *,
-    menu_clusterer_data: dict[str, Any] | None,
     campaign_brief_data: dict[str, Any] | None,
 ) -> tuple[list[str], str]:
     hints = post.get("scheduleHints")
@@ -398,13 +345,12 @@ def _weekly_post_schedule(
                     str(hints.get("preferredTime") or "").strip() or DEFAULT_POST_SLOT_TIME
                 )
                 return cleaned, preferred_time
-    return _preferred_weekdays(menu_clusterer_data, campaign_brief_data), DEFAULT_POST_SLOT_TIME
+    return _preferred_weekdays(campaign_brief_data), DEFAULT_POST_SLOT_TIME
 
 
 def _build_weekly_post_slots(
     post_lineup_data: dict[str, Any] | None,
     *,
-    menu_clusterer_data: dict[str, Any] | None,
     campaign_brief_data: dict[str, Any] | None,
     start_date: str,
     end_date: str,
@@ -454,7 +400,6 @@ def _build_weekly_post_slots(
     post = valid_posts[0]
     preferred_weekdays, preferred_time = _weekly_post_schedule(
         post,
-        menu_clusterer_data=menu_clusterer_data,
         campaign_brief_data=campaign_brief_data,
     )
     dates = _slot_dates(start_date, end_date, preferred_weekdays)
@@ -474,7 +419,6 @@ def _build_weekly_post_slots(
 def _build_post_slots(
     post_lineup_data: dict[str, Any] | None,
     *,
-    menu_clusterer_data: dict[str, Any] | None,
     campaign_brief_data: dict[str, Any] | None,
     start_date: str,
     end_date: str,
@@ -490,7 +434,6 @@ def _build_post_slots(
     slots.extend(
         _build_weekly_post_slots(
             post_lineup_data,
-            menu_clusterer_data=menu_clusterer_data,
             campaign_brief_data=campaign_brief_data,
             start_date=start_date,
             end_date=end_date,
@@ -544,10 +487,6 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
     if campaign_brief_data is None:
         raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="scheduler"))
 
-    menu_clusterer_data = extract_menu_clusterer_data(prior_json)
-    if menu_clusterer_data is None:
-        raise ValueError(menu_clusterer_prior_error_message(prior_json, milestone_id="scheduler"))
-
     post_lineup_data = extract_post_lineup_data(prior_json)
     story_lineup_data = extract_story_lineup_data(prior_json)
 
@@ -564,13 +503,6 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
         brief_title = campaign_brief_row.get("title")
         if isinstance(brief_title, str) and brief_title.strip():
             source_campaign_brief_title = brief_title.strip()
-
-    menu_clusterer_row = extract_menu_clusterer_row(prior_json)
-    source_menu_clusterer_title = ""
-    if isinstance(menu_clusterer_row, dict):
-        reel_title = menu_clusterer_row.get("title")
-        if isinstance(reel_title, str) and reel_title.strip():
-            source_menu_clusterer_title = reel_title.strip()
 
     post_lineup_row = extract_post_lineup_row(prior_json)
     source_post_lineup_title = ""
@@ -591,8 +523,6 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
         "source_dates_title": source_dates_title,
         "campaign_brief_data": campaign_brief_data,
         "source_campaign_brief_title": source_campaign_brief_title,
-        "menu_clusterer_data": menu_clusterer_data,
-        "source_menu_clusterer_title": source_menu_clusterer_title,
         "post_lineup_data": post_lineup_data,
         "source_post_lineup_title": source_post_lineup_title,
         "story_lineup_data": story_lineup_data,
@@ -609,10 +539,6 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     if not isinstance(campaign_brief_data, dict):
         raise ValueError("scheduler requires prior restaurant_campaign_brief milestone data")
 
-    menu_clusterer_data = state.get("menu_clusterer_data")
-    if not isinstance(menu_clusterer_data, dict):
-        raise ValueError("scheduler requires prior menu_clusterer milestone data")
-
     start_date = str(dates_data.get("startDate") or "").strip()
     end_date = str(dates_data.get("endDate") or "").strip()
     if not start_date or not end_date:
@@ -622,16 +548,10 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     if not isinstance(public_holidays, list):
         public_holidays = []
 
-    slots = _build_reel_slots(
-        menu_clusterer_data,
-        campaign_brief_data,
-        start_date=start_date,
-        end_date=end_date,
-    )
+    slots: list[dict[str, str]] = []
     slots.extend(
         _build_post_slots(
             state.get("post_lineup_data"),
-            menu_clusterer_data=menu_clusterer_data,
             campaign_brief_data=campaign_brief_data,
             start_date=start_date,
             end_date=end_date,
@@ -659,9 +579,6 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     source_campaign_brief_title = str(state.get("source_campaign_brief_title") or "").strip()
     if source_campaign_brief_title:
         payload["sourceCampaignBriefTitle"] = source_campaign_brief_title
-    source_menu_clusterer_title = str(state.get("source_menu_clusterer_title") or "").strip()
-    if source_menu_clusterer_title:
-        payload["sourceMenuClustererTitle"] = source_menu_clusterer_title
     source_post_lineup_title = str(state.get("source_post_lineup_title") or "").strip()
     if source_post_lineup_title:
         payload["sourcePostLineupTitle"] = source_post_lineup_title

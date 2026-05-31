@@ -69,19 +69,18 @@ def test_prior_campaign_brief_verdict_passes() -> None:
     assert verdict[0] == "pass"
 
 
-def test_prior_menu_clusterer_verdict_passes() -> None:
-    verdict = try_scheduler_deterministic_verdict(
-        "Run used a prior menu clusterer milestone.",
-        _sample_payload(),
+def test_menu_clusterer_and_reel_criteria_are_not_deterministic() -> None:
+    assert (
+        try_scheduler_deterministic_verdict(
+            "Run used a prior menu clusterer milestone.",
+            _sample_payload(),
+        )
+        is None
     )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_explicit_reel_slot_verdict_passes() -> None:
-    verdict = try_scheduler_deterministic_verdict(
-        "Scheduler outputs explicit typed reel slots.",
-        _sample_payload(),
+    assert (
+        try_scheduler_deterministic_verdict(
+            "Scheduler outputs explicit typed reel slots.",
+            _sample_payload(),
+        )
+        is None
     )
-    assert verdict is not None
-    assert verdict[0] == "pass"

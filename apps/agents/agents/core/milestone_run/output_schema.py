@@ -664,9 +664,7 @@ class MenuClustererGroupOutput(BaseModel):
 
 class MenuClustererMilestoneOutput(BaseModel):
     foodLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
-    drinkLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
     groups: list[MenuClustererGroupOutput]
-    drinkGroups: list[MenuClustererGroupOutput] = Field(default_factory=list)
     unassignedItemNames: list[str] = Field(default_factory=list)
     topFoodLeadNames: list[str] = Field(default_factory=list, max_length=5)
     targetGroupCount: int | None = Field(default=None, ge=4, le=8)
@@ -678,14 +676,9 @@ class MenuClustererMilestoneOutput(BaseModel):
     def _validate_lead_group_alignment(self) -> MenuClustererMilestoneOutput:
         if len(self.foodLeads) != len(self.groups):
             raise ValueError("foodLeads length must match groups length")
-        if len(self.drinkLeads) != len(self.drinkGroups):
-            raise ValueError("drinkLeads length must match drinkGroups length")
         for lead, group in zip(self.foodLeads, self.groups, strict=True):
             if lead.name.strip() != group.leadName.strip():
                 raise ValueError("foodLeads[i].name must match groups[i].leadName")
-        for lead, group in zip(self.drinkLeads, self.drinkGroups, strict=True):
-            if lead.name.strip() != group.leadName.strip():
-                raise ValueError("drinkLeads[i].name must match drinkGroups[i].leadName")
         return self
 
 

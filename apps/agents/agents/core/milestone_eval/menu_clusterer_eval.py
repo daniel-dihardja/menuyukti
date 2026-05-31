@@ -252,12 +252,4 @@ def try_menu_clusterer_deterministic_verdict(
             "each food cluster has a valid position-1 lead from the top-5 food lead pool.",
         )
 
-    if ("drink" in norm or "beverage" in norm) and (
-        "position" in norm or "hook" in norm or "group" in norm
-    ):
-        drink_groups = data.get("drinkGroups")
-        if isinstance(drink_groups, list) and drink_groups:
-            return ("fail", "menu clusterer should not include drink groups.")
-        return ("pass", "menu clusterer contains no drink groups (food-only clusters).")
-
     return None

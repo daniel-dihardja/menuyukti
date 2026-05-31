@@ -13,7 +13,7 @@ from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
 from agents_app.agents.core.milestone_run.menu_clusterer.nodes import (
     MenuClustererClusterDraft,
     _menu_clusterer_draft_output_model,
-    build_lineup,
+    build_clusters,
     fetch_and_prepare,
     persist_result,
 )
@@ -186,8 +186,8 @@ def test_merge_llm_clusters_builds_multi_item_groups_with_descriptions() -> None
     assert error is None
     assert isinstance(normalized, dict)
     assert len(normalized["groups"]) == 4
-    assert normalized["drinkLeads"] == []
-    assert normalized["drinkGroups"] == []
+    assert "drinkLeads" not in normalized
+    assert "drinkGroups" not in normalized
     assert normalized["topFoodLeadNames"] == ["Wings", "Ribeye", "Burger", "Fries", "Salad"]
     assert normalized["targetGroupCount"] == 4
     first = normalized["groups"][0]
@@ -321,7 +321,7 @@ async def test_fetch_and_prepare_requires_campaign_brief() -> None:
 
 
 @pytest.mark.asyncio
-async def test_build_lineup_and_persist() -> None:
+async def test_build_clusters_and_persist() -> None:
     draft_model = _menu_clusterer_draft_output_model(4)
     draft = draft_model(clusters=_draft_clusters())
     state = {
@@ -348,7 +348,7 @@ async def test_build_lineup_and_persist() -> None:
             new=AsyncMock(return_value=draft),
         ),
     ):
-        built = await build_lineup(state)  # type: ignore[arg-type]
+        built = await build_clusters(state)  # type: ignore[arg-type]
     assert len(built["generated_output"]["groups"]) == 4
     assert built["generated_output"]["groups"][0]["scheduleHints"]["preferredTime"] == "11:00"
 

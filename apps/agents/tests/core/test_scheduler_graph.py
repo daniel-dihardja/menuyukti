@@ -165,7 +165,6 @@ def _prior_json() -> str:
                             "storytellingFit": "strong",
                         },
                     ],
-                    "drinkLeads": [],
                     "groups": [
                         {
                             "id": "group-1",
@@ -236,7 +235,6 @@ def _prior_json() -> str:
                             },
                         },
                     ],
-                    "drinkGroups": [],
                     "unassignedItemNames": [],
                     "sourceCampaignBriefTitle": "Campaign brief",
                     "sourceMenuTaggerTitle": "Tagged menu",
@@ -369,7 +367,7 @@ def _base_state(**overrides: object) -> dict[str, object]:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_menu_clusterer() -> None:
+async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_lineups() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
         return_value=lambda _x: None,
@@ -380,10 +378,8 @@ async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_menu_clust
         )
         assert result["source_dates_title"] == "Campaign dates"
         assert result["source_campaign_brief_title"] == "Campaign brief"
-        assert result["source_menu_clusterer_title"] == "Lunch Menu Clusterer"
         assert result["source_post_lineup_title"] == "Monthly Post Lineup"
         assert result["source_story_lineup_title"] == "Holiday Story Lineup"
-        assert len(result["menu_clusterer_data"]["groups"]) == 2
 
 
 @pytest.mark.asyncio
@@ -417,34 +413,16 @@ async def test_fetch_and_prepare_raises_without_prior_campaign_brief() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_raises_without_prior_menu_clusterer() -> None:
-    prior = json.dumps(json.loads(_prior_json())[:2])
-    with (
-        patch(
-            "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        pytest.raises(ValueError, match="scheduler requires a prior menu_clusterer milestone"),
-    ):
-        await fetch_and_prepare(
-            _base_state(prior_milestones_data=prior),
-            client=AsyncMock(),
-        )
-
-
-@pytest.mark.asyncio
-async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
+async def test_build_snapshot_creates_post_and_story_slots_without_reels() -> None:
     prior = json.loads(_prior_json())
     result = await build_snapshot(
         _base_state(
             dates_data=prior[0]["data"],
             campaign_brief_data=prior[1]["data"],
-            menu_clusterer_data=prior[2]["data"],
             post_lineup_data=prior[3]["data"],
             story_lineup_data=prior[4]["data"],
             source_dates_title="Campaign dates",
             source_campaign_brief_title="Campaign brief",
-            source_menu_clusterer_title="Lunch Menu Clusterer",
             source_post_lineup_title="Monthly Post Lineup",
             source_story_lineup_title="Holiday Story Lineup",
         )
@@ -453,10 +431,10 @@ async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
     assert error is None
     assert isinstance(normalized, dict)
     assert normalized["sourceCampaignBriefTitle"] == "Campaign brief"
-    assert normalized["sourceMenuClustererTitle"] == "Lunch Menu Clusterer"
     assert normalized["sourcePostLineupTitle"] == "Monthly Post Lineup"
     assert normalized["sourceStoryLineupTitle"] == "Holiday Story Lineup"
-    assert normalized["slots"][:6] == [
+    assert not any(slot.get("kind") == "reel" for slot in normalized["slots"])
+    assert normalized["slots"][:4] == [
         {
             "kind": "post",
             "date": "2026-06-01",
@@ -472,23 +450,11 @@ async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
             "post": _EXPECTED_WEEKLY_POST_DETAIL,
         },
         {
-            "kind": "reel",
-            "date": "2026-06-02",
-            "time": "11:00",
-            "title": "Reel: Ribeye lunch offer (11:00-14:00) [hero]",
-        },
-        {
             "kind": "post",
             "date": "2026-06-09",
             "time": "10:00",
             "title": "Weekday lunch at Cafe Alto",
             "post": _EXPECTED_WEEKLY_POST_DETAIL,
-        },
-        {
-            "kind": "reel",
-            "date": "2026-06-09",
-            "time": "11:00",
-            "title": "Reel: Burger lunch offer (11:00-14:00) [proof]",
         },
         {
             "kind": "story",
@@ -513,7 +479,6 @@ async def test_build_snapshot_repeats_monthly_top_menu_on_first_of_each_month() 
         _base_state(
             dates_data=prior[0]["data"],
             campaign_brief_data=prior[1]["data"],
-            menu_clusterer_data=prior[2]["data"],
             post_lineup_data=prior[3]["data"],
             story_lineup_data=prior[4]["data"],
         )
@@ -573,46 +538,6 @@ async def test_persist_result_upserts_scheduler_payload() -> None:
 
 
 @pytest.mark.asyncio
-async def test_build_snapshot_rotates_groups_across_two_month_window() -> None:
-    prior = json.loads(_prior_json())
-    prior[0]["data"]["endDate"] = "2026-07-31"
-    result = await build_snapshot(
-        _base_state(
-            dates_data=prior[0]["data"],
-            campaign_brief_data=prior[1]["data"],
-            menu_clusterer_data=prior[2]["data"],
-        )
-    )
-    normalized, error = validate_skill_output("scheduler", result["generated_output"])
-    assert error is None
-    assert isinstance(normalized, dict)
-    assert len(normalized["slots"]) == 9
-    assert normalized["slots"][0]["title"] == "Reel: Ribeye lunch offer (11:00-14:00) [hero]"
-    assert normalized["slots"][1]["title"] == "Reel: Burger lunch offer (11:00-14:00) [proof]"
-
-
-@pytest.mark.asyncio
-async def test_build_snapshot_treats_human_readable_weekday_lunch_focus_as_tuesday_only() -> None:
-    prior = json.loads(_prior_json())
-    prior[1]["data"]["overallStrategy"]["strategyFocus"] = "Weekday Lunch"
-
-    result = await build_snapshot(
-        _base_state(
-            dates_data=prior[0]["data"],
-            campaign_brief_data=prior[1]["data"],
-            menu_clusterer_data=prior[2]["data"],
-        )
-    )
-
-    normalized, error = validate_skill_output("scheduler", result["generated_output"])
-    assert error is None
-    assert isinstance(normalized, dict)
-
-    reel_dates = [slot["date"] for slot in normalized["slots"] if slot["kind"] == "reel"]
-    assert reel_dates == ["2026-06-02", "2026-06-09", "2026-06-16", "2026-06-23", "2026-06-30"]
-
-
-@pytest.mark.asyncio
 async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
     from agents_app.agents.core.milestone_run.scheduler.nodes import _build_weekly_post_slots
 
@@ -655,7 +580,6 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
 
     slots = _build_weekly_post_slots(
         post_lineup_data,
-        menu_clusterer_data=None,
         campaign_brief_data=None,
         start_date="2026-06-01",
         end_date="2026-06-30",
