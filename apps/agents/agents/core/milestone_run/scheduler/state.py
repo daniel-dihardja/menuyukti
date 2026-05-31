@@ -5,11 +5,21 @@ from __future__ import annotations
 from typing import Any, Literal, NotRequired, TypedDict
 
 
+class SchedulerPostSlotDetail(TypedDict):
+    id: str
+    format: Literal["carousel"]
+    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
+    title: str
+    slides: list[dict[str, str]]
+    groupIds: list[str]
+
+
 class SchedulerSlot(TypedDict):
     kind: Literal["story", "post", "reel"]
     date: str
     time: str
     title: str
+    post: NotRequired[SchedulerPostSlotDetail]
 
 
 class SchedulerOutput(TypedDict):

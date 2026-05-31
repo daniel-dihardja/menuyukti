@@ -859,11 +859,21 @@ class PostLineupMilestoneOutput(BaseModel):
         return self
 
 
+class SchedulerPostSlotDetailOutput(BaseModel):
+    id: str
+    format: Literal["carousel"]
+    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
+    title: str
+    slides: list[PostLineupSlideOutput]
+    groupIds: list[str] = Field(default_factory=list)
+
+
 class SchedulerSlotOutput(BaseModel):
     kind: Literal["story", "post", "reel"] | None = None
     date: str
     time: str
     title: str
+    post: SchedulerPostSlotDetailOutput | None = None
 
     @model_validator(mode="after")
     def _fill_legacy_kind(self) -> SchedulerSlotOutput:

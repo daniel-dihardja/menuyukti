@@ -302,6 +302,35 @@ def _prior_json() -> str:
     )
 
 
+_EXPECTED_MONTHLY_POST_DETAIL = {
+    "id": "pinned-monthly-menu",
+    "format": "carousel",
+    "intent": "pinned_monthly_menu",
+    "title": "Monthly top menu",
+    "groupIds": ["group-1"],
+    "slides": [
+        {
+            "dishName": "Ribeye",
+            "imageBrief": "Hero menu photography brief.",
+        }
+    ],
+}
+
+_EXPECTED_WEEKLY_POST_DETAIL = {
+    "id": "weekday-lunch-post",
+    "format": "carousel",
+    "intent": "weekday_lunch_post",
+    "title": "Weekday lunch at Cafe Alto",
+    "groupIds": ["group-1"],
+    "slides": [
+        {
+            "dishName": "Ribeye",
+            "imageBrief": "Lunch photography brief.",
+        }
+    ],
+}
+
+
 def _base_state(**overrides: object) -> dict[str, object]:
     state: dict[str, object] = {
         "milestone_id": "1",
@@ -410,12 +439,14 @@ async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
             "date": "2026-06-01",
             "time": "10:00",
             "title": "Monthly top menu",
+            "post": _EXPECTED_MONTHLY_POST_DETAIL,
         },
         {
             "kind": "post",
             "date": "2026-06-02",
             "time": "10:00",
             "title": "Weekday lunch at Cafe Alto",
+            "post": _EXPECTED_WEEKLY_POST_DETAIL,
         },
         {
             "kind": "reel",
@@ -428,6 +459,7 @@ async def test_build_snapshot_creates_reel_slots_from_menu_clusterer() -> None:
             "date": "2026-06-09",
             "time": "10:00",
             "title": "Weekday lunch at Cafe Alto",
+            "post": _EXPECTED_WEEKLY_POST_DETAIL,
         },
         {
             "kind": "reel",
@@ -477,12 +509,14 @@ async def test_build_snapshot_repeats_monthly_top_menu_on_first_of_each_month() 
             "date": "2026-06-01",
             "time": "10:00",
             "title": "Monthly top menu",
+            "post": _EXPECTED_MONTHLY_POST_DETAIL,
         },
         {
             "kind": "post",
             "date": "2026-07-01",
             "time": "10:00",
             "title": "Monthly top menu",
+            "post": _EXPECTED_MONTHLY_POST_DETAIL,
         },
     ]
 
@@ -569,7 +603,12 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
                 "date": "2026-06-02",
                 "fixdate": True,
                 "scheduleHints": {"preferredWeekdays": ["tuesday"], "preferredTime": "10:00"},
-                "slides": [],
+                "slides": [
+                    {
+                        "dishName": "Ribeye",
+                        "imageBrief": "Week 1 lunch photography brief.",
+                    }
+                ],
                 "groupIds": ["group-1"],
             },
             {
@@ -580,7 +619,12 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
                 "date": "2026-06-09",
                 "fixdate": True,
                 "scheduleHints": {"preferredWeekdays": ["tuesday"], "preferredTime": "10:00"},
-                "slides": [],
+                "slides": [
+                    {
+                        "dishName": "Burger",
+                        "imageBrief": "Week 2 lunch photography brief.",
+                    }
+                ],
                 "groupIds": ["group-1"],
             },
         ]
@@ -599,11 +643,37 @@ async def test_build_weekly_post_slots_uses_fixdated_posts() -> None:
             "date": "2026-06-02",
             "time": "10:00",
             "title": "Week 1 lunch",
+            "post": {
+                "id": "weekday-lunch-post-week-2026-06-01",
+                "format": "carousel",
+                "intent": "weekday_lunch_post",
+                "title": "Week 1 lunch",
+                "groupIds": ["group-1"],
+                "slides": [
+                    {
+                        "dishName": "Ribeye",
+                        "imageBrief": "Week 1 lunch photography brief.",
+                    }
+                ],
+            },
         },
         {
             "kind": "post",
             "date": "2026-06-09",
             "time": "10:00",
             "title": "Week 2 lunch",
+            "post": {
+                "id": "weekday-lunch-post-week-2026-06-08",
+                "format": "carousel",
+                "intent": "weekday_lunch_post",
+                "title": "Week 2 lunch",
+                "groupIds": ["group-1"],
+                "slides": [
+                    {
+                        "dishName": "Burger",
+                        "imageBrief": "Week 2 lunch photography brief.",
+                    }
+                ],
+            },
         },
     ]

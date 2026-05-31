@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/timeline/types'
 import {
   findPriorDatesMilestone,
+  findPriorPostLineupMilestone,
   parseIsoDateOnly,
+  resolvePostLineupPostsForScheduler,
   resolveSchedulerWindow,
 } from '@/lib/milestones/scheduler-dates'
 
@@ -53,6 +55,75 @@ describe('findPriorDatesMilestone', () => {
   it('returns undefined when no prior dates milestone exists', () => {
     const milestones = [milestone('1', 'promotion_candidates'), milestone('2', 'scheduler')]
     expect(findPriorDatesMilestone(milestones, '2')).toBeUndefined()
+  })
+})
+
+describe('findPriorPostLineupMilestone', () => {
+  it('returns the nearest post_lineup milestone before the scheduler', () => {
+    const milestones = [
+      milestone('1', 'post_lineup', { title: 'Posts A' }),
+      milestone('2', 'story_lineup'),
+      milestone('3', 'post_lineup', { title: 'Posts B' }),
+      milestone('4', 'scheduler'),
+    ]
+
+    expect(findPriorPostLineupMilestone(milestones, '4')?.id).toBe('3')
+    expect(findPriorPostLineupMilestone(milestones, '2')?.id).toBe('1')
+  })
+})
+
+describe('resolvePostLineupPostsForScheduler', () => {
+  it('returns parsed posts from the prior post_lineup milestone', () => {
+    const milestones = [
+      milestone('1', 'post_lineup', {
+        data: {
+          startDate: '2026-06-01',
+          endDate: '2026-06-30',
+          posts: [
+            {
+              id: 'post-1',
+              format: 'carousel',
+              intent: 'pinned_monthly_menu',
+              title: 'Monthly top menu',
+              groupIds: ['group-1'],
+              slides: [{ dishName: 'Ribeye', imageBrief: 'Hero brief.' }],
+            },
+            {
+              id: 'post-2',
+              format: 'carousel',
+              intent: 'weekday_lunch_post',
+              title: 'Weekday lunch',
+              groupIds: ['group-1'],
+              fixdate: true,
+              date: '2026-06-02',
+              slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
+            },
+          ],
+        },
+      }),
+      milestone('2', 'scheduler'),
+    ]
+
+    expect(resolvePostLineupPostsForScheduler(milestones, '2')).toEqual([
+      {
+        id: 'post-1',
+        format: 'carousel',
+        intent: 'pinned_monthly_menu',
+        title: 'Monthly top menu',
+        groupIds: ['group-1'],
+        slides: [{ dishName: 'Ribeye', imageBrief: 'Hero brief.' }],
+      },
+      {
+        id: 'post-2',
+        format: 'carousel',
+        intent: 'weekday_lunch_post',
+        title: 'Weekday lunch',
+        groupIds: ['group-1'],
+        fixdate: true,
+        date: '2026-06-02',
+        slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
+      },
+    ])
   })
 })
 

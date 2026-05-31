@@ -1,5 +1,5 @@
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
+import type { PostLineupPost, SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 
 export const SCHEDULER_GRID_HOUR_START = 8
 export const SCHEDULER_GRID_HOUR_END = 22
@@ -145,6 +145,23 @@ export function schedulerSlotsForDateDetail(
       ) ||
       schedulerSlotDisplayTitle(left).localeCompare(schedulerSlotDisplayTitle(right)),
   )
+}
+
+export function resolveSchedulerPostDetail(
+  slot: SchedulerSlot,
+  postLineupPosts?: PostLineupPost[],
+): PostLineupPost | undefined {
+  if (schedulerSlotKind(slot) !== 'post') {
+    return undefined
+  }
+  if (slot.post) {
+    return slot.post
+  }
+  if (!postLineupPosts?.length) {
+    return undefined
+  }
+  const title = slot.title.trim()
+  return postLineupPosts.find((post) => post.title.trim() === title)
 }
 
 export function schedulerSlotsByDate(slots: SchedulerSlot[]): Map<string, SchedulerSlot[]> {

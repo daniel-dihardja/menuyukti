@@ -2,8 +2,10 @@ import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/t
 import {
   datesMilestoneDataSchema,
   datesMilestoneInputValueSchema,
+  postLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   type CampaignWindowPublicHoliday,
+  type PostLineupPost,
   type SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
 
@@ -115,6 +117,36 @@ export function findPriorDatesMilestone(
   }
 
   return undefined
+}
+
+export function findPriorPostLineupMilestone(
+  milestones: TimelineMilestone[],
+  currentMilestoneId: string,
+): TimelineMilestone | undefined {
+  const index = milestones.findIndex((milestone) => milestone.id === currentMilestoneId)
+  if (index < 0) {
+    return undefined
+  }
+
+  for (let i = index - 1; i >= 0; i -= 1) {
+    if (milestones[i]?.presetId === 'post_lineup') {
+      return milestones[i]
+    }
+  }
+
+  return undefined
+}
+
+export function resolvePostLineupPostsForScheduler(
+  milestones: TimelineMilestone[],
+  currentMilestoneId: string,
+): PostLineupPost[] {
+  const priorPostLineup = findPriorPostLineupMilestone(milestones, currentMilestoneId)
+  if (!priorPostLineup) {
+    return []
+  }
+  const parsed = postLineupMilestoneDataSchema.safeParse(priorPostLineup.data)
+  return parsed.success ? parsed.data.posts : []
 }
 
 export type ResolveSchedulerWindowResult =

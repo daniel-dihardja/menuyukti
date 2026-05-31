@@ -576,6 +576,7 @@ export const schedulerSlotSchema = z
     date: z.string(),
     time: z.string(),
     title: z.string(),
+    post: postLineupPostSchema.optional(),
   })
   .transform((slot) => ({
     ...slot,

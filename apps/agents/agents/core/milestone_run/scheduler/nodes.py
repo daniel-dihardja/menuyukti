@@ -268,6 +268,79 @@ def _build_reel_slots(
     return slots
 
 
+def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
+    post_id = str(post.get("id") or "").strip()
+    title = str(post.get("title") or "").strip()
+    intent = str(post.get("intent") or "").strip()
+    post_format = str(post.get("format") or "").strip()
+    if not post_id or not title or intent not in {"pinned_monthly_menu", "weekday_lunch_post"}:
+        return None
+    if post_format != "carousel":
+        return None
+
+    raw_slides = post.get("slides")
+    if not isinstance(raw_slides, list) or not raw_slides:
+        return None
+
+    slides: list[dict[str, Any]] = []
+    for slide in raw_slides:
+        if not isinstance(slide, dict):
+            continue
+        dish_name = str(slide.get("dishName") or "").strip()
+        image_brief = str(slide.get("imageBrief") or "").strip()
+        if not dish_name or not image_brief:
+            continue
+        slide_payload: dict[str, Any] = {
+            "dishName": dish_name,
+            "imageBrief": image_brief,
+        }
+        role = slide.get("role")
+        if role in {"star", "puzzle"}:
+            slide_payload["role"] = role
+        category = slide.get("category")
+        if isinstance(category, str) and category.strip():
+            slide_payload["category"] = category.strip()
+        slides.append(slide_payload)
+
+    if not slides:
+        return None
+
+    raw_group_ids = post.get("groupIds")
+    group_ids: list[str] = []
+    if isinstance(raw_group_ids, list):
+        group_ids = [str(value).strip() for value in raw_group_ids if str(value).strip()]
+
+    return {
+        "id": post_id,
+        "format": "carousel",
+        "intent": intent,
+        "title": title,
+        "slides": slides,
+        "groupIds": group_ids,
+    }
+
+
+def _post_slot_payload(
+    post: dict[str, Any],
+    *,
+    iso_date: str,
+    preferred_time: str,
+) -> dict[str, Any] | None:
+    title = str(post.get("title") or "").strip()
+    if not title:
+        return None
+    payload: dict[str, Any] = {
+        "kind": "post",
+        "date": iso_date,
+        "time": preferred_time,
+        "title": title,
+    }
+    post_detail = _post_slot_detail(post)
+    if post_detail is not None:
+        payload["post"] = post_detail
+    return payload
+
+
 def _build_monthly_post_slots(
     post_lineup_data: dict[str, Any] | None,
     *,
@@ -292,14 +365,9 @@ def _build_monthly_post_slots(
     slots: list[dict[str, str]] = []
     for index, iso_date in enumerate(dates):
         post = valid_posts[index % len(valid_posts)]
-        slots.append(
-            {
-                "kind": "post",
-                "date": iso_date,
-                "time": DEFAULT_POST_SLOT_TIME,
-                "title": str(post.get("title") or "").strip(),
-            }
-        )
+        slot = _post_slot_payload(post, iso_date=iso_date, preferred_time=DEFAULT_POST_SLOT_TIME)
+        if slot is not None:
+            slots.append(slot)
     return slots
 
 
@@ -366,7 +434,8 @@ def _build_weekly_post_slots(
                 if time:
                     preferred_time = time
             slots.append(
-                {
+                _post_slot_payload(post, iso_date=iso_date, preferred_time=preferred_time)
+                or {
                     "kind": "post",
                     "date": iso_date,
                     "time": preferred_time,
@@ -384,7 +453,8 @@ def _build_weekly_post_slots(
     dates = _slot_dates(start_date, end_date, preferred_weekdays)
     title = str(post.get("title") or "").strip()
     return [
-        {
+        _post_slot_payload(post, iso_date=iso_date, preferred_time=preferred_time)
+        or {
             "kind": "post",
             "date": iso_date,
             "time": preferred_time,

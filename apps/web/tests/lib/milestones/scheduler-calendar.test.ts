@@ -11,6 +11,7 @@ import {
   clampWeekStart,
   eachIsoDateInWindow,
   isoDateOnlyFromDate,
+  resolveSchedulerPostDetail,
   schedulerHourIndexFromTime,
   schedulerHourLabels,
   schedulerSlotClassName,
@@ -31,6 +32,65 @@ import {
   monthStartIsoForWeek,
 } from '@/lib/milestones/scheduler-calendar'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+
+const samplePostDetail = {
+  id: 'pinned-monthly-menu',
+  format: 'carousel' as const,
+  intent: 'pinned_monthly_menu' as const,
+  title: 'Monthly top menu',
+  groupIds: ['group-1'],
+  slides: [
+    {
+      dishName: 'Ribeye',
+      imageBrief: 'Hero menu photography brief.',
+    },
+  ],
+}
+
+describe('resolveSchedulerPostDetail', () => {
+  it('returns embedded post detail from the slot', () => {
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: samplePostDetail,
+        },
+        [],
+      ),
+    ).toEqual(samplePostDetail)
+  })
+
+  it('falls back to post_lineup posts matched by title', () => {
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+        },
+        [samplePostDetail],
+      ),
+    ).toEqual(samplePostDetail)
+  })
+
+  it('returns undefined for non-post slots', () => {
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'reel',
+          date: '2026-06-02',
+          time: '11:00',
+          title: 'Reel: Lunch offer',
+        },
+        [samplePostDetail],
+      ),
+    ).toBeUndefined()
+  })
+})
 
 describe('schedulerHourIndexFromTime', () => {
   it('maps 10:00 to index 2 when the grid starts at 8', () => {

@@ -16,25 +16,14 @@ import {
   useMilestonePreviewSelection,
 } from './milestone-preview-list-detail'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
+import {
+  postIntentBadgeLabel,
+  PostLineupPostBadges,
+  PostLineupSlides,
+} from './post-lineup-preview-parts'
 
 export type MilestonePostLineupDataPreviewProps = {
   data: PostLineupMilestoneData
-}
-
-const ROLE_BADGE_CLASS = {
-  star: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100',
-  puzzle:
-    'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
-} as const
-
-function postIntentBadgeLabel(
-  intent: PostLineupPost['intent'],
-  t: ReturnType<typeof useTranslations>,
-): string {
-  if (intent === 'weekday_lunch_post') {
-    return t('milestonePostLineupPreviewWeeklyLunchBadge')
-  }
-  return t('milestonePostLineupPreviewPinnedBadge')
 }
 
 function PostCard({
@@ -56,83 +45,16 @@ function PostCard({
         <CardTitle className="text-base">
           {t('milestonePostLineupPreviewPostTitle', { number: index + 1, title: post.title })}
         </CardTitle>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
-          <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
-          {post.date?.trim() ? (
-            <Badge variant="outline">
-              {t('milestonePostLineupPreviewScheduledDate', { date: post.date })}
-            </Badge>
-          ) : null}
-        </div>
+        <PostLineupPostBadges post={post} showScheduledDate />
       </CardHeader>
       <CardContent className="flex flex-col gap-2 px-4 pt-0">
-        <PostSlides post={post} roleStarLabel={roleStarLabel} rolePuzzleLabel={rolePuzzleLabel} />
-      </CardContent>
-    </Card>
-  )
-}
-
-function PostSlides({
-  post,
-  roleStarLabel,
-  rolePuzzleLabel,
-}: {
-  post: PostLineupPost
-  roleStarLabel: string
-  rolePuzzleLabel: string
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      {post.slides.map((slide, slideIndex) => (
-        <SlideCard
-          key={`${slide.dishName}-${slideIndex}`}
-          slideNumber={slideIndex + 1}
-          dishName={slide.dishName}
-          role={slide.role}
-          imageBrief={slide.imageBrief}
+        <PostLineupSlides
+          post={post}
           roleStarLabel={roleStarLabel}
           rolePuzzleLabel={rolePuzzleLabel}
         />
-      ))}
-    </div>
-  )
-}
-
-function SlideCard({
-  slideNumber,
-  dishName,
-  role,
-  imageBrief,
-  roleStarLabel,
-  rolePuzzleLabel,
-}: {
-  slideNumber: number
-  dishName: string
-  role?: 'star' | 'puzzle'
-  imageBrief: string
-  roleStarLabel: string
-  rolePuzzleLabel: string
-}) {
-  const t = useTranslations('analytics.workflows.chat')
-
-  return (
-    <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/20 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold text-foreground">
-          {t('milestonePostLineupPreviewSlideTitle', { number: slideNumber, dishName })}
-        </p>
-        {role ? (
-          <Badge variant="outline" className={ROLE_BADGE_CLASS[role]}>
-            {role === 'star' ? roleStarLabel : rolePuzzleLabel}
-          </Badge>
-        ) : null}
-      </div>
-      <div className="flex flex-col gap-1">
-        <p className={mp.sectionTitle}>{t('milestonePostLineupPreviewImageBrief')}</p>
-        <p className={mp.body}>{imageBrief}</p>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 

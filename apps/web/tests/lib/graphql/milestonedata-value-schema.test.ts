@@ -14,6 +14,20 @@ const schedulerPayload = {
       time: '10:00',
       title: 'Story: sending happy Easter Sunday',
     },
+    {
+      kind: 'post',
+      date: '2026-06-01',
+      time: '10:00',
+      title: 'Monthly top menu',
+      post: {
+        id: 'pinned-monthly-menu',
+        format: 'carousel',
+        intent: 'pinned_monthly_menu',
+        title: 'Monthly top menu',
+        groupIds: ['group-1'],
+        slides: [{ dishName: 'Ribeye', imageBrief: 'Hero menu photography brief.' }],
+      },
+    },
   ],
 }
 
@@ -34,6 +48,7 @@ describe('milestonedataValueSchema', () => {
       slots: schedulerPayload.slots,
     })
     expect(parsed.data.slots[0]?.kind).toBe('story')
+    expect(parsed.data.slots[1]?.post?.slides[0]?.dishName).toBe('Ribeye')
   })
 })
 
