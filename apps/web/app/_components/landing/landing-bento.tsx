@@ -11,13 +11,19 @@ type LandingBentoProps = {
   title: string
   subtitle: string
   items: readonly [BentoItem, BentoItem, BentoItem]
+  sectionId?: string
 }
 
 const icons = [BarChart3, Bot, LineChart] as const
 
-export function LandingBento({ title, subtitle, items }: LandingBentoProps) {
+export function LandingBento({
+  title,
+  subtitle,
+  items,
+  sectionId = 'platform',
+}: LandingBentoProps) {
   return (
-    <section id="platform" className="bg-background py-24" aria-labelledby="bento-heading">
+    <section id={sectionId} className="bg-background py-24" aria-labelledby="bento-heading">
       <div className="mx-auto max-w-6xl px-6">
         <h2
           id="bento-heading"

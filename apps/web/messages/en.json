@@ -146,9 +146,9 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Turn restaurant sales data into Instagram campaigns you can run",
-      "subtitle": "Workflows turns sales signals into campaign briefs, promotion shortlists, schedules, and draft copy you can review step by step. Studio turns your menu photos into on-brand Reels and feed posts.",
-      "badge": "Agentic workflows · Sales-backed · Restaurant Instagram",
+      "headline": "Running restaurant Instagram is a full-time job—and the tools weren't built for it",
+      "subtitle": "Menuyukti gives owners and Instagram partners one shared workspace: upload sales reports, run AI workflows, and build a monthly content schedule backed by what actually sells.",
+      "badge": "Shared workspace · Owner + Instagram partner · Monthly planning",
       "ctaSecondary": "Sign in",
       "viewLarger": "View larger",
       "carouselLabel": "Product screenshots",
@@ -183,19 +183,76 @@
         }
       }
     },
+    "pain": {
+      "title": "Restaurant Instagram is time-consuming",
+      "subtitle": "Most owners and partners are doing the work with tools—and playbooks—built for online businesses, not restaurants.",
+      "item1Title": "Hours every week, not a skill gap",
+      "item1Description": "Planning posts, picking dishes to feature, and keeping the feed fresh adds up to hours every week—on top of everything else that comes with running a restaurant.",
+      "item2Title": "Offline-first needs a different playbook",
+      "item2Description": "Restaurants sell on the floor, not in a checkout flow. What to promote and when to post should follow menu performance and local demand—not the templates online-only brands run on.",
+      "item3Title": "Basic sales data, not promotion intelligence",
+      "item3Description": "Many restaurants split the work—the owner has the POS export, the partner runs Instagram. That report has totals, not granular analytics like menu engineering, demand timing, and ranked promotion picks. Without that layer, both sides do their part but the feed still runs on guesswork."
+    },
+    "analyticsComparison": {
+      "title": "POS reports show what sold. Menuyukti shows what to promote.",
+      "subtitle": "Your POS is built for operations—ringing orders, closing shifts, and accounting. Menuyukti adds the analytics layer agents need to turn the same export into a monthly Instagram strategy.",
+      "posColumnTitle": "Typical POS reporting",
+      "menuyuktiColumnTitle": "Menuyukti agent signals",
+      "points": {
+        "overview": {
+          "pos": "Daily and weekly totals: revenue, covers, and top sellers by quantity or amount.",
+          "menuyukti": "Structured sales signals composed for campaign planning—not just a spreadsheet for the back office."
+        },
+        "menuDepth": {
+          "pos": "Item-level counts and ranks, sometimes with basic margin if COGS are entered in the POS.",
+          "menuyukti": "Menu engineering matrix: stars, puzzles, plow horses, and low performers—so promotion picks follow portfolio logic, not just bestseller lists."
+        },
+        "timing": {
+          "pos": "Shift summaries or hour-of-day charts when the POS includes timestamps—mainly for staffing and prep.",
+          "menuyukti": "Hourly demand heatmaps, weekday and daypart patterns, and recommended posting windows aligned to when guests actually order."
+        },
+        "categories": {
+          "pos": "Category or section sales for inventory and menu mix review.",
+          "menuyukti": "Category mix trends, rising items, and focus categories that feed brief pillars and content themes."
+        },
+        "semantics": {
+          "pos": "Menu items as flat line names—no reel hooks, prep style, or occasion metadata for content planning.",
+          "menuyukti": "Semantic tags on each promotion pick—reel moment, prep style, taste, occasion, and more—then Reel clusters that group dishes into shootable series for the month."
+        },
+        "strategy": {
+          "pos": "Operational insight: what to prep, reorder, or discount—rarely connected to social content.",
+          "menuyukti": "Ranked promotion candidates, items to avoid, and schedule-ready signals that flow into briefs, shortlists, and draft copy in Workflows."
+        }
+      },
+      "impactTitle": "Same export, different strategy depth",
+      "impactDescription": "POS dashboards answer how the business performed. Menuyukti answers what to feature, how to group dishes into Reel clusters, when to post, and why—so the partner plans from evidence instead of habit, and the owner can see the reasoning behind every pick."
+    },
+    "bridge": {
+      "title": "One workspace for the owner and the Instagram partner",
+      "subtitle": "Whether one person or two share the work, Menuyukti plans your month from sales data—the way restaurant marketing works, not how online brands grow.",
+      "owner": {
+        "title": "Restaurant owner",
+        "description": "Upload last month's sales report at the start of each month and keep the business context in one shared place."
+      },
+      "partner": {
+        "title": "Instagram partner",
+        "description": "Pick a strategy template, attach the latest sales report, adjust inputs, and run the pipeline to generate the month's schedule."
+      }
+    },
     "pillars": {
-      "title": "Two tools, one campaign workflow",
-      "subtitle": "Built for restaurant Instagram teams: Workflows plans campaigns from sales signals, and Studio creates the visuals.",
+      "title": "Workflows at the center of your monthly plan",
+      "subtitle": "Sales-grounded campaign planning is the core job. When you need visuals, Studio turns menu photos into feed-ready assets.",
       "items": {
         "workflows": {
-          "title": "Workflows: agentic campaigns, step by step",
-          "description": "Link location analytics, run milestones for brief, promotion shortlist, schedule, and copy, and keep structured outputs you can review, edit, and rerun."
+          "title": "Workflows: your monthly Instagram schedule, step by step",
+          "description": "Link location analytics, run milestones for brief, promotion shortlist, schedule, and copy, and keep structured outputs you can review, edit, and rerun together."
         },
         "studio": {
-          "title": "Studio: scroll-stopping visuals from your photos",
-          "description": "Upload dish photos and turn them into feed-ready hero shots, Reels assets, and promo designs from one reusable brand library."
+          "title": "Studio (optional)",
+          "description": "When you need visuals, turn menu photos into feed-ready hero shots and Reels assets from one brand library."
         }
-      }
+      },
+      "studioFootnote": "Studio is optional—most teams start with Workflows and add visuals when they're ready."
     },
     "workflows": {
       "title": "Workflows: your campaign lives in a timeline, not a chat thread",
@@ -285,7 +342,7 @@
       }
     },
     "automation": {
-      "title": "How automation works: analytics plus AI",
+      "title": "What the AI pipeline does for you",
       "subtitle": "Menuyukti combines deterministic analytics with AI generation: analytics computes what is happening in your location data, and AI turns that into campaign strategy, storytelling, and draft assets you can review.",
       "items": {
         "campaignBrief": {
@@ -384,7 +441,7 @@
     "faq": {
       "title": "Common questions",
       "q1": "What data do I need to upload?",
-      "a1": "For Workflows with sales-grounded milestones, upload your POS sales report (where your POS format is supported) so we can build demand, mix, and timing signals. Studio does not require sales data—you can create visuals from menu photos alone.",
+      "a1": "At the start of each month, the owner uploads last month's POS sales report (where your POS format is supported). That report powers demand, mix, and timing signals for the partner's monthly workflow run.",
       "q2": "Do I need sales data to use Studio?",
       "a2": "No. Studio works with your product photos and briefs without any sales upload. Connecting analytics to a workflow unlocks evidence-backed briefs, promotion ideas, and schedules.",
       "q3": "Is this just another chat tool?",
@@ -392,21 +449,21 @@
       "q4": "What is a workflow milestone?",
       "a4": "A milestone is one step in your campaign timeline with a goal, optional pass criteria, and saved output. The agent runs the step with context from prior milestones, and you can review, edit, and rerun as needed.",
       "q5": "Who is Menuyukti built for?",
-      "a5": "Restaurant owners, operators, and solo marketers who run Instagram for small to mid-sized restaurants and want faster execution with stronger data-backed decisions.",
+      "a5": "Restaurant owners and the Instagram partners they work with—small to mid-sized restaurants that need a shared workspace for monthly planning backed by real sales data, not guesswork.",
       "q6": "Can I chat without opening a workflow?",
       "a6": "Yes. You can use Advisor chat when you need quick help, and use Workflows when you want a full milestone timeline with persistent outputs."
     },
     "how": {
-      "title": "How it works",
-      "subtitle": "Plan the campaign in Workflows, then create visuals in Studio, all in one platform.",
+      "title": "Your monthly rhythm",
+      "subtitle": "A simple two-step loop at the start of each month—owner supplies the data, partner runs the pipeline.",
       "steps": {
-        "workflows": {
-          "title": "1. Workflows: plan and run the campaign",
-          "description": "Run milestones that produce promotion candidates, content schedules, and draft captions from your sales signals—structured outputs you can trust."
+        "ownerUpload": {
+          "title": "1. Owner uploads last month's sales report",
+          "description": "On the first of the month, upload the POS export from the previous month so the workspace has fresh menu performance data."
         },
-        "studio": {
-          "title": "2. Studio: create visual content",
-          "description": "Generate social-ready creatives from menu photos and briefs, including Reels covers, carousels, and promo assets in one brand library."
+        "partnerRun": {
+          "title": "2. Partner runs the monthly strategy workflow",
+          "description": "Create a new workflow from the strategy template, select the latest sales report, adjust inputs if needed, and rerun the pipeline to generate the month's Instagram schedule."
         }
       }
     },
@@ -421,8 +478,8 @@
       }
     },
     "cta": {
-      "title": "Ready to plan Instagram campaigns from what you sell?",
-      "description": "Use Workflows to build data-backed campaign plans and Studio to create on-brand visuals from menu photos in one platform.",
+      "title": "Ready to share one workspace for your monthly Instagram plan?",
+      "description": "Upload sales reports, run AI workflows together, and build a monthly schedule backed by what your restaurant actually sells.",
       "secondary": "Sign in"
     },
     "footer": {
