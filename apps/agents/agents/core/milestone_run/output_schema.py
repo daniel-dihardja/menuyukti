@@ -873,8 +873,18 @@ class SchedulerPostSlotDetailOutput(BaseModel):
     format: Literal["carousel"]
     intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
     title: str
+    description: str | None = None
+    captionGuidance: str | None = None
     slides: list[PostLineupSlideOutput]
     groupIds: list[str] = Field(default_factory=list)
+
+    @field_validator("description", "captionGuidance", mode="before")
+    @classmethod
+    def _normalize_optional_copy(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
 
 
 class SchedulerSlotOutput(BaseModel):

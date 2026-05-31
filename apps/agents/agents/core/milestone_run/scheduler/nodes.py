@@ -310,7 +310,7 @@ def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
     if isinstance(raw_group_ids, list):
         group_ids = [str(value).strip() for value in raw_group_ids if str(value).strip()]
 
-    return {
+    payload: dict[str, Any] = {
         "id": post_id,
         "format": "carousel",
         "intent": intent,
@@ -318,6 +318,13 @@ def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
         "slides": slides,
         "groupIds": group_ids,
     }
+    description = str(post.get("description") or "").strip()
+    if description:
+        payload["description"] = description
+    caption_guidance = str(post.get("captionGuidance") or "").strip()
+    if caption_guidance:
+        payload["captionGuidance"] = caption_guidance
+    return payload
 
 
 def _post_slot_payload(

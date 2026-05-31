@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.scheduler.nodes import (
+    _post_slot_detail,
     build_snapshot,
     fetch_and_prepare,
     persist_result,
@@ -251,6 +252,8 @@ def _prior_json() -> str:
                             "format": "carousel",
                             "intent": "pinned_monthly_menu",
                             "title": "Monthly top menu",
+                            "description": "Monthly pin carousel concept summary.",
+                            "captionGuidance": "Lead with hero mains and a reservation CTA.",
                             "groupIds": ["group-1"],
                             "slides": [
                                 {
@@ -264,6 +267,8 @@ def _prior_json() -> str:
                             "format": "carousel",
                             "intent": "weekday_lunch_post",
                             "title": "Weekday lunch at Cafe Alto",
+                            "description": "Weekday lunch carousel for nearby workers.",
+                            "captionGuidance": "Keep copy concise; mention the lunch offer window.",
                             "groupIds": ["group-1"],
                             "scheduleHints": {
                                 "preferredWeekdays": ["tuesday"],
@@ -307,6 +312,8 @@ _EXPECTED_MONTHLY_POST_DETAIL = {
     "format": "carousel",
     "intent": "pinned_monthly_menu",
     "title": "Monthly top menu",
+    "description": "Monthly pin carousel concept summary.",
+    "captionGuidance": "Lead with hero mains and a reservation CTA.",
     "groupIds": ["group-1"],
     "slides": [
         {
@@ -321,6 +328,8 @@ _EXPECTED_WEEKLY_POST_DETAIL = {
     "format": "carousel",
     "intent": "weekday_lunch_post",
     "title": "Weekday lunch at Cafe Alto",
+    "description": "Weekday lunch carousel for nearby workers.",
+    "captionGuidance": "Keep copy concise; mention the lunch offer window.",
     "groupIds": ["group-1"],
     "slides": [
         {
@@ -329,6 +338,20 @@ _EXPECTED_WEEKLY_POST_DETAIL = {
         }
     ],
 }
+
+
+def test_post_slot_detail_passes_description_and_caption_guidance() -> None:
+    post = {
+        "id": "pinned-monthly-menu",
+        "format": "carousel",
+        "intent": "pinned_monthly_menu",
+        "title": "Monthly top menu",
+        "description": "Monthly pin carousel concept summary.",
+        "captionGuidance": "Lead with hero mains and a reservation CTA.",
+        "groupIds": ["group-1"],
+        "slides": [{"dishName": "Ribeye", "imageBrief": "Hero menu photography brief."}],
+    }
+    assert _post_slot_detail(post) == _EXPECTED_MONTHLY_POST_DETAIL
 
 
 def _base_state(**overrides: object) -> dict[str, object]:

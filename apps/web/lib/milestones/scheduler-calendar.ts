@@ -147,6 +147,36 @@ export function schedulerSlotsForDateDetail(
   )
 }
 
+function findPostLineupPostByTitle(
+  postLineupPosts: PostLineupPost[] | undefined,
+  title: string,
+): PostLineupPost | undefined {
+  if (!postLineupPosts?.length) {
+    return undefined
+  }
+  const normalizedTitle = title.trim()
+  return postLineupPosts.find((post) => post.title.trim() === normalizedTitle)
+}
+
+function mergeSchedulerPostCopy(
+  embedded: PostLineupPost,
+  fallback?: PostLineupPost,
+): PostLineupPost {
+  if (!fallback) {
+    return embedded
+  }
+  const description = embedded.description?.trim() || fallback.description?.trim()
+  const captionGuidance = embedded.captionGuidance?.trim() || fallback.captionGuidance?.trim()
+  if (description === embedded.description && captionGuidance === embedded.captionGuidance) {
+    return embedded
+  }
+  return {
+    ...embedded,
+    ...(description ? { description } : {}),
+    ...(captionGuidance ? { captionGuidance } : {}),
+  }
+}
+
 export function resolveSchedulerPostDetail(
   slot: SchedulerSlot,
   postLineupPosts?: PostLineupPost[],
@@ -154,14 +184,12 @@ export function resolveSchedulerPostDetail(
   if (schedulerSlotKind(slot) !== 'post') {
     return undefined
   }
-  if (slot.post) {
-    return slot.post
-  }
-  if (!postLineupPosts?.length) {
-    return undefined
-  }
   const title = slot.title.trim()
-  return postLineupPosts.find((post) => post.title.trim() === title)
+  const fallback = findPostLineupPostByTitle(postLineupPosts, title)
+  if (slot.post) {
+    return mergeSchedulerPostCopy(slot.post, fallback)
+  }
+  return fallback
 }
 
 export function schedulerSlotsByDate(slots: SchedulerSlot[]): Map<string, SchedulerSlot[]> {

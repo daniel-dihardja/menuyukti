@@ -77,6 +77,51 @@ describe('resolveSchedulerPostDetail', () => {
     ).toEqual(samplePostDetail)
   })
 
+  it('merges description and captionGuidance from post_lineup when embedded post lacks copy', () => {
+    const postLineupWithCopy = {
+      ...samplePostDetail,
+      description: 'Monthly pin concept summary.',
+      captionGuidance: 'Lead with hero mains and a reservation CTA.',
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: samplePostDetail,
+        },
+        [postLineupWithCopy],
+      ),
+    ).toEqual(postLineupWithCopy)
+  })
+
+  it('prefers embedded description and captionGuidance over post_lineup fallback', () => {
+    const embedded = {
+      ...samplePostDetail,
+      description: 'Embedded description.',
+      captionGuidance: 'Embedded caption guidance.',
+    }
+    const fallback = {
+      ...samplePostDetail,
+      description: 'Fallback description.',
+      captionGuidance: 'Fallback caption guidance.',
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: embedded,
+        },
+        [fallback],
+      ),
+    ).toEqual(embedded)
+  })
+
   it('returns undefined for non-post slots', () => {
     expect(
       resolveSchedulerPostDetail(
