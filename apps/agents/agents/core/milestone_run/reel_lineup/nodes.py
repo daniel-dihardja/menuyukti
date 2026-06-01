@@ -192,10 +192,7 @@ def _weekly_reels_from_planned_reels(
     by_week: dict[int, dict[str, Any]] = {}
     for reel in reels:
         week = by_week.setdefault(reel.weekIndex, {"weekIndex": reel.weekIndex})
-        if reel.intent == "weekday_reel":
-            slot_key = "weekdayReel"
-        else:
-            slot_key = "weekendReel"
+        slot_key = "weekdayReel" if reel.intent == "weekday_reel" else "weekendReel"
         if slot_key in week:
             raise ValueError(
                 f"duplicate {reel.intent} for weekIndex {reel.weekIndex}; "
