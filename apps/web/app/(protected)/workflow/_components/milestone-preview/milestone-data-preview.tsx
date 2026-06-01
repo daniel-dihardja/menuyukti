@@ -14,6 +14,7 @@ import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-preview'
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestonePostLineupDataPreview } from './milestone-post-lineup-data-preview'
+import { MilestoneReelLineupDataPreview } from './milestone-reel-lineup-data-preview'
 import { MilestoneStoryLineupDataPreview } from './milestone-story-lineup-data-preview'
 import { MilestoneMenuClustererDataPreview } from './milestone-menu-clusterer-data-preview'
 import { MilestoneSchedulerDataPreview } from './milestone-scheduler-data-preview'
@@ -72,6 +73,12 @@ function renderParsedPreview(
       return (
         <MilestonePostLineupDataPreview
           data={data as Parameters<typeof MilestonePostLineupDataPreview>[0]['data']}
+        />
+      )
+    case 'reel_lineup':
+      return (
+        <MilestoneReelLineupDataPreview
+          data={data as Parameters<typeof MilestoneReelLineupDataPreview>[0]['data']}
         />
       )
     case 'story_lineup':

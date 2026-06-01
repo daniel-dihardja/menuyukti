@@ -37,6 +37,12 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "feed post concepts. Builds a pinned monthly menu carousel with one slide per food "
         "lead, each slide naming the dish and including a high-quality photo brief."
     ),
+    "reel_lineup": (
+        "Requires prior dates, Campaign Brief, and Menu clusterer milestones. Plans one weekday "
+        "and one weekend Instagram Reel per campaign week between the saved start and end dates. "
+        "Uses AI to pick a menu clusterer group per reel plus titles, descriptions, "
+        "and strategic explanations."
+    ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
         "generate intersection topics between the concept and the audience's likely interests "
@@ -50,7 +56,7 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
     "scheduler": (
         "Reads the campaign window from dates, business strategy from Campaign Brief, and "
         "saved post and story lineups. It places feed posts and Stories on the calendar between "
-        "the start and end dates. Reel scheduling will use a dedicated reel milestone later."
+        "the start and end dates. Reel slots can be scheduled from a prior Reel lineup milestone when present."
     ),
 }
 
@@ -103,6 +109,7 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "menu_tagger",
         "menu_clusterer",
         "post_lineup",
+        "reel_lineup",
         "scheduler",
     ):
         return "\n".join(

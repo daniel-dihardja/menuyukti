@@ -8,6 +8,7 @@ import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/
 import { deriveMilestoneRailStatus } from './milestone-map'
 import { parseDataPreviewForPreset, type MilestoneOpsContext } from './milestone-ops-shared'
 import { hasPostLineupPosts, isEmptyPostLineupData } from '@/lib/milestones/post-lineup'
+import { hasReelLineupReels, isEmptyReelLineupData } from '@/lib/milestones/reel-lineup'
 import { normalizeMilestonePresetData } from '@/lib/milestones/preset-definitions'
 import type {
   MilestoneDataValue,
@@ -22,6 +23,27 @@ import {
   upsertReflectionRound,
   type CampaignBriefReflectionRound,
 } from '@/lib/milestones/campaign-brief-reflection-run'
+
+/** Agents SSE errors use `{ error: true, message }` or `{ step: 'error', error_message }`. */
+function parseMilestoneRunStreamError(payload: Record<string, unknown>): string | null {
+  if (payload.error === true) {
+    const message = typeof payload.message === 'string' ? payload.message.trim() : ''
+    return message || 'Milestone run failed'
+  }
+  if (typeof payload.error === 'string' && payload.error.trim()) {
+    return payload.error.trim()
+  }
+  if (payload.step === 'error') {
+    const message =
+      typeof payload.error_message === 'string'
+        ? payload.error_message.trim()
+        : typeof payload.message === 'string'
+          ? payload.message.trim()
+          : ''
+    return message || 'Milestone run failed'
+  }
+  return null
+}
 
 export function useMilestoneRun(
   dispatch: Dispatch<WorkflowMilestoneAction>,
@@ -74,9 +96,15 @@ export function useMilestoneRun(
                 body.presetId === 'post_lineup' &&
                 isEmptyPostLineupData(dataValue) &&
                 hasPostLineupPosts(m.data)
+              const keepExistingReelLineup =
+                body.presetId === 'reel_lineup' &&
+                isEmptyReelLineupData(dataValue) &&
+                hasReelLineupReels(m.data)
               const next: TimelineMilestone = {
                 ...m,
-                ...(dataValue !== undefined && !keepExistingPostLineup ? { data: dataValue } : {}),
+                ...(dataValue !== undefined && !keepExistingPostLineup && !keepExistingReelLineup
+                  ? { data: dataValue }
+                  : {}),
                 presetId: body.presetId ?? m.presetId,
                 milestoneInput: body.milestoneInput ?? m.milestoneInput,
                 goal: goalText.trim() ? goalText : undefined,
@@ -182,8 +210,9 @@ export function useMilestoneRun(
             } catch {
               continue
             }
-            if (typeof payload.error === 'string') {
-              throw new Error(payload.error)
+            const streamError = parseMilestoneRunStreamError(payload)
+            if (streamError) {
+              throw new Error(streamError)
             }
             if (typeof payload.step === 'string') {
               if (payload.step === 'reflect_critique_summary') {
@@ -312,9 +341,10 @@ export function useMilestoneRun(
             }
           }
         }
-        if (runCompleted) {
-          await handleHydrateMilestoneData(milestoneId)
+        if (!runCompleted) {
+          throw new Error(t('milestoneRunError'))
         }
+        await handleHydrateMilestoneData(milestoneId)
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
           dispatch({

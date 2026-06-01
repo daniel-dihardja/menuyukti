@@ -133,9 +133,7 @@ def normalize_monthly_pin_group_ids(
         canonical = _hero_creative_role_group_ids_in_order(groups)
 
     if not canonical:
-        raise ValueError(
-            "post_lineup monthly pin requires at least one static_hero or hero group"
-        )
+        raise ValueError("post_lineup monthly pin requires at least one static_hero or hero group")
     return canonical
 
 

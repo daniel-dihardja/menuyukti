@@ -17,6 +17,7 @@ from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profi
 from agents_app.agents.core.milestone_run.menu_clusterer.graph import build_menu_clusterer_graph
 from agents_app.agents.core.milestone_run.menu_tagger.graph import build_menu_tagger_graph
 from agents_app.agents.core.milestone_run.post_lineup.graph import build_post_lineup_graph
+from agents_app.agents.core.milestone_run.reel_lineup.graph import build_reel_lineup_graph
 from agents_app.agents.core.milestone_run.presets.registry import (
     get_preset_runner,
     register_preset_runner,
@@ -193,6 +194,29 @@ async def _run_post_lineup(
     initial["milestonedata_written"] = False
     final_sub = await _stream_subgraph(
         build_post_lineup_graph(client),
+        initial,
+        state=state,
+    )
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
+async def _run_reel_lineup(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    initial["result_data"] = ""
+    initial["milestonedata_written"] = False
+    final_sub = await _stream_subgraph(
+        build_reel_lineup_graph(client),
         initial,
         state=state,
     )
@@ -424,6 +448,7 @@ def _register_preset_runners() -> None:
     register_preset_runner("menu_tagger", _run_menu_tagger)
     register_preset_runner("menu_clusterer", _run_menu_clusterer)
     register_preset_runner("post_lineup", _run_post_lineup)
+    register_preset_runner("reel_lineup", _run_reel_lineup)
     register_preset_runner("story_lineup", _run_story_lineup)
     register_preset_runner("scheduler", _run_scheduler)
     register_preset_runner("culture_hooks", _run_culture_hooks)

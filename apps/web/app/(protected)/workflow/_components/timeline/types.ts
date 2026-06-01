@@ -3,6 +3,7 @@ import type {
   MilestonePresetId,
   MenuTaggerMilestoneData,
   PostLineupMilestoneData,
+  ReelLineupMilestoneData,
   MenuClustererMilestoneData,
   StoryLineupMilestoneData,
   SchedulerMilestoneData,
@@ -110,6 +111,7 @@ export type IgProfileMilestoneData = {
 export type {
   MenuTaggerMilestoneData,
   PostLineupMilestoneData,
+  ReelLineupMilestoneData,
   MenuClustererMilestoneData,
   StoryLineupMilestoneData,
 }
@@ -121,6 +123,7 @@ export type MilestoneDataValue =
   | MenuTaggerMilestoneData
   | MenuClustererMilestoneData
   | PostLineupMilestoneData
+  | ReelLineupMilestoneData
   | StoryLineupMilestoneData
   | CultureHooksMilestoneData
   | IgProfileMilestoneData

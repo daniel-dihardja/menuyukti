@@ -6,6 +6,7 @@ import {
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
@@ -51,6 +52,10 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'post_lineup') {
     const parsed = postLineupMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'reel_lineup') {
+    const parsed = reelLineupMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'story_lineup') {

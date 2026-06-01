@@ -10,6 +10,7 @@ import {
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
@@ -43,6 +44,7 @@ export const milestonedataValueSchema = z.union([
   menuTaggerMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
   postLineupMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
 ])
 

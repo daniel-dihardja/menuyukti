@@ -345,7 +345,7 @@ def _prior_json() -> str:
                             "reason": "public_holiday",
                             "holidayName": "Easter Sunday",
                             "time": "10:00",
-                        }
+                        },
                     ],
                     "sourceDatesTitle": "Campaign dates",
                 },

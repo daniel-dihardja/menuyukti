@@ -867,6 +867,134 @@ class PostLineupMilestoneOutput(BaseModel):
         return self
 
 
+class ReelLineupHeroDishOutput(BaseModel):
+    name: str
+    reelMoment: str | None = None
+    role: Literal["star", "puzzle"] | None = None
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _normalize_name(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+
+class ReelLineupReelOutput(BaseModel):
+    id: str
+    format: Literal["reel"]
+    intent: Literal["weekday_reel", "weekend_reel"]
+    title: str
+    description: str
+    explanation: str
+    groupIds: list[str] = Field(default_factory=list)
+    weekIndex: int | None = None
+    date: str | None = None
+    heroDishes: list[ReelLineupHeroDishOutput] = Field(default_factory=list)
+
+    @field_validator("id", "title", "description", "explanation", "date", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("title", "description", "explanation")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+    @field_validator("groupIds", mode="before")
+    @classmethod
+    def _normalize_group_ids(cls, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    @field_validator("groupIds")
+    @classmethod
+    def _validate_group_ids(cls, values: list[str]) -> list[str]:
+        if not values:
+            raise ValueError("must contain at least one group id")
+        return values
+
+
+class ReelLineupMilestoneOutput(BaseModel):
+    reels: list[ReelLineupReelOutput]
+    startDate: str
+    endDate: str
+    sourceMenuClustererTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
+    sourceDatesTitle: str | None = None
+    notes: str | None = None
+
+    @field_validator("startDate", "endDate", mode="before")
+    @classmethod
+    def _normalize_window_dates(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @model_validator(mode="after")
+    def _validate_reel_lineup_structure(self) -> ReelLineupMilestoneOutput:
+        if not self.startDate or not self.endDate:
+            raise ValueError("startDate and endDate must be non-empty")
+
+        window_start = parse_iso_date(self.startDate)
+        window_end = parse_iso_date(self.endDate)
+        if window_start is None or window_end is None:
+            raise ValueError("startDate and endDate must be valid ISO dates")
+
+        from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks
+        from agents_app.agents.core.milestone_run.reel_lineup.build import (
+            REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX,
+            REEL_LINEUP_WEEKEND_REEL_ID_PREFIX,
+        )
+
+        expected_weeks = count_campaign_weeks(self.startDate, self.endDate)
+        expected_reel_count = expected_weeks * 2
+        if len(self.reels) != expected_reel_count:
+            raise ValueError(
+                "must contain two reels (weekday + weekend) per campaign week in the dates window"
+            )
+
+        weekday_prefix = REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX
+        weekend_prefix = REEL_LINEUP_WEEKEND_REEL_ID_PREFIX
+        seen_weekday_starts: set[str] = set()
+        seen_weekend_starts: set[str] = set()
+
+        for reel in self.reels:
+            post_id = str(reel.id or "").strip()
+            if reel.intent == "weekday_reel":
+                if not post_id.startswith(weekday_prefix):
+                    raise ValueError("weekday_reel id must encode campaign week start")
+                week_start = post_id[len(weekday_prefix) :]
+                if parse_iso_date(week_start) is None:
+                    raise ValueError("weekday_reel id week start must be a valid ISO date")
+                if week_start in seen_weekday_starts:
+                    raise ValueError("weekday_reel entries must map to distinct calendar weeks")
+                seen_weekday_starts.add(week_start)
+            elif reel.intent == "weekend_reel":
+                if not post_id.startswith(weekend_prefix):
+                    raise ValueError("weekend_reel id must encode campaign week start")
+                week_start = post_id[len(weekend_prefix) :]
+                if parse_iso_date(week_start) is None:
+                    raise ValueError("weekend_reel id week start must be a valid ISO date")
+                if week_start in seen_weekend_starts:
+                    raise ValueError("weekend_reel entries must map to distinct calendar weeks")
+                seen_weekend_starts.add(week_start)
+            else:
+                raise ValueError("reel intent must be weekday_reel or weekend_reel")
+
+        if len(seen_weekday_starts) != expected_weeks or len(seen_weekend_starts) != expected_weeks:
+            raise ValueError("must contain one weekday_reel and one weekend_reel per campaign week")
+
+        return self
+
+
 class SchedulerPostSlotDetailOutput(BaseModel):
     id: str
     format: Literal["carousel"]
@@ -961,6 +1089,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "menu_tagger": MenuTaggerMilestoneOutput,
     "menu_clusterer": MenuClustererMilestoneOutput,
     "post_lineup": PostLineupMilestoneOutput,
+    "reel_lineup": ReelLineupMilestoneOutput,
     "story_lineup": StoryLineupMilestoneOutput,
     "scheduler": SchedulerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,

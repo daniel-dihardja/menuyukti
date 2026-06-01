@@ -31,6 +31,7 @@ export const milestonePresetIdSchema = z.enum([
   'menu_tagger',
   'menu_clusterer',
   'post_lineup',
+  'reel_lineup',
   'story_lineup',
   'culture_hooks',
   'ig_profile',
@@ -108,6 +109,12 @@ export const postLineupMilestoneInputValueSchema = z.object({
 })
 
 export type PostLineupMilestoneInputValue = z.infer<typeof postLineupMilestoneInputValueSchema>
+
+export const reelLineupMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type ReelLineupMilestoneInputValue = z.infer<typeof reelLineupMilestoneInputValueSchema>
 
 export const storyLineupMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -520,6 +527,141 @@ export const postLineupMilestoneDataSchema = z
   })
 
 export type PostLineupMilestoneData = z.infer<typeof postLineupMilestoneDataSchema>
+
+export const reelLineupReelIntentSchema = z.enum(['weekday_reel', 'weekend_reel'])
+
+export const reelLineupHeroDishSchema = z.object({
+  name: z.string().trim().min(1),
+  reelMoment: z.string().optional(),
+  role: z.enum(['star', 'puzzle']).optional(),
+})
+
+export type ReelLineupHeroDish = z.infer<typeof reelLineupHeroDishSchema>
+
+export const reelLineupReelSchema = z.object({
+  id: z.string().trim().min(1),
+  format: z.literal('reel'),
+  intent: reelLineupReelIntentSchema,
+  title: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  explanation: z.string().trim().min(1),
+  groupIds: z.array(z.string().trim().min(1)).min(1),
+  weekIndex: z.number().int().positive().optional(),
+  date: z.string().optional(),
+  heroDishes: z.array(reelLineupHeroDishSchema).optional(),
+})
+
+export type ReelLineupReel = z.infer<typeof reelLineupReelSchema>
+
+const REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX = 'weekday-reel-week-'
+const REEL_LINEUP_WEEKEND_REEL_ID_PREFIX = 'weekend-reel-week-'
+
+export const reelLineupMilestoneDataSchema = z
+  .object({
+    reels: z.array(reelLineupReelSchema),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    sourceMenuClustererTitle: z.string().optional(),
+    sourceCampaignBriefTitle: z.string().optional(),
+    sourceDatesTitle: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const { reels, startDate, endDate } = data
+    if (reels.length === 0) {
+      return
+    }
+
+    if (!startDate?.trim() || !endDate?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'startDate and endDate are required when reels are present',
+        path: ['startDate'],
+      })
+      return
+    }
+
+    const weekdayReels = reels.filter((reel) => reel.intent === 'weekday_reel')
+    const weekendReels = reels.filter((reel) => reel.intent === 'weekend_reel')
+    const expectedWeeks = countCampaignWeeks(startDate, endDate)
+    const expectedReelCount = expectedWeeks * 2
+
+    if (reels.length !== expectedReelCount) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'must contain two reels (weekday + weekend) per campaign week in the dates window',
+        path: ['reels'],
+      })
+    }
+
+    if (weekdayReels.length !== expectedWeeks || weekendReels.length !== expectedWeeks) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'must contain one weekday_reel and one weekend_reel per campaign week',
+        path: ['reels'],
+      })
+    }
+
+    const seenWeekdayStarts = new Set<string>()
+    const seenWeekendStarts = new Set<string>()
+    weekdayReels.forEach((reel, index) => {
+      if (!reel.id.startsWith(REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_reel id must encode campaign week start',
+          path: ['reels', index, 'id'],
+        })
+        return
+      }
+      const weekStart = reel.id.slice(REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX.length)
+      if (!parseIsoDateOnly(weekStart)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_reel id week start must be a valid ISO date',
+          path: ['reels', index, 'id'],
+        })
+        return
+      }
+      if (seenWeekdayStarts.has(weekStart)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekday_reel entries must map to distinct calendar weeks',
+          path: ['reels', index, 'id'],
+        })
+      }
+      seenWeekdayStarts.add(weekStart)
+    })
+    weekendReels.forEach((reel, index) => {
+      const reelIndex = reels.indexOf(reel)
+      if (!reel.id.startsWith(REEL_LINEUP_WEEKEND_REEL_ID_PREFIX)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekend_reel id must encode campaign week start',
+          path: ['reels', reelIndex, 'id'],
+        })
+        return
+      }
+      const weekStart = reel.id.slice(REEL_LINEUP_WEEKEND_REEL_ID_PREFIX.length)
+      if (!parseIsoDateOnly(weekStart)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekend_reel id week start must be a valid ISO date',
+          path: ['reels', reelIndex, 'id'],
+        })
+        return
+      }
+      if (seenWeekendStarts.has(weekStart)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weekend_reel entries must map to distinct calendar weeks',
+          path: ['reels', reelIndex, 'id'],
+        })
+      }
+      seenWeekendStarts.add(weekStart)
+    })
+  })
+
+export type ReelLineupMilestoneData = z.infer<typeof reelLineupMilestoneDataSchema>
 
 export const storyLineupStoryReasonSchema = z.enum(['public_holiday', 'user_review'])
 

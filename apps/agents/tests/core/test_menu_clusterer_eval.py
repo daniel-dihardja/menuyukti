@@ -214,4 +214,3 @@ def test_multi_item_group_passes_top_five_check() -> None:
     )
     assert verdict is not None
     assert verdict[0] == "pass"
-
