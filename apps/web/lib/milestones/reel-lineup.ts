@@ -1,4 +1,4 @@
-import type { MenuClustererGroup } from '@/lib/graphql/node-schemas'
+import type { MenuClustererGroup, ReelLineupMilestoneData } from '@/lib/graphql/node-schemas'
 import { reelLineupMilestoneDataSchema } from '@/lib/graphql/node-schemas'
 
 import { type CampaignWeek, campaignWeeks } from '@/lib/milestones/dates-window'
@@ -9,8 +9,6 @@ export const REEL_LINEUP_WEEKEND_REEL_ID_PREFIX = 'weekend-reel-week-'
 export const EMPTY_REEL_LINEUP_DATA: ReelLineupMilestoneData = {
   reels: [],
 }
-
-export type ReelLineupMilestoneData = import('@/lib/graphql/node-schemas').ReelLineupMilestoneData
 
 /** Parse persisted/API reel lineup payload; returns null when missing or invalid. */
 export function parseReelLineupMilestoneDataOrNull(raw: unknown): ReelLineupMilestoneData | null {

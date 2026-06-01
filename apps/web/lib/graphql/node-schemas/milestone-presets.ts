@@ -631,7 +631,7 @@ export const reelLineupMilestoneDataSchema = z
       }
       seenWeekdayStarts.add(weekStart)
     })
-    weekendReels.forEach((reel, index) => {
+    weekendReels.forEach((reel) => {
       const reelIndex = reels.indexOf(reel)
       if (!reel.id.startsWith(REEL_LINEUP_WEEKEND_REEL_ID_PREFIX)) {
         ctx.addIssue({

@@ -175,7 +175,7 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
         onBack={clear}
         list={
           <div className="flex flex-col gap-2">
-            {listItems.map(({ id, reel }, index) => (
+            {listItems.map(({ id, reel }) => (
               <MilestonePreviewListRow
                 key={id}
                 title={reel.title}
