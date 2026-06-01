@@ -1014,12 +1014,50 @@ class SchedulerPostSlotDetailOutput(BaseModel):
         return text or None
 
 
+class SchedulerReelSlotDetailOutput(BaseModel):
+    id: str
+    format: Literal["reel"]
+    intent: Literal["weekday_reel", "weekend_reel"]
+    title: str
+    description: str
+    explanation: str
+    groupIds: list[str] = Field(default_factory=list)
+    heroDishes: list[ReelLineupHeroDishOutput] = Field(default_factory=list)
+
+    @field_validator("id", "title", "description", "explanation", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("title", "description", "explanation")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+    @field_validator("groupIds", mode="before")
+    @classmethod
+    def _normalize_group_ids(cls, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    @field_validator("groupIds")
+    @classmethod
+    def _validate_group_ids(cls, values: list[str]) -> list[str]:
+        if not values:
+            raise ValueError("must contain at least one group id")
+        return values
+
+
 class SchedulerSlotOutput(BaseModel):
     kind: Literal["story", "post", "reel"] | None = None
     date: str
     time: str
     title: str
     post: SchedulerPostSlotDetailOutput | None = None
+    reel: SchedulerReelSlotDetailOutput | None = None
 
     @model_validator(mode="after")
     def _fill_legacy_kind(self) -> SchedulerSlotOutput:
@@ -1044,6 +1082,7 @@ class SchedulerMilestoneOutput(BaseModel):
     sourceMenuClustererTitle: str | None = None
     sourcePostLineupTitle: str | None = None
     sourceStoryLineupTitle: str | None = None
+    sourceReelLineupTitle: str | None = None
     slots: list[SchedulerSlotOutput] = Field(default_factory=list)
 
 

@@ -7,6 +7,7 @@ import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import {
   parseIsoDateOnly,
   resolvePostLineupPostsForScheduler,
+  resolveReelLineupReelsForScheduler,
   resolveSchedulerWindow,
 } from '@/lib/milestones/scheduler-dates'
 
@@ -44,6 +45,10 @@ export function MilestoneSchedulerDataPreview({
   )
   const postLineupPosts = useMemo(
     () => resolvePostLineupPostsForScheduler(milestones, milestone.id),
+    [milestones, milestone.id],
+  )
+  const reelLineupReels = useMemo(
+    () => resolveReelLineupReelsForScheduler(milestones, milestone.id),
     [milestones, milestone.id],
   )
 
@@ -84,6 +89,7 @@ export function MilestoneSchedulerDataPreview({
         locale={locale}
         slots={data.slots ?? []}
         postLineupPosts={postLineupPosts}
+        reelLineupReels={reelLineupReels}
         windowEnd={window.endDate}
         windowStart={window.startDate}
       />

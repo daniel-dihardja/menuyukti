@@ -7,8 +7,8 @@ from typing import Any, Literal
 
 import httpx
 from agents_app.agents.core.llm_invoke import (
-    LLMInvokeError,
     STRUCTURED_OUTPUT_FAILED,
+    LLMInvokeError,
     emit_llm_error_step,
 )
 from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
@@ -238,7 +238,7 @@ def _structured_output_correction_message(
             f'Return one object with key "reels": an array of exactly {expected_reels} '
             f"objects ({expected_week_count} campaign weeks × weekday + weekend).\n"
             "Each array item must be a flat object with these keys (no nesting):\n"
-            '- weekIndex (integer from week plan)\n'
+            "- weekIndex (integer from week plan)\n"
             '- intent ("weekday_reel" or "weekend_reel")\n'
             "- groupId (string id from Menu clusterer groups)\n"
             "- title, description, explanation (non-empty strings)\n"
@@ -409,10 +409,7 @@ async def plan_reels(state: ReelLineupState) -> dict[str, Any]:
             )
             structured_parse_error = None
         except LLMInvokeError as exc:
-            if (
-                exc.code == STRUCTURED_OUTPUT_FAILED
-                and attempt < REEL_LINEUP_MERGE_MAX_ATTEMPTS
-            ):
+            if exc.code == STRUCTURED_OUTPUT_FAILED and attempt < REEL_LINEUP_MERGE_MAX_ATTEMPTS:
                 structured_parse_error = str(exc)
                 _trace(
                     state,

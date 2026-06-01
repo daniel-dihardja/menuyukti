@@ -17,7 +17,6 @@ from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profi
 from agents_app.agents.core.milestone_run.menu_clusterer.graph import build_menu_clusterer_graph
 from agents_app.agents.core.milestone_run.menu_tagger.graph import build_menu_tagger_graph
 from agents_app.agents.core.milestone_run.post_lineup.graph import build_post_lineup_graph
-from agents_app.agents.core.milestone_run.reel_lineup.graph import build_reel_lineup_graph
 from agents_app.agents.core.milestone_run.presets.registry import (
     get_preset_runner,
     register_preset_runner,
@@ -28,6 +27,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
 from agents_app.agents.core.milestone_run.promotion_candidates.graph import (
     build_promotion_candidates_graph,
 )
+from agents_app.agents.core.milestone_run.reel_lineup.graph import build_reel_lineup_graph
 from agents_app.agents.core.milestone_run.scheduler.graph import build_scheduler_graph
 from agents_app.agents.core.milestone_run.state import MilestoneRunState
 from agents_app.agents.core.milestone_run.story_lineup.graph import build_story_lineup_graph

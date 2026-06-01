@@ -41,15 +41,15 @@ from agents_app.agents.core.milestone_eval.post_lineup_eval import (
     enrich_post_lineup_eval_payload,
     try_post_lineup_deterministic_verdict,
 )
-from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
-    enrich_reel_lineup_eval_payload,
-    try_reel_lineup_deterministic_verdict,
-)
 from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
     SYNTHESIS_SYSTEM,
     eval_human_message,
     synthesis_human_message,
+)
+from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
+    enrich_reel_lineup_eval_payload,
+    try_reel_lineup_deterministic_verdict,
 )
 from agents_app.agents.core.milestone_eval.scheduler_eval import (
     enrich_scheduler_eval_payload,

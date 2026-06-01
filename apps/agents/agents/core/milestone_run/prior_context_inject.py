@@ -428,6 +428,31 @@ def extract_story_lineup_data(prior_milestones_json: str) -> dict[str, Any] | No
     return None
 
 
+def is_reel_lineup_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    reels = data.get("reels")
+    return isinstance(reels, list) and len(reels) > 0
+
+
+def extract_reel_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior reel_lineup row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"reel_lineup"}))
+    return matched[0] if matched else None
+
+
+def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return reel_lineup ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_reel_lineup_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_reel_lineup_milestone_data(data):
+        return data
+    return None
+
+
 def story_lineup_prior_error_message(prior_milestones_json: str) -> str:
     """Actionable error when scheduler cannot read prior story_lineup data."""
     base = "scheduler requires a prior story_lineup milestone with saved stories"

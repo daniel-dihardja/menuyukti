@@ -17,7 +17,11 @@ import { cn } from '@workspace/ui/lib/utils'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { MilestonePreviewListDetailShell } from '@/app/(protected)/workflow/_components/milestone-preview/milestone-preview-list-detail'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import type { PostLineupPost, SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
+import type {
+  PostLineupPost,
+  ReelLineupReel,
+  SchedulerMilestoneData,
+} from '@/lib/graphql/node-schemas'
 import {
   canGoToNextMonth,
   canGoToNextWeek,
@@ -33,6 +37,7 @@ import {
   previousMonthStartIso,
   previousWeekStartIso,
   resolveSchedulerPostDetail,
+  resolveSchedulerReelDetail,
   schedulerSlotClassName,
   schedulerSlotDisplayTime,
   schedulerSlotKind,
@@ -54,6 +59,7 @@ import {
   PostLineupPostCopy,
   PostLineupSlides,
 } from './post-lineup-preview-parts'
+import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
 export type SchedulerCalendarViewMode = 'week' | 'month'
 
@@ -63,6 +69,7 @@ export type SchedulerCalendarProps = {
   locale: string
   slots?: SchedulerMilestoneData['slots']
   postLineupPosts?: PostLineupPost[]
+  reelLineupReels?: ReelLineupReel[]
   className?: string
 }
 
@@ -79,10 +86,21 @@ function formatSchedulerDateDetailLabel(isoDate: string, locale: string): string
   }).format(date)
 }
 
+function reelIntentBadgeLabel(
+  intent: ReelLineupReel['intent'],
+  t: ReturnType<typeof useTranslations<'analytics.workflows.chat'>>,
+): string {
+  if (intent === 'weekday_reel') {
+    return t('milestoneReelLineupPreviewWeekdayBadge')
+  }
+  return t('milestoneReelLineupPreviewWeekendBadge')
+}
+
 type SchedulerCalendarDateDetailProps = {
   selectedDateIso: string
   slots: SchedulerMilestoneData['slots']
   postLineupPosts?: PostLineupPost[]
+  reelLineupReels?: ReelLineupReel[]
 }
 
 function SchedulerPostSlotDetailCard({
@@ -120,10 +138,65 @@ function SchedulerPostSlotDetailCard({
   )
 }
 
+function SchedulerReelSlotDetailCard({
+  slot,
+  reel,
+}: {
+  slot: SchedulerMilestoneData['slots'][number]
+  reel: ReelLineupReel
+}) {
+  const t = useTranslations('analytics.workflows.chat')
+
+  return (
+    <>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
+          {schedulerSlotDisplayTime(slot)}
+        </span>
+        <Badge variant="outline" className={schedulerSlotClassName('reel')}>
+          {schedulerSlotTypeLabel('reel')}
+        </Badge>
+        <Badge variant="secondary">{reelIntentBadgeLabel(reel.intent, t)}</Badge>
+      </div>
+      <p className="mb-3 text-base font-semibold text-foreground">{reel.title}</p>
+      <div className="flex flex-col gap-3">
+        <div>
+          <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewDescription')}</p>
+          <p className={mp.body}>{reel.description}</p>
+        </div>
+        <div>
+          <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewExplanation')}</p>
+          <p className={mp.body}>{reel.explanation}</p>
+        </div>
+        {reel.heroDishes && reel.heroDishes.length > 0 ? (
+          <div>
+            <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewHeroDishes')}</p>
+            <ul className={`${mp.body} list-disc space-y-1 pl-5`}>
+              {reel.heroDishes.map((dish) => (
+                <li key={dish.name}>
+                  {dish.name}
+                  {dish.reelMoment ? ` · ${dish.reelMoment}` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {reel.groupIds.length > 0 ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{t('milestoneReelLineupPreviewGroupIds')}:</span>{' '}
+            {reel.groupIds.join(', ')}
+          </p>
+        ) : null}
+      </div>
+    </>
+  )
+}
+
 function SchedulerCalendarDateDetail({
   selectedDateIso,
   slots,
   postLineupPosts,
+  reelLineupReels,
 }: SchedulerCalendarDateDetailProps) {
   const t = useTranslations('analytics.workflows.chat')
   const selectedDaySlots = useMemo(
@@ -143,7 +216,10 @@ function SchedulerCalendarDateDetail({
     <div className="flex flex-col gap-2">
       {selectedDaySlots.map((slot) => {
         const postDetail = resolveSchedulerPostDetail(slot, postLineupPosts)
-        const isPostSlot = schedulerSlotKind(slot) === 'post'
+        const reelDetail = resolveSchedulerReelDetail(slot, reelLineupReels)
+        const slotKind = schedulerSlotKind(slot)
+        const isPostSlot = slotKind === 'post'
+        const isReelSlot = slotKind === 'reel'
 
         return (
           <article
@@ -152,6 +228,8 @@ function SchedulerCalendarDateDetail({
           >
             {isPostSlot && postDetail ? (
               <SchedulerPostSlotDetailCard slot={slot} post={postDetail} />
+            ) : isReelSlot && reelDetail ? (
+              <SchedulerReelSlotDetailCard slot={slot} reel={reelDetail} />
             ) : (
               <>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -178,6 +256,11 @@ function SchedulerCalendarDateDetail({
                     {t('milestoneSchedulerPreviewPostDetailMissing')}
                   </p>
                 ) : null}
+                {isReelSlot ? (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t('milestoneSchedulerPreviewReelDetailMissing')}
+                  </p>
+                ) : null}
               </>
             )}
           </article>
@@ -193,6 +276,7 @@ export function SchedulerCalendar({
   locale,
   slots = [],
   postLineupPosts,
+  reelLineupReels,
   className,
 }: SchedulerCalendarProps) {
   const t = useTranslations('analytics.workflows.chat')
@@ -442,6 +526,7 @@ export function SchedulerCalendar({
               selectedDateIso={selectedDateIso}
               slots={slots}
               postLineupPosts={postLineupPosts}
+              reelLineupReels={reelLineupReels}
             />
           ) : null
         }

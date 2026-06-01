@@ -226,9 +226,7 @@ def _group_id_from_slot(
         raise ValueError(f"reel_lineup plan must include {intent} object")
     group_id = str(slot.get("groupId") or "").strip()
     if not group_id:
-        raise ValueError(
-            f"reel_lineup {intent} must include groupId from Menu clusterer groups"
-        )
+        raise ValueError(f"reel_lineup {intent} must include groupId from Menu clusterer groups")
     if group_id not in valid_group_ids:
         raise ValueError(f"reel_lineup {intent} references unknown group id {group_id!r}")
     return group_id

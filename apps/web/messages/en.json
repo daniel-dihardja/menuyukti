@@ -1771,6 +1771,7 @@
         "milestoneSchedulerPreviewBackToCalendar": "Back to calendar",
         "milestoneSchedulerPreviewDateEmpty": "No scheduled entries on this date.",
         "milestoneSchedulerPreviewPostDetailMissing": "Post preparation details are not available for this entry. Re-run the scheduler milestone after updating post lineup.",
+        "milestoneSchedulerPreviewReelDetailMissing": "Reel preparation details are not available for this entry. Re-run the scheduler milestone after updating reel lineup.",
         "milestoneSchedulerPreviewNoPriorDatesTitle": "No dates milestone found",
         "milestoneSchedulerPreviewNoPriorDatesBody": "Add a **dates** milestone before this one in the timeline and set a start and end date.",
         "milestoneSchedulerPreviewIncompleteWindowTitle": "Campaign window incomplete",

@@ -717,6 +717,7 @@ export const schedulerSlotSchema = z
     time: z.string(),
     title: z.string(),
     post: postLineupPostSchema.optional(),
+    reel: reelLineupReelSchema.optional(),
   })
   .transform((slot) => ({
     ...slot,
@@ -732,6 +733,7 @@ export const schedulerMilestoneDataSchema = z.object({
   sourceMenuClustererTitle: z.string().optional(),
   sourcePostLineupTitle: z.string().optional(),
   sourceStoryLineupTitle: z.string().optional(),
+  sourceReelLineupTitle: z.string().optional(),
   slots: z.array(schedulerSlotSchema).default([]),
 })
 

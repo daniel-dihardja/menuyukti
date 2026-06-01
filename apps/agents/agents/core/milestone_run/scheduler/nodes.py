@@ -12,7 +12,9 @@ from agents_app.agents.core.milestone_run.dates_window import (
     holiday_dates,
     interval_block_starts,
     pick_least_busy_date,
+    preferred_reel_time_for_strategy,
     preferred_time_for_strategy,
+    preferred_weekdays_for_strategy,
 )
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
@@ -24,10 +26,16 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_dates_row,
     extract_post_lineup_data,
     extract_post_lineup_row,
+    extract_reel_lineup_data,
+    extract_reel_lineup_row,
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
     extract_story_lineup_data,
     extract_story_lineup_row,
+)
+from agents_app.agents.core.milestone_run.reel_lineup.build import (
+    REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX,
+    REEL_LINEUP_WEEKEND_REEL_ID_PREFIX,
 )
 from agents_app.agents.core.milestone_run.scheduler.state import SchedulerOutput, SchedulerState
 from langgraph.config import get_stream_writer
@@ -350,8 +358,8 @@ def _build_interval_story_slots(
     start_date: str,
     end_date: str,
     public_holidays: list[Any],
-    existing_slots: list[dict[str, str]],
-) -> list[dict[str, str]]:
+    existing_slots: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     stories = story_lineup_data.get("stories") if isinstance(story_lineup_data, dict) else None
     if not isinstance(stories, list):
         return []
@@ -411,8 +419,8 @@ def _build_story_slots(
     start_date: str,
     end_date: str,
     public_holidays: list[Any],
-    existing_slots: list[dict[str, str]],
-) -> list[dict[str, str]]:
+    existing_slots: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     fixdate_slots = _build_fixdate_story_slots(
         story_lineup_data,
         start_date=start_date,
@@ -426,6 +434,197 @@ def _build_story_slots(
         existing_slots=[*existing_slots, *fixdate_slots],
     )
     return [*fixdate_slots, *interval_slots]
+
+
+def _week_start_from_reel_id(reel: dict[str, Any], *, prefix: str) -> str | None:
+    reel_id = str(reel.get("id") or "").strip()
+    if not reel_id.startswith(prefix):
+        return None
+    week_start = reel_id[len(prefix) :]
+    return week_start if _parse_iso_date(week_start) is not None else None
+
+
+def _reel_slot_detail(reel: dict[str, Any]) -> dict[str, Any] | None:
+    reel_id = str(reel.get("id") or "").strip()
+    title = str(reel.get("title") or "").strip()
+    intent = str(reel.get("intent") or "").strip()
+    post_format = str(reel.get("format") or "").strip()
+    description = str(reel.get("description") or "").strip()
+    explanation = str(reel.get("explanation") or "").strip()
+    if (
+        not reel_id
+        or not title
+        or intent not in {"weekday_reel", "weekend_reel"}
+        or post_format != "reel"
+        or not description
+        or not explanation
+    ):
+        return None
+
+    raw_group_ids = reel.get("groupIds")
+    group_ids: list[str] = []
+    if isinstance(raw_group_ids, list):
+        group_ids = [str(value).strip() for value in raw_group_ids if str(value).strip()]
+    if not group_ids:
+        return None
+
+    hero_dishes: list[dict[str, Any]] = []
+    raw_hero_dishes = reel.get("heroDishes")
+    if isinstance(raw_hero_dishes, list):
+        for dish in raw_hero_dishes:
+            if not isinstance(dish, dict):
+                continue
+            name = str(dish.get("name") or "").strip()
+            if not name:
+                continue
+            dish_payload: dict[str, Any] = {"name": name}
+            reel_moment = str(dish.get("reelMoment") or "").strip()
+            if reel_moment:
+                dish_payload["reelMoment"] = reel_moment
+            role = dish.get("role")
+            if role in {"star", "puzzle"}:
+                dish_payload["role"] = role
+            hero_dishes.append(dish_payload)
+
+    payload: dict[str, Any] = {
+        "id": reel_id,
+        "format": "reel",
+        "intent": intent,
+        "title": title,
+        "description": description,
+        "explanation": explanation,
+        "groupIds": group_ids,
+    }
+    if hero_dishes:
+        payload["heroDishes"] = hero_dishes
+    return payload
+
+
+def _reel_slot_payload(
+    reel: dict[str, Any],
+    *,
+    iso_date: str,
+    preferred_time: str,
+) -> dict[str, Any] | None:
+    title = str(reel.get("title") or "").strip()
+    if not title:
+        return None
+    payload: dict[str, Any] = {
+        "kind": "reel",
+        "date": iso_date,
+        "time": preferred_time,
+        "title": f"Reel: {title}",
+    }
+    reel_detail = _reel_slot_detail(reel)
+    if reel_detail is not None:
+        payload["reel"] = reel_detail
+    return payload
+
+
+def _build_reel_slots(
+    reel_lineup_data: dict[str, Any] | None,
+    *,
+    campaign_brief_data: dict[str, Any] | None,
+    start_date: str,
+    end_date: str,
+    public_holidays: list[Any],
+    existing_slots: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    reels = reel_lineup_data.get("reels") if isinstance(reel_lineup_data, dict) else None
+    if not isinstance(reels, list) or not reels:
+        return []
+
+    valid_reels = [
+        reel
+        for reel in reels
+        if isinstance(reel, dict)
+        and str(reel.get("intent") or "").strip() in {"weekday_reel", "weekend_reel"}
+        and str(reel.get("title") or "").strip()
+    ]
+    if not valid_reels:
+        return []
+
+    weeks = campaign_weeks(start_date, end_date, campaign_brief_data=campaign_brief_data)
+    if not weeks:
+        return []
+
+    holidays = holiday_dates(public_holidays)
+    occupied_counts = _slot_counts(existing_slots)
+    weekday_preferred = preferred_weekdays_for_strategy(campaign_brief_data)
+    weekend_preferred: list[str] = ["saturday", "sunday"]
+    preferred_time = preferred_reel_time_for_strategy(campaign_brief_data)
+
+    weekday_by_week: dict[str, dict[str, Any]] = {}
+    weekend_by_week: dict[str, dict[str, Any]] = {}
+    unmatched_weekday: list[dict[str, Any]] = []
+    unmatched_weekend: list[dict[str, Any]] = []
+
+    for reel in valid_reels:
+        intent = str(reel.get("intent") or "").strip()
+        if intent == "weekday_reel":
+            week_start = _week_start_from_reel_id(
+                reel,
+                prefix=REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX,
+            )
+            if week_start is not None and week_start not in weekday_by_week:
+                weekday_by_week[week_start] = reel
+            else:
+                unmatched_weekday.append(reel)
+        else:
+            week_start = _week_start_from_reel_id(
+                reel,
+                prefix=REEL_LINEUP_WEEKEND_REEL_ID_PREFIX,
+            )
+            if week_start is not None and week_start not in weekend_by_week:
+                weekend_by_week[week_start] = reel
+            else:
+                unmatched_weekend.append(reel)
+
+    slots: list[dict[str, Any]] = []
+    for week in weeks:
+        week_reel: dict[str, Any] | None = weekday_by_week.get(week.week_start)
+        if week_reel is None and unmatched_weekday:
+            week_reel = unmatched_weekday.pop(0)
+        if week_reel is not None:
+            iso_date = pick_least_busy_date(
+                week.week_start,
+                week.week_end,
+                occupied_counts=occupied_counts,
+                holiday_dates=holidays,
+                preferred_weekdays=weekday_preferred,
+            )
+            if iso_date is not None and start_date <= iso_date <= end_date:
+                slot = _reel_slot_payload(
+                    week_reel,
+                    iso_date=iso_date,
+                    preferred_time=preferred_time,
+                )
+                if slot is not None:
+                    slots.append(slot)
+                    occupied_counts[iso_date] = occupied_counts.get(iso_date, 0) + 1
+
+        weekend_reel: dict[str, Any] | None = weekend_by_week.get(week.week_start)
+        if weekend_reel is None and unmatched_weekend:
+            weekend_reel = unmatched_weekend.pop(0)
+        if weekend_reel is not None:
+            iso_date = pick_least_busy_date(
+                week.week_start,
+                week.week_end,
+                occupied_counts=occupied_counts,
+                holiday_dates=holidays,
+                preferred_weekdays=weekend_preferred,
+            )
+            if iso_date is not None and start_date <= iso_date <= end_date:
+                slot = _reel_slot_payload(
+                    weekend_reel,
+                    iso_date=iso_date,
+                    preferred_time=preferred_time,
+                )
+                if slot is not None:
+                    slots.append(slot)
+                    occupied_counts[iso_date] = occupied_counts.get(iso_date, 0) + 1
+
+    return slots
 
 
 async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -443,6 +642,7 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
 
     post_lineup_data = extract_post_lineup_data(prior_json)
     story_lineup_data = extract_story_lineup_data(prior_json)
+    reel_lineup_data = extract_reel_lineup_data(prior_json)
 
     dates_row = extract_dates_row(prior_json)
     source_dates_title = ""
@@ -472,6 +672,13 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
         if isinstance(story_title, str) and story_title.strip():
             source_story_lineup_title = story_title.strip()
 
+    reel_lineup_row = extract_reel_lineup_row(prior_json)
+    source_reel_lineup_title = ""
+    if isinstance(reel_lineup_row, dict):
+        reel_title = reel_lineup_row.get("title")
+        if isinstance(reel_title, str) and reel_title.strip():
+            source_reel_lineup_title = reel_title.strip()
+
     return {
         "dates_data": dates_data,
         "source_dates_title": source_dates_title,
@@ -481,6 +688,8 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
         "source_post_lineup_title": source_post_lineup_title,
         "story_lineup_data": story_lineup_data,
         "source_story_lineup_title": source_story_lineup_title,
+        "reel_lineup_data": reel_lineup_data,
+        "source_reel_lineup_title": source_reel_lineup_title,
     }
 
 
@@ -510,13 +719,22 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
         end_date=end_date,
     )
     slots.extend(post_slots)
+    reel_slots = _build_reel_slots(
+        state.get("reel_lineup_data"),
+        campaign_brief_data=campaign_brief_data,
+        start_date=start_date,
+        end_date=end_date,
+        public_holidays=public_holidays,
+        existing_slots=post_slots,
+    )
+    slots.extend(reel_slots)
     slots.extend(
         _build_story_slots(
             state.get("story_lineup_data"),
             start_date=start_date,
             end_date=end_date,
             public_holidays=public_holidays,
-            existing_slots=post_slots,
+            existing_slots=[*post_slots, *reel_slots],
         )
     )
 
@@ -540,6 +758,9 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     source_story_lineup_title = str(state.get("source_story_lineup_title") or "").strip()
     if source_story_lineup_title:
         payload["sourceStoryLineupTitle"] = source_story_lineup_title
+    source_reel_lineup_title = str(state.get("source_reel_lineup_title") or "").strip()
+    if source_reel_lineup_title:
+        payload["sourceReelLineupTitle"] = source_reel_lineup_title
 
     normalized = _normalize_generated_output(payload)
     return {"generated_output": normalized}

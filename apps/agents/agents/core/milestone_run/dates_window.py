@@ -38,6 +38,7 @@ _INDEX_WEEKDAY: dict[int, WeekdayName] = {
 
 _DEFAULT_WEEKDAY_LUNCH_DAYS: list[WeekdayName] = ["thursday"]
 _DEFAULT_WEEKLY_POST_TIME = "10:00"
+_DEFAULT_REEL_TIME = "11:00"
 
 
 def parse_iso_date(value: str) -> date | None:
@@ -90,6 +91,15 @@ def preferred_time_for_strategy(campaign_brief_data: dict[str, Any] | None) -> s
     if focus == "evening_dinner":
         return "17:30"
     return _DEFAULT_WEEKLY_POST_TIME
+
+
+def preferred_reel_time_for_strategy(campaign_brief_data: dict[str, Any] | None) -> str:
+    focus = _strategy_focus(campaign_brief_data)
+    if focus == "weekend_family":
+        return "09:30"
+    if focus == "evening_dinner":
+        return "17:30"
+    return _DEFAULT_REEL_TIME
 
 
 def weekday_name_from_date(value: date) -> WeekdayName:
