@@ -17,7 +17,7 @@ def test_scheduler_help_mentions_posts_stories_and_campaign_brief() -> None:
     text = resolve_what_it_does("scheduler", None)
     assert "Campaign Brief" in text
     assert "post and story lineups" in text
-    assert "dedicated reel milestone" in text
+    assert "Reel lineup milestone" in text
 
 
 def test_resolve_what_it_does_custom_when_no_catalog() -> None:
