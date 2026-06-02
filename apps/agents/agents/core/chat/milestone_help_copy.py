@@ -28,7 +28,8 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
     "menu_clusterer": (
         "Requires prior Campaign Brief and Menu Tagger milestones. Ranks the top five food "
         "items by popularity (storytelling breaks ties) as eligible position-1 leads, then "
-        "uses AI to generate food-only Reel clusters (4–8; default 4) with varied tag-based "
+        "uses AI to generate food-only Reel clusters (4–8, sized from the tagged menu) with "
+        "varied tag-based "
         "combinations (2–5 items each). Each cluster includes a clusterDescription and "
         "weekday lunch scheduling hints for downstream scheduling."
     ),

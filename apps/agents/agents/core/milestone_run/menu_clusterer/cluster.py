@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import math
 import re
 import unicodedata
 from typing import Any, Literal, Protocol
@@ -71,13 +72,101 @@ def _name_key(name: str) -> str:
     return text.casefold()
 
 
+def derive_target_group_count(food_item_count: int) -> int:
+    """Derive cluster count from tagged food menu size (clamped to 4–8)."""
+    if food_item_count < MENU_CLUSTERER_MIN_GROUP_COUNT:
+        return MENU_CLUSTERER_MIN_GROUP_COUNT
+    by_coverage = math.ceil(food_item_count / MENU_CLUSTERER_GROUP_MAX_SIZE)
+    return max(
+        MENU_CLUSTERER_MIN_GROUP_COUNT,
+        min(MENU_CLUSTERER_MAX_GROUP_COUNT, by_coverage),
+    )
+
+
 def resolve_target_group_count(raw: int | None, *, food_item_count: int) -> int:
-    """Clamp configured target to menu size and allowed range (default 4)."""
-    count = MENU_CLUSTERER_DEFAULT_GROUP_COUNT if raw is None else int(raw)
-    count = max(MENU_CLUSTERER_MIN_GROUP_COUNT, min(MENU_CLUSTERER_MAX_GROUP_COUNT, count))
+    """Legacy: derive when unset; otherwise clamp configured target to menu size."""
+    if raw is None:
+        return derive_target_group_count(food_item_count)
+    count = max(MENU_CLUSTERER_MIN_GROUP_COUNT, min(MENU_CLUSTERER_MAX_GROUP_COUNT, int(raw)))
     if food_item_count > 0:
         count = min(count, food_item_count)
     return max(MENU_CLUSTERER_MIN_GROUP_COUNT, count)
+
+
+def _assigned_name_keys(groups: list[dict[str, Any]]) -> set[str]:
+    keys: set[str] = set()
+    for group in groups:
+        items = group.get("items")
+        if not isinstance(items, list):
+            continue
+        for row in items:
+            if not isinstance(row, dict):
+                continue
+            key = _name_key(str(row.get("name") or ""))
+            if key:
+                keys.add(key)
+    return keys
+
+
+def assign_remaining_food_items(
+    groups: list[dict[str, Any]],
+    food_items: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Place any food items not yet in a cluster into groups with capacity."""
+    if not groups:
+        raise ValueError("menu_clusterer requires at least one food cluster to assign items")
+
+    by_name = _items_by_name(food_items)
+    assigned_keys = _assigned_name_keys(groups)
+    unassigned = [
+        item
+        for item in food_items
+        if _name_key(_item_name(item)) and _name_key(_item_name(item)) not in assigned_keys
+    ]
+    if not unassigned:
+        return groups
+
+    result = [{**group, "items": list(group.get("items") or [])} for group in groups]
+    for item in unassigned:
+        name_key = _name_key(_item_name(item))
+        if not name_key or name_key in assigned_keys:
+            continue
+
+        indices = sorted(
+            range(len(result)),
+            key=lambda index: len(result[index].get("items") or []),
+        )
+        placed = False
+        for index in indices:
+            group = result[index]
+            items = group.get("items")
+            if not isinstance(items, list):
+                items = []
+            if len(items) >= MENU_CLUSTERER_GROUP_MAX_SIZE:
+                continue
+            if any(
+                _name_key(str(row.get("name") or "")) == name_key
+                for row in items
+                if isinstance(row, dict)
+            ):
+                assigned_keys.add(name_key)
+                placed = True
+                break
+            menu_item = by_name.get(name_key) or item
+            items.append(_group_item_from_menu_item(menu_item, position=len(items) + 1))
+            group["items"] = items
+            group["mix"] = _compute_mix(items)
+            assigned_keys.add(name_key)
+            placed = True
+            break
+
+        if not placed:
+            raise ValueError(
+                f"menu_clusterer could not assign food item {_item_name(item)!r}; "
+                "all clusters are at maximum size"
+            )
+
+    return result
 
 
 def rank_top_food_leads(
@@ -300,20 +389,23 @@ def merge_llm_clusters(
     source_campaign_brief_title: str = "",
     notes: str = "",
     strict_top5_leads: bool = False,
-    min_groups: int = MENU_CLUSTERER_DEFAULT_GROUP_COUNT,
     target_group_count: int | None = None,
 ) -> dict[str, Any]:
     food_items = food_items_only(menu_tagger_items)
-    resolved_min = resolve_target_group_count(min_groups, food_item_count=len(food_items))
-    if len(draft_clusters) < resolved_min:
+    resolved_count = (
+        target_group_count
+        if target_group_count is not None
+        else derive_target_group_count(len(food_items))
+    )
+    if len(draft_clusters) < resolved_count:
         raise ValueError(
-            f"menu_clusterer requires at least {resolved_min} food clusters; "
+            f"menu_clusterer requires at least {resolved_count} food clusters; "
             f"got {len(draft_clusters)}"
         )
 
-    if len(food_items) < resolved_min:
+    if len(food_items) < resolved_count:
         raise ValueError(
-            f"menu_clusterer requires at least {resolved_min} tagged food items; "
+            f"menu_clusterer requires at least {resolved_count} tagged food items; "
             f"got {len(food_items)}"
         )
 
@@ -389,10 +481,12 @@ def merge_llm_clusters(
         food_leads.append(lead_item)
         assigned_in_any_group.update(seen_in_group)
 
+    groups = assign_remaining_food_items(groups, food_items)
+    assigned_after_assign = _assigned_name_keys(groups)
     unassigned_item_names = [
         _item_name(item)
         for item in food_items
-        if _item_name(item) and _name_key(_item_name(item)) not in assigned_in_any_group
+        if _item_name(item) and _name_key(_item_name(item)) not in assigned_after_assign
     ]
 
     top_food_lead_names = [_item_name(item) for item in top5_leads if _item_name(item)]
@@ -412,7 +506,5 @@ def merge_llm_clusters(
     note_text = notes.strip()
     if note_text:
         payload["notes"] = note_text
-    payload["targetGroupCount"] = (
-        target_group_count if target_group_count is not None else resolved_min
-    )
+    payload["targetGroupCount"] = resolved_count
     return payload

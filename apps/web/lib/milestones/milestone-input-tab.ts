@@ -1,4 +1,4 @@
-import type { MilestoneInput, MenuClustererTargetGroupCount } from '@/lib/graphql/node-schemas'
+import type { MilestoneInput } from '@/lib/graphql/node-schemas'
 import {
   promotionCandidatesMilestoneInputValueSchema,
   menuClustererMilestoneInputValueSchema,
@@ -43,12 +43,10 @@ export function optionalNotesFromMilestoneInput(
 
 const DEFAULT_MENU_CLUSTERER_INPUT = {
   notes: '',
-  targetGroupCount: 4 as const,
 }
 
 export function menuClustererInputFromMilestoneInput(raw: MilestoneInput | undefined): {
   notes: string
-  targetGroupCount: MenuClustererTargetGroupCount
 } {
   if (raw?.type !== 'menu_clusterer' || raw.value == null || typeof raw.value !== 'object') {
     return { ...DEFAULT_MENU_CLUSTERER_INPUT }
@@ -58,36 +56,24 @@ export function menuClustererInputFromMilestoneInput(raw: MilestoneInput | undef
     const legacyNotes = (raw.value as { notes?: unknown }).notes
     return {
       notes: typeof legacyNotes === 'string' ? legacyNotes : '',
-      targetGroupCount: 4,
     }
   }
   return {
     notes: parsed.data.notes,
-    targetGroupCount: parsed.data.targetGroupCount,
   }
 }
 
-export function normalizeMenuClustererInput(value: {
-  notes: string
-  targetGroupCount?: MenuClustererTargetGroupCount
-}): {
-  notes: string
-  targetGroupCount: MenuClustererTargetGroupCount
-} {
-  const count = value.targetGroupCount
-  const targetGroupCount: MenuClustererTargetGroupCount =
-    count === 4 || count === 5 || count === 6 || count === 7 || count === 8 ? count : 4
+export function normalizeMenuClustererInput(value: { notes: string }): { notes: string } {
   return {
     notes: value.notes.trim(),
-    targetGroupCount,
   }
 }
 
 export function normalizedMenuClustererInputsEqual(
-  a: { notes: string; targetGroupCount: MenuClustererTargetGroupCount },
-  b: { notes: string; targetGroupCount: MenuClustererTargetGroupCount },
+  a: { notes: string },
+  b: { notes: string },
 ): boolean {
-  return a.notes === b.notes && a.targetGroupCount === b.targetGroupCount
+  return a.notes === b.notes
 }
 
 const DEFAULT_PROMOTION_CANDIDATES_INPUT = {

@@ -5,6 +5,10 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
+from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    derive_target_group_count,
+)
+
 DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
 MENU_CLUSTERER_GROUP_MIN_SIZE = 1
@@ -26,11 +30,37 @@ def is_menu_clusterer_milestone_data(data: dict[str, Any]) -> bool:
     return isinstance(data.get("groups"), list)
 
 
+def _assigned_food_item_count(data: dict[str, Any]) -> int:
+    keys: set[str] = set()
+    for group in _groups(data):
+        items = group.get("items")
+        if not isinstance(items, list):
+            continue
+        for row in items:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or "").strip().casefold()
+            if name:
+                keys.add(name)
+    unassigned = _unassigned_item_names(data)
+    return len(keys) + len(unassigned)
+
+
 def _target_group_count(data: dict[str, Any]) -> int:
     raw = data.get("targetGroupCount")
     if isinstance(raw, int) and raw >= MENU_CLUSTERER_MIN_GROUP_COUNT:
         return min(raw, MENU_CLUSTERER_MAX_GROUP_COUNT)
+    assigned_count = _assigned_food_item_count(data)
+    if assigned_count > 0:
+        return derive_target_group_count(assigned_count)
     return MENU_CLUSTERER_DEFAULT_GROUP_COUNT
+
+
+def _unassigned_item_names(data: dict[str, Any]) -> list[str]:
+    raw = data.get("unassignedItemNames")
+    if not isinstance(raw, list):
+        return []
+    return [str(name).strip() for name in raw if str(name).strip()]
 
 
 def enrich_menu_clusterer_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
@@ -157,8 +187,45 @@ def try_menu_clusterer_deterministic_verdict(
             "menu clusterer is missing sourceCampaignBriefTitle or campaign-aware strategy on groups.",
         )
 
+    if "unassigned" in norm and ("food" in norm or "menu" in norm or "tagged" in norm):
+        unassigned = _unassigned_item_names(data)
+        if unassigned:
+            return (
+                "fail",
+                f"menu clusterer left {len(unassigned)} tagged food item(s) unassigned: "
+                f"{', '.join(unassigned[:5])}.",
+            )
+        if not groups:
+            return ("fail", "menu clusterer data has no food clusters.")
+        return (
+            "pass",
+            "every tagged food item from menu tagger appears in at least one food cluster.",
+        )
+
     if (
-        ("at least" in norm or "least" in norm or "minimum" in norm)
+        ("every" in norm or "all tagged" in norm)
+        and "food" in norm
+        and ("item" in norm or "menu" in norm)
+        and ("cluster" in norm or "group" in norm)
+    ):
+        unassigned = _unassigned_item_names(data)
+        if unassigned:
+            return (
+                "fail",
+                f"menu clusterer left {len(unassigned)} food item(s) without a cluster assignment.",
+            )
+        if not groups:
+            return ("fail", "menu clusterer data has no food clusters.")
+        return ("pass", "all tagged food items are assigned to food clusters.")
+
+    if (
+        (
+            "at least" in norm
+            or "least" in norm
+            or "minimum" in norm
+            or "configured number" in norm
+            or "derived number" in norm
+        )
         and ("group" in norm or "cluster" in norm or "reel" in norm)
         and "drink" not in norm
         and "beverage" not in norm

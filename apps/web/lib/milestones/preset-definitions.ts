@@ -265,7 +265,7 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       name: t('milestonePreset.menu_clusterer.title'),
       milestoneInput: {
         type: 'menu_clusterer',
-        value: { notes: '', targetGroupCount: 4 },
+        value: { notes: '' },
       },
       milestoneData: EMPTY_MENU_CLUSTERER_DATA,
       goal: t('milestonePreset.menu_clusterer.goal'),

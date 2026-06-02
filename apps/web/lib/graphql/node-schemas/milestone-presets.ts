@@ -97,7 +97,6 @@ export type MenuClustererTargetGroupCount = z.infer<typeof menuClustererTargetGr
 
 export const menuClustererMilestoneInputValueSchema = z.object({
   notes: z.string(),
-  targetGroupCount: menuClustererTargetGroupCountSchema.default(MENU_CLUSTERER_DEFAULT_GROUP_COUNT),
 })
 
 export type MenuClustererMilestoneInputValue = z.infer<

@@ -10,6 +10,7 @@ Your task: group tagged menu food items into exactly {target_group_count} distin
 HARD RULES
 ────────────────────────────────────────────────────────────────────────
 - Produce exactly {target_group_count} clusters (minimum {min_group_count}). Each cluster is food-only (tags.kind == food).
+- Every tagged food item in the input list MUST appear in at least one cluster (as leadItemName or supportingItemNames).
 - Position 1 (leadItemName) MUST be chosen from the provided top-5 food lead list only.
 - supportingItemNames must be other tagged food items from the full food list (0 to 4 names).
 - Total items per cluster (lead + supporting) must be between 2 and 5 when enough food items exist; use 1-item clusters only when the menu is too small for pairs.

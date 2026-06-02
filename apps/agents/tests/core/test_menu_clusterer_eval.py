@@ -123,7 +123,7 @@ def test_min_groups_verdict_uses_target_group_count_from_data() -> None:
     payload["targetGroupCount"] = 6
     payload["groups"] = payload["groups"][:5]
     verdict = try_menu_clusterer_deterministic_verdict(
-        "Data includes the configured number of food Reel clusters (minimum 4, from Input tab target group count).",
+        "Data includes the derived number of food Reel clusters (4–8) sized to cover the tagged menu.",
         payload,
     )
     assert verdict is not None
@@ -132,7 +132,7 @@ def test_min_groups_verdict_uses_target_group_count_from_data() -> None:
     payload["groups"] = _sample_payload()["groups"] + _extra_groups()
     payload["groups"] = payload["groups"][:6]
     verdict = try_menu_clusterer_deterministic_verdict(
-        "Data includes the configured number of food Reel clusters (minimum 4, from Input tab target group count).",
+        "Data includes the derived number of food Reel clusters (4–8) sized to cover the tagged menu.",
         payload,
     )
     assert verdict is not None
@@ -186,6 +186,26 @@ def test_cluster_description_verdict_fails_when_missing() -> None:
     )
     assert verdict is not None
     assert verdict[0] == "fail"
+
+
+def test_unassigned_food_items_verdict_fails() -> None:
+    verdict = try_menu_clusterer_deterministic_verdict(
+        "Every tagged food item from menu tagger appears in at least one food cluster (no unassigned items).",
+        _sample_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "fail"
+
+
+def test_unassigned_food_items_verdict_passes() -> None:
+    payload = _sample_payload()
+    payload["unassignedItemNames"] = []
+    verdict = try_menu_clusterer_deterministic_verdict(
+        "Every tagged food item from menu tagger appears in at least one food cluster (no unassigned items).",
+        payload,
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
 
 
 def test_multi_item_group_passes_top_five_check() -> None:

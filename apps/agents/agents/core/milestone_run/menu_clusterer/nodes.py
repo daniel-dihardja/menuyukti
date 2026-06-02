@@ -13,10 +13,10 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
 )
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     MENU_CLUSTERER_MIN_GROUP_COUNT,
+    derive_target_group_count,
     food_items_only,
     merge_llm_clusters,
     rank_top_food_leads,
-    resolve_target_group_count,
 )
 from agents_app.agents.core.milestone_run.menu_clusterer.prompts import format_menu_clusterer_system
 from agents_app.agents.core.milestone_run.menu_clusterer.state import (
@@ -34,27 +34,6 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field, create_model
-
-
-def _read_milestone_input_value(milestone_input: dict[str, Any] | None) -> dict[str, Any]:
-    if not isinstance(milestone_input, dict):
-        return {}
-    if milestone_input.get("type") != "menu_clusterer":
-        return {}
-    value = milestone_input.get("value")
-    return value if isinstance(value, dict) else {}
-
-
-def _read_target_group_count(
-    milestone_input: dict[str, Any] | None, *, food_item_count: int
-) -> int:
-    raw = _read_milestone_input_value(milestone_input).get("targetGroupCount")
-    parsed: int | None = None
-    if isinstance(raw, int):
-        parsed = raw
-    elif isinstance(raw, str) and raw.strip().isdigit():
-        parsed = int(raw.strip())
-    return resolve_target_group_count(parsed, food_item_count=food_item_count)
 
 
 def _trace(state: MenuClustererState, step: str, **extra: Any) -> None:
@@ -141,8 +120,8 @@ def _merge_correction_message(error: ValueError) -> HumanMessage:
             "Your previous cluster draft could not be merged with the menu data.\n\n"
             f"Error: {error}\n\n"
             "Return a corrected JSON object only. Use exact item names from the tagged food list, "
-            "choose leadItemName only from the top-5 lead list, and keep each clusterDescription "
-            "at least 40 characters."
+            "choose leadItemName only from the top-5 lead list, ensure every tagged food item "
+            "appears in at least one cluster, and keep each clusterDescription at least 40 characters."
         )
     )
 
@@ -177,7 +156,10 @@ def _build_generation_context(
     top5_names = [str(item.get("name") or "").strip() for item in top5_leads]
 
     sections = [
-        f"## Target cluster count\nProduce exactly **{target_group_count}** food Reel clusters.",
+        f"## Target cluster count\nProduce exactly **{target_group_count}** food Reel clusters "
+        "(derived from the tagged food menu size).",
+        "## Full menu coverage\nEvery tagged food item listed below must appear in at least one "
+        "cluster (as leadItemName or supportingItemNames). Items may repeat across clusters.",
         "## Campaign brief (excerpt)\n```json\n"
         f"{json.dumps(brief_excerpt, ensure_ascii=False, indent=2)}\n```",
         "## Top-5 food leads (position 1 must come from this list only)\n```json\n"
@@ -223,15 +205,11 @@ async def fetch_and_prepare(
         )
 
     food_count = len(food_items_only(menu_tagger_items))
-    target_group_count = _read_target_group_count(
-        state.get("milestone_input") if isinstance(state.get("milestone_input"), dict) else None,
-        food_item_count=food_count,
-    )
+    target_group_count = derive_target_group_count(food_count)
     if food_count < target_group_count:
         raise ValueError(
             f"menu_clusterer requires at least {target_group_count} tagged food items in prior "
-            f"menu_tagger data (Input tab target); got {food_count}. Re-run menu_tagger or "
-            "lower the target group count."
+            f"menu_tagger data; got {food_count}. Re-run menu_tagger or widen promotion candidates."
         )
     if food_count < MENU_CLUSTERER_MIN_GROUP_COUNT:
         raise ValueError(
@@ -326,7 +304,6 @@ async def build_clusters(state: MenuClustererState) -> dict[str, Any]:
                 source_menu_tagger_title=str(state.get("source_menu_tagger_title") or ""),
                 source_campaign_brief_title=str(state.get("source_campaign_brief_title") or ""),
                 notes=owner_notes,
-                min_groups=target_group_count,
                 target_group_count=target_group_count,
             )
             normalized = _normalize_generated_output(payload)

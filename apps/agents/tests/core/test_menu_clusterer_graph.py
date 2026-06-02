@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    derive_target_group_count,
     merge_llm_clusters,
     rank_top_food_leads,
 )
@@ -168,6 +169,14 @@ def _draft_clusters() -> list[MenuClustererClusterDraft]:
     ]
 
 
+def test_derive_target_group_count_clamps_to_menu_size() -> None:
+    assert derive_target_group_count(4) == 4
+    assert derive_target_group_count(5) == 4
+    assert derive_target_group_count(20) == 4
+    assert derive_target_group_count(25) == 5
+    assert derive_target_group_count(40) == 8
+
+
 def test_rank_top_food_leads_orders_by_popularity_and_storytelling() -> None:
     ranked = rank_top_food_leads(_menu_tagger_items())
     assert [item["name"] for item in ranked] == ["Wings", "Ribeye", "Burger", "Fries", "Salad"]
@@ -190,6 +199,7 @@ def test_merge_llm_clusters_builds_multi_item_groups_with_descriptions() -> None
     assert "drinkGroups" not in normalized
     assert normalized["topFoodLeadNames"] == ["Wings", "Ribeye", "Burger", "Fries", "Salad"]
     assert normalized["targetGroupCount"] == 4
+    assert normalized["unassignedItemNames"] == []
     first = normalized["groups"][0]
     assert len(first["items"]) == 2
     assert first["items"][0]["position"] == 1
@@ -223,6 +233,49 @@ def test_merge_llm_clusters_rejects_non_top5_lead_when_strict() -> None:
             top5_leads=top5,
             strict_top5_leads=True,
         )
+
+
+def test_merge_llm_clusters_assigns_remaining_food_items() -> None:
+    top5 = rank_top_food_leads(_menu_tagger_items())
+    sparse = [
+        MenuClustererClusterDraft(
+            themeLabel="Hero signatures",
+            leadItemName="Wings",
+            supportingItemNames=["Ribeye"],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+        MenuClustererClusterDraft(
+            themeLabel="Category variety",
+            leadItemName="Ribeye",
+            supportingItemNames=["Burger"],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+        MenuClustererClusterDraft(
+            themeLabel="Proof angle",
+            leadItemName="Burger",
+            supportingItemNames=[],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+        MenuClustererClusterDraft(
+            themeLabel="Side pairings",
+            leadItemName="Wings",
+            supportingItemNames=[],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+    ]
+    payload = merge_llm_clusters(
+        sparse,
+        menu_tagger_items=_menu_tagger_items(),
+        top5_leads=top5,
+        campaign_brief_data=_campaign_brief_data(),
+    )
+    assert payload["unassignedItemNames"] == []
+    assigned = {
+        item["name"]
+        for group in payload["groups"]
+        for item in group["items"]
+    }
+    assert assigned == {item["name"] for item in _menu_tagger_items()}
 
 
 def test_merge_llm_clusters_auto_corrects_non_top5_lead() -> None:

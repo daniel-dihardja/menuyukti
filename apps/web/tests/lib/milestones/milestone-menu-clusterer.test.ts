@@ -24,7 +24,7 @@ describe('menu_clusterer preset', () => {
     expect(fields.presetId).toBe('menu_clusterer')
     expect(fields.milestoneInput).toEqual({
       type: 'menu_clusterer',
-      value: { notes: '', targetGroupCount: 4 },
+      value: { notes: '' },
     })
     expect(fields.milestoneData).toMatchObject({
       foodLeads: [],
@@ -38,26 +38,41 @@ describe('menu_clusterer preset', () => {
     ])
   })
 
-  it('menuClustererInputFromMilestoneInput reads notes and targetGroupCount', () => {
+  it('menuClustererInputFromMilestoneInput reads notes only', () => {
     expect(
       menuClustererInputFromMilestoneInput({
         type: 'menu_clusterer',
-        value: { notes: 'focus mains', targetGroupCount: 6 },
+        value: { notes: 'focus mains' },
       }),
-    ).toEqual({ notes: 'focus mains', targetGroupCount: 6 })
+    ).toEqual({ notes: 'focus mains' })
     expect(
       menuClustererInputFromMilestoneInput({
         type: 'menu_clusterer',
-        value: { notes: 'legacy only' },
+        value: { notes: 'legacy only', targetGroupCount: 6 },
       }),
-    ).toEqual({ notes: 'legacy only', targetGroupCount: 4 })
-    expect(normalizeMenuClustererInput({ notes: '  hi ', targetGroupCount: 8 })).toEqual({
+    ).toEqual({ notes: 'legacy only' })
+    expect(normalizeMenuClustererInput({ notes: '  hi ' })).toEqual({
       notes: 'hi',
-      targetGroupCount: 8,
     })
   })
 
-  it('patchMilestoneSchema accepts menu_clusterer milestoneInput with targetGroupCount', () => {
+  it('patchMilestoneSchema accepts menu_clusterer milestoneInput with notes only', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: {
+        type: 'menu_clusterer',
+        value: { notes: 'seasonal' },
+      },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'menu_clusterer',
+        value: { notes: 'seasonal' },
+      })
+    }
+  })
+
+  it('patchMilestoneSchema strips legacy targetGroupCount from menu_clusterer input', () => {
     const parsed = patchMilestoneSchema.safeParse({
       milestoneInput: {
         type: 'menu_clusterer',
@@ -68,7 +83,7 @@ describe('menu_clusterer preset', () => {
     if (parsed.success) {
       expect(parsed.data.milestoneInput).toEqual({
         type: 'menu_clusterer',
-        value: { notes: 'seasonal', targetGroupCount: 5 },
+        value: { notes: 'seasonal' },
       })
     }
   })
