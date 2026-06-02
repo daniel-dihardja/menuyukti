@@ -554,62 +554,6 @@ class MenuClustererGroupItemOutput(BaseModel):
         return value
 
 
-class MenuClustererScheduleHintsOutput(BaseModel):
-    preferredWeekdays: list[
-        Literal[
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-    ] = Field(default_factory=list)
-    preferredTime: str
-    cadenceEligible: bool = True
-
-    @field_validator("preferredWeekdays")
-    @classmethod
-    def _validate_preferred_weekdays(
-        cls,
-        values: list[
-            Literal[
-                "monday",
-                "tuesday",
-                "wednesday",
-                "thursday",
-                "friday",
-                "saturday",
-                "sunday",
-            ]
-        ],
-    ) -> list[
-        Literal[
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-    ]:
-        if not values:
-            raise ValueError("must contain at least one preferred weekday")
-        if len(set(values)) != len(values):
-            raise ValueError("preferredWeekdays must not contain duplicates")
-        return values
-
-    @field_validator("preferredTime")
-    @classmethod
-    def _validate_preferred_time(cls, value: str) -> str:
-        text = value.strip()
-        if not text:
-            raise ValueError("preferredTime must be non-empty")
-        return text
-
-
 class MenuClustererGroupMixOutput(BaseModel):
     priceLevels: list[Literal[1, 2, 3]]
     storytellingStrongCount: int = Field(ge=0)
@@ -634,7 +578,6 @@ class MenuClustererGroupOutput(BaseModel):
     coreMessage: str | None = None
     creativeRole: str | None = None
     assetHint: str | None = None
-    scheduleHints: MenuClustererScheduleHintsOutput | None = None
 
     @field_validator("clusterDescription", mode="before")
     @classmethod
@@ -895,6 +838,7 @@ class ReelLineupReelOutput(BaseModel):
     groupIds: list[str] = Field(default_factory=list)
     weekIndex: int | None = None
     date: str | None = None
+    scheduleHints: PostLineupScheduleHintsOutput | None = None
     heroDishes: list[ReelLineupHeroDishOutput] = Field(default_factory=list)
 
     @field_validator("id", "title", "description", "explanation", "date", mode="before")

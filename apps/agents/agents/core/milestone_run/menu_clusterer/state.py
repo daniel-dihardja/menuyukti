@@ -16,22 +16,6 @@ class MenuClustererGroupItem(TypedDict):
     reelMoment: NotRequired[str]
 
 
-class MenuClustererScheduleHints(TypedDict):
-    preferredWeekdays: list[
-        Literal[
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-    ]
-    preferredTime: str
-    cadenceEligible: bool
-
-
 class MenuClustererGroupMix(TypedDict):
     priceLevels: list[Literal[1, 2, 3]]
     storytellingStrongCount: int
@@ -56,7 +40,6 @@ class MenuClustererGroup(TypedDict):
     coreMessage: NotRequired[str]
     creativeRole: NotRequired[str]
     assetHint: NotRequired[str]
-    scheduleHints: NotRequired[MenuClustererScheduleHints]
 
 
 class MenuClustererOutput(TypedDict):

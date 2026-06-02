@@ -47,11 +47,6 @@ def _sample_payload() -> dict:
                 },
                 "clusterDescription": _CLUSTER_DESCRIPTION,
                 "strategyFocus": "weekday_lunch",
-                "scheduleHints": {
-                    "preferredWeekdays": ["tuesday"],
-                    "preferredTime": "11:00",
-                    "cadenceEligible": True,
-                },
             },
             *_extra_groups(),
         ],
@@ -88,11 +83,6 @@ def _extra_groups() -> list[dict]:
                 },
                 "clusterDescription": _CLUSTER_DESCRIPTION,
                 "strategyFocus": "weekday_lunch",
-                "scheduleHints": {
-                    "preferredWeekdays": ["tuesday"],
-                    "preferredTime": "11:00",
-                    "cadenceEligible": True,
-                },
             }
         )
     return groups
@@ -160,18 +150,9 @@ def test_min_four_groups_verdict_fails() -> None:
     assert verdict[0] == "fail"
 
 
-def test_campaign_brief_strategy_verdict_passes() -> None:
+def test_prior_campaign_brief_verdict_passes() -> None:
     verdict = try_menu_clusterer_deterministic_verdict(
-        "Data references a prior campaign brief and carries campaign-aware scheduling hints.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_schedule_hints_verdict_passes() -> None:
-    verdict = try_menu_clusterer_deterministic_verdict(
-        "Each food group includes strategy focus plus preferred weekday and time schedule hints.",
+        "Run used a prior restaurant_campaign_brief milestone with saved strategy data.",
         _sample_payload(),
     )
     assert verdict is not None

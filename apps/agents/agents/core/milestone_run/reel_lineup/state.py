@@ -13,6 +13,21 @@ class ReelLineupHeroDish(TypedDict):
     role: NotRequired[Literal["star", "puzzle"]]
 
 
+class ReelLineupScheduleHints(TypedDict):
+    preferredWeekdays: list[
+        Literal[
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+    ]
+    preferredTime: str
+
+
 class ReelLineupReel(TypedDict):
     id: str
     format: Literal["reel"]
@@ -23,6 +38,7 @@ class ReelLineupReel(TypedDict):
     groupIds: list[str]
     weekIndex: NotRequired[int]
     date: NotRequired[str]
+    scheduleHints: NotRequired[ReelLineupScheduleHints]
     heroDishes: NotRequired[list[ReelLineupHeroDish]]
 
 

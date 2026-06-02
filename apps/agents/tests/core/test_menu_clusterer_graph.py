@@ -194,7 +194,7 @@ def test_merge_llm_clusters_builds_multi_item_groups_with_descriptions() -> None
     assert len(first["items"]) == 2
     assert first["items"][0]["position"] == 1
     assert first["clusterDescription"] == _CLUSTER_DESCRIPTION
-    assert first["scheduleHints"]["preferredWeekdays"] == ["tuesday"]
+    assert "scheduleHints" not in first
 
 
 def test_merge_llm_clusters_rejects_non_top5_lead_when_strict() -> None:
@@ -350,7 +350,7 @@ async def test_build_clusters_and_persist() -> None:
     ):
         built = await build_clusters(state)  # type: ignore[arg-type]
     assert len(built["generated_output"]["groups"]) == 4
-    assert built["generated_output"]["groups"][0]["scheduleHints"]["preferredTime"] == "11:00"
+    assert "scheduleHints" not in built["generated_output"]["groups"][0]
 
     with patch(
         "agents_app.agents.core.milestone_run.menu_clusterer.nodes.upsert_milestonedata_node",

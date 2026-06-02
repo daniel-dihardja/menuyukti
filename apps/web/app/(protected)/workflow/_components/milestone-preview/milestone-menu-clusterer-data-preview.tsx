@@ -63,21 +63,6 @@ type GroupCardLabels = {
   coreMessageLabel: string
   creativeRoleLabel: string
   assetHintLabel: string
-  scheduleHintsSectionTitle: string
-  preferredWeekdaysLabel: string
-  preferredTimeLabel: string
-  cadenceEligibleLabel: string
-  cadenceEligibleYes: string
-  cadenceEligibleNo: string
-  weekdayLabels: {
-    monday: string
-    tuesday: string
-    wednesday: string
-    thursday: string
-    friday: string
-    saturday: string
-    sunday: string
-  }
   groupTitle: string
   clusterDescriptionLabel: string
   roleStarLabel: string
@@ -97,27 +82,6 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function weekdayLabel(
-  day: string,
-  labels: {
-    monday: string
-    tuesday: string
-    wednesday: string
-    thursday: string
-    friday: string
-    saturday: string
-    sunday: string
-  },
-): string {
-  if (day === 'monday') return labels.monday
-  if (day === 'tuesday') return labels.tuesday
-  if (day === 'wednesday') return labels.wednesday
-  if (day === 'thursday') return labels.thursday
-  if (day === 'friday') return labels.friday
-  if (day === 'saturday') return labels.saturday
-  return labels.sunday
-}
-
 function MenuClustererGroupCard({
   group,
   labels,
@@ -125,12 +89,6 @@ function MenuClustererGroupCard({
   group: MenuClustererGroup
   labels: GroupCardLabels
 }) {
-  const preferredWeekdays = group.scheduleHints?.preferredWeekdays ?? []
-  const preferredWeekdaysText =
-    preferredWeekdays.length > 0
-      ? preferredWeekdays.map((day) => weekdayLabel(day, labels.weekdayLabels)).join(', ')
-      : ''
-
   return (
     <Card className="gap-3 py-4 shadow-none">
       <CardHeader className="flex flex-col gap-2 px-4 pb-0">
@@ -174,28 +132,6 @@ function MenuClustererGroupCard({
               {group.assetHint ? (
                 <DetailRow label={labels.assetHintLabel} value={group.assetHint} />
               ) : null}
-            </div>
-          </div>
-        ) : null}
-        {group.scheduleHints ? (
-          <div>
-            <p className={mp.sectionTitle}>{labels.scheduleHintsSectionTitle}</p>
-            <div className="space-y-1.5">
-              {preferredWeekdaysText ? (
-                <DetailRow label={labels.preferredWeekdaysLabel} value={preferredWeekdaysText} />
-              ) : null}
-              <DetailRow
-                label={labels.preferredTimeLabel}
-                value={group.scheduleHints.preferredTime}
-              />
-              <DetailRow
-                label={labels.cadenceEligibleLabel}
-                value={
-                  group.scheduleHints.cadenceEligible
-                    ? labels.cadenceEligibleYes
-                    : labels.cadenceEligibleNo
-                }
-              />
             </div>
           </div>
         ) : null}
@@ -434,21 +370,6 @@ export function MilestoneMenuClustererDataPreview({
       coreMessageLabel: t('milestoneMenuClustererPreviewCoreMessageLabel'),
       creativeRoleLabel: t('milestoneMenuClustererPreviewCreativeRoleLabel'),
       assetHintLabel: t('milestoneMenuClustererPreviewAssetHintLabel'),
-      scheduleHintsSectionTitle: t('milestoneMenuClustererPreviewScheduleHintsSectionTitle'),
-      preferredWeekdaysLabel: t('milestoneMenuClustererPreviewPreferredWeekdaysLabel'),
-      preferredTimeLabel: t('milestoneMenuClustererPreviewPreferredTimeLabel'),
-      cadenceEligibleLabel: t('milestoneMenuClustererPreviewCadenceEligibleLabel'),
-      cadenceEligibleYes: t('milestoneMenuClustererPreviewCadenceEligibleYes'),
-      cadenceEligibleNo: t('milestoneMenuClustererPreviewCadenceEligibleNo'),
-      weekdayLabels: {
-        monday: t('milestoneMenuClustererPreviewWeekdayMonday'),
-        tuesday: t('milestoneMenuClustererPreviewWeekdayTuesday'),
-        wednesday: t('milestoneMenuClustererPreviewWeekdayWednesday'),
-        thursday: t('milestoneMenuClustererPreviewWeekdayThursday'),
-        friday: t('milestoneMenuClustererPreviewWeekdayFriday'),
-        saturday: t('milestoneMenuClustererPreviewWeekdaySaturday'),
-        sunday: t('milestoneMenuClustererPreviewWeekdaySunday'),
-      },
       roleStarLabel: t('milestoneMenuTaggerPreviewRoleStar'),
       rolePuzzleLabel: t('milestoneMenuTaggerPreviewRolePuzzle'),
       storytellingStrongLabel: t('milestonePromotionCandidatesPreviewStorytellingStrong'),

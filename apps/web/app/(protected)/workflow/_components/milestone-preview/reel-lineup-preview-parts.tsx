@@ -35,17 +35,71 @@ export function ReelLineupReelBadges({ reel }: { reel: ReelLineupReel }) {
   )
 }
 
+const WEEKDAY_KEYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const
+
+function weekdayLabel(
+  day: (typeof WEEKDAY_KEYS)[number],
+  labels: Record<(typeof WEEKDAY_KEYS)[number], string>,
+): string {
+  return labels[day]
+}
+
+export function ReelLineupReelScheduleHints({ reel }: { reel: ReelLineupReel }) {
+  const t = useTranslations('analytics.workflows.chat')
+  const hints = reel.scheduleHints
+  if (!hints) {
+    return null
+  }
+
+  const weekdayLabels = {
+    monday: t('milestoneReelLineupPreviewWeekdayMonday'),
+    tuesday: t('milestoneReelLineupPreviewWeekdayTuesday'),
+    wednesday: t('milestoneReelLineupPreviewWeekdayWednesday'),
+    thursday: t('milestoneReelLineupPreviewWeekdayThursday'),
+    friday: t('milestoneReelLineupPreviewWeekdayFriday'),
+    saturday: t('milestoneReelLineupPreviewWeekdaySaturday'),
+    sunday: t('milestoneReelLineupPreviewWeekdaySunday'),
+  }
+  const preferredWeekdaysText = hints.preferredWeekdays
+    .map((day) => weekdayLabel(day, weekdayLabels))
+    .join(', ')
+
+  return (
+    <div className="flex flex-col gap-1">
+      <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewScheduleHintsSectionTitle')}</p>
+      <p className={mp.bodySmall}>
+        <span className={mp.rowKey}>{t('milestoneReelLineupPreviewPreferredWeekdaysLabel')}:</span>{' '}
+        {preferredWeekdaysText}
+      </p>
+      <p className={mp.bodySmall}>
+        <span className={mp.rowKey}>{t('milestoneReelLineupPreviewPreferredTimeLabel')}:</span>{' '}
+        {hints.preferredTime}
+      </p>
+    </div>
+  )
+}
+
 export function ReelLineupReelCopy({ reel }: { reel: ReelLineupReel }) {
   const t = useTranslations('analytics.workflows.chat')
   const description = reel.description?.trim()
   const explanation = reel.explanation?.trim()
+  const hasScheduleHints = Boolean(reel.scheduleHints)
 
-  if (!description && !explanation) {
+  if (!description && !explanation && !hasScheduleHints) {
     return null
   }
 
   return (
     <div className="flex flex-col gap-3">
+      <ReelLineupReelScheduleHints reel={reel} />
       {description ? (
         <div className="flex flex-col gap-1">
           <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewDescription')}</p>

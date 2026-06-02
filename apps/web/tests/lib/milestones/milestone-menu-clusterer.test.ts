@@ -35,7 +35,6 @@ describe('menu_clusterer preset', () => {
       'milestonePreset.menu_clusterer.criterionHookGroupCount',
       'milestonePreset.menu_clusterer.criterionTopFiveLead',
       'milestonePreset.menu_clusterer.criterionClusterDescription',
-      'milestonePreset.menu_clusterer.criterionSchedulingHints',
     ])
   })
 

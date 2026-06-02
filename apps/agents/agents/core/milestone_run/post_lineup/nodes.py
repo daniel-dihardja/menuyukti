@@ -121,7 +121,6 @@ def _compact_group(group: dict[str, Any]) -> dict[str, Any]:
         "strategyFocus": group.get("strategyFocus"),
         "creativeRole": group.get("creativeRole"),
         "mix": group.get("mix"),
-        "scheduleHints": group.get("scheduleHints"),
     }
 
 

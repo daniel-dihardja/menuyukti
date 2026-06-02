@@ -19,10 +19,6 @@ MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN = 40
 _DEFAULT_STRATEGY_FOCUS = "weekday_lunch"
 _DEFAULT_CORE_MESSAGE = "Weekday lunch offer for nearby workers and small groups."
 _DEFAULT_OFFER_WINDOW = "11:00-14:00"
-_DEFAULT_WEEKDAY_LUNCH_DAYS = ["tuesday"]
-_DEFAULT_WEEKDAY_LUNCH_TIME = "11:00"
-_DEFAULT_WEEKEND_TIME = "09:30"
-_DEFAULT_EVENING_TIME = "17:30"
 _CREATIVE_ROLE_SEQUENCE = (
     "hero",
     "proof",
@@ -194,24 +190,6 @@ def _offer_window(campaign_brief_data: dict[str, Any] | None) -> str:
     return str(overall.get("offerWindow") or "").strip() or _DEFAULT_OFFER_WINDOW
 
 
-def _preferred_weekdays_for_focus(focus: str) -> list[str]:
-    normalized = focus.strip().lower()
-    if normalized == "weekend_family":
-        return ["friday", "sunday"]
-    if normalized == "evening_dinner":
-        return ["wednesday", "friday"]
-    return list(_DEFAULT_WEEKDAY_LUNCH_DAYS)
-
-
-def _preferred_time_for_focus(focus: str) -> str:
-    normalized = focus.strip().lower()
-    if normalized == "weekend_family":
-        return _DEFAULT_WEEKEND_TIME
-    if normalized == "evening_dinner":
-        return _DEFAULT_EVENING_TIME
-    return _DEFAULT_WEEKDAY_LUNCH_TIME
-
-
 def _creative_role_for_index(index: int) -> str:
     if index < len(_CREATIVE_ROLE_SEQUENCE):
         return _CREATIVE_ROLE_SEQUENCE[index]
@@ -309,11 +287,6 @@ def _finalize_cluster_group(
             offer_window=offer_window,
             theme_label=theme_label,
         ),
-        "scheduleHints": {
-            "preferredWeekdays": _preferred_weekdays_for_focus(focus),
-            "preferredTime": _preferred_time_for_focus(focus),
-            "cadenceEligible": True,
-        },
     }
 
 

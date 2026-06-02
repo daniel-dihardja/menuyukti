@@ -7,6 +7,7 @@ from typing import Any, Literal
 from agents_app.agents.core.milestone_run.dates_window import (
     CampaignWeek,
     preferred_weekdays_for_strategy,
+    schedule_hints_for_reel_intent,
 )
 
 REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX = "weekday-reel-week-"
@@ -220,6 +221,7 @@ def _build_reel(
     group_id: str,
     groups_by_id: dict[str, dict[str, Any]],
     week_index: int,
+    campaign_brief_data: dict[str, Any] | None,
 ) -> dict[str, Any]:
     title, description, explanation = _reel_copy_from_plan(slot, intent=intent)
     group = groups_by_id.get(group_id)
@@ -236,6 +238,7 @@ def _build_reel(
         "groupIds": [group_id],
         "weekIndex": week_index,
         "heroDishes": _hero_dishes_from_group(group),
+        "scheduleHints": schedule_hints_for_reel_intent(intent, campaign_brief_data),
     }
     return reel
 
@@ -253,7 +256,6 @@ def build_reel_lineup_from_plan(
     source_dates_title: str = "",
     notes: str = "",
 ) -> dict[str, Any]:
-    _ = campaign_brief_data
     if not groups:
         raise ValueError("reel_lineup requires at least one menu clusterer group")
     if not campaign_weeks:
@@ -290,6 +292,7 @@ def build_reel_lineup_from_plan(
                 group_id=weekday_group_id,
                 groups_by_id=groups_by_id,
                 week_index=week.week_index,
+                campaign_brief_data=campaign_brief_data,
             )
         )
         reels.append(
@@ -300,6 +303,7 @@ def build_reel_lineup_from_plan(
                 group_id=weekend_group_id,
                 groups_by_id=groups_by_id,
                 week_index=week.week_index,
+                campaign_brief_data=campaign_brief_data,
             )
         )
 

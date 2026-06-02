@@ -6,12 +6,13 @@ from agents_app.agents.core.milestone_eval.post_lineup_eval import (
     enrich_post_lineup_eval_payload,
     try_post_lineup_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
 
 START_DATE = "2026-06-01"
 END_DATE = "2026-06-30"
 
 
-def _weekly_post(week_start: str, title: str) -> dict:
+def _weekly_post(week_start: str, title: str, *, post_date: str) -> dict:
     return {
         "id": f"weekday-lunch-post-week-{week_start}",
         "format": "carousel",
@@ -19,7 +20,21 @@ def _weekly_post(week_start: str, title: str) -> dict:
         "title": title,
         "groupIds": ["group-1"],
         "slides": [{"dishName": "Ribeye", "imageBrief": "Lunch photo brief."}],
+        "date": post_date,
+        "fixdate": True,
+        "scheduleHints": {
+            "preferredWeekdays": ["thursday"],
+            "preferredTime": "10:00",
+        },
     }
+
+
+def _weekly_posts_for_window() -> list[dict]:
+    weeks = campaign_weeks(START_DATE, END_DATE)
+    return [
+        _weekly_post(week.week_start, f"Week {week.week_index} lunch", post_date=week.post_date)
+        for week in weeks
+    ]
 
 
 def _sample_data() -> dict:
@@ -39,10 +54,7 @@ def _sample_data() -> dict:
                     {"dishName": "Burger", "imageBrief": "Stack photo brief."},
                 ],
             },
-            _weekly_post("2026-06-01", "Week 1 lunch"),
-            _weekly_post("2026-06-08", "Week 2 lunch"),
-            _weekly_post("2026-06-15", "Week 3 lunch"),
-            _weekly_post("2026-06-22", "Week 4 lunch"),
+            *_weekly_posts_for_window(),
         ],
         "sourceMenuClustererTitle": "Menu clusterer",
         "sourceCampaignBriefTitle": "Campaign brief",
@@ -88,10 +100,9 @@ def test_try_post_lineup_deterministic_verdict_weekly_fixdate() -> None:
         "Each weekday_lunch_post has fixdate true and a date within the campaign window.",
         _sample_data(),
     )
-    assert verdict == (
-        "pass",
-        "weekday lunch posts are defined by intent; scheduler assigns publish dates.",
-    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+    assert "fixdate" in verdict[1].lower()
 
 
 def test_try_post_lineup_deterministic_verdict_slide_fields() -> None:

@@ -9,6 +9,7 @@ from agents_app.agents.core.milestone_run.dates_window import (
     interval_block_starts,
     pick_least_busy_date,
     preferred_weekdays_for_strategy,
+    schedule_hints_for_reel_intent,
 )
 
 
@@ -34,6 +35,16 @@ def test_campaign_weeks_weekend_family_strategy() -> None:
     assert len(weeks) == 1
     assert weeks[0].post_date == "2026-06-05"
     assert preferred_weekdays_for_strategy(brief) == ["friday", "sunday"]
+
+
+def test_schedule_hints_for_reel_intent_weekday_vs_weekend() -> None:
+    brief = {"overallStrategy": {"strategyFocus": "weekday_lunch"}}
+    weekday = schedule_hints_for_reel_intent("weekday_reel", brief)
+    weekend = schedule_hints_for_reel_intent("weekend_reel", brief)
+    assert weekday["preferredWeekdays"] == ["thursday"]
+    assert weekday["preferredTime"] == "11:00"
+    assert weekend["preferredWeekdays"] == ["saturday", "sunday"]
+    assert weekend["preferredTime"] == "11:00"
 
 
 def test_count_campaign_weeks_matches_list_length() -> None:

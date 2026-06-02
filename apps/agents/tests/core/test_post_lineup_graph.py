@@ -233,8 +233,16 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     assert len(weekly_posts) == len(weeks)
     assert all(post["description"] for post in weekly_posts)
     assert all(post["captionGuidance"] for post in weekly_posts)
-    assert all(post.get("date") is None for post in weekly_posts)
-    assert all(post.get("fixdate") is not True for post in weekly_posts)
+    weeks_by_start = {week.week_start: week for week in weeks}
+    for post in weekly_posts:
+        week_start = post["id"].removeprefix("weekday-lunch-post-week-")
+        week = weeks_by_start[week_start]
+        assert post["fixdate"] is True
+        assert post["date"] == week.post_date
+        assert post["scheduleHints"]["preferredWeekdays"] == ["thursday"]
+        assert post["scheduleHints"]["preferredTime"] == "10:00"
+    assert "scheduleHints" not in monthly
+    assert monthly.get("fixdate") is not True
     assert normalized["startDate"] == START_DATE
     assert normalized["endDate"] == END_DATE
     assert normalized["sourceDatesTitle"] == "Campaign dates"

@@ -102,6 +102,28 @@ def preferred_reel_time_for_strategy(campaign_brief_data: dict[str, Any] | None)
     return _DEFAULT_REEL_TIME
 
 
+def preferred_weekdays_for_reel_intent(
+    intent: Literal["weekday_reel", "weekend_reel"],
+    campaign_brief_data: dict[str, Any] | None,
+) -> list[WeekdayName]:
+    if intent == "weekend_reel":
+        focus = _strategy_focus(campaign_brief_data)
+        if focus == "weekend_family":
+            return ["friday", "sunday"]
+        return ["saturday", "sunday"]
+    return preferred_weekdays_for_strategy(campaign_brief_data)
+
+
+def schedule_hints_for_reel_intent(
+    intent: Literal["weekday_reel", "weekend_reel"],
+    campaign_brief_data: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "preferredWeekdays": preferred_weekdays_for_reel_intent(intent, campaign_brief_data),
+        "preferredTime": preferred_reel_time_for_strategy(campaign_brief_data),
+    }
+
+
 def weekday_name_from_date(value: date) -> WeekdayName:
     return _INDEX_WEEKDAY[value.weekday()]
 

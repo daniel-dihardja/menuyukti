@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
-from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks
+from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks, parse_iso_date
 
 DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
@@ -76,6 +76,24 @@ def _all_slides_have_required_fields(posts: list[dict[str, Any]]) -> list[str]:
 
 def _weekly_posts(posts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [post for post in posts if str(post.get("intent") or "").strip() == "weekday_lunch_post"]
+
+
+def _post_has_schedule_hints(post: dict[str, Any]) -> bool:
+    hints = post.get("scheduleHints")
+    if not isinstance(hints, dict):
+        return False
+    weekdays = hints.get("preferredWeekdays")
+    preferred_time = str(hints.get("preferredTime") or "").strip()
+    return isinstance(weekdays, list) and bool(weekdays) and bool(preferred_time)
+
+
+def _date_in_campaign_window(iso_date: str, start_date: str, end_date: str) -> bool:
+    parsed = parse_iso_date(iso_date)
+    window_start = parse_iso_date(start_date)
+    window_end = parse_iso_date(end_date)
+    if parsed is None or window_start is None or window_end is None:
+        return False
+    return window_start <= parsed <= window_end
 
 
 def try_post_lineup_deterministic_verdict(
@@ -189,9 +207,25 @@ def try_post_lineup_deterministic_verdict(
                     f"post lineup must include one weekday lunch post per week; "
                     f"expected {expected}, got {len(weekly_posts)}.",
                 )
+        issues: list[str] = []
+        for post in weekly_posts:
+            post_id = str(post.get("id") or "weekday_lunch_post")
+            if post.get("fixdate") is not True:
+                issues.append(f"{post_id} must set fixdate true")
+            post_date = str(post.get("date") or "").strip()
+            if not post_date:
+                issues.append(f"{post_id} is missing date")
+            elif start_date and end_date and not _date_in_campaign_window(
+                post_date, start_date, end_date
+            ):
+                issues.append(f"{post_id} date {post_date!r} is outside the campaign window")
+            if not _post_has_schedule_hints(post):
+                issues.append(f"{post_id} is missing scheduleHints (weekdays and preferred time)")
+        if issues:
+            return ("fail", "; ".join(issues[:4]))
         return (
             "pass",
-            "weekday lunch posts are defined by intent; scheduler assigns publish dates.",
+            "each weekday lunch post has fixdate, date within the campaign window, and schedule hints.",
         )
 
     if "slide" in norm and ("group" in norm or "groups" in norm):

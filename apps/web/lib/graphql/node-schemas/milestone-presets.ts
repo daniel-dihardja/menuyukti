@@ -366,14 +366,6 @@ export const menuClustererWeekdaySchema = z.enum([
   'sunday',
 ])
 
-export const menuClustererScheduleHintsSchema = z.object({
-  preferredWeekdays: z.array(menuClustererWeekdaySchema),
-  preferredTime: z.string().trim().min(1),
-  cadenceEligible: z.boolean().default(true),
-})
-
-export type MenuClustererScheduleHints = z.infer<typeof menuClustererScheduleHintsSchema>
-
 export const menuClustererGroupSchema = z.object({
   id: z.string().trim().min(1),
   leadName: z.string().trim().min(1),
@@ -386,7 +378,6 @@ export const menuClustererGroupSchema = z.object({
   coreMessage: z.string().trim().min(1).optional(),
   creativeRole: z.string().trim().min(1).optional(),
   assetHint: z.string().trim().min(1).optional(),
-  scheduleHints: menuClustererScheduleHintsSchema.optional(),
 })
 
 export type MenuClustererGroup = z.infer<typeof menuClustererGroupSchema>
@@ -548,6 +539,7 @@ export const reelLineupReelSchema = z.object({
   groupIds: z.array(z.string().trim().min(1)).min(1),
   weekIndex: z.number().int().positive().optional(),
   date: z.string().optional(),
+  scheduleHints: postLineupScheduleHintsSchema.optional(),
   heroDishes: z.array(reelLineupHeroDishSchema).optional(),
 })
 

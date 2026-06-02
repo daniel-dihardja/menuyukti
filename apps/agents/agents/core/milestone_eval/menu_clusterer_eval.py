@@ -74,20 +74,10 @@ def _top_food_lead_names(data: dict[str, Any]) -> set[str]:
     return set()
 
 
-def _groups_have_schedule_hints(groups: list[dict[str, Any]]) -> bool:
+def _groups_reference_campaign_brief(groups: list[dict[str, Any]]) -> bool:
     if not groups:
         return False
-    for group in groups:
-        hints = group.get("scheduleHints")
-        if not isinstance(hints, dict):
-            return False
-        weekdays = hints.get("preferredWeekdays")
-        preferred_time = str(hints.get("preferredTime") or "").strip()
-        if not isinstance(weekdays, list) or not weekdays or not preferred_time:
-            return False
-        if not str(group.get("strategyFocus") or "").strip():
-            return False
-    return True
+    return all(str(group.get("strategyFocus") or "").strip() for group in groups)
 
 
 def _groups_have_cluster_descriptions(groups: list[dict[str, Any]]) -> list[str]:
@@ -151,27 +141,20 @@ def try_menu_clusterer_deterministic_verdict(
             return ("fail", "menu clusterer data has no groups from prior menu_tagger items.")
         return ("pass", f"menu clusterer produced {len(groups)} food cluster(s) from tagged items.")
 
-    if "campaign" in norm and "brief" in norm:
+    if (
+        ("prior" in norm or "run used" in norm)
+        and "campaign" in norm
+        and "brief" in norm
+    ) or ("restaurant_campaign_brief" in norm and ("prior" in norm or "run used" in norm)):
         source_title = str(data.get("sourceCampaignBriefTitle") or "").strip()
-        if source_title and _groups_have_schedule_hints(groups):
+        if source_title and groups and _groups_reference_campaign_brief(groups):
             return (
                 "pass",
-                "menu clusterer references campaign brief strategy and includes food-group scheduling hints.",
+                "menu clusterer used prior campaign brief strategy for food-group clustering.",
             )
         return (
             "fail",
-            "menu clusterer is missing sourceCampaignBriefTitle or campaign-aware food-group scheduling hints.",
-        )
-
-    if "schedule" in norm or "cadence" in norm or "weekday" in norm:
-        if _groups_have_schedule_hints(groups):
-            return (
-                "pass",
-                "each food reel group includes strategy focus plus preferred weekdays/time scheduling hints.",
-            )
-        return (
-            "fail",
-            "one or more food reel groups is missing strategy focus or preferred weekday/time hints.",
+            "menu clusterer is missing sourceCampaignBriefTitle or campaign-aware strategy on groups.",
         )
 
     if (

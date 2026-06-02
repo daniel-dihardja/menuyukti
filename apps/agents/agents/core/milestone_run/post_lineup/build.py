@@ -6,7 +6,11 @@ import re
 import unicodedata
 from typing import Any, Literal
 
-from agents_app.agents.core.milestone_run.dates_window import CampaignWeek
+from agents_app.agents.core.milestone_run.dates_window import (
+    CampaignWeek,
+    preferred_time_for_strategy,
+    preferred_weekdays_for_strategy,
+)
 
 POST_LINEUP_PINNED_POST_ID = "pinned-monthly-menu"
 POST_LINEUP_WEEKLY_POST_ID_PREFIX = "weekday-lunch-post-week"
@@ -200,12 +204,21 @@ def _resolve_groups(
     return selected
 
 
+def _weekday_lunch_schedule_hints(campaign_brief_data: dict[str, Any] | None) -> dict[str, Any]:
+    return {
+        "preferredWeekdays": preferred_weekdays_for_strategy(campaign_brief_data),
+        "preferredTime": preferred_time_for_strategy(campaign_brief_data),
+    }
+
+
 def _build_post_from_plan(
     plan_post: dict[str, Any],
     *,
     groups_by_id: dict[str, dict[str, Any]],
     food_leads_by_name: dict[str, dict[str, Any]],
     post_id: str,
+    campaign_brief_data: dict[str, Any] | None = None,
+    campaign_week: CampaignWeek | None = None,
 ) -> dict[str, Any]:
     if not isinstance(plan_post, dict):
         raise ValueError("post_lineup plan post must be an object")
@@ -247,6 +260,18 @@ def _build_post_from_plan(
         "slides": slides,
         "groupIds": group_ids,
     }
+
+    if intent == "weekday_lunch_post":
+        if campaign_week is None:
+            raise ValueError("weekday_lunch_post requires a campaign week for scheduling")
+        post_date = str(campaign_week.post_date or "").strip()
+        if not post_date:
+            raise ValueError(
+                f"weekday_lunch_post for week {campaign_week.week_index} is missing post_date"
+            )
+        post["date"] = post_date
+        post["fixdate"] = True
+        post["scheduleHints"] = _weekday_lunch_schedule_hints(campaign_brief_data)
 
     return post
 
@@ -328,6 +353,7 @@ def build_post_lineup_from_plan(
             groups_by_id=groups_by_id,
             food_leads_by_name=food_leads_by_name,
             post_id=POST_LINEUP_PINNED_POST_ID,
+            campaign_brief_data=campaign_brief_data,
         )
     )
 
@@ -338,6 +364,8 @@ def build_post_lineup_from_plan(
                 groups_by_id=groups_by_id,
                 food_leads_by_name=food_leads_by_name,
                 post_id=f"{POST_LINEUP_WEEKLY_POST_ID_PREFIX}-{week.week_start}",
+                campaign_brief_data=campaign_brief_data,
+                campaign_week=week,
             )
         )
 

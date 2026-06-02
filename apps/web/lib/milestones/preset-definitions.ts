@@ -290,10 +290,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           requirement: t('milestonePreset.menu_clusterer.criterionClusterDescription'),
           status: 'open',
         },
-        {
-          requirement: t('milestonePreset.menu_clusterer.criterionSchedulingHints'),
-          status: 'open',
-        },
       ],
     }),
   },
