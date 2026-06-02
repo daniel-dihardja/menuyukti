@@ -4,7 +4,11 @@ import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
 
-import type { ReelLineupHeroDish, ReelLineupReel } from '@/lib/graphql/node-schemas'
+import type {
+  PostLineupScheduleHints,
+  ReelLineupHeroDish,
+  ReelLineupReel,
+} from '@/lib/graphql/node-schemas'
 
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
@@ -35,20 +39,9 @@ export function ReelLineupReelBadges({ reel }: { reel: ReelLineupReel }) {
   )
 }
 
-const WEEKDAY_KEYS = [
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-  'sunday',
-] as const
+type WeekdayName = PostLineupScheduleHints['preferredWeekdays'][number]
 
-function weekdayLabel(
-  day: (typeof WEEKDAY_KEYS)[number],
-  labels: Record<(typeof WEEKDAY_KEYS)[number], string>,
-): string {
+function weekdayLabel(day: WeekdayName, labels: Record<WeekdayName, string>): string {
   return labels[day]
 }
 
