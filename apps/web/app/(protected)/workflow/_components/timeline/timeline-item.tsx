@@ -250,8 +250,8 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
         <Collapsible className="min-w-0 w-full" onOpenChange={setUserOpen} open={open}>
           <Card
             className={cn(
-              'min-w-0 w-full gap-0 border py-4 shadow-none transition-[background-color,border-color]',
-              isSelected ? 'border-primary bg-accent/50' : 'hover:bg-accent/30',
+              'min-w-0 w-full gap-0 bg-card py-4 shadow-none transition-[border-color,colors] dark:bg-muted',
+              isSelected ? 'border border-primary' : 'border-0',
             )}
           >
             <TimelineItemHeaderProvider

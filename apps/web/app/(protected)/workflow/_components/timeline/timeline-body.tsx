@@ -21,7 +21,7 @@ export function TimelineBody() {
         <ScrollArea className="h-full min-h-0 min-w-0">
           <div
             aria-label={t('timelineListLabel')}
-            className="flex min-w-0 flex-col px-0 py-2 md:p-4 md:pr-3"
+            className="flex min-w-0 flex-col px-0 py-2 md:p-4"
             role="listbox"
           >
             {milestones.map((milestone, index) => {

@@ -22,12 +22,8 @@ export function MilestoneStatusMarker({ status }: { status: TimelineMilestoneSta
 
   if (status === 'complete') {
     return (
-      <span
-        aria-label={labels.complete}
-        className={cn(MARKER_BOX, 'rounded-full bg-success text-success-foreground')}
-        role="img"
-      >
-        <Check aria-hidden className={MARKER_ICON_CHECK} />
+      <span aria-label={labels.complete} className={cn(MARKER_BOX, 'text-success')} role="img">
+        <Check aria-hidden className={MARKER_ICON} />
       </span>
     )
   }

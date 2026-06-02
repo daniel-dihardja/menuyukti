@@ -3,7 +3,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 function TimelineToolbarSkeleton() {
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b px-2 py-3 md:px-4">
+    <header className="flex shrink-0 items-center justify-between gap-3 border-border/60 border-b bg-card px-2 py-3 md:px-4">
       <div className="flex min-w-0 items-center gap-2">
         <Skeleton className="h-4 w-28" />
         <Skeleton className="h-5 w-8 rounded-full" />
@@ -20,14 +20,14 @@ function TimelineToolbarSkeleton() {
 function MilestoneCardSkeleton({ showMobilePreview }: { showMobilePreview?: boolean }) {
   return (
     <div className="min-w-0 w-full pb-8">
-      <div className="flex flex-col overflow-hidden rounded-md border py-4">
+      <div className="flex flex-col overflow-hidden rounded-md bg-card py-4 dark:bg-muted">
         <div className="flex items-center justify-between gap-2 px-3 md:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Skeleton className="size-5 shrink-0 rounded-sm" />
             <Skeleton className="h-5 w-36 max-w-[70%]" />
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <Skeleton className="size-9 rounded-full" />
+            <Skeleton className="size-6 rounded-full" />
             <Skeleton className="hidden size-9 rounded-md md:block" />
             <Skeleton className="size-9 rounded-md" />
             <Skeleton className="size-9 rounded-md" />
@@ -51,12 +51,12 @@ export function WorkflowTimelineSkeleton({ className }: { className?: string }) 
       aria-busy="true"
       aria-hidden
       className={cn(
-        'flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background',
+        'flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted dark:bg-background',
         className,
       )}
     >
       <TimelineToolbarSkeleton />
-      <div className="min-h-0 flex-1 overflow-hidden px-0 py-2 md:p-4 md:pr-3">
+      <div className="min-h-0 flex-1 overflow-hidden px-0 py-2 md:p-4">
         <div className="flex flex-col gap-0">
           <div className="md:hidden">
             <MilestoneCardSkeleton showMobilePreview />
@@ -142,7 +142,7 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="grid h-full min-h-0 flex-1 grid-cols-[38fr_34fr_28fr] gap-0 overflow-hidden">
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r pr-2">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-muted dark:bg-background">
               <WorkflowTimelineSkeleton />
             </div>
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20 p-3">

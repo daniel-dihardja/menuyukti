@@ -87,7 +87,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
                     aria-label={
                       showStop ? t('milestoneStopAriaLabel') : t('milestonePlayAriaLabel')
                     }
-                    className="size-9 shrink-0 rounded-full"
+                    className="shrink-0 rounded-full"
                     disabled={showStop ? false : !canRun}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -98,7 +98,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
                       void actions.run?.(milestone.id, milestoneRunChatModel)
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
-                    size="icon"
+                    size="icon-xs"
                     type="button"
                     variant="default"
                   >
