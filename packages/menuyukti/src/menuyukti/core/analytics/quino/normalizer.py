@@ -28,7 +28,7 @@ def _classify_from_code(code_token: str | None) -> tuple[str, str]:
 
 def normalize_quino_excel_with_rejections(
     data: bytes,
-    skiprows: int = 0,
+    skiprows: int = 3,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     required_columns = POSTransactionLineItem.get_required_columns()
     COL = POSTransactionLineItem
@@ -36,7 +36,10 @@ def normalize_quino_excel_with_rejections(
     source = pd.read_excel(BytesIO(data), skiprows=skiprows)
     expected_cols = {"Code", "Name", "Qty", "Net Sales"}
     if not expected_cols.issubset(set(source.columns)):
-        raise ValueError("Missing required QUINO columns: Code, Name, Qty, Net Sales")
+        raise ValueError(
+            "Missing required QUINO columns: Code, Name, Qty, Net Sales. "
+            "Expected Quino Item Sales Report export (title row + header on row 4)."
+        )
 
     rows: list[dict[str, object]] = []
 
@@ -116,6 +119,6 @@ def normalize_quino_excel_with_rejections(
     return cleaned, rejected
 
 
-def normalize_quino_excel(data: bytes, skiprows: int = 0) -> pd.DataFrame:
+def normalize_quino_excel(data: bytes, skiprows: int = 3) -> pd.DataFrame:
     cleaned, _ = normalize_quino_excel_with_rejections(data, skiprows=skiprows)
     return cleaned

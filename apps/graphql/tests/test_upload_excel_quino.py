@@ -9,7 +9,7 @@ from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_contex
 from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
-REPORT_FILE = ROOT_DIR / "reports" / "quino" / "ItemSalesReport.xlsx"
+REPORT_FILE = ROOT_DIR / "reports" / "quino" / "ItemSalesReport_2026_April_02.xlsx"
 
 MUTATION = """
 mutation UploadFile($file: Upload!, $locationId: ID!) {
@@ -32,7 +32,9 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 
 def test_upload_quino_excel_persists_quino_order_facts():
     if not REPORT_FILE.exists():
-        pytest.skip("Expected sample QUINO report at 'reports/quino/ItemSalesReport.xlsx'.")
+        pytest.skip(
+            "Expected QUINO report at 'reports/quino/ItemSalesReport_2026_April_02.xlsx'."
+        )
 
     payload = REPORT_FILE.read_bytes()
     upload = UploadFile(
