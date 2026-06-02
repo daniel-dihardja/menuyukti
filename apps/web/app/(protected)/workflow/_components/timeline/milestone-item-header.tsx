@@ -23,8 +23,8 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { MilestoneStatusMarker } from './milestone-status-marker'
 import { useTimelineItemHeader } from './timeline-item-header-context'
-import { TimelineRailMarker } from './timeline-rail'
 
 export type MilestoneItemHeaderProps = {
   open: boolean
@@ -56,8 +56,8 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
           <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <span className="flex size-5 shrink-0 items-center justify-center">
-                {isMobile && railStatus !== 'empty' ? (
-                  <TimelineRailMarker compact status={railStatus} />
+                {railStatus !== 'empty' ? (
+                  <MilestoneStatusMarker status={railStatus} />
                 ) : (
                   <MilestoneIcon aria-hidden className="size-4 text-muted-foreground" />
                 )}

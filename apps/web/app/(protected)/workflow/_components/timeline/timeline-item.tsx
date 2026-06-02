@@ -22,29 +22,32 @@ import { MilestoneItemMobileRunModel } from './milestone-item-mobile-run-model'
 import { TimelineItemHeaderProvider } from './timeline-item-header-context'
 import { MilestoneItemTabs, type MilestoneItemTabValue } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
-import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
 import { useMilestoneItemDrafts } from './use-milestone-item-drafts'
-import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './types'
+import type { PassCriteriaRow, TimelineMilestone } from './types'
+
+/** When true, the listbox card must not handle Space/Enter (used for selection). */
+function isKeyboardEventFromNestedInteractive(eventTarget: EventTarget | null): boolean {
+  if (!(eventTarget instanceof Element)) {
+    return false
+  }
+  return (
+    eventTarget.closest('textarea, input, select, button, a[href], [contenteditable="true"]') !==
+    null
+  )
+}
 
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { campaignBriefInputFromMilestoneInput } from '@/lib/milestones/campaign-brief-input'
 
 export type TimelineItemProps = {
   milestone: TimelineMilestone
-  positionIndex: number
   isFirst: boolean
   isLast: boolean
   /** Inline data preview below the card (narrow viewports only). */
   isMobile?: boolean
 }
 
-function TimelineItemInner({
-  milestone,
-  positionIndex,
-  isFirst,
-  isLast,
-  isMobile = false,
-}: TimelineItemProps) {
+function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: TimelineItemProps) {
   const t = useTranslations('analytics.workflows.chat')
   const actions = useTimelineActions()
   const { isBusy: isChatBusy } = useTimelineChat()
@@ -100,7 +103,6 @@ function TimelineItemInner({
       : null
   /** Keep the card expanded for the whole run; user can collapse again after the run ends. */
   const open = isMilestoneRunning || userOpen
-  const status: TimelineMilestoneStatus = milestone.status ?? 'empty'
   const [criteriaRows, setCriteriaRows] = useState<PassCriteriaRow[]>(() => milestone.passCriteria)
   const addCriteriaInputId = `milestone-pass-criteria-add-${milestone.id}`
 
@@ -226,11 +228,8 @@ function TimelineItemInner({
   return (
     <div
       aria-selected={isSelected}
-      className={cn(
-        'flex min-w-0 w-full cursor-pointer rounded-md outline-none [contain-intrinsic-size:0_200px] [content-visibility:auto] focus-visible:ring-2 focus-visible:ring-ring/60',
-        isMobile ? 'gap-2' : 'gap-4',
-      )}
-      data-timeline-card=""
+      className="min-w-0 w-full cursor-pointer rounded-md outline-none [contain-intrinsic-size:0_200px] [content-visibility:auto] focus-visible:ring-2 focus-visible:ring-ring/60"
+      data-milestone-card=""
       onClick={() => {
         onSelect(milestone.id)
       }}
@@ -247,34 +246,7 @@ function TimelineItemInner({
       role="option"
       tabIndex={0}
     >
-      {!isMobile ? (
-        <div className="flex w-12 shrink-0 flex-col items-center">
-          {isFirst ? (
-            <div className="flex w-full shrink-0 flex-col items-center pt-4">
-              <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
-                <TimelineRailMarker status={status} />
-              </div>
-              <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
-                {positionIndex}
-              </span>
-            </div>
-          ) : (
-            <div className="flex w-full shrink-0 flex-col items-center">
-              <div aria-hidden className="h-4 w-px shrink-0 border-l border-dashed border-border" />
-              <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
-                <TimelineRailMarker status={status} />
-              </div>
-              <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
-                {positionIndex}
-              </span>
-            </div>
-          )}
-          {isLast ? null : (
-            <div aria-hidden className="min-h-0 w-px flex-1 border-l border-dashed border-border" />
-          )}
-        </div>
-      ) : null}
-      <div className={cn('min-w-0 flex-1', !isLast && 'pb-8')}>
+      <div className={cn('min-w-0 w-full', !isLast && 'pb-8')}>
         <Collapsible className="min-w-0 w-full" onOpenChange={setUserOpen} open={open}>
           <Card
             className={cn(

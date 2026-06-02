@@ -17,38 +17,30 @@ function TimelineToolbarSkeleton() {
   )
 }
 
-function MilestoneCardSkeleton({ showRail }: { showRail: boolean }) {
+function MilestoneCardSkeleton({ showMobilePreview }: { showMobilePreview?: boolean }) {
   return (
-    <div className={cn('flex min-w-0 w-full', showRail ? 'gap-4' : 'gap-2')}>
-      {showRail ? (
-        <div className="hidden w-12 shrink-0 flex-col items-center md:flex">
-          <Skeleton className="size-9 rounded-full" />
-          <Skeleton className="mt-0.5 h-3 w-4" />
-          <Skeleton className="mt-1 min-h-0 w-px flex-1" />
-        </div>
-      ) : null}
-      <div className="min-w-0 flex-1 pb-8">
-        <div className="flex flex-col overflow-hidden rounded-md border py-4">
-          <div className="flex items-center justify-between gap-2 px-3 md:px-6">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <Skeleton className="size-5 shrink-0 rounded-sm" />
-              <Skeleton className="h-5 w-36 max-w-[70%]" />
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <Skeleton className="size-9 rounded-full" />
-              <Skeleton className="size-9 rounded-md" />
-              <Skeleton className="size-9 rounded-md" />
-              <Skeleton className="size-9 rounded-md" />
-            </div>
+    <div className="min-w-0 w-full pb-8">
+      <div className="flex flex-col overflow-hidden rounded-md border py-4">
+        <div className="flex items-center justify-between gap-2 px-3 md:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Skeleton className="size-5 shrink-0 rounded-sm" />
+            <Skeleton className="h-5 w-36 max-w-[70%]" />
           </div>
-          <div className="mt-4 flex gap-2 border-t px-3 pt-4 md:px-6">
-            {Array.from({ length: 5 }, (_, i) => (
-              <Skeleton className="h-8 w-16 shrink-0 rounded-md" key={`milestone-tab-${i}`} />
-            ))}
+          <div className="flex shrink-0 items-center gap-1">
+            <Skeleton className="size-9 rounded-full" />
+            <Skeleton className="hidden size-9 rounded-md md:block" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
           </div>
         </div>
-        {!showRail ? <Skeleton className="mt-2 h-10 w-full rounded-lg" /> : null}
+        <div className="mt-4 flex gap-2 border-t px-3 pt-4 md:px-6">
+          {Array.from({ length: 5 }, (_, i) => (
+            <Skeleton className="h-8 w-16 shrink-0 rounded-md" key={`milestone-tab-${i}`} />
+          ))}
+        </div>
       </div>
+      {showMobilePreview ? <Skeleton className="mt-2 h-10 w-full rounded-lg" /> : null}
     </div>
   )
 }
@@ -67,12 +59,12 @@ export function WorkflowTimelineSkeleton({ className }: { className?: string }) 
       <div className="min-h-0 flex-1 overflow-hidden px-0 py-2 md:p-4 md:pr-3">
         <div className="flex flex-col gap-0">
           <div className="md:hidden">
-            <MilestoneCardSkeleton showRail={false} />
-            <MilestoneCardSkeleton showRail={false} />
+            <MilestoneCardSkeleton showMobilePreview />
+            <MilestoneCardSkeleton showMobilePreview />
           </div>
           <div className="hidden flex-col md:flex">
-            <MilestoneCardSkeleton showRail />
-            <MilestoneCardSkeleton showRail />
+            <MilestoneCardSkeleton />
+            <MilestoneCardSkeleton />
           </div>
         </div>
       </div>

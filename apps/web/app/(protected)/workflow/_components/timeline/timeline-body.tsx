@@ -33,7 +33,6 @@ export function TimelineBody() {
                   isLast={isLast}
                   isMobile={!isDesktop}
                   milestone={milestone}
-                  positionIndex={index + 1}
                 />
               )
             })}
