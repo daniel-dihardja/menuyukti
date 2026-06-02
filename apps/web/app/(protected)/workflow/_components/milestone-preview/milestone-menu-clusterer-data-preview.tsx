@@ -5,7 +5,7 @@ import { Clapperboard } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
-import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -50,7 +50,34 @@ function priceLevelLabel(
 
 type GroupCardLabels = {
   hookBadgeLabel: string
+  detailsBadgeLabel: string
+  itemsSectionTitle: string
   leadLabel: string
+  roleLabel: string
+  categoryLabel: string
+  positionLabel: string
+  groupMixLabel: string
+  groupMixValue: (starCount: number, puzzleCount: number, storytellingStrongCount: number) => string
+  strategySectionTitle: string
+  strategyFocusLabel: string
+  coreMessageLabel: string
+  creativeRoleLabel: string
+  assetHintLabel: string
+  scheduleHintsSectionTitle: string
+  preferredWeekdaysLabel: string
+  preferredTimeLabel: string
+  cadenceEligibleLabel: string
+  cadenceEligibleYes: string
+  cadenceEligibleNo: string
+  weekdayLabels: {
+    monday: string
+    tuesday: string
+    wednesday: string
+    thursday: string
+    friday: string
+    saturday: string
+    sunday: string
+  }
   groupTitle: string
   clusterDescriptionLabel: string
   roleStarLabel: string
@@ -62,6 +89,35 @@ type GroupCardLabels = {
   priceLabels: { low: string; mid: string; high: string }
 }
 
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <p className={mp.bodySmall}>
+      <span className={mp.rowKey}>{label}:</span> {value}
+    </p>
+  )
+}
+
+function weekdayLabel(
+  day: string,
+  labels: {
+    monday: string
+    tuesday: string
+    wednesday: string
+    thursday: string
+    friday: string
+    saturday: string
+    sunday: string
+  },
+): string {
+  if (day === 'monday') return labels.monday
+  if (day === 'tuesday') return labels.tuesday
+  if (day === 'wednesday') return labels.wednesday
+  if (day === 'thursday') return labels.thursday
+  if (day === 'friday') return labels.friday
+  if (day === 'saturday') return labels.saturday
+  return labels.sunday
+}
+
 function MenuClustererGroupCard({
   group,
   labels,
@@ -69,32 +125,100 @@ function MenuClustererGroupCard({
   group: MenuClustererGroup
   labels: GroupCardLabels
 }) {
+  const preferredWeekdays = group.scheduleHints?.preferredWeekdays ?? []
+  const preferredWeekdaysText =
+    preferredWeekdays.length > 0
+      ? preferredWeekdays.map((day) => weekdayLabel(day, labels.weekdayLabels)).join(', ')
+      : ''
+
   return (
     <Card className="gap-3 py-4 shadow-none">
-      <CardHeader className="px-4 pb-0">
+      <CardHeader className="flex flex-col gap-2 px-4 pb-0">
+        <CardTitle className="text-base">{labels.groupTitle}</CardTitle>
         <MenuClustererGroupCardHeader group={group} labels={labels} hideTitle />
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">{labels.hookBadgeLabel}</Badge>
+          <Badge variant="secondary">{labels.detailsBadgeLabel}</Badge>
+        </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4 px-4 pt-0">
+      <CardContent className="flex flex-col gap-3 px-4 pt-0">
+        <DetailRow
+          label={labels.groupMixLabel}
+          value={labels.groupMixValue(
+            group.mix.starCount,
+            group.mix.puzzleCount,
+            group.mix.storytellingStrongCount,
+          )}
+        />
         {group.clusterDescription?.trim() ? (
-          <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-muted/20 p-3">
+          <div>
             <p className={mp.sectionTitle}>{labels.clusterDescriptionLabel}</p>
             <p className={`${mp.body} text-pretty text-foreground`}>
               {group.clusterDescription.trim()}
             </p>
           </div>
         ) : null}
+        {group.strategyFocus || group.coreMessage || group.creativeRole || group.assetHint ? (
+          <div>
+            <p className={mp.sectionTitle}>{labels.strategySectionTitle}</p>
+            <div className="space-y-1.5">
+              {group.strategyFocus ? (
+                <DetailRow label={labels.strategyFocusLabel} value={group.strategyFocus} />
+              ) : null}
+              {group.coreMessage ? (
+                <DetailRow label={labels.coreMessageLabel} value={group.coreMessage} />
+              ) : null}
+              {group.creativeRole ? (
+                <DetailRow label={labels.creativeRoleLabel} value={group.creativeRole} />
+              ) : null}
+              {group.assetHint ? (
+                <DetailRow label={labels.assetHintLabel} value={group.assetHint} />
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+        {group.scheduleHints ? (
+          <div>
+            <p className={mp.sectionTitle}>{labels.scheduleHintsSectionTitle}</p>
+            <div className="space-y-1.5">
+              {preferredWeekdaysText ? (
+                <DetailRow label={labels.preferredWeekdaysLabel} value={preferredWeekdaysText} />
+              ) : null}
+              <DetailRow
+                label={labels.preferredTimeLabel}
+                value={group.scheduleHints.preferredTime}
+              />
+              <DetailRow
+                label={labels.cadenceEligibleLabel}
+                value={
+                  group.scheduleHints.cadenceEligible
+                    ? labels.cadenceEligibleYes
+                    : labels.cadenceEligibleNo
+                }
+              />
+            </div>
+          </div>
+        ) : null}
+        <div>
+          <p className={mp.sectionTitle}>{labels.itemsSectionTitle}</p>
+        </div>
         <ul className={`${mp.listDecimal} flex flex-col gap-2`}>
           {group.items.map((item) => {
             const isLead = item.position === 1
             return (
               <li
                 key={`${group.id}-${item.position}-${item.name}`}
-                className={cn(mp.insetCard, isLead && 'ring-1 ring-sky-200 dark:ring-sky-800')}
+                className={cn(
+                  'rounded-md border border-border/60 bg-muted/20 px-3 py-2.5',
+                  isLead && 'border-sky-300 dark:border-sky-700',
+                )}
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className={`${mp.body} font-medium text-foreground`}>{item.name}</p>
-                    <p className={`${mp.bodySmall} text-muted-foreground`}>{item.category}</p>
+                    <p className={`${mp.bodySmall} text-muted-foreground`}>
+                      {labels.categoryLabel}: {item.category}
+                    </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1">
                     {isLead ? (
@@ -110,6 +234,12 @@ function MenuClustererGroupCard({
                     </Badge>
                   </div>
                 </div>
+                <p className={`${mp.bodySmall} mt-1.5`}>
+                  <span className={mp.rowKey}>{labels.roleLabel}:</span>{' '}
+                  {item.role === 'star' ? labels.roleStarLabel : labels.rolePuzzleLabel}
+                  <span className="mx-1">·</span>
+                  <span className={mp.rowKey}>{labels.positionLabel}:</span> {item.position}
+                </p>
                 {item.reelMoment ? (
                   <p className={`${mp.bodySmall} mt-2`}>
                     <span className={mp.rowKey}>{labels.reelMomentLabel}:</span> {item.reelMoment}
@@ -162,7 +292,7 @@ function MenuClustererGroupCardHeader({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {hideTitle ? null : <p className={mp.sectionTitle}>{labels.groupTitle}</p>}
-        <Badge variant="outline" className="gap-1 font-normal">
+        <Badge variant="outline" className="gap-1">
           <Clapperboard className="size-3 opacity-70" aria-hidden />
           {formatMenuTaggerTagLabel(group.anchor.value)}
         </Badge>
@@ -286,7 +416,39 @@ export function MilestoneMenuClustererDataPreview({
   const labels = useMemo(
     () => ({
       hookBadgeLabel: t('milestoneMenuClustererPreviewHookBadge'),
+      detailsBadgeLabel: t('milestoneMenuClustererPreviewDetailsBadge'),
+      itemsSectionTitle: t('milestoneMenuClustererPreviewItemsSectionTitle'),
       clusterDescriptionLabel: t('milestoneMenuClustererPreviewClusterDescription'),
+      roleLabel: t('milestoneMenuClustererPreviewRoleLabel'),
+      categoryLabel: t('milestoneMenuClustererPreviewCategoryLabel'),
+      positionLabel: t('milestoneMenuClustererPreviewPositionLabel'),
+      groupMixLabel: t('milestoneMenuClustererPreviewGroupMixLabel'),
+      groupMixValue: (starCount: number, puzzleCount: number, storytellingStrongCount: number) =>
+        t('milestoneMenuClustererPreviewGroupMixValue', {
+          starCount,
+          puzzleCount,
+          storytellingStrongCount,
+        }),
+      strategySectionTitle: t('milestoneMenuClustererPreviewStrategySectionTitle'),
+      strategyFocusLabel: t('milestoneMenuClustererPreviewStrategyFocusLabel'),
+      coreMessageLabel: t('milestoneMenuClustererPreviewCoreMessageLabel'),
+      creativeRoleLabel: t('milestoneMenuClustererPreviewCreativeRoleLabel'),
+      assetHintLabel: t('milestoneMenuClustererPreviewAssetHintLabel'),
+      scheduleHintsSectionTitle: t('milestoneMenuClustererPreviewScheduleHintsSectionTitle'),
+      preferredWeekdaysLabel: t('milestoneMenuClustererPreviewPreferredWeekdaysLabel'),
+      preferredTimeLabel: t('milestoneMenuClustererPreviewPreferredTimeLabel'),
+      cadenceEligibleLabel: t('milestoneMenuClustererPreviewCadenceEligibleLabel'),
+      cadenceEligibleYes: t('milestoneMenuClustererPreviewCadenceEligibleYes'),
+      cadenceEligibleNo: t('milestoneMenuClustererPreviewCadenceEligibleNo'),
+      weekdayLabels: {
+        monday: t('milestoneMenuClustererPreviewWeekdayMonday'),
+        tuesday: t('milestoneMenuClustererPreviewWeekdayTuesday'),
+        wednesday: t('milestoneMenuClustererPreviewWeekdayWednesday'),
+        thursday: t('milestoneMenuClustererPreviewWeekdayThursday'),
+        friday: t('milestoneMenuClustererPreviewWeekdayFriday'),
+        saturday: t('milestoneMenuClustererPreviewWeekdaySaturday'),
+        sunday: t('milestoneMenuClustererPreviewWeekdaySunday'),
+      },
       roleStarLabel: t('milestoneMenuTaggerPreviewRoleStar'),
       rolePuzzleLabel: t('milestoneMenuTaggerPreviewRolePuzzle'),
       storytellingStrongLabel: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
