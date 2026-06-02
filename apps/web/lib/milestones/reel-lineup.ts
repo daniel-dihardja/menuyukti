@@ -148,8 +148,6 @@ export function buildReelLineupFromPlan(
   const validGroupIds = new Set(groupsById.keys())
 
   const reels = weeklyPlanByIndex(weeklyReels, weeks).flatMap(({ week, plan }) => {
-    const weekdayDate = week.postDate
-    const weekendDate = pickWeekendReelDate(week.weekStart, week.weekEnd, startDate, endDate)
     const weekdayGroupId = groupIdFromPlanSlot(plan.weekdayReel, 'weekday_reel', validGroupIds)
     const weekendGroupId = groupIdFromPlanSlot(plan.weekendReel, 'weekend_reel', validGroupIds)
     const weekdayGroup = groupsById.get(weekdayGroupId)
@@ -168,7 +166,6 @@ export function buildReelLineupFromPlan(
         explanation: plan.weekdayReel.explanation.trim(),
         groupIds: [weekdayGroupId],
         weekIndex: week.weekIndex,
-        date: weekdayDate,
         heroDishes: heroDishesFromGroup(weekdayGroup),
       },
       {
@@ -180,7 +177,6 @@ export function buildReelLineupFromPlan(
         explanation: plan.weekendReel.explanation.trim(),
         groupIds: [weekendGroupId],
         weekIndex: week.weekIndex,
-        date: weekendDate,
         heroDishes: heroDishesFromGroup(weekendGroup),
       },
     ]
@@ -200,57 +196,4 @@ export function buildReelLineupFromPlan(
     ...(sourceDatesTitle ? { sourceDatesTitle } : {}),
     ...(notes ? { notes } : {}),
   }
-}
-
-function pickWeekendReelDate(
-  weekStart: string,
-  weekEnd: string,
-  windowStart: string,
-  windowEnd: string,
-): string {
-  const start = parseIsoDate(weekStart)
-  const end = parseIsoDate(weekEnd)
-  const winStart = parseIsoDate(windowStart)
-  const winEnd = parseIsoDate(windowEnd)
-  if (!start || !end || !winStart || !winEnd) {
-    return weekEnd
-  }
-
-  const rangeStart = start > winStart ? start : winStart
-  const rangeEnd = end < winEnd ? end : winEnd
-  if (rangeStart > rangeEnd) {
-    return weekEnd
-  }
-
-  for (const target of [6, 0]) {
-    const cursor = new Date(rangeStart)
-    while (cursor <= rangeEnd) {
-      if (cursor.getDay() === target) {
-        return isoDate(cursor)
-      }
-      cursor.setDate(cursor.getDate() + 1)
-    }
-  }
-  return weekEnd
-}
-
-function parseIsoDate(value: string): Date | null {
-  const text = value.trim()
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    return null
-  }
-  const [year, month, day] = text.split('-').map(Number)
-  const date = new Date(year!, month! - 1, day)
-  if (date.getFullYear() !== year || date.getMonth() !== month! - 1 || date.getDate() !== day) {
-    return null
-  }
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
-function isoDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
 }

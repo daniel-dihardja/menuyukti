@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
 from typing import Any, Literal
 
 from agents_app.agents.core.milestone_run.dates_window import (
     CampaignWeek,
-    parse_iso_date,
     preferred_weekdays_for_strategy,
 )
 
 REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX = "weekday-reel-week-"
 REEL_LINEUP_WEEKEND_REEL_ID_PREFIX = "weekend-reel-week-"
-_WEEKEND_PREFERRED = ("saturday", "sunday")
 
 
 def _creative_role(group: dict[str, Any]) -> str:
@@ -104,26 +101,6 @@ def _hero_dishes_from_group(group: dict[str, Any]) -> list[dict[str, Any]]:
     return dishes
 
 
-def _pick_weekend_reel_date(
-    week_start: date,
-    week_end: date,
-    window_start: date,
-    window_end: date,
-) -> str | None:
-    range_start = max(week_start, window_start)
-    range_end = min(week_end, window_end)
-    if range_start > range_end:
-        return None
-    for day_name in _WEEKEND_PREFERRED:
-        target_index = {"saturday": 5, "sunday": 6}[day_name]
-        cursor = range_start
-        while cursor <= range_end:
-            if cursor.weekday() == target_index:
-                return cursor.isoformat()
-            cursor += timedelta(days=1)
-    return None
-
-
 def coerce_campaign_weeks(raw_weeks: list[Any]) -> list[CampaignWeek]:
     """Normalize LangGraph state weeks (dataclass or serialized dict) for build."""
     weeks: list[CampaignWeek] = []
@@ -148,34 +125,18 @@ def coerce_campaign_weeks(raw_weeks: list[Any]) -> list[CampaignWeek]:
 def reel_week_plan(
     campaign_weeks: list[CampaignWeek],
     *,
-    start_date: str,
-    end_date: str,
     campaign_brief_data: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
-    window_start = parse_iso_date(start_date)
-    window_end = parse_iso_date(end_date)
-    if window_start is None or window_end is None:
-        return []
-
     preferred_weekdays = preferred_weekdays_for_strategy(campaign_brief_data)
-    plan: list[dict[str, Any]] = []
-    for week in campaign_weeks:
-        week_start = parse_iso_date(week.week_start)
-        week_end = parse_iso_date(week.week_end)
-        weekend_date: str | None = None
-        if week_start is not None and week_end is not None:
-            weekend_date = _pick_weekend_reel_date(week_start, week_end, window_start, window_end)
-        plan.append(
-            {
-                "weekIndex": week.week_index,
-                "weekStart": week.week_start,
-                "weekEnd": week.week_end,
-                "weekdayReelDate": week.post_date,
-                "weekendReelDate": weekend_date or week.week_end,
-                "preferredWeekdays": preferred_weekdays,
-            }
-        )
-    return plan
+    return [
+        {
+            "weekIndex": week.week_index,
+            "weekStart": week.week_start,
+            "weekEnd": week.week_end,
+            "preferredWeekdays": preferred_weekdays,
+        }
+        for week in campaign_weeks
+    ]
 
 
 def _weekly_plan_by_index(
@@ -259,7 +220,6 @@ def _build_reel(
     group_id: str,
     groups_by_id: dict[str, dict[str, Any]],
     week_index: int,
-    reel_date: str,
 ) -> dict[str, Any]:
     title, description, explanation = _reel_copy_from_plan(slot, intent=intent)
     group = groups_by_id.get(group_id)
@@ -275,7 +235,6 @@ def _build_reel(
         "explanation": explanation,
         "groupIds": [group_id],
         "weekIndex": week_index,
-        "date": reel_date.strip(),
         "heroDishes": _hero_dishes_from_group(group),
     }
     return reel
@@ -294,6 +253,7 @@ def build_reel_lineup_from_plan(
     source_dates_title: str = "",
     notes: str = "",
 ) -> dict[str, Any]:
+    _ = campaign_brief_data
     if not groups:
         raise ValueError("reel_lineup requires at least one menu clusterer group")
     if not campaign_weeks:
@@ -302,20 +262,9 @@ def build_reel_lineup_from_plan(
     campaign_weeks = coerce_campaign_weeks(list(campaign_weeks))
     groups_by_id = _groups_by_id(groups)
     valid_group_ids = set(groups_by_id.keys())
-    week_plan_rows = reel_week_plan(
-        campaign_weeks,
-        start_date=start_date,
-        end_date=end_date,
-        campaign_brief_data=campaign_brief_data,
-    )
-    week_dates_by_index = {row["weekIndex"]: row for row in week_plan_rows}
 
     reels: list[dict[str, Any]] = []
     for week, weekly_plan in _weekly_plan_by_index(weekly_reels, campaign_weeks):
-        dates_row = week_dates_by_index.get(week.week_index, {})
-        weekday_date = str(dates_row.get("weekdayReelDate") or week.post_date).strip()
-        weekend_date = str(dates_row.get("weekendReelDate") or week.week_end).strip()
-
         weekday_slot = weekly_plan.get("weekdayReel")
         weekend_slot = weekly_plan.get("weekendReel")
         if not isinstance(weekday_slot, dict):
@@ -341,7 +290,6 @@ def build_reel_lineup_from_plan(
                 group_id=weekday_group_id,
                 groups_by_id=groups_by_id,
                 week_index=week.week_index,
-                reel_date=weekday_date,
             )
         )
         reels.append(
@@ -352,7 +300,6 @@ def build_reel_lineup_from_plan(
                 group_id=weekend_group_id,
                 groups_by_id=groups_by_id,
                 week_index=week.week_index,
-                reel_date=weekend_date,
             )
         )
 

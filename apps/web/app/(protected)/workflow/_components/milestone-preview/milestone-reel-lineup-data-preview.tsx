@@ -16,22 +16,29 @@ import {
   useMilestonePreviewSelection,
 } from './milestone-preview-list-detail'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
+import {
+  reelIntentBadgeLabel,
+  ReelLineupHeroDishes,
+  ReelLineupReelBadges,
+  ReelLineupReelCopy,
+  ReelLineupReelMeta,
+} from './reel-lineup-preview-parts'
 
 export type MilestoneReelLineupDataPreviewProps = {
   data: ReelLineupMilestoneData
 }
 
-function reelIntentBadgeLabel(
-  intent: ReelLineupReel['intent'],
-  t: ReturnType<typeof useTranslations<'analytics.workflows.chat'>>,
-): string {
-  if (intent === 'weekday_reel') {
-    return t('milestoneReelLineupPreviewWeekdayBadge')
-  }
-  return t('milestoneReelLineupPreviewWeekendBadge')
-}
-
-function ReelCard({ reel, index }: { reel: ReelLineupReel; index: number }) {
+function ReelCard({
+  reel,
+  index,
+  roleStarLabel,
+  rolePuzzleLabel,
+}: {
+  reel: ReelLineupReel
+  index: number
+  roleStarLabel: string
+  rolePuzzleLabel: string
+}) {
   const t = useTranslations('analytics.workflows.chat')
 
   return (
@@ -40,44 +47,16 @@ function ReelCard({ reel, index }: { reel: ReelLineupReel; index: number }) {
         <CardTitle className="text-base">
           {t('milestoneReelLineupPreviewReelTitle', { number: index + 1, title: reel.title })}
         </CardTitle>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{t('milestoneReelLineupPreviewReelBadge')}</Badge>
-          <Badge variant="secondary">{reelIntentBadgeLabel(reel.intent, t)}</Badge>
-          {reel.date ? (
-            <Badge variant="outline">
-              {t('milestoneReelLineupPreviewScheduledDate', { date: reel.date })}
-            </Badge>
-          ) : null}
-        </div>
+        <ReelLineupReelBadges reel={reel} />
       </CardHeader>
       <CardContent className="flex flex-col gap-3 px-4 pt-0">
-        <div>
-          <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewDescription')}</p>
-          <p className={mp.body}>{reel.description}</p>
-        </div>
-        <div>
-          <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewExplanation')}</p>
-          <p className={mp.body}>{reel.explanation}</p>
-        </div>
-        {reel.heroDishes && reel.heroDishes.length > 0 ? (
-          <div>
-            <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewHeroDishes')}</p>
-            <ul className={`${mp.body} list-disc space-y-1 pl-5`}>
-              {reel.heroDishes.map((dish) => (
-                <li key={dish.name}>
-                  {dish.name}
-                  {dish.reelMoment ? ` · ${dish.reelMoment}` : ''}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        {reel.groupIds.length > 0 ? (
-          <p className={mp.bodySmall}>
-            <span className={mp.rowKey}>{t('milestoneReelLineupPreviewGroupIds')}:</span>{' '}
-            {reel.groupIds.join(', ')}
-          </p>
-        ) : null}
+        <ReelLineupReelCopy reel={reel} />
+        <ReelLineupHeroDishes
+          reel={reel}
+          roleStarLabel={roleStarLabel}
+          rolePuzzleLabel={rolePuzzleLabel}
+        />
+        <ReelLineupReelMeta reel={reel} />
       </CardContent>
     </Card>
   )
@@ -106,8 +85,8 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
 
   const viewDetailsLabel = t('milestoneLineupPreviewViewDetails')
   const backLabel = t('milestoneLineupPreviewBackToList')
-  const reelsHelpTitle = t('milestoneReelLineupPreviewHelpReels')
-  const detailTitle = selectedReel?.title ?? reelsHelpTitle
+  const roleStarLabel = t('milestonePostLineupPreviewRoleStar')
+  const rolePuzzleLabel = t('milestonePostLineupPreviewRolePuzzle')
 
   if (data.reels.length === 0) {
     return (
@@ -121,6 +100,9 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
       </div>
     )
   }
+
+  const reelsHelpTitle = t('milestoneReelLineupPreviewHelpReels')
+  const detailTitle = selectedReel?.title ?? reelsHelpTitle
 
   return (
     <div className="flex flex-col gap-4">
@@ -175,11 +157,15 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
         onBack={clear}
         list={
           <div className="flex flex-col gap-2">
-            {listItems.map(({ id, reel }) => (
+            {listItems.map(({ id, reel }, index) => (
               <MilestonePreviewListRow
                 key={id}
                 title={reel.title}
-                description={reel.description}
+                description={
+                  reel.description?.trim()
+                    ? reel.description.trim()
+                    : t('milestoneReelLineupPreviewReelListMeta', { number: index + 1 })
+                }
                 meta={
                   <>
                     <Badge variant="outline">{t('milestoneReelLineupPreviewReelBadge')}</Badge>
@@ -194,7 +180,12 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
         }
         detail={
           selectedReel && selectedIndex >= 0 ? (
-            <ReelCard reel={selectedReel} index={selectedIndex} />
+            <ReelCard
+              reel={selectedReel}
+              index={selectedIndex}
+              roleStarLabel={roleStarLabel}
+              rolePuzzleLabel={rolePuzzleLabel}
+            />
           ) : null
         }
       />

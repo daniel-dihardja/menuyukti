@@ -171,6 +171,7 @@ def test_build_reel_lineup_from_plan_creates_weekday_and_weekend_reels() -> None
     assert all(reel["groupIds"] == ["group-1"] for reel in weekday_reels)
     assert all(reel["groupIds"] == ["group-4"] for reel in weekend_reels)
     assert all(reel["description"] and reel["explanation"] for reel in normalized["reels"])
+    assert all("date" not in reel for reel in normalized["reels"])
     assert normalized["reels"][0]["heroDishes"][0]["name"] == "Ribeye"
 
 

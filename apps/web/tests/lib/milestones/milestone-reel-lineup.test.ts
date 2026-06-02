@@ -100,5 +100,6 @@ describe('reel_lineup preset', () => {
     expect(built.reels).toHaveLength(weeks.length * 2)
     expect(milestonedataValueSchema.safeParse(built).success).toBe(true)
     expect(built.reels.every((reel) => reel.description && reel.explanation)).toBe(true)
+    expect(built.reels.every((reel) => reel.date === undefined)).toBe(true)
   })
 })

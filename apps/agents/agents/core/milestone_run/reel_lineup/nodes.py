@@ -356,8 +356,6 @@ async def plan_reels(state: ReelLineupState) -> dict[str, Any]:
 
     week_plan = reel_week_plan(
         campaign_weeks_list,
-        start_date=start_date,
-        end_date=end_date,
         campaign_brief_data=campaign_brief_data,
     )
     expected_week_count = len(week_plan)
