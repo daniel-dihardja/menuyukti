@@ -68,6 +68,7 @@ export type SchedulerCalendarProps = {
   windowEnd: string
   locale: string
   slots?: SchedulerMilestoneData['slots']
+  publicHolidays?: SchedulerMilestoneData['publicHolidays']
   postLineupPosts?: PostLineupPost[]
   reelLineupReels?: ReelLineupReel[]
   className?: string
@@ -275,6 +276,7 @@ export function SchedulerCalendar({
   windowEnd,
   locale,
   slots = [],
+  publicHolidays = [],
   postLineupPosts,
   reelLineupReels,
   className,
@@ -467,7 +469,6 @@ export function SchedulerCalendar({
           ) : null}
         </div>
       </div>
-
       {isDesktop && viewMode === 'week' ? (
         <SchedulerCalendarWeekGrid
           weekStartIso={weekStartIso}
@@ -475,6 +476,7 @@ export function SchedulerCalendar({
           windowEnd={windowEnd}
           locale={locale}
           slots={slots}
+          publicHolidays={publicHolidays}
           onSlotClick={(slot) => {
             setSelectedDateIso(slot.date)
           }}
@@ -486,6 +488,7 @@ export function SchedulerCalendar({
           windowEnd={windowEnd}
           locale={locale}
           slots={slots}
+          publicHolidays={publicHolidays}
           onDayClick={(isoDate) => {
             setWeekStartIso(weekStartIsoForDay(isoDate, windowStart, windowEnd))
             setViewMode('week')
@@ -501,6 +504,7 @@ export function SchedulerCalendar({
           windowEnd={windowEnd}
           locale={locale}
           slots={slots}
+          publicHolidays={publicHolidays}
           onSlotClick={(slot) => {
             setSelectedDateIso(slot.date)
           }}

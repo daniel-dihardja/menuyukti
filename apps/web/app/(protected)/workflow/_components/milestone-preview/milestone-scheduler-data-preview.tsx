@@ -88,6 +88,7 @@ export function MilestoneSchedulerDataPreview({
         className="min-h-0 flex-1"
         locale={locale}
         slots={data.slots ?? []}
+        publicHolidays={window.publicHolidays}
         postLineupPosts={postLineupPosts}
         reelLineupReels={reelLineupReels}
         windowEnd={window.endDate}

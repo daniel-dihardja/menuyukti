@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -24,6 +25,7 @@ export type SchedulerCalendarMonthListProps = {
   windowEnd: string
   locale: string
   slots?: SchedulerMilestoneData['slots']
+  publicHolidays?: SchedulerMilestoneData['publicHolidays']
   className?: string
   onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
 }
@@ -49,9 +51,11 @@ export function SchedulerCalendarMonthList({
   windowEnd,
   locale,
   slots = [],
+  publicHolidays = [],
   className,
   onSlotClick,
 }: SchedulerCalendarMonthListProps) {
+  const t = useTranslations('analytics.workflows.chat')
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd).filter((day) => day.inMonth),
     [monthStartIso, windowEnd, windowStart],
@@ -59,6 +63,16 @@ export function SchedulerCalendarMonthList({
   const monthLabel = useMemo(
     () => formatSchedulerMonthLabel(monthStartIso, locale),
     [locale, monthStartIso],
+  )
+  const holidayByDate = useMemo(
+    () =>
+      new Map(
+        publicHolidays.map((holiday) => [
+          holiday.date,
+          holiday.name.trim().length > 0 ? holiday.name : holiday.date,
+        ]),
+      ),
+    [publicHolidays],
   )
 
   return (
@@ -72,6 +86,11 @@ export function SchedulerCalendarMonthList({
         {monthDays.map((day) => {
           const { weekday, day: dayNumber } = formatDayHeader(day.isoDate, locale)
           const daySlots = schedulerSlotsForDate(slots, day.isoDate)
+          const dayDate = parseIsoDateOnly(day.isoDate)
+          const dayOfWeek = dayDate?.getDay()
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+          const holidayName = holidayByDate.get(day.isoDate)
+          const isPublicHoliday = holidayName !== undefined
 
           return (
             <li
@@ -81,6 +100,7 @@ export function SchedulerCalendarMonthList({
               className={cn(
                 'flex min-w-0 items-start gap-3 px-3 py-2.5',
                 !day.inWindow && 'bg-muted/30 text-muted-foreground',
+                isWeekend && day.inWindow && 'bg-amber-50/80 dark:bg-amber-950/20',
                 day.isToday && day.inWindow && 'bg-primary/10 text-primary',
               )}
             >
@@ -92,6 +112,18 @@ export function SchedulerCalendarMonthList({
               </div>
 
               <div className="flex min-w-0 flex-1 flex-col gap-1">
+                {(isWeekend || isPublicHoliday) && day.inWindow ? (
+                  <div className="mb-1 flex flex-wrap items-center gap-1">
+                    {isPublicHoliday ? (
+                      <span
+                        className="rounded-sm border border-rose-300/80 bg-rose-100/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-900 dark:border-rose-700/70 dark:bg-rose-900/40 dark:text-rose-100"
+                        title={holidayName}
+                      >
+                        {t('milestoneSchedulerPreviewHolidayBadge')}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
                 {daySlots.length > 0 ? (
                   daySlots.map((slot) => (
                     <button
