@@ -816,6 +816,9 @@ class ReelLineupHeroDishOutput(BaseModel):
     name: str
     reelMoment: str | None = None
     role: Literal["star", "puzzle"] | None = None
+    category: str | None = None
+    storytellingFit: Literal["strong", "weak"] | None = None
+    popularity: float | None = Field(default=None, ge=0, le=1)
 
     @field_validator("name", mode="before")
     @classmethod
@@ -828,6 +831,14 @@ class ReelLineupHeroDishOutput(BaseModel):
         if not value:
             raise ValueError("must be non-empty")
         return value
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def _normalize_category(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
 
 
 class ReelLineupReelOutput(BaseModel):

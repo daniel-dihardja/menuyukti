@@ -101,5 +101,14 @@ describe('reel_lineup preset', () => {
     expect(milestonedataValueSchema.safeParse(built).success).toBe(true)
     expect(built.reels.every((reel) => reel.description && reel.explanation)).toBe(true)
     expect(built.reels.every((reel) => reel.date === undefined)).toBe(true)
+
+    const weekdayReel = built.reels.find((reel) => reel.intent === 'weekday_reel')
+    expect(weekdayReel?.heroDishes?.[0]).toMatchObject({
+      name: 'Ribeye',
+      role: 'star',
+      category: 'MAINS',
+      storytellingFit: 'strong',
+      reelMoment: 'static_hero',
+    })
   })
 })

@@ -525,7 +525,10 @@ export const reelLineupReelIntentSchema = z.enum(['weekday_reel', 'weekend_reel'
 export const reelLineupHeroDishSchema = z.object({
   name: z.string().trim().min(1),
   reelMoment: z.string().optional(),
-  role: z.enum(['star', 'puzzle']).optional(),
+  role: menuTaggerItemRoleSchema.optional(),
+  category: z.string().trim().min(1).optional(),
+  storytellingFit: z.enum(['strong', 'weak']).optional(),
+  popularity: z.number().min(0).max(1).optional(),
 })
 
 export type ReelLineupHeroDish = z.infer<typeof reelLineupHeroDishSchema>

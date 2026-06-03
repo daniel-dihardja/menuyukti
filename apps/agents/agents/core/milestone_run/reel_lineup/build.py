@@ -98,6 +98,15 @@ def _hero_dishes_from_group(group: dict[str, Any]) -> list[dict[str, Any]]:
         role = str(item.get("role") or "").strip()
         if role in ("star", "puzzle"):
             dish["role"] = role
+        category = str(item.get("category") or "").strip()
+        if category:
+            dish["category"] = category
+        storytelling_fit = item.get("storytellingFit")
+        if storytelling_fit in ("strong", "weak"):
+            dish["storytellingFit"] = storytelling_fit
+        popularity = item.get("popularity")
+        if isinstance(popularity, (int, float)) and 0 <= float(popularity) <= 1:
+            dish["popularity"] = float(popularity)
         dishes.append(dish)
     return dishes
 

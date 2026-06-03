@@ -8,13 +8,13 @@ import type { PostLineupPost, PostLineupSlide } from '@/lib/graphql/node-schemas
 
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
-const ROLE_BADGE_CLASS = {
+export const LINEUP_ROLE_BADGE_CLASS = {
   star: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100',
   puzzle:
     'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
 } as const
 
-const STORYTELLING_BADGE_CLASS = {
+export const LINEUP_STORYTELLING_BADGE_CLASS = {
   strong:
     'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
   weak: 'border-border bg-muted/40 text-muted-foreground',
@@ -104,7 +104,7 @@ function PostLineupSlideRow({
         {title}
       </p>
       {slide.role ? (
-        <Badge variant="outline" className={ROLE_BADGE_CLASS[slide.role]}>
+        <Badge variant="outline" className={LINEUP_ROLE_BADGE_CLASS[slide.role]}>
           {slide.role === 'star' ? roleStarLabel : rolePuzzleLabel}
         </Badge>
       ) : null}
@@ -114,7 +114,7 @@ function PostLineupSlideRow({
         </Badge>
       ) : null}
       {slide.storytellingFit ? (
-        <Badge variant="outline" className={STORYTELLING_BADGE_CLASS[slide.storytellingFit]}>
+        <Badge variant="outline" className={LINEUP_STORYTELLING_BADGE_CLASS[slide.storytellingFit]}>
           {slide.storytellingFit === 'strong'
             ? t('milestonePromotionCandidatesPreviewStorytellingStrong')
             : t('milestonePromotionCandidatesPreviewStorytellingWeak')}

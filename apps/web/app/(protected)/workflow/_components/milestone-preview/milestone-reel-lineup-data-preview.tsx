@@ -53,6 +53,7 @@ function ReelCard({
         <ReelLineupReelCopy reel={reel} />
         <ReelLineupHeroDishes
           reel={reel}
+          layout="bullet"
           roleStarLabel={roleStarLabel}
           rolePuzzleLabel={rolePuzzleLabel}
         />

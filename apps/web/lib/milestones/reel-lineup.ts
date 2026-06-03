@@ -74,6 +74,11 @@ function heroDishesFromGroup(group: MenuClustererGroup) {
       name: item.name,
       ...(item.reelMoment ? { reelMoment: item.reelMoment } : {}),
       ...(item.role === 'star' || item.role === 'puzzle' ? { role: item.role } : {}),
+      ...(item.category?.trim() ? { category: item.category.trim() } : {}),
+      ...(item.storytellingFit === 'strong' || item.storytellingFit === 'weak'
+        ? { storytellingFit: item.storytellingFit }
+        : {}),
+      ...(typeof item.popularity === 'number' ? { popularity: item.popularity } : {}),
     }))
 }
 

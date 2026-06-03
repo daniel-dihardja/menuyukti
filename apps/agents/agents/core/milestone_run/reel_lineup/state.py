@@ -11,6 +11,9 @@ class ReelLineupHeroDish(TypedDict):
     name: str
     reelMoment: NotRequired[str]
     role: NotRequired[Literal["star", "puzzle"]]
+    category: NotRequired[str]
+    storytellingFit: NotRequired[Literal["strong", "weak"]]
+    popularity: NotRequired[float]
 
 
 class ReelLineupScheduleHints(TypedDict):

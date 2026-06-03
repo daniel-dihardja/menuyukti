@@ -182,7 +182,12 @@ def test_build_reel_lineup_from_plan_creates_weekday_and_weekend_reels() -> None
         reel["scheduleHints"]["preferredWeekdays"] == ["saturday", "sunday"]
         for reel in weekend_reels
     )
-    assert normalized["reels"][0]["heroDishes"][0]["name"] == "Ribeye"
+    hero_dish = normalized["reels"][0]["heroDishes"][0]
+    assert hero_dish["name"] == "Ribeye"
+    assert hero_dish["category"] == "MAINS"
+    assert hero_dish["storytellingFit"] == "strong"
+    assert hero_dish["reelMoment"] == "static_hero"
+    assert hero_dish["role"] == "star"
 
 
 def test_validate_static_hero_groups_rejects_non_hero_clusters() -> None:
