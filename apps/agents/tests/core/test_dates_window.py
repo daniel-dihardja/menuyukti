@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from agents_app.agents.core.milestone_run.dates_window import (
+    campaign_days_in_week_overlap,
     campaign_weeks,
     count_campaign_weeks,
     holiday_dates,
@@ -10,6 +11,8 @@ from agents_app.agents.core.milestone_run.dates_window import (
     pick_least_busy_date,
     preferred_weekdays_for_strategy,
     schedule_hints_for_reel_intent,
+    week_has_weekend_in_overlap,
+    week_requires_weekly_cadence,
 )
 
 
@@ -27,6 +30,25 @@ def test_campaign_weeks_partial_first_week() -> None:
     weeks = campaign_weeks("2026-06-04", "2026-06-10")
     assert len(weeks) == 1
     assert weeks[0].post_date == "2026-06-04"
+
+
+def test_short_tail_week_overlap_is_not_schedulable() -> None:
+    start = "2026-06-01"
+    end = "2026-06-23"
+    assert campaign_days_in_week_overlap("2026-06-22", "2026-06-23", start, end) == 2
+    assert not week_requires_weekly_cadence("2026-06-22", "2026-06-23", start, end)
+
+
+def test_tail_week_ending_thursday_has_no_weekend_in_overlap() -> None:
+    weeks = campaign_weeks("2026-06-01", "2026-06-25")
+    tail = weeks[-1]
+    assert tail.week_end == "2026-06-25"
+    assert not week_has_weekend_in_overlap(
+        tail.week_start,
+        tail.week_end,
+        "2026-06-01",
+        "2026-06-25",
+    )
 
 
 def test_campaign_weeks_weekend_family_strategy() -> None:

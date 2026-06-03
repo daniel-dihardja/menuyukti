@@ -136,6 +136,106 @@ class CampaignWeek:
     post_date: str
 
 
+# Campaign weeks with fewer in-window days are optional for weekly post/reel cadence
+# (e.g. a 2-day tail at the end of the window).
+MIN_SCHEDULABLE_WEEK_DAYS = 3
+
+
+def campaign_days_in_week_overlap(
+    week_start: str,
+    week_end: str,
+    window_start: str,
+    window_end: str,
+) -> int:
+    """Count calendar days where the campaign week overlaps the campaign window."""
+    week_start_date = parse_iso_date(week_start)
+    week_end_date = parse_iso_date(week_end)
+    window_start_date = parse_iso_date(window_start)
+    window_end_date = parse_iso_date(window_end)
+    if (
+        week_start_date is None
+        or week_end_date is None
+        or window_start_date is None
+        or window_end_date is None
+    ):
+        return 0
+
+    overlap_start = max(week_start_date, window_start_date)
+    overlap_end = min(week_end_date, window_end_date)
+    if overlap_start > overlap_end:
+        return 0
+    return (overlap_end - overlap_start).days + 1
+
+
+def week_requires_weekly_cadence(
+    week_start: str,
+    week_end: str,
+    window_start: str,
+    window_end: str,
+    *,
+    min_days: int = MIN_SCHEDULABLE_WEEK_DAYS,
+) -> bool:
+    return (
+        campaign_days_in_week_overlap(week_start, week_end, window_start, window_end) >= min_days
+    )
+
+
+def week_has_weekday_in_overlap(
+    week_start: str,
+    week_end: str,
+    window_start: str,
+    window_end: str,
+) -> bool:
+    week_start_date = parse_iso_date(week_start)
+    week_end_date = parse_iso_date(week_end)
+    window_start_date = parse_iso_date(window_start)
+    window_end_date = parse_iso_date(window_end)
+    if (
+        week_start_date is None
+        or week_end_date is None
+        or window_start_date is None
+        or window_end_date is None
+    ):
+        return False
+
+    overlap_start = max(week_start_date, window_start_date)
+    overlap_end = min(week_end_date, window_end_date)
+    cursor = overlap_start
+    while cursor <= overlap_end:
+        if cursor.weekday() < 5:
+            return True
+        cursor += timedelta(days=1)
+    return False
+
+
+def week_has_weekend_in_overlap(
+    week_start: str,
+    week_end: str,
+    window_start: str,
+    window_end: str,
+) -> bool:
+    week_start_date = parse_iso_date(week_start)
+    week_end_date = parse_iso_date(week_end)
+    window_start_date = parse_iso_date(window_start)
+    window_end_date = parse_iso_date(window_end)
+    if (
+        week_start_date is None
+        or week_end_date is None
+        or window_start_date is None
+        or window_end_date is None
+    ):
+        return False
+
+    overlap_start = max(week_start_date, window_start_date)
+    overlap_end = min(week_end_date, window_end_date)
+    cursor = overlap_start
+    while cursor <= overlap_end:
+        if cursor.weekday() >= 5:
+            return True
+        cursor += timedelta(days=1)
+    return False
+
+
 def _pick_post_date(
     week_start: date,
     week_end: date,

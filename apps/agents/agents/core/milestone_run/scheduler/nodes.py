@@ -12,7 +12,12 @@ from agents_app.agents.core.llm_invoke import (
     LLMInvokeError,
     emit_llm_error_step,
 )
-from agents_app.agents.core.milestone_run.dates_window import campaign_weeks, interval_block_starts
+from agents_app.agents.core.milestone_run.dates_window import (
+    campaign_weeks,
+    interval_block_starts,
+    week_has_weekday_in_overlap,
+    week_requires_weekly_cadence,
+)
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
@@ -530,10 +535,20 @@ def _validate_scheduler_rules(
             )
 
     for week in weeks:
+        if not week_requires_weekly_cadence(
+            week.week_start,
+            week.week_end,
+            start_date,
+            end_date,
+        ):
+            continue
         if weekday_posts_by_week.get(week.week_start, 0) != 1:
             raise ValueError(f"weekday post must be exactly 1 in campaign week {week.week_index}")
-        if weekday_reels_by_week.get(week.week_start, 0) != 1:
-            raise ValueError(f"weekday reel must be exactly 1 in campaign week {week.week_index}")
+        if week_has_weekday_in_overlap(week.week_start, week.week_end, start_date, end_date):
+            if weekday_reels_by_week.get(week.week_start, 0) != 1:
+                raise ValueError(
+                    f"weekday reel must be exactly 1 in campaign week {week.week_index}"
+                )
 
     for story_id, hit_count in fixed_story_hits.items():
         if hit_count != 1:

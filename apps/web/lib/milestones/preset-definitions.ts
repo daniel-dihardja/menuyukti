@@ -499,15 +499,19 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       goal: t('milestonePreset.scheduler.goal'),
       passCriteria: [
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorDates'),
+          requirement: t('milestonePreset.scheduler.criterionMonthlyMenuHighlight'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorCampaignBrief'),
+          requirement: t('milestonePreset.scheduler.criterionWeeklyWeekdayPost'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionWindowPresent'),
+          requirement: t('milestonePreset.scheduler.criterionWeeklyWeekdayReel'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.scheduler.criterionWeeklyWeekendReel'),
           status: 'open',
         },
       ],
