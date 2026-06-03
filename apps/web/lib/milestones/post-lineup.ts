@@ -6,6 +6,7 @@ import type {
 import { postLineupMilestoneDataSchema } from '@/lib/graphql/node-schemas'
 
 import { type CampaignWeek, campaignWeeks } from '@/lib/milestones/dates-window'
+import { sortByPopularityDesc } from '@/lib/milestones/popularity-display'
 
 export const POST_LINEUP_PINNED_POST_ID = 'pinned-monthly-menu'
 export const POST_LINEUP_WEEKLY_POST_ID_PREFIX = 'weekday-lunch-post-week'
@@ -73,8 +74,8 @@ function slideMetricsFromItem(
   item: MenuClustererGroup['items'][number],
   lookup?: MenuTaggerItem,
 ): { storytellingFit?: 'strong' | 'weak'; popularity?: number } {
-  const storytellingFit = lookup?.storytellingFit ?? item.storytellingFit
-  const popularity = lookup?.popularity ?? item.popularity
+  const storytellingFit = item.storytellingFit ?? lookup?.storytellingFit
+  const popularity = item.popularity ?? lookup?.popularity
 
   return {
     ...(storytellingFit === 'strong' || storytellingFit === 'weak' ? { storytellingFit } : {}),
@@ -177,27 +178,28 @@ export function buildPostLineupFromPlan(
     })
 
     const seen = new Set<string>()
-    const slides = selectedGroups
-      .flatMap((group) => group.items)
-      .filter((item) => {
-        const key = nameKey(item.name)
-        if (seen.has(key)) {
-          return false
-        }
-        seen.add(key)
-        return true
-      })
-      .slice(0, POST_LINEUP_MAX_SLIDES)
-      .map((item) => {
-        const lookup = foodLeadsByName.get(nameKey(item.name))
-        return {
-          dishName: item.name,
-          role: item.role,
-          category: item.category,
-          imageBrief: buildImageBrief(lookup ?? item),
-          ...slideMetricsFromItem(item, lookup),
-        }
-      })
+    const slides = sortByPopularityDesc(
+      selectedGroups
+        .flatMap((group) => group.items)
+        .filter((item) => {
+          const key = nameKey(item.name)
+          if (seen.has(key)) {
+            return false
+          }
+          seen.add(key)
+          return true
+        })
+        .map((item) => {
+          const lookup = foodLeadsByName.get(nameKey(item.name))
+          return {
+            dishName: item.name,
+            role: item.role,
+            category: item.category,
+            imageBrief: buildImageBrief(lookup ?? item),
+            ...slideMetricsFromItem(item, lookup),
+          }
+        }),
+    ).slice(0, plan.intent === 'pinned_monthly_menu' ? undefined : POST_LINEUP_MAX_SLIDES)
 
     if (slides.length === 0) {
       throw new Error(`post_lineup plan for ${plan.intent} produced no slides`)

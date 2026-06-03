@@ -389,7 +389,9 @@ def _build_generation_context(
                 {"index": idx + 1, "startDate": b_start, "endDate": b_end}
                 for idx, (b_start, b_end) in enumerate(blocks)
             ],
-            "publicHolidays": dates_data.get("publicHolidays") if isinstance(dates_data.get("publicHolidays"), list) else [],
+            "publicHolidays": dates_data.get("publicHolidays")
+            if isinstance(dates_data.get("publicHolidays"), list)
+            else [],
         },
         "candidates": {
             "monthlyMenuPosts": monthly_posts,
@@ -477,7 +479,9 @@ def _validate_scheduler_rules(
                     raise ValueError(f"weekday post must be on weekday: {iso_date}")
                 if not _is_within_lunch_time(slot_time, lunch_window):
                     raise ValueError(f"weekday post must be during lunch time: {slot_time}")
-                weekday_posts_by_week[week.week_start] = weekday_posts_by_week.get(week.week_start, 0) + 1
+                weekday_posts_by_week[week.week_start] = (
+                    weekday_posts_by_week.get(week.week_start, 0) + 1
+                )
             else:
                 raise ValueError(f"post sourceId not found in post lineup candidates: {source_id}")
 
@@ -487,7 +491,9 @@ def _validate_scheduler_rules(
                     raise ValueError(f"weekday reel must be on weekday: {iso_date}")
                 if not _is_within_lunch_time(slot_time, lunch_window):
                     raise ValueError(f"weekday reel must be during lunch time: {slot_time}")
-                weekday_reels_by_week[week.week_start] = weekday_reels_by_week.get(week.week_start, 0) + 1
+                weekday_reels_by_week[week.week_start] = (
+                    weekday_reels_by_week.get(week.week_start, 0) + 1
+                )
             elif source_id in weekend_reel_ids:
                 if not _is_weekend(iso_date):
                     raise ValueError(f"weekend reel must be on weekend: {iso_date}")
@@ -508,16 +514,19 @@ def _validate_scheduler_rules(
                     raise ValueError(f"feedback story slot {iso_date} is outside 4-week blocks")
                 feedback_by_block[block_index] = feedback_by_block.get(block_index, 0) + 1
             else:
-                raise ValueError(f"story sourceId not found in story lineup candidates: {source_id}")
+                raise ValueError(
+                    f"story sourceId not found in story lineup candidates: {source_id}"
+                )
 
     total_blocks = len(list(interval_block_starts(start_date, end_date, interval_weeks=4)))
     for block_index in range(total_blocks):
         if monthlies_by_block.get(block_index, 0) != 1:
-            raise ValueError(f"monthly menu pin post must be exactly 1 in 4-week block {block_index + 1}")
+            raise ValueError(
+                f"monthly menu pin post must be exactly 1 in 4-week block {block_index + 1}"
+            )
         if feedback_by_block.get(block_index, 0) != 1:
             raise ValueError(
-                "positive user feedback story must be exactly 1 in "
-                f"4-week block {block_index + 1}"
+                f"positive user feedback story must be exactly 1 in 4-week block {block_index + 1}"
             )
 
     for week in weeks:
@@ -619,9 +628,21 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
     reel_candidates = _candidate_entries(state.get("reel_lineup_data"), "reels")
     story_candidates = _candidate_entries(state.get("story_lineup_data"), "stories")
 
-    post_by_id = {str(item.get("id") or "").strip(): item for item in post_candidates if str(item.get("id") or "").strip()}
-    reel_by_id = {str(item.get("id") or "").strip(): item for item in reel_candidates if str(item.get("id") or "").strip()}
-    story_by_id = {str(item.get("id") or "").strip(): item for item in story_candidates if str(item.get("id") or "").strip()}
+    post_by_id = {
+        str(item.get("id") or "").strip(): item
+        for item in post_candidates
+        if str(item.get("id") or "").strip()
+    }
+    reel_by_id = {
+        str(item.get("id") or "").strip(): item
+        for item in reel_candidates
+        if str(item.get("id") or "").strip()
+    }
+    story_by_id = {
+        str(item.get("id") or "").strip(): item
+        for item in story_candidates
+        if str(item.get("id") or "").strip()
+    }
 
     monthly_post_ids = {
         row_id
@@ -728,7 +749,9 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
             source_dates_title = str(state.get("source_dates_title") or "").strip()
             if source_dates_title:
                 payload["sourceDatesTitle"] = source_dates_title
-            source_campaign_brief_title = str(state.get("source_campaign_brief_title") or "").strip()
+            source_campaign_brief_title = str(
+                state.get("source_campaign_brief_title") or ""
+            ).strip()
             if source_campaign_brief_title:
                 payload["sourceCampaignBriefTitle"] = source_campaign_brief_title
             source_post_lineup_title = str(state.get("source_post_lineup_title") or "").strip()
@@ -748,7 +771,9 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
             retry_error = str(exc)
             if attempt >= SCHEDULER_MAX_ATTEMPTS:
                 _trace_agent_event(state, "chat_model_end")
-                raise ValueError(f"scheduler planning failed after {attempt} attempts: {exc}") from exc
+                raise ValueError(
+                    f"scheduler planning failed after {attempt} attempts: {exc}"
+                ) from exc
 
     _trace_agent_event(state, "chat_model_end")
     raise ValueError("scheduler planning failed")

@@ -11,6 +11,10 @@ from agents_app.agents.core.milestone_run.dates_window import (
     preferred_time_for_strategy,
     preferred_weekdays_for_strategy,
 )
+from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT,
+    sort_items_by_popularity,
+)
 
 POST_LINEUP_PINNED_POST_ID = "pinned-monthly-menu"
 POST_LINEUP_WEEKLY_POST_ID_PREFIX = "weekday-lunch-post-week"
@@ -69,12 +73,15 @@ def _slide_metrics_from_item(
     item: dict[str, Any],
     lookup: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    source = lookup if lookup is not None else item
     metrics: dict[str, Any] = {}
-    fit = _optional_storytelling_fit(source)
+    fit = _optional_storytelling_fit(item)
+    if fit is None and lookup is not None:
+        fit = _optional_storytelling_fit(lookup)
     if fit is not None:
         metrics["storytellingFit"] = fit
-    popularity = _optional_popularity(source)
+    popularity = _optional_popularity(item)
+    if popularity is None and lookup is not None:
+        popularity = _optional_popularity(lookup)
     if popularity is not None:
         metrics["popularity"] = popularity
     return metrics
@@ -104,6 +111,21 @@ def _groups_by_id(groups: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 def _creative_role(group: dict[str, Any]) -> str:
     return str(group.get("creativeRole") or "").strip().lower()
+
+
+def _is_menu_highlight_group(group: dict[str, Any]) -> bool:
+    return str(group.get("profileId") or "").strip() == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
+
+
+def _menu_highlight_group_ids_in_order(groups: list[dict[str, Any]]) -> list[str]:
+    ids: list[str] = []
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        group_id = str(group.get("id") or "").strip()
+        if group_id and _is_menu_highlight_group(group):
+            ids.append(group_id)
+    return ids
 
 
 def _is_static_hero_group(group: dict[str, Any]) -> bool:
@@ -147,13 +169,15 @@ def _hero_creative_role_group_ids_in_order(groups: list[dict[str, Any]]) -> list
 
 def validate_monthly_pin_groups(groups: list[dict[str, Any]]) -> None:
     """Fail fast when menu clusterer output cannot satisfy the monthly pin."""
+    if _menu_highlight_group_ids_in_order(groups):
+        return
     if _static_hero_group_ids_in_order(groups):
         return
     if _hero_creative_role_group_ids_in_order(groups):
         return
     raise ValueError(
-        "post_lineup monthly pin requires at least one static_hero menu clusterer group "
-        "or a group with creativeRole hero"
+        "post_lineup monthly pin requires a menu_highlight group, or at least one static_hero "
+        "menu clusterer group, or a group with creativeRole hero"
     )
 
 
@@ -161,9 +185,14 @@ def normalize_monthly_pin_group_ids(
     group_ids: list[str],
     groups_by_id: dict[str, dict[str, Any]],
 ) -> list[str]:
-    """Resolve monthly pin to all static-hero groups (hero-only; no variety)."""
+    """Resolve monthly pin to the menu-highlight group when present, else static-hero merge."""
+    del group_ids
     groups = list(groups_by_id.values())
     validate_monthly_pin_groups(groups)
+
+    highlight_ids = _menu_highlight_group_ids_in_order(groups)
+    if highlight_ids:
+        return highlight_ids
 
     canonical = _static_hero_group_ids_in_order(groups)
     if not canonical:
@@ -178,6 +207,7 @@ def _slides_from_groups(
     selected_groups: list[dict[str, Any]],
     *,
     food_leads_by_name: dict[str, dict[str, Any]],
+    max_slides: int | None = POST_LINEUP_MAX_SLIDES,
 ) -> list[dict[str, Any]]:
     slides: list[dict[str, Any]] = []
     seen_names: set[str] = set()
@@ -187,7 +217,7 @@ def _slides_from_groups(
         if not isinstance(raw_items, list):
             continue
         for raw_item in raw_items:
-            if len(slides) >= POST_LINEUP_MAX_SLIDES:
+            if max_slides is not None and len(slides) >= max_slides:
                 return slides
             if not isinstance(raw_item, dict):
                 continue
@@ -218,7 +248,7 @@ def _slides_from_groups(
             slide.update(_slide_metrics_from_item(raw_item, lookup))
             slides.append(slide)
 
-    return slides
+    return sort_items_by_popularity(slides)
 
 
 def _resolve_groups(
@@ -280,7 +310,14 @@ def _build_post_from_plan(
     if intent == "pinned_monthly_menu":
         group_ids = normalize_monthly_pin_group_ids(group_ids, groups_by_id)
     selected_groups = _resolve_groups(group_ids, groups_by_id)
-    slides = _slides_from_groups(selected_groups, food_leads_by_name=food_leads_by_name)
+    slide_cap: int | None = POST_LINEUP_MAX_SLIDES
+    if intent == "pinned_monthly_menu":
+        slide_cap = None
+    slides = _slides_from_groups(
+        selected_groups,
+        food_leads_by_name=food_leads_by_name,
+        max_slides=slide_cap,
+    )
     if not slides:
         raise ValueError(f"post_lineup plan for {intent} produced no slides from selected groups")
 

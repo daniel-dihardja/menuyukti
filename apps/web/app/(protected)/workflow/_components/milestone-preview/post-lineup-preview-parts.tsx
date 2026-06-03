@@ -6,6 +6,10 @@ import { Badge } from '@workspace/ui/components/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 
 import type { PostLineupPost, PostLineupSlide } from '@/lib/graphql/node-schemas'
+import {
+  formatMilestonePopularityPercent,
+  sortByPopularityDesc,
+} from '@/lib/milestones/popularity-display'
 
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
@@ -123,7 +127,9 @@ function PostLineupSlideRow({
       ) : null}
       {typeof slide.popularity === 'number' ? (
         <Badge variant="outline" className="font-normal text-muted-foreground">
-          {t('milestoneMenuClustererPreviewPopularityLabel', { value: slide.popularity })}
+          {t('milestoneMenuClustererPreviewPopularityLabel', {
+            value: formatMilestonePopularityPercent(slide.popularity),
+          })}
         </Badge>
       ) : null}
     </div>
@@ -141,10 +147,17 @@ export function PostLineupSlides({
   rolePuzzleLabel: string
   layout?: PostLineupSlidesLayout
 }) {
+  const slides = sortByPopularityDesc(
+    post.slides.map((slide) => ({
+      ...slide,
+      name: slide.dishName,
+    })),
+  )
+
   if (layout === 'bullet') {
     return (
       <ul className={`${mp.listDisc} flex flex-col gap-2`}>
-        {post.slides.map((slide, slideIndex) => (
+        {slides.map((slide, slideIndex) => (
           <li key={`${slide.dishName}-${slideIndex}`}>
             <PostLineupSlideRow
               layout="bullet"
@@ -161,7 +174,7 @@ export function PostLineupSlides({
 
   return (
     <div className="flex flex-col gap-2">
-      {post.slides.map((slide, slideIndex) => (
+      {slides.map((slide, slideIndex) => (
         <div
           key={`${slide.dishName}-${slideIndex}`}
           className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/20 p-3"

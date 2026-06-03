@@ -11,6 +11,10 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import type { MenuClustererGroup, MenuClustererMilestoneData } from '@/lib/graphql/node-schemas'
 import { formatMenuTaggerTagLabel } from '@/lib/milestones/menu-tagger-items'
+import {
+  formatMilestonePopularityPercent,
+  sortByPopularityDesc,
+} from '@/lib/milestones/popularity-display'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import {
@@ -50,6 +54,7 @@ function priceLevelLabel(
 
 type GroupCardLabels = {
   hookBadgeLabel: string
+  menuHighlightBadgeLabel: string
   detailsBadgeLabel: string
   itemsSectionTitle: string
   leadLabel: string
@@ -89,13 +94,16 @@ function MenuClustererGroupCard({
   group: MenuClustererGroup
   labels: GroupCardLabels
 }) {
+  const profileBadgeLabel =
+    group.profileId === 'menu_highlight' ? labels.menuHighlightBadgeLabel : labels.hookBadgeLabel
+
   return (
     <Card className="gap-3 py-4 shadow-none">
       <CardHeader className="flex flex-col gap-2 px-4 pb-0">
         <CardTitle className="text-base">{labels.groupTitle}</CardTitle>
         <MenuClustererGroupCardHeader group={group} labels={labels} hideTitle />
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{labels.hookBadgeLabel}</Badge>
+          <Badge variant="outline">{profileBadgeLabel}</Badge>
           <Badge variant="secondary">{labels.detailsBadgeLabel}</Badge>
         </div>
       </CardHeader>
@@ -139,11 +147,12 @@ function MenuClustererGroupCard({
           <p className={mp.sectionTitle}>{labels.itemsSectionTitle}</p>
         </div>
         <ul className={`${mp.listDecimal} flex flex-col gap-2`}>
-          {group.items.map((item) => {
-            const isLead = item.position === 1
+          {sortByPopularityDesc(group.items).map((item, itemIndex) => {
+            const displayPosition = itemIndex + 1
+            const isLead = displayPosition === 1
             return (
               <li
-                key={`${group.id}-${item.position}-${item.name}`}
+                key={`${group.id}-${displayPosition}-${item.name}`}
                 className={cn(
                   'rounded-md border border-border/60 bg-muted/20 px-3 py-2.5',
                   isLead && 'border-sky-300 dark:border-sky-700',
@@ -162,7 +171,7 @@ function MenuClustererGroupCard({
                         variant="outline"
                         className="border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-100"
                       >
-                        {labels.hookBadgeLabel}
+                        {profileBadgeLabel}
                       </Badge>
                     ) : null}
                     <Badge variant="outline" className={ROLE_BADGE_CLASS[item.role]}>
@@ -174,7 +183,7 @@ function MenuClustererGroupCard({
                   <span className={mp.rowKey}>{labels.roleLabel}:</span>{' '}
                   {item.role === 'star' ? labels.roleStarLabel : labels.rolePuzzleLabel}
                   <span className="mx-1">·</span>
-                  <span className={mp.rowKey}>{labels.positionLabel}:</span> {item.position}
+                  <span className={mp.rowKey}>{labels.positionLabel}:</span> {displayPosition}
                 </p>
                 {item.reelMoment ? (
                   <p className={`${mp.bodySmall} mt-2`}>
@@ -352,6 +361,7 @@ export function MilestoneMenuClustererDataPreview({
   const labels = useMemo(
     () => ({
       hookBadgeLabel: t('milestoneMenuClustererPreviewHookBadge'),
+      menuHighlightBadgeLabel: t('milestoneMenuClustererPreviewMenuHighlightBadge'),
       detailsBadgeLabel: t('milestoneMenuClustererPreviewDetailsBadge'),
       itemsSectionTitle: t('milestoneMenuClustererPreviewItemsSectionTitle'),
       clusterDescriptionLabel: t('milestoneMenuClustererPreviewClusterDescription'),
@@ -375,7 +385,9 @@ export function MilestoneMenuClustererDataPreview({
       storytellingStrongLabel: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
       storytellingWeakLabel: t('milestonePromotionCandidatesPreviewStorytellingWeak'),
       popularityLabel: (value: number) =>
-        t('milestoneMenuClustererPreviewPopularityLabel', { value }),
+        t('milestoneMenuClustererPreviewPopularityLabel', {
+          value: formatMilestonePopularityPercent(value),
+        }),
       reelMomentLabel: t('milestoneMenuClustererPreviewReelMomentLabel'),
       priceLabels: {
         low: t('milestonePromotionCandidatesPreviewPriceLevelLow'),

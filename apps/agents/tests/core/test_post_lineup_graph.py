@@ -7,6 +7,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
+from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    MENU_CLUSTERER_HIGHLIGHT_GROUP_ID,
+    build_menu_highlight_cluster,
+    select_menu_highlight_items,
+)
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.post_lineup.build import (
     build_post_lineup_from_plan,
@@ -63,8 +68,101 @@ def _food_leads() -> list[dict]:
     ]
 
 
+def _menu_highlight_group() -> dict:
+    items = _menu_tagger_items_for_highlight()
+    cluster = build_menu_highlight_cluster(
+        select_menu_highlight_items(items),
+        campaign_brief_data=_campaign_brief_data(),
+    )
+    assert cluster is not None
+    return cluster
+
+
+def _menu_tagger_items_for_highlight() -> list[dict]:
+    shared_tags = {
+        "kind": "food",
+        "ingredient": ["meat"],
+        "taste": ["savory"],
+        "course": ["main"],
+        "reel_moment": "static_hero",
+        "texture": ["juicy"],
+        "prep_style": ["grilled"],
+        "occasion": ["dinner"],
+        "serve_temp": "hot",
+        "content_angle": [],
+    }
+    side_tags = {**shared_tags, "course": ["side"]}
+    return [
+        {
+            "name": "Ribeye",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "strong",
+            "popularity": 0.09,
+            "tags": shared_tags,
+        },
+        {
+            "name": "Burger",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "strong",
+            "popularity": 0.09,
+            "tags": {**shared_tags, "reel_moment": "stack"},
+        },
+        {
+            "name": "Wings",
+            "role": "puzzle",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.05,
+            "tags": {**shared_tags, "reel_moment": "toss_stir"},
+        },
+        {
+            "name": "Pasta",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.04,
+            "tags": shared_tags,
+        },
+        {
+            "name": "Steak",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.04,
+            "tags": shared_tags,
+        },
+        {
+            "name": "Soup",
+            "role": "puzzle",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.03,
+            "tags": shared_tags,
+        },
+        {
+            "name": "Risotto",
+            "role": "puzzle",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.03,
+            "tags": shared_tags,
+        },
+        {
+            "name": "Fries",
+            "role": "puzzle",
+            "category": "SIDES",
+            "storytellingFit": "weak",
+            "popularity": 0.5,
+            "tags": side_tags,
+        },
+    ]
+
+
 def _groups() -> list[dict]:
     return [
+        _menu_highlight_group(),
         {
             "id": "group-1",
             "leadName": "Ribeye",
@@ -224,12 +322,13 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     monthly = next(post for post in normalized["posts"] if post["intent"] == "pinned_monthly_menu")
     weekly_posts = [post for post in normalized["posts"] if post["intent"] == "weekday_lunch_post"]
     assert monthly["format"] == "carousel"
-    assert monthly["groupIds"] == ["group-1", "group-4"]
-    assert len(monthly["slides"]) == 2
-    assert monthly["slides"][0]["dishName"] == "Ribeye"
-    assert monthly["slides"][0]["storytellingFit"] == "strong"
-    assert monthly["slides"][1]["dishName"] == "Burger"
-    assert monthly["slides"][1]["storytellingFit"] == "strong"
+    assert monthly["groupIds"] == [MENU_CLUSTERER_HIGHLIGHT_GROUP_ID]
+    assert len(monthly["slides"]) == 7
+    assert [monthly["slides"][0]["dishName"], monthly["slides"][1]["dishName"]] == [
+        "Burger",
+        "Ribeye",
+    ]
+    assert monthly["slides"][2]["dishName"] == "Wings"
     assert monthly["description"]
     assert monthly["captionGuidance"]
     assert len(weekly_posts) == len(weeks)
@@ -250,22 +349,70 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     assert normalized["sourceDatesTitle"] == "Campaign dates"
 
 
-def test_normalize_monthly_pin_merges_all_static_hero_groups() -> None:
+def test_normalize_monthly_pin_uses_menu_highlight_group() -> None:
     groups = _groups()
     groups_by_id = {group["id"]: group for group in groups}
+    assert normalize_monthly_pin_group_ids(["group-2", "group-3"], groups_by_id) == [
+        MENU_CLUSTERER_HIGHLIGHT_GROUP_ID,
+    ]
+
+
+def test_normalize_monthly_pin_merges_static_hero_without_highlight() -> None:
+    legacy_groups = [
+        {
+            "id": "group-1",
+            "profileId": "hook_reel",
+            "creativeRole": "hero",
+            "anchor": {"dimension": "reel_moment", "value": "static_hero"},
+            "items": [{"name": "Ribeye", "reelMoment": "static_hero"}],
+        },
+        {
+            "id": "group-4",
+            "profileId": "hook_reel",
+            "creativeRole": "proof",
+            "anchor": {"dimension": "reel_moment", "value": "static_hero"},
+            "items": [{"name": "Burger", "reelMoment": "static_hero"}],
+        },
+    ]
+    groups_by_id = {group["id"]: group for group in legacy_groups}
     assert normalize_monthly_pin_group_ids(["group-1"], groups_by_id) == [
         "group-1",
         "group-4",
     ]
 
 
-def test_normalize_monthly_pin_strips_variety_from_llm_plan() -> None:
-    groups = _groups()
-    groups_by_id = {group["id"]: group for group in groups}
-    assert normalize_monthly_pin_group_ids(["group-2", "group-3"], groups_by_id) == [
-        "group-1",
-        "group-4",
-    ]
+def test_monthly_pin_includes_all_highlight_slides_when_ties_exceed_five() -> None:
+    highlight = _menu_highlight_group()
+    payload = build_post_lineup_from_plan(
+        monthly_post={
+            "intent": "pinned_monthly_menu",
+            "title": "Top sellers",
+            "groupIds": [highlight["id"]],
+            "description": "Monthly highlight carousel.",
+            "captionGuidance": "Lead with bestsellers.",
+        },
+        weekly_posts=_weekly_posts_for_window(),
+        campaign_weeks=campaign_weeks(
+            START_DATE, END_DATE, campaign_brief_data=_campaign_brief_data()
+        ),
+        groups=_groups(),
+        food_leads=_food_leads(),
+        campaign_brief_data=_campaign_brief_data(),
+        start_date=START_DATE,
+        end_date=END_DATE,
+    )
+    monthly = next(post for post in payload["posts"] if post["intent"] == "pinned_monthly_menu")
+    assert len(monthly["slides"]) == len(highlight["items"])
+    assert len(monthly["slides"]) == 7
+    assert {slide["dishName"] for slide in monthly["slides"]} == {
+        "Ribeye",
+        "Burger",
+        "Wings",
+        "Pasta",
+        "Steak",
+        "Soup",
+        "Risotto",
+    }
 
 
 def test_validate_monthly_pin_groups_accepts_hero_when_no_static_hero() -> None:
@@ -280,8 +427,8 @@ def test_validate_monthly_pin_groups_accepts_hero_when_no_static_hero() -> None:
 
 
 def test_validate_monthly_pin_groups_rejects_non_hero_clusters() -> None:
-    proof_only = [_groups()[1]]
-    with pytest.raises(ValueError, match="static_hero|hero"):
+    proof_only = [_groups()[2]]
+    with pytest.raises(ValueError, match="menu_highlight|static_hero|hero"):
         validate_monthly_pin_groups(proof_only)
 
 
@@ -314,8 +461,8 @@ async def test_plan_posts_mocks_llm_and_persists() -> None:
         monthlyPost=PostLineupPostPlanDraft(
             intent="pinned_monthly_menu",
             title="Cafe Alto signature menu",
-            groupIds=["group-1", "group-4"],
-            description="Monthly signatures from static-hero groups.",
+            groupIds=[MENU_CLUSTERER_HIGHLIGHT_GROUP_ID],
+            description="Monthly signatures from menu highlight cluster.",
             captionGuidance="Be specific; lead with hero mains and a reservation CTA.",
         ),
         weeklyPosts=[
@@ -400,7 +547,7 @@ async def test_fetch_and_prepare_loads_dates_groups_and_brief() -> None:
             },
             client=AsyncMock(),
         )
-    assert len(prepared["groups"]) == 4
+    assert len(prepared["groups"]) == 5
     assert prepared["start_date"] == START_DATE
     assert prepared["end_date"] == END_DATE
     assert len(prepared["campaign_weeks"]) == 4

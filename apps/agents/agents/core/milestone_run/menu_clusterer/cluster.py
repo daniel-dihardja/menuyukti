@@ -9,7 +9,12 @@ import unicodedata
 from typing import Any, Literal, Protocol
 
 MENU_CLUSTERER_PROFILE_ID: Literal["hook_reel"] = "hook_reel"
+MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT: Literal["menu_highlight"] = "menu_highlight"
+MENU_CLUSTERER_HIGHLIGHT_GROUP_ID = "group-menu-highlight"
 MENU_CLUSTERER_TOP_LEADS = 5
+MENU_CLUSTERER_POPULARITY_SCORE_RANK_LIMIT = 5
+MENU_CLUSTERER_HIGHLIGHT_MAX_ITEMS = 12
+MENU_CLUSTERER_TOP_FOOD_LEAD_NAMES_MAX = 12
 MENU_CLUSTERER_MIN_GROUP_COUNT = 4
 MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 4
 MENU_CLUSTERER_MAX_GROUP_COUNT = 8
@@ -47,6 +52,23 @@ def food_items_only(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [item for item in items if _is_food_item(item)]
 
 
+def _is_main_course_food_item(item: dict[str, Any]) -> bool:
+    if not _is_food_item(item):
+        return False
+    tags = item.get("tags")
+    if not isinstance(tags, dict):
+        return False
+    course = tags.get("course")
+    if not isinstance(course, list):
+        return False
+    return any(str(value or "").strip().casefold() == "main" for value in course)
+
+
+def menu_highlight_eligible_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Food mains only — used for the deterministic monthly menu highlight cluster."""
+    return [item for item in food_items_only(items) if _is_main_course_food_item(item)]
+
+
 def _item_popularity(item: dict[str, Any]) -> float:
     popularity_raw = item.get("popularity")
     if popularity_raw is None or popularity_raw == "":
@@ -57,13 +79,76 @@ def _item_popularity(item: dict[str, Any]) -> float:
         return -1.0
 
 
+def _has_valid_popularity(item: dict[str, Any]) -> bool:
+    return _item_popularity(item) >= 0.0
+
+
+def _popularity_rank_score(item: dict[str, Any]) -> float:
+    """Stable score key for distinct popularity tiers (ties share the same key)."""
+    return round(_item_popularity(item), 6)
+
+
+def _food_sort_key(item: dict[str, Any]) -> tuple[float, int, str]:
+    pop_sort = (
+        -_popularity_rank_score(item)
+        if _has_valid_popularity(item)
+        else float("inf")
+    )
+    return (
+        pop_sort,
+        -_storytelling_rank(item),
+        _item_name(item).casefold(),
+    )
+
+
+def sort_items_by_popularity(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Sort menu/cluster/slide rows by popularity (desc), then storytelling, then name."""
+    return sorted(items, key=_food_sort_key)
+
+
+def sort_group_items_by_popularity(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Like sort_items_by_popularity but reassigns 1-based position on each cluster item."""
+    return [
+        {**row, "position": position}
+        for position, row in enumerate(sort_items_by_popularity(items), start=1)
+    ]
+
+
+def sort_all_groups_items_by_popularity(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for group in groups:
+        updated = {**group}
+        raw_items = group.get("items")
+        if isinstance(raw_items, list):
+            items = [row for row in raw_items if isinstance(row, dict)]
+            if len(items) > 1:
+                updated["items"] = sort_group_items_by_popularity(items)
+                updated["mix"] = _compute_mix(updated["items"])
+        result.append(updated)
+    return result
+
+
+def _is_hook_reel_group(group: dict[str, Any]) -> bool:
+    return (
+        str(group.get("profileId") or MENU_CLUSTERER_PROFILE_ID).strip()
+        == MENU_CLUSTERER_PROFILE_ID
+    )
+
+
+def _is_menu_highlight_group(group: dict[str, Any]) -> bool:
+    return str(group.get("profileId") or "").strip() == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
+
+
 def _storytelling_rank(item: dict[str, Any]) -> int:
     fit = str(item.get("storytellingFit") or "weak").strip().lower()
     return 1 if fit == "strong" else 0
 
 
 def _item_name(item: dict[str, Any]) -> str:
-    return str(item.get("name") or "").strip()
+    name = item.get("name")
+    if name is None or str(name).strip() == "":
+        name = item.get("dishName")
+    return str(name or "").strip()
 
 
 def _name_key(name: str) -> str:
@@ -124,21 +209,26 @@ def assign_remaining_food_items(
         if _name_key(_item_name(item)) and _name_key(_item_name(item)) not in assigned_keys
     ]
     if not unassigned:
-        return groups
+        return sort_all_groups_items_by_popularity(groups)
 
     result = [{**group, "items": list(group.get("items") or [])} for group in groups]
+    hook_indices = [index for index, group in enumerate(result) if _is_hook_reel_group(group)]
+    if not hook_indices:
+        hook_indices = list(range(len(result)))
     for item in unassigned:
         name_key = _name_key(_item_name(item))
         if not name_key or name_key in assigned_keys:
             continue
 
         indices = sorted(
-            range(len(result)),
+            hook_indices,
             key=lambda index: len(result[index].get("items") or []),
         )
         placed = False
         for index in indices:
             group = result[index]
+            if not _is_hook_reel_group(group):
+                continue
             items = group.get("items")
             if not isinstance(items, list):
                 items = []
@@ -166,25 +256,54 @@ def assign_remaining_food_items(
                 "all clusters are at maximum size"
             )
 
-    return result
+    return sort_all_groups_items_by_popularity(result)
+
+
+def select_top_popularity_food_by_score_rank(
+    items: list[dict[str, Any]],
+    *,
+    score_limit: int = MENU_CLUSTERER_POPULARITY_SCORE_RANK_LIMIT,
+    eligible_items: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Items in the top N distinct popularity scores; all items tied at each included score."""
+    pool = eligible_items if eligible_items is not None else food_items_only(items)
+    food_with_popularity = [item for item in pool if _has_valid_popularity(item)]
+    if not food_with_popularity:
+        return []
+
+    unique_scores = sorted(
+        {_popularity_rank_score(item) for item in food_with_popularity},
+        reverse=True,
+    )
+    included_scores = set(unique_scores[:score_limit])
+    return [
+        item
+        for item in sorted(food_with_popularity, key=_food_sort_key)
+        if _popularity_rank_score(item) in included_scores
+    ]
+
+
+def select_menu_highlight_items(
+    items: list[dict[str, Any]],
+    *,
+    score_limit: int = MENU_CLUSTERER_POPULARITY_SCORE_RANK_LIMIT,
+) -> list[dict[str, Any]]:
+    """Main-course food items in the top N distinct popularity score tiers (ties included)."""
+    eligible = menu_highlight_eligible_items(items)
+    return select_top_popularity_food_by_score_rank(
+        items,
+        score_limit=score_limit,
+        eligible_items=eligible,
+    )
 
 
 def rank_top_food_leads(
     items: list[dict[str, Any]],
     *,
-    limit: int = MENU_CLUSTERER_TOP_LEADS,
+    score_limit: int = MENU_CLUSTERER_POPULARITY_SCORE_RANK_LIMIT,
 ) -> list[dict[str, Any]]:
-    """Rank food items by popularity desc, strong storytelling tie-break, then name."""
-    food = food_items_only(items)
-    ranked = sorted(
-        food,
-        key=lambda item: (
-            -_item_popularity(item),
-            -_storytelling_rank(item),
-            _item_name(item).casefold(),
-        ),
-    )
-    return ranked[:limit]
+    """Eligible hook-cluster leads from top popularity score tiers (ties included)."""
+    return select_top_popularity_food_by_score_rank(items, score_limit=score_limit)
 
 
 def _items_by_name(items: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -340,6 +459,80 @@ def _compute_mix(group_items: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _venue_name(campaign_brief_data: dict[str, Any] | None) -> str:
+    if not isinstance(campaign_brief_data, dict):
+        return "the venue"
+    snapshot = campaign_brief_data.get("venueSnapshot")
+    if not isinstance(snapshot, dict):
+        return "the venue"
+    name = str(snapshot.get("venueName") or "").strip()
+    return name or "the venue"
+
+
+def _menu_highlight_cluster_description(
+    *,
+    campaign_brief_data: dict[str, Any] | None,
+    item_names: list[str],
+) -> str:
+    venue = _venue_name(campaign_brief_data)
+    focus = _strategy_focus(campaign_brief_data)
+    dishes = ", ".join(item_names[:6])
+    if len(item_names) > 6:
+        dishes = f"{dishes}, and others"
+    return (
+        f"Deterministic monthly menu highlight for {venue}: top-selling main-course dishes by "
+        f"popularity score tier ({dishes}). Grouped for the pinned signature carousel; aligns with "
+        f"{focus} strategy."
+    )
+
+
+def build_menu_highlight_cluster(
+    highlight_items: list[dict[str, Any]],
+    *,
+    campaign_brief_data: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Build the deterministic menu-highlight group for the monthly pinned post."""
+    if not highlight_items:
+        return None
+
+    ordered = sorted(highlight_items, key=_food_sort_key)
+    if len(ordered) > MENU_CLUSTERER_HIGHLIGHT_MAX_ITEMS:
+        ordered = ordered[:MENU_CLUSTERER_HIGHLIGHT_MAX_ITEMS]
+
+    lead_item = ordered[0]
+    group_items: list[dict[str, Any]] = []
+    for position, item in enumerate(ordered, start=1):
+        row = _group_item_from_menu_item(item, position=position)
+        row["reelMoment"] = "static_hero"
+        group_items.append(row)
+
+    item_names = [_item_name(item) for item in ordered if _item_name(item)]
+    description = _menu_highlight_cluster_description(
+        campaign_brief_data=campaign_brief_data,
+        item_names=item_names,
+    )
+    focus = _strategy_focus(campaign_brief_data)
+    offer_window = _offer_window(campaign_brief_data)
+
+    return {
+        "id": MENU_CLUSTERER_HIGHLIGHT_GROUP_ID,
+        "leadName": _item_name(lead_item),
+        "profileId": MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT,
+        "anchor": {"dimension": "reel_moment", "value": "static_hero"},
+        "items": group_items,
+        "mix": _compute_mix(group_items),
+        "clusterDescription": description,
+        "strategyFocus": focus,
+        "coreMessage": _core_message(campaign_brief_data),
+        "creativeRole": "menu_highlight",
+        "assetHint": _build_asset_hint(
+            lead_item,
+            offer_window=offer_window,
+            theme_label="Monthly menu highlight",
+        ),
+    }
+
+
 def _finalize_cluster_group(
     *,
     lead_item: dict[str, Any],
@@ -355,6 +548,7 @@ def _finalize_cluster_group(
     group_items = [_group_item_from_menu_item(lead_item, position=1)]
     for position, item in enumerate(supporting_items, start=2):
         group_items.append(_group_item_from_menu_item(item, position=position))
+    group_items = sort_group_items_by_popularity(group_items)
 
     focus = _strategy_focus(campaign_brief_data)
     offer_window = _offer_window(campaign_brief_data)
@@ -482,6 +676,15 @@ def merge_llm_clusters(
         assigned_in_any_group.update(seen_in_group)
 
     groups = assign_remaining_food_items(groups, food_items)
+
+    highlight_items = select_menu_highlight_items(menu_tagger_items)
+    highlight_group = build_menu_highlight_cluster(
+        highlight_items,
+        campaign_brief_data=campaign_brief_data,
+    )
+    if highlight_group is not None:
+        groups = [highlight_group, *groups]
+
     assigned_after_assign = _assigned_name_keys(groups)
     unassigned_item_names = [
         _item_name(item)

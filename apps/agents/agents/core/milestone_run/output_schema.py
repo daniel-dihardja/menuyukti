@@ -535,7 +535,7 @@ class MenuClustererGroupItemOutput(BaseModel):
     name: str
     role: Literal["star", "puzzle"]
     category: str
-    position: int = Field(ge=1, le=5)
+    position: int = Field(ge=1, le=12)
     popularity: float | None = Field(default=None, ge=0.0, le=1.0)
     priceLevel: Literal[1, 2, 3] | None = None
     storytellingFit: Literal["strong", "weak"] | None = None
@@ -569,7 +569,7 @@ class MenuClustererAnchorOutput(BaseModel):
 class MenuClustererGroupOutput(BaseModel):
     id: str
     leadName: str
-    profileId: Literal["hook_reel"]
+    profileId: Literal["hook_reel", "menu_highlight"]
     anchor: MenuClustererAnchorOutput
     items: list[MenuClustererGroupItemOutput]
     mix: MenuClustererGroupMixOutput
@@ -591,24 +591,24 @@ class MenuClustererGroupOutput(BaseModel):
             raise ValueError("clusterDescription must be at least 40 characters")
         return value
 
-    @field_validator("items")
-    @classmethod
-    def _validate_items(
-        cls, values: list[MenuClustererGroupItemOutput]
-    ) -> list[MenuClustererGroupItemOutput]:
-        if not (1 <= len(values) <= 5):
-            raise ValueError("each group must contain between 1 and 5 items")
-        positions = [item.position for item in values]
-        if positions != list(range(1, len(values) + 1)):
+    @model_validator(mode="after")
+    def _validate_items_by_profile(self) -> MenuClustererGroupOutput:
+        max_items = 12 if self.profileId == "menu_highlight" else 5
+        if not (1 <= len(self.items) <= max_items):
+            raise ValueError(
+                f"each {self.profileId} group must contain between 1 and {max_items} items"
+            )
+        positions = [item.position for item in self.items]
+        if positions != list(range(1, len(self.items) + 1)):
             raise ValueError("item positions must be sequential starting at 1")
-        return values
+        return self
 
 
 class MenuClustererMilestoneOutput(BaseModel):
     foodLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
     groups: list[MenuClustererGroupOutput]
     unassignedItemNames: list[str] = Field(default_factory=list)
-    topFoodLeadNames: list[str] = Field(default_factory=list, max_length=5)
+    topFoodLeadNames: list[str] = Field(default_factory=list, max_length=12)
     targetGroupCount: int | None = Field(default=None, ge=4, le=8)
     sourceMenuTaggerTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
@@ -616,11 +616,12 @@ class MenuClustererMilestoneOutput(BaseModel):
 
     @model_validator(mode="after")
     def _validate_lead_group_alignment(self) -> MenuClustererMilestoneOutput:
-        if len(self.foodLeads) != len(self.groups):
-            raise ValueError("foodLeads length must match groups length")
-        for lead, group in zip(self.foodLeads, self.groups, strict=True):
+        hook_groups = [group for group in self.groups if group.profileId == "hook_reel"]
+        if len(self.foodLeads) != len(hook_groups):
+            raise ValueError("foodLeads length must match hook_reel groups length")
+        for lead, group in zip(self.foodLeads, hook_groups, strict=True):
             if lead.name.strip() != group.leadName.strip():
-                raise ValueError("foodLeads[i].name must match groups[i].leadName")
+                raise ValueError("foodLeads[i].name must match hook_reel groups[i].leadName")
         return self
 
 
@@ -743,14 +744,14 @@ class PostLineupPostOutput(BaseModel):
             raise ValueError("must contain at least one group id")
         return values
 
-    @field_validator("slides")
-    @classmethod
-    def _validate_slides(cls, values: list[PostLineupSlideOutput]) -> list[PostLineupSlideOutput]:
-        if not values:
+    @model_validator(mode="after")
+    def _validate_slides_by_intent(self) -> PostLineupPostOutput:
+        if not self.slides:
             raise ValueError("must contain at least one slide")
-        if len(values) > 5:
-            raise ValueError("must contain at most 5 slides")
-        return values
+        max_slides = 12 if self.intent == "pinned_monthly_menu" else 5
+        if len(self.slides) > max_slides:
+            raise ValueError(f"must contain at most {max_slides} slides")
+        return self
 
 
 class PostLineupMilestoneOutput(BaseModel):

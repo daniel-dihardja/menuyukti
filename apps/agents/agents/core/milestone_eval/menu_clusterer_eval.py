@@ -19,6 +19,7 @@ MENU_CLUSTERER_MAX_GROUP_COUNT = 8
 # Backward-compatible alias used in older call sites/tests.
 MENU_CLUSTERER_MIN_GROUPS = MENU_CLUSTERER_MIN_GROUP_COUNT
 MENU_CLUSTERER_TOP_LEADS = 5
+MENU_CLUSTERER_TOP_FOOD_LEAD_NAMES_MAX = 12
 MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN = 40
 
 
@@ -72,7 +73,7 @@ def enrich_menu_clusterer_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
     top_food_lead_names: list[str] = []
     if isinstance(top_names, list):
         top_food_lead_names = [str(name).strip() for name in top_names if str(name).strip()][
-            :MENU_CLUSTERER_TOP_LEADS
+            :MENU_CLUSTERER_TOP_FOOD_LEAD_NAMES_MAX
         ]
     enriched["_evalHints"] = {
         "groupSizeRange": [MENU_CLUSTERER_GROUP_MIN_SIZE, MENU_CLUSTERER_GROUP_MAX_SIZE],
@@ -90,6 +91,14 @@ def _groups(data: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(raw, list):
         return []
     return [row for row in raw if isinstance(row, dict)]
+
+
+def _is_menu_highlight_group(group: dict[str, Any]) -> bool:
+    return str(group.get("profileId") or "").strip() == "menu_highlight"
+
+
+def _hook_reel_groups(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [group for group in groups if not _is_menu_highlight_group(group)]
 
 
 def _top_food_lead_names(data: dict[str, Any]) -> set[str]:
@@ -128,6 +137,8 @@ def _validate_food_groups(
 ) -> list[str]:
     issues: list[str] = []
     for group in groups:
+        if _is_menu_highlight_group(group):
+            continue
         group_id = str(group.get("id") or "group")
         items = group.get("items")
         if not isinstance(items, list) or not items:
@@ -171,11 +182,9 @@ def try_menu_clusterer_deterministic_verdict(
             return ("fail", "menu clusterer data has no groups from prior menu_tagger items.")
         return ("pass", f"menu clusterer produced {len(groups)} food cluster(s) from tagged items.")
 
-    if (
-        ("prior" in norm or "run used" in norm)
-        and "campaign" in norm
-        and "brief" in norm
-    ) or ("restaurant_campaign_brief" in norm and ("prior" in norm or "run used" in norm)):
+    if (("prior" in norm or "run used" in norm) and "campaign" in norm and "brief" in norm) or (
+        "restaurant_campaign_brief" in norm and ("prior" in norm or "run used" in norm)
+    ):
         source_title = str(data.get("sourceCampaignBriefTitle") or "").strip()
         if source_title and groups and _groups_reference_campaign_brief(groups):
             return (
@@ -231,14 +240,15 @@ def try_menu_clusterer_deterministic_verdict(
         and "beverage" not in norm
     ):
         min_groups = _target_group_count(data)
-        if len(groups) < min_groups:
+        hook_groups = _hook_reel_groups(groups)
+        if len(hook_groups) < min_groups:
             return (
                 "fail",
-                f"menu clusterer has {len(groups)} food groups; minimum is {min_groups}.",
+                f"menu clusterer has {len(hook_groups)} hook Reel groups; minimum is {min_groups}.",
             )
         return (
             "pass",
-            f"menu clusterer produced {len(groups)} food cluster(s) (at least {min_groups}).",
+            f"menu clusterer produced {len(hook_groups)} hook Reel cluster(s) (at least {min_groups}).",
         )
 
     if (
@@ -274,7 +284,7 @@ def try_menu_clusterer_deterministic_verdict(
         and ("position" in norm or "lead" in norm or "hook" in norm or "popularity" in norm)
     ):
         issues = _validate_food_groups(
-            groups,
+            _hook_reel_groups(groups),
             top5_names=top5_names,
             empty_message="no menu clusterer food clusters to validate.",
         )
@@ -282,7 +292,7 @@ def try_menu_clusterer_deterministic_verdict(
             return ("fail", "; ".join(issues[:4]))
         return (
             "pass",
-            "each food cluster position-1 item is a top-5 food lead by popularity ranking.",
+            "each hook Reel cluster position-1 item is a top popularity score-tier food lead.",
         )
 
     if (
@@ -291,7 +301,7 @@ def try_menu_clusterer_deterministic_verdict(
         and ("position" in norm or "lead" in norm or "hook" in norm)
     ):
         issues = _validate_food_groups(
-            groups,
+            _hook_reel_groups(groups),
             top5_names=top5_names,
             empty_message="no menu clusterer food clusters to validate.",
         )

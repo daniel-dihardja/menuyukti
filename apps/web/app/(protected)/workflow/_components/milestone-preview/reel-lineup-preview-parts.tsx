@@ -12,6 +12,11 @@ import type {
 } from '@/lib/graphql/node-schemas'
 
 import {
+  formatMilestonePopularityPercent,
+  sortByPopularityDesc,
+} from '@/lib/milestones/popularity-display'
+
+import {
   LINEUP_ROLE_BADGE_CLASS,
   LINEUP_STORYTELLING_BADGE_CLASS,
 } from './post-lineup-preview-parts'
@@ -168,7 +173,9 @@ function ReelLineupHeroDishRow({
       ) : null}
       {typeof dish.popularity === 'number' ? (
         <Badge variant="outline" className="font-normal text-muted-foreground">
-          {t('milestoneMenuClustererPreviewPopularityLabel', { value: dish.popularity })}
+          {t('milestoneMenuClustererPreviewPopularityLabel', {
+            value: formatMilestonePopularityPercent(dish.popularity),
+          })}
         </Badge>
       ) : null}
     </div>
@@ -210,7 +217,7 @@ export function ReelLineupHeroDishes({
   rolePuzzleLabel: string
   layout?: ReelLineupHeroDishesLayout
 }) {
-  const heroDishes = reel.heroDishes ?? []
+  const heroDishes = sortByPopularityDesc(reel.heroDishes ?? [])
   if (heroDishes.length === 0) {
     return null
   }

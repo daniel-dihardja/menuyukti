@@ -31,7 +31,7 @@ class MenuClustererAnchor(TypedDict):
 class MenuClustererGroup(TypedDict):
     id: str
     leadName: str
-    profileId: Literal["hook_reel"]
+    profileId: Literal["hook_reel", "menu_highlight"]
     anchor: MenuClustererAnchor
     items: list[MenuClustererGroupItem]
     mix: MenuClustererGroupMix

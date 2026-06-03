@@ -9,6 +9,9 @@ from agents_app.agents.core.milestone_run.dates_window import (
     preferred_weekdays_for_strategy,
     schedule_hints_for_reel_intent,
 )
+from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    sort_items_by_popularity,
+)
 
 REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX = "weekday-reel-week-"
 REEL_LINEUP_WEEKEND_REEL_ID_PREFIX = "weekend-reel-week-"
@@ -108,7 +111,7 @@ def _hero_dishes_from_group(group: dict[str, Any]) -> list[dict[str, Any]]:
         if isinstance(popularity, (int, float)) and 0 <= float(popularity) <= 1:
             dish["popularity"] = float(popularity)
         dishes.append(dish)
-    return dishes
+    return sort_items_by_popularity(dishes)
 
 
 def coerce_campaign_weeks(raw_weeks: list[Any]) -> list[CampaignWeek]:

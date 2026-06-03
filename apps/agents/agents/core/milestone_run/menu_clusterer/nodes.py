@@ -120,7 +120,7 @@ def _merge_correction_message(error: ValueError) -> HumanMessage:
             "Your previous cluster draft could not be merged with the menu data.\n\n"
             f"Error: {error}\n\n"
             "Return a corrected JSON object only. Use exact item names from the tagged food list, "
-            "choose leadItemName only from the top-5 lead list, ensure every tagged food item "
+            "choose leadItemName only from the top popularity score-tier lead list, ensure every tagged food item "
             "appears in at least one cluster, and keep each clusterDescription at least 40 characters."
         )
     )
@@ -162,7 +162,7 @@ def _build_generation_context(
         "cluster (as leadItemName or supportingItemNames). Items may repeat across clusters.",
         "## Campaign brief (excerpt)\n```json\n"
         f"{json.dumps(brief_excerpt, ensure_ascii=False, indent=2)}\n```",
-        "## Top-5 food leads (position 1 must come from this list only)\n```json\n"
+        "## Top popularity score-tier food leads (position 1 must come from this list; ties included)\n```json\n"
         f"{json.dumps(top5_names, ensure_ascii=False, indent=2)}\n```",
         "## Tagged food items\n```json\n"
         f"{json.dumps(food_items, ensure_ascii=False, indent=2)}\n```",

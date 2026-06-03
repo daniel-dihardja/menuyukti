@@ -2,6 +2,7 @@ import type { MenuClustererGroup, ReelLineupMilestoneData } from '@/lib/graphql/
 import { reelLineupMilestoneDataSchema } from '@/lib/graphql/node-schemas'
 
 import { type CampaignWeek, campaignWeeks } from '@/lib/milestones/dates-window'
+import { sortByPopularityDesc } from '@/lib/milestones/popularity-display'
 
 export const REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX = 'weekday-reel-week-'
 export const REEL_LINEUP_WEEKEND_REEL_ID_PREFIX = 'weekend-reel-week-'
@@ -68,18 +69,20 @@ type WeeklyReelPlan = {
 }
 
 function heroDishesFromGroup(group: MenuClustererGroup) {
-  return group.items
-    .filter((item) => item.name.trim())
-    .map((item) => ({
-      name: item.name,
-      ...(item.reelMoment ? { reelMoment: item.reelMoment } : {}),
-      ...(item.role === 'star' || item.role === 'puzzle' ? { role: item.role } : {}),
-      ...(item.category?.trim() ? { category: item.category.trim() } : {}),
-      ...(item.storytellingFit === 'strong' || item.storytellingFit === 'weak'
-        ? { storytellingFit: item.storytellingFit }
-        : {}),
-      ...(typeof item.popularity === 'number' ? { popularity: item.popularity } : {}),
-    }))
+  return sortByPopularityDesc(
+    group.items
+      .filter((item) => item.name.trim())
+      .map((item) => ({
+        name: item.name,
+        ...(item.reelMoment ? { reelMoment: item.reelMoment } : {}),
+        ...(item.role === 'star' || item.role === 'puzzle' ? { role: item.role } : {}),
+        ...(item.category?.trim() ? { category: item.category.trim() } : {}),
+        ...(item.storytellingFit === 'strong' || item.storytellingFit === 'weak'
+          ? { storytellingFit: item.storytellingFit }
+          : {}),
+        ...(typeof item.popularity === 'number' ? { popularity: item.popularity } : {}),
+      })),
+  )
 }
 
 function weeklyPlanByIndex(

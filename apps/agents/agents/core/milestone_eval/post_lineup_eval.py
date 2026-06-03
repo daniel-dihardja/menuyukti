@@ -215,8 +215,10 @@ def try_post_lineup_deterministic_verdict(
             post_date = str(post.get("date") or "").strip()
             if not post_date:
                 issues.append(f"{post_id} is missing date")
-            elif start_date and end_date and not _date_in_campaign_window(
-                post_date, start_date, end_date
+            elif (
+                start_date
+                and end_date
+                and not _date_in_campaign_window(post_date, start_date, end_date)
             ):
                 issues.append(f"{post_id} date {post_date!r} is outside the campaign window")
             if not _post_has_schedule_hints(post):
@@ -235,7 +237,8 @@ def try_post_lineup_deterministic_verdict(
             slides = _slides(post)
             if not slides:
                 return ("fail", "a post has no slides sourced from menu clusterer groups.")
-            if len(slides) > POST_LINEUP_MAX_SLIDES:
+            intent = str(post.get("intent") or "").strip()
+            if intent != "pinned_monthly_menu" and len(slides) > POST_LINEUP_MAX_SLIDES:
                 return (
                     "fail",
                     f"a post has {len(slides)} slides; maximum is {POST_LINEUP_MAX_SLIDES}.",

@@ -7,9 +7,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    MENU_CLUSTERER_HIGHLIGHT_GROUP_ID,
+    MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT,
     derive_target_group_count,
+    menu_highlight_eligible_items,
     merge_llm_clusters,
     rank_top_food_leads,
+    select_menu_highlight_items,
+    select_top_popularity_food_by_score_rank,
 )
 from agents_app.agents.core.milestone_run.menu_clusterer.nodes import (
     MenuClustererClusterDraft,
@@ -182,6 +187,142 @@ def test_rank_top_food_leads_orders_by_popularity_and_storytelling() -> None:
     assert [item["name"] for item in ranked] == ["Wings", "Ribeye", "Burger", "Fries", "Salad"]
 
 
+def test_select_top_popularity_food_by_score_rank_includes_ties_at_fifth_score() -> None:
+    items = [
+        {
+            "name": "Alpha",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "strong",
+            "popularity": 0.9,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "Beta",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "strong",
+            "popularity": 0.8,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "Gamma",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.7,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "Delta",
+            "role": "puzzle",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.6,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "Fries",
+            "role": "puzzle",
+            "category": "SIDES",
+            "storytellingFit": "weak",
+            "popularity": 0.5,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "Taco",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.5,
+            "tags": _food_tags(reel_moment="static_hero"),
+        },
+        {
+            "name": "Salad",
+            "role": "puzzle",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.4,
+            "tags": _food_tags(course=["side"]),
+        },
+    ]
+    selected = select_top_popularity_food_by_score_rank(items)
+    names = [item["name"] for item in selected]
+    assert "Fries" in names
+    assert "Taco" in names
+    assert "Salad" not in names
+    assert len(names) == 6
+
+
+def test_select_top_popularity_excludes_scores_between_included_tiers() -> None:
+    items = [
+        {
+            "name": "High",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "strong",
+            "popularity": 0.9,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "MidGap",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.55,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "LowA",
+            "role": "puzzle",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.5,
+            "tags": _food_tags(),
+        },
+        {
+            "name": "LowB",
+            "role": "puzzle",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.5,
+            "tags": _food_tags(),
+        },
+    ]
+    selected = select_top_popularity_food_by_score_rank(items, score_limit=2)
+    names = {item["name"] for item in selected}
+    assert names == {"High", "MidGap"}
+    assert "LowA" not in names
+    assert "LowB" not in names
+
+
+def test_menu_highlight_eligible_items_requires_food_main_course() -> None:
+    items = _menu_tagger_items()
+    eligible = menu_highlight_eligible_items(items)
+    names = {item["name"] for item in eligible}
+    assert names == {"Ribeye", "Burger", "Wings"}
+    assert "Fries" not in names
+    assert "Salad" not in names
+
+
+def test_select_menu_highlight_includes_all_mains_at_top_score_tiers() -> None:
+    items = _menu_tagger_items() + [
+        {
+            "name": "Taco",
+            "role": "star",
+            "category": "MAINS",
+            "storytellingFit": "weak",
+            "popularity": 0.5,
+            "tags": _food_tags(),
+        },
+    ]
+    selected = select_menu_highlight_items(items)
+    names = [item["name"] for item in selected]
+    assert names == ["Wings", "Ribeye", "Burger", "Taco"]
+    assert "Fries" not in names
+    assert "Salad" not in names
+
+
 def test_merge_llm_clusters_builds_multi_item_groups_with_descriptions() -> None:
     top5 = rank_top_food_leads(_menu_tagger_items())
     payload = merge_llm_clusters(
@@ -194,17 +335,24 @@ def test_merge_llm_clusters_builds_multi_item_groups_with_descriptions() -> None
     normalized, error = validate_skill_output("menu_clusterer", payload)
     assert error is None
     assert isinstance(normalized, dict)
-    assert len(normalized["groups"]) == 4
+    assert len(normalized["groups"]) == 5
     assert "drinkLeads" not in normalized
     assert "drinkGroups" not in normalized
     assert normalized["topFoodLeadNames"] == ["Wings", "Ribeye", "Burger", "Fries", "Salad"]
     assert normalized["targetGroupCount"] == 4
+    assert len(normalized["foodLeads"]) == 4
     assert normalized["unassignedItemNames"] == []
-    first = normalized["groups"][0]
-    assert len(first["items"]) == 2
-    assert first["items"][0]["position"] == 1
-    assert first["clusterDescription"] == _CLUSTER_DESCRIPTION
-    assert "scheduleHints" not in first
+    highlight = normalized["groups"][0]
+    assert highlight["id"] == MENU_CLUSTERER_HIGHLIGHT_GROUP_ID
+    assert highlight["profileId"] == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
+    assert highlight["creativeRole"] == "menu_highlight"
+    assert len(highlight["items"]) == 3
+    assert [row["name"] for row in highlight["items"]] == ["Wings", "Ribeye", "Burger"]
+    first_hook = normalized["groups"][1]
+    assert len(first_hook["items"]) == 2
+    assert first_hook["items"][0]["position"] == 1
+    assert first_hook["clusterDescription"] == _CLUSTER_DESCRIPTION
+    assert "scheduleHints" not in first_hook
 
 
 def test_merge_llm_clusters_rejects_non_top5_lead_when_strict() -> None:
@@ -270,11 +418,7 @@ def test_merge_llm_clusters_assigns_remaining_food_items() -> None:
         campaign_brief_data=_campaign_brief_data(),
     )
     assert payload["unassignedItemNames"] == []
-    assigned = {
-        item["name"]
-        for group in payload["groups"]
-        for item in group["items"]
-    }
+    assigned = {item["name"] for group in payload["groups"] for item in group["items"]}
     assert assigned == {item["name"] for item in _menu_tagger_items()}
 
 
@@ -302,7 +446,8 @@ def test_merge_llm_clusters_auto_corrects_non_top5_lead() -> None:
         menu_tagger_items=items,
         top5_leads=top5,
     )
-    assert payload["groups"][0]["leadName"] in [item["name"] for item in top5]
+    hook_groups = [group for group in payload["groups"] if group.get("profileId") == "hook_reel"]
+    assert hook_groups[0]["leadName"] in [item["name"] for item in top5]
 
 
 @pytest.mark.asyncio
@@ -402,8 +547,11 @@ async def test_build_clusters_and_persist() -> None:
         ),
     ):
         built = await build_clusters(state)  # type: ignore[arg-type]
-    assert len(built["generated_output"]["groups"]) == 4
-    assert "scheduleHints" not in built["generated_output"]["groups"][0]
+    assert len(built["generated_output"]["groups"]) == 5
+    assert (
+        built["generated_output"]["groups"][0]["profileId"] == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
+    )
+    assert "scheduleHints" not in built["generated_output"]["groups"][1]
 
     with patch(
         "agents_app.agents.core.milestone_run.menu_clusterer.nodes.upsert_milestonedata_node",

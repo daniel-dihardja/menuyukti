@@ -11,7 +11,7 @@ HARD RULES
 ────────────────────────────────────────────────────────────────────────
 - Produce exactly {target_group_count} clusters (minimum {min_group_count}). Each cluster is food-only (tags.kind == food).
 - Every tagged food item in the input list MUST appear in at least one cluster (as leadItemName or supportingItemNames).
-- Position 1 (leadItemName) MUST be chosen from the provided top-5 food lead list only.
+- Position 1 (leadItemName) MUST be chosen from the provided top popularity score-tier food lead list only (top five distinct popularity scores; ties at the cutoff are all eligible).
 - supportingItemNames must be other tagged food items from the full food list (0 to 4 names).
 - Total items per cluster (lead + supporting) must be between 2 and 5 when enough food items exist; use 1-item clusters only when the menu is too small for pairs.
 - Menu items MAY appear in multiple clusters; vary each cluster's theme and character.
@@ -33,7 +33,7 @@ OUTPUT FORMAT — return exactly one JSON object matching the schema
   "clusters": [
     {{
       "themeLabel": "Short theme label for this cluster's character",
-      "leadItemName": "Exact name from top-5 lead list",
+      "leadItemName": "Exact name from top popularity score-tier lead list",
       "supportingItemNames": ["Other food item names"],
       "clusterDescription": "Why grouped, why it fits the venue concept, why it works as a Reel."
     }}

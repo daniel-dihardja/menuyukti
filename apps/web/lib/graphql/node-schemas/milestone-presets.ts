@@ -328,7 +328,7 @@ export const menuTaggerMilestoneDataSchema = z.object({
 
 export type MenuTaggerMilestoneData = z.infer<typeof menuTaggerMilestoneDataSchema>
 
-export const menuClustererProfileIdSchema = z.literal('hook_reel')
+export const menuClustererProfileIdSchema = z.enum(['hook_reel', 'menu_highlight'])
 
 export const menuClustererAnchorSchema = z.object({
   dimension: z.literal('reel_moment'),
@@ -346,7 +346,7 @@ export const menuClustererGroupItemSchema = z.object({
   name: z.string().trim().min(1),
   role: menuTaggerItemRoleSchema,
   category: z.string().trim().min(1),
-  position: z.number().int().min(1).max(5),
+  position: z.number().int().min(1).max(12),
   popularity: z.number().min(0).max(1).optional(),
   priceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   storytellingFit: z.enum(['strong', 'weak']).optional(),
@@ -365,19 +365,30 @@ export const menuClustererWeekdaySchema = z.enum([
   'sunday',
 ])
 
-export const menuClustererGroupSchema = z.object({
-  id: z.string().trim().min(1),
-  leadName: z.string().trim().min(1),
-  profileId: menuClustererProfileIdSchema,
-  anchor: menuClustererAnchorSchema,
-  items: z.array(menuClustererGroupItemSchema).min(1).max(5),
-  mix: menuClustererGroupMixSchema,
-  clusterDescription: z.string().trim().min(40).optional(),
-  strategyFocus: z.string().trim().min(1).optional(),
-  coreMessage: z.string().trim().min(1).optional(),
-  creativeRole: z.string().trim().min(1).optional(),
-  assetHint: z.string().trim().min(1).optional(),
-})
+export const menuClustererGroupSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    leadName: z.string().trim().min(1),
+    profileId: menuClustererProfileIdSchema,
+    anchor: menuClustererAnchorSchema,
+    items: z.array(menuClustererGroupItemSchema).min(1).max(12),
+    mix: menuClustererGroupMixSchema,
+    clusterDescription: z.string().trim().min(40).optional(),
+    strategyFocus: z.string().trim().min(1).optional(),
+    coreMessage: z.string().trim().min(1).optional(),
+    creativeRole: z.string().trim().min(1).optional(),
+    assetHint: z.string().trim().min(1).optional(),
+  })
+  .superRefine((group, ctx) => {
+    const maxItems = group.profileId === 'menu_highlight' ? 12 : 5
+    if (group.items.length > maxItems) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `menu_highlight groups allow up to 12 items; hook_reel groups allow up to 5`,
+        path: ['items'],
+      })
+    }
+  })
 
 export type MenuClustererGroup = z.infer<typeof menuClustererGroupSchema>
 
@@ -385,7 +396,7 @@ export const menuClustererMilestoneDataSchema = z.object({
   foodLeads: z.array(menuTaggerItemSchema).default([]),
   groups: z.array(menuClustererGroupSchema),
   unassignedItemNames: z.array(z.string().trim().min(1)),
-  topFoodLeadNames: z.array(z.string().trim().min(1)).max(5).default([]),
+  topFoodLeadNames: z.array(z.string().trim().min(1)).max(12).default([]),
   targetGroupCount: menuClustererTargetGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
@@ -416,19 +427,30 @@ export const postLineupSlideSchema = z.object({
 
 export type PostLineupSlide = z.infer<typeof postLineupSlideSchema>
 
-export const postLineupPostSchema = z.object({
-  id: z.string().trim().min(1),
-  format: postLineupPostFormatSchema,
-  intent: postLineupPostIntentSchema,
-  title: z.string().trim().min(1),
-  description: z.string().trim().min(1).optional(),
-  captionGuidance: z.string().trim().min(1).optional(),
-  slides: z.array(postLineupSlideSchema).min(1).max(5),
-  groupIds: z.array(z.string().trim().min(1)).min(1),
-  date: z.string().optional(),
-  fixdate: z.boolean().optional(),
-  scheduleHints: postLineupScheduleHintsSchema.optional(),
-})
+export const postLineupPostSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    format: postLineupPostFormatSchema,
+    intent: postLineupPostIntentSchema,
+    title: z.string().trim().min(1),
+    description: z.string().trim().min(1).optional(),
+    captionGuidance: z.string().trim().min(1).optional(),
+    slides: z.array(postLineupSlideSchema).min(1).max(12),
+    groupIds: z.array(z.string().trim().min(1)).min(1),
+    date: z.string().optional(),
+    fixdate: z.boolean().optional(),
+    scheduleHints: postLineupScheduleHintsSchema.optional(),
+  })
+  .superRefine((post, ctx) => {
+    const maxSlides = post.intent === 'pinned_monthly_menu' ? 12 : 5
+    if (post.slides.length > maxSlides) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `post with intent ${post.intent} must contain at most ${maxSlides} slides`,
+        path: ['slides'],
+      })
+    }
+  })
 
 export type PostLineupPost = z.infer<typeof postLineupPostSchema>
 
