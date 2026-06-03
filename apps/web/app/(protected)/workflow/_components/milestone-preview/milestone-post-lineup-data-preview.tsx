@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { Badge } from '@workspace/ui/components/badge'
 import { Separator } from '@workspace/ui/components/separator'
 
-import type { PostLineupMilestoneData, PostLineupPost } from '@/lib/graphql/node-schemas'
+import type { PostLineupMilestoneData } from '@/lib/graphql/node-schemas'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import {
