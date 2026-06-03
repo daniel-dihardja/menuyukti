@@ -566,11 +566,12 @@ def _validate_scheduler_rules(
             continue
         if weekday_posts_by_week.get(week.week_start, 0) != 1:
             raise ValueError(f"weekday post must be exactly 1 in campaign week {week.week_index}")
-        if week_has_weekday_in_overlap(week.week_start, week.week_end, start_date, end_date):
-            if weekday_reels_by_week.get(week.week_start, 0) != 1:
-                raise ValueError(
-                    f"weekday reel must be exactly 1 in campaign week {week.week_index}"
-                )
+        if week_has_weekday_in_overlap(
+            week.week_start, week.week_end, start_date, end_date
+        ) and weekday_reels_by_week.get(week.week_start, 0) != 1:
+            raise ValueError(
+                f"weekday reel must be exactly 1 in campaign week {week.week_index}"
+            )
 
     for story_id, hit_count in fixed_story_hits.items():
         if hit_count != 1:
