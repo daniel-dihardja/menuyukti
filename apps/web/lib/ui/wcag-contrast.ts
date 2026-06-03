@@ -49,9 +49,13 @@ function linearToSrgb(channel: number): number {
 }
 
 export function oklchToRgb(color: OklchColor): [number, number, number] {
-  const [r, g, b] = oklchToLinearRgb(color).map(linearToSrgb)
+  const [lr, lg, lb] = oklchToLinearRgb(color)
   const alpha = color.alpha ?? 1
-  return [clamp01(r * alpha), clamp01(g * alpha), clamp01(b * alpha)]
+  return [
+    clamp01(linearToSrgb(lr) * alpha),
+    clamp01(linearToSrgb(lg) * alpha),
+    clamp01(linearToSrgb(lb) * alpha),
+  ]
 }
 
 function clamp01(value: number): number {
