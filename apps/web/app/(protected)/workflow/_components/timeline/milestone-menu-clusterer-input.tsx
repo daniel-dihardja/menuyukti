@@ -2,8 +2,10 @@
 
 import { useTranslations } from 'next-intl'
 
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Textarea } from '@workspace/ui/components/textarea'
+
+import { MilestoneFieldDescription } from './milestone-field-description'
 
 export type MenuClustererInputDraft = {
   notes: string
@@ -30,7 +32,7 @@ export function MilestoneMenuClustererInput({
     <FieldGroup className="gap-4">
       <Field>
         <FieldLabel>{t('inputLabel')}</FieldLabel>
-        <FieldDescription>{t('inputDescription')}</FieldDescription>
+        <MilestoneFieldDescription content={t('inputDescription')} />
         <Textarea
           className="min-h-[120px] resize-y whitespace-pre-wrap"
           disabled={disabled}

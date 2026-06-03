@@ -2,11 +2,13 @@
 
 import { useTranslations } from 'next-intl'
 
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
 
 import type { CampaignBriefInputDraft } from '@/lib/milestones/campaign-brief-input'
+
+import { MilestoneFieldDescription } from './milestone-field-description'
 
 export type MilestoneCampaignBriefInputProps = {
   draft: CampaignBriefInputDraft
@@ -29,7 +31,7 @@ export function MilestoneCampaignBriefInput({
     <FieldGroup className="gap-4">
       <Field>
         <FieldLabel>{t('inputLabel')}</FieldLabel>
-        <FieldDescription>{t('inputDescription')}</FieldDescription>
+        <MilestoneFieldDescription content={t('inputDescription')} />
         <Textarea
           className="min-h-[120px] resize-y whitespace-pre-wrap"
           disabled={disabled}
@@ -45,7 +47,7 @@ export function MilestoneCampaignBriefInput({
       <Field orientation="horizontal">
         <div className="flex flex-1 flex-col gap-1">
           <FieldLabel htmlFor="campaign-brief-reflection">{t('reflectionLabel')}</FieldLabel>
-          <FieldDescription>{t('reflectionDescription')}</FieldDescription>
+          <MilestoneFieldDescription content={t('reflectionDescription')} />
         </div>
         <Switch
           checked={draft.reflection.enabled}

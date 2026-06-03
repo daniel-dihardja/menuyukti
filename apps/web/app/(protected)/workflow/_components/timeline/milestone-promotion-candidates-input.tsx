@@ -9,7 +9,6 @@ import { Button } from '@workspace/ui/components/button'
 import { Checkbox } from '@workspace/ui/components/checkbox'
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -26,6 +25,8 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { Textarea } from '@workspace/ui/components/textarea'
+
+import { MilestoneFieldDescription } from './milestone-field-description'
 import { cn } from '@workspace/ui/lib/utils'
 
 import {
@@ -220,9 +221,9 @@ export function MilestonePromotionCandidatesInput({
     <FieldGroup className="gap-4">
       <Field>
         <FieldLabel>{t('milestonePromotionCandidatesInputShortlistLabel')}</FieldLabel>
-        <FieldDescription>
-          {t('milestonePromotionCandidatesInputShortlistDescription')}
-        </FieldDescription>
+        <MilestoneFieldDescription
+          content={t('milestonePromotionCandidatesInputShortlistDescription')}
+        />
         <FieldSet
           className={cn(
             'flex flex-col gap-4 rounded-lg border bg-muted/15 p-3',
@@ -252,9 +253,9 @@ export function MilestonePromotionCandidatesInput({
 
       <Field>
         <FieldLabel>{t('milestonePromotionCandidatesInputCategoriesLabel')}</FieldLabel>
-        <FieldDescription>
-          {t('milestonePromotionCandidatesInputCategoriesDescription')}
-        </FieldDescription>
+        <MilestoneFieldDescription
+          content={t('milestonePromotionCandidatesInputCategoriesDescription')}
+        />
 
         {loadState.status === 'loading' || loadState.status === 'idle' ? (
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-3">
@@ -340,9 +341,9 @@ export function MilestonePromotionCandidatesInput({
 
       <Field>
         <FieldLabel>{t('milestonePromotionCandidatesInputIgnoredItemsLabel')}</FieldLabel>
-        <FieldDescription>
-          {t('milestonePromotionCandidatesInputIgnoredItemsDescription')}
-        </FieldDescription>
+        <MilestoneFieldDescription
+          content={t('milestonePromotionCandidatesInputIgnoredItemsDescription')}
+        />
         <Textarea
           className="min-h-[100px] resize-y whitespace-pre-wrap font-mono text-sm"
           disabled={disabled}
@@ -360,9 +361,9 @@ export function MilestonePromotionCandidatesInput({
 
       <Field>
         <FieldLabel>{t('milestonePreset.promotion_candidates.inputLabel')}</FieldLabel>
-        <FieldDescription>
-          {t('milestonePreset.promotion_candidates.inputDescription')}
-        </FieldDescription>
+        <MilestoneFieldDescription
+          content={t('milestonePreset.promotion_candidates.inputDescription')}
+        />
         <Textarea
           className="min-h-[100px] resize-y whitespace-pre-wrap"
           disabled={disabled}

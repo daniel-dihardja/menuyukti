@@ -11,7 +11,7 @@ import { Calendar } from '@workspace/ui/components/calendar'
 import { CardContent } from '@workspace/ui/components/card'
 import { Empty, EmptyDescription, EmptyHeader } from '@workspace/ui/components/empty'
 import { cn } from '@workspace/ui/lib/utils'
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import {
   InputGroup,
   InputGroupAddon,
@@ -33,6 +33,7 @@ import {
   MilestoneCampaignBriefInput,
   type MilestoneCampaignBriefInputProps,
 } from './milestone-campaign-brief-input'
+import { MilestoneFieldDescription } from './milestone-field-description'
 import {
   MilestoneMenuClustererInput,
   type MenuClustererInputDraft,
@@ -177,7 +178,7 @@ function MilestoneInputTabContent({
         <FieldGroup className="gap-4">
           <Field>
             <FieldLabel>{t('milestoneDatesInputStartDateLabel')}</FieldLabel>
-            <FieldDescription>{t('milestoneDatesInputStartDateDescription')}</FieldDescription>
+            <MilestoneFieldDescription content={t('milestoneDatesInputStartDateDescription')} />
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -208,7 +209,7 @@ function MilestoneInputTabContent({
           </Field>
           <Field>
             <FieldLabel>{t('milestoneDatesInputEndDateLabel')}</FieldLabel>
-            <FieldDescription>{t('milestoneDatesInputEndDateDescription')}</FieldDescription>
+            <MilestoneFieldDescription content={t('milestoneDatesInputEndDateDescription')} />
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -301,7 +302,7 @@ function MilestoneInputTabContent({
         <FieldGroup className="gap-4">
           <Field>
             <FieldLabel>{inputModel.copy.label}</FieldLabel>
-            <FieldDescription>{inputModel.copy.description}</FieldDescription>
+            <MilestoneFieldDescription content={inputModel.copy.description} />
             <Textarea
               className="min-h-[120px] resize-y whitespace-pre-wrap"
               disabled={isMilestoneRunning}
