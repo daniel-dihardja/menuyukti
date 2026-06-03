@@ -12,6 +12,8 @@ class PostLineupSlide(TypedDict):
     imageBrief: str
     role: NotRequired[Literal["star", "puzzle"]]
     category: NotRequired[str]
+    storytellingFit: NotRequired[Literal["strong", "weak"]]
+    popularity: NotRequired[float]
 
 
 class PostLineupScheduleHints(TypedDict):

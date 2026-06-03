@@ -410,6 +410,8 @@ export const postLineupSlideSchema = z.object({
   role: menuTaggerItemRoleSchema.optional(),
   category: z.string().trim().min(1).optional(),
   imageBrief: z.string().trim().min(1),
+  storytellingFit: z.enum(['strong', 'weak']).optional(),
+  popularity: z.number().min(0).max(1).optional(),
 })
 
 export type PostLineupSlide = z.infer<typeof postLineupSlideSchema>

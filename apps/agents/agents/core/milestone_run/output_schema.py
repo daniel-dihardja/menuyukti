@@ -629,6 +629,8 @@ class PostLineupSlideOutput(BaseModel):
     role: Literal["star", "puzzle"] | None = None
     category: str | None = None
     imageBrief: str
+    storytellingFit: Literal["strong", "weak"] | None = None
+    popularity: float | None = Field(default=None, ge=0, le=1)
 
     @field_validator("dishName", "imageBrief", mode="before")
     @classmethod

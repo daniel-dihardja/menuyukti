@@ -47,6 +47,39 @@ def _build_image_brief_from_item(item: dict[str, Any]) -> str:
     )
 
 
+def _optional_storytelling_fit(item: dict[str, Any]) -> Literal["strong", "weak"] | None:
+    raw = item.get("storytellingFit")
+    if raw in ("strong", "weak"):
+        return raw
+    return None
+
+
+def _optional_popularity(item: dict[str, Any]) -> float | None:
+    raw = item.get("popularity")
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, (int, float)):
+        value = float(raw)
+        if 0 <= value <= 1:
+            return value
+    return None
+
+
+def _slide_metrics_from_item(
+    item: dict[str, Any],
+    lookup: dict[str, Any] | None,
+) -> dict[str, Any]:
+    source = lookup if lookup is not None else item
+    metrics: dict[str, Any] = {}
+    fit = _optional_storytelling_fit(source)
+    if fit is not None:
+        metrics["storytellingFit"] = fit
+    popularity = _optional_popularity(source)
+    if popularity is not None:
+        metrics["popularity"] = popularity
+    return metrics
+
+
 def _food_leads_by_name(food_leads: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     by_name: dict[str, dict[str, Any]] = {}
     for item in food_leads:
@@ -182,6 +215,7 @@ def _slides_from_groups(
                 slide["role"] = role
             if category:
                 slide["category"] = category
+            slide.update(_slide_metrics_from_item(raw_item, lookup))
             slides.append(slide)
 
     return slides

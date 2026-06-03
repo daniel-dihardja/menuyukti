@@ -69,6 +69,19 @@ function nameKey(name: string): string {
   return name.trim().toLowerCase()
 }
 
+function slideMetricsFromItem(
+  item: MenuClustererGroup['items'][number],
+  lookup?: MenuTaggerItem,
+): { storytellingFit?: 'strong' | 'weak'; popularity?: number } {
+  const storytellingFit = lookup?.storytellingFit ?? item.storytellingFit
+  const popularity = lookup?.popularity ?? item.popularity
+
+  return {
+    ...(storytellingFit === 'strong' || storytellingFit === 'weak' ? { storytellingFit } : {}),
+    ...(typeof popularity === 'number' ? { popularity } : {}),
+  }
+}
+
 type PostLineupPlanPost = {
   intent: 'pinned_monthly_menu' | 'weekday_lunch_post'
   title: string
@@ -182,6 +195,7 @@ export function buildPostLineupFromPlan(
           role: item.role,
           category: item.category,
           imageBrief: buildImageBrief(lookup ?? item),
+          ...slideMetricsFromItem(item, lookup),
         }
       })
 

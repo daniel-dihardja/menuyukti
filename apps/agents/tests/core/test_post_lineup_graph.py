@@ -227,7 +227,9 @@ def test_build_post_lineup_from_plan_creates_monthly_and_weekly_posts() -> None:
     assert monthly["groupIds"] == ["group-1", "group-4"]
     assert len(monthly["slides"]) == 2
     assert monthly["slides"][0]["dishName"] == "Ribeye"
+    assert monthly["slides"][0]["storytellingFit"] == "strong"
     assert monthly["slides"][1]["dishName"] == "Burger"
+    assert monthly["slides"][1]["storytellingFit"] == "strong"
     assert monthly["description"]
     assert monthly["captionGuidance"]
     assert len(weekly_posts) == len(weeks)

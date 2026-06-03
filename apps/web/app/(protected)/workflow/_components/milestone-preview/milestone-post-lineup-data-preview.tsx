@@ -52,6 +52,7 @@ function PostCard({
         <PostLineupPostCopy post={post} />
         <PostLineupSlides
           post={post}
+          layout="bullet"
           roleStarLabel={roleStarLabel}
           rolePuzzleLabel={rolePuzzleLabel}
         />

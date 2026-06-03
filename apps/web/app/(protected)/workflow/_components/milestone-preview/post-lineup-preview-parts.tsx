@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
 
-import type { PostLineupPost } from '@/lib/graphql/node-schemas'
+import type { PostLineupPost, PostLineupSlide } from '@/lib/graphql/node-schemas'
 
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
@@ -12,6 +12,12 @@ const ROLE_BADGE_CLASS = {
   star: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100',
   puzzle:
     'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
+} as const
+
+const STORYTELLING_BADGE_CLASS = {
+  strong:
+    'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
+  weak: 'border-border bg-muted/40 text-muted-foreground',
 } as const
 
 export function postIntentBadgeLabel(
@@ -62,47 +68,63 @@ export function PostLineupPostBadges({ post }: { post: PostLineupPost }) {
   )
 }
 
-export function PostLineupSlideCard({
+type PostLineupSlidesLayout = 'card' | 'bullet'
+
+function PostLineupSlideRow({
+  layout,
   slideNumber,
-  dishName,
-  role,
-  category,
-  imageBrief,
+  slide,
   roleStarLabel,
   rolePuzzleLabel,
 }: {
+  layout: PostLineupSlidesLayout
   slideNumber: number
-  dishName: string
-  role?: 'star' | 'puzzle'
-  category?: string
-  imageBrief: string
+  slide: PostLineupSlide
   roleStarLabel: string
   rolePuzzleLabel: string
 }) {
   const t = useTranslations('analytics.workflows.chat')
+  const title =
+    layout === 'bullet'
+      ? slide.dishName
+      : t('milestonePostLineupPreviewSlideTitle', {
+          number: slideNumber,
+          dishName: slide.dishName,
+        })
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/20 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold text-foreground">
-          {t('milestonePostLineupPreviewSlideTitle', { number: slideNumber, dishName })}
-        </p>
-        {role ? (
-          <Badge variant="outline" className={ROLE_BADGE_CLASS[role]}>
-            {role === 'star' ? roleStarLabel : rolePuzzleLabel}
-          </Badge>
-        ) : null}
-      </div>
-      {category?.trim() ? (
-        <div className="flex flex-col gap-1">
-          <p className={mp.sectionTitle}>{t('milestonePostLineupPreviewCategory')}</p>
-          <p className={mp.body}>{category.trim()}</p>
-        </div>
+    <div className="flex flex-wrap items-center gap-2">
+      <p
+        className={
+          layout === 'bullet'
+            ? `${mp.body} font-medium text-foreground`
+            : 'text-sm font-semibold text-foreground'
+        }
+      >
+        {title}
+      </p>
+      {slide.role ? (
+        <Badge variant="outline" className={ROLE_BADGE_CLASS[slide.role]}>
+          {slide.role === 'star' ? roleStarLabel : rolePuzzleLabel}
+        </Badge>
       ) : null}
-      <div className="flex flex-col gap-1">
-        <p className={mp.sectionTitle}>{t('milestonePostLineupPreviewImageBrief')}</p>
-        <p className={mp.body}>{imageBrief}</p>
-      </div>
+      {slide.category?.trim() ? (
+        <Badge variant="outline" className="font-normal text-muted-foreground">
+          {slide.category.trim()}
+        </Badge>
+      ) : null}
+      {slide.storytellingFit ? (
+        <Badge variant="outline" className={STORYTELLING_BADGE_CLASS[slide.storytellingFit]}>
+          {slide.storytellingFit === 'strong'
+            ? t('milestonePromotionCandidatesPreviewStorytellingStrong')
+            : t('milestonePromotionCandidatesPreviewStorytellingWeak')}
+        </Badge>
+      ) : null}
+      {typeof slide.popularity === 'number' ? (
+        <Badge variant="outline" className="font-normal text-muted-foreground">
+          {t('milestoneMenuClustererPreviewPopularityLabel', { value: slide.popularity })}
+        </Badge>
+      ) : null}
     </div>
   )
 }
@@ -111,24 +133,46 @@ export function PostLineupSlides({
   post,
   roleStarLabel,
   rolePuzzleLabel,
+  layout = 'card',
 }: {
   post: PostLineupPost
   roleStarLabel: string
   rolePuzzleLabel: string
+  layout?: PostLineupSlidesLayout
 }) {
+  if (layout === 'bullet') {
+    return (
+      <ul className={`${mp.listDisc} flex flex-col gap-2`}>
+        {post.slides.map((slide, slideIndex) => (
+          <li key={`${slide.dishName}-${slideIndex}`}>
+            <PostLineupSlideRow
+              layout="bullet"
+              slideNumber={slideIndex + 1}
+              slide={slide}
+              roleStarLabel={roleStarLabel}
+              rolePuzzleLabel={rolePuzzleLabel}
+            />
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-2">
       {post.slides.map((slide, slideIndex) => (
-        <PostLineupSlideCard
+        <div
           key={`${slide.dishName}-${slideIndex}`}
-          slideNumber={slideIndex + 1}
-          dishName={slide.dishName}
-          role={slide.role}
-          category={slide.category}
-          imageBrief={slide.imageBrief}
-          roleStarLabel={roleStarLabel}
-          rolePuzzleLabel={rolePuzzleLabel}
-        />
+          className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/20 p-3"
+        >
+          <PostLineupSlideRow
+            layout="card"
+            slideNumber={slideIndex + 1}
+            slide={slide}
+            roleStarLabel={roleStarLabel}
+            rolePuzzleLabel={rolePuzzleLabel}
+          />
+        </div>
       ))}
     </div>
   )

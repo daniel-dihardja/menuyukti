@@ -56,6 +56,7 @@ function group(
         category: 'MAINS',
         position: 1,
         storytellingFit: 'strong',
+        popularity: 0.82,
         reelMoment,
       },
     ],
@@ -104,6 +105,9 @@ describe('buildPostLineupFromPlan', () => {
     expect(result.endDate).toBe(END_DATE)
     expect(result.sourceDatesTitle).toBe('Campaign dates')
     expect(postLineupMilestoneDataSchema.safeParse(result).success).toBe(true)
+    const monthlySlides = result.posts[0]?.slides ?? []
+    expect(monthlySlides[0]?.storytellingFit).toBe('strong')
+    expect(monthlySlides[0]?.popularity).toBe(0.82)
   })
 
   it('passes through description and captionGuidance when provided', () => {

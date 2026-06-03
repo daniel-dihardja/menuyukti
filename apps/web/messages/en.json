@@ -1873,8 +1873,6 @@
         "milestonePostLineupPreviewPinnedBadge": "Pinned monthly menu",
         "milestonePostLineupPreviewWeeklyLunchBadge": "Weekday lunch post",
         "milestonePostLineupPreviewSlideTitle": "Slide {number}: {dishName}",
-        "milestonePostLineupPreviewCategory": "Category",
-        "milestonePostLineupPreviewImageBrief": "Photo brief",
         "milestonePostLineupPreviewRoleStar": "Star",
         "milestonePostLineupPreviewRolePuzzle": "Puzzle",
         "milestonePostLineupPreviewHelpPosts": "Instagram feed post concepts built from Dates, Campaign brief context, and Menu clusterer groups. Includes one pinned monthly signature menu post and one distinct weekday lunch post for each calendar week in the campaign window; each post has a concept description and caption guidance from the campaign brief. Weekly posts include a fixed schedule date.",
