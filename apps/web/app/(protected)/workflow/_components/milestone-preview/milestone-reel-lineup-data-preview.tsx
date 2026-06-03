@@ -4,7 +4,6 @@ import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 
 import type { ReelLineupMilestoneData, ReelLineupReel } from '@/lib/graphql/node-schemas'
@@ -16,51 +15,10 @@ import {
   useMilestonePreviewSelection,
 } from './milestone-preview-list-detail'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
-import {
-  reelIntentBadgeLabel,
-  ReelLineupHeroDishes,
-  ReelLineupReelBadges,
-  ReelLineupReelCopy,
-  ReelLineupReelMeta,
-} from './reel-lineup-preview-parts'
+import { reelIntentBadgeLabel, ReelLineupDetailCard } from './reel-lineup-preview-parts'
 
 export type MilestoneReelLineupDataPreviewProps = {
   data: ReelLineupMilestoneData
-}
-
-function ReelCard({
-  reel,
-  index,
-  roleStarLabel,
-  rolePuzzleLabel,
-}: {
-  reel: ReelLineupReel
-  index: number
-  roleStarLabel: string
-  rolePuzzleLabel: string
-}) {
-  const t = useTranslations('analytics.workflows.chat')
-
-  return (
-    <Card className="gap-3 py-4 shadow-none">
-      <CardHeader className="flex flex-col gap-2 px-4 pb-0">
-        <CardTitle className="text-base">
-          {t('milestoneReelLineupPreviewReelTitle', { number: index + 1, title: reel.title })}
-        </CardTitle>
-        <ReelLineupReelBadges reel={reel} />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3 px-4 pt-0">
-        <ReelLineupReelCopy reel={reel} />
-        <ReelLineupHeroDishes
-          reel={reel}
-          layout="bullet"
-          roleStarLabel={roleStarLabel}
-          rolePuzzleLabel={rolePuzzleLabel}
-        />
-        <ReelLineupReelMeta reel={reel} />
-      </CardContent>
-    </Card>
-  )
 }
 
 function NotesSection({ label, text }: { label: string; text: string }) {
@@ -181,7 +139,7 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
         }
         detail={
           selectedReel && selectedIndex >= 0 ? (
-            <ReelCard
+            <ReelLineupDetailCard
               reel={selectedReel}
               index={selectedIndex}
               roleStarLabel={roleStarLabel}

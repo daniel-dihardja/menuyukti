@@ -54,12 +54,8 @@ import { SchedulerCalendarMonthGrid } from './scheduler-calendar-month-grid'
 import { SchedulerCalendarMonthList } from './scheduler-calendar-month-list'
 import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
 import { SchedulerCalendarWeekGrid } from './scheduler-calendar-week-grid'
-import {
-  PostLineupPostBadges,
-  PostLineupPostCopy,
-  PostLineupSlides,
-} from './post-lineup-preview-parts'
-import { milestonePreviewTypography as mp } from './milestone-preview-typography'
+import { PostLineupDetailCard } from './post-lineup-preview-parts'
+import { ReelLineupDetailCard } from './reel-lineup-preview-parts'
 
 export type SchedulerCalendarViewMode = 'week' | 'month'
 
@@ -87,16 +83,6 @@ function formatSchedulerDateDetailLabel(isoDate: string, locale: string): string
   }).format(date)
 }
 
-function reelIntentBadgeLabel(
-  intent: ReelLineupReel['intent'],
-  t: ReturnType<typeof useTranslations<'analytics.workflows.chat'>>,
-): string {
-  if (intent === 'weekday_reel') {
-    return t('milestoneReelLineupPreviewWeekdayBadge')
-  }
-  return t('milestoneReelLineupPreviewWeekendBadge')
-}
-
 type SchedulerCalendarDateDetailProps = {
   selectedDateIso: string
   slots: SchedulerMilestoneData['slots']
@@ -104,12 +90,39 @@ type SchedulerCalendarDateDetailProps = {
   reelLineupReels?: ReelLineupReel[]
 }
 
+function SchedulerSlotDetailHeader({ slot }: { slot: SchedulerMilestoneData['slots'][number] }) {
+  const slotKind = schedulerSlotKind(slot)
+
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2">
+      <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
+        {schedulerSlotDisplayTime(slot)}
+      </span>
+      <Badge variant="outline" className={schedulerSlotClassName(slotKind)}>
+        {schedulerSlotTypeLabel(slotKind)}
+      </Badge>
+    </div>
+  )
+}
+
+function lineupIndexForPost(post: PostLineupPost, postLineupPosts?: PostLineupPost[]): number {
+  const index = postLineupPosts?.findIndex((entry) => entry.id === post.id) ?? -1
+  return index >= 0 ? index : 0
+}
+
+function lineupIndexForReel(reel: ReelLineupReel, reelLineupReels?: ReelLineupReel[]): number {
+  const index = reelLineupReels?.findIndex((entry) => entry.id === reel.id) ?? -1
+  return index >= 0 ? index : 0
+}
+
 function SchedulerPostSlotDetailCard({
   slot,
   post,
+  postLineupPosts,
 }: {
   slot: SchedulerMilestoneData['slots'][number]
   post: PostLineupPost
+  postLineupPosts?: PostLineupPost[]
 }) {
   const t = useTranslations('analytics.workflows.chat')
   const roleStarLabel = t('milestonePostLineupPreviewRoleStar')
@@ -117,24 +130,13 @@ function SchedulerPostSlotDetailCard({
 
   return (
     <>
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
-          {schedulerSlotDisplayTime(slot)}
-        </span>
-        <Badge variant="outline" className={schedulerSlotClassName('post')}>
-          {schedulerSlotTypeLabel('post')}
-        </Badge>
-      </div>
-      <p className="mb-3 text-base font-semibold text-foreground">{post.title}</p>
-      <PostLineupPostBadges post={post} />
-      <div className="mt-3 flex flex-col gap-3">
-        <PostLineupPostCopy post={post} />
-        <PostLineupSlides
-          post={post}
-          roleStarLabel={roleStarLabel}
-          rolePuzzleLabel={rolePuzzleLabel}
-        />
-      </div>
+      <SchedulerSlotDetailHeader slot={slot} />
+      <PostLineupDetailCard
+        post={post}
+        index={lineupIndexForPost(post, postLineupPosts)}
+        roleStarLabel={roleStarLabel}
+        rolePuzzleLabel={rolePuzzleLabel}
+      />
     </>
   )
 }
@@ -142,53 +144,25 @@ function SchedulerPostSlotDetailCard({
 function SchedulerReelSlotDetailCard({
   slot,
   reel,
+  reelLineupReels,
 }: {
   slot: SchedulerMilestoneData['slots'][number]
   reel: ReelLineupReel
+  reelLineupReels?: ReelLineupReel[]
 }) {
   const t = useTranslations('analytics.workflows.chat')
+  const roleStarLabel = t('milestonePostLineupPreviewRoleStar')
+  const rolePuzzleLabel = t('milestonePostLineupPreviewRolePuzzle')
 
   return (
     <>
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
-          {schedulerSlotDisplayTime(slot)}
-        </span>
-        <Badge variant="outline" className={schedulerSlotClassName('reel')}>
-          {schedulerSlotTypeLabel('reel')}
-        </Badge>
-        <Badge variant="secondary">{reelIntentBadgeLabel(reel.intent, t)}</Badge>
-      </div>
-      <p className="mb-3 text-base font-semibold text-foreground">{reel.title}</p>
-      <div className="flex flex-col gap-3">
-        <div>
-          <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewDescription')}</p>
-          <p className={mp.body}>{reel.description}</p>
-        </div>
-        <div>
-          <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewExplanation')}</p>
-          <p className={mp.body}>{reel.explanation}</p>
-        </div>
-        {reel.heroDishes && reel.heroDishes.length > 0 ? (
-          <div>
-            <p className={mp.sectionTitle}>{t('milestoneReelLineupPreviewHeroDishes')}</p>
-            <ul className={`${mp.body} list-disc space-y-1 pl-5`}>
-              {reel.heroDishes.map((dish) => (
-                <li key={dish.name}>
-                  {dish.name}
-                  {dish.reelMoment ? ` · ${dish.reelMoment}` : ''}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        {reel.groupIds.length > 0 ? (
-          <p className={mp.bodySmall}>
-            <span className={mp.rowKey}>{t('milestoneReelLineupPreviewGroupIds')}:</span>{' '}
-            {reel.groupIds.join(', ')}
-          </p>
-        ) : null}
-      </div>
+      <SchedulerSlotDetailHeader slot={slot} />
+      <ReelLineupDetailCard
+        reel={reel}
+        index={lineupIndexForReel(reel, reelLineupReels)}
+        roleStarLabel={roleStarLabel}
+        rolePuzzleLabel={rolePuzzleLabel}
+      />
     </>
   )
 }
@@ -228,9 +202,17 @@ function SchedulerCalendarDateDetail({
             className="rounded-lg border border-border/80 bg-background px-3 py-3 shadow-xs"
           >
             {isPostSlot && postDetail ? (
-              <SchedulerPostSlotDetailCard slot={slot} post={postDetail} />
+              <SchedulerPostSlotDetailCard
+                slot={slot}
+                post={postDetail}
+                postLineupPosts={postLineupPosts}
+              />
             ) : isReelSlot && reelDetail ? (
-              <SchedulerReelSlotDetailCard slot={slot} reel={reelDetail} />
+              <SchedulerReelSlotDetailCard
+                slot={slot}
+                reel={reelDetail}
+                reelLineupReels={reelLineupReels}
+              />
             ) : (
               <>
                 <div className="mb-2 flex flex-wrap items-center gap-2">

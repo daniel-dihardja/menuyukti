@@ -116,6 +116,38 @@ def _is_within_lunch_time(value: str, lunch_window: tuple[str, str]) -> bool:
     return start <= value <= end
 
 
+def _optional_storytelling_fit(item: dict[str, Any]) -> str | None:
+    raw = item.get("storytellingFit")
+    if raw in {"strong", "weak"}:
+        return raw
+    return None
+
+
+def _optional_popularity(item: dict[str, Any]) -> float | None:
+    raw = item.get("popularity")
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, (int, float)):
+        value = float(raw)
+        if 0 <= value <= 1:
+            return value
+    return None
+
+
+def _lineup_item_metrics(item: dict[str, Any]) -> dict[str, Any]:
+    metrics: dict[str, Any] = {}
+    category = str(item.get("category") or "").strip()
+    if category:
+        metrics["category"] = category
+    storytelling_fit = _optional_storytelling_fit(item)
+    if storytelling_fit is not None:
+        metrics["storytellingFit"] = storytelling_fit
+    popularity = _optional_popularity(item)
+    if popularity is not None:
+        metrics["popularity"] = popularity
+    return metrics
+
+
 def _candidate_entries(lineup: dict[str, Any] | None, key: str) -> list[dict[str, Any]]:
     values = lineup.get(key) if isinstance(lineup, dict) else None
     if not isinstance(values, list):
@@ -152,9 +184,7 @@ def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
         role = slide.get("role")
         if role in {"star", "puzzle"}:
             slide_payload["role"] = role
-        category = slide.get("category")
-        if isinstance(category, str) and category.strip():
-            slide_payload["category"] = category.strip()
+        slide_payload.update(_lineup_item_metrics(slide))
         slides.append(slide_payload)
 
     if not slides:
@@ -222,6 +252,7 @@ def _reel_slot_detail(reel: dict[str, Any]) -> dict[str, Any] | None:
             role = dish.get("role")
             if role in {"star", "puzzle"}:
                 dish_payload["role"] = role
+            dish_payload.update(_lineup_item_metrics(dish))
             hero_dishes.append(dish_payload)
 
     payload: dict[str, Any] = {

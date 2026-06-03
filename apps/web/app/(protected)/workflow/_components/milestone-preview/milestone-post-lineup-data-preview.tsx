@@ -4,7 +4,6 @@ import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 
 import type { PostLineupMilestoneData, PostLineupPost } from '@/lib/graphql/node-schemas'
@@ -16,49 +15,10 @@ import {
   useMilestonePreviewSelection,
 } from './milestone-preview-list-detail'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
-import {
-  postIntentBadgeLabel,
-  PostLineupPostBadges,
-  PostLineupPostCopy,
-  PostLineupSlides,
-} from './post-lineup-preview-parts'
+import { postIntentBadgeLabel, PostLineupDetailCard } from './post-lineup-preview-parts'
 
 export type MilestonePostLineupDataPreviewProps = {
   data: PostLineupMilestoneData
-}
-
-function PostCard({
-  post,
-  index,
-  roleStarLabel,
-  rolePuzzleLabel,
-}: {
-  post: PostLineupPost
-  index: number
-  roleStarLabel: string
-  rolePuzzleLabel: string
-}) {
-  const t = useTranslations('analytics.workflows.chat')
-
-  return (
-    <Card className="gap-3 py-4 shadow-none">
-      <CardHeader className="flex flex-col gap-2 px-4 pb-0">
-        <CardTitle className="text-base">
-          {t('milestonePostLineupPreviewPostTitle', { number: index + 1, title: post.title })}
-        </CardTitle>
-        <PostLineupPostBadges post={post} />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3 px-4 pt-0">
-        <PostLineupPostCopy post={post} />
-        <PostLineupSlides
-          post={post}
-          layout="bullet"
-          roleStarLabel={roleStarLabel}
-          rolePuzzleLabel={rolePuzzleLabel}
-        />
-      </CardContent>
-    </Card>
-  )
 }
 
 function NotesSection({ label, text }: { label: string; text: string }) {
@@ -192,7 +152,7 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
         }
         detail={
           selectedPost && selectedIndex >= 0 ? (
-            <PostCard
+            <PostLineupDetailCard
               post={selectedPost}
               index={selectedIndex}
               roleStarLabel={roleStarLabel}

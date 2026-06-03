@@ -110,6 +110,90 @@ describe('resolveSchedulerPostDetail', () => {
     ).toEqual(postLineupWithCopy)
   })
 
+  it('merges slide category, storytellingFit, and popularity from post_lineup', () => {
+    const embedded = {
+      ...samplePostDetail,
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Embedded brief.',
+        },
+      ],
+    }
+    const lineupWithMetrics = {
+      ...samplePostDetail,
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Lineup brief.',
+          role: 'star' as const,
+          category: 'Mains',
+          storytellingFit: 'strong' as const,
+          popularity: 0.82,
+        },
+      ],
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: embedded,
+        },
+        [lineupWithMetrics],
+      ),
+    ).toEqual({
+      ...embedded,
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Embedded brief.',
+          role: 'star',
+          category: 'Mains',
+          storytellingFit: 'strong',
+          popularity: 0.82,
+        },
+      ],
+    })
+  })
+
+  it('falls back to post_lineup posts matched by embedded id', () => {
+    const lineupPost = {
+      ...samplePostDetail,
+      title: 'Different scheduler title',
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Lineup brief.',
+          category: 'Mains',
+          storytellingFit: 'weak' as const,
+          popularity: 0.4,
+        },
+      ],
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Post: Monthly top menu',
+          post: {
+            ...samplePostDetail,
+            slides: [{ dishName: 'Ribeye', imageBrief: 'Embedded brief.' }],
+          },
+        },
+        [lineupPost],
+      )?.slides[0],
+    ).toMatchObject({
+      category: 'Mains',
+      storytellingFit: 'weak',
+      popularity: 0.4,
+    })
+  })
+
   it('prefers embedded description and captionGuidance over post_lineup fallback', () => {
     const embedded = {
       ...samplePostDetail,
@@ -178,6 +262,50 @@ describe('resolveSchedulerReelDetail', () => {
         [sampleReelDetail],
       ),
     ).toEqual(sampleReelDetail)
+  })
+
+  it('merges hero dish category, storytellingFit, and popularity from reel_lineup', () => {
+    const embedded = {
+      ...sampleReelDetail,
+      heroDishes: [{ name: 'Ribeye', reelMoment: 'static_hero' }],
+    }
+    const lineupWithMetrics = {
+      ...sampleReelDetail,
+      heroDishes: [
+        {
+          name: 'Ribeye',
+          reelMoment: 'static_hero',
+          role: 'star' as const,
+          category: 'Mains',
+          storytellingFit: 'strong' as const,
+          popularity: 0.91,
+        },
+      ],
+    }
+    expect(
+      resolveSchedulerReelDetail(
+        {
+          kind: 'reel',
+          date: '2026-06-04',
+          time: '11:00',
+          title: 'Reel: Week 1 weekday lunch reel',
+          reel: embedded,
+        },
+        [lineupWithMetrics],
+      ),
+    ).toEqual({
+      ...embedded,
+      heroDishes: [
+        {
+          name: 'Ribeye',
+          reelMoment: 'static_hero',
+          role: 'star',
+          category: 'Mains',
+          storytellingFit: 'strong',
+          popularity: 0.91,
+        },
+      ],
+    })
   })
 
   it('merges explanation from reel_lineup when embedded reel lacks copy', () => {

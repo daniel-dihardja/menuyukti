@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 
 import type { PostLineupPost, PostLineupSlide } from '@/lib/graphql/node-schemas'
 
@@ -175,5 +176,39 @@ export function PostLineupSlides({
         </div>
       ))}
     </div>
+  )
+}
+
+export function PostLineupDetailCard({
+  post,
+  index,
+  roleStarLabel,
+  rolePuzzleLabel,
+}: {
+  post: PostLineupPost
+  index: number
+  roleStarLabel: string
+  rolePuzzleLabel: string
+}) {
+  const t = useTranslations('analytics.workflows.chat')
+
+  return (
+    <Card className="gap-3 py-4 shadow-none">
+      <CardHeader className="flex flex-col gap-2 px-4 pb-0">
+        <CardTitle className="text-base">
+          {t('milestonePostLineupPreviewPostTitle', { number: index + 1, title: post.title })}
+        </CardTitle>
+        <PostLineupPostBadges post={post} />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 px-4 pt-0">
+        <PostLineupPostCopy post={post} />
+        <PostLineupSlides
+          post={post}
+          layout="bullet"
+          roleStarLabel={roleStarLabel}
+          rolePuzzleLabel={rolePuzzleLabel}
+        />
+      </CardContent>
+    </Card>
   )
 }

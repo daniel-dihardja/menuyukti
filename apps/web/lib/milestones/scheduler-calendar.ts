@@ -1,6 +1,8 @@
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import type {
   PostLineupPost,
+  PostLineupSlide,
+  ReelLineupHeroDish,
   ReelLineupReel,
   SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
@@ -180,6 +182,10 @@ export function schedulerSlotsForDateDetail(
   )
 }
 
+function normalizeLineupItemName(name: string): string {
+  return name.trim().toLowerCase()
+}
+
 function findPostLineupPostByTitle(
   postLineupPosts: PostLineupPost[] | undefined,
   title: string,
@@ -191,7 +197,59 @@ function findPostLineupPostByTitle(
   return postLineupPosts.find((post) => post.title.trim() === normalizedTitle)
 }
 
-function mergeSchedulerPostCopy(
+function findPostLineupPostForSlot(
+  postLineupPosts: PostLineupPost[] | undefined,
+  slot: SchedulerSlot,
+): PostLineupPost | undefined {
+  if (!postLineupPosts?.length) {
+    return undefined
+  }
+  const embeddedId = slot.post?.id.trim()
+  if (embeddedId) {
+    const byId = postLineupPosts.find((post) => post.id === embeddedId)
+    if (byId) {
+      return byId
+    }
+  }
+  return findPostLineupPostByTitle(postLineupPosts, slot.title)
+}
+
+function mergeSchedulerPostSlide(
+  embedded: PostLineupSlide,
+  fallback?: PostLineupSlide,
+): PostLineupSlide {
+  if (!fallback) {
+    return embedded
+  }
+  const category = embedded.category?.trim() || fallback.category
+  return {
+    ...fallback,
+    ...embedded,
+    dishName: embedded.dishName,
+    imageBrief: embedded.imageBrief,
+    role: embedded.role ?? fallback.role,
+    ...(category ? { category } : {}),
+    storytellingFit: embedded.storytellingFit ?? fallback.storytellingFit,
+    popularity: embedded.popularity ?? fallback.popularity,
+  }
+}
+
+function mergeSchedulerPostSlides(
+  embeddedSlides: PostLineupSlide[],
+  fallbackSlides?: PostLineupSlide[],
+): PostLineupSlide[] {
+  if (!fallbackSlides?.length) {
+    return embeddedSlides
+  }
+  const fallbackByDish = new Map(
+    fallbackSlides.map((slide) => [normalizeLineupItemName(slide.dishName), slide]),
+  )
+  return embeddedSlides.map((slide) =>
+    mergeSchedulerPostSlide(slide, fallbackByDish.get(normalizeLineupItemName(slide.dishName))),
+  )
+}
+
+function mergeSchedulerPostDetail(
   embedded: PostLineupPost,
   fallback?: PostLineupPost,
 ): PostLineupPost {
@@ -200,14 +258,14 @@ function mergeSchedulerPostCopy(
   }
   const description = embedded.description?.trim() || fallback.description?.trim()
   const captionGuidance = embedded.captionGuidance?.trim() || fallback.captionGuidance?.trim()
-  if (description === embedded.description && captionGuidance === embedded.captionGuidance) {
-    return embedded
-  }
-  return {
+  const slides = mergeSchedulerPostSlides(embedded.slides, fallback.slides)
+  const merged: PostLineupPost = {
     ...embedded,
+    slides,
     ...(description ? { description } : {}),
     ...(captionGuidance ? { captionGuidance } : {}),
   }
+  return merged
 }
 
 export function resolveSchedulerPostDetail(
@@ -217,10 +275,9 @@ export function resolveSchedulerPostDetail(
   if (schedulerSlotKind(slot) !== 'post') {
     return undefined
   }
-  const title = slot.title.trim()
-  const fallback = findPostLineupPostByTitle(postLineupPosts, title)
+  const fallback = findPostLineupPostForSlot(postLineupPosts, slot)
   if (slot.post) {
-    return mergeSchedulerPostCopy(slot.post, fallback)
+    return mergeSchedulerPostDetail(slot.post, fallback)
   }
   return fallback
 }
@@ -249,7 +306,45 @@ function findReelLineupReelForSlot(
   return reelLineupReels.find((reel) => reel.title.trim() === name)
 }
 
-function mergeSchedulerReelCopy(
+function mergeSchedulerHeroDish(
+  embedded: ReelLineupHeroDish,
+  fallback?: ReelLineupHeroDish,
+): ReelLineupHeroDish {
+  if (!fallback) {
+    return embedded
+  }
+  const category = embedded.category?.trim() || fallback.category
+  return {
+    ...fallback,
+    ...embedded,
+    name: embedded.name,
+    reelMoment: embedded.reelMoment ?? fallback.reelMoment,
+    role: embedded.role ?? fallback.role,
+    ...(category ? { category } : {}),
+    storytellingFit: embedded.storytellingFit ?? fallback.storytellingFit,
+    popularity: embedded.popularity ?? fallback.popularity,
+  }
+}
+
+function mergeSchedulerHeroDishes(
+  embeddedHeroDishes: ReelLineupHeroDish[] | undefined,
+  fallbackHeroDishes?: ReelLineupHeroDish[],
+): ReelLineupHeroDish[] | undefined {
+  if (!embeddedHeroDishes?.length) {
+    return fallbackHeroDishes
+  }
+  if (!fallbackHeroDishes?.length) {
+    return embeddedHeroDishes
+  }
+  const fallbackByName = new Map(
+    fallbackHeroDishes.map((dish) => [normalizeLineupItemName(dish.name), dish]),
+  )
+  return embeddedHeroDishes.map((dish) =>
+    mergeSchedulerHeroDish(dish, fallbackByName.get(normalizeLineupItemName(dish.name))),
+  )
+}
+
+function mergeSchedulerReelDetail(
   embedded: ReelLineupReel,
   fallback?: ReelLineupReel,
 ): ReelLineupReel {
@@ -258,17 +353,7 @@ function mergeSchedulerReelCopy(
   }
   const description = embedded.description.trim() || fallback.description.trim()
   const explanation = embedded.explanation.trim() || fallback.explanation.trim()
-  const heroDishes =
-    embedded.heroDishes && embedded.heroDishes.length > 0
-      ? embedded.heroDishes
-      : fallback.heroDishes
-  if (
-    description === embedded.description &&
-    explanation === embedded.explanation &&
-    heroDishes === embedded.heroDishes
-  ) {
-    return embedded
-  }
+  const heroDishes = mergeSchedulerHeroDishes(embedded.heroDishes, fallback.heroDishes)
   return {
     ...embedded,
     description,
@@ -286,7 +371,7 @@ export function resolveSchedulerReelDetail(
   }
   const fallback = findReelLineupReelForSlot(reelLineupReels, slot)
   if (slot.reel) {
-    return mergeSchedulerReelCopy(slot.reel, fallback)
+    return mergeSchedulerReelDetail(slot.reel, fallback)
   }
   return fallback
 }

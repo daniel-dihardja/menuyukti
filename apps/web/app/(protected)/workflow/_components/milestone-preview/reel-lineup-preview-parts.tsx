@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 
 import type {
   PostLineupScheduleHints,
@@ -259,5 +260,40 @@ export function ReelLineupReelMeta({ reel }: { reel: ReelLineupReel }) {
       <span className={mp.rowKey}>{t('milestoneReelLineupPreviewGroupIds')}:</span>{' '}
       {reel.groupIds.join(', ')}
     </p>
+  )
+}
+
+export function ReelLineupDetailCard({
+  reel,
+  index,
+  roleStarLabel,
+  rolePuzzleLabel,
+}: {
+  reel: ReelLineupReel
+  index: number
+  roleStarLabel: string
+  rolePuzzleLabel: string
+}) {
+  const t = useTranslations('analytics.workflows.chat')
+
+  return (
+    <Card className="gap-3 py-4 shadow-none">
+      <CardHeader className="flex flex-col gap-2 px-4 pb-0">
+        <CardTitle className="text-base">
+          {t('milestoneReelLineupPreviewReelTitle', { number: index + 1, title: reel.title })}
+        </CardTitle>
+        <ReelLineupReelBadges reel={reel} />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 px-4 pt-0">
+        <ReelLineupReelCopy reel={reel} />
+        <ReelLineupHeroDishes
+          reel={reel}
+          layout="bullet"
+          roleStarLabel={roleStarLabel}
+          rolePuzzleLabel={rolePuzzleLabel}
+        />
+        <ReelLineupReelMeta reel={reel} />
+      </CardContent>
+    </Card>
   )
 }
