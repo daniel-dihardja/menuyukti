@@ -6,6 +6,9 @@ import re
 from typing import Any, Literal
 
 from agents_app.agents.core.milestone_run.dates_window import parse_iso_date
+from agents_app.agents.core.milestone_run.scheduler.prompts import (
+    SCHEDULE_EXPLANATION_MAX_CHARS,
+)
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 
@@ -1035,6 +1038,7 @@ class SchedulerMilestoneOutput(BaseModel):
     startDate: str
     endDate: str
     publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
+    scheduleExplanation: str | None = None
     sourceDatesTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
     sourceMenuClustererTitle: str | None = None
@@ -1042,6 +1046,20 @@ class SchedulerMilestoneOutput(BaseModel):
     sourceStoryLineupTitle: str | None = None
     sourceReelLineupTitle: str | None = None
     slots: list[SchedulerSlotOutput] = Field(default_factory=list)
+
+    @field_validator("scheduleExplanation")
+    @classmethod
+    def _validate_schedule_explanation_length(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        if len(text) > SCHEDULE_EXPLANATION_MAX_CHARS:
+            raise ValueError(
+                f"scheduleExplanation must be at most {SCHEDULE_EXPLANATION_MAX_CHARS} characters"
+            )
+        return text
 
 
 class StoryLineupStoryOutput(BaseModel):

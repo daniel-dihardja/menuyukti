@@ -746,6 +746,7 @@ export const schedulerMilestoneDataSchema = z.object({
   startDate: z.string(),
   endDate: z.string(),
   publicHolidays: z.array(campaignWindowPublicHolidaySchema).default([]),
+  scheduleExplanation: z.string().trim().min(1).optional(),
   sourceDatesTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   sourceMenuClustererTitle: z.string().optional(),

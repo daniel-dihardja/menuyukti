@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+# Hard cap: 50% of a typical verbose scheduleExplanation (~1708 chars).
+SCHEDULE_EXPLANATION_MAX_CHARS = 854
+SCHEDULE_EXPLANATION_MAX_WORDS = 75
+# Prompt target so the model stays well under the hard cap.
+SCHEDULE_EXPLANATION_TARGET_CHARS = 380
+
 
 def format_scheduler_system() -> str:
     return (
@@ -20,5 +26,20 @@ def format_scheduler_system() -> str:
         "- Use lineup items from inputs; do not invent unrelated content.\n"
         "- Use ISO date format (YYYY-MM-DD).\n"
         "- Time must be HH:MM in 24-hour format.\n"
-        "- If there are multiple suitable options, choose balanced dates."
+        "- If there are multiple suitable options, choose balanced dates.\n\n"
+        "scheduleExplanation (required; HARD LIMIT—outputs over the limit are rejected):\n"
+        f"- Maximum {SCHEDULE_EXPLANATION_MAX_WORDS} words and {SCHEDULE_EXPLANATION_MAX_CHARS} "
+        f"characters. Aim for about {SCHEDULE_EXPLANATION_TARGET_CHARS} characters.\n"
+        "- Exactly 3 short sentences—one per topic below. No fourth sentence. No bullet lists.\n"
+        "- Sentence 1: weekday reel schedule—why you chose that weekday date and time "
+        "(use the times from your slots; summarize the pattern if weeks differ).\n"
+        "- Sentence 2: weekend reel schedule—why you chose that weekend date and time.\n"
+        "- Sentence 3: weekday post schedule—why you chose that weekday date and time.\n"
+        "- Do NOT explain monthly pins, stories, or overall campaign strategy.\n"
+        "- FORBIDDEN: multi-paragraph text; listing every campaign week; quoting long "
+        "brief copy; filler like 'strategically', 'foundational piece', 'maximum visibility'.\n"
+        "- GOOD (~280 chars): \"Weekday reels at 12:15 on Tue target lunch breaks before "
+        "the weekend push. Saturday 12:15 weekend reel catches leisure diners. Weekday "
+        "posts at 12:30 follow reels so the lunch offer lands when attention is highest.\"\n"
+        "- BAD: monthly pin rationale, story timing, or text longer than the GOOD example."
     )

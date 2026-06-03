@@ -14,6 +14,10 @@ from agents_app.agents.core.milestone_run.scheduler.nodes import (
     generate_schedule_with_llm,
     persist_result,
 )
+from agents_app.agents.core.milestone_run.scheduler.prompts import (
+    SCHEDULE_EXPLANATION_MAX_CHARS,
+)
+from pydantic import ValidationError
 
 
 def _prior_json() -> str:
@@ -301,8 +305,21 @@ def _valid_draft() -> SchedulerDraftOutput:
                 title="Story: positive customer review",
                 sourceId="story-user-review",
             ),
-        ]
+        ],
+        scheduleExplanation=(
+            "Weekday reels at 12:15 on Tuesday target lunch breaks in the offer window. "
+            "Saturday 12:15 weekend reels reach leisure diners. "
+            "Weekday posts at 12:30 follow reels when lunch attention peaks."
+        ),
     )
+
+
+def test_scheduler_draft_rejects_overlong_schedule_explanation() -> None:
+    with pytest.raises(ValidationError):
+        SchedulerDraftOutput(
+            slots=[],
+            scheduleExplanation="x" * (SCHEDULE_EXPLANATION_MAX_CHARS + 1),
+        )
 
 
 @pytest.mark.asyncio
@@ -349,13 +366,17 @@ async def test_generate_schedule_with_llm_success() -> None:
     assert normalized["startDate"] == "2026-06-01"
     assert normalized["endDate"] == "2026-06-28"
     assert len(normalized["slots"]) == 12
+    assert "scheduleExplanation" in normalized
+    assert normalized["scheduleExplanation"]
 
 
 @pytest.mark.asyncio
 async def test_generate_schedule_with_llm_retries_then_succeeds() -> None:
     prior = json.loads(_prior_json())
+    valid = _valid_draft()
     invalid = SchedulerDraftOutput(
-        slots=[slot for slot in _valid_draft().slots if slot.sourceId != "story-user-review"]
+        slots=[slot for slot in valid.slots if slot.sourceId != "story-user-review"],
+        scheduleExplanation=valid.scheduleExplanation,
     )
     state = _base_state(
         dates_data=prior[0]["data"],
@@ -364,7 +385,7 @@ async def test_generate_schedule_with_llm_retries_then_succeeds() -> None:
         story_lineup_data=prior[3]["data"],
         reel_lineup_data=prior[4]["data"],
     )
-    invoke = AsyncMock(side_effect=[invalid, _valid_draft()])
+    invoke = AsyncMock(side_effect=[invalid, valid])
     with (
         patch(
             "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
@@ -383,8 +404,10 @@ async def test_generate_schedule_with_llm_retries_then_succeeds() -> None:
 @pytest.mark.asyncio
 async def test_generate_schedule_with_llm_fails_after_max_attempts() -> None:
     prior = json.loads(_prior_json())
+    valid = _valid_draft()
     invalid = SchedulerDraftOutput(
-        slots=[slot for slot in _valid_draft().slots if slot.sourceId != "story-user-review"]
+        slots=[slot for slot in valid.slots if slot.sourceId != "story-user-review"],
+        scheduleExplanation=valid.scheduleExplanation,
     )
     state = _base_state(
         dates_data=prior[0]["data"],

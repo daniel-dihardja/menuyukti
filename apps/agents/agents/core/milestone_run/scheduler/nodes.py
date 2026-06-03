@@ -37,7 +37,12 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_story_lineup_data,
     extract_story_lineup_row,
 )
-from agents_app.agents.core.milestone_run.scheduler.prompts import format_scheduler_system
+from agents_app.agents.core.milestone_run.scheduler.prompts import (
+    SCHEDULE_EXPLANATION_MAX_CHARS,
+    SCHEDULE_EXPLANATION_MAX_WORDS,
+    SCHEDULE_EXPLANATION_TARGET_CHARS,
+    format_scheduler_system,
+)
 from agents_app.agents.core.milestone_run.scheduler.state import SchedulerOutput, SchedulerState
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
@@ -59,6 +64,15 @@ class SchedulerDraftSlot(BaseModel):
 
 class SchedulerDraftOutput(BaseModel):
     slots: list[SchedulerDraftSlot]
+    scheduleExplanation: str = Field(
+        min_length=1,
+        max_length=SCHEDULE_EXPLANATION_MAX_CHARS,
+        description=(
+            f"Exactly 3 short sentences (weekday reel, weekend reel, weekday post timing), "
+            f"max {SCHEDULE_EXPLANATION_MAX_WORDS} words, aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS} "
+            f"characters, hard max {SCHEDULE_EXPLANATION_MAX_CHARS} characters."
+        ),
+    )
 
 
 def _trace(state: SchedulerState, step: str, **extra: Any) -> None:
@@ -411,7 +425,11 @@ def _build_generation_context(
 
     return (
         "Generate schedule slots using ONLY candidate sourceId values from this input.\n"
-        "Return one object with key `slots` where each item has: kind, date, time, title, sourceId.\n\n"
+        "Return one object with keys `slots` and `scheduleExplanation`.\n"
+        "Each slot item has: kind, date, time, title, sourceId.\n"
+        f"scheduleExplanation is required (3 sentences: weekday reel, weekend reel, weekday "
+        f"post timing; aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS} chars, max "
+        f"{SCHEDULE_EXPLANATION_MAX_CHARS}) per the system instructions.\n\n"
         f"```json\n{json.dumps(context_payload, ensure_ascii=False, indent=2)}\n```"
     )
 
@@ -419,9 +437,13 @@ def _build_generation_context(
 def _scheduler_correction_message(error: str) -> HumanMessage:
     return HumanMessage(
         content=(
-            "Your previous output was invalid. Return a corrected JSON object only with key `slots`.\n"
+            "Your previous output was invalid. Return a corrected JSON object with keys "
+            "`slots` and `scheduleExplanation`.\n"
             f"Validation error: {error[:1200]}\n"
-            "Each slot item must include: kind, date, time, title, sourceId."
+            "Each slot item must include: kind, date, time, title, sourceId.\n"
+            f"scheduleExplanation must be exactly 3 short sentences (weekday reel, weekend reel, "
+            f"weekday post day/time), non-empty, and at most {SCHEDULE_EXPLANATION_MAX_CHARS} "
+            f"characters (aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS})."
         )
     )
 
@@ -755,11 +777,20 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
                 )
             )
 
+            schedule_explanation = generated.scheduleExplanation.strip()
+            if not schedule_explanation:
+                raise ValueError("scheduleExplanation must be non-empty")
+            if len(schedule_explanation) > SCHEDULE_EXPLANATION_MAX_CHARS:
+                raise ValueError(
+                    f"scheduleExplanation exceeds {SCHEDULE_EXPLANATION_MAX_CHARS} characters"
+                )
+
             payload: dict[str, Any] = {
                 "startDate": start_date,
                 "endDate": end_date,
                 "publicHolidays": public_holidays,
                 "slots": schedule_slots,
+                "scheduleExplanation": schedule_explanation,
             }
             source_dates_title = str(state.get("source_dates_title") or "").strip()
             if source_dates_title:

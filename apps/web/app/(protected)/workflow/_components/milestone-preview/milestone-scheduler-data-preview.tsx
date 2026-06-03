@@ -14,6 +14,7 @@ import {
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { TimelineMilestone } from '../timeline/types'
 import { SchedulerCalendar } from './scheduler-calendar'
+import { SchedulerScheduleExplanation } from './scheduler-schedule-explanation'
 
 export type MilestoneSchedulerDataPreviewProps = {
   milestone: TimelineMilestone
@@ -82,6 +83,8 @@ export function MilestoneSchedulerDataPreview({
     )
   }
 
+  const scheduleExplanation = data.scheduleExplanation?.trim()
+
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
       <SchedulerCalendar
@@ -94,6 +97,9 @@ export function MilestoneSchedulerDataPreview({
         windowEnd={window.endDate}
         windowStart={window.startDate}
       />
+      {scheduleExplanation ? (
+        <SchedulerScheduleExplanation scheduleExplanation={scheduleExplanation} />
+      ) : null}
     </div>
   )
 }

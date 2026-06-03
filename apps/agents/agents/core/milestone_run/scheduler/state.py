@@ -39,6 +39,7 @@ class SchedulerOutput(TypedDict):
     endDate: str
     publicHolidays: list[dict[str, str]]
     slots: list[SchedulerSlot]
+    scheduleExplanation: NotRequired[str]
     sourceDatesTitle: NotRequired[str]
     sourceCampaignBriefTitle: NotRequired[str]
     sourceMenuClustererTitle: NotRequired[str]
