@@ -27,6 +27,7 @@ export function SchedulerScheduleExplanation({
   scheduleExplanation,
 }: SchedulerScheduleExplanationProps) {
   const t = useTranslations('analytics.workflows.chat')
+  const [open, setOpen] = useState(false)
   const text = scheduleExplanation.trim()
 
   if (!shouldShowScheduleExplanation(text)) {
@@ -35,7 +36,6 @@ export function SchedulerScheduleExplanation({
 
   const usesDisclosure = scheduleExplanationUsesDisclosure(text)
   const previewSnippet = usesDisclosure ? scheduleExplanationPreviewSnippet(text) : null
-  const [open, setOpen] = useState(false)
 
   if (!usesDisclosure) {
     return (
