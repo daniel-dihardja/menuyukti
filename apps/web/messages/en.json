@@ -2022,7 +2022,7 @@
         "goalSaveError": "Could not save goal. Please try again."
       },
       "milestoneRun": {
-        "runningLabel": "Evaluation in progress…",
+        "runningLabel": "Milestone run in progress…",
         "campaignBriefRunningLabel": "Campaign brief in progress…",
         "campaignBriefEvalRunningLabel": "Checking pass criteria…",
         "campaignBriefStepStarting": "Starting campaign brief…",
@@ -2053,7 +2053,7 @@
         "campaignBriefReflectionReviseFallback": "Improve this section.",
         "stepReflectCritique": "Quality review",
         "stepReflectRevise": "Revising draft",
-        "stepFetchContext": "Fetching context",
+        "stepFetchContext": "Generating output",
         "stepEvaluateCriteria": "Evaluating criteria",
         "stepUpdateCriteria": "Updating records",
         "stepSynthesize": "Synthesising",
