@@ -48,6 +48,7 @@ export type AnalyticsRunOrderMetricsType = {
   __typename?: 'AnalyticsRunOrderMetricsType'
   avgOrderRevenue: Scalars['Float']['output']
   avgOrderSize: Scalars['Float']['output']
+  byDayOfWeek: Array<OrderMetricsByDayOfWeekType>
 }
 
 /** Metadata for a single analytics run — period, POS system, and optional per-menu COGS. Request `menuItemCogs` only when needed; it loads from the database lazily. Use menuEngineeringMatrix, menuHeatmaps, or orderMetrics queries for computed analytics. */
@@ -382,7 +383,7 @@ export type Mutation = {
   upsertMenuItemCogsBulk: Array<MenuItemCogsType>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationCompleteMilestoneAgentRunArgs = {
   errorMessage?: InputMaybe<Scalars['String']['input']>
   externalTraceId?: InputMaybe<Scalars['String']['input']>
@@ -393,7 +394,7 @@ export type MutationCompleteMilestoneAgentRunArgs = {
   timeline?: InputMaybe<Scalars['JSON']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationCreateImageAiFlowArgs = {
   displayName: Scalars['String']['input']
   imageReferenceStrength?: InputMaybe<Scalars['String']['input']>
@@ -406,7 +407,7 @@ export type MutationCreateImageAiFlowArgs = {
   styleIds?: InputMaybe<Scalars['JSON']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationCreateLocationArgs = {
   city?: InputMaybe<Scalars['String']['input']>
   country?: InputMaybe<Scalars['String']['input']>
@@ -416,7 +417,7 @@ export type MutationCreateLocationArgs = {
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationCreateNodeArgs = {
   data?: InputMaybe<Scalars['JSON']['input']>
   description?: InputMaybe<Scalars['String']['input']>
@@ -426,26 +427,26 @@ export type MutationCreateNodeArgs = {
   parentId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
-export type MutationCreateWorkspaceArgs = {
-  name: Scalars['String']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
-export type MutationDeleteAnalyticsRunArgs = {
-  analyticsRunId: Scalars['ID']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
-export type MutationDeleteImageAiFlowArgs = {
-  slug: Scalars['String']['input']
-}
-
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationCreateWorkflowFromPayloadArgs = {
   analyticsRunId?: InputMaybe<Scalars['Int']['input']>
   locationId: Scalars['Int']['input']
   payload: Scalars['JSON']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
+export type MutationCreateWorkspaceArgs = {
+  name: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
+export type MutationDeleteAnalyticsRunArgs = {
+  analyticsRunId: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
+export type MutationDeleteImageAiFlowArgs = {
+  slug: Scalars['String']['input']
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
@@ -459,20 +460,20 @@ export type MutationInviteWorkspaceMemberArgs = {
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationRemoveWorkspaceMemberArgs = {
   clerkUserId: Scalars['String']['input']
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationReplacePassCriteriaArgs = {
   locationId: Scalars['Int']['input']
   milestoneId: Scalars['ID']['input']
   requirements: Array<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationSetPassCriterionStatusArgs = {
   criterionId: Scalars['String']['input']
   locationId: Scalars['Int']['input']
@@ -480,7 +481,7 @@ export type MutationSetPassCriterionStatusArgs = {
   status: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationStartMilestoneAgentRunArgs = {
   milestoneId: Scalars['ID']['input']
   runId: Scalars['String']['input']
@@ -488,7 +489,7 @@ export type MutationStartMilestoneAgentRunArgs = {
   workflowId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationUpdateImageAiFlowArgs = {
   displayName?: InputMaybe<Scalars['String']['input']>
   imageReferenceStrength?: InputMaybe<Scalars['String']['input']>
@@ -502,7 +503,7 @@ export type MutationUpdateImageAiFlowArgs = {
   styleIds?: InputMaybe<Scalars['JSON']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationUpdateLocationArgs = {
   city?: InputMaybe<Scalars['String']['input']>
   country?: InputMaybe<Scalars['String']['input']>
@@ -513,32 +514,32 @@ export type MutationUpdateLocationArgs = {
   street?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationUpdateLocationManualBriefInputArgs = {
   locationId: Scalars['Int']['input']
   quickProfile: Scalars['JSON']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationUpdateMenuItemCogsBulkArgs = {
   updates: Array<MenuItemCogsUpdateInput>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationUpdateNodeArgs = {
   data?: InputMaybe<Scalars['JSON']['input']>
   id: Scalars['ID']['input']
   name?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationUploadSalesReportArgs = {
   file: Scalars['Upload']['input']
   includeLineItems?: Scalars['Boolean']['input']
   locationId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationUpsertMenuItemCogsBulkArgs = {
   analyticsRunId: Scalars['ID']['input']
   items: Array<MenuItemCogsUpsertInput>
@@ -615,6 +616,14 @@ export type OrderItemType = {
   price: Scalars['Float']['output']
   qty: Scalars['Int']['output']
   totalAfterBillDiscount: Scalars['Float']['output']
+}
+
+/** Average order size and revenue for a single weekday. */
+export type OrderMetricsByDayOfWeekType = {
+  __typename?: 'OrderMetricsByDayOfWeekType'
+  avgOrderRevenue: Scalars['Float']['output']
+  avgOrderSize: Scalars['Float']['output']
+  day: Scalars['String']['output']
 }
 
 export type OrderSignalsType = {
@@ -724,7 +733,7 @@ export type Query = {
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
   /** JSON array of prior milestones' preset payloads: each element is `{"title": string, "presetId": string|null, "data": object|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is copied from the milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the `milestone_preset_data` column (flat preset JSON). Empty array when there are no prior milestones or the request is not authorized. */
   priorMilestonesMilestoneData: Scalars['JSON']['output']
-  /** Top star and puzzle menu-item names derived from menu engineering. When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` (up to 5) and `puzzleItems` (up to 10). Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`. */
+  /** Top star and puzzle menu items derived from menu engineering. Each element in `starItems` / `puzzleItems` is an object with `menu`, `quantity` (units sold in the bucket), and `popularity` (share of bucket quantity, 0–1). When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` and `puzzleItems`. Optional `maxStarItems` / `maxPuzzleItems` default to 5 and 10; pass 0 or a negative value for unlimited. Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`. */
   promotionEngineeringCandidates?: Maybe<Scalars['JSON']['output']>
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
   promotionMenuItems?: Maybe<PromotionMenuItemsPayloadType>

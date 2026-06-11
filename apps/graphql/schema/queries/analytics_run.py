@@ -1,7 +1,10 @@
 from datetime import date, datetime
 
 import strawberry
-from menuyukti.core.analytics import compute_sales_analytics_from_orders
+from menuyukti.core.analytics import (
+    compute_order_metrics_by_day_from_orders,
+    compute_sales_analytics_from_orders,
+)
 
 from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact, SessionLocal
 from graphql.limits import (
@@ -15,13 +18,24 @@ from graphql.schema.auth import (
     user_id_from_info,
 )
 from graphql.schema.types import MenuItemCogsType
-from graphql.services.order_fact_rows import facts_to_sales_analytics_rows
+from graphql.services.order_fact_rows import (
+    facts_to_operating_profile_rows,
+    facts_to_sales_analytics_rows,
+)
+
+
+@strawberry.type(description="Average order size and revenue for a single weekday.")
+class OrderMetricsByDayOfWeekType:
+    day: str
+    avgOrderSize: float
+    avgOrderRevenue: float
 
 
 @strawberry.type(description="Average order size and revenue for an analytics run.")
 class AnalyticsRunOrderMetricsType:
     avgOrderSize: float
     avgOrderRevenue: float
+    byDayOfWeek: list[OrderMetricsByDayOfWeekType]
 
 
 @strawberry.type(
@@ -81,11 +95,21 @@ class AnalyticsRunListItemType:
 
 def _compute_order_metrics(session, run: AnalyticsRun) -> AnalyticsRunOrderMetricsType:
     rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    by_day_rows = compute_order_metrics_by_day_from_orders(facts_to_operating_profile_rows(rows))
+    by_day_of_week = [
+        OrderMetricsByDayOfWeekType(
+            day=r["day"],
+            avgOrderSize=float(r["avg_order_size"]),
+            avgOrderRevenue=float(r["avg_order_revenue"]),
+        )
+        for r in by_day_rows
+    ]
 
     if not rows:
         return AnalyticsRunOrderMetricsType(
             avgOrderSize=0.0,
             avgOrderRevenue=0.0,
+            byDayOfWeek=by_day_of_week,
         )
 
     sales_rows = facts_to_sales_analytics_rows(rows)
@@ -95,11 +119,13 @@ def _compute_order_metrics(session, run: AnalyticsRun) -> AnalyticsRunOrderMetri
         return AnalyticsRunOrderMetricsType(
             avgOrderSize=0.0,
             avgOrderRevenue=0.0,
+            byDayOfWeek=by_day_of_week,
         )
 
     return AnalyticsRunOrderMetricsType(
         avgOrderSize=float(order_signals["avg_order_items"]),
         avgOrderRevenue=float(order_signals["avg_order_revenue"]),
+        byDayOfWeek=by_day_of_week,
     )
 
 

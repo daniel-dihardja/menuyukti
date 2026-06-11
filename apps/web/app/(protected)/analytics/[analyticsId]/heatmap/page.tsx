@@ -77,6 +77,7 @@ export default async function Page({ params }: PageProps) {
           <OrderMetricsWidget
             avgOrderSize={orderMetrics.avgOrderSize}
             avgOrderRevenue={orderMetrics.avgOrderRevenue}
+            byDayOfWeek={orderMetrics.byDayOfWeek}
             locale={locale}
             currency={currency}
           />

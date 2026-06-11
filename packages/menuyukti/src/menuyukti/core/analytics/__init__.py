@@ -70,8 +70,10 @@ from menuyukti.core.analytics.calculate_operating_profile import (
     DayTypeRow,
     MealPeriodRow,
     OperatingProfileResult,
+    OrderMetricsByDayRow,
     OrderRowForProfile,
     compute_operating_profile_from_orders,
+    compute_order_metrics_by_day_from_orders,
 )
 from menuyukti.core.analytics.calculate_popularity_index import (
     calculate_popularity_index,
@@ -141,6 +143,7 @@ __all__ = [
     "MenuEngineeringThresholds",
     "MenuHeatmapPayload",
     "OperatingProfileResult",
+    "OrderMetricsByDayRow",
     "OrderSignals",
     "OrderRowForCategoryMix",
     "OrderRowForMatrix",
@@ -166,6 +169,7 @@ __all__ = [
     "calculate_menu_heatmaps",
     "compute_menu_heatmaps_from_orders",
     "compute_operating_profile_from_orders",
+    "compute_order_metrics_by_day_from_orders",
     "compute_revenue_trends_from_orders",
     "calculate_popularity_index",
     "BestPostingWindowInput",

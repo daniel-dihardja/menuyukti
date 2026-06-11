@@ -2145,7 +2145,18 @@
       "breadcrumbRunLoading": "Report",
       "orderMetrics": {
         "avgOrderSize": "Avg Order Size",
-        "avgOrderRevenue": "Avg Order Revenue"
+        "avgOrderRevenue": "Avg Order Revenue",
+        "byDayTitle": "By day of week",
+        "dayColumn": "Day",
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        }
       }
     },
     "heatmap": {
