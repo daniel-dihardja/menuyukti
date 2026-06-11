@@ -3,10 +3,16 @@ import { getTranslations } from 'next-intl/server'
 import { routes } from '@/lib/routes'
 import { notFound } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { OrderMetricsWidget } from '@/components/order-metrics-widget'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
-import { getCachedAnalyticsRun, getCachedMenuHeatmaps } from '@/lib/graphql/cached-queries'
+import {
+  getCachedAnalyticsRun,
+  getCachedMenuHeatmaps,
+  getCachedOrderMetrics,
+} from '@/lib/graphql/cached-queries'
+import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
 import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
@@ -37,9 +43,16 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const heatmapsData = await getCachedMenuHeatmaps(userId, id, String(run.locationId))
+  const locationId = String(run.locationId)
+  const locale = getAppCurrencyLocale()
+  const currency = getAppCurrencyCode()
+  const [heatmapsData, orderMetricsData] = await Promise.all([
+    getCachedMenuHeatmaps(userId, id, locationId),
+    getCachedOrderMetrics(userId, id),
+  ])
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
+  const orderMetrics = orderMetricsData.orderMetrics
 
   const menuHeatmaps = heatmapsData.menuHeatmaps ?? []
   const dailyMatrix = adaptDailyHeatmapMatrix(
@@ -67,6 +80,16 @@ export default async function Page({ params }: PageProps) {
           </Button>
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
+
+        {orderMetrics ? (
+          <OrderMetricsWidget
+            avgOrderSize={orderMetrics.avgOrderSize}
+            avgOrderRevenue={orderMetrics.avgOrderRevenue}
+            locale={locale}
+            currency={currency}
+          />
+        ) : null}
+
         <HeatmapView dailyMatrix={dailyMatrix} weeklyMatrix={weeklyMatrix} />
       </section>
     </AnalyticsPageShell>

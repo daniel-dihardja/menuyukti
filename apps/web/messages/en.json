@@ -2142,7 +2142,11 @@
       "backToSales": "Back to sales",
       "createWorkflowFromReport": "Create workflow",
       "createWorkflowFromReportHint": "Open workflows with this report context to plan promos from these insights.",
-      "breadcrumbRunLoading": "Report"
+      "breadcrumbRunLoading": "Report",
+      "orderMetrics": {
+        "avgOrderSize": "Avg Order Size",
+        "avgOrderRevenue": "Avg Order Revenue"
+      }
     },
     "heatmap": {
       "reportTitle": "Heatmaps",

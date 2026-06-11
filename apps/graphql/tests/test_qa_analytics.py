@@ -88,8 +88,11 @@ def _expected_order_metrics_from_rows(rows):
     revenues = []
     all_times = []
     for group in orders.values():
-        sizes.append(len(group))
-        revenues.append(float(sum(r.totalAfterBillDiscount for r in group)))
+        revenue = float(sum(r.totalAfterBillDiscount for r in group))
+        if revenue <= 0:
+            continue
+        sizes.append(int(sum(r.qty for r in group)))
+        revenues.append(revenue)
         for r in group:
             t = r.orderTime
             if hasattr(t, "to_pydatetime"):
@@ -97,6 +100,8 @@ def _expected_order_metrics_from_rows(rows):
             elif isinstance(t, str):
                 t = datetime.fromisoformat(t)
             all_times.append(t)
+    if not sizes:
+        return 0.0, 0.0, None, None
     avg_size = sum(sizes) / len(sizes)
     avg_revenue = sum(revenues) / len(revenues)
     period_start = min(all_times).date() if all_times else None

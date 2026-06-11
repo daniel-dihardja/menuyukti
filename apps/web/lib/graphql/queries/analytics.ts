@@ -41,6 +41,22 @@ export type AnalyticsRunMetadataData = {
   } | null
 }
 
+export const ORDER_METRICS_QUERY = `
+  query OrderMetrics($analyticsRunId: ID!) {
+    orderMetrics(analyticsRunId: $analyticsRunId) {
+      avgOrderSize
+      avgOrderRevenue
+    }
+  }
+`
+
+export type OrderMetricsData = {
+  orderMetrics: {
+    avgOrderSize: number
+    avgOrderRevenue: number
+  } | null
+}
+
 export const ANALYTICS_RUN_QUERY = `
   query AnalyticsRun($id: ID!) {
     analyticsRun(id: $id) {

@@ -1,7 +1,7 @@
-from collections import defaultdict
 from datetime import date, datetime
 
 import strawberry
+from menuyukti.core.analytics import compute_sales_analytics_from_orders
 
 from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact, SessionLocal
 from graphql.limits import (
@@ -15,6 +15,7 @@ from graphql.schema.auth import (
     user_id_from_info,
 )
 from graphql.schema.types import MenuItemCogsType
+from graphql.services.order_fact_rows import facts_to_sales_analytics_rows
 
 
 @strawberry.type(description="Average order size and revenue for an analytics run.")
@@ -87,22 +88,18 @@ def _compute_order_metrics(session, run: AnalyticsRun) -> AnalyticsRunOrderMetri
             avgOrderRevenue=0.0,
         )
 
-    orders = defaultdict(list)
-    for row in rows:
-        orders[row.bill_number].append(row)
-
-    order_sizes: list[int] = []
-    order_revenues: list[float] = []
-    for group in orders.values():
-        order_sizes.append(len(group))
-        order_revenues.append(float(sum(r.total_after_bill_discount for r in group)))
-
-    avg_order_size = float(sum(order_sizes)) / len(order_sizes)
-    avg_order_revenue = float(sum(order_revenues)) / len(order_revenues)
+    sales_rows = facts_to_sales_analytics_rows(rows)
+    sales_analytics = compute_sales_analytics_from_orders(sales_rows)
+    order_signals = sales_analytics["additional_signals"]["order_signals"]
+    if order_signals is None:
+        return AnalyticsRunOrderMetricsType(
+            avgOrderSize=0.0,
+            avgOrderRevenue=0.0,
+        )
 
     return AnalyticsRunOrderMetricsType(
-        avgOrderSize=avg_order_size,
-        avgOrderRevenue=avg_order_revenue,
+        avgOrderSize=float(order_signals["avg_order_items"]),
+        avgOrderRevenue=float(order_signals["avg_order_revenue"]),
     )
 
 

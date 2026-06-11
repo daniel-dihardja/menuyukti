@@ -38,23 +38,22 @@ query AnalyticsRunOrderMetrics($id: ID!) {
 """
 
 
-def _compute_expected_metrics(payload: bytes):
-    rows, _ = normalize_sales_report(payload)
-
-    orders = defaultdict(list)
-    for row in rows:
-        orders[row.billNumber].append(row)
-
+def _order_metrics_from_groups(
+    orders: dict,
+) -> tuple[float, float, datetime | None, datetime | None]:
     if not orders:
         return 0.0, 0.0, None, None
 
-    sizes = []
-    revenues = []
+    sizes: list[int] = []
+    revenues: list[float] = []
     all_times: list[datetime] = []
 
     for group in orders.values():
-        sizes.append(len(group))
-        revenues.append(float(sum(r.totalAfterBillDiscount for r in group)))
+        revenue = float(sum(r.totalAfterBillDiscount for r in group))
+        if revenue <= 0:
+            continue
+        sizes.append(int(sum(r.qty for r in group)))
+        revenues.append(revenue)
         for r in group:
             order_time = r.orderTime
             if hasattr(order_time, "to_pydatetime"):
@@ -63,13 +62,25 @@ def _compute_expected_metrics(payload: bytes):
                 order_time = datetime.fromisoformat(order_time)
             all_times.append(order_time)
 
+    if not sizes:
+        return 0.0, 0.0, None, None
+
     avg_order_size = float(sum(sizes)) / len(sizes)
     avg_order_revenue = float(sum(revenues)) / len(revenues)
-
     period_start = min(all_times).date() if all_times else None
     period_end = max(all_times).date() if all_times else None
 
     return avg_order_size, avg_order_revenue, period_start, period_end
+
+
+def _compute_expected_metrics(payload: bytes):
+    rows, _ = normalize_sales_report(payload)
+
+    orders = defaultdict(list)
+    for row in rows:
+        orders[row.billNumber].append(row)
+
+    return _order_metrics_from_groups(orders)
 
 
 def _parse_date_value(value):
@@ -85,26 +96,7 @@ def _expected_metrics_from_rows(rows):
     orders = defaultdict(list)
     for r in rows:
         orders[r.billNumber].append(r)
-    if not orders:
-        return 0.0, 0.0, None, None
-    sizes = []
-    revenues = []
-    all_times = []
-    for group in orders.values():
-        sizes.append(len(group))
-        revenues.append(float(sum(r.totalAfterBillDiscount for r in group)))
-        for r in group:
-            t = r.orderTime
-            if hasattr(t, "to_pydatetime"):
-                t = t.to_pydatetime()
-            elif isinstance(t, str):
-                t = datetime.fromisoformat(t)
-            all_times.append(t)
-    avg_size = sum(sizes) / len(sizes)
-    avg_revenue = sum(revenues) / len(revenues)
-    period_start = min(all_times).date() if all_times else None
-    period_end = max(all_times).date() if all_times else None
-    return avg_size, avg_revenue, period_start, period_end
+    return _order_metrics_from_groups(orders)
 
 
 def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
