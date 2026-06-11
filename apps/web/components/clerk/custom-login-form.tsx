@@ -37,7 +37,8 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const [busy, setBusy] = useState(false)
   const [mfaLoading, setMfaLoading] = useState(false)
   const [primarySecondFactor, setPrimarySecondFactor] = useState<string | null>(null)
-  const lastPreparedSignInId = useRef<string | null>(null)
+  const preparingSignInIdRef = useRef<string | null>(null)
+  const preparedSignInIdRef = useRef<string | null>(null)
 
   const finalizeAndRedirect = useCallback(async () => {
     if (!signIn) return
@@ -56,39 +57,66 @@ export function CustomLoginForm({ className }: { className?: string }) {
     })
   }, [router, signIn])
 
-  const prepareSecondFactor = useCallback(async () => {
-    if (!signIn) return
-    const primary = getPrimarySecondFactor(signIn)
-    setPrimarySecondFactor(primary)
-    if (primary === 'phone_code') {
-      await signIn.mfa.sendPhoneCode()
-    } else if (primary === 'email_code') {
-      await signIn.mfa.sendEmailCode()
+  const ensureVerificationCodeSent = useCallback(async () => {
+    if (!signIn?.id) return
+
+    const signInId = signIn.id
+    if (preparedSignInIdRef.current === signInId || preparingSignInIdRef.current === signInId) {
+      return
+    }
+
+    preparingSignInIdRef.current = signInId
+    try {
+      if (signIn.status === 'needs_second_factor') {
+        const primary = getPrimarySecondFactor(signIn)
+        setPrimarySecondFactor(primary)
+        if (primary === 'phone_code') {
+          await signIn.mfa.sendPhoneCode()
+        } else if (primary === 'email_code') {
+          await signIn.mfa.sendEmailCode()
+        }
+      } else if (signIn.status === 'needs_client_trust') {
+        const emailCodeFactor = signIn.supportedSecondFactors?.find(
+          (factor) => factor.strategy === 'email_code',
+        )
+        if (emailCodeFactor) {
+          await signIn.mfa.sendEmailCode()
+        }
+      }
+      preparedSignInIdRef.current = signInId
+    } finally {
+      if (preparingSignInIdRef.current === signInId) {
+        preparingSignInIdRef.current = null
+      }
     }
   }, [signIn])
 
+  const ensureVerificationCodeSentRef = useRef(ensureVerificationCodeSent)
+  ensureVerificationCodeSentRef.current = ensureVerificationCodeSent
+
   useEffect(() => {
-    if (!signIn || signIn.status !== 'needs_second_factor') {
-      return
-    }
-    if (step !== 'password') {
-      return
-    }
-    if (lastPreparedSignInId.current === signIn.id) {
+    if (!signIn) return
+    const status = signIn.status
+    const isPendingVerification =
+      status === 'needs_second_factor' || status === 'needs_client_trust'
+    if (!isPendingVerification || step !== 'password') {
       return
     }
 
     setMfaLoading(true)
     void (async () => {
       try {
-        await prepareSecondFactor()
-        lastPreparedSignInId.current = signIn.id ?? null
-        setStep('second_factor')
+        await ensureVerificationCodeSentRef.current()
+        if (status === 'needs_second_factor') {
+          setStep('second_factor')
+        } else if (status === 'needs_client_trust') {
+          setStep('client_trust')
+        }
       } finally {
         setMfaLoading(false)
       }
     })()
-  }, [signIn, signIn?.id, signIn?.status, step, prepareSecondFactor])
+  }, [signIn?.id, signIn?.status, step])
 
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -111,19 +139,13 @@ export function CustomLoginForm({ className }: { className?: string }) {
       }
 
       if (signIn.status === 'needs_second_factor') {
-        await prepareSecondFactor()
-        lastPreparedSignInId.current = signIn.id ?? null
+        await ensureVerificationCodeSent()
         setStep('second_factor')
         return
       }
 
       if (signIn.status === 'needs_client_trust') {
-        const emailCodeFactor = signIn.supportedSecondFactors?.find(
-          (factor) => factor.strategy === 'email_code',
-        )
-        if (emailCodeFactor) {
-          await signIn.mfa.sendEmailCode()
-        }
+        await ensureVerificationCodeSent()
         setStep('client_trust')
         return
       }
@@ -138,11 +160,10 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
     const form = e.currentTarget
     const code = (form.elements.namedItem('mfa-code') as HTMLInputElement).value.trim()
-    const useBackup = (form.elements.namedItem('useBackup') as HTMLInputElement | null)?.checked
 
     setBusy(true)
     try {
-      if (useBackup || primarySecondFactor === 'backup_code') {
+      if (primarySecondFactor === 'backup_code') {
         await signIn.mfa.verifyBackupCode({ code })
       } else if (primarySecondFactor === 'phone_code') {
         await signIn.mfa.verifyPhoneCode({ code })
@@ -183,7 +204,8 @@ export function CustomLoginForm({ className }: { className?: string }) {
     setBusy(true)
     try {
       await signIn.reset()
-      lastPreparedSignInId.current = null
+      preparingSignInIdRef.current = null
+      preparedSignInIdRef.current = null
       setPrimarySecondFactor(null)
       setStep('password')
     } finally {
@@ -227,20 +249,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
         </p>
         <form onSubmit={handleSecondFactorSubmit} className="space-y-4">
           <FieldGroup>
-            {primarySecondFactor !== 'backup_code' ? (
-              <Field className="flex flex-row items-center gap-2">
-                <input
-                  id="use-backup"
-                  name="useBackup"
-                  type="checkbox"
-                  aria-label={t('useBackupCode')}
-                  className="size-4 rounded border"
-                />
-                <label htmlFor="use-backup" className="text-sm text-foreground">
-                  {t('useBackupCode')}
-                </label>
-              </Field>
-            ) : null}
             <Field>
               <FieldLabel htmlFor="mfa-code">{t('verificationCodeLabel')}</FieldLabel>
               <Input
