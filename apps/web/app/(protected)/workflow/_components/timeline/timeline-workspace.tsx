@@ -62,7 +62,7 @@ export function TimelineWorkspace({
 
   return (
     <TimelineCollapseProvider>
-      <PanelFullscreenProvider className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted dark:bg-background">
+      <PanelFullscreenProvider className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
         <TimelineToolbar
           actions={toolbarActions}
           count={milestones.length}

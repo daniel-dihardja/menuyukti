@@ -51,7 +51,7 @@ export function WorkflowTimelineSkeleton({ className }: { className?: string }) 
       aria-busy="true"
       aria-hidden
       className={cn(
-        'flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted dark:bg-background',
+        'flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background',
         className,
       )}
     >
@@ -142,10 +142,10 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="grid h-full min-h-0 flex-1 grid-cols-[38fr_34fr_28fr] gap-0 overflow-hidden">
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-muted dark:bg-background">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-background">
               <WorkflowTimelineSkeleton />
             </div>
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20 p-3">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-background p-3">
               <WorkflowPreviewPanelSkeleton className="flex-1" />
             </div>
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-l">

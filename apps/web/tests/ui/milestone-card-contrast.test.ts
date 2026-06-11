@@ -23,9 +23,9 @@ const globalsCss = readFileSync(
 )
 const { light, dark } = readThemeTokensFromGlobals(globalsCss)
 
-/** Matches `timeline-body` list surface (muted in light, background in dark). */
-function milestoneTimelinePanel(tokens: typeof light | typeof dark, mode: 'light' | 'dark') {
-  return mode === 'light' ? tokens.muted! : tokens.background!
+/** Matches workflow timeline panel surface (app background in light and dark). */
+function milestoneTimelinePanel(tokens: typeof light | typeof dark) {
+  return tokens.background!
 }
 
 /** Matches default milestone `Card` surface (card in light, muted in dark). */
@@ -34,7 +34,7 @@ function milestoneTimelineCard(tokens: typeof light | typeof dark, mode: 'light'
 }
 
 /** Minimum card-vs-panel ratios achievable with design tokens (see vitest diagnostics). */
-const MIN_CARD_ON_PANEL = { light: 1.1, dark: 1.25 } as const
+const MIN_CARD_ON_PANEL = { light: 1.02, dark: 1.25 } as const
 
 function expectContrast(
   foreground: Parameters<typeof contrastRatio>[0],
@@ -88,7 +88,7 @@ describe('milestone card contrast (borderless selection)', () => {
     })
 
     it(`${mode}: milestone card surface contrasts with timeline panel`, () => {
-      const panel = milestoneTimelinePanel(tokens, mode)
+      const panel = milestoneTimelinePanel(tokens)
       const card = milestoneTimelineCard(tokens, mode)
       expectContrast(
         card,
@@ -106,9 +106,8 @@ describe('milestone card contrast (borderless selection)', () => {
     )
     const layoutSource = readSource('app/(protected)/workflow/_components/workflow-chat-layout.tsx')
     const bodySource = readSource('app/(protected)/workflow/_components/timeline/timeline-body.tsx')
-    expect(workspaceSource).toContain('bg-muted')
-    expect(workspaceSource).toContain('dark:bg-background')
-    expect(layoutSource).toContain('bg-muted')
+    expect(workspaceSource).toContain('bg-background')
+    expect(layoutSource).toContain('bg-background')
     expect(bodySource).toContain('md:p-4')
     expect(itemSource).toContain('shadow-none')
     expect(itemSource).toContain('dark:bg-muted')
