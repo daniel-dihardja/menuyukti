@@ -2154,6 +2154,16 @@
       "breadcrumb": "Heatmaps",
       "heading": "Menu Sales Heatmap",
       "description": "Visualize sales volume by menu and time",
+      "empty": "No heatmap data for this run.",
+      "emptyDaily": "No daily heatmap data.",
+      "emptyWeekly": "No weekly heatmap data.",
+      "emptyFiltered": "No heatmap items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter heatmap items by menu category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories"
+      },
       "tabs": {
         "daily": "Daily",
         "weekly": "Weekly"

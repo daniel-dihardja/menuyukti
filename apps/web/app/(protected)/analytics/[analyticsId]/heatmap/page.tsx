@@ -13,8 +13,6 @@ import {
   getCachedOrderMetrics,
 } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
-import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
-import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { HeatmapView } from './heatmap-view'
 
@@ -55,12 +53,6 @@ export default async function Page({ params }: PageProps) {
   const orderMetrics = orderMetricsData.orderMetrics
 
   const menuHeatmaps = heatmapsData.menuHeatmaps ?? []
-  const dailyMatrix = adaptDailyHeatmapMatrix(
-    menuHeatmaps,
-    DAILY_HEATMAP_START_HOUR,
-    DAILY_HEATMAP_END_HOUR,
-  )
-  const weeklyMatrix = adaptWeeklyHeatmapMatrix(menuHeatmaps)
 
   return (
     <AnalyticsPageShell
@@ -90,7 +82,7 @@ export default async function Page({ params }: PageProps) {
           />
         ) : null}
 
-        <HeatmapView dailyMatrix={dailyMatrix} weeklyMatrix={weeklyMatrix} />
+        <HeatmapView menuHeatmaps={menuHeatmaps} locale={locale} />
       </section>
     </AnalyticsPageShell>
   )
