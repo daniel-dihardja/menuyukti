@@ -1225,7 +1225,7 @@
           },
           "quino": {
             "pos": "Quino",
-            "report": "ItemSalesReport.xlsx"
+            "report": "TransactionItemDetailReport.xlsx"
           }
         }
       },

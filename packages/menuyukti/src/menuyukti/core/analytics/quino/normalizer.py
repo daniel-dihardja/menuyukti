@@ -4,96 +4,93 @@ from io import BytesIO
 
 import pandas as pd
 
+from menuyukti.core.analytics.utils import normalize_columns
 from menuyukti.core.models.pos_transaction import POSTransactionLineItem
 
-_QUINO_FALLBACK_ORDER_TIME = pd.Timestamp("1970-01-01 00:00:00")
+_QUINO_SOURCE_COLUMNS = {
+    "inv_no.",
+    "name",
+    "qty",
+    "subtotal",
+    "discount",
+    "order_time",
+    "department",
+    "category",
+}
 
 
-def _classify_from_code(code_token: str | None) -> tuple[str, str]:
-    if not isinstance(code_token, str):
-        return "OTHER", "UNCATEGORIZED"
-    token = code_token.strip().upper()
-    if not token:
-        return "OTHER", "UNCATEGORIZED"
-    if "LUNCHPROMO" in token:
-        return "FOOD", "FOOD"
-    if token.startswith("FOOD"):
-        return "FOOD", "FOOD"
-    if "BVG" in token or ".BEV." in token:
-        return "DRINK", "DRINK"
-    if token.startswith("MOD."):
-        return "MODIFIER", "MODIFIER"
-    return "OTHER", token
+def _normalize_category(value: object, fallback: str) -> str:
+    if pd.isna(value):
+        return fallback
+    text = str(value).strip().upper()
+    return text if text and text.lower() != "nan" else fallback
 
 
 def normalize_quino_excel_with_rejections(
     data: bytes,
     skiprows: int = 3,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Load and normalize Quino Transaction Item Detail Report into:
+    - accepted rows (typed and valid)
+    - rejected rows with `rejection_reason`
+    """
     required_columns = POSTransactionLineItem.get_required_columns()
     COL = POSTransactionLineItem
 
     source = pd.read_excel(BytesIO(data), skiprows=skiprows)
-    expected_cols = {"Code", "Name", "Qty", "Net Sales"}
-    if not expected_cols.issubset(set(source.columns)):
+    source = normalize_columns(source)
+
+    if not _QUINO_SOURCE_COLUMNS.issubset(set(source.columns)):
         raise ValueError(
-            "Missing required QUINO columns: Code, Name, Qty, Net Sales. "
-            "Expected Quino Item Sales Report export (title row + header on row 4)."
+            "Missing required QUINO columns for Transaction Item Detail Report: "
+            "Inv No., Name, Qty, Subtotal, Discount, Order Time, Department, Category. "
+            "Expected Quino Transaction Item Detail Report export (title row + header on row 4)."
         )
 
-    rows: list[dict[str, object]] = []
+    df = source.rename(
+        columns={
+            "inv_no.": COL.BILL_NUMBER,
+            "name": COL.MENU,
+            "department": COL.MENU_CATEGORY,
+            "category": COL.MENU_CATEGORY_DETAIL,
+        }
+    )
 
-    for index, record in enumerate(source.to_dict(orient="records"), start=1):
-        name_value = record.get("Name")
-        if pd.isna(name_value):
-            continue
-        raw_name = str(name_value).strip()
-        code_value = record.get("Code")
-        qty_raw = record.get("Qty")
-        net_sales_raw = record.get("Net Sales")
+    subtotal = pd.to_numeric(df["subtotal"], errors="coerce")
+    discount = pd.to_numeric(df["discount"], errors="coerce").fillna(0)
+    df[COL.TOTAL_AFTER_BILL_DISCOUNT] = subtotal - discount
+    df[COL.PRICE] = df[COL.TOTAL_AFTER_BILL_DISCOUNT] / pd.to_numeric(df[COL.QTY], errors="coerce")
 
-        if not raw_name:
-            continue
-        if raw_name.lower() == "nan":
-            continue
+    df[COL.MENU] = df[COL.MENU].astype("string").str.strip()
+    df[COL.BILL_NUMBER] = df[COL.BILL_NUMBER].astype("string").str.strip()
+    df[COL.MENU_CATEGORY] = df[COL.MENU_CATEGORY].map(
+        lambda value: _normalize_category(value, "OTHER")
+    )
+    df[COL.MENU_CATEGORY_DETAIL] = df[COL.MENU_CATEGORY_DETAIL].map(
+        lambda value: _normalize_category(value, "UNCATEGORIZED")
+    )
 
-        label = raw_name.upper()
-        if label.startswith("TOTAL ") or label == "GRAND TTL":
-            continue
+    menu_upper = df[COL.MENU].str.upper()
+    summary_mask = menu_upper.str.startswith("TOTAL ", na=False) | menu_upper.eq("GRAND TTL")
+    empty_menu_mask = df[COL.MENU].isna() | df[COL.MENU].eq("")
 
-        if pd.isna(qty_raw) or pd.isna(net_sales_raw):
-            continue
+    qty_numeric = pd.to_numeric(df[COL.QTY], errors="coerce")
+    revenue_numeric = pd.to_numeric(df[COL.TOTAL_AFTER_BILL_DISCOUNT], errors="coerce")
+    business_rule_mask = (
+        summary_mask
+        | empty_menu_mask
+        | qty_numeric.isna()
+        | revenue_numeric.isna()
+        | (qty_numeric <= 0)
+        | (revenue_numeric <= 0)
+    )
 
-        menu_category, menu_category_detail = _classify_from_code(code_value)
+    rejected_business = df[business_rule_mask].copy()
+    rejected_business["rejection_reason"] = "non_positive_qty_or_revenue"
 
-        qty_numeric = pd.to_numeric(qty_raw, errors="coerce")
-        net_sales_numeric = pd.to_numeric(net_sales_raw, errors="coerce")
-        if pd.isna(qty_numeric) or pd.isna(net_sales_numeric):
-            continue
-        if qty_numeric <= 0:
-            continue
-        if net_sales_numeric <= 0:
-            continue
-        price_numeric = (
-            net_sales_numeric / qty_numeric
-            if qty_numeric not in (0, 0.0)
-            else net_sales_numeric
-        )
-
-        rows.append(
-            {
-                COL.BILL_NUMBER: f"QUINO-ITEM-{index:06d}",
-                COL.MENU: raw_name,
-                COL.QTY: qty_numeric,
-                COL.PRICE: price_numeric,
-                COL.TOTAL_AFTER_BILL_DISCOUNT: net_sales_numeric,
-                COL.ORDER_TIME: _QUINO_FALLBACK_ORDER_TIME,
-                COL.MENU_CATEGORY: menu_category,
-                COL.MENU_CATEGORY_DETAIL: menu_category_detail,
-            }
-        )
-
-    df_required = pd.DataFrame(rows, columns=required_columns)
+    candidate = df[~business_rule_mask].copy()
+    df_required = candidate[required_columns].copy()
 
     missing_required_mask = df_required.isna().any(axis=1)
     rejected_missing = df_required[missing_required_mask].copy()
@@ -115,7 +112,21 @@ def normalize_quino_excel_with_rejections(
     cleaned = accepted[~invalid_conversion_mask].copy()
     cleaned[COL.QTY] = cleaned[COL.QTY].astype(int)
 
-    rejected = pd.concat([rejected_missing, rejected_invalid], ignore_index=True)
+    # POS exports may assign the same menu name to different categories over time.
+    # Harmonize to the mode category per menu so downstream heatmap analytics succeed.
+    menu_category = cleaned.groupby(COL.MENU)[COL.MENU_CATEGORY].agg(
+        lambda values: values.mode().iloc[0] if not values.mode().empty else values.iloc[0]
+    )
+    menu_category_detail = cleaned.groupby(COL.MENU)[COL.MENU_CATEGORY_DETAIL].agg(
+        lambda values: values.mode().iloc[0] if not values.mode().empty else values.iloc[0]
+    )
+    cleaned[COL.MENU_CATEGORY] = cleaned[COL.MENU].map(menu_category)
+    cleaned[COL.MENU_CATEGORY_DETAIL] = cleaned[COL.MENU].map(menu_category_detail)
+
+    rejected = pd.concat(
+        [rejected_business, rejected_missing, rejected_invalid],
+        ignore_index=True,
+    )
     return cleaned, rejected
 
 
