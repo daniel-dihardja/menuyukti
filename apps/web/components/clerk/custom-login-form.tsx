@@ -12,14 +12,19 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Step = 'password' | 'second_factor' | 'client_trust'
 
+/** Primary MFA strategy to drive send + verify (Clerk custom MFA flow). */
 function getPrimarySecondFactor(signIn: {
   supportedSecondFactors?: Array<{ strategy: string }> | null
 }): string | null {
   const factors = signIn.supportedSecondFactors ?? []
-  if (factors.length === 0) return null
+  if (factors.length === 0) {
+    return null
+  }
   const order = ['phone_code', 'email_code', 'totp', 'backup_code']
   for (const s of order) {
-    if (factors.some((f) => f.strategy === s)) return s
+    if (factors.some((f) => f.strategy === s)) {
+      return s
+    }
   }
   return factors[0]?.strategy ?? null
 }
@@ -39,7 +44,9 @@ export function CustomLoginForm({ className }: { className?: string }) {
     if (!signIn) return
     await signIn.finalize({
       navigate: async ({ session, decorateUrl }) => {
-        if (session?.currentTask) return
+        if (session?.currentTask) {
+          return
+        }
         const url = decorateUrl(routes.dashboard)
         if (url.startsWith('http')) {
           window.location.href = url
@@ -50,8 +57,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
     })
   }, [router, signIn])
 
-  // ✅ Kept from feature: handles both needs_second_factor and needs_client_trust,
-  // with deduplication guards to prevent double-sends.
   const ensureVerificationCodeSent = useCallback(async () => {
     if (!signIn?.id) return
 
@@ -109,6 +114,8 @@ export function CustomLoginForm({ className }: { className?: string }) {
         setMfaLoading(false)
       }
     })()
+    // signIn object identity changes each render; id/status capture the reactive fields we need.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ensureVerificationCodeSentRef always calls latest callback
   }, [signIn?.id, signIn?.status, step])
 
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -122,7 +129,9 @@ export function CustomLoginForm({ className }: { className?: string }) {
     setBusy(true)
     try {
       const { error } = await signIn.password({ emailAddress, password })
-      if (error) return
+      if (error) {
+        return
+      }
 
       if (signIn.status === 'complete') {
         await finalizeAndRedirect()
@@ -130,14 +139,12 @@ export function CustomLoginForm({ className }: { className?: string }) {
       }
 
       if (signIn.status === 'needs_second_factor') {
-        // ✅ Kept from feature: ensureVerificationCodeSent handles deduplication
         await ensureVerificationCodeSent()
         setStep('second_factor')
         return
       }
 
       if (signIn.status === 'needs_client_trust') {
-        // ✅ Kept from feature: ensureVerificationCodeSent handles client_trust too
         await ensureVerificationCodeSent()
         setStep('client_trust')
         return
@@ -152,7 +159,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
     if (!signIn || busy) return
 
     const form = e.currentTarget
-    // ✅ Kept from develop: matches id/name="verification-code" used throughout the JSX
     const code = (form.elements.namedItem('verification-code') as HTMLInputElement).value.trim()
 
     setBusy(true)
@@ -210,5 +216,230 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const loading = busy || fetchStatus === 'fetching' || mfaLoading
   const isSigningIn = loading
 
-  // ... rest of JSX unchanged
+  const mfaHint =
+    primarySecondFactor === 'phone_code'
+      ? t('mfaHintSms')
+      : primarySecondFactor === 'email_code'
+        ? t('mfaHintEmail')
+        : primarySecondFactor === 'backup_code'
+          ? t('useBackupCode')
+          : t('mfaHintTotp')
+
+  if (!signIn) {
+    return (
+      <div className={cn('text-sm text-muted-foreground', className)} aria-live="polite">
+        {t('signingIn')}
+      </div>
+    )
+  }
+
+  if (mfaLoading) {
+    return (
+      <div className={cn('text-sm text-muted-foreground', className)} aria-live="polite">
+        {t('signingIn')}
+      </div>
+    )
+  }
+
+  if (step === 'second_factor') {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <p className="text-sm text-muted-foreground" role="status">
+          {mfaHint}
+        </p>
+        <form onSubmit={handleSecondFactorSubmit} className="space-y-4" autoComplete="off">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="verification-code">{t('verificationCodeLabel')}</FieldLabel>
+              <Input
+                key="second-factor-code"
+                id="verification-code"
+                name="verification-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                spellCheck={false}
+                placeholder={t('verificationCodePlaceholder')}
+                required
+                readOnly
+                onFocus={(e) => {
+                  e.currentTarget.readOnly = false
+                }}
+                disabled={!signIn || isSigningIn}
+                className="text-base py-2"
+              />
+              {errors?.fields?.code?.message ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {errors.fields.code.message}
+                </p>
+              ) : null}
+            </Field>
+            <Field>
+              <Button type="submit" className="w-full text-base py-3" disabled={isSigningIn}>
+                {isSigningIn ? t('signingIn') : t('verify')}
+              </Button>
+            </Field>
+          </FieldGroup>
+        </form>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+          {primarySecondFactor === 'phone_code' ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              disabled={isSigningIn}
+              onClick={() => signIn.mfa.sendPhoneCode()}
+            >
+              {t('resendCode')}
+            </Button>
+          ) : primarySecondFactor === 'email_code' ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              disabled={isSigningIn}
+              onClick={() => signIn.mfa.sendEmailCode()}
+            >
+              {t('resendCode')}
+            </Button>
+          ) : (
+            <span />
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            disabled={isSigningIn}
+            onClick={handleStartOver}
+          >
+            {t('startOver')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'client_trust') {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <form onSubmit={handleVerifyTrust} className="space-y-4" autoComplete="off">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="verification-code">{t('verificationCodeLabel')}</FieldLabel>
+              <Input
+                key="client-trust-code"
+                id="verification-code"
+                name="verification-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                spellCheck={false}
+                placeholder={t('verificationCodePlaceholder')}
+                required
+                readOnly
+                onFocus={(e) => {
+                  e.currentTarget.readOnly = false
+                }}
+                disabled={!signIn || isSigningIn}
+                className="text-base py-2"
+              />
+              {errors?.fields?.code?.message ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {errors.fields.code.message}
+                </p>
+              ) : null}
+            </Field>
+            <Field>
+              <Button type="submit" className="w-full text-base py-3" disabled={isSigningIn}>
+                {isSigningIn ? t('signingIn') : t('verify')}
+              </Button>
+            </Field>
+          </FieldGroup>
+        </form>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            disabled={isSigningIn}
+            onClick={() => signIn.mfa.sendEmailCode()}
+          >
+            {t('resendCode')}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            disabled={isSigningIn}
+            onClick={handleStartOver}
+          >
+            {t('startOver')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn('space-y-6', className)}>
+      <form onSubmit={handlePasswordSubmit} className="space-y-8">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="email" className="text-base font-medium text-foreground">
+              {t('emailLabel')}
+            </FieldLabel>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              spellCheck={false}
+              placeholder={t('emailPlaceholder')}
+              required
+              disabled={isSigningIn}
+              className="text-base py-2"
+            />
+            {errors?.fields?.identifier?.message ? (
+              <p className="text-sm text-destructive" role="alert">
+                {errors.fields.identifier.message}
+              </p>
+            ) : null}
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="password" className="text-base font-medium text-foreground">
+              {t('passwordLabel')}
+            </FieldLabel>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              disabled={isSigningIn}
+              className="text-base py-2"
+            />
+            {errors?.fields?.password?.message ? (
+              <p className="text-sm text-destructive" role="alert">
+                {errors.fields.password.message}
+              </p>
+            ) : null}
+          </Field>
+
+          <Field>
+            <Button type="submit" className="w-full text-base py-3" disabled={isSigningIn}>
+              {isSigningIn ? t('signingIn') : t('loginButton')}
+            </Button>
+          </Field>
+        </FieldGroup>
+      </form>
+
+      <div id="clerk-captcha" />
+    </div>
+  )
 }
