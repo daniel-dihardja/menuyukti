@@ -5,11 +5,11 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-from menuyukti.core.analytics import compute_order_metrics_by_day_from_orders
 from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from menuyukti.core.analytics import compute_order_metrics_by_day_from_orders
 from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
