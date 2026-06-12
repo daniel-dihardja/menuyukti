@@ -3,7 +3,7 @@
 import { Lightbulb, Megaphone, Radio } from 'lucide-react'
 import Link from 'next/link'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 
 import {
@@ -16,7 +16,6 @@ import {
   type MenuCombosPayload,
   type MinLiftFilter,
 } from '@/lib/analytics/menu-combos-page-adapter'
-import { CATEGORY_ORDER, type MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
 import { routes } from '@/lib/routes'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
@@ -33,24 +32,6 @@ type MenuCombosViewProps = {
   menuCombos: MenuCombosPayload
   locale: string
   matrixAvailable: boolean
-}
-
-function allQuadrantsSelected(selected: Set<MatrixCategory>): boolean {
-  return CATEGORY_ORDER.every((category) => selected.has(category))
-}
-
-function parseQuadrantParam(value: string | null): Set<MatrixCategory> {
-  if (!value) return new Set(CATEGORY_ORDER)
-  const parts = value.split(',').filter(Boolean)
-  const valid = parts.filter((p): p is MatrixCategory =>
-    (CATEGORY_ORDER as readonly string[]).includes(p),
-  )
-  return valid.length > 0 ? new Set(valid) : new Set(CATEGORY_ORDER)
-}
-
-function serializeQuadrants(quadrants: Set<MatrixCategory>): string | null {
-  if (allQuadrantsSelected(quadrants)) return null
-  return [...quadrants].join(',')
 }
 
 export function MenuCombosView({
@@ -70,23 +51,6 @@ export function MenuCombosView({
     'minLift',
     parseAsString.withDefault('all'),
   )
-  const [quadrantParam, setQuadrantParam] = useQueryState('quadrant', parseAsString)
-
-  const selectedQuadrants = useMemo(() => parseQuadrantParam(quadrantParam), [quadrantParam])
-
-  const onQuadrantToggle = useCallback(
-    (category: MatrixCategory, checked: boolean) => {
-      const next = new Set(selectedQuadrants)
-      if (checked) {
-        next.add(category)
-      } else {
-        next.delete(category)
-      }
-      void setQuadrantParam(serializeQuadrants(next))
-    },
-    [selectedQuadrants, setQuadrantParam],
-  )
-
   const categoryOptions = useMemo(
     () => getMenuCategoryOptions(menuCombos.pairs, locale),
     [menuCombos.pairs, locale],
@@ -100,11 +64,10 @@ export function MenuCombosView({
   const filteredPairs = useMemo(
     () =>
       filterPairs(menuCombos.pairs, {
-        quadrants: selectedQuadrants,
         menuCategory: selectedCategory,
         minLift,
       }),
-    [menuCombos.pairs, selectedCategory, selectedQuadrants, minLift],
+    [menuCombos.pairs, selectedCategory, minLift],
   )
 
   const bundleIdeas = useMemo(() => groupBundleIdeas(menuCombos.pairs), [menuCombos.pairs])
@@ -217,8 +180,6 @@ export function MenuCombosView({
         onCategoryChange={(value) => {
           void setCategoryFilter(value)
         }}
-        selectedQuadrants={selectedQuadrants}
-        onQuadrantToggle={onQuadrantToggle}
         minLift={minLift}
         onMinLiftChange={(value) => {
           void setMinLiftFilter(value)
