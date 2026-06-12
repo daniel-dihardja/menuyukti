@@ -290,7 +290,7 @@ export function MenuCombosPairsTable({ pairs, locale }: MenuCombosPairsTableProp
           <CardDescription>{t('description')}</CardDescription>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-4 px-4 pt-4 md:hidden">
+        <CardContent className="flex flex-col gap-4 px-4 pt-4 pb-4 md:hidden">
           <div className="flex items-end gap-2">
             <Field className="min-w-0 flex-1 gap-2">
               <FieldLabel htmlFor="menu-combos-mobile-sort">{tMobile('sortLabel')}</FieldLabel>
@@ -333,7 +333,7 @@ export function MenuCombosPairsTable({ pairs, locale }: MenuCombosPairsTableProp
           </ul>
         </CardContent>
 
-        <CardContent className="hidden overflow-x-auto px-0 pt-0 md:block">
+        <CardContent className="hidden overflow-x-auto px-0 pt-0 pb-4 md:block">
           <SortableTable
             columns={columns}
             sortKey={sortKey}

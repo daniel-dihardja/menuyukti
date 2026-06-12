@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -9,153 +9,229 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@workspace/ui/components/dropdown-menu'
-import {
-  BarChart3,
-  Coins,
-  Flame,
-  Link2,
-  List,
-  MoreHorizontal,
-  Radio,
-  Sparkles,
-  Table2,
-  Trash2,
-} from 'lucide-react'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { BarChart3, Coins, Flame, Link2, List, Radio, Sparkles, Table2, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routes } from '@/lib/routes'
+import {
+  ResponsiveActionMenu,
+  type ResponsiveActionMenuItem,
+} from '../_components/responsive-action-menu'
 
 interface SalesTableProps {
   uploads: Array<{ id: number; name: string }>
-  onDelete: (analyticsId: number) => void
+  onDelete: (analyticsId: number) => Promise<{ ok: true } | { ok: false }>
   onCogs: (analyticsId: number) => void
+  deleting?: boolean
 }
 
-export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
+function buildActionItems(
+  row: { id: number; name: string },
+  t: ReturnType<typeof useTranslations<'analytics.sales.table'>>,
+  onCogs: (analyticsId: number) => void,
+  onRequestDelete: (row: { id: number; name: string }) => void,
+): ResponsiveActionMenuItem[] {
+  return [
+    {
+      id: 'menu-items',
+      label: t('menuItems'),
+      icon: List,
+      href: routes.analytics.menuItems(row.id),
+    },
+    {
+      id: 'matrix',
+      label: t('matrix'),
+      icon: Table2,
+      href: routes.analytics.matrix(row.id),
+    },
+    {
+      id: 'heatmap',
+      label: t('heatmap'),
+      icon: Flame,
+      href: routes.analytics.heatmap(row.id),
+    },
+    {
+      id: 'menu-combos',
+      label: t('menuCombos'),
+      icon: Link2,
+      href: routes.analytics.menuCombos(row.id),
+    },
+    {
+      id: 'order-metrics',
+      label: t('orderMetrics'),
+      icon: BarChart3,
+      href: routes.analytics.orderMetrics(row.id),
+    },
+    {
+      id: 'campaign-signals',
+      label: t('campaignSignals'),
+      icon: Radio,
+      href: routes.analytics.campaignSignals(row.id),
+    },
+    {
+      id: 'cogs',
+      label: t('cogs'),
+      icon: Coins,
+      separatorBefore: true,
+      onSelect: () => onCogs(row.id),
+    },
+    {
+      id: 'ask-ai',
+      label: t('askAi'),
+      icon: Sparkles,
+      href: routes.workflows.list,
+      separatorBefore: true,
+    },
+    {
+      id: 'delete',
+      label: t('delete'),
+      icon: Trash2,
+      destructive: true,
+      separatorBefore: true,
+      onSelect: () => onRequestDelete(row),
+    },
+  ]
+}
+
+export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: SalesTableProps) {
   const t = useTranslations('analytics.sales.table')
+  const tDelete = useTranslations('analytics.sales.delete')
+  const tMobile = useTranslations('analytics.sales.table.mobile')
+
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const onRequestDelete = useCallback((row: { id: number; name: string }) => {
+    setDeleteError(null)
+    setPendingDelete(row)
+  }, [])
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return
+    setDeleteError(null)
+    const result = await onDelete(pendingDelete.id)
+    if (result.ok) {
+      setPendingDelete(null)
+      return
+    }
+    setDeleteError(tDelete('error'))
+  }, [onDelete, pendingDelete, tDelete])
+
+  const actionMenuProps = useMemo(
+    () => ({
+      desktopTriggerAriaLabel: t('action'),
+      mobileTriggerLabel: tMobile('actionsTrigger'),
+      sheetDescription: tMobile('sheetDescription'),
+    }),
+    [t, tMobile],
+  )
 
   return (
-    <div className="border w-full">
-      <Table className="w-full">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[60px]">{t('index')}</TableHead>
-            <TableHead>{t('fileName')}</TableHead>
-            <TableHead className="text-right w-[80px]">{t('action')}</TableHead>
-          </TableRow>
-        </TableHeader>
+    <>
+      <ul className="flex flex-col gap-3 md:hidden">
+        {uploads.map((row) => (
+          <li
+            key={row.id}
+            className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3"
+          >
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="truncate font-medium" title={row.name}>
+                {row.name}
+              </span>
+            </div>
+            <ResponsiveActionMenu
+              {...actionMenuProps}
+              items={buildActionItems(row, t, onCogs, onRequestDelete)}
+              sheetId={`sales-report-actions-${row.id}`}
+              sheetTitle={row.name}
+            />
+          </li>
+        ))}
+      </ul>
 
-        <TableBody>
-          {uploads.map((row, index) => (
-            <TableRow key={row.id}>
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>
-                <span>{row.name}</span>
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      aria-label={t('action')}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.menuItems(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <List className="h-4 w-4" />
-                        {t('menuItems')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onCogs(row.id)}
-                      className="flex items-center gap-2"
-                    >
-                      <Coins className="h-4 w-4" />
-                      {t('cogs')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.matrix(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <Table2 className="h-4 w-4" />
-                        {t('matrix')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.heatmap(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <Flame className="h-4 w-4" />
-                        {t('heatmap')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.menuCombos(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <Link2 className="h-4 w-4" />
-                        {t('menuCombos')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.orderMetrics(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <BarChart3 className="h-4 w-4" />
-                        {t('orderMetrics')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.campaignSignals(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <Radio className="h-4 w-4" />
-                        {t('campaignSignals')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href={routes.workflows.list} className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        {t('askAi')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="flex items-center gap-2 text-destructive focus:text-destructive"
-                      onClick={() => onDelete(row.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      {t('delete')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+      <div className="hidden w-full border md:block">
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('fileName')}</TableHead>
+              <TableHead className="w-[80px] text-right">{t('action')}</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+
+          <TableBody>
+            {uploads.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>
+                  <span className="truncate" title={row.name}>
+                    {row.name}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <ResponsiveActionMenu
+                    {...actionMenuProps}
+                    items={buildActionItems(row, t, onCogs, onRequestDelete)}
+                    sheetId={`sales-report-actions-desktop-${row.id}`}
+                    sheetTitle={row.name}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (open) return
+          if (deleting) return
+          setPendingDelete(null)
+          setDeleteError(null)
+        }}
+        open={pendingDelete !== null}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tDelete('title')}</AlertDialogTitle>
+            <AlertDialogDescription>{tDelete('description')}</AlertDialogDescription>
+            {deleteError ? (
+              <p className="text-destructive text-sm" role="alert">
+                {deleteError}
+              </p>
+            ) : null}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting} type="button">
+              {tDelete('cancel')}
+            </AlertDialogCancel>
+            <Button
+              className={deleting ? 'inline-flex items-center gap-2' : undefined}
+              disabled={deleting}
+              onClick={() => void confirmDelete()}
+              type="button"
+              variant="destructive"
+            >
+              {deleting ? (
+                <>
+                  <Spinner />
+                  {tDelete('confirm')}
+                </>
+              ) : (
+                tDelete('confirm')
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

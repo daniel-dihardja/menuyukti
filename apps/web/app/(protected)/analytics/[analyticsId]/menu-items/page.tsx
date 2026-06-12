@@ -8,8 +8,10 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { promotionItemsToTableRows } from '@/lib/analytics/menu-items-page-adapter'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { getCachedAnalyticsRun, getCachedPromotionMenuItems } from '@/lib/graphql/cached-queries'
 import { routes } from '@/lib/routes'
+import { cn } from '@workspace/ui/lib/utils'
 import { MenuItemsTable } from './menu-items-table'
 
 type PageProps = {
@@ -49,13 +51,14 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tMenuItems('reportTitle')}
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
         { label: tMenuItems('breadcrumb') },
       ]}
     >
-      <section className="border rounded-md p-3 sm:p-6 space-y-4">
+      <section className={cn('space-y-4', ANALYTICS_REPORT_SECTION_CLASS)}>
         <PageHeading title={tMenuItems('heading')} description={tMenuItems('description')} />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">

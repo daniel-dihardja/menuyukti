@@ -12,8 +12,10 @@ import {
   getCachedMenuHeatmaps,
 } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyLocale } from '@/lib/app-currency'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { HeatmapView } from './heatmap-view'
+import { cn } from '@workspace/ui/lib/utils'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
@@ -54,13 +56,14 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tHeatmap('reportTitle')}
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
         { label: tHeatmap('breadcrumb') },
       ]}
     >
-      <section className="flex flex-col gap-4 rounded-md border p-6">
+      <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>
         <PageHeading title={tHeatmap('heading')} description={tHeatmap('description')} />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">

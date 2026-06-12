@@ -10,8 +10,13 @@ function readSource(relativePath: string): string {
 
 describe('UI accessibility guardrails', () => {
   it('keeps an accessible label on analytics table row actions', () => {
-    const source = readSource('app/(protected)/analytics/sales/sales-table.tsx')
-    expect(source).toContain("aria-label={t('action')}")
+    const salesTable = readSource('app/(protected)/analytics/sales/sales-table.tsx')
+    const actionMenu = readSource(
+      'app/(protected)/analytics/_components/responsive-action-menu.tsx',
+    )
+
+    expect(salesTable).toContain("desktopTriggerAriaLabel: t('action')")
+    expect(actionMenu).toContain('aria-label={desktopTriggerAriaLabel}')
   })
 
   it('uses semantic button for asset preview trigger', () => {
