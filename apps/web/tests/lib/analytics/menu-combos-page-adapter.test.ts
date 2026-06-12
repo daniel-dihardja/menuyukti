@@ -2,8 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildLiftMatrixRows,
+  filterPairs,
+  getMenuCategoryOptions,
+  getTopComboPair,
+  groupBundleIdeas,
+  liftStrengthClass,
   multiItemOrderShare,
   pairLabel,
+  sortPairs,
   sortPairsByLift,
 } from '@/lib/analytics/menu-combos-page-adapter'
 import type { MenuComboPair } from '@/lib/graphql/queries/analytics'
@@ -58,5 +64,81 @@ describe('menu-combos-page-adapter', () => {
     ])
     expect(pairs[0]?.lift).toBe(2.5)
     expect(pairLabel(pairs[0]!)).toBe('C + D')
+  })
+
+  it('returns top combo pair', () => {
+    const top = getTopComboPair([
+      samplePair({ lift: 1.2 }),
+      samplePair({ menuA: 'Pasta', menuB: 'Wine', lift: 2.1 }),
+    ])
+    expect(top?.menuA).toBe('Pasta')
+    expect(top?.lift).toBe(2.1)
+  })
+
+  it('sorts pairs by column and direction', () => {
+    const pairs = sortPairs(
+      [samplePair({ coOrderCount: 5, lift: 1.2 }), samplePair({ coOrderCount: 20, lift: 1.5 })],
+      'coOrderCount',
+      'asc',
+    )
+    expect(pairs[0]?.coOrderCount).toBe(5)
+  })
+
+  it('collects unique menu categories', () => {
+    const options = getMenuCategoryOptions(
+      [
+        samplePair({ menuACategory: 'Mains', menuBCategory: 'Sides' }),
+        samplePair({
+          menuA: 'Salad',
+          menuB: 'Soup',
+          menuACategory: 'Starters',
+          menuBCategory: 'Starters',
+        }),
+      ],
+      'en',
+    )
+    expect(options).toEqual(['Mains', 'Sides', 'Starters'])
+  })
+
+  it('filters pairs by min lift and quadrant', () => {
+    const pairs = [
+      samplePair({ lift: 0.8, matrixCategoryA: 'low_end', matrixCategoryB: 'low_end' }),
+      samplePair({
+        menuA: 'A',
+        menuB: 'B',
+        lift: 2.0,
+        matrixCategoryA: 'star',
+        matrixCategoryB: 'puzzle',
+      }),
+    ]
+    const filtered = filterPairs(pairs, {
+      quadrants: new Set(['star']),
+      menuCategory: 'all',
+      minLift: 'above1',
+    })
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]?.menuA).toBe('A')
+  })
+
+  it('groups bundle ideas by matrix categories', () => {
+    const groups = groupBundleIdeas([
+      samplePair({ lift: 2.0, matrixCategoryA: 'star', matrixCategoryB: 'star' }),
+      samplePair({
+        menuA: 'Burger',
+        menuB: 'Salad',
+        lift: 1.9,
+        matrixCategoryA: 'star',
+        matrixCategoryB: 'puzzle',
+      }),
+    ])
+    expect(groups).toHaveLength(2)
+    expect(groups[0]?.kind).toBe('premium')
+    expect(groups[1]?.kind).toBe('upsell')
+  })
+
+  it('classifies lift strength for row styling', () => {
+    expect(liftStrengthClass(2.0)).toBe('bg-primary/5')
+    expect(liftStrengthClass(0.5)).toBe('bg-muted/30')
+    expect(liftStrengthClass(1.2)).toBeNull()
   })
 })

@@ -1,34 +1,32 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { Lightbulb, Megaphone, Radio } from 'lucide-react'
 import Link from 'next/link'
+import { parseAsString, useQueryState } from 'nuqs'
+import { useCallback, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Badge } from '@workspace/ui/components/badge'
-import { Button } from '@workspace/ui/components/button'
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
-import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+
 import {
   buildLiftMatrixRows,
+  filterPairs,
   formatLift,
-  formatPercent,
-  multiItemOrderShare,
-  pairLabel,
+  getMenuCategoryOptions,
+  getTopComboPair,
+  groupBundleIdeas,
   type MenuCombosPayload,
+  type MinLiftFilter,
 } from '@/lib/analytics/menu-combos-page-adapter'
-import { MATRIX_CATEGORY_BADGE_CLASS } from '@/lib/analytics/matrix-category-styles'
-import type { MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
+import { CATEGORY_ORDER, type MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
 import { routes } from '@/lib/routes'
-import { cn } from '@workspace/ui/lib/utils'
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
+import { Button } from '@workspace/ui/components/button'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { HeatmapMatrix } from '../heatmap/heatmap-matrix'
+import { MenuCombosBundleIdeas } from './_components/menu-combos-bundle-ideas'
+import { MenuCombosFilters } from './_components/menu-combos-filters'
+import { MenuCombosKpis } from './_components/menu-combos-kpis'
+import { MenuCombosPairsTable } from './_components/menu-combos-pairs-table'
 
 type MenuCombosViewProps = {
   analyticsId: number
@@ -37,21 +35,22 @@ type MenuCombosViewProps = {
   matrixAvailable: boolean
 }
 
-function scopeBadgeLabel(scope: string, t: ReturnType<typeof useTranslations>): string {
-  return scope === 'stars' ? t('insights.scopeStars') : t('insights.scopeTopSellers')
+function allQuadrantsSelected(selected: Set<MatrixCategory>): boolean {
+  return CATEGORY_ORDER.every((category) => selected.has(category))
 }
 
-function MatrixCategoryBadge({ category }: { category: string | null | undefined }) {
-  const tCategories = useTranslations('analytics.matrix.categories')
-  if (!category) return null
-  const key = category as MatrixCategory
-  const className = MATRIX_CATEGORY_BADGE_CLASS[key]
-  if (!className) return <Badge variant="outline">{category}</Badge>
-  return (
-    <Badge variant="outline" className={cn('font-normal', className)}>
-      {tCategories(key)}
-    </Badge>
+function parseQuadrantParam(value: string | null): Set<MatrixCategory> {
+  if (!value) return new Set(CATEGORY_ORDER)
+  const parts = value.split(',').filter(Boolean)
+  const valid = parts.filter((p): p is MatrixCategory =>
+    (CATEGORY_ORDER as readonly string[]).includes(p),
   )
+  return valid.length > 0 ? new Set(valid) : new Set(CATEGORY_ORDER)
+}
+
+function serializeQuadrants(quadrants: Set<MatrixCategory>): string | null {
+  if (allQuadrantsSelected(quadrants)) return null
+  return [...quadrants].join(',')
 }
 
 export function MenuCombosView({
@@ -61,9 +60,56 @@ export function MenuCombosView({
   matrixAvailable,
 }: MenuCombosViewProps) {
   const t = useTranslations('analytics.menuCombos')
-  const [view, setView] = useState<'pairs' | 'matrix'>('pairs')
 
-  const multiItemShare = multiItemOrderShare(menuCombos)
+  const [view, setView] = useQueryState('view', parseAsString.withDefault('pairs'))
+  const [categoryFilter, setCategoryFilter] = useQueryState(
+    'category',
+    parseAsString.withDefault('all'),
+  )
+  const [minLiftFilter, setMinLiftFilter] = useQueryState(
+    'minLift',
+    parseAsString.withDefault('all'),
+  )
+  const [quadrantParam, setQuadrantParam] = useQueryState('quadrant', parseAsString)
+
+  const selectedQuadrants = useMemo(() => parseQuadrantParam(quadrantParam), [quadrantParam])
+
+  const onQuadrantToggle = useCallback(
+    (category: MatrixCategory, checked: boolean) => {
+      const next = new Set(selectedQuadrants)
+      if (checked) {
+        next.add(category)
+      } else {
+        next.delete(category)
+      }
+      void setQuadrantParam(serializeQuadrants(next))
+    },
+    [selectedQuadrants, setQuadrantParam],
+  )
+
+  const categoryOptions = useMemo(
+    () => getMenuCategoryOptions(menuCombos.pairs, locale),
+    [menuCombos.pairs, locale],
+  )
+
+  const selectedCategory = categoryOptions.includes(categoryFilter) ? categoryFilter : 'all'
+  const minLift = (['all', 'above1', 'above1_5'] as const).includes(minLiftFilter as MinLiftFilter)
+    ? (minLiftFilter as MinLiftFilter)
+    : 'all'
+
+  const filteredPairs = useMemo(
+    () =>
+      filterPairs(menuCombos.pairs, {
+        quadrants: selectedQuadrants,
+        menuCategory: selectedCategory,
+        minLift,
+      }),
+    [menuCombos.pairs, selectedCategory, selectedQuadrants, minLift],
+  )
+
+  const bundleIdeas = useMemo(() => groupBundleIdeas(menuCombos.pairs), [menuCombos.pairs])
+  const topPair = useMemo(() => getTopComboPair(menuCombos.pairs), [menuCombos.pairs])
+
   const matrixRows = useMemo(
     () => buildLiftMatrixRows(menuCombos.focusMenus, menuCombos.matrixLift),
     [menuCombos.focusMenus, menuCombos.matrixLift],
@@ -87,6 +133,8 @@ export function MenuCombosView({
     [locale, t],
   )
 
+  const workflowHref = `${routes.workflows.list}?fromAnalytics=${String(analyticsId)}&focus=combos`
+
   if (menuCombos.totalOrders === 0) {
     return (
       <Empty className="border border-dashed">
@@ -100,13 +148,8 @@ export function MenuCombosView({
 
   if (menuCombos.multiItemOrderCount === 0 || menuCombos.pairs.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <InsightStrip
-          menuCombos={menuCombos}
-          multiItemShare={multiItemShare}
-          locale={locale}
-          t={t}
-        />
+      <div className="flex flex-col gap-6">
+        <MenuCombosKpis menuCombos={menuCombos} locale={locale} />
         <Empty className="border border-dashed">
           <EmptyHeader>
             <EmptyTitle>{t('emptyMultiItem.title')}</EmptyTitle>
@@ -118,10 +161,16 @@ export function MenuCombosView({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm">
           <Link href={routes.analytics.matrix(analyticsId)}>{t('linkToMatrix')}</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href={routes.analytics.campaignSignals(analyticsId)}>
+            <Radio aria-hidden data-icon="inline-start" />
+            {t('linkToCampaignSignals')}
+          </Link>
         </Button>
         {!matrixAvailable ? (
           <Button asChild variant="outline" size="sm">
@@ -136,59 +185,76 @@ export function MenuCombosView({
         </Alert>
       ) : null}
 
-      <InsightStrip menuCombos={menuCombos} multiItemShare={multiItemShare} locale={locale} t={t} />
+      <MenuCombosKpis menuCombos={menuCombos} locale={locale} />
 
-      <Tabs value={view} onValueChange={(value) => setView(value as 'pairs' | 'matrix')}>
+      {topPair ? (
+        <Alert>
+          <Lightbulb aria-hidden />
+          <AlertTitle>{t('insightTitle')}</AlertTitle>
+          <AlertDescription className="flex flex-col gap-3">
+            <p>
+              {t('insightTopPair', {
+                menuA: topPair.menuA,
+                menuB: topPair.menuB,
+                lift: formatLift(topPair.lift, locale),
+              })}
+            </p>
+            <Button asChild variant="secondary" size="sm" className="w-fit">
+              <Link href={workflowHref}>
+                <Megaphone aria-hidden data-icon="inline-start" />
+                {t('createCampaignCta')}
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <MenuCombosBundleIdeas groups={bundleIdeas} locale={locale} />
+
+      <MenuCombosFilters
+        categoryOptions={categoryOptions}
+        selectedCategory={selectedCategory}
+        onCategoryChange={(value) => {
+          void setCategoryFilter(value)
+        }}
+        selectedQuadrants={selectedQuadrants}
+        onQuadrantToggle={onQuadrantToggle}
+        minLift={minLift}
+        onMinLiftChange={(value) => {
+          void setMinLiftFilter(value)
+        }}
+        visibleCount={filteredPairs.length}
+      />
+
+      <Tabs
+        value={view === 'matrix' ? 'matrix' : 'pairs'}
+        onValueChange={(value) => {
+          void setView(value)
+        }}
+      >
         <TabsList>
           <TabsTrigger value="pairs">{t('tabs.pairs')}</TabsTrigger>
           <TabsTrigger value="matrix">{t('tabs.matrix')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pairs" className="mt-4">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('table.pair')}</TableHead>
-                  <TableHead className="text-right">{t('table.coOrders')}</TableHead>
-                  <TableHead className="text-right">{t('table.lift')}</TableHead>
-                  <TableHead className="text-right">{t('table.support')}</TableHead>
-                  <TableHead className="text-right">{t('table.confidence')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {menuCombos.pairs.map((pair) => (
-                  <TableRow key={`${pair.menuA}::${pair.menuB}`}>
-                    <TableCell>
-                      <div className="flex flex-col gap-1.5">
-                        <span className="font-medium">{pairLabel(pair)}</span>
-                        <div className="flex flex-wrap gap-1">
-                          <MatrixCategoryBadge category={pair.matrixCategoryA} />
-                          <MatrixCategoryBadge category={pair.matrixCategoryB} />
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{pair.coOrderCount}</TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {formatLift(pair.lift, locale)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatPercent(pair.support, locale)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {t('table.confidenceValue', {
-                        aToB: formatPercent(pair.confidenceAToB, locale),
-                        bToA: formatPercent(pair.confidenceBToA, locale),
-                      })}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          {filteredPairs.length === 0 ? (
+            <Empty className="border border-dashed">
+              <EmptyHeader>
+                <EmptyTitle>{t('emptyFiltered.title')}</EmptyTitle>
+                <EmptyDescription>{t('emptyFiltered.description')}</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <MenuCombosPairsTable pairs={filteredPairs} locale={locale} />
+          )}
         </TabsContent>
 
-        <TabsContent value="matrix" className="mt-4">
+        <TabsContent value="matrix" className="mt-4 flex flex-col gap-4">
+          <Alert>
+            <AlertTitle>{t('matrix.explainTitle')}</AlertTitle>
+            <AlertDescription>{t('matrix.explainBody')}</AlertDescription>
+          </Alert>
           {matrixRows.length < 2 ? (
             <Empty className="border border-dashed">
               <EmptyHeader>
@@ -208,33 +274,6 @@ export function MenuCombosView({
           )}
         </TabsContent>
       </Tabs>
-    </div>
-  )
-}
-
-type InsightStripProps = {
-  menuCombos: MenuCombosPayload
-  multiItemShare: number
-  locale: string
-  t: ReturnType<typeof useTranslations>
-}
-
-function InsightStrip({ menuCombos, multiItemShare, locale, t }: InsightStripProps) {
-  const numberFmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 })
-  return (
-    <div className="flex flex-wrap gap-3">
-      <Badge variant="secondary" className="font-normal">
-        {t('insights.totalOrders', { count: menuCombos.totalOrders })}
-      </Badge>
-      <Badge variant="secondary" className="font-normal">
-        {t('insights.multiItemShare', { percent: formatPercent(multiItemShare, locale) })}
-      </Badge>
-      <Badge variant="secondary" className="font-normal">
-        {t('insights.avgItems', { count: numberFmt.format(menuCombos.avgDistinctItemsPerOrder) })}
-      </Badge>
-      <Badge variant="outline" className="font-normal">
-        {scopeBadgeLabel(menuCombos.scope, t)}
-      </Badge>
     </div>
   )
 }
