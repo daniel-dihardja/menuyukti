@@ -1251,6 +1251,10 @@
         "menuItems": "Menu Items",
         "orderMetrics": "Order Metrics",
         "campaignSignals": "Campaign Signals",
+        "mobile": {
+          "actionsTrigger": "Reports & actions",
+          "sheetDescription": "Choose a report or action for this sales upload."
+        },
         "readiness": {
           "badges": {
             "ready": "Ready",
@@ -1275,6 +1279,13 @@
         "title": "No sales reports yet",
         "description": "Upload an Excel sales file to start analyzing menu performance.",
         "cta": "Upload New Sales Report"
+      },
+      "delete": {
+        "title": "Delete this sales report?",
+        "description": "This permanently removes the report and related generated insights. You can't undo this action.",
+        "confirm": "Delete report",
+        "cancel": "Cancel",
+        "error": "Could not delete the sales report. Please try again."
       }
     },
     "workflows": {

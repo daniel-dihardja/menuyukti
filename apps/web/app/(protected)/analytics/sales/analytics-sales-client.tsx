@@ -51,7 +51,7 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
     initialAnalytics,
   })
   const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, refetch)
-  const { deleteAnalytics } = useDeleteAnalytics({
+  const { deleteAnalytics, deleting } = useDeleteAnalytics({
     locationId,
     onSuccess: refetch,
   })
@@ -92,6 +92,7 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
       ) : (
         <SalesTable
           uploads={uploads}
+          deleting={deleting}
           onDelete={deleteAnalytics}
           onCogs={(analyticsId) => {
             router.push(routes.analytics.cogs(String(analyticsId)))
