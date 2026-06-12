@@ -47,6 +47,7 @@ export const routes = {
 
     cogs: (analyticsId: string | number) => `/analytics/${analyticsId}/cogs`,
     menuItems: (analyticsId: string | number) => `/analytics/${analyticsId}/menu-items`,
+    orderMetrics: (analyticsId: string | number) => `/analytics/${analyticsId}/order-metrics`,
   },
 
   /** AI studio (brand library + generation). */

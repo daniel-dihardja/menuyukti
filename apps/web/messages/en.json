@@ -1248,6 +1248,7 @@
         "finance": "Finance",
         "heatmap": "Heatmap",
         "menuItems": "Menu Items",
+        "orderMetrics": "Order Metrics",
         "readiness": {
           "badges": {
             "ready": "Ready",
@@ -2158,6 +2159,27 @@
           "sun": "Sun"
         }
       }
+    },
+    "orderMetrics": {
+      "reportTitle": "Order Metrics",
+      "pageLoadingTitle": "Loading order metrics…",
+      "breadcrumb": "Order Metrics",
+      "heading": "Order Metrics",
+      "description": "Average order size and revenue for this sales report, including breakdown by day of week.",
+      "empty": "No order metrics for this run.",
+      "emptyTitle": "No order metrics yet",
+      "emptyDescription": "This report does not include enough order data to calculate averages. Try another upload or check that the sales file contains order-level detail.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "kpi": {
+        "orderSizeHint": "Items per order on average",
+        "orderRevenueHint": "Average ticket value"
+      },
+      "weeklyTitle": "By day of week",
+      "weeklyDescription": "Compare average order patterns across the week",
+      "insightTitle": "Key insight",
+      "insightPeakRevenue": "{day} has the highest average ticket at {amount}",
+      "peakDayBadge": "Peak day"
     },
     "heatmap": {
       "reportTitle": "Heatmaps",

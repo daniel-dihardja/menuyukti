@@ -5,15 +5,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { OrderMetricsWidget } from '@/components/order-metrics-widget'
 import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { promotionItemsToTableRows } from '@/lib/analytics/menu-items-page-adapter'
-import {
-  getCachedAnalyticsRun,
-  getCachedOrderMetrics,
-  getCachedPromotionMenuItems,
-} from '@/lib/graphql/cached-queries'
+import { getCachedAnalyticsRun, getCachedPromotionMenuItems } from '@/lib/graphql/cached-queries'
 import { routes } from '@/lib/routes'
 import { MenuItemsTable } from './menu-items-table'
 
@@ -42,13 +37,9 @@ export default async function Page({ params }: PageProps) {
   if (!run) notFound()
 
   const locationId = String(run.locationId)
-  const [promotionItemsData, orderMetricsData] = await Promise.all([
-    getCachedPromotionMenuItems(userId, id, locationId),
-    getCachedOrderMetrics(userId, id),
-  ])
+  const promotionItemsData = await getCachedPromotionMenuItems(userId, id, locationId)
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const orderMetrics = orderMetricsData.orderMetrics
   const locale = getAppCurrencyLocale()
   const currency = getAppCurrencyCode()
 
@@ -71,15 +62,6 @@ export default async function Page({ params }: PageProps) {
             <Link href={routes.analytics.sales}>{tMenuItems('backToSales')}</Link>
           </Button>
         </div>
-
-        {orderMetrics ? (
-          <OrderMetricsWidget
-            avgOrderSize={orderMetrics.avgOrderSize}
-            avgOrderRevenue={orderMetrics.avgOrderRevenue}
-            locale={locale}
-            currency={currency}
-          />
-        ) : null}
 
         {rows.length === 0 ? (
           <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">

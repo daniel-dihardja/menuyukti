@@ -17,7 +17,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@workspace/ui/components/dropdown-menu'
-import { Coins, Flame, List, MoreHorizontal, Sparkles, Table2, Trash2 } from 'lucide-react'
+import {
+  BarChart3,
+  Coins,
+  Flame,
+  List,
+  MoreHorizontal,
+  Sparkles,
+  Table2,
+  Trash2,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routes } from '@/lib/routes'
 
@@ -94,6 +103,15 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       >
                         <Flame className="h-4 w-4" />
                         {t('heatmap')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.orderMetrics(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        {t('orderMetrics')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

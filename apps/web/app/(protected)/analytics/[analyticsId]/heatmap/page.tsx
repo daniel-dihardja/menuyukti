@@ -3,16 +3,11 @@ import { getTranslations } from 'next-intl/server'
 import { routes } from '@/lib/routes'
 import { notFound } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { OrderMetricsWidget } from '@/components/order-metrics-widget'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
-import {
-  getCachedAnalyticsRun,
-  getCachedMenuHeatmaps,
-  getCachedOrderMetrics,
-} from '@/lib/graphql/cached-queries'
-import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
+import { getCachedAnalyticsRun, getCachedMenuHeatmaps } from '@/lib/graphql/cached-queries'
+import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { HeatmapView } from './heatmap-view'
 
@@ -43,15 +38,9 @@ export default async function Page({ params }: PageProps) {
 
   const locationId = String(run.locationId)
   const locale = getAppCurrencyLocale()
-  const currency = getAppCurrencyCode()
-  const [heatmapsData, orderMetricsData] = await Promise.all([
-    getCachedMenuHeatmaps(userId, id, locationId),
-    getCachedOrderMetrics(userId, id),
-  ])
+  const heatmapsData = await getCachedMenuHeatmaps(userId, id, locationId)
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const orderMetrics = orderMetricsData.orderMetrics
-
   const menuHeatmaps = heatmapsData.menuHeatmaps ?? []
 
   return (
@@ -72,16 +61,6 @@ export default async function Page({ params }: PageProps) {
           </Button>
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
-
-        {orderMetrics ? (
-          <OrderMetricsWidget
-            avgOrderSize={orderMetrics.avgOrderSize}
-            avgOrderRevenue={orderMetrics.avgOrderRevenue}
-            byDayOfWeek={orderMetrics.byDayOfWeek}
-            locale={locale}
-            currency={currency}
-          />
-        ) : null}
 
         <HeatmapView menuHeatmaps={menuHeatmaps} locale={locale} />
       </section>

@@ -5,13 +5,8 @@ import Link from 'next/link'
 import { routes } from '@/lib/routes'
 import { notFound } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { OrderMetricsWidget } from '@/components/order-metrics-widget'
 import { PageHeading } from '@/components/page-heading'
-import {
-  getCachedAnalyticsRun,
-  getCachedMenuEngineeringMatrix,
-  getCachedOrderMetrics,
-} from '@/lib/graphql/cached-queries'
+import { getCachedAnalyticsRun, getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { MatrixView } from './matrix-view'
@@ -42,14 +37,9 @@ export default async function Page({ params }: PageProps) {
   if (!run) notFound()
 
   const locationId = String(run.locationId)
-  const [matrixData, orderMetricsData] = await Promise.all([
-    getCachedMenuEngineeringMatrix(userId, id, locationId),
-    getCachedOrderMetrics(userId, id),
-  ])
+  const matrixData = await getCachedMenuEngineeringMatrix(userId, id, locationId)
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const orderMetrics = orderMetricsData.orderMetrics
-
   const matrix = matrixData.menuEngineeringMatrix
   const items = matrix?.items ?? []
   const distribution = matrix?.distribution ?? []
@@ -74,15 +64,6 @@ export default async function Page({ params }: PageProps) {
           </Button>
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
-
-        {orderMetrics ? (
-          <OrderMetricsWidget
-            avgOrderSize={orderMetrics.avgOrderSize}
-            avgOrderRevenue={orderMetrics.avgOrderRevenue}
-            locale={locale}
-            currency={currency}
-          />
-        ) : null}
 
         {!matrix ? (
           <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
