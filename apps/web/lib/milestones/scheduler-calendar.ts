@@ -1,10 +1,17 @@
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
+import type {
+  PostLineupPost,
+  PostLineupSlide,
+  ReelLineupHeroDish,
+  ReelLineupReel,
+  SchedulerMilestoneData,
+} from '@/lib/graphql/node-schemas'
 
 export const SCHEDULER_GRID_HOUR_START = 8
 export const SCHEDULER_GRID_HOUR_END = 22
 export const SCHEDULER_GRID_SLOT_MINUTES = 60
 export const SCHEDULER_MONTHLY_PIN_POST_TIME = '10:00'
+export const SCHEDULER_WEEKLY_LUNCH_POST_TIME = '10:00'
 export const SCHEDULER_REEL_LUNCH_OFFER_TIME = '11:00'
 export const SCHEDULER_HAPPY_HOLIDAY_STORY_TIME = '10:00'
 
@@ -16,7 +23,7 @@ const SCHEDULER_SLOT_CLASS = {
   story:
     'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
   post: 'border-sky-300/80 bg-sky-50/90 text-foreground dark:border-sky-500/50 dark:bg-sky-950/40',
-  reel: 'border-orange-200 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-orange-950/60 dark:text-orange-100',
+  reel: 'border-orange-400 bg-orange-100 text-orange-950 dark:border-orange-600 dark:bg-orange-950/70 dark:text-orange-50',
 } as const
 
 const SCHEDULER_SLOT_TITLE_PREFIX = /^(post|reel|story):\s*/i
@@ -26,8 +33,28 @@ const SCHEDULER_SLOT_FALLBACK_TIME: Record<SchedulerSlotKind, string> = {
   reel: SCHEDULER_REEL_LUNCH_OFFER_TIME,
 }
 
+function inferSchedulerSlotKindFromTitle(title: string): SchedulerSlotKind {
+  const trimmed = title.trimStart()
+  if (trimmed.startsWith('Post:')) {
+    return 'post'
+  }
+  if (trimmed.startsWith('Reel:')) {
+    return 'reel'
+  }
+  return 'story'
+}
+
 export function schedulerSlotKind(slot: SchedulerSlot): SchedulerSlotKind {
-  return slot.kind
+  if (slot.kind) {
+    return slot.kind
+  }
+  if (slot.reel) {
+    return 'reel'
+  }
+  if (slot.post) {
+    return 'post'
+  }
+  return inferSchedulerSlotKindFromTitle(slot.title)
 }
 
 export function schedulerSlotClassName(kind: SchedulerSlotKind): string {
@@ -51,9 +78,18 @@ function schedulerSlotName(title: string): string {
   return normalized || trimmed
 }
 
+export function schedulerSlotDisplayTitleParts(slot: SchedulerSlot): {
+  typeLabel: string
+  name: string
+} {
+  return {
+    typeLabel: schedulerSlotTypeLabel(schedulerSlotKind(slot)),
+    name: schedulerSlotName(slot.title),
+  }
+}
+
 export function schedulerSlotDisplayTitle(slot: SchedulerSlot): string {
-  const typeLabel = schedulerSlotTypeLabel(schedulerSlotKind(slot))
-  const name = schedulerSlotName(slot.title)
+  const { typeLabel, name } = schedulerSlotDisplayTitleParts(slot)
   return name ? `${typeLabel}: ${name}` : typeLabel
 }
 
@@ -144,6 +180,200 @@ export function schedulerSlotsForDateDetail(
       ) ||
       schedulerSlotDisplayTitle(left).localeCompare(schedulerSlotDisplayTitle(right)),
   )
+}
+
+function normalizeLineupItemName(name: string): string {
+  return name.trim().toLowerCase()
+}
+
+function findPostLineupPostByTitle(
+  postLineupPosts: PostLineupPost[] | undefined,
+  title: string,
+): PostLineupPost | undefined {
+  if (!postLineupPosts?.length) {
+    return undefined
+  }
+  const normalizedTitle = title.trim()
+  return postLineupPosts.find((post) => post.title.trim() === normalizedTitle)
+}
+
+function findPostLineupPostForSlot(
+  postLineupPosts: PostLineupPost[] | undefined,
+  slot: SchedulerSlot,
+): PostLineupPost | undefined {
+  if (!postLineupPosts?.length) {
+    return undefined
+  }
+  const embeddedId = slot.post?.id.trim()
+  if (embeddedId) {
+    const byId = postLineupPosts.find((post) => post.id === embeddedId)
+    if (byId) {
+      return byId
+    }
+  }
+  return findPostLineupPostByTitle(postLineupPosts, slot.title)
+}
+
+function mergeSchedulerPostSlide(
+  embedded: PostLineupSlide,
+  fallback?: PostLineupSlide,
+): PostLineupSlide {
+  if (!fallback) {
+    return embedded
+  }
+  const category = embedded.category?.trim() || fallback.category
+  return {
+    ...fallback,
+    ...embedded,
+    dishName: embedded.dishName,
+    imageBrief: embedded.imageBrief,
+    role: embedded.role ?? fallback.role,
+    ...(category ? { category } : {}),
+    storytellingFit: embedded.storytellingFit ?? fallback.storytellingFit,
+    popularity: embedded.popularity ?? fallback.popularity,
+  }
+}
+
+function mergeSchedulerPostSlides(
+  embeddedSlides: PostLineupSlide[],
+  fallbackSlides?: PostLineupSlide[],
+): PostLineupSlide[] {
+  if (!fallbackSlides?.length) {
+    return embeddedSlides
+  }
+  const fallbackByDish = new Map(
+    fallbackSlides.map((slide) => [normalizeLineupItemName(slide.dishName), slide]),
+  )
+  return embeddedSlides.map((slide) =>
+    mergeSchedulerPostSlide(slide, fallbackByDish.get(normalizeLineupItemName(slide.dishName))),
+  )
+}
+
+function mergeSchedulerPostDetail(
+  embedded: PostLineupPost,
+  fallback?: PostLineupPost,
+): PostLineupPost {
+  if (!fallback) {
+    return embedded
+  }
+  const description = embedded.description?.trim() || fallback.description?.trim()
+  const captionGuidance = embedded.captionGuidance?.trim() || fallback.captionGuidance?.trim()
+  const slides = mergeSchedulerPostSlides(embedded.slides, fallback.slides)
+  const merged: PostLineupPost = {
+    ...embedded,
+    slides,
+    ...(description ? { description } : {}),
+    ...(captionGuidance ? { captionGuidance } : {}),
+  }
+  return merged
+}
+
+export function resolveSchedulerPostDetail(
+  slot: SchedulerSlot,
+  postLineupPosts?: PostLineupPost[],
+): PostLineupPost | undefined {
+  if (schedulerSlotKind(slot) !== 'post') {
+    return undefined
+  }
+  const fallback = findPostLineupPostForSlot(postLineupPosts, slot)
+  if (slot.post) {
+    return mergeSchedulerPostDetail(slot.post, fallback)
+  }
+  return fallback
+}
+
+function schedulerReelTitleFromSlotTitle(title: string): string {
+  const trimmed = title.trim()
+  const normalized = trimmed.replace(/^reel:\s*/i, '').trim()
+  return normalized || trimmed
+}
+
+function findReelLineupReelForSlot(
+  reelLineupReels: ReelLineupReel[] | undefined,
+  slot: SchedulerSlot,
+): ReelLineupReel | undefined {
+  if (!reelLineupReels?.length) {
+    return undefined
+  }
+  const embeddedId = slot.reel?.id.trim()
+  if (embeddedId) {
+    const byId = reelLineupReels.find((reel) => reel.id === embeddedId)
+    if (byId) {
+      return byId
+    }
+  }
+  const name = schedulerReelTitleFromSlotTitle(slot.title)
+  return reelLineupReels.find((reel) => reel.title.trim() === name)
+}
+
+function mergeSchedulerHeroDish(
+  embedded: ReelLineupHeroDish,
+  fallback?: ReelLineupHeroDish,
+): ReelLineupHeroDish {
+  if (!fallback) {
+    return embedded
+  }
+  const category = embedded.category?.trim() || fallback.category
+  return {
+    ...fallback,
+    ...embedded,
+    name: embedded.name,
+    reelMoment: embedded.reelMoment ?? fallback.reelMoment,
+    role: embedded.role ?? fallback.role,
+    ...(category ? { category } : {}),
+    storytellingFit: embedded.storytellingFit ?? fallback.storytellingFit,
+    popularity: embedded.popularity ?? fallback.popularity,
+  }
+}
+
+function mergeSchedulerHeroDishes(
+  embeddedHeroDishes: ReelLineupHeroDish[] | undefined,
+  fallbackHeroDishes?: ReelLineupHeroDish[],
+): ReelLineupHeroDish[] | undefined {
+  if (!embeddedHeroDishes?.length) {
+    return fallbackHeroDishes
+  }
+  if (!fallbackHeroDishes?.length) {
+    return embeddedHeroDishes
+  }
+  const fallbackByName = new Map(
+    fallbackHeroDishes.map((dish) => [normalizeLineupItemName(dish.name), dish]),
+  )
+  return embeddedHeroDishes.map((dish) =>
+    mergeSchedulerHeroDish(dish, fallbackByName.get(normalizeLineupItemName(dish.name))),
+  )
+}
+
+function mergeSchedulerReelDetail(
+  embedded: ReelLineupReel,
+  fallback?: ReelLineupReel,
+): ReelLineupReel {
+  if (!fallback) {
+    return embedded
+  }
+  const description = embedded.description.trim() || fallback.description.trim()
+  const explanation = embedded.explanation.trim() || fallback.explanation.trim()
+  const heroDishes = mergeSchedulerHeroDishes(embedded.heroDishes, fallback.heroDishes)
+  return {
+    ...embedded,
+    description,
+    explanation,
+    ...(heroDishes ? { heroDishes } : {}),
+  }
+}
+
+export function resolveSchedulerReelDetail(
+  slot: SchedulerSlot,
+  reelLineupReels?: ReelLineupReel[],
+): ReelLineupReel | undefined {
+  if (schedulerSlotKind(slot) !== 'reel') {
+    return undefined
+  }
+  const fallback = findReelLineupReelForSlot(reelLineupReels, slot)
+  if (slot.reel) {
+    return mergeSchedulerReelDetail(slot.reel, fallback)
+  }
+  return fallback
 }
 
 export function schedulerSlotsByDate(slots: SchedulerSlot[]): Map<string, SchedulerSlot[]> {

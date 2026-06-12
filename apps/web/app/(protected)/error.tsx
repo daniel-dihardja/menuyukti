@@ -17,7 +17,7 @@ export default function ProtectedError({
     <ErrorFallback
       className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8"
       description={t('description')}
-      digestLabel={t('digestLabel')}
+      digestLabel={error.digest ? t('digestLabel', { digest: error.digest }) : undefined}
       error={error}
       reset={reset}
       title={t('title')}

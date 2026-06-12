@@ -8,7 +8,7 @@ ESB column names are the canonical schema - other POS systems map to them.
 # POS_CONFIG: {pos_name: (detection_pattern, skip_rows, {pos_col: canonical_col})}
 POS_CONFIG = {
     "esb": ("sales recapitulation", 11, {}),  # ESB = canonical, no rename needed
-    "quino": ("quino_transaction_detail", 0, {}),
+    "quino": ("transaction item detail report", 3, {}),
     # Add new POS systems here:
     # "toast": ("toast", 0, {"check_id": "bill_number", "item_name": "menu", "quantity": "qty"}),
     # "square": ("square", 1, {"order_id": "bill_number", "item": "menu"}),

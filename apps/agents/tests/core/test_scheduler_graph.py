@@ -1,4 +1,4 @@
-"""Tests for scheduler graph nodes."""
+"""Tests for LLM-driven scheduler graph nodes."""
 
 from __future__ import annotations
 
@@ -8,272 +8,200 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.scheduler.nodes import (
-    build_snapshot,
+    SchedulerDraftOutput,
+    SchedulerDraftSlot,
     fetch_and_prepare,
+    generate_schedule_with_llm,
     persist_result,
 )
+from agents_app.agents.core.milestone_run.scheduler.prompts import (
+    SCHEDULE_EXPLANATION_MAX_CHARS,
+)
+from pydantic import ValidationError
 
 
 def _prior_json() -> str:
-    return json.dumps(
-        [
-            {
-                "title": "Campaign dates",
-                "presetId": "dates",
-                "data": {
-                    "startDate": "2026-06-01",
-                    "endDate": "2026-06-30",
-                    "publicHolidays": [
-                        {
-                            "name": "Easter Sunday",
-                            "description": "Desc",
-                            "date": "2026-06-15",
-                        }
-                    ],
-                },
+    rows = [
+        {
+            "title": "Campaign dates",
+            "presetId": "dates",
+            "data": {
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-28",
+                "publicHolidays": [
+                    {"name": "Holiday", "description": "Desc", "date": "2026-06-15"}
+                ],
             },
-            {
-                "title": "Campaign brief",
-                "presetId": "restaurant_campaign_brief",
-                "data": {
-                    "venueSnapshot": {
-                        "venueName": "Cafe Alto",
-                        "city": "Berlin",
-                        "country": "Germany",
-                        "currency": "EUR",
+        },
+        {
+            "title": "Campaign brief",
+            "presetId": "restaurant_campaign_brief",
+            "data": {
+                "venueSnapshot": {
+                    "venueName": "Cafe Alto",
+                    "city": "Berlin",
+                    "country": "Germany",
+                    "currency": "EUR",
+                },
+                "overallStrategy": {
+                    "offerWindow": "11:00-14:00",
+                    "strategyFocus": "weekday_lunch",
+                    "audiencePriority": ["Office workers", "Families", "Dinner crowd"],
+                    "coreMessage": "Promote weekday lunch deals.",
+                    "cadenceGuidance": ["Rule 1", "Rule 2", "Rule 3"],
+                },
+                "contentPillars": ["Hero dishes", "Social proof", "Story reminders"],
+                "audienceHypotheses": ["A", "B", "C"],
+                "proofOrientedAngles": ["A", "B", "C"],
+                "toneGuardrails": ["A", "B", "C"],
+                "campaignObjective": "Increase lunch bookings",
+                "mainCategory": "Mains",
+                "targetSegments": ["A", "B", "C"],
+                "messageHierarchy": ["A", "B", "C"],
+                "offerAndCtaPlan": ["A", "B", "C"],
+                "contentPillarPlan": ["A", "B", "C"],
+                "measurementPlan": ["A", "B", "C"],
+                "testingPlan": ["A", "B", "C"],
+                "riskGuardrails": ["A", "B", "C"],
+            },
+        },
+        {
+            "title": "Post lineup",
+            "presetId": "post_lineup",
+            "data": {
+                "posts": [
+                    {
+                        "id": "post-monthly",
+                        "format": "carousel",
+                        "intent": "pinned_monthly_menu",
+                        "title": "Monthly top menu",
+                        "description": "desc",
+                        "captionGuidance": "caption",
+                        "groupIds": ["g1"],
+                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
                     },
-                    "overallStrategy": {
-                        "strategyFocus": "weekday_lunch",
-                        "audiencePriority": [
-                            "Weekday lunch nearby workers and office groups",
-                            "Evening after-work diners",
-                            "Weekend family groups",
-                        ],
-                        "coreMessage": (
-                            "Promote a repeatable weekday lunch offer for nearby workers "
-                            "and small groups."
-                        ),
-                        "offerWindow": "11:00-14:00",
-                        "cadenceGuidance": [
-                            "Publish lunch-offer reels once per week on Tuesday.",
-                            "Prioritize Tuesday morning posting before the lunch window.",
-                            (
-                                "Keep the core lunch CTA consistent while rotating visuals "
-                                "and hero dishes."
-                            ),
-                        ],
+                    {
+                        "id": "post-w1",
+                        "format": "carousel",
+                        "intent": "weekday_lunch_post",
+                        "title": "Week 1 lunch",
+                        "description": "desc",
+                        "captionGuidance": "caption",
+                        "groupIds": ["g1"],
+                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
                     },
-                    "contentPillars": ["Hero signatures", "Category variety", "Behind-the-scenes craft"],
-                    "audienceHypotheses": [
-                        "Lunch nearby workers",
-                        "Weekend family groups",
-                        "Evening social dining",
-                    ],
-                    "proofOrientedAngles": [
-                        "Top sellers lead conversions",
-                        "Weekend mix supports bundles",
-                        "Meal-period demand shapes timing",
-                    ],
-                    "toneGuardrails": ["Be specific", "Keep copy concise", "Use operational language"],
-                    "campaignObjective": "Increase reservations in conversion stage this month",
-                    "mainCategory": "Mains",
-                    "targetSegments": [
-                        "Weekday lunch workers",
-                        "Weekend family groups",
-                        "Evening social diners",
-                    ],
-                    "messageHierarchy": [
-                        "Hero promise tied to signature dishes",
-                        "Proof from top menu and category signals",
-                        "CTA to reserve or DM for booking",
-                    ],
-                    "offerAndCtaPlan": [
-                        "Keep offers margin-safe and time-bounded",
-                        "Primary CTA uses reservation link",
-                        "DM fallback for high-intent booking questions",
-                    ],
-                    "contentPillarPlan": [
-                        "Signature dishes via Reels for discovery",
-                        "Social proof carousel for consideration",
-                        "Story reminders for conversion windows",
-                    ],
-                    "measurementPlan": [
-                        "Track saves and shares weekly",
-                        "Track profile visits and DM starts weekly",
-                        "If DM starts under target for 2 weeks then update CTA framing",
-                    ],
-                    "testingPlan": [
-                        "Test lunch vs dinner daypart windows",
-                        "Test Tuesday morning posting times",
-                        "Replace weak hooks after 2 weeks of flat save rate",
-                    ],
-                    "riskGuardrails": [
-                        "Avoid unverified claims",
-                        "Respect allergen and local promotion regulations",
-                        "Avoid discount-heavy messaging below margin floor",
-                    ],
-                },
+                    {
+                        "id": "post-w2",
+                        "format": "carousel",
+                        "intent": "weekday_lunch_post",
+                        "title": "Week 2 lunch",
+                        "description": "desc",
+                        "captionGuidance": "caption",
+                        "groupIds": ["g1"],
+                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
+                    },
+                    {
+                        "id": "post-w3",
+                        "format": "carousel",
+                        "intent": "weekday_lunch_post",
+                        "title": "Week 3 lunch",
+                        "description": "desc",
+                        "captionGuidance": "caption",
+                        "groupIds": ["g1"],
+                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
+                    },
+                    {
+                        "id": "post-w4",
+                        "format": "carousel",
+                        "intent": "weekday_lunch_post",
+                        "title": "Week 4 lunch",
+                        "description": "desc",
+                        "captionGuidance": "caption",
+                        "groupIds": ["g1"],
+                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
+                    },
+                ]
             },
-            {
-                "title": "Lunch Reel Lineup",
-                "presetId": "reel_lineup",
-                "data": {
-                    "foodLeads": [
-                        {
-                            "name": "Ribeye",
-                            "role": "star",
-                            "category": "MAINS",
-                            "tags": {
-                                "kind": "food",
-                                "ingredient": ["meat"],
-                                "taste": ["savory"],
-                                "course": ["main"],
-                                "reel_moment": "sizzle",
-                                "texture": ["juicy"],
-                                "prep_style": ["grilled"],
-                                "occasion": ["lunch"],
-                                "serve_temp": "hot",
-                                "content_angle": [],
-                            },
-                            "storytellingFit": "strong",
-                        },
-                        {
-                            "name": "Burger",
-                            "role": "star",
-                            "category": "MAINS",
-                            "tags": {
-                                "kind": "food",
-                                "ingredient": ["bread"],
-                                "taste": ["savory"],
-                                "course": ["main"],
-                                "reel_moment": "stack",
-                                "texture": ["juicy"],
-                                "prep_style": ["grilled"],
-                                "occasion": ["lunch"],
-                                "serve_temp": "hot",
-                                "content_angle": [],
-                            },
-                            "storytellingFit": "strong",
-                        },
-                    ],
-                    "drinkLeads": [],
-                    "groups": [
-                        {
-                            "id": "group-1",
-                            "leadName": "Ribeye",
-                            "profileId": "hook_reel",
-                            "anchor": {"dimension": "reel_moment", "value": "sizzle"},
-                            "items": [
-                                {
-                                    "name": "Ribeye",
-                                    "role": "star",
-                                    "category": "MAINS",
-                                    "position": 1,
-                                    "storytellingFit": "strong",
-                                    "reelMoment": "sizzle",
-                                }
-                            ],
-                            "mix": {
-                                "priceLevels": [],
-                                "storytellingStrongCount": 1,
-                                "starCount": 1,
-                                "puzzleCount": 0,
-                            },
-                            "strategyFocus": "weekday_lunch",
-                            "coreMessage": (
-                                "Promote a repeatable weekday lunch offer for nearby workers "
-                                "and small groups."
-                            ),
-                            "creativeRole": "hero",
-                            "assetHint": "Keep the lunch CTA consistent for 11:00-14:00.",
-                            "scheduleHints": {
-                                "preferredWeekdays": ["tuesday"],
-                                "preferredTime": "11:00",
-                                "cadenceEligible": True,
-                            },
-                        },
-                        {
-                            "id": "group-2",
-                            "leadName": "Burger",
-                            "profileId": "hook_reel",
-                            "anchor": {"dimension": "reel_moment", "value": "stack"},
-                            "items": [
-                                {
-                                    "name": "Burger",
-                                    "role": "star",
-                                    "category": "MAINS",
-                                    "position": 1,
-                                    "storytellingFit": "strong",
-                                    "reelMoment": "stack",
-                                }
-                            ],
-                            "mix": {
-                                "priceLevels": [],
-                                "storytellingStrongCount": 1,
-                                "starCount": 1,
-                                "puzzleCount": 0,
-                            },
-                            "strategyFocus": "weekday_lunch",
-                            "coreMessage": (
-                                "Promote a repeatable weekday lunch offer for nearby workers "
-                                "and small groups."
-                            ),
-                            "creativeRole": "proof",
-                            "assetHint": "Keep the lunch CTA consistent for 11:00-14:00.",
-                            "scheduleHints": {
-                                "preferredWeekdays": ["tuesday"],
-                                "preferredTime": "11:00",
-                                "cadenceEligible": True,
-                            },
-                        },
-                    ],
-                    "drinkGroups": [],
-                    "unassignedItemNames": [],
-                    "sourceCampaignBriefTitle": "Campaign brief",
-                    "sourceMenuTaggerTitle": "Tagged menu",
-                },
+        },
+        {
+            "title": "Story lineup",
+            "presetId": "story_lineup",
+            "data": {
+                "stories": [
+                    {
+                        "id": "story-fixed-1",
+                        "title": "Story fixed",
+                        "fixdate": True,
+                        "date": "2026-06-15",
+                        "reason": "public_holiday",
+                        "time": "10:00",
+                    },
+                    {
+                        "id": "story-user-review",
+                        "title": "Story: positive customer review",
+                        "fixdate": False,
+                        "reason": "user_review",
+                        "intervalWeeks": 4,
+                        "time": "14:00",
+                    },
+                ]
             },
-            {
-                "title": "Monthly Post Lineup",
-                "presetId": "post_lineup",
-                "data": {
-                    "posts": [
-                        {
-                            "id": "pinned-monthly-menu",
-                            "format": "carousel",
-                            "intent": "pinned_monthly_menu",
-                            "title": "Monthly top menu",
-                            "slides": [
-                                {
-                                    "dishName": "Ribeye",
-                                    "imageBrief": "Hero menu photography brief.",
-                                }
-                            ],
-                        }
-                    ],
-                    "sourceReelLineupTitle": "Lunch Reel Lineup",
-                },
+        },
+        {
+            "title": "Reel lineup",
+            "presetId": "reel_lineup",
+            "data": {
+                "reels": [
+                    {
+                        "id": "reel-weekday-1",
+                        "format": "reel",
+                        "intent": "weekday_reel",
+                        "title": "Weekday 1",
+                        "description": "desc",
+                        "explanation": "exp",
+                        "groupIds": ["g1"],
+                    },
+                    {
+                        "id": "reel-weekday-2",
+                        "format": "reel",
+                        "intent": "weekday_reel",
+                        "title": "Weekday 2",
+                        "description": "desc",
+                        "explanation": "exp",
+                        "groupIds": ["g1"],
+                    },
+                    {
+                        "id": "reel-weekday-3",
+                        "format": "reel",
+                        "intent": "weekday_reel",
+                        "title": "Weekday 3",
+                        "description": "desc",
+                        "explanation": "exp",
+                        "groupIds": ["g1"],
+                    },
+                    {
+                        "id": "reel-weekday-4",
+                        "format": "reel",
+                        "intent": "weekday_reel",
+                        "title": "Weekday 4",
+                        "description": "desc",
+                        "explanation": "exp",
+                        "groupIds": ["g1"],
+                    },
+                    {
+                        "id": "reel-weekend-1",
+                        "format": "reel",
+                        "intent": "weekend_reel",
+                        "title": "Weekend 1",
+                        "description": "desc",
+                        "explanation": "exp",
+                        "groupIds": ["g1"],
+                    },
+                ]
             },
-            {
-                "title": "Holiday Story Lineup",
-                "presetId": "story_lineup",
-                "data": {
-                    "stories": [
-                        {
-                            "id": "story-public-holiday-2026-06-15-easter-sunday",
-                            "title": "Story: sending happy Easter Sunday",
-                            "date": "2026-06-15",
-                            "fixdate": True,
-                            "reason": "public_holiday",
-                            "holidayName": "Easter Sunday",
-                            "time": "10:00",
-                        }
-                    ],
-                    "sourceDatesTitle": "Campaign dates",
-                },
-            },
-        ]
-    )
+        },
+    ]
+    return json.dumps(rows)
 
 
 def _base_state(**overrides: object) -> dict[str, object]:
@@ -290,8 +218,112 @@ def _base_state(**overrides: object) -> dict[str, object]:
     return state
 
 
+def _valid_draft() -> SchedulerDraftOutput:
+    return SchedulerDraftOutput(
+        slots=[
+            SchedulerDraftSlot(
+                kind="post",
+                date="2026-06-01",
+                time="12:00",
+                title="Monthly top menu",
+                sourceId="post-monthly",
+            ),
+            SchedulerDraftSlot(
+                kind="post",
+                date="2026-06-03",
+                time="12:30",
+                title="Week 1 lunch",
+                sourceId="post-w1",
+            ),
+            SchedulerDraftSlot(
+                kind="post",
+                date="2026-06-10",
+                time="12:30",
+                title="Week 2 lunch",
+                sourceId="post-w2",
+            ),
+            SchedulerDraftSlot(
+                kind="post",
+                date="2026-06-17",
+                time="12:30",
+                title="Week 3 lunch",
+                sourceId="post-w3",
+            ),
+            SchedulerDraftSlot(
+                kind="post",
+                date="2026-06-24",
+                time="12:30",
+                title="Week 4 lunch",
+                sourceId="post-w4",
+            ),
+            SchedulerDraftSlot(
+                kind="reel",
+                date="2026-06-02",
+                time="12:15",
+                title="Reel weekday 1",
+                sourceId="reel-weekday-1",
+            ),
+            SchedulerDraftSlot(
+                kind="reel",
+                date="2026-06-09",
+                time="12:15",
+                title="Reel weekday 2",
+                sourceId="reel-weekday-2",
+            ),
+            SchedulerDraftSlot(
+                kind="reel",
+                date="2026-06-16",
+                time="12:15",
+                title="Reel weekday 3",
+                sourceId="reel-weekday-3",
+            ),
+            SchedulerDraftSlot(
+                kind="reel",
+                date="2026-06-23",
+                time="12:15",
+                title="Reel weekday 4",
+                sourceId="reel-weekday-4",
+            ),
+            SchedulerDraftSlot(
+                kind="reel",
+                date="2026-06-07",
+                time="12:15",
+                title="Reel weekend 1",
+                sourceId="reel-weekend-1",
+            ),
+            SchedulerDraftSlot(
+                kind="story",
+                date="2026-06-15",
+                time="10:00",
+                title="Story fixed",
+                sourceId="story-fixed-1",
+            ),
+            SchedulerDraftSlot(
+                kind="story",
+                date="2026-06-11",
+                time="14:00",
+                title="Story: positive customer review",
+                sourceId="story-user-review",
+            ),
+        ],
+        scheduleExplanation=(
+            "Weekday reels at 12:15 on Tuesday target lunch breaks in the offer window. "
+            "Saturday 12:15 weekend reels reach leisure diners. "
+            "Weekday posts at 12:30 follow reels when lunch attention peaks."
+        ),
+    )
+
+
+def test_scheduler_draft_rejects_overlong_schedule_explanation() -> None:
+    with pytest.raises(ValidationError):
+        SchedulerDraftOutput(
+            slots=[],
+            scheduleExplanation="x" * (SCHEDULE_EXPLANATION_MAX_CHARS + 1),
+        )
+
+
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_reel_lineup() -> None:
+async def test_fetch_and_prepare_reads_prior_milestones() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
         return_value=lambda _x: None,
@@ -300,147 +332,102 @@ async def test_fetch_and_prepare_reads_prior_dates_campaign_brief_and_reel_lineu
             _base_state(prior_milestones_data=_prior_json()),
             client=AsyncMock(),
         )
-        assert result["source_dates_title"] == "Campaign dates"
-        assert result["source_campaign_brief_title"] == "Campaign brief"
-        assert result["source_reel_lineup_title"] == "Lunch Reel Lineup"
-        assert result["source_post_lineup_title"] == "Monthly Post Lineup"
-        assert result["source_story_lineup_title"] == "Holiday Story Lineup"
-        assert len(result["reel_lineup_data"]["groups"]) == 2
+    assert result["source_dates_title"] == "Campaign dates"
+    assert result["source_campaign_brief_title"] == "Campaign brief"
+    assert result["source_post_lineup_title"] == "Post lineup"
+    assert result["source_story_lineup_title"] == "Story lineup"
+    assert result["source_reel_lineup_title"] == "Reel lineup"
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_raises_without_prior_campaign_brief() -> None:
-    prior = json.dumps(
-        [
-            {
-                "title": "Campaign dates",
-                "presetId": "dates",
-                "data": {
-                    "startDate": "2026-06-01",
-                    "endDate": "2026-06-30",
-                    "publicHolidays": [],
-                },
-            }
-        ]
+async def test_generate_schedule_with_llm_success() -> None:
+    prior = json.loads(_prior_json())
+    state = _base_state(
+        dates_data=prior[0]["data"],
+        campaign_brief_data=prior[1]["data"],
+        post_lineup_data=prior[2]["data"],
+        story_lineup_data=prior[3]["data"],
+        reel_lineup_data=prior[4]["data"],
     )
     with (
         patch(
             "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
-        pytest.raises(ValueError, match="scheduler requires a prior restaurant_campaign_brief milestone"),
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=_valid_draft()),
+        ),
     ):
-        await fetch_and_prepare(
-            _base_state(prior_milestones_data=prior),
-            client=AsyncMock(),
-        )
+        result = await generate_schedule_with_llm(state)
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert normalized["startDate"] == "2026-06-01"
+    assert normalized["endDate"] == "2026-06-28"
+    assert len(normalized["slots"]) == 12
+    assert "scheduleExplanation" in normalized
+    assert normalized["scheduleExplanation"]
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_raises_without_prior_reel_lineup() -> None:
-    prior = json.dumps(json.loads(_prior_json())[:2])
+async def test_generate_schedule_with_llm_retries_then_succeeds() -> None:
+    prior = json.loads(_prior_json())
+    valid = _valid_draft()
+    invalid = SchedulerDraftOutput(
+        slots=[slot for slot in valid.slots if slot.sourceId != "story-user-review"],
+        scheduleExplanation=valid.scheduleExplanation,
+    )
+    state = _base_state(
+        dates_data=prior[0]["data"],
+        campaign_brief_data=prior[1]["data"],
+        post_lineup_data=prior[2]["data"],
+        story_lineup_data=prior[3]["data"],
+        reel_lineup_data=prior[4]["data"],
+    )
+    invoke = AsyncMock(side_effect=[invalid, valid])
     with (
         patch(
             "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
-        pytest.raises(ValueError, match="scheduler requires a prior reel_lineup milestone"),
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.structured_ainvoke_from_run_config",
+            new=invoke,
+        ),
     ):
-        await fetch_and_prepare(
-            _base_state(prior_milestones_data=prior),
-            client=AsyncMock(),
-        )
+        result = await generate_schedule_with_llm(state)
+    assert isinstance(result["generated_output"], dict)
+    assert invoke.await_count == 2
 
 
 @pytest.mark.asyncio
-async def test_build_snapshot_creates_reel_slots_from_reel_lineup() -> None:
+async def test_generate_schedule_with_llm_fails_after_max_attempts() -> None:
     prior = json.loads(_prior_json())
-    result = await build_snapshot(
-        _base_state(
-            dates_data=prior[0]["data"],
-            campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
-            post_lineup_data=prior[3]["data"],
-            story_lineup_data=prior[4]["data"],
-            source_dates_title="Campaign dates",
-            source_campaign_brief_title="Campaign brief",
-            source_reel_lineup_title="Lunch Reel Lineup",
-            source_post_lineup_title="Monthly Post Lineup",
-            source_story_lineup_title="Holiday Story Lineup",
-        )
+    valid = _valid_draft()
+    invalid = SchedulerDraftOutput(
+        slots=[slot for slot in valid.slots if slot.sourceId != "story-user-review"],
+        scheduleExplanation=valid.scheduleExplanation,
     )
-    normalized, error = validate_skill_output("scheduler", result["generated_output"])
-    assert error is None
-    assert isinstance(normalized, dict)
-    assert normalized["sourceCampaignBriefTitle"] == "Campaign brief"
-    assert normalized["sourceReelLineupTitle"] == "Lunch Reel Lineup"
-    assert normalized["sourcePostLineupTitle"] == "Monthly Post Lineup"
-    assert normalized["sourceStoryLineupTitle"] == "Holiday Story Lineup"
-    assert normalized["slots"][:4] == [
-        {
-            "kind": "post",
-            "date": "2026-06-01",
-            "time": "10:00",
-            "title": "Monthly top menu",
-        },
-        {
-            "kind": "reel",
-            "date": "2026-06-02",
-            "time": "11:00",
-            "title": "Reel: Ribeye lunch offer (11:00-14:00) [hero]",
-        },
-        {
-            "kind": "reel",
-            "date": "2026-06-09",
-            "time": "11:00",
-            "title": "Reel: Burger lunch offer (11:00-14:00) [proof]",
-        },
-        {
-            "kind": "story",
-            "date": "2026-06-15",
-            "time": "10:00",
-            "title": "Story: sending happy Easter Sunday",
-        },
-    ]
-    assert {
-        "kind": "story",
-        "date": "2026-06-15",
-        "time": "10:00",
-        "title": "Story: sending happy Easter Sunday",
-    } in normalized["slots"]
-
-
-@pytest.mark.asyncio
-async def test_build_snapshot_repeats_monthly_top_menu_on_first_of_each_month() -> None:
-    prior = json.loads(_prior_json())
-    prior[0]["data"]["endDate"] = "2026-07-31"
-    result = await build_snapshot(
-        _base_state(
-            dates_data=prior[0]["data"],
-            campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
-            post_lineup_data=prior[3]["data"],
-            story_lineup_data=prior[4]["data"],
-        )
+    state = _base_state(
+        dates_data=prior[0]["data"],
+        campaign_brief_data=prior[1]["data"],
+        post_lineup_data=prior[2]["data"],
+        story_lineup_data=prior[3]["data"],
+        reel_lineup_data=prior[4]["data"],
     )
-    normalized, error = validate_skill_output("scheduler", result["generated_output"])
-    assert error is None
-    assert isinstance(normalized, dict)
-    monthly_post_slots = [slot for slot in normalized["slots"] if slot["kind"] == "post"]
-    assert monthly_post_slots == [
-        {
-            "kind": "post",
-            "date": "2026-06-01",
-            "time": "10:00",
-            "title": "Monthly top menu",
-        },
-        {
-            "kind": "post",
-            "date": "2026-07-01",
-            "time": "10:00",
-            "title": "Monthly top menu",
-        }
-    ]
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=invalid),
+        ),
+        pytest.raises(ValueError, match="scheduler planning failed after 3 attempts"),
+    ):
+        await generate_schedule_with_llm(state)
 
 
 @pytest.mark.asyncio
@@ -448,14 +435,14 @@ async def test_persist_result_upserts_scheduler_payload() -> None:
     client = AsyncMock()
     payload = {
         "startDate": "2026-06-01",
-        "endDate": "2026-06-30",
+        "endDate": "2026-06-28",
         "publicHolidays": [],
         "slots": [
             {
-                "kind": "reel",
-                "date": "2026-06-02",
-                "time": "11:00",
-                "title": "Reel: Ribeye lunch offer (11:00-14:00) [hero]",
+                "kind": "post",
+                "date": "2026-06-01",
+                "time": "12:00",
+                "title": "Monthly top menu",
             }
         ],
     }
@@ -467,45 +454,5 @@ async def test_persist_result_upserts_scheduler_payload() -> None:
             _base_state(generated_output=payload),
             client=client,
         )
-        upsert.assert_awaited_once()
-        assert result["milestonedata_written"] is True
-
-
-@pytest.mark.asyncio
-async def test_build_snapshot_rotates_groups_across_two_month_window() -> None:
-    prior = json.loads(_prior_json())
-    prior[0]["data"]["endDate"] = "2026-07-31"
-    result = await build_snapshot(
-        _base_state(
-            dates_data=prior[0]["data"],
-            campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
-        )
-    )
-    normalized, error = validate_skill_output("scheduler", result["generated_output"])
-    assert error is None
-    assert isinstance(normalized, dict)
-    assert len(normalized["slots"]) == 9
-    assert normalized["slots"][0]["title"] == "Reel: Ribeye lunch offer (11:00-14:00) [hero]"
-    assert normalized["slots"][1]["title"] == "Reel: Burger lunch offer (11:00-14:00) [proof]"
-
-
-@pytest.mark.asyncio
-async def test_build_snapshot_treats_human_readable_weekday_lunch_focus_as_tuesday_only() -> None:
-    prior = json.loads(_prior_json())
-    prior[1]["data"]["overallStrategy"]["strategyFocus"] = "Weekday Lunch"
-
-    result = await build_snapshot(
-        _base_state(
-            dates_data=prior[0]["data"],
-            campaign_brief_data=prior[1]["data"],
-            reel_lineup_data=prior[2]["data"],
-        )
-    )
-
-    normalized, error = validate_skill_output("scheduler", result["generated_output"])
-    assert error is None
-    assert isinstance(normalized, dict)
-
-    reel_dates = [slot["date"] for slot in normalized["slots"] if slot["kind"] == "reel"]
-    assert reel_dates == ["2026-06-02", "2026-06-09", "2026-06-16", "2026-06-23", "2026-06-30"]
+    upsert.assert_awaited_once()
+    assert result["milestonedata_written"] is True

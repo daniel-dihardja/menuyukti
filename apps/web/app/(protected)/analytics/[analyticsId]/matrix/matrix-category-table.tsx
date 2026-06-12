@@ -1,9 +1,12 @@
 'use client'
 
+import { Info } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge } from '@workspace/ui/components/badge'
+import { Button } from '@workspace/ui/components/button'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@workspace/ui/components/hover-card'
 import { Slider } from '@workspace/ui/components/slider'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
@@ -14,15 +17,14 @@ import type {
   MatrixCategory,
   MatrixDisplayRow,
 } from '@/lib/analytics/matrix-page-adapter'
+import { MATRIX_CATEGORY_BADGE_CLASS } from '@/lib/analytics/matrix-category-styles'
 
-type SortKey = 'menuItem' | 'unitsSold' | 'contributionMargin' | 'contributionMarginShare'
-
-const CATEGORY_BADGE_CLASS: Record<MatrixCategory, string> = {
-  star: 'bg-emerald-600 text-white border-transparent',
-  plow_horse: 'bg-amber-500 text-black border-transparent',
-  puzzle: 'bg-sky-100 text-sky-800 border-sky-300',
-  low_end: 'bg-rose-100 text-rose-700 border-rose-300',
-}
+type SortKey =
+  | 'menuItem'
+  | 'unitsSold'
+  | 'contributionMargin'
+  | 'contributionMarginShare'
+  | 'action'
 
 type Props = {
   category: MatrixCategory
@@ -32,11 +34,27 @@ type Props = {
   currency: string
 }
 
+function actionBadgeVariant(
+  action: MatrixDisplayRow['action'],
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (action) {
+    case 'promote':
+      return 'default'
+    case 'reprice':
+      return 'secondary'
+    case 'remove':
+      return 'destructive'
+    default:
+      return 'outline'
+  }
+}
+
 export function MatrixCategoryTable({ category, items, portfolioStats, locale, currency }: Props) {
   const tTable = useTranslations('analytics.matrix.table')
   const tCategories = useTranslations('analytics.matrix.categories')
   const tPortfolio = useTranslations('analytics.matrix.portfolio')
   const tHighlight = useTranslations('analytics.matrix.lowEndHighlight')
+  const tQuadrantHelp = useTranslations('analytics.matrix.quadrantHelp')
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<SortKey>('unitsSold', 'desc')
 
   const [sliderValue, setSliderValue] = useState(0)
@@ -65,6 +83,12 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
     return [...items].sort((a, b) => {
       const aVal = a[sortKey]
       const bVal = b[sortKey]
+      if (sortKey === 'action') {
+        const aAction = a.action ?? ''
+        const bAction = b.action ?? ''
+        const cmp = aAction.localeCompare(bAction, locale)
+        return sortDirection === 'asc' ? cmp : -cmp
+      }
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         const cmp = aVal.localeCompare(bVal, locale)
         return sortDirection === 'asc' ? cmp : -cmp
@@ -80,12 +104,20 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
   const marginSharePct = `${(portfolioStats.marginShare * 100).toFixed(1)}%`
 
   return (
-    <section className="space-y-2">
+    <section className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <h3 className="text-sm font-semibold text-foreground">{tCategories(category)}</h3>
-        <Badge variant="outline" className={CATEGORY_BADGE_CLASS[category]}>
-          {tCategories(category)}
-        </Badge>
+        <HoverCard openDelay={200} closeDelay={100}>
+          <HoverCardTrigger asChild>
+            <button type="button" className="inline-flex items-center gap-1.5">
+              <Badge variant="outline" className={MATRIX_CATEGORY_BADGE_CLASS[category]}>
+                {tCategories(category)}
+              </Badge>
+              <Info className="size-3.5 text-muted-foreground" aria-hidden />
+              <span className="sr-only">{tQuadrantHelp(category)}</span>
+            </button>
+          </HoverCardTrigger>
+          <HoverCardContent className="text-sm">{tQuadrantHelp(category)}</HoverCardContent>
+        </HoverCard>
         <span className="text-xs text-muted-foreground">
           {isFiltered
             ? tPortfolio('filteredShowing', {
@@ -119,6 +151,7 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
             { id: 'unitsSold', label: tTable('qty') },
             { id: 'contributionMargin', label: tTable('margin') },
             { id: 'contributionMarginShare', label: tTable('shareOfTotalMargin') },
+            { id: 'action', label: tTable('action') },
           ]}
           sortKey={sortKey}
           sortDirection={sortDirection}
@@ -127,7 +160,7 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
         >
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
                 {tPortfolio('noItems')}
               </TableCell>
             </TableRow>
@@ -135,6 +168,8 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
             sortedItems.map((item) => {
               const inThresholdBand = highlightedRows.has(item)
               const sharePct = (item.contributionMarginShare * 100).toFixed(1)
+              const actionKey = item.action
+
               return (
                 <TableRow
                   key={`${category}-${item.menuItem}`}
@@ -170,6 +205,15 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
                   >
                     {sharePct}%
                   </TableCell>
+                  <TableCell className="px-3 py-2 text-right">
+                    {actionKey ? (
+                      <Badge variant={actionBadgeVariant(actionKey)}>
+                        {tTable(`actions.${actionKey}`)}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                 </TableRow>
               )
             })
@@ -181,9 +225,22 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
         <div className="rounded-lg border bg-muted/30 px-4 py-3">
           <Field className="gap-2">
             <div className="flex items-center justify-between">
-              <FieldLabel htmlFor="low-end-margin-slider" className="text-xs font-medium">
-                {tHighlight('sliderLabel')}
-              </FieldLabel>
+              <div className="flex items-center gap-1.5">
+                <FieldLabel htmlFor="low-end-margin-slider" className="text-xs font-medium">
+                  {tHighlight('sliderLabel')}
+                </FieldLabel>
+                <HoverCard openDelay={200} closeDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <Button type="button" variant="ghost" size="icon" className="size-6">
+                      <Info aria-hidden />
+                      <span className="sr-only">{tHighlight('sliderHelp')}</span>
+                    </Button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="text-sm">
+                    {tHighlight('sliderHelp')}
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
               <span className="text-xs tabular-nums text-muted-foreground">
                 {tHighlight('sliderValue', { value: sliderValue.toFixed(1) })}
               </span>
@@ -201,7 +258,6 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
               aria-valuenow={sliderValue}
               className="w-full"
             />
-            <p className="text-xs text-muted-foreground">{tHighlight('sliderHelp')}</p>
           </Field>
         </div>
       )}

@@ -25,18 +25,24 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "assigns fixed taxonomy tags (kind, ingredient, taste, course) to each menu item for "
         "downstream content grouping."
     ),
-    "reel_lineup": (
-        "Requires prior Campaign Brief and Menu Tagger milestones. Picks up to five main-course "
-        "food items with strong storytelling from tagged items in menu tagger order and places "
-        "each as the position-1 Reel hook in its own food group. Food groups also store the "
-        "same core weekday lunch-offer message, creative rotation role, and scheduler-facing "
-        "preferred weekday/time hints. Also picks up to three tagged beverage drinks "
-        "(storytelling fit not required) as position-1 drink Reel hook groups."
+    "menu_clusterer": (
+        "Requires prior Campaign Brief and Menu Tagger milestones. Ranks the top five food "
+        "items by popularity (storytelling breaks ties) as eligible position-1 leads, then "
+        "uses AI to generate food-only Reel clusters (4–8, sized from the tagged menu) with "
+        "varied tag-based "
+        "combinations (2–5 items each). Each cluster includes a clusterDescription and "
+        "weekday lunch scheduling hints for downstream scheduling."
     ),
     "post_lineup": (
-        "Requires a prior Reel Lineup milestone. Reads saved foodLeads and drafts Instagram "
+        "Requires a prior Menu clusterer milestone. Reads saved foodLeads and drafts Instagram "
         "feed post concepts. Builds a pinned monthly menu carousel with one slide per food "
         "lead, each slide naming the dish and including a high-quality photo brief."
+    ),
+    "reel_lineup": (
+        "Requires prior dates, Campaign Brief, and Menu clusterer milestones. Plans one weekday "
+        "and one weekend Instagram Reel per campaign week between the saved start and end dates. "
+        "Uses AI to pick a menu clusterer group per reel plus titles, descriptions, "
+        "and strategic explanations."
     ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
@@ -49,10 +55,9 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "and three bio variations — aligned with brand, audience, and campaign objective."
     ),
     "scheduler": (
-        "Reads the campaign window from dates plus business strategy from Campaign Brief and "
-        "food-group rotation hints from Reel Lineup. It schedules food reels as a recurring "
-        "twice-weekly lunch cadence with explicit `reel` slot kinds between the start and end "
-        "dates."
+        "Reads the campaign window from dates, business strategy from Campaign Brief, and "
+        "saved post and story lineups. It places feed posts and Stories on the calendar between "
+        "the start and end dates. Reel slots can be scheduled from a prior Reel lineup milestone when present."
     ),
 }
 
@@ -103,8 +108,9 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "culture_hooks",
         "ig_profile",
         "menu_tagger",
-        "reel_lineup",
+        "menu_clusterer",
         "post_lineup",
+        "reel_lineup",
         "scheduler",
     ):
         return "\n".join(

@@ -29,6 +29,7 @@ import { LocationSelect } from '../../analytics/sales/location-select'
 import {
   BLANK_PRESET_SELECTION_KEY,
   WORKFLOW_IMPORT_PRESETS,
+  WORKFLOW_STRATEGY_OPTIONS,
   presetSelectionKey,
   workflowTitleFromPresetPayload,
 } from '@/lib/workflows/presets'
@@ -150,6 +151,11 @@ function CreateWorkflowDataAndTemplateSection({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={BLANK_PRESET_SELECTION_KEY}>{tNew('noPreset')}</SelectItem>
+              {WORKFLOW_STRATEGY_OPTIONS.map((strategy) => (
+                <SelectItem key={strategy.id} value={presetSelectionKey(strategy.id)}>
+                  {tNew(strategy.labelKey)}
+                </SelectItem>
+              ))}
               {WORKFLOW_IMPORT_PRESETS.map((preset) => (
                 <SelectItem key={preset.id} value={presetSelectionKey(preset.id)}>
                   {workflowTitleFromPresetPayload(preset.payload) ??
@@ -262,7 +268,7 @@ export function CreateWorkflowPanel({
   const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
 
   return (
-    <Card className="overflow-hidden border bg-card shadow-sm ring-1 ring-border/50">
+    <Card className="overflow-hidden bg-card shadow-none">
       <CardHeader className="border-border/60 border-b bg-muted/20 px-5 py-5 sm:px-6">
         <CardTitle className="text-balance font-semibold text-xl tracking-tight">
           {tPanel('title')}

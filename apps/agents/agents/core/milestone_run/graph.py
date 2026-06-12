@@ -7,7 +7,6 @@ from functools import partial
 from typing import Any
 
 import httpx
-from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.campaign_brief.graph import build_campaign_brief_graph
@@ -15,8 +14,13 @@ from agents_app.agents.core.milestone_run.culture_hooks.graph import build_cultu
 from agents_app.agents.core.milestone_run.dates.graph import build_dates_graph
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
 from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profile_graph
+from agents_app.agents.core.milestone_run.menu_clusterer.graph import build_menu_clusterer_graph
 from agents_app.agents.core.milestone_run.menu_tagger.graph import build_menu_tagger_graph
 from agents_app.agents.core.milestone_run.post_lineup.graph import build_post_lineup_graph
+from agents_app.agents.core.milestone_run.presets.registry import (
+    get_preset_runner,
+    register_preset_runner,
+)
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     build_injected_prior_context_markdown,
 )
@@ -158,7 +162,7 @@ async def _run_menu_tagger(
     }
 
 
-async def _run_reel_lineup(
+async def _run_menu_clusterer(
     state: MilestoneRunState, *, client: httpx.AsyncClient
 ) -> dict[str, Any]:
     initial = _base_initial(state)
@@ -166,7 +170,7 @@ async def _run_reel_lineup(
     initial["result_data"] = ""
     initial["milestonedata_written"] = False
     final_sub = await _stream_subgraph(
-        build_reel_lineup_graph(client),
+        build_menu_clusterer_graph(client),
         initial,
         state=state,
     )
@@ -190,6 +194,29 @@ async def _run_post_lineup(
     initial["milestonedata_written"] = False
     final_sub = await _stream_subgraph(
         build_post_lineup_graph(client),
+        initial,
+        state=state,
+    )
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
+async def _run_reel_lineup(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    initial["result_data"] = ""
+    initial["milestonedata_written"] = False
+    final_sub = await _stream_subgraph(
+        build_reel_lineup_graph(client),
         initial,
         state=state,
     )
@@ -327,21 +354,8 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
             client=client,
         )
 
-    row = await fetch_milestone_node(mid, str(state["user_id"]), client=client)
-    raw_md = row.get("data") if isinstance(row, dict) else None
-    milestone_node_data = raw_md if isinstance(raw_md, dict) else {}
-    pass_rows = milestone_node_data.get("passCriterias")
-    criteria: list[dict[str, str]] = []
-    if isinstance(pass_rows, list):
-        for item in pass_rows:
-            if not isinstance(item, dict):
-                continue
-            cid = item.get("id")
-            req = item.get("requirement")
-            if isinstance(cid, str) and cid and isinstance(req, str):
-                criteria.append({"id": cid, "requirement": req})
-    raw_preset = milestone_node_data.get("presetId")
-    preset_id = raw_preset.strip() if isinstance(raw_preset, str) else ""
+    criteria: list[dict[str, str]] = list(out.get("criteria") or [])
+    preset_id = str(out.get("preset_id") or "").strip()
     if not preset_id:
         raise RuntimeError(
             f"milestone_run requires milestone.data.presetId for dedicated dispatch (milestone_id={mid})"
@@ -370,29 +384,12 @@ async def _execute_preset(state: MilestoneRunState, *, client: httpx.AsyncClient
     preset_id = str(state.get("preset_id") or "").strip()
     _trace_step(state, "execute_preset", preset_id=preset_id)
     _logger.info("milestone_run.execute_preset: milestone_id=%s preset_id=%s", mid, preset_id)
-    if preset_id == "restaurant_campaign_brief":
-        return await _run_campaign_brief(state, client=client)
-    if preset_id == "promotion_candidates":
-        return await _run_promotion_candidates(state, client=client)
-    if preset_id == "menu_tagger":
-        return await _run_menu_tagger(state, client=client)
-    if preset_id == "reel_lineup":
-        return await _run_reel_lineup(state, client=client)
-    if preset_id == "post_lineup":
-        return await _run_post_lineup(state, client=client)
-    if preset_id == "story_lineup":
-        return await _run_story_lineup(state, client=client)
-    if preset_id == "scheduler":
-        return await _run_scheduler(state, client=client)
-    if preset_id == "culture_hooks":
-        return await _run_culture_hooks(state, client=client)
-    if preset_id == "ig_profile":
-        return await _run_ig_profile(state, client=client)
-    if preset_id == "dates":
-        return await _run_dates(state, client=client)
-    raise RuntimeError(
-        f"Unsupported milestone preset for dedicated dispatch: {preset_id!r} (milestone_id={mid})"
-    )
+    runner = get_preset_runner(preset_id)
+    if runner is None:
+        raise RuntimeError(
+            f"Unsupported milestone preset for dedicated dispatch: {preset_id!r} (milestone_id={mid})"
+        )
+    return await runner(state, client=client)
 
 
 async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -404,9 +401,9 @@ async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient)
         "milestone_id": state["milestone_id"],
         "location_id": int(state["location_id"]),
         "user_id": str(state["user_id"]),
-        "goal": "",
-        "raw_data": "",
-        "criteria": [],
+        "goal": str(state.get("goal", "")),
+        "raw_data": str(state.get("raw_data") or state.get("result_data") or ""),
+        "criteria": list(state.get("criteria") or []),
         "evaluated": [],
         "result_summary": "",
         "result_node_id": None,
@@ -443,3 +440,20 @@ def build_milestone_run_graph(client: httpx.AsyncClient):
     builder.add_edge("execute_preset", "finalize_eval")
     builder.add_edge("finalize_eval", END)
     return builder.compile()
+
+
+def _register_preset_runners() -> None:
+    register_preset_runner("restaurant_campaign_brief", _run_campaign_brief)
+    register_preset_runner("promotion_candidates", _run_promotion_candidates)
+    register_preset_runner("menu_tagger", _run_menu_tagger)
+    register_preset_runner("menu_clusterer", _run_menu_clusterer)
+    register_preset_runner("post_lineup", _run_post_lineup)
+    register_preset_runner("reel_lineup", _run_reel_lineup)
+    register_preset_runner("story_lineup", _run_story_lineup)
+    register_preset_runner("scheduler", _run_scheduler)
+    register_preset_runner("culture_hooks", _run_culture_hooks)
+    register_preset_runner("ig_profile", _run_ig_profile)
+    register_preset_runner("dates", _run_dates)
+
+
+_register_preset_runners()

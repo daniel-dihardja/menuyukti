@@ -3,7 +3,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 function TimelineToolbarSkeleton() {
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b px-2 py-3 md:px-4">
+    <header className="flex shrink-0 items-center justify-between gap-3 border-border/60 border-b bg-card px-2 py-3 md:px-4">
       <div className="flex min-w-0 items-center gap-2">
         <Skeleton className="h-4 w-28" />
         <Skeleton className="h-5 w-8 rounded-full" />
@@ -17,38 +17,30 @@ function TimelineToolbarSkeleton() {
   )
 }
 
-function MilestoneCardSkeleton({ showRail }: { showRail: boolean }) {
+function MilestoneCardSkeleton({ showMobilePreview }: { showMobilePreview?: boolean }) {
   return (
-    <div className={cn('flex min-w-0 w-full', showRail ? 'gap-4' : 'gap-2')}>
-      {showRail ? (
-        <div className="hidden w-12 shrink-0 flex-col items-center md:flex">
-          <Skeleton className="size-9 rounded-full" />
-          <Skeleton className="mt-0.5 h-3 w-4" />
-          <Skeleton className="mt-1 min-h-0 w-px flex-1" />
-        </div>
-      ) : null}
-      <div className="min-w-0 flex-1 pb-8">
-        <div className="flex flex-col overflow-hidden rounded-md border py-4">
-          <div className="flex items-center justify-between gap-2 px-3 md:px-6">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <Skeleton className="size-5 shrink-0 rounded-sm" />
-              <Skeleton className="h-5 w-36 max-w-[70%]" />
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <Skeleton className="size-9 rounded-full" />
-              <Skeleton className="size-9 rounded-md" />
-              <Skeleton className="size-9 rounded-md" />
-              <Skeleton className="size-9 rounded-md" />
-            </div>
+    <div className="min-w-0 w-full pb-8">
+      <div className="flex flex-col overflow-hidden rounded-md bg-card py-4 dark:bg-muted">
+        <div className="flex items-center justify-between gap-2 px-3 md:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Skeleton className="size-5 shrink-0 rounded-sm" />
+            <Skeleton className="h-5 w-36 max-w-[70%]" />
           </div>
-          <div className="mt-4 flex gap-2 border-t px-3 pt-4 md:px-6">
-            {Array.from({ length: 5 }, (_, i) => (
-              <Skeleton className="h-8 w-16 shrink-0 rounded-md" key={`milestone-tab-${i}`} />
-            ))}
+          <div className="flex shrink-0 items-center gap-1">
+            <Skeleton className="size-6 rounded-full" />
+            <Skeleton className="hidden size-9 rounded-md md:block" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
           </div>
         </div>
-        {!showRail ? <Skeleton className="mt-2 h-10 w-full rounded-lg" /> : null}
+        <div className="mt-4 flex gap-2 border-t px-3 pt-4 md:px-6">
+          {Array.from({ length: 5 }, (_, i) => (
+            <Skeleton className="h-8 w-16 shrink-0 rounded-md" key={`milestone-tab-${i}`} />
+          ))}
+        </div>
       </div>
+      {showMobilePreview ? <Skeleton className="mt-2 h-10 w-full rounded-lg" /> : null}
     </div>
   )
 }
@@ -64,15 +56,15 @@ export function WorkflowTimelineSkeleton({ className }: { className?: string }) 
       )}
     >
       <TimelineToolbarSkeleton />
-      <div className="min-h-0 flex-1 overflow-hidden px-0 py-2 md:p-4 md:pr-3">
+      <div className="min-h-0 flex-1 overflow-hidden px-0 py-2 md:p-4">
         <div className="flex flex-col gap-0">
           <div className="md:hidden">
-            <MilestoneCardSkeleton showRail={false} />
-            <MilestoneCardSkeleton showRail={false} />
+            <MilestoneCardSkeleton showMobilePreview />
+            <MilestoneCardSkeleton showMobilePreview />
           </div>
           <div className="hidden flex-col md:flex">
-            <MilestoneCardSkeleton showRail />
-            <MilestoneCardSkeleton showRail />
+            <MilestoneCardSkeleton />
+            <MilestoneCardSkeleton />
           </div>
         </div>
       </div>
@@ -135,19 +127,25 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       aria-live="polite"
       className={cn('flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden', className)}
     >
-      {/* Mobile: timeline only */}
+      {/* Mobile: timeline + sticky assistant bar */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:hidden">
-        <WorkflowTimelineSkeleton className="flex-1" />
+        <WorkflowTimelineSkeleton className="min-h-0 flex-1" />
+        <div
+          aria-hidden
+          className="shrink-0 border-t bg-background px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        >
+          <Skeleton className="h-11 w-full rounded-lg" />
+        </div>
       </div>
 
       {/* Desktop: three-panel workspace */}
       <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="grid h-full min-h-0 flex-1 grid-cols-[38fr_34fr_28fr] gap-0 overflow-hidden">
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r pr-2">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-background">
               <WorkflowTimelineSkeleton />
             </div>
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20 p-3">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-background p-3">
               <WorkflowPreviewPanelSkeleton className="flex-1" />
             </div>
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-l">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { ArrowDown, ArrowUp, ChevronDown, Play, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Play, Square, Trash2 } from 'lucide-react'
 
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { milestonePresetIconFor } from '@/lib/milestones/preset-definitions'
@@ -23,8 +23,8 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { MilestoneStatusMarker } from './milestone-status-marker'
 import { useTimelineItemHeader } from './timeline-item-header-context'
-import { TimelineRailMarker } from './timeline-rail'
 
 export type MilestoneItemHeaderProps = {
   open: boolean
@@ -47,6 +47,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const railStatus = milestone.status ?? 'empty'
   const canRun = Boolean(actions.run) && runState !== 'blocked'
   const isRunning = runState === 'running'
+  const showStop = isRunning && Boolean(actions.stopRun)
 
   return (
     <CardHeader className={cn('min-w-0 gap-1.5', isMobile && 'px-3')}>
@@ -55,8 +56,8 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
           <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <span className="flex size-5 shrink-0 items-center justify-center">
-                {isMobile && railStatus !== 'empty' ? (
-                  <TimelineRailMarker compact status={railStatus} />
+                {railStatus !== 'empty' ? (
+                  <MilestoneStatusMarker status={railStatus} />
                 ) : (
                   <MilestoneIcon aria-hidden className="size-4 text-muted-foreground" />
                 )}
@@ -67,7 +68,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
         </div>
       </CardTitle>
       <CardAction className="flex items-center gap-1">
-        {actions.run ? (
+        {actions.run || showStop ? (
           <span className="inline-flex items-center gap-2">
             {!isMobile ? (
               <span className="inline-flex shrink-0" onPointerDown={(e) => e.stopPropagation()}>
@@ -82,24 +83,36 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
               <TooltipTrigger asChild>
                 <span className="inline-flex">
                   <Button
-                    aria-busy={isRunning ? true : undefined}
-                    aria-label={t('milestonePlayAriaLabel')}
-                    className="size-9 shrink-0 rounded-full"
-                    disabled={!canRun}
+                    aria-busy={isRunning && !showStop ? true : undefined}
+                    aria-label={
+                      showStop ? t('milestoneStopAriaLabel') : t('milestonePlayAriaLabel')
+                    }
+                    className="shrink-0 rounded-full"
+                    disabled={showStop ? false : !canRun}
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (showStop) {
+                        actions.stopRun?.()
+                        return
+                      }
                       void actions.run?.(milestone.id, milestoneRunChatModel)
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
-                    size="icon"
+                    size="icon-xs"
                     type="button"
                     variant="default"
                   >
-                    {isRunning ? <Spinner /> : <Play aria-hidden data-icon="inline-start" />}
+                    {showStop ? (
+                      <Square aria-hidden data-icon="inline-start" />
+                    ) : (
+                      <Play aria-hidden data-icon="inline-start" />
+                    )}
                   </Button>
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="bottom">{t('milestonePlayTooltip')}</TooltipContent>
+              <TooltipContent side="bottom">
+                {showStop ? t('milestoneStopTooltip') : t('milestonePlayTooltip')}
+              </TooltipContent>
             </Tooltip>
           </span>
         ) : null}

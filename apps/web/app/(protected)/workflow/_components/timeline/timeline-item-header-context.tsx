@@ -11,7 +11,7 @@ export type TimelineItemDeleteState = 'hidden' | 'idle' | 'deleting'
 
 type TimelineItemHeaderContextValue = {
   milestone: TimelineMilestone
-  /** When true, the left timeline rail is hidden; status is shown inside the card header. */
+  /** When true: tighter header padding, run model select hidden, inline preview below the card. */
   isMobile?: boolean
   position: TimelineItemPosition
   runState: TimelineItemRunState
@@ -24,6 +24,7 @@ type TimelineItemHeaderContextValue = {
   onMilestoneRunChatModelChange: (id: ChatGatewayModelId) => void
   actions: {
     run?: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+    stopRun?: () => void
     deleteMilestone?: (id: string) => void | Promise<void>
   }
 }

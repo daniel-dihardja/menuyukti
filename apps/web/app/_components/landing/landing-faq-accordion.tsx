@@ -23,7 +23,7 @@ export function LandingFaqAccordion({ items }: LandingFaqAccordionProps) {
         <AccordionItem
           key={item.question}
           value={`faq-${index}`}
-          className="rounded-lg border border-border border-b bg-card px-4 shadow-sm last:border-b"
+          className="rounded-lg border border-border border-b bg-card px-4 last:border-b"
         >
           <AccordionTrigger className="py-3 text-base font-medium leading-snug hover:no-underline md:text-lg md:leading-snug [&>svg]:size-4">
             <span className="min-w-0 text-left text-pretty">{item.question}</span>

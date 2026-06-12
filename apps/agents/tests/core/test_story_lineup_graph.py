@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.story_lineup.nodes import (
+    USER_REVIEW_STORY_ID,
     HolidayGreetingPick,
     StoryLineupHolidayGreetingsDraft,
     _build_public_holiday_stories,
+    _build_user_review_story,
     _fmt_owner_holiday_notes,
     build_lineup,
     fetch_and_prepare,
@@ -74,16 +76,14 @@ async def test_select_public_holiday_stories_calls_llm() -> None:
     draft = StoryLineupHolidayGreetingsDraft(
         holidayGreetings=[HolidayGreetingPick(date="2026-06-15", holidayName="Easter Sunday")]
     )
-    mock_llm = MagicMock()
-    mock_llm.ainvoke = AsyncMock(return_value=draft)
     with (
         patch(
             "agents_app.agents.core.milestone_run.story_lineup.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
         patch(
-            "agents_app.agents.core.milestone_run.story_lineup.nodes.structured_llm_from_milestone_run_config",
-            return_value=MagicMock(with_structured_output=MagicMock(return_value=mock_llm)),
+            "agents_app.agents.core.milestone_run.story_lineup.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=draft),
         ),
     ):
         result = await select_public_holiday_stories(
@@ -132,6 +132,14 @@ def test_fmt_owner_holiday_notes_uses_story_lineup_input() -> None:
     assert "Mark Easter Sunday" in text
 
 
+def test_build_user_review_story_is_deterministic() -> None:
+    story = _build_user_review_story()
+    assert story["id"] == USER_REVIEW_STORY_ID
+    assert story["reason"] == "user_review"
+    assert story["fixdate"] is False
+    assert story["intervalWeeks"] == 4
+
+
 @pytest.mark.asyncio
 async def test_build_lineup_persists_stories() -> None:
     result = await build_lineup(
@@ -157,8 +165,10 @@ async def test_build_lineup_persists_stories() -> None:
     assert error is None
     assert isinstance(normalized, dict)
     assert normalized["sourceDatesTitle"] == "Campaign dates"
-    assert len(normalized["stories"]) == 1
-    assert normalized["stories"][0]["fixdate"] is True
+    assert len(normalized["stories"]) == 2
+    assert normalized["stories"][0]["reason"] == "user_review"
+    assert normalized["stories"][0]["fixdate"] is False
+    assert normalized["stories"][1]["fixdate"] is True
 
 
 @pytest.mark.asyncio

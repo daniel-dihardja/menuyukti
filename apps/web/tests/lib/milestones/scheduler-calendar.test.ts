@@ -11,11 +11,14 @@ import {
   clampWeekStart,
   eachIsoDateInWindow,
   isoDateOnlyFromDate,
+  resolveSchedulerPostDetail,
+  resolveSchedulerReelDetail,
   schedulerHourIndexFromTime,
   schedulerHourLabels,
   schedulerSlotClassName,
   schedulerSlotDisplayTime,
   schedulerSlotDisplayTitle,
+  schedulerSlotDisplayTitleParts,
   schedulerSlotKind,
   schedulerSlotsByDate,
   schedulerSlotsForDate,
@@ -31,6 +34,320 @@ import {
   monthStartIsoForWeek,
 } from '@/lib/milestones/scheduler-calendar'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+
+const samplePostDetail = {
+  id: 'pinned-monthly-menu',
+  format: 'carousel' as const,
+  intent: 'pinned_monthly_menu' as const,
+  title: 'Monthly top menu',
+  groupIds: ['group-1'],
+  slides: [
+    {
+      dishName: 'Ribeye',
+      imageBrief: 'Hero menu photography brief.',
+    },
+  ],
+}
+
+const sampleReelDetail = {
+  id: 'weekday-reel-week-2026-06-01',
+  format: 'reel' as const,
+  intent: 'weekday_reel' as const,
+  title: 'Week 1 weekday lunch reel',
+  description: 'Weekday visual hook for week 1.',
+  explanation: 'Strategic weekday reel for week 1.',
+  groupIds: ['group-1'],
+  heroDishes: [{ name: 'Ribeye', reelMoment: 'static_hero' }],
+}
+
+describe('resolveSchedulerPostDetail', () => {
+  it('returns embedded post detail from the slot', () => {
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: samplePostDetail,
+        },
+        [],
+      ),
+    ).toEqual(samplePostDetail)
+  })
+
+  it('falls back to post_lineup posts matched by title', () => {
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+        },
+        [samplePostDetail],
+      ),
+    ).toEqual(samplePostDetail)
+  })
+
+  it('merges description and captionGuidance from post_lineup when embedded post lacks copy', () => {
+    const postLineupWithCopy = {
+      ...samplePostDetail,
+      description: 'Monthly pin concept summary.',
+      captionGuidance: 'Lead with hero mains and a reservation CTA.',
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: samplePostDetail,
+        },
+        [postLineupWithCopy],
+      ),
+    ).toEqual(postLineupWithCopy)
+  })
+
+  it('merges slide category, storytellingFit, and popularity from post_lineup', () => {
+    const embedded = {
+      ...samplePostDetail,
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Embedded brief.',
+        },
+      ],
+    }
+    const lineupWithMetrics = {
+      ...samplePostDetail,
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Lineup brief.',
+          role: 'star' as const,
+          category: 'Mains',
+          storytellingFit: 'strong' as const,
+          popularity: 0.82,
+        },
+      ],
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: embedded,
+        },
+        [lineupWithMetrics],
+      ),
+    ).toEqual({
+      ...embedded,
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Embedded brief.',
+          role: 'star',
+          category: 'Mains',
+          storytellingFit: 'strong',
+          popularity: 0.82,
+        },
+      ],
+    })
+  })
+
+  it('falls back to post_lineup posts matched by embedded id', () => {
+    const lineupPost = {
+      ...samplePostDetail,
+      title: 'Different scheduler title',
+      slides: [
+        {
+          dishName: 'Ribeye',
+          imageBrief: 'Lineup brief.',
+          category: 'Mains',
+          storytellingFit: 'weak' as const,
+          popularity: 0.4,
+        },
+      ],
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Post: Monthly top menu',
+          post: {
+            ...samplePostDetail,
+            slides: [{ dishName: 'Ribeye', imageBrief: 'Embedded brief.' }],
+          },
+        },
+        [lineupPost],
+      )?.slides[0],
+    ).toMatchObject({
+      category: 'Mains',
+      storytellingFit: 'weak',
+      popularity: 0.4,
+    })
+  })
+
+  it('prefers embedded description and captionGuidance over post_lineup fallback', () => {
+    const embedded = {
+      ...samplePostDetail,
+      description: 'Embedded description.',
+      captionGuidance: 'Embedded caption guidance.',
+    }
+    const fallback = {
+      ...samplePostDetail,
+      description: 'Fallback description.',
+      captionGuidance: 'Fallback caption guidance.',
+    }
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+          post: embedded,
+        },
+        [fallback],
+      ),
+    ).toEqual(embedded)
+  })
+
+  it('returns undefined for non-post slots', () => {
+    expect(
+      resolveSchedulerPostDetail(
+        {
+          kind: 'reel',
+          date: '2026-06-02',
+          time: '11:00',
+          title: 'Reel: Lunch offer',
+        },
+        [samplePostDetail],
+      ),
+    ).toBeUndefined()
+  })
+})
+
+describe('resolveSchedulerReelDetail', () => {
+  it('returns embedded reel detail from the slot', () => {
+    expect(
+      resolveSchedulerReelDetail(
+        {
+          kind: 'reel',
+          date: '2026-06-04',
+          time: '11:00',
+          title: 'Reel: Week 1 weekday lunch reel',
+          reel: sampleReelDetail,
+        },
+        [],
+      ),
+    ).toEqual(sampleReelDetail)
+  })
+
+  it('falls back to reel_lineup reels matched by title', () => {
+    expect(
+      resolveSchedulerReelDetail(
+        {
+          kind: 'reel',
+          date: '2026-06-04',
+          time: '11:00',
+          title: 'Reel: Week 1 weekday lunch reel',
+        },
+        [sampleReelDetail],
+      ),
+    ).toEqual(sampleReelDetail)
+  })
+
+  it('merges hero dish category, storytellingFit, and popularity from reel_lineup', () => {
+    const embedded = {
+      ...sampleReelDetail,
+      heroDishes: [{ name: 'Ribeye', reelMoment: 'static_hero' }],
+    }
+    const lineupWithMetrics = {
+      ...sampleReelDetail,
+      heroDishes: [
+        {
+          name: 'Ribeye',
+          reelMoment: 'static_hero',
+          role: 'star' as const,
+          category: 'Mains',
+          storytellingFit: 'strong' as const,
+          popularity: 0.91,
+        },
+      ],
+    }
+    expect(
+      resolveSchedulerReelDetail(
+        {
+          kind: 'reel',
+          date: '2026-06-04',
+          time: '11:00',
+          title: 'Reel: Week 1 weekday lunch reel',
+          reel: embedded,
+        },
+        [lineupWithMetrics],
+      ),
+    ).toEqual({
+      ...embedded,
+      heroDishes: [
+        {
+          name: 'Ribeye',
+          reelMoment: 'static_hero',
+          role: 'star',
+          category: 'Mains',
+          storytellingFit: 'strong',
+          popularity: 0.91,
+        },
+      ],
+    })
+  })
+
+  it('merges explanation from reel_lineup when embedded reel lacks copy', () => {
+    const embedded = {
+      ...sampleReelDetail,
+      explanation: '',
+    }
+    const lineupWithCopy = {
+      ...sampleReelDetail,
+      explanation: 'Merged strategic explanation.',
+    }
+    expect(
+      resolveSchedulerReelDetail(
+        {
+          kind: 'reel',
+          date: '2026-06-04',
+          time: '11:00',
+          title: 'Reel: Week 1 weekday lunch reel',
+          reel: embedded,
+        },
+        [lineupWithCopy],
+      ),
+    ).toEqual({
+      ...embedded,
+      explanation: 'Merged strategic explanation.',
+    })
+  })
+
+  it('returns undefined for non-reel slots', () => {
+    expect(
+      resolveSchedulerReelDetail(
+        {
+          kind: 'post',
+          date: '2026-06-01',
+          time: '10:00',
+          title: 'Monthly top menu',
+        },
+        [sampleReelDetail],
+      ),
+    ).toBeUndefined()
+  })
+})
 
 describe('schedulerHourIndexFromTime', () => {
   it('maps 10:00 to index 2 when the grid starts at 8', () => {
@@ -76,6 +393,27 @@ describe('schedulerSlotKind', () => {
       }),
     ).toBe('reel')
   })
+
+  it('infers reel from Reel: title prefix when kind is missing', () => {
+    expect(
+      schedulerSlotKind({
+        date: '2026-06-16',
+        time: '11:00',
+        title: 'Reel: Week 1 weekday lunch reel',
+      } as Parameters<typeof schedulerSlotKind>[0]),
+    ).toBe('reel')
+  })
+
+  it('infers reel when embedded reel detail is present', () => {
+    expect(
+      schedulerSlotKind({
+        date: '2026-06-04',
+        time: '11:00',
+        title: 'Week 1 weekday lunch reel',
+        reel: sampleReelDetail,
+      } as Parameters<typeof schedulerSlotKind>[0]),
+    ).toBe('reel')
+  })
 })
 
 describe('schedulerSlotClassName', () => {
@@ -88,6 +426,19 @@ describe('schedulerSlotClassName', () => {
     expect(reelClass).toContain('orange')
     expect(storyClass).not.toEqual(postClass)
     expect(reelClass).not.toEqual(postClass)
+  })
+})
+
+describe('schedulerSlotDisplayTitleParts', () => {
+  it('returns type label and name separately', () => {
+    expect(
+      schedulerSlotDisplayTitleParts({
+        kind: 'story',
+        date: '2026-06-15',
+        time: '10:00',
+        title: 'Public holiday greetings',
+      }),
+    ).toEqual({ typeLabel: 'Story', name: 'Public holiday greetings' })
   })
 })
 

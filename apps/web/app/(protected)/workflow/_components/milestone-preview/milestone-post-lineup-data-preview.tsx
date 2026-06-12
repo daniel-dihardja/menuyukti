@@ -4,10 +4,9 @@ import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 
-import type { PostLineupMilestoneData, PostLineupPost } from '@/lib/graphql/node-schemas'
+import type { PostLineupMilestoneData } from '@/lib/graphql/node-schemas'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import {
@@ -16,109 +15,10 @@ import {
   useMilestonePreviewSelection,
 } from './milestone-preview-list-detail'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
+import { postIntentBadgeLabel, PostLineupDetailCard } from './post-lineup-preview-parts'
 
 export type MilestonePostLineupDataPreviewProps = {
   data: PostLineupMilestoneData
-}
-
-const ROLE_BADGE_CLASS = {
-  star: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100',
-  puzzle:
-    'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
-} as const
-
-function PostCard({
-  post,
-  index,
-  roleStarLabel,
-  rolePuzzleLabel,
-}: {
-  post: PostLineupPost
-  index: number
-  roleStarLabel: string
-  rolePuzzleLabel: string
-}) {
-  const t = useTranslations('analytics.workflows.chat')
-
-  return (
-    <Card className="gap-3 py-4 shadow-none">
-      <CardHeader className="flex flex-col gap-2 px-4 pb-0">
-        <CardTitle className="text-base">
-          {t('milestonePostLineupPreviewPostTitle', { number: index + 1, title: post.title })}
-        </CardTitle>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
-          <Badge variant="secondary">{t('milestonePostLineupPreviewPinnedBadge')}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2 px-4 pt-0">
-        <PostSlides post={post} roleStarLabel={roleStarLabel} rolePuzzleLabel={rolePuzzleLabel} />
-      </CardContent>
-    </Card>
-  )
-}
-
-function PostSlides({
-  post,
-  roleStarLabel,
-  rolePuzzleLabel,
-}: {
-  post: PostLineupPost
-  roleStarLabel: string
-  rolePuzzleLabel: string
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      {post.slides.map((slide, slideIndex) => (
-        <SlideCard
-          key={`${slide.dishName}-${slideIndex}`}
-          slideNumber={slideIndex + 1}
-          dishName={slide.dishName}
-          role={slide.role}
-          imageBrief={slide.imageBrief}
-          roleStarLabel={roleStarLabel}
-          rolePuzzleLabel={rolePuzzleLabel}
-        />
-      ))}
-    </div>
-  )
-}
-
-function SlideCard({
-  slideNumber,
-  dishName,
-  role,
-  imageBrief,
-  roleStarLabel,
-  rolePuzzleLabel,
-}: {
-  slideNumber: number
-  dishName: string
-  role?: 'star' | 'puzzle'
-  imageBrief: string
-  roleStarLabel: string
-  rolePuzzleLabel: string
-}) {
-  const t = useTranslations('analytics.workflows.chat')
-
-  return (
-    <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/20 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold text-foreground">
-          {t('milestonePostLineupPreviewSlideTitle', { number: slideNumber, dishName })}
-        </p>
-        {role ? (
-          <Badge variant="outline" className={ROLE_BADGE_CLASS[role]}>
-            {role === 'star' ? roleStarLabel : rolePuzzleLabel}
-          </Badge>
-        ) : null}
-      </div>
-      <div className="flex flex-col gap-1">
-        <p className={mp.sectionTitle}>{t('milestonePostLineupPreviewImageBrief')}</p>
-        <p className={mp.body}>{imageBrief}</p>
-      </div>
-    </div>
-  )
 }
 
 function NotesSection({ label, text }: { label: string; text: string }) {
@@ -183,10 +83,33 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
             helpText={postsHelpTitle}
           />
         </div>
-        {data.sourceReelLineupTitle ? (
+        {data.sourceMenuClustererTitle ? (
           <p className={mp.bodySmall}>
             <span className={mp.rowKey}>{t('milestonePostLineupPreviewSourceTitle')}:</span>{' '}
-            {data.sourceReelLineupTitle}
+            {data.sourceMenuClustererTitle}
+          </p>
+        ) : null}
+        {data.sourceCampaignBriefTitle ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>
+              {t('milestonePostLineupPreviewSourceCampaignBriefTitle')}:
+            </span>{' '}
+            {data.sourceCampaignBriefTitle}
+          </p>
+        ) : null}
+        {data.startDate && data.endDate ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{t('milestonePostLineupPreviewCampaignWindow')}:</span>{' '}
+            {t('milestonePostLineupPreviewCampaignWindowValue', {
+              startDate: data.startDate,
+              endDate: data.endDate,
+            })}
+          </p>
+        ) : null}
+        {data.sourceDatesTitle ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{t('milestonePostLineupPreviewSourceDatesTitle')}:</span>{' '}
+            {data.sourceDatesTitle}
           </p>
         ) : null}
       </div>
@@ -205,14 +128,20 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
               <MilestonePreviewListRow
                 key={id}
                 title={post.title}
-                description={t('milestonePostLineupPreviewPostListMeta', {
-                  number: index + 1,
-                  slideCount: post.slides.length,
-                })}
+                description={
+                  post.description?.trim()
+                    ? post.description.trim()
+                    : t('milestonePostLineupPreviewPostListMeta', {
+                        number: index + 1,
+                        slideCount: post.slides.length,
+                        hasDate: 'false',
+                        date: '',
+                      })
+                }
                 meta={
                   <>
                     <Badge variant="outline">{t('milestonePostLineupPreviewCarouselBadge')}</Badge>
-                    <Badge variant="secondary">{t('milestonePostLineupPreviewPinnedBadge')}</Badge>
+                    <Badge variant="secondary">{postIntentBadgeLabel(post.intent, t)}</Badge>
                   </>
                 }
                 viewDetailsLabel={viewDetailsLabel}
@@ -223,7 +152,7 @@ export function MilestonePostLineupDataPreview({ data }: MilestonePostLineupData
         }
         detail={
           selectedPost && selectedIndex >= 0 ? (
-            <PostCard
+            <PostLineupDetailCard
               post={selectedPost}
               index={selectedIndex}
               roleStarLabel={roleStarLabel}

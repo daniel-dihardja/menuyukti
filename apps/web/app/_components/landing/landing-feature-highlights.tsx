@@ -29,7 +29,7 @@ export function LandingFeatureHighlights({
   return (
     <section
       id="feature-highlights"
-      className="bg-muted py-24"
+      className="bg-secondary py-24"
       aria-labelledby="feature-highlights-heading"
     >
       <div className="mx-auto max-w-6xl px-6">
@@ -45,7 +45,7 @@ export function LandingFeatureHighlights({
 
         <div className="mt-12 flex flex-col gap-6">
           {cards.map((card) => (
-            <Card key={card.title} className="overflow-hidden border-border/80 shadow-md">
+            <Card key={card.title} className="overflow-hidden shadow-none">
               <div className="border-b border-border bg-background p-2">
                 <div className="overflow-hidden rounded-md border border-border">
                   <Image

@@ -1,12 +1,14 @@
 'use client'
 
 import type { Dispatch } from 'react'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 import { deriveMilestoneRailStatus } from './milestone-map'
 import { parseDataPreviewForPreset, type MilestoneOpsContext } from './milestone-ops-shared'
+import { hasPostLineupPosts, isEmptyPostLineupData } from '@/lib/milestones/post-lineup'
+import { hasReelLineupReels, isEmptyReelLineupData } from '@/lib/milestones/reel-lineup'
 import { normalizeMilestonePresetData } from '@/lib/milestones/preset-definitions'
 import type {
   MilestoneDataValue,
@@ -16,11 +18,44 @@ import type {
   TimelineMilestone,
 } from './timeline/types'
 import type { WorkflowMilestoneAction } from './workflow-milestone-reducer'
+import {
+  parseReflectionCritiqueSummaryPayload,
+  upsertReflectionRound,
+  type CampaignBriefReflectionRound,
+} from '@/lib/milestones/campaign-brief-reflection-run'
+
+/** Agents SSE errors use `{ error: true, message }` or `{ step: 'error', error_message }`. */
+function parseMilestoneRunStreamError(payload: Record<string, unknown>): string | null {
+  if (payload.error === true) {
+    const message = typeof payload.message === 'string' ? payload.message.trim() : ''
+    return message || 'Milestone run failed'
+  }
+  if (typeof payload.error === 'string' && payload.error.trim()) {
+    return payload.error.trim()
+  }
+  if (payload.step === 'error') {
+    const message =
+      typeof payload.error_message === 'string'
+        ? payload.error_message.trim()
+        : typeof payload.message === 'string'
+          ? payload.message.trim()
+          : ''
+    return message || 'Milestone run failed'
+  }
+  return null
+}
 
 export function useMilestoneRun(
   dispatch: Dispatch<WorkflowMilestoneAction>,
   { workflowId, locationId, t }: MilestoneOpsContext,
 ) {
+  const abortRef = useRef<AbortController | null>(null)
+  const reflectionRoundsRef = useRef<CampaignBriefReflectionRound[]>([])
+
+  const handleStopMilestoneRun = useCallback(() => {
+    abortRef.current?.abort()
+  }, [])
+
   const handleHydrateMilestoneData = useCallback(
     async (milestoneId: string) => {
       try {
@@ -57,9 +92,19 @@ export function useMilestoneRun(
                   ? body.passCriterias
                   : m.passCriteria
               const goalText = typeof body.goal === 'string' ? body.goal : (m.goal ?? '')
+              const keepExistingPostLineup =
+                body.presetId === 'post_lineup' &&
+                isEmptyPostLineupData(dataValue) &&
+                hasPostLineupPosts(m.data)
+              const keepExistingReelLineup =
+                body.presetId === 'reel_lineup' &&
+                isEmptyReelLineupData(dataValue) &&
+                hasReelLineupReels(m.data)
               const next: TimelineMilestone = {
                 ...m,
-                ...(dataValue !== undefined ? { data: dataValue } : {}),
+                ...(dataValue !== undefined && !keepExistingPostLineup && !keepExistingReelLineup
+                  ? { data: dataValue }
+                  : {}),
                 presetId: body.presetId ?? m.presetId,
                 milestoneInput: body.milestoneInput ?? m.milestoneInput,
                 goal: goalText.trim() ? goalText : undefined,
@@ -78,13 +123,22 @@ export function useMilestoneRun(
 
   const handleRunMilestone = useCallback(
     async (milestoneId: string, chatModel: ChatGatewayModelId = DEFAULT_CHAT_GATEWAY_MODEL) => {
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+      const { signal } = controller
+
+      reflectionRoundsRef.current = []
       dispatch({
         type: 'PATCH',
         patch: {
           milestoneRunError: null,
           milestoneRunCriteriaHint: null,
           runningMilestoneId: milestoneId,
-          runningStep: 'fetch_context',
+          runningStep: null,
+          runningStepIteration: null,
+          runningReflectionRounds: [],
+          runningReflectionAddressing: [],
         },
       })
       dispatch({
@@ -93,7 +147,9 @@ export function useMilestoneRun(
           prev.map((m) => (m.id === milestoneId ? { ...m, status: 'pending' as const } : m)),
       })
       try {
-        const hydrateRes = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`)
+        const hydrateRes = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
+          signal,
+        })
         const hydrateBody = (await hydrateRes.json().catch(() => null)) as {
           message?: string
           goal?: string
@@ -111,12 +167,21 @@ export function useMilestoneRun(
             goal: hydrateBody?.goal ?? '',
             model: chatModel,
             milestoneInput: hydrateBody?.milestoneInput ?? undefined,
-            milestoneData: hydrateBody?.milestoneData,
+            milestoneData: hydrateBody?.milestoneData ?? undefined,
           }),
+          signal,
         })
         if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null
-          throw new Error(body?.error ?? t('milestoneRunError'))
+          const body = (await res.json().catch(() => null)) as {
+            error?: string
+            issues?: Array<{ message?: string; path?: Array<string | number> }>
+          } | null
+          const issueHint = body?.issues?.[0]?.message
+          throw new Error(
+            issueHint
+              ? `${body?.error ?? t('milestoneRunError')}: ${issueHint}`
+              : (body?.error ?? t('milestoneRunError')),
+          )
         }
         if (!res.body) {
           throw new Error(t('milestoneRunError'))
@@ -145,11 +210,54 @@ export function useMilestoneRun(
             } catch {
               continue
             }
-            if (typeof payload.error === 'string') {
-              throw new Error(payload.error)
+            const streamError = parseMilestoneRunStreamError(payload)
+            if (streamError) {
+              throw new Error(streamError)
             }
             if (typeof payload.step === 'string') {
-              dispatch({ type: 'PATCH', patch: { runningStep: payload.step } })
+              if (payload.step === 'reflect_critique_summary') {
+                const round = parseReflectionCritiqueSummaryPayload(payload)
+                if (round) {
+                  reflectionRoundsRef.current = upsertReflectionRound(
+                    reflectionRoundsRef.current,
+                    round,
+                  )
+                  dispatch({
+                    type: 'PATCH',
+                    patch: {
+                      runningReflectionRounds: reflectionRoundsRef.current,
+                      runningReflectionAddressing: [],
+                    },
+                  })
+                }
+                continue
+              }
+
+              const stepPatch: {
+                runningStep: string
+                runningStepIteration?: number
+                runningReflectionRounds?: CampaignBriefReflectionRound[]
+                runningReflectionAddressing?: Array<{ criterionId: string; feedback: string }>
+              } = { runningStep: payload.step }
+              if (typeof payload.iteration === 'number' && Number.isFinite(payload.iteration)) {
+                stepPatch.runningStepIteration = payload.iteration
+              }
+              if (payload.step === 'reflect_revise' && Array.isArray(payload.addressing)) {
+                const addressing = payload.addressing
+                  .filter(
+                    (row): row is { id?: unknown; feedback?: unknown } =>
+                      row != null && typeof row === 'object',
+                  )
+                  .map((row) => ({
+                    criterionId: typeof row.id === 'string' ? row.id : '',
+                    feedback: typeof row.feedback === 'string' ? row.feedback.trim() : '',
+                  }))
+                  .filter((row) => row.criterionId)
+                if (addressing.length > 0) {
+                  stepPatch.runningReflectionAddressing = addressing
+                }
+              }
+              dispatch({ type: 'PATCH', patch: stepPatch })
             }
             if (payload.done === true) {
               runCompleted = true
@@ -233,10 +341,27 @@ export function useMilestoneRun(
             }
           }
         }
-        if (runCompleted) {
-          await handleHydrateMilestoneData(milestoneId)
+        if (!runCompleted) {
+          throw new Error(t('milestoneRunError'))
         }
+        await handleHydrateMilestoneData(milestoneId)
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          dispatch({
+            type: 'UPDATE_MILESTONES',
+            updater: (prev) =>
+              prev.map((m) => {
+                if (m.id !== milestoneId) {
+                  return m
+                }
+                return {
+                  ...m,
+                  status: deriveMilestoneRailStatus(m.passCriteria, m.resultMarkdown),
+                }
+              }),
+          })
+          return
+        }
         dispatch({
           type: 'PATCH',
           patch: {
@@ -249,11 +374,22 @@ export function useMilestoneRun(
             prev.map((m) => (m.id === milestoneId ? { ...m, status: 'empty' as const } : m)),
         })
       } finally {
-        dispatch({ type: 'PATCH', patch: { runningMilestoneId: null, runningStep: null } })
+        if (abortRef.current === controller) {
+          abortRef.current = null
+        }
+        dispatch({
+          type: 'PATCH',
+          patch: {
+            runningMilestoneId: null,
+            runningStep: null,
+            runningStepIteration: null,
+            runningReflectionAddressing: [],
+          },
+        })
       }
     },
     [workflowId, dispatch, locationId, t, handleHydrateMilestoneData],
   )
 
-  return { handleRunMilestone, handleHydrateMilestoneData }
+  return { handleRunMilestone, handleStopMilestoneRun, handleHydrateMilestoneData }
 }

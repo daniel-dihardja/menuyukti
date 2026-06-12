@@ -12,6 +12,22 @@ import {
 } from '@/lib/milestones/preset-definitions'
 
 describe('storyLineupMilestoneDataSchema', () => {
+  it('accepts user_review stories with intervalWeeks', () => {
+    const parsed = storyLineupMilestoneDataSchema.safeParse({
+      stories: [
+        {
+          id: 'story-user-review',
+          title: 'Story: positive customer review',
+          fixdate: false,
+          reason: 'user_review',
+          intervalWeeks: 4,
+          time: '14:00',
+        },
+      ],
+    })
+    expect(parsed.success).toBe(true)
+  })
+
   it('accepts public-holiday stories with fixdate and date', () => {
     const parsed = storyLineupMilestoneDataSchema.safeParse({
       stories: [
@@ -58,7 +74,7 @@ describe('story_lineup preset registry', () => {
       value: { notes: '' },
     })
     expect(fields.milestoneData).toEqual(EMPTY_STORY_LINEUP_DATA)
-    expect(fields.passCriteria?.length).toBe(3)
+    expect(fields.passCriteria?.length).toBe(4)
   })
 
   it('milestonedataValueSchema accepts empty story_lineup data for milestone run', () => {

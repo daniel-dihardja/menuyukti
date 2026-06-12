@@ -1,4 +1,4 @@
-"""Tests for deterministic reel_lineup milestone eval."""
+"""Tests for reel_lineup deterministic eval."""
 
 from __future__ import annotations
 
@@ -6,169 +6,81 @@ from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
     enrich_reel_lineup_eval_payload,
     try_reel_lineup_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
+from agents_app.agents.core.milestone_run.reel_lineup.build import build_reel_lineup_from_plan
+
+START_DATE = "2026-06-01"
+END_DATE = "2026-06-14"
 
 
-def _sample_payload() -> dict:
-    return {
-        "groups": [
-            {
-                "id": "group-1",
-                "leadName": "Ribeye",
-                "profileId": "hook_reel",
-                "anchor": {"dimension": "reel_moment", "value": "sizzle"},
-                "items": [
-                    {
-                        "name": "Ribeye",
-                        "role": "star",
-                        "category": "MAINS",
-                        "position": 1,
-                        "storytellingFit": "strong",
-                        "reelMoment": "sizzle",
-                    },
-                ],
-                "mix": {
-                    "priceLevels": [],
-                    "storytellingStrongCount": 1,
-                    "starCount": 1,
-                    "puzzleCount": 0,
-                },
-                "strategyFocus": "weekday_lunch",
-                "scheduleHints": {
-                    "preferredWeekdays": ["tuesday"],
-                    "preferredTime": "11:00",
-                    "cadenceEligible": True,
-                },
-            }
-        ],
-        "drinkGroups": [],
-        "unassignedItemNames": ["Burger"],
-        "sourceCampaignBriefTitle": "Campaign brief",
-    }
-
-
-def _drink_group(name: str = "Cola", *, storytelling: str = "weak") -> dict:
-    return {
-        "id": "drink-group-1",
-        "leadName": name,
-        "profileId": "hook_reel",
-        "anchor": {"dimension": "reel_moment", "value": "pour"},
-        "items": [
-            {
-                "name": name,
-                "role": "star",
-                "category": "DRINKS",
-                "position": 1,
-                "storytellingFit": storytelling,
-                "reelMoment": "pour",
-            },
-        ],
-        "mix": {
-            "priceLevels": [],
-            "storytellingStrongCount": 0,
-            "starCount": 1,
-            "puzzleCount": 0,
-        },
-    }
-
-
-def test_enrich_reel_lineup_eval_payload_adds_hints() -> None:
-    enriched = enrich_reel_lineup_eval_payload(_sample_payload())
-    assert enriched["_evalHints"]["maxLeadGroups"] == 5
-    assert enriched["_evalHints"]["maxDrinkLeadGroups"] == 3
-
-
-def test_prior_menu_tagger_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Run used a prior menu_tagger milestone with tagged items.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_prior_menu_tagger_verdict_passes_with_drink_only() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Run used a prior menu_tagger milestone with tagged items.",
-        {"groups": [], "drinkGroups": [_drink_group()], "unassignedItemNames": []},
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_food_hook_group_count_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Data includes up to 5 food Reel hook groups.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_campaign_brief_strategy_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Data references a prior campaign brief and carries campaign-aware scheduling hints.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_schedule_hints_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Each food group includes strategy focus plus preferred weekday and time schedule hints.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_drink_hook_group_count_verdict_passes() -> None:
-    payload = _sample_payload()
-    payload["drinkGroups"] = [_drink_group()]
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Data includes up to 3 drink Reel hook groups.",
-        payload,
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_main_course_hook_verdict_passes() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Each food group's position-1 item is a main-course food item with strong storytelling.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_drink_hook_verdict_passes_with_weak_storytelling() -> None:
-    payload = _sample_payload()
-    payload["drinkGroups"] = [_drink_group(storytelling="weak")]
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Each drink group's position-1 item is a tagged beverage drink with a reel moment "
-        "(storytelling fit not required).",
-        payload,
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_main_course_hook_verdict_fails_when_multiple_items() -> None:
-    payload = _sample_payload()
-    payload["groups"][0]["items"].append(
+def _groups() -> list[dict]:
+    return [
         {
-            "name": "Burger",
-            "role": "star",
-            "category": "MAINS",
-            "position": 2,
-            "storytellingFit": "strong",
-            "reelMoment": "sizzle",
+            "id": "group-1",
+            "anchor": {"dimension": "reel_moment", "value": "static_hero"},
+            "items": [{"name": "Ribeye", "reelMoment": "static_hero"}],
+        },
+        {
+            "id": "group-2",
+            "anchor": {"dimension": "reel_moment", "value": "static_hero"},
+            "items": [{"name": "Burger", "reelMoment": "static_hero"}],
+        },
+    ]
+
+
+def _payload() -> dict:
+    weeks = campaign_weeks(START_DATE, END_DATE)
+    weekly = [
+        {
+            "weekIndex": week.week_index,
+            "weekdayReel": {
+                "groupId": "group-1",
+                "title": f"W{week.week_index} weekday",
+                "description": "Desc",
+                "explanation": "Why",
+            },
+            "weekendReel": {
+                "groupId": "group-2",
+                "title": f"W{week.week_index} weekend",
+                "description": "Desc",
+                "explanation": "Why",
+            },
         }
+        for week in weeks
+    ]
+    return build_reel_lineup_from_plan(
+        weekly_reels=weekly,
+        campaign_weeks=weeks,
+        groups=_groups(),
+        campaign_brief_data={},
+        start_date=START_DATE,
+        end_date=END_DATE,
+        source_dates_title="Dates",
     )
+
+
+def test_enrich_reel_lineup_eval_payload() -> None:
+    data = _payload()
+    enriched = enrich_reel_lineup_eval_payload(data)
+    hints = enriched["_evalHints"]
+    assert hints["reelCount"] == len(data["reels"])
+    assert hints["expectedReelCount"] == len(data["reels"])
+
+
+def test_try_reel_lineup_two_reels_per_week() -> None:
+    data = _payload()
     verdict = try_reel_lineup_deterministic_verdict(
-        "Each food group's position-1 item is a main-course food item with strong storytelling.",
-        payload,
+        "Includes two reels per campaign week in the dates window.",
+        data,
+    )
+    assert verdict == ("pass", verdict[1])
+
+
+def test_try_reel_lineup_description_explanation() -> None:
+    data = _payload()
+    verdict = try_reel_lineup_deterministic_verdict(
+        "Every reel has description and explanation fields.",
+        data,
     )
     assert verdict is not None
-    assert verdict[0] == "fail"
+    assert verdict[0] == "pass"

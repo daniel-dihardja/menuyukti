@@ -5,6 +5,10 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
+from agents_app.agents.core.milestone_run.dates_window import parse_iso_date
+from agents_app.agents.core.milestone_run.scheduler.prompts import (
+    SCHEDULE_EXPLANATION_MAX_CHARS,
+)
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 
@@ -373,6 +377,23 @@ class CultureHooksMilestoneOutput(BaseModel):
 
 
 _IG_USERNAME_RE = re.compile(r"^[a-zA-Z0-9._]+$")
+IG_PROFILE_BIO_MAX_CHARS = 150
+
+
+def clamp_ig_profile_bio_text(value: str, *, max_chars: int = IG_PROFILE_BIO_MAX_CHARS) -> str:
+    """Trim and clamp Instagram bio copy to the platform character limit."""
+    text = value.strip()
+    if not text:
+        return text
+    if len(text) <= max_chars:
+        return text
+    truncated = text[:max_chars].rstrip()
+    last_space = truncated.rfind(" ")
+    if last_space >= max_chars - 30:
+        word_boundary = truncated[:last_space].rstrip()
+        if word_boundary:
+            return word_boundary
+    return truncated
 
 
 class IgProfileUsernameSuggestion(BaseModel):
@@ -410,11 +431,9 @@ class IgProfileBio(BaseModel):
     @field_validator("text")
     @classmethod
     def _validate_bio_text(cls, value: str) -> str:
-        text = value.strip()
+        text = clamp_ig_profile_bio_text(value)
         if not text:
             raise ValueError("bio text must be non-empty")
-        if len(text) > 150:
-            raise ValueError("bio text must be at most 150 characters")
         return text
 
     @field_validator("hook", "valueProp", "cta", "tone")
@@ -515,11 +534,11 @@ class MenuTaggerMilestoneOutput(BaseModel):
         return values
 
 
-class ReelLineupGroupItemOutput(BaseModel):
+class MenuClustererGroupItemOutput(BaseModel):
     name: str
     role: Literal["star", "puzzle"]
     category: str
-    position: int = Field(ge=1, le=5)
+    position: int = Field(ge=1, le=12)
     popularity: float | None = Field(default=None, ge=0.0, le=1.0)
     priceLevel: Literal[1, 2, 3] | None = None
     storytellingFit: Literal["strong", "weak"] | None = None
@@ -538,7 +557,99 @@ class ReelLineupGroupItemOutput(BaseModel):
         return value
 
 
-class ReelLineupScheduleHintsOutput(BaseModel):
+class MenuClustererGroupMixOutput(BaseModel):
+    priceLevels: list[Literal[1, 2, 3]]
+    storytellingStrongCount: int = Field(ge=0)
+    starCount: int = Field(ge=0)
+    puzzleCount: int = Field(ge=0)
+
+
+class MenuClustererAnchorOutput(BaseModel):
+    dimension: Literal["reel_moment"]
+    value: str
+
+
+class MenuClustererGroupOutput(BaseModel):
+    id: str
+    leadName: str
+    profileId: Literal["hook_reel", "menu_highlight"]
+    anchor: MenuClustererAnchorOutput
+    items: list[MenuClustererGroupItemOutput]
+    mix: MenuClustererGroupMixOutput
+    clusterDescription: str
+    strategyFocus: str | None = None
+    coreMessage: str | None = None
+    creativeRole: str | None = None
+    assetHint: str | None = None
+
+    @field_validator("clusterDescription", mode="before")
+    @classmethod
+    def _normalize_cluster_description(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("clusterDescription")
+    @classmethod
+    def _validate_cluster_description(cls, value: str) -> str:
+        if len(value) < 40:
+            raise ValueError("clusterDescription must be at least 40 characters")
+        return value
+
+    @model_validator(mode="after")
+    def _validate_items_by_profile(self) -> MenuClustererGroupOutput:
+        max_items = 12 if self.profileId == "menu_highlight" else 5
+        if not (1 <= len(self.items) <= max_items):
+            raise ValueError(
+                f"each {self.profileId} group must contain between 1 and {max_items} items"
+            )
+        positions = [item.position for item in self.items]
+        if positions != list(range(1, len(self.items) + 1)):
+            raise ValueError("item positions must be sequential starting at 1")
+        return self
+
+
+class MenuClustererMilestoneOutput(BaseModel):
+    foodLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
+    groups: list[MenuClustererGroupOutput]
+    unassignedItemNames: list[str] = Field(default_factory=list)
+    topFoodLeadNames: list[str] = Field(default_factory=list, max_length=12)
+    targetGroupCount: int | None = Field(default=None, ge=4, le=8)
+    sourceMenuTaggerTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def _validate_lead_group_alignment(self) -> MenuClustererMilestoneOutput:
+        hook_groups = [group for group in self.groups if group.profileId == "hook_reel"]
+        if len(self.foodLeads) != len(hook_groups):
+            raise ValueError("foodLeads length must match hook_reel groups length")
+        for lead, group in zip(self.foodLeads, hook_groups, strict=True):
+            if lead.name.strip() != group.leadName.strip():
+                raise ValueError("foodLeads[i].name must match hook_reel groups[i].leadName")
+        return self
+
+
+class PostLineupSlideOutput(BaseModel):
+    dishName: str
+    role: Literal["star", "puzzle"] | None = None
+    category: str | None = None
+    imageBrief: str
+    storytellingFit: Literal["strong", "weak"] | None = None
+    popularity: float | None = Field(default=None, ge=0, le=1)
+
+    @field_validator("dishName", "imageBrief", mode="before")
+    @classmethod
+    def _normalize_required_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("dishName", "imageBrief")
+    @classmethod
+    def _validate_non_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+
+class PostLineupScheduleHintsOutput(BaseModel):
     preferredWeekdays: list[
         Literal[
             "monday",
@@ -551,7 +662,6 @@ class ReelLineupScheduleHintsOutput(BaseModel):
         ]
     ] = Field(default_factory=list)
     preferredTime: str
-    cadenceEligible: bool = True
 
     @field_validator("preferredWeekdays")
     @classmethod
@@ -585,129 +695,320 @@ class ReelLineupScheduleHintsOutput(BaseModel):
             raise ValueError("preferredWeekdays must not contain duplicates")
         return values
 
+    @field_validator("preferredTime", mode="before")
+    @classmethod
+    def _normalize_preferred_time(cls, value: Any) -> str:
+        return str(value or "").strip()
+
     @field_validator("preferredTime")
     @classmethod
     def _validate_preferred_time(cls, value: str) -> str:
-        text = value.strip()
-        if not text:
-            raise ValueError("preferredTime must be non-empty")
-        return text
-
-
-class ReelLineupGroupMixOutput(BaseModel):
-    priceLevels: list[Literal[1, 2, 3]]
-    storytellingStrongCount: int = Field(ge=0)
-    starCount: int = Field(ge=0)
-    puzzleCount: int = Field(ge=0)
-
-
-class ReelLineupAnchorOutput(BaseModel):
-    dimension: Literal["reel_moment"]
-    value: str
-
-
-class ReelLineupGroupOutput(BaseModel):
-    id: str
-    leadName: str
-    profileId: Literal["hook_reel"]
-    anchor: ReelLineupAnchorOutput
-    items: list[ReelLineupGroupItemOutput]
-    mix: ReelLineupGroupMixOutput
-    strategyFocus: str | None = None
-    coreMessage: str | None = None
-    creativeRole: str | None = None
-    assetHint: str | None = None
-    scheduleHints: ReelLineupScheduleHintsOutput | None = None
-
-    @field_validator("items")
-    @classmethod
-    def _validate_items(
-        cls, values: list[ReelLineupGroupItemOutput]
-    ) -> list[ReelLineupGroupItemOutput]:
-        if not (1 <= len(values) <= 5):
-            raise ValueError("each group must contain between 1 and 5 items")
-        positions = [item.position for item in values]
-        if positions != list(range(1, len(values) + 1)):
-            raise ValueError("item positions must be sequential starting at 1")
-        return values
-
-
-class ReelLineupMilestoneOutput(BaseModel):
-    foodLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
-    drinkLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
-    groups: list[ReelLineupGroupOutput]
-    drinkGroups: list[ReelLineupGroupOutput] = Field(default_factory=list)
-    unassignedItemNames: list[str] = Field(default_factory=list)
-    sourceMenuTaggerTitle: str | None = None
-    sourceCampaignBriefTitle: str | None = None
-    notes: str | None = None
-
-    @model_validator(mode="after")
-    def _validate_lead_group_alignment(self) -> ReelLineupMilestoneOutput:
-        if len(self.foodLeads) != len(self.groups):
-            raise ValueError("foodLeads length must match groups length")
-        if len(self.drinkLeads) != len(self.drinkGroups):
-            raise ValueError("drinkLeads length must match drinkGroups length")
-        for lead, group in zip(self.foodLeads, self.groups, strict=True):
-            if lead.name.strip() != group.leadName.strip():
-                raise ValueError("foodLeads[i].name must match groups[i].leadName")
-        for lead, group in zip(self.drinkLeads, self.drinkGroups, strict=True):
-            if lead.name.strip() != group.leadName.strip():
-                raise ValueError("drinkLeads[i].name must match drinkGroups[i].leadName")
-        return self
-
-
-class PostLineupSlideOutput(BaseModel):
-    dishName: str
-    role: Literal["star", "puzzle"] | None = None
-    category: str | None = None
-    imageBrief: str
-
-    @field_validator("dishName", "imageBrief", mode="before")
-    @classmethod
-    def _normalize_required_text(cls, value: Any) -> str:
-        return str(value or "").strip()
-
-    @field_validator("dishName", "imageBrief")
-    @classmethod
-    def _validate_non_empty(cls, value: str) -> str:
         if not value:
-            raise ValueError("must be non-empty")
+            raise ValueError("preferredTime must be non-empty")
         return value
 
 
 class PostLineupPostOutput(BaseModel):
     id: str
     format: Literal["carousel"]
-    intent: Literal["pinned_monthly_menu"]
+    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
     title: str
+    description: str
+    captionGuidance: str
     slides: list[PostLineupSlideOutput]
+    groupIds: list[str] = Field(default_factory=list)
+    date: str | None = None
+    fixdate: bool | None = None
+    scheduleHints: PostLineupScheduleHintsOutput | None = None
 
-    @field_validator("id", "title", mode="before")
+    @field_validator("id", "title", "description", "captionGuidance", "date", mode="before")
     @classmethod
     def _normalize_text(cls, value: Any) -> str:
         return str(value or "").strip()
 
-    @field_validator("slides")
+    @field_validator("title", "description", "captionGuidance")
     @classmethod
-    def _validate_slides(cls, values: list[PostLineupSlideOutput]) -> list[PostLineupSlideOutput]:
+    def _validate_non_empty_text(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+    @field_validator("groupIds", mode="before")
+    @classmethod
+    def _normalize_group_ids(cls, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    @field_validator("groupIds")
+    @classmethod
+    def _validate_group_ids(cls, values: list[str]) -> list[str]:
         if not values:
-            raise ValueError("must contain at least one slide")
-        if len(values) > 5:
-            raise ValueError("must contain at most 5 slides")
+            raise ValueError("must contain at least one group id")
         return values
+
+    @model_validator(mode="after")
+    def _validate_slides_by_intent(self) -> PostLineupPostOutput:
+        if not self.slides:
+            raise ValueError("must contain at least one slide")
+        max_slides = 12 if self.intent == "pinned_monthly_menu" else 5
+        if len(self.slides) > max_slides:
+            raise ValueError(f"must contain at most {max_slides} slides")
+        return self
 
 
 class PostLineupMilestoneOutput(BaseModel):
     posts: list[PostLineupPostOutput]
-    sourceReelLineupTitle: str | None = None
+    startDate: str
+    endDate: str
+    sourceMenuClustererTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
+    sourceDatesTitle: str | None = None
     notes: str | None = None
 
-    @field_validator("posts")
+    @field_validator("startDate", "endDate", mode="before")
     @classmethod
-    def _validate_posts(cls, values: list[PostLineupPostOutput]) -> list[PostLineupPostOutput]:
+    def _normalize_window_dates(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @model_validator(mode="after")
+    def _validate_post_lineup_structure(self) -> PostLineupMilestoneOutput:
+        if not self.startDate or not self.endDate:
+            raise ValueError("startDate and endDate must be non-empty")
+
+        monthly_posts = [post for post in self.posts if post.intent == "pinned_monthly_menu"]
+        weekly_posts = [post for post in self.posts if post.intent == "weekday_lunch_post"]
+
+        if len(monthly_posts) != 1:
+            raise ValueError("must contain exactly one pinned_monthly_menu post")
+        if len(weekly_posts) < 1:
+            raise ValueError("must contain at least one weekday_lunch_post for the campaign window")
+
+        window_start = parse_iso_date(self.startDate)
+        window_end = parse_iso_date(self.endDate)
+        if window_start is None or window_end is None:
+            raise ValueError("startDate and endDate must be valid ISO dates")
+
+        from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks
+        from agents_app.agents.core.milestone_run.post_lineup.build import (
+            POST_LINEUP_WEEKLY_POST_ID_PREFIX,
+        )
+
+        expected_weeks = count_campaign_weeks(self.startDate, self.endDate)
+        if len(weekly_posts) != expected_weeks:
+            raise ValueError(
+                "must contain one weekday_lunch_post per campaign week in the dates window"
+            )
+
+        seen_week_starts: set[str] = set()
+        prefix = f"{POST_LINEUP_WEEKLY_POST_ID_PREFIX}-"
+        for post in weekly_posts:
+            post_id = str(post.id or "").strip()
+            if not post_id.startswith(prefix):
+                raise ValueError("weekday_lunch_post id must encode campaign week start")
+            week_start = post_id[len(prefix) :]
+            if parse_iso_date(week_start) is None:
+                raise ValueError("weekday_lunch_post id week start must be a valid ISO date")
+            if week_start in seen_week_starts:
+                raise ValueError("weekday_lunch_post entries must map to distinct calendar weeks")
+            seen_week_starts.add(week_start)
+
+        return self
+
+
+class ReelLineupHeroDishOutput(BaseModel):
+    name: str
+    reelMoment: str | None = None
+    role: Literal["star", "puzzle"] | None = None
+    category: str | None = None
+    storytellingFit: Literal["strong", "weak"] | None = None
+    popularity: float | None = Field(default=None, ge=0, le=1)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _normalize_name(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def _normalize_category(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
+
+
+class ReelLineupReelOutput(BaseModel):
+    id: str
+    format: Literal["reel"]
+    intent: Literal["weekday_reel", "weekend_reel"]
+    title: str
+    description: str
+    explanation: str
+    groupIds: list[str] = Field(default_factory=list)
+    weekIndex: int | None = None
+    date: str | None = None
+    scheduleHints: PostLineupScheduleHintsOutput | None = None
+    heroDishes: list[ReelLineupHeroDishOutput] = Field(default_factory=list)
+
+    @field_validator("id", "title", "description", "explanation", "date", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("title", "description", "explanation")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+    @field_validator("groupIds", mode="before")
+    @classmethod
+    def _normalize_group_ids(cls, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    @field_validator("groupIds")
+    @classmethod
+    def _validate_group_ids(cls, values: list[str]) -> list[str]:
         if not values:
-            raise ValueError("must contain at least one post")
+            raise ValueError("must contain at least one group id")
+        return values
+
+
+class ReelLineupMilestoneOutput(BaseModel):
+    reels: list[ReelLineupReelOutput]
+    startDate: str
+    endDate: str
+    sourceMenuClustererTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
+    sourceDatesTitle: str | None = None
+    notes: str | None = None
+
+    @field_validator("startDate", "endDate", mode="before")
+    @classmethod
+    def _normalize_window_dates(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @model_validator(mode="after")
+    def _validate_reel_lineup_structure(self) -> ReelLineupMilestoneOutput:
+        if not self.startDate or not self.endDate:
+            raise ValueError("startDate and endDate must be non-empty")
+
+        window_start = parse_iso_date(self.startDate)
+        window_end = parse_iso_date(self.endDate)
+        if window_start is None or window_end is None:
+            raise ValueError("startDate and endDate must be valid ISO dates")
+
+        from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks
+        from agents_app.agents.core.milestone_run.reel_lineup.build import (
+            REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX,
+            REEL_LINEUP_WEEKEND_REEL_ID_PREFIX,
+        )
+
+        expected_weeks = count_campaign_weeks(self.startDate, self.endDate)
+        expected_reel_count = expected_weeks * 2
+        if len(self.reels) != expected_reel_count:
+            raise ValueError(
+                "must contain two reels (weekday + weekend) per campaign week in the dates window"
+            )
+
+        weekday_prefix = REEL_LINEUP_WEEKDAY_REEL_ID_PREFIX
+        weekend_prefix = REEL_LINEUP_WEEKEND_REEL_ID_PREFIX
+        seen_weekday_starts: set[str] = set()
+        seen_weekend_starts: set[str] = set()
+
+        for reel in self.reels:
+            post_id = str(reel.id or "").strip()
+            if reel.intent == "weekday_reel":
+                if not post_id.startswith(weekday_prefix):
+                    raise ValueError("weekday_reel id must encode campaign week start")
+                week_start = post_id[len(weekday_prefix) :]
+                if parse_iso_date(week_start) is None:
+                    raise ValueError("weekday_reel id week start must be a valid ISO date")
+                if week_start in seen_weekday_starts:
+                    raise ValueError("weekday_reel entries must map to distinct calendar weeks")
+                seen_weekday_starts.add(week_start)
+            elif reel.intent == "weekend_reel":
+                if not post_id.startswith(weekend_prefix):
+                    raise ValueError("weekend_reel id must encode campaign week start")
+                week_start = post_id[len(weekend_prefix) :]
+                if parse_iso_date(week_start) is None:
+                    raise ValueError("weekend_reel id week start must be a valid ISO date")
+                if week_start in seen_weekend_starts:
+                    raise ValueError("weekend_reel entries must map to distinct calendar weeks")
+                seen_weekend_starts.add(week_start)
+            else:
+                raise ValueError("reel intent must be weekday_reel or weekend_reel")
+
+        if len(seen_weekday_starts) != expected_weeks or len(seen_weekend_starts) != expected_weeks:
+            raise ValueError("must contain one weekday_reel and one weekend_reel per campaign week")
+
+        return self
+
+
+class SchedulerPostSlotDetailOutput(BaseModel):
+    id: str
+    format: Literal["carousel"]
+    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
+    title: str
+    description: str | None = None
+    captionGuidance: str | None = None
+    slides: list[PostLineupSlideOutput]
+    groupIds: list[str] = Field(default_factory=list)
+
+    @field_validator("description", "captionGuidance", mode="before")
+    @classmethod
+    def _normalize_optional_copy(cls, value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
+
+
+class SchedulerReelSlotDetailOutput(BaseModel):
+    id: str
+    format: Literal["reel"]
+    intent: Literal["weekday_reel", "weekend_reel"]
+    title: str
+    description: str
+    explanation: str
+    groupIds: list[str] = Field(default_factory=list)
+    heroDishes: list[ReelLineupHeroDishOutput] = Field(default_factory=list)
+
+    @field_validator("id", "title", "description", "explanation", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("title", "description", "explanation")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+    @field_validator("groupIds", mode="before")
+    @classmethod
+    def _normalize_group_ids(cls, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    @field_validator("groupIds")
+    @classmethod
+    def _validate_group_ids(cls, values: list[str]) -> list[str]:
+        if not values:
+            raise ValueError("must contain at least one group id")
         return values
 
 
@@ -716,6 +1017,8 @@ class SchedulerSlotOutput(BaseModel):
     date: str
     time: str
     title: str
+    post: SchedulerPostSlotDetailOutput | None = None
+    reel: SchedulerReelSlotDetailOutput | None = None
 
     @model_validator(mode="after")
     def _fill_legacy_kind(self) -> SchedulerSlotOutput:
@@ -735,12 +1038,28 @@ class SchedulerMilestoneOutput(BaseModel):
     startDate: str
     endDate: str
     publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
+    scheduleExplanation: str | None = None
     sourceDatesTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
-    sourceReelLineupTitle: str | None = None
+    sourceMenuClustererTitle: str | None = None
     sourcePostLineupTitle: str | None = None
     sourceStoryLineupTitle: str | None = None
+    sourceReelLineupTitle: str | None = None
     slots: list[SchedulerSlotOutput] = Field(default_factory=list)
+
+    @field_validator("scheduleExplanation")
+    @classmethod
+    def _validate_schedule_explanation_length(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        if len(text) > SCHEDULE_EXPLANATION_MAX_CHARS:
+            raise ValueError(
+                f"scheduleExplanation must be at most {SCHEDULE_EXPLANATION_MAX_CHARS} characters"
+            )
+        return text
 
 
 class StoryLineupStoryOutput(BaseModel):
@@ -748,9 +1067,10 @@ class StoryLineupStoryOutput(BaseModel):
     title: str
     date: str | None = None
     fixdate: bool = False
-    reason: Literal["public_holiday"] | None = None
+    reason: Literal["public_holiday", "user_review"] | None = None
     holidayName: str | None = None
     time: str | None = None
+    intervalWeeks: int | None = None
 
     @field_validator("id", "title", mode="before")
     @classmethod
@@ -782,8 +1102,9 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "campaign_brief": CampaignBriefMilestoneOutput,
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "menu_tagger": MenuTaggerMilestoneOutput,
-    "reel_lineup": ReelLineupMilestoneOutput,
+    "menu_clusterer": MenuClustererMilestoneOutput,
     "post_lineup": PostLineupMilestoneOutput,
+    "reel_lineup": ReelLineupMilestoneOutput,
     "story_lineup": StoryLineupMilestoneOutput,
     "scheduler": SchedulerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,

@@ -21,6 +21,8 @@ import {
   schedulerSlotsByDate,
 } from '@/lib/milestones/scheduler-calendar'
 
+import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
+
 const TIME_GUTTER_WIDTH_PX = 52
 
 export type SchedulerCalendarWeekGridProps = {
@@ -29,6 +31,7 @@ export type SchedulerCalendarWeekGridProps = {
   windowEnd: string
   locale: string
   slots?: SchedulerMilestoneData['slots']
+  publicHolidays?: SchedulerMilestoneData['publicHolidays']
   className?: string
   onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
 }
@@ -48,12 +51,19 @@ function formatDayHeader(isoDate: string, locale: string): { weekday: string; da
   return { weekday, day }
 }
 
+function isWeekendIsoDate(isoDate: string): boolean {
+  const date = parseIsoDateOnly(isoDate)
+  const day = date?.getDay()
+  return day === 0 || day === 6
+}
+
 export function SchedulerCalendarWeekGrid({
   weekStartIso,
   windowStart,
   windowEnd,
   locale,
   slots = [],
+  publicHolidays = [],
   className,
   onSlotClick,
 }: SchedulerCalendarWeekGridProps) {
@@ -64,6 +74,16 @@ export function SchedulerCalendarWeekGrid({
     [weekStartIso, windowEnd, windowStart],
   )
   const slotsByDate = useMemo(() => schedulerSlotsByDate(slots), [slots])
+  const holidayByDate = useMemo(
+    () =>
+      new Map(
+        publicHolidays.map((holiday) => [
+          holiday.date,
+          holiday.name.trim().length > 0 ? holiday.name : holiday.date,
+        ]),
+      ),
+    [publicHolidays],
+  )
   const hourLabels = useMemo(
     () => schedulerHourLabels(locale, SCHEDULER_GRID_HOUR_START, SCHEDULER_GRID_HOUR_END),
     [locale],
@@ -102,6 +122,9 @@ export function SchedulerCalendarWeekGrid({
 
         {weekDays.map((day) => {
           const header = formatDayHeader(day.isoDate, locale)
+          const isWeekend = isWeekendIsoDate(day.isoDate)
+          const holidayName = holidayByDate.get(day.isoDate)
+          const isPublicHoliday = holidayName !== undefined
           return (
             <div
               key={day.isoDate}
@@ -109,11 +132,22 @@ export function SchedulerCalendarWeekGrid({
               className={cn(
                 'sticky top-0 z-20 border-b border-r border-border/60 bg-muted/40 px-1 py-2 text-center last:border-r-0',
                 !day.inWindow && 'text-muted-foreground',
+                isWeekend && day.inWindow && 'bg-amber-100/70 dark:bg-amber-950/35',
                 day.isToday && day.inWindow && 'bg-primary/10 text-primary',
               )}
             >
               <p className="text-[11px] font-medium uppercase tracking-wide">{header.weekday}</p>
               <p className="text-sm font-semibold">{header.day}</p>
+              <div className="mt-1 flex items-center justify-center gap-1">
+                {isPublicHoliday ? (
+                  <span
+                    className="rounded-sm border border-rose-300/80 bg-rose-100/90 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-900 dark:border-rose-700/70 dark:bg-rose-900/40 dark:text-rose-100"
+                    title={holidayName}
+                  >
+                    {t('milestoneSchedulerPreviewHolidayBadge')}
+                  </span>
+                ) : null}
+              </div>
             </div>
           )
         })}
@@ -181,6 +215,9 @@ function SchedulerHourRow({
             className={cn(
               'relative border-b border-r border-border/60 p-0.5 last:border-r-0',
               !day.inWindow && 'bg-muted/30',
+              isWeekendIsoDate(day.isoDate) &&
+                day.inWindow &&
+                'bg-amber-50/80 dark:bg-amber-950/20',
             )}
             style={{ gridRow: rowIndex, gridColumn: dayIndex + 2 }}
           >
@@ -206,7 +243,7 @@ function SchedulerHourRow({
                     : undefined
                 }
               >
-                <span className="line-clamp-2 font-medium">{schedulerSlotDisplayTitle(slot)}</span>
+                <SchedulerSlotDisplayTitle slot={slot} className="line-clamp-2 font-medium" />
               </button>
             ))}
           </div>

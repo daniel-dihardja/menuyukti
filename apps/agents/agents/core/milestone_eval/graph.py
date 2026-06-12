@@ -37,7 +37,7 @@ def build_milestone_eval_graph(
     builder.add_conditional_edges(
         "fetch_context",
         nodes.route_after_fetch,
-        ["evaluate_criterion", "synthesize"],
+        ["evaluate_criterion", "update_criteria"],
     )
     builder.add_edge("evaluate_criterion", "update_criteria")
     builder.add_edge("update_criteria", "synthesize")

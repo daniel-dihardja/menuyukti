@@ -7,6 +7,7 @@ import {
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  menuClustererMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -45,12 +46,16 @@ export function parseDataPreviewForPreset(
     const parsed = menuTaggerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
-  if (presetId === 'reel_lineup') {
-    const parsed = reelLineupMilestoneDataSchema.safeParse(dataPreview)
+  if (presetId === 'menu_clusterer') {
+    const parsed = menuClustererMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'post_lineup') {
     const parsed = postLineupMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'reel_lineup') {
+    const parsed = reelLineupMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'story_lineup') {

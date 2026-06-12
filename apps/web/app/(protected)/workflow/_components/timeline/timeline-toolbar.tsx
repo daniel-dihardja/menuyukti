@@ -30,7 +30,7 @@ export function TimelineToolbar({ title, count, actions, trailingSlot }: Timelin
   const showActions = Boolean(actions) || Boolean(trailingSlot)
 
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b px-2 py-3 md:px-4">
+    <header className="flex shrink-0 items-center justify-between gap-3 border-border/60 border-b bg-card px-2 py-3 md:px-4">
       <div className="flex min-w-0 items-center gap-2">
         <h2 className="truncate font-semibold text-foreground text-sm">{title}</h2>
         <Badge variant="secondary">{count}</Badge>

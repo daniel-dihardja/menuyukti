@@ -9,6 +9,7 @@ from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from menuyukti.core.analytics import compute_order_metrics_by_day_from_orders
 from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -33,9 +34,49 @@ query AnalyticsRunOrderMetrics($id: ID!) {
   orderMetrics(analyticsRunId: $id) {
     avgOrderSize
     avgOrderRevenue
+    byDayOfWeek {
+      day
+      avgOrderSize
+      avgOrderRevenue
+    }
   }
 }
 """
+
+
+def _order_metrics_from_groups(
+    orders: dict,
+) -> tuple[float, float, datetime | None, datetime | None]:
+    if not orders:
+        return 0.0, 0.0, None, None
+
+    sizes: list[int] = []
+    revenues: list[float] = []
+    all_times: list[datetime] = []
+
+    for group in orders.values():
+        revenue = float(sum(r.totalAfterBillDiscount for r in group))
+        if revenue <= 0:
+            continue
+        sizes.append(int(sum(r.qty for r in group)))
+        revenues.append(revenue)
+        for r in group:
+            order_time = r.orderTime
+            if hasattr(order_time, "to_pydatetime"):
+                order_time = order_time.to_pydatetime()
+            elif isinstance(order_time, str):
+                order_time = datetime.fromisoformat(order_time)
+            all_times.append(order_time)
+
+    if not sizes:
+        return 0.0, 0.0, None, None
+
+    avg_order_size = float(sum(sizes)) / len(sizes)
+    avg_order_revenue = float(sum(revenues)) / len(revenues)
+    period_start = min(all_times).date() if all_times else None
+    period_end = max(all_times).date() if all_times else None
+
+    return avg_order_size, avg_order_revenue, period_start, period_end
 
 
 def _compute_expected_metrics(payload: bytes):
@@ -45,31 +86,7 @@ def _compute_expected_metrics(payload: bytes):
     for row in rows:
         orders[row.billNumber].append(row)
 
-    if not orders:
-        return 0.0, 0.0, None, None
-
-    sizes = []
-    revenues = []
-    all_times: list[datetime] = []
-
-    for group in orders.values():
-        sizes.append(len(group))
-        revenues.append(float(sum(r.totalAfterBillDiscount for r in group)))
-        for r in group:
-            order_time = r.orderTime
-            if hasattr(order_time, "to_pydatetime"):
-                order_time = order_time.to_pydatetime()
-            elif isinstance(order_time, str):
-                order_time = datetime.fromisoformat(order_time)
-            all_times.append(order_time)
-
-    avg_order_size = float(sum(sizes)) / len(sizes)
-    avg_order_revenue = float(sum(revenues)) / len(revenues)
-
-    period_start = min(all_times).date() if all_times else None
-    period_end = max(all_times).date() if all_times else None
-
-    return avg_order_size, avg_order_revenue, period_start, period_end
+    return _order_metrics_from_groups(orders)
 
 
 def _parse_date_value(value):
@@ -80,31 +97,25 @@ def _parse_date_value(value):
     return value
 
 
+def _expected_by_day_from_rows(rows):
+    order_rows = [
+        {
+            "order_time": r.orderTime,
+            "bill_number": r.billNumber,
+            "total_after_bill_discount": r.totalAfterBillDiscount,
+            "qty": r.qty,
+        }
+        for r in rows
+    ]
+    return compute_order_metrics_by_day_from_orders(order_rows)
+
+
 def _expected_metrics_from_rows(rows):
     """Compute expected avgOrderSize, avgOrderRevenue, periodStart, periodEnd from rows."""
     orders = defaultdict(list)
     for r in rows:
         orders[r.billNumber].append(r)
-    if not orders:
-        return 0.0, 0.0, None, None
-    sizes = []
-    revenues = []
-    all_times = []
-    for group in orders.values():
-        sizes.append(len(group))
-        revenues.append(float(sum(r.totalAfterBillDiscount for r in group)))
-        for r in group:
-            t = r.orderTime
-            if hasattr(t, "to_pydatetime"):
-                t = t.to_pydatetime()
-            elif isinstance(t, str):
-                t = datetime.fromisoformat(t)
-            all_times.append(t)
-    avg_size = sum(sizes) / len(sizes)
-    avg_revenue = sum(revenues) / len(revenues)
-    period_start = min(all_times).date() if all_times else None
-    period_end = max(all_times).date() if all_times else None
-    return avg_size, avg_revenue, period_start, period_end
+    return _order_metrics_from_groups(orders)
 
 
 def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
@@ -130,6 +141,16 @@ def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
 
     assert pytest.approx(float(metrics["avgOrderSize"]), rel=1e-6) == expected_avg_size
     assert pytest.approx(float(metrics["avgOrderRevenue"]), rel=1e-6) == expected_avg_revenue
+    assert len(metrics["byDayOfWeek"]) == 7
+    expected_by_day = _expected_by_day_from_rows(qa_sales_rows)
+    by_day = {r["day"]: r for r in metrics["byDayOfWeek"]}
+    for expected in expected_by_day:
+        actual = by_day[expected["day"]]
+        assert pytest.approx(float(actual["avgOrderSize"]), rel=1e-6) == expected["avg_order_size"]
+        assert (
+            pytest.approx(float(actual["avgOrderRevenue"]), rel=1e-6)
+            == expected["avg_order_revenue"]
+        )
     if expected_start is not None:
         assert _parse_date_value(run_data["periodStart"]) == expected_start
     if expected_end is not None:
@@ -210,6 +231,28 @@ def test_order_metrics_for_uploaded_run(tmp_path):
 
     assert pytest.approx(avg_order_size, rel=1e-6) == expected_avg_size
     assert pytest.approx(avg_order_revenue, rel=1e-6) == expected_avg_revenue
+    assert len(metrics["byDayOfWeek"]) == 7
+
+    rows, _ = normalize_sales_report(payload)
+    expected_by_day = compute_order_metrics_by_day_from_orders(
+        [
+            {
+                "order_time": r.orderTime,
+                "bill_number": r.billNumber,
+                "total_after_bill_discount": r.totalAfterBillDiscount,
+                "qty": r.qty,
+            }
+            for r in rows
+        ]
+    )
+    by_day = {r["day"]: r for r in metrics["byDayOfWeek"]}
+    for expected in expected_by_day:
+        actual = by_day[expected["day"]]
+        assert pytest.approx(float(actual["avgOrderSize"]), rel=1e-6) == expected["avg_order_size"]
+        assert (
+            pytest.approx(float(actual["avgOrderRevenue"]), rel=1e-6)
+            == expected["avg_order_revenue"]
+        )
 
     if expected_start is not None:
         assert period_start == expected_start

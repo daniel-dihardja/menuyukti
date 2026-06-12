@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 from dataclasses import dataclass
 from typing import Any, cast
@@ -112,27 +113,40 @@ async def graphql_post(
     query: str,
     variables: dict[str, Any],
     user_id: str,
+    *,
+    max_attempts: int = 3,
 ) -> dict[str, Any]:
-    res = await client.post(
-        graphql_endpoint(),
-        json={"query": query, "variables": variables},
-        headers=graphql_headers(user_id),
-        timeout=60.0,
-    )
-    res.raise_for_status()
-    body = cast(dict[str, Any], res.json())
-    errors = _errors_list(body.get("errors"))
-    if errors:
-        first = errors[0]
-        detail = _first_error_detail(first)
-        code = _error_code(first)
-        raise GraphQLHttpError(
-            detail,
-            errors=errors,
-            code=code,
-            retryable=code == "INTERNAL_SERVER_ERROR",
-        )
-    data = body.get("data")
-    if not isinstance(data, dict):
-        raise GraphQLHttpError("GraphQL returned no data", errors=None)
-    return data
+    last: Exception | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            res = await client.post(
+                graphql_endpoint(),
+                json={"query": query, "variables": variables},
+                headers=graphql_headers(user_id),
+                timeout=60.0,
+            )
+            res.raise_for_status()
+            body = cast(dict[str, Any], res.json())
+            errors = _errors_list(body.get("errors"))
+            if errors:
+                first = errors[0]
+                detail = _first_error_detail(first)
+                code = _error_code(first)
+                raise GraphQLHttpError(
+                    detail,
+                    errors=errors,
+                    code=code,
+                    retryable=code == "INTERNAL_SERVER_ERROR",
+                )
+            data = body.get("data")
+            if not isinstance(data, dict):
+                raise GraphQLHttpError("GraphQL returned no data", errors=None)
+            return data
+        except Exception as exc:
+            last = exc
+            failure = classify_graphql_failure(exc)
+            if attempt >= max_attempts or not failure.retryable:
+                raise
+            await asyncio.sleep(0.5 * (2 ** (attempt - 1)))
+    assert last is not None
+    raise last

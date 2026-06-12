@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -17,12 +18,15 @@ import {
   schedulerWeekdayLabels,
 } from '@/lib/milestones/scheduler-calendar'
 
+import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
+
 export type SchedulerCalendarMonthGridProps = {
   monthStartIso: string
   windowStart: string
   windowEnd: string
   locale: string
   slots?: SchedulerMilestoneData['slots']
+  publicHolidays?: SchedulerMilestoneData['publicHolidays']
   className?: string
   onDayClick?: (isoDate: string) => void
   onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
@@ -42,15 +46,28 @@ export function SchedulerCalendarMonthGrid({
   windowEnd,
   locale,
   slots = [],
+  publicHolidays = [],
   className,
   onDayClick,
   onSlotClick,
 }: SchedulerCalendarMonthGridProps) {
+  const t = useTranslations('analytics.workflows.chat')
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd),
     [monthStartIso, windowEnd, windowStart],
   )
   const weekdayLabels = useMemo(() => schedulerWeekdayLabels(locale), [locale])
+  const weekendWeekdayIndexes = useMemo(() => new Set([5, 6]), [])
+  const holidayByDate = useMemo(
+    () =>
+      new Map(
+        publicHolidays.map((holiday) => [
+          holiday.date,
+          holiday.name.trim().length > 0 ? holiday.name : holiday.date,
+        ]),
+      ),
+    [publicHolidays],
+  )
   const monthLabel = useMemo(
     () => formatSchedulerMonthLabel(monthStartIso, locale),
     [locale, monthStartIso],
@@ -72,11 +89,15 @@ export function SchedulerCalendarMonthGrid({
           gridTemplateRows: 'auto repeat(6, minmax(0, 1fr))',
         }}
       >
-        {weekdayLabels.map((label) => (
+        {weekdayLabels.map((label, weekdayIndex) => (
           <div
             key={label}
             role="columnheader"
-            className="border-b border-r border-border/60 bg-muted/40 px-1 py-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground last:border-r-0"
+            className={cn(
+              'border-b border-r border-border/60 bg-muted/40 px-1 py-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground last:border-r-0',
+              weekendWeekdayIndexes.has(weekdayIndex) &&
+                'bg-amber-100/70 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200',
+            )}
           >
             {label}
           </div>
@@ -86,6 +107,11 @@ export function SchedulerCalendarMonthGrid({
           const dayNumber = formatDayNumber(day.isoDate, locale)
           const clickable = day.inWindow && onDayClick
           const daySlots = schedulerSlotsForDate(slots, day.isoDate)
+          const dayDate = parseIsoDateOnly(day.isoDate)
+          const dayOfWeek = dayDate?.getDay()
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+          const holidayName = holidayByDate.get(day.isoDate)
+          const isPublicHoliday = holidayName !== undefined
 
           return (
             <div
@@ -97,6 +123,7 @@ export function SchedulerCalendarMonthGrid({
                 'flex min-h-0 flex-col border-b border-r border-border/60 p-1.5 last:border-r-0',
                 !day.inMonth && 'text-muted-foreground/70',
                 !day.inWindow && 'bg-muted/30 text-muted-foreground',
+                isWeekend && day.inWindow && 'bg-amber-50/80 dark:bg-amber-950/20',
                 day.isToday && day.inWindow && 'bg-primary/10 text-primary',
                 clickable &&
                   'cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -120,16 +147,28 @@ export function SchedulerCalendarMonthGrid({
                   : undefined
               }
             >
-              <span className="text-sm font-semibold">{dayNumber}</span>
+              <div className="flex items-start justify-between gap-1">
+                <span className="shrink-0 text-sm font-semibold">{dayNumber}</span>
+                <div className="flex shrink-0 items-center gap-1">
+                  {isPublicHoliday ? (
+                    <span
+                      className="rounded-sm border border-rose-300/80 bg-rose-100/90 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-900 dark:border-rose-700/70 dark:bg-rose-900/40 dark:text-rose-100"
+                      title={holidayName}
+                    >
+                      {t('milestoneSchedulerPreviewHolidayBadge')}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
               {daySlots.length > 0 ? (
-                <div className="mt-1 space-y-0.5">
-                  {daySlots.slice(0, 1).map((slot) => (
+                <div className="mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+                  {daySlots.map((slot, slotIndex) => (
                     <button
-                      key={`${slot.date}-${slot.time}-${slot.title}`}
+                      key={`${slot.date}-${slot.time}-${slot.title}-${slotIndex}`}
                       type="button"
                       title={schedulerSlotDisplayTitle(slot)}
                       className={cn(
-                        'flex w-full flex-col items-start rounded-md border px-1 py-0.5 text-left text-xs font-medium leading-snug',
+                        'flex w-full shrink-0 flex-col items-start rounded-md border px-1 py-0.5 text-left text-xs font-medium leading-snug',
                         schedulerSlotClassName(schedulerSlotKind(slot)),
                         onSlotClick &&
                           'cursor-pointer hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -149,12 +188,9 @@ export function SchedulerCalendarMonthGrid({
                       <span className="mb-0.5 text-[10px] font-semibold opacity-80">
                         {schedulerSlotDisplayTime(slot)}
                       </span>
-                      <span className="w-full truncate">{schedulerSlotDisplayTitle(slot)}</span>
+                      <SchedulerSlotDisplayTitle slot={slot} className="w-full truncate" />
                     </button>
                   ))}
-                  {daySlots.length > 1 ? (
-                    <span className="block size-1.5 rounded-full bg-primary" aria-hidden />
-                  ) : null}
                 </div>
               ) : null}
             </div>

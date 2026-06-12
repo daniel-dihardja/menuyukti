@@ -8,6 +8,16 @@ import re
 from typing import Any, Literal
 
 import httpx
+from agents_app.agents.core.llm_invoke import (
+    LLMInvokeError,
+    ainvoke_with_retry,
+    astream_collect_with_retry,
+    emit_llm_error_step,
+)
+from agents_app.agents.core.milestone_eval.campaign_brief_eval import (
+    enrich_campaign_brief_eval_payload,
+    try_campaign_brief_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.graphql_client import (
     fetch_milestone_node,
     fetch_prior_milestones_data_for_eval,
@@ -18,6 +28,10 @@ from agents_app.agents.core.milestone_eval.ig_profile_eval import (
     enrich_ig_profile_eval_payload,
     parse_milestone_data_from_eval_raw,
     try_ig_profile_deterministic_verdict,
+)
+from agents_app.agents.core.milestone_eval.menu_clusterer_eval import (
+    enrich_menu_clusterer_eval_payload,
+    try_menu_clusterer_deterministic_verdict,
 )
 from agents_app.agents.core.milestone_eval.menu_tagger_eval import (
     enrich_menu_tagger_eval_payload,
@@ -56,11 +70,15 @@ _logger = logging.getLogger(__name__)
 
 
 def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
-    return enrich_scheduler_eval_payload(
-        enrich_story_lineup_eval_payload(
-            enrich_post_lineup_eval_payload(
+    return enrich_campaign_brief_eval_payload(
+        enrich_scheduler_eval_payload(
+            enrich_story_lineup_eval_payload(
                 enrich_reel_lineup_eval_payload(
-                    enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+                    enrich_post_lineup_eval_payload(
+                        enrich_menu_clusterer_eval_payload(
+                            enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+                        )
+                    )
                 )
             )
         )
@@ -95,8 +113,9 @@ _OWNER_NOTES_INPUT_TYPES = frozenset(
         "restaurant_campaign_brief",
         "culture_hooks",
         "menu_tagger",
-        "reel_lineup",
+        "menu_clusterer",
         "post_lineup",
+        "reel_lineup",
         "story_lineup",
         "scheduler",
         "ig_profile",
@@ -222,7 +241,28 @@ async def fetch_context(
             if raw_data
             else f"Prior milestone context (for requirement checks):\n{prior_context}"
         )
-    return {"goal": goal, "raw_data": raw_data, "criteria": criteria}
+
+    preset_id = ""
+    if isinstance(milestone_row, dict):
+        md = milestone_row.get("data")
+        node_data = md if isinstance(md, dict) else {}
+        raw_preset = node_data.get("presetId")
+        if isinstance(raw_preset, str):
+            preset_id = raw_preset.strip()
+
+    existing_raw = str(state.get("raw_data") or "").strip()
+    existing_criteria = state.get("criteria") or []
+    existing_goal = str(state.get("goal") or "").strip()
+    if existing_raw and existing_criteria:
+        writer(fc_payload)
+        return {
+            "goal": existing_goal or goal,
+            "raw_data": existing_raw,
+            "criteria": list(existing_criteria),
+            "preset_id": preset_id,
+        }
+
+    return {"goal": goal, "raw_data": raw_data, "criteria": criteria, "preset_id": preset_id}
 
 
 async def evaluate_criterion(
@@ -241,30 +281,44 @@ async def evaluate_criterion(
         if deterministic is None:
             deterministic = try_menu_tagger_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
-            deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
+            deterministic = try_menu_clusterer_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_post_lineup_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_story_lineup_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_scheduler_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_campaign_brief_deterministic_verdict(requirement, milestone_data)
         if deterministic is not None:
             status, reasoning = deterministic
             verdict = CriterionVerdict(status=status, reasoning=reasoning)
         else:
-            verdict = await structured_llm.ainvoke(
+            try:
+                verdict = await ainvoke_with_retry(
+                    structured_llm,
+                    [
+                        SystemMessage(content=EVAL_SYSTEM),
+                        HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
+                    ],
+                )
+            except LLMInvokeError as exc:
+                emit_llm_error_step(exc.code, str(exc))
+                raise ValueError(str(exc)) from exc
+    else:
+        try:
+            verdict = await ainvoke_with_retry(
+                structured_llm,
                 [
                     SystemMessage(content=EVAL_SYSTEM),
                     HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
-                ]
+                ],
             )
-    else:
-        verdict = await structured_llm.ainvoke(
-            [
-                SystemMessage(content=EVAL_SYSTEM),
-                HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
-            ]
-        )
+        except LLMInvokeError as exc:
+            emit_llm_error_step(exc.code, str(exc))
+            raise ValueError(str(exc)) from exc
     writer = get_stream_writer()
     writer(
         {
@@ -289,7 +343,10 @@ async def update_criteria(
 ) -> dict[str, Any]:
     writer = get_stream_writer()
     writer({"step": "update_criteria"})
-    for ev in state.get("evaluated", []):
+    evaluated = state.get("evaluated", [])
+    if not evaluated:
+        return {}
+    for ev in evaluated:
         await update_milestone_passcriteria_status(
             state["milestone_id"],
             state["location_id"],
@@ -320,15 +377,14 @@ async def synthesize(
     ]
     notes = _extract_milestone_input_notes(state)
     msg = synthesis_human_message(state.get("goal", ""), payload, notes)
-    full = ""
-    async for chunk in llm.astream(
-        [SystemMessage(content=SYNTHESIS_SYSTEM), HumanMessage(content=msg)]
-    ):
-        c = chunk.content
-        if isinstance(c, str):
-            full += c
-        elif isinstance(c, list):
-            full += "".join(str(x) for x in c)
+    try:
+        full = await astream_collect_with_retry(
+            llm,
+            [SystemMessage(content=SYNTHESIS_SYSTEM), HumanMessage(content=msg)],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     summary = _enforce_optional_input_line(
         full.strip(),
         notes,
@@ -375,10 +431,10 @@ async def store_result(
 
 def route_after_fetch(
     state: MilestoneEvalState,
-) -> list[Send] | Literal["synthesize"]:
+) -> list[Send] | Literal["update_criteria"]:
     crit = state.get("criteria") or []
     if not crit:
-        return "synthesize"
+        return "update_criteria"
     return [
         Send(
             "evaluate_criterion",

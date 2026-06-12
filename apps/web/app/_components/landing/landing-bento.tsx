@@ -11,13 +11,19 @@ type LandingBentoProps = {
   title: string
   subtitle: string
   items: readonly [BentoItem, BentoItem, BentoItem]
+  sectionId?: string
 }
 
 const icons = [BarChart3, Bot, LineChart] as const
 
-export function LandingBento({ title, subtitle, items }: LandingBentoProps) {
+export function LandingBento({
+  title,
+  subtitle,
+  items,
+  sectionId = 'platform',
+}: LandingBentoProps) {
   return (
-    <section id="platform" className="bg-background py-24" aria-labelledby="bento-heading">
+    <section id={sectionId} className="bg-background py-24" aria-labelledby="bento-heading">
       <div className="mx-auto max-w-6xl px-6">
         <h2
           id="bento-heading"
@@ -32,7 +38,7 @@ export function LandingBento({ title, subtitle, items }: LandingBentoProps) {
           {items.map((item, i) => {
             const Icon = icons[i]!
             return (
-              <Card key={item.title} className="shadow-md">
+              <Card key={item.title} className="shadow-none transition-colors">
                 <CardHeader>
                   <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10">
                     <Icon className="size-5 text-primary" aria-hidden />

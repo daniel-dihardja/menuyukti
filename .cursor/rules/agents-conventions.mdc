@@ -22,11 +22,11 @@ agents/
     chat/
     milestone_eval/   # Criterion loop + synthesis; invoked from milestone_run only
     milestone_data/   # GraphQL upsert for milestonedata (structured JSON / legacy text)
-    milestone_run/      # LangGraph run: fetch → skill select → ReAct + tools → eval
-      skills/<skill_id>/SKILL.md
-      skill_markdown.py
-      skill_paths.py
-      graph.py, tools.py, stream.py, state.py, graphql_client.py, prompts.py
+    milestone_run/      # Outer graph: fetch → preset subgraph (by presetId) → eval
+      presets/registry.py   # PRESET_RUNNERS dispatch table
+      <preset>/graph.py     # Dedicated StateGraph per preset
+      tools/                # Legacy LangChain tools (tests); presets use nodes + GraphQL
+      graph.py, stream.py, state.py, graphql_client.py
 models/
   llm_config.py
 routers/
@@ -35,7 +35,7 @@ tests/
   core/
 ```
 
-**Convention:** add new **milestone run** skills as `agents/core/milestone_run/skills/<skill_id>/SKILL.md` (optional YAML `extra_tools` for non-core LangChain tools) and register them in `skills.py`. Core + optional tools are assembled in `milestone_run/tools/` (`make_milestone_run_tools`, `tools/registry.py`). **Milestone data persistence** is `agents/core/milestone_data/`.
+**Convention:** add a new **milestone preset** as `agents/core/milestone_run/<preset_id>/` (`graph.py`, `nodes.py`, `state.py`, `prompts.py`) and register the runner in `presets/registry.py` via `register_preset_runner` (wired from `graph.py`). Set `milestone.data.presetId` in GraphQL. **Milestone data persistence** uses `milestone_data` upsert from preset `persist_result` nodes.
 
 ## Graph factory pattern
 
@@ -77,13 +77,15 @@ class MilestoneEvalState(TypedDict):
 Use `Send` for parallel node execution; route via a conditional edge function that returns a list of `Send` objects or a fallback node name.
 
 ```python
-def route_after_fetch(state) -> list[Send] | Literal["synthesize"]:
+def route_after_fetch(state) -> list[Send] | Literal["update_criteria"]:
     criteria = state.get("criteria") or []
     if not criteria:
-        return "synthesize"
+        return "update_criteria"
     return [Send("evaluate_criterion", {"criterion_id": c["id"], ...}) for c in criteria]
 
-builder.add_conditional_edges("fetch_context", route_after_fetch, ["evaluate_criterion", "synthesize"])
+builder.add_conditional_edges("fetch_context", route_after_fetch, ["evaluate_criterion", "update_criteria"])
+builder.add_edge("evaluate_criterion", "update_criteria")
+builder.add_edge("update_criteria", "synthesize")
 ```
 
 ## Streaming patterns

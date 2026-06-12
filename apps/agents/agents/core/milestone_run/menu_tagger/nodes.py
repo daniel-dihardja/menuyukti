@@ -6,9 +6,10 @@ import json
 from typing import Any, Literal
 
 import httpx
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_llm_from_milestone_run_config,
+    structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.menu_tagger.prompts import MENU_TAGGER_SYSTEM
 from agents_app.agents.core.milestone_run.menu_tagger.state import (
@@ -357,13 +358,17 @@ def normalize_menu_tagger_tags(raw: dict[str, Any] | str | None) -> MenuTaggerTa
             max_count=MAX_TASTE_TAGS,
         ),
         "course": _filter_enum_values(
-            (raw_obj or {}).get("course") if isinstance((raw_obj or {}).get("course"), list) else [],
+            (raw_obj or {}).get("course")
+            if isinstance((raw_obj or {}).get("course"), list)
+            else [],
             COURSE_VALUES,
             max_count=MAX_COURSE_TAGS,
         ),
         "reel_moment": reel_moment,  # type: ignore[typeddict-item]
         "texture": _filter_enum_values(
-            (raw_obj or {}).get("texture") if isinstance((raw_obj or {}).get("texture"), list) else [],
+            (raw_obj or {}).get("texture")
+            if isinstance((raw_obj or {}).get("texture"), list)
+            else [],
             TEXTURE_VALUES,
             max_count=MAX_TEXTURE_TAGS,
         ),
@@ -375,7 +380,9 @@ def normalize_menu_tagger_tags(raw: dict[str, Any] | str | None) -> MenuTaggerTa
             max_count=MAX_PREP_STYLE_TAGS,
         ),
         "occasion": _filter_enum_values(
-            (raw_obj or {}).get("occasion") if isinstance((raw_obj or {}).get("occasion"), list) else [],
+            (raw_obj or {}).get("occasion")
+            if isinstance((raw_obj or {}).get("occasion"), list)
+            else [],
             OCCASION_VALUES,
             max_count=MAX_OCCASION_TAGS,
         ),
@@ -650,14 +657,18 @@ async def tag_items(state: MenuTaggerState) -> dict[str, Any]:
     if not input_items:
         raise ValueError("menu_tagger has no input items to tag")
 
-    llm = structured_llm_from_milestone_run_config().with_structured_output(MenuTaggerDraftOutput)
     _trace_agent_event(state, "chat_model_start")
-    generated = await llm.ainvoke(
-        [
-            SystemMessage(content=MENU_TAGGER_SYSTEM),
-            HumanMessage(content=str(state.get("generation_context_markdown") or "").strip()),
-        ]
-    )
+    try:
+        generated = await structured_ainvoke_from_run_config(
+            MenuTaggerDraftOutput,
+            [
+                SystemMessage(content=MENU_TAGGER_SYSTEM),
+                HumanMessage(content=str(state.get("generation_context_markdown") or "").strip()),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     _trace_agent_event(state, "chat_model_end")
 
     llm_items = [row.model_dump() for row in generated.items]

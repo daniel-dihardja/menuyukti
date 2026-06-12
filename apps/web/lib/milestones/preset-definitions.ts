@@ -15,6 +15,7 @@ import {
 import type { z } from 'zod'
 
 import type { PassCriteriaRow } from '@/app/(protected)/workflow/_components/timeline/types'
+import { DEFAULT_CAMPAIGN_BRIEF_REFLECTION } from '@/lib/milestones/campaign-brief-input'
 import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import {
   MENU_TAGGER_TAXONOMY_VERSION,
@@ -22,6 +23,7 @@ import {
 } from '@/lib/milestones/menu-tagger-taxonomy'
 import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
 import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
+import { EMPTY_MENU_CLUSTERER_DATA } from '@/lib/milestones/menu-clusterer'
 import { EMPTY_STORY_LINEUP_DATA } from '@/lib/milestones/story-lineup'
 import {
   campaignBriefMilestoneDataSchema,
@@ -31,6 +33,7 @@ import {
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  menuClustererMilestoneDataSchema,
   storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   type MilestoneInput,
@@ -43,7 +46,13 @@ import {
 export type { MilestonePresetId }
 export { MILESTONE_PRESET_IDS }
 
-export type MilestonePresetInputType = 'dates' | 'promotion_candidates' | 'optional_notes' | 'none'
+export type MilestonePresetInputType =
+  | 'dates'
+  | 'promotion_candidates'
+  | 'campaign_brief'
+  | 'menu_clusterer'
+  | 'optional_notes'
+  | 'none'
 
 export function isMilestonePresetId(value: string): value is MilestonePresetId {
   return (MILESTONE_PRESET_IDS as readonly string[]).includes(value)
@@ -167,14 +176,17 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
   restaurant_campaign_brief: {
     id: 'restaurant_campaign_brief',
     icon: ClipboardList,
-    inputType: 'optional_notes',
+    inputType: 'campaign_brief',
     dataSchema: campaignBriefMilestoneDataSchema,
     emptyData: EMPTY_CAMPAIGN_BRIEF_DATA,
     getCreateFields: (t) => ({
       name: t('milestonePreset.restaurant_campaign_brief.title'),
       milestoneInput: {
         type: 'restaurant_campaign_brief',
-        value: { notes: '' },
+        value: {
+          notes: '',
+          reflection: { ...DEFAULT_CAMPAIGN_BRIEF_REFLECTION },
+        },
       },
       milestoneData: EMPTY_CAMPAIGN_BRIEF_DATA,
       goal: t('milestonePreset.restaurant_campaign_brief.goal'),
@@ -243,47 +255,39 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       ],
     }),
   },
-  reel_lineup: {
-    id: 'reel_lineup',
+  menu_clusterer: {
+    id: 'menu_clusterer',
     icon: Clapperboard,
-    inputType: 'optional_notes',
-    dataSchema: reelLineupMilestoneDataSchema,
-    emptyData: EMPTY_REEL_LINEUP_DATA,
+    inputType: 'menu_clusterer',
+    dataSchema: menuClustererMilestoneDataSchema,
+    emptyData: EMPTY_MENU_CLUSTERER_DATA,
     getCreateFields: (t) => ({
-      name: t('milestonePreset.reel_lineup.title'),
+      name: t('milestonePreset.menu_clusterer.title'),
       milestoneInput: {
-        type: 'reel_lineup',
+        type: 'menu_clusterer',
         value: { notes: '' },
       },
-      milestoneData: EMPTY_REEL_LINEUP_DATA,
-      goal: t('milestonePreset.reel_lineup.goal'),
+      milestoneData: EMPTY_MENU_CLUSTERER_DATA,
+      goal: t('milestonePreset.menu_clusterer.goal'),
       passCriteria: [
         {
-          requirement: t('milestonePreset.reel_lineup.criterionPriorCampaignBrief'),
+          requirement: t('milestonePreset.menu_clusterer.criterionPriorCampaignBrief'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionPriorMenuTagger'),
+          requirement: t('milestonePreset.menu_clusterer.criterionPriorMenuTagger'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionHookGroupCount'),
+          requirement: t('milestonePreset.menu_clusterer.criterionHookGroupCount'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionMainCourseHook'),
+          requirement: t('milestonePreset.menu_clusterer.criterionTopFiveLead'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionDrinkHookGroupCount'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.reel_lineup.criterionDrinkHook'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.reel_lineup.criterionSchedulingHints'),
+          requirement: t('milestonePreset.menu_clusterer.criterionClusterDescription'),
           status: 'open',
         },
       ],
@@ -305,11 +309,23 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       goal: t('milestonePreset.post_lineup.goal'),
       passCriteria: [
         {
-          requirement: t('milestonePreset.post_lineup.criterionPriorReelLineup'),
+          requirement: t('milestonePreset.post_lineup.criterionPriorDates'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionPriorCampaignBrief'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionPriorMenuClusterer'),
           status: 'open',
         },
         {
           requirement: t('milestonePreset.post_lineup.criterionCarouselPost'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionWeeklyFixdate'),
           status: 'open',
         },
         {
@@ -318,6 +334,52 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.post_lineup.criterionSlideFields'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  reel_lineup: {
+    id: 'reel_lineup',
+    icon: Clapperboard,
+    inputType: 'optional_notes',
+    dataSchema: reelLineupMilestoneDataSchema,
+    emptyData: EMPTY_REEL_LINEUP_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.reel_lineup.title'),
+      milestoneInput: {
+        type: 'reel_lineup',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_REEL_LINEUP_DATA,
+      goal: t('milestonePreset.reel_lineup.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionPriorDates'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionPriorCampaignBrief'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionPriorMenuClusterer'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionTwoReelsPerWeek'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionWeekdayWeekendIntents'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionDescriptionExplanation'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionStaticHeroGroups'),
           status: 'open',
         },
       ],
@@ -348,6 +410,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.story_lineup.criterionPublicHolidayFixdate'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.story_lineup.criterionUserReviewStory'),
           status: 'open',
         },
       ],
@@ -433,23 +499,19 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       goal: t('milestonePreset.scheduler.goal'),
       passCriteria: [
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorDates'),
+          requirement: t('milestonePreset.scheduler.criterionMonthlyMenuHighlight'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorCampaignBrief'),
+          requirement: t('milestonePreset.scheduler.criterionWeeklyWeekdayPost'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionPriorReelLineup'),
+          requirement: t('milestonePreset.scheduler.criterionWeeklyWeekdayReel'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.scheduler.criterionWindowPresent'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.scheduler.criterionReelSlotKinds'),
+          requirement: t('milestonePreset.scheduler.criterionWeeklyWeekendReel'),
           status: 'open',
         },
       ],
@@ -491,7 +553,7 @@ export function normalizeMilestonePresetData(
   }
   const def = MILESTONE_PRESET_REGISTRY[presetId]
   const parsed = def.dataSchema.safeParse(data)
-  return parsed.success ? (parsed.data as MilestonedataValue) : def.emptyData
+  return parsed.success ? (parsed.data as MilestonedataValue) : undefined
 }
 
 /**

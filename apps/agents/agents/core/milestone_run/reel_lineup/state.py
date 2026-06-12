@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from typing import Any, Literal, NotRequired, TypedDict
 
+from agents_app.agents.core.milestone_run.dates_window import CampaignWeek
 
-class ReelLineupGroupItem(TypedDict):
+
+class ReelLineupHeroDish(TypedDict):
     name: str
-    role: Literal["star", "puzzle"]
-    category: str
-    position: int
-    popularity: NotRequired[float]
-    priceLevel: NotRequired[Literal[1, 2, 3]]
-    storytellingFit: NotRequired[Literal["strong", "weak"]]
     reelMoment: NotRequired[str]
+    role: NotRequired[Literal["star", "puzzle"]]
+    category: NotRequired[str]
+    storytellingFit: NotRequired[Literal["strong", "weak"]]
+    popularity: NotRequired[float]
 
 
 class ReelLineupScheduleHints(TypedDict):
@@ -29,43 +29,29 @@ class ReelLineupScheduleHints(TypedDict):
         ]
     ]
     preferredTime: str
-    cadenceEligible: bool
 
 
-class ReelLineupGroupMix(TypedDict):
-    priceLevels: list[Literal[1, 2, 3]]
-    storytellingStrongCount: int
-    starCount: int
-    puzzleCount: int
-
-
-class ReelLineupAnchor(TypedDict):
-    dimension: Literal["reel_moment"]
-    value: str
-
-
-class ReelLineupGroup(TypedDict):
+class ReelLineupReel(TypedDict):
     id: str
-    leadName: str
-    profileId: Literal["hook_reel"]
-    anchor: ReelLineupAnchor
-    items: list[ReelLineupGroupItem]
-    mix: ReelLineupGroupMix
-    strategyFocus: NotRequired[str]
-    coreMessage: NotRequired[str]
-    creativeRole: NotRequired[str]
-    assetHint: NotRequired[str]
+    format: Literal["reel"]
+    intent: Literal["weekday_reel", "weekend_reel"]
+    title: str
+    description: str
+    explanation: str
+    groupIds: list[str]
+    weekIndex: NotRequired[int]
+    date: NotRequired[str]
     scheduleHints: NotRequired[ReelLineupScheduleHints]
+    heroDishes: NotRequired[list[ReelLineupHeroDish]]
 
 
 class ReelLineupOutput(TypedDict):
-    foodLeads: list[dict[str, Any]]
-    drinkLeads: list[dict[str, Any]]
-    groups: list[ReelLineupGroup]
-    drinkGroups: list[ReelLineupGroup]
-    unassignedItemNames: list[str]
-    sourceMenuTaggerTitle: NotRequired[str]
+    reels: list[ReelLineupReel]
+    startDate: NotRequired[str]
+    endDate: NotRequired[str]
+    sourceMenuClustererTitle: NotRequired[str]
     sourceCampaignBriefTitle: NotRequired[str]
+    sourceDatesTitle: NotRequired[str]
     notes: NotRequired[str]
 
 
@@ -81,11 +67,16 @@ class ReelLineupState(TypedDict):
     traceparent: NotRequired[str | None]
     prior_milestones_data: NotRequired[str]
     owner_notes_markdown: NotRequired[str]
-    campaign_brief_data: NotRequired[dict[str, Any] | None]
+    dates_data: NotRequired[dict[str, Any]]
+    start_date: NotRequired[str]
+    end_date: NotRequired[str]
+    source_dates_title: NotRequired[str]
+    campaign_weeks: NotRequired[list[CampaignWeek]]
+    campaign_brief_data: NotRequired[dict[str, Any]]
     source_campaign_brief_title: NotRequired[str]
-    menu_tagger_items: NotRequired[list[dict[str, Any]]]
-    source_menu_tagger_title: NotRequired[str]
+    groups: NotRequired[list[dict[str, Any]]]
+    source_menu_clusterer_title: NotRequired[str]
     generated_output: NotRequired[ReelLineupOutput | None]
     result_data: str
-    milestone_data: NotRequired[dict[str, Any] | None]
+    milestone_data: NotRequired[dict[str, Any] | list[Any] | None]
     milestonedata_written: bool

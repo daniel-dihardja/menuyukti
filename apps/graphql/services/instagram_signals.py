@@ -42,16 +42,7 @@ def build_instagram_signals(session: Session, run: AnalyticsRun) -> dict[str, An
         prev_facts = session.query(OrderFact).where(OrderFact.analytics_run_id == prev_run.id).all()
 
     sales_rows = facts_to_sales_analytics_rows(facts)
-    pos_system = (run.pos_system or "").strip().lower()
-    # Quino exports omit bill linkage and real timestamps; treat as explicitly minimal.
-    # For other POS systems, derive order_id / datetime tiers from actual OrderFact rows so
-    # reports without usable order_time do not advertise heatmaps or posting windows.
-    is_quino = pos_system == "quino"
-    sales_analytics = compute_sales_analytics_from_orders(
-        sales_rows,
-        has_order_id=False if is_quino else None,
-        has_datetime=False if is_quino else None,
-    )
+    sales_analytics = compute_sales_analytics_from_orders(sales_rows)
 
     cat_rows = facts_to_category_mix_rows(facts)
     category_mix = compute_category_mix_from_orders(cat_rows)

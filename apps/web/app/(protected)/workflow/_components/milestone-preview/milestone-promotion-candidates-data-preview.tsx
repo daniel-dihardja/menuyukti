@@ -15,6 +15,7 @@ import {
   sortPromotionCandidateCategories,
   sortPromotionCandidateItemsByPopularity,
 } from '@/lib/milestones/promotion-candidates-category-order'
+import { formatMilestonePopularityPercent } from '@/lib/milestones/popularity-display'
 import {
   DEFAULT_PROMOTION_CANDIDATES_PREVIEW_FILTERS,
   countFilteredPromotionCandidateItemsInCategories,
@@ -77,15 +78,6 @@ type PromotionCandidatesPreviewLabels = {
   itemCount: (count: number) => string
   filteredShowing: (visible: number, total: number) => string
   formatHelpAriaLabel: (sectionTitle: string) => string
-}
-
-const popularityPercentFormatter = new Intl.NumberFormat(undefined, {
-  style: 'percent',
-  maximumFractionDigits: 1,
-})
-
-function formatPopularityLabel(popularity: number): string {
-  return popularityPercentFormatter.format(popularity)
 }
 
 function priceLevelLabel(
@@ -223,9 +215,14 @@ function renderMenuItems(
               >
                 <span>
                   {hasPopularity && hasQuantity
-                    ? labels.metricsLine(formatPopularityLabel(item.popularity!), item.quantity!)
+                    ? labels.metricsLine(
+                        formatMilestonePopularityPercent(item.popularity!),
+                        item.quantity!,
+                      )
                     : hasPopularity
-                      ? labels.popularityOnlyLine(formatPopularityLabel(item.popularity!))
+                      ? labels.popularityOnlyLine(
+                          formatMilestonePopularityPercent(item.popularity!),
+                        )
                       : labels.quantityOnlyLine(item.quantity!)}
                 </span>
                 {hasPopularity ? (

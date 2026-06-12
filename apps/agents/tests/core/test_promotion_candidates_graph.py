@@ -333,14 +333,10 @@ async def test_enrich_storytelling_applies_llm_verdicts() -> None:
             )
         ]
     )
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(return_value=verdict)
-    base_llm = MagicMock()
-    base_llm.with_structured_output.return_value = structured
     with (
         patch(
-            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.structured_llm_from_milestone_run_config",
-            return_value=base_llm,
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=verdict),
         ),
         patch(
             "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
@@ -403,14 +399,10 @@ async def test_enrich_storytelling_aligns_missing_verdict_names_by_order() -> No
             ]
         }
     )
-    structured = MagicMock()
-    structured.ainvoke = AsyncMock(return_value=verdict)
-    base_llm = MagicMock()
-    base_llm.with_structured_output.return_value = structured
     with (
         patch(
-            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.structured_llm_from_milestone_run_config",
-            return_value=base_llm,
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=verdict),
         ),
         patch(
             "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",

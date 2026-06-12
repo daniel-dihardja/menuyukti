@@ -36,7 +36,8 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const promotionItemsData = await getCachedPromotionMenuItems(userId, id, String(run.locationId))
+  const locationId = String(run.locationId)
+  const promotionItemsData = await getCachedPromotionMenuItems(userId, id, locationId)
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
   const locale = getAppCurrencyLocale()

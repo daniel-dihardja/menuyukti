@@ -22,8 +22,8 @@ const runBodySchema = z.object({
     .refine((v) => v === undefined || isAllowedChatGatewayModel(v), {
       message: 'Unsupported chat model',
     }),
-  milestoneInput: milestoneInputSchema.optional(),
-  milestoneData: milestonedataValueSchema.optional(),
+  milestoneInput: milestoneInputSchema.nullish(),
+  milestoneData: milestonedataValueSchema.nullish(),
 })
 
 type RouteContext = {

@@ -22,6 +22,9 @@ from langgraph.config import get_config
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 
+# Max tool/model turns per request (ReAct loop budget).
+CHAT_RECURSION_LIMIT = 20
+
 
 def chat_tools_list() -> list:
     """Build chat ReAct tools (optional ``search_web`` when ``TAVILY_API_KEY`` is set)."""

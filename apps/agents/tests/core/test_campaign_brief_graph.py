@@ -201,9 +201,14 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
 
     with (
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
             new=AsyncMock(
-                return_value={"data": {"goal": "G1", "presetId": "restaurant_campaign_brief"}}
+                return_value={
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [],
+                    "preset_id": "restaurant_campaign_brief",
+                }
             ),
         ),
         patch(

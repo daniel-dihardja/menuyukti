@@ -3,17 +3,23 @@ import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Separator } from '@workspace/ui/components/separator'
 import { cn } from '@workspace/ui/lib/utils'
-import { GitBranch, Sparkles } from 'lucide-react'
+import { CalendarDays, GitBranch, Upload } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import type { ReactElement } from 'react'
 
 import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
+import {
+  LandingHeroHeadline,
+  parseLandingHeroHeadlineVariant,
+} from '@/app/_components/landing/landing-hero-headline'
+import { LandingAnalyticsComparison } from '@/app/_components/landing/landing-analytics-comparison'
+import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFeatureSpotlight } from '@/app/_components/landing/landing-feature-spotlight'
-import { LandingStudioTransformation } from '@/app/_components/landing/landing-studio-transformation'
 import { LandingFooter } from '@/app/_components/landing/landing-footer'
 import { LandingHowTwoSteps } from '@/app/_components/landing/landing-how-two-steps'
 import { LandingProductPillars } from '@/app/_components/landing/landing-product-pillars'
+import { LandingSharedWorkspace } from '@/app/_components/landing/landing-shared-workspace'
 import { routes } from '@/lib/routes'
 
 const AUTOMATION_HIGHLIGHT_TERMS = [
@@ -51,8 +57,13 @@ function highlightAutomationTerms(text: string): Array<string | ReactElement> {
   })
 }
 
-export default async function LandingPage() {
+type LandingPageProps = {
+  searchParams: Promise<{ heroHeadline?: string | string[] }>
+}
+
+export default async function LandingPage({ searchParams }: LandingPageProps) {
   const t = await getTranslations('landing')
+  const heroHeadlineVariant = parseLandingHeroHeadlineVariant((await searchParams).heroHeadline)
 
   const pillarItems = [
     {
@@ -66,6 +77,26 @@ export default async function LandingPage() {
       description: t('pillars.items.studio.description'),
     },
   ] as const
+
+  const painItems = [
+    {
+      title: t('pain.item1Title'),
+      description: t('pain.item1Description'),
+    },
+    {
+      title: t('pain.item2Title'),
+      description: t('pain.item2Description'),
+    },
+    {
+      title: t('pain.item3Title'),
+      description: t('pain.item3Description'),
+    },
+  ] as const
+
+  const analyticsComparisonPosBullets = t.raw('analyticsComparison.posBullets') as string[]
+  const analyticsComparisonMenuyuktiBullets = t.raw(
+    'analyticsComparison.menuyuktiBullets',
+  ) as string[]
 
   const workflowsBullets = [
     {
@@ -86,43 +117,16 @@ export default async function LandingPage() {
     },
   ] as const
 
-  const studioBullets = [
-    {
-      title: t('studio.bullets.library.title'),
-      description: t('studio.bullets.library.description'),
-    },
-    {
-      title: t('studio.featuredFlows.heroShot.title'),
-      description: t('studio.featuredFlows.heroShot.description'),
-    },
-    {
-      title: t('studio.featuredFlows.goldenHour.title'),
-      description: t('studio.featuredFlows.goldenHour.description'),
-    },
-    {
-      title: t('studio.featuredFlows.prepareForAds.title'),
-      description: t('studio.featuredFlows.prepareForAds.description'),
-    },
-    {
-      title: t('studio.bullets.designs.title'),
-      description: t('studio.bullets.designs.description'),
-    },
-    {
-      title: t('studio.bullets.feedsWorkflows.title'),
-      description: t('studio.bullets.feedsWorkflows.description'),
-    },
-  ] as const
-
   const howSteps = [
     {
-      title: t('how.steps.workflows.title'),
-      description: t('how.steps.workflows.description'),
-      Icon: GitBranch,
+      title: t('how.steps.ownerUpload.title'),
+      description: t('how.steps.ownerUpload.description'),
+      Icon: Upload,
     },
     {
-      title: t('how.steps.studio.title'),
-      description: t('how.steps.studio.description'),
-      Icon: Sparkles,
+      title: t('how.steps.partnerRun.title'),
+      description: t('how.steps.partnerRun.description'),
+      Icon: GitBranch,
     },
   ] as const
 
@@ -172,7 +176,7 @@ export default async function LandingPage() {
       </a>
 
       <main id="main-content" className="min-w-0 w-full overflow-x-clip">
-        <section className="relative w-full min-w-0 overflow-x-clip bg-gradient-to-b from-muted/30 to-background">
+        <section className="relative w-full min-w-0 overflow-x-clip bg-gradient-to-b from-hero-gradient-from to-hero-gradient-to">
           <div
             className={cn(
               'relative mx-auto flex w-full min-w-0 max-w-6xl flex-col items-center',
@@ -186,12 +190,12 @@ export default async function LandingPage() {
                 'mb-4 inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 whitespace-normal px-3 py-1.5 text-center text-balance leading-snug',
               )}
             >
-              <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
+              <CalendarDays className="size-3.5 shrink-0 text-primary" aria-hidden />
               {t('hero.badge')}
             </Badge>
-            <h1 className="w-full min-w-0 text-balance text-4xl font-bold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]">
+            <LandingHeroHeadline variant={heroHeadlineVariant}>
               {t('hero.headline')}
-            </h1>
+            </LandingHeroHeadline>
 
             <p className="mx-auto mt-5 max-w-2xl text-pretty text-center text-lg leading-relaxed text-foreground/80 md:mt-6 md:text-xl md:leading-relaxed">
               {t('hero.subtitle')}
@@ -259,6 +263,39 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        <LandingBento
+          sectionId="the-problem"
+          title={t('pain.title')}
+          subtitle={t('pain.subtitle')}
+          items={painItems}
+        />
+
+        <LandingAnalyticsComparison
+          title={t('analyticsComparison.title')}
+          subtitle={t('analyticsComparison.subtitle')}
+          posColumnTitle={t('analyticsComparison.posColumnTitle')}
+          menuyuktiColumnTitle={t('analyticsComparison.menuyuktiColumnTitle')}
+          posBullets={analyticsComparisonPosBullets}
+          menuyuktiBullets={analyticsComparisonMenuyuktiBullets}
+          impactTitle={t('analyticsComparison.impactTitle')}
+          impactDescription={t('analyticsComparison.impactDescription')}
+        />
+
+        <LandingSharedWorkspace
+          title={t('bridge.title')}
+          subtitle={t('bridge.subtitle')}
+          owner={{
+            title: t('bridge.owner.title'),
+            description: t('bridge.owner.description'),
+          }}
+          partner={{
+            title: t('bridge.partner.title'),
+            description: t('bridge.partner.description'),
+          }}
+        />
+
+        <LandingHowTwoSteps title={t('how.title')} subtitle={t('how.subtitle')} steps={howSteps} />
+
         <section className="bg-muted/40 py-20 md:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <div className="mx-auto max-w-3xl text-center">
@@ -272,7 +309,7 @@ export default async function LandingPage() {
 
             <div className="mt-10 grid gap-4 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
               {automationItems.map((item) => (
-                <article key={item.title} className="rounded-xl border bg-card p-5 shadow-sm">
+                <article key={item.title} className="rounded-xl border bg-card p-5">
                   <h3 className="text-base font-semibold leading-snug">
                     {highlightAutomationTerms(item.title)}
                   </h3>
@@ -285,21 +322,11 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-background py-14 md:py-16">
-          <div className="mx-auto max-w-4xl px-6 text-center">
-            <p className="text-pretty text-lg leading-relaxed text-foreground/85 md:text-xl">
-              {t('problem')}
-            </p>
-            <p className="mx-auto mt-5 max-w-3xl text-pretty text-base leading-relaxed text-foreground/75 md:text-lg">
-              {t('solution')}
-            </p>
-          </div>
-        </section>
-
         <LandingProductPillars
           title={t('pillars.title')}
           subtitle={t('pillars.subtitle')}
           items={pillarItems}
+          studioFootnote={t('pillars.studioFootnote')}
         />
 
         <div className="mx-auto max-w-6xl px-6">
@@ -316,57 +343,6 @@ export default async function LandingPage() {
           imageCaption={t('workflows.imageCaption')}
           Icon={GitBranch}
         />
-
-        <LandingFeatureSpotlight
-          id="studio"
-          title={t('studio.title')}
-          subtitle={t('studio.subtitle')}
-          bullets={studioBullets}
-          media={
-            <LandingStudioTransformation
-              title={t('studio.transformation.title')}
-              intro={t('studio.transformation.intro')}
-              steps={[
-                {
-                  label: t('studio.transformation.steps.source.label'),
-                  alt: t('studio.transformation.steps.source.alt'),
-                  caption: t('studio.transformation.steps.source.caption'),
-                  imageSrc: '/images/landing/studio-transformation-source.webp',
-                },
-                {
-                  label: t('studio.transformation.steps.lightFix.label'),
-                  alt: t('studio.transformation.steps.lightFix.alt'),
-                  captionLead: t('studio.transformation.steps.lightFix.captionLead'),
-                  preparePoints: [
-                    {
-                      title: t('studio.transformation.steps.lightFix.points.light.title'),
-                      description: t(
-                        'studio.transformation.steps.lightFix.points.light.description',
-                      ),
-                    },
-                    {
-                      title: t('studio.transformation.steps.lightFix.points.composition.title'),
-                      description: t(
-                        'studio.transformation.steps.lightFix.points.composition.description',
-                      ),
-                    },
-                  ],
-                  imageSrc: '/images/landing/studio-transformation-cropped-light-fix.webp',
-                },
-                {
-                  label: t('studio.transformation.steps.heroShot.label'),
-                  alt: t('studio.transformation.steps.heroShot.alt'),
-                  caption: t('studio.transformation.steps.heroShot.caption'),
-                  imageSrc: '/images/landing/studio-transformation-hero-shot.webp',
-                },
-              ]}
-            />
-          }
-          Icon={Sparkles}
-          stacked
-        />
-
-        <LandingHowTwoSteps title={t('how.title')} subtitle={t('how.subtitle')} steps={howSteps} />
 
         <LandingFaq title={t('faq.title')} items={faqItems} />
 

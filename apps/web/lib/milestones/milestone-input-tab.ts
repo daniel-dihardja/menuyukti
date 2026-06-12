@@ -1,5 +1,8 @@
 import type { MilestoneInput } from '@/lib/graphql/node-schemas'
-import { promotionCandidatesMilestoneInputValueSchema } from '@/lib/graphql/node-schemas'
+import {
+  promotionCandidatesMilestoneInputValueSchema,
+  menuClustererMilestoneInputValueSchema,
+} from '@/lib/graphql/node-schemas'
 import {
   milestonePresetInputType,
   type MilestonePresetId,
@@ -9,12 +12,11 @@ import {
 export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
 ): presetId is
-  | 'restaurant_campaign_brief'
   | 'culture_hooks'
   | 'ig_profile'
   | 'menu_tagger'
-  | 'reel_lineup'
   | 'post_lineup'
+  | 'reel_lineup'
   | 'story_lineup'
   | 'scheduler' {
   return milestonePresetInputType(presetId) === 'optional_notes'
@@ -27,8 +29,8 @@ export function optionalNotesFromMilestoneInput(
     | 'culture_hooks'
     | 'ig_profile'
     | 'menu_tagger'
-    | 'reel_lineup'
     | 'post_lineup'
+    | 'reel_lineup'
     | 'story_lineup'
     | 'scheduler',
 ): string {
@@ -37,6 +39,41 @@ export function optionalNotesFromMilestoneInput(
   }
   const n = (raw.value as { notes?: unknown }).notes
   return typeof n === 'string' ? n : ''
+}
+
+const DEFAULT_MENU_CLUSTERER_INPUT = {
+  notes: '',
+}
+
+export function menuClustererInputFromMilestoneInput(raw: MilestoneInput | undefined): {
+  notes: string
+} {
+  if (raw?.type !== 'menu_clusterer' || raw.value == null || typeof raw.value !== 'object') {
+    return { ...DEFAULT_MENU_CLUSTERER_INPUT }
+  }
+  const parsed = menuClustererMilestoneInputValueSchema.safeParse(raw.value)
+  if (!parsed.success) {
+    const legacyNotes = (raw.value as { notes?: unknown }).notes
+    return {
+      notes: typeof legacyNotes === 'string' ? legacyNotes : '',
+    }
+  }
+  return {
+    notes: parsed.data.notes,
+  }
+}
+
+export function normalizeMenuClustererInput(value: { notes: string }): { notes: string } {
+  return {
+    notes: value.notes.trim(),
+  }
+}
+
+export function normalizedMenuClustererInputsEqual(
+  a: { notes: string },
+  b: { notes: string },
+): boolean {
+  return a.notes === b.notes
 }
 
 const DEFAULT_PROMOTION_CANDIDATES_INPUT = {

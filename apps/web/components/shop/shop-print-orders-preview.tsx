@@ -40,7 +40,7 @@ export async function ShopPrintOrdersPreview() {
   }
 
   return (
-    <Card className="mt-8 border-border/80">
+    <Card className="mt-8">
       <CardHeader className="gap-1">
         <CardTitle className="text-lg">{t('previewTitle')}</CardTitle>
         <CardDescription>{t('previewDescription')}</CardDescription>

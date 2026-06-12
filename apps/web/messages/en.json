@@ -146,9 +146,9 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Turn restaurant sales data into Instagram campaigns you can run",
-      "subtitle": "Workflows turns sales signals into campaign briefs, promotion shortlists, schedules, and draft copy you can review step by step. Studio turns your menu photos into on-brand Reels and feed posts.",
-      "badge": "Agentic workflows · Sales-backed · Restaurant Instagram",
+      "headline": "Your POS knows what sells. Instagram doesn't.",
+      "subtitle": "Turn last month's sales into this month's Instagram schedule with AI—promotion picks, posting windows, and draft copy in one workflow.",
+      "badge": "POS → Instagram planning",
       "ctaSecondary": "Sign in",
       "viewLarger": "View larger",
       "carouselLabel": "Product screenshots",
@@ -183,19 +183,67 @@
         }
       }
     },
+    "pain": {
+      "title": "Restaurant Instagram is time-consuming",
+      "subtitle": "Whether you start from a POS export or already have your own process, owners and Instagram partners—freelancers, social managers, or agencies—rarely have a dedicated system for turning sales data into a monthly Instagram plan.",
+      "item1Title": "The work adds up every week",
+      "item1Description": "Planning posts, picking dishes to feature, and keeping the feed fresh adds up to hours every week—on top of everything else that comes with running a restaurant.",
+      "item2Title": "Offline-first needs a different playbook",
+      "item2Description": "Restaurants sell on the floor, not in a checkout flow. What to promote and when to post should follow menu performance and local demand—not the templates online-only brands run on.",
+      "item3Title": "Sales data, plus the layer Instagram planning needs",
+      "item3Description": "When the work is split, the owner has the POS export and the Instagram partner runs the feed. The export shows what sold—the next step is granular analytics like menu engineering, demand timing, and ranked promotion picks that both sides can plan from in one place."
+    },
+    "analyticsComparison": {
+      "title": "POS reports show what sold. Menuyukti shows what to promote.",
+      "subtitle": "Your POS is built for operations—ringing orders, closing shifts, and accounting. Menuyukti adds the analytics layer on top, whether you're building a workflow from scratch or extending one you already use.",
+      "posColumnTitle": "Typical POS reporting",
+      "menuyuktiColumnTitle": "Menuyukti agent signals",
+      "posBullets": [
+        "Daily and weekly totals: revenue, covers, and top sellers by quantity or amount",
+        "Item-level counts and ranks, sometimes with basic margin if COGS are entered in the POS",
+        "Shift summaries or hour-of-day charts when the POS includes timestamps—mainly for staffing and prep",
+        "Category or section sales for inventory and menu mix review",
+        "Menu items as flat line names—no reel hooks, prep style, or occasion metadata for content planning",
+        "Operational insight: what to prep, reorder, or discount—rarely connected to social content"
+      ],
+      "menuyuktiBullets": [
+        "Structured sales signals composed for campaign planning—not just a spreadsheet for the back office",
+        "Menu engineering matrix: stars, puzzles, plow horses, and low performers—so promotion picks follow portfolio logic, not just bestseller lists",
+        "Hourly demand heatmaps, weekday and daypart patterns, and recommended posting windows aligned to when guests actually order",
+        "Category mix trends, rising items, and focus categories that feed brief pillars and content themes",
+        "Semantic tags on each promotion pick—reel moment, prep style, taste, occasion, and more",
+        "Reel clusters that group dishes into shootable series for the month",
+        "Ranked promotion candidates, items to avoid, and schedule-ready signals that flow into briefs, shortlists, and draft copy in Workflows"
+      ],
+      "impactTitle": "Same export, different strategy depth",
+      "impactDescription": "POS dashboards answer how the business performed. Menuyukti answers what to feature, how to group dishes into Reel clusters, when to post, and why—so your Instagram partner can plan with evidence, and the owner can see the reasoning behind every pick."
+    },
+    "bridge": {
+      "title": "One workspace for the owner and the Instagram partner",
+      "subtitle": "Whether one person wears both hats or owner and Instagram partner work separately, Menuyukti connects sales data to a monthly plan—the way restaurant marketing works, not how online brands grow.",
+      "owner": {
+        "title": "Restaurant owner",
+        "description": "Upload last month's sales report at the start of each month and keep the business context in one shared place."
+      },
+      "partner": {
+        "title": "Instagram partner",
+        "description": "Freelancer, social manager, or agency—the person who runs the restaurant's Instagram. Pick a strategy template, attach the latest sales report, adjust inputs, and run the pipeline to generate the month's schedule."
+      }
+    },
     "pillars": {
-      "title": "Two tools, one campaign workflow",
-      "subtitle": "Built for restaurant Instagram teams: Workflows plans campaigns from sales signals, and Studio creates the visuals.",
+      "title": "Workflows at the center of your monthly plan",
+      "subtitle": "Sales-grounded campaign planning is the core job. When you need visuals, Studio turns menu photos into feed-ready assets.",
       "items": {
         "workflows": {
-          "title": "Workflows: agentic campaigns, step by step",
-          "description": "Link location analytics, run milestones for brief, promotion shortlist, schedule, and copy, and keep structured outputs you can review, edit, and rerun."
+          "title": "Workflows: your monthly Instagram schedule, step by step",
+          "description": "Link location analytics, run milestones for brief, promotion shortlist, schedule, and copy, and keep structured outputs you can review, edit, and rerun together."
         },
         "studio": {
-          "title": "Studio: scroll-stopping visuals from your photos",
-          "description": "Upload dish photos and turn them into feed-ready hero shots, Reels assets, and promo designs from one reusable brand library."
+          "title": "Studio (optional)",
+          "description": "When you need visuals, turn menu photos into feed-ready hero shots and Reels assets from one brand library."
         }
-      }
+      },
+      "studioFootnote": "Studio is optional—most teams start with Workflows and add visuals when they're ready."
     },
     "workflows": {
       "title": "Workflows: your campaign lives in a timeline, not a chat thread",
@@ -285,7 +333,7 @@
       }
     },
     "automation": {
-      "title": "How automation works: analytics plus AI",
+      "title": "What the AI pipeline does for you",
       "subtitle": "Menuyukti combines deterministic analytics with AI generation: analytics computes what is happening in your location data, and AI turns that into campaign strategy, storytelling, and draft assets you can review.",
       "items": {
         "campaignBrief": {
@@ -384,7 +432,7 @@
     "faq": {
       "title": "Common questions",
       "q1": "What data do I need to upload?",
-      "a1": "For Workflows with sales-grounded milestones, upload your POS sales report (where your POS format is supported) so we can build demand, mix, and timing signals. Studio does not require sales data—you can create visuals from menu photos alone.",
+      "a1": "At the start of each month, the owner uploads last month's POS sales report (where your POS format is supported). That report powers demand, mix, and timing signals for the Instagram partner's monthly workflow run.",
       "q2": "Do I need sales data to use Studio?",
       "a2": "No. Studio works with your product photos and briefs without any sales upload. Connecting analytics to a workflow unlocks evidence-backed briefs, promotion ideas, and schedules.",
       "q3": "Is this just another chat tool?",
@@ -392,21 +440,21 @@
       "q4": "What is a workflow milestone?",
       "a4": "A milestone is one step in your campaign timeline with a goal, optional pass criteria, and saved output. The agent runs the step with context from prior milestones, and you can review, edit, and rerun as needed.",
       "q5": "Who is Menuyukti built for?",
-      "a5": "Restaurant owners, operators, and solo marketers who run Instagram for small to mid-sized restaurants and want faster execution with stronger data-backed decisions.",
+      "a5": "Restaurant owners and the Instagram partners they work with—freelancers, social managers, or agencies at small to mid-sized restaurants that need a shared workspace for monthly planning backed by real sales data, not guesswork.",
       "q6": "Can I chat without opening a workflow?",
       "a6": "Yes. You can use Advisor chat when you need quick help, and use Workflows when you want a full milestone timeline with persistent outputs."
     },
     "how": {
-      "title": "How it works",
-      "subtitle": "Plan the campaign in Workflows, then create visuals in Studio, all in one platform.",
+      "title": "Your monthly rhythm",
+      "subtitle": "A simple two-step loop at the start of each month—the owner supplies the data, the Instagram partner runs the pipeline.",
       "steps": {
-        "workflows": {
-          "title": "1. Workflows: plan and run the campaign",
-          "description": "Run milestones that produce promotion candidates, content schedules, and draft captions from your sales signals—structured outputs you can trust."
+        "ownerUpload": {
+          "title": "1. Owner uploads last month's sales report",
+          "description": "On the first of the month, upload the POS export from the previous month so the workspace has fresh menu performance data."
         },
-        "studio": {
-          "title": "2. Studio: create visual content",
-          "description": "Generate social-ready creatives from menu photos and briefs, including Reels covers, carousels, and promo assets in one brand library."
+        "partnerRun": {
+          "title": "2. Instagram partner runs the monthly strategy workflow",
+          "description": "Create a new workflow from the strategy template, select the latest sales report, adjust inputs if needed, and rerun the pipeline to generate the month's Instagram schedule."
         }
       }
     },
@@ -421,8 +469,8 @@
       }
     },
     "cta": {
-      "title": "Ready to plan Instagram campaigns from what you sell?",
-      "description": "Use Workflows to build data-backed campaign plans and Studio to create on-brand visuals from menu photos in one platform.",
+      "title": "Ready to share one workspace for your monthly Instagram plan?",
+      "description": "Upload sales reports, run AI workflows together, and build a monthly schedule backed by what your restaurant actually sells.",
       "secondary": "Sign in"
     },
     "footer": {
@@ -665,6 +713,19 @@
       "forbidden": "Only the workspace owner can manage team members.",
       "generic": "Something went wrong. Please try again."
     }
+  },
+  "stylePalette": {
+    "label": "Color style",
+    "amber": "Golden Amber",
+    "saffron": "Saffron Spark",
+    "nectar": "Golden Nectar",
+    "coral": "Coral & Peach",
+    "hearth": "Open Hearth",
+    "terracotta": "Mediterranean Clay",
+    "brass": "Brass Ledger",
+    "sage": "Farm & Herb",
+    "bistro": "Wine Bistro",
+    "espresso": "Roastery"
   },
   "sidebar": {
     "groupLabel": "Menuyukti",
@@ -1164,7 +1225,7 @@
           },
           "quino": {
             "pos": "Quino",
-            "report": "ItemSalesReport.xlsx"
+            "report": "TransactionItemDetailReport.xlsx"
           }
         }
       },
@@ -1187,6 +1248,8 @@
         "finance": "Finance",
         "heatmap": "Heatmap",
         "menuItems": "Menu Items",
+        "orderMetrics": "Order Metrics",
+        "campaignSignals": "Campaign Signals",
         "readiness": {
           "badges": {
             "ready": "Ready",
@@ -1239,13 +1302,13 @@
       "analyticsRunPlaceholder": "Select a run",
       "analyticsRunLoading": "Loading runs…",
       "analyticsRunNone": "No analytics runs found",
-      "templateLabel": "Starter template",
+      "templateLabel": "Strategies",
       "createWorkflowPanel": {
         "title": "New workflow",
         "description": "Choose a location, link the sales report that powers milestone data, then pick a template or start blank.",
         "sectionLocation": "Location",
         "sectionData": "Sales report",
-        "sectionTemplate": "Starter template",
+        "sectionTemplate": "Strategies",
         "footerHint": "Creates the workflow with your location, linked sales report, and template. You can change milestones afterward.",
         "ctaPrimary": "Create workflow"
       },
@@ -1256,8 +1319,9 @@
         "contextBranch": "Location",
         "contextRun": "Sales report",
         "contextTemplate": "Template",
-        "noPreset": "Blank workflow",
+        "noPreset": "None",
         "noPresetDescription": "Start with an empty milestone board.",
+        "localPulseStrategy": "Local Pulse",
         "create": "Create Workflow",
         "creating": "Creating…",
         "cancel": "Cancel",
@@ -1299,6 +1363,15 @@
         "clearChatAriaLabel": "Clear chat",
         "clearChatLabel": "Clear chat",
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
+        "stopChatAriaLabel": "Stop generating",
+        "submitChatAriaLabel": "Send message",
+        "mobileChatOpenLabel": "Workflow assistant",
+        "mobileChatOpenAriaLabel": "Open workflow assistant",
+        "mobileChatSheetTitle": "Workflow assistant",
+        "mobileChatSheetDescription": "Chat with the workflow assistant to plan milestones and get help.",
+        "mobileChatCloseAriaLabel": "Close assistant",
+        "mobileChatEmptyHint": "Ask about milestones, data, or next steps.",
+        "mobileChatContinueHint": "Continue conversation",
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {
@@ -1359,20 +1432,18 @@
             "criterionAllItemsTagged": "Every promotion candidate item has required single-value tags (**kind**, **reel_moment**, **serve_temp**) and optional multi-value dimension arrays.",
             "criterionTaxonomyOnly": "All tag values come from the fixed **v2 taxonomy** enums (no free-form tags). Empty optional tag arrays are valid."
           },
-          "reel_lineup": {
-            "label": "Reel lineup",
-            "title": "Reel lineup",
-            "inputLabel": "Reel lineup notes",
-            "inputDescription": "Optional guidance for hook emphasis. The run reads prior Campaign Brief and Menu Tagger data, then picks food main-course hook leads (strong storytelling, up to five) plus drink beverage hook leads (up to three).",
+          "menu_clusterer": {
+            "label": "Menu clusterer",
+            "title": "Menu clusterer",
+            "inputLabel": "Menu clusterer notes",
+            "inputDescription": "Optional guidance for cluster emphasis. The run reads prior Campaign Brief and Menu Tagger data, builds a deterministic monthly menu-highlight cluster from top popularity scores (ties included), then uses AI for food-only Reel hook clusters.",
             "inputPlaceholder": "e.g. prioritize signature mains with the highest sales…",
-            "goal": "Read prior Campaign Brief strategy plus tagged menu items from Menu Tagger. Pick up to five main-course food items with strong storytelling as Reel hook leads, plus up to three tagged beverage drinks as drink Reel hook leads (storytelling fit not required for drinks). Each food lead starts a Reel group at position 1 and carries the basic weekday lunch cadence for downstream scheduling: Tuesday at 11:00.",
+            "goal": "Read prior Campaign Brief strategy plus tagged menu items from Menu Tagger. Build a deterministic **menu_highlight** cluster from tagged **food main-course** items in the top five distinct popularity scores (include every item that shares an included score). Rank the same score tier as eligible hook-cluster position-1 leads, then generate food-only Reel clusters (4–8, sized from the tagged menu) with varied tag-based combinations (2–5 items each). Every tagged food item must appear in at least one cluster. Each cluster includes a clusterDescription explaining grouping rationale and location-concept fit.",
             "criterionPriorCampaignBrief": "Run used a prior **restaurant_campaign_brief** milestone with saved strategy data.",
             "criterionPriorMenuTagger": "Run used a prior **menu_tagger** milestone with tagged items.",
-            "criterionHookGroupCount": "Data includes **up to 5** food Reel hook groups.",
-            "criterionMainCourseHook": "Each food group's position-1 item is a **main-course food** item with **strong storytelling**.",
-            "criterionDrinkHookGroupCount": "Data includes **up to 3** drink Reel hook groups.",
-            "criterionDrinkHook": "Each drink group's position-1 item is a tagged **beverage drink** with a reel moment (storytelling fit not required).",
-            "criterionSchedulingHints": "Each food Reel group includes strategy focus plus weekday lunch scheduling hints aligned to Tuesday at 11:00."
+            "criterionHookGroupCount": "Data includes the derived number of **food Reel hook clusters** (4–8) sized to cover the tagged menu.",
+            "criterionTopFiveLead": "Each hook Reel cluster's position-1 item is in the **top popularity score-tier** (top five scores; storytelling breaks ties among same score).",
+            "criterionClusterDescription": "Each food cluster includes a **clusterDescription** explaining grouping rationale and location-concept fit."
           },
           "story_lineup": {
             "label": "Story lineup",
@@ -1380,22 +1451,41 @@
             "inputLabel": "Holiday story notes",
             "inputDescription": "Optional guidance for which public holidays from the prior **dates** milestone should get an Instagram Story greeting. Name holidays to include or skip; leave empty to let the run decide from the holiday list alone.",
             "inputPlaceholder": "e.g. Mark Easter Sunday and Christmas Day; skip Memorial Day and remembrance days…",
-            "goal": "Read the campaign window and public holidays from a prior **dates** milestone, then decide which holidays deserve a cheerful Instagram Story greeting. Save each selected story in **stories** with **fixdate** set so the scheduler can place it on the holiday date. Place this milestone after **dates** and before **scheduler** in the timeline.",
+            "goal": "Read the campaign window and public holidays from a prior **dates** milestone, then decide which holidays deserve a cheerful Instagram Story greeting. Always include one **user_review** story (positive customer feedback screenshot) with **fixdate** false so the scheduler can place it every four weeks. Save each selected holiday story in **stories** with **fixdate** set so the scheduler can place it on the holiday date. Place this milestone after **dates** and before **scheduler** in the timeline.",
             "criterionPriorDates": "Run used a prior **dates** milestone with saved start, end, and public holidays.",
             "criterionStoriesPresent": "**stories** lists every selected public-holiday Story with a non-empty **title**.",
-            "criterionPublicHolidayFixdate": "Each public-holiday story has **fixdate** true and a **date** matching the holiday in the dates milestone."
+            "criterionPublicHolidayFixdate": "Each public-holiday story has **fixdate** true and a **date** matching the holiday in the dates milestone.",
+            "criterionUserReviewStory": "**stories** always includes one **user_review** story with **fixdate** false."
           },
           "post_lineup": {
             "label": "Post lineup",
             "title": "Post lineup",
             "inputLabel": "Post lineup notes",
-            "inputDescription": "Optional guidance for post emphasis. The run reads prior Reel Lineup milestone data and drafts Instagram feed post concepts from foodLeads.",
+            "inputDescription": "Optional guidance for post emphasis. The run reads prior Dates, Campaign brief, and Menu clusterer groups to plan a monthly pin post (menu_highlight cluster: top popularity dishes) and one distinct weekday lunch feed post for each week in the campaign window.",
             "inputPlaceholder": "e.g. emphasize hero plating and warm lighting on signature mains…",
-            "goal": "Read saved Reel Lineup from an earlier workflow milestone and draft Instagram feed post concepts. Build a pinned monthly menu carousel from foodLeads: one slide per dish with the dish name and a high-quality photo brief. Place this milestone after Reel Lineup in the timeline.",
-            "criterionPriorReelLineup": "Run used a prior **reel_lineup** milestone with **foodLeads**.",
-            "criterionCarouselPost": "**posts** includes at least one **carousel** post concept.",
-            "criterionSlideCount": "Carousel **slide** count matches **foodLeads** length.",
+            "goal": "Read saved Dates, Campaign brief, and Menu clusterer output from earlier workflow milestones and plan Instagram feed carousel posts: one pinned monthly signature menu post using the deterministic menu_highlight cluster (all top popularity-score-tier dishes as slides) and one distinct weekday lunch post for each calendar week in the campaign window. Each post combines menu clusterer groups into slides with dish names and photo briefs, plus a concept description and caption guidance grounded in the campaign brief. The scheduler assigns publish dates from post intent. Place this milestone after Dates and Menu clusterer in the timeline.",
+            "criterionPriorDates": "Run used a prior **dates** milestone with saved start and end dates.",
+            "criterionPriorCampaignBrief": "Run used a prior **restaurant_campaign_brief** milestone for location context.",
+            "criterionPriorMenuClusterer": "Run used a prior **menu_clusterer** milestone with **groups**.",
+            "criterionCarouselPost": "**posts** includes one **pinned_monthly_menu** carousel and one **weekday_lunch_post** carousel per week in the campaign window.",
+            "criterionWeeklyFixdate": "Each **weekday_lunch_post** has **fixdate** true and a **date** within the campaign window.",
+            "criterionSlideCount": "Each post has **slides** sourced from selected menu clusterer **groups** (1–5 slides).",
             "criterionSlideFields": "Every slide has non-empty **dishName** and **imageBrief**."
+          },
+          "reel_lineup": {
+            "label": "Reel lineup",
+            "title": "Reel lineup",
+            "inputLabel": "Reel lineup notes",
+            "inputDescription": "Optional guidance for reel emphasis. The run reads prior Dates, Campaign brief, and Menu clusterer groups to plan one weekday and one weekend Instagram Reel for each week in the campaign window. Static-hero groups are assigned automatically.",
+            "inputPlaceholder": "e.g. emphasize sizzle hooks on signature mains for weekday lunch…",
+            "goal": "Read saved Dates, Campaign brief, and Menu clusterer output from earlier workflow milestones and plan Instagram Reels: one weekday reel and one weekend reel for each calendar week between the campaign start and end dates. The LLM writes titles, descriptions, and strategic explanations; build assigns static-hero menu clusterer groups to each slot. Place this milestone after Dates and Menu clusterer in the timeline.",
+            "criterionPriorDates": "Run used a prior **dates** milestone with saved start and end dates.",
+            "criterionPriorCampaignBrief": "Run used a prior **restaurant_campaign_brief** milestone for location context.",
+            "criterionPriorMenuClusterer": "Run used a prior **menu_clusterer** milestone with **groups**.",
+            "criterionTwoReelsPerWeek": "**reels** includes two entries per campaign week (weekday + weekend) in the dates window.",
+            "criterionWeekdayWeekendIntents": "Each week has one **weekday_reel** and one **weekend_reel**.",
+            "criterionDescriptionExplanation": "Every reel has non-empty **description** and **explanation**.",
+            "criterionStaticHeroGroups": "Each reel references static-hero menu clusterer **groupIds** assigned in build."
           },
           "culture_hooks": {
             "label": "Culture hooks",
@@ -1424,14 +1514,13 @@
             "label": "Scheduler",
             "title": "Scheduler",
             "inputLabel": "Scheduler notes",
-            "inputDescription": "Optional guidance for scheduling emphasis. This step reads the campaign window from **dates**, business strategy from **restaurant_campaign_brief**, and food Reel rotation hints from **reel_lineup**. For now the weekday lunch cadence is fixed to Tuesday at 11:00.",
-            "inputPlaceholder": "e.g. keep the Tuesday 11:00 lunch Reel cadence and avoid back-to-back hero dishes…",
-            "goal": "Read the campaign window from **dates**, the lunch-first business strategy from **restaurant_campaign_brief**, and food-group rotation hints from **reel_lineup**. Place food Reels on the calendar as a recurring weekly lunch cadence on Tuesday at 11:00 with explicit slot kinds.",
-            "criterionPriorDates": "Run used a prior **dates** milestone with saved start and end dates.",
-            "criterionPriorCampaignBrief": "Run used a prior **restaurant_campaign_brief** milestone with saved strategy data.",
-            "criterionPriorReelLineup": "Run used a prior **reel_lineup** milestone with saved food groups.",
-            "criterionWindowPresent": "Scheduler data includes **startDate** and **endDate** for the campaign window.",
-            "criterionReelSlotKinds": "Scheduler data includes explicit **reel** slots with `kind` set and reel-lineup provenance."
+            "inputDescription": "Optional guidance for scheduling emphasis. This step reads the campaign window from **dates**, business strategy from **restaurant_campaign_brief**, and saved **post_lineup** and **story_lineup** milestones when present.",
+            "inputPlaceholder": "e.g. prioritize monthly menu post on the 1st and keep holiday stories on fixdates…",
+            "goal": "Read the campaign window from **dates**, business strategy from **restaurant_campaign_brief**, and saved post, story, and reel lineups when present. Place feed posts, Stories, and Reels on the calendar with explicit slot kinds and meet the core cadence: one monthly menu highlight post per 4-week block, one weekday lunch post per schedulable campaign week (monthly highlight may share a week), one weekday reel per schedulable week with a weekday in the window, and one weekend reel per schedulable week with a weekend day in the window.",
+            "criterionMonthlyMenuHighlight": "Exactly **one monthly menu highlight post** is scheduled in each **4-week block** of the campaign window.",
+            "criterionWeeklyWeekdayPost": "Each **schedulable campaign week** (at least 3 in-window days) has exactly **one weekday lunch post**. A monthly menu highlight post in the same week does not count toward this limit.",
+            "criterionWeeklyWeekdayReel": "Each schedulable campaign week that includes a **weekday** in the campaign window has exactly **one weekday reel**.",
+            "criterionWeeklyWeekendReel": "Each schedulable campaign week that includes a **weekend day** in the campaign window has exactly **one weekend reel**. Short tail weeks with fewer than 3 in-window days are exempt."
           },
           "restaurant_campaign_brief": {
             "label": "Campaign brief",
@@ -1439,6 +1528,8 @@
             "inputLabel": "Campaign brief notes",
             "inputDescription": "Optional context for generation (style, positioning, constraints). Example: during a soccer World Cup period, note campaign priorities or tone for match days. Included with location and analytics data when you run or generate the brief.",
             "inputPlaceholder": "e.g. Family-friendly trattoria tone; highlight lunch and vegetarian options…",
+            "reflectionLabel": "Reflection",
+            "reflectionDescription": "When enabled, a quality pass reviews the draft against your pass criteria and revises weak sections before the brief is saved. Milestone evaluation still runs afterward to verify completeness.",
             "goal": "The data holds a factual campaign brief foundation: venue snapshot, an explicit overall business strategy for audience ordering and lunch-first focus, objective and funnel stage, target segments, message hierarchy, CTA/offer plan, content and proof strategy, plus measurement/testing/risk guardrails grounded in available analytics.",
             "criterionStartDate": "**startDate** is set in the data using the Input tab campaign window.",
             "criterionEndDate": "**endDate** is set in the data using the Input tab campaign window.",
@@ -1475,7 +1566,7 @@
         "moveMilestoneUp": "Move milestone up",
         "moveMilestoneDown": "Move milestone down",
         "milestonesMoveError": "Could not reorder milestones. Please try again.",
-        "timelineListLabel": "Milestone timeline",
+        "timelineListLabel": "Milestones",
         "milestoneExpandDetails": "Expand details",
         "milestoneCollapseDetails": "Collapse details",
         "collapseAllMilestones": "Collapse all milestones",
@@ -1675,12 +1766,20 @@
         "milestoneSchedulerPreviewWeekRange": "{start} – {end}",
         "milestoneSchedulerPreviewTimeColumnLabel": "Time",
         "milestoneSchedulerPreviewSlotAria": "{title} at {time}",
+        "milestoneSchedulerPreviewMarkersLabel": "Markers:",
+        "milestoneSchedulerPreviewWeekendBadge": "Weekend",
+        "milestoneSchedulerPreviewHolidayBadge": "Holiday",
         "milestoneSchedulerPreviewBackToCalendar": "Back to calendar",
         "milestoneSchedulerPreviewDateEmpty": "No scheduled entries on this date.",
+        "milestoneSchedulerPreviewPostDetailMissing": "Post preparation details are not available for this entry. Re-run the scheduler milestone after updating post lineup.",
+        "milestoneSchedulerPreviewReelDetailMissing": "Reel preparation details are not available for this entry. Re-run the scheduler milestone after updating reel lineup.",
         "milestoneSchedulerPreviewNoPriorDatesTitle": "No dates milestone found",
         "milestoneSchedulerPreviewNoPriorDatesBody": "Add a **dates** milestone before this one in the timeline and set a start and end date.",
         "milestoneSchedulerPreviewIncompleteWindowTitle": "Campaign window incomplete",
         "milestoneSchedulerPreviewIncompleteWindowBody": "The prior **dates** milestone needs a start and end date. Set them on the dates Input tab or run the dates milestone.",
+        "milestoneSchedulerPreviewScheduleExplanation": "Scheduling approach",
+        "milestoneSchedulerPreviewScheduleExplanationExpand": "Read why this schedule was chosen",
+        "milestoneSchedulerPreviewScheduleExplanationCollapse": "Hide scheduling approach",
         "milestoneCultureHooksPreviewLocationConcept": "Location concept",
         "milestoneCultureHooksPreviewTargetAudience": "Target audience",
         "milestoneCultureHooksPreviewIntersections": "Intersections",
@@ -1710,49 +1809,114 @@
         "milestoneLineupPreviewBackToList": "Back to list",
         "milestoneLineupPreviewBackToListAria": "Back to lineup list",
         "milestoneLineupPreviewItemCount": "{count, plural, one {# item} other {# items}}",
-        "milestoneReelLineupPreviewGroupListMeta": "{leadLabel}: {leadName} · {anchor} · {itemCount, plural, one {# item} other {# items}}",
-        "milestoneReelLineupPreviewReelMomentLabel": "Reel moment",
-        "milestonePostLineupPreviewPostListMeta": "Post {number} · {slideCount, plural, one {# slide} other {# slides}}",
+        "milestoneMenuClustererPreviewGroupListMeta": "{leadLabel}: {leadName} · {anchor} · {itemCount, plural, one {# item} other {# items}}",
+        "milestoneMenuClustererPreviewReelMomentLabel": "Reel moment",
+        "milestoneMenuClustererPreviewDetailsBadge": "Cluster details",
+        "milestoneMenuClustererPreviewItemsSectionTitle": "Items",
+        "milestoneMenuClustererPreviewRoleLabel": "Role",
+        "milestoneMenuClustererPreviewCategoryLabel": "Category",
+        "milestoneMenuClustererPreviewPositionLabel": "Position",
+        "milestoneMenuClustererPreviewGroupMixLabel": "Group mix",
+        "milestoneMenuClustererPreviewGroupMixValue": "{starCount, plural, one {# star} other {# stars}} · {puzzleCount, plural, one {# puzzle} other {# puzzles}} · {storytellingStrongCount, plural, one {# strong storytelling fit} other {# strong storytelling fits}}",
+        "milestoneMenuClustererPreviewStrategySectionTitle": "Strategy context",
+        "milestoneMenuClustererPreviewStrategyFocusLabel": "Strategy focus",
+        "milestoneMenuClustererPreviewCoreMessageLabel": "Core message",
+        "milestoneMenuClustererPreviewCreativeRoleLabel": "Creative role",
+        "milestoneMenuClustererPreviewAssetHintLabel": "Asset hint",
+        "milestoneMenuClustererPreviewScheduleHintsSectionTitle": "Schedule hints",
+        "milestoneMenuClustererPreviewPreferredWeekdaysLabel": "Preferred weekdays",
+        "milestoneMenuClustererPreviewPreferredTimeLabel": "Preferred time",
+        "milestoneMenuClustererPreviewCadenceEligibleLabel": "Cadence eligible",
+        "milestoneMenuClustererPreviewCadenceEligibleYes": "Yes",
+        "milestoneMenuClustererPreviewCadenceEligibleNo": "No",
+        "milestoneMenuClustererPreviewWeekdayMonday": "Monday",
+        "milestoneMenuClustererPreviewWeekdayTuesday": "Tuesday",
+        "milestoneMenuClustererPreviewWeekdayWednesday": "Wednesday",
+        "milestoneMenuClustererPreviewWeekdayThursday": "Thursday",
+        "milestoneMenuClustererPreviewWeekdayFriday": "Friday",
+        "milestoneMenuClustererPreviewWeekdaySaturday": "Saturday",
+        "milestoneMenuClustererPreviewWeekdaySunday": "Sunday",
+        "milestonePostLineupPreviewPostListMeta": "Post {number} · {slideCount, plural, one {# slide} other {# slides}}{hasDate, select, true { · {date}} other {}}",
         "milestoneStoryLineupPreviewDateLabel": "Date",
         "milestoneStoryLineupPreviewHolidayLabel": "Holiday",
         "milestoneStoryLineupPreviewTimeLabel": "Time",
-        "milestoneReelLineupPreviewSummary": "{foodGroupCount, plural, =0 {No food Reel groups} one {# food Reel group} other {# food Reel groups}} · {drinkGroupCount, plural, =0 {no drink Reel groups} one {# drink Reel group} other {# drink Reel groups}} · {assignedCount, plural, =0 {no items assigned} one {# item assigned} other {# items assigned}} · {unassignedCount, plural, =0 {none unassigned} one {# unassigned} other {# unassigned}}",
-        "milestoneReelLineupPreviewSourceTitle": "Source menu tagger",
-        "milestoneReelLineupPreviewSourceCampaignBriefTitle": "Source campaign brief",
-        "milestoneReelLineupPreviewFoodSectionTitle": "Food Reel groups",
-        "milestoneReelLineupPreviewDrinkSectionTitle": "Drink Reel groups",
-        "milestoneReelLineupPreviewFoodEmptyTitle": "No food Reel groups yet",
-        "milestoneReelLineupPreviewFoodEmptyBody": "Run the Reel lineup milestone after Menu Tagger to pick up to five main-course hook leads with strong storytelling.",
-        "milestoneReelLineupPreviewDrinkEmptyTitle": "No drink Reel groups yet",
-        "milestoneReelLineupPreviewDrinkEmptyBody": "Tagged beverage drinks from Menu Tagger appear here as drink hook leads (up to three; storytelling fit is not required).",
-        "milestoneReelLineupPreviewGroupTitle": "Reel group {id}",
-        "milestoneReelLineupPreviewLeadDishLabel": "Lead dish",
-        "milestoneReelLineupPreviewLeadDrinkLabel": "Lead drink",
-        "milestoneReelLineupPreviewHookBadge": "Reel hook",
-        "milestoneReelLineupPreviewUnassignedTitle": "Unassigned items",
-        "milestoneReelLineupPreviewHelpUnassigned": "Menu tagger items that were not selected as a food or drink Reel hook lead.",
-        "milestoneReelLineupPreviewPopularityLabel": "Popularity {value, number, percent}",
-        "milestoneReelLineupPreviewNotes": "Notes",
-        "milestoneReelLineupPreviewNoNotes": "No notes added.",
+        "milestoneMenuClustererPreviewSummary": "{foodGroupCount, plural, =0 {No food Reel groups} one {# food Reel group} other {# food Reel groups}} · {assignedCount, plural, =0 {no items assigned} one {# item assigned} other {# items assigned}} · {unassignedCount, plural, =0 {none unassigned} one {# unassigned} other {# unassigned}}",
+        "milestoneMenuClustererPreviewSourceTitle": "Source menu tagger",
+        "milestoneMenuClustererPreviewSourceCampaignBriefTitle": "Source campaign brief",
+        "milestoneMenuClustererPreviewFoodSectionTitle": "Food Reel groups",
+        "milestoneMenuClustererPreviewFoodEmptyTitle": "No food Reel groups yet",
+        "milestoneMenuClustererPreviewFoodEmptyBody": "Run the Menu clusterer milestone after Menu Tagger to generate food Reel clusters from all tagged food items (cluster count is derived from menu size).",
+        "milestoneMenuClustererPreviewGroupTitle": "Reel group {id}",
+        "milestoneMenuClustererPreviewClusterDescription": "Group note",
+        "milestoneMenuClustererPreviewLeadDishLabel": "Lead dish",
+        "milestoneMenuClustererPreviewHookBadge": "Reel hook",
+        "milestoneMenuClustererPreviewMenuHighlightBadge": "Monthly menu highlight",
+        "milestoneMenuClustererPreviewUnassignedTitle": "Unassigned items",
+        "milestoneMenuClustererPreviewHelpUnassigned": "Menu tagger items that were not placed in any food cluster.",
+        "milestoneMenuClustererPreviewPopularityLabel": "Popularity {value}",
+        "milestoneMenuClustererPreviewNotes": "Notes",
+        "milestoneMenuClustererPreviewNoNotes": "No notes added.",
         "milestoneStoryLineupPreviewHeading": "Instagram Stories lineup",
-        "milestoneStoryLineupPreviewEmpty": "No stories selected yet. Run Story lineup after Dates to pick public-holiday Story greetings.",
+        "milestoneStoryLineupPreviewEmpty": "No stories yet. Run Story lineup after Dates to build the user-review story and pick public-holiday Story greetings.",
         "milestoneStoryLineupPreviewSourceDates": "Source dates milestone",
         "milestoneStoryLineupPreviewFixdateBadge": "Fixed date",
         "milestoneStoryLineupPreviewPublicHolidayBadge": "Public holiday",
+        "milestoneStoryLineupPreviewUserReviewBadge": "User review",
+        "milestoneStoryLineupPreviewIntervalLabel": "Schedule interval",
+        "milestoneStoryLineupPreviewIntervalValue": "Every {weeks, plural, one {# week} other {# weeks}}",
         "milestonePostLineupPreviewSummary": "{postCount, plural, =0 {No posts} one {# post concept} other {# post concepts}} · {slideCount, plural, =0 {no slides} one {# slide} other {# slides}}",
-        "milestonePostLineupPreviewSourceTitle": "Source reel lineup",
+        "milestonePostLineupPreviewSourceTitle": "Source menu clusterer",
+        "milestonePostLineupPreviewSourceCampaignBriefTitle": "Source campaign brief",
+        "milestonePostLineupPreviewSourceDatesTitle": "Source dates",
+        "milestonePostLineupPreviewCampaignWindow": "Campaign window",
+        "milestonePostLineupPreviewCampaignWindowValue": "{startDate} – {endDate}",
+        "milestonePostLineupPreviewScheduledDate": "{date}",
         "milestonePostLineupPreviewEmptyTitle": "No post concepts yet",
-        "milestonePostLineupPreviewEmptyBody": "Run the Post lineup milestone after Reel Lineup to draft a pinned monthly menu carousel from foodLeads.",
+        "milestonePostLineupPreviewEmptyBody": "Run the Post lineup milestone after Dates, Campaign brief, and Menu clusterer to plan a monthly pin post and one weekday lunch feed post for each week in the campaign window.",
         "milestonePostLineupPreviewPostTitle": "Post {number}: {title}",
+        "milestonePostLineupPreviewDescription": "Description",
+        "milestonePostLineupPreviewCaptionGuidance": "Caption guidance",
         "milestonePostLineupPreviewCarouselBadge": "Carousel",
         "milestonePostLineupPreviewPinnedBadge": "Pinned monthly menu",
+        "milestonePostLineupPreviewWeeklyLunchBadge": "Weekday lunch post",
         "milestonePostLineupPreviewSlideTitle": "Slide {number}: {dishName}",
-        "milestonePostLineupPreviewImageBrief": "Photo brief",
         "milestonePostLineupPreviewRoleStar": "Star",
         "milestonePostLineupPreviewRolePuzzle": "Puzzle",
-        "milestonePostLineupPreviewHelpPosts": "Instagram feed post concepts built from Reel Lineup foodLeads. Each carousel slide names a dish and includes a visual brief for a high-quality dish photo.",
+        "milestonePostLineupPreviewHelpPosts": "Instagram feed post concepts built from Dates, Campaign brief context, and Menu clusterer groups. Includes one pinned monthly signature menu post (menu_highlight cluster slides) and one distinct weekday lunch post for each calendar week in the campaign window; each post has a concept description and caption guidance from the campaign brief. Weekly posts include a fixed schedule date.",
         "milestonePostLineupPreviewNotes": "Notes",
         "milestonePostLineupPreviewNoNotes": "No notes added.",
+        "milestoneReelLineupPreviewSummary": "{reelCount, plural, =0 {No reels} one {# reel concept} other {# reel concepts}}",
+        "milestoneReelLineupPreviewSourceTitle": "Source menu clusterer",
+        "milestoneReelLineupPreviewSourceCampaignBriefTitle": "Source campaign brief",
+        "milestoneReelLineupPreviewSourceDatesTitle": "Source dates",
+        "milestoneReelLineupPreviewCampaignWindow": "Campaign window",
+        "milestoneReelLineupPreviewCampaignWindowValue": "{startDate} – {endDate}",
+        "milestoneReelLineupPreviewEmptyTitle": "No reel concepts yet",
+        "milestoneReelLineupPreviewEmptyBody": "Run the Reel lineup milestone after Dates, Campaign brief, and Menu clusterer to plan one weekday and one weekend Reel for each week in the campaign window.",
+        "milestoneReelLineupPreviewReelListMeta": "Reel {number}",
+        "milestoneReelLineupPreviewReelTitle": "Reel {number}: {title}",
+        "milestoneReelLineupPreviewHeroDishTitle": "Hero dish {number}: {dishName}",
+        "milestoneReelLineupPreviewReelMoment": "Reel moment",
+        "milestoneReelLineupPreviewDescription": "Description",
+        "milestoneReelLineupPreviewExplanation": "Explanation",
+        "milestoneReelLineupPreviewScheduleHintsSectionTitle": "Schedule hints",
+        "milestoneReelLineupPreviewPreferredWeekdaysLabel": "Preferred weekdays",
+        "milestoneReelLineupPreviewPreferredTimeLabel": "Preferred time",
+        "milestoneReelLineupPreviewWeekdayMonday": "Monday",
+        "milestoneReelLineupPreviewWeekdayTuesday": "Tuesday",
+        "milestoneReelLineupPreviewWeekdayWednesday": "Wednesday",
+        "milestoneReelLineupPreviewWeekdayThursday": "Thursday",
+        "milestoneReelLineupPreviewWeekdayFriday": "Friday",
+        "milestoneReelLineupPreviewWeekdaySaturday": "Saturday",
+        "milestoneReelLineupPreviewWeekdaySunday": "Sunday",
+        "milestoneReelLineupPreviewHeroDishes": "Hero dishes",
+        "milestoneReelLineupPreviewGroupIds": "Group IDs",
+        "milestoneReelLineupPreviewReelBadge": "Reel",
+        "milestoneReelLineupPreviewWeekdayBadge": "Weekday reel",
+        "milestoneReelLineupPreviewWeekendBadge": "Weekend reel",
+        "milestoneReelLineupPreviewHelpReels": "Instagram Reel concepts for each campaign week: one weekday reel and one weekend reel between the saved start and end dates. Static-hero menu clusterer groups are assigned in build; copy includes title, description, and strategic explanation.",
+        "milestoneReelLineupPreviewNotes": "Notes",
+        "milestoneReelLineupPreviewNoNotes": "No notes added.",
         "milestoneMenuTaggerPreviewUsedTagsEmpty": "No tags assigned yet.",
         "milestoneMenuTaggerPreviewHelpUsedTags": "Unique tags rolled up across all tagged menu items, grouped by taxonomy dimension. Use this to see which ingredients, reel moments, and content angles appear in your lineup.",
         "milestoneMenuTaggerPreviewHelpTaggedItems": "Each dish from promotion candidates with AI-assigned tags. Star and puzzle badges reflect menu-engineering roles from analytics; the storytelling badge shows how well the dish name fits your campaign brief for Instagram content.",
@@ -1797,6 +1961,8 @@
         "milestoneResultEmpty": "No result yet.",
         "milestonePlayTooltip": "Run this milestone",
         "milestonePlayAriaLabel": "Run milestone",
+        "milestoneStopTooltip": "Stop this milestone run",
+        "milestoneStopAriaLabel": "Stop milestone run",
         "milestoneRunUserMessage": "Run this milestone now.",
         "milestoneRunError": "Could not run milestone evaluation. Please try again.",
         "milestoneDataDescriptionLocationProfile": "Uses your latest analytics run and operating profile metrics. Generate to fill milestone data, then adjust fields in the preview if needed. Adjust the goal and criteria as needed before you run evaluation.",
@@ -1858,8 +2024,38 @@
         "goalSaveError": "Could not save goal. Please try again."
       },
       "milestoneRun": {
-        "runningLabel": "Evaluation in progress…",
-        "stepFetchContext": "Fetching context",
+        "runningLabel": "Milestone run in progress…",
+        "campaignBriefRunningLabel": "Campaign brief in progress…",
+        "campaignBriefEvalRunningLabel": "Checking pass criteria…",
+        "campaignBriefStepStarting": "Starting campaign brief…",
+        "campaignBriefStepPrepare": "Loading restaurant signals",
+        "campaignBriefStepGenerate": "Generating campaign brief",
+        "campaignBriefStepReview": "Reviewing brief — quality check {pass} of {max}",
+        "campaignBriefStepRevise": "Revising brief from feedback — pass {pass} of {max}",
+        "campaignBriefStepSave": "Saving campaign brief",
+        "campaignBriefPipelineCreate": "Create brief",
+        "campaignBriefPipelineReview": "Review brief",
+        "campaignBriefPipelineReviewAgain": "Review again",
+        "campaignBriefPipelineEdit": "Edit brief",
+        "campaignBriefPipelineSave": "Save brief",
+        "campaignBriefPhaseGenerate": "Generate brief",
+        "campaignBriefPhaseReview": "Review brief",
+        "campaignBriefPhaseRevise": "Revise from feedback",
+        "campaignBriefPhaseReviewAgain": "Review again",
+        "campaignBriefPhaseSave": "Save brief",
+        "campaignBriefReflectLoopHint": "Reflection may review and revise the draft up to two times before pass-criteria evaluation.",
+        "campaignBriefReflectionDisabledHint": "Reflection is off for this run. Enable it in the Input tab to quality-check the draft before evaluation.",
+        "campaignBriefReflectionPendingHint": "Reflection will run after the first draft is generated.",
+        "campaignBriefReflectionFeedTitle": "Reflection quality checks",
+        "campaignBriefReflectionRoundHeading": "Review pass {pass} of {max}",
+        "campaignBriefReflectionRoundAllPass": "All {total} checks passed — draft quality looks good.",
+        "campaignBriefReflectionRoundSummary": "{passCount} passed, {failCount} need improvement (of {total}).",
+        "campaignBriefReflectionCritiqueRunning": "Running quality checks against your pass criteria…",
+        "campaignBriefReflectionReviseHeading": "Revising draft from feedback (pass {pass})",
+        "campaignBriefReflectionReviseFallback": "Improve this section.",
+        "stepReflectCritique": "Quality review",
+        "stepReflectRevise": "Revising draft",
+        "stepFetchContext": "Generating output",
         "stepEvaluateCriteria": "Evaluating criteria",
         "stepUpdateCriteria": "Updating records",
         "stepSynthesize": "Synthesising",
@@ -1948,7 +2144,153 @@
       "backToSales": "Back to sales",
       "createWorkflowFromReport": "Create workflow",
       "createWorkflowFromReportHint": "Open workflows with this report context to plan promos from these insights.",
-      "breadcrumbRunLoading": "Report"
+      "breadcrumbRunLoading": "Report",
+      "orderMetrics": {
+        "avgOrderSize": "Avg Order Size",
+        "avgOrderRevenue": "Avg Order Revenue",
+        "byDayTitle": "By day of week",
+        "dayColumn": "Day",
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        }
+      }
+    },
+    "campaignSignals": {
+      "reportTitle": "Campaign Signals",
+      "pageLoadingTitle": "Loading campaign signals…",
+      "breadcrumb": "Campaign Signals",
+      "heading": "Campaign Signals",
+      "description": "Deterministic analytics inputs used when generating campaign briefs — sales fundamentals, timing, menu guardrails, and planning recommendations for this location.",
+      "emptyTitle": "No campaign signals yet",
+      "emptyDescription": "This report has no parsed order data. Upload a sales file with line items so signals can be computed.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "coverageNotesTitle": "Data coverage notes",
+      "sections": {
+        "coverage": "Data coverage",
+        "fundamental": "Fundamental signals",
+        "order": "Order signals",
+        "timing": "Timing & posting",
+        "matrix": "Menu matrix guardrails",
+        "planning": "Campaign planning"
+      },
+      "capabilities": {
+        "orderId": "Order-level data",
+        "noOrderId": "No order-level data",
+        "datetime": "Datetime data",
+        "noDatetime": "No datetime data",
+        "enabledBlocks": "Enabled blocks: {blocks}"
+      },
+      "confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
+      },
+      "sales": {
+        "totalRevenue": "Total revenue",
+        "totalItemsSold": "Items sold",
+        "uniqueMenuItems": "Unique menu items",
+        "avgItemPrice": "Avg item price"
+      },
+      "categoryFocus": {
+        "title": "Top revenue category",
+        "revenueShare": "Revenue share",
+        "quantityShare": "Quantity share"
+      },
+      "trending": {
+        "title": "Rising items",
+        "description": "Menu items with rising revenue vs the prior period",
+        "menuColumn": "Menu item",
+        "currentRevenue": "Current revenue",
+        "changePct": "Change",
+        "rank": "Rank",
+        "wasRank": "was {rank}"
+      },
+      "order": {
+        "totalOrders": "Total orders",
+        "avgOrderRevenue": "Avg order revenue",
+        "avgOrderItems": "Avg items per order",
+        "revenueRange": "Order revenue range"
+      },
+      "timing": {
+        "peakDay": "Peak demand day",
+        "peakRevenueDay": "Peak revenue day",
+        "primaryMealPeriod": "Primary meal period",
+        "peakRevenueMealPeriod": "Peak revenue meal period",
+        "peakHour": "Peak hour",
+        "periodHeadline": "Reporting period",
+        "periodRevenue": "Period revenue",
+        "previousRevenue": "Previous period",
+        "vsPrevious": "Vs previous period"
+      },
+      "matrix": {
+        "heroesTitle": "Content heroes",
+        "heroesDescription": "Star items recommended for spotlight content",
+        "heroesEmpty": "No hero items identified",
+        "avoidTitle": "Use cautiously",
+        "avoidDescription": "Low-end matrix items to avoid over-promoting",
+        "avoidEmpty": "No avoid items flagged",
+        "empty": "Menu engineering signals need COGS data. Add costs to unlock hero and avoid lists.",
+        "menuColumn": "Menu item",
+        "categoryColumn": "Matrix",
+        "revenueColumn": "Revenue"
+      },
+      "planning": {
+        "title": "Planning recommendations",
+        "description": "Derived posting and objective hints for campaign briefs",
+        "objective": "Recommended objective",
+        "primaryCta": "Primary CTA channel",
+        "postingDays": "Recommended posting days",
+        "dayparts": "Recommended dayparts"
+      },
+      "objectives": {
+        "awareness": "Awareness",
+        "consideration": "Consideration",
+        "conversion": "Conversion",
+        "unknown": "Unknown objective"
+      },
+      "cta": {
+        "profileVisit": "Profile visit",
+        "dm": "Direct message",
+        "orderOrReservation": "Order or reservation",
+        "unknown": "Unknown CTA"
+      },
+      "unavailable": {
+        "orderSignals": "Order-level signals are unavailable because this report lacks order identifiers.",
+        "datetimeSignals": "Timing signals are unavailable because this report lacks order timestamps."
+      },
+      "links": {
+        "heatmap": "View heatmap",
+        "cogs": "Add COGS",
+        "matrix": "View matrix"
+      }
+    },
+    "orderMetrics": {
+      "reportTitle": "Order Metrics",
+      "pageLoadingTitle": "Loading order metrics…",
+      "breadcrumb": "Order Metrics",
+      "heading": "Order Metrics",
+      "description": "Average order size and revenue for this sales report, including breakdown by day of week.",
+      "empty": "No order metrics for this run.",
+      "emptyTitle": "No order metrics yet",
+      "emptyDescription": "This report does not include enough order data to calculate averages. Try another upload or check that the sales file contains order-level detail.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "kpi": {
+        "orderSizeHint": "Items per order on average",
+        "orderRevenueHint": "Average ticket value"
+      },
+      "weeklyTitle": "By day of week",
+      "weeklyDescription": "Compare average order patterns across the week",
+      "insightTitle": "Key insight",
+      "insightPeakRevenue": "{day} has the highest average ticket at {amount}",
+      "peakDayBadge": "Peak day"
     },
     "heatmap": {
       "reportTitle": "Heatmaps",
@@ -1956,12 +2298,55 @@
       "breadcrumb": "Heatmaps",
       "heading": "Menu Sales Heatmap",
       "description": "Visualize sales volume by menu and time",
+      "empty": "No heatmap data for this run.",
+      "emptyDaily": "No daily heatmap data.",
+      "emptyWeekly": "No weekly heatmap data.",
+      "emptyFiltered": "No heatmap items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter heatmap items by menu category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories",
+        "matrixLabel": "Menu engineering filter",
+        "matrixAriaLabel": "Filter heatmap items by menu engineering matrix category",
+        "matrixHelp": "Choose which menu engineering quadrants appear in the heatmap. When all are selected, every heatmap item is shown.",
+        "emptyMatrixFiltered": "No heatmap items match the selected menu engineering categories. Select at least one quadrant to continue."
+      },
       "tabs": {
         "daily": "Daily",
         "weekly": "Weekly"
       },
       "dailyTitle": "Hourly Sales ({startHour}:00 – {endHour}:00)",
-      "weeklyTitle": "Weekly Sales (Mon–Fri)"
+      "weeklyTitle": "Weekly Sales (Mon–Sun)",
+      "uncategorized": "Uncategorized",
+      "linkToMatrix": "View menu engineering matrix",
+      "insights": {
+        "peakHour": "Busiest hour: {window}",
+        "peakDay": "Busiest day: {window}",
+        "topItem": "Top item: {item} ({count, plural, one {# unit} other {# units}})",
+        "itemCount": "Showing {count, plural, one {# item} other {# items}}",
+        "reportingPeriod": "Period: {period}"
+      },
+      "matrix": {
+        "menuColumn": "Menu"
+      },
+      "legend": {
+        "low": "Low",
+        "high": "High",
+        "units": "Units sold"
+      },
+      "totals": {
+        "label": "Total"
+      },
+      "sort": {
+        "hint": "Click a column header to sort. Click again to toggle ascending or descending."
+      },
+      "cellAriaLabel": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
+      "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
+      "explain": {
+        "title": "How to read this heatmap",
+        "body": "Cell color shows relative units sold within the current view. Numbers are order-line quantities by hour or weekday from your sales data—not forecasts. Daily view shows service hours only (8:00–18:00) for now."
+      }
     },
     "ai": {
       "reportTitle": "Workflow Planner",
@@ -2017,9 +2402,52 @@
         "remove": "Remove"
       },
       "empty": {
+        "title": "Matrix not ready",
         "description": "Matrix data is not available yet for this analytics file. Please update COGS first to generate matrix results.",
         "cta": "Go to COGS setup"
       },
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "tabs": {
+        "matrix": "Matrix chart",
+        "items": "Item list"
+      },
+      "kpi": {
+        "totalProfit": "Total profit",
+        "totalProfitHint": "Revenue minus COGS across the full menu",
+        "portfolioMargin": "Portfolio margin",
+        "portfolioMarginHint": "Profit as a share of total revenue",
+        "itemsAnalyzed": "Items analyzed",
+        "itemsAnalyzedHint": "Menu items with COGS and revenue in this run",
+        "avgPopularity": "Avg popularity threshold",
+        "avgPopularityHint": "Items at or above this quantity sold count as popular"
+      },
+      "quadrantHelp": {
+        "star": "High popularity and high margin — protect and feature these winners.",
+        "plow_horse": "High popularity but lower margin — optimize cost or price carefully.",
+        "puzzle": "Strong margin but lower volume — promote and increase visibility.",
+        "low_end": "Lower popularity and margin — review, reprice, or retire."
+      },
+      "uncategorized": "Uncategorized",
+      "links": {
+        "heatmap": "View heatmap",
+        "cogs": "COGS setup"
+      },
+      "chart": {
+        "ariaLabel": "Menu engineering matrix scatter plot showing popularity versus contribution margin",
+        "xAxis": "Popularity (units sold)",
+        "yAxis": "Contribution margin",
+        "thresholdPopularity": "Avg popularity",
+        "thresholdMargin": "Avg margin",
+        "empty": "No items to plot for the current filters."
+      },
+      "distributionGrid": {
+        "title": "Menu performance distribution",
+        "marginShareLabel": "Margin share",
+        "toggleAriaLabel": "Toggle {category} quadrant visibility"
+      },
+      "filteredStatsAlert": "Portfolio shares below reflect the selected menu category, not the full run.",
+      "quadrantFilterEmpty": "Select at least one quadrant to view the matrix.",
       "overview": {
         "title": "Sales Overview",
         "period": {
@@ -2059,7 +2487,11 @@
         "categoryLabel": "Category Filter",
         "categoryAriaLabel": "Filter matrix items by menu category",
         "categoryPlaceholder": "Select category…",
-        "allCategories": "All Categories"
+        "allCategories": "All Categories",
+        "matrixLabel": "Quadrants",
+        "matrixAriaLabel": "Filter by menu engineering quadrant",
+        "matrixHelp": "Show or hide Stars, Plow Horses, Puzzles, and Low End items.",
+        "showingCount": "Showing {count, plural, one {# item} other {# items}}"
       },
       "categories": {
         "star": "Stars",

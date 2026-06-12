@@ -41,7 +41,7 @@ export function LandingFeatureSpotlight({
     media ??
     (imageSrc && imageAlt ? (
       <figure className="min-w-0">
-        <div className="overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
+        <div className="overflow-hidden rounded-2xl border border-border bg-muted/20">
           <div className="relative aspect-video w-full">
             <Image
               src={imageSrc}

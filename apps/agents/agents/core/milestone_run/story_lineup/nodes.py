@@ -7,9 +7,10 @@ import re
 from typing import Any
 
 import httpx
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_llm_from_milestone_run_config,
+    structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.prior_context_inject import (
@@ -29,6 +30,9 @@ from langgraph.config import get_stream_writer
 from pydantic import BaseModel
 
 HAPPY_HOLIDAY_STORY_TIME = "10:00"
+USER_REVIEW_STORY_TIME = "14:00"
+USER_REVIEW_STORY_ID = "story-user-review"
+USER_REVIEW_INTERVAL_WEEKS = 4
 
 
 def _trace(state: StoryLineupState, step: str, **extra: Any) -> None:
@@ -163,6 +167,17 @@ def _build_public_holiday_stories(
     return stories
 
 
+def _build_user_review_story() -> dict[str, Any]:
+    return {
+        "id": USER_REVIEW_STORY_ID,
+        "title": "Story: positive customer review",
+        "fixdate": False,
+        "reason": "user_review",
+        "intervalWeeks": USER_REVIEW_INTERVAL_WEEKS,
+        "time": USER_REVIEW_STORY_TIME,
+    }
+
+
 async def fetch_and_prepare(
     state: StoryLineupState, *, client: httpx.AsyncClient
 ) -> dict[str, Any]:
@@ -212,16 +227,18 @@ async def select_public_holiday_stories(state: StoryLineupState) -> dict[str, An
     if owner_notes:
         human_content = f"{human_content}\n\n{owner_notes}"
 
-    llm = structured_llm_from_milestone_run_config().with_structured_output(
-        StoryLineupHolidayGreetingsDraft
-    )
     _trace_agent_event(state, "chat_model_start")
-    generated = await llm.ainvoke(
-        [
-            SystemMessage(content=STORY_LINEUP_HOLIDAY_GREETINGS_SYSTEM),
-            HumanMessage(content=human_content),
-        ]
-    )
+    try:
+        generated = await structured_ainvoke_from_run_config(
+            StoryLineupHolidayGreetingsDraft,
+            [
+                SystemMessage(content=STORY_LINEUP_HOLIDAY_GREETINGS_SYSTEM),
+                HumanMessage(content=human_content),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     _trace_agent_event(state, "chat_model_end")
 
     picks = [
@@ -257,7 +274,7 @@ async def build_lineup(state: StoryLineupState) -> dict[str, Any]:
         end_date=end_date,
     )
 
-    payload: dict[str, Any] = {"stories": stories}
+    payload: dict[str, Any] = {"stories": [_build_user_review_story(), *stories]}
     source_title = str(state.get("source_dates_title") or "").strip()
     if source_title:
         payload["sourceDatesTitle"] = source_title

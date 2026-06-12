@@ -4,6 +4,7 @@ import type {
   MenuTaggerMilestoneData,
   PostLineupMilestoneData,
   ReelLineupMilestoneData,
+  MenuClustererMilestoneData,
   StoryLineupMilestoneData,
   SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
@@ -111,6 +112,7 @@ export type {
   MenuTaggerMilestoneData,
   PostLineupMilestoneData,
   ReelLineupMilestoneData,
+  MenuClustererMilestoneData,
   StoryLineupMilestoneData,
 }
 
@@ -119,8 +121,9 @@ export type MilestoneDataValue =
   | CampaignBriefMilestoneData
   | PromotionCandidatesMilestoneData
   | MenuTaggerMilestoneData
-  | ReelLineupMilestoneData
+  | MenuClustererMilestoneData
   | PostLineupMilestoneData
+  | ReelLineupMilestoneData
   | StoryLineupMilestoneData
   | CultureHooksMilestoneData
   | IgProfileMilestoneData
@@ -147,6 +150,6 @@ export type TimelineMilestone = {
 export type TimelineWorkspaceProps = {
   isLoading?: boolean
   loadError?: string | null
-  /** Placed after the create milestone control in the toolbar and beside create in the empty state. */
+  /** Placed after milestone controls in the toolbar when the timeline has milestones. */
   timelineTrailing?: ReactNode
 }

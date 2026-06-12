@@ -4,56 +4,105 @@ from __future__ import annotations
 
 from agents_app.agents.core.milestone_eval.post_lineup_eval import (
     enrich_post_lineup_eval_payload,
-    is_post_lineup_milestone_data,
     try_post_lineup_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
+
+START_DATE = "2026-06-01"
+END_DATE = "2026-06-30"
+
+
+def _weekly_post(week_start: str, title: str, *, post_date: str) -> dict:
+    return {
+        "id": f"weekday-lunch-post-week-{week_start}",
+        "format": "carousel",
+        "intent": "weekday_lunch_post",
+        "title": title,
+        "groupIds": ["group-1"],
+        "slides": [{"dishName": "Ribeye", "imageBrief": "Lunch photo brief."}],
+        "date": post_date,
+        "fixdate": True,
+        "scheduleHints": {
+            "preferredWeekdays": ["thursday"],
+            "preferredTime": "10:00",
+        },
+    }
+
+
+def _weekly_posts_for_window() -> list[dict]:
+    weeks = campaign_weeks(START_DATE, END_DATE)
+    return [
+        _weekly_post(week.week_start, f"Week {week.week_index} lunch", post_date=week.post_date)
+        for week in weeks
+    ]
 
 
 def _sample_data() -> dict:
     return {
+        "startDate": START_DATE,
+        "endDate": END_DATE,
+        "sourceDatesTitle": "Campaign dates",
         "posts": [
             {
                 "id": "pinned-monthly-menu",
                 "format": "carousel",
                 "intent": "pinned_monthly_menu",
-                "title": "Monthly top menu",
+                "title": "Cafe Alto signature menu",
+                "groupIds": ["group-1", "group-4"],
                 "slides": [
-                    {"dishName": "Ribeye", "imageBrief": "Hero steak photo"},
-                    {"dishName": "Burger", "imageBrief": "Stacked burger photo"},
+                    {"dishName": "Ribeye", "imageBrief": "Hero photo brief."},
+                    {"dishName": "Burger", "imageBrief": "Stack photo brief."},
                 ],
-            }
-        ]
+            },
+            *_weekly_posts_for_window(),
+        ],
+        "sourceMenuClustererTitle": "Menu clusterer",
+        "sourceCampaignBriefTitle": "Campaign brief",
     }
-
-
-def test_is_post_lineup_milestone_data() -> None:
-    assert is_post_lineup_milestone_data(_sample_data()) is True
-    assert is_post_lineup_milestone_data({"groups": []}) is False
 
 
 def test_enrich_post_lineup_eval_payload() -> None:
     enriched = enrich_post_lineup_eval_payload(_sample_data())
-    assert enriched["_evalHints"]["postCount"] == 1
-    assert enriched["_evalHints"]["slideCount"] == 2
+    assert enriched["_evalHints"]["postCount"] == 5
+    assert enriched["_evalHints"]["expectedWeeklyPostCount"] == 4
 
 
-def test_try_post_lineup_deterministic_verdict_prior_reel_lineup() -> None:
+def test_try_post_lineup_deterministic_verdict_dates_prior() -> None:
     verdict = try_post_lineup_deterministic_verdict(
-        "Run used a prior reel_lineup milestone with foodLeads.",
+        "Run used a prior dates milestone with saved start and end dates.",
+        _sample_data(),
+    )
+    assert verdict == ("pass", "post lineup used prior dates milestone for the campaign window.")
+
+
+def test_try_post_lineup_deterministic_verdict_campaign_brief_prior() -> None:
+    verdict = try_post_lineup_deterministic_verdict(
+        "Run used a prior restaurant_campaign_brief milestone for location context.",
         _sample_data(),
     )
     assert verdict == (
         "pass",
-        "post lineup produced 1 post concept(s) from reel lineup food leads.",
+        "post lineup used prior restaurant_campaign_brief context for post planning.",
     )
 
 
-def test_try_post_lineup_deterministic_verdict_carousel() -> None:
+def test_try_post_lineup_deterministic_verdict_weekly_posts_per_week() -> None:
     verdict = try_post_lineup_deterministic_verdict(
-        "posts includes at least one carousel post concept.",
+        "posts includes one weekday_lunch_post carousel per week in the campaign window.",
         _sample_data(),
     )
-    assert verdict == ("pass", "post lineup includes 1 carousel post(s).")
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_try_post_lineup_deterministic_verdict_weekly_fixdate() -> None:
+    verdict = try_post_lineup_deterministic_verdict(
+        "Each weekday_lunch_post has fixdate true and a date within the campaign window.",
+        _sample_data(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+    assert "fixdate" in verdict[1].lower()
 
 
 def test_try_post_lineup_deterministic_verdict_slide_fields() -> None:

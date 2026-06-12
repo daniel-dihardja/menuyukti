@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 import httpx
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.culture_hooks.prompts import CULTURE_HOOKS_SYSTEM
 from agents_app.agents.core.milestone_run.culture_hooks.state import (
     CultureHooksOutput,
@@ -13,7 +14,7 @@ from agents_app.agents.core.milestone_run.culture_hooks.state import (
 )
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_llm_from_milestone_run_config,
+    structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -114,14 +115,18 @@ def _normalize_generated_output(payload: Any) -> CultureHooksOutput:
 
 async def generate_intersections(state: CultureHooksState) -> dict[str, Any]:
     """Generate structured non-food intersections from campaign brief context."""
-    llm = structured_llm_from_milestone_run_config().with_structured_output(CultureHooksDraftOutput)
     _trace_agent_event(state, "chat_model_start")
-    generated = await llm.ainvoke(
-        [
-            SystemMessage(content=CULTURE_HOOKS_SYSTEM),
-            HumanMessage(content=str(state.get("generation_context_markdown") or "").strip()),
-        ]
-    )
+    try:
+        generated = await structured_ainvoke_from_run_config(
+            CultureHooksDraftOutput,
+            [
+                SystemMessage(content=CULTURE_HOOKS_SYSTEM),
+                HumanMessage(content=str(state.get("generation_context_markdown") or "").strip()),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     _trace_agent_event(state, "chat_model_end")
     normalized = _normalize_generated_output(generated.model_dump(exclude_none=True))
     return {"generated_output": normalized}

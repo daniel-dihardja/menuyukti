@@ -4,11 +4,17 @@ import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 
 import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
-import { parseIsoDateOnly, resolveSchedulerWindow } from '@/lib/milestones/scheduler-dates'
+import {
+  parseIsoDateOnly,
+  resolvePostLineupPostsForScheduler,
+  resolveReelLineupReelsForScheduler,
+  resolveSchedulerWindow,
+} from '@/lib/milestones/scheduler-dates'
 
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { TimelineMilestone } from '../timeline/types'
 import { SchedulerCalendar } from './scheduler-calendar'
+import { SchedulerScheduleExplanation } from './scheduler-schedule-explanation'
 
 export type MilestoneSchedulerDataPreviewProps = {
   milestone: TimelineMilestone
@@ -37,6 +43,14 @@ export function MilestoneSchedulerDataPreview({
   const resolution = useMemo(
     () => resolveSchedulerWindow({ milestone, milestones }),
     [milestone, milestones],
+  )
+  const postLineupPosts = useMemo(
+    () => resolvePostLineupPostsForScheduler(milestones, milestone.id),
+    [milestones, milestone.id],
+  )
+  const reelLineupReels = useMemo(
+    () => resolveReelLineupReelsForScheduler(milestones, milestone.id),
+    [milestones, milestone.id],
   )
 
   if (resolution.status === 'no_prior_dates') {
@@ -69,15 +83,23 @@ export function MilestoneSchedulerDataPreview({
     )
   }
 
+  const scheduleExplanation = data.scheduleExplanation?.trim()
+
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
       <SchedulerCalendar
         className="min-h-0 flex-1"
         locale={locale}
         slots={data.slots ?? []}
+        publicHolidays={window.publicHolidays}
+        postLineupPosts={postLineupPosts}
+        reelLineupReels={reelLineupReels}
         windowEnd={window.endDate}
         windowStart={window.startDate}
       />
+      {scheduleExplanation ? (
+        <SchedulerScheduleExplanation scheduleExplanation={scheduleExplanation} />
+      ) : null}
     </div>
   )
 }

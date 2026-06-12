@@ -76,6 +76,7 @@ async def complete_milestone_agent_run_record(
     summary: dict[str, Any] | None = None,
     timeline: list[dict[str, Any]] | None = None,
     error_message: str | None = None,
+    external_trace_id: str | None = None,
 ) -> None:
     try:
         ext_url = external_trace_url_for_run(run_id)
@@ -86,7 +87,7 @@ async def complete_milestone_agent_run_record(
                 "runId": run_id,
                 "status": status,
                 "summary": summary,
-                "externalTraceId": None,
+                "externalTraceId": external_trace_id,
                 "externalTraceUrl": ext_url,
                 "timeline": timeline,
                 "errorMessage": error_message,

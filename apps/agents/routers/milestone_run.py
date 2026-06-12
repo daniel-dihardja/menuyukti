@@ -10,6 +10,7 @@ from agents_app.agents.core.milestone_run.stream import (
     format_sse_line,
     iter_milestone_run_sse_lines,
 )
+from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
@@ -90,7 +91,7 @@ async def milestone_run(
             ):
                 yield line
         except Exception as e:
-            yield format_sse_line({"error": str(e)})
+            yield format_sse_line(structured_error_payload(e))
 
     return StreamingResponse(
         event_stream(),

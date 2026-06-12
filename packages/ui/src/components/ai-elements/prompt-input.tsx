@@ -1005,9 +1005,12 @@ export const PromptInputSubmit = ({
   onStop,
   onClick,
   children,
+  disabled,
   ...props
 }: PromptInputSubmitProps) => {
   const isGenerating = status === 'submitted' || status === 'streaming'
+  const canStop = isGenerating && Boolean(onStop)
+  const effectiveDisabled = canStop ? false : disabled
 
   let Icon = <ArrowUp className="size-4" />
 
@@ -1021,23 +1024,24 @@ export const PromptInputSubmit = ({
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (isGenerating && onStop) {
+      if (canStop && onStop) {
         e.preventDefault()
         onStop()
         return
       }
       onClick?.(e)
     },
-    [isGenerating, onStop, onClick],
+    [canStop, onStop, onClick],
   )
 
   return (
     <InputGroupButton
-      aria-label={isGenerating ? 'Stop' : 'Submit'}
+      aria-label={canStop ? 'Stop' : 'Submit'}
       className={cn('ml-auto', className)}
+      disabled={effectiveDisabled}
       onClick={handleClick}
       size={size}
-      type={isGenerating && onStop ? 'button' : 'submit'}
+      type={canStop ? 'button' : 'submit'}
       variant={variant}
       {...props}
     >

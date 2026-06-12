@@ -7,12 +7,13 @@ from copy import deepcopy
 from typing import Any, Literal
 
 import httpx
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_promotion_engineering_candidates,
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_llm_from_milestone_run_config,
+    structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.promotion_candidates.prompts import (
@@ -628,16 +629,18 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
     )
     human_message = "\n\n".join(human_sections)
 
-    llm = structured_llm_from_milestone_run_config().with_structured_output(
-        StorytellingVerdictsOutput
-    )
     _trace_agent_event(state, "chat_model_start")
-    generated = await llm.ainvoke(
-        [
-            SystemMessage(content=PROMOTION_STORYTELLING_SYSTEM),
-            HumanMessage(content=human_message),
-        ]
-    )
+    try:
+        generated = await structured_ainvoke_from_run_config(
+            StorytellingVerdictsOutput,
+            [
+                SystemMessage(content=PROMOTION_STORYTELLING_SYSTEM),
+                HumanMessage(content=human_message),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     _trace_agent_event(state, "chat_model_end")
 
     by_cf = _verdict_map_from_llm(generated.verdicts, unique_names=unique_names)

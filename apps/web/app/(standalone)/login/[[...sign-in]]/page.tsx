@@ -16,7 +16,7 @@ export default async function LoginPage() {
   return (
     <div className="flex min-h-[calc(100svh-3.5rem)] w-full flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-[min(100%,28rem)]">
-        <Card className="border shadow-sm">
+        <Card className="shadow-none">
           <CardHeader className="space-y-3 pb-2">
             <CardTitle className="text-3xl tracking-tight text-foreground md:text-4xl">
               {t('title')}

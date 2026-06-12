@@ -26,7 +26,7 @@ export default async function SignUpPage() {
           </Link>
         </Button>
 
-        <Card className="border shadow-sm">
+        <Card className="shadow-none">
           <CardHeader className="space-y-3 pb-2">
             <CardTitle className="text-3xl tracking-tight text-foreground md:text-4xl">
               {t('signUpTitle')}

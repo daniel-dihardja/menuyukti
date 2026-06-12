@@ -1,15 +1,17 @@
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist_Mono, Plus_Jakarta_Sans } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 
 import '@workspace/ui/globals.css'
 import { RootShell, RootShellFallback } from '@/app/_components/root-shell'
+import { stylePaletteScript } from '@/lib/style-palette'
 import { getTranslations } from 'next-intl/server'
 
-const fontSans = Geist({
+const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 const fontMono = Geist_Mono({
@@ -22,8 +24,8 @@ const ogImageUrl = 'https://menuyukti.com/images/og-image.webp'
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+    { media: '(prefers-color-scheme: light)', color: '#fdf8f2' },
+    { media: '(prefers-color-scheme: dark)', color: '#2b241c' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -95,7 +97,14 @@ export default function RootLayout({
     children,
   }
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-palette="espresso">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: stylePaletteScript(),
+          }}
+        />
+      </head>
       <Suspense fallback={<RootShellFallback {...shellProps} />}>
         <RootShell {...shellProps} />
       </Suspense>

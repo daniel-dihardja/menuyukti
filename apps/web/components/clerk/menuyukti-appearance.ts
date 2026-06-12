@@ -1,12 +1,12 @@
 export const menuyuktiClerkAppearance = {
   variables: {
-    colorPrimary: 'oklch(0.205 0 0)',
-    colorText: 'oklch(0.145 0 0)',
-    colorTextSecondary: 'oklch(0.556 0 0)',
-    colorBackground: 'oklch(1 0 0)',
-    colorInputBackground: 'oklch(1 0 0)',
-    colorInput: 'oklch(0.922 0 0)',
-    borderRadius: '0.65rem',
+    colorPrimary: 'oklch(0.58 0.17 58)',
+    colorText: 'oklch(0.28 0.03 55)',
+    colorTextSecondary: 'oklch(0.5 0.03 55)',
+    colorBackground: 'oklch(0.99 0.012 90)',
+    colorInputBackground: 'oklch(1 0.008 92)',
+    colorInput: 'oklch(0.9 0.025 80)',
+    borderRadius: '0.75rem',
   },
   elements: {
     rootBox: 'w-full',

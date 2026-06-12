@@ -20,6 +20,8 @@ import {
   MENU_ENGINEERING_MATRIX_QUERY,
   MENU_HEATMAPS_QUERY,
   NODES_QUERY,
+  INSTAGRAM_SIGNALS_QUERY,
+  ORDER_METRICS_QUERY,
   PROMOTION_MENU_ITEMS_QUERY,
   WORKFLOW_CAMPAIGN_TREE_QUERY,
   parseNodesData,
@@ -32,6 +34,8 @@ import {
   type MenuHeatmapsData,
   type NodesDataRaw,
   type LocationData,
+  type InstagramSignalsData,
+  type OrderMetricsData,
   type PromotionMenuItemsData,
   type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
@@ -158,6 +162,39 @@ export async function getCachedMenuHeatmaps(
     { id: analyticsRunId, locationId },
     userId,
     'MenuHeatmaps',
+  )
+}
+
+/** Campaign brief operating signals composed from analytics pipelines for a run. */
+export async function getCachedInstagramSignals(
+  userId: string,
+  analyticsRunId: string,
+  locationId: string,
+): Promise<InstagramSignalsData> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<InstagramSignalsData>(
+    INSTAGRAM_SIGNALS_QUERY,
+    { analyticsRunId, locationId },
+    userId,
+    'InstagramSignals',
+  )
+}
+
+/** Average order size and revenue for an analytics run. */
+export async function getCachedOrderMetrics(
+  userId: string,
+  analyticsRunId: string,
+): Promise<OrderMetricsData> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<OrderMetricsData>(
+    ORDER_METRICS_QUERY,
+    { analyticsRunId },
+    userId,
+    'OrderMetrics',
   )
 }
 

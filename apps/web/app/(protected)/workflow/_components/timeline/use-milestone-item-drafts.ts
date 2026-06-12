@@ -4,14 +4,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import type { FieldSaveStatusVariant } from '@/components/field-save-status'
+import {
+  campaignBriefInputFromMilestoneInput,
+  normalizeCampaignBriefInput,
+  normalizedCampaignBriefInputsEqual,
+  type CampaignBriefInputDraft,
+} from '@/lib/milestones/campaign-brief-input'
 import { extractCampaignBriefMainCategory } from '@/lib/milestones/campaign-brief-main-category'
 import {
   milestonePresetHasDefaultOptionalNotesInput,
   normalizePromotionCandidatesInput,
+  normalizeMenuClustererInput,
   normalizedPromotionCandidatesInputsEqual,
+  normalizedMenuClustererInputsEqual,
   optionalNotesFromMilestoneInput,
   promotionCandidatesDraftFromNormalized,
   promotionCandidatesInputFromMilestoneInput,
+  menuClustererInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -20,6 +29,7 @@ import type { TimelineActions } from '../timeline-context'
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { MilestoneInputModel } from './milestone-item-tabs'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
+import type { MenuClustererInputDraft } from './milestone-menu-clusterer-input'
 import type { TimelineMilestone } from './types'
 
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
@@ -49,6 +59,13 @@ function promotionCandidatesInputEqual(
   )
 }
 
+function menuClustererInputEqual(a: MenuClustererInputDraft, b: MenuClustererInputDraft): boolean {
+  return normalizedMenuClustererInputsEqual(
+    normalizeMenuClustererInput(a),
+    normalizeMenuClustererInput(b),
+  )
+}
+
 export function useMilestoneItemDrafts(
   milestone: TimelineMilestone,
   {
@@ -74,6 +91,8 @@ export function useMilestoneItemDrafts(
   const usesOptionalNotesInput = inputType === 'optional_notes'
   const isDatesPreset = inputType === 'dates'
   const isPromotionCandidatesPreset = inputType === 'promotion_candidates'
+  const isCampaignBriefPreset = inputType === 'campaign_brief'
+  const isMenuClustererPreset = inputType === 'menu_clusterer'
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
@@ -82,6 +101,12 @@ export function useMilestoneItemDrafts(
     useState<PromotionCandidatesInputDraft>(() =>
       promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput),
     )
+  const [campaignBriefDraft, setCampaignBriefDraft] = useState<CampaignBriefInputDraft>(() =>
+    campaignBriefInputFromMilestoneInput(milestone.milestoneInput),
+  )
+  const [menuClustererDraft, setMenuClustererDraft] = useState<MenuClustererInputDraft>(() =>
+    menuClustererInputFromMilestoneInput(milestone.milestoneInput),
+  )
   const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
     milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
       ? optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
@@ -95,10 +120,18 @@ export function useMilestoneItemDrafts(
         promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput),
       )
     }
+    if (milestone.presetId === 'restaurant_campaign_brief') {
+      setCampaignBriefDraft(campaignBriefInputFromMilestoneInput(milestone.milestoneInput))
+    }
+    if (milestone.presetId === 'menu_clusterer') {
+      setMenuClustererDraft(menuClustererInputFromMilestoneInput(milestone.milestoneInput))
+    }
   }, [milestone.id, milestone.milestoneInput, milestone.presetId])
 
   const previousMilestoneIdRef = useRef(milestone.id)
   const promotionCandidatesFocusedRef = useRef(false)
+  const campaignBriefFocusedRef = useRef(false)
+  const menuClustererFocusedRef = useRef(false)
   const optionalNotesFocusedRef = useRef(false)
 
   useEffect(() => {
@@ -114,6 +147,48 @@ export function useMilestoneItemDrafts(
       }
       if (!promotionCandidatesInputEqual(prev, server)) {
         if (!promotionCandidatesFocusedRef.current) {
+          return server
+        }
+        return prev
+      }
+      return prev
+    })
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
+
+  useEffect(() => {
+    if (milestone.presetId !== 'restaurant_campaign_brief') {
+      previousMilestoneIdRef.current = milestone.id
+      return
+    }
+    const server = campaignBriefInputFromMilestoneInput(milestone.milestoneInput)
+    setCampaignBriefDraft((prev) => {
+      if (previousMilestoneIdRef.current !== milestone.id) {
+        previousMilestoneIdRef.current = milestone.id
+        return server
+      }
+      if (!normalizedCampaignBriefInputsEqual(prev, server)) {
+        if (!campaignBriefFocusedRef.current) {
+          return server
+        }
+        return prev
+      }
+      return prev
+    })
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
+
+  useEffect(() => {
+    if (milestone.presetId !== 'menu_clusterer') {
+      previousMilestoneIdRef.current = milestone.id
+      return
+    }
+    const server = menuClustererInputFromMilestoneInput(milestone.milestoneInput)
+    setMenuClustererDraft((prev) => {
+      if (previousMilestoneIdRef.current !== milestone.id) {
+        previousMilestoneIdRef.current = milestone.id
+        return server
+      }
+      if (!menuClustererInputEqual(prev, server)) {
+        if (!menuClustererFocusedRef.current) {
           return server
         }
         return prev
@@ -151,6 +226,10 @@ export function useMilestoneItemDrafts(
   optionalNotesDraftRef.current = optionalNotesDraft
   const promotionCandidatesDraftRef = useRef(promotionCandidatesDraft)
   promotionCandidatesDraftRef.current = promotionCandidatesDraft
+  const campaignBriefDraftRef = useRef(campaignBriefDraft)
+  campaignBriefDraftRef.current = campaignBriefDraft
+  const menuClustererDraftRef = useRef(menuClustererDraft)
+  menuClustererDraftRef.current = menuClustererDraft
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
   const debounceTimerRef = useRef<number | null>(null)
@@ -189,6 +268,25 @@ export function useMilestoneItemDrafts(
     const server = promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput)
     return !promotionCandidatesInputEqual(promotionCandidatesDraft, server)
   }, [isPromotionCandidatesPreset, milestone.milestoneInput, promotionCandidatesDraft])
+
+  const campaignBriefDirty = useMemo(() => {
+    if (!isCampaignBriefPreset) {
+      return false
+    }
+    const server = campaignBriefInputFromMilestoneInput(milestone.milestoneInput)
+    return !normalizedCampaignBriefInputsEqual(
+      normalizeCampaignBriefInput(campaignBriefDraft),
+      normalizeCampaignBriefInput(server),
+    )
+  }, [campaignBriefDraft, isCampaignBriefPreset, milestone.milestoneInput])
+
+  const menuClustererDirty = useMemo(() => {
+    if (!isMenuClustererPreset) {
+      return false
+    }
+    const server = menuClustererInputFromMilestoneInput(milestone.milestoneInput)
+    return !menuClustererInputEqual(menuClustererDraft, server)
+  }, [isMenuClustererPreset, milestone.milestoneInput, menuClustererDraft])
 
   const performMilestoneInputFlush = useCallback(
     async ({
@@ -248,6 +346,38 @@ export function useMilestoneItemDrafts(
         }
         return ok
       }
+      if (m.presetId === 'restaurant_campaign_brief') {
+        const server = campaignBriefInputFromMilestoneInput(m.milestoneInput)
+        const normalizedDraft = normalizeCampaignBriefInput(campaignBriefDraftRef.current)
+        const normalizedServer = normalizeCampaignBriefInput(server)
+        if (normalizedCampaignBriefInputsEqual(normalizedDraft, normalizedServer)) {
+          return true
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'restaurant_campaign_brief',
+          value: normalizedDraft,
+        })
+        if (!ok) {
+          setCampaignBriefDraft(server)
+        }
+        return ok
+      }
+      if (m.presetId === 'menu_clusterer') {
+        const server = menuClustererInputFromMilestoneInput(m.milestoneInput)
+        const normalizedDraft = normalizeMenuClustererInput(menuClustererDraftRef.current)
+        const normalizedServer = normalizeMenuClustererInput(server)
+        if (normalizedMenuClustererInputsEqual(normalizedDraft, normalizedServer)) {
+          return true
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'menu_clusterer',
+          value: normalizedDraft,
+        })
+        if (!ok) {
+          setMenuClustererDraft(server)
+        }
+        return ok
+      }
       if (milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
         const server = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId)
         const trimmedDraft = optionalNotesDraftRef.current.trim()
@@ -300,8 +430,12 @@ export function useMilestoneItemDrafts(
     const dirty =
       (isDatesPreset && inputDirty) ||
       (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
+      (isCampaignBriefPreset && campaignBriefDirty) ||
+      (isMenuClustererPreset && menuClustererDirty) ||
       (!isDatesPreset &&
         !isPromotionCandidatesPreset &&
+        !isCampaignBriefPreset &&
+        !isMenuClustererPreset &&
         usesOptionalNotesInput &&
         optionalNotesDirty)
     if (!dirty) {
@@ -321,11 +455,17 @@ export function useMilestoneItemDrafts(
   }, [
     optionalNotesDirty,
     optionalNotesDraft,
+    campaignBriefDirty,
+    campaignBriefDraft,
+    menuClustererDirty,
+    menuClustererDraft,
     promotionCandidatesDirty,
     promotionCandidatesDraft,
     flushMilestoneInputSave,
     inputDirty,
     inputDraft,
+    isCampaignBriefPreset,
+    isMenuClustererPreset,
     isPromotionCandidatesPreset,
     usesOptionalNotesInput,
     isDatesPreset,
@@ -350,6 +490,8 @@ export function useMilestoneItemDrafts(
     ? 'saving'
     : (isDatesPreset && inputDirty) ||
         (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
+        (isCampaignBriefPreset && campaignBriefDirty) ||
+        (isMenuClustererPreset && menuClustererDirty) ||
         (usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
@@ -381,6 +523,36 @@ export function useMilestoneItemDrafts(
     [],
   )
 
+  const handleCampaignBriefDraftChange = useCallback((next: CampaignBriefInputDraft) => {
+    campaignBriefFocusedRef.current = true
+    campaignBriefDraftRef.current = next
+    setCampaignBriefDraft(next)
+  }, [])
+
+  const handleCampaignBriefNotesBlur = useCallback(() => {
+    campaignBriefFocusedRef.current = false
+    void flushMilestoneInputSave()
+  }, [flushMilestoneInputSave])
+
+  const handleCampaignBriefNotesFocus = useCallback(() => {
+    campaignBriefFocusedRef.current = true
+  }, [])
+
+  const handleMenuClustererNotesBlur = useCallback(() => {
+    menuClustererFocusedRef.current = false
+    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
+  }, [flushMilestoneInputSave])
+
+  const handleMenuClustererNotesFocus = useCallback(() => {
+    menuClustererFocusedRef.current = true
+  }, [])
+
+  const handleMenuClustererDraftChange = useCallback((next: MenuClustererInputDraft) => {
+    menuClustererFocusedRef.current = true
+    menuClustererDraftRef.current = next
+    setMenuClustererDraft(next)
+  }, [])
+
   const inputModel = useMemo((): MilestoneInputModel => {
     if (isDatesPreset) {
       return {
@@ -399,6 +571,28 @@ export function useMilestoneItemDrafts(
         onNotesBlur: handlePromotionCandidatesNotesBlur,
         onNotesFocus: handlePromotionCandidatesNotesFocus,
         mainCategory: campaignBriefMainCategory,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    if (isCampaignBriefPreset) {
+      return {
+        type: 'campaign_brief',
+        draft: campaignBriefDraft,
+        onChange: handleCampaignBriefDraftChange,
+        onNotesBlur: handleCampaignBriefNotesBlur,
+        onNotesFocus: handleCampaignBriefNotesFocus,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    if (isMenuClustererPreset) {
+      return {
+        type: 'menu_clusterer',
+        draft: menuClustererDraft,
+        onChange: handleMenuClustererDraftChange,
+        onNotesBlur: handleMenuClustererNotesBlur,
+        onNotesFocus: handleMenuClustererNotesFocus,
         saveStatus: inputSaveStatus,
         saving: savingInput,
       }
@@ -423,8 +617,15 @@ export function useMilestoneItemDrafts(
     }
     return { type: 'none' }
   }, [
+    campaignBriefDraft,
     campaignBriefMainCategory,
+    handleCampaignBriefDraftChange,
+    handleCampaignBriefNotesBlur,
+    handleCampaignBriefNotesFocus,
     handleDatesDraftChange,
+    handleMenuClustererDraftChange,
+    handleMenuClustererNotesBlur,
+    handleMenuClustererNotesFocus,
     handleOptionalNotesBlur,
     handleOptionalNotesDraftChange,
     handleOptionalNotesFocus,
@@ -433,11 +634,14 @@ export function useMilestoneItemDrafts(
     handlePromotionCandidatesNotesFocus,
     inputDraft,
     inputSaveStatus,
+    isCampaignBriefPreset,
     isDatesPreset,
+    isMenuClustererPreset,
     isPromotionCandidatesPreset,
     milestone.presetId,
     optionalNotesDraft,
     promotionCandidatesDraft,
+    menuClustererDraft,
     savingInput,
     t,
     usesOptionalNotesInput,

@@ -10,6 +10,12 @@ import {
   AccordionTrigger,
 } from '@workspace/ui/components/accordion'
 import type { CampaignBriefMilestoneData } from '@/lib/graphql/node-schemas'
+import {
+  hasCampaignBriefListContent,
+  hasCampaignBriefOverallStrategyContent,
+  hasCampaignBriefPreviewContent,
+  hasCampaignBriefVenueSnapshotContent,
+} from '@/lib/milestones/campaign-brief-preview-content'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
@@ -172,12 +178,24 @@ function OverallStrategyFields({
   )
 }
 
+function CampaignBriefPreviewEmptyState() {
+  const t = useTranslations('analytics.workflows.chat')
+  return (
+    <div className="space-y-1.5 rounded-lg border border-dashed border-border/80 bg-muted/20 px-3 py-4">
+      <p className="text-base font-semibold text-foreground">
+        {t('milestonePreviewDataEmptyTitle')}
+      </p>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        {t('milestonePreviewDataEmptyBody')}
+      </p>
+    </div>
+  )
+}
+
 export function MilestoneCampaignBriefDataPreview({
   data,
 }: MilestoneCampaignBriefDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const formatHelpAriaLabel = (sectionTitle: string) =>
-    t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
   const labels = useMemo<CampaignBriefPreviewLabels>(
     () => ({
       venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
@@ -222,136 +240,186 @@ export function MilestoneCampaignBriefDataPreview({
     }),
     [t],
   )
+
+  if (!hasCampaignBriefPreviewContent(data)) {
+    return <CampaignBriefPreviewEmptyState />
+  }
+
+  const formatHelpAriaLabel = (sectionTitle: string) =>
+    t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
   const a = formatHelpAriaLabel
+
+  const showVenue = hasCampaignBriefVenueSnapshotContent(data.venueSnapshot)
+  const showOverallStrategy = hasCampaignBriefOverallStrategyContent(data.overallStrategy)
+  const showObjective = data.campaignObjective.trim().length > 0
+  const showPillars = hasCampaignBriefListContent(data.contentPillars)
+  const showAudience = hasCampaignBriefListContent(data.audienceHypotheses)
+  const showProof = hasCampaignBriefListContent(data.proofOrientedAngles)
+  const showTone = hasCampaignBriefListContent(data.toneGuardrails)
+  const showSegments = hasCampaignBriefListContent(data.targetSegments)
+  const showHierarchy = hasCampaignBriefListContent(data.messageHierarchy)
+  const showOffer = hasCampaignBriefListContent(data.offerAndCtaPlan)
+  const showPillarPlan = hasCampaignBriefListContent(data.contentPillarPlan)
+  const showMeasurement = hasCampaignBriefListContent(data.measurementPlan)
+  const showTesting = hasCampaignBriefListContent(data.testingPlan)
+  const showRisk = hasCampaignBriefListContent(data.riskGuardrails)
 
   return (
     <div className={mp.root}>
       <Accordion type="multiple" defaultValue={[]} className="w-full min-w-0">
-        <BriefAccordionSection
-          value="venue"
-          title={labels.venueSnapshot}
-          helpAria={a(labels.venueSnapshot)}
-          helpText={labels.helpVenueSnapshot}
-        >
-          <VenueFields data={data} labels={labels} />
-        </BriefAccordionSection>
+        {showVenue ? (
+          <BriefAccordionSection
+            value="venue"
+            title={labels.venueSnapshot}
+            helpAria={a(labels.venueSnapshot)}
+            helpText={labels.helpVenueSnapshot}
+          >
+            <VenueFields data={data} labels={labels} />
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="overall-strategy"
-          title={labels.overallStrategy}
-          helpAria={a(labels.overallStrategy)}
-          helpText={labels.helpOverallStrategy}
-        >
-          <OverallStrategyFields data={data} labels={labels} />
-        </BriefAccordionSection>
+        {showOverallStrategy ? (
+          <BriefAccordionSection
+            value="overall-strategy"
+            title={labels.overallStrategy}
+            helpAria={a(labels.overallStrategy)}
+            helpText={labels.helpOverallStrategy}
+          >
+            <OverallStrategyFields data={data} labels={labels} />
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="objective"
-          title={labels.campaignObjective}
-          helpAria={a(labels.campaignObjective)}
-          helpText={labels.helpCampaignObjective}
-        >
-          <p className={`mt-2 ${mp.body}`}>{data.campaignObjective || labels.emptyValue}</p>
-        </BriefAccordionSection>
+        {showObjective ? (
+          <BriefAccordionSection
+            value="objective"
+            title={labels.campaignObjective}
+            helpAria={a(labels.campaignObjective)}
+            helpText={labels.helpCampaignObjective}
+          >
+            <p className={`mt-2 ${mp.body}`}>{data.campaignObjective}</p>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="pillars"
-          title={labels.contentPillars}
-          helpAria={a(labels.contentPillars)}
-          helpText={labels.helpContentPillars}
-        >
-          <div className="mt-2">{renderList(data.contentPillars, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showPillars ? (
+          <BriefAccordionSection
+            value="pillars"
+            title={labels.contentPillars}
+            helpAria={a(labels.contentPillars)}
+            helpText={labels.helpContentPillars}
+          >
+            <div className="mt-2">{renderList(data.contentPillars, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="audience"
-          title={labels.audienceHypotheses}
-          helpAria={a(labels.audienceHypotheses)}
-          helpText={labels.helpAudienceHypotheses}
-        >
-          <div className="mt-2">{renderList(data.audienceHypotheses, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showAudience ? (
+          <BriefAccordionSection
+            value="audience"
+            title={labels.audienceHypotheses}
+            helpAria={a(labels.audienceHypotheses)}
+            helpText={labels.helpAudienceHypotheses}
+          >
+            <div className="mt-2">{renderList(data.audienceHypotheses, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="proof"
-          title={labels.proofOrientedAngles}
-          helpAria={a(labels.proofOrientedAngles)}
-          helpText={labels.helpProofOrientedAngles}
-        >
-          <div className="mt-2">{renderList(data.proofOrientedAngles, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showProof ? (
+          <BriefAccordionSection
+            value="proof"
+            title={labels.proofOrientedAngles}
+            helpAria={a(labels.proofOrientedAngles)}
+            helpText={labels.helpProofOrientedAngles}
+          >
+            <div className="mt-2">{renderList(data.proofOrientedAngles, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="tone"
-          title={labels.toneGuardrails}
-          helpAria={a(labels.toneGuardrails)}
-          helpText={labels.helpToneGuardrails}
-        >
-          <div className="mt-2">{renderList(data.toneGuardrails, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showTone ? (
+          <BriefAccordionSection
+            value="tone"
+            title={labels.toneGuardrails}
+            helpAria={a(labels.toneGuardrails)}
+            helpText={labels.helpToneGuardrails}
+          >
+            <div className="mt-2">{renderList(data.toneGuardrails, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="segments"
-          title={labels.targetSegments}
-          helpAria={a(labels.targetSegments)}
-          helpText={labels.helpTargetSegments}
-        >
-          <div className="mt-2">{renderList(data.targetSegments, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showSegments ? (
+          <BriefAccordionSection
+            value="segments"
+            title={labels.targetSegments}
+            helpAria={a(labels.targetSegments)}
+            helpText={labels.helpTargetSegments}
+          >
+            <div className="mt-2">{renderList(data.targetSegments, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="hierarchy"
-          title={labels.messageHierarchy}
-          helpAria={a(labels.messageHierarchy)}
-          helpText={labels.helpMessageHierarchy}
-        >
-          <div className="mt-2">{renderList(data.messageHierarchy, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showHierarchy ? (
+          <BriefAccordionSection
+            value="hierarchy"
+            title={labels.messageHierarchy}
+            helpAria={a(labels.messageHierarchy)}
+            helpText={labels.helpMessageHierarchy}
+          >
+            <div className="mt-2">{renderList(data.messageHierarchy, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="offer"
-          title={labels.offerAndCtaPlan}
-          helpAria={a(labels.offerAndCtaPlan)}
-          helpText={labels.helpOfferAndCtaPlan}
-        >
-          <div className="mt-2">{renderList(data.offerAndCtaPlan, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showOffer ? (
+          <BriefAccordionSection
+            value="offer"
+            title={labels.offerAndCtaPlan}
+            helpAria={a(labels.offerAndCtaPlan)}
+            helpText={labels.helpOfferAndCtaPlan}
+          >
+            <div className="mt-2">{renderList(data.offerAndCtaPlan, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="pillar-plan"
-          title={labels.contentPillarPlan}
-          helpAria={a(labels.contentPillarPlan)}
-          helpText={labels.helpContentPillarPlan}
-        >
-          <div className="mt-2">{renderList(data.contentPillarPlan, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showPillarPlan ? (
+          <BriefAccordionSection
+            value="pillar-plan"
+            title={labels.contentPillarPlan}
+            helpAria={a(labels.contentPillarPlan)}
+            helpText={labels.helpContentPillarPlan}
+          >
+            <div className="mt-2">{renderList(data.contentPillarPlan, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="measurement"
-          title={labels.measurementPlan}
-          helpAria={a(labels.measurementPlan)}
-          helpText={labels.helpMeasurementPlan}
-        >
-          <div className="mt-2">{renderList(data.measurementPlan, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showMeasurement ? (
+          <BriefAccordionSection
+            value="measurement"
+            title={labels.measurementPlan}
+            helpAria={a(labels.measurementPlan)}
+            helpText={labels.helpMeasurementPlan}
+          >
+            <div className="mt-2">{renderList(data.measurementPlan, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="testing"
-          title={labels.testingPlan}
-          helpAria={a(labels.testingPlan)}
-          helpText={labels.helpTestingPlan}
-        >
-          <div className="mt-2">{renderList(data.testingPlan, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showTesting ? (
+          <BriefAccordionSection
+            value="testing"
+            title={labels.testingPlan}
+            helpAria={a(labels.testingPlan)}
+            helpText={labels.helpTestingPlan}
+          >
+            <div className="mt-2">{renderList(data.testingPlan, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
 
-        <BriefAccordionSection
-          value="risk"
-          title={labels.riskGuardrails}
-          helpAria={a(labels.riskGuardrails)}
-          helpText={labels.helpRiskGuardrails}
-        >
-          <div className="mt-2">{renderList(data.riskGuardrails, labels.emptyList)}</div>
-        </BriefAccordionSection>
+        {showRisk ? (
+          <BriefAccordionSection
+            value="risk"
+            title={labels.riskGuardrails}
+            helpAria={a(labels.riskGuardrails)}
+            helpText={labels.helpRiskGuardrails}
+          >
+            <div className="mt-2">{renderList(data.riskGuardrails, labels.emptyList)}</div>
+          </BriefAccordionSection>
+        ) : null}
       </Accordion>
     </div>
   )

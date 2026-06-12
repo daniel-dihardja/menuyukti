@@ -123,4 +123,53 @@ export function distributionToCategoryMap(
   return map
 }
 
+/**
+ * Maps trimmed menu item names to their menu-engineering quadrant.
+ * Duplicate menu names: last item wins (same as matrix table grouping).
+ */
+export function buildMenuEngineeringCategoryByMenu(
+  items: MatrixItem[] | null | undefined,
+): Map<string, MatrixCategory> {
+  const map = new Map<string, MatrixCategory>()
+  if (!items || !Array.isArray(items)) return map
+  for (const item of items) {
+    const menu = item.menu?.trim()
+    if (!menu) continue
+    map.set(menu, normalizeCategory(item.category))
+  }
+  return map
+}
+
+/**
+ * Recomputes per-quadrant distribution stats from a grouped (possibly filtered) subset.
+ * Use when a menu-category filter is active so portfolio shares match visible items.
+ */
+export function distributionFromGroupedRows(
+  grouped: GroupedByCategory,
+): Record<MatrixCategory, DistributionStats> {
+  const allItems = CATEGORY_ORDER.flatMap((category) => grouped[category])
+  const totalItems = allItems.length
+  const totalMargin = allItems.reduce((sum, row) => sum + row.contributionMargin, 0)
+
+  const map: Record<MatrixCategory, DistributionStats> = {
+    star: { ...ZERO_STATS },
+    plow_horse: { ...ZERO_STATS },
+    puzzle: { ...ZERO_STATS },
+    low_end: { ...ZERO_STATS },
+  }
+
+  for (const category of CATEGORY_ORDER) {
+    const catItems = grouped[category]
+    const count = catItems.length
+    const catMargin = catItems.reduce((sum, row) => sum + row.contributionMargin, 0)
+    map[category] = {
+      itemCount: count,
+      itemShare: totalItems > 0 ? count / totalItems : 0,
+      marginShare: totalMargin > 0 ? catMargin / totalMargin : 0,
+    }
+  }
+
+  return map
+}
+
 export { CATEGORY_ORDER }

@@ -13,12 +13,23 @@ type Props = {
   portfolioStats: Record<MatrixCategory, DistributionStats>
   locale: string
   currency: string
+  hideEmptyQuadrants?: boolean
 }
 
-export function MatrixCategoryTables({ grouped, portfolioStats, locale, currency }: Props) {
+export function MatrixCategoryTables({
+  grouped,
+  portfolioStats,
+  locale,
+  currency,
+  hideEmptyQuadrants = false,
+}: Props) {
+  const categories = hideEmptyQuadrants
+    ? CATEGORY_ORDER.filter((category) => grouped[category].length > 0)
+    : CATEGORY_ORDER
+
   return (
-    <div className="space-y-8">
-      {CATEGORY_ORDER.map((category: MatrixCategory) => (
+    <div className="flex flex-col gap-8">
+      {categories.map((category: MatrixCategory) => (
         <MatrixCategoryTable
           key={category}
           category={category}

@@ -52,8 +52,9 @@ def test_build_milestone_run_graph_compiles() -> None:
         ("dates", "build_dates_graph"),
         ("promotion_candidates", "build_promotion_candidates_graph"),
         ("menu_tagger", "build_menu_tagger_graph"),
-        ("reel_lineup", "build_reel_lineup_graph"),
+        ("menu_clusterer", "build_menu_clusterer_graph"),
         ("post_lineup", "build_post_lineup_graph"),
+        ("reel_lineup", "build_reel_lineup_graph"),
         ("culture_hooks", "build_culture_hooks_graph"),
         ("ig_profile", "build_ig_profile_graph"),
     ],
@@ -77,16 +78,13 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
 
     with (
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
             new=AsyncMock(
                 return_value={
-                    "data": {
-                        "goal": "G1",
-                        "presetId": preset_id,
-                        "passCriterias": [
-                            {"id": "c1", "requirement": "Must have data", "status": "open"}
-                        ],
-                    }
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [{"id": "c1", "requirement": "Must have data"}],
+                    "preset_id": preset_id,
                 }
             ),
         ),
@@ -131,20 +129,56 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
 
 
 @pytest.mark.asyncio
+async def test_fetch_children_uses_row_first_pass_criterias() -> None:
+    """Regression: row-level passCriterias must not be wiped by legacy data-only parsing."""
+    from agents_app.agents.core.milestone_run.graph import _fetch_children
+
+    client = MagicMock(spec=AsyncMock)
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "workflow_id": None,
+        "milestone_input": None,
+        "request_goal": None,
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
+            new=AsyncMock(
+                return_value={
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [
+                        {"id": "c1", "requirement": "Campaign objective names dual outcomes"},
+                        {"id": "c2", "requirement": "Content pillars are listed"},
+                    ],
+                    "preset_id": "restaurant_campaign_brief",
+                }
+            ),
+        ),
+    ):
+        out = await _fetch_children(state, client=client)  # type: ignore[arg-type]
+
+    assert out["criteria"] == [
+        {"id": "c1", "requirement": "Campaign objective names dual outcomes"},
+        {"id": "c2", "requirement": "Content pillars are listed"},
+    ]
+    assert out["preset_id"] == "restaurant_campaign_brief"
+
+
+@pytest.mark.asyncio
 async def test_graph_raises_for_unknown_preset() -> None:
     client = MagicMock(spec=AsyncMock)
     with (
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
+            "agents_app.agents.core.milestone_run.graph.fetch_context",
             new=AsyncMock(
                 return_value={
-                    "data": {
-                        "goal": "G1",
-                        "presetId": "unknown_preset",
-                        "passCriterias": [
-                            {"id": "c1", "requirement": "Must have data", "status": "open"}
-                        ],
-                    }
+                    "goal": "G1",
+                    "raw_data": "",
+                    "criteria": [{"id": "c1", "requirement": "Must have data"}],
+                    "preset_id": "unknown_preset",
                 }
             ),
         ),

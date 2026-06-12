@@ -69,7 +69,33 @@ def try_story_lineup_deterministic_verdict(
             )
         return ("fail", "Story lineup stories must include at least one item with a title.")
 
+    if ("user" in normalized and "review" in normalized) or "user_review" in normalized:
+        user_review_stories = [
+            story
+            for story in stories
+            if isinstance(story, dict)
+            and story.get("reason") == "user_review"
+            and story.get("fixdate") is False
+            and str(story.get("title") or "").strip()
+        ]
+        if len(user_review_stories) == 1:
+            return (
+                "pass",
+                "Story lineup includes exactly one user_review story with fixdate false.",
+            )
+        if not user_review_stories:
+            return (
+                "fail",
+                "Story lineup must include one user_review story with fixdate false.",
+            )
+        return (
+            "fail",
+            f"Story lineup must include exactly one user_review story; found {len(user_review_stories)}.",
+        )
+
     if "fixdate" in normalized or ("public" in normalized and "holiday" in normalized):
+        if "user" in normalized and "review" in normalized:
+            return None
         holiday_stories = [
             story
             for story in stories

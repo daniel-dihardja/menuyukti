@@ -1,4 +1,4 @@
-"""Shared state shape for the milestone run (tool-using agent) graph."""
+"""Shared state shape for the milestone run outer orchestrator graph."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from typing import Any, NotRequired, TypedDict
 
 
 class MilestoneRunState(TypedDict):
-    """State carried through the milestone run graph; tools read/write overlapping fields."""
+    """State for fetch → preset subgraph → eval; preset dispatch uses ``preset_id``."""
 
     milestone_id: str
     location_id: int
@@ -41,3 +41,5 @@ class MilestoneRunState(TypedDict):
     traceparent: NotRequired[str | None]
     # Vercel AI Gateway id (e.g. openai/gpt-4o-mini); optional RunnableConfig + eval subgraph.
     chat_gateway_model: NotRequired[str | None]
+    # LangSmith trace/run id captured at end of run (when LANGCHAIN_TRACING_V2 is set).
+    external_langsmith_trace_id: NotRequired[str | None]

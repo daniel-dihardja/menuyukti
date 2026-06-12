@@ -18,7 +18,7 @@ import { WorkflowsClient } from './_components/workflows-client'
 function WorkflowsListSkeleton() {
   return (
     <div className="flex flex-col gap-8">
-      <Card className="overflow-hidden border shadow-sm ring-1 ring-border/50">
+      <Card className="overflow-hidden shadow-none">
         <CardHeader className="border-b bg-muted/20 px-5 py-5 sm:px-6">
           <Skeleton className="mb-2 h-7 w-48" />
           <Skeleton className="h-4 w-full max-w-xl" />

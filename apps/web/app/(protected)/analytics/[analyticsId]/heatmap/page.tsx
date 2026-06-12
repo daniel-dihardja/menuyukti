@@ -6,9 +6,12 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
-import { getCachedAnalyticsRun, getCachedMenuHeatmaps } from '@/lib/graphql/cached-queries'
-import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
-import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
+import {
+  getCachedAnalyticsRun,
+  getCachedMenuEngineeringMatrix,
+  getCachedMenuHeatmaps,
+} from '@/lib/graphql/cached-queries'
+import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { HeatmapView } from './heatmap-view'
 
@@ -37,29 +40,27 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const heatmapsData = await getCachedMenuHeatmaps(userId, id, String(run.locationId))
+  const locationId = String(run.locationId)
+  const locale = getAppCurrencyLocale()
+  const [heatmapsData, matrixData] = await Promise.all([
+    getCachedMenuHeatmaps(userId, id, locationId),
+    getCachedMenuEngineeringMatrix(userId, id, locationId),
+  ])
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-
   const menuHeatmaps = heatmapsData.menuHeatmaps ?? []
-  const dailyMatrix = adaptDailyHeatmapMatrix(
-    menuHeatmaps,
-    DAILY_HEATMAP_START_HOUR,
-    DAILY_HEATMAP_END_HOUR,
-  )
-  const weeklyMatrix = adaptWeeklyHeatmapMatrix(menuHeatmaps)
+  const matrixItems = matrixData.menuEngineeringMatrix?.items ?? null
 
   return (
     <AnalyticsPageShell
       title={tHeatmap('reportTitle')}
-      contentWidth="full"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
         { label: tHeatmap('breadcrumb') },
       ]}
     >
-      <section className="border rounded-md p-6 space-y-4">
+      <section className="flex flex-col gap-4 rounded-md border p-6">
         <PageHeading title={tHeatmap('heading')} description={tHeatmap('description')} />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
@@ -67,7 +68,13 @@ export default async function Page({ params }: PageProps) {
           </Button>
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
-        <HeatmapView dailyMatrix={dailyMatrix} weeklyMatrix={weeklyMatrix} />
+
+        <HeatmapView
+          analyticsId={analyticsId}
+          menuHeatmaps={menuHeatmaps}
+          matrixItems={matrixItems}
+          locale={locale}
+        />
       </section>
     </AnalyticsPageShell>
   )

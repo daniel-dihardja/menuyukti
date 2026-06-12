@@ -15,6 +15,8 @@ from agents_app.agents.core.milestone_run.run_persistence import (
     complete_milestone_agent_run_record,
     start_milestone_agent_run_record,
 )
+from agents_app.agents.errors import structured_error_payload
+from agents_app.agents.tracing import try_langsmith_external_trace_id
 
 _logger = logging.getLogger(__name__)
 
@@ -33,7 +35,14 @@ def _compact_trace_entry(chunk: dict[str, Any]) -> dict[str, Any]:
         out["step"] = chunk["step"]
     if "agent_event" in chunk:
         out["agent_event"] = chunk["agent_event"]
-    for key in ("skill_id", "skill_index", "skill_count"):
+    for key in (
+        "skill_id",
+        "skill_index",
+        "skill_count",
+        "preset_id",
+        "gateway_model",
+        "error_code",
+    ):
         if key in chunk:
             out[key] = chunk[key]
     return out
@@ -65,6 +74,7 @@ async def _safe_complete_milestone_agent_run_record(
             summary=_summary_from_final_state(final_state),
             timeline=timeline or None,
             error_message=None if run_ok else stream_error,
+            external_trace_id=_external_trace_id_from_final_state(final_state),
         )
     except RuntimeError as e:
         if "closed" in str(e).lower():
@@ -89,12 +99,23 @@ def _summary_from_final_state(fs: dict[str, Any] | None) -> dict[str, Any]:
         return {}
     rs = fs.get("result_summary")
     summary_text = rs if isinstance(rs, str) else str(rs or "")
-    return {
+    out: dict[str, Any] = {
         "result_node_id": fs.get("result_node_id"),
         "result_summary_preview": summary_text[:500],
         "preset_id": fs.get("preset_id"),
         "milestonedata_written": fs.get("milestonedata_written"),
     }
+    if fs.get("persist_start_failed"):
+        out["persist_start_failed"] = True
+    return out
+
+
+def _external_trace_id_from_final_state(fs: dict[str, Any] | None) -> str | None:
+    if isinstance(fs, dict):
+        tid = fs.get("external_langsmith_trace_id")
+        if isinstance(tid, str) and tid.strip():
+            return tid.strip()
+    return try_langsmith_external_trace_id()
 
 
 async def iter_milestone_run_sse_lines(
@@ -122,6 +143,19 @@ async def iter_milestone_run_sse_lines(
         workflow_id=workflow_id,
         traceparent=traceparent,
     )
+    if not started:
+        _logger.error(
+            "milestone_run.sse: startMilestoneAgentRun failed run_id=%s milestone_id=%s",
+            run_id,
+            milestone_id,
+        )
+        yield format_sse_line(
+            structured_error_payload(
+                RuntimeError("Failed to register milestone agent run"),
+                default_code="PERSIST_START_FAILED",
+            )
+        )
+        return
 
     initial: dict[str, Any] = {
         "milestone_id": milestone_id,
@@ -171,6 +205,7 @@ async def iter_milestone_run_sse_lines(
         run_config["metadata"]["traceparent"] = traceparent
     if chat_gateway_model:
         run_config["configurable"] = {"chat_gateway_model": chat_gateway_model}
+        run_config["metadata"]["gateway_model"] = chat_gateway_model
 
     try:
         async for mode, chunk in graph.astream(
@@ -180,9 +215,17 @@ async def iter_milestone_run_sse_lines(
         ):
             if mode == "custom":
                 _logger.debug("milestone_run.sse: custom chunk=%s", chunk)
-                if isinstance(chunk, dict) and len(timeline) < _TIMELINE_MAX:
-                    timeline.append(_compact_trace_entry(chunk))
-                yield format_sse_line(chunk)
+                if isinstance(chunk, dict):
+                    enriched = dict(chunk)
+                    if chat_gateway_model and "gateway_model" not in enriched:
+                        enriched["gateway_model"] = chat_gateway_model
+                    if isinstance(final_state, dict):
+                        pid = final_state.get("preset_id")
+                        if pid and "preset_id" not in enriched:
+                            enriched["preset_id"] = pid
+                    if len(timeline) < _TIMELINE_MAX:
+                        timeline.append(_compact_trace_entry(enriched))
+                    yield format_sse_line(enriched)
             elif mode == "values" and isinstance(chunk, dict):
                 _logger.debug(
                     "milestone_run.sse: values update keys=%s",
@@ -196,6 +239,9 @@ async def iter_milestone_run_sse_lines(
             final_state is not None,
         )
         if isinstance(final_state, dict):
+            trace_id = try_langsmith_external_trace_id()
+            if trace_id:
+                final_state["external_langsmith_trace_id"] = trace_id
             last = final_state.get("last_criteria_verdicts", [])
             criteria_payload: list[dict[str, str | None]] = []
             if isinstance(last, list):

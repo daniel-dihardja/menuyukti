@@ -137,6 +137,7 @@ export function WorkflowChatPanel({
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
   const [text, setText] = useState('')
+  const [mobileChatOpen, setMobileChatOpen] = useState(false)
   const [, startPreviewTransition] = useTransition()
 
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
@@ -196,6 +197,16 @@ export function WorkflowChatPanel({
     },
     [setSelectedMilestoneId],
   )
+
+  const handleRunMilestone = useCallback(
+    async (milestoneId: string, chatModel?: ChatGatewayModelId) => {
+      void setSelectedMilestoneId(milestoneId)
+      await ops.handleRunMilestone(milestoneId, chatModel)
+    },
+    [ops, setSelectedMilestoneId],
+  )
+
+  const timelineOps = useMemo(() => ({ ...ops, handleRunMilestone }), [ops, handleRunMilestone])
 
   /** `useChat` keeps the first `transport` instance; a ref keeps milestone/workflow ids fresh per request. */
   const chatApiContextRef = useRef({
@@ -368,8 +379,8 @@ export function WorkflowChatPanel({
     }
   }, [workflowId, stop, clearError, setMessages])
 
-  const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const isChatBusy = status === 'streaming' || status === 'submitted'
+  const isSubmitDisabled = !text.trim() && !isChatBusy
 
   const timelineSlices = useWorkflowTimelineProviderSlices(
     milestoneUi,
@@ -379,7 +390,7 @@ export function WorkflowChatPanel({
     isChatBusy,
     selectedMilestoneId,
     handleSelectMilestone,
-    ops,
+    timelineOps,
   )
 
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
@@ -524,7 +535,12 @@ export function WorkflowChatPanel({
                 {t('clearChatLabel')}
               </PromptInputButton>
             </PromptInputTools>
-            <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
+            <PromptInputSubmit
+              aria-label={isChatBusy ? t('stopChatAriaLabel') : t('submitChatAriaLabel')}
+              disabled={isSubmitDisabled}
+              onStop={stop}
+              status={status}
+            />
           </PromptInputFooter>
         </PromptInput>
       </div>
@@ -540,7 +556,11 @@ export function WorkflowChatPanel({
       <WorkflowChatMentionProvider>
         <WorkflowChatLayout
           chatPane={chatPane}
+          hasChatMessages={messages.length > 0}
+          isChatBusy={isChatBusy}
           isDesktop={isDesktop}
+          mobileChatOpen={mobileChatOpen}
+          onMobileChatOpenChange={setMobileChatOpen}
           previewPane={<WorkflowPreviewPanelBodyLazy />}
           previewPanelRef={previewPanelRef}
           timelinePane={

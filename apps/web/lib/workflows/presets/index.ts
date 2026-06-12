@@ -1,29 +1,22 @@
-import campaignPlanningMultiSkill from './campaign-planning-multi-skill.json'
-import langgraphTracingDemo from './langgraph-tracing-demo.json'
-import publicHolidaysExample from './public-holidays-example.json'
-
 /**
  * Built-in workflow import payloads (`workflowImportPayload` from
  * `apps/graphql/workflow_export_schema.json`). Shown first in the import dialog.
  */
-export type WorkflowImportPresetId =
-  | 'public-holidays-example'
-  | 'campaign-planning-multi-skill'
-  | 'langgraph-tracing-demo'
+export type WorkflowImportPresetId = string
 
 export type WorkflowImportPreset = {
   id: WorkflowImportPresetId
-  payload:
-    | typeof publicHolidaysExample
-    | typeof campaignPlanningMultiSkill
-    | typeof langgraphTracingDemo
+  payload: unknown
 }
 
-export const WORKFLOW_IMPORT_PRESETS: readonly WorkflowImportPreset[] = [
-  { id: 'public-holidays-example', payload: publicHolidaysExample },
-  { id: 'campaign-planning-multi-skill', payload: campaignPlanningMultiSkill },
-  { id: 'langgraph-tracing-demo', payload: langgraphTracingDemo },
+export const WORKFLOW_IMPORT_PRESETS: readonly WorkflowImportPreset[] = []
+
+/** Strategy picker labels without import payloads (creation still uses an empty workflow). */
+export const WORKFLOW_STRATEGY_OPTIONS = [
+  { id: 'local-pulse', labelKey: 'localPulseStrategy' },
 ] as const
+
+export type WorkflowStrategyId = (typeof WORKFLOW_STRATEGY_OPTIONS)[number]['id']
 
 export const PRESET_KEY_PREFIX = 'preset:' as const
 
@@ -50,6 +43,6 @@ export function parsePresetIdFromSelectionKey(key: string): WorkflowImportPreset
   if (!key.startsWith(PRESET_KEY_PREFIX)) {
     return null
   }
-  const id = key.slice(PRESET_KEY_PREFIX.length) as WorkflowImportPresetId
+  const id = key.slice(PRESET_KEY_PREFIX.length)
   return WORKFLOW_IMPORT_PRESETS.some((p) => p.id === id) ? id : null
 }

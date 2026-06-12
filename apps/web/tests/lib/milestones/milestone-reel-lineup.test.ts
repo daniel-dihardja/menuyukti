@@ -4,7 +4,56 @@ import {
   getMilestonePresetCreateFields,
   MILESTONE_PRESET_REGISTRY,
 } from '@/lib/milestones/preset-definitions'
-import { reelLineupMilestoneDataSchema } from '@/lib/graphql/node-schemas'
+import { milestonedataValueSchema, reelLineupMilestoneDataSchema } from '@/lib/graphql/node-schemas'
+import { campaignWeeks } from '@/lib/milestones/dates-window'
+import { buildReelLineupFromPlan } from '@/lib/milestones/reel-lineup'
+
+const GROUPS = [
+  {
+    id: 'group-1',
+    leadName: 'Ribeye',
+    profileId: 'hook_reel' as const,
+    anchor: { dimension: 'reel_moment' as const, value: 'static_hero' },
+    items: [
+      {
+        name: 'Ribeye',
+        role: 'star' as const,
+        category: 'MAINS',
+        position: 1,
+        storytellingFit: 'strong' as const,
+        reelMoment: 'static_hero',
+      },
+    ],
+    mix: {
+      priceLevels: [] as (1 | 2 | 3)[],
+      storytellingStrongCount: 1,
+      starCount: 1,
+      puzzleCount: 0,
+    },
+  },
+  {
+    id: 'group-2',
+    leadName: 'Burger',
+    profileId: 'hook_reel' as const,
+    anchor: { dimension: 'reel_moment' as const, value: 'static_hero' },
+    items: [
+      {
+        name: 'Burger',
+        role: 'star' as const,
+        category: 'MAINS',
+        position: 1,
+        storytellingFit: 'strong' as const,
+        reelMoment: 'static_hero',
+      },
+    ],
+    mix: {
+      priceLevels: [] as (1 | 2 | 3)[],
+      storytellingStrongCount: 1,
+      starCount: 1,
+      puzzleCount: 0,
+    },
+  },
+]
 
 describe('reel_lineup preset', () => {
   it('registers preset with empty data schema', () => {
@@ -21,18 +70,45 @@ describe('reel_lineup preset', () => {
       type: 'reel_lineup',
       value: { notes: '' },
     })
-    expect(fields.milestoneData).toMatchObject({
-      foodLeads: [],
-      drinkLeads: [],
+    expect(fields.milestoneData).toMatchObject({ reels: [] })
+    expect(fields.passCriteria?.length).toBe(7)
+  })
+
+  it('buildReelLineupFromPlan produces two reels per week', () => {
+    const startDate = '2026-06-01'
+    const endDate = '2026-06-14'
+    const weeks = campaignWeeks(startDate, endDate)
+    const built = buildReelLineupFromPlan(
+      weeks.map((week) => ({
+        weekIndex: week.weekIndex,
+        weekdayReel: {
+          groupId: 'group-1',
+          title: `Week ${week.weekIndex} weekday`,
+          description: 'Weekday description.',
+          explanation: 'Weekday explanation.',
+        },
+        weekendReel: {
+          groupId: 'group-2',
+          title: `Week ${week.weekIndex} weekend`,
+          description: 'Weekend description.',
+          explanation: 'Weekend explanation.',
+        },
+      })),
+      GROUPS,
+      { startDate, endDate },
+    )
+    expect(built.reels).toHaveLength(weeks.length * 2)
+    expect(milestonedataValueSchema.safeParse(built).success).toBe(true)
+    expect(built.reels.every((reel) => reel.description && reel.explanation)).toBe(true)
+    expect(built.reels.every((reel) => reel.date === undefined)).toBe(true)
+
+    const weekdayReel = built.reels.find((reel) => reel.intent === 'weekday_reel')
+    expect(weekdayReel?.heroDishes?.[0]).toMatchObject({
+      name: 'Ribeye',
+      role: 'star',
+      category: 'MAINS',
+      storytellingFit: 'strong',
+      reelMoment: 'static_hero',
     })
-    expect(fields.passCriteria?.map((row) => row.requirement)).toEqual([
-      'milestonePreset.reel_lineup.criterionPriorCampaignBrief',
-      'milestonePreset.reel_lineup.criterionPriorMenuTagger',
-      'milestonePreset.reel_lineup.criterionHookGroupCount',
-      'milestonePreset.reel_lineup.criterionMainCourseHook',
-      'milestonePreset.reel_lineup.criterionDrinkHookGroupCount',
-      'milestonePreset.reel_lineup.criterionDrinkHook',
-      'milestonePreset.reel_lineup.criterionSchedulingHints',
-    ])
   })
 })

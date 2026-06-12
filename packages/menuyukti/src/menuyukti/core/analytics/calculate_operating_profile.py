@@ -84,6 +84,12 @@ class MealPeriodRow(TypedDict):
     avg_revenue_per_order: float
 
 
+class OrderMetricsByDayRow(TypedDict):
+    day: str            # "mon" | "tue" | ... | "sun"
+    avg_order_size: float
+    avg_order_revenue: float
+
+
 class OperatingProfileResult(TypedDict):
     total_orders: int
     total_revenue: float
@@ -307,6 +313,53 @@ def _compute_meal_period_metrics(
         peak_revenue_meal_period,
         active_meal_periods,
     )
+
+
+def _zero_order_metrics_by_day() -> list[OrderMetricsByDayRow]:
+    return [
+        OrderMetricsByDayRow(day=d, avg_order_size=0.0, avg_order_revenue=0.0)
+        for d in _WEEKDAY_ORDER
+    ]
+
+
+def compute_order_metrics_by_day_from_orders(
+    order_rows: list[OrderRowForProfile],
+) -> list[OrderMetricsByDayRow]:
+    """Return avg order size and revenue for each weekday (Mon–Sun).
+
+    Always returns seven rows in fixed order. Days with no orders use 0.0 averages.
+    """
+    if not order_rows:
+        return _zero_order_metrics_by_day()
+
+    aggregated = _aggregate_positive_revenue_bills(order_rows)
+    if aggregated is None:
+        return _zero_order_metrics_by_day()
+
+    bill_revenue, bill_time, bill_items = aggregated
+
+    dow_order_count: dict[str, int] = {d: 0 for d in _WEEKDAY_ORDER}
+    dow_revenue: dict[str, float] = {d: 0.0 for d in _WEEKDAY_ORDER}
+    dow_items: dict[str, int] = {d: 0 for d in _WEEKDAY_ORDER}
+
+    for bn, dt in bill_time.items():
+        abbr = _abbr(dt)
+        dow_order_count[abbr] += 1
+        dow_revenue[abbr] += bill_revenue[bn]
+        dow_items[abbr] += bill_items[bn]
+
+    return [
+        OrderMetricsByDayRow(
+            day=d,
+            avg_order_size=round(
+                dow_items[d] / dow_order_count[d], 4
+            ) if dow_order_count[d] else 0.0,
+            avg_order_revenue=round(
+                dow_revenue[d] / dow_order_count[d], 4
+            ) if dow_order_count[d] else 0.0,
+        )
+        for d in _WEEKDAY_ORDER
+    ]
 
 
 def compute_operating_profile_from_orders(

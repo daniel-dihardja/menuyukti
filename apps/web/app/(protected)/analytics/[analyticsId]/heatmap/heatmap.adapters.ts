@@ -4,12 +4,16 @@
 
 export type DailyHeatmapInput = {
   menu: string
+  menuCategory?: string | null
+  menu_category?: string | null
   dailyHeatmap?: { hour: string | number; quantity: number }[]
   daily_heatmap?: { hour: string | number; quantity: number }[]
 }
 
 export type WeeklyHeatmapInput = {
   menu: string
+  menuCategory?: string | null
+  menu_category?: string | null
   weeklyHeatmap?: { day: string; quantity: number }[]
   weekly_heatmap?: { day: string; quantity: number }[]
 }

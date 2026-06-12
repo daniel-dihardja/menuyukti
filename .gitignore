@@ -34,6 +34,9 @@ dist
 # Local CV snippets (not versioned)
 packages/cv-snippet/
 
+# Social media plans and assets (local; not versioned)
+packages/sosmed/
+
 # POD product assets (local / generated; not versioned)
 packages/pod/
 

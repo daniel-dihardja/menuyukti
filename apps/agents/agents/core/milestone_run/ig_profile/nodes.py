@@ -6,16 +6,20 @@ import json
 from typing import Any
 
 import httpx
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.ig_profile.prompts import IG_PROFILE_SYSTEM
 from agents_app.agents.core.milestone_run.ig_profile.state import IgProfileOutput, IgProfileState
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_llm_from_milestone_run_config,
+    structured_ainvoke_from_run_config,
 )
-from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.core.milestone_run.output_schema import (
+    clamp_ig_profile_bio_text,
+    validate_skill_output,
+)
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 def _trace(state: IgProfileState, step: str, **extra: Any) -> None:
@@ -86,6 +90,11 @@ class IgProfileBioDraft(BaseModel):
     cta: str
     tone: str
 
+    @field_validator("text")
+    @classmethod
+    def _clamp_bio_text(cls, value: str) -> str:
+        return clamp_ig_profile_bio_text(value)
+
 
 class IgProfileDraftOutput(BaseModel):
     usernames: list[IgProfileUsernameDraft]
@@ -113,14 +122,18 @@ def _normalize_generated_output(payload: Any) -> IgProfileOutput:
 
 async def generate_profile(state: IgProfileState) -> dict[str, Any]:
     """Generate structured IG profile suggestions from campaign brief context."""
-    llm = structured_llm_from_milestone_run_config().with_structured_output(IgProfileDraftOutput)
     _trace_agent_event(state, "chat_model_start")
-    generated = await llm.ainvoke(
-        [
-            SystemMessage(content=IG_PROFILE_SYSTEM),
-            HumanMessage(content=str(state.get("generation_context_markdown") or "").strip()),
-        ]
-    )
+    try:
+        generated = await structured_ainvoke_from_run_config(
+            IgProfileDraftOutput,
+            [
+                SystemMessage(content=IG_PROFILE_SYSTEM),
+                HumanMessage(content=str(state.get("generation_context_markdown") or "").strip()),
+            ],
+        )
+    except LLMInvokeError as exc:
+        emit_llm_error_step(exc.code, str(exc))
+        raise ValueError(str(exc)) from exc
     _trace_agent_event(state, "chat_model_end")
     normalized = _normalize_generated_output(generated.model_dump(exclude_none=True))
     return {"generated_output": normalized}
