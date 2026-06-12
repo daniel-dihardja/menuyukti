@@ -17,6 +17,7 @@ import {
   IMAGE_AI_FLOWS_QUERY,
   LOCATION_QUERY,
   LOCATIONS_QUERY,
+  MENU_COMBOS_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
   MENU_HEATMAPS_QUERY,
   NODES_QUERY,
@@ -30,6 +31,7 @@ import {
   type AnalyticsRunMetadataData,
   type ImageAiFlowsData,
   type LocationsData,
+  type MenuCombosData,
   type MenuEngineeringMatrixData,
   type MenuHeatmapsData,
   type NodesDataRaw,
@@ -143,6 +145,23 @@ export async function getCachedMenuEngineeringMatrix(
     { id: analyticsRunId, locationId },
     userId,
     'MenuEngineeringMatrix',
+  )
+}
+
+/** Basket affinity / menu combo analytics for a run. */
+export async function getCachedMenuCombos(
+  userId: string,
+  analyticsRunId: string,
+  locationId: string,
+): Promise<MenuCombosData> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<MenuCombosData>(
+    MENU_COMBOS_QUERY,
+    { id: analyticsRunId, locationId },
+    userId,
+    'MenuCombos',
   )
 }
 

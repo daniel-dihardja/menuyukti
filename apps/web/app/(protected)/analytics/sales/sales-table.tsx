@@ -21,6 +21,7 @@ import {
   BarChart3,
   Coins,
   Flame,
+  Link2,
   List,
   MoreHorizontal,
   Radio,
@@ -104,6 +105,15 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       >
                         <Flame className="h-4 w-4" />
                         {t('heatmap')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.menuCombos(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <Link2 className="h-4 w-4" />
+                        {t('menuCombos')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>

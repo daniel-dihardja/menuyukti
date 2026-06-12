@@ -1247,6 +1247,7 @@
         "scheduler": "Scheduler",
         "finance": "Finance",
         "heatmap": "Heatmap",
+        "menuCombos": "Menu Combos",
         "menuItems": "Menu Items",
         "orderMetrics": "Order Metrics",
         "campaignSignals": "Campaign Signals",
@@ -2292,6 +2293,62 @@
       "insightPeakRevenue": "{day} has the highest average ticket at {amount}",
       "peakDayBadge": "Peak day"
     },
+    "menuCombos": {
+      "reportTitle": "Menu Combos",
+      "pageLoadingTitle": "Loading menu combos…",
+      "breadcrumb": "Menu Combos",
+      "heading": "Menu Combos",
+      "description": "See which dishes guests order together to inspire bundles and promotions.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "linkToMatrix": "View menu engineering matrix",
+      "linkToCogs": "Add COGS for star filtering",
+      "matrixUnavailable": "Add COGS to classify star items and focus combo analysis on your best performers. Top sellers are used until then.",
+      "tabs": {
+        "pairs": "Top combos",
+        "matrix": "Lift matrix"
+      },
+      "insights": {
+        "totalOrders": "{count, plural, one {# order} other {# orders}}",
+        "multiItemShare": "{percent} multi-item orders",
+        "avgItems": "Avg {count} items per order",
+        "scopeStars": "Star items",
+        "scopeTopSellers": "Top sellers"
+      },
+      "table": {
+        "pair": "Pair",
+        "coOrders": "Co-orders",
+        "lift": "Lift",
+        "support": "Support",
+        "confidence": "Confidence",
+        "confidenceValue": "{aToB} with A · {bToA} with B"
+      },
+      "matrix": {
+        "title": "Pair lift matrix",
+        "menuColumn": "Menu",
+        "legendLow": "Lower lift",
+        "legendHigh": "Higher lift",
+        "unitsLabel": "Lift (association strength vs chance)",
+        "totalsRowLabel": "Total",
+        "sortHint": "Click a column header to sort rows by lift with that item.",
+        "explainTitle": "How to read this matrix",
+        "explainBody": "Lift above 1 means the pair appears together more often than popularity alone would predict. Diagonal cells are hidden. Values below the minimum co-order threshold may be blank.",
+        "cellAriaLabel": "{menu} with {other} · lift {lift}",
+        "cellTooltip": "{menu} + {other} · lift {lift}"
+      },
+      "empty": {
+        "title": "No combo data yet",
+        "description": "This report does not include order lines with bill numbers. Upload a sales file with order-level detail to analyze menu pairs."
+      },
+      "emptyMultiItem": {
+        "title": "Not enough multi-item orders",
+        "description": "Guests mostly ordered single items in this period. Try a longer date range or check that line items group correctly by bill number."
+      },
+      "emptyMatrix": {
+        "title": "Matrix needs more items",
+        "description": "At least two focus menu items are required to show the lift matrix."
+      }
+    },
     "heatmap": {
       "reportTitle": "Heatmaps",
       "pageLoadingTitle": "Loading heatmap…",
@@ -2431,6 +2488,7 @@
       "uncategorized": "Uncategorized",
       "links": {
         "heatmap": "View heatmap",
+        "menuCombos": "View menu combos",
         "cogs": "COGS setup"
       },
       "chart": {

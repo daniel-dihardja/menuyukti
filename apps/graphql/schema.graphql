@@ -236,6 +236,34 @@ type MenuCatalogPayloadType {
   items: [MenuCatalogItemType!]!
 }
 
+"""Co-occurrence metrics for a pair of menu items within the same order."""
+type MenuComboPairType {
+  menuA: String!
+  menuB: String!
+  coOrderCount: Int!
+  support: Float!
+  confidenceAToB: Float!
+  confidenceBToA: Float!
+  lift: Float!
+  menuACategory: String
+  menuBCategory: String
+  matrixCategoryA: String
+  matrixCategoryB: String
+}
+
+"""
+Basket affinity analytics for an analytics run: which menu items appear together in orders, ranked by lift.
+"""
+type MenuCombosPayloadType {
+  totalOrders: Int!
+  multiItemOrderCount: Int!
+  avgDistinctItemsPerOrder: Float!
+  scope: String!
+  focusMenus: [String!]!
+  pairs: [MenuComboPairType!]!
+  matrixLift: [[Float]!]!
+}
+
 """
 Share of items and margin contribution per BCG category (star, puzzle, plow_horse, low_end).
 """
@@ -556,6 +584,11 @@ type Query {
   Compute average order size and revenue for an analytics run. Returns None if the run has no order data.
   """
   orderMetrics(analyticsRunId: ID!): AnalyticsRunOrderMetricsType
+
+  """
+  Return basket affinity analytics for an analytics run: menu pairs ordered together, with lift and confidence metrics. Defaults to star items when menu engineering matrix is available; otherwise top items by order presence. When locationId is set, the run must belong to that location.
+  """
+  menuCombos(analyticsRunId: ID!, locationId: ID = null): MenuCombosPayloadType
 
   """
   Return hourly and day-of-week demand heatmaps for every menu item in an analytics run. Use this to identify peak selling times per dish. When locationId is set, the run must belong to that location (otherwise returns an empty list).

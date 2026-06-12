@@ -5,6 +5,7 @@ from .instagram_signals import InstagramSignalsQuery
 from .location_manual_brief_input import LocationManualBriefInputQuery
 from .locations import LocationsQuery
 from .menu_catalog import MenuCatalogQuery
+from .menu_combos import MenuCombosQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
 from .milestone_prior_data import MilestonePriorDataQuery
@@ -28,6 +29,7 @@ __all__ = [
     "LocationManualBriefInputQuery",
     "MenuCatalogQuery",
     "MilestonePriorDataQuery",
+    "MenuCombosQuery",
     "MenuEngineeringMatrixQuery",
     "MenuHeatmapsQuery",
     "PromotionMenuItemsQuery",
