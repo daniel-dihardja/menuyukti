@@ -61,7 +61,7 @@ export default async function Page({ params }: PageProps) {
         { label: tHeatmap('breadcrumb') },
       ]}
     >
-      <section className="border rounded-md p-6 space-y-4">
+      <section className="flex flex-col gap-4 rounded-md border p-6">
         <PageHeading title={tHeatmap('heading')} description={tHeatmap('description')} />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
@@ -70,7 +70,12 @@ export default async function Page({ params }: PageProps) {
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
-        <HeatmapView menuHeatmaps={menuHeatmaps} matrixItems={matrixItems} locale={locale} />
+        <HeatmapView
+          analyticsId={analyticsId}
+          menuHeatmaps={menuHeatmaps}
+          matrixItems={matrixItems}
+          locale={locale}
+        />
       </section>
     </AnalyticsPageShell>
   )
