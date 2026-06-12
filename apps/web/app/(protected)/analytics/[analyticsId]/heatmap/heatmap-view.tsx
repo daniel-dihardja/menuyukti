@@ -178,7 +178,10 @@ export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: 
       totalsRowLabel: t('totals.label'),
       sortHint: t('sort.hint'),
       explainTitle: t('explain.title'),
-      explainBody: t('explain.body'),
+      explainBody: t('explain.body', {
+        startHour: DAILY_HEATMAP_START_HOUR,
+        endHour: DAILY_HEATMAP_END_HOUR,
+      }),
       cellAriaLabel: (menu: string, window: string, count: number) =>
         t('cellAriaLabel', { menu, window, count }),
       cellTooltip: (menu: string, window: string, count: number) =>
