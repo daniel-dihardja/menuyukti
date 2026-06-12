@@ -10,6 +10,7 @@ import { CreateWorkflowFromReportButton } from '@/components/create-workflow-fro
 import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { formatPreviewDateString } from '@/lib/format-preview-date'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { getCachedAnalyticsRun, getCachedOrderMetrics } from '@/lib/graphql/cached-queries'
 import { routes } from '@/lib/routes'
 import { Badge } from '@workspace/ui/components/badge'
@@ -21,6 +22,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { OrderMetricsView } from './_components/order-metrics-view'
 
@@ -77,13 +79,14 @@ export default async function Page({ params }: PageProps) {
     <AnalyticsPageShell
       title={tOrderMetrics('reportTitle')}
       contentWidth="full"
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
         { label: tOrderMetrics('breadcrumb') },
       ]}
     >
-      <section className="flex flex-col gap-6 rounded-xl border border-card-border bg-card p-4 sm:p-6">
+      <section className={cn('flex flex-col gap-6', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-3">
           <PageHeading
             title={tOrderMetrics('heading')}

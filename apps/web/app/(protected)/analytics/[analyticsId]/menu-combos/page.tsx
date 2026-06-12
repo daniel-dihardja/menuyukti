@@ -7,6 +7,7 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyLocale } from '@/lib/app-currency'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { formatPreviewDateString } from '@/lib/format-preview-date'
 import {
   getCachedAnalyticsRun,
@@ -16,6 +17,7 @@ import {
 import { routes } from '@/lib/routes'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { cn } from '@workspace/ui/lib/utils'
 import {
   Empty,
   EmptyContent,
@@ -81,14 +83,14 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tMenuCombos('reportTitle')}
-      mainClassName="gap-4 px-0 py-0 sm:gap-6 sm:px-6 sm:py-4 md:px-12"
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
         { label: tMenuCombos('breadcrumb') },
       ]}
     >
-      <section className="flex flex-col gap-6 rounded-none border-0 bg-transparent p-4 sm:rounded-xl sm:border sm:border-card-border sm:bg-card sm:p-6">
+      <section className={cn('flex flex-col gap-6', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-3">
           <PageHeading title={tMenuCombos('heading')} description={tMenuCombos('description')} />
           <div className="flex flex-wrap items-center gap-2">

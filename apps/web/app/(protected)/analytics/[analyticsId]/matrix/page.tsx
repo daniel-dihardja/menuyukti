@@ -9,6 +9,7 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { getCachedAnalyticsRun, getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { formatPreviewDateString } from '@/lib/format-preview-date'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { Badge } from '@workspace/ui/components/badge'
@@ -20,6 +21,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { cn } from '@workspace/ui/lib/utils'
 import { MatrixView } from './matrix-view'
 
 type PageProps = {
@@ -77,13 +79,14 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tMatrix('reportTitle')}
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
         { label: tMatrix('breadcrumb') },
       ]}
     >
-      <section className="flex flex-col gap-6 rounded-xl border border-card-border bg-card p-4 sm:p-6">
+      <section className={cn('flex flex-col gap-6', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-3">
           <PageHeading title={tMatrix('heading')} description={tMatrix('description')} />
           <div className="flex flex-wrap items-center gap-2">

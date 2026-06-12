@@ -1,8 +1,10 @@
 import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { cn } from '@workspace/ui/lib/utils'
 
 export default async function HeatmapLoading() {
   const tSales = await getTranslations('analytics.sales')
@@ -12,13 +14,14 @@ export default async function HeatmapLoading() {
   return (
     <AnalyticsPageShell
       title={tHeatmap('pageLoadingTitle')}
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: tShared('breadcrumbRunLoading') },
         { label: tHeatmap('breadcrumb') },
       ]}
     >
-      <section className="flex flex-col gap-4 rounded-md border p-6">
+      <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-2">
           <Skeleton className="h-8 w-72 max-w-full" />
           <Skeleton className="h-4 w-full max-w-xl" />
