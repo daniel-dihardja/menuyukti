@@ -12,7 +12,6 @@ export default async function HeatmapLoading() {
   return (
     <AnalyticsPageShell
       title={tHeatmap('pageLoadingTitle')}
-      contentWidth="full"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: tShared('breadcrumbRunLoading') },

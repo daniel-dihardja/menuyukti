@@ -12,7 +12,6 @@ export default async function CampaignSignalsLoading() {
   return (
     <AnalyticsPageShell
       title={tCampaignSignals('pageLoadingTitle')}
-      contentWidth="full"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: tShared('breadcrumbRunLoading') },
