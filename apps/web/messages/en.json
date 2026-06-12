@@ -2206,7 +2206,36 @@
         "weekly": "Weekly"
       },
       "dailyTitle": "Hourly Sales ({startHour}:00 – {endHour}:00)",
-      "weeklyTitle": "Weekly Sales (Mon–Fri)"
+      "weeklyTitle": "Weekly Sales (Mon–Sun)",
+      "uncategorized": "Uncategorized",
+      "linkToMatrix": "View menu engineering matrix",
+      "insights": {
+        "peakHour": "Busiest hour: {window}",
+        "peakDay": "Busiest day: {window}",
+        "topItem": "Top item: {item} ({count, plural, one {# unit} other {# units}})",
+        "itemCount": "Showing {count, plural, one {# item} other {# items}}",
+        "reportingPeriod": "Period: {period}"
+      },
+      "matrix": {
+        "menuColumn": "Menu"
+      },
+      "legend": {
+        "low": "Low",
+        "high": "High",
+        "units": "Units sold"
+      },
+      "totals": {
+        "label": "Total"
+      },
+      "sort": {
+        "hint": "Click a column header to sort. Click again to toggle ascending or descending."
+      },
+      "cellAriaLabel": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
+      "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
+      "explain": {
+        "title": "How to read this heatmap",
+        "body": "Cell color shows relative units sold within the current view. Numbers are order-line quantities by hour or weekday from your sales data—not forecasts. Daily view shows service hours only (8:00–18:00) for now."
+      }
     },
     "ai": {
       "reportTitle": "Workflow Planner",
