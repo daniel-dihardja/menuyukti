@@ -57,6 +57,13 @@ from menuyukti.core.analytics.calculate_instagram_signals import (
     PeriodHeadline,
     calculate_instagram_signals,
 )
+from menuyukti.core.analytics.calculate_menu_basket_affinities import (
+    MenuBasketAffinitiesResult,
+    MenuBasketPair,
+    OrderRowForBasket,
+    calculate_menu_basket_affinities,
+    compute_menu_basket_affinities_from_orders,
+)
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
     DailyHeatmapRow,
     MenuHeatmapPayload,
@@ -121,6 +128,7 @@ from menuyukti.core.analytics.frame_contracts import (
     ensure_optional_category_columns,
     extract_menu_items_required_columns,
     line_item_columns_full,
+    menu_basket_affinities_columns,
     popularity_index_columns,
     require_columns,
     revenue_trends_columns,
@@ -142,6 +150,9 @@ __all__ = [
     "MenuEngineeringMatrixResult",
     "MenuEngineeringThresholds",
     "MenuHeatmapPayload",
+    "MenuBasketAffinitiesResult",
+    "MenuBasketPair",
+    "OrderRowForBasket",
     "OperatingProfileResult",
     "OrderMetricsByDayRow",
     "OrderSignals",
@@ -168,6 +179,8 @@ __all__ = [
     "compute_sales_analytics_from_orders",
     "calculate_menu_heatmaps",
     "compute_menu_heatmaps_from_orders",
+    "calculate_menu_basket_affinities",
+    "compute_menu_basket_affinities_from_orders",
     "compute_operating_profile_from_orders",
     "compute_order_metrics_by_day_from_orders",
     "compute_revenue_trends_from_orders",
@@ -188,6 +201,7 @@ __all__ = [
     "extract_menu_items",
     "extract_menu_items_required_columns",
     "line_item_columns_full",
+    "menu_basket_affinities_columns",
     "popularity_index_columns",
     "require_columns",
     "revenue_trends_columns",

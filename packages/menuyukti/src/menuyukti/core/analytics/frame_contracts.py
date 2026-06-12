@@ -82,6 +82,11 @@ def extract_menu_items_required_columns() -> list[str]:
     return [_COL.MENU, _COL.QTY, _COL.PRICE]
 
 
+def menu_basket_affinities_columns() -> list[str]:
+    """Minimum columns for :func:`calculate_menu_basket_affinities`."""
+    return [_COL.BILL_NUMBER, _COL.MENU]
+
+
 def ensure_optional_category_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Ensure ``menu_category`` and ``menu_category_detail`` exist, filling with

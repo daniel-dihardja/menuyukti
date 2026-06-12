@@ -55,6 +55,8 @@ type Props = {
   density?: 'comfortable' | 'compact'
   sortable?: boolean
   defaultSortColumnIndex?: number
+  /** When true, cells where row label matches column label render as an em dash. */
+  maskDiagonal?: boolean
   labels: HeatmapMatrixLabels
 }
 
@@ -68,6 +70,7 @@ export function HeatmapMatrix({
   density = 'comfortable',
   sortable = true,
   defaultSortColumnIndex = 0,
+  maskDiagonal = false,
   labels,
 }: Props) {
   const initialSortKey = String(defaultSortColumnIndex) as HeatmapSortKey
@@ -95,8 +98,27 @@ export function HeatmapMatrix({
 
   const displayRows = sortable ? sortedRows : rows
 
-  const { min, max } = useMemo(() => computeScaleBounds(displayRows), [displayRows])
-  const columnTotals = useMemo(() => computeColumnTotals(displayRows), [displayRows])
+  const scaleRows = useMemo(() => {
+    if (!maskDiagonal) return displayRows
+    return displayRows.map((row) => ({
+      ...row,
+      values: row.values.map((value, i) => (row.label === columnLabels[i] ? 0 : value)),
+    }))
+  }, [columnLabels, displayRows, maskDiagonal])
+
+  const { min, max } = useMemo(() => {
+    if (!maskDiagonal) return computeScaleBounds(displayRows)
+    const offDiagonal = displayRows.flatMap((row) =>
+      row.values.filter((_, i) => row.label !== columnLabels[i]),
+    )
+    if (offDiagonal.length === 0) return { min: 0, max: 1 }
+    return {
+      min: Math.min(...offDiagonal),
+      max: Math.max(...offDiagonal),
+    }
+  }, [columnLabels, displayRows, maskDiagonal])
+
+  const columnTotals = useMemo(() => computeColumnTotals(scaleRows), [scaleRows])
   const peakColumnIndex = useMemo(() => findPeakColumnIndex(columnTotals), [columnTotals])
 
   const columns = useMemo(
@@ -156,8 +178,9 @@ export function HeatmapMatrix({
                       {row.label}
                     </TableCell>
                     {row.values.map((value, i) => {
-                      const intensity = heatmapIntensity(value, min, max)
                       const windowLabel = columnLabels[i] ?? String(i)
+                      const isDiagonal = maskDiagonal && row.label === windowLabel
+                      const intensity = heatmapIntensity(value, min, max)
                       const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
                       const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
 
@@ -167,19 +190,30 @@ export function HeatmapMatrix({
                           className={cn(
                             'text-center text-[11px] font-medium',
                             density === 'compact' ? 'h-8' : 'h-10',
-                            heatmapCellUsesLightText(intensity) && 'text-primary-foreground',
+                            isDiagonal && 'bg-muted/30 text-muted-foreground',
+                            !isDiagonal &&
+                              heatmapCellUsesLightText(intensity) &&
+                              'text-primary-foreground',
                           )}
-                          style={{ backgroundColor: heatmapCellBackground(intensity) }}
+                          style={
+                            isDiagonal
+                              ? undefined
+                              : { backgroundColor: heatmapCellBackground(intensity) }
+                          }
                           aria-label={ariaLabel}
                         >
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex size-full items-center justify-center">
-                                {value > 0 ? value : ''}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">{tooltipText}</TooltipContent>
-                          </Tooltip>
+                          {isDiagonal ? (
+                            '—'
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex size-full items-center justify-center">
+                                  {value > 0 ? value : ''}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">{tooltipText}</TooltipContent>
+                            </Tooltip>
+                          )}
                         </TableCell>
                       )
                     })}

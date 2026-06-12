@@ -271,6 +271,58 @@ export type MenuHeatmapsData = {
   }>
 }
 
+export const MENU_COMBOS_QUERY = `
+  query MenuCombos($id: ID!, $locationId: ID) {
+    menuCombos(analyticsRunId: $id, locationId: $locationId) {
+      totalOrders
+      multiItemOrderCount
+      avgDistinctItemsPerOrder
+      scope
+      focusMenus
+      pairs {
+        menuA
+        menuB
+        coOrderCount
+        support
+        confidenceAToB
+        confidenceBToA
+        lift
+        menuACategory
+        menuBCategory
+        matrixCategoryA
+        matrixCategoryB
+      }
+      matrixLift
+    }
+  }
+`
+
+export type MenuComboPair = {
+  menuA: string
+  menuB: string
+  coOrderCount: number
+  support: number
+  confidenceAToB: number
+  confidenceBToA: number
+  lift: number
+  menuACategory: string | null
+  menuBCategory: string | null
+  matrixCategoryA: string | null
+  matrixCategoryB: string | null
+}
+
+export type MenuCombosData = {
+  menuCombos: {
+    totalOrders: number
+    multiItemOrderCount: number
+    avgDistinctItemsPerOrder: number
+    scope: string
+    focusMenus: string[]
+    pairs: MenuComboPair[]
+    matrixLift: Array<Array<number | null>>
+  } | null
+}
+
 export const PROMOTION_MENU_ITEMS_QUERY = `
   query PromotionMenuItems($id: ID!, $locationId: ID) {
     promotionMenuItems(analyticsRunId: $id, locationId: $locationId) {

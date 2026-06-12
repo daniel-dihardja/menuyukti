@@ -1247,6 +1247,7 @@
         "scheduler": "Scheduler",
         "finance": "Finance",
         "heatmap": "Heatmap",
+        "menuCombos": "Menu Combos",
         "menuItems": "Menu Items",
         "orderMetrics": "Order Metrics",
         "campaignSignals": "Campaign Signals",
@@ -2292,6 +2293,111 @@
       "insightPeakRevenue": "{day} has the highest average ticket at {amount}",
       "peakDayBadge": "Peak day"
     },
+    "menuCombos": {
+      "reportTitle": "Menu Combos",
+      "pageLoadingTitle": "Loading menu combos…",
+      "breadcrumb": "Menu Combos",
+      "heading": "Menu Combos",
+      "description": "See which dishes guests order together to inspire bundles and promotions.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "linkToMatrix": "View menu engineering matrix",
+      "linkToCogs": "Add COGS for star filtering",
+      "linkToCampaignSignals": "View campaign signals",
+      "createCampaignCta": "Turn into campaign",
+      "matrixUnavailable": "Add COGS to classify star items and focus combo analysis on your best performers. Top sellers are used until then.",
+      "insightTitle": "Key insight",
+      "insightTopPair": "Guests who order {menuA} often add {menuB} — lift {lift}× above chance. Consider a bundle or \"complete your meal\" promo.",
+      "tabs": {
+        "pairs": "Top combos",
+        "matrix": "Lift matrix"
+      },
+      "kpi": {
+        "totalOrders": "Total orders",
+        "totalOrdersHint": "Orders with bill numbers in this period",
+        "multiItemShare": "Multi-item orders",
+        "multiItemShareHint": "Guests ordering more than one dish",
+        "avgItems": "Avg items per order",
+        "avgItemsHint": "Higher averages suggest more bundle potential",
+        "scope": "Analysis scope",
+        "scopeStarsHint": "Pairs focus on star performers from your menu matrix",
+        "scopeTopSellersHint": "Pairs focus on top-selling items until COGS is added"
+      },
+      "insights": {
+        "totalOrders": "{count, plural, one {# order} other {# orders}}",
+        "multiItemShare": "{percent} multi-item orders",
+        "avgItems": "Avg {count} items per order",
+        "scopeStars": "Star items",
+        "scopeTopSellers": "Top sellers"
+      },
+      "filters": {
+        "quadrantLabel": "Menu engineering filter",
+        "quadrantAriaLabel": "Filter pairs by menu engineering quadrant",
+        "quadrantHelp": "Show pairs where at least one item is in a selected quadrant.",
+        "categoryLabel": "Menu category",
+        "categoryAriaLabel": "Filter pairs by menu category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All categories",
+        "minLiftLabel": "Minimum lift",
+        "minLiftAriaLabel": "Filter pairs by minimum lift",
+        "minLiftAll": "All pairs",
+        "minLiftAbove1": "Lift 1.0+",
+        "minLiftAbove1_5": "Lift 1.5+",
+        "showingCount": "Showing {count, plural, one {# pair} other {# pairs}}"
+      },
+      "bundleIdeas": {
+        "title": "Bundle ideas",
+        "description": "Suggested pairings based on menu engineering categories",
+        "premiumTitle": "Premium bundle candidates",
+        "premiumDescription": "Star + star pairings — your best performers guests already combine",
+        "upsellTitle": "Upsell opportunities",
+        "upsellDescription": "Star + puzzle pairings — promote high-margin stars alongside slower movers"
+      },
+      "table": {
+        "title": "Top combo opportunities",
+        "description": "Ranked by how often guests order items together vs. chance alone",
+        "pair": "Pair",
+        "coOrders": "Co-orders",
+        "lift": "Lift",
+        "support": "Support",
+        "confidence": "Confidence",
+        "confidenceLineA": "When guests order {menu}, {percent} also order {other}",
+        "confidenceLineB": "When guests order {menu}, {percent} also order {other}",
+        "liftTooltip": "How much more often this pair appears together vs. random chance. Above 1 = stronger than expected.",
+        "supportTooltip": "Share of all orders that include both items",
+        "confidenceTooltip": "Directional add-on rate for each item in the pair",
+        "strongLiftBadge": "Strong affinity"
+      },
+      "matrix": {
+        "title": "Pair lift matrix",
+        "menuColumn": "Menu",
+        "legendLow": "Lower lift",
+        "legendHigh": "Higher lift",
+        "unitsLabel": "Lift (association strength vs chance)",
+        "totalsRowLabel": "Total",
+        "sortHint": "Click a column header to sort rows by lift with that item.",
+        "explainTitle": "How to read this matrix",
+        "explainBody": "Lift above 1 means the pair appears together more often than popularity alone would predict. Diagonal cells are hidden. Values below the minimum co-order threshold may be blank.",
+        "cellAriaLabel": "{menu} with {other} · lift {lift}",
+        "cellTooltip": "{menu} + {other} · lift {lift}"
+      },
+      "empty": {
+        "title": "No combo data yet",
+        "description": "This report does not include order lines with bill numbers. Upload a sales file with order-level detail to analyze menu pairs."
+      },
+      "emptyMultiItem": {
+        "title": "Not enough multi-item orders",
+        "description": "Guests mostly ordered single items in this period. Try a longer date range or check that line items group correctly by bill number."
+      },
+      "emptyMatrix": {
+        "title": "Matrix needs more items",
+        "description": "At least two focus menu items are required to show the lift matrix."
+      },
+      "emptyFiltered": {
+        "title": "No pairs match your filters",
+        "description": "Try selecting more quadrants, a different category, or a lower minimum lift."
+      }
+    },
     "heatmap": {
       "reportTitle": "Heatmaps",
       "pageLoadingTitle": "Loading heatmap…",
@@ -2431,6 +2537,7 @@
       "uncategorized": "Uncategorized",
       "links": {
         "heatmap": "View heatmap",
+        "menuCombos": "View menu combos",
         "cogs": "COGS setup"
       },
       "chart": {
