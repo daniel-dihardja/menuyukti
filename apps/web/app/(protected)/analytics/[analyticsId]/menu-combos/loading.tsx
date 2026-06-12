@@ -12,13 +12,14 @@ export default async function MenuCombosLoading() {
   return (
     <AnalyticsPageShell
       title={tMenuCombos('pageLoadingTitle')}
+      mainClassName="gap-4 px-0 py-0 sm:gap-6 sm:px-6 sm:py-4 md:px-12"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: tShared('breadcrumbRunLoading') },
         { label: tMenuCombos('breadcrumb') },
       ]}
     >
-      <section className="flex flex-col gap-6 rounded-xl border border-card-border bg-card p-4 sm:p-6">
+      <section className="flex flex-col gap-6 rounded-none border-0 bg-transparent p-4 sm:rounded-xl sm:border sm:border-card-border sm:bg-card sm:p-6">
         <div className="flex flex-col gap-3">
           <Skeleton className="h-8 w-72 max-w-full" />
           <Skeleton className="h-4 w-full max-w-xl" />
