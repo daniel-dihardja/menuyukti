@@ -2195,7 +2195,11 @@
         "categoryLabel": "Category Filter",
         "categoryAriaLabel": "Filter heatmap items by menu category",
         "categoryPlaceholder": "Select category…",
-        "allCategories": "All Categories"
+        "allCategories": "All Categories",
+        "matrixLabel": "Menu engineering filter",
+        "matrixAriaLabel": "Filter heatmap items by menu engineering matrix category",
+        "matrixHelp": "Choose which menu engineering quadrants appear in the heatmap. When all are selected, every heatmap item is shown.",
+        "emptyMatrixFiltered": "No heatmap items match the selected menu engineering categories. Select at least one quadrant to continue."
       },
       "tabs": {
         "daily": "Daily",

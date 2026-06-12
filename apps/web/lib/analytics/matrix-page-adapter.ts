@@ -123,4 +123,21 @@ export function distributionToCategoryMap(
   return map
 }
 
+/**
+ * Maps trimmed menu item names to their menu-engineering quadrant.
+ * Duplicate menu names: last item wins (same as matrix table grouping).
+ */
+export function buildMenuEngineeringCategoryByMenu(
+  items: MatrixItem[] | null | undefined,
+): Map<string, MatrixCategory> {
+  const map = new Map<string, MatrixCategory>()
+  if (!items || !Array.isArray(items)) return map
+  for (const item of items) {
+    const menu = item.menu?.trim()
+    if (!menu) continue
+    map.set(menu, normalizeCategory(item.category))
+  }
+  return map
+}
+
 export { CATEGORY_ORDER }

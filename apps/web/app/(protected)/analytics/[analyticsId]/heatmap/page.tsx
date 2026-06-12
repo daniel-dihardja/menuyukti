@@ -6,7 +6,11 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
-import { getCachedAnalyticsRun, getCachedMenuHeatmaps } from '@/lib/graphql/cached-queries'
+import {
+  getCachedAnalyticsRun,
+  getCachedMenuEngineeringMatrix,
+  getCachedMenuHeatmaps,
+} from '@/lib/graphql/cached-queries'
 import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { HeatmapView } from './heatmap-view'
@@ -38,10 +42,14 @@ export default async function Page({ params }: PageProps) {
 
   const locationId = String(run.locationId)
   const locale = getAppCurrencyLocale()
-  const heatmapsData = await getCachedMenuHeatmaps(userId, id, locationId)
+  const [heatmapsData, matrixData] = await Promise.all([
+    getCachedMenuHeatmaps(userId, id, locationId),
+    getCachedMenuEngineeringMatrix(userId, id, locationId),
+  ])
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
   const menuHeatmaps = heatmapsData.menuHeatmaps ?? []
+  const matrixItems = matrixData.menuEngineeringMatrix?.items ?? null
 
   return (
     <AnalyticsPageShell
@@ -62,7 +70,7 @@ export default async function Page({ params }: PageProps) {
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
-        <HeatmapView menuHeatmaps={menuHeatmaps} locale={locale} />
+        <HeatmapView menuHeatmaps={menuHeatmaps} matrixItems={matrixItems} locale={locale} />
       </section>
     </AnalyticsPageShell>
   )

@@ -14,15 +14,9 @@ import type {
   MatrixCategory,
   MatrixDisplayRow,
 } from '@/lib/analytics/matrix-page-adapter'
+import { MATRIX_CATEGORY_BADGE_CLASS } from '@/lib/analytics/matrix-category-styles'
 
 type SortKey = 'menuItem' | 'unitsSold' | 'contributionMargin' | 'contributionMarginShare'
-
-const CATEGORY_BADGE_CLASS: Record<MatrixCategory, string> = {
-  star: 'bg-emerald-600 text-white border-transparent',
-  plow_horse: 'bg-amber-500 text-black border-transparent',
-  puzzle: 'bg-sky-100 text-sky-800 border-sky-300',
-  low_end: 'bg-rose-100 text-rose-700 border-rose-300',
-}
 
 type Props = {
   category: MatrixCategory
@@ -83,7 +77,7 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
     <section className="space-y-2">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <h3 className="text-sm font-semibold text-foreground">{tCategories(category)}</h3>
-        <Badge variant="outline" className={CATEGORY_BADGE_CLASS[category]}>
+        <Badge variant="outline" className={MATRIX_CATEGORY_BADGE_CLASS[category]}>
           {tCategories(category)}
         </Badge>
         <span className="text-xs text-muted-foreground">
