@@ -100,19 +100,9 @@ describe('menu-combos-page-adapter', () => {
     expect(options).toEqual(['Mains', 'Sides', 'Starters'])
   })
 
-  it('filters pairs by min lift and quadrant', () => {
-    const pairs = [
-      samplePair({ lift: 0.8, matrixCategoryA: 'low_end', matrixCategoryB: 'low_end' }),
-      samplePair({
-        menuA: 'A',
-        menuB: 'B',
-        lift: 2.0,
-        matrixCategoryA: 'star',
-        matrixCategoryB: 'puzzle',
-      }),
-    ]
+  it('filters pairs by min lift', () => {
+    const pairs = [samplePair({ lift: 0.8 }), samplePair({ menuA: 'A', menuB: 'B', lift: 2.0 })]
     const filtered = filterPairs(pairs, {
-      quadrants: new Set(['star']),
       menuCategory: 'all',
       minLift: 'above1',
     })

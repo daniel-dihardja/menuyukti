@@ -1,13 +1,10 @@
 import type { HeatmapMatrixRow } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
 import type { MenuComboPair, MenuCombosData } from '@/lib/graphql/queries/analytics'
-import type { MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
-
 export type MenuCombosPayload = NonNullable<MenuCombosData['menuCombos']>
 
 export type MinLiftFilter = 'all' | 'above1' | 'above1_5'
 
 export type MenuCombosPairFilters = {
-  quadrants: Set<MatrixCategory>
   menuCategory: string
   minLift: MinLiftFilter
 }
@@ -105,13 +102,6 @@ function passesMinLift(pair: MenuComboPair, minLift: MinLiftFilter): boolean {
   return pair.lift >= STRONG_LIFT_THRESHOLD
 }
 
-function passesQuadrantFilter(pair: MenuComboPair, quadrants: Set<MatrixCategory>): boolean {
-  if (quadrants.size === 0) return true
-  const catA = pair.matrixCategoryA as MatrixCategory | null | undefined
-  const catB = pair.matrixCategoryB as MatrixCategory | null | undefined
-  return (catA != null && quadrants.has(catA)) || (catB != null && quadrants.has(catB))
-}
-
 function passesMenuCategoryFilter(pair: MenuComboPair, menuCategory: string): boolean {
   if (menuCategory === 'all') return true
   return pair.menuACategory === menuCategory || pair.menuBCategory === menuCategory
@@ -123,9 +113,7 @@ export function filterPairs(
 ): MenuComboPair[] {
   return pairs.filter(
     (pair) =>
-      passesMinLift(pair, filters.minLift) &&
-      passesQuadrantFilter(pair, filters.quadrants) &&
-      passesMenuCategoryFilter(pair, filters.menuCategory),
+      passesMinLift(pair, filters.minLift) && passesMenuCategoryFilter(pair, filters.menuCategory),
   )
 }
 

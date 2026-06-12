@@ -2331,9 +2331,6 @@
         "scopeTopSellers": "Top sellers"
       },
       "filters": {
-        "quadrantLabel": "Menu engineering filter",
-        "quadrantAriaLabel": "Filter pairs by menu engineering quadrant",
-        "quadrantHelp": "Show pairs where at least one item is in a selected quadrant.",
         "categoryLabel": "Menu category",
         "categoryAriaLabel": "Filter pairs by menu category",
         "categoryPlaceholder": "Select category…",
@@ -2395,7 +2392,7 @@
       },
       "emptyFiltered": {
         "title": "No pairs match your filters",
-        "description": "Try selecting more quadrants, a different category, or a lower minimum lift."
+        "description": "Try a different category or a lower minimum lift."
       }
     },
     "heatmap": {
