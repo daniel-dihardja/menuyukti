@@ -2291,9 +2291,52 @@
         "remove": "Remove"
       },
       "empty": {
+        "title": "Matrix not ready",
         "description": "Matrix data is not available yet for this analytics file. Please update COGS first to generate matrix results.",
         "cta": "Go to COGS setup"
       },
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "tabs": {
+        "matrix": "Matrix chart",
+        "items": "Item list"
+      },
+      "kpi": {
+        "totalProfit": "Total profit",
+        "totalProfitHint": "Revenue minus COGS across the full menu",
+        "portfolioMargin": "Portfolio margin",
+        "portfolioMarginHint": "Profit as a share of total revenue",
+        "itemsAnalyzed": "Items analyzed",
+        "itemsAnalyzedHint": "Menu items with COGS and revenue in this run",
+        "avgPopularity": "Avg popularity threshold",
+        "avgPopularityHint": "Items at or above this quantity sold count as popular"
+      },
+      "quadrantHelp": {
+        "star": "High popularity and high margin — protect and feature these winners.",
+        "plow_horse": "High popularity but lower margin — optimize cost or price carefully.",
+        "puzzle": "Strong margin but lower volume — promote and increase visibility.",
+        "low_end": "Lower popularity and margin — review, reprice, or retire."
+      },
+      "uncategorized": "Uncategorized",
+      "links": {
+        "heatmap": "View heatmap",
+        "cogs": "COGS setup"
+      },
+      "chart": {
+        "ariaLabel": "Menu engineering matrix scatter plot showing popularity versus contribution margin",
+        "xAxis": "Popularity (units sold)",
+        "yAxis": "Contribution margin",
+        "thresholdPopularity": "Avg popularity",
+        "thresholdMargin": "Avg margin",
+        "empty": "No items to plot for the current filters."
+      },
+      "distributionGrid": {
+        "title": "Menu performance distribution",
+        "marginShareLabel": "Margin share",
+        "toggleAriaLabel": "Toggle {category} quadrant visibility"
+      },
+      "filteredStatsAlert": "Portfolio shares below reflect the selected menu category, not the full run.",
+      "quadrantFilterEmpty": "Select at least one quadrant to view the matrix.",
       "overview": {
         "title": "Sales Overview",
         "period": {
@@ -2333,7 +2376,11 @@
         "categoryLabel": "Category Filter",
         "categoryAriaLabel": "Filter matrix items by menu category",
         "categoryPlaceholder": "Select category…",
-        "allCategories": "All Categories"
+        "allCategories": "All Categories",
+        "matrixLabel": "Quadrants",
+        "matrixAriaLabel": "Filter by menu engineering quadrant",
+        "matrixHelp": "Show or hide Stars, Plow Horses, Puzzles, and Low End items.",
+        "showingCount": "Showing {count, plural, one {# item} other {# items}}"
       },
       "categories": {
         "star": "Stars",
