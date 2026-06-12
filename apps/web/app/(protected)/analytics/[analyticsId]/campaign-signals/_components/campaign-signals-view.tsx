@@ -30,15 +30,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table'
 import { Button } from '@workspace/ui/components/button'
+
+import { MatrixItemsSection } from './matrix-items-section'
+import { TrendingItemsSection } from './trending-items-section'
 
 type SignalsPayload = NonNullable<InstagramSignalsData['instagramSignals']>
 
@@ -61,60 +56,6 @@ function ShareBar({ label, value, locale }: { label: string; value: number; loca
         <div className="h-full rounded-full bg-primary/50" style={{ width: `${pct}%` }} />
       </div>
     </div>
-  )
-}
-
-function MatrixItemsTable({
-  items,
-  emptyLabel,
-  locale,
-  currency,
-  menuColumn,
-  categoryColumn,
-  revenueColumn,
-}: {
-  items: SignalsPayload['additionalSignals']['matrixSignals']['contentHeroes']
-  emptyLabel: string
-  locale: string
-  currency: string
-  menuColumn: string
-  categoryColumn: string
-  revenueColumn: string
-}) {
-  if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">{emptyLabel}</p>
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{menuColumn}</TableHead>
-          <TableHead>{categoryColumn}</TableHead>
-          <TableHead className="text-right">{revenueColumn}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.map((item) => (
-          <TableRow key={item.menu}>
-            <TableCell>
-              <div className="flex flex-col gap-0.5">
-                <span>{item.menu}</span>
-                {item.menuCategory ? (
-                  <span className="text-xs text-muted-foreground">{item.menuCategory}</span>
-                ) : null}
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline">{item.matrixCategory}</Badge>
-            </TableCell>
-            <TableCell className="text-right tabular-nums">
-              {formatCurrencyWithCode(item.totalRevenue, currency, locale)}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   )
 }
 
@@ -145,7 +86,7 @@ export async function CampaignSignalsView({
   const matrixEmpty = heroes.length === 0 && avoidItems.length === 0
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex min-w-0 flex-col gap-8">
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold">{t('sections.coverage')}</h2>
         <div className="flex flex-wrap gap-2">
@@ -251,44 +192,25 @@ export async function CampaignSignalsView({
         ) : null}
 
         {trendingItems.length > 0 ? (
-          <Card className="gap-0 py-0 shadow-none">
-            <CardHeader className="border-b border-card-border py-5 sm:py-6">
+          <Card className="min-w-0 gap-0 overflow-hidden py-0 shadow-none">
+            <CardHeader className="border-b border-card-border px-4 py-5 sm:px-6 sm:py-6">
               <div className="flex items-center gap-2">
                 <TrendingUp className="size-4 text-muted-foreground" aria-hidden />
                 <CardTitle className="text-base">{t('trending.title')}</CardTitle>
               </div>
               <CardDescription>{t('trending.description')}</CardDescription>
             </CardHeader>
-            <CardContent className="px-0 pt-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('trending.menuColumn')}</TableHead>
-                    <TableHead className="text-right">{t('trending.currentRevenue')}</TableHead>
-                    <TableHead className="text-right">{t('trending.changePct')}</TableHead>
-                    <TableHead className="text-right">{t('trending.rank')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {trendingItems.map((item) => (
-                    <TableRow key={item.menu}>
-                      <TableCell>{item.menu}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCurrencyWithCode(item.currentRevenue, currency, locale)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatChangePercent(item.changePct, locale) ?? '—'}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">
-                        {item.rankCurrent}
-                        {item.rankPrevious !== item.rankCurrent
-                          ? ` (${t('trending.wasRank', { rank: item.rankPrevious })})`
-                          : ''}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <CardContent className="min-w-0 px-0 pt-0">
+              <TrendingItemsSection
+                items={trendingItems}
+                locale={locale}
+                currency={currency}
+                menuColumn={t('trending.menuColumn')}
+                currentRevenueColumn={t('trending.currentRevenue')}
+                changePctColumn={t('trending.changePct')}
+                rankColumn={t('trending.rank')}
+                wasRankLabel={(rank) => t('trending.wasRank', { rank })}
+              />
             </CardContent>
           </Card>
         ) : null}
@@ -461,14 +383,14 @@ export async function CampaignSignalsView({
             <AlertDescription>{t('matrix.empty')}</AlertDescription>
           </Alert>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="gap-0 py-0 shadow-none">
-              <CardHeader className="border-b border-card-border py-5">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+            <Card className="min-w-0 gap-0 overflow-hidden py-0 shadow-none">
+              <CardHeader className="border-b border-card-border px-4 py-5 sm:px-6">
                 <CardTitle className="text-base">{t('matrix.heroesTitle')}</CardTitle>
                 <CardDescription>{t('matrix.heroesDescription')}</CardDescription>
               </CardHeader>
-              <CardContent className="px-0 pt-0">
-                <MatrixItemsTable
+              <CardContent className="min-w-0 px-0 pt-0">
+                <MatrixItemsSection
                   items={heroes}
                   emptyLabel={t('matrix.heroesEmpty')}
                   locale={locale}
@@ -479,13 +401,13 @@ export async function CampaignSignalsView({
                 />
               </CardContent>
             </Card>
-            <Card className="gap-0 py-0 shadow-none">
-              <CardHeader className="border-b border-card-border py-5">
+            <Card className="min-w-0 gap-0 overflow-hidden py-0 shadow-none">
+              <CardHeader className="border-b border-card-border px-4 py-5 sm:px-6">
                 <CardTitle className="text-base">{t('matrix.avoidTitle')}</CardTitle>
                 <CardDescription>{t('matrix.avoidDescription')}</CardDescription>
               </CardHeader>
-              <CardContent className="px-0 pt-0">
-                <MatrixItemsTable
+              <CardContent className="min-w-0 px-0 pt-0">
+                <MatrixItemsSection
                   items={avoidItems}
                   emptyLabel={t('matrix.avoidEmpty')}
                   locale={locale}

@@ -1,7 +1,6 @@
 'use client'
 
-import { Lightbulb, Megaphone, Radio } from 'lucide-react'
-import Link from 'next/link'
+import { ChevronDown } from 'lucide-react'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
@@ -16,16 +15,22 @@ import {
   type MenuCombosPayload,
   type MinLiftFilter,
 } from '@/lib/analytics/menu-combos-page-adapter'
-import { routes } from '@/lib/routes'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { HeatmapMatrix } from '../heatmap/heatmap-matrix'
 import { MenuCombosBundleIdeas } from './_components/menu-combos-bundle-ideas'
 import { MenuCombosFilters } from './_components/menu-combos-filters'
+import { MenuCombosInsightHero } from './_components/menu-combos-insight-hero'
 import { MenuCombosKpis } from './_components/menu-combos-kpis'
 import { MenuCombosPairsTable } from './_components/menu-combos-pairs-table'
+import { MenuCombosRelatedReports } from './_components/menu-combos-related-reports'
 
 type MenuCombosViewProps = {
   analyticsId: number
@@ -96,8 +101,6 @@ export function MenuCombosView({
     [locale, t],
   )
 
-  const workflowHref = `${routes.workflows.list}?fromAnalytics=${String(analyticsId)}&focus=combos`
-
   if (menuCombos.totalOrders === 0) {
     return (
       <Empty className="border border-dashed">
@@ -125,24 +128,13 @@ export function MenuCombosView({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link href={routes.analytics.matrix(analyticsId)}>{t('linkToMatrix')}</Link>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <Link href={routes.analytics.campaignSignals(analyticsId)}>
-            <Radio aria-hidden data-icon="inline-start" />
-            {t('linkToCampaignSignals')}
-          </Link>
-        </Button>
-        {!matrixAvailable ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={routes.analytics.cogs(analyticsId)}>{t('linkToCogs')}</Link>
-          </Button>
-        ) : null}
-      </div>
-
-      {!matrixAvailable ? (
+      {topPair ? (
+        <MenuCombosInsightHero
+          topPair={topPair}
+          locale={locale}
+          matrixUnavailable={!matrixAvailable}
+        />
+      ) : !matrixAvailable ? (
         <Alert>
           <AlertDescription>{t('matrixUnavailable')}</AlertDescription>
         </Alert>
@@ -150,55 +142,32 @@ export function MenuCombosView({
 
       <MenuCombosKpis menuCombos={menuCombos} locale={locale} />
 
-      {topPair ? (
-        <Alert>
-          <Lightbulb aria-hidden />
-          <AlertTitle>{t('insightTitle')}</AlertTitle>
-          <AlertDescription className="flex flex-col gap-3">
-            <p>
-              {t('insightTopPair', {
-                menuA: topPair.menuA,
-                menuB: topPair.menuB,
-                lift: formatLift(topPair.lift, locale),
-              })}
-            </p>
-            <Button asChild variant="secondary" size="sm" className="w-fit">
-              <Link href={workflowHref}>
-                <Megaphone aria-hidden data-icon="inline-start" />
-                {t('createCampaignCta')}
-              </Link>
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      <MenuCombosBundleIdeas groups={bundleIdeas} locale={locale} />
-
-      <MenuCombosFilters
-        categoryOptions={categoryOptions}
-        selectedCategory={selectedCategory}
-        onCategoryChange={(value) => {
-          void setCategoryFilter(value)
-        }}
-        minLift={minLift}
-        onMinLiftChange={(value) => {
-          void setMinLiftFilter(value)
-        }}
-        visibleCount={filteredPairs.length}
-      />
-
       <Tabs
         value={view === 'matrix' ? 'matrix' : 'pairs'}
         onValueChange={(value) => {
           void setView(value)
         }}
       >
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="pairs">{t('tabs.pairs')}</TabsTrigger>
           <TabsTrigger value="matrix">{t('tabs.matrix')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pairs" className="mt-4">
+        <TabsContent value="pairs" className="mt-4 flex flex-col gap-4">
+          <MenuCombosFilters
+            categoryOptions={categoryOptions}
+            selectedCategory={selectedCategory}
+            onCategoryChange={(value) => {
+              void setCategoryFilter(value)
+            }}
+            minLift={minLift}
+            onMinLiftChange={(value) => {
+              void setMinLiftFilter(value)
+            }}
+            visibleCount={filteredPairs.length}
+            stickyOnMobile
+          />
+
           {filteredPairs.length === 0 ? (
             <Empty className="border border-dashed">
               <EmptyHeader>
@@ -212,10 +181,26 @@ export function MenuCombosView({
         </TabsContent>
 
         <TabsContent value="matrix" className="mt-4 flex flex-col gap-4">
-          <Alert>
+          <Alert className="hidden md:flex md:flex-col">
             <AlertTitle>{t('matrix.explainTitle')}</AlertTitle>
             <AlertDescription>{t('matrix.explainBody')}</AlertDescription>
           </Alert>
+
+          <Collapsible className="md:hidden">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="group w-full justify-between px-0">
+                <span>{t('matrix.showExplanation')}</span>
+                <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <Alert>
+                <AlertTitle>{t('matrix.explainTitle')}</AlertTitle>
+                <AlertDescription>{t('matrix.explainBody')}</AlertDescription>
+              </Alert>
+            </CollapsibleContent>
+          </Collapsible>
+
           {matrixRows.length < 2 ? (
             <Empty className="border border-dashed">
               <EmptyHeader>
@@ -235,6 +220,10 @@ export function MenuCombosView({
           )}
         </TabsContent>
       </Tabs>
+
+      <MenuCombosBundleIdeas groups={bundleIdeas} locale={locale} />
+
+      <MenuCombosRelatedReports analyticsId={analyticsId} matrixAvailable={matrixAvailable} />
     </div>
   )
 }

@@ -80,7 +80,7 @@ export default async function Page({ params }: PageProps) {
         { label: tCampaignSignals('breadcrumb') },
       ]}
     >
-      <section className="flex flex-col gap-6 rounded-xl border border-card-border bg-card p-4 sm:p-6">
+      <section className="flex min-w-0 flex-col gap-6 rounded-xl border border-card-border bg-card p-4 sm:p-6">
         <div className="flex flex-col gap-3">
           <PageHeading
             title={tCampaignSignals('heading')}

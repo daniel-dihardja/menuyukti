@@ -105,11 +105,13 @@ export default async function Page({ params }: PageProps) {
           {showFilename ? <p className="text-sm text-muted-foreground">{run.filename}</p> : null}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
           </Button>
-          <CreateWorkflowFromReportButton analyticsId={analyticsId} />
+          <div className="w-full sm:w-auto [&_a]:w-full [&_button]:w-full sm:[&_a]:w-auto sm:[&_button]:w-auto">
+            <CreateWorkflowFromReportButton analyticsId={analyticsId} />
+          </div>
         </div>
 
         {!menuCombos ? (
