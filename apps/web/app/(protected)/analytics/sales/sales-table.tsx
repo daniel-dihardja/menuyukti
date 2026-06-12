@@ -23,6 +23,7 @@ import {
   Flame,
   List,
   MoreHorizontal,
+  Radio,
   Sparkles,
   Table2,
   Trash2,
@@ -112,6 +113,15 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       >
                         <BarChart3 className="h-4 w-4" />
                         {t('orderMetrics')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.campaignSignals(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <Radio className="h-4 w-4" />
+                        {t('campaignSignals')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

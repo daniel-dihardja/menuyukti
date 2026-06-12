@@ -1249,6 +1249,7 @@
         "heatmap": "Heatmap",
         "menuItems": "Menu Items",
         "orderMetrics": "Order Metrics",
+        "campaignSignals": "Campaign Signals",
         "readiness": {
           "badges": {
             "ready": "Ready",
@@ -2158,6 +2159,116 @@
           "sat": "Sat",
           "sun": "Sun"
         }
+      }
+    },
+    "campaignSignals": {
+      "reportTitle": "Campaign Signals",
+      "pageLoadingTitle": "Loading campaign signals…",
+      "breadcrumb": "Campaign Signals",
+      "heading": "Campaign Signals",
+      "description": "Deterministic analytics inputs used when generating campaign briefs — sales fundamentals, timing, menu guardrails, and planning recommendations for this location.",
+      "emptyTitle": "No campaign signals yet",
+      "emptyDescription": "This report has no parsed order data. Upload a sales file with line items so signals can be computed.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "coverageNotesTitle": "Data coverage notes",
+      "sections": {
+        "coverage": "Data coverage",
+        "fundamental": "Fundamental signals",
+        "order": "Order signals",
+        "timing": "Timing & posting",
+        "matrix": "Menu matrix guardrails",
+        "planning": "Campaign planning"
+      },
+      "capabilities": {
+        "orderId": "Order-level data",
+        "noOrderId": "No order-level data",
+        "datetime": "Datetime data",
+        "noDatetime": "No datetime data",
+        "enabledBlocks": "Enabled blocks: {blocks}"
+      },
+      "confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
+      },
+      "sales": {
+        "totalRevenue": "Total revenue",
+        "totalItemsSold": "Items sold",
+        "uniqueMenuItems": "Unique menu items",
+        "avgItemPrice": "Avg item price"
+      },
+      "categoryFocus": {
+        "title": "Top revenue category",
+        "revenueShare": "Revenue share",
+        "quantityShare": "Quantity share"
+      },
+      "trending": {
+        "title": "Rising items",
+        "description": "Menu items with rising revenue vs the prior period",
+        "menuColumn": "Menu item",
+        "currentRevenue": "Current revenue",
+        "changePct": "Change",
+        "rank": "Rank",
+        "wasRank": "was {rank}"
+      },
+      "order": {
+        "totalOrders": "Total orders",
+        "avgOrderRevenue": "Avg order revenue",
+        "avgOrderItems": "Avg items per order",
+        "revenueRange": "Order revenue range"
+      },
+      "timing": {
+        "peakDay": "Peak demand day",
+        "peakRevenueDay": "Peak revenue day",
+        "primaryMealPeriod": "Primary meal period",
+        "peakRevenueMealPeriod": "Peak revenue meal period",
+        "peakHour": "Peak hour",
+        "periodHeadline": "Reporting period",
+        "periodRevenue": "Period revenue",
+        "previousRevenue": "Previous period",
+        "vsPrevious": "Vs previous period"
+      },
+      "matrix": {
+        "heroesTitle": "Content heroes",
+        "heroesDescription": "Star items recommended for spotlight content",
+        "heroesEmpty": "No hero items identified",
+        "avoidTitle": "Use cautiously",
+        "avoidDescription": "Low-end matrix items to avoid over-promoting",
+        "avoidEmpty": "No avoid items flagged",
+        "empty": "Menu engineering signals need COGS data. Add costs to unlock hero and avoid lists.",
+        "menuColumn": "Menu item",
+        "categoryColumn": "Matrix",
+        "revenueColumn": "Revenue"
+      },
+      "planning": {
+        "title": "Planning recommendations",
+        "description": "Derived posting and objective hints for campaign briefs",
+        "objective": "Recommended objective",
+        "primaryCta": "Primary CTA channel",
+        "postingDays": "Recommended posting days",
+        "dayparts": "Recommended dayparts"
+      },
+      "objectives": {
+        "awareness": "Awareness",
+        "consideration": "Consideration",
+        "conversion": "Conversion",
+        "unknown": "Unknown objective"
+      },
+      "cta": {
+        "profileVisit": "Profile visit",
+        "dm": "Direct message",
+        "orderOrReservation": "Order or reservation",
+        "unknown": "Unknown CTA"
+      },
+      "unavailable": {
+        "orderSignals": "Order-level signals are unavailable because this report lacks order identifiers.",
+        "datetimeSignals": "Timing signals are unavailable because this report lacks order timestamps."
+      },
+      "links": {
+        "heatmap": "View heatmap",
+        "cogs": "Add COGS",
+        "matrix": "View matrix"
       }
     },
     "orderMetrics": {

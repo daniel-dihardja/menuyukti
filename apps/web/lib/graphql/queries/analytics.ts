@@ -324,3 +324,177 @@ export type PublicHolidayItem = {
 export type PublicHolidaysData = {
   publicHolidays: PublicHolidayItem[]
 }
+
+export const INSTAGRAM_SIGNALS_QUERY = `
+  query InstagramSignals($analyticsRunId: ID!, $locationId: ID!) {
+    instagramSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+      analyticsRunId
+      capabilities {
+        hasOrderId
+        hasDatetime
+        enabledBlocks
+      }
+      fundamentalSignals {
+        sales {
+          totalItemsSold
+          totalRevenue
+          uniqueMenuItems
+          avgItemPrice
+          avgPopularityThreshold
+        }
+        categoryFocus {
+          category
+          revenueShare
+          quantityShare
+        }
+        trendingItems {
+          menu
+          currentRevenue
+          previousRevenue
+          changePct
+          rankCurrent
+          rankPrevious
+          trendLabel
+        }
+      }
+      additionalSignals {
+        orderSignals {
+          totalOrders
+          avgOrderRevenue
+          maxOrderRevenue
+          minOrderRevenue
+          avgOrderItems
+          maxOrderItems
+          minOrderItems
+        }
+        datetimeSignals {
+          bestPostingWindow {
+            peakDay
+            peakRevenueDay
+            primaryMealPeriod
+            peakRevenueMealPeriod
+            peakHour
+          }
+          periodHeadline {
+            periodStart
+            periodEnd
+            totalRevenue
+            previousPeriodTotalRevenue
+            revenueVsPreviousPct
+          }
+        }
+        matrixSignals {
+          contentHeroes {
+            menu
+            matrixCategory
+            totalRevenue
+            menuCategory
+            menuCategoryDetail
+          }
+          avoidItems {
+            menu
+            matrixCategory
+            totalRevenue
+            menuCategory
+            menuCategoryDetail
+          }
+        }
+        campaignPlanningSignals {
+          recommendedPostingDays
+          recommendedDayparts
+          objectiveRecommendation
+          primaryCtaChannel
+        }
+        signalConfidence {
+          tier
+          coverageNotes
+        }
+      }
+    }
+  }
+`
+
+export type InstagramSignalsMatrixItem = {
+  menu: string
+  matrixCategory: string
+  totalRevenue: number
+  menuCategory: string | null
+  menuCategoryDetail: string | null
+}
+
+export type InstagramSignalsTrendingItem = {
+  menu: string
+  currentRevenue: number
+  previousRevenue: number
+  changePct: number | null
+  rankCurrent: number
+  rankPrevious: number
+  trendLabel: string
+}
+
+export type InstagramSignalsData = {
+  instagramSignals: {
+    analyticsRunId: string
+    capabilities: {
+      hasOrderId: boolean
+      hasDatetime: boolean
+      enabledBlocks: string[]
+    }
+    fundamentalSignals: {
+      sales: {
+        totalItemsSold: number
+        totalRevenue: number
+        uniqueMenuItems: number
+        avgItemPrice: number
+        avgPopularityThreshold: number
+      }
+      categoryFocus: {
+        category: string | null
+        revenueShare: number
+        quantityShare: number
+      } | null
+      trendingItems: InstagramSignalsTrendingItem[]
+    }
+    additionalSignals: {
+      orderSignals: {
+        totalOrders: number
+        avgOrderRevenue: number
+        maxOrderRevenue: number
+        minOrderRevenue: number
+        avgOrderItems: number
+        maxOrderItems: number
+        minOrderItems: number
+      } | null
+      datetimeSignals: {
+        bestPostingWindow: {
+          peakDay: string | null
+          peakRevenueDay: string | null
+          primaryMealPeriod: string | null
+          peakRevenueMealPeriod: string | null
+          peakHour: number | null
+        }
+        periodHeadline: {
+          periodStart: string
+          periodEnd: string
+          totalRevenue: number
+          previousPeriodTotalRevenue: number
+          revenueVsPreviousPct: number | null
+        }
+      } | null
+      matrixSignals: {
+        contentHeroes: InstagramSignalsMatrixItem[]
+        avoidItems: InstagramSignalsMatrixItem[]
+      }
+      campaignPlanningSignals: {
+        recommendedPostingDays: string[]
+        recommendedDayparts: string[]
+        objectiveRecommendation: string
+        primaryCtaChannel: string
+      }
+      signalConfidence: {
+        tier: string
+        coverageNotes: string[]
+      }
+    }
+  } | null
+}
