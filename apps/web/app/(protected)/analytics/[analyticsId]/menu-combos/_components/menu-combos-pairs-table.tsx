@@ -1,10 +1,11 @@
 'use client'
 
-import { HelpCircle } from 'lucide-react'
-import { useMemo } from 'react'
+import { ArrowDown, ArrowUp, ChevronDown, HelpCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
+import { MilestonePreviewHelpTrigger } from '@/app/(protected)/workflow/_components/milestone-preview/milestone-preview-help-trigger'
 import { MATRIX_CATEGORY_BADGE_CLASS } from '@/lib/analytics/matrix-category-styles'
 import type { MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
 import {
@@ -17,6 +18,7 @@ import {
 } from '@/lib/analytics/menu-combos-page-adapter'
 import type { MenuComboPair } from '@/lib/graphql/queries/analytics'
 import { Badge } from '@workspace/ui/components/badge'
+import { Button } from '@workspace/ui/components/button'
 import {
   Card,
   CardContent,
@@ -24,6 +26,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
+import { Field, FieldLabel } from '@workspace/ui/components/field'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { TableCell, TableRow } from '@workspace/ui/components/table'
 import {
   Tooltip,
@@ -39,6 +54,7 @@ type MenuCombosPairsTableProps = {
 }
 
 type TableSortKey = PairSortKey | 'pair' | 'confidence'
+type MobileSortKey = PairSortKey
 
 function MatrixCategoryBadge({ category }: { category: string | null | undefined }) {
   const tCategories = useTranslations('analytics.matrix.categories')
@@ -74,20 +90,27 @@ function ColumnHeaderWithTooltip({ label, tooltip }: { label: string; tooltip: s
   )
 }
 
-function PairCell({ pair }: { pair: MenuComboPair }) {
+function PairCell({ pair, breakWords = false }: { pair: MenuComboPair; breakWords?: boolean }) {
+  const nameClass = breakWords ? 'break-words font-medium' : 'truncate font-medium'
+  const subClass = breakWords
+    ? 'text-xs text-muted-foreground break-words'
+    : 'truncate text-xs text-muted-foreground'
+
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate font-medium">{pair.menuA}</span>
-        {pair.menuACategory ? (
-          <span className="truncate text-xs text-muted-foreground">{pair.menuACategory}</span>
-        ) : null}
+        <span className={nameClass}>{pair.menuA}</span>
+        {pair.menuACategory ? <span className={subClass}>{pair.menuACategory}</span> : null}
       </div>
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-muted-foreground">+ {pair.menuB}</span>
-        {pair.menuBCategory ? (
-          <span className="truncate text-xs text-muted-foreground">{pair.menuBCategory}</span>
-        ) : null}
+        <span
+          className={
+            breakWords ? 'break-words text-muted-foreground' : 'truncate text-muted-foreground'
+          }
+        >
+          + {pair.menuB}
+        </span>
+        {pair.menuBCategory ? <span className={subClass}>{pair.menuBCategory}</span> : null}
       </div>
       <div className="flex flex-wrap gap-1">
         <MatrixCategoryBadge category={pair.matrixCategoryA} />
@@ -97,8 +120,107 @@ function PairCell({ pair }: { pair: MenuComboPair }) {
   )
 }
 
+function MobilePairCard({ pair, locale }: { pair: MenuComboPair; locale: string }) {
+  const t = useTranslations('analytics.menuCombos.table')
+  const tMobile = useTranslations('analytics.menuCombos.mobile')
+  const [confidenceOpen, setConfidenceOpen] = useState(false)
+
+  const rowClass = liftStrengthClass(pair.lift)
+  const isStrong = pair.lift >= STRONG_LIFT_THRESHOLD
+
+  const bestConfidence =
+    pair.confidenceAToB >= pair.confidenceBToA
+      ? { menu: pair.menuA, other: pair.menuB, percent: pair.confidenceAToB }
+      : { menu: pair.menuB, other: pair.menuA, percent: pair.confidenceBToA }
+
+  return (
+    <li
+      className={cn('flex flex-col gap-3 rounded-lg border border-card-border px-4 py-3', rowClass)}
+    >
+      <PairCell pair={pair} breakWords />
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="flex flex-col gap-0.5">
+          <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+            {t('lift')}
+            <MilestonePreviewHelpTrigger helpText={t('liftTooltip')} ariaLabel={t('liftTooltip')} />
+          </span>
+          <div className="flex flex-col gap-1">
+            <span className="text-lg font-semibold tabular-nums">
+              {formatLift(pair.lift, locale)}
+            </span>
+            {isStrong ? (
+              <Badge variant="secondary" className="w-fit font-normal text-xs">
+                {t('strongLiftBadge')}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">{t('coOrders')}</span>
+          <span className="text-lg font-semibold tabular-nums">{pair.coOrderCount}</span>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+            {t('support')}
+            <MilestonePreviewHelpTrigger
+              helpText={t('supportTooltip')}
+              ariaLabel={t('supportTooltip')}
+            />
+          </span>
+          <span className="text-lg font-semibold tabular-nums">
+            {formatPercent(pair.support, locale)}
+          </span>
+        </div>
+      </div>
+
+      <Collapsible open={confidenceOpen} onOpenChange={setConfidenceOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-auto w-full justify-between px-0 py-1">
+            <span className="text-xs text-muted-foreground">
+              {confidenceOpen ? tMobile('hideConfidence') : tMobile('showConfidence')}
+            </span>
+            <ChevronDown
+              className={cn(
+                'size-4 shrink-0 text-muted-foreground transition-transform',
+                confidenceOpen && 'rotate-180',
+              )}
+            />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="flex flex-col gap-2 pt-1">
+          <p className="text-sm text-muted-foreground">
+            {tMobile('confidenceSummary', {
+              menu: bestConfidence.menu,
+              other: bestConfidence.other,
+              percent: formatPercent(bestConfidence.percent, locale),
+            })}
+          </p>
+          <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+            <span>
+              {t('confidenceLineA', {
+                menu: pair.menuA,
+                percent: formatPercent(pair.confidenceAToB, locale),
+                other: pair.menuB,
+              })}
+            </span>
+            <span>
+              {t('confidenceLineB', {
+                menu: pair.menuB,
+                percent: formatPercent(pair.confidenceBToA, locale),
+                other: pair.menuA,
+              })}
+            </span>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </li>
+  )
+}
+
 export function MenuCombosPairsTable({ pairs, locale }: MenuCombosPairsTableProps) {
   const t = useTranslations('analytics.menuCombos.table')
+  const tMobile = useTranslations('analytics.menuCombos.mobile')
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<TableSortKey>('lift', 'desc')
 
   const sortedPairs = useMemo(() => {
@@ -107,6 +229,9 @@ export function MenuCombosPairsTable({ pairs, locale }: MenuCombosPairsTableProp
     }
     return sortPairs(pairs, sortKey, sortDirection)
   }, [pairs, sortKey, sortDirection])
+
+  const mobileSortKey: MobileSortKey =
+    sortKey === 'coOrderCount' || sortKey === 'support' ? sortKey : 'lift'
 
   const columns = useMemo(
     () => [
@@ -164,7 +289,51 @@ export function MenuCombosPairsTable({ pairs, locale }: MenuCombosPairsTableProp
           <CardTitle className="text-base">{t('title')}</CardTitle>
           <CardDescription>{t('description')}</CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto px-0 pt-0">
+
+        <CardContent className="flex flex-col gap-4 px-4 pt-4 md:hidden">
+          <div className="flex items-end gap-2">
+            <Field className="min-w-0 flex-1 gap-2">
+              <FieldLabel htmlFor="menu-combos-mobile-sort">{tMobile('sortLabel')}</FieldLabel>
+              <Select
+                value={mobileSortKey}
+                onValueChange={(value) => {
+                  if (value === 'lift' || value === 'coOrderCount' || value === 'support') {
+                    toggleSort(value)
+                  }
+                }}
+              >
+                <SelectTrigger id="menu-combos-mobile-sort" aria-label={tMobile('sortAriaLabel')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lift">{tMobile('sortLift')}</SelectItem>
+                  <SelectItem value="coOrderCount">{tMobile('sortCoOrders')}</SelectItem>
+                  <SelectItem value="support">{tMobile('sortSupport')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              aria-label={
+                sortDirection === 'asc' ? tMobile('sortAscending') : tMobile('sortDescending')
+              }
+              onClick={() => toggleSort(mobileSortKey)}
+            >
+              {sortDirection === 'asc' ? <ArrowUp aria-hidden /> : <ArrowDown aria-hidden />}
+            </Button>
+          </div>
+
+          <ul className="flex flex-col gap-3">
+            {sortedPairs.map((pair) => (
+              <MobilePairCard key={`${pair.menuA}::${pair.menuB}`} pair={pair} locale={locale} />
+            ))}
+          </ul>
+        </CardContent>
+
+        <CardContent className="hidden overflow-x-auto px-0 pt-0 md:block">
           <SortableTable
             columns={columns}
             sortKey={sortKey}

@@ -2308,6 +2308,24 @@
       "matrixUnavailable": "Add COGS to classify star items and focus combo analysis on your best performers. Top sellers are used until then.",
       "insightTitle": "Key insight",
       "insightTopPair": "Guests who order {menuA} often add {menuB} — lift {lift}× above chance. Consider a bundle or \"complete your meal\" promo.",
+      "hero": {
+        "liftLabel": "{lift}× lift"
+      },
+      "relatedReports": {
+        "trigger": "Related reports"
+      },
+      "mobile": {
+        "sortLabel": "Sort by",
+        "sortAriaLabel": "Sort combo pairs",
+        "sortLift": "Lift",
+        "sortCoOrders": "Co-orders",
+        "sortSupport": "Support",
+        "sortAscending": "Sort ascending",
+        "sortDescending": "Sort descending",
+        "confidenceSummary": "Up to {percent} of guests who order {menu} also add {other}",
+        "showConfidence": "Why this pair",
+        "hideConfidence": "Hide details"
+      },
       "tabs": {
         "pairs": "Top combos",
         "matrix": "Lift matrix"
@@ -2375,6 +2393,8 @@
         "sortHint": "Click a column header to sort rows by lift with that item.",
         "explainTitle": "How to read this matrix",
         "explainBody": "Lift above 1 means the pair appears together more often than popularity alone would predict. Diagonal cells are hidden. Values below the minimum co-order threshold may be blank.",
+        "showExplanation": "How to read this matrix",
+        "hideExplanation": "Hide explanation",
         "cellAriaLabel": "{menu} with {other} · lift {lift}",
         "cellTooltip": "{menu} + {other} · lift {lift}"
       },

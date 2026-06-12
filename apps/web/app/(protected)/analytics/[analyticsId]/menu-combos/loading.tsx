@@ -27,19 +27,32 @@ export default async function MenuCombosLoading() {
             <Skeleton className="h-6 w-40" />
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-9 w-32" />
-          <Skeleton className="h-9 w-44" />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Skeleton className="h-9 w-full sm:w-32" />
+          <Skeleton className="h-9 w-full sm:w-44" />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Skeleton className="h-36 w-full rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-xl" />
+
+        <Skeleton className="h-44 w-full rounded-xl" />
+
+        <div className="-mx-1 flex gap-3 overflow-hidden px-1">
+          <Skeleton className="h-28 min-w-[72%] shrink-0 rounded-xl" />
+          <Skeleton className="h-28 min-w-[72%] shrink-0 rounded-xl" />
         </div>
+
+        <div className="grid w-full grid-cols-2 gap-2">
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton className="h-32 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
+        </div>
+
         <Skeleton className="h-24 w-full rounded-lg" />
-        <Skeleton className="h-10 w-56" />
-        <Skeleton className="h-[min(24rem,50vh)] w-full rounded-md" />
+        <Skeleton className="h-9 w-full rounded-md md:w-40" />
       </section>
     </AnalyticsPageShell>
   )

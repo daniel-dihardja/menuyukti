@@ -15,10 +15,54 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
+import { cn } from '@workspace/ui/lib/utils'
 
 type MenuCombosKpisProps = {
   menuCombos: MenuCombosPayload
   locale: string
+}
+
+type KpiCardProps = {
+  icon: React.ReactNode
+  iconWrapperClassName?: string
+  label: string
+  value: React.ReactNode
+  hint: string
+  highlighted?: boolean
+}
+
+function KpiCard({
+  icon,
+  iconWrapperClassName,
+  label,
+  value,
+  hint,
+  highlighted = false,
+}: KpiCardProps) {
+  return (
+    <Card
+      className={cn(
+        'min-w-[72%] shrink-0 snap-start gap-3 py-4 shadow-none md:min-w-0 md:py-6',
+        highlighted && 'border-primary/30',
+      )}
+    >
+      <CardHeader className="gap-2">
+        <div
+          className={cn(
+            'flex size-10 shrink-0 items-center justify-center rounded-md bg-muted',
+            iconWrapperClassName,
+          )}
+        >
+          {icon}
+        </div>
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="text-2xl tracking-tight tabular-nums md:text-3xl">{value}</CardTitle>
+      </CardHeader>
+      <CardContent className="hidden pt-0 md:block">
+        <p className="text-sm text-muted-foreground">{hint}</p>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function MenuCombosKpis({ menuCombos, locale }: MenuCombosKpisProps) {
@@ -31,83 +75,47 @@ export function MenuCombosKpis({ menuCombos, locale }: MenuCombosKpisProps) {
   const isStarsScope = menuCombos.scope === 'stars'
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Card className="gap-4 py-5 shadow-none sm:py-6">
-        <CardHeader className="gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
-            <ShoppingBag className="text-muted-foreground" aria-hidden />
-          </div>
-          <CardDescription>{t('kpi.totalOrders')}</CardDescription>
-          <CardTitle className="text-3xl tracking-tight tabular-nums">
-            {countFmt.format(menuCombos.totalOrders)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">{t('kpi.totalOrdersHint')}</p>
-        </CardContent>
-      </Card>
+    <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 snap-x snap-mandatory md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 md:pb-0 md:snap-none xl:grid-cols-4">
+      <KpiCard
+        icon={<ShoppingBag className="text-muted-foreground" aria-hidden />}
+        label={t('kpi.totalOrders')}
+        value={countFmt.format(menuCombos.totalOrders)}
+        hint={t('kpi.totalOrdersHint')}
+      />
 
-      <Card className="gap-4 border-primary/30 py-5 shadow-none sm:py-6">
-        <CardHeader className="gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
-            <UtensilsCrossed className="text-primary" aria-hidden />
-          </div>
-          <CardDescription>{t('kpi.multiItemShare')}</CardDescription>
-          <CardTitle className="text-3xl tracking-tight tabular-nums">
-            {formatPercent(multiItemShare, locale)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">{t('kpi.multiItemShareHint')}</p>
-        </CardContent>
-      </Card>
+      <KpiCard
+        icon={<UtensilsCrossed className="text-primary" aria-hidden />}
+        iconWrapperClassName="bg-primary/10"
+        label={t('kpi.multiItemShare')}
+        value={formatPercent(multiItemShare, locale)}
+        hint={t('kpi.multiItemShareHint')}
+        highlighted
+      />
 
-      <Card className="gap-4 py-5 shadow-none sm:py-6">
-        <CardHeader className="gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
-            <LayoutGrid className="text-muted-foreground" aria-hidden />
-          </div>
-          <CardDescription>{t('kpi.avgItems')}</CardDescription>
-          <CardTitle className="text-3xl tracking-tight tabular-nums">
-            {numberFmt.format(menuCombos.avgDistinctItemsPerOrder)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">{t('kpi.avgItemsHint')}</p>
-        </CardContent>
-      </Card>
+      <KpiCard
+        icon={<LayoutGrid className="text-muted-foreground" aria-hidden />}
+        label={t('kpi.avgItems')}
+        value={numberFmt.format(menuCombos.avgDistinctItemsPerOrder)}
+        hint={t('kpi.avgItemsHint')}
+      />
 
-      <Card
-        className={
-          isStarsScope
-            ? 'gap-4 border-primary/30 py-5 shadow-none sm:py-6'
-            : 'gap-4 py-5 shadow-none sm:py-6'
+      <KpiCard
+        icon={
+          <Sparkles
+            className={isStarsScope ? 'text-primary' : 'text-muted-foreground'}
+            aria-hidden
+          />
         }
-      >
-        <CardHeader className="gap-3">
-          <div
-            className={
-              isStarsScope
-                ? 'flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10'
-                : 'flex size-10 shrink-0 items-center justify-center rounded-md bg-muted'
-            }
-          >
-            <Sparkles
-              className={isStarsScope ? 'text-primary' : 'text-muted-foreground'}
-              aria-hidden
-            />
-          </div>
-          <CardDescription>{t('kpi.scope')}</CardDescription>
-          <CardTitle className="text-xl tracking-tight">
+        iconWrapperClassName={isStarsScope ? 'bg-primary/10' : undefined}
+        label={t('kpi.scope')}
+        value={
+          <span className="text-xl md:text-xl">
             {isStarsScope ? tInsights('scopeStars') : tInsights('scopeTopSellers')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">
-            {isStarsScope ? t('kpi.scopeStarsHint') : t('kpi.scopeTopSellersHint')}
-          </p>
-        </CardContent>
-      </Card>
+          </span>
+        }
+        hint={isStarsScope ? t('kpi.scopeStarsHint') : t('kpi.scopeTopSellersHint')}
+        highlighted={isStarsScope}
+      />
     </div>
   )
 }
