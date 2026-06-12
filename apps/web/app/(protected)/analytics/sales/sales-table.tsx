@@ -139,15 +139,12 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
   return (
     <>
       <ul className="flex flex-col gap-3 md:hidden">
-        {uploads.map((row, index) => (
+        {uploads.map((row) => (
           <li
             key={row.id}
             className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3"
           >
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="text-muted-foreground text-xs">
-                {t('index')} {index + 1}
-              </span>
               <span className="truncate font-medium" title={row.name}>
                 {row.name}
               </span>
@@ -166,16 +163,14 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
         <Table className="w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60px]">{t('index')}</TableHead>
               <TableHead>{t('fileName')}</TableHead>
               <TableHead className="w-[80px] text-right">{t('action')}</TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {uploads.map((row, index) => (
+            {uploads.map((row) => (
               <TableRow key={row.id}>
-                <TableCell>{index + 1}</TableCell>
                 <TableCell>
                   <span className="truncate" title={row.name}>
                     {row.name}
