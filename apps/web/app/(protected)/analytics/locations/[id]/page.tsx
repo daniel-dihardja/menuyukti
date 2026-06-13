@@ -59,6 +59,7 @@ export default async function Page({ params }: PageProps) {
       <section className={LOCATION_DETAIL_SECTION_CLASS}>
         <PageHeading title={location.name} description={t('detailDescription')} />
         <LocationNextSteps
+          locationId={location.id}
           latestAnalyticsId={analyticsRuns[0]?.id ?? null}
           labels={{
             title: t('nextSteps.title'),

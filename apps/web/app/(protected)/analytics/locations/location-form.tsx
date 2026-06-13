@@ -351,7 +351,8 @@ export function LocationForm({
           description: t('toast.createdDescription'),
           action: {
             label: t('toast.uploadSalesAction'),
-            onClick: () => router.push(routes.analytics.sales),
+            onClick: () =>
+              router.push(routes.analytics.salesWithLocation(saved.id ?? locationId ?? '')),
           },
         })
         const newId = saved.id ?? locationId
@@ -367,7 +368,7 @@ export function LocationForm({
         description: t('toast.savedDescription'),
         action: {
           label: t('toast.uploadSalesAction'),
-          onClick: () => router.push(routes.analytics.sales),
+          onClick: () => router.push(routes.analytics.salesWithLocation(locationId ?? '')),
         },
       })
     } catch (err) {

@@ -69,7 +69,7 @@ function buildActionItems(
       id: 'upload-sales',
       label: t('uploadSales'),
       icon: Upload,
-      href: routes.analytics.sales,
+      href: routes.analytics.salesWithLocation(row.id),
     },
   ]
 

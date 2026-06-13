@@ -37,6 +37,8 @@ export const routes = {
     branchesCreate: '/analytics/locations/create',
     branchesDetail: (id: string | number) => `/analytics/locations/${id}`,
     sales: '/analytics/sales',
+    salesWithLocation: (locationId: string | number) =>
+      `/analytics/sales?locationId=${encodeURIComponent(String(locationId))}`,
 
     matrix: (analyticsId: string | number) => `/analytics/${analyticsId}/matrix`,
     attribution: (analyticsId: string | number) => `/analytics/${analyticsId}/attribution`,

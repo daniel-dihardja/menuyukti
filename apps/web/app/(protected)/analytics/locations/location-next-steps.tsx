@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/componen
 import { cn } from '@workspace/ui/lib/utils'
 
 type LocationNextStepsProps = {
+  locationId: string | number
   latestAnalyticsId: number | null
   labels: {
     title: string
@@ -16,7 +17,11 @@ type LocationNextStepsProps = {
   }
 }
 
-export function LocationNextSteps({ latestAnalyticsId, labels }: LocationNextStepsProps) {
+export function LocationNextSteps({
+  locationId,
+  latestAnalyticsId,
+  labels,
+}: LocationNextStepsProps) {
   return (
     <Card className="gap-0 py-0">
       <CardHeader className="px-4 pb-2 pt-4 sm:px-6">
@@ -24,7 +29,7 @@ export function LocationNextSteps({ latestAnalyticsId, labels }: LocationNextSte
       </CardHeader>
       <CardContent className="flex gap-2 overflow-x-auto px-4 pb-4 sm:px-6">
         <Button asChild className="shrink-0 touch-manipulation" size="sm">
-          <Link href={routes.analytics.sales}>{labels.uploadSales}</Link>
+          <Link href={routes.analytics.salesWithLocation(locationId)}>{labels.uploadSales}</Link>
         </Button>
         {latestAnalyticsId !== null ? (
           <Button asChild className="shrink-0 touch-manipulation" size="sm" variant="outline">
