@@ -25,7 +25,7 @@ function LocationsPageSkeleton() {
         </div>
         <Skeleton className="h-10 w-full max-w-xs sm:w-40" />
       </div>
-      <div className="-mx-4 w-[calc(100%+2rem)] border-x-0 border-y sm:mx-0 sm:w-full sm:rounded-md sm:border">
+      <div className="-mx-4 w-[calc(100%+2rem)] border-x-0 border-y lg:mx-0 lg:w-full lg:rounded-md lg:border">
         <div className="flex gap-4 border-b px-4 py-3">
           <Skeleton className="h-4 w-8 shrink-0" />
           <Skeleton className="h-4 w-32" />

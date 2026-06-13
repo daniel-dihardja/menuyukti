@@ -45,7 +45,7 @@ import {
   useTransition,
 } from 'react'
 
-import { useMediaQuery } from '@/hooks/use-media-query'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { useSearchParams } from 'next/navigation'
 import { parseAsString, useQueryState } from 'nuqs'
 import type { TimelineMilestone } from './timeline-workspace'
@@ -141,7 +141,7 @@ export function WorkflowChatPanel({
   const [, startPreviewTransition] = useTransition()
 
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
-  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isDesktop = useDesktopLayout()
   const previewPanelRef = usePanelRef()
 
   const [milestoneUi, dispatch] = useReducer(

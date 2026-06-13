@@ -138,7 +138,7 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
 
   return (
     <>
-      <ul className="flex flex-col gap-3 md:hidden">
+      <ul className="flex flex-col gap-3 lg:hidden">
         {uploads.map((row) => (
           <li
             key={row.id}
@@ -159,7 +159,7 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
         ))}
       </ul>
 
-      <div className="hidden w-full border md:block">
+      <div className="hidden w-full border lg:block">
         <Table className="w-full">
           <TableHeader>
             <TableRow>

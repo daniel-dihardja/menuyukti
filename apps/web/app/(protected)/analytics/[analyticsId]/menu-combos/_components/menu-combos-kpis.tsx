@@ -58,7 +58,7 @@ function KpiCard({
         <CardDescription>{label}</CardDescription>
         <CardTitle className="text-2xl tracking-tight tabular-nums md:text-3xl">{value}</CardTitle>
       </CardHeader>
-      <CardContent className="hidden pt-0 md:block">
+      <CardContent className="hidden pt-0 lg:block">
         <p className="text-sm text-muted-foreground">{hint}</p>
       </CardContent>
     </Card>
@@ -75,7 +75,7 @@ export function MenuCombosKpis({ menuCombos, locale }: MenuCombosKpisProps) {
   const isStarsScope = menuCombos.scope === 'stars'
 
   return (
-    <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 snap-x snap-mandatory md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 md:pb-0 md:snap-none xl:grid-cols-4">
+    <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0 lg:snap-none xl:grid-cols-4">
       <KpiCard
         icon={<ShoppingBag className="text-muted-foreground" aria-hidden />}
         label={t('kpi.totalOrders')}

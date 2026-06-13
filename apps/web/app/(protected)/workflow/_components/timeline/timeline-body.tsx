@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import { useMediaQuery } from '@/hooks/use-media-query'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
@@ -11,7 +11,7 @@ import { TimelineItem } from './timeline-item'
 
 export function TimelineBody() {
   const t = useTranslations('analytics.workflows.chat')
-  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isDesktop = useDesktopLayout()
   const { milestoneState } = useTimelineWorkspaceState()
   const { milestones } = milestoneState
 

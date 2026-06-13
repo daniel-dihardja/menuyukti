@@ -255,7 +255,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
               modalTitle={t('hero.modalTitle')}
             />
 
-            <div className="mt-8 hidden justify-center md:flex">
+            <div className="mt-8 hidden justify-center lg:flex">
               <Button size="lg" variant="default" asChild>
                 <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
               </Button>
@@ -307,7 +307,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
               </p>
             </div>
 
-            <div className="mt-10 grid gap-4 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-10 grid gap-4 md:mt-12 lg:grid-cols-2 xl:grid-cols-3">
               {automationItems.map((item) => (
                 <article key={item.title} className="rounded-xl border bg-card p-5">
                   <h3 className="text-base font-semibold leading-snug">
@@ -356,7 +356,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
               {t('cta.description')}
             </p>
 
-            <div className="hidden justify-center md:flex">
+            <div className="hidden justify-center lg:flex">
               <Button size="lg" className="px-8 py-6" asChild>
                 <Link href={routes.login}>{t('cta.secondary')}</Link>
               </Button>
@@ -377,7 +377,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
         termsLabel={t('footer.terms')}
       />
 
-      <div className="fixed bottom-0 left-0 z-50 flex w-full gap-3 border-t border-border bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden">
+      <div className="fixed bottom-0 left-0 z-50 flex w-full gap-3 border-t border-border bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
         <Button className="min-h-11 flex-1" size="lg" asChild>
           <Link href={routes.login}>{t('mobileCta.primary')}</Link>
         </Button>

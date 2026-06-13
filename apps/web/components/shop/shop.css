@@ -29,7 +29,7 @@
 }
 
 /* Single column on narrow screens: avoids 12-col + span quirks and balances track width. */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .shop-editorial-grid {
     grid-template-columns: minmax(0, 1fr);
   }

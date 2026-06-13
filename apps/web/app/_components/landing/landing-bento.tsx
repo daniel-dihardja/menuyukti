@@ -34,7 +34,7 @@ export function LandingBento({
         <p className="mx-auto mt-5 max-w-2xl text-center text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
           {subtitle}
         </p>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {items.map((item, i) => {
             const Icon = icons[i]!
             return (

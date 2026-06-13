@@ -646,11 +646,11 @@ export function LocationForm({
                     </Button>
                   </div>
 
-                  <Accordion type="single" collapsible className="md:hidden">
+                  <Accordion type="single" collapsible className="lg:hidden">
                     {openingHours.map((row) => renderOpeningHourRow(row, true))}
                   </Accordion>
 
-                  <div className="hidden flex-col gap-3 md:flex">
+                  <div className="hidden flex-col gap-3 lg:flex">
                     {openingHours.map((row) => renderOpeningHourRow(row))}
                   </div>
                 </FieldSet>

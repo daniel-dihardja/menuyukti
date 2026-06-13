@@ -101,7 +101,7 @@ export function HeroProductPreview({
                 type="button"
                 onClick={() => api?.scrollPrev()}
                 disabled={!canScrollPrev}
-                className={cn(carouselNavButtonClassName, 'hidden md:flex')}
+                className={cn(carouselNavButtonClassName, 'hidden lg:flex')}
                 aria-label={carouselPrevLabel}
               >
                 <ChevronLeft className="size-5" aria-hidden />
@@ -141,7 +141,7 @@ export function HeroProductPreview({
               </div>
 
               {showNav ? (
-                <div className="flex items-center justify-center gap-4 border-t border-border/40 bg-muted/10 px-4 py-2.5 md:hidden">
+                <div className="flex items-center justify-center gap-4 border-t border-border/40 bg-muted/10 px-4 py-2.5 lg:hidden">
                   <button
                     type="button"
                     onClick={() => api?.scrollPrev()}
@@ -195,7 +195,7 @@ export function HeroProductPreview({
                 type="button"
                 onClick={() => api?.scrollNext()}
                 disabled={!canScrollNext}
-                className={cn(carouselNavButtonClassName, 'hidden md:flex')}
+                className={cn(carouselNavButtonClassName, 'hidden lg:flex')}
                 aria-label={carouselNextLabel}
               >
                 <ChevronRight className="size-5" aria-hidden />

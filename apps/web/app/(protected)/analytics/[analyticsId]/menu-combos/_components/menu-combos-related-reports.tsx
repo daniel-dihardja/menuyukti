@@ -26,7 +26,7 @@ export function MenuCombosRelatedReports({
 
   return (
     <>
-      <div className="hidden flex-wrap gap-2 md:flex">
+      <div className="hidden flex-wrap gap-2 lg:flex">
         <Button asChild variant="outline" size="sm">
           <Link href={routes.analytics.matrix(analyticsId)}>{t('linkToMatrix')}</Link>
         </Button>
@@ -45,7 +45,7 @@ export function MenuCombosRelatedReports({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="w-full md:hidden">
+          <Button variant="outline" size="sm" className="w-full lg:hidden">
             {t('relatedReports.trigger')}
             <ChevronDown aria-hidden data-icon="inline-end" />
           </Button>

@@ -55,7 +55,7 @@ export default async function MenuCombosLoading() {
         </div>
 
         <Skeleton className="h-24 w-full rounded-lg" />
-        <Skeleton className="h-9 w-full rounded-md md:w-40" />
+        <Skeleton className="h-9 w-full rounded-md lg:w-40" />
       </section>
     </AnalyticsPageShell>
   )

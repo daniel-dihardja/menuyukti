@@ -649,11 +649,11 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
               <Card key={group.category} className="min-w-0 overflow-hidden">
                 <CardHeader className="flex min-w-0 flex-col gap-3">
                   <CardTitle className="break-words">{group.category}</CardTitle>
-                  <div className="md:hidden">{renderMobileSortToolbar()}</div>
+                  <div className="lg:hidden">{renderMobileSortToolbar()}</div>
                 </CardHeader>
                 <CardContent className="min-w-0">
                   {renderCategoryBulkBlock(group.category, group.items)}
-                  <div className="md:hidden">
+                  <div className="lg:hidden">
                     <div className="flex flex-col">
                       {group.items.map((item, idx) => (
                         <div key={item.id}>
@@ -663,7 +663,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                       ))}
                     </div>
                   </div>
-                  <div className="hidden md:block">
+                  <div className="hidden lg:block">
                     <SortableTable<CogsColKey>
                       columns={tableColumns}
                       sortKey={sortKey}
@@ -681,11 +681,11 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
               <Card className="min-w-0 overflow-hidden">
                 <CardHeader className="flex min-w-0 flex-col gap-3">
                   <CardTitle>{t('table.uncategorizedTitle')}</CardTitle>
-                  <div className="md:hidden">{renderMobileSortToolbar()}</div>
+                  <div className="lg:hidden">{renderMobileSortToolbar()}</div>
                 </CardHeader>
                 <CardContent className="min-w-0">
                   {renderCategoryBulkBlock(UNCATEGORIZED_KEY, sortedGroupedMenuItems.uncategorized)}
-                  <div className="md:hidden">
+                  <div className="lg:hidden">
                     <div className="flex flex-col">
                       {sortedGroupedMenuItems.uncategorized.map((item, idx) => (
                         <div key={item.id}>
@@ -695,7 +695,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                       ))}
                     </div>
                   </div>
-                  <div className="hidden md:block">
+                  <div className="hidden lg:block">
                     <SortableTable<CogsColKey>
                       columns={tableColumns}
                       sortKey={sortKey}

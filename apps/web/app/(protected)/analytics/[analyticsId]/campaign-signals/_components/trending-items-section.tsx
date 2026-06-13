@@ -53,7 +53,7 @@ export function TrendingItemsSection({
 }: TrendingItemsSectionProps) {
   return (
     <>
-      <ul className="flex flex-col md:hidden">
+      <ul className="flex flex-col lg:hidden">
         {items.map((item, index) => (
           <li key={item.menu} className="min-w-0 px-4 py-3 sm:px-6">
             {index > 0 ? <Separator className="mb-3" /> : null}
@@ -88,7 +88,7 @@ export function TrendingItemsSection({
         ))}
       </ul>
 
-      <div className="hidden overflow-x-auto md:block">
+      <div className="hidden overflow-x-auto lg:block">
         <Table>
           <TableHeader>
             <TableRow>

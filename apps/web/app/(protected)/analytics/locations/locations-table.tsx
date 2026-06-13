@@ -152,7 +152,7 @@ export function LocationsTable({
 
   return (
     <>
-      <ul className="flex flex-col gap-3 md:hidden">
+      <ul className="flex flex-col gap-3 lg:hidden">
         {branches.map((branch) => {
           const subtitle = formatLocationSubtitle(branch)
           return (
@@ -187,7 +187,7 @@ export function LocationsTable({
         })}
       </ul>
 
-      <div className="-mx-4 hidden w-[calc(100%+2rem)] border-x-0 border-y sm:mx-0 sm:w-full sm:rounded-md sm:border md:block">
+      <div className="-mx-4 hidden w-[calc(100%+2rem)] border-x-0 border-y lg:mx-0 lg:w-full lg:rounded-md lg:border lg:block">
         <Table className="w-full">
           <TableHeader>
             <TableRow>

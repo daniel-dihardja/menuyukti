@@ -14,7 +14,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { useMediaQuery } from '@/hooks/use-media-query'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { MilestonePreviewListDetailShell } from '@/app/(protected)/workflow/_components/milestone-preview/milestone-preview-list-detail'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import type {
@@ -264,7 +264,7 @@ export function SchedulerCalendar({
   className,
 }: SchedulerCalendarProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isDesktop = useDesktopLayout()
 
   const initialWeekStart = useMemo(() => {
     const anchor = parseIsoDateOnly(windowStart)

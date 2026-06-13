@@ -18,7 +18,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
-import { useMediaQuery } from '@/hooks/use-media-query'
+import { useCompactLayout } from '@/hooks/use-desktop-layout'
 import {
   computeColumnTotals,
   computeScaleBounds,
@@ -104,7 +104,7 @@ export function HeatmapMatrix({
   maskDiagonal = false,
   labels,
 }: Props) {
-  const isMobile = useMediaQuery('(max-width: 767px)')
+  const isMobile = useCompactLayout()
   const initialSortKey = String(defaultSortColumnIndex) as HeatmapSortKey
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<HeatmapSortKey>(
     initialSortKey,
@@ -200,7 +200,7 @@ export function HeatmapMatrix({
         </div>
 
         {labels.scrollHint ? (
-          <p className="text-xs text-muted-foreground md:hidden">{labels.scrollHint}</p>
+          <p className="text-xs text-muted-foreground lg:hidden">{labels.scrollHint}</p>
         ) : null}
 
         <div className="rounded-md border">

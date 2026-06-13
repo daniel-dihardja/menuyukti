@@ -38,10 +38,10 @@ export function LandingStudioTransformation({
         {intro}
       </p>
 
-      <div role="list" className="flex w-full flex-col gap-6 md:flex-row md:items-stretch md:gap-3">
+      <div role="list" className="flex w-full flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-3">
         {steps.map((step, index) => (
           <Fragment key={step.imageSrc}>
-            <div role="listitem" className="flex w-full min-w-0 flex-col gap-3 md:flex-1">
+            <div role="listitem" className="flex w-full min-w-0 flex-col gap-3 lg:flex-1">
               <span className="text-sm font-semibold uppercase tracking-wide text-primary">
                 {step.label}
               </span>
@@ -52,7 +52,7 @@ export function LandingStudioTransformation({
                     alt={step.alt}
                     fill
                     className="object-contain object-center"
-                    sizes="(max-width: 767px) 100vw, 33vw"
+                    sizes="(max-width: 1023px) 100vw, 33vw"
                     loading="lazy"
                   />
                 </div>
@@ -85,8 +85,8 @@ export function LandingStudioTransformation({
                 className="flex shrink-0 justify-center py-1 md:items-center md:self-center md:py-0"
                 aria-hidden
               >
-                <ArrowDown className="size-6 text-muted-foreground md:hidden" />
-                <ArrowRight className="hidden size-6 text-muted-foreground md:block" />
+                <ArrowDown className="size-6 text-muted-foreground lg:hidden" />
+                <ArrowRight className="hidden size-6 text-muted-foreground lg:block" />
               </div>
             ) : null}
           </Fragment>
