@@ -91,6 +91,7 @@ export function MenuCombosView({
       unitsLabel: t('matrix.unitsLabel'),
       totalsRowLabel: t('matrix.totalsRowLabel'),
       sortHint: t('matrix.sortHint'),
+      scrollHint: t('matrix.scrollHint'),
       explainTitle: t('matrix.explainTitle'),
       explainBody: t('matrix.explainBody'),
       cellAriaLabel: (menu: string, other: string, lift: number) =>

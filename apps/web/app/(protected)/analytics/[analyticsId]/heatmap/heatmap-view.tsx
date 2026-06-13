@@ -177,6 +177,7 @@ export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: 
       unitsLabel: t('legend.units'),
       totalsRowLabel: t('totals.label'),
       sortHint: t('sort.hint'),
+      scrollHint: t('scroll.hint'),
       explainTitle: t('explain.title'),
       explainBody: t('explain.body', {
         startHour: DAILY_HEATMAP_START_HOUR,

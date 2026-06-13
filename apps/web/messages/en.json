@@ -2402,6 +2402,7 @@
         "unitsLabel": "Lift (association strength vs chance)",
         "totalsRowLabel": "Total",
         "sortHint": "Click a column header to sort rows by lift with that item.",
+        "scrollHint": "Swipe sideways to see more →",
         "explainTitle": "How to read this matrix",
         "explainBody": "Lift above 1 means the pair appears together more often than popularity alone would predict. Diagonal cells are hidden. Values below the minimum co-order threshold may be blank.",
         "showExplanation": "How to read this matrix",
@@ -2474,6 +2475,9 @@
       },
       "sort": {
         "hint": "Click a column header to sort. Click again to toggle ascending or descending."
+      },
+      "scroll": {
+        "hint": "Swipe sideways to see all hours →"
       },
       "cellAriaLabel": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
       "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
