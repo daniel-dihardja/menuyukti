@@ -96,22 +96,34 @@ export function buildQuickProfilePayload(state: BriefHintsState): Record<string,
   return out
 }
 
+const BRIEF_PROFILE_TEXT_FIELDS: (keyof BriefHintsState)[] = [
+  'instagramHandle',
+  'websiteUrl',
+  'reservationUrl',
+  'onlineOrderUrl',
+  'menuUrl',
+  'googleMapsUrl',
+  'phone',
+  'contactEmail',
+  'neighborhood',
+]
+
+export const BRIEF_PROFILE_FIELD_COUNT = 1 + BRIEF_PROFILE_TEXT_FIELDS.length
+
+export function countFilledBriefProfileFields(state: BriefHintsState): number {
+  let count = 0
+  if (state.notes.trim()) count++
+  for (const key of BRIEF_PROFILE_TEXT_FIELDS) {
+    if (state[key].trim()) count++
+  }
+  return count
+}
+
 export function briefHintsHasAnySelection(state: BriefHintsState): boolean {
   if (state.notes.trim()) {
     return true
   }
-  const textFields: (keyof BriefHintsState)[] = [
-    'instagramHandle',
-    'websiteUrl',
-    'reservationUrl',
-    'onlineOrderUrl',
-    'menuUrl',
-    'googleMapsUrl',
-    'phone',
-    'contactEmail',
-    'neighborhood',
-  ]
-  return textFields.some((key) => {
+  return BRIEF_PROFILE_TEXT_FIELDS.some((key) => {
     const value = state[key]
     return typeof value === 'string' && value.trim().length > 0
   })

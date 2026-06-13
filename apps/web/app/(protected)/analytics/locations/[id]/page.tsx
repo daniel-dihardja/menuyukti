@@ -4,10 +4,11 @@ import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
-import { getCachedLocation } from '@/lib/graphql/cached-queries'
+import { getCachedAnalyticsRunsByLocation, getCachedLocation } from '@/lib/graphql/cached-queries'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
 import { LocationForm, type Weekday } from '../location-form'
+import { LOCATION_DETAIL_SECTION_CLASS, LocationNextSteps } from '../location-next-steps'
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -20,7 +21,10 @@ export default async function Page({ params }: PageProps) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocation(userId, id)
+  const [data, analyticsRuns] = await Promise.all([
+    getCachedLocation(userId, id),
+    getCachedAnalyticsRunsByLocation(userId, Number(id)),
+  ])
   const location = data.location
   if (!location) {
     notFound()
@@ -52,8 +56,17 @@ export default async function Page({ params }: PageProps) {
       ]}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
     >
-      <section className="flex flex-col gap-4 p-4 sm:gap-6 sm:p-6">
+      <section className={LOCATION_DETAIL_SECTION_CLASS}>
         <PageHeading title={location.name} description={t('detailDescription')} />
+        <LocationNextSteps
+          latestAnalyticsId={analyticsRuns[0]?.id ?? null}
+          labels={{
+            title: t('nextSteps.title'),
+            uploadSales: t('nextSteps.uploadSales'),
+            viewAnalytics: t('nextSteps.viewAnalytics'),
+            openWorkflow: t('nextSteps.openWorkflow'),
+          }}
+        />
         <LocationForm
           key={`${location.id}-${JSON.stringify(location.manualBriefInput?.quickProfile ?? {})}`}
           mode="edit"
