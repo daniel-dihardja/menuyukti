@@ -28,7 +28,7 @@ function MilestoneCardSkeleton({ showMobilePreview }: { showMobilePreview?: bool
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <Skeleton className="size-6 rounded-full" />
-            <Skeleton className="hidden size-9 rounded-md md:block" />
+            <Skeleton className="hidden size-9 rounded-md lg:block" />
             <Skeleton className="size-9 rounded-md" />
             <Skeleton className="size-9 rounded-md" />
             <Skeleton className="size-9 rounded-md" />
@@ -58,11 +58,11 @@ export function WorkflowTimelineSkeleton({ className }: { className?: string }) 
       <TimelineToolbarSkeleton />
       <div className="min-h-0 flex-1 overflow-hidden px-0 py-2 md:p-4">
         <div className="flex flex-col gap-0">
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <MilestoneCardSkeleton showMobilePreview />
             <MilestoneCardSkeleton showMobilePreview />
           </div>
-          <div className="hidden flex-col md:flex">
+          <div className="hidden flex-col lg:flex">
             <MilestoneCardSkeleton />
             <MilestoneCardSkeleton />
           </div>
@@ -128,7 +128,7 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       className={cn('flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden', className)}
     >
       {/* Mobile: timeline + sticky assistant bar */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:hidden">
         <WorkflowTimelineSkeleton className="min-h-0 flex-1" />
         <div
           aria-hidden
@@ -139,7 +139,7 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       </div>
 
       {/* Desktop: three-panel workspace */}
-      <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex">
+      <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="grid h-full min-h-0 flex-1 grid-cols-[38fr_34fr_28fr] gap-0 overflow-hidden">
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-background">

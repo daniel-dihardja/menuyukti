@@ -1115,8 +1115,8 @@
   },
   "analytics": {
     "branches": {
-      "title": "Location List",
-      "description": "Manage your locations and configure location-level settings before uploading sales reports.",
+      "title": "Locations",
+      "description": "Power analytics and Instagram campaigns for each venue. Configure basics here, then upload POS sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
       "detailDescription": "Update location information and opening hours.",
       "table": {
@@ -1124,9 +1124,33 @@
         "branchName": "Location Name",
         "city": "City",
         "action": "Actions",
-        "view": "View",
+        "view": "Edit Location",
+        "viewAnalytics": "View Latest Analytics",
+        "uploadSales": "Upload Sales Report",
         "delete": "Delete",
-        "empty": "No locations available yet."
+        "empty": "No locations available yet.",
+        "mobile": {
+          "actionsTrigger": "Actions",
+          "sheetDescription": "Choose an action for this location."
+        },
+        "status": {
+          "incomplete": "Setup incomplete",
+          "readyForSales": "Ready for sales",
+          "analyticsActive": "Analytics active"
+        }
+      },
+      "empty": {
+        "title": "Add your first location",
+        "description": "Locations unlock sales uploads, menu analytics, and AI-powered Instagram campaigns.",
+        "createCta": "Create New Location",
+        "salesHint": "Then upload a POS sales report to start analytics.",
+        "salesCta": "Go to Sales Reports"
+      },
+      "nextSteps": {
+        "title": "Next steps",
+        "uploadSales": "Upload sales report",
+        "viewAnalytics": "View latest analytics",
+        "openWorkflow": "Open workflow"
       },
       "create": "Create New Location",
       "form": {
@@ -1156,6 +1180,27 @@
         "openingHoursPresetsAria": "Quick presets for opening hours",
         "presetWeekdays": "Mon–Fri, 9:00–22:00 (weekends closed)",
         "presetAllClosed": "Mark every day closed",
+        "presetCopyMonday": "Copy Monday to weekdays",
+        "tabs": {
+          "basics": "Basics",
+          "hours": "Hours",
+          "marketing": "Marketing profile"
+        },
+        "currencyAutoHint": "Currency is set from country — change if needed.",
+        "toast": {
+          "savedTitle": "Location saved",
+          "savedDescription": "Your changes are ready for analytics and campaigns.",
+          "createdTitle": "Location created",
+          "createdDescription": "Upload a sales report to start analytics.",
+          "uploadSalesAction": "Upload sales report"
+        },
+        "stickySaveAria": "Save location form",
+        "profileCompleteness": "{filled} of {total} profile fields complete",
+        "collapsible": {
+          "bookAndOrder": "Book & order links",
+          "socialAndWeb": "Social & web",
+          "maps": "Maps & directions"
+        },
         "dayClosed": "Closed",
         "dayOpen": "Open",
         "opensAt": "Opens",
@@ -1163,8 +1208,8 @@
         "openDaySwitchAria": "Open on {day}",
         "createAction": "Create Location",
         "saveAction": "Save Changes",
-        "creating": "Creating...",
-        "saving": "Saving...",
+        "creating": "Creating…",
+        "saving": "Saving…",
         "errors": {
           "saveFailed": "Failed to save location.",
           "openingHoursIncomplete": "On {day}, add both open and close times or mark the day closed.",
@@ -2402,6 +2447,7 @@
         "unitsLabel": "Lift (association strength vs chance)",
         "totalsRowLabel": "Total",
         "sortHint": "Click a column header to sort rows by lift with that item.",
+        "scrollHint": "Swipe sideways to see more →",
         "explainTitle": "How to read this matrix",
         "explainBody": "Lift above 1 means the pair appears together more often than popularity alone would predict. Diagonal cells are hidden. Values below the minimum co-order threshold may be blank.",
         "showExplanation": "How to read this matrix",
@@ -2474,6 +2520,9 @@
       },
       "sort": {
         "hint": "Click a column header to sort. Click again to toggle ascending or descending."
+      },
+      "scroll": {
+        "hint": "Swipe sideways to see all hours →"
       },
       "cellAriaLabel": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
       "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",

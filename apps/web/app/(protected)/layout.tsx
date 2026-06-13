@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <SidebarProvider className="h-svh min-h-0">
       <AppSidebar />
-      <SidebarInset className="min-h-0 min-w-0 flex-1">
+      <SidebarInset className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <AnalyticsProvider>{children}</AnalyticsProvider>
       </SidebarInset>
     </SidebarProvider>

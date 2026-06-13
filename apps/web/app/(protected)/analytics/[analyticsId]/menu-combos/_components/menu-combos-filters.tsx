@@ -39,12 +39,12 @@ export function MenuCombosFilters({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end',
+        'flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end',
         stickyOnMobile &&
-          'sticky top-0 z-10 -mx-4 border-b border-card-border bg-card/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none',
+          'sticky top-0 z-10 -mx-4 border-b border-card-border bg-card/95 px-4 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none',
       )}
     >
-      <Field className="w-full gap-2 md:max-w-xs md:flex-1">
+      <Field className="w-full gap-2 lg:max-w-xs lg:flex-1">
         <FieldLabel htmlFor="menu-combos-category-filter">{t('filters.categoryLabel')}</FieldLabel>
         <Select value={selectedCategory} onValueChange={onCategoryChange}>
           <SelectTrigger
@@ -65,7 +65,7 @@ export function MenuCombosFilters({
         </Select>
       </Field>
 
-      <Field className="w-full gap-2 md:max-w-md md:flex-1">
+      <Field className="w-full gap-2 lg:max-w-md lg:flex-1">
         <FieldLabel>{t('filters.minLiftLabel')}</FieldLabel>
         <ToggleGroup
           type="single"

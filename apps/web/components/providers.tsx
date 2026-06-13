@@ -7,6 +7,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { CookieConsentBanner } from '@/components/cookie-consent/cookie-consent-banner'
 import { CookieConsentProvider } from '@/components/cookie-consent/cookie-consent-context'
 import { StylePaletteProvider } from '@/components/style-palette-provider'
+import { Toaster } from '@/components/toaster'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <StylePaletteProvider>
           <CookieConsentProvider>
             {children}
+            <Toaster />
             <CookieConsentBanner />
           </CookieConsentProvider>
         </StylePaletteProvider>

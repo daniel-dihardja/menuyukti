@@ -91,6 +91,7 @@ export function MenuCombosView({
       unitsLabel: t('matrix.unitsLabel'),
       totalsRowLabel: t('matrix.totalsRowLabel'),
       sortHint: t('matrix.sortHint'),
+      scrollHint: t('matrix.scrollHint'),
       explainTitle: t('matrix.explainTitle'),
       explainBody: t('matrix.explainBody'),
       cellAriaLabel: (menu: string, other: string, lift: number) =>
@@ -181,12 +182,12 @@ export function MenuCombosView({
         </TabsContent>
 
         <TabsContent value="matrix" className="mt-4 flex flex-col gap-4">
-          <Alert className="hidden md:flex md:flex-col">
+          <Alert className="hidden lg:flex lg:flex-col">
             <AlertTitle>{t('matrix.explainTitle')}</AlertTitle>
             <AlertDescription>{t('matrix.explainBody')}</AlertDescription>
           </Alert>
 
-          <Collapsible className="md:hidden">
+          <Collapsible className="lg:hidden">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm" className="group w-full justify-between px-0">
                 <span>{t('matrix.showExplanation')}</span>

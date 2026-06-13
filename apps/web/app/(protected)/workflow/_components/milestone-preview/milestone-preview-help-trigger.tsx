@@ -1,6 +1,6 @@
 'use client'
 
-import { useMediaQuery } from '@/hooks/use-media-query'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { Button } from '@workspace/ui/components/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
 import {
@@ -20,14 +20,14 @@ const tooltipContentClassName =
   'max-w-md text-balance bg-foreground px-3 py-2 text-sm leading-snug text-background'
 
 /**
- * Help for milestone previews: tooltip on desktop (min-width 768px), popover on smaller
+ * Help for milestone previews: tooltip on desktop (min-width 1024px), popover on smaller
  * viewports so touch users can open explanations. Wider than default tooltip for long copy.
  */
 export function MilestonePreviewHelpTrigger({
   helpText,
   ariaLabel,
 }: MilestonePreviewHelpTriggerProps) {
-  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isDesktop = useDesktopLayout()
 
   const triggerButton = (
     <Button

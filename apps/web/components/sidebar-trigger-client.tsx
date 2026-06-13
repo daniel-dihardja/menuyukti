@@ -56,7 +56,7 @@ export function SidebarTriggerClient({
 
       {shouldShowBreadcrumb && items.length > 0 ? (
         <div className="flex min-w-0 flex-1 items-center">
-          <Breadcrumb className="hidden min-w-0 md:block">
+          <Breadcrumb className="hidden min-w-0 lg:block">
             <BreadcrumbList>
               {items.map((item, index) => (
                 <Fragment key={`${item.label}-${index}`}>
@@ -75,7 +75,7 @@ export function SidebarTriggerClient({
             </BreadcrumbList>
           </Breadcrumb>
 
-          <Breadcrumb className="block md:hidden min-w-0">
+          <Breadcrumb className="block lg:hidden min-w-0">
             <BreadcrumbList className="flex-nowrap overflow-hidden">
               {firstItem && items.length > 1 ? (
                 <>

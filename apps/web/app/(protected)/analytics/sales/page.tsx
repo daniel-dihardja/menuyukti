@@ -76,7 +76,27 @@ function SalesPageSkeleton() {
   )
 }
 
-async function SalesPageData() {
+function parseRequestedLocationId(raw: string | undefined): number | null {
+  if (!raw) return null
+  const parsed = Number(raw)
+  if (!Number.isInteger(parsed) || parsed < 1) return null
+  return parsed
+}
+
+function resolveInitialLocationId(
+  branches: Array<{ id: number }>,
+  requestedLocationId: number | null,
+): number | null {
+  if (
+    requestedLocationId !== null &&
+    branches.some((branch) => branch.id === requestedLocationId)
+  ) {
+    return requestedLocationId
+  }
+  return branches.length === 1 ? (branches[0]?.id ?? null) : null
+}
+
+async function SalesPageData({ requestedLocationId }: { requestedLocationId: number | null }) {
   const t = await getTranslations('analytics.sales')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
@@ -105,7 +125,7 @@ async function SalesPageData() {
     )
   }
 
-  const initialLocationId = branches.length === 1 ? (branches[0]?.id ?? null) : null
+  const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
   const initialAnalytics =
     initialLocationId === null
       ? []
@@ -122,15 +142,21 @@ async function SalesPageData() {
   )
 }
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ locationId?: string }>
+}) {
   const t = await getTranslations('analytics.sales')
+  const { locationId: locationIdParam } = await searchParams
+  const requestedLocationId = parseRequestedLocationId(locationIdParam)
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
       <PageHeading title={t('title')} description={t('description')} />
       <PosUploadInfoSection t={t} />
       <Suspense fallback={<SalesPageSkeleton />}>
-        <SalesPageData />
+        <SalesPageData requestedLocationId={requestedLocationId} />
       </Suspense>
     </AnalyticsPageShell>
   )

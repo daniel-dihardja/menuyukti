@@ -31,7 +31,7 @@ export function LandingHowTwoSteps({ title, subtitle, steps }: LandingHowTwoStep
           {subtitle}
         </p>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {steps.map((step) => {
             const Icon = step.Icon
             return (

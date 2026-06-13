@@ -207,7 +207,7 @@ export function WorkflowChatComposerMenus({
       </PopoverAnchor>
       <PopoverContent
         align="start"
-        className="w-[var(--radix-popover-trigger-width)] max-w-[var(--radix-popover-trigger-width)] overflow-hidden p-0 md:w-auto md:max-w-md md:min-w-56"
+        className="w-[var(--radix-popover-trigger-width)] max-w-[var(--radix-popover-trigger-width)] overflow-hidden p-0 lg:w-auto lg:max-w-md lg:min-w-56"
         onOpenAutoFocus={(ev) => ev.preventDefault()}
         side="top"
       >

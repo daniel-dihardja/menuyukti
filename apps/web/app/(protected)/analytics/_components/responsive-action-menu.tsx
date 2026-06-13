@@ -108,7 +108,7 @@ export function ResponsiveActionMenu({
 
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -160,7 +160,7 @@ export function ResponsiveActionMenu({
         </DropdownMenu>
       </div>
 
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <Button
           aria-controls={resolvedSheetId}
           aria-expanded={open}

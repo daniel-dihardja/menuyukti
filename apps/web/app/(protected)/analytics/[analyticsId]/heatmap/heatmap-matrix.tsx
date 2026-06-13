@@ -18,6 +18,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
+import { useCompactLayout } from '@/hooks/use-desktop-layout'
 import {
   computeColumnTotals,
   computeScaleBounds,
@@ -44,6 +45,8 @@ type HeatmapMatrixLabels = {
   sortHint: string
   explainTitle: string
   explainBody: string
+  /** Shown above the table on small screens when horizontal scroll is needed. */
+  scrollHint?: string
   cellAriaLabel: (menu: string, window: string, count: number) => string
   cellTooltip: (menu: string, window: string, count: number) => string
 }
@@ -63,6 +66,34 @@ type Props = {
 /** Sort by Menu (label) or by column index (e.g. "0", "1"). */
 type HeatmapSortKey = 'label' | string
 
+const STICKY_EDGE =
+  'border-r border-border shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.35)]'
+
+const STICKY_COLUMN_WIDTH = 'min-w-32 max-w-32 md:min-w-[220px] md:max-w-[220px]'
+
+const DATA_COLUMN_CLASS = 'min-w-11'
+
+const STICKY_HEADER_LABEL = cn('sticky left-0 z-20 h-10 bg-muted', STICKY_COLUMN_WIDTH, STICKY_EDGE)
+
+const STICKY_ROW_LABEL = cn(
+  'sticky left-0 z-10 truncate bg-card text-sm font-medium',
+  STICKY_COLUMN_WIDTH,
+  STICKY_EDGE,
+)
+
+const STICKY_TOTALS_LABEL = cn(
+  'sticky left-0 z-10 bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+  STICKY_COLUMN_WIDTH,
+  STICKY_EDGE,
+)
+
+const HOUR_LABEL_RE = /^(\d{1,2}):\d{2}$/
+
+function shortenHourLabel(label: string): string {
+  const match = HOUR_LABEL_RE.exec(label)
+  return match ? match[1]! : label
+}
+
 export function HeatmapMatrix({
   title,
   rows,
@@ -73,6 +104,7 @@ export function HeatmapMatrix({
   maskDiagonal = false,
   labels,
 }: Props) {
+  const isMobile = useCompactLayout()
   const initialSortKey = String(defaultSortColumnIndex) as HeatmapSortKey
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<HeatmapSortKey>(
     initialSortKey,
@@ -121,22 +153,27 @@ export function HeatmapMatrix({
   const columnTotals = useMemo(() => computeColumnTotals(scaleRows), [scaleRows])
   const peakColumnIndex = useMemo(() => findPeakColumnIndex(columnTotals), [columnTotals])
 
+  const displayColumnLabels = useMemo(
+    () => (isMobile ? columnLabels.map(shortenHourLabel) : columnLabels),
+    [columnLabels, isMobile],
+  )
+
   const columns = useMemo(
     () => [
       {
         id: 'label' as const,
         label: labels.menuColumnLabel,
         align: 'left' as const,
-        className: 'min-w-[220px] sticky left-0 z-10 bg-muted/40 h-10',
+        className: STICKY_HEADER_LABEL,
       },
-      ...columnLabels.map((label, i) => ({
+      ...displayColumnLabels.map((label, i) => ({
         id: String(i),
         label,
         align: 'center' as const,
-        className: 'h-10 min-w-0',
+        className: cn('h-10', DATA_COLUMN_CLASS),
       })),
     ],
-    [columnLabels, labels.menuColumnLabel],
+    [displayColumnLabels, labels.menuColumnLabel],
   )
 
   return (
@@ -162,87 +199,87 @@ export function HeatmapMatrix({
           </div>
         </div>
 
-        <div className="rounded-md border">
-          <div className="overflow-x-auto">
-            <TooltipProvider delayDuration={300}>
-              <SortableTable<HeatmapSortKey>
-                columns={columns}
-                sortKey={sortKey}
-                sortDirection={sortDirection}
-                onSort={toggleSort}
-                sortable={sortable}
-              >
-                {displayRows.map((row) => (
-                  <TableRow key={row.key}>
-                    <TableCell className="sticky left-0 z-10 max-w-[220px] truncate bg-background text-sm font-medium">
-                      {row.label}
-                    </TableCell>
-                    {row.values.map((value, i) => {
-                      const windowLabel = columnLabels[i] ?? String(i)
-                      const isDiagonal = maskDiagonal && row.label === windowLabel
-                      const intensity = heatmapIntensity(value, min, max)
-                      const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
-                      const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
+        {labels.scrollHint ? (
+          <p className="text-xs text-muted-foreground lg:hidden">{labels.scrollHint}</p>
+        ) : null}
 
-                      return (
-                        <TableCell
-                          key={`${row.key}-${windowLabel}`}
-                          className={cn(
-                            'text-center text-[11px] font-medium',
-                            density === 'compact' ? 'h-8' : 'h-10',
-                            isDiagonal && 'bg-muted/30 text-muted-foreground',
-                            !isDiagonal &&
-                              heatmapCellUsesLightText(intensity) &&
-                              'text-primary-foreground',
-                          )}
-                          style={
-                            isDiagonal
-                              ? undefined
-                              : { backgroundColor: heatmapCellBackground(intensity) }
-                          }
-                          aria-label={ariaLabel}
-                        >
-                          {isDiagonal ? (
-                            '—'
-                          ) : (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="inline-flex size-full items-center justify-center">
-                                  {value > 0 ? value : ''}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">{tooltipText}</TooltipContent>
-                            </Tooltip>
-                          )}
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-                <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableCell className="sticky left-0 z-10 bg-muted/30 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {labels.totalsRowLabel}
-                  </TableCell>
-                  {columnTotals.map((total, i) => {
-                    const isPeak = peakColumnIndex === i && total > 0
+        <div className="rounded-md border">
+          <TooltipProvider delayDuration={300}>
+            <SortableTable<HeatmapSortKey>
+              columns={columns}
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSort={toggleSort}
+              sortable={sortable}
+              headerRowClassName="bg-muted hover:bg-muted"
+            >
+              {displayRows.map((row) => (
+                <TableRow key={row.key}>
+                  <TableCell className={STICKY_ROW_LABEL}>{row.label}</TableCell>
+                  {row.values.map((value, i) => {
+                    const windowLabel = columnLabels[i] ?? String(i)
+                    const isDiagonal = maskDiagonal && row.label === windowLabel
+                    const intensity = heatmapIntensity(value, min, max)
+                    const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
+                    const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
+
                     return (
                       <TableCell
-                        key={`total-${columnLabels[i] ?? i}`}
+                        key={`${row.key}-${windowLabel}`}
                         className={cn(
-                          'text-center text-xs font-semibold text-muted-foreground',
+                          'text-center text-[11px] font-medium',
+                          DATA_COLUMN_CLASS,
                           density === 'compact' ? 'h-8' : 'h-10',
-                          isPeak &&
-                            'bg-chart-2/20 font-bold text-foreground ring-1 ring-chart-2/40',
+                          isDiagonal && 'bg-muted/30 text-muted-foreground',
+                          !isDiagonal &&
+                            heatmapCellUsesLightText(intensity) &&
+                            'text-primary-foreground',
                         )}
+                        style={
+                          isDiagonal
+                            ? undefined
+                            : { backgroundColor: heatmapCellBackground(intensity) }
+                        }
+                        aria-label={ariaLabel}
                       >
-                        {total > 0 ? total : '—'}
+                        {isDiagonal ? (
+                          '—'
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex size-full items-center justify-center">
+                                {value > 0 ? value : ''}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{tooltipText}</TooltipContent>
+                          </Tooltip>
+                        )}
                       </TableCell>
                     )
                   })}
                 </TableRow>
-              </SortableTable>
-            </TooltipProvider>
-          </div>
+              ))}
+              <TableRow className="bg-muted hover:bg-muted">
+                <TableCell className={STICKY_TOTALS_LABEL}>{labels.totalsRowLabel}</TableCell>
+                {columnTotals.map((total, i) => {
+                  const isPeak = peakColumnIndex === i && total > 0
+                  return (
+                    <TableCell
+                      key={`total-${columnLabels[i] ?? i}`}
+                      className={cn(
+                        'text-center text-xs font-semibold text-muted-foreground',
+                        DATA_COLUMN_CLASS,
+                        density === 'compact' ? 'h-8' : 'h-10',
+                        isPeak && 'bg-chart-2/20 font-bold text-foreground ring-1 ring-chart-2/40',
+                      )}
+                    >
+                      {total > 0 ? total : '—'}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            </SortableTable>
+          </TooltipProvider>
         </div>
 
         <Alert>

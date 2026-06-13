@@ -4,12 +4,32 @@ export const LOCATIONS_QUERY = `
       id
       name
       nodeId
+      city
+      country
+      currency
+      openingHours {
+        dayOfWeek
+        openTime
+        closeTime
+      }
     }
   }
 `
 
 export type LocationsData = {
-  locations: Array<{ id: string; name: string; nodeId: string | null }>
+  locations: Array<{
+    id: string
+    name: string
+    nodeId: string | null
+    city: string | null
+    country: string | null
+    currency: string | null
+    openingHours: Array<{
+      dayOfWeek: string
+      openTime: string
+      closeTime: string
+    }>
+  }>
 }
 
 export const LOCATION_QUERY = `

@@ -1,14 +1,18 @@
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { APP_INSET_CONTENT_MAX_WIDTH_CLASS } from '@/lib/app-layout'
+import {
+  APP_INSET_CONTENT_MAX_WIDTH_CLASS,
+  ANALYTICS_PAGE_SHELL_PADDING_CLASS,
+} from '@/lib/app-layout'
 
 export default function ProtectedLoading() {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div
         className={cn(
-          'mx-auto flex min-h-0 w-full flex-1 flex-col gap-6 px-4 py-4 sm:px-6 md:px-12',
+          'mx-auto flex min-h-0 w-full flex-1 flex-col gap-6',
+          ANALYTICS_PAGE_SHELL_PADDING_CLASS,
           APP_INSET_CONTENT_MAX_WIDTH_CLASS,
         )}
       >

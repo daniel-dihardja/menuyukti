@@ -54,7 +54,7 @@ export function LandingFeatureHighlights({
                     width={1920}
                     height={1080}
                     className="h-auto w-full object-cover"
-                    sizes="(max-width: 768px) 100vw, 1080px"
+                    sizes="(max-width: 1023px) 100vw, 1080px"
                     loading="lazy"
                   />
                 </div>

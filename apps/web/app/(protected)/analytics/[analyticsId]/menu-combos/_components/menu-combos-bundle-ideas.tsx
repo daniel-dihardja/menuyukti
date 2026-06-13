@@ -94,13 +94,13 @@ export function MenuCombosBundleIdeas({ groups, locale }: MenuCombosBundleIdeasP
         <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <div className="hidden flex-col gap-6 md:flex">
+        <div className="hidden flex-col gap-6 lg:flex">
           {groups.map((group) => (
             <BundleGroupContent key={group.kind} group={group} locale={locale} />
           ))}
         </div>
 
-        <Accordion type="multiple" defaultValue={defaultOpen} className="md:hidden">
+        <Accordion type="multiple" defaultValue={defaultOpen} className="lg:hidden">
           {groups.map((group) => (
             <AccordionItem key={group.kind} value={group.kind}>
               <AccordionTrigger className="text-sm font-medium">
