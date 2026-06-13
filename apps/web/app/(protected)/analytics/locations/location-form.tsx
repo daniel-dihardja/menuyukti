@@ -485,7 +485,7 @@ export function LocationForm({
 
           <CardContent className="px-4 sm:px-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-4 w-full justify-start overflow-x-auto">
+              <TabsList className="mb-4 w-full justify-start">
                 <TabsTrigger value="basics">{t('tabs.basics')}</TabsTrigger>
                 <TabsTrigger value="hours">{t('tabs.hours')}</TabsTrigger>
                 {mode === 'edit' ? (
