@@ -28,7 +28,7 @@ export function LocationsTable({
   branchNameLabel,
 }: LocationsTableProps) {
   return (
-    <div className="border w-full">
+    <div className="-mx-4 w-[calc(100%+2rem)] border-x-0 border-y sm:mx-0 sm:w-full sm:rounded-md sm:border">
       <Table className="w-full">
         <TableHeader>
           <TableRow>

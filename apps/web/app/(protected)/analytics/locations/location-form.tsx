@@ -257,13 +257,13 @@ export function LocationForm({
   }
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <Card className="w-full">
-        <CardHeader>
+    <form className="space-y-4 sm:space-y-6" onSubmit={onSubmit}>
+      <Card className="-mx-4 w-[calc(100%+2rem)] gap-4 rounded-none border-x-0 py-4 sm:mx-0 sm:w-full sm:gap-6 sm:rounded-xl sm:border-x sm:py-6">
+        <CardHeader className="px-4 sm:px-6">
           <CardTitle>{mode === 'create' ? t('createTitle') : t('editTitle')}</CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 px-4 sm:space-y-6 sm:px-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="name">{t('nameLabel')}</Label>
@@ -315,7 +315,7 @@ export function LocationForm({
                 }}
                 disabled={loading}
               >
-                <SelectTrigger id="country" name="country">
+                <SelectTrigger id="country" name="country" className="w-full">
                   <SelectValue placeholder={t('countrySelectPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -343,7 +343,7 @@ export function LocationForm({
                 }}
                 disabled={loading}
               >
-                <SelectTrigger id="currency" name="currency">
+                <SelectTrigger id="currency" name="currency" className="w-full">
                   <SelectValue placeholder={t('currencySelectPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>

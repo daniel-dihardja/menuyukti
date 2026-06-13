@@ -9,14 +9,20 @@ import { PageHeading } from '@/components/page-heading'
 import { auth } from '@clerk/nextjs/server'
 import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
+import { cn } from '@workspace/ui/lib/utils'
 
 function LocationsPageSkeleton() {
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <Skeleton className="h-8 w-48 max-w-full" />
+        <Skeleton className="h-4 w-full max-w-md" />
+      </div>
       <div className="flex justify-start">
         <Skeleton className="h-10 w-full max-w-xs sm:w-40" />
       </div>
-      <div className="w-full border">
+      <div className="-mx-4 w-[calc(100%+2rem)] border-x-0 border-y sm:mx-0 sm:w-full sm:rounded-md sm:border">
         <div className="flex gap-4 border-b px-4 py-3">
           <Skeleton className="h-4 w-8 shrink-0" />
           <Skeleton className="h-4 w-32" />
@@ -67,11 +73,17 @@ export default async function Page() {
   const t = await getTranslations('analytics.branches')
 
   return (
-    <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <PageHeading title={t('title')} description={t('description')} />
-      <Suspense fallback={<LocationsPageSkeleton />}>
-        <LocationsPageData />
-      </Suspense>
+    <AnalyticsPageShell
+      title={t('title')}
+      breadcrumbs={[{ label: t('title') }]}
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
+    >
+      <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>
+        <PageHeading title={t('title')} description={t('description')} />
+        <Suspense fallback={<LocationsPageSkeleton />}>
+          <LocationsPageData />
+        </Suspense>
+      </section>
     </AnalyticsPageShell>
   )
 }
