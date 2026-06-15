@@ -57,6 +57,7 @@ venv/
 
 
 /reports/
+/screenshots/
 .vscode/*
 creds
 apps/web/e2e-artifacts/
