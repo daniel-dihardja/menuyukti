@@ -158,10 +158,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
       title: t('platform.bullets.campaigns.title'),
       description: t('platform.bullets.campaigns.description'),
     },
-    {
-      title: t('platform.bullets.performance.title'),
-      description: t('platform.bullets.performance.description'),
-    },
   ] as const
 
   const faqItems = [

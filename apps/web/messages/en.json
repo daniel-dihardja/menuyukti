@@ -333,10 +333,6 @@
         "campaigns": {
           "title": "Smarter campaign planning",
           "description": "Data-informed campaign calendars and social strategy aligned to when your guests actually engage."
-        },
-        "performance": {
-          "title": "Performance evaluation",
-          "description": "Track what works, refine strategy over time, and benefit as the platform learns from every engagement."
         }
       }
     },
