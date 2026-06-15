@@ -22,24 +22,9 @@ type LandingPageProps = {
   searchParams: Promise<{ heroHeadline?: string | string[] }>
 }
 
-function buildConsultationMailto(email: string, subject: string, body: string): string {
-  const params = new URLSearchParams({
-    subject,
-    body,
-  })
-
-  return `mailto:${email}?${params.toString()}`
-}
-
 export default async function LandingPage({ searchParams }: LandingPageProps) {
   const t = await getTranslations('landing')
   const heroHeadlineVariant = parseLandingHeroHeadlineVariant((await searchParams).heroHeadline)
-
-  const consultationHref = buildConsultationMailto(
-    t('contact.email'),
-    t('contact.consultationSubject'),
-    t('contact.consultationBody'),
-  )
 
   const whyItems = [
     {
@@ -187,6 +172,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
     { question: t('faq.q4'), answer: t('faq.a4') },
     { question: t('faq.q5'), answer: t('faq.a5') },
     { question: t('faq.q6'), answer: t('faq.a6') },
+    { question: t('faq.q8'), answer: t('faq.a8') },
   ]
 
   return (
@@ -224,9 +210,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
 
             <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
               <Button size="lg" className="min-h-11 w-full sm:w-auto" asChild>
-                <a href={consultationHref}>{t('hero.ctaPrimary')}</a>
-              </Button>
-              <Button size="lg" variant="outline" className="min-h-11 w-full sm:w-auto" asChild>
                 <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
               </Button>
             </div>
@@ -253,8 +236,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
           title={t('services.title')}
           subtitle={t('services.subtitle')}
           items={serviceItems}
-          consultationHref={consultationHref}
-          consultationLinkLabel={t('services.consultationLink')}
         />
 
         <LandingFeatureSpotlight
@@ -310,9 +291,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button size="lg" className="min-h-11 w-full px-8 sm:w-auto" asChild>
-                <a href={consultationHref}>{t('cta.primary')}</a>
-              </Button>
-              <Button size="lg" variant="outline" className="min-h-11 w-full sm:w-auto" asChild>
                 <Link href={routes.login}>{t('cta.secondary')}</Link>
               </Button>
             </div>
@@ -326,7 +304,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
         whyLabel={t('footer.why')}
         servicesLabel={t('footer.services')}
         platformLabel={t('footer.platform')}
-        contactLabel={t('footer.contact')}
         faqLabel={t('footer.faq')}
         privacyPolicyLabel={t('footer.privacyPolicy')}
         termsLabel={t('footer.terms')}
@@ -334,7 +311,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
 
       <div className="fixed bottom-0 left-0 z-50 flex w-full gap-3 border-t border-border bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
         <Button className="min-h-11 flex-1" size="lg" asChild>
-          <a href={consultationHref}>{t('mobileCta.primary')}</a>
+          <Link href={routes.login}>{t('mobileCta.primary')}</Link>
         </Button>
         <Button className="min-h-11 flex-1" size="lg" variant="outline" asChild>
           <Link href="#services">{t('mobileCta.secondary')}</Link>

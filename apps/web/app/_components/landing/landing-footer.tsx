@@ -9,7 +9,6 @@ type LandingFooterProps = {
   whyLabel: string
   servicesLabel: string
   platformLabel: string
-  contactLabel: string
   faqLabel: string
   privacyPolicyLabel: string
   termsLabel: string
@@ -25,7 +24,6 @@ export function LandingFooter({
   whyLabel,
   servicesLabel,
   platformLabel,
-  contactLabel,
   faqLabel,
   privacyPolicyLabel,
   termsLabel,
@@ -45,9 +43,6 @@ export function LandingFooter({
           </Link>
           <Link href="#platform" className={linkClassName}>
             {platformLabel}
-          </Link>
-          <Link href="#cta" className={linkClassName}>
-            {contactLabel}
           </Link>
           <Link href="#faq" className={linkClassName}>
             {faqLabel}
