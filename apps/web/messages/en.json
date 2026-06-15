@@ -58,7 +58,11 @@
   "metadata": {
     "title": "Menuyukti — AI-Powered Marketing Partner for Restaurants",
     "description": "Restaurant marketing expertise, enterprise-grade software engineering, and proprietary AI technology. Marketing analysis, content creation, social media, strategy, and technical consulting for restaurants, cafés, and bars.",
-    "ogLocale": "en_US"
+    "ogLocale": "en_US",
+    "ogImageAlt": "Menuyukti — AI-Powered Marketing Partner for Restaurants",
+    "ogImageBadge": "Restaurant marketing · AI-powered",
+    "ogImageHeadline": "The AI-Powered Marketing Partner Built Exclusively for Restaurants",
+    "ogImageTagline": "Strategy, content, and growth consulting powered by proprietary AI and restaurant marketing expertise."
   },
   "login": {
     "title": "Menuyukti",
