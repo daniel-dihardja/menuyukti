@@ -19,8 +19,6 @@ type LandingServicesGridProps = {
   title: string
   subtitle: string
   items: readonly LandingServiceItem[]
-  consultationHref: string
-  consultationLinkLabel: string
 }
 
 const serviceIcons = {
@@ -35,13 +33,7 @@ function getServiceIcon(id: string): LucideIcon {
   return serviceIcons[id as keyof typeof serviceIcons] ?? BarChart3
 }
 
-export function LandingServicesGrid({
-  title,
-  subtitle,
-  items,
-  consultationHref,
-  consultationLinkLabel,
-}: LandingServicesGridProps) {
+export function LandingServicesGrid({ title, subtitle, items }: LandingServicesGridProps) {
   return (
     <section
       id="services"
@@ -95,15 +87,6 @@ export function LandingServicesGrid({
             )
           })}
         </div>
-
-        <p className="mt-10 text-center">
-          <a
-            href={consultationHref}
-            className="text-base font-medium text-primary underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            {consultationLinkLabel} →
-          </a>
-        </p>
       </div>
     </section>
   )

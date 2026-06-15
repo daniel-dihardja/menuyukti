@@ -13,13 +13,7 @@ import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 
 export type HeroPreviewSlide = {
-  id:
-    | 'workflows01'
-    | 'workflows02'
-    | 'promoCandidates01'
-    | 'promoCandidates02'
-    | 'menuTagger01'
-    | 'menuTagger02'
+  id: string
   imageSrc: string
   alt: string
   caption: string
@@ -33,10 +27,14 @@ export type HeroProductPreviewProps = {
   carouselNextLabel: string
   carouselDotLabels: readonly string[]
   modalTitle: string
+  /** Use full container width (e.g. stacked landing sections) instead of hero max-width. */
+  fullWidth?: boolean
 }
 
-const IMAGE_SIZES =
+const HERO_IMAGE_SIZES =
   '(max-width: 640px) 100vw, (max-width: 1152px) min(100vw - 3rem, 1024px), 1024px'
+
+const FULL_WIDTH_IMAGE_SIZES = '(max-width: 1152px) 100vw, 1152px'
 
 const carouselNavButtonClassName = cn(
   'flex size-10 shrink-0 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
@@ -53,6 +51,7 @@ export function HeroProductPreview({
   carouselNextLabel,
   carouselDotLabels,
   modalTitle,
+  fullWidth = false,
 }: HeroProductPreviewProps) {
   const [api, setApi] = useState<CarouselApi>()
   const [activeIndex, setActiveIndex] = useState(0)
@@ -87,7 +86,12 @@ export function HeroProductPreview({
   const openModal = () => setModalOpen(true)
 
   return (
-    <figure className="mx-auto mt-10 w-full min-w-0 max-w-5xl md:mt-12">
+    <figure
+      className={cn(
+        'mx-auto w-full min-w-0',
+        fullWidth ? 'mt-8 max-w-none' : 'mt-10 max-w-5xl md:mt-12',
+      )}
+    >
       <div className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500 motion-reduce:animate-none">
         <Carousel
           setApi={setApi}
@@ -127,7 +131,7 @@ export function HeroProductPreview({
                             className="object-contain object-center"
                             priority={index === 0}
                             loading={index === 0 ? undefined : 'lazy'}
-                            sizes={IMAGE_SIZES}
+                            sizes={fullWidth ? FULL_WIDTH_IMAGE_SIZES : HERO_IMAGE_SIZES}
                           />
                         </div>
                         <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition group-hover:bg-background">

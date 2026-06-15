@@ -25,6 +25,9 @@ export default async function LoginPage() {
           </CardHeader>
           <CardContent className="pt-2">
             <MenuyuktiSignIn />
+            <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground">
+              {t('accessNote')}
+            </p>
           </CardContent>
         </Card>
       </div>

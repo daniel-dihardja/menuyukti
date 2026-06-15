@@ -5,6 +5,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { Bot, Sparkles } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
+import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
 import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFeatureSpotlight } from '@/app/_components/landing/landing-feature-spotlight'
@@ -21,24 +22,9 @@ type LandingPageProps = {
   searchParams: Promise<{ heroHeadline?: string | string[] }>
 }
 
-function buildConsultationMailto(email: string, subject: string, body: string): string {
-  const params = new URLSearchParams({
-    subject,
-    body,
-  })
-
-  return `mailto:${email}?${params.toString()}`
-}
-
 export default async function LandingPage({ searchParams }: LandingPageProps) {
   const t = await getTranslations('landing')
   const heroHeadlineVariant = parseLandingHeroHeadlineVariant((await searchParams).heroHeadline)
-
-  const consultationHref = buildConsultationMailto(
-    t('contact.email'),
-    t('contact.consultationSubject'),
-    t('contact.consultationBody'),
-  )
 
   const whyItems = [
     {
@@ -108,6 +94,57 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
     },
   ] as const
 
+  const platformSlides = [
+    {
+      id: 'workflowBriefing',
+      imageSrc: '/images/showcase/01-workflow-briefing.webp',
+      alt: t('platform.slides.workflowBriefing.alt'),
+      caption: t('platform.slides.workflowBriefing.caption'),
+    },
+    {
+      id: 'workflowPromoCandidates',
+      imageSrc: '/images/showcase/02-workflow-promo-candidates.webp',
+      alt: t('platform.slides.workflowPromoCandidates.alt'),
+      caption: t('platform.slides.workflowPromoCandidates.caption'),
+    },
+    {
+      id: 'workflowMenuTagger01',
+      imageSrc: '/images/showcase/03-workflow-menu-tagger-01.webp',
+      alt: t('platform.slides.workflowMenuTagger01.alt'),
+      caption: t('platform.slides.workflowMenuTagger01.caption'),
+    },
+    {
+      id: 'workflowMenuTagger02',
+      imageSrc: '/images/showcase/04-workflow-menu-tagger-02.webp',
+      alt: t('platform.slides.workflowMenuTagger02.alt'),
+      caption: t('platform.slides.workflowMenuTagger02.caption'),
+    },
+    {
+      id: 'heatmapDaily',
+      imageSrc: '/images/showcase/heatmap-daily.webp',
+      alt: t('platform.slides.heatmapDaily.alt'),
+      caption: t('platform.slides.heatmapDaily.caption'),
+    },
+    {
+      id: 'heatmapWeekly',
+      imageSrc: '/images/showcase/heatmap-weekly.webp',
+      alt: t('platform.slides.heatmapWeekly.alt'),
+      caption: t('platform.slides.heatmapWeekly.caption'),
+    },
+    {
+      id: 'menuComboAnalytics',
+      imageSrc: '/images/showcase/menu-combo-analysis-01.webp',
+      alt: t('platform.slides.menuComboAnalytics.alt'),
+      caption: t('platform.slides.menuComboAnalytics.caption'),
+    },
+    {
+      id: 'menuComboHeatmap',
+      imageSrc: '/images/showcase/menu-combo-analysis-02.webp',
+      alt: t('platform.slides.menuComboHeatmap.alt'),
+      caption: t('platform.slides.menuComboHeatmap.caption'),
+    },
+  ] as const
+
   const platformBullets = [
     {
       title: t('platform.bullets.analysis.title'),
@@ -130,10 +167,12 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
   const faqItems = [
     { question: t('faq.q1'), answer: t('faq.a1') },
     { question: t('faq.q2'), answer: t('faq.a2') },
+    { question: t('faq.q7'), answer: t('faq.a7') },
     { question: t('faq.q3'), answer: t('faq.a3') },
     { question: t('faq.q4'), answer: t('faq.a4') },
     { question: t('faq.q5'), answer: t('faq.a5') },
     { question: t('faq.q6'), answer: t('faq.a6') },
+    { question: t('faq.q8'), answer: t('faq.a8') },
   ]
 
   return (
@@ -171,9 +210,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
 
             <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
               <Button size="lg" className="min-h-11 w-full sm:w-auto" asChild>
-                <a href={consultationHref}>{t('hero.ctaPrimary')}</a>
-              </Button>
-              <Button size="lg" variant="outline" className="min-h-11 w-full sm:w-auto" asChild>
                 <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
               </Button>
             </div>
@@ -200,8 +236,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
           title={t('services.title')}
           subtitle={t('services.subtitle')}
           items={serviceItems}
-          consultationHref={consultationHref}
-          consultationLinkLabel={t('services.consultationLink')}
         />
 
         <LandingFeatureSpotlight
@@ -209,10 +243,20 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
           title={t('platform.title')}
           subtitle={t('platform.subtitle')}
           bullets={platformBullets}
-          imageSrc="/images/landing/workflow-campaign-brief.webp"
-          imageAlt={t('platform.imageAlt')}
-          imageCaption={t('platform.imageCaption')}
+          stacked
           Icon={Bot}
+          media={
+            <HeroProductPreview
+              slides={platformSlides}
+              fullWidth
+              viewLargerLabel={t('platform.viewLargerLabel')}
+              carouselLabel={t('platform.carouselLabel')}
+              carouselPrevLabel={t('platform.carouselPrevLabel')}
+              carouselNextLabel={t('platform.carouselNextLabel')}
+              carouselDotLabels={t.raw('platform.carouselDotLabels') as string[]}
+              modalTitle={t('platform.modalTitle')}
+            />
+          }
         />
 
         <section
@@ -247,9 +291,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button size="lg" className="min-h-11 w-full px-8 sm:w-auto" asChild>
-                <a href={consultationHref}>{t('cta.primary')}</a>
-              </Button>
-              <Button size="lg" variant="outline" className="min-h-11 w-full sm:w-auto" asChild>
                 <Link href={routes.login}>{t('cta.secondary')}</Link>
               </Button>
             </div>
@@ -263,7 +304,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
         whyLabel={t('footer.why')}
         servicesLabel={t('footer.services')}
         platformLabel={t('footer.platform')}
-        contactLabel={t('footer.contact')}
         faqLabel={t('footer.faq')}
         privacyPolicyLabel={t('footer.privacyPolicy')}
         termsLabel={t('footer.terms')}
@@ -271,7 +311,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
 
       <div className="fixed bottom-0 left-0 z-50 flex w-full gap-3 border-t border-border bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
         <Button className="min-h-11 flex-1" size="lg" asChild>
-          <a href={consultationHref}>{t('mobileCta.primary')}</a>
+          <Link href={routes.login}>{t('mobileCta.primary')}</Link>
         </Button>
         <Button className="min-h-11 flex-1" size="lg" variant="outline" asChild>
           <Link href="#services">{t('mobileCta.secondary')}</Link>
