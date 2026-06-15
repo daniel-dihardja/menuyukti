@@ -17,9 +17,12 @@ export function LandingTrustStrip({ title, stats }: TrustStripProps) {
         >
           {title}
         </h2>
-        <ul className="flex flex-col gap-8 sm:flex-row sm:justify-center sm:gap-16">
+        <ul className="flex flex-wrap justify-center gap-x-8 gap-y-8 sm:gap-x-12 lg:gap-x-10">
           {stats.map((s) => (
-            <li key={s.label} className="flex flex-col items-center text-center">
+            <li
+              key={s.label}
+              className="flex min-w-[9rem] max-w-[14rem] flex-col items-center text-center"
+            >
               <span className="text-3xl font-semibold tabular-nums tracking-tight text-foreground md:text-4xl">
                 {s.value}
               </span>
