@@ -5,6 +5,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { Bot, Sparkles } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
+import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
 import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFeatureSpotlight } from '@/app/_components/landing/landing-feature-spotlight'
@@ -105,6 +106,57 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
       title: t('services.items.technical.title'),
       description: t('services.items.technical.description'),
       bullets: t.raw('services.items.technical.bullets') as string[],
+    },
+  ] as const
+
+  const platformSlides = [
+    {
+      id: 'workflowBriefing',
+      imageSrc: '/images/showcase/01-workflow-briefing.webp',
+      alt: t('platform.slides.workflowBriefing.alt'),
+      caption: t('platform.slides.workflowBriefing.caption'),
+    },
+    {
+      id: 'workflowPromoCandidates',
+      imageSrc: '/images/showcase/02-workflow-promo-candidates.webp',
+      alt: t('platform.slides.workflowPromoCandidates.alt'),
+      caption: t('platform.slides.workflowPromoCandidates.caption'),
+    },
+    {
+      id: 'workflowMenuTagger01',
+      imageSrc: '/images/showcase/03-workflow-menu-tagger-01.webp',
+      alt: t('platform.slides.workflowMenuTagger01.alt'),
+      caption: t('platform.slides.workflowMenuTagger01.caption'),
+    },
+    {
+      id: 'workflowMenuTagger02',
+      imageSrc: '/images/showcase/04-workflow-menu-tagger-02.webp',
+      alt: t('platform.slides.workflowMenuTagger02.alt'),
+      caption: t('platform.slides.workflowMenuTagger02.caption'),
+    },
+    {
+      id: 'heatmapDaily',
+      imageSrc: '/images/showcase/heatmap-daily.webp',
+      alt: t('platform.slides.heatmapDaily.alt'),
+      caption: t('platform.slides.heatmapDaily.caption'),
+    },
+    {
+      id: 'heatmapWeekly',
+      imageSrc: '/images/showcase/heatmap-weekly.webp',
+      alt: t('platform.slides.heatmapWeekly.alt'),
+      caption: t('platform.slides.heatmapWeekly.caption'),
+    },
+    {
+      id: 'menuComboAnalytics',
+      imageSrc: '/images/showcase/menu-combo-analysis-01.webp',
+      alt: t('platform.slides.menuComboAnalytics.alt'),
+      caption: t('platform.slides.menuComboAnalytics.caption'),
+    },
+    {
+      id: 'menuComboHeatmap',
+      imageSrc: '/images/showcase/menu-combo-analysis-02.webp',
+      alt: t('platform.slides.menuComboHeatmap.alt'),
+      caption: t('platform.slides.menuComboHeatmap.caption'),
     },
   ] as const
 
@@ -210,10 +262,20 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
           title={t('platform.title')}
           subtitle={t('platform.subtitle')}
           bullets={platformBullets}
-          imageSrc="/images/landing/workflow-campaign-brief.webp"
-          imageAlt={t('platform.imageAlt')}
-          imageCaption={t('platform.imageCaption')}
+          stacked
           Icon={Bot}
+          media={
+            <HeroProductPreview
+              slides={platformSlides}
+              fullWidth
+              viewLargerLabel={t('platform.viewLargerLabel')}
+              carouselLabel={t('platform.carouselLabel')}
+              carouselPrevLabel={t('platform.carouselPrevLabel')}
+              carouselNextLabel={t('platform.carouselNextLabel')}
+              carouselDotLabels={t.raw('platform.carouselDotLabels') as string[]}
+              modalTitle={t('platform.modalTitle')}
+            />
+          }
         />
 
         <section
