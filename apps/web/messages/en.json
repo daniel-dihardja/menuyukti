@@ -12,6 +12,12 @@
     "navStudio": "Studio",
     "navWorkflows": "Workflows",
     "navShop": "Print Shop",
+    "landingNav": {
+      "services": "Services",
+      "why": "Why Menuyukti",
+      "contact": "Contact",
+      "mobileDescription": "AI-powered restaurant marketing—strategy, content, and growth consulting built exclusively for hospitality."
+    },
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
     "mobileMenuDescription": "Workflows for agentic campaign planning and Studio for AI brand visuals.",
@@ -50,8 +56,8 @@
     "mistral_mistral_large_3": "Mistral Large 3"
   },
   "metadata": {
-    "title": "Menuyukti — Agentic Instagram campaigns for restaurants",
-    "description": "Turn restaurant sales data into campaign briefs, promotion ideas, schedules, and copy in agentic Workflows. Create on-brand Reels and feed visuals in Studio from your menu photos.",
+    "title": "Menuyukti — AI-Powered Marketing Partner for Restaurants",
+    "description": "Restaurant marketing expertise, enterprise-grade software engineering, and proprietary AI technology. Marketing analysis, content creation, social media, strategy, and technical consulting for restaurants, cafés, and bars.",
     "ogLocale": "en_US"
   },
   "login": {
@@ -146,347 +152,188 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Your POS knows what sells. Instagram doesn't.",
-      "subtitle": "Turn last month's sales into this month's Instagram schedule with AI—promotion picks, posting windows, and draft copy in one workflow.",
-      "badge": "POS → Instagram planning",
-      "ctaSecondary": "Sign in",
-      "viewLarger": "View larger",
-      "carouselLabel": "Product screenshots",
-      "carouselPrev": "Previous screenshot",
-      "carouselNext": "Next screenshot",
-      "carouselDot": "Slide {n} of {total}",
-      "modalTitle": "Product screenshot",
-      "previewSlides": {
-        "workflows01": {
-          "alt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected.",
-          "caption": "Workflows timeline: move from campaign brief to promotion shortlist, schedule, and draft copy in one place."
+      "headline": "The AI-Powered Marketing Partner Built Exclusively for Restaurants",
+      "subtitle": "Combining restaurant marketing expertise, enterprise-grade software engineering, and proprietary AI technology to help restaurants grow faster, create better content, and attract more customers.",
+      "badge": "Restaurant marketing · AI-powered",
+      "ctaPrimary": "Book a Free Growth Consultation",
+      "ctaSecondary": "Sign in"
+    },
+    "contact": {
+      "email": "hello@menuyukti.com",
+      "consultationSubject": "Free growth consultation request",
+      "consultationBody": "Hi Menuyukti team,\n\nI'd like to book a free growth consultation for my restaurant.\n\nRestaurant name:\nLocation:\nBest time to reach me:\n"
+    },
+    "why": {
+      "title": "Why Menuyukti exists",
+      "subtitle": "Restaurant owners juggle operations, staff, reputation, social media, and growth—all at once. Most agencies are generalists. We focus exclusively on restaurants, cafés, and bars.",
+      "item1Title": "Too much on every owner's plate",
+      "item1Description": "Running a restaurant means managing suppliers, guest experience, online reputation, promotions, and social media simultaneously—marketing rarely gets the attention it deserves.",
+      "item2Title": "Generalist agencies miss the nuance",
+      "item2Description": "Most marketing agencies work across industries—dentists one week, real estate the next. Restaurant hospitality needs strategies built for local competition and foot traffic, not generic templates.",
+      "item3Title": "Restaurant-only focus",
+      "item3Description": "By specializing in a single industry, we develop deeper expertise, better processes, and marketing strategies designed specifically for hospitality businesses."
+    },
+    "foundation": {
+      "title": "Built on a unique foundation",
+      "subtitle": "Technology alone is not enough. Menuyukti combines industry knowledge, marketing expertise, AI, and software engineering in a way few agencies can replicate.",
+      "item1Title": "Enterprise software engineering",
+      "item1Description": "More than a decade building platforms for banking, industrial companies, and the public sector—a technical foundation most marketing agencies simply do not have.",
+      "item2Title": "Proprietary AI platform",
+      "item2Description": "An internal AI platform built for restaurant marketing: analysis, content generation, campaign planning, social strategy, and growth opportunity discovery—augmenting human expertise, not replacing it.",
+      "item3Title": "Restaurant marketing expertise",
+      "item3Description": "Marketing professionals who understand the restaurant business and the realities of attracting customers in highly competitive local markets."
+    },
+    "differentiators": {
+      "title": "What makes Menuyukti different",
+      "items": [
+        {
+          "value": "Faster",
+          "label": "Content, analysis, and strategic recommendations delivered significantly faster than traditional agencies."
         },
-        "workflows02": {
-          "alt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected.",
-          "caption": "Workflows timeline: move from campaign brief to promotion shortlist, schedule, and draft copy in one place."
+        {
+          "value": "Consistent",
+          "label": "AI-supported workflows ensure a consistent quality standard across campaigns and channels."
         },
-        "promoCandidates01": {
-          "alt": "Screenshot of the Menuyukti Workflows UI with the Promotion Candidates milestone selected on the campaign timeline.",
-          "caption": "Promotion shortlist: rank dishes from real menu performance so you promote what sells."
+        {
+          "value": "Data-driven",
+          "label": "Marketing recommendations based on analysis—not guesswork."
         },
-        "promoCandidates02": {
-          "alt": "Screenshot of the Menuyukti Workflows UI with the Promotion Candidates milestone selected on the campaign timeline.",
-          "caption": "Promotion shortlist: rank dishes from real menu performance so you promote what sells."
+        {
+          "value": "Focused",
+          "label": "Every strategy designed specifically for restaurants, cafés, and bars."
         },
-        "menuTagger01": {
-          "alt": "Screenshot of the Menuyukti Workflows UI with the Menu Tagger milestone selected on the campaign timeline.",
-          "caption": "Menu tagger: AI adds reel angles and content context to each promotion candidate before copy drafting."
-        },
-        "menuTagger02": {
-          "alt": "Screenshot of the Menuyukti Workflows UI with the Menu Tagger milestone selected on the campaign timeline.",
-          "caption": "Menu tagger: AI adds reel angles and content context to each promotion candidate before copy drafting."
+        {
+          "value": "Evolving",
+          "label": "The platform improves constantly, so clients benefit from new capabilities without added complexity."
         }
-      }
+      ]
     },
-    "pain": {
-      "title": "Restaurant Instagram is time-consuming",
-      "subtitle": "Whether you start from a POS export or already have your own process, owners and Instagram partners—freelancers, social managers, or agencies—rarely have a dedicated system for turning sales data into a monthly Instagram plan.",
-      "item1Title": "The work adds up every week",
-      "item1Description": "Planning posts, picking dishes to feature, and keeping the feed fresh adds up to hours every week—on top of everything else that comes with running a restaurant.",
-      "item2Title": "Offline-first needs a different playbook",
-      "item2Description": "Restaurants sell on the floor, not in a checkout flow. What to promote and when to post should follow menu performance and local demand—not the templates online-only brands run on.",
-      "item3Title": "Sales data, plus the layer Instagram planning needs",
-      "item3Description": "When the work is split, the owner has the POS export and the Instagram partner runs the feed. The export shows what sold—the next step is granular analytics like menu engineering, demand timing, and ranked promotion picks that both sides can plan from in one place."
-    },
-    "analyticsComparison": {
-      "title": "POS reports show what sold. Menuyukti shows what to promote.",
-      "subtitle": "Your POS is built for operations—ringing orders, closing shifts, and accounting. Menuyukti adds the analytics layer on top, whether you're building a workflow from scratch or extending one you already use.",
-      "posColumnTitle": "Typical POS reporting",
-      "menuyuktiColumnTitle": "Menuyukti agent signals",
-      "posBullets": [
-        "Daily and weekly totals: revenue, covers, and top sellers by quantity or amount",
-        "Item-level counts and ranks, sometimes with basic margin if COGS are entered in the POS",
-        "Shift summaries or hour-of-day charts when the POS includes timestamps—mainly for staffing and prep",
-        "Category or section sales for inventory and menu mix review",
-        "Menu items as flat line names—no reel hooks, prep style, or occasion metadata for content planning",
-        "Operational insight: what to prep, reorder, or discount—rarely connected to social content"
-      ],
-      "menuyuktiBullets": [
-        "Structured sales signals composed for campaign planning—not just a spreadsheet for the back office",
-        "Menu engineering matrix: stars, puzzles, plow horses, and low performers—so promotion picks follow portfolio logic, not just bestseller lists",
-        "Hourly demand heatmaps, weekday and daypart patterns, and recommended posting windows aligned to when guests actually order",
-        "Category mix trends, rising items, and focus categories that feed brief pillars and content themes",
-        "Semantic tags on each promotion pick—reel moment, prep style, taste, occasion, and more",
-        "Reel clusters that group dishes into shootable series for the month",
-        "Ranked promotion candidates, items to avoid, and schedule-ready signals that flow into briefs, shortlists, and draft copy in Workflows"
-      ],
-      "impactTitle": "Same export, different strategy depth",
-      "impactDescription": "POS dashboards answer how the business performed. Menuyukti answers what to feature, how to group dishes into Reel clusters, when to post, and why—so your Instagram partner can plan with evidence, and the owner can see the reasoning behind every pick."
-    },
-    "bridge": {
-      "title": "One workspace for the owner and the Instagram partner",
-      "subtitle": "Whether one person wears both hats or owner and Instagram partner work separately, Menuyukti connects sales data to a monthly plan—the way restaurant marketing works, not how online brands grow.",
-      "owner": {
-        "title": "Restaurant owner",
-        "description": "Upload last month's sales report at the start of each month and keep the business context in one shared place."
-      },
-      "partner": {
-        "title": "Instagram partner",
-        "description": "Freelancer, social manager, or agency—the person who runs the restaurant's Instagram. Pick a strategy template, attach the latest sales report, adjust inputs, and run the pipeline to generate the month's schedule."
-      }
-    },
-    "pillars": {
-      "title": "Workflows at the center of your monthly plan",
-      "subtitle": "Sales-grounded campaign planning is the core job. When you need visuals, Studio turns menu photos into feed-ready assets.",
+    "services": {
+      "title": "Our services",
+      "subtitle": "End-to-end marketing support for restaurant growth—from analysis and content to strategy and technology.",
+      "consultationLink": "Book a free consultation",
       "items": {
-        "workflows": {
-          "title": "Workflows: your monthly Instagram schedule, step by step",
-          "description": "Link location analytics, run milestones for brief, promotion shortlist, schedule, and copy, and keep structured outputs you can review, edit, and rerun together."
+        "analysis": {
+          "title": "Marketing analysis",
+          "description": "Identify growth opportunities by analyzing your digital presence, customer engagement, competition, and marketing performance.",
+          "bullets": [
+            "Digital presence audits",
+            "Competitive analysis",
+            "Marketing performance reviews",
+            "Growth opportunity identification",
+            "Strategic recommendations"
+          ]
         },
-        "studio": {
-          "title": "Studio (optional)",
-          "description": "When you need visuals, turn menu photos into feed-ready hero shots and Reels assets from one brand library."
+        "content": {
+          "title": "AI-assisted content creation",
+          "description": "Consistent content that keeps customers engaged and your brand visible—without the weekly scramble.",
+          "bullets": [
+            "Social media posts",
+            "Promotional campaigns",
+            "Seasonal content",
+            "Menu highlights",
+            "Event promotions",
+            "Brand storytelling"
+          ]
+        },
+        "social": {
+          "title": "Social media management",
+          "description": "Restaurants live and die by visibility. Maintain a strong presence with strategic planning and execution.",
+          "bullets": [
+            "Content calendars",
+            "Campaign planning",
+            "Audience engagement strategies",
+            "Platform optimization",
+            "Performance monitoring"
+          ]
+        },
+        "strategy": {
+          "title": "Marketing strategy",
+          "description": "Long-term strategies for customer acquisition and retention—not just posting content.",
+          "bullets": [
+            "Customer growth strategies",
+            "Brand positioning",
+            "Promotional planning",
+            "Loyalty initiatives",
+            "Local marketing campaigns"
+          ]
+        },
+        "technical": {
+          "title": "Technical consulting",
+          "description": "Modernize fragmented systems and outdated technology—websites, reservations, loyalty apps, and custom restaurant software.",
+          "bullets": [
+            "Modern restaurant websites",
+            "Online reservation integrations",
+            "Menu management solutions",
+            "Loyalty and ordering applications",
+            "Performance optimization"
+          ]
         }
-      },
-      "studioFootnote": "Studio is optional—most teams start with Workflows and add visuals when they're ready."
+      }
     },
-    "workflows": {
-      "title": "Workflows: your campaign lives in a timeline, not a chat thread",
-      "subtitle": "Each milestone has a clear goal, optional pass criteria, and saved artifacts. Set the quality bar, let the agent run the step, then edit or rerun with control.",
-      "imageAlt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected and its generated brief preview.",
-      "imageCaption": "Your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy.",
+    "platform": {
+      "title": "Powered by our proprietary AI platform",
+      "subtitle": "Every engagement runs on technology we build and improve in-house—so you get agency expertise backed by software most competitors cannot offer.",
+      "imageAlt": "Screenshot of the Menuyukti platform showing campaign planning and marketing analysis for restaurants.",
+      "imageCaption": "Our internal platform analyzes restaurant data, generates content, and supports marketing decisions—delivering output that would normally require a much larger team.",
       "bullets": {
-        "templates": {
-          "title": "Workflow templates",
-          "description": "Start from built-in templates with goals, pass criteria, and starter data, then tailor each step to your campaign."
+        "analysis": {
+          "title": "Marketing analysis at scale",
+          "description": "Continuous analysis of digital presence, engagement patterns, and competitive landscape to surface growth opportunities."
         },
-        "salesData": {
-          "title": "Sales-grounded data",
-          "description": "Attach a location analytics run so your brief and promotion shortlist reflect real menu performance, not guesswork."
+        "content": {
+          "title": "Faster content production",
+          "description": "AI-assisted workflows produce posts, campaigns, and promotional content while marketers maintain creative control."
         },
-        "presets": {
-          "title": "Milestone presets",
-          "description": "Add steps like key dates, campaign brief, promotion picks, scheduler, and captions with prefilled goals and pass criteria."
+        "campaigns": {
+          "title": "Smarter campaign planning",
+          "description": "Data-informed campaign calendars and social strategy aligned to when your guests actually engage."
         },
-        "transparent": {
-          "title": "Transparent runs",
-          "description": "Chat beside the timeline, inspect the skills and tools used in each run, and rerun milestones when new sales data arrives."
+        "performance": {
+          "title": "Performance evaluation",
+          "description": "Track what works, refine strategy over time, and benefit as the platform learns from every engagement."
         }
       }
     },
-    "studio": {
-      "title": "Studio: brand library and AI image flows",
-      "subtitle": "Turn one smartphone photo into a polished hero shot with better food lighting, smarter framing, and a brand-ready finish.",
-      "transformation": {
-        "title": "One phone shot → prepare → hero shot",
-        "intro": "Step 2 prepares your photo in two ways before the hero pass: warmer, food-optimized light and cleaner composition. Step 3 turns the same plate into a classic 45-60 degree restaurant hero on warm wood without a reshoot.",
-        "steps": {
-          "source": {
-            "label": "1 · Source",
-            "alt": "Original smartphone photo of a restaurant dish with uneven lighting and tight framing.",
-            "caption": "Your everyday phone capture—real dish, imperfect light, maybe cropped tight to the plate."
-          },
-          "lightFix": {
-            "label": "2 · Prepare",
-            "alt": "Same dish after preparing light and composition—warmer food lighting and reframed with more space around the subject.",
-            "captionLead": "The golden-hour fix prepares your image in two steps:",
-            "points": {
-              "light": {
-                "title": "Light",
-                "description": "Add warmer, appetizing tones, lift shadows, and tune exposure so the food looks rich and natural instead of flat phone flash."
-              },
-              "composition": {
-                "title": "Composition",
-                "description": "Advanced cropping and reframing—not a simple tight crop. Reposition for rule of thirds and flattering angle, and add intentional space around the dish when your source photo has none, so the frame has headroom and breathing room."
-              }
-            }
-          },
-          "heroShot": {
-            "label": "3 · Hero shot",
-            "alt": "Restaurant marketing hero shot generated from the source dish on warm wood.",
-            "caption": "Restaurant marketing hero shot—commercial angle and brand-ready finish."
-          }
-        }
-      },
-      "featuredFlows": {
-        "heroShot": {
-          "title": "Restaurant marketing hero shot",
-          "description": "Commercial 45–60° angle on warm wood—your plate stays exactly as photographed while lighting and presentation become menu- and Instagram-ready."
-        },
-        "goldenHour": {
-          "title": "Instagram food golden hour fix",
-          "description": "Prepare your photo with warmer food lighting and cleaner framing before the hero-shot pass."
-        },
-        "prepareForAds": {
-          "title": "Prepare product for ads",
-          "description": "Remove the background to clean white, center and scale the dish, and balance exposure—a neutral cutout ready for compositing, carousels, and ad layouts."
-        }
-      },
-      "bullets": {
-        "library": {
-          "title": "Product library",
-          "description": "Upload, normalize, and manage images for your brand—drag and drop, preview, download, and reuse across campaigns."
-        },
-        "designs": {
-          "title": "Designs",
-          "description": "Combine product shots, backgrounds, aspect ratios, and flows in a guided new-design wizard for Reels, carousels, and promos."
-        },
-        "feedsWorkflows": {
-          "title": "Feeds Workflows",
-          "description": "Use the same assets when workflow milestones need product imagery—one visual library for planning and execution."
-        }
-      }
-    },
-    "automation": {
-      "title": "What the AI pipeline does for you",
-      "subtitle": "Menuyukti combines deterministic analytics with AI generation: analytics computes what is happening in your location data, and AI turns that into campaign strategy, storytelling, and draft assets you can review.",
-      "items": {
-        "campaignBrief": {
-          "title": "Campaign brief from location data",
-          "description": "Deterministic analytics summarizes demand and menu performance, then AI composes a campaign brief with audience focus, pillars, and tone guardrails."
-        },
-        "promotionRanking": {
-          "title": "Promotion shortlist from deterministic analytics",
-          "description": "Rules-based scoring ranks promotion candidates from real menu demand so you feature dishes with evidence, not guesswork."
-        },
-        "storytellingStrength": {
-          "title": "AI adds storytelling strength before copywriting",
-          "description": "AI tags each candidate with content angles, hook ideas, and reel context so weekly content feels intentional instead of repetitive."
-        },
-        "timingCadence": {
-          "title": "Local Pulse timing from analytics plus AI planning",
-          "description": "Deterministic timing signals identify lunch, dinner, and weekend demand windows, then AI turns them into a practical weekly posting cadence."
-        },
-        "copyAndVisualPrep": {
-          "title": "AI drafts copy and prepares visual direction",
-          "description": "AI drafts captions and creative directions, while Studio flows prepare visuals from your menu photos to speed up weekly execution."
-        },
-        "humanControl": {
-          "title": "Human review, edit, and rerun control",
-          "description": "Every milestone is saved as an artifact with clear inputs and outputs, so you can inspect, edit, and rerun when fresh data arrives."
-        }
-      }
-    },
-    "problem": "If you run restaurant social on your own, you are usually juggling chat tools, design apps, and spreadsheets. Even when content looks good, it is hard to connect posts to what actually sells.",
-    "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti connects both sides of the job: Workflows turns sales signals into campaign plans you can review, and Studio turns menu photos into on-brand visuals you can publish faster.",
-    "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
-    "trust": {
-      "title": "Built for restaurant teams that need speed and control",
-      "stat1Value": "Studio",
-      "stat1Label": "Create on-brand visuals for Reels, carousels, and promos in minutes.",
-      "stat2Value": "Workflows",
-      "stat2Label": "Run campaign milestones for briefs, promotion picks, schedules, and draft copy from your sales signals.",
-      "stat3Value": "Visibility",
-      "stat3Label": "Inspect skills and tools used in each run, edit outputs, and rerun when your data changes."
-    },
-    "bento": {
-      "title": "When you layer agentic workflows on your data",
-      "subtitle": "Analytics and workflows sit on your sales signals: milestones in the middle, structured campaign outputs out, so automation stays explainable.",
-      "item1Title": "Sales-report signal intelligence",
-      "item1Description": "Upload POS exports and spreadsheet sales reports to surface menu demand, daypart peaks, and category opportunities that inform what to promote and when.",
-      "item2Title": "Transparent agent runs",
-      "item2Description": "See how milestones and tools combine in each run so strategy logic stays inspectable—not a black box.",
-      "item3Title": "Reusable campaign artifacts",
-      "item3Description": "Store post schedules, promotion rationales, and messaging guidance as structured data you can refine across locations and campaign windows."
-    },
-    "pipeline": {
-      "title": "Workflows: compose your agentic campaign pipeline",
-      "subtitle": "Each milestone runs with tools and memory: orchestrate strategy, timing, and copy across your campaign, then rerun as fresh sales data arrives.",
-      "nodes": {
-        "datesTitle": "Dates node",
-        "datesDescription": "Defines campaign start/end windows and public-holiday context to keep posting plans realistic.",
-        "campaignBriefTitle": "Campaign Brief node",
-        "campaignBriefDescription": "Builds audience hypotheses, content pillars, and tone guardrails from operating and menu signals.",
-        "promotionCandidatesTitle": "Promotion candidates node",
-        "promotionCandidatesDescription": "Turns menu-engineering signals into ranked promotion ideas—stars, puzzles, and angles—aligned with your campaign brief and only naming dishes your analytics actually support.",
-        "contentCreatorTitle": "Content creator node",
-        "contentCreatorDescription": "Drafts captions, hooks, and post copy grounded in your schedule, brief, and promotion choices so you get review-ready social text, not generic filler."
-      }
-    },
-    "signals": {
-      "title": "Recommendations grounded in restaurant sales signals",
-      "subtitle": "When you run Workflows with uploaded sales data, each recommendation stays traceable to what your locations actually sell so you can justify strategy decisions.",
-      "items": {
-        "demandTitle": "Demand timing signals",
-        "demandDescription": "Identify dayparts and weekday patterns where audience attention and purchase intent are strongest.",
-        "mixTitle": "Category and menu mix",
-        "mixDescription": "Detect which categories and hero items deserve promotion versus items that need repositioning.",
-        "evidenceTitle": "Evidence-first recommendations",
-        "evidenceDescription": "Every candidate and schedule row carries the why: score, trend, and context used to generate it."
-      }
-    },
-    "featureHighlights": {
-      "title": "See the platform in action",
-      "subtitle": "From creative workflows in Studio to campaign planning in Workflows, each layer is built for restaurant social media marketing.",
-      "cards": {
-        "assetsTitle": "Workflow assets and AI image flows",
-        "assetsDescription": "Upload raw smartphone photos and chain AI image flows from background removal through preset-based product photography.",
-        "assetsAlt": "Workflow assets with AI image flows for background removal and AI presets for high-quality product shots.",
-        "heatmapsTitle": "Hourly demand heatmaps",
-        "heatmapsDescription": "On each location’s sales report, heatmaps show how menu items concentrate across hours of the day so you can spot dayparts, prep load, and when to time social content to real purchase rhythm.",
-        "heatmapsAlt": "Location sales report heatmap grid showing menu items versus hours of the day with color intensity for sales volume.",
-        "bubbleChartTitle": "Menu bubble chart",
-        "bubbleChartDescription": "Compare items at a glance: bubble position and size encode quantity sold versus revenue so you can separate high-turn staples from high-ticket stars and decide what to promote or reposition.",
-        "bubbleChartAlt": "Bubble chart of menu items on a location sales report with bubbles sized and positioned by quantity and revenue.",
-        "skillsTitle": "Skill and tool transparency",
-        "skillsDescription": "Inspect which marketing skills and tools power each milestone run, so you keep control of strategy logic.",
-        "skillsAlt": "Skills and tools page listing milestone skills and available tools."
-      }
+    "vision": {
+      "title": "Building the first AI-native marketing platform for restaurants",
+      "description": "Menuyukti is not simply another marketing agency. Every restaurant engagement improves the platform. Every campaign contributes new insights. Over time, we evolve from a service company into a technology-enabled growth platform—helping restaurants market themselves more effectively than ever before."
     },
     "faq": {
       "title": "Common questions",
-      "q1": "What data do I need to upload?",
-      "a1": "At the start of each month, the owner uploads last month's POS sales report (where your POS format is supported). That report powers demand, mix, and timing signals for the Instagram partner's monthly workflow run.",
-      "q2": "Do I need sales data to use Studio?",
-      "a2": "No. Studio works with your product photos and briefs without any sales upload. Connecting analytics to a workflow unlocks evidence-backed briefs, promotion ideas, and schedules.",
-      "q3": "Is this just another chat tool?",
-      "a3": "No. Workflows stores each step as a milestone with goals, pass criteria, and saved artifacts, so campaign strategy does not disappear in long chat threads.",
-      "q4": "What is a workflow milestone?",
-      "a4": "A milestone is one step in your campaign timeline with a goal, optional pass criteria, and saved output. The agent runs the step with context from prior milestones, and you can review, edit, and rerun as needed.",
-      "q5": "Who is Menuyukti built for?",
-      "a5": "Restaurant owners and the Instagram partners they work with—freelancers, social managers, or agencies at small to mid-sized restaurants that need a shared workspace for monthly planning backed by real sales data, not guesswork.",
-      "q6": "Can I chat without opening a workflow?",
-      "a6": "Yes. You can use Advisor chat when you need quick help, and use Workflows when you want a full milestone timeline with persistent outputs."
-    },
-    "how": {
-      "title": "Your monthly rhythm",
-      "subtitle": "A simple two-step loop at the start of each month—the owner supplies the data, the Instagram partner runs the pipeline.",
-      "steps": {
-        "ownerUpload": {
-          "title": "1. Owner uploads last month's sales report",
-          "description": "On the first of the month, upload the POS export from the previous month so the workspace has fresh menu performance data."
-        },
-        "partnerRun": {
-          "title": "2. Instagram partner runs the monthly strategy workflow",
-          "description": "Create a new workflow from the strategy template, select the latest sales report, adjust inputs if needed, and rerun the pipeline to generate the month's Instagram schedule."
-        }
-      }
-    },
-    "why": {
-      "title": "Why restaurant marketers choose Menuyukti",
-      "subtitle": "Unlike generic tools, Menuyukti combines Studio for creatives and Workflows for agentic campaign planning in one platform built for restaurant social media marketing.",
-      "cards": {
-        "insights": "Translate sales patterns into campaign decisions",
-        "waste": "Ship more content with less manual back-and-forth",
-        "ops": "Keep strategy and execution aligned in one workflow",
-        "margin": "Prioritize promotions that support revenue goals"
-      }
+      "q1": "Who is Menuyukti for?",
+      "a1": "Restaurant owners, operators, and marketers at restaurants, cafés, and bars who want marketing support built exclusively for hospitality—not generic agency playbooks.",
+      "q2": "How is Menuyukti different from a typical marketing agency?",
+      "a2": "We specialize only in restaurants, run on a proprietary AI platform we build in-house, and bring enterprise software engineering experience that most agencies lack. We scale through technology, not just headcount.",
+      "q3": "What does “AI-assisted” mean in practice?",
+      "a3": "Our internal platform accelerates analysis, content drafts, and campaign planning. Human marketers review, refine, and approve everything—AI increases productivity and consistency; expertise drives the strategy.",
+      "q4": "What services do you offer?",
+      "a4": "Marketing analysis, AI-assisted content creation, social media management, marketing strategy, and technical consulting—including websites, reservations, loyalty apps, and custom restaurant software.",
+      "q5": "How do we get started?",
+      "a5": "Book a free growth consultation. We'll discuss your restaurant, current marketing challenges, and how Menuyukti can help—no obligation.",
+      "q6": "I already use the Menuyukti platform. Where do I sign in?",
+      "a6": "Existing platform users can sign in from the header to access Workflows, Studio, and analytics tools."
     },
     "cta": {
-      "title": "Ready to share one workspace for your monthly Instagram plan?",
-      "description": "Upload sales reports, run AI workflows together, and build a monthly schedule backed by what your restaurant actually sells.",
+      "title": "Ready to grow your restaurant with smarter marketing?",
+      "description": "Book a free growth consultation and discover how AI-powered strategy, content, and technology can help you attract more customers.",
+      "primary": "Book a Free Growth Consultation",
       "secondary": "Sign in"
     },
     "footer": {
       "navLabel": "Footer",
-      "about": "How it works",
-      "contact": "Get started",
+      "why": "Why Menuyukti",
+      "services": "Services",
+      "platform": "Platform",
+      "contact": "Contact",
       "faq": "FAQ",
-      "workflows": "Workflows",
-      "studio": "Studio",
       "privacyPolicy": "Privacy Policy",
       "terms": "Terms of Service",
       "copyrightName": "Menuyukti"
     },
     "mobileCta": {
-      "primary": "Sign in",
-      "secondary": "How it works"
+      "primary": "Book consultation",
+      "secondary": "Services"
     }
   },
   "cookieConsent": {

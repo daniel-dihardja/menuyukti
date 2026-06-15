@@ -22,9 +22,13 @@ import {
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
+const landingAnchorClass =
+  'rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+
 export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
+  const isLanding = pathname === '/'
 
   const workflowsActive =
     pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
@@ -63,12 +67,28 @@ export function MainHeader() {
             className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
             aria-label={t('navAria')}
           >
-            <Link href={routes.workflows.list} className={navLinkClass(workflowsActive)}>
-              {t('navWorkflows')}
-            </Link>
-            <Link href={routes.canvas} className={navLinkClass(studioActive)}>
-              {t('navStudio')}
-            </Link>
+            {isLanding ? (
+              <>
+                <Link href="#services" className={landingAnchorClass}>
+                  {t('landingNav.services')}
+                </Link>
+                <Link href="#why" className={landingAnchorClass}>
+                  {t('landingNav.why')}
+                </Link>
+                <Link href="#cta" className={landingAnchorClass}>
+                  {t('landingNav.contact')}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href={routes.workflows.list} className={navLinkClass(workflowsActive)}>
+                  {t('navWorkflows')}
+                </Link>
+                <Link href={routes.canvas} className={navLinkClass(studioActive)}>
+                  {t('navStudio')}
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
@@ -94,44 +114,83 @@ export function MainHeader() {
                 >
                   <SheetHeader className="flex flex-col gap-1 px-4 text-left">
                     <SheetTitle>{t('mobileMenuTitle')}</SheetTitle>
-                    <SheetDescription>{t('mobileMenuDescription')}</SheetDescription>
+                    <SheetDescription>
+                      {isLanding ? t('landingNav.mobileDescription') : t('mobileMenuDescription')}
+                    </SheetDescription>
                   </SheetHeader>
                   <nav aria-label={t('navAria')} className="flex flex-col gap-2 px-4 pt-4">
-                    <SheetClose asChild>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className={cn(
-                          'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                          workflowsActive
-                            ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
-                            : 'text-muted-foreground hover:text-foreground',
-                        )}
-                      >
-                        <Link
-                          href={routes.workflows.list}
-                          aria-current={workflowsActive ? 'page' : undefined}
-                        >
-                          {t('navWorkflows')}
-                        </Link>
-                      </Button>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className={cn(
-                          'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                          studioActive
-                            ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
-                            : 'text-muted-foreground hover:text-foreground',
-                        )}
-                      >
-                        <Link href={routes.canvas} aria-current={studioActive ? 'page' : undefined}>
-                          {t('navStudio')}
-                        </Link>
-                      </Button>
-                    </SheetClose>
+                    {isLanding ? (
+                      <>
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className="h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+                          >
+                            <Link href="#services">{t('landingNav.services')}</Link>
+                          </Button>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className="h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+                          >
+                            <Link href="#why">{t('landingNav.why')}</Link>
+                          </Button>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className="h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+                          >
+                            <Link href="#cta">{t('landingNav.contact')}</Link>
+                          </Button>
+                        </SheetClose>
+                      </>
+                    ) : (
+                      <>
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className={cn(
+                              'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
+                              workflowsActive
+                                ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
+                          >
+                            <Link
+                              href={routes.workflows.list}
+                              aria-current={workflowsActive ? 'page' : undefined}
+                            >
+                              {t('navWorkflows')}
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className={cn(
+                              'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
+                              studioActive
+                                ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
+                          >
+                            <Link
+                              href={routes.canvas}
+                              aria-current={studioActive ? 'page' : undefined}
+                            >
+                              {t('navStudio')}
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                      </>
+                    )}
                   </nav>
                   <Show when="signed-out">
                     <div className="px-4 pt-2">

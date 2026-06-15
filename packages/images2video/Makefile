@@ -1,19 +1,53 @@
-.PHONY: video
+.PHONY: help video preview-all slideshow parallax list-effects clean
 
-IMAGE ?= dish1.jpg
-OUTPUT ?= output.mp4
-FPS ?= 25
-DURATION ?= 5
-VIDEO_WIDTH ?= 1080
-VIDEO_HEIGHT ?= 1920
-MASK_WIDTH ?= 1080
-MASK_HEIGHT ?= 1080
-SOURCE_WIDTH ?= 4000
-ZOOM_STEP ?= 0.0015
-MAX_ZOOM ?= 1.5
-CRF ?= 18
-BG_COLOR ?= black
-FRAME_COUNT = $(shell expr $(FPS) \* $(DURATION))
+IMAGE ?= fixtures/single/pic-13.webp
+EFFECT ?= ken-burns
+OUTPUT ?=
+BG ?= fixtures/parallax/bg.webp
+FG ?= fixtures/parallax/fg.png
+IMAGES ?= fixtures/slideshow/slide-01.webp fixtures/slideshow/slide-02.webp fixtures/slideshow/slide-03.webp
+DURATION ?=
+FOCAL_X ?=
+FOCAL_Y ?=
+LUT ?=
+
+RENDER_ARGS = ./scripts/render.sh $(EFFECT)
+ifneq ($(strip $(IMAGE)),)
+RENDER_ARGS += --image "$(IMAGE)"
+endif
+ifneq ($(strip $(OUTPUT)),)
+RENDER_ARGS += --output "$(OUTPUT)"
+endif
+ifneq ($(strip $(DURATION)),)
+RENDER_ARGS += --duration "$(DURATION)"
+endif
+
+help:
+	@echo "images2video — motion effects for still food photos"
+	@echo ""
+	@echo "  make list-effects"
+	@echo "  make video EFFECT=ken-burns IMAGE=fixtures/single/pic-13.webp"
+	@echo "  make preview-all IMAGE=fixtures/single/pic-13.webp"
+	@echo "  make slideshow"
+	@echo "  make parallax BG=fixtures/parallax/bg.webp FG=fixtures/parallax/fg.png"
+	@echo "  make clean"
+	@echo ""
+	@echo "Effects: ken-burns zoom-punch color-grade vignette-pulse cross-dissolve parallax"
 
 video:
-	ffmpeg -y -loop 1 -i "$(IMAGE)" -filter_complex "color=c=$(BG_COLOR):s=$(VIDEO_WIDTH)x$(VIDEO_HEIGHT):r=$(FPS):d=$(DURATION)[bg];[0:v]scale=$(SOURCE_WIDTH):-1:flags=lanczos,zoompan=z='min(zoom+$(ZOOM_STEP),$(MAX_ZOOM))':d=$(FRAME_COUNT):x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=$(MASK_WIDTH)x$(MASK_HEIGHT):fps=$(FPS)[fg];[bg][fg]overlay=x='(W-w)/2':y='(H-h)/2':shortest=1,format=yuv420p[v]" -map "[v]" -t $(DURATION) -pix_fmt yuv420p -c:v libx264 -crf $(CRF) "$(OUTPUT)"
+	$(RENDER_ARGS)
+
+preview-all:
+	./scripts/render-all.sh --image "$(IMAGE)" $(if $(DURATION),--duration "$(DURATION)",)
+
+slideshow:
+	./scripts/render.sh cross-dissolve --images "$(IMAGES)" $(if $(OUTPUT),--output "$(OUTPUT)",) $(if $(DURATION),--duration "$(DURATION)",)
+
+parallax:
+	./scripts/render.sh parallax --bg "$(BG)" --fg "$(FG)" $(if $(OUTPUT),--output "$(OUTPUT)",) $(if $(DURATION),--duration "$(DURATION)",)
+
+list-effects:
+	./scripts/list-effects.sh
+
+clean:
+	rm -rf output/

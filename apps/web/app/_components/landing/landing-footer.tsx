@@ -6,11 +6,11 @@ import { routes } from '@/lib/routes'
 type LandingFooterProps = {
   copyright: string
   navLabel: string
-  aboutLabel: string
+  whyLabel: string
+  servicesLabel: string
+  platformLabel: string
   contactLabel: string
   faqLabel: string
-  workflowsLabel: string
-  studioLabel: string
   privacyPolicyLabel: string
   termsLabel: string
 }
@@ -22,11 +22,11 @@ const BUILD_YEAR = new Date().getFullYear()
 export function LandingFooter({
   copyright,
   navLabel,
-  aboutLabel,
+  whyLabel,
+  servicesLabel,
+  platformLabel,
   contactLabel,
   faqLabel,
-  workflowsLabel,
-  studioLabel,
   privacyPolicyLabel,
   termsLabel,
 }: LandingFooterProps) {
@@ -37,14 +37,14 @@ export function LandingFooter({
           aria-label={navLabel}
           className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-base"
         >
-          <Link href="#how-it-works" className={linkClassName}>
-            {aboutLabel}
+          <Link href="#why" className={linkClassName}>
+            {whyLabel}
           </Link>
-          <Link href="#workflows" className={linkClassName}>
-            {workflowsLabel}
+          <Link href="#services" className={linkClassName}>
+            {servicesLabel}
           </Link>
-          <Link href="#studio" className={linkClassName}>
-            {studioLabel}
+          <Link href="#platform" className={linkClassName}>
+            {platformLabel}
           </Link>
           <Link href="#cta" className={linkClassName}>
             {contactLabel}

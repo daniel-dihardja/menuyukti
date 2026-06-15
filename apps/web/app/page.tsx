@@ -1,132 +1,129 @@
 import Link from 'next/link'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Separator } from '@workspace/ui/components/separator'
 import { cn } from '@workspace/ui/lib/utils'
-import { CalendarDays, GitBranch, Upload } from 'lucide-react'
+import { Bot, Sparkles } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
-import type { ReactElement } from 'react'
 
-import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
-import {
-  LandingHeroHeadline,
-  parseLandingHeroHeadlineVariant,
-} from '@/app/_components/landing/landing-hero-headline'
-import { LandingAnalyticsComparison } from '@/app/_components/landing/landing-analytics-comparison'
 import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFeatureSpotlight } from '@/app/_components/landing/landing-feature-spotlight'
 import { LandingFooter } from '@/app/_components/landing/landing-footer'
-import { LandingHowTwoSteps } from '@/app/_components/landing/landing-how-two-steps'
-import { LandingProductPillars } from '@/app/_components/landing/landing-product-pillars'
-import { LandingSharedWorkspace } from '@/app/_components/landing/landing-shared-workspace'
+import {
+  LandingHeroHeadline,
+  parseLandingHeroHeadlineVariant,
+} from '@/app/_components/landing/landing-hero-headline'
+import { LandingServicesGrid } from '@/app/_components/landing/landing-services-grid'
+import { LandingTrustStrip } from '@/app/_components/landing/landing-trust-strip'
 import { routes } from '@/lib/routes'
-
-const AUTOMATION_HIGHLIGHT_TERMS = [
-  'deterministic analytics',
-  'sales signals',
-  'local pulse',
-  'workflows',
-  'milestone',
-  'milestones',
-  'analytics',
-  'deterministic',
-  'agentic',
-  'ai',
-] as const
-
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
-function highlightAutomationTerms(text: string): Array<string | ReactElement> {
-  const sortedTerms = [...AUTOMATION_HIGHLIGHT_TERMS].sort((a, b) => b.length - a.length)
-  const pattern = new RegExp(`\\b(${sortedTerms.map(escapeRegex).join('|')})\\b`, 'gi')
-  const segments = text.split(pattern)
-
-  return segments.map((segment, index) => {
-    const isMatch = sortedTerms.some((term) => term.toLowerCase() === segment.toLowerCase())
-
-    if (!isMatch) return segment
-
-    return (
-      <strong key={`${segment}-${index}`} className="font-semibold text-foreground">
-        {segment}
-      </strong>
-    )
-  })
-}
 
 type LandingPageProps = {
   searchParams: Promise<{ heroHeadline?: string | string[] }>
+}
+
+function buildConsultationMailto(email: string, subject: string, body: string): string {
+  const params = new URLSearchParams({
+    subject,
+    body,
+  })
+
+  return `mailto:${email}?${params.toString()}`
 }
 
 export default async function LandingPage({ searchParams }: LandingPageProps) {
   const t = await getTranslations('landing')
   const heroHeadlineVariant = parseLandingHeroHeadlineVariant((await searchParams).heroHeadline)
 
-  const pillarItems = [
+  const consultationHref = buildConsultationMailto(
+    t('contact.email'),
+    t('contact.consultationSubject'),
+    t('contact.consultationBody'),
+  )
+
+  const whyItems = [
     {
-      id: 'workflows' as const,
-      title: t('pillars.items.workflows.title'),
-      description: t('pillars.items.workflows.description'),
+      title: t('why.item1Title'),
+      description: t('why.item1Description'),
     },
     {
-      id: 'studio' as const,
-      title: t('pillars.items.studio.title'),
-      description: t('pillars.items.studio.description'),
+      title: t('why.item2Title'),
+      description: t('why.item2Description'),
+    },
+    {
+      title: t('why.item3Title'),
+      description: t('why.item3Description'),
     },
   ] as const
 
-  const painItems = [
+  const foundationItems = [
     {
-      title: t('pain.item1Title'),
-      description: t('pain.item1Description'),
+      title: t('foundation.item1Title'),
+      description: t('foundation.item1Description'),
     },
     {
-      title: t('pain.item2Title'),
-      description: t('pain.item2Description'),
+      title: t('foundation.item2Title'),
+      description: t('foundation.item2Description'),
     },
     {
-      title: t('pain.item3Title'),
-      description: t('pain.item3Description'),
-    },
-  ] as const
-
-  const analyticsComparisonPosBullets = t.raw('analyticsComparison.posBullets') as string[]
-  const analyticsComparisonMenuyuktiBullets = t.raw(
-    'analyticsComparison.menuyuktiBullets',
-  ) as string[]
-
-  const workflowsBullets = [
-    {
-      title: t('workflows.bullets.templates.title'),
-      description: t('workflows.bullets.templates.description'),
-    },
-    {
-      title: t('workflows.bullets.salesData.title'),
-      description: t('workflows.bullets.salesData.description'),
-    },
-    {
-      title: t('workflows.bullets.presets.title'),
-      description: t('workflows.bullets.presets.description'),
-    },
-    {
-      title: t('workflows.bullets.transparent.title'),
-      description: t('workflows.bullets.transparent.description'),
+      title: t('foundation.item3Title'),
+      description: t('foundation.item3Description'),
     },
   ] as const
 
-  const howSteps = [
+  const differentiatorItems = t.raw('differentiators.items') as Array<{
+    value: string
+    label: string
+  }>
+
+  const serviceItems = [
     {
-      title: t('how.steps.ownerUpload.title'),
-      description: t('how.steps.ownerUpload.description'),
-      Icon: Upload,
+      id: 'analysis',
+      title: t('services.items.analysis.title'),
+      description: t('services.items.analysis.description'),
+      bullets: t.raw('services.items.analysis.bullets') as string[],
     },
     {
-      title: t('how.steps.partnerRun.title'),
-      description: t('how.steps.partnerRun.description'),
-      Icon: GitBranch,
+      id: 'content',
+      title: t('services.items.content.title'),
+      description: t('services.items.content.description'),
+      bullets: t.raw('services.items.content.bullets') as string[],
+    },
+    {
+      id: 'social',
+      title: t('services.items.social.title'),
+      description: t('services.items.social.description'),
+      bullets: t.raw('services.items.social.bullets') as string[],
+    },
+    {
+      id: 'strategy',
+      title: t('services.items.strategy.title'),
+      description: t('services.items.strategy.description'),
+      bullets: t.raw('services.items.strategy.bullets') as string[],
+    },
+    {
+      id: 'technical',
+      title: t('services.items.technical.title'),
+      description: t('services.items.technical.description'),
+      bullets: t.raw('services.items.technical.bullets') as string[],
+    },
+  ] as const
+
+  const platformBullets = [
+    {
+      title: t('platform.bullets.analysis.title'),
+      description: t('platform.bullets.analysis.description'),
+    },
+    {
+      title: t('platform.bullets.content.title'),
+      description: t('platform.bullets.content.description'),
+    },
+    {
+      title: t('platform.bullets.campaigns.title'),
+      description: t('platform.bullets.campaigns.description'),
+    },
+    {
+      title: t('platform.bullets.performance.title'),
+      description: t('platform.bullets.performance.description'),
     },
   ] as const
 
@@ -138,33 +135,6 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
     { question: t('faq.q5'), answer: t('faq.a5') },
     { question: t('faq.q6'), answer: t('faq.a6') },
   ]
-
-  const automationItems = [
-    {
-      title: t('automation.items.campaignBrief.title'),
-      description: t('automation.items.campaignBrief.description'),
-    },
-    {
-      title: t('automation.items.promotionRanking.title'),
-      description: t('automation.items.promotionRanking.description'),
-    },
-    {
-      title: t('automation.items.storytellingStrength.title'),
-      description: t('automation.items.storytellingStrength.description'),
-    },
-    {
-      title: t('automation.items.timingCadence.title'),
-      description: t('automation.items.timingCadence.description'),
-    },
-    {
-      title: t('automation.items.copyAndVisualPrep.title'),
-      description: t('automation.items.copyAndVisualPrep.description'),
-    },
-    {
-      title: t('automation.items.humanControl.title'),
-      description: t('automation.items.humanControl.description'),
-    },
-  ] as const
 
   return (
     <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-clip bg-background pb-[max(6rem,env(safe-area-inset-bottom,0px))] text-foreground md:pb-0">
@@ -186,11 +156,9 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
           >
             <Badge
               variant="secondary"
-              className={cn(
-                'mb-4 inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 whitespace-normal px-3 py-1.5 text-center text-balance leading-snug',
-              )}
+              className="mb-4 inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 whitespace-normal px-3 py-1.5 text-center text-balance leading-snug"
             >
-              <CalendarDays className="size-3.5 shrink-0 text-primary" aria-hidden />
+              <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
               {t('hero.badge')}
             </Badge>
             <LandingHeroHeadline variant={heroHeadlineVariant}>
@@ -201,62 +169,11 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
               {t('hero.subtitle')}
             </p>
 
-            <HeroProductPreview
-              slides={[
-                {
-                  id: 'workflows01',
-                  imageSrc: '/images/landing/workflow-campaign-brief-01.webp',
-                  alt: t('hero.previewSlides.workflows01.alt'),
-                  caption: t('hero.previewSlides.workflows01.caption'),
-                },
-                {
-                  id: 'workflows02',
-                  imageSrc: '/images/landing/workflow-campaign-brief-02.webp',
-                  alt: t('hero.previewSlides.workflows02.alt'),
-                  caption: t('hero.previewSlides.workflows02.caption'),
-                },
-                {
-                  id: 'promoCandidates01',
-                  imageSrc: '/images/landing/promo-candidates-01.webp',
-                  alt: t('hero.previewSlides.promoCandidates01.alt'),
-                  caption: t('hero.previewSlides.promoCandidates01.caption'),
-                },
-                {
-                  id: 'promoCandidates02',
-                  imageSrc: '/images/landing/promo-candidates-02.webp',
-                  alt: t('hero.previewSlides.promoCandidates02.alt'),
-                  caption: t('hero.previewSlides.promoCandidates02.caption'),
-                },
-                {
-                  id: 'menuTagger01',
-                  imageSrc: '/images/landing/menu-tagger-01.webp',
-                  alt: t('hero.previewSlides.menuTagger01.alt'),
-                  caption: t('hero.previewSlides.menuTagger01.caption'),
-                },
-                {
-                  id: 'menuTagger02',
-                  imageSrc: '/images/landing/menu-tagger-02.webp',
-                  alt: t('hero.previewSlides.menuTagger02.alt'),
-                  caption: t('hero.previewSlides.menuTagger02.caption'),
-                },
-              ]}
-              viewLargerLabel={t('hero.viewLarger')}
-              carouselLabel={t('hero.carouselLabel')}
-              carouselPrevLabel={t('hero.carouselPrev')}
-              carouselNextLabel={t('hero.carouselNext')}
-              carouselDotLabels={[
-                t('hero.carouselDot', { n: '1', total: '6' }),
-                t('hero.carouselDot', { n: '2', total: '6' }),
-                t('hero.carouselDot', { n: '3', total: '6' }),
-                t('hero.carouselDot', { n: '4', total: '6' }),
-                t('hero.carouselDot', { n: '5', total: '6' }),
-                t('hero.carouselDot', { n: '6', total: '6' }),
-              ]}
-              modalTitle={t('hero.modalTitle')}
-            />
-
-            <div className="mt-8 hidden justify-center lg:flex">
-              <Button size="lg" variant="default" asChild>
+            <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+              <Button size="lg" className="min-h-11 w-full sm:w-auto" asChild>
+                <a href={consultationHref}>{t('hero.ctaPrimary')}</a>
+              </Button>
+              <Button size="lg" variant="outline" className="min-h-11 w-full sm:w-auto" asChild>
                 <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
               </Button>
             </div>
@@ -264,85 +181,57 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
         </section>
 
         <LandingBento
-          sectionId="the-problem"
-          title={t('pain.title')}
-          subtitle={t('pain.subtitle')}
-          items={painItems}
+          sectionId="why"
+          title={t('why.title')}
+          subtitle={t('why.subtitle')}
+          items={whyItems}
         />
 
-        <LandingAnalyticsComparison
-          title={t('analyticsComparison.title')}
-          subtitle={t('analyticsComparison.subtitle')}
-          posColumnTitle={t('analyticsComparison.posColumnTitle')}
-          menuyuktiColumnTitle={t('analyticsComparison.menuyuktiColumnTitle')}
-          posBullets={analyticsComparisonPosBullets}
-          menuyuktiBullets={analyticsComparisonMenuyuktiBullets}
-          impactTitle={t('analyticsComparison.impactTitle')}
-          impactDescription={t('analyticsComparison.impactDescription')}
+        <LandingBento
+          sectionId="foundation"
+          title={t('foundation.title')}
+          subtitle={t('foundation.subtitle')}
+          items={foundationItems}
         />
 
-        <LandingSharedWorkspace
-          title={t('bridge.title')}
-          subtitle={t('bridge.subtitle')}
-          owner={{
-            title: t('bridge.owner.title'),
-            description: t('bridge.owner.description'),
-          }}
-          partner={{
-            title: t('bridge.partner.title'),
-            description: t('bridge.partner.description'),
-          }}
+        <LandingTrustStrip title={t('differentiators.title')} stats={differentiatorItems} />
+
+        <LandingServicesGrid
+          title={t('services.title')}
+          subtitle={t('services.subtitle')}
+          items={serviceItems}
+          consultationHref={consultationHref}
+          consultationLinkLabel={t('services.consultationLink')}
         />
-
-        <LandingHowTwoSteps title={t('how.title')} subtitle={t('how.subtitle')} steps={howSteps} />
-
-        <section className="bg-muted/40 py-20 md:py-24">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="mx-auto max-w-3xl text-center">
-              <h2 className="text-balance text-3xl font-bold leading-tight md:text-4xl">
-                {t('automation.title')}
-              </h2>
-              <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
-                {highlightAutomationTerms(t('automation.subtitle'))}
-              </p>
-            </div>
-
-            <div className="mt-10 grid gap-4 md:mt-12 lg:grid-cols-2 xl:grid-cols-3">
-              {automationItems.map((item) => (
-                <article key={item.title} className="rounded-xl border bg-card p-5">
-                  <h3 className="text-base font-semibold leading-snug">
-                    {highlightAutomationTerms(item.title)}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-foreground/75">
-                    {highlightAutomationTerms(item.description)}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <LandingProductPillars
-          title={t('pillars.title')}
-          subtitle={t('pillars.subtitle')}
-          items={pillarItems}
-          studioFootnote={t('pillars.studioFootnote')}
-        />
-
-        <div className="mx-auto max-w-6xl px-6">
-          <Separator />
-        </div>
 
         <LandingFeatureSpotlight
-          id="workflows"
-          title={t('workflows.title')}
-          subtitle={t('workflows.subtitle')}
-          bullets={workflowsBullets}
+          id="platform"
+          title={t('platform.title')}
+          subtitle={t('platform.subtitle')}
+          bullets={platformBullets}
           imageSrc="/images/landing/workflow-campaign-brief.webp"
-          imageAlt={t('workflows.imageAlt')}
-          imageCaption={t('workflows.imageCaption')}
-          Icon={GitBranch}
+          imageAlt={t('platform.imageAlt')}
+          imageCaption={t('platform.imageCaption')}
+          Icon={Bot}
         />
+
+        <section
+          id="vision"
+          className="border-y border-border bg-muted/40 py-16 md:py-20"
+          aria-labelledby="vision-heading"
+        >
+          <div className="mx-auto max-w-3xl px-6 text-center">
+            <h2
+              id="vision-heading"
+              className="text-balance text-2xl font-bold leading-tight md:text-3xl"
+            >
+              {t('vision.title')}
+            </h2>
+            <p className="mt-5 text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
+              {t('vision.description')}
+            </p>
+          </div>
+        </section>
 
         <LandingFaq title={t('faq.title')} items={faqItems} />
 
@@ -356,8 +245,11 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
               {t('cta.description')}
             </p>
 
-            <div className="hidden justify-center lg:flex">
-              <Button size="lg" className="px-8 py-6" asChild>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button size="lg" className="min-h-11 w-full px-8 sm:w-auto" asChild>
+                <a href={consultationHref}>{t('cta.primary')}</a>
+              </Button>
+              <Button size="lg" variant="outline" className="min-h-11 w-full sm:w-auto" asChild>
                 <Link href={routes.login}>{t('cta.secondary')}</Link>
               </Button>
             </div>
@@ -368,21 +260,21 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
       <LandingFooter
         copyright={t('footer.copyrightName')}
         navLabel={t('footer.navLabel')}
-        aboutLabel={t('footer.about')}
+        whyLabel={t('footer.why')}
+        servicesLabel={t('footer.services')}
+        platformLabel={t('footer.platform')}
         contactLabel={t('footer.contact')}
         faqLabel={t('footer.faq')}
-        workflowsLabel={t('footer.workflows')}
-        studioLabel={t('footer.studio')}
         privacyPolicyLabel={t('footer.privacyPolicy')}
         termsLabel={t('footer.terms')}
       />
 
       <div className="fixed bottom-0 left-0 z-50 flex w-full gap-3 border-t border-border bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
         <Button className="min-h-11 flex-1" size="lg" asChild>
-          <Link href={routes.login}>{t('mobileCta.primary')}</Link>
+          <a href={consultationHref}>{t('mobileCta.primary')}</a>
         </Button>
         <Button className="min-h-11 flex-1" size="lg" variant="outline" asChild>
-          <Link href="#how-it-works">{t('mobileCta.secondary')}</Link>
+          <Link href="#services">{t('mobileCta.secondary')}</Link>
         </Button>
       </div>
     </div>
