@@ -20,7 +20,7 @@ const fontMono = Geist_Mono({
   variable: '--font-mono',
 })
 
-const ogImageUrl = 'https://menuyukti.com/images/og-image.webp'
+const siteUrl = 'https://menuyukti.com'
 
 export const viewport: Viewport = {
   themeColor: [
@@ -39,6 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogLocale = t('ogLocale')
 
   return {
+    metadataBase: new URL(siteUrl),
     applicationName: 'Menuyukti',
     title,
     description,
@@ -59,15 +60,8 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: 'https://menuyukti.com',
+      url: siteUrl,
       siteName: 'Menuyukti',
-      images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-        },
-      ],
       type: 'website',
       locale: ogLocale,
     },
@@ -75,12 +69,11 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: [ogImageUrl],
     },
     alternates: {
-      canonical: 'https://menuyukti.com',
+      canonical: siteUrl,
       languages: {
-        en: 'https://menuyukti.com',
+        en: siteUrl,
       },
     },
   }
