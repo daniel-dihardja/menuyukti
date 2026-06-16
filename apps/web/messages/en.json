@@ -16,7 +16,7 @@
       "services": "Services",
       "why": "Why Menuyukti",
       "contact": "Contact",
-      "mobileDescription": "AI-powered restaurant marketing—strategy, content, and growth consulting built exclusively for hospitality."
+      "mobileDescription": "A restaurant marketing agency with enterprise engineering and AI—strategy, content, and campaigns built exclusively for hospitality."
     },
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
@@ -56,13 +56,13 @@
     "mistral_mistral_large_3": "Mistral Large 3"
   },
   "metadata": {
-    "title": "Menuyukti — AI-Powered Marketing Partner for Restaurants",
-    "description": "Restaurant marketing expertise, enterprise-grade software engineering, and proprietary AI technology. Marketing analysis, content creation, social media, strategy, and technical consulting for restaurants, cafés, and bars.",
+    "title": "Menuyukti — Restaurant Marketing Agency | AI Strategy & Content",
+    "description": "A restaurant marketing agency built on enterprise engineering and proprietary AI. Strategy, content creation, social media, marketing analysis, and technical consulting for restaurants, cafés, and bars.",
     "ogLocale": "en_US",
-    "ogImageAlt": "Menuyukti — AI-Powered Marketing Partner for Restaurants",
-    "ogImageBadge": "Restaurant marketing · AI-powered",
-    "ogImageHeadline": "The AI-Powered Marketing Partner Built Exclusively for Restaurants",
-    "ogImageTagline": "Strategy, content, and growth consulting powered by proprietary AI and restaurant marketing expertise."
+    "ogImageAlt": "Menuyukti — Restaurant Marketing Agency | AI Strategy & Content",
+    "ogImageBadge": "Restaurant marketing agency · Strategy & content",
+    "ogImageHeadline": "A restaurant marketing agency built on AI and engineering",
+    "ogImageTagline": "Data-informed strategy and social content—delivered by agency marketers powered by in-house AI and engineering."
   },
   "login": {
     "title": "Menuyukti",
@@ -157,59 +157,59 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "The AI-Powered Marketing Partner Built Exclusively for Restaurants",
-      "subtitle": "Combining restaurant marketing expertise, enterprise-grade software engineering, and proprietary AI technology to help restaurants grow faster, create better content, and attract more customers.",
-      "badge": "Restaurant marketing · AI-powered",
+      "headline": "A restaurant marketing agency built on AI and engineering",
+      "subtitle": "Menuyukti combines hospitality marketing expertise with enterprise-grade software and proprietary AI—delivering data-informed strategies, social content, and campaigns faster than traditional agencies.",
+      "badge": "Restaurant marketing agency · Strategy & content · AI-native",
       "ctaSecondary": "Sign in"
     },
     "why": {
       "title": "Why Menuyukti exists",
-      "subtitle": "Restaurant owners juggle operations, staff, reputation, social media, and growth—all at once. Most agencies are generalists. We focus exclusively on restaurants, cafés, and bars.",
+      "subtitle": "Restaurant owners juggle operations, staff, reputation, social media, and growth—all at once. Most agencies are generalists without the technical infrastructure to deliver strategy and content at scale. We are a restaurant-only marketing agency built on AI and engineering.",
       "item1Title": "Too much on every owner's plate",
       "item1Description": "Running a restaurant means managing suppliers, guest experience, online reputation, promotions, and social media simultaneously—marketing rarely gets the attention it deserves.",
       "item2Title": "Generalist agencies miss the nuance",
-      "item2Description": "Most marketing agencies work across industries—dentists one week, real estate the next. Restaurant hospitality needs strategies built for local competition and foot traffic, not generic templates.",
+      "item2Description": "Most marketing agencies work across industries—dentists one week, real estate the next. They lack the technical and AI infrastructure to produce restaurant-specific strategy and content at scale. Hospitality needs plans built for local competition and foot traffic, not generic templates.",
       "item3Title": "Restaurant-only focus",
       "item3Description": "By specializing in a single industry, we develop deeper expertise, better processes, and marketing strategies designed specifically for hospitality businesses."
     },
     "foundation": {
       "title": "Built on a unique foundation",
-      "subtitle": "Technology alone is not enough. Menuyukti combines industry knowledge, marketing expertise, AI, and software engineering in a way few agencies can replicate.",
-      "item1Title": "Enterprise software engineering",
+      "subtitle": "Most agencies run on spreadsheets and freelancers. Menuyukti runs on enterprise engineering, proprietary AI, and restaurant marketing expertise—a combination few agencies can replicate.",
+      "item1Title": "Enterprise-grade engineering",
       "item1Description": "More than a decade building platforms for banking, industrial companies, and the public sector—enterprise-grade software engineering behind how your marketing runs.",
       "item2Title": "Proprietary AI platform",
-      "item2Description": "An internal AI platform built for restaurant marketing: analysis, content generation, campaign planning, social strategy, and growth opportunity discovery—augmenting human expertise, not replacing it.",
-      "item3Title": "Restaurant marketing expertise",
-      "item3Description": "Marketing professionals who understand the restaurant business and the realities of attracting customers in highly competitive local markets."
+      "item2Description": "An internal AI platform built for restaurant marketing: analysis, strategy, content generation, campaign planning, and growth opportunity discovery in one workflow—augmenting agency marketers, not replacing them.",
+      "item3Title": "Agency marketing expertise",
+      "item3Description": "Restaurant marketing professionals who operate our platform daily—understanding hospitality, local competition, and what it takes to turn strategy into posts, captions, and campaigns."
     },
     "differentiators": {
       "title": "What makes Menuyukti different",
       "items": [
         {
           "value": "Faster",
-          "label": "Content, analysis, and strategic recommendations delivered significantly faster than traditional agencies."
+          "label": "Strategy briefs, social posts, and campaigns delivered at software speed—not traditional agency timelines."
         },
         {
           "value": "Consistent",
-          "label": "AI-supported workflows ensure a consistent quality standard across campaigns and channels."
+          "label": "AI-supported workflows enforce an agency quality bar across every campaign and channel."
         },
         {
           "value": "Data-driven",
-          "label": "Marketing recommendations based on analysis—not guesswork."
+          "label": "Strategy and content grounded in your sales and analytics—not agency guesswork."
         },
         {
           "value": "Focused",
-          "label": "Every strategy designed specifically for restaurants, cafés, and bars."
+          "label": "A restaurant-only marketing agency—every plan built for cafés, bars, and dining rooms."
         },
         {
           "value": "Evolving",
-          "label": "The platform improves constantly, so clients benefit from new capabilities without added complexity."
+          "label": "Agency clients benefit as our in-house platform improves—new capabilities without added complexity."
         }
       ]
     },
     "services": {
       "title": "Our services",
-      "subtitle": "End-to-end marketing support for restaurant growth—from analysis and content to strategy and technology.",
+      "subtitle": "Full-service restaurant marketing—from strategy and AI-assisted content to analysis, social management, and technical consulting.",
       "items": {
         "analysis": {
           "title": "Marketing analysis",
@@ -223,8 +223,8 @@
           ]
         },
         "content": {
-          "title": "AI-assisted content creation",
-          "description": "Consistent content that keeps customers engaged and your brand visible—without the weekly scramble.",
+          "title": "Content creation",
+          "description": "Posts, captions, reels, and promos that keep customers engaged—produced by our agency with AI acceleration, without the weekly scramble.",
           "bullets": [
             "Social media posts",
             "Promotional campaigns",
@@ -247,7 +247,7 @@
         },
         "strategy": {
           "title": "Marketing strategy",
-          "description": "Long-term strategies for customer acquisition and retention—not just posting content.",
+          "description": "Long-term strategies for customer acquisition and retention—feeding content calendars, campaigns, and promotions with a clear plan.",
           "bullets": [
             "Customer growth strategies",
             "Brand positioning",
@@ -270,7 +270,7 @@
       }
     },
     "platform": {
-      "title": "Powered by our proprietary AI platform",
+      "title": "The AI platform behind our agency",
       "subtitle": "Every engagement runs on technology we build and improve in-house—so you get agency expertise backed by software most competitors cannot offer.",
       "carouselLabel": "Platform feature screenshots",
       "carouselPrevLabel": "Previous screenshot",
@@ -327,8 +327,8 @@
           "description": "Continuous analysis of digital presence, engagement patterns, and competitive landscape to surface growth opportunities."
         },
         "content": {
-          "title": "Faster content production",
-          "description": "AI-assisted workflows produce posts, campaigns, and promotional content while marketers maintain creative control."
+          "title": "Agency content at scale",
+          "description": "Our marketers deliver posts, campaigns, and promotional content with AI-assisted workflows—maintaining creative control and brand quality."
         },
         "campaigns": {
           "title": "Smarter campaign planning",
@@ -337,17 +337,17 @@
       }
     },
     "vision": {
-      "title": "Building the first AI-native marketing platform for restaurants",
-      "description": "Menuyukti is not simply another marketing agency. Every restaurant engagement improves the platform. Every campaign contributes new insights. Over time, we evolve from a service company into a technology-enabled growth platform—helping restaurants market themselves more effectively than ever before."
+      "title": "The technical marketing agency restaurants have been missing",
+      "description": "We are a restaurant marketing agency first—strategy and content for operators who need results, not slide decks. Our proprietary AI platform is what lets a specialized agency deliver at a scale and consistency generalist firms cannot match."
     },
     "faq": {
       "title": "Common questions",
       "q1": "Who is Menuyukti for?",
-      "a1": "Restaurant owners, operators, and marketers at restaurants, cafés, and bars who want marketing support built exclusively for hospitality—not generic agency playbooks.",
+      "a1": "Restaurant owners, operators, and marketers at restaurants, cafés, and bars who want a specialized marketing agency—not generic playbooks from generalist firms.",
       "q2": "How is Menuyukti different from a typical marketing agency?",
-      "a2": "We specialize only in restaurants, run on a proprietary AI platform we build in-house, and bring enterprise software engineering experience that most agencies lack. We scale through technology, not just headcount.",
+      "a2": "We are a restaurant-only agency with in-house enterprise engineering and proprietary AI. Strategy and content creation live under one roof—delivered faster and more consistently than agencies that scale only through headcount.",
       "q3": "What does “AI-assisted” mean in practice?",
-      "a3": "Our internal platform accelerates analysis, content drafts, and campaign planning. Human marketers review, refine, and approve everything—AI increases productivity and consistency; expertise drives the strategy.",
+      "a3": "Our internal platform accelerates analysis, strategy briefs, content drafts, captions, and campaign calendars. Agency marketers review, refine, and approve everything—AI increases productivity and consistency; human expertise drives the strategy.",
       "q4": "What services do you offer?",
       "a4": "Marketing analysis, AI-assisted content creation, social media management, marketing strategy, and technical consulting—including websites, reservations, loyalty apps, and custom restaurant software.",
       "q5": "How do we get started?",
@@ -360,8 +360,8 @@
       "a8": "The platform is currently available to existing customers and early partners only. We are preparing for a public launch—check back soon for when sign-up opens more broadly."
     },
     "cta": {
-      "title": "Ready to grow your restaurant with smarter marketing?",
-      "description": "Discover how AI-powered strategy, content, and technology can help you attract more customers.",
+      "title": "Ready for a restaurant marketing agency that delivers strategy and content?",
+      "description": "Discover how agency expertise, proprietary AI, and enterprise engineering can help you attract more customers.",
       "secondary": "Sign in"
     },
     "footer": {
