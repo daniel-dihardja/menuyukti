@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { getTranslations } from 'next-intl/server'
 
-export const alt = 'Menuyukti — AI-Powered Marketing Partner for Restaurants'
+export const alt = 'Menuyukti — Restaurant Marketing Agency | AI Strategy & Content'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
