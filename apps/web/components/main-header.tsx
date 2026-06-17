@@ -33,6 +33,7 @@ export function MainHeader() {
   const workflowsActive =
     pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
   const studioActive = pathname === routes.canvas || pathname?.startsWith(`${routes.canvas}/`)
+  const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
   const showMobileMainMenu = true
 
   const navLinkClass = (active: boolean) =>
@@ -75,8 +76,8 @@ export function MainHeader() {
                 <Link href="#why" className={landingAnchorClass}>
                   {t('landingNav.why')}
                 </Link>
-                <Link href="#cta" className={landingAnchorClass}>
-                  {t('landingNav.contact')}
+                <Link href={routes.shop} className={landingAnchorClass}>
+                  {t('navShop')}
                 </Link>
               </>
             ) : (
@@ -86,6 +87,9 @@ export function MainHeader() {
                 </Link>
                 <Link href={routes.canvas} className={navLinkClass(studioActive)}>
                   {t('navStudio')}
+                </Link>
+                <Link href={routes.shop} className={navLinkClass(shopActive)}>
+                  {t('navShop')}
                 </Link>
               </>
             )}
@@ -145,7 +149,7 @@ export function MainHeader() {
                             variant="ghost"
                             className="h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
                           >
-                            <Link href="#cta">{t('landingNav.contact')}</Link>
+                            <Link href={routes.shop}>{t('navShop')}</Link>
                           </Button>
                         </SheetClose>
                       </>
@@ -186,6 +190,22 @@ export function MainHeader() {
                               aria-current={studioActive ? 'page' : undefined}
                             >
                               {t('navStudio')}
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className={cn(
+                              'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
+                              shopActive
+                                ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
+                          >
+                            <Link href={routes.shop} aria-current={shopActive ? 'page' : undefined}>
+                              {t('navShop')}
                             </Link>
                           </Button>
                         </SheetClose>
