@@ -38,6 +38,8 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', '@workspace/ui', '@ai-sdk/react', 'react-markdown'],
+    // Reel video uploads (up to 50 MB) pass through Clerk proxy; default buffer is 10 MB.
+    proxyClientMaxBodySize: '52mb',
   },
   images: {
     remotePatterns: [

@@ -58,7 +58,10 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'content',
     href: routes.content.photos,
     icon: <Image className="w-4 h-4" />,
-    children: [{ key: 'photos', labelKey: 'photos', href: routes.content.photos }],
+    children: [
+      { key: 'photos', labelKey: 'photos', href: routes.content.photos },
+      { key: 'igReels', labelKey: 'igReels', href: routes.content.reels },
+    ],
   },
   {
     key: 'studio',

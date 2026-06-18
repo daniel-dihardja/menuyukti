@@ -628,6 +628,7 @@
     "studio": "Studio",
     "content": "Content",
     "photos": "Photos",
+    "igReels": "IG Reels",
     "printShop": "Print shop",
     "agents": "Advisor",
     "cogs": "COGS",
@@ -770,6 +771,42 @@
       "loadError": "Couldn’t load your photos. Refresh the page.",
       "deleted": "Photo removed",
       "deleteError": "Couldn’t remove that photo. Try again."
+    }
+  },
+  "reels": {
+    "title": "IG Reels",
+    "description": "Upload Instagram reel assets — images or short videos (up to 50 MB). Images are resized to 1024px on the shortest side and saved as WebP.",
+    "upload": {
+      "title": "Upload reels",
+      "hint": "Drag and drop or browse — images (PNG, JPEG, WebP, GIF, AVIF) or video (MP4, MOV, WebM, max 50 MB)",
+      "browse": "Browse files",
+      "uploading": "Uploading…",
+      "invalidType": "Please choose an image or supported video file.",
+      "tooLarge": "Video must be 50 MB or smaller."
+    },
+    "grid": {
+      "empty": {
+        "title": "No reels yet",
+        "description": "Upload your first reel image or video to build your content library."
+      },
+      "delete": "Remove",
+      "deleteConfirm": "Remove this reel?",
+      "deleteAction": "Remove",
+      "cancel": "Cancel",
+      "viewLarge": "View larger",
+      "play": "Play reel",
+      "download": "Download"
+    },
+    "preview": {
+      "close": "Close preview"
+    },
+    "toast": {
+      "uploaded": "Reel uploaded",
+      "uploadError": "Couldn’t upload that file. Try again.",
+      "uploadPartial": "Some files couldn’t be uploaded. Check your files and try again.",
+      "loadError": "Couldn’t load your reels. Refresh the page.",
+      "deleted": "Reel removed",
+      "deleteError": "Couldn’t remove that reel. Try again."
     }
   },
   "assets": {
