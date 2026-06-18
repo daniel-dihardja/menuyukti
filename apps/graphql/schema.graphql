@@ -6,6 +6,23 @@ type AdditionalSignalsType {
   signalConfidence: SignalConfidenceType!
 }
 
+"""Select which analytics sections to include in the bundle."""
+input AnalyticsBundleOptionsInput {
+  includeOrderMetrics: Boolean! = true
+  includeMenuEngineeringMatrix: Boolean! = true
+  includeMenuHeatmaps: Boolean! = true
+  includeCategoryMix: Boolean! = true
+}
+
+"""Multiple analytics computations from a single order-fact load."""
+type AnalyticsBundleType {
+  analyticsRunId: ID!
+  orderMetrics: AnalyticsRunOrderMetricsType
+  menuEngineeringMatrix: MenuEngineeringMatrixType
+  menuHeatmaps: [MenuHeatmapType!]
+  categoryMix: CategoryMixPayloadType
+}
+
 """Minimal fields for listing analytics runs by location."""
 type AnalyticsRunListItemType {
   id: ID!
@@ -170,6 +187,31 @@ type InstagramSignalsType {
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+
+"""Latest analytics run metadata for a location."""
+type LatestAnalyticsRunType {
+  id: ID!
+  name: String!
+}
+
+"""Latest run for a location with composite Instagram signals."""
+type LatestAnalyticsRunWithSignalsType {
+  analyticsRun: LatestAnalyticsRunType
+  instagramSignals: InstagramSignalsType
+}
+
+"""Summary of analytics runs for one location."""
+type LocationAnalyticsRunSummaryType {
+  id: ID!
+  name: String!
+}
+
+"""Run count and latest run for a location."""
+type LocationAnalyticsSummaryType {
+  locationId: Int!
+  runCount: Int!
+  latestRun: LocationAnalyticsRunSummaryType
+}
 
 """Owner-provided click-first brief hints; not AI-generated."""
 type LocationManualBriefInputType {
@@ -357,6 +399,11 @@ type MilestoneCampaignBundleType {
   milestone: NodeType!
 }
 
+input MilestoneOrderInput {
+  milestoneId: ID!
+  order: Int!
+}
+
 """
 Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration.
 """
@@ -371,6 +418,8 @@ type Mutation {
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
+  setPassCriteriaStatuses(milestoneId: ID!, locationId: Int!, updates: [PassCriterionStatusInput!]!): Boolean!
+  reorderMilestones(workflowId: ID!, locationId: Int!, orders: [MilestoneOrderInput!]!): Boolean!
   createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String): LocationType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
@@ -484,6 +533,11 @@ type OrderType {
   items: [OrderItemType!]!
 }
 
+input PassCriterionStatusInput {
+  criterionId: String!
+  status: String!
+}
+
 type PeriodHeadlineType {
   periodStart: String!
   periodEnd: String!
@@ -552,9 +606,24 @@ type Query {
   workflowCampaignTree(workflowId: ID!): WorkflowCampaignTreeType
 
   """
+  Return multiple analytics sections for one run using a shared OrderFact load. Use options to omit sections you do not need.
+  """
+  analyticsBundle(analyticsRunId: ID!, locationId: ID = null, options: AnalyticsBundleOptionsInput = null): AnalyticsBundleType
+
+  """
+  Resolve the newest analytics run for a location and return instagramSignals in one request (single OrderFact load path when signals are requested).
+  """
+  latestAnalyticsRunWithSignals(locationId: Int!): LatestAnalyticsRunWithSignalsType
+
+  """
   All locations the current user can access (direct owner or workspace member).
   """
   locations(first: Int = null): [LocationType!]!
+
+  """
+  Analytics run counts and latest run per location in one query. Only returns summaries for locations the caller can access.
+  """
+  locationAnalyticsSummaries(locationIds: [Int!]!): [LocationAnalyticsSummaryType!]!
 
   """Fetch one location by id if the caller has access."""
   location(id: ID!): LocationType
