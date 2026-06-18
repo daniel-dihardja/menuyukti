@@ -2,7 +2,8 @@ import strawberry
 from sqlalchemy import func, or_
 from sqlalchemy.orm import selectinload
 
-from graphql.data_sources import AnalyticsRun, Location, SessionLocal, WorkspaceMembership
+from graphql.context import request_session_scope
+from graphql.data_sources import AnalyticsRun, Location, WorkspaceMembership
 from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import LocationType, OpeningHourType
@@ -48,9 +49,7 @@ class LocationsQuery:
     @strawberry.field(
         description="All locations the current user can access (direct owner or workspace member)."
     )
-    def locations(
-        self, info: strawberry.Info, first: int | None = None
-    ) -> list[LocationType]:
+    def locations(self, info: strawberry.Info, first: int | None = None) -> list[LocationType]:
         user_id = user_id_from_info(info)
         if not user_id:
             return []
@@ -59,7 +58,7 @@ class LocationsQuery:
             default=DEFAULT_LIST_FIRST,
             maximum=MAX_LIST_FIRST,
         )
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             workspace_ids = [
                 w[0]
                 for w in session.query(WorkspaceMembership.workspace_id)
@@ -97,7 +96,7 @@ class LocationsQuery:
         if not unique_ids:
             return []
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             allowed: list[int] = []
             for lid in unique_ids:
                 if is_location_owner(session, lid, user_id, info=info):
@@ -143,7 +142,7 @@ class LocationsQuery:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             row = (
                 session.query(Location)
                 .options(selectinload(Location.opening_hours))

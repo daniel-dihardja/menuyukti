@@ -42,9 +42,7 @@ def build_revenue_trends(
     else:
         prev_run = get_previous_analytics_run(session, run.location_id, run.id)
         prev_facts = (
-            load_order_facts(session, prev_run.id, info=info)
-            if prev_run is not None
-            else []
+            load_order_facts(session, prev_run.id, info=info) if prev_run is not None else []
         )
 
     curr_rows = facts_to_revenue_trend_rows(facts)

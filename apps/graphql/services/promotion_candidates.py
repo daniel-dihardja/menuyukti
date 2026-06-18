@@ -36,7 +36,9 @@ def build_promotion_candidates_signals(
         if isinstance(instagram_payload, dict)
         else {}
     )
-    matrix_signals = _as_dict(additional.get("matrix_signals")) if isinstance(additional, dict) else {}
+    matrix_signals = (
+        _as_dict(additional.get("matrix_signals")) if isinstance(additional, dict) else {}
+    )
     datetime_signals = (
         _as_dict(additional.get("datetime_signals")) if isinstance(additional, dict) else {}
     )

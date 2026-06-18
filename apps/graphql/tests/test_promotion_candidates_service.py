@@ -24,7 +24,9 @@ def test_build_promotion_candidates_signals_handles_none_datetime_signals() -> N
             "contribution_margin_percentage": 41.2,
         }
     ]
-    fake_promotion = SimpleNamespace(rows=promotion_rows, items_total_count=1, items_truncated=False)
+    fake_promotion = SimpleNamespace(
+        rows=promotion_rows, items_total_count=1, items_truncated=False
+    )
     instagram_payload = {
         "additional_signals": {
             "datetime_signals": None,

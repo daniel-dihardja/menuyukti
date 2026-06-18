@@ -4,20 +4,13 @@ from datetime import datetime
 from typing import Any
 
 import pandas as pd
-from menuyukti.core.analytics.esb import normalize_esb_excel
-from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
-from menuyukti.core.analytics.quino import normalize_quino_excel
+from menuyukti.core.analytics import detect_pos_from_excel_bytes, get_normalizer
 from menuyukti.core.models.pos_mapping import get_config
 from menuyukti.core.models.pos_transaction import POSTransactionLineItem
 from sqlalchemy import insert
 from sqlalchemy.orm import Session
 
 from graphql.data_sources import OrderFact
-
-SUPPORTED_NORMALIZERS = {
-    "esb": normalize_esb_excel,
-    "quino": normalize_quino_excel,
-}
 
 
 @dataclass
@@ -60,7 +53,7 @@ def _build_rows(df: pd.DataFrame) -> list[NormalizedLineItemData]:
 
 def normalize_sales_report(payload: bytes) -> tuple[list[NormalizedLineItemData], str]:
     pos = detect_pos_from_excel_bytes(payload) or "unknown"
-    normalizer = SUPPORTED_NORMALIZERS.get(pos)
+    normalizer = get_normalizer(pos)
     if normalizer is None:
         raise ValueError(f"Unsupported POS system detected: {pos}")
 

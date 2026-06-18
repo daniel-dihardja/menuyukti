@@ -78,17 +78,18 @@ require_location_owner(session, location_id, user_id)
 
 ## DB session pattern
 
-Open `SessionLocal()` explicitly; always close in a `finally` block.
+Use the request-scoped session so nested field resolvers reuse the same connection:
 
 ```python
-session = SessionLocal()
-try:
-    # query or mutate
-    session.commit()
-    return result
-finally:
-    session.close()
+from graphql.context import request_session_scope
+
+@strawberry.field
+def example(self, info: strawberry.Info) -> ExampleType:
+    with request_session_scope(info) as session:
+        ...
 ```
+
+`RequestSessionExtension` closes the session after each GraphQL operation.
 
 ## Node handlers (strategy pattern)
 

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import strawberry
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_handlers import get_handler
 
@@ -38,7 +39,7 @@ class ReorderMilestonesMutation:
         if wf_pk < 1:
             raise ValueError("Invalid workflow id")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id, info=info)
             root = session.get(Node, wf_pk)
             if root is None or root.node_type != "workflow":

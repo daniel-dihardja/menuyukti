@@ -1,7 +1,8 @@
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
@@ -38,7 +39,7 @@ class UpdateNodeMutation:
         if node_pk < 1:
             raise ValueError("Invalid node id")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             node = session.get(Node, node_pk)
             if node is None:
                 raise ValueError("Node not found")

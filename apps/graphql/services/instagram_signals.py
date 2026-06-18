@@ -6,14 +6,12 @@ from typing import Any
 
 import strawberry
 from menuyukti.core.analytics import (
+    OperatingProfileResult,
     calculate_instagram_signals,
     compute_category_mix_from_orders,
+    compute_operating_profile_from_orders,
     compute_revenue_trends_from_orders,
     compute_sales_analytics_from_orders,
-)
-from menuyukti.core.analytics.calculate_operating_profile import (
-    OperatingProfileResult,
-    compute_operating_profile_from_orders,
 )
 from sqlalchemy.orm import Session
 
@@ -44,9 +42,7 @@ def build_instagram_signals(
         return None
 
     prev_run = get_previous_analytics_run(session, run.location_id, run.id)
-    prev_facts = (
-        load_order_facts(session, prev_run.id, info=info) if prev_run is not None else []
-    )
+    prev_facts = load_order_facts(session, prev_run.id, info=info) if prev_run is not None else []
 
     sales_rows = facts_to_sales_analytics_rows(facts)
     sales_analytics = compute_sales_analytics_from_orders(sales_rows)

@@ -6,7 +6,8 @@ from typing import Any
 
 import strawberry
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mutations.set_pass_criterion_status import _ALLOWED
 
@@ -50,15 +51,10 @@ class SetPassCriteriaStatusesMutation:
                 raise ValueError("status must be pass, fail, or open")
             normalized.append((cid, st))
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id, info=info)
 
-            milestone = (
-                session.query(Node)
-                .filter(Node.id == ms_pk)
-                .with_for_update()
-                .one_or_none()
-            )
+            milestone = session.query(Node).filter(Node.id == ms_pk).with_for_update().one_or_none()
             if milestone is None:
                 raise ValueError("Milestone not found")
             if milestone.node_type != "milestone":

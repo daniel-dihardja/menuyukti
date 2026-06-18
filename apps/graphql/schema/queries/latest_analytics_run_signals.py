@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import AnalyticsRun
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.queries.instagram_signals import (
-    InstagramSignalsType,
-    instagram_signals_raw_to_gql,
-)
+from graphql.schema.mappers.instagram_signals import instagram_signals_raw_to_gql
+from graphql.schema.types.instagram_signals import InstagramSignalsType
 from graphql.services.instagram_signals import build_instagram_signals
 
 
@@ -39,7 +38,7 @@ class LatestAnalyticsRunWithSignalsQuery:
         location_id: int,
     ) -> LatestAnalyticsRunWithSignalsType | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             if not is_location_owner(session, location_id, user_id, info=info):
                 return None
             run = (

@@ -57,3 +57,41 @@ def facts_to_operating_profile_rows(facts: list[OrderFact]) -> list[dict[str, An
         }
         for r in facts
     ]
+
+
+def facts_to_heatmap_rows(facts: list[OrderFact]) -> list[dict[str, Any]]:
+    return [
+        {
+            "menu": r.menu,
+            "qty": r.qty,
+            "order_time": r.order_time,
+            "menu_category": r.menu_category,
+            "menu_category_detail": r.menu_category_detail,
+        }
+        for r in facts
+    ]
+
+
+def facts_to_basket_rows(facts: list[OrderFact]) -> list[dict[str, Any]]:
+    return [
+        {
+            "bill_number": r.bill_number,
+            "menu": r.menu,
+            "menu_category": r.menu_category,
+            "menu_category_detail": r.menu_category_detail,
+        }
+        for r in facts
+    ]
+
+
+def facts_to_menu_engineering_rows(facts: list[OrderFact]) -> list[dict[str, Any]]:
+    return [
+        {
+            "menu": r.menu,
+            "qty": r.qty,
+            "total_after_bill_discount": r.total_after_bill_discount,
+            "menu_category": r.menu_category,
+            "menu_category_detail": r.menu_category_detail,
+        }
+        for r in facts
+    ]

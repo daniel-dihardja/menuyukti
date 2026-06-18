@@ -8,11 +8,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from graphql.data_sources import Node
-from graphql.schema.milestone_payload_validation import (
-    validate_pass_criteria_list,
-    validate_result_payload,
-)
-from graphql.schema.node_handlers import get_handler
+from graphql.domain import validate_pass_criteria_list, validate_result_payload
+from graphql.node_handlers import get_handler
 
 _PASS_STATUSES = frozenset({"pass", "fail", "open"})
 

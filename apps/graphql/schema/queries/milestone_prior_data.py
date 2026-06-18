@@ -7,7 +7,8 @@ from typing import Any, cast
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
 
@@ -17,7 +18,7 @@ class MilestonePriorDataQuery:
     @strawberry.field(
         description=(
             "JSON array of prior milestones' preset payloads: each element is "
-            "`{\"title\": string, \"presetId\": string|null, \"data\": object|null}` for milestones strictly "
+            '`{"title": string, "presetId": string|null, "data": object|null}` for milestones strictly '
             "before the given milestone in workflow display order. `presetId` is copied from the "
             "milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the "
             "`milestone_preset_data` column (flat preset JSON). Empty array when there "
@@ -41,7 +42,7 @@ class MilestonePriorDataQuery:
             return cast(JSON, [])
         if wf_pk < 1 or ms_pk < 1:
             return cast(JSON, [])
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             if not is_location_owner(session, location_id, user_id, info=info):
                 return cast(JSON, [])
             root = session.get(Node, wf_pk)
@@ -96,7 +97,10 @@ class MilestonePriorDataQuery:
                     .all()
                 )
                 for md_row in md_rows:
-                    if md_row.parent_id is not None and md_row.parent_id not in milestonedata_by_parent:
+                    if (
+                        md_row.parent_id is not None
+                        and md_row.parent_id not in milestonedata_by_parent
+                    ):
                         milestonedata_by_parent[md_row.parent_id] = md_row
 
             for m in prior_milestones:

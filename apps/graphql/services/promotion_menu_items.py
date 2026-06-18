@@ -10,9 +10,11 @@ from typing import Any, NamedTuple
 
 import pandas as pd
 import strawberry
-from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
-from menuyukti.core.analytics.calculate_menu_heatmaps import WEEKDAY_ORDER
-from menuyukti.core.analytics.extract_menu_items import extract_menu_items
+from menuyukti.core.analytics import (
+    WEEKDAY_ORDER,
+    compute_menu_heatmaps_from_orders,
+    extract_menu_items,
+)
 from sqlalchemy.orm import Session
 
 from graphql.data_sources import AnalyticsRun

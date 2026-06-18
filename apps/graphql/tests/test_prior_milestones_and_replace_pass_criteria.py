@@ -69,6 +69,7 @@ mutation Replace($milestoneId: ID!, $locationId: Int!, $requirements: [String!]!
 }
 """
 
+
 def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
     session = SessionLocal()
     try:

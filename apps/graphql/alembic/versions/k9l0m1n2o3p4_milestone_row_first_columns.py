@@ -64,9 +64,7 @@ def upgrade() -> None:
     op.add_column("node", sa.Column("milestone_preset_data", json_type, nullable=True))
     op.add_column("node", sa.Column("milestone_result", json_type, nullable=True))
 
-    m_rows = bind.execute(
-        text("SELECT id, data FROM node WHERE type = 'milestone'")
-    ).fetchall()
+    m_rows = bind.execute(text("SELECT id, data FROM node WHERE type = 'milestone'")).fetchall()
     milestone_ids = [int(r[0]) for r in m_rows]
     children_by_parent: dict[int, list[tuple[int, str, object, object]]] = defaultdict(list)
     if milestone_ids:
@@ -85,9 +83,7 @@ def upgrade() -> None:
             pid = row[1]
             if pid is None:
                 continue
-            children_by_parent[int(pid)].append(
-                (int(row[0]), str(row[2]), row[3], row[4])
-            )
+            children_by_parent[int(pid)].append((int(row[0]), str(row[2]), row[3], row[4]))
 
     for row in m_rows:
         mid = int(row[0])
@@ -129,9 +125,7 @@ def upgrade() -> None:
 
             _best_cid, best_payload = max(md_candidates, key=_md_key)
             bind.execute(
-                text(
-                    "UPDATE node SET milestone_preset_data = :d WHERE id = :id"
-                ),
+                text("UPDATE node SET milestone_preset_data = :d WHERE id = :id"),
                 {"d": _json_param(best_payload, dialect), "id": mid},
             )
 
@@ -168,9 +162,7 @@ def upgrade() -> None:
                     continue
                 if st not in ("pass", "fail", "open"):
                     continue
-                built.append(
-                    {"id": str(cid), "requirement": req, "status": str(st)}
-                )
+                built.append({"id": str(cid), "requirement": req, "status": str(st)})
             if built:
                 bind.execute(
                     text(
@@ -179,11 +171,7 @@ def upgrade() -> None:
                     {"pc": _json_param(built, dialect), "id": mid},
                 )
 
-    bind.execute(
-        text(
-            "DELETE FROM node WHERE type IN ('milestonedata', 'result', 'passcriteria')"
-        )
-    )
+    bind.execute(text("DELETE FROM node WHERE type IN ('milestonedata', 'result', 'passcriteria')"))
 
 
 def downgrade() -> None:

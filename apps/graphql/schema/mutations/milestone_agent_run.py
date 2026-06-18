@@ -5,7 +5,8 @@ from __future__ import annotations
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import MilestoneAgentRun, Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import MilestoneAgentRun, Node
 from graphql.schema.auth import require_location_owner, user_id_from_info
 
 
@@ -46,7 +47,7 @@ class MilestoneAgentRunMutation:
         if workflow_id is not None and str(workflow_id).strip():
             workflow_pk = _parse_positive_int(workflow_id, "workflow id")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             existing = session.get(MilestoneAgentRun, rid)
             if existing is not None:
                 return True
@@ -113,7 +114,7 @@ class MilestoneAgentRunMutation:
 
         from datetime import UTC, datetime
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             row = session.get(MilestoneAgentRun, rid)
             if row is None:
                 raise ValueError("Milestone agent run not found")
@@ -133,10 +134,14 @@ class MilestoneAgentRunMutation:
             row.summary = merged or None
             row.timeline = timeline
             row.external_trace_id = (
-                external_trace_id.strip() if external_trace_id and external_trace_id.strip() else None
+                external_trace_id.strip()
+                if external_trace_id and external_trace_id.strip()
+                else None
             )
             row.external_trace_url = (
-                external_trace_url.strip() if external_trace_url and external_trace_url.strip() else None
+                external_trace_url.strip()
+                if external_trace_url and external_trace_url.strip()
+                else None
             )
             row.error_message = (
                 error_message.strip() if error_message and error_message.strip() else None

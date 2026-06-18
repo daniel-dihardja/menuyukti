@@ -7,7 +7,8 @@ import re
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import ImageAiFlow, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import ImageAiFlow
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.image_ai_flows import _flow_to_gql
 from graphql.schema.types import ImageAiFlowType
@@ -61,7 +62,7 @@ class CreateImageAiFlowMutation:
         if not model_clean:
             raise ValueError("Model is required")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             existing = session.query(ImageAiFlow).filter(ImageAiFlow.slug == slug_clean).first()
             if existing is not None:
                 raise ValueError(f"An image AI flow with slug '{slug_clean}' already exists")

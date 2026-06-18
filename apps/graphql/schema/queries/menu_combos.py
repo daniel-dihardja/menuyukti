@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import strawberry
-from menuyukti.core.analytics import compute_menu_basket_affinities_from_orders
 
-from graphql.data_sources import AnalyticsRun, SessionLocal
+from graphql.context import request_session_scope
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
-from graphql.services.menu_engineering import compute_menu_engineering_matrix
-from graphql.services.order_facts import load_order_facts
+from graphql.services.menu_combos import build_menu_combos
 
 
-@strawberry.type(description="Co-occurrence metrics for a pair of menu items within the same order.")
+@strawberry.type(
+    description="Co-occurrence metrics for a pair of menu items within the same order."
+)
 class MenuComboPairType:
     menu_a: str
     menu_b: str
@@ -42,44 +42,7 @@ class MenuCombosPayloadType:
     matrix_lift: list[list[float | None]]
 
 
-def _star_focus_menus(matrix_items: list[dict]) -> list[str] | None:
-    stars = [str(item["menu"]) for item in matrix_items if str(item.get("category") or "") == "star"]
-    if len(stars) >= 2:
-        return stars
-    return None
-
-
-def _compute_menu_combos_for_run(
-    session,
-    run: AnalyticsRun,
-    info: strawberry.Info | None = None,
-) -> MenuCombosPayloadType | None:
-    rows = load_order_facts(session, run.id, info=info)
-    if not rows:
-        return None
-
-    order_rows = [
-        {
-            "bill_number": r.bill_number,
-            "menu": r.menu,
-            "menu_category": r.menu_category,
-            "menu_category_detail": r.menu_category_detail,
-        }
-        for r in rows
-    ]
-
-    matrix_data = compute_menu_engineering_matrix(session, run, order_facts=rows, info=info)
-    matrix_by_menu: dict[str, str | None] = {}
-    focus_menus: list[str] | None = None
-    if matrix_data is not None:
-        matrix_by_menu = {
-            str(item["menu"]): str(item["category"]) if item.get("category") else None
-            for item in matrix_data.items
-        }
-        focus_menus = _star_focus_menus(matrix_data.items)
-
-    raw = compute_menu_basket_affinities_from_orders(order_rows, focus_menus=focus_menus)
-
+def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
     pairs = [
         MenuComboPairType(
             menu_a=p["menu_a"],
@@ -91,8 +54,8 @@ def _compute_menu_combos_for_run(
             lift=p["lift"],
             menu_a_category=p["menu_a_category"],
             menu_b_category=p["menu_b_category"],
-            matrix_category_a=matrix_by_menu.get(p["menu_a"]),
-            matrix_category_b=matrix_by_menu.get(p["menu_b"]),
+            matrix_category_a=p.get("matrix_category_a"),
+            matrix_category_b=p.get("matrix_category_b"),
         )
         for p in raw["pairs"]
     ]
@@ -125,10 +88,13 @@ class MenuCombosQuery:
         location_id: strawberry.ID | None = None,
     ) -> MenuCombosPayloadType | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
             if location_id is not None and run.location_id != int(location_id):
                 return None
-            return _compute_menu_combos_for_run(session, run, info=info)
+            raw = build_menu_combos(session, run, info=info)
+            if raw is None:
+                return None
+            return menu_combos_to_gql(raw)

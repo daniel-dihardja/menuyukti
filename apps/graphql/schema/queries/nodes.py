@@ -1,6 +1,7 @@
 import strawberry
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.limits import (
     DEFAULT_NODES_FIRST,
     MAX_NODES_FIRST,
@@ -34,10 +35,8 @@ class NodesQuery:
         user_id = user_id_from_info(info)
         if not user_id:
             return []
-        limit = clamp_page_size(
-            first, default=DEFAULT_NODES_FIRST, maximum=MAX_NODES_FIRST
-        )
-        with SessionLocal() as session:
+        limit = clamp_page_size(first, default=DEFAULT_NODES_FIRST, maximum=MAX_NODES_FIRST)
+        with request_session_scope(info) as session:
             if not is_location_owner(session, location_id, user_id, info=info):
                 return []
             q = session.query(Node).filter(Node.location_id == location_id)
@@ -79,7 +78,7 @@ class NodesQuery:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             try:
                 node_pk = int(str(id))
             except ValueError:

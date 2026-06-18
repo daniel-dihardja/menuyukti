@@ -2,7 +2,7 @@
 
 import strawberry
 
-from graphql.data_sources import SessionLocal
+from graphql.context import request_session_scope
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 from graphql.services.revenue_trends import build_revenue_trends
 
@@ -43,7 +43,7 @@ class RevenueTrendsQuery:
         previous_run_id: strawberry.ID | None = None,
     ) -> RevenueTrendsPayloadType | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None

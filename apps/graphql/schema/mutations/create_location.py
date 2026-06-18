@@ -1,7 +1,8 @@
 import strawberry
 from strawberry import UNSET
 
-from graphql.data_sources import Location, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Location
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.types import LocationType
 
@@ -23,7 +24,7 @@ class CreateLocationMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createLocation")
         wid = int(workspace_id)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             if not is_workspace_member(session, wid, user_id):
                 raise PermissionError("Access denied")
             loc_kwargs: dict[str, object] = {

@@ -5,7 +5,7 @@ from __future__ import annotations
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import SessionLocal
+from graphql.context import request_session_scope
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 from graphql.services.promotion_engineering_candidates import (
     build_promotion_engineering_candidates,
@@ -36,7 +36,7 @@ class PromotionEngineeringCandidatesQuery:
         max_puzzle_items: int | None = None,
     ) -> JSON | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None

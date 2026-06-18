@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import strawberry
 
-from graphql.data_sources import ImageAiFlow, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import ImageAiFlow
 from graphql.schema.auth import user_id_from_info
 
 
@@ -20,7 +21,7 @@ class DeleteImageAiFlowMutation:
         if not slug_key:
             raise ValueError("Slug is required")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             row = session.query(ImageAiFlow).filter(ImageAiFlow.slug == slug_key).first()
             if row is None:
                 raise ValueError("Image AI flow not found")

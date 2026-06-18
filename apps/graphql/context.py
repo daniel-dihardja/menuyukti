@@ -53,19 +53,24 @@ def get_request_session(info: strawberry.Info, *, create: bool = True) -> Sessio
 
 @contextmanager
 def request_session_scope(info: strawberry.Info) -> Iterator[Session]:
-    """Yield a session tied to the request when available, else a local session."""
+    """Yield the request-scoped session, creating one when needed.
+
+    The session stays in context until ``RequestSessionExtension`` closes it at
+    the end of the GraphQL operation so nested field resolvers can reuse it.
+    """
     ctx = _context_dict(info)
     if ctx is not None and _SESSION_KEY in ctx:
         yield ctx[_SESSION_KEY]
         return
-    with SessionLocal() as session:
-        if ctx is not None:
-            ctx[_SESSION_KEY] = session
-        try:
-            yield session
-        finally:
-            if ctx is not None:
-                ctx.pop(_SESSION_KEY, None)
+    session = SessionLocal()
+    created_for_request = ctx is not None
+    if created_for_request:
+        ctx[_SESSION_KEY] = session
+    try:
+        yield session
+    finally:
+        if not created_for_request:
+            session.close()
 
 
 def close_request_session(ctx: dict[str, Any]) -> None:

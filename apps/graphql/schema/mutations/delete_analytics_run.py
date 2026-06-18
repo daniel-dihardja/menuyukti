@@ -1,6 +1,7 @@
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact
 from graphql.schema.auth import require_location_owner, user_id_from_info
 
 
@@ -19,7 +20,7 @@ class DeleteAnalyticsRunMutation:
         if run_pk < 1:
             raise ValueError("Invalid analytics run id")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             run = session.get(AnalyticsRun, run_pk)
             if run is None:
                 # Make delete idempotent so stale UI/cache entries do not surface a hard error.

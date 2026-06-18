@@ -1,9 +1,8 @@
 import strawberry
-from menuyukti.core.analytics import compute_operating_profile_from_orders
 
-from graphql.data_sources import SessionLocal
+from graphql.context import request_session_scope
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
-from graphql.services.order_facts import load_order_facts
+from graphql.services.operating_profile import build_operating_profile
 
 
 @strawberry.type
@@ -54,7 +53,7 @@ class OperatingProfileType:
     dining_focus: str
 
 
-def _result_to_type(result) -> OperatingProfileType:
+def _result_to_type(result: dict) -> OperatingProfileType:
     return OperatingProfileType(
         total_orders=result["total_orders"],
         total_revenue=result["total_revenue"],
@@ -118,24 +117,12 @@ class OperatingProfileQuery:
         the given location_id.
         """
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None or run.location_id != int(location_id):
                 return None
 
-            rows = load_order_facts(session, run.id, info=info)
-
-            order_rows = [
-                {
-                    "order_time": r.order_time,
-                    "bill_number": r.bill_number,
-                    "total_after_bill_discount": r.total_after_bill_discount,
-                    "qty": r.qty,
-                }
-                for r in rows
-            ]
-
-            result = compute_operating_profile_from_orders(order_rows)
+            result = build_operating_profile(session, run, info=info)
             if result is None:
                 return None
 

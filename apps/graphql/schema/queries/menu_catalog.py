@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import AnalyticsRun
 from graphql.schema.auth import get_analytics_run_if_owner, is_location_owner, user_id_from_info
 from graphql.services.menu_catalog import build_menu_catalog
 
@@ -44,7 +45,7 @@ class MenuCatalogQuery:
         location_id: int,
     ) -> MenuCatalogPayloadType | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             if not is_location_owner(session, location_id, user_id, info=info):
                 return None
             run = (
@@ -89,7 +90,7 @@ class MenuCatalogQuery:
         analytics_run_id: strawberry.ID,
     ) -> MenuCatalogPayloadType | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None

@@ -86,7 +86,9 @@ def test_create_workflow_rejects_parent_node():
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Workflow Parent Guard Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(
+            name="Workflow Parent Guard Location", clerk_user_id=GRAPHQL_TEST_USER_ID
+        )
         session.add(location)
         session.commit()
         session.refresh(location)
