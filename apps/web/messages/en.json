@@ -626,6 +626,8 @@
     "workflows": "Workflow",
     "skills": "Skills & tools",
     "studio": "Studio",
+    "content": "Content",
+    "photos": "Photos",
     "printShop": "Print shop",
     "agents": "Advisor",
     "cogs": "COGS",
@@ -737,6 +739,37 @@
       "previewDescription": "Browse popular pieces without leaving Menuyukti. Checkout opens in the public catalog.",
       "previewFootnote": "The full catalog is open to everyone — share links with your team.",
       "browseFullCatalog": "Browse full catalogue"
+    }
+  },
+  "photos": {
+    "title": "Photos",
+    "description": "Upload restaurant and campaign photos. Files are resized to 1024px on the shortest side and saved as WebP.",
+    "upload": {
+      "title": "Upload photos",
+      "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
+      "browse": "Browse files",
+      "uploading": "Uploading…",
+      "invalidType": "Please choose an image file."
+    },
+    "grid": {
+      "empty": {
+        "title": "No photos yet",
+        "description": "Upload your first photo to build your content library."
+      },
+      "delete": "Remove",
+      "deleteConfirm": "Remove this photo?",
+      "deleteAction": "Remove",
+      "cancel": "Cancel",
+      "viewLarge": "View larger",
+      "download": "Download"
+    },
+    "toast": {
+      "uploaded": "Photo uploaded",
+      "uploadError": "Couldn’t upload that file. Try again.",
+      "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
+      "loadError": "Couldn’t load your photos. Refresh the page.",
+      "deleted": "Photo removed",
+      "deleteError": "Couldn’t remove that photo. Try again."
     }
   },
   "assets": {

@@ -57,6 +57,7 @@ export function isSafeAssetFilename(name: string): boolean {
 }
 
 const ASSET_DESIGNS_SUBDIR = 'designs'
+const ASSET_PHOTOS_SUBDIR = 'photos'
 
 /** S3 prefix: `users/<userId>/designs/`. */
 export function userDesignsPrefix(userId: string): string {
@@ -65,6 +66,22 @@ export function userDesignsPrefix(userId: string): string {
 
 export function userDesignsObjectKey(userId: string, filename: string): string {
   return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_DESIGNS_SUBDIR}/${filename}`
+}
+
+/** S3 prefix: `users/<userId>/photos/`. */
+export function userPhotosPrefix(userId: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_PHOTOS_SUBDIR}/`
+}
+
+export function userPhotosObjectKey(userId: string, filename: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_PHOTOS_SUBDIR}/${filename}`
+}
+
+export function isObjectKeyForPhoto(key: string, userId: string): boolean {
+  const prefix = userPhotosPrefix(userId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeAssetFilename(filename)
 }
 
 /** Allow common image extensions in designs (not restricted to UUID.webp). */
