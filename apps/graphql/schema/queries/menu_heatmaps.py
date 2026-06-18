@@ -3,8 +3,9 @@
 import strawberry
 from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
 
-from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
+from graphql.data_sources import AnalyticsRun, SessionLocal
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
+from graphql.services.order_facts import load_order_facts
 
 
 @strawberry.type(description="Hourly demand distribution for a menu item.")
@@ -34,8 +35,12 @@ class MenuHeatmapType:
     reporting_period: str
 
 
-def _compute_menu_heatmaps_for_run(session, run: AnalyticsRun) -> list[MenuHeatmapType]:
-    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+def _compute_menu_heatmaps_for_run(
+    session,
+    run: AnalyticsRun,
+    info: strawberry.Info | None = None,
+) -> list[MenuHeatmapType]:
+    rows = load_order_facts(session, run.id, info=info)
 
     if not rows:
         return []
@@ -99,9 +104,9 @@ class MenuHeatmapsQuery:
     ) -> list[MenuHeatmapType]:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return []
             if location_id is not None and run.location_id != int(location_id):
                 return []
-            return _compute_menu_heatmaps_for_run(session, run)
+            return _compute_menu_heatmaps_for_run(session, run, info=info)

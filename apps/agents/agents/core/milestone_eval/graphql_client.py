@@ -13,6 +13,7 @@ from agents_app.agents.graphql_operations import (
     NODE_BY_ID_QUERY,
     NODES_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
+    SET_PASS_CRITERIA_STATUSES_MUTATION,
     SET_PASS_CRITERION_STATUS_MUTATION,
     UPDATE_NODE_MUTATION,
 )
@@ -90,6 +91,34 @@ async def update_milestone_passcriteria_status(
     )
     if not data.get("setPassCriterionStatus"):
         msg = "setPassCriterionStatus failed"
+        raise RuntimeError(msg)
+
+
+async def update_milestone_passcriteria_statuses(
+    milestone_id: str,
+    location_id: int,
+    updates: list[dict[str, str]],
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> None:
+    """Batch-update pass criterion statuses in one mutation."""
+    if not updates:
+        return
+    data = await graphql_post(
+        client,
+        SET_PASS_CRITERIA_STATUSES_MUTATION,
+        {
+            "milestoneId": milestone_id,
+            "locationId": location_id,
+            "updates": [
+                {"criterionId": item["id"], "status": item["status"]} for item in updates
+            ],
+        },
+        user_id,
+    )
+    if not data.get("setPassCriteriaStatuses"):
+        msg = "setPassCriteriaStatuses failed"
         raise RuntimeError(msg)
 
 

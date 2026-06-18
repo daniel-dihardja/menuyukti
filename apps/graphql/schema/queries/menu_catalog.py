@@ -45,7 +45,7 @@ class MenuCatalogQuery:
     ) -> MenuCatalogPayloadType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            if not is_location_owner(session, location_id, user_id):
+            if not is_location_owner(session, location_id, user_id, info=info):
                 return None
             run = (
                 session.query(AnalyticsRun)
@@ -55,7 +55,7 @@ class MenuCatalogQuery:
             )
             if run is None:
                 return None
-            raw_items = build_menu_catalog(session, run)
+            raw_items = build_menu_catalog(session, run, info=info)
             if not raw_items:
                 return None
             items = [
@@ -90,11 +90,11 @@ class MenuCatalogQuery:
     ) -> MenuCatalogPayloadType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
 
-            raw_items = build_menu_catalog(session, run)
+            raw_items = build_menu_catalog(session, run, info=info)
             if not raw_items:
                 return None
 

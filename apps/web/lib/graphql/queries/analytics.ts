@@ -378,7 +378,7 @@ export type PublicHolidaysData = {
 }
 
 export const INSTAGRAM_SIGNALS_QUERY = `
-  query InstagramSignals($analyticsRunId: ID!, $locationId: ID!) {
+  query InstagramSignals($analyticsRunId: ID!, $locationId: ID) {
     instagramSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
       analyticsRunId
       capabilities {
@@ -548,5 +548,55 @@ export type InstagramSignalsData = {
         coverageNotes: string[]
       }
     }
+  } | null
+}
+
+export const ANALYTICS_BUNDLE_HEATMAP_QUERY = `
+  query AnalyticsBundleHeatmap($analyticsRunId: ID!, $locationId: ID) {
+    analyticsBundle(
+      analyticsRunId: $analyticsRunId
+      locationId: $locationId
+      options: {
+        includeOrderMetrics: false
+        includeMenuEngineeringMatrix: true
+        includeMenuHeatmaps: true
+        includeCategoryMix: false
+      }
+    ) {
+      analyticsRunId
+      menuEngineeringMatrix {
+        items {
+          menu
+          quantity
+          totalRevenue
+          cogs
+          totalCogs
+          contributionMargin
+          contributionMarginPercentage
+          marginPerUnit
+          weValue
+          category
+          action
+          menuCategory
+          menuCategoryDetail
+        }
+      }
+      menuHeatmaps {
+        menu
+        menuCategory
+        menuCategoryDetail
+        reportingPeriod
+        dailyHeatmap { hour quantity }
+        weeklyHeatmap { day quantity }
+      }
+    }
+  }
+`
+
+export type AnalyticsBundleHeatmapData = {
+  analyticsBundle: {
+    analyticsRunId: string
+    menuEngineeringMatrix: MenuEngineeringMatrixData['menuEngineeringMatrix']
+    menuHeatmaps: MenuHeatmapsData['menuHeatmaps']
   } | null
 }

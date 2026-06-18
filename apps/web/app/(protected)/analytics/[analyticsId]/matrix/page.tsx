@@ -58,19 +58,19 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const runData = await getCachedAnalyticsRun(userId, id)
+  const [runData, matrixData] = await Promise.all([
+    getCachedAnalyticsRun(userId, id),
+    getCachedMenuEngineeringMatrix(userId, id),
+  ])
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const locationId = String(run.locationId)
-  const matrixData = await getCachedMenuEngineeringMatrix(userId, id, locationId)
-
-  const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
   const matrix = matrixData.menuEngineeringMatrix
   const items = matrix?.items ?? []
   const distribution = matrix?.distribution ?? []
   const thresholds = matrix?.thresholds
 
+  const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
   const locale = getAppCurrencyLocale()
   const currency = getAppCurrencyCode()
   const reportPeriod = formatReportPeriod(run.periodStart, run.periodEnd, locale)

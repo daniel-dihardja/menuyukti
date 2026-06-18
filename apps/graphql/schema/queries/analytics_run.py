@@ -6,7 +6,7 @@ from menuyukti.core.analytics import (
     compute_sales_analytics_from_orders,
 )
 
-from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact, SessionLocal
+from graphql.data_sources import AnalyticsRun, MenuItemCogs, SessionLocal
 from graphql.limits import (
     DEFAULT_ANALYTICS_RUNS_FIRST,
     MAX_ANALYTICS_RUNS_FIRST,
@@ -22,6 +22,7 @@ from graphql.services.order_fact_rows import (
     facts_to_operating_profile_rows,
     facts_to_sales_analytics_rows,
 )
+from graphql.services.order_facts import load_order_facts
 
 
 @strawberry.type(description="Average order size and revenue for a single weekday.")
@@ -62,7 +63,7 @@ class AnalyticsRunType:
     def menuItemCogs(self, info: strawberry.Info) -> list[MenuItemCogsType]:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, self._analytics_run_id, user_id)
+            run = get_analytics_run_if_owner(session, self._analytics_run_id, user_id, info=info)
             if run is None:
                 return []
             cogs_rows = (
@@ -93,8 +94,12 @@ class AnalyticsRunListItemType:
     filename: str
 
 
-def _compute_order_metrics(session, run: AnalyticsRun) -> AnalyticsRunOrderMetricsType:
-    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+def _compute_order_metrics(
+    session,
+    run: AnalyticsRun,
+    info: strawberry.Info | None = None,
+) -> AnalyticsRunOrderMetricsType:
+    rows = load_order_facts(session, run.id, info=info)
     by_day_rows = compute_order_metrics_by_day_from_orders(facts_to_operating_profile_rows(rows))
     by_day_of_week = [
         OrderMetricsByDayOfWeekType(
@@ -149,7 +154,7 @@ class AnalyticsRunQuery:
     def analytics_run(self, info: strawberry.Info, id: strawberry.ID) -> AnalyticsRunType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(id), user_id)
+            run = get_analytics_run_if_owner(session, int(id), user_id, info=info)
             if run is None:
                 return None
             return _run_to_type(run)
@@ -173,7 +178,7 @@ class AnalyticsRunQuery:
             maximum=MAX_ANALYTICS_RUNS_FIRST,
         )
         with SessionLocal() as session:
-            if not is_location_owner(session, location_id, user_id):
+            if not is_location_owner(session, location_id, user_id, info=info):
                 return []
             runs = (
                 session.query(AnalyticsRun)
@@ -202,7 +207,7 @@ class AnalyticsRunQuery:
     ) -> AnalyticsRunOrderMetricsType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
-            return _compute_order_metrics(session, run)
+            return _compute_order_metrics(session, run, info=info)

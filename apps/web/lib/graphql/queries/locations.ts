@@ -1,3 +1,16 @@
+export const LOCATIONS_LIST_QUERY = `
+  query LocationsList($first: Int) {
+    locations(first: $first) {
+      id
+      name
+      nodeId
+      city
+      country
+      currency
+    }
+  }
+`
+
 export const LOCATIONS_QUERY = `
   query Locations($first: Int) {
     locations(first: $first) {
@@ -15,6 +28,38 @@ export const LOCATIONS_QUERY = `
     }
   }
 `
+
+export type LocationsListData = {
+  locations: Array<{
+    id: string
+    name: string
+    nodeId: string | null
+    city: string | null
+    country: string | null
+    currency: string | null
+  }>
+}
+
+export const LOCATION_ANALYTICS_SUMMARIES_QUERY = `
+  query LocationAnalyticsSummaries($locationIds: [Int!]!) {
+    locationAnalyticsSummaries(locationIds: $locationIds) {
+      locationId
+      runCount
+      latestRun {
+        id
+        name
+      }
+    }
+  }
+`
+
+export type LocationAnalyticsSummariesData = {
+  locationAnalyticsSummaries: Array<{
+    locationId: number
+    runCount: number
+    latestRun: { id: string; name: string } | null
+  }>
+}
 
 export type LocationsData = {
   locations: Array<{

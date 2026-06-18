@@ -6,12 +6,14 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
+import strawberry
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     compute_menu_engineering_from_orders,
 )
 from sqlalchemy.orm import Session
 
 from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact
+from graphql.services.order_facts import load_order_facts
 
 
 @dataclass
@@ -28,6 +30,7 @@ def compute_menu_engineering_matrix(
     run: AnalyticsRun,
     *,
     order_facts: Sequence[OrderFact] | None = None,
+    info: strawberry.Info | None = None,
 ) -> MenuEngineeringMatrixData | None:
     """Load facts and COGS, run matrix math; return None if no rows or on ValueError.
 
@@ -37,7 +40,7 @@ def compute_menu_engineering_matrix(
     rows = (
         list(order_facts)
         if order_facts is not None
-        else session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+        else load_order_facts(session, run.id, info=info)
     )
 
     if not rows:

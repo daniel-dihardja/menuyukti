@@ -42,7 +42,7 @@ class MilestonePriorDataQuery:
         if wf_pk < 1 or ms_pk < 1:
             return cast(JSON, [])
         with SessionLocal() as session:
-            if not is_location_owner(session, location_id, user_id):
+            if not is_location_owner(session, location_id, user_id, info=info):
                 return cast(JSON, [])
             root = session.get(Node, wf_pk)
             if root is None or root.node_type != "workflow":
@@ -76,7 +76,30 @@ class MilestonePriorDataQuery:
                 return cast(JSON, [])
 
             payload: list[dict[str, Any]] = []
-            for m in milestones[:idx]:
+            prior_milestones = milestones[:idx]
+            missing_data_ids = [
+                m.id
+                for m in prior_milestones
+                if not (
+                    isinstance(m.milestone_preset_data, (dict, list)) and m.milestone_preset_data
+                )
+            ]
+            milestonedata_by_parent: dict[int, Node] = {}
+            if missing_data_ids:
+                md_rows = (
+                    session.query(Node)
+                    .filter(
+                        Node.parent_id.in_(missing_data_ids),
+                        Node.node_type == "milestonedata",
+                    )
+                    .order_by(Node.parent_id.asc(), Node.id.asc())
+                    .all()
+                )
+                for md_row in md_rows:
+                    if md_row.parent_id is not None and md_row.parent_id not in milestonedata_by_parent:
+                        milestonedata_by_parent[md_row.parent_id] = md_row
+
+            for m in prior_milestones:
                 title = m.name or "Milestone"
                 preset_id: str | None = None
                 if isinstance(m.data, dict):
@@ -88,15 +111,7 @@ class MilestonePriorDataQuery:
                 if isinstance(mpd, (dict, list)) and mpd:
                     data_val = mpd
                 else:
-                    md_row = (
-                        session.query(Node)
-                        .filter(
-                            Node.parent_id == m.id,
-                            Node.node_type == "milestonedata",
-                        )
-                        .order_by(Node.id.asc())
-                        .first()
-                    )
+                    md_row = milestonedata_by_parent.get(m.id)
                     if md_row is not None and isinstance(md_row.data, dict):
                         data_val = md_row.data
                 payload.append({"title": title, "presetId": preset_id, "data": data_val})

@@ -37,7 +37,7 @@ class PromotionEngineeringCandidatesQuery:
     ) -> JSON | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
             if location_id is not None and run.location_id != int(location_id):
@@ -47,4 +47,5 @@ class PromotionEngineeringCandidatesQuery:
                 run,
                 max_star_items=max_star_items,
                 max_puzzle_items=max_puzzle_items,
+                info=info,
             )

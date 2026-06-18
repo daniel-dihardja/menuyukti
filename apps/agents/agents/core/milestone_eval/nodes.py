@@ -21,7 +21,7 @@ from agents_app.agents.core.milestone_eval.campaign_brief_eval import (
 from agents_app.agents.core.milestone_eval.graphql_client import (
     fetch_milestone_node,
     fetch_prior_milestones_data_for_eval,
-    update_milestone_passcriteria_status,
+    update_milestone_passcriteria_statuses,
     upsert_result_node,
 )
 from agents_app.agents.core.milestone_eval.ig_profile_eval import (
@@ -178,6 +178,20 @@ async def fetch_context(
         "milestone_eval.fetch_context: emitted step fetch_context; loading milestone %s",
         mid,
     )
+
+    existing_raw = str(state.get("raw_data") or "").strip()
+    existing_criteria = state.get("criteria") or []
+    existing_goal = str(state.get("goal") or "").strip()
+    if existing_raw and existing_criteria:
+        preset_id = str(state.get("preset_id") or "").strip()
+        writer(fc_payload)
+        return {
+            "goal": existing_goal,
+            "raw_data": existing_raw,
+            "criteria": list(existing_criteria),
+            "preset_id": preset_id,
+        }
+
     milestone_row = await fetch_milestone_node(mid, state["user_id"], client=client)
     _logger.info(
         "milestone_eval.fetch_context: loaded milestone row for milestone_id=%s location_id=%s",
@@ -249,18 +263,6 @@ async def fetch_context(
         raw_preset = node_data.get("presetId")
         if isinstance(raw_preset, str):
             preset_id = raw_preset.strip()
-
-    existing_raw = str(state.get("raw_data") or "").strip()
-    existing_criteria = state.get("criteria") or []
-    existing_goal = str(state.get("goal") or "").strip()
-    if existing_raw and existing_criteria:
-        writer(fc_payload)
-        return {
-            "goal": existing_goal or goal,
-            "raw_data": existing_raw,
-            "criteria": list(existing_criteria),
-            "preset_id": preset_id,
-        }
 
     return {"goal": goal, "raw_data": raw_data, "criteria": criteria, "preset_id": preset_id}
 
@@ -346,15 +348,13 @@ async def update_criteria(
     evaluated = state.get("evaluated", [])
     if not evaluated:
         return {}
-    for ev in evaluated:
-        await update_milestone_passcriteria_status(
-            state["milestone_id"],
-            state["location_id"],
-            ev["id"],
-            ev["status"],
-            state["user_id"],
-            client=client,
-        )
+    await update_milestone_passcriteria_statuses(
+        state["milestone_id"],
+        state["location_id"],
+        [{"id": ev["id"], "status": ev["status"]} for ev in evaluated],
+        state["user_id"],
+        client=client,
+    )
     return {}
 
 

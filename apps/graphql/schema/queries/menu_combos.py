@@ -5,9 +5,10 @@ from __future__ import annotations
 import strawberry
 from menuyukti.core.analytics import compute_menu_basket_affinities_from_orders
 
-from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
+from graphql.data_sources import AnalyticsRun, SessionLocal
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 from graphql.services.menu_engineering import compute_menu_engineering_matrix
+from graphql.services.order_facts import load_order_facts
 
 
 @strawberry.type(description="Co-occurrence metrics for a pair of menu items within the same order.")
@@ -48,8 +49,12 @@ def _star_focus_menus(matrix_items: list[dict]) -> list[str] | None:
     return None
 
 
-def _compute_menu_combos_for_run(session, run: AnalyticsRun) -> MenuCombosPayloadType | None:
-    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+def _compute_menu_combos_for_run(
+    session,
+    run: AnalyticsRun,
+    info: strawberry.Info | None = None,
+) -> MenuCombosPayloadType | None:
+    rows = load_order_facts(session, run.id, info=info)
     if not rows:
         return None
 
@@ -63,7 +68,7 @@ def _compute_menu_combos_for_run(session, run: AnalyticsRun) -> MenuCombosPayloa
         for r in rows
     ]
 
-    matrix_data = compute_menu_engineering_matrix(session, run, order_facts=rows)
+    matrix_data = compute_menu_engineering_matrix(session, run, order_facts=rows, info=info)
     matrix_by_menu: dict[str, str | None] = {}
     focus_menus: list[str] | None = None
     if matrix_data is not None:
@@ -121,9 +126,9 @@ class MenuCombosQuery:
     ) -> MenuCombosPayloadType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
             if location_id is not None and run.location_id != int(location_id):
                 return None
-            return _compute_menu_combos_for_run(session, run)
+            return _compute_menu_combos_for_run(session, run, info=info)

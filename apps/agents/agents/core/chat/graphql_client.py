@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
+from agents_app.agents.core.chat.http_context import get_chat_milestone_cache
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     NODE_BY_ID_QUERY,
@@ -18,11 +19,21 @@ async def fetch_milestone_node(
     user_id: str,
     *,
     client: httpx.AsyncClient,
+    query: str = NODE_BY_ID_QUERY,
+    cache_key: str | None = "full",
 ) -> dict[str, Any] | None:
     """Return the milestone node (typed milestone fields + ``data``) or None."""
-    data = await graphql_post(client, NODE_BY_ID_QUERY, {"id": milestone_id}, user_id)
+    if cache_key is not None:
+        cache = get_chat_milestone_cache()
+        memo_key = (milestone_id, f"{user_id}:{cache_key}")
+        if memo_key in cache:
+            return cache[memo_key]
+    data = await graphql_post(client, query, {"id": milestone_id}, user_id)
     raw = data.get("node")
-    return raw if isinstance(raw, dict) else None
+    node = raw if isinstance(raw, dict) else None
+    if cache_key is not None:
+        get_chat_milestone_cache()[(milestone_id, f"{user_id}:{cache_key}")] = node
+    return node
 
 
 async def upsert_milestone_goal(

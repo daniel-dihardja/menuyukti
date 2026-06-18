@@ -1,8 +1,9 @@
 import strawberry
 from menuyukti.core.analytics import compute_operating_profile_from_orders
 
-from graphql.data_sources import OrderFact, SessionLocal
+from graphql.data_sources import SessionLocal
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
+from graphql.services.order_facts import load_order_facts
 
 
 @strawberry.type
@@ -118,11 +119,11 @@ class OperatingProfileQuery:
         """
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None or run.location_id != int(location_id):
                 return None
 
-            rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+            rows = load_order_facts(session, run.id, info=info)
 
             order_rows = [
                 {

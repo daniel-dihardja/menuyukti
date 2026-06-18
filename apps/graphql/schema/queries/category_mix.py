@@ -40,13 +40,13 @@ class CategoryMixQuery:
     ) -> CategoryMixPayloadType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
             if location_id is not None and run.location_id != int(location_id):
                 return None
 
-            raw = build_category_mix(session, run)
+            raw = build_category_mix(session, run, info=info)
             if raw is None:
                 return None
 

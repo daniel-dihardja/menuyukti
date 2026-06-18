@@ -8,7 +8,7 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { auth } from '@clerk/nextjs/server'
 import {
-  getCachedAnalyticsRunsByLocation,
+  getCachedLocationAnalyticsSummaries,
   getCachedLocationsData,
 } from '@/lib/graphql/cached-queries'
 import { Skeleton } from '@workspace/ui/components/skeleton'
@@ -52,16 +52,19 @@ async function LocationsPageData() {
   }
 
   const data = await getCachedLocationsData(userId)
-  const branches = await Promise.all(
-    data.locations.map(async (location) => {
-      const runs = await getCachedAnalyticsRunsByLocation(userId, Number(location.id))
-      return {
-        ...location,
-        analyticsRunCount: runs.length,
-        latestAnalyticsId: runs[0]?.id ?? null,
-      }
-    }),
+  const locationIds = data.locations.map((location) => Number(location.id))
+  const summariesData = await getCachedLocationAnalyticsSummaries(userId, locationIds)
+  const summaryByLocation = new Map(
+    summariesData.locationAnalyticsSummaries.map((summary) => [summary.locationId, summary]),
   )
+  const branches = data.locations.map((location) => {
+    const summary = summaryByLocation.get(Number(location.id))
+    return {
+      ...location,
+      analyticsRunCount: summary?.runCount ?? 0,
+      latestAnalyticsId: summary?.latestRun ? Number(summary.latestRun.id) : null,
+    }
+  })
 
   return (
     <LocationsTable

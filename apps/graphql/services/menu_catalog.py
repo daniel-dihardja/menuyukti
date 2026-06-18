@@ -5,18 +5,25 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+import strawberry
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, OrderFact
+from graphql.data_sources import AnalyticsRun
+from graphql.services.order_facts import load_order_facts
 
 
-def build_menu_catalog(session: Session, run: AnalyticsRun) -> list[dict[str, Any]]:
+def build_menu_catalog(
+    session: Session,
+    run: AnalyticsRun,
+    *,
+    info: strawberry.Info | None = None,
+) -> list[dict[str, Any]]:
     """
     Return one row per distinct menu name in the run: category, quantity-weighted avg unit price.
 
     ``id`` is a stable hash of menu name for LLM-friendly references (no separate menu PK in DB).
     """
-    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    rows = load_order_facts(session, run.id, info=info)
     if not rows:
         return []
 

@@ -39,7 +39,7 @@ class WeeklyDemandPatternQuery:
     ) -> WeeklyDemandPatternPayloadType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            if not is_location_owner(session, location_id, user_id):
+            if not is_location_owner(session, location_id, user_id, info=info):
                 return None
             run = (
                 session.query(AnalyticsRun)
@@ -49,7 +49,7 @@ class WeeklyDemandPatternQuery:
             )
             if run is None:
                 return None
-            raw_rows = build_weekly_demand_pattern(session, run)
+            raw_rows = build_weekly_demand_pattern(session, run, info=info)
             if not raw_rows:
                 return None
             rows = [

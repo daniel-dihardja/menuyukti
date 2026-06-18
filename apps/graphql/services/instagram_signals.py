@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import strawberry
 from menuyukti.core.analytics import (
     calculate_instagram_signals,
     compute_category_mix_from_orders,
@@ -16,7 +17,7 @@ from menuyukti.core.analytics.calculate_operating_profile import (
 )
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, OrderFact
+from graphql.data_sources import AnalyticsRun
 from graphql.services.analytics_runs import get_previous_analytics_run
 from graphql.services.menu_engineering import compute_menu_engineering_matrix
 from graphql.services.order_fact_rows import (
@@ -25,21 +26,27 @@ from graphql.services.order_fact_rows import (
     facts_to_revenue_trend_rows,
     facts_to_sales_analytics_rows,
 )
+from graphql.services.order_facts import load_order_facts
 
 
-def build_instagram_signals(session: Session, run: AnalyticsRun) -> dict[str, Any] | None:
+def build_instagram_signals(
+    session: Session,
+    run: AnalyticsRun,
+    *,
+    info: strawberry.Info | None = None,
+) -> dict[str, Any] | None:
     """
     Load order facts for ``run`` and the prior run (if any), run analytics pipelines,
     and return a JSON-friendly dict matching :class:`InstagramSignalsResult`.
     """
-    facts = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    facts = load_order_facts(session, run.id, info=info)
     if not facts:
         return None
 
     prev_run = get_previous_analytics_run(session, run.location_id, run.id)
-    prev_facts: list[OrderFact] = []
-    if prev_run is not None:
-        prev_facts = session.query(OrderFact).where(OrderFact.analytics_run_id == prev_run.id).all()
+    prev_facts = (
+        load_order_facts(session, prev_run.id, info=info) if prev_run is not None else []
+    )
 
     sales_rows = facts_to_sales_analytics_rows(facts)
     sales_analytics = compute_sales_analytics_from_orders(sales_rows)
@@ -57,7 +64,7 @@ def build_instagram_signals(session: Session, run: AnalyticsRun) -> dict[str, An
         compute_operating_profile_from_orders(op_rows) if has_datetime_effective else None
     )
 
-    matrix_data = compute_menu_engineering_matrix(session, run, order_facts=facts)
+    matrix_data = compute_menu_engineering_matrix(session, run, order_facts=facts, info=info)
     menu_engineering = (
         {
             "thresholds": matrix_data.thresholds,

@@ -60,11 +60,13 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const runData = await getCachedAnalyticsRun(userId, id)
+  const [runData, signalsData] = await Promise.all([
+    getCachedAnalyticsRun(userId, id),
+    getCachedInstagramSignals(userId, id),
+  ])
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const signalsData = await getCachedInstagramSignals(userId, id, String(run.locationId))
   const signals = signalsData.instagramSignals
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`

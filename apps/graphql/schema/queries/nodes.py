@@ -38,7 +38,7 @@ class NodesQuery:
             first, default=DEFAULT_NODES_FIRST, maximum=MAX_NODES_FIRST
         )
         with SessionLocal() as session:
-            if not is_location_owner(session, location_id, user_id):
+            if not is_location_owner(session, location_id, user_id, info=info):
                 return []
             q = session.query(Node).filter(Node.location_id == location_id)
             if node_type is not None:
@@ -51,9 +51,9 @@ class NodesQuery:
                 if parent_pk < 1:
                     return []
                 q = q.filter(Node.parent_id == parent_pk)
-                rows = q.order_by(Node.created_at.asc()).all()
+                rows = q.order_by(Node.created_at.asc()).limit(limit).all()
                 rows.sort(key=_milestone_sort_key)
-                return [node_to_gql(r) for r in rows[:limit]]
+                return [node_to_gql(r) for r in rows]
             if after_id is not None:
                 try:
                     after_pk = int(str(after_id))
@@ -89,6 +89,6 @@ class NodesQuery:
             row = session.get(Node, node_pk)
             if row is None or row.location_id is None:
                 return None
-            if not is_location_owner(session, row.location_id, user_id):
+            if not is_location_owner(session, row.location_id, user_id, info=info):
                 return None
             return node_to_gql(row)

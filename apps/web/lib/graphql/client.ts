@@ -69,11 +69,21 @@ function buildHeaders(userId?: string): Record<string, string> {
   return headers
 }
 
-export const graphqlQuery = cache(async function graphqlQuery<T>(
+function stableVariablesKey(variables?: Record<string, unknown>): string {
+  if (!variables || Object.keys(variables).length === 0) {
+    return ''
+  }
+  const sorted = Object.keys(variables)
+    .sort()
+    .map((key) => [key, variables[key]])
+  return JSON.stringify(sorted)
+}
+
+async function executeGraphQL<T>(
   query: string,
-  variables?: Record<string, unknown>,
-  userId?: string,
-  operationName?: string,
+  variables: Record<string, unknown> | undefined,
+  userId: string | undefined,
+  operationName: string | undefined,
 ): Promise<T> {
   const body: Record<string, unknown> = { query, variables }
   if (operationName) {
@@ -109,4 +119,25 @@ export const graphqlQuery = cache(async function graphqlQuery<T>(
   }
 
   return json.data
+}
+
+const cachedGraphQLRequest = cache(async function cachedGraphQLRequest<T>(
+  requestKey: string,
+  query: string,
+  variables: Record<string, unknown> | undefined,
+  userId: string | undefined,
+  operationName: string | undefined,
+): Promise<T> {
+  void requestKey
+  return executeGraphQL<T>(query, variables, userId, operationName)
 })
+
+export function graphqlQuery<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+  userId?: string,
+  operationName?: string,
+): Promise<T> {
+  const requestKey = `${operationName ?? 'anonymous'}:${userId ?? ''}:${stableVariablesKey(variables)}`
+  return cachedGraphQLRequest<T>(requestKey, query, variables, userId, operationName)
+}

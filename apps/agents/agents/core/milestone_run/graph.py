@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from functools import partial
 from typing import Any
@@ -342,17 +343,21 @@ async def _run_dates(state: MilestoneRunState, *, client: httpx.AsyncClient) -> 
 
 async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     mid = str(state["milestone_id"])
-    out = await fetch_context(state, client=client)  # type: ignore[arg-type]
-    prior = ""
     wf_raw = state.get("workflow_id")
     if isinstance(wf_raw, str) and wf_raw.strip():
-        prior = await fetch_prior_milestones_data(
-            mid,
-            wf_raw.strip(),
-            int(state["location_id"]),
-            str(state["user_id"]),
-            client=client,
+        out, prior = await asyncio.gather(
+            fetch_context(state, client=client),  # type: ignore[arg-type]
+            fetch_prior_milestones_data(
+                mid,
+                wf_raw.strip(),
+                int(state["location_id"]),
+                str(state["user_id"]),
+                client=client,
+            ),
         )
+    else:
+        out = await fetch_context(state, client=client)  # type: ignore[arg-type]
+        prior = ""
 
     criteria: list[dict[str, str]] = list(out.get("criteria") or [])
     preset_id = str(out.get("preset_id") or "").strip()
@@ -404,6 +409,7 @@ async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient)
         "goal": str(state.get("goal", "")),
         "raw_data": str(state.get("raw_data") or state.get("result_data") or ""),
         "criteria": list(state.get("criteria") or []),
+        "preset_id": str(state.get("preset_id") or "").strip(),
         "evaluated": [],
         "result_summary": "",
         "result_node_id": None,

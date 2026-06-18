@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
+import strawberry
 from menuyukti.core.analytics import compute_menu_engineering_promotion_candidates
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact
+from graphql.data_sources import AnalyticsRun, MenuItemCogs
+from graphql.services.order_facts import load_order_facts
 
 _DEFAULT_MAX_STAR_ITEMS = 5
 _DEFAULT_MAX_PUZZLE_ITEMS = 10
@@ -60,9 +62,10 @@ def build_promotion_engineering_candidates(
     *,
     max_star_items: int | None = None,
     max_puzzle_items: int | None = None,
+    info: strawberry.Info | None = None,
 ) -> dict[str, Any] | None:
     """Load order facts and COGS; return star/puzzle items with menu metrics by category."""
-    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    rows = load_order_facts(session, run.id, info=info)
     if not rows:
         return None
 

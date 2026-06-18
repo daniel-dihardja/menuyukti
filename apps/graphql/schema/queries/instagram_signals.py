@@ -6,6 +6,7 @@ import strawberry
 
 from graphql.data_sources import SessionLocal
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
+from graphql.services.compute_limits import compute_timeout
 from graphql.services.instagram_signals import build_instagram_signals
 
 
@@ -171,6 +172,149 @@ class InstagramSignalsType:
     additional_signals: AdditionalSignalsType
 
 
+def instagram_signals_raw_to_gql(run_id: int, raw: dict[str, Any]) -> InstagramSignalsType:
+    """Map build_instagram_signals dict to GraphQL types."""
+    caps = raw.get("capabilities") or {}
+    fundamental = raw.get("fundamental_signals") or {}
+    sales_raw = fundamental.get("sales") if isinstance(fundamental, dict) else None
+    sales: dict[str, Any] = sales_raw if isinstance(sales_raw, dict) else {}
+    trending = fundamental.get("trending_items", []) if isinstance(fundamental, dict) else []
+    additional = raw.get("additional_signals") or {}
+    order_signals = additional.get("order_signals") if isinstance(additional, dict) else None
+    dt_signals = additional.get("datetime_signals") if isinstance(additional, dict) else None
+    matrix = additional.get("matrix_signals") if isinstance(additional, dict) else {}
+    planning = additional.get("campaign_planning_signals") if isinstance(additional, dict) else {}
+    confidence = additional.get("signal_confidence") if isinstance(additional, dict) else {}
+    cat = fundamental.get("category_focus") if isinstance(fundamental, dict) else None
+
+    return InstagramSignalsType(
+        analytics_run_id=strawberry.ID(str(run_id)),
+        capabilities=CampaignBriefSignalCapabilitiesType(
+            has_order_id=bool(caps.get("has_order_id")),
+            has_datetime=bool(caps.get("has_datetime")),
+            enabled_blocks=[str(x) for x in caps.get("enabled_blocks", [])],
+        ),
+        fundamental_signals=FundamentalSignalsType(
+            sales=FundamentalSalesSignalsType(
+                total_items_sold=int(sales.get("total_items_sold") or 0),
+                total_revenue=float(sales.get("total_revenue") or 0.0),
+                unique_menu_items=int(sales.get("unique_menu_items") or 0),
+                avg_item_price=float(sales.get("avg_item_price") or 0.0),
+                avg_popularity_threshold=float(sales.get("avg_popularity_threshold") or 0.0),
+            ),
+            category_focus=_category_focus(cat),
+            trending_items=[_trending_item(x) for x in trending],
+        ),
+        additional_signals=AdditionalSignalsType(
+            order_signals=(
+                OrderSignalsType(
+                    total_orders=int(order_signals.get("total_orders") or 0),
+                    avg_order_revenue=float(order_signals.get("avg_order_revenue") or 0.0),
+                    max_order_revenue=float(order_signals.get("max_order_revenue") or 0.0),
+                    min_order_revenue=float(order_signals.get("min_order_revenue") or 0.0),
+                    avg_order_items=float(order_signals.get("avg_order_items") or 0.0),
+                    max_order_items=int(order_signals.get("max_order_items") or 0),
+                    min_order_items=int(order_signals.get("min_order_items") or 0),
+                )
+                if isinstance(order_signals, dict)
+                else None
+            ),
+            datetime_signals=(
+                DatetimeSignalsType(
+                    best_posting_window=BestPostingWindowType(
+                        peak_day=dt_signals.get("best_posting_window", {}).get("peak_day"),
+                        peak_revenue_day=dt_signals.get("best_posting_window", {}).get(
+                            "peak_revenue_day"
+                        ),
+                        primary_meal_period=dt_signals.get("best_posting_window", {}).get(
+                            "primary_meal_period"
+                        ),
+                        peak_revenue_meal_period=dt_signals.get("best_posting_window", {}).get(
+                            "peak_revenue_meal_period"
+                        ),
+                        peak_hour=dt_signals.get("best_posting_window", {}).get("peak_hour"),
+                    ),
+                    period_headline=PeriodHeadlineType(
+                        period_start=str(
+                            dt_signals.get("period_headline", {}).get("period_start") or ""
+                        ),
+                        period_end=str(
+                            dt_signals.get("period_headline", {}).get("period_end") or ""
+                        ),
+                        total_revenue=float(
+                            dt_signals.get("period_headline", {}).get("total_revenue") or 0.0
+                        ),
+                        previous_period_total_revenue=float(
+                            dt_signals.get("period_headline", {}).get(
+                                "previous_period_total_revenue"
+                            )
+                            or 0.0
+                        ),
+                        revenue_vs_previous_pct=dt_signals.get("period_headline", {}).get(
+                            "revenue_vs_previous_pct"
+                        ),
+                    ),
+                )
+                if isinstance(dt_signals, dict)
+                else None
+            ),
+            matrix_signals=MatrixSignalsType(
+                content_heroes=[
+                    _matrix_item(x)
+                    for x in (matrix.get("content_heroes", []) if isinstance(matrix, dict) else [])
+                ],
+                avoid_items=[
+                    _matrix_item(x)
+                    for x in (matrix.get("avoid_items", []) if isinstance(matrix, dict) else [])
+                ],
+            ),
+            campaign_planning_signals=CampaignPlanningSignalsType(
+                recommended_posting_days=[
+                    str(x)
+                    for x in (
+                        planning.get("recommended_posting_days", [])
+                        if isinstance(planning, dict)
+                        else []
+                    )
+                ],
+                recommended_dayparts=[
+                    str(x)
+                    for x in (
+                        planning.get("recommended_dayparts", [])
+                        if isinstance(planning, dict)
+                        else []
+                    )
+                ],
+                objective_recommendation=(
+                    str(planning.get("objective_recommendation") or "awareness")
+                    if isinstance(planning, dict)
+                    else "awareness"
+                ),
+                primary_cta_channel=(
+                    str(planning.get("primary_cta_channel") or "profile_visit")
+                    if isinstance(planning, dict)
+                    else "profile_visit"
+                ),
+            ),
+            signal_confidence=SignalConfidenceType(
+                tier=(
+                    str(confidence.get("tier") or "low")
+                    if isinstance(confidence, dict)
+                    else "low"
+                ),
+                coverage_notes=[
+                    str(x)
+                    for x in (
+                        confidence.get("coverage_notes", [])
+                        if isinstance(confidence, dict)
+                        else []
+                    )
+                ],
+            ),
+        ),
+    )
+
+
 @strawberry.type
 class InstagramSignalsQuery:
     @strawberry.field(
@@ -188,163 +332,15 @@ class InstagramSignalsQuery:
     ) -> InstagramSignalsType | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
             if location_id is not None and run.location_id != int(location_id):
                 return None
 
-            raw = build_instagram_signals(session, run)
+            with compute_timeout():
+                raw = build_instagram_signals(session, run, info=info)
             if raw is None:
                 return None
 
-            caps = raw.get("capabilities") or {}
-            fundamental = raw.get("fundamental_signals") or {}
-            sales_raw = fundamental.get("sales") if isinstance(fundamental, dict) else None
-            sales: dict[str, Any] = sales_raw if isinstance(sales_raw, dict) else {}
-            trending = (
-                fundamental.get("trending_items", [])
-                if isinstance(fundamental, dict)
-                else []
-            )
-            additional = raw.get("additional_signals") or {}
-            order_signals = additional.get("order_signals") if isinstance(additional, dict) else None
-            dt_signals = additional.get("datetime_signals") if isinstance(additional, dict) else None
-            matrix = additional.get("matrix_signals") if isinstance(additional, dict) else {}
-            planning = (
-                additional.get("campaign_planning_signals") if isinstance(additional, dict) else {}
-            )
-            confidence = additional.get("signal_confidence") if isinstance(additional, dict) else {}
-            cat = (
-                fundamental.get("category_focus")
-                if isinstance(fundamental, dict)
-                else None
-            )
-
-            return InstagramSignalsType(
-                analytics_run_id=strawberry.ID(str(run.id)),
-                capabilities=CampaignBriefSignalCapabilitiesType(
-                    has_order_id=bool(caps.get("has_order_id")),
-                    has_datetime=bool(caps.get("has_datetime")),
-                    enabled_blocks=[str(x) for x in caps.get("enabled_blocks", [])],
-                ),
-                fundamental_signals=FundamentalSignalsType(
-                    sales=FundamentalSalesSignalsType(
-                        total_items_sold=int(sales.get("total_items_sold") or 0),
-                        total_revenue=float(sales.get("total_revenue") or 0.0),
-                        unique_menu_items=int(sales.get("unique_menu_items") or 0),
-                        avg_item_price=float(sales.get("avg_item_price") or 0.0),
-                        avg_popularity_threshold=float(sales.get("avg_popularity_threshold") or 0.0),
-                    ),
-                    category_focus=_category_focus(cat),
-                    trending_items=[_trending_item(x) for x in trending],
-                ),
-                additional_signals=AdditionalSignalsType(
-                    order_signals=(
-                        OrderSignalsType(
-                            total_orders=int(order_signals.get("total_orders") or 0),
-                            avg_order_revenue=float(order_signals.get("avg_order_revenue") or 0.0),
-                            max_order_revenue=float(order_signals.get("max_order_revenue") or 0.0),
-                            min_order_revenue=float(order_signals.get("min_order_revenue") or 0.0),
-                            avg_order_items=float(order_signals.get("avg_order_items") or 0.0),
-                            max_order_items=int(order_signals.get("max_order_items") or 0),
-                            min_order_items=int(order_signals.get("min_order_items") or 0),
-                        )
-                        if isinstance(order_signals, dict)
-                        else None
-                    ),
-                    datetime_signals=(
-                        DatetimeSignalsType(
-                            best_posting_window=BestPostingWindowType(
-                                peak_day=dt_signals.get("best_posting_window", {}).get("peak_day"),
-                                peak_revenue_day=dt_signals.get("best_posting_window", {}).get(
-                                    "peak_revenue_day"
-                                ),
-                                primary_meal_period=dt_signals.get("best_posting_window", {}).get(
-                                    "primary_meal_period"
-                                ),
-                                peak_revenue_meal_period=dt_signals.get(
-                                    "best_posting_window", {}
-                                ).get("peak_revenue_meal_period"),
-                                peak_hour=dt_signals.get("best_posting_window", {}).get("peak_hour"),
-                            ),
-                            period_headline=PeriodHeadlineType(
-                                period_start=str(
-                                    dt_signals.get("period_headline", {}).get("period_start") or ""
-                                ),
-                                period_end=str(
-                                    dt_signals.get("period_headline", {}).get("period_end") or ""
-                                ),
-                                total_revenue=float(
-                                    dt_signals.get("period_headline", {}).get("total_revenue")
-                                    or 0.0
-                                ),
-                                previous_period_total_revenue=float(
-                                    dt_signals.get("period_headline", {}).get(
-                                        "previous_period_total_revenue"
-                                    )
-                                    or 0.0
-                                ),
-                                revenue_vs_previous_pct=dt_signals.get("period_headline", {}).get(
-                                    "revenue_vs_previous_pct"
-                                ),
-                            ),
-                        )
-                        if isinstance(dt_signals, dict)
-                        else None
-                    ),
-                    matrix_signals=MatrixSignalsType(
-                        content_heroes=[
-                            _matrix_item(x)
-                            for x in (matrix.get("content_heroes", []) if isinstance(matrix, dict) else [])
-                        ],
-                        avoid_items=[
-                            _matrix_item(x)
-                            for x in (matrix.get("avoid_items", []) if isinstance(matrix, dict) else [])
-                        ],
-                    ),
-                    campaign_planning_signals=CampaignPlanningSignalsType(
-                        recommended_posting_days=[
-                            str(x)
-                            for x in (
-                                planning.get("recommended_posting_days", [])
-                                if isinstance(planning, dict)
-                                else []
-                            )
-                        ],
-                        recommended_dayparts=[
-                            str(x)
-                            for x in (
-                                planning.get("recommended_dayparts", [])
-                                if isinstance(planning, dict)
-                                else []
-                            )
-                        ],
-                        objective_recommendation=(
-                            str(planning.get("objective_recommendation") or "awareness")
-                            if isinstance(planning, dict)
-                            else "awareness"
-                        ),
-                        primary_cta_channel=(
-                            str(planning.get("primary_cta_channel") or "profile_visit")
-                            if isinstance(planning, dict)
-                            else "profile_visit"
-                        ),
-                    ),
-                    signal_confidence=SignalConfidenceType(
-                        tier=(
-                            str(confidence.get("tier") or "low")
-                            if isinstance(confidence, dict)
-                            else "low"
-                        ),
-                        coverage_notes=[
-                            str(x)
-                            for x in (
-                                confidence.get("coverage_notes", [])
-                                if isinstance(confidence, dict)
-                                else []
-                            )
-                        ],
-                    ),
-                ),
-            )
+            return instagram_signals_raw_to_gql(run.id, raw)

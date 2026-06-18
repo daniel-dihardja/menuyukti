@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { getCachedLocation } from '@/lib/graphql/cached-queries'
-import { graphqlQuery } from '@/lib/graphql/client'
-import {
-  PUBLIC_HOLIDAYS_QUERY,
-  type PublicHolidaysData,
-  type PublicHolidayItem,
-} from '@/lib/graphql/queries'
+import { getCachedLocation, getCachedPublicHolidays } from '@/lib/graphql/cached-queries'
+import { type PublicHolidayItem } from '@/lib/graphql/queries'
 import {
   countryIdToPublicHolidayId,
   resolveCountryIdFromName,
@@ -72,12 +67,14 @@ export async function GET(req: Request) {
       )
     }
     const publicHolidayId = countryIdToPublicHolidayId[countryId]
+    if (!publicHolidayId) {
+      return NextResponse.json(
+        { error: 'Could not resolve public holiday country id' },
+        { status: 422 },
+      )
+    }
 
-    const holidaysData = await graphqlQuery<PublicHolidaysData>(
-      PUBLIC_HOLIDAYS_QUERY,
-      { country: publicHolidayId, startDate: dateStart, endDate: dateEnd },
-      userId,
-    )
+    const holidaysData = await getCachedPublicHolidays(userId, publicHolidayId, dateStart, dateEnd)
 
     const holidays: PublicHolidayItem[] = holidaysData.publicHolidays ?? []
 

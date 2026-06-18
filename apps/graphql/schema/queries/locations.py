@@ -1,8 +1,8 @@
 import strawberry
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.orm import selectinload
 
-from graphql.data_sources import Location, SessionLocal, WorkspaceMembership
+from graphql.data_sources import AnalyticsRun, Location, SessionLocal, WorkspaceMembership
 from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import LocationType, OpeningHourType
@@ -28,6 +28,19 @@ def _location_to_gql(row: Location) -> LocationType:
         workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
         opening_hours=opening_hours,
     )
+
+
+@strawberry.type(description="Summary of analytics runs for one location.")
+class LocationAnalyticsRunSummaryType:
+    id: strawberry.ID
+    name: str
+
+
+@strawberry.type(description="Run count and latest run for a location.")
+class LocationAnalyticsSummaryType:
+    location_id: int
+    run_count: int
+    latest_run: LocationAnalyticsRunSummaryType | None
 
 
 @strawberry.type
@@ -66,13 +79,77 @@ class LocationsQuery:
             )
             return [_location_to_gql(row) for row in rows]
 
+    @strawberry.field(
+        description=(
+            "Analytics run counts and latest run per location in one query. "
+            "Only returns summaries for locations the caller can access."
+        )
+    )
+    def location_analytics_summaries(
+        self,
+        info: strawberry.Info,
+        location_ids: list[int],
+    ) -> list[LocationAnalyticsSummaryType]:
+        user_id = user_id_from_info(info)
+        if not user_id or not location_ids:
+            return []
+        unique_ids = sorted({lid for lid in location_ids if lid > 0})
+        if not unique_ids:
+            return []
+
+        with SessionLocal() as session:
+            allowed: list[int] = []
+            for lid in unique_ids:
+                if is_location_owner(session, lid, user_id, info=info):
+                    allowed.append(lid)
+            if not allowed:
+                return []
+
+            counts = dict(
+                session.query(AnalyticsRun.location_id, func.count(AnalyticsRun.id))
+                .filter(AnalyticsRun.location_id.in_(allowed))
+                .group_by(AnalyticsRun.location_id)
+                .all()
+            )
+            latest_rows = (
+                session.query(AnalyticsRun)
+                .filter(AnalyticsRun.location_id.in_(allowed))
+                .order_by(AnalyticsRun.location_id.asc(), AnalyticsRun.id.desc())
+                .all()
+            )
+            latest_by_location: dict[int, AnalyticsRun] = {}
+            for row in latest_rows:
+                if row.location_id not in latest_by_location:
+                    latest_by_location[row.location_id] = row
+
+            return [
+                LocationAnalyticsSummaryType(
+                    location_id=lid,
+                    run_count=int(counts.get(lid, 0)),
+                    latest_run=(
+                        LocationAnalyticsRunSummaryType(
+                            id=strawberry.ID(str(latest_by_location[lid].id)),
+                            name=latest_by_location[lid].name,
+                        )
+                        if lid in latest_by_location
+                        else None
+                    ),
+                )
+                for lid in allowed
+            ]
+
     @strawberry.field(description="Fetch one location by id if the caller has access.")
     def location(self, info: strawberry.Info, id: strawberry.ID) -> LocationType | None:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
         with SessionLocal() as session:
-            row = session.get(Location, int(id))
-            if row is None or not is_location_owner(session, row.id, user_id):
+            row = (
+                session.query(Location)
+                .options(selectinload(Location.opening_hours))
+                .filter(Location.id == int(id))
+                .one_or_none()
+            )
+            if row is None or not is_location_owner(session, row.id, user_id, info=info):
                 return None
             return _location_to_gql(row)

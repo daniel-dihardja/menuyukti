@@ -2,6 +2,9 @@ import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
+import { revalidateAnalyticsRunComputationsCache } from '@/lib/graphql/revalidate-analytics-cache'
+import { revalidateTag } from 'next/cache'
+import { graphqlAnalyticsRunCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 
 const DELETE_ANALYTICS_RUN_MUTATION = `
   mutation DeleteAnalyticsRun($id: ID!) {
@@ -45,6 +48,11 @@ export async function DELETE(req: Request) {
     if (Number.isInteger(locationId) && locationId > 0) {
       revalidateLocationScopedLists(userId, locationId)
     }
+    revalidateAnalyticsRunComputationsCache(userId, String(analyticsId))
+    revalidateTag(
+      graphqlAnalyticsRunCacheTag(userId, String(analyticsId)),
+      revalidateTagAfterMutation,
+    )
 
     return NextResponse.json({ ok: true })
   } catch (err) {
