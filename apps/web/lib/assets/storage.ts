@@ -57,6 +57,10 @@ export function isSafeAssetFilename(name: string): boolean {
 }
 
 const ASSET_DESIGNS_SUBDIR = 'designs'
+const ASSET_PHOTOS_SUBDIR = 'photos'
+const ASSET_REELS_SUBDIR = 'reels'
+
+const UUID_FILENAME = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /** S3 prefix: `users/<userId>/designs/`. */
 export function userDesignsPrefix(userId: string): string {
@@ -65,6 +69,73 @@ export function userDesignsPrefix(userId: string): string {
 
 export function userDesignsObjectKey(userId: string, filename: string): string {
   return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_DESIGNS_SUBDIR}/${filename}`
+}
+
+/** S3 prefix: `users/<userId>/photos/`. */
+export function userPhotosPrefix(userId: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_PHOTOS_SUBDIR}/`
+}
+
+export function userPhotosObjectKey(userId: string, filename: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_PHOTOS_SUBDIR}/${filename}`
+}
+
+export function isObjectKeyForPhoto(key: string, userId: string): boolean {
+  const prefix = userPhotosPrefix(userId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeAssetFilename(filename)
+}
+
+/** S3 prefix: `users/<userId>/reels/`. */
+export function userReelsPrefix(userId: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_REELS_SUBDIR}/`
+}
+
+export function userReelsObjectKey(userId: string, filename: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_REELS_SUBDIR}/${filename}`
+}
+
+/** UUID-based reel filenames: `.webp` (images) or `.mp4` / `.mov` / `.webm` (videos). */
+export function isSafeReelFilename(name: string): boolean {
+  const dot = name.lastIndexOf('.')
+  if (dot <= 0) return false
+  const base = name.slice(0, dot)
+  const ext = name.slice(dot + 1).toLowerCase()
+  if (!UUID_FILENAME.test(base)) return false
+  return ext === 'webp' || ext === 'mp4' || ext === 'mov' || ext === 'webm'
+}
+
+export function getReelMediaType(filename: string): 'image' | 'video' | null {
+  if (!isSafeReelFilename(filename)) return null
+  const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()
+  if (ext === 'webp') return 'image'
+  if (ext === 'mp4' || ext === 'mov' || ext === 'webm') return 'video'
+  return null
+}
+
+export function isObjectKeyForReel(key: string, userId: string): boolean {
+  const prefix = userReelsPrefix(userId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeReelFilename(filename)
+}
+
+export function reelContentTypeForFilename(filename: string): string | null {
+  if (!isSafeReelFilename(filename)) return null
+  const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()
+  switch (ext) {
+    case 'webp':
+      return 'image/webp'
+    case 'mp4':
+      return 'video/mp4'
+    case 'mov':
+      return 'video/quicktime'
+    case 'webm':
+      return 'video/webm'
+    default:
+      return null
+  }
 }
 
 /** Allow common image extensions in designs (not restricted to UUID.webp). */

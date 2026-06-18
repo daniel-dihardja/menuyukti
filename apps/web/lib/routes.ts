@@ -8,6 +8,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflow',
   '/canvas',
+  '/content',
   '/advisor',
   '/print-orders',
   '/dashboard',
@@ -52,6 +53,12 @@ export const routes = {
     menuItems: (analyticsId: string | number) => `/analytics/${analyticsId}/menu-items`,
     orderMetrics: (analyticsId: string | number) => `/analytics/${analyticsId}/order-metrics`,
     campaignSignals: (analyticsId: string | number) => `/analytics/${analyticsId}/campaign-signals`,
+  },
+
+  content: {
+    root: '/content',
+    photos: '/content/photos',
+    reels: '/content/reels',
   },
 
   /** AI studio (brand library + generation). */

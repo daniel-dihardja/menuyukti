@@ -4,6 +4,7 @@ import {
   BarChart3,
   ChevronRight,
   FileUp,
+  Image,
   LayoutDashboard,
   MapPin,
   Megaphone,
@@ -51,6 +52,16 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'dashboard',
     href: routes.dashboard,
     icon: <LayoutDashboard className="w-4 h-4" />,
+  },
+  {
+    key: 'content',
+    labelKey: 'content',
+    href: routes.content.photos,
+    icon: <Image className="w-4 h-4" />,
+    children: [
+      { key: 'photos', labelKey: 'photos', href: routes.content.photos },
+      { key: 'igReels', labelKey: 'igReels', href: routes.content.reels },
+    ],
   },
   {
     key: 'studio',
