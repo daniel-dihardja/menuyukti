@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Loader2 } from 'lucide-react'
+import { ImageIcon } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -14,13 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
-import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
 import { cn } from '@workspace/ui/lib/utils'
 
-import type { AssetItem } from '@/app/(protected)/canvas/_components/asset-item-types'
-import { loadPhotos } from '@/lib/photos/client-api'
+import { ContentMediaGrid } from '@/app/(protected)/content/_components/content-media-grid'
+import { ContentMediaPreviewDialog } from '@/app/(protected)/content/_components/content-media-preview-dialog'
+import type { ContentCatalogItem } from '@/app/(protected)/content/_components/content-catalog-types'
+import { loadPhotos, photoDownloadHref, type PhotoCatalogItem } from '@/lib/photos/client-api'
 
-import { PhotosImageGrid } from './_components/photos-image-grid'
 import { PhotosUploadZone } from './_components/photos-upload-zone'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
@@ -28,7 +28,7 @@ type ToastState = { kind: 'success' | 'error'; message: string } | null
 export function PhotosClient() {
   const t = useTranslations('photos')
   const inputRef = useRef<HTMLInputElement>(null)
-  const [items, setItems] = useState<AssetItem[]>([])
+  const [items, setItems] = useState<PhotoCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -38,8 +38,7 @@ export function PhotosClient() {
   const [imageDimensionsByName, setImageDimensionsByName] = useState<
     Record<string, { width: number; height: number }>
   >({})
-  const [preview, setPreview] = useState<AssetItem | null>(null)
-  const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
+  const [preview, setPreview] = useState<ContentCatalogItem | null>(null)
 
   const showToast = useCallback((kind: 'success' | 'error', message: string) => {
     setToast({ kind, message })
@@ -99,7 +98,7 @@ export function PhotosClient() {
             const err = (await res.json().catch(() => ({}))) as { message?: string }
             throw new Error(err.message ?? 'upload')
           }
-          return res.json() as Promise<AssetItem>
+          return res.json() as Promise<PhotoCatalogItem>
         }),
       )
       const ok = results.filter((r) => r.status === 'fulfilled').length
@@ -178,17 +177,25 @@ export function PhotosClient() {
         onBrowse={() => inputRef.current?.click()}
       />
 
-      <PhotosImageGrid
+      <ContentMediaGrid
         loading={loading}
         items={items}
         imageDimensionsByName={imageDimensionsByName}
         onImageNaturalSize={handleImageNaturalSize}
+        onVideoMetadata={handleImageNaturalSize}
         deleting={deleting}
-        onPreview={(item) => {
-          setPreviewImgLoaded(false)
-          setPreview(item)
-        }}
+        onPreview={setPreview}
         onDeleteRequest={setPendingDeleteName}
+        getDownloadHref={photoDownloadHref}
+        emptyIcon={ImageIcon}
+        labels={{
+          previewImage: t('grid.viewLarge'),
+          previewVideo: t('grid.viewLarge'),
+          delete: t('grid.delete'),
+          download: t('grid.download'),
+          emptyTitle: t('grid.empty.title'),
+          emptyDescription: t('grid.empty.description'),
+        }}
       />
 
       <AlertDialog
@@ -217,38 +224,11 @@ export function PhotosClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog
-        open={preview != null}
-        onOpenChange={(open) => {
-          if (!open) setPreview(null)
-        }}
-      >
-        {preview ? (
-          <DialogContent className="max-w-[min(96vw,72rem)] border-none bg-transparent p-0 shadow-none sm:max-w-[min(96vw,72rem)]">
-            <DialogTitle className="sr-only">{preview.name}</DialogTitle>
-            <div className="relative flex min-h-[12rem] items-center justify-center">
-              {!previewImgLoaded ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" aria-hidden />
-                </div>
-              ) : null}
-              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
-              <img
-                src={preview.url}
-                alt=""
-                width={1200}
-                height={900}
-                className={cn(
-                  'w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300',
-                  'max-h-[calc(100dvh-5.5rem)] sm:max-h-[calc(90vh-5.5rem)]',
-                  previewImgLoaded ? 'opacity-100' : 'opacity-0',
-                )}
-                onLoad={() => setPreviewImgLoaded(true)}
-              />
-            </div>
-          </DialogContent>
-        ) : null}
-      </Dialog>
+      <ContentMediaPreviewDialog
+        item={preview}
+        onClose={() => setPreview(null)}
+        closeLabel={t('preview.close')}
+      />
     </div>
   )
 }

@@ -59,6 +59,7 @@ export function isSafeAssetFilename(name: string): boolean {
 const ASSET_DESIGNS_SUBDIR = 'designs'
 const ASSET_PHOTOS_SUBDIR = 'photos'
 const ASSET_REELS_SUBDIR = 'reels'
+const ASSET_IG_STORIES_SUBDIR = 'igstories'
 
 const UUID_FILENAME = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -123,6 +124,57 @@ export function isObjectKeyForReel(key: string, userId: string): boolean {
 
 export function reelContentTypeForFilename(filename: string): string | null {
   if (!isSafeReelFilename(filename)) return null
+  const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()
+  switch (ext) {
+    case 'webp':
+      return 'image/webp'
+    case 'mp4':
+      return 'video/mp4'
+    case 'mov':
+      return 'video/quicktime'
+    case 'webm':
+      return 'video/webm'
+    default:
+      return null
+  }
+}
+
+/** S3 prefix: `users/<userId>/igstories/`. */
+export function userIgStoriesPrefix(userId: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_IG_STORIES_SUBDIR}/`
+}
+
+export function userIgStoriesObjectKey(userId: string, filename: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_IG_STORIES_SUBDIR}/${filename}`
+}
+
+/** UUID-based IG story filenames: `.webp` (images) or `.mp4` / `.mov` / `.webm` (videos). */
+export function isSafeIgStoryFilename(name: string): boolean {
+  const dot = name.lastIndexOf('.')
+  if (dot <= 0) return false
+  const base = name.slice(0, dot)
+  const ext = name.slice(dot + 1).toLowerCase()
+  if (!UUID_FILENAME.test(base)) return false
+  return ext === 'webp' || ext === 'mp4' || ext === 'mov' || ext === 'webm'
+}
+
+export function getIgStoryMediaType(filename: string): 'image' | 'video' | null {
+  if (!isSafeIgStoryFilename(filename)) return null
+  const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()
+  if (ext === 'webp') return 'image'
+  if (ext === 'mp4' || ext === 'mov' || ext === 'webm') return 'video'
+  return null
+}
+
+export function isObjectKeyForIgStory(key: string, userId: string): boolean {
+  const prefix = userIgStoriesPrefix(userId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeIgStoryFilename(filename)
+}
+
+export function igStoryContentTypeForFilename(filename: string): string | null {
+  if (!isSafeIgStoryFilename(filename)) return null
   const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()
   switch (ext) {
     case 'webp':

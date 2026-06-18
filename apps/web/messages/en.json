@@ -629,6 +629,7 @@
     "content": "Content",
     "photos": "Photos",
     "igReels": "IG Reels",
+    "igStories": "IG Stories",
     "printShop": "Print shop",
     "agents": "Advisor",
     "cogs": "COGS",
@@ -764,6 +765,9 @@
       "viewLarge": "View larger",
       "download": "Download"
     },
+    "preview": {
+      "close": "Close preview"
+    },
     "toast": {
       "uploaded": "Photo uploaded",
       "uploadError": "Couldn’t upload that file. Try again.",
@@ -807,6 +811,42 @@
       "loadError": "Couldn’t load your reels. Refresh the page.",
       "deleted": "Reel removed",
       "deleteError": "Couldn’t remove that reel. Try again."
+    }
+  },
+  "igstories": {
+    "title": "IG Stories",
+    "description": "Upload Instagram story assets — images or short videos (up to 50 MB). Images are resized to 1024px on the shortest side and saved as WebP.",
+    "upload": {
+      "title": "Upload stories",
+      "hint": "Drag and drop or browse — images (PNG, JPEG, WebP, GIF, AVIF) or video (MP4, MOV, WebM, max 50 MB)",
+      "browse": "Browse files",
+      "uploading": "Uploading…",
+      "invalidType": "Please choose an image or supported video file.",
+      "tooLarge": "Video must be 50 MB or smaller."
+    },
+    "grid": {
+      "empty": {
+        "title": "No stories yet",
+        "description": "Upload your first story image or video to build your content library."
+      },
+      "delete": "Remove",
+      "deleteConfirm": "Remove this story?",
+      "deleteAction": "Remove",
+      "cancel": "Cancel",
+      "viewLarge": "View larger",
+      "play": "Play story",
+      "download": "Download"
+    },
+    "preview": {
+      "close": "Close preview"
+    },
+    "toast": {
+      "uploaded": "Story uploaded",
+      "uploadError": "Couldn’t upload that file. Try again.",
+      "uploadPartial": "Some files couldn’t be uploaded. Check your files and try again.",
+      "loadError": "Couldn’t load your stories. Refresh the page.",
+      "deleted": "Story removed",
+      "deleteError": "Couldn’t remove that story. Try again."
     }
   },
   "assets": {

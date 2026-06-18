@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Film } from 'lucide-react'
+import { CircleFadingPlus } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -16,31 +16,31 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { cn } from '@workspace/ui/lib/utils'
 
+import type { ContentCatalogItem } from '@/app/(protected)/content/_components/content-catalog-types'
 import { ContentMediaGrid } from '@/app/(protected)/content/_components/content-media-grid'
 import { ContentMediaPreviewDialog } from '@/app/(protected)/content/_components/content-media-preview-dialog'
-import type { ContentCatalogItem } from '@/app/(protected)/content/_components/content-catalog-types'
 import {
-  loadReels,
-  MAX_REEL_VIDEO_BYTES,
-  reelDownloadHref,
-  type ReelCatalogItem,
-} from '@/lib/reels/client-api'
+  igStoryDownloadHref,
+  loadIgStories,
+  MAX_IG_STORY_VIDEO_BYTES,
+  type IgStoryCatalogItem,
+} from '@/lib/igstories/client-api'
 
-import { ReelsUploadZone } from './_components/reels-upload-zone'
+import { IgStoriesUploadZone } from './_components/ig-stories-upload-zone'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 
 const ALLOWED_VIDEO_TYPES = new Set(['video/mp4', 'video/quicktime', 'video/webm'])
 
-function isAllowedReelFile(file: File): boolean {
+function isAllowedIgStoryFile(file: File): boolean {
   if (file.type.startsWith('image/')) return true
   return ALLOWED_VIDEO_TYPES.has(file.type.toLowerCase())
 }
 
-export function ReelsClient() {
-  const t = useTranslations('reels')
+export function IgStoriesClient() {
+  const t = useTranslations('igstories')
   const inputRef = useRef<HTMLInputElement>(null)
-  const [items, setItems] = useState<ReelCatalogItem[]>([])
+  const [items, setItems] = useState<IgStoryCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -61,7 +61,7 @@ export function ReelsClient() {
     async (silent = false, signal?: AbortSignal) => {
       if (!silent) setLoading(true)
       try {
-        const list = await loadReels({ signal })
+        const list = await loadIgStories({ signal })
         setItems(list)
       } catch (e) {
         if (e instanceof Error && e.name === 'AbortError') {
@@ -91,14 +91,14 @@ export function ReelsClient() {
   }, [])
 
   const uploadFiles = async (files: FileList | File[]) => {
-    const list = Array.from(files).filter(isAllowedReelFile)
+    const list = Array.from(files).filter(isAllowedIgStoryFile)
     if (list.length === 0) {
       showToast('error', t('upload.invalidType'))
       return
     }
 
     const oversized = list.filter(
-      (f) => ALLOWED_VIDEO_TYPES.has(f.type.toLowerCase()) && f.size > MAX_REEL_VIDEO_BYTES,
+      (f) => ALLOWED_VIDEO_TYPES.has(f.type.toLowerCase()) && f.size > MAX_IG_STORY_VIDEO_BYTES,
     )
     if (oversized.length > 0) {
       showToast('error', t('upload.tooLarge'))
@@ -111,7 +111,7 @@ export function ReelsClient() {
         list.map(async (file) => {
           const fd = new FormData()
           fd.set('file', file)
-          const res = await fetch('/api/reels/upload', {
+          const res = await fetch('/api/igstories/upload', {
             method: 'POST',
             body: fd,
           })
@@ -119,7 +119,7 @@ export function ReelsClient() {
             const err = (await res.json().catch(() => ({}))) as { message?: string }
             throw new Error(err.message ?? 'upload')
           }
-          return res.json() as Promise<ReelCatalogItem>
+          return res.json() as Promise<IgStoryCatalogItem>
         }),
       )
       const ok = results.filter((r) => r.status === 'fulfilled').length
@@ -153,7 +153,7 @@ export function ReelsClient() {
   const onDelete = async (name: string) => {
     setDeleting(name)
     try {
-      const res = await fetch('/api/reels/delete', {
+      const res = await fetch('/api/igstories/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -188,7 +188,7 @@ export function ReelsClient() {
 
       <p className="text-sm text-muted-foreground">{t('description')}</p>
 
-      <ReelsUploadZone
+      <IgStoriesUploadZone
         inputRef={inputRef}
         uploading={uploading}
         dragActive={dragActive}
@@ -207,8 +207,8 @@ export function ReelsClient() {
         deleting={deleting}
         onPreview={setPreview}
         onDeleteRequest={setPendingDeleteName}
-        getDownloadHref={reelDownloadHref}
-        emptyIcon={Film}
+        getDownloadHref={igStoryDownloadHref}
+        emptyIcon={CircleFadingPlus}
         labels={{
           previewImage: t('grid.viewLarge'),
           previewVideo: t('grid.play'),
