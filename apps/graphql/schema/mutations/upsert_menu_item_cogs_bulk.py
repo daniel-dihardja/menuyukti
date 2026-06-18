@@ -1,6 +1,7 @@
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, MenuItemCogs, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import AnalyticsRun, MenuItemCogs
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.types import MenuItemCogsType
 
@@ -50,7 +51,7 @@ class UpsertMenuItemCogsBulkMutation:
         if run_pk < 1:
             raise ValueError("Invalid analytics run id")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             run = session.get(AnalyticsRun, run_pk)
             if run is None:
                 raise ValueError("Analytics run not found")

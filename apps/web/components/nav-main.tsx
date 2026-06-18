@@ -61,6 +61,7 @@ const NAV_WORKSPACE: NavItem[] = [
     children: [
       { key: 'photos', labelKey: 'photos', href: routes.content.photos },
       { key: 'igReels', labelKey: 'igReels', href: routes.content.reels },
+      { key: 'igStories', labelKey: 'igStories', href: routes.content.igStories },
     ],
   },
   {

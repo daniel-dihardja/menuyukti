@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   getCachedAnalyticsRunsByLocation,
-  getCachedLocationsData,
+  getCachedLocationsListData,
   getCachedWorkflowsByLocation,
 } from '@/lib/graphql/cached-queries'
 import { type AnyNode } from '@/lib/graphql/queries'
@@ -70,7 +70,7 @@ async function WorkflowsData() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocationsData(userId)
+  const data = await getCachedLocationsListData(userId)
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,

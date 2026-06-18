@@ -6,12 +6,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
-    compute_menu_engineering_from_orders,
-)
+import strawberry
+from menuyukti.core.analytics import compute_menu_engineering_from_orders
 from sqlalchemy.orm import Session
 
 from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact
+from graphql.services.order_fact_rows import facts_to_menu_engineering_rows
+from graphql.services.order_facts import load_order_facts
 
 
 @dataclass
@@ -28,6 +29,7 @@ def compute_menu_engineering_matrix(
     run: AnalyticsRun,
     *,
     order_facts: Sequence[OrderFact] | None = None,
+    info: strawberry.Info | None = None,
 ) -> MenuEngineeringMatrixData | None:
     """Load facts and COGS, run matrix math; return None if no rows or on ValueError.
 
@@ -37,22 +39,13 @@ def compute_menu_engineering_matrix(
     rows = (
         list(order_facts)
         if order_facts is not None
-        else session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+        else load_order_facts(session, run.id, info=info)
     )
 
     if not rows:
         return None
 
-    order_rows = [
-        {
-            "menu": r.menu,
-            "qty": r.qty,
-            "total_after_bill_discount": r.total_after_bill_discount,
-            "menu_category": r.menu_category,
-            "menu_category_detail": r.menu_category_detail,
-        }
-        for r in rows
-    ]
+    order_rows = facts_to_menu_engineering_rows(rows)
 
     cogs_rows = session.query(MenuItemCogs).where(MenuItemCogs.analytics_run_id == run.id).all()
     cogs_by_menu = {r.menu: float(r.cogs) for r in cogs_rows}

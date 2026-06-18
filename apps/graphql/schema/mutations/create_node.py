@@ -3,7 +3,8 @@ import secrets
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
@@ -44,7 +45,7 @@ class CreateNodeMutation:
                 "(milestonePresetData, milestoneResult, passCriterias, etc.)"
             )
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id)
 
             display_name = name if name is not None and name.strip() else _random_default_name()

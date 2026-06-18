@@ -31,6 +31,20 @@ ${NODE_SELECTION_FIELDS}
   }
 `
 
+export const REORDER_MILESTONES_MUTATION = `
+  mutation ReorderMilestones(
+    $workflowId: ID!
+    $locationId: Int!
+    $orders: [MilestoneOrderInput!]!
+  ) {
+    reorderMilestones(workflowId: $workflowId, locationId: $locationId, orders: $orders)
+  }
+`
+
+export type ReorderMilestonesData = {
+  reorderMilestones: boolean
+}
+
 export type UpdateNodeData = {
   updateNode: AnyNode
 }

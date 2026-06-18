@@ -2,7 +2,8 @@
 
 import strawberry
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
@@ -50,7 +51,7 @@ class WorkflowCampaignTreeQuery:
         if workflow_pk < 1:
             return None
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             workflow_row = session.get(Node, workflow_pk)
             if (
                 workflow_row is None

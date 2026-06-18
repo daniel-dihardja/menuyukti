@@ -4,7 +4,7 @@ from datetime import date
 
 import strawberry
 
-from graphql.data_sources import SessionLocal
+from graphql.context import request_session_scope
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 from graphql.services.promotion_menu_items import build_promotion_menu_items
 
@@ -90,14 +90,14 @@ class PromotionMenuItemsQuery:
         location_id: strawberry.ID | None = None,
     ) -> PromotionMenuItemsPayloadType | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+        with request_session_scope(info) as session:
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return None
             if location_id is not None and run.location_id != int(location_id):
                 return None
 
-            built = build_promotion_menu_items(session, run)
+            built = build_promotion_menu_items(session, run, info=info)
             items = [_row_to_promotion_item(r) for r in built.rows]
 
             return PromotionMenuItemsPayloadType(

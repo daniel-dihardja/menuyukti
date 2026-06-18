@@ -154,7 +154,12 @@ export function WorkflowChatPanel({
     dispatch({ type: 'RESET', milestones: initialMilestones })
   }, [workflowId, initialMilestones])
 
-  const ops = useMilestoneOperations(dispatch, { workflowId, locationId, t })
+  const ops = useMilestoneOperations(dispatch, {
+    workflowId,
+    locationId,
+    t,
+    getMilestoneSnapshot: (milestoneId) => milestoneUi.milestones.find((m) => m.id === milestoneId),
+  })
 
   const [selectedMilestoneId, setSelectedMilestoneId] = useQueryState('milestone', parseAsString)
   const searchParams = useSearchParams()

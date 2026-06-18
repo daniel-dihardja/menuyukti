@@ -6,7 +6,8 @@ import secrets
 
 import strawberry
 
-from graphql.data_sources import Node, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Node
 from graphql.schema.auth import require_location_owner, user_id_from_info
 
 
@@ -31,7 +32,7 @@ class ReplacePassCriteriaMutation:
         if ms_pk < 1:
             raise ValueError("Invalid milestone id")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id)
 
             milestone = session.get(Node, ms_pk)

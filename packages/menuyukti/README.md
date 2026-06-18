@@ -26,6 +26,8 @@ Export stable entry points from `menuyukti.core.analytics` (`__init__.py` + `__a
 
 Treat changes to public functions and return shapes as **API contracts**: callers include GraphQL and tests. When you change outputs or behavior, update callers and tests in the same change when possible.
 
+Document breaking contract changes in commit messages. Column names on `POSTransactionLineItem` and keys on public `TypedDict` results are part of the stable surface exported from `menuyukti.core.analytics`.
+
 ## Tests and tooling
 
 - Unit tests: `tests/` (e.g. `tests/unit/core/analytics/`).

@@ -39,6 +39,42 @@ query Node($id: ID!) {
 }
 """
 
+MILESTONE_INPUT_QUERY = """
+query MilestoneInput($id: ID!) {
+  node(id: $id) {
+    id
+    nodeType
+    locationId
+    milestoneInput
+  }
+}
+"""
+
+MILESTONE_PRESET_DATA_QUERY = """
+query MilestonePresetData($id: ID!) {
+  node(id: $id) {
+    id
+    nodeType
+    locationId
+    milestonePresetData
+  }
+}
+"""
+
+MILESTONE_HELP_QUERY = """
+query MilestoneHelp($id: ID!) {
+  node(id: $id) {
+    id
+    nodeType
+    locationId
+    name
+    milestoneGoal
+    data
+    passCriterias
+  }
+}
+"""
+
 UPDATE_NODE_MUTATION = """
 mutation UpdateNode($id: ID!, $data: JSON) {
   updateNode(id: $id, data: $data) {
@@ -66,6 +102,20 @@ mutation SetPassCriterionStatus(
     locationId: $locationId
     criterionId: $criterionId
     status: $status
+  )
+}
+"""
+
+SET_PASS_CRITERIA_STATUSES_MUTATION = """
+mutation SetPassCriteriaStatuses(
+  $milestoneId: ID!
+  $locationId: Int!
+  $updates: [PassCriterionStatusInput!]!
+) {
+  setPassCriteriaStatuses(
+    milestoneId: $milestoneId
+    locationId: $locationId
+    updates: $updates
   )
 }
 """
@@ -171,6 +221,96 @@ query AnalyticsRunsForLocation($locationId: Int!, $first: Int) {
   analyticsRuns(locationId: $locationId, first: $first) {
     id
     name
+  }
+}
+"""
+
+LATEST_ANALYTICS_RUN_WITH_SIGNALS_QUERY = """
+query LatestAnalyticsRunWithSignals($locationId: Int!) {
+  latestAnalyticsRunWithSignals(locationId: $locationId) {
+    analyticsRun {
+      id
+      name
+    }
+    instagramSignals {
+      capabilities {
+        hasOrderId
+        hasDatetime
+        enabledBlocks
+      }
+      fundamentalSignals {
+        sales {
+          totalItemsSold
+          totalRevenue
+          uniqueMenuItems
+          avgItemPrice
+          avgPopularityThreshold
+        }
+        categoryFocus {
+          category
+          revenueShare
+          quantityShare
+        }
+        trendingItems {
+          menu
+          currentRevenue
+          previousRevenue
+          changePct
+          rankCurrent
+          rankPrevious
+          trendLabel
+        }
+      }
+      additionalSignals {
+        orderSignals {
+          totalOrders
+          avgOrderRevenue
+          maxOrderRevenue
+          minOrderRevenue
+          avgOrderItems
+          maxOrderItems
+          minOrderItems
+        }
+        datetimeSignals {
+          bestPostingWindow {
+            peakDay
+            peakRevenueDay
+            primaryMealPeriod
+            peakRevenueMealPeriod
+            peakHour
+          }
+          periodHeadline {
+            periodStart
+            periodEnd
+            totalRevenue
+            previousPeriodTotalRevenue
+            revenueVsPreviousPct
+          }
+        }
+        matrixSignals {
+          contentHeroes {
+            menu
+            matrixCategory
+            totalRevenue
+          }
+          avoidItems {
+            menu
+            matrixCategory
+            totalRevenue
+          }
+        }
+        campaignPlanningSignals {
+          recommendedPostingDays
+          recommendedDayparts
+          objectiveRecommendation
+          primaryCtaChannel
+        }
+        signalConfidence {
+          tier
+          coverageNotes
+        }
+      }
+    }
   }
 }
 """

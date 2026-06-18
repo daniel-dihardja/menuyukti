@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import AnalyticsRun
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.services.weekly_demand_pattern import build_weekly_demand_pattern
 
@@ -38,8 +39,8 @@ class WeeklyDemandPatternQuery:
         location_id: int,
     ) -> WeeklyDemandPatternPayloadType | None:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
-            if not is_location_owner(session, location_id, user_id):
+        with request_session_scope(info) as session:
+            if not is_location_owner(session, location_id, user_id, info=info):
                 return None
             run = (
                 session.query(AnalyticsRun)
@@ -49,7 +50,7 @@ class WeeklyDemandPatternQuery:
             )
             if run is None:
                 return None
-            raw_rows = build_weekly_demand_pattern(session, run)
+            raw_rows = build_weekly_demand_pattern(session, run, info=info)
             if not raw_rows:
                 return None
             rows = [

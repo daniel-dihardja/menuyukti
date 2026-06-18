@@ -1,10 +1,6 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { graphqlQuery } from '@/lib/graphql/client'
-import {
-  ANALYTICS_RUNS_BY_LOCATION_QUERY,
-  type AnalyticsRunsByLocationData,
-} from '@/lib/graphql/queries'
+import { getCachedAnalyticsRunsByLocation } from '@/lib/graphql/cached-queries'
 
 function isPrerenderInterrupt(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -46,15 +42,7 @@ export async function GET(req: Request) {
       )
     }
 
-    const data = await graphqlQuery<AnalyticsRunsByLocationData>(
-      ANALYTICS_RUNS_BY_LOCATION_QUERY,
-      { locationId, first: 300 },
-      userId,
-    )
-    const list = (data.analyticsRuns ?? []).map((run) => ({
-      id: Number(run.id),
-      name: run.name || run.filename || `Run #${run.id}`,
-    }))
+    const list = await getCachedAnalyticsRunsByLocation(userId, locationId)
     return NextResponse.json(list, {
       headers: {
         'Cache-Control': 'no-store',

@@ -48,7 +48,10 @@ async def lifespan(app: FastAPI) -> Any:
     app.state.chat_checkpointer = checkpointer
     app.state.chat_graph = compile_chat_graph(checkpointer)
     try:
-        async with httpx.AsyncClient() as http_client:
+        async with httpx.AsyncClient(
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+            timeout=httpx.Timeout(60.0),
+        ) as http_client:
             app.state.http_client = http_client
             yield
     finally:

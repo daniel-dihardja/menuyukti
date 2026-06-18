@@ -5,7 +5,7 @@ from __future__ import annotations
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import SessionLocal
+from graphql.context import request_session_scope
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_gql import node_to_gql
 from graphql.schema.types import NodeType
@@ -26,7 +26,7 @@ class CreateWorkflowFromPayloadMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createWorkflowFromPayload")
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id)
             root_node = seed_workflow_from_payload(
                 session,

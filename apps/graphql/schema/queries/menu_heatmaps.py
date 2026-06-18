@@ -1,10 +1,10 @@
 """GraphQL types and resolver for menuHeatmaps."""
 
 import strawberry
-from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
 
-from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
+from graphql.context import request_session_scope
 from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
+from graphql.services.menu_heatmaps import build_menu_heatmaps
 
 
 @strawberry.type(description="Hourly demand distribution for a menu item.")
@@ -34,24 +34,7 @@ class MenuHeatmapType:
     reporting_period: str
 
 
-def _compute_menu_heatmaps_for_run(session, run: AnalyticsRun) -> list[MenuHeatmapType]:
-    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
-
-    if not rows:
-        return []
-
-    order_rows = [
-        {
-            "menu": r.menu,
-            "qty": r.qty,
-            "order_time": r.order_time,
-            "menu_category": r.menu_category,
-            "menu_category_detail": r.menu_category_detail,
-        }
-        for r in rows
-    ]
-    payloads = compute_menu_heatmaps_from_orders(order_rows)
-
+def menu_heatmaps_to_gql(payloads: list[dict]) -> list[MenuHeatmapType]:
     result: list[MenuHeatmapType] = []
     for payload in payloads:
         daily_heatmap = [
@@ -78,7 +61,6 @@ def _compute_menu_heatmaps_for_run(session, run: AnalyticsRun) -> list[MenuHeatm
                 reporting_period=payload["reporting_period"],
             )
         )
-
     return result
 
 
@@ -98,10 +80,11 @@ class MenuHeatmapsQuery:
         location_id: strawberry.ID | None = None,
     ) -> list[MenuHeatmapType]:
         user_id = user_id_from_info(info)
-        with SessionLocal() as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+        with request_session_scope(info) as session:
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
             if run is None:
                 return []
             if location_id is not None and run.location_id != int(location_id):
                 return []
-            return _compute_menu_heatmaps_for_run(session, run)
+            payloads = build_menu_heatmaps(session, run, info=info)
+            return menu_heatmaps_to_gql(payloads)

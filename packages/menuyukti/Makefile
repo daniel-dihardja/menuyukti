@@ -1,62 +1,43 @@
-.PHONY: help test unit_tests orchestration_tests core_tests integration_tests clean lint type-check format
+.PHONY: help test unit_tests core_tests clean lint type-check format
 
 help:
 	@echo "menuyukti test commands:"
 	@echo ""
 	@echo "  make test              - Run all unit tests"
 	@echo "  make unit_tests        - Run all unit tests (alias)"
-	@echo "  make orchestration_tests       - Run orchestration unit tests only"
 	@echo "  make core_tests        - Run core unit tests only"
 	@echo "  make test_verbose      - Run all unit tests with verbose output"
 	@echo "  make test_coverage     - Run tests with coverage report"
 	@echo ""
 	@echo "Other commands:"
 	@echo "  make clean             - Remove pytest cache and compiled files"
-	@echo "  make lint              - Run pylint (if configured)"
+	@echo "  make lint              - Run Ruff lint (from repo root: uv run ruff check)"
 	@echo "  make type-check        - Run mypy type checking"
-	@echo "  make format            - Auto-format code with black"
-	@echo "  make sample_star_item  - Export star_item scenario as JSON"
+	@echo "  make format            - Run Ruff format (from repo root: uv run ruff format)"
 
 # Run all unit tests
 test:
-	python -m pytest tests/unit/ -v
+	uv run pytest tests/ -v
 
 # Alias for test
 unit_tests: test
 
-# Run orchestration tests only
-orchestration_tests:
-	python -m pytest tests/unit/orchestration/ -v
-
-# Run core tests only
+# Run core analytics tests only
 core_tests:
-	python -m pytest tests/unit/core/ -v
+	uv run pytest tests/unit/core/ -v
 
 # Run all tests with verbose output
 test_verbose:
-	python -m pytest tests/unit/ -vv --tb=short
+	uv run pytest tests/ -vv --tb=short
 
 # Run tests with coverage report
 test_coverage:
-	python -m pytest tests/unit/ --cov=menuyukti --cov-report=html --cov-report=term-missing
+	uv run pytest tests/ --cov=menuyukti --cov-report=html --cov-report=term-missing
 	@echo "Coverage report generated in htmlcov/index.html"
 
 # Run tests and stop on first failure
 test_fast:
-	python -m pytest tests/unit/ -x
-
-# Run specific test file
-test_file:
-	@read -p "Enter test file path (relative to tests/): " file; \
-	python -m pytest tests/$$file -v
-
-# Run specific test by name (requires TEST_NAME env var)
-test_by_name:
-	python -m pytest tests/unit/ -k "$(TEST_NAME)" -v
-
-# Watch mode - rerun tests on file changes (requires pytest-watch)
-test_watch:
-	ptw tests/unit/ -- -v
+	uv run pytest tests/ -x
 
 # Clean up test artifacts
 clean:
@@ -67,33 +48,15 @@ clean:
 
 # Type checking
 type-check:
-	mypy src/menuyukti --ignore-missing-imports
+	uv run mypy src/menuyukti --ignore-missing-imports
 
-# Linting (if pylint is available)
+# Linting via workspace Ruff
 lint:
-	pylint src/menuyukti --disable=all --enable=E,F --max-line-length=120 || true
+	uv run ruff check src/menuyukti tests/
 
-# Auto-format code
+# Format via workspace Ruff
 format:
-	black src/menuyukti tests/
-
-# Export sample data
-sample_star_item:
-	python scripts/export_sample.py --scenario star_item --format json --output-dir samples_output
+	uv run ruff format src/menuyukti tests/
 
 # Run all checks
 check: lint type-check test
-
-# Development setup
-dev-install:
-	uv pip install -e .
-	uv pip install pytest pytest-cov pytest-watch
-
-# Show test statistics
-test_stats:
-	@echo "=== Orchestration Tests ==="
-	@python -m pytest tests/unit/orchestration/ --collect-only -q | tail -1
-	@echo "=== Core Tests ==="
-	@python -m pytest tests/unit/core/ --collect-only -q | tail -1
-	@echo "=== Total Unit Tests ==="
-	@python -m pytest tests/unit/ --collect-only -q | tail -1

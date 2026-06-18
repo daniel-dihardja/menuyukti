@@ -32,6 +32,7 @@ DEFAULT_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
 # Must match the Clerk user id used by the web app (X-User-Id) so resolvers allow access.
 _DEFAULT_DEV_CLERK_USER_ID = "dev_local_user"
 
+
 def _resolve_clerk_user_id(cli_value: str | None) -> str:
     if cli_value:
         return cli_value

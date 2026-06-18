@@ -47,7 +47,14 @@ function parseMilestoneRunStreamError(payload: Record<string, unknown>): string 
 
 export function useMilestoneRun(
   dispatch: Dispatch<WorkflowMilestoneAction>,
-  { workflowId, locationId, t }: MilestoneOpsContext,
+  {
+    workflowId,
+    locationId,
+    t,
+    getMilestoneSnapshot,
+  }: MilestoneOpsContext & {
+    getMilestoneSnapshot?: (milestoneId: string) => TimelineMilestone | undefined
+  },
 ) {
   const abortRef = useRef<AbortController | null>(null)
   const reflectionRoundsRef = useRef<CampaignBriefReflectionRound[]>([])
@@ -147,18 +154,36 @@ export function useMilestoneRun(
           prev.map((m) => (m.id === milestoneId ? { ...m, status: 'pending' as const } : m)),
       })
       try {
-        const hydrateRes = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
-          signal,
-        })
-        const hydrateBody = (await hydrateRes.json().catch(() => null)) as {
+        const cached = getMilestoneSnapshot?.(milestoneId)
+        let hydrateBody: {
           message?: string
           goal?: string
           milestoneData?: MilestoneDataValue
           milestoneInput?: MilestoneInput | null
-        } | null
-        if (!hydrateRes.ok) {
-          throw new Error(hydrateBody?.message ?? t('milestoneRunError'))
         }
+
+        if (cached) {
+          hydrateBody = {
+            goal: cached.goal ?? '',
+            milestoneInput: cached.milestoneInput ?? undefined,
+            milestoneData: cached.data ?? undefined,
+          }
+        } else {
+          const hydrateRes = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
+            signal,
+          })
+          const fetched = (await hydrateRes.json().catch(() => null)) as {
+            message?: string
+            goal?: string
+            milestoneData?: MilestoneDataValue
+            milestoneInput?: MilestoneInput | null
+          } | null
+          if (!hydrateRes.ok) {
+            throw new Error(fetched?.message ?? t('milestoneRunError'))
+          }
+          hydrateBody = fetched ?? { goal: '' }
+        }
+
         const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -388,7 +413,7 @@ export function useMilestoneRun(
         })
       }
     },
-    [workflowId, dispatch, locationId, t, handleHydrateMilestoneData],
+    [workflowId, dispatch, locationId, t, handleHydrateMilestoneData, getMilestoneSnapshot],
   )
 
   return { handleRunMilestone, handleStopMilestoneRun, handleHydrateMilestoneData }

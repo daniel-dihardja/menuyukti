@@ -77,6 +77,7 @@ query RevenueTrends($locationId: ID!, $analyticsRunId: ID!) {
 }
 """
 
+
 def _get_location_id(run_id: int) -> int:
     session = SessionLocal()
     try:
@@ -140,4 +141,3 @@ def test_instagram_signals_category_mix_revenue_trends(analytics_run_with_qa_dat
     assert trends is not None
     assert trends["currentPeriodTotalRevenue"] > 0
     assert len(trends["rows"]) >= 1
-

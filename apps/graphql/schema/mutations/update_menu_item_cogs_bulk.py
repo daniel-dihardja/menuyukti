@@ -1,6 +1,7 @@
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, MenuItemCogs, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import AnalyticsRun, MenuItemCogs
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import MenuItemCogsType
 
@@ -46,7 +47,7 @@ class UpdateMenuItemCogsBulkMutation:
         if not id_to_cogs:
             return []
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             rows = session.query(MenuItemCogs).filter(MenuItemCogs.id.in_(id_to_cogs.keys())).all()
             by_id = {r.id: r for r in rows}
 

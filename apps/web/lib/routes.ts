@@ -59,6 +59,7 @@ export const routes = {
     root: '/content',
     photos: '/content/photos',
     reels: '/content/reels',
+    igStories: '/content/igstories',
   },
 
   /** AI studio (brand library + generation). */

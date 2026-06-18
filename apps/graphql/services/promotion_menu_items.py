@@ -9,13 +9,17 @@ from __future__ import annotations
 from typing import Any, NamedTuple
 
 import pandas as pd
-from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
-from menuyukti.core.analytics.calculate_menu_heatmaps import WEEKDAY_ORDER
-from menuyukti.core.analytics.extract_menu_items import extract_menu_items
+import strawberry
+from menuyukti.core.analytics import (
+    WEEKDAY_ORDER,
+    compute_menu_heatmaps_from_orders,
+    extract_menu_items,
+)
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, OrderFact
+from graphql.data_sources import AnalyticsRun
 from graphql.services.menu_engineering import compute_menu_engineering_matrix
+from graphql.services.order_facts import load_order_facts
 
 # Cap returned rows so agents and clients never receive unbounded promotion payloads.
 # OrderFact rows stay inside this service; only aggregated rows cross the API boundary.
@@ -64,7 +68,12 @@ def _heatmap_peaks_by_menu(
     return out
 
 
-def build_promotion_menu_items(session: Session, run: AnalyticsRun) -> PromotionMenuItemsBuildResult:
+def build_promotion_menu_items(
+    session: Session,
+    run: AnalyticsRun,
+    *,
+    info: strawberry.Info | None = None,
+) -> PromotionMenuItemsBuildResult:
     """
     One ``OrderFact`` query per call; matrix reuses those rows via ``order_facts``.
 
@@ -74,7 +83,7 @@ def build_promotion_menu_items(session: Session, run: AnalyticsRun) -> Promotion
     Returns JSON-friendly dicts with snake_case keys aligned with menuyukti outputs,
     plus ``peak_hour`` and ``peak_day`` (string weekday code, e.g. ``mon``).
     """
-    facts = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    facts = load_order_facts(session, run.id, info=info)
     if not facts:
         return PromotionMenuItemsBuildResult(rows=[], items_total_count=0, items_truncated=False)
 

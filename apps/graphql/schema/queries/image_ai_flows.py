@@ -1,6 +1,7 @@
 import strawberry
 
-from graphql.data_sources import ImageAiFlow, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import ImageAiFlow
 from graphql.schema.types import ImageAiFlowType
 
 
@@ -22,10 +23,12 @@ def _flow_to_gql(row: ImageAiFlow) -> ImageAiFlowType:
 @strawberry.type
 class ImageAiFlowsQuery:
     @strawberry.field
-    def image_ai_flows(self, include_inactive: bool = False) -> list[ImageAiFlowType]:
+    def image_ai_flows(
+        self, info: strawberry.Info, include_inactive: bool = False
+    ) -> list[ImageAiFlowType]:
         """Image AI flows ordered for display. Default: active only (asset upload UI)."""
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             q = session.query(ImageAiFlow).order_by(
                 ImageAiFlow.sort_order.asc(), ImageAiFlow.id.asc()
             )
@@ -35,13 +38,13 @@ class ImageAiFlowsQuery:
             return [_flow_to_gql(r) for r in rows]
 
     @strawberry.field
-    def image_ai_flow(self, slug: str) -> ImageAiFlowType | None:
+    def image_ai_flow(self, info: strawberry.Info, slug: str) -> ImageAiFlowType | None:
         """Single flow by slug (including inactive), for server-side processing."""
 
         slug_clean = slug.strip()
         if not slug_clean:
             return None
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             row = session.query(ImageAiFlow).filter(ImageAiFlow.slug == slug_clean).first()
             return _flow_to_gql(row) if row else None

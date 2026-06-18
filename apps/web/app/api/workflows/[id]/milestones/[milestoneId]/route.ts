@@ -27,6 +27,7 @@ import {
   DELETE_NODE_MUTATION,
   NODE_QUERY,
   NODES_QUERY,
+  REORDER_MILESTONES_MUTATION,
   UPDATE_NODE_MUTATION,
   parseNodeData,
   parseNodesData,
@@ -380,17 +381,17 @@ export async function PATCH(req: Request, context: RouteContext) {
       reordered[idx] = b
       reordered[j] = a
 
-      await Promise.all(
-        reordered.map((node, i) => {
-          if (!node) {
-            return Promise.resolve()
-          }
-          return graphqlQuery<UpdateNodeDataRaw>(
-            UPDATE_NODE_MUTATION,
-            { id: node.id, data: { order: i + 1 } },
-            userId,
-          ).then((res) => parseUpdateNodeData(res))
-        }),
+      await graphqlQuery(
+        REORDER_MILESTONES_MUTATION,
+        {
+          workflowId,
+          locationId: workflowRoot.locationId,
+          orders: reordered.map((node, i) => ({
+            milestoneId: node.id,
+            order: i + 1,
+          })),
+        },
+        userId,
       )
 
       revalidateWorkflowCampaignTreeCache(userId, workflowId)

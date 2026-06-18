@@ -5,7 +5,8 @@ from __future__ import annotations
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources import LocationManualBriefInput, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import LocationManualBriefInput
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.types.location_manual_brief_input import LocationManualBriefInputType
 from graphql.services.manual_quick_profile import (
@@ -37,7 +38,7 @@ class UpdateLocationManualBriefInputMutation:
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
 
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id)
             row = (
                 session.query(LocationManualBriefInput)

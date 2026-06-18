@@ -9,6 +9,7 @@ from typing import Any
 
 from openpyxl import load_workbook
 
+from graphql.access import require_location_owner
 from graphql.data_sources import AnalyticsRun, Location, SessionLocal
 from graphql.reports import (
     Order,
@@ -18,7 +19,6 @@ from graphql.reports import (
     run_sales_analytics,
 )
 from graphql.reports.ingest import NormalizedLineItemData
-from graphql.schema.auth import require_location_owner
 
 
 @dataclass

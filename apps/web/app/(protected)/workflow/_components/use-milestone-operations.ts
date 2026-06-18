@@ -6,6 +6,7 @@ import { useMemo } from 'react'
 import { useMilestoneCrud } from './use-milestone-crud'
 import { useMilestonePatches } from './use-milestone-patches'
 import { useMilestoneRun } from './use-milestone-run'
+import type { TimelineMilestone } from './timeline/types'
 import type { WorkflowMilestoneAction } from './workflow-milestone-reducer'
 
 export function useMilestoneOperations(
@@ -14,14 +15,16 @@ export function useMilestoneOperations(
     workflowId,
     locationId,
     t,
+    getMilestoneSnapshot,
   }: {
     workflowId: string
     locationId: number
     /** `useTranslations('analytics.workflows.chat')` */
     t: (key: string) => string
+    getMilestoneSnapshot?: (milestoneId: string) => TimelineMilestone | undefined
   },
 ) {
-  const ctx = { workflowId, locationId, t }
+  const ctx = { workflowId, locationId, t, getMilestoneSnapshot }
   const crud = useMilestoneCrud(dispatch, ctx)
   const patches = useMilestonePatches(dispatch, ctx)
   const run = useMilestoneRun(dispatch, ctx)

@@ -8,8 +8,7 @@ import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
 import {
   getCachedAnalyticsRun,
-  getCachedMenuEngineeringMatrix,
-  getCachedMenuHeatmaps,
+  getCachedAnalyticsBundleHeatmap,
 } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
@@ -44,14 +43,12 @@ export default async function Page({ params }: PageProps) {
 
   const locationId = String(run.locationId)
   const locale = getAppCurrencyLocale()
-  const [heatmapsData, matrixData] = await Promise.all([
-    getCachedMenuHeatmaps(userId, id, locationId),
-    getCachedMenuEngineeringMatrix(userId, id, locationId),
-  ])
+  const bundleData = await getCachedAnalyticsBundleHeatmap(userId, id, locationId)
+  const bundle = bundleData.analyticsBundle
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const menuHeatmaps = heatmapsData.menuHeatmaps ?? []
-  const matrixItems = matrixData.menuEngineeringMatrix?.items ?? null
+  const menuHeatmaps = bundle?.menuHeatmaps ?? []
+  const matrixItems = bundle?.menuEngineeringMatrix?.items ?? null
 
   return (
     <AnalyticsPageShell

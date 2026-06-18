@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Loader2, X } from 'lucide-react'
+import { Film } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -14,12 +14,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
-import { Dialog, DialogClose, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { loadReels, MAX_REEL_VIDEO_BYTES, type ReelCatalogItem } from '@/lib/reels/client-api'
+import { ContentMediaGrid } from '@/app/(protected)/content/_components/content-media-grid'
+import { ContentMediaPreviewDialog } from '@/app/(protected)/content/_components/content-media-preview-dialog'
+import type { ContentCatalogItem } from '@/app/(protected)/content/_components/content-catalog-types'
+import {
+  loadReels,
+  MAX_REEL_VIDEO_BYTES,
+  reelDownloadHref,
+  type ReelCatalogItem,
+} from '@/lib/reels/client-api'
 
-import { ReelsMediaGrid } from './_components/reels-media-grid'
 import { ReelsUploadZone } from './_components/reels-upload-zone'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
@@ -34,7 +40,6 @@ function isAllowedReelFile(file: File): boolean {
 export function ReelsClient() {
   const t = useTranslations('reels')
   const inputRef = useRef<HTMLInputElement>(null)
-  const previewVideoRef = useRef<HTMLVideoElement>(null)
   const [items, setItems] = useState<ReelCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -45,18 +50,11 @@ export function ReelsClient() {
   const [mediaDimensionsByName, setMediaDimensionsByName] = useState<
     Record<string, { width: number; height: number }>
   >({})
-  const [preview, setPreview] = useState<ReelCatalogItem | null>(null)
-  const [previewMediaLoaded, setPreviewMediaLoaded] = useState(false)
+  const [preview, setPreview] = useState<ContentCatalogItem | null>(null)
 
   const showToast = useCallback((kind: 'success' | 'error', message: string) => {
     setToast({ kind, message })
     window.setTimeout(() => setToast(null), 4200)
-  }, [])
-
-  const closePreview = useCallback(() => {
-    previewVideoRef.current?.pause()
-    setPreview(null)
-    setPreviewMediaLoaded(false)
   }, [])
 
   const load = useCallback(
@@ -200,18 +198,25 @@ export function ReelsClient() {
         onBrowse={() => inputRef.current?.click()}
       />
 
-      <ReelsMediaGrid
+      <ContentMediaGrid
         loading={loading}
         items={items}
         imageDimensionsByName={mediaDimensionsByName}
         onImageNaturalSize={setMediaDimensions}
         onVideoMetadata={setMediaDimensions}
         deleting={deleting}
-        onPreview={(item) => {
-          setPreviewMediaLoaded(false)
-          setPreview(item)
-        }}
+        onPreview={setPreview}
         onDeleteRequest={setPendingDeleteName}
+        getDownloadHref={reelDownloadHref}
+        emptyIcon={Film}
+        labels={{
+          previewImage: t('grid.viewLarge'),
+          previewVideo: t('grid.play'),
+          delete: t('grid.delete'),
+          download: t('grid.download'),
+          emptyTitle: t('grid.empty.title'),
+          emptyDescription: t('grid.empty.description'),
+        }}
       />
 
       <AlertDialog
@@ -240,65 +245,11 @@ export function ReelsClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog
-        open={preview != null}
-        onOpenChange={(open) => {
-          if (!open) closePreview()
-        }}
-      >
-        {preview ? (
-          <DialogContent
-            showCloseButton={false}
-            className="max-w-[min(96vw,72rem)] border-none bg-transparent p-0 shadow-none sm:max-w-[min(96vw,72rem)]"
-          >
-            <DialogTitle className="sr-only">{preview.name}</DialogTitle>
-            <div className="relative flex min-h-[12rem] items-center justify-center">
-              <DialogClose
-                type="button"
-                aria-label={t('preview.close')}
-                className="absolute top-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white shadow-lg ring-offset-background transition-opacity hover:bg-black/85 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden"
-                onClick={() => closePreview()}
-              >
-                <X className="h-5 w-5" aria-hidden />
-              </DialogClose>
-              {!previewMediaLoaded ? (
-                <div className="absolute inset-0 z-0 flex items-center justify-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" aria-hidden />
-                </div>
-              ) : null}
-              {preview.mediaType === 'video' ? (
-                <video
-                  ref={previewVideoRef}
-                  src={preview.url}
-                  controls
-                  autoPlay
-                  playsInline
-                  className={cn(
-                    'relative z-10 w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300',
-                    'max-h-[calc(100dvh-5.5rem)] sm:max-h-[calc(90vh-5.5rem)]',
-                    previewMediaLoaded ? 'opacity-100' : 'opacity-0',
-                  )}
-                  onLoadedData={() => setPreviewMediaLoaded(true)}
-                />
-              ) : (
-                /* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */
-                <img
-                  src={preview.url}
-                  alt=""
-                  width={1200}
-                  height={900}
-                  className={cn(
-                    'relative z-10 w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300',
-                    'max-h-[calc(100dvh-5.5rem)] sm:max-h-[calc(90vh-5.5rem)]',
-                    previewMediaLoaded ? 'opacity-100' : 'opacity-0',
-                  )}
-                  onLoad={() => setPreviewMediaLoaded(true)}
-                />
-              )}
-            </div>
-          </DialogContent>
-        ) : null}
-      </Dialog>
+      <ContentMediaPreviewDialog
+        item={preview}
+        onClose={() => setPreview(null)}
+        closeLabel={t('preview.close')}
+      />
     </div>
   )
 }

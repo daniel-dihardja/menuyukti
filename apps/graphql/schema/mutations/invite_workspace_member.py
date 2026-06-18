@@ -2,7 +2,8 @@ from datetime import UTC, datetime
 
 import strawberry
 
-from graphql.data_sources import SessionLocal, WorkspaceMembership
+from graphql.context import request_session_scope
+from graphql.data_sources import WorkspaceMembership
 from graphql.schema.auth import is_workspace_owner_role, user_id_from_info
 from graphql.schema.types import WorkspaceMembershipType
 
@@ -22,7 +23,7 @@ class InviteWorkspaceMemberMutation:
         wid = int(workspace_id)
         if clerk_user_id == user_id:
             raise ValueError("Cannot invite yourself to the workspace")
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             if not is_workspace_owner_role(session, wid, user_id):
                 raise PermissionError("Access denied")
             existing = (

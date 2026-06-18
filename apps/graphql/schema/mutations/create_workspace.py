@@ -2,7 +2,8 @@ from datetime import UTC, datetime
 
 import strawberry
 
-from graphql.data_sources import SessionLocal, Workspace, WorkspaceMembership
+from graphql.context import request_session_scope
+from graphql.data_sources import Workspace, WorkspaceMembership
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.types import WorkspaceType
 
@@ -15,7 +16,7 @@ class CreateWorkspaceMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createWorkspace")
         now = datetime.now(tz=UTC)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             ws = Workspace(name=name, owner_clerk_user_id=user_id)
             session.add(ws)
             session.flush()

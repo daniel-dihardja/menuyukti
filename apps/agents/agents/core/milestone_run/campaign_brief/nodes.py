@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -344,19 +345,20 @@ async def fetch_and_prepare(
 ) -> dict[str, Any]:
     """Fetch location + signals and normalize them into deterministic markdown context."""
     _trace(state, "prepare_brief_context")
-    location_data = await graphql_post(
+    location_task = graphql_post(
         client,
         LOCATION_QUERY,
         {"id": str(state["location_id"]), "locationId": int(state["location_id"])},
         str(state["user_id"]),
     )
-    raw_loc = location_data.get("location")
-    location_raw = raw_loc if isinstance(raw_loc, dict) else {}
-    signals = await fetch_location_operating_signals(
+    signals_task = fetch_location_operating_signals(
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
     )
+    location_data, signals = await asyncio.gather(location_task, signals_task)
+    raw_loc = location_data.get("location")
+    location_raw = raw_loc if isinstance(raw_loc, dict) else {}
     signal_markdown = _build_signal_markdown(
         location_data=location_data,
         location_raw=location_raw,

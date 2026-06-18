@@ -12,10 +12,13 @@ import {
   graphqlWorkflowCampaignTreeCacheTag,
 } from '@/lib/graphql/cache-tags'
 import {
+  ANALYTICS_BUNDLE_HEATMAP_QUERY,
   ANALYTICS_RUN_METADATA_QUERY,
   ANALYTICS_RUNS_BY_LOCATION_QUERY,
   IMAGE_AI_FLOWS_QUERY,
   LOCATION_QUERY,
+  LOCATION_ANALYTICS_SUMMARIES_QUERY,
+  LOCATIONS_LIST_QUERY,
   LOCATIONS_QUERY,
   MENU_COMBOS_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
@@ -24,23 +27,41 @@ import {
   INSTAGRAM_SIGNALS_QUERY,
   ORDER_METRICS_QUERY,
   PROMOTION_MENU_ITEMS_QUERY,
+  PUBLIC_HOLIDAYS_QUERY,
   WORKFLOW_CAMPAIGN_TREE_QUERY,
   parseNodesData,
+  type AnalyticsBundleHeatmapData,
   type AnalyticsRunsByLocationData,
   type AnyNode,
   type AnalyticsRunMetadataData,
   type ImageAiFlowsData,
+  type LocationsListData,
   type LocationsData,
   type MenuCombosData,
   type MenuEngineeringMatrixData,
   type MenuHeatmapsData,
   type NodesDataRaw,
+  type LocationAnalyticsSummariesData,
   type LocationData,
   type InstagramSignalsData,
   type OrderMetricsData,
   type PromotionMenuItemsData,
+  type PublicHolidaysData,
   type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
+
+/** Cached per user; list view without opening hours payload. */
+export async function getCachedLocationsListData(userId: string): Promise<LocationsListData> {
+  'use cache'
+  cacheTag(graphqlLocationsDataCacheTag(userId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<LocationsListData>(
+    LOCATIONS_LIST_QUERY,
+    { first: DEFAULT_LIST_FIRST },
+    userId,
+    'LocationsList',
+  )
+}
 
 /** Cached per user; reduces duplicate GraphQL hits on analytics entry routes. */
 export async function getCachedLocationsData(userId: string): Promise<LocationsData> {
@@ -52,6 +73,22 @@ export async function getCachedLocationsData(userId: string): Promise<LocationsD
     { first: DEFAULT_LIST_FIRST },
     userId,
     'Locations',
+  )
+}
+
+/** Batch analytics run counts and latest run for many locations (one GraphQL round trip). */
+export async function getCachedLocationAnalyticsSummaries(
+  userId: string,
+  locationIds: number[],
+): Promise<LocationAnalyticsSummariesData> {
+  'use cache'
+  cacheTag(graphqlLocationsDataCacheTag(userId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<LocationAnalyticsSummariesData>(
+    LOCATION_ANALYTICS_SUMMARIES_QUERY,
+    { locationIds },
+    userId,
+    'LocationAnalyticsSummaries',
   )
 }
 
@@ -134,7 +171,7 @@ export async function getCachedImageAiFlows(userId: string): Promise<ImageAiFlow
 export async function getCachedMenuEngineeringMatrix(
   userId: string,
   analyticsRunId: string,
-  locationId: string,
+  locationId?: string,
 ): Promise<MenuEngineeringMatrixData> {
   'use cache'
   const computationsTag = graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId)
@@ -142,7 +179,7 @@ export async function getCachedMenuEngineeringMatrix(
   cacheLife({ revalidate: 60 })
   return graphqlQuery<MenuEngineeringMatrixData>(
     MENU_ENGINEERING_MATRIX_QUERY,
-    { id: analyticsRunId, locationId },
+    { id: analyticsRunId, ...(locationId != null ? { locationId } : {}) },
     userId,
     'MenuEngineeringMatrix',
   )
@@ -184,18 +221,35 @@ export async function getCachedMenuHeatmaps(
   )
 }
 
+/** Heatmap page bundle: matrix + heatmaps in one GraphQL operation. */
+export async function getCachedAnalyticsBundleHeatmap(
+  userId: string,
+  analyticsRunId: string,
+  locationId: string,
+): Promise<AnalyticsBundleHeatmapData> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<AnalyticsBundleHeatmapData>(
+    ANALYTICS_BUNDLE_HEATMAP_QUERY,
+    { analyticsRunId, locationId },
+    userId,
+    'AnalyticsBundleHeatmap',
+  )
+}
+
 /** Campaign brief operating signals composed from analytics pipelines for a run. */
 export async function getCachedInstagramSignals(
   userId: string,
   analyticsRunId: string,
-  locationId: string,
+  locationId?: string,
 ): Promise<InstagramSignalsData> {
   'use cache'
   cacheTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId))
   cacheLife({ revalidate: 60 })
   return graphqlQuery<InstagramSignalsData>(
     INSTAGRAM_SIGNALS_QUERY,
-    { analyticsRunId, locationId },
+    { analyticsRunId, ...(locationId != null ? { locationId } : {}) },
     userId,
     'InstagramSignals',
   )
@@ -250,5 +304,22 @@ export async function getCachedWorkflowCampaignTree(
     { workflowId },
     userId,
     'WorkflowCampaignTree',
+  )
+}
+
+/** Public holidays for a country and date range (shared across workflow milestones). */
+export async function getCachedPublicHolidays(
+  userId: string,
+  country: string,
+  startDate: string,
+  endDate: string,
+): Promise<PublicHolidaysData> {
+  'use cache'
+  cacheLife({ revalidate: 3600 })
+  return graphqlQuery<PublicHolidaysData>(
+    PUBLIC_HOLIDAYS_QUERY,
+    { country, startDate, endDate },
+    userId,
+    'PublicHolidays',
   )
 }

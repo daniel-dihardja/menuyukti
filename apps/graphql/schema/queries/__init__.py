@@ -1,7 +1,9 @@
+from .analytics_bundle import AnalyticsBundleQuery
 from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
+from .latest_analytics_run_signals import LatestAnalyticsRunWithSignalsQuery
 from .location_manual_brief_input import LocationManualBriefInputQuery
 from .locations import LocationsQuery
 from .menu_catalog import MenuCatalogQuery
@@ -20,7 +22,9 @@ from .workflow_campaign_tree import WorkflowCampaignTreeQuery
 from .workspace import WorkspaceQuery
 
 __all__ = [
+    "AnalyticsBundleQuery",
     "AnalyticsRunQuery",
+    "LatestAnalyticsRunWithSignalsQuery",
     "WorkflowCampaignTreeQuery",
     "CategoryMixQuery",
     "ImageAiFlowsQuery",

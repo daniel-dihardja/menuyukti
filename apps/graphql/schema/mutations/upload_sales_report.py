@@ -106,9 +106,7 @@ class UploadSalesReportMutation:
         )
 
         if include_line_items:
-            normalized_rows = [
-                NormalizedLineItem(**asdict(row)) for row in result.normalized_rows
-            ]
+            normalized_rows = [NormalizedLineItem(**asdict(row)) for row in result.normalized_rows]
             orders = [_order_to_strawberry(o) for o in result.orders]
         else:
             normalized_rows = []

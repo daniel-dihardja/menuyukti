@@ -15,7 +15,7 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
 import {
   getCachedAnalyticsRunsByLocation,
-  getCachedLocationsData,
+  getCachedLocationsListData,
 } from '@/lib/graphql/cached-queries'
 import { AnalyticsSalesClient } from './analytics-sales-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -103,7 +103,7 @@ async function SalesPageData({ requestedLocationId }: { requestedLocationId: num
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocationsData(userId)
+  const data = await getCachedLocationsListData(userId)
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,

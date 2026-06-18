@@ -1,6 +1,7 @@
 import strawberry
 
-from graphql.data_sources import SessionLocal, Workspace, WorkspaceMembership
+from graphql.context import request_session_scope
+from graphql.data_sources import Workspace, WorkspaceMembership
 from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.types import WorkspaceMembershipType, WorkspaceType
@@ -34,7 +35,7 @@ class WorkspaceQuery:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             mem = (
                 session.query(WorkspaceMembership)
                 .filter(WorkspaceMembership.clerk_user_id == user_id)
@@ -64,7 +65,7 @@ class WorkspaceQuery:
             maximum=MAX_LIST_FIRST,
         )
         wid = int(workspace_id)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             if not is_workspace_member(session, wid, user_id):
                 return []
             rows = (

@@ -41,13 +41,16 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const matrixData = await getCachedMenuEngineeringMatrix(userId, id, String(run.locationId))
-  const menuCatalogData = await graphqlQuery<MenuItemsCatalogForRunData>(
-    MENU_ITEMS_CATALOG_FOR_RUN_QUERY,
-    { analyticsRunId: id },
-    userId,
-    'MenuItemsCatalogForRun',
-  )
+  const locationId = String(run.locationId)
+  const [matrixData, menuCatalogData] = await Promise.all([
+    getCachedMenuEngineeringMatrix(userId, id, locationId),
+    graphqlQuery<MenuItemsCatalogForRunData>(
+      MENU_ITEMS_CATALOG_FOR_RUN_QUERY,
+      { analyticsRunId: id },
+      userId,
+      'MenuItemsCatalogForRun',
+    ),
+  ])
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`
   const currencyCode = getAppCurrencyCode()

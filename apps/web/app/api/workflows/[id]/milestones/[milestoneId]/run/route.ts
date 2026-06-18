@@ -125,9 +125,11 @@ export async function POST(req: Request, context: RouteContext) {
     milestoneInput,
   } = parsed.data
 
-  const rootData = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
-  )
+  const [rootRaw, milestoneRaw] = await Promise.all([
+    graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
+    graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
+  ])
+  const rootData = parseNodeData(rootRaw)
   const rootNode = rootData.node
   if (!rootNode || rootNode.nodeType !== 'workflow') {
     return NextResponse.json({ error: 'Workflow not found' }, { status: 404 })
@@ -136,10 +138,7 @@ export async function POST(req: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Location mismatch' }, { status: 400 })
   }
 
-  const milestoneNodeData = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
-  )
-  const milestoneNode = milestoneNodeData.node
+  const milestoneNode = parseNodeData(milestoneRaw).node
   if (!milestoneNode || milestoneNode.nodeType !== 'milestone') {
     return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
   }

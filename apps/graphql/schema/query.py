@@ -1,10 +1,12 @@
 import strawberry
 
 from graphql.schema.queries import (
+    AnalyticsBundleQuery,
     AnalyticsRunQuery,
     CategoryMixQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
+    LatestAnalyticsRunWithSignalsQuery,
     LocationManualBriefInputQuery,
     LocationsQuery,
     MenuCatalogQuery,
@@ -32,6 +34,8 @@ from graphql.schema.queries import (
 )
 class Query(
     WorkflowCampaignTreeQuery,
+    AnalyticsBundleQuery,
+    LatestAnalyticsRunWithSignalsQuery,
     LocationsQuery,
     LocationManualBriefInputQuery,
     NodesQuery,

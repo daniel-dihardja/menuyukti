@@ -4,18 +4,25 @@ from __future__ import annotations
 
 from typing import Any
 
+import strawberry
 from menuyukti.core.analytics import (
     OrderRowForWeeklyDemand,
     compute_weekly_demand_pattern_from_orders,
 )
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, OrderFact
+from graphql.data_sources import AnalyticsRun
+from graphql.services.order_facts import load_order_facts
 
 
-def build_weekly_demand_pattern(session: Session, run: AnalyticsRun) -> list[dict[str, Any]]:
+def build_weekly_demand_pattern(
+    session: Session,
+    run: AnalyticsRun,
+    *,
+    info: strawberry.Info | None = None,
+) -> list[dict[str, Any]]:
     """Return camelCase dict rows for GraphQL (isoWeek, weekLabel, ...)."""
-    facts = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    facts = load_order_facts(session, run.id, info=info)
     if not facts:
         return []
 

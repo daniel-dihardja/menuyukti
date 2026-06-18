@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
 from graphql.schema import schema
-from graphql.schema.queries.menu_combos import _star_focus_menus
+from graphql.services.menu_combos import _star_focus_menus
 from graphql.services.menu_engineering import compute_menu_engineering_matrix
 from graphql.tests.auth_context import graphql_auth_context
 from menuyukti.core.analytics import compute_menu_basket_affinities_from_orders

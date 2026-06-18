@@ -8,6 +8,7 @@ from strawberry.http import GraphQLHTTPResponse
 
 from graphql import GraphQLError
 
+from .context import init_request_context
 from .schema import schema
 
 INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY", "")
@@ -28,6 +29,7 @@ class GraphQLWithUserContext(GraphQL):
         if isinstance(ctx, dict):
             hdr = request.headers.get("X-User-Id", "")
             ctx["user_id"] = hdr
+            init_request_context(ctx)
         return ctx
 
     async def process_result(self, request, result) -> GraphQLHTTPResponse:

@@ -29,9 +29,11 @@
 
 Callers outside this package should prefer typed row lists and
 ``compute_*_from_orders`` over constructing ``DataFrame`` objects ad hoc.
-GraphQL and agents should map persisted or API rows to those TypedDicts or call
-``apps/graphql`` helpers that delegate here — see the repo skill
-``.agents/skills/menuyukti-analytics/SKILL.md``.
+
+**Empty inputs:** ``compute_*_from_orders`` either returns an empty structured
+result (``[]`` / ``None``), or raises ``ValueError`` when the pipeline cannot
+run without rows — see each function's docstring. GraphQL services guard with
+``if not facts: return None`` before calling into the package.
 """
 
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
@@ -65,6 +67,7 @@ from menuyukti.core.analytics.calculate_menu_basket_affinities import (
     compute_menu_basket_affinities_from_orders,
 )
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
+    WEEKDAY_ORDER,
     DailyHeatmapRow,
     MenuHeatmapPayload,
     OrderRowForHeatmap,
@@ -134,6 +137,7 @@ from menuyukti.core.analytics.frame_contracts import (
     revenue_trends_columns,
 )
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
+from menuyukti.core.analytics.registry import NORMALIZERS, get_normalizer
 
 __all__ = [
     "BestPostingWindow",
@@ -167,6 +171,7 @@ __all__ = [
     "RevenueTrendRow",
     "RevenueTrendsResult",
     "WeeklyHeatmapRow",
+    "WEEKDAY_ORDER",
     "WeeklyDemandPatternRow",
     "OrderRowForWeeklyDemand",
     "calculate_category_mix",
@@ -206,6 +211,8 @@ __all__ = [
     "require_columns",
     "revenue_trends_columns",
     "detect_pos_from_excel_bytes",
+    "get_normalizer",
+    "NORMALIZERS",
     "AnalyticsCapabilities",
     "FundamentalSignals",
     "AdditionalSignals",

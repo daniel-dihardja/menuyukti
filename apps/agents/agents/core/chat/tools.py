@@ -19,6 +19,11 @@ from agents_app.agents.core.chat.http_context import get_chat_http_client
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.graphql_operations import (
+    MILESTONE_HELP_QUERY,
+    MILESTONE_INPUT_QUERY,
+    MILESTONE_PRESET_DATA_QUERY,
+)
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
 
@@ -446,9 +451,27 @@ async def get_milestone_data(config: Annotated[RunnableConfig, InjectedToolArg()
 @tool
 async def get_milestone_input_json(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
     """Load only milestoneInput JSON for the selected milestone."""
-    node, err = await _load_selected_milestone_node(config)
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
+    milestone_id, location_id, user_id = _milestone_context_from_config(config)
+    if not milestone_id or location_id is None or not user_id:
+        return (
+            "Milestone context is not available (no milestone selected or missing location). "
+            "Ask the user to select a milestone first."
+        )
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(
+        milestone_id,
+        user_id,
+        client=client,
+        query=MILESTONE_INPUT_QUERY,
+        cache_key="input",
+    )
+    if not node:
+        return "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return "Error: milestone location does not match the campaign context."
     return _format_json_shortcut_section("Input (milestoneInput)", node.get("milestoneInput"))
 
 
@@ -457,9 +480,27 @@ async def get_milestone_preset_data_json(
     config: Annotated[RunnableConfig, InjectedToolArg()],
 ) -> str:
     """Load only milestonePresetData JSON for the selected milestone."""
-    node, err = await _load_selected_milestone_node(config)
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
+    milestone_id, location_id, user_id = _milestone_context_from_config(config)
+    if not milestone_id or location_id is None or not user_id:
+        return (
+            "Milestone context is not available (no milestone selected or missing location). "
+            "Ask the user to select a milestone first."
+        )
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(
+        milestone_id,
+        user_id,
+        client=client,
+        query=MILESTONE_PRESET_DATA_QUERY,
+        cache_key="preset",
+    )
+    if not node:
+        return "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return "Error: milestone location does not match the campaign context."
     return _format_json_shortcut_section(
         "Preset data (milestonePresetData)",
         node.get("milestonePresetData"),
@@ -493,7 +534,13 @@ async def get_milestone_preset_data_for_milestone(
         )
 
     client = get_chat_http_client()
-    node = await fetch_milestone_node(target, str(user_id), client=client)
+    node = await fetch_milestone_node(
+        target,
+        str(user_id),
+        client=client,
+        query=MILESTONE_PRESET_DATA_QUERY,
+        cache_key="preset",
+    )
     if not node:
         return "Error: milestone not found."
     if str(node.get("nodeType") or "") != "milestone":
@@ -526,11 +573,27 @@ async def get_milestone_help(config: Annotated[RunnableConfig, InjectedToolArg()
     """Return Help-tab style guidance for the selected milestone (what it does + optional input).
 
     Call when the user asks for milestone help or sends exactly ``/help``."""
-    node, err = await _load_selected_milestone_node(config)
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
-    c = config.get("configurable") or {}
-    milestone_id = c.get("milestone_id")
+    milestone_id, location_id, user_id = _milestone_context_from_config(config)
+    if not milestone_id or location_id is None or not user_id:
+        return (
+            "Milestone context is not available (no milestone selected or missing location). "
+            "Ask the user to select a milestone first."
+        )
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(
+        milestone_id,
+        user_id,
+        client=client,
+        query=MILESTONE_HELP_QUERY,
+        cache_key="help",
+    )
+    if not node:
+        return "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return "Error: milestone location does not match the campaign context."
     name = node.get("name")
     title = str(name) if name is not None else str(milestone_id or "")
     goal = node.get("milestoneGoal")

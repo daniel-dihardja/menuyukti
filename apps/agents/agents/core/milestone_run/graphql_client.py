@@ -17,7 +17,7 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     ANALYTICS_RUNS_QUERY,
-    LOCATION_OPERATING_SIGNALS_QUERY,
+    LATEST_ANALYTICS_RUN_WITH_SIGNALS_QUERY,
     LOCATION_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     PROMOTION_ENGINEERING_CANDIDATES_QUERY,
@@ -139,32 +139,21 @@ async def fetch_location_operating_signals(
     client: httpx.AsyncClient,
 ) -> dict[str, Any]:
     """Fetch the latest analytics run's tiered signals for a location."""
-    runs_data = await graphql_post(
+    data = await graphql_post(
         client,
-        ANALYTICS_RUNS_QUERY,
-        {"locationId": location_id, "first": 1},
+        LATEST_ANALYTICS_RUN_WITH_SIGNALS_QUERY,
+        {"locationId": location_id},
         user_id,
     )
-    runs = runs_data.get("analyticsRuns")
-    if not isinstance(runs, list) or not runs:
+    payload = data.get("latestAnalyticsRunWithSignals")
+    if not isinstance(payload, dict):
         return {
             "analytics_run": None,
             "instagram_signals": None,
         }
-
-    run = runs[0]
-    run_id = str(run.get("id", ""))
-
-    signals_data = await graphql_post(
-        client,
-        LOCATION_OPERATING_SIGNALS_QUERY,
-        {"locationId": str(location_id), "analyticsRunId": run_id},
-        user_id,
-    )
-
     return {
-        "analytics_run": run,
-        "instagram_signals": signals_data.get("instagramSignals"),
+        "analytics_run": payload.get("analyticsRun"),
+        "instagram_signals": payload.get("instagramSignals"),
     }
 
 

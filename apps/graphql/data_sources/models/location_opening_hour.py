@@ -19,7 +19,9 @@ class LocationOpeningHour(Base):
 
     __tablename__ = "location_opening_hour"
     __table_args__ = (
-        UniqueConstraint("location_id", "day_of_week", name="uq_location_opening_hour_location_day"),
+        UniqueConstraint(
+            "location_id", "day_of_week", name="uq_location_opening_hour_location_day"
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

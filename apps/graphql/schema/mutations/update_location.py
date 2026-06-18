@@ -6,7 +6,8 @@ import strawberry
 from sqlalchemy.orm import Session
 from strawberry import UNSET
 
-from graphql.data_sources import Location, LocationOpeningHour, SessionLocal
+from graphql.context import request_session_scope
+from graphql.data_sources import Location, LocationOpeningHour
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.types import LocationType, OpeningHourType
 
@@ -115,7 +116,7 @@ class UpdateLocationMutation:
             raise ValueError("Missing authenticated user for updateLocation")
 
         location_id = int(id)
-        with SessionLocal() as session:
+        with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id)
             row = session.get(Location, location_id)
             if row is None:
