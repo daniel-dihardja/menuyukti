@@ -42,11 +42,11 @@ class SetPassCriteriaStatusesMutation:
             raise ValueError("Invalid milestone id")
 
         normalized: list[tuple[str, str]] = []
-        for item in updates:
-            cid = item.criterion_id.strip()
+        for update in updates:
+            cid = update.criterion_id.strip()
             if not cid:
                 raise ValueError("criterion_id cannot be empty")
-            st = item.status.strip().lower()
+            st = update.status.strip().lower()
             if st not in _ALLOWED:
                 raise ValueError("status must be pass, fail, or open")
             normalized.append((cid, st))
@@ -67,25 +67,25 @@ class SetPassCriteriaStatusesMutation:
             update_map = dict(normalized)
             next_rows: list[dict[str, Any]] = []
             found_ids: set[str] = set()
-            for item in rows:
-                if not isinstance(item, dict):
+            for row in rows:
+                if not isinstance(row, dict):
                     continue
-                item_id = item.get("id")
-                if not isinstance(item_id, str):
-                    next_rows.append(item)
+                row_id = row.get("id")
+                if not isinstance(row_id, str):
+                    next_rows.append(row)
                     continue
-                if item_id in update_map:
-                    req = item.get("requirement")
+                if row_id in update_map:
+                    req = row.get("requirement")
                     next_rows.append(
                         {
-                            "id": item_id,
+                            "id": row_id,
                             "requirement": req if isinstance(req, str) else "",
-                            "status": update_map[item_id],
+                            "status": update_map[row_id],
                         }
                     )
-                    found_ids.add(item_id)
+                    found_ids.add(row_id)
                 else:
-                    next_rows.append(item)
+                    next_rows.append(row)
 
             missing = set(update_map.keys()) - found_ids
             if missing:
