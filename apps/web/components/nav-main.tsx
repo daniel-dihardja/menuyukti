@@ -54,6 +54,13 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <LayoutDashboard className="w-4 h-4" />,
   },
   {
+    key: 'content',
+    labelKey: 'content',
+    href: routes.content.photos,
+    icon: <Image className="w-4 h-4" />,
+    children: [{ key: 'photos', labelKey: 'photos', href: routes.content.photos }],
+  },
+  {
     key: 'studio',
     labelKey: 'studio',
     href: routes.canvas,
@@ -65,14 +72,6 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'workflows',
     href: routes.workflows.list,
     icon: <Megaphone className="w-4 h-4" />,
-  },
-  {
-    key: 'content',
-    labelKey: 'content',
-    href: routes.content.photos,
-    icon: <Image className="w-4 h-4" />,
-    separatorBefore: true,
-    children: [{ key: 'photos', labelKey: 'photos', href: routes.content.photos }],
   },
   {
     key: 'reports',
