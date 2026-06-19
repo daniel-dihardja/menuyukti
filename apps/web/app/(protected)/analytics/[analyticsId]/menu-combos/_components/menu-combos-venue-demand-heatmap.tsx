@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { HeatmapMatrix } from '../../heatmap/heatmap-matrix'
 import {
   adaptSlotDemandHeatmap,
+  COMBO_MEAL_PERIODS,
   COMBO_WEEKDAYS,
   formatLift,
   type ComboMealPeriod,
@@ -108,6 +109,7 @@ function VenueHeatmapContent({
       highlightCell={highlightCell}
       showTotalsRow={false}
       showExplanation
+      rowKeyOrder={COMBO_MEAL_PERIODS}
     />
   )
 }
