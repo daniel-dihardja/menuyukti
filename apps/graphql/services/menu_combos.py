@@ -5,13 +5,20 @@ from __future__ import annotations
 from typing import Any
 
 import strawberry
-from menuyukti.core.analytics import compute_menu_basket_affinities_from_orders
+from menuyukti.core.analytics import (
+    compute_combo_pair_timing_from_orders,
+    compute_menu_basket_affinities_from_orders,
+    compute_slot_demand_profile_from_orders,
+    derive_combo_promo_posture,
+)
 from sqlalchemy.orm import Session
 
 from graphql.data_sources import AnalyticsRun
 from graphql.services.menu_engineering import compute_menu_engineering_matrix
-from graphql.services.order_fact_rows import facts_to_basket_rows
+from graphql.services.order_fact_rows import facts_to_basket_rows, facts_to_combo_timing_rows
 from graphql.services.order_facts import load_order_facts
+
+TOP_PAIR_TIMING_COUNT = 3
 
 
 def _star_focus_menus(matrix_items: list[dict[str, Any]]) -> list[str] | None:
@@ -21,6 +28,17 @@ def _star_focus_menus(matrix_items: list[dict[str, Any]]) -> list[str] | None:
     if len(stars) >= 2:
         return stars
     return None
+
+
+def _top_pairs_for_timing(pairs: list[dict[str, Any]], *, limit: int = TOP_PAIR_TIMING_COUNT) -> list[dict[str, str]]:
+    sorted_pairs = sorted(
+        pairs,
+        key=lambda p: (-float(p["lift"]), -int(p["co_order_count"]), p["menu_a"], p["menu_b"]),
+    )
+    return [
+        {"menu_a": p["menu_a"], "menu_b": p["menu_b"]}
+        for p in sorted_pairs[:limit]
+    ]
 
 
 def build_menu_combos(
@@ -58,6 +76,18 @@ def build_menu_combos(
         for p in raw["pairs"]
     ]
 
+    top_pair_inputs = _top_pairs_for_timing(pairs)
+    combo_timing_rows = facts_to_combo_timing_rows(facts)
+    slot_demand_profile = compute_slot_demand_profile_from_orders(combo_timing_rows)
+    top_pair_timing_raw = compute_combo_pair_timing_from_orders(
+        combo_timing_rows,
+        top_pair_inputs,
+    )
+    top_pair_timing = [
+        {**timing, "promo_posture": derive_combo_promo_posture(timing, slot_demand_profile)}
+        for timing in top_pair_timing_raw
+    ]
+
     return {
         "total_orders": raw["total_orders"],
         "multi_item_order_count": raw["multi_item_order_count"],
@@ -66,4 +96,6 @@ def build_menu_combos(
         "focus_menus": list(raw["focus_menus"]),
         "pairs": pairs,
         "matrix_lift": raw["matrix_lift"],
+        "slot_demand_profile": slot_demand_profile,
+        "top_pair_timing": top_pair_timing,
     }

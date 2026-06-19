@@ -2,13 +2,7 @@
 
 import { useMemo } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { TableCell, TableRow } from '@workspace/ui/components/table'
 import {
   Tooltip,
@@ -28,6 +22,7 @@ import {
   heatmapCellBackground,
   heatmapCellUsesLightText,
   heatmapIntensity,
+  venueDemandCellBackground,
 } from '@/lib/analytics/heatmap-scale'
 
 export type HeatmapMatrixRow = {
@@ -51,6 +46,11 @@ type HeatmapMatrixLabels = {
   cellTooltip: (menu: string, window: string, count: number) => string
 }
 
+export type HeatmapHighlightCell = {
+  rowKey: string
+  columnIndex: number
+}
+
 type Props = {
   title?: string
   rows: HeatmapMatrixRow[]
@@ -61,6 +61,16 @@ type Props = {
   /** When true, cells where row label matches column label render as an em dash. */
   maskDiagonal?: boolean
   labels: HeatmapMatrixLabels
+  /** `embedded` drops the Card wrapper for use inside a parent section. */
+  variant?: 'card' | 'embedded'
+  /** When false, hides the explanation alert below the table. Defaults to true for card, false for embedded. */
+  showExplanation?: boolean
+  /** Sequential (chart-2) or venue demand (chart-4, light = weak, dark = strong). */
+  colorScale?: 'sequential' | 'venue'
+  /** Highlights a cell with a primary ring (e.g. pair peak slot). */
+  highlightCell?: HeatmapHighlightCell | null
+  /** When false, hides the totals row. Defaults to true. */
+  showTotalsRow?: boolean
 }
 
 /** Sort by Menu (label) or by column index (e.g. "0", "1"). */
@@ -103,7 +113,14 @@ export function HeatmapMatrix({
   defaultSortColumnIndex = 0,
   maskDiagonal = false,
   labels,
+  variant = 'card',
+  showExplanation,
+  colorScale = 'sequential',
+  highlightCell = null,
+  showTotalsRow = true,
 }: Props) {
+  const isEmbedded = variant === 'embedded'
+  const showExplainBlock = showExplanation ?? !isEmbedded
   const isMobile = useCompactLayout()
   const initialSortKey = String(defaultSortColumnIndex) as HeatmapSortKey
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<HeatmapSortKey>(
@@ -176,89 +193,98 @@ export function HeatmapMatrix({
     [displayColumnLabels, labels.menuColumnLabel],
   )
 
-  return (
-    <Card className="gap-4 py-4">
-      {title ? (
-        <CardHeader className="gap-1 px-4 pb-0">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        </CardHeader>
+  const isVenueScale = colorScale === 'venue'
+  const legendGradient = isVenueScale
+    ? 'bg-gradient-to-r from-chart-4/15 via-chart-4/50 to-chart-4'
+    : 'bg-gradient-to-r from-chart-2/15 via-chart-2/50 to-chart-2'
+
+  const matrixBody = (
+    <>
+      <div className="flex flex-col gap-1">
+        <p className="text-xs text-muted-foreground">{labels.unitsLabel}</p>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{labels.legendLow}</span>
+          <span className="text-muted-foreground/80">{isVenueScale ? min.toFixed(2) : min}</span>
+          <div
+            className={cn('h-2 min-w-[8rem] flex-1 rounded', legendGradient)}
+            aria-hidden="true"
+          />
+          <span className="text-muted-foreground/80">{isVenueScale ? max.toFixed(2) : max}</span>
+          <span>{labels.legendHigh}</span>
+        </div>
+      </div>
+
+      {labels.scrollHint ? (
+        <p className="text-xs text-muted-foreground lg:hidden">{labels.scrollHint}</p>
       ) : null}
 
-      <CardContent className="flex flex-col gap-3 px-4">
-        <div className="flex flex-col gap-1">
-          <CardDescription className="text-xs">{labels.unitsLabel}</CardDescription>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{labels.legendLow}</span>
-            <span className="text-muted-foreground/80">{min}</span>
-            <div
-              className="h-2 min-w-[8rem] flex-1 rounded bg-gradient-to-r from-chart-2/15 via-chart-2/50 to-chart-2"
-              aria-hidden="true"
-            />
-            <span className="text-muted-foreground/80">{max}</span>
-            <span>{labels.legendHigh}</span>
-          </div>
-        </div>
+      <div className="rounded-md border">
+        <TooltipProvider delayDuration={300}>
+          <SortableTable<HeatmapSortKey>
+            columns={columns}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSort={toggleSort}
+            sortable={sortable}
+            headerRowClassName="bg-muted hover:bg-muted"
+          >
+            {displayRows.map((row) => (
+              <TableRow key={row.key}>
+                <TableCell className={STICKY_ROW_LABEL}>{row.label}</TableCell>
+                {row.values.map((value, i) => {
+                  const windowLabel = columnLabels[i] ?? String(i)
+                  const isDiagonal = maskDiagonal && row.label === windowLabel
+                  const intensity = heatmapIntensity(value, min, max)
+                  const isHighlighted =
+                    highlightCell != null &&
+                    highlightCell.rowKey === row.key &&
+                    highlightCell.columnIndex === i
+                  const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
+                  const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
+                  const displayValue = value > 0 ? (isVenueScale ? value.toFixed(2) : value) : ''
 
-        {labels.scrollHint ? (
-          <p className="text-xs text-muted-foreground lg:hidden">{labels.scrollHint}</p>
-        ) : null}
-
-        <div className="rounded-md border">
-          <TooltipProvider delayDuration={300}>
-            <SortableTable<HeatmapSortKey>
-              columns={columns}
-              sortKey={sortKey}
-              sortDirection={sortDirection}
-              onSort={toggleSort}
-              sortable={sortable}
-              headerRowClassName="bg-muted hover:bg-muted"
-            >
-              {displayRows.map((row) => (
-                <TableRow key={row.key}>
-                  <TableCell className={STICKY_ROW_LABEL}>{row.label}</TableCell>
-                  {row.values.map((value, i) => {
-                    const windowLabel = columnLabels[i] ?? String(i)
-                    const isDiagonal = maskDiagonal && row.label === windowLabel
-                    const intensity = heatmapIntensity(value, min, max)
-                    const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
-                    const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
-
-                    return (
-                      <TableCell
-                        key={`${row.key}-${windowLabel}`}
-                        className={cn(
-                          'text-center text-[11px] font-medium',
-                          DATA_COLUMN_CLASS,
-                          density === 'compact' ? 'h-8' : 'h-10',
-                          isDiagonal && 'bg-muted/30 text-muted-foreground',
-                          !isDiagonal &&
-                            heatmapCellUsesLightText(intensity) &&
-                            'text-primary-foreground',
-                        )}
-                        style={
-                          isDiagonal
-                            ? undefined
-                            : { backgroundColor: heatmapCellBackground(intensity) }
-                        }
-                        aria-label={ariaLabel}
-                      >
-                        {isDiagonal ? (
-                          '—'
-                        ) : (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex size-full items-center justify-center">
-                                {value > 0 ? value : ''}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">{tooltipText}</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))}
+                  return (
+                    <TableCell
+                      key={`${row.key}-${windowLabel}`}
+                      className={cn(
+                        'text-center text-[11px] font-medium',
+                        DATA_COLUMN_CLASS,
+                        density === 'compact' ? 'h-8' : 'h-10',
+                        isDiagonal && 'bg-muted/30 text-muted-foreground',
+                        !isDiagonal &&
+                          heatmapCellUsesLightText(intensity) &&
+                          'text-primary-foreground',
+                        isHighlighted && 'ring-2 ring-primary ring-offset-1',
+                      )}
+                      style={
+                        isDiagonal
+                          ? undefined
+                          : {
+                              backgroundColor: isVenueScale
+                                ? venueDemandCellBackground(intensity)
+                                : heatmapCellBackground(intensity),
+                            }
+                      }
+                      aria-label={ariaLabel}
+                    >
+                      {isDiagonal ? (
+                        '—'
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex size-full items-center justify-center">
+                              {displayValue}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">{tooltipText}</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            ))}
+            {showTotalsRow ? (
               <TableRow className="bg-muted hover:bg-muted">
                 <TableCell className={STICKY_TOTALS_LABEL}>{labels.totalsRowLabel}</TableCell>
                 {columnTotals.map((total, i) => {
@@ -278,17 +304,40 @@ export function HeatmapMatrix({
                   )
                 })}
               </TableRow>
-            </SortableTable>
-          </TooltipProvider>
-        </div>
+            ) : null}
+          </SortableTable>
+        </TooltipProvider>
+      </div>
 
+      {showExplainBlock ? (
         <Alert>
           <AlertTitle className="text-xs">{labels.explainTitle}</AlertTitle>
           <AlertDescription className="text-xs">{labels.explainBody}</AlertDescription>
         </Alert>
+      ) : null}
 
-        {sortable ? <p className="text-xs text-muted-foreground">{labels.sortHint}</p> : null}
-      </CardContent>
+      {sortable ? <p className="text-xs text-muted-foreground">{labels.sortHint}</p> : null}
+    </>
+  )
+
+  if (isEmbedded) {
+    return (
+      <div className="flex flex-col gap-3">
+        {title ? <h3 className="text-sm font-medium">{title}</h3> : null}
+        {matrixBody}
+      </div>
+    )
+  }
+
+  return (
+    <Card className="gap-4 py-4">
+      {title ? (
+        <CardHeader className="gap-1 px-4 pb-0">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        </CardHeader>
+      ) : null}
+
+      <CardContent className="flex flex-col gap-3 px-4">{matrixBody}</CardContent>
     </Card>
   )
 }

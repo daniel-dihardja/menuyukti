@@ -293,9 +293,114 @@ export const MENU_COMBOS_QUERY = `
         matrixCategoryB
       }
       matrixLift
+      slotDemandProfile {
+        day
+        mealPeriod
+        mealPeriodLabel
+        mealPeriodHoursLabel
+        orderCount
+        trafficShare
+        demandIndex
+        relativeDemand
+      }
+      topPairTiming {
+        menuA
+        menuB
+      recommendedWindow {
+        bestDay
+        bestMealPeriod
+        bestMealPeriodLabel
+        bestMealPeriodHoursLabel
+        peakHour
+        coOrderIndex
+        sampleCoOrders
+        confidenceTier
+      }
+      promoPosture {
+        promoPosture
+        peakDay
+        peakMealPeriod
+        pairCoOrderIndex
+        venueDemandIndex
+        venueRelativeDemand
+        promoReason
+      }
+      dayMealCells {
+        day
+        mealPeriod
+        mealPeriodLabel
+        mealPeriodHoursLabel
+        coOrderCount
+          coOrderIndex
+          attachRate
+        }
+        hourlyCoOrders {
+          hour
+          coOrderCount
+        }
+      }
     }
   }
 `
+
+export type ComboPairTimingCell = {
+  day: string
+  mealPeriod: string
+  mealPeriodLabel: string
+  mealPeriodHoursLabel: string
+  coOrderCount: number
+  coOrderIndex: number
+  attachRate: number
+}
+
+export type ComboPairTimingHour = {
+  hour: number
+  coOrderCount: number
+}
+
+export type ComboPairRecommendedWindow = {
+  bestDay: string | null
+  bestMealPeriod: string | null
+  bestMealPeriodLabel: string | null
+  bestMealPeriodHoursLabel: string | null
+  peakHour: number | null
+  coOrderIndex: number | null
+  sampleCoOrders: number
+  confidenceTier: string
+}
+
+export type ComboPromoPosture = {
+  promoPosture: PromoPosture
+  peakDay: string | null
+  peakMealPeriod: string | null
+  pairCoOrderIndex: number | null
+  venueDemandIndex: number | null
+  venueRelativeDemand: RelativeDemand | null
+  promoReason: string
+}
+
+export type SlotDemandCell = {
+  day: string
+  mealPeriod: string
+  mealPeriodLabel: string
+  mealPeriodHoursLabel: string
+  orderCount: number
+  trafficShare: number
+  demandIndex: number
+  relativeDemand: RelativeDemand
+}
+
+export type RelativeDemand = 'low' | 'average' | 'high'
+export type PromoPosture = 'support' | 'promote' | 'maintain'
+
+export type MenuComboPairTiming = {
+  menuA: string
+  menuB: string
+  recommendedWindow: ComboPairRecommendedWindow
+  promoPosture: ComboPromoPosture
+  dayMealCells: ComboPairTimingCell[]
+  hourlyCoOrders: ComboPairTimingHour[]
+}
 
 export type MenuComboPair = {
   menuA: string
@@ -320,6 +425,8 @@ export type MenuCombosData = {
     focusMenus: string[]
     pairs: MenuComboPair[]
     matrixLift: Array<Array<number | null>>
+    slotDemandProfile: SlotDemandCell[]
+    topPairTiming: MenuComboPairTiming[]
   } | null
 }
 

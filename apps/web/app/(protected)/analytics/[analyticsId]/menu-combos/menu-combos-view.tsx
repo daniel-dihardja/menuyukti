@@ -31,6 +31,7 @@ import { MenuCombosInsightHero } from './_components/menu-combos-insight-hero'
 import { MenuCombosKpis } from './_components/menu-combos-kpis'
 import { MenuCombosPairsTable } from './_components/menu-combos-pairs-table'
 import { MenuCombosRelatedReports } from './_components/menu-combos-related-reports'
+import { MenuCombosTimingTab } from './_components/menu-combos-timing-tab'
 
 type MenuCombosViewProps = {
   analyticsId: number
@@ -77,6 +78,8 @@ export function MenuCombosView({
 
   const bundleIdeas = useMemo(() => groupBundleIdeas(menuCombos.pairs), [menuCombos.pairs])
   const topPair = useMemo(() => getTopComboPair(menuCombos.pairs), [menuCombos.pairs])
+
+  const activeView = view === 'matrix' || view === 'timing' ? view : 'pairs'
 
   const matrixRows = useMemo(
     () => buildLiftMatrixRows(menuCombos.focusMenus, menuCombos.matrixLift),
@@ -144,15 +147,27 @@ export function MenuCombosView({
       <MenuCombosKpis menuCombos={menuCombos} locale={locale} />
 
       <Tabs
-        value={view === 'matrix' ? 'matrix' : 'pairs'}
+        className="min-w-0"
+        value={activeView}
         onValueChange={(value) => {
           void setView(value)
         }}
       >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="pairs">{t('tabs.pairs')}</TabsTrigger>
-          <TabsTrigger value="matrix">{t('tabs.matrix')}</TabsTrigger>
+        <TabsList
+          variant="line"
+          className="w-full min-w-0 max-w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+        >
+          <TabsTrigger className="shrink-0" value="pairs">
+            {t('tabs.pairs')}
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="matrix">
+            {t('tabs.matrix')}
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="timing">
+            {t('tabs.timing')}
+          </TabsTrigger>
         </TabsList>
+        <p className="text-xs text-muted-foreground sm:hidden">{t('tabs.scrollHint')}</p>
 
         <TabsContent value="pairs" className="mt-4 flex flex-col gap-4">
           <MenuCombosFilters
@@ -219,6 +234,14 @@ export function MenuCombosView({
               labels={matrixLabels}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="timing" className="mt-4 focus-visible:outline-none">
+          <MenuCombosTimingTab
+            topPairTiming={menuCombos.topPairTiming}
+            slotDemandProfile={menuCombos.slotDemandProfile}
+            locale={locale}
+          />
         </TabsContent>
       </Tabs>
 

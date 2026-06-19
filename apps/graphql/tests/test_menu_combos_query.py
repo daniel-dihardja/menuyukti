@@ -34,6 +34,52 @@ query AnalyticsRunMenuCombos($id: ID!, $locationId: ID) {
       matrixCategoryB
     }
     matrixLift
+    slotDemandProfile {
+      day
+      mealPeriod
+      mealPeriodLabel
+      mealPeriodHoursLabel
+      orderCount
+      trafficShare
+      demandIndex
+      relativeDemand
+    }
+    topPairTiming {
+      menuA
+      menuB
+      recommendedWindow {
+        bestDay
+        bestMealPeriod
+        bestMealPeriodLabel
+        bestMealPeriodHoursLabel
+        peakHour
+        coOrderIndex
+        sampleCoOrders
+        confidenceTier
+      }
+      promoPosture {
+        promoPosture
+        peakDay
+        peakMealPeriod
+        pairCoOrderIndex
+        venueDemandIndex
+        venueRelativeDemand
+        promoReason
+      }
+      dayMealCells {
+        day
+        mealPeriod
+        mealPeriodLabel
+        mealPeriodHoursLabel
+        coOrderCount
+        coOrderIndex
+        attachRate
+      }
+      hourlyCoOrders {
+        hour
+        coOrderCount
+      }
+    }
   }
 }
 """
@@ -92,3 +138,23 @@ def test_menu_combos_with_synthetic_facts(analytics_run_with_qa_data):
     assert len(payload["pairs"]) == len(expected["pairs"])
     if expected["pairs"]:
         assert payload["pairs"][0]["lift"] == pytest.approx(expected["pairs"][0]["lift"])
+        top_timing = payload["topPairTiming"]
+        assert len(top_timing) <= 3
+        if top_timing:
+            top_pair = max(payload["pairs"], key=lambda p: (p["lift"], p["coOrderCount"]))
+            assert top_timing[0]["menuA"] == top_pair["menuA"]
+            assert top_timing[0]["menuB"] == top_pair["menuB"]
+            assert "recommendedWindow" in top_timing[0]
+            assert "dayMealCells" in top_timing[0]
+            assert len(top_timing[0]["dayMealCells"]) == 35
+            assert "promoPosture" in top_timing[0]
+            assert top_timing[0]["promoPosture"]["promoPosture"] in {
+                "support",
+                "promote",
+                "maintain",
+            }
+            assert len(payload["slotDemandProfile"]) == 35
+            lunch_cell = next(
+                c for c in top_timing[0]["dayMealCells"] if c["mealPeriod"] == "lunch"
+            )
+            assert lunch_cell["mealPeriodHoursLabel"] == "11:00–14:59"

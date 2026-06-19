@@ -101,6 +101,58 @@ type CategoryMixRowGqlType {
   topItem: String!
 }
 
+"""Recommended promo window for a combo pair."""
+type ComboPairRecommendedWindowType {
+  bestDay: String
+  bestMealPeriod: String
+  bestMealPeriodLabel: String
+  bestMealPeriodHoursLabel: String
+  peakHour: Int
+  coOrderIndex: Float
+  sampleCoOrders: Int!
+  confidenceTier: String!
+}
+
+"""Promo posture for a combo pair's peak window."""
+type ComboPromoPostureType {
+  promoPosture: String!
+  peakDay: String
+  peakMealPeriod: String
+  pairCoOrderIndex: Float
+  venueDemandIndex: Float
+  venueRelativeDemand: String
+  promoReason: String!
+}
+
+"""Venue demand for one day and meal-period slot."""
+type SlotDemandCellType {
+  day: String!
+  mealPeriod: String!
+  mealPeriodLabel: String!
+  mealPeriodHoursLabel: String!
+  orderCount: Int!
+  trafficShare: Float!
+  demandIndex: Float!
+  relativeDemand: String!
+}
+
+"""Co-order intensity for one day and meal-period slot."""
+type ComboPairTimingCellType {
+  day: String!
+  mealPeriod: String!
+  mealPeriodLabel: String!
+  mealPeriodHoursLabel: String!
+  coOrderCount: Int!
+  coOrderIndex: Float!
+  attachRate: Float!
+}
+
+"""Hourly co-order count for a combo pair."""
+type ComboPairTimingHourType {
+  hour: Int!
+  coOrderCount: Int!
+}
+
 """Hourly demand distribution for a menu item."""
 type DailyHeatmapType {
   hour: Int!
@@ -278,6 +330,16 @@ type MenuCatalogPayloadType {
   items: [MenuCatalogItemType!]!
 }
 
+"""Timing analytics for when a combo pair is ordered together."""
+type MenuComboPairTimingType {
+  menuA: String!
+  menuB: String!
+  recommendedWindow: ComboPairRecommendedWindowType!
+  promoPosture: ComboPromoPostureType!
+  dayMealCells: [ComboPairTimingCellType!]!
+  hourlyCoOrders: [ComboPairTimingHourType!]!
+}
+
 """Co-occurrence metrics for a pair of menu items within the same order."""
 type MenuComboPairType {
   menuA: String!
@@ -304,6 +366,8 @@ type MenuCombosPayloadType {
   focusMenus: [String!]!
   pairs: [MenuComboPairType!]!
   matrixLift: [[Float]!]!
+  slotDemandProfile: [SlotDemandCellType!]!
+  topPairTiming: [MenuComboPairTimingType!]!
 }
 
 """
