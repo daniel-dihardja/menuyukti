@@ -11,11 +11,10 @@ import pandas as pd
 from menuyukti.core.analytics.meal_periods import (
     MEAL_PERIODS,
     WEEKDAY_ORDER,
-    meal_period_for_hour,
     meal_period_hours_range,
     meal_period_short_label,
-    weekday_abbr,
 )
+from menuyukti.core.analytics.slot_keys import slot_key
 
 MIN_SLOT_CO_ORDERS = 3
 ConfidenceTier = Literal["high", "medium", "low", "insufficient"]
@@ -112,10 +111,6 @@ def _bill_menus_and_times(
     )
 
 
-def _slot_key(dt: datetime) -> tuple[str, str]:
-    return weekday_abbr(dt), meal_period_for_hour(dt.hour)
-
-
 def _compute_pair_timing(
     *,
     menu_a: str,
@@ -147,7 +142,7 @@ def _compute_pair_timing(
 
     for bn in co_order_bills:
         dt = bill_time[bn]
-        slot = _slot_key(dt)
+        slot = slot_key(dt)
         pair_slot_counts[slot] += 1
         hourly_counts[dt.hour] += 1
         slot_hour_counts[(slot[0], slot[1], dt.hour)] += 1
@@ -155,7 +150,7 @@ def _compute_pair_timing(
     for bn, menus in bill_menus.items():
         if menu_a not in menus or bn not in bill_time:
             continue
-        pair_slot_menu_a[_slot_key(bill_time[bn])] += 1
+        pair_slot_menu_a[slot_key(bill_time[bn])] += 1
 
     day_meal_cells: list[ComboPairTimingCell] = []
     for day in WEEKDAY_ORDER:
@@ -242,7 +237,7 @@ def calculate_combo_pair_timing(
 
     slot_order_counts: dict[tuple[str, str], int] = defaultdict(int)
     for bn, dt in bill_time.items():
-        slot_order_counts[_slot_key(dt)] += 1
+        slot_order_counts[slot_key(dt)] += 1
 
     results: list[ComboPairTimingResult] = []
     for pair in pairs:

@@ -75,6 +75,14 @@ from menuyukti.core.analytics.calculate_combo_pair_timing import (
     OrderRowForComboTiming,
     compute_combo_pair_timing_from_orders,
 )
+from menuyukti.core.analytics.calculate_slot_demand_profile import (
+    OrderRowForSlotDemand,
+    PromoPostureResult,
+    SlotDemandCell,
+    calculate_slot_demand_profile,
+    compute_slot_demand_profile_from_orders,
+    derive_combo_promo_posture,
+)
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
     WEEKDAY_ORDER,
     DailyHeatmapRow,
@@ -202,6 +210,12 @@ __all__ = [
     "ComboPairTimingResult",
     "OrderRowForComboTiming",
     "compute_combo_pair_timing_from_orders",
+    "OrderRowForSlotDemand",
+    "PromoPostureResult",
+    "SlotDemandCell",
+    "calculate_slot_demand_profile",
+    "compute_slot_demand_profile_from_orders",
+    "derive_combo_promo_posture",
     "compute_operating_profile_from_orders",
     "compute_order_metrics_by_day_from_orders",
     "compute_revenue_trends_from_orders",

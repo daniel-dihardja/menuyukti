@@ -2509,7 +2509,7 @@
           "sortHint": "Click a column header to sort meal periods by day.",
           "scrollHint": "Swipe sideways to see all days →",
           "explainTitle": "How to read this heatmap",
-          "explainBody": "Each cell shows how often this pair appears in that day and meal period, relative to overall traffic in the slot. Values above 1 mean the pair shows up more often than average.",
+          "explainBody": "Each cell shows how often this pair appears in that day and meal period, relative to overall traffic in the slot. Values above 1 mean the pair shows up more often than average. The ring marks this pair's recommended peak window.",
           "cellAriaLabel": "{mealPeriod} on {day} · index {index}×",
           "cellTooltip": "{mealPeriod} on {day} · co-order index {index}×"
         },
@@ -2526,6 +2526,48 @@
           "explainBody": "Number of checks that included both items in each hour.",
           "cellAriaLabel": "{pair} at {hour}:00 · {count, plural, one {# co-order} other {# co-orders}}",
           "cellTooltip": "{pair} at {hour}:00 · {count, plural, one {# co-order} other {# co-orders}}"
+        },
+        "strategy": {
+          "pairIndexLabel": "Pair index",
+          "venueDemandLabel": "Venue demand",
+          "insufficientDataHint": "Need at least 3 co-orders in the peak slot before recommending a promo posture.",
+          "posture": {
+            "support": "Support",
+            "promote": "Promote",
+            "maintain": "Maintain",
+            "insufficient_data": "Insufficient data"
+          },
+          "gauge": {
+            "pairAtPeak": "Pair fit at peak",
+            "venueAtPeak": "Venue load at peak",
+            "tierLow": "Below average",
+            "tierAverage": "Average",
+            "tierHigh": "Above average"
+          },
+          "venueHeatmap": {
+            "title": "Venue slot strength",
+            "description": "How busy each day and meal period is for this location, compared to the average slot. The ring marks the selected pair's peak window.",
+            "collapsibleTrigger": "Venue slot strength",
+            "menuColumn": "Meal period",
+            "legendLow": "Weaker (light)",
+            "legendHigh": "Stronger (dark)",
+            "unitsLabel": "Venue demand index — darker cells are busier slots",
+            "totalsRowLabel": "Total",
+            "sortHint": "Click a column header to sort meal periods by day.",
+            "scrollHint": "Swipe sideways to see all days →",
+            "explainTitle": "How to read venue demand",
+            "explainBody": "Each cell compares order traffic in that slot to the average across all day and meal-period slots (1.0× = average). Light cells are quieter; dark cells are busier. Values below 1.0 are below average; above 1.0 are above average.",
+            "cellAriaLabel": "{mealPeriod} on {day} · venue demand {index}×",
+            "cellTooltip": "{mealPeriod} on {day} · venue demand {index}× · {tier}"
+          },
+          "dayExplorer": {
+            "title": "Slot day explorer",
+            "description": "Pick a day to compare pair timing and venue demand for each meal period.",
+            "noData": "No activity in this slot.",
+            "sheetDescription": "Pair timing and venue demand for this slot.",
+            "coOrdersLabel": "Co-orders",
+            "venueDemandTierLabel": "Venue tier"
+          }
         }
       }
     },

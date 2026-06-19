@@ -11,6 +11,13 @@ export function heatmapCellBackground(intensity: number): string {
   return `color-mix(in oklch, var(--chart-2) ${pct}%, transparent)`
 }
 
+/** Light-to-dark fill for venue demand cells (weak → strong). intensity in [0, 1]. */
+export function venueDemandCellBackground(intensity: number): string {
+  const alpha = 0.12 + intensity * 0.88
+  const pct = Math.round(alpha * 100)
+  return `color-mix(in oklch, var(--chart-4) ${pct}%, transparent)`
+}
+
 /** Whether cell text should use high-contrast foreground. */
 export function heatmapCellUsesLightText(intensity: number): boolean {
   return intensity > 0.75

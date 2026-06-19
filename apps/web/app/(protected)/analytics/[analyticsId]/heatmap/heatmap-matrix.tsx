@@ -22,6 +22,7 @@ import {
   heatmapCellBackground,
   heatmapCellUsesLightText,
   heatmapIntensity,
+  venueDemandCellBackground,
 } from '@/lib/analytics/heatmap-scale'
 
 export type HeatmapMatrixRow = {
@@ -45,6 +46,11 @@ type HeatmapMatrixLabels = {
   cellTooltip: (menu: string, window: string, count: number) => string
 }
 
+export type HeatmapHighlightCell = {
+  rowKey: string
+  columnIndex: number
+}
+
 type Props = {
   title?: string
   rows: HeatmapMatrixRow[]
@@ -59,6 +65,12 @@ type Props = {
   variant?: 'card' | 'embedded'
   /** When false, hides the explanation alert below the table. Defaults to true for card, false for embedded. */
   showExplanation?: boolean
+  /** Sequential (chart-2) or venue demand (chart-4, light = weak, dark = strong). */
+  colorScale?: 'sequential' | 'venue'
+  /** Highlights a cell with a primary ring (e.g. pair peak slot). */
+  highlightCell?: HeatmapHighlightCell | null
+  /** When false, hides the totals row. Defaults to true. */
+  showTotalsRow?: boolean
 }
 
 /** Sort by Menu (label) or by column index (e.g. "0", "1"). */
@@ -103,6 +115,9 @@ export function HeatmapMatrix({
   labels,
   variant = 'card',
   showExplanation,
+  colorScale = 'sequential',
+  highlightCell = null,
+  showTotalsRow = true,
 }: Props) {
   const isEmbedded = variant === 'embedded'
   const showExplainBlock = showExplanation ?? !isEmbedded
@@ -178,18 +193,23 @@ export function HeatmapMatrix({
     [displayColumnLabels, labels.menuColumnLabel],
   )
 
+  const isVenueScale = colorScale === 'venue'
+  const legendGradient = isVenueScale
+    ? 'bg-gradient-to-r from-chart-4/15 via-chart-4/50 to-chart-4'
+    : 'bg-gradient-to-r from-chart-2/15 via-chart-2/50 to-chart-2'
+
   const matrixBody = (
     <>
       <div className="flex flex-col gap-1">
         <p className="text-xs text-muted-foreground">{labels.unitsLabel}</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{labels.legendLow}</span>
-          <span className="text-muted-foreground/80">{min}</span>
+          <span className="text-muted-foreground/80">{isVenueScale ? min.toFixed(2) : min}</span>
           <div
-            className="h-2 min-w-[8rem] flex-1 rounded bg-gradient-to-r from-chart-2/15 via-chart-2/50 to-chart-2"
+            className={cn('h-2 min-w-[8rem] flex-1 rounded', legendGradient)}
             aria-hidden="true"
           />
-          <span className="text-muted-foreground/80">{max}</span>
+          <span className="text-muted-foreground/80">{isVenueScale ? max.toFixed(2) : max}</span>
           <span>{labels.legendHigh}</span>
         </div>
       </div>
@@ -215,8 +235,13 @@ export function HeatmapMatrix({
                   const windowLabel = columnLabels[i] ?? String(i)
                   const isDiagonal = maskDiagonal && row.label === windowLabel
                   const intensity = heatmapIntensity(value, min, max)
+                  const isHighlighted =
+                    highlightCell != null &&
+                    highlightCell.rowKey === row.key &&
+                    highlightCell.columnIndex === i
                   const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
                   const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
+                  const displayValue = value > 0 ? (isVenueScale ? value.toFixed(2) : value) : ''
 
                   return (
                     <TableCell
@@ -229,11 +254,16 @@ export function HeatmapMatrix({
                         !isDiagonal &&
                           heatmapCellUsesLightText(intensity) &&
                           'text-primary-foreground',
+                        isHighlighted && 'ring-2 ring-primary ring-offset-1',
                       )}
                       style={
                         isDiagonal
                           ? undefined
-                          : { backgroundColor: heatmapCellBackground(intensity) }
+                          : {
+                              backgroundColor: isVenueScale
+                                ? venueDemandCellBackground(intensity)
+                                : heatmapCellBackground(intensity),
+                            }
                       }
                       aria-label={ariaLabel}
                     >
@@ -243,7 +273,7 @@ export function HeatmapMatrix({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex size-full items-center justify-center">
-                              {value > 0 ? value : ''}
+                              {displayValue}
                             </span>
                           </TooltipTrigger>
                           <TooltipContent side="top">{tooltipText}</TooltipContent>
@@ -254,25 +284,27 @@ export function HeatmapMatrix({
                 })}
               </TableRow>
             ))}
-            <TableRow className="bg-muted hover:bg-muted">
-              <TableCell className={STICKY_TOTALS_LABEL}>{labels.totalsRowLabel}</TableCell>
-              {columnTotals.map((total, i) => {
-                const isPeak = peakColumnIndex === i && total > 0
-                return (
-                  <TableCell
-                    key={`total-${columnLabels[i] ?? i}`}
-                    className={cn(
-                      'text-center text-xs font-semibold text-muted-foreground',
-                      DATA_COLUMN_CLASS,
-                      density === 'compact' ? 'h-8' : 'h-10',
-                      isPeak && 'bg-chart-2/20 font-bold text-foreground ring-1 ring-chart-2/40',
-                    )}
-                  >
-                    {total > 0 ? total : '—'}
-                  </TableCell>
-                )
-              })}
-            </TableRow>
+            {showTotalsRow ? (
+              <TableRow className="bg-muted hover:bg-muted">
+                <TableCell className={STICKY_TOTALS_LABEL}>{labels.totalsRowLabel}</TableCell>
+                {columnTotals.map((total, i) => {
+                  const isPeak = peakColumnIndex === i && total > 0
+                  return (
+                    <TableCell
+                      key={`total-${columnLabels[i] ?? i}`}
+                      className={cn(
+                        'text-center text-xs font-semibold text-muted-foreground',
+                        DATA_COLUMN_CLASS,
+                        density === 'compact' ? 'h-8' : 'h-10',
+                        isPeak && 'bg-chart-2/20 font-bold text-foreground ring-1 ring-chart-2/40',
+                      )}
+                    >
+                      {total > 0 ? total : '—'}
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            ) : null}
           </SortableTable>
         </TooltipProvider>
       </div>

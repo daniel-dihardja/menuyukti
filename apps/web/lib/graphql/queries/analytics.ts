@@ -293,6 +293,16 @@ export const MENU_COMBOS_QUERY = `
         matrixCategoryB
       }
       matrixLift
+      slotDemandProfile {
+        day
+        mealPeriod
+        mealPeriodLabel
+        mealPeriodHoursLabel
+        orderCount
+        trafficShare
+        demandIndex
+        relativeDemand
+      }
       topPairTiming {
         menuA
         menuB
@@ -305,6 +315,15 @@ export const MENU_COMBOS_QUERY = `
         coOrderIndex
         sampleCoOrders
         confidenceTier
+      }
+      promoPosture {
+        promoPosture
+        peakDay
+        peakMealPeriod
+        pairCoOrderIndex
+        venueDemandIndex
+        venueRelativeDemand
+        promoReason
       }
       dayMealCells {
         day
@@ -350,10 +369,35 @@ export type ComboPairRecommendedWindow = {
   confidenceTier: string
 }
 
+export type ComboPromoPosture = {
+  promoPosture: PromoPosture
+  peakDay: string | null
+  peakMealPeriod: string | null
+  pairCoOrderIndex: number | null
+  venueDemandIndex: number | null
+  venueRelativeDemand: RelativeDemand | null
+  promoReason: string
+}
+
+export type SlotDemandCell = {
+  day: string
+  mealPeriod: string
+  mealPeriodLabel: string
+  mealPeriodHoursLabel: string
+  orderCount: number
+  trafficShare: number
+  demandIndex: number
+  relativeDemand: RelativeDemand
+}
+
+export type RelativeDemand = 'low' | 'average' | 'high'
+export type PromoPosture = 'support' | 'promote' | 'maintain' | 'insufficient_data'
+
 export type MenuComboPairTiming = {
   menuA: string
   menuB: string
   recommendedWindow: ComboPairRecommendedWindow
+  promoPosture: ComboPromoPosture
   dayMealCells: ComboPairTimingCell[]
   hourlyCoOrders: ComboPairTimingHour[]
 }
@@ -381,6 +425,7 @@ export type MenuCombosData = {
     focusMenus: string[]
     pairs: MenuComboPair[]
     matrixLift: Array<Array<number | null>>
+    slotDemandProfile: SlotDemandCell[]
     topPairTiming: MenuComboPairTiming[]
   } | null
 }

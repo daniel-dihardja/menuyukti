@@ -237,7 +237,11 @@ export function MenuCombosView({
         </TabsContent>
 
         <TabsContent value="timing" className="mt-4 focus-visible:outline-none">
-          <MenuCombosTimingTab topPairTiming={menuCombos.topPairTiming} locale={locale} />
+          <MenuCombosTimingTab
+            topPairTiming={menuCombos.topPairTiming}
+            slotDemandProfile={menuCombos.slotDemandProfile}
+            locale={locale}
+          />
         </TabsContent>
       </Tabs>
 

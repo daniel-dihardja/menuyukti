@@ -7,10 +7,13 @@ import { HeatmapMatrix } from '../../heatmap/heatmap-matrix'
 import {
   adaptComboDayMealHeatmap,
   adaptComboHourlyHeatmap,
+  buildOpportunityCells,
   formatLift,
+  getPeakSlotHighlight,
   pairLabel,
+  type ComboWeekday,
 } from '@/lib/analytics/menu-combos-page-adapter'
-import type { MenuComboPairTiming } from '@/lib/graphql/queries/analytics'
+import type { MenuComboPairTiming, SlotDemandCell } from '@/lib/graphql/queries/analytics'
 import {
   Card,
   CardContent,
@@ -22,10 +25,13 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/
 import { Separator } from '@workspace/ui/components/separator'
 import { Tabs, TabsContent } from '@workspace/ui/components/tabs'
 import { MenuCombosTimingPairSelector } from './menu-combos-timing-pair-selector'
-import { MenuCombosTimingPeakSummary } from './menu-combos-timing-peak-summary'
+import { MenuCombosSlotStrategyHero } from './menu-combos-slot-strategy-hero'
+import { MenuCombosSlotDayExplorer } from './menu-combos-slot-day-explorer'
+import { MenuCombosVenueDemandHeatmap } from './menu-combos-venue-demand-heatmap'
 
 type MenuCombosTimingTabProps = {
   topPairTiming: MenuComboPairTiming[]
+  slotDemandProfile: SlotDemandCell[]
   locale: string
 }
 
@@ -35,6 +41,7 @@ function weekdayLabel(day: string, t: ReturnType<typeof useTranslations>): strin
 
 type TimingPairPanelProps = {
   timing: MenuComboPairTiming
+  slotDemandProfile: SlotDemandCell[]
   locale: string
   dayMealLabels: ReturnType<typeof buildDayMealLabels>
   hourlyLabels: ReturnType<typeof buildHourlyLabels>
@@ -87,11 +94,20 @@ function buildHourlyLabels(t: ReturnType<typeof useTranslations>) {
 
 function MenuCombosTimingPairPanel({
   timing,
+  slotDemandProfile,
   locale,
   dayMealLabels,
   hourlyLabels,
   t,
 }: TimingPairPanelProps) {
+  const opportunityCells = useMemo(
+    () => buildOpportunityCells(timing, slotDemandProfile),
+    [timing, slotDemandProfile],
+  )
+
+  const peakDay = (timing.recommendedWindow.bestDay as ComboWeekday | null) ?? null
+  const peakHighlight = useMemo(() => getPeakSlotHighlight(timing), [timing])
+
   const dayMealHeatmap = useMemo(() => {
     const heatmap = adaptComboDayMealHeatmap(timing.dayMealCells)
     return {
@@ -107,7 +123,15 @@ function MenuCombosTimingPairPanel({
 
   return (
     <div className="flex flex-col gap-8">
-      <MenuCombosTimingPeakSummary timing={timing} locale={locale} />
+      <MenuCombosSlotStrategyHero timing={timing} locale={locale} />
+
+      <MenuCombosSlotDayExplorer
+        key={`${timing.menuA}-${timing.menuB}-explorer`}
+        cells={opportunityCells}
+        locale={locale}
+        defaultDay={peakDay}
+        weekdayLabel={(day) => weekdayLabel(day, t)}
+      />
 
       <HeatmapMatrix
         title={t('timing.dayMeal.title')}
@@ -116,6 +140,7 @@ function MenuCombosTimingPairPanel({
         density="compact"
         variant="embedded"
         labels={dayMealLabels}
+        highlightCell={peakHighlight}
       />
 
       <Separator />
@@ -132,12 +157,22 @@ function MenuCombosTimingPairPanel({
   )
 }
 
-export function MenuCombosTimingTab({ topPairTiming, locale }: MenuCombosTimingTabProps) {
+export function MenuCombosTimingTab({
+  topPairTiming,
+  slotDemandProfile,
+  locale,
+}: MenuCombosTimingTabProps) {
   const t = useTranslations('analytics.menuCombos')
   const [selectedIndex, setSelectedIndex] = useState(0)
 
   const dayMealLabels = useMemo(() => buildDayMealLabels(locale, t), [locale, t])
   const hourlyLabels = useMemo(() => buildHourlyLabels(t), [t])
+
+  const selectedTiming = topPairTiming[selectedIndex]
+  const venuePeakHighlight = useMemo(
+    () => (selectedTiming ? getPeakSlotHighlight(selectedTiming) : null),
+    [selectedTiming],
+  )
 
   if (topPairTiming.length === 0) {
     return (
@@ -169,11 +204,18 @@ export function MenuCombosTimingTab({ topPairTiming, locale }: MenuCombosTimingT
             setSelectedIndex(Number(value))
           }}
         >
-          <div className="border-b bg-background px-4 py-4 md:px-6">
+          <div className="flex flex-col gap-4 border-b bg-background px-4 py-4 md:px-6">
             <MenuCombosTimingPairSelector
               topPairTiming={topPairTiming}
               selectedIndex={selectedIndex}
               onSelectedIndexChange={setSelectedIndex}
+            />
+
+            <MenuCombosVenueDemandHeatmap
+              slotDemandProfile={slotDemandProfile}
+              locale={locale}
+              highlightCell={venuePeakHighlight}
+              weekdayLabel={(day) => weekdayLabel(day, t)}
             />
           </div>
 
@@ -185,6 +227,7 @@ export function MenuCombosTimingTab({ topPairTiming, locale }: MenuCombosTimingT
             >
               <MenuCombosTimingPairPanel
                 timing={timing}
+                slotDemandProfile={slotDemandProfile}
                 locale={locale}
                 dayMealLabels={dayMealLabels}
                 hourlyLabels={hourlyLabels}

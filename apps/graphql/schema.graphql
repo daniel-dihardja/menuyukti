@@ -113,6 +113,29 @@ type ComboPairRecommendedWindowType {
   confidenceTier: String!
 }
 
+"""Promo posture for a combo pair's peak window."""
+type ComboPromoPostureType {
+  promoPosture: String!
+  peakDay: String
+  peakMealPeriod: String
+  pairCoOrderIndex: Float
+  venueDemandIndex: Float
+  venueRelativeDemand: String
+  promoReason: String!
+}
+
+"""Venue demand for one day and meal-period slot."""
+type SlotDemandCellType {
+  day: String!
+  mealPeriod: String!
+  mealPeriodLabel: String!
+  mealPeriodHoursLabel: String!
+  orderCount: Int!
+  trafficShare: Float!
+  demandIndex: Float!
+  relativeDemand: String!
+}
+
 """Co-order intensity for one day and meal-period slot."""
 type ComboPairTimingCellType {
   day: String!
@@ -312,6 +335,7 @@ type MenuComboPairTimingType {
   menuA: String!
   menuB: String!
   recommendedWindow: ComboPairRecommendedWindowType!
+  promoPosture: ComboPromoPostureType!
   dayMealCells: [ComboPairTimingCellType!]!
   hourlyCoOrders: [ComboPairTimingHourType!]!
 }
@@ -342,6 +366,7 @@ type MenuCombosPayloadType {
   focusMenus: [String!]!
   pairs: [MenuComboPairType!]!
   matrixLift: [[Float]!]!
+  slotDemandProfile: [SlotDemandCellType!]!
   topPairTiming: [MenuComboPairTimingType!]!
 }
 

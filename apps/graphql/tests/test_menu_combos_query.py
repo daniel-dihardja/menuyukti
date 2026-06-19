@@ -34,6 +34,16 @@ query AnalyticsRunMenuCombos($id: ID!, $locationId: ID) {
       matrixCategoryB
     }
     matrixLift
+    slotDemandProfile {
+      day
+      mealPeriod
+      mealPeriodLabel
+      mealPeriodHoursLabel
+      orderCount
+      trafficShare
+      demandIndex
+      relativeDemand
+    }
     topPairTiming {
       menuA
       menuB
@@ -46,6 +56,15 @@ query AnalyticsRunMenuCombos($id: ID!, $locationId: ID) {
         coOrderIndex
         sampleCoOrders
         confidenceTier
+      }
+      promoPosture {
+        promoPosture
+        peakDay
+        peakMealPeriod
+        pairCoOrderIndex
+        venueDemandIndex
+        venueRelativeDemand
+        promoReason
       }
       dayMealCells {
         day
@@ -128,6 +147,14 @@ def test_menu_combos_with_synthetic_facts(analytics_run_with_qa_data):
             assert "recommendedWindow" in top_timing[0]
             assert "dayMealCells" in top_timing[0]
             assert len(top_timing[0]["dayMealCells"]) == 35
+            assert "promoPosture" in top_timing[0]
+            assert top_timing[0]["promoPosture"]["promoPosture"] in {
+                "support",
+                "promote",
+                "maintain",
+                "insufficient_data",
+            }
+            assert len(payload["slotDemandProfile"]) == 35
             lunch_cell = next(
                 c for c in top_timing[0]["dayMealCells"] if c["mealPeriod"] == "lunch"
             )

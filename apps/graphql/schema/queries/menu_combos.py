@@ -55,11 +55,35 @@ class ComboPairRecommendedWindowType:
     confidence_tier: str
 
 
+@strawberry.type(description="Venue demand for one day and meal-period slot.")
+class SlotDemandCellType:
+    day: str
+    meal_period: str
+    meal_period_label: str
+    meal_period_hours_label: str
+    order_count: int
+    traffic_share: float
+    demand_index: float
+    relative_demand: str
+
+
+@strawberry.type(description="Promo posture for a combo pair's peak window.")
+class ComboPromoPostureType:
+    promo_posture: str
+    peak_day: str | None
+    peak_meal_period: str | None
+    pair_co_order_index: float | None
+    venue_demand_index: float | None
+    venue_relative_demand: str | None
+    promo_reason: str
+
+
 @strawberry.type(description="Timing analytics for when a combo pair is ordered together.")
 class MenuComboPairTimingType:
     menu_a: str
     menu_b: str
     recommended_window: ComboPairRecommendedWindowType
+    promo_posture: ComboPromoPostureType
     day_meal_cells: list[ComboPairTimingCellType]
     hourly_co_orders: list[ComboPairTimingHourType]
 
@@ -78,6 +102,7 @@ class MenuCombosPayloadType:
     focus_menus: list[str]
     pairs: list[MenuComboPairType]
     matrix_lift: list[list[float | None]]
+    slot_demand_profile: list[SlotDemandCellType]
     top_pair_timing: list[MenuComboPairTimingType]
 
 
@@ -115,6 +140,15 @@ def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
                 sample_co_orders=t["recommended_window"]["sample_co_orders"],
                 confidence_tier=t["recommended_window"]["confidence_tier"],
             ),
+            promo_posture=ComboPromoPostureType(
+                promo_posture=t["promo_posture"]["promo_posture"],
+                peak_day=t["promo_posture"]["peak_day"],
+                peak_meal_period=t["promo_posture"]["peak_meal_period"],
+                pair_co_order_index=t["promo_posture"]["pair_co_order_index"],
+                venue_demand_index=t["promo_posture"]["venue_demand_index"],
+                venue_relative_demand=t["promo_posture"]["venue_relative_demand"],
+                promo_reason=t["promo_posture"]["promo_reason"],
+            ),
             day_meal_cells=[
                 ComboPairTimingCellType(
                     day=c["day"],
@@ -138,6 +172,20 @@ def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
         for t in raw.get("top_pair_timing", [])
     ]
 
+    slot_demand_profile = [
+        SlotDemandCellType(
+            day=c["day"],
+            meal_period=c["meal_period"],
+            meal_period_label=c["meal_period_label"],
+            meal_period_hours_label=c["meal_period_hours_label"],
+            order_count=c["order_count"],
+            traffic_share=c["traffic_share"],
+            demand_index=c["demand_index"],
+            relative_demand=c["relative_demand"],
+        )
+        for c in raw.get("slot_demand_profile", [])
+    ]
+
     return MenuCombosPayloadType(
         total_orders=raw["total_orders"],
         multi_item_order_count=raw["multi_item_order_count"],
@@ -146,6 +194,7 @@ def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
         focus_menus=list(raw["focus_menus"]),
         pairs=pairs,
         matrix_lift=raw["matrix_lift"],
+        slot_demand_profile=slot_demand_profile,
         top_pair_timing=top_pair_timing,
     )
 

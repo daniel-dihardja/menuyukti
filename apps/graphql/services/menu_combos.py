@@ -8,6 +8,8 @@ import strawberry
 from menuyukti.core.analytics import (
     compute_combo_pair_timing_from_orders,
     compute_menu_basket_affinities_from_orders,
+    compute_slot_demand_profile_from_orders,
+    derive_combo_promo_posture,
 )
 from sqlalchemy.orm import Session
 
@@ -75,10 +77,16 @@ def build_menu_combos(
     ]
 
     top_pair_inputs = _top_pairs_for_timing(pairs)
-    top_pair_timing = compute_combo_pair_timing_from_orders(
-        facts_to_combo_timing_rows(facts),
+    combo_timing_rows = facts_to_combo_timing_rows(facts)
+    slot_demand_profile = compute_slot_demand_profile_from_orders(combo_timing_rows)
+    top_pair_timing_raw = compute_combo_pair_timing_from_orders(
+        combo_timing_rows,
         top_pair_inputs,
     )
+    top_pair_timing = [
+        {**timing, "promo_posture": derive_combo_promo_posture(timing, slot_demand_profile)}
+        for timing in top_pair_timing_raw
+    ]
 
     return {
         "total_orders": raw["total_orders"],
@@ -88,5 +96,6 @@ def build_menu_combos(
         "focus_menus": list(raw["focus_menus"]),
         "pairs": pairs,
         "matrix_lift": raw["matrix_lift"],
+        "slot_demand_profile": slot_demand_profile,
         "top_pair_timing": top_pair_timing,
     }
