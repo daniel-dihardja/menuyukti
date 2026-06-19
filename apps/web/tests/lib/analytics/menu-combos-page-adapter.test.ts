@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  adaptComboDayMealHeatmap,
-  adaptComboHourlyHeatmap,
   adaptSlotDemandHeatmap,
   buildLiftMatrixRows,
   buildOpportunityCells,
@@ -328,38 +326,6 @@ describe('menu-combos-page-adapter', () => {
     expect(formatMealPeriodWithHours('Lunch', '11:00–14:59')).toBe('Lunch (11:00–14:59)')
     expect(formatMealPeriodWithHours('Dinner', null)).toBe('Dinner')
     expect(formatMealPeriodWithHours(null, '17:00–21:59')).toBe('17:00–21:59')
-  })
-
-  it('adapts day-meal heatmap with meal periods as rows', () => {
-    const { rows, columnLabels } = adaptComboDayMealHeatmap([
-      {
-        day: 'fri',
-        mealPeriod: 'lunch',
-        mealPeriodLabel: 'Lunch',
-        mealPeriodHoursLabel: '11:00–14:59',
-        coOrderCount: 8,
-        coOrderIndex: 1.6,
-        attachRate: 0.4,
-      },
-    ])
-    expect(columnLabels).toHaveLength(7)
-    expect(rows).toHaveLength(5)
-    const lunchRow = rows.find((row) => row.key === 'lunch')
-    expect(lunchRow?.label).toBe('Lunch (11:00–14:59)')
-    expect(lunchRow?.values[4]).toBe(1.6)
-  })
-
-  it('adapts hourly co-order heatmap within configured hour range', () => {
-    const { rows, columnLabels } = adaptComboHourlyHeatmap(
-      [
-        { hour: 12, coOrderCount: 5 },
-        { hour: 13, coOrderCount: 3 },
-      ],
-      'Burger + Fries',
-    )
-    expect(rows).toHaveLength(1)
-    expect(columnLabels[2]).toBe('12')
-    expect(rows[0]?.values[2]).toBe(5)
   })
 
   it('builds opportunity cells with peak posture from server', () => {

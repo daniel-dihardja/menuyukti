@@ -12,10 +12,7 @@ from typing import Literal, TypedDict
 
 import pandas as pd
 
-from menuyukti.core.analytics.calculate_combo_pair_timing import (
-    MIN_SLOT_CO_ORDERS,
-    ComboPairTimingResult,
-)
+from menuyukti.core.analytics.calculate_combo_pair_timing import ComboPairTimingResult
 from menuyukti.core.analytics.meal_periods import (
     MEAL_PERIODS,
     WEEKDAY_ORDER,
@@ -239,7 +236,7 @@ def derive_combo_promo_posture(
         ),
     }
 
-    if not peak_day or not peak_period or sample < MIN_SLOT_CO_ORDERS:
+    if not peak_day or not peak_period or sample < 1:
         return empty
 
     venue_cell = _slot_profile_lookup(slot_profile).get((peak_day, peak_period))

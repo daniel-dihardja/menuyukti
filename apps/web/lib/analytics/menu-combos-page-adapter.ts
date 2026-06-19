@@ -1,5 +1,4 @@
 import type { HeatmapMatrixRow } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
-import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
 import type {
   ComboPairTimingCell,
   MenuComboPair,
@@ -121,53 +120,6 @@ export function formatMealPeriodWithHours(
   if (short) return short
   if (hours) return hours
   return '—'
-}
-
-export function adaptComboDayMealHeatmap(cells: ComboPairTimingCell[]): {
-  rows: HeatmapMatrixRow[]
-  columnLabels: string[]
-} {
-  const cellByKey = new Map(cells.map((cell) => [`${cell.day}:${cell.mealPeriod}`, cell]))
-
-  const columnLabels = COMBO_WEEKDAYS.map((day) => day.toUpperCase())
-
-  const rows: HeatmapMatrixRow[] = COMBO_MEAL_PERIODS.map((period) => {
-    const sampleCell = cells.find((cell) => cell.mealPeriod === period)
-    return {
-      key: period,
-      label: sampleCell
-        ? formatMealPeriodWithHours(sampleCell.mealPeriodLabel, sampleCell.mealPeriodHoursLabel)
-        : period,
-      values: COMBO_WEEKDAYS.map((day) => {
-        const cell = cellByKey.get(`${day}:${period}`)
-        return cell?.coOrderIndex ?? 0
-      }),
-    }
-  })
-
-  return { rows, columnLabels }
-}
-
-export function adaptComboHourlyHeatmap(
-  hourlyCoOrders: Array<{ hour: number; coOrderCount: number }>,
-  pairLabel: string,
-): { rows: HeatmapMatrixRow[]; columnLabels: string[] } {
-  const byHour = new Map(hourlyCoOrders.map((row) => [row.hour, row.coOrderCount]))
-  const hours = Array.from(
-    { length: DAILY_HEATMAP_END_HOUR - DAILY_HEATMAP_START_HOUR + 1 },
-    (_, index) => DAILY_HEATMAP_START_HOUR + index,
-  )
-
-  return {
-    rows: [
-      {
-        key: pairLabel,
-        label: pairLabel,
-        values: hours.map((hour) => byHour.get(hour) ?? 0),
-      },
-    ],
-    columnLabels: hours.map((hour) => String(hour).padStart(2, '0')),
-  }
 }
 
 export type ComboPairPeakSummary = {
@@ -418,7 +370,8 @@ export function buildOpportunityCells(
         pairCoOrderIndex: pair?.coOrderIndex ?? 0,
         venueDemandIndex: venue?.demandIndex ?? 0,
         venueRelativeDemand: venue?.relativeDemand ?? 'average',
-        promoPosture: isPeak && peakPosture ? peakPosture : null,
+        promoPosture:
+          isPeak && peakPosture && peakPosture !== 'insufficient_data' ? peakPosture : null,
         isPeak,
         coOrderCount: pair?.coOrderCount ?? 0,
       })

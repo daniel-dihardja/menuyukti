@@ -3,14 +3,9 @@
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
-import { HeatmapMatrix } from '../../heatmap/heatmap-matrix'
 import {
-  adaptComboDayMealHeatmap,
-  adaptComboHourlyHeatmap,
   buildOpportunityCells,
-  formatLift,
   getPeakSlotHighlight,
-  pairLabel,
   type ComboWeekday,
 } from '@/lib/analytics/menu-combos-page-adapter'
 import type { MenuComboPairTiming, SlotDemandCell } from '@/lib/graphql/queries/analytics'
@@ -22,7 +17,6 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
-import { Separator } from '@workspace/ui/components/separator'
 import { Tabs, TabsContent } from '@workspace/ui/components/tabs'
 import { MenuCombosTimingPairSelector } from './menu-combos-timing-pair-selector'
 import { MenuCombosSlotStrategyHero } from './menu-combos-slot-strategy-hero'
@@ -43,83 +37,16 @@ type TimingPairPanelProps = {
   timing: MenuComboPairTiming
   slotDemandProfile: SlotDemandCell[]
   locale: string
-  dayMealLabels: ReturnType<typeof buildDayMealLabels>
-  hourlyLabels: ReturnType<typeof buildHourlyLabels>
   t: ReturnType<typeof useTranslations>
 }
 
-function buildDayMealLabels(locale: string, t: ReturnType<typeof useTranslations>) {
-  return {
-    menuColumnLabel: t('timing.dayMeal.menuColumn'),
-    legendLow: t('timing.dayMeal.legendLow'),
-    legendHigh: t('timing.dayMeal.legendHigh'),
-    unitsLabel: t('timing.dayMeal.unitsLabel'),
-    totalsRowLabel: t('timing.dayMeal.totalsRowLabel'),
-    sortHint: t('timing.dayMeal.sortHint'),
-    scrollHint: t('timing.dayMeal.scrollHint'),
-    explainTitle: t('timing.dayMeal.explainTitle'),
-    explainBody: t('timing.dayMeal.explainBody'),
-    cellAriaLabel: (mealPeriod: string, day: string, index: number) =>
-      t('timing.dayMeal.cellAriaLabel', {
-        mealPeriod,
-        day,
-        index: formatLift(index, locale),
-      }),
-    cellTooltip: (mealPeriod: string, day: string, index: number) =>
-      t('timing.dayMeal.cellTooltip', {
-        mealPeriod,
-        day,
-        index: formatLift(index, locale),
-      }),
-  }
-}
-
-function buildHourlyLabels(t: ReturnType<typeof useTranslations>) {
-  return {
-    menuColumnLabel: t('timing.hourly.menuColumn'),
-    legendLow: t('timing.hourly.legendLow'),
-    legendHigh: t('timing.hourly.legendHigh'),
-    unitsLabel: t('timing.hourly.unitsLabel'),
-    totalsRowLabel: t('timing.hourly.totalsRowLabel'),
-    sortHint: t('timing.hourly.sortHint'),
-    scrollHint: t('timing.hourly.scrollHint'),
-    explainTitle: t('timing.hourly.explainTitle'),
-    explainBody: t('timing.hourly.explainBody'),
-    cellAriaLabel: (pair: string, hour: string, count: number) =>
-      t('timing.hourly.cellAriaLabel', { pair, hour, count }),
-    cellTooltip: (pair: string, hour: string, count: number) =>
-      t('timing.hourly.cellTooltip', { pair, hour, count }),
-  }
-}
-
-function MenuCombosTimingPairPanel({
-  timing,
-  slotDemandProfile,
-  locale,
-  dayMealLabels,
-  hourlyLabels,
-  t,
-}: TimingPairPanelProps) {
+function MenuCombosTimingPairPanel({ timing, slotDemandProfile, locale, t }: TimingPairPanelProps) {
   const opportunityCells = useMemo(
     () => buildOpportunityCells(timing, slotDemandProfile),
     [timing, slotDemandProfile],
   )
 
   const peakDay = (timing.recommendedWindow.bestDay as ComboWeekday | null) ?? null
-  const peakHighlight = useMemo(() => getPeakSlotHighlight(timing), [timing])
-
-  const dayMealHeatmap = useMemo(() => {
-    const heatmap = adaptComboDayMealHeatmap(timing.dayMealCells)
-    return {
-      ...heatmap,
-      columnLabels: heatmap.columnLabels.map((day) => weekdayLabel(day.toLowerCase(), t)),
-    }
-  }, [timing.dayMealCells, t])
-
-  const hourlyHeatmap = useMemo(
-    () => adaptComboHourlyHeatmap(timing.hourlyCoOrders, pairLabel(timing)),
-    [timing],
-  )
 
   return (
     <div className="flex flex-col gap-8">
@@ -132,27 +59,6 @@ function MenuCombosTimingPairPanel({
         defaultDay={peakDay}
         weekdayLabel={(day) => weekdayLabel(day, t)}
       />
-
-      <HeatmapMatrix
-        title={t('timing.dayMeal.title')}
-        rows={dayMealHeatmap.rows}
-        columnLabels={dayMealHeatmap.columnLabels}
-        density="compact"
-        variant="embedded"
-        labels={dayMealLabels}
-        highlightCell={peakHighlight}
-      />
-
-      <Separator />
-
-      <HeatmapMatrix
-        title={t('timing.hourly.title')}
-        rows={hourlyHeatmap.rows}
-        columnLabels={hourlyHeatmap.columnLabels}
-        density="compact"
-        variant="embedded"
-        labels={hourlyLabels}
-      />
     </div>
   )
 }
@@ -164,9 +70,6 @@ export function MenuCombosTimingTab({
 }: MenuCombosTimingTabProps) {
   const t = useTranslations('analytics.menuCombos')
   const [selectedIndex, setSelectedIndex] = useState(0)
-
-  const dayMealLabels = useMemo(() => buildDayMealLabels(locale, t), [locale, t])
-  const hourlyLabels = useMemo(() => buildHourlyLabels(t), [t])
 
   const selectedTiming = topPairTiming[selectedIndex]
   const venuePeakHighlight = useMemo(
@@ -229,8 +132,6 @@ export function MenuCombosTimingTab({
                 timing={timing}
                 slotDemandProfile={slotDemandProfile}
                 locale={locale}
-                dayMealLabels={dayMealLabels}
-                hourlyLabels={hourlyLabels}
                 t={t}
               />
             </TabsContent>

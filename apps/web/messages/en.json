@@ -2499,38 +2499,9 @@
           "title": "No timing data yet",
           "description": "Timing appears when guests order combo pairs together across multiple time slots."
         },
-        "dayMeal": {
-          "title": "Co-order index by day and meal period",
-          "menuColumn": "Meal period",
-          "legendLow": "Lower index",
-          "legendHigh": "Higher index",
-          "unitsLabel": "Co-order index (vs overall traffic in that slot)",
-          "totalsRowLabel": "Total",
-          "sortHint": "Click a column header to sort meal periods by day.",
-          "scrollHint": "Swipe sideways to see all days →",
-          "explainTitle": "How to read this heatmap",
-          "explainBody": "Each cell shows how often this pair appears in that day and meal period, relative to overall traffic in the slot. Values above 1 mean the pair shows up more often than average. The ring marks this pair's recommended peak window.",
-          "cellAriaLabel": "{mealPeriod} on {day} · index {index}×",
-          "cellTooltip": "{mealPeriod} on {day} · co-order index {index}×"
-        },
-        "hourly": {
-          "title": "Hourly co-orders",
-          "menuColumn": "Pair",
-          "legendLow": "Fewer",
-          "legendHigh": "More",
-          "unitsLabel": "Co-orders per hour",
-          "totalsRowLabel": "Total",
-          "sortHint": "Click a column header to sort by hour.",
-          "scrollHint": "Swipe sideways to see all hours →",
-          "explainTitle": "Hourly co-order counts",
-          "explainBody": "Number of checks that included both items in each hour.",
-          "cellAriaLabel": "{pair} at {hour}:00 · {count, plural, one {# co-order} other {# co-orders}}",
-          "cellTooltip": "{pair} at {hour}:00 · {count, plural, one {# co-order} other {# co-orders}}"
-        },
         "strategy": {
           "pairIndexLabel": "Pair index",
           "venueDemandLabel": "Venue demand",
-          "insufficientDataHint": "Need at least 3 co-orders in the peak slot before recommending a promo posture.",
           "posture": {
             "support": "Support",
             "promote": "Promote",

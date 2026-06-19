@@ -3,7 +3,6 @@
 from datetime import datetime, timezone
 
 from menuyukti.core.analytics.calculate_combo_pair_timing import (
-    MIN_SLOT_CO_ORDERS,
     compute_combo_pair_timing_from_orders,
 )
 from menuyukti.core.analytics.calculate_slot_demand_profile import (
@@ -126,7 +125,7 @@ def test_sparse_breakfast_slots_stay_below_average():
     assert max(c["demand_index"] for c in breakfast_cells) < 1.5
 
 
-def test_insufficient_co_orders_returns_insufficient_data():
+def test_low_co_orders_still_recommends_posture():
     rows: list[dict] = []
     for i in range(2):
         rows.append(_row(f"C{i}", "Burger", _dt(2024, 1, 5, 12)))
@@ -138,5 +137,24 @@ def test_insufficient_co_orders_returns_insufficient_data():
     )[0]
     posture = derive_combo_promo_posture(timing, profile)
 
-    assert timing["recommended_window"]["sample_co_orders"] < MIN_SLOT_CO_ORDERS
+    assert timing["recommended_window"]["sample_co_orders"] == 2
+    assert posture["promo_posture"] in {"support", "promote", "maintain"}
+    assert posture["venue_demand_index"] is not None
+    assert posture["venue_relative_demand"] is not None
+    assert "Promote" in posture["promo_reason"] or "Support" in posture["promo_reason"] or "Maintain" in posture["promo_reason"]
+
+
+def test_no_co_orders_returns_insufficient_data():
+    rows: list[dict] = [
+        _row("B1", "Burger", _dt(2024, 1, 5, 12)),
+        _row("B2", "Fries", _dt(2024, 1, 6, 12)),
+    ]
+
+    profile = compute_slot_demand_profile_from_orders(rows)
+    timing = compute_combo_pair_timing_from_orders(
+        rows, [{"menu_a": "Burger", "menu_b": "Fries"}]
+    )[0]
+    posture = derive_combo_promo_posture(timing, profile)
+
+    assert timing["recommended_window"]["best_day"] is None
     assert posture["promo_posture"] == "insufficient_data"
