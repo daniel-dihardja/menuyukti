@@ -5,10 +5,17 @@ import { useTranslations } from 'next-intl'
 
 import {
   buildOpportunityCells,
+  buildTimingPairOptions,
+  formatLift,
   getPeakSlotHighlight,
+  pairLabel,
   type ComboWeekday,
 } from '@/lib/analytics/menu-combos-page-adapter'
-import type { MenuComboPairTiming, SlotDemandCell } from '@/lib/graphql/queries/analytics'
+import type {
+  MenuComboPair,
+  MenuComboPairTiming,
+  SlotDemandCell,
+} from '@/lib/graphql/queries/analytics'
 import {
   Card,
   CardContent,
@@ -17,13 +24,13 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
-import { Tabs, TabsContent } from '@workspace/ui/components/tabs'
 import { MenuCombosTimingPairSelector } from './menu-combos-timing-pair-selector'
 import { MenuCombosSlotStrategyHero } from './menu-combos-slot-strategy-hero'
 import { MenuCombosSlotDayExplorer } from './menu-combos-slot-day-explorer'
 import { MenuCombosVenueDemandHeatmap } from './menu-combos-venue-demand-heatmap'
 
 type MenuCombosTimingTabProps = {
+  pairs: MenuComboPair[]
   topPairTiming: MenuComboPairTiming[]
   slotDemandProfile: SlotDemandCell[]
   locale: string
@@ -31,6 +38,10 @@ type MenuCombosTimingTabProps = {
 
 function weekdayLabel(day: string, t: ReturnType<typeof useTranslations>): string {
   return t(`timing.weekdays.${day}` as 'timing.weekdays.mon')
+}
+
+function timingPairKey(timing: Pick<MenuComboPairTiming, 'menuA' | 'menuB'>): string {
+  return `${timing.menuA}::${timing.menuB}`
 }
 
 type TimingPairPanelProps = {
@@ -64,20 +75,49 @@ function MenuCombosTimingPairPanel({ timing, slotDemandProfile, locale, t }: Tim
 }
 
 export function MenuCombosTimingTab({
+  pairs,
   topPairTiming,
   slotDemandProfile,
   locale,
 }: MenuCombosTimingTabProps) {
   const t = useTranslations('analytics.menuCombos')
-  const [selectedIndex, setSelectedIndex] = useState(0)
 
-  const selectedTiming = topPairTiming[selectedIndex]
+  const timingPairOptions = useMemo(
+    () => buildTimingPairOptions(pairs, topPairTiming),
+    [pairs, topPairTiming],
+  )
+
+  const selectOptions = useMemo(
+    () =>
+      timingPairOptions.map((option) => ({
+        value: timingPairKey(option.timing),
+        label: t('timing.pairSelectorOption', {
+          pair: pairLabel(option.timing),
+          lift: formatLift(option.pair?.lift ?? 0, locale),
+        }),
+      })),
+    [locale, t, timingPairOptions],
+  )
+
+  const [selectedValue, setSelectedValue] = useState(() => selectOptions[0]?.value ?? '')
+
+  const resolvedSelectedValue = selectOptions.some((option) => option.value === selectedValue)
+    ? selectedValue
+    : (selectOptions[0]?.value ?? '')
+
+  const selectedTiming = useMemo(
+    () =>
+      timingPairOptions.find((option) => timingPairKey(option.timing) === resolvedSelectedValue)
+        ?.timing ?? null,
+    [resolvedSelectedValue, timingPairOptions],
+  )
+
   const venuePeakHighlight = useMemo(
     () => (selectedTiming ? getPeakSlotHighlight(selectedTiming) : null),
     [selectedTiming],
   )
 
-  if (topPairTiming.length === 0) {
+  if (timingPairOptions.length === 0) {
     return (
       <Card className="shadow-none">
         <CardContent className="py-10">
@@ -100,43 +140,31 @@ export function MenuCombosTimingTab({
       </CardHeader>
 
       <CardContent className="p-0">
-        <Tabs
-          className="min-w-0"
-          value={String(selectedIndex)}
-          onValueChange={(value) => {
-            setSelectedIndex(Number(value))
-          }}
-        >
-          <div className="flex flex-col gap-4 border-b bg-background px-4 py-4 md:px-6">
-            <MenuCombosTimingPairSelector
-              topPairTiming={topPairTiming}
-              selectedIndex={selectedIndex}
-              onSelectedIndexChange={setSelectedIndex}
-            />
+        <div className="flex flex-col gap-4 border-b bg-background px-4 py-4 md:px-6">
+          <MenuCombosTimingPairSelector
+            options={selectOptions}
+            selectedValue={resolvedSelectedValue}
+            onSelectedValueChange={setSelectedValue}
+          />
 
-            <MenuCombosVenueDemandHeatmap
+          <MenuCombosVenueDemandHeatmap
+            slotDemandProfile={slotDemandProfile}
+            locale={locale}
+            highlightCell={venuePeakHighlight}
+            weekdayLabel={(day) => weekdayLabel(day, t)}
+          />
+        </div>
+
+        {selectedTiming ? (
+          <div className="flex flex-col gap-8 px-4 py-6 md:px-6">
+            <MenuCombosTimingPairPanel
+              timing={selectedTiming}
               slotDemandProfile={slotDemandProfile}
               locale={locale}
-              highlightCell={venuePeakHighlight}
-              weekdayLabel={(day) => weekdayLabel(day, t)}
+              t={t}
             />
           </div>
-
-          {topPairTiming.map((timing, index) => (
-            <TabsContent
-              key={`${timing.menuA}-${timing.menuB}-panel`}
-              value={String(index)}
-              className="mt-0 flex flex-col gap-8 px-4 py-6 focus-visible:outline-none md:px-6"
-            >
-              <MenuCombosTimingPairPanel
-                timing={timing}
-                slotDemandProfile={slotDemandProfile}
-                locale={locale}
-                t={t}
-              />
-            </TabsContent>
-          ))}
-        </Tabs>
+        ) : null}
       </CardContent>
     </Card>
   )

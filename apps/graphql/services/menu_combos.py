@@ -18,7 +18,7 @@ from graphql.services.menu_engineering import compute_menu_engineering_matrix
 from graphql.services.order_fact_rows import facts_to_basket_rows, facts_to_combo_timing_rows
 from graphql.services.order_facts import load_order_facts
 
-TOP_PAIR_TIMING_COUNT = 3
+STRONG_LIFT_THRESHOLD = 1.5
 
 
 def _star_focus_menus(matrix_items: list[dict[str, Any]]) -> list[str] | None:
@@ -30,14 +30,15 @@ def _star_focus_menus(matrix_items: list[dict[str, Any]]) -> list[str] | None:
     return None
 
 
-def _top_pairs_for_timing(pairs: list[dict[str, Any]], *, limit: int = TOP_PAIR_TIMING_COUNT) -> list[dict[str, str]]:
+def _pairs_for_timing(pairs: list[dict[str, Any]]) -> list[dict[str, str]]:
     sorted_pairs = sorted(
         pairs,
         key=lambda p: (-float(p["lift"]), -int(p["co_order_count"]), p["menu_a"], p["menu_b"]),
     )
     return [
         {"menu_a": p["menu_a"], "menu_b": p["menu_b"]}
-        for p in sorted_pairs[:limit]
+        for p in sorted_pairs
+        if float(p["lift"]) >= STRONG_LIFT_THRESHOLD
     ]
 
 
@@ -76,7 +77,7 @@ def build_menu_combos(
         for p in raw["pairs"]
     ]
 
-    top_pair_inputs = _top_pairs_for_timing(pairs)
+    top_pair_inputs = _pairs_for_timing(pairs)
     combo_timing_rows = facts_to_combo_timing_rows(facts)
     slot_demand_profile = compute_slot_demand_profile_from_orders(combo_timing_rows)
     top_pair_timing_raw = compute_combo_pair_timing_from_orders(
