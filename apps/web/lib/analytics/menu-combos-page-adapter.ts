@@ -199,7 +199,10 @@ export function deriveComboPairPeakSummary(timing: MenuComboPairTiming): ComboPa
 }
 
 export function hasActionableTiming(timing: MenuComboPairTiming): boolean {
-  return timing.recommendedWindow.confidenceTier !== 'insufficient'
+  return (
+    timing.dayMealCells.some((cell) => cell.coOrderCount > 0) ||
+    timing.recommendedWindow.bestDay != null
+  )
 }
 
 export function findPairForTiming(
@@ -370,8 +373,7 @@ export function buildOpportunityCells(
         pairCoOrderIndex: pair?.coOrderIndex ?? 0,
         venueDemandIndex: venue?.demandIndex ?? 0,
         venueRelativeDemand: venue?.relativeDemand ?? 'average',
-        promoPosture:
-          isPeak && peakPosture && peakPosture !== 'insufficient_data' ? peakPosture : null,
+        promoPosture: isPeak && peakPosture ? peakPosture : null,
         isPeak,
         coOrderCount: pair?.coOrderCount ?? 0,
       })

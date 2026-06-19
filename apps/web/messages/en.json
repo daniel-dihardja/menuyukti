@@ -2505,8 +2505,7 @@
           "posture": {
             "support": "Support",
             "promote": "Promote",
-            "maintain": "Maintain",
-            "insufficient_data": "Insufficient data"
+            "maintain": "Maintain"
           },
           "gauge": {
             "pairAtPeak": "Pair fit at peak",

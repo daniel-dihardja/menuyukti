@@ -93,7 +93,7 @@ export function MenuCombosSlotStrategyHero({ timing, locale }: MenuCombosSlotStr
           <Clock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
           <p className="text-sm font-medium leading-relaxed text-foreground">{summaryText}</p>
         </div>
-        {promo.promoPosture && promo.promoPosture !== 'insufficient_data' ? (
+        {promo.promoPosture ? (
           <Badge
             className={cn(
               'w-fit shrink-0 px-3 py-1 text-xs font-semibold uppercase tracking-wide',

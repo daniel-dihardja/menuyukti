@@ -2,10 +2,7 @@
 
 from datetime import datetime, timezone
 
-from menuyukti.core.analytics.calculate_combo_pair_timing import (
-    MIN_SLOT_CO_ORDERS,
-    compute_combo_pair_timing_from_orders,
-)
+from menuyukti.core.analytics.calculate_combo_pair_timing import compute_combo_pair_timing_from_orders
 
 
 def _row(bill: str, menu: str, order_time: datetime) -> dict:
@@ -24,7 +21,7 @@ def test_empty_input_returns_empty():
     assert compute_combo_pair_timing_from_orders([], [{"menu_a": "A", "menu_b": "B"}]) == []
 
 
-def test_no_co_orders_returns_insufficient_confidence():
+def test_no_co_orders_returns_empty_peak_window():
     rows = [
         _row("B1", "Burger", _dt(2024, 1, 1, 12)),
         _row("B2", "Fries", _dt(2024, 1, 2, 12)),
@@ -34,8 +31,23 @@ def test_no_co_orders_returns_insufficient_confidence():
     )
     assert len(result) == 1
     timing = result[0]
-    assert timing["recommended_window"]["confidence_tier"] == "insufficient"
+    assert timing["recommended_window"]["confidence_tier"] == "low"
     assert timing["recommended_window"]["best_day"] is None
+
+
+def test_single_co_order_still_recommends_peak():
+    rows = [
+        _row("C0", "Burger", _dt(2024, 1, 5, 12)),
+        _row("C0", "Fries", _dt(2024, 1, 5, 12)),
+    ]
+    result = compute_combo_pair_timing_from_orders(
+        rows, [{"menu_a": "Burger", "menu_b": "Fries"}]
+    )[0]
+    window = result["recommended_window"]
+    assert window["best_day"] == "fri"
+    assert window["best_meal_period"] == "lunch"
+    assert window["sample_co_orders"] == 1
+    assert window["confidence_tier"] == "low"
 
 
 def test_friday_lunch_cluster_recommended():
@@ -108,9 +120,9 @@ def test_recommendation_follows_peak_index_not_only_high_volume_slots():
     assert window["best_meal_period_label"] in {"Breakfast", "Lunch"}
 
 
-def test_slots_below_minimum_still_get_low_confidence():
+def test_sparse_slots_still_get_low_confidence():
     rows: list[dict] = []
-    # Only 2 co-orders on Wed breakfast (below MIN_SLOT_CO_ORDERS)
+    # Only 2 co-orders on Wed breakfast
     for i in range(2):
         rows.append(_row(f"W{i}", "Burger", _dt(2024, 1, 3, 8)))
         rows.append(_row(f"W{i}", "Fries", _dt(2024, 1, 3, 8)))

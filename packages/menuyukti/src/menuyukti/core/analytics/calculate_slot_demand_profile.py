@@ -12,7 +12,10 @@ from typing import Literal, TypedDict
 
 import pandas as pd
 
-from menuyukti.core.analytics.calculate_combo_pair_timing import ComboPairTimingResult
+from menuyukti.core.analytics.calculate_combo_pair_timing import (
+    ComboPairTimingCell,
+    ComboPairTimingResult,
+)
 from menuyukti.core.analytics.meal_periods import (
     MEAL_PERIODS,
     WEEKDAY_ORDER,
@@ -22,7 +25,7 @@ from menuyukti.core.analytics.meal_periods import (
 from menuyukti.core.analytics.slot_keys import slot_key
 
 RelativeDemand = Literal["low", "average", "high"]
-PromoPosture = Literal["support", "promote", "maintain", "insufficient_data"]
+PromoPosture = Literal["support", "promote", "maintain"]
 
 LOW_DEMAND_THRESHOLD = 0.9
 HIGH_DEMAND_THRESHOLD = 1.1
@@ -113,9 +116,6 @@ def _build_promo_reason(
     relative: RelativeDemand | None,
     posture: PromoPosture,
 ) -> str:
-    if posture == "insufficient_data":
-        return "Not enough co-orders in the peak slot to recommend a promo posture."
-
     index_part = f" ({pair_index:.2f}×)" if pair_index is not None else ""
     venue_part = ""
     if venue_index is not None and relative is not None:
@@ -208,42 +208,58 @@ def _slot_profile_lookup(
     return {(cell["day"], cell["meal_period"]): cell for cell in slot_profile}
 
 
+def _resolve_peak_cell(timing: ComboPairTimingResult) -> ComboPairTimingCell | None:
+    """Best day × meal-period cell for posture, using recommended window or co-order fallback."""
+    window = timing["recommended_window"]
+    peak_day = window.get("best_day")
+    peak_period = window.get("best_meal_period")
+    if peak_day and peak_period:
+        for cell in timing["day_meal_cells"]:
+            if cell["day"] == peak_day and cell["meal_period"] == peak_period:
+                return cell
+
+    candidates = [c for c in timing["day_meal_cells"] if c["co_order_count"] > 0]
+    if not candidates:
+        return None
+
+    return max(
+        candidates,
+        key=lambda c: (
+            c["co_order_index"],
+            c["co_order_count"],
+            -WEEKDAY_ORDER.index(c["day"]),
+        ),
+    )
+
+
 def derive_combo_promo_posture(
     timing: ComboPairTimingResult,
     slot_profile: list[SlotDemandCell],
 ) -> PromoPostureResult:
     """Classify promote vs support for the pair's peak window using venue slot health."""
-    window = timing["recommended_window"]
-    peak_day = window.get("best_day")
-    peak_period = window.get("best_meal_period")
-    peak_label = window.get("best_meal_period_label")
-    sample = int(window.get("sample_co_orders") or 0)
-    pair_index = window.get("co_order_index")
+    peak_cell = _resolve_peak_cell(timing)
+    pair_index = timing["recommended_window"].get("co_order_index")
 
-    empty: PromoPostureResult = {
-        "promo_posture": "insufficient_data",
-        "peak_day": peak_day,
-        "peak_meal_period": peak_period,
-        "pair_co_order_index": pair_index,
-        "venue_demand_index": None,
-        "venue_relative_demand": None,
-        "promo_reason": _build_promo_reason(
-            peak_window=_format_peak_window(peak_day, peak_label),
-            pair_index=pair_index,
-            venue_index=None,
-            relative=None,
-            posture="insufficient_data",
-        ),
-    }
+    if peak_cell is None:
+        return {
+            "promo_posture": "maintain",
+            "peak_day": None,
+            "peak_meal_period": None,
+            "pair_co_order_index": pair_index,
+            "venue_demand_index": None,
+            "venue_relative_demand": None,
+            "promo_reason": "Maintain steady content until this pair shows a clear timing pattern.",
+        }
 
-    if not peak_day or not peak_period or sample < 1:
-        return empty
+    peak_day = peak_cell["day"]
+    peak_period = peak_cell["meal_period"]
+    peak_label = peak_cell["meal_period_label"]
+    cell_pair_index = peak_cell["co_order_index"] if peak_cell["co_order_index"] > 0 else None
+    resolved_pair_index = cell_pair_index if cell_pair_index is not None else pair_index
 
     venue_cell = _slot_profile_lookup(slot_profile).get((peak_day, peak_period))
-    if venue_cell is None:
-        return empty
-
-    relative = venue_cell["relative_demand"]
+    relative: RelativeDemand = venue_cell["relative_demand"] if venue_cell else "average"
+    venue_index = venue_cell["demand_index"] if venue_cell else None
     posture = _posture_from_relative(relative)
     peak_window = _format_peak_window(peak_day, peak_label)
 
@@ -251,14 +267,14 @@ def derive_combo_promo_posture(
         "promo_posture": posture,
         "peak_day": peak_day,
         "peak_meal_period": peak_period,
-        "pair_co_order_index": pair_index,
-        "venue_demand_index": venue_cell["demand_index"],
-        "venue_relative_demand": relative,
+        "pair_co_order_index": resolved_pair_index,
+        "venue_demand_index": venue_index,
+        "venue_relative_demand": relative if venue_cell else None,
         "promo_reason": _build_promo_reason(
             peak_window=peak_window,
-            pair_index=pair_index,
-            venue_index=venue_cell["demand_index"],
-            relative=relative,
+            pair_index=resolved_pair_index,
+            venue_index=venue_index,
+            relative=relative if venue_cell else None,
             posture=posture,
         ),
     }

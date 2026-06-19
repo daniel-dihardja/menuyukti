@@ -152,7 +152,6 @@ def test_menu_combos_with_synthetic_facts(analytics_run_with_qa_data):
                 "support",
                 "promote",
                 "maintain",
-                "insufficient_data",
             }
             assert len(payload["slotDemandProfile"]) == 35
             lunch_cell = next(

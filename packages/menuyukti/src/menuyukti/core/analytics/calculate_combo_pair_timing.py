@@ -16,8 +16,8 @@ from menuyukti.core.analytics.meal_periods import (
 )
 from menuyukti.core.analytics.slot_keys import slot_key
 
-MIN_SLOT_CO_ORDERS = 3
-ConfidenceTier = Literal["high", "medium", "low", "insufficient"]
+MIN_SLOT_CO_ORDERS = 1
+ConfidenceTier = Literal["high", "medium", "low"]
 
 
 class OrderRowForComboTiming(TypedDict):
@@ -76,7 +76,7 @@ def _empty_recommended_window() -> ComboPairRecommendedWindow:
         "peak_hour": None,
         "co_order_index": None,
         "sample_co_orders": 0,
-        "confidence_tier": "insufficient",
+        "confidence_tier": "low",
     }
 
 
@@ -85,9 +85,7 @@ def _confidence_tier(sample: int) -> ConfidenceTier:
         return "high"
     if sample >= 5:
         return "medium"
-    if sample >= MIN_SLOT_CO_ORDERS:
-        return "low"
-    return "insufficient"
+    return "low"
 
 
 def _bill_menus_and_times(
@@ -177,14 +175,14 @@ def _compute_pair_timing(
                 }
             )
 
-    index_candidates = [
-        c for c in day_meal_cells if c["co_order_count"] > 0 and c["co_order_index"] > 0
-    ]
-    if index_candidates:
+    slot_candidates = [c for c in day_meal_cells if c["co_order_count"] > 0]
+    if slot_candidates:
+        index_candidates = [c for c in slot_candidates if c["co_order_index"] > 0]
+        pool = index_candidates if index_candidates else slot_candidates
         best = max(
-            index_candidates,
+            pool,
             key=lambda c: (
-                c["co_order_index"],
+                c["co_order_index"] if index_candidates else 0,
                 c["co_order_count"],
                 -WEEKDAY_ORDER.index(c["day"]),
             ),

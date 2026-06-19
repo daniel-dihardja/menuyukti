@@ -144,7 +144,7 @@ def test_low_co_orders_still_recommends_posture():
     assert "Promote" in posture["promo_reason"] or "Support" in posture["promo_reason"] or "Maintain" in posture["promo_reason"]
 
 
-def test_no_co_orders_returns_insufficient_data():
+def test_no_co_orders_returns_maintain_posture():
     rows: list[dict] = [
         _row("B1", "Burger", _dt(2024, 1, 5, 12)),
         _row("B2", "Fries", _dt(2024, 1, 6, 12)),
@@ -157,4 +157,5 @@ def test_no_co_orders_returns_insufficient_data():
     posture = derive_combo_promo_posture(timing, profile)
 
     assert timing["recommended_window"]["best_day"] is None
-    assert posture["promo_posture"] == "insufficient_data"
+    assert posture["promo_posture"] == "maintain"
+    assert "Not enough co-orders" not in posture["promo_reason"]

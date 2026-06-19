@@ -391,7 +391,7 @@ export type SlotDemandCell = {
 }
 
 export type RelativeDemand = 'low' | 'average' | 'high'
-export type PromoPosture = 'support' | 'promote' | 'maintain' | 'insufficient_data'
+export type PromoPosture = 'support' | 'promote' | 'maintain'
 
 export type MenuComboPairTiming = {
   menuA: string
