@@ -167,8 +167,91 @@ export function adaptComboHourlyHeatmap(
   }
 }
 
+export type ComboPairPeakSummary = {
+  peakDay: string | null
+  peakMealPeriodLabel: string | null
+  peakMealPeriodHoursLabel: string | null
+  peakHour: number | null
+  peakSlotCoOrders: number
+  peakHourCoOrders: number
+}
+
+const EMPTY_PEAK_SUMMARY: ComboPairPeakSummary = {
+  peakDay: null,
+  peakMealPeriodLabel: null,
+  peakMealPeriodHoursLabel: null,
+  peakHour: null,
+  peakSlotCoOrders: 0,
+  peakHourCoOrders: 0,
+}
+
+export function deriveComboPairPeakSummary(timing: MenuComboPairTiming): ComboPairPeakSummary {
+  const activeCells = timing.dayMealCells.filter((cell) => cell.coOrderCount > 0)
+  const activeHours = timing.hourlyCoOrders.filter((row) => row.coOrderCount > 0)
+
+  if (activeCells.length === 0 && activeHours.length === 0) {
+    return EMPTY_PEAK_SUMMARY
+  }
+
+  let bestCell: ComboPairTimingCell | null = null
+  for (const cell of activeCells) {
+    if (!bestCell) {
+      bestCell = cell
+      continue
+    }
+    const indexDiff = cell.coOrderIndex - bestCell.coOrderIndex
+    if (indexDiff > 0) {
+      bestCell = cell
+      continue
+    }
+    if (indexDiff === 0 && cell.coOrderCount > bestCell.coOrderCount) {
+      bestCell = cell
+      continue
+    }
+    if (
+      indexDiff === 0 &&
+      cell.coOrderCount === bestCell.coOrderCount &&
+      COMBO_WEEKDAYS.indexOf(cell.day as ComboWeekday) <
+        COMBO_WEEKDAYS.indexOf(bestCell.day as ComboWeekday)
+    ) {
+      bestCell = cell
+    }
+  }
+
+  let bestHour: { hour: number; coOrderCount: number } | null = null
+  for (const row of activeHours) {
+    if (!bestHour) {
+      bestHour = row
+      continue
+    }
+    if (row.coOrderCount > bestHour.coOrderCount) {
+      bestHour = row
+      continue
+    }
+    if (row.coOrderCount === bestHour.coOrderCount && row.hour < bestHour.hour) {
+      bestHour = row
+    }
+  }
+
+  return {
+    peakDay: bestCell?.day ?? null,
+    peakMealPeriodLabel: bestCell?.mealPeriodLabel ?? null,
+    peakMealPeriodHoursLabel: bestCell?.mealPeriodHoursLabel ?? null,
+    peakHour: bestHour?.hour ?? null,
+    peakSlotCoOrders: bestCell?.coOrderCount ?? 0,
+    peakHourCoOrders: bestHour?.coOrderCount ?? 0,
+  }
+}
+
 export function hasActionableTiming(timing: MenuComboPairTiming): boolean {
   return timing.recommendedWindow.confidenceTier !== 'insufficient'
+}
+
+export function findPairForTiming(
+  pairs: MenuComboPair[],
+  timing: MenuComboPairTiming,
+): MenuComboPair | null {
+  return pairs.find((pair) => pair.menuA === timing.menuA && pair.menuB === timing.menuB) ?? null
 }
 
 export function findTimingForPair(

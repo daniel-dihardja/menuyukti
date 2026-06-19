@@ -1,14 +1,10 @@
 'use client'
 
-import { Clock, Lightbulb } from 'lucide-react'
+import { Lightbulb } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-import {
-  formatLift,
-  formatMealPeriodWithHours,
-  hasActionableTiming,
-} from '@/lib/analytics/menu-combos-page-adapter'
-import type { MenuComboPair, MenuComboPairTiming } from '@/lib/graphql/queries/analytics'
+import { formatLift } from '@/lib/analytics/menu-combos-page-adapter'
+import type { MenuComboPair } from '@/lib/graphql/queries/analytics'
 import { Badge } from '@workspace/ui/components/badge'
 import {
   Card,
@@ -20,28 +16,16 @@ import {
 
 type MenuCombosInsightHeroProps = {
   topPair: MenuComboPair
-  topPairTiming?: MenuComboPairTiming | null
   locale: string
   matrixUnavailable?: boolean
 }
 
-function weekdayLabel(day: string, t: ReturnType<typeof useTranslations>): string {
-  return t(`timing.weekdays.${day}` as 'timing.weekdays.mon')
-}
-
 export function MenuCombosInsightHero({
   topPair,
-  topPairTiming = null,
   locale,
   matrixUnavailable = false,
 }: MenuCombosInsightHeroProps) {
   const t = useTranslations('analytics.menuCombos')
-  const window = topPairTiming?.recommendedWindow
-  const showTiming =
-    topPairTiming != null &&
-    hasActionableTiming(topPairTiming) &&
-    window?.bestDay &&
-    window.bestMealPeriodLabel
 
   return (
     <Card className="gap-4 border-primary/30 bg-primary/5 py-5 shadow-none sm:py-6">
@@ -71,18 +55,6 @@ export function MenuCombosInsightHero({
             lift: formatLift(topPair.lift, locale),
           })}
         </p>
-        {showTiming && window ? (
-          <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-foreground">
-            <Clock className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-            {t('hero.bestPromoWindow', {
-              day: weekdayLabel(window.bestDay!, t),
-              mealPeriod: formatMealPeriodWithHours(
-                window.bestMealPeriodLabel,
-                window.bestMealPeriodHoursLabel,
-              ),
-            })}
-          </p>
-        ) : null}
         {matrixUnavailable ? (
           <p className="mt-2 text-xs text-muted-foreground">{t('matrixUnavailable')}</p>
         ) : null}

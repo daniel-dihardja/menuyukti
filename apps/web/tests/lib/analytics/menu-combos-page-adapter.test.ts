@@ -4,9 +4,10 @@ import {
   adaptComboDayMealHeatmap,
   adaptComboHourlyHeatmap,
   buildLiftMatrixRows,
+  deriveComboPairPeakSummary,
   filterPairs,
+  findPairForTiming,
   formatMealPeriodWithHours,
-  formatRecommendedWindowShort,
   getMenuCategoryOptions,
   getTopComboPair,
   getTopPairsForTiming,
@@ -147,6 +148,138 @@ describe('menu-combos-page-adapter', () => {
     ])
     expect(pairs).toHaveLength(3)
     expect(pairs[0]?.lift).toBe(2.5)
+  })
+
+  it('finds pair metadata for timing row', () => {
+    const pair = samplePair({ menuA: 'Burger', menuB: 'Fries', lift: 2.1 })
+    const timing = {
+      menuA: 'Burger',
+      menuB: 'Fries',
+      recommendedWindow: {
+        bestDay: 'fri',
+        bestMealPeriod: 'lunch',
+        bestMealPeriodLabel: 'Lunch',
+        bestMealPeriodHoursLabel: '11:00–14:59',
+        peakHour: 12,
+        coOrderIndex: 1.6,
+        sampleCoOrders: 8,
+        confidenceTier: 'medium',
+      },
+      dayMealCells: [],
+      hourlyCoOrders: [],
+    }
+    expect(findPairForTiming([pair], timing)?.lift).toBe(2.1)
+    expect(findPairForTiming([], timing)).toBeNull()
+  })
+
+  it('derives peak day-meal slot by co-order index and peak hour by count', () => {
+    const summary = deriveComboPairPeakSummary({
+      menuA: 'Burger',
+      menuB: 'Fries',
+      recommendedWindow: {
+        bestDay: null,
+        bestMealPeriod: null,
+        bestMealPeriodLabel: null,
+        bestMealPeriodHoursLabel: null,
+        peakHour: null,
+        coOrderIndex: null,
+        sampleCoOrders: 0,
+        confidenceTier: 'insufficient',
+      },
+      dayMealCells: [
+        {
+          day: 'fri',
+          mealPeriod: 'lunch',
+          mealPeriodLabel: 'Lunch',
+          mealPeriodHoursLabel: '11:00–14:59',
+          coOrderCount: 8,
+          coOrderIndex: 1.6,
+          attachRate: 0.4,
+        },
+        {
+          day: 'sat',
+          mealPeriod: 'dinner',
+          mealPeriodLabel: 'Dinner',
+          mealPeriodHoursLabel: '17:00–21:59',
+          coOrderCount: 10,
+          coOrderIndex: 1.2,
+          attachRate: 0.3,
+        },
+      ],
+      hourlyCoOrders: [
+        { hour: 12, coOrderCount: 5 },
+        { hour: 19, coOrderCount: 7 },
+      ],
+    })
+
+    expect(summary.peakDay).toBe('fri')
+    expect(summary.peakMealPeriodLabel).toBe('Lunch')
+    expect(summary.peakHour).toBe(19)
+    expect(summary.peakSlotCoOrders).toBe(8)
+    expect(summary.peakHourCoOrders).toBe(7)
+  })
+
+  it('breaks day-meal peak ties by co-order count then weekday order', () => {
+    const summary = deriveComboPairPeakSummary({
+      menuA: 'A',
+      menuB: 'B',
+      recommendedWindow: {
+        bestDay: null,
+        bestMealPeriod: null,
+        bestMealPeriodLabel: null,
+        bestMealPeriodHoursLabel: null,
+        peakHour: null,
+        coOrderIndex: null,
+        sampleCoOrders: 0,
+        confidenceTier: 'insufficient',
+      },
+      dayMealCells: [
+        {
+          day: 'sat',
+          mealPeriod: 'lunch',
+          mealPeriodLabel: 'Lunch',
+          mealPeriodHoursLabel: '11:00–14:59',
+          coOrderCount: 4,
+          coOrderIndex: 1.5,
+          attachRate: 0.2,
+        },
+        {
+          day: 'fri',
+          mealPeriod: 'lunch',
+          mealPeriodLabel: 'Lunch',
+          mealPeriodHoursLabel: '11:00–14:59',
+          coOrderCount: 6,
+          coOrderIndex: 1.5,
+          attachRate: 0.3,
+        },
+      ],
+      hourlyCoOrders: [],
+    })
+
+    expect(summary.peakDay).toBe('fri')
+    expect(summary.peakSlotCoOrders).toBe(6)
+  })
+
+  it('returns empty peak summary when no co-orders exist', () => {
+    const summary = deriveComboPairPeakSummary({
+      menuA: 'A',
+      menuB: 'B',
+      recommendedWindow: {
+        bestDay: null,
+        bestMealPeriod: null,
+        bestMealPeriodLabel: null,
+        bestMealPeriodHoursLabel: null,
+        peakHour: null,
+        coOrderIndex: null,
+        sampleCoOrders: 0,
+        confidenceTier: 'insufficient',
+      },
+      dayMealCells: [],
+      hourlyCoOrders: [{ hour: 12, coOrderCount: 0 }],
+    })
+
+    expect(summary.peakDay).toBeNull()
+    expect(summary.peakHour).toBeNull()
   })
 
   it('formats meal period with hour range', () => {

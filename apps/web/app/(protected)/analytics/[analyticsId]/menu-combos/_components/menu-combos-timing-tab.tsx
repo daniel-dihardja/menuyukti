@@ -1,6 +1,5 @@
 'use client'
 
-import { ChevronDown } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
@@ -9,12 +8,9 @@ import {
   adaptComboDayMealHeatmap,
   adaptComboHourlyHeatmap,
   formatLift,
-  formatRecommendedWindowShort,
-  hasActionableTiming,
   pairLabel,
 } from '@/lib/analytics/menu-combos-page-adapter'
 import type { MenuComboPairTiming } from '@/lib/graphql/queries/analytics'
-import { Button } from '@workspace/ui/components/button'
 import {
   Card,
   CardContent,
@@ -22,16 +18,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@workspace/ui/components/collapsible'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
-import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Separator } from '@workspace/ui/components/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
-import { MenuCombosTimingWindowCard } from './menu-combos-timing-window-card'
+import { Tabs, TabsContent } from '@workspace/ui/components/tabs'
+import { MenuCombosTimingPairSelector } from './menu-combos-timing-pair-selector'
+import { MenuCombosTimingPeakSummary } from './menu-combos-timing-peak-summary'
 
 type MenuCombosTimingTabProps = {
   topPairTiming: MenuComboPairTiming[]
@@ -115,68 +106,28 @@ function MenuCombosTimingPairPanel({
   )
 
   return (
-    <div className="flex flex-col gap-6">
-      <section aria-labelledby="timing-recommendation-heading" className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <h3 id="timing-recommendation-heading" className="text-sm font-medium">
-            {t('timing.sections.recommendation')}
-          </h3>
-          <p className="text-sm text-muted-foreground">{t('timing.sections.recommendationHint')}</p>
-        </div>
-        <MenuCombosTimingWindowCard timing={timing} locale={locale} variant="inset" />
-      </section>
+    <div className="flex flex-col gap-8">
+      <MenuCombosTimingPeakSummary timing={timing} locale={locale} />
+
+      <HeatmapMatrix
+        title={t('timing.dayMeal.title')}
+        rows={dayMealHeatmap.rows}
+        columnLabels={dayMealHeatmap.columnLabels}
+        density="compact"
+        variant="embedded"
+        labels={dayMealLabels}
+      />
 
       <Separator />
 
-      <section aria-labelledby="timing-heatmap-heading" className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <h3 id="timing-heatmap-heading" className="text-sm font-medium">
-            {t('timing.sections.heatmap')}
-          </h3>
-          <p className="text-sm text-muted-foreground">{t('timing.sections.heatmapHint')}</p>
-        </div>
-        <HeatmapMatrix
-          title={t('timing.dayMeal.title')}
-          rows={dayMealHeatmap.rows}
-          columnLabels={dayMealHeatmap.columnLabels}
-          density="compact"
-          labels={dayMealLabels}
-        />
-      </section>
-
-      <section aria-labelledby="timing-hourly-heading" className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <h3 id="timing-hourly-heading" className="text-sm font-medium">
-            {t('timing.sections.hourly')}
-          </h3>
-          <p className="text-sm text-muted-foreground">{t('timing.sections.hourlyHint')}</p>
-        </div>
-        <Collapsible className="overflow-hidden rounded-lg border border-dashed">
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="group h-auto w-full justify-between rounded-none px-4 py-3 text-left font-normal"
-            >
-              <span>{t('timing.hourly.showDetail')}</span>
-              <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="border-t px-2 pb-2 pt-2 sm:px-4">
-            <HeatmapMatrix
-              title={t('timing.hourly.title')}
-              rows={hourlyHeatmap.rows}
-              columnLabels={hourlyHeatmap.columnLabels}
-              density="compact"
-              labels={hourlyLabels}
-            />
-          </CollapsibleContent>
-        </Collapsible>
-      </section>
-
-      {!hasActionableTiming(timing) ? (
-        <p className="text-sm text-muted-foreground">{t('timing.lowSampleNote')}</p>
-      ) : null}
+      <HeatmapMatrix
+        title={t('timing.hourly.title')}
+        rows={hourlyHeatmap.rows}
+        columnLabels={hourlyHeatmap.columnLabels}
+        density="compact"
+        variant="embedded"
+        labels={hourlyLabels}
+      />
     </div>
   )
 }
@@ -212,47 +163,25 @@ export function MenuCombosTimingTab({ topPairTiming, locale }: MenuCombosTimingT
 
       <CardContent className="p-0">
         <Tabs
+          className="min-w-0"
           value={String(selectedIndex)}
           onValueChange={(value) => {
             setSelectedIndex(Number(value))
           }}
         >
           <div className="border-b bg-background px-4 py-4 md:px-6">
-            <Field>
-              <FieldLabel className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                {t('timing.pairSelectorLabel')}
-              </FieldLabel>
-              <TabsList className="mt-2 flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/50 p-1">
-                {topPairTiming.map((timing, index) => {
-                  const windowLabel = formatRecommendedWindowShort(timing, (day) =>
-                    weekdayLabel(day, t),
-                  )
-                  return (
-                    <TabsTrigger
-                      key={`${timing.menuA}-${timing.menuB}`}
-                      value={String(index)}
-                      className="h-auto max-w-full py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <span className="flex min-w-0 flex-col items-start gap-0.5 text-left">
-                        <span className="truncate font-medium">{pairLabel(timing)}</span>
-                        {windowLabel ? (
-                          <span className="truncate text-xs font-normal text-muted-foreground">
-                            {windowLabel}
-                          </span>
-                        ) : null}
-                      </span>
-                    </TabsTrigger>
-                  )
-                })}
-              </TabsList>
-            </Field>
+            <MenuCombosTimingPairSelector
+              topPairTiming={topPairTiming}
+              selectedIndex={selectedIndex}
+              onSelectedIndexChange={setSelectedIndex}
+            />
           </div>
 
           {topPairTiming.map((timing, index) => (
             <TabsContent
               key={`${timing.menuA}-${timing.menuB}-panel`}
               value={String(index)}
-              className="mt-0 px-4 py-6 focus-visible:outline-none md:px-6"
+              className="mt-0 flex flex-col gap-8 px-4 py-6 focus-visible:outline-none md:px-6"
             >
               <MenuCombosTimingPairPanel
                 timing={timing}

@@ -8,7 +8,6 @@ import { useTranslations } from 'next-intl'
 import {
   buildLiftMatrixRows,
   filterPairs,
-  findTimingForPair,
   formatLift,
   getMenuCategoryOptions,
   getTopComboPair,
@@ -79,10 +78,6 @@ export function MenuCombosView({
 
   const bundleIdeas = useMemo(() => groupBundleIdeas(menuCombos.pairs), [menuCombos.pairs])
   const topPair = useMemo(() => getTopComboPair(menuCombos.pairs), [menuCombos.pairs])
-  const topPairTiming = useMemo(
-    () => (topPair ? findTimingForPair(menuCombos.topPairTiming, topPair) : null),
-    [menuCombos.topPairTiming, topPair],
-  )
 
   const activeView = view === 'matrix' || view === 'timing' ? view : 'pairs'
 
@@ -140,7 +135,6 @@ export function MenuCombosView({
       {topPair ? (
         <MenuCombosInsightHero
           topPair={topPair}
-          topPairTiming={topPairTiming}
           locale={locale}
           matrixUnavailable={!matrixAvailable}
         />
@@ -153,16 +147,27 @@ export function MenuCombosView({
       <MenuCombosKpis menuCombos={menuCombos} locale={locale} />
 
       <Tabs
+        className="min-w-0"
         value={activeView}
         onValueChange={(value) => {
           void setView(value)
         }}
       >
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="pairs">{t('tabs.pairs')}</TabsTrigger>
-          <TabsTrigger value="matrix">{t('tabs.matrix')}</TabsTrigger>
-          <TabsTrigger value="timing">{t('tabs.timing')}</TabsTrigger>
+        <TabsList
+          variant="line"
+          className="w-full min-w-0 max-w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+        >
+          <TabsTrigger className="shrink-0" value="pairs">
+            {t('tabs.pairs')}
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="matrix">
+            {t('tabs.matrix')}
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="timing">
+            {t('tabs.timing')}
+          </TabsTrigger>
         </TabsList>
+        <p className="text-xs text-muted-foreground sm:hidden">{t('tabs.scrollHint')}</p>
 
         <TabsContent value="pairs" className="mt-4 flex flex-col gap-4">
           <MenuCombosFilters
