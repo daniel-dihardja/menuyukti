@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import {
   buildLiftMatrixRows,
   filterPairs,
+  findTimingForPair,
   formatLift,
   getMenuCategoryOptions,
   getTopComboPair,
@@ -31,6 +32,7 @@ import { MenuCombosInsightHero } from './_components/menu-combos-insight-hero'
 import { MenuCombosKpis } from './_components/menu-combos-kpis'
 import { MenuCombosPairsTable } from './_components/menu-combos-pairs-table'
 import { MenuCombosRelatedReports } from './_components/menu-combos-related-reports'
+import { MenuCombosTimingTab } from './_components/menu-combos-timing-tab'
 
 type MenuCombosViewProps = {
   analyticsId: number
@@ -77,6 +79,12 @@ export function MenuCombosView({
 
   const bundleIdeas = useMemo(() => groupBundleIdeas(menuCombos.pairs), [menuCombos.pairs])
   const topPair = useMemo(() => getTopComboPair(menuCombos.pairs), [menuCombos.pairs])
+  const topPairTiming = useMemo(
+    () => (topPair ? findTimingForPair(menuCombos.topPairTiming, topPair) : null),
+    [menuCombos.topPairTiming, topPair],
+  )
+
+  const activeView = view === 'matrix' || view === 'timing' ? view : 'pairs'
 
   const matrixRows = useMemo(
     () => buildLiftMatrixRows(menuCombos.focusMenus, menuCombos.matrixLift),
@@ -132,6 +140,7 @@ export function MenuCombosView({
       {topPair ? (
         <MenuCombosInsightHero
           topPair={topPair}
+          topPairTiming={topPairTiming}
           locale={locale}
           matrixUnavailable={!matrixAvailable}
         />
@@ -144,14 +153,15 @@ export function MenuCombosView({
       <MenuCombosKpis menuCombos={menuCombos} locale={locale} />
 
       <Tabs
-        value={view === 'matrix' ? 'matrix' : 'pairs'}
+        value={activeView}
         onValueChange={(value) => {
           void setView(value)
         }}
       >
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pairs">{t('tabs.pairs')}</TabsTrigger>
           <TabsTrigger value="matrix">{t('tabs.matrix')}</TabsTrigger>
+          <TabsTrigger value="timing">{t('tabs.timing')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pairs" className="mt-4 flex flex-col gap-4">
@@ -219,6 +229,10 @@ export function MenuCombosView({
               labels={matrixLabels}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="timing" className="mt-4 focus-visible:outline-none">
+          <MenuCombosTimingTab topPairTiming={menuCombos.topPairTiming} locale={locale} />
         </TabsContent>
       </Tabs>
 

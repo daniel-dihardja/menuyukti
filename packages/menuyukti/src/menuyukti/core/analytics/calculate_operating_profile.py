@@ -15,45 +15,19 @@ from __future__ import annotations
 from datetime import datetime, date
 from typing import TypedDict
 
-
-# ---------------------------------------------------------------------------
-# Meal period definitions (non-overlapping, hour-based)
-# ---------------------------------------------------------------------------
-
-_MEAL_PERIODS: list[tuple[str, str, set[int]]] = [
-    ("breakfast",  "Breakfast (05:00–10:59)",  set(range(5, 11))),
-    ("lunch",      "Lunch (11:00–14:59)",       set(range(11, 15))),
-    ("afternoon",  "Afternoon (15:00–16:59)",   set(range(15, 17))),
-    ("dinner",     "Dinner (17:00–21:59)",       set(range(17, 22))),
-    ("late_night", "Late Night (22:00–04:59)",  set(range(22, 24)) | set(range(0, 5))),
-]
-
-_WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-_WEEKEND_DAYS = {"sat", "sun"}
+from menuyukti.core.analytics.meal_periods import (
+    MEAL_PERIODS,
+    WEEKDAY_ORDER,
+    WEEKEND_DAYS,
+    meal_period_for_hour as _meal_period,
+    meal_period_label as _meal_label,
+    weekday_abbr as _abbr,
+)
 
 
-def _abbr(dt: datetime) -> str:
-    """Return 3-letter lowercase weekday abbreviation."""
-    return dt.strftime("%a").lower()
-
-
-def _meal_period(hour: int) -> str:
-    for period, _label, hours in _MEAL_PERIODS:
-        if hour in hours:
-            return period
-    return "late_night"
-
-
-def _meal_label(period: str) -> str:
-    for p, label, _ in _MEAL_PERIODS:
-        if p == period:
-            return label
-    return period
-
-
-# ---------------------------------------------------------------------------
-# Output TypedDicts
-# ---------------------------------------------------------------------------
+_MEAL_PERIODS = MEAL_PERIODS
+_WEEKDAY_ORDER = WEEKDAY_ORDER
+_WEEKEND_DAYS = WEEKEND_DAYS
 
 
 class DayOfWeekRow(TypedDict):

@@ -1,6 +1,25 @@
 import type { HeatmapMatrixRow } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
-import type { MenuComboPair, MenuCombosData } from '@/lib/graphql/queries/analytics'
+import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
+import type {
+  ComboPairTimingCell,
+  MenuComboPair,
+  MenuComboPairTiming,
+  MenuCombosData,
+} from '@/lib/graphql/queries/analytics'
 export type MenuCombosPayload = NonNullable<MenuCombosData['menuCombos']>
+
+export const COMBO_MEAL_PERIODS = [
+  'breakfast',
+  'lunch',
+  'afternoon',
+  'dinner',
+  'late_night',
+] as const
+
+export const COMBO_WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+
+export type ComboMealPeriod = (typeof COMBO_MEAL_PERIODS)[number]
+export type ComboWeekday = (typeof COMBO_WEEKDAYS)[number]
 
 export type MinLiftFilter = 'all' | 'above1' | 'above1_5'
 
@@ -51,7 +70,7 @@ export function formatPercent(value: number, locale: string): string {
   }).format(value)
 }
 
-export function pairLabel(pair: MenuComboPair): string {
+export function pairLabel(pair: Pick<MenuComboPair, 'menuA' | 'menuB'>): string {
   return `${pair.menuA} + ${pair.menuB}`
 }
 
@@ -83,6 +102,96 @@ export function sortPairs(
 export function getTopComboPair(pairs: MenuComboPair[]): MenuComboPair | null {
   const sorted = sortPairsByLift(pairs)
   return sorted[0] ?? null
+}
+
+export function getTopPairsForTiming(pairs: MenuComboPair[], n = 3): MenuComboPair[] {
+  return sortPairsByLift(pairs).slice(0, n)
+}
+
+export function formatMealPeriodWithHours(
+  label: string | null | undefined,
+  hoursLabel: string | null | undefined,
+): string {
+  const short = label?.trim()
+  const hours = hoursLabel?.trim()
+  if (short && hours) return `${short} (${hours})`
+  if (short) return short
+  if (hours) return hours
+  return '—'
+}
+
+export function adaptComboDayMealHeatmap(cells: ComboPairTimingCell[]): {
+  rows: HeatmapMatrixRow[]
+  columnLabels: string[]
+} {
+  const cellByKey = new Map(cells.map((cell) => [`${cell.day}:${cell.mealPeriod}`, cell]))
+
+  const columnLabels = COMBO_WEEKDAYS.map((day) => day.toUpperCase())
+
+  const rows: HeatmapMatrixRow[] = COMBO_MEAL_PERIODS.map((period) => {
+    const sampleCell = cells.find((cell) => cell.mealPeriod === period)
+    return {
+      key: period,
+      label: sampleCell
+        ? formatMealPeriodWithHours(sampleCell.mealPeriodLabel, sampleCell.mealPeriodHoursLabel)
+        : period,
+      values: COMBO_WEEKDAYS.map((day) => {
+        const cell = cellByKey.get(`${day}:${period}`)
+        return cell?.coOrderIndex ?? 0
+      }),
+    }
+  })
+
+  return { rows, columnLabels }
+}
+
+export function adaptComboHourlyHeatmap(
+  hourlyCoOrders: Array<{ hour: number; coOrderCount: number }>,
+  pairLabel: string,
+): { rows: HeatmapMatrixRow[]; columnLabels: string[] } {
+  const byHour = new Map(hourlyCoOrders.map((row) => [row.hour, row.coOrderCount]))
+  const hours = Array.from(
+    { length: DAILY_HEATMAP_END_HOUR - DAILY_HEATMAP_START_HOUR + 1 },
+    (_, index) => DAILY_HEATMAP_START_HOUR + index,
+  )
+
+  return {
+    rows: [
+      {
+        key: pairLabel,
+        label: pairLabel,
+        values: hours.map((hour) => byHour.get(hour) ?? 0),
+      },
+    ],
+    columnLabels: hours.map((hour) => String(hour).padStart(2, '0')),
+  }
+}
+
+export function hasActionableTiming(timing: MenuComboPairTiming): boolean {
+  return timing.recommendedWindow.confidenceTier !== 'insufficient'
+}
+
+export function findTimingForPair(
+  topPairTiming: MenuComboPairTiming[],
+  pair: MenuComboPair,
+): MenuComboPairTiming | null {
+  return (
+    topPairTiming.find((timing) => timing.menuA === pair.menuA && timing.menuB === pair.menuB) ??
+    null
+  )
+}
+
+export function formatRecommendedWindowShort(
+  timing: MenuComboPairTiming,
+  weekdayLabel: (day: string) => string,
+): string | null {
+  const window = timing.recommendedWindow
+  if (!window.bestDay || !window.bestMealPeriodLabel) return null
+  const mealPeriod = formatMealPeriodWithHours(
+    window.bestMealPeriodLabel,
+    window.bestMealPeriodHoursLabel,
+  )
+  return `${weekdayLabel(window.bestDay)} · ${mealPeriod}`
 }
 
 export function getMenuCategoryOptions(pairs: MenuComboPair[], locale: string): string[] {

@@ -84,6 +84,17 @@ def facts_to_basket_rows(facts: list[OrderFact]) -> list[dict[str, Any]]:
     ]
 
 
+def facts_to_combo_timing_rows(facts: list[OrderFact]) -> list[dict[str, Any]]:
+    return [
+        {
+            "bill_number": r.bill_number,
+            "menu": r.menu,
+            "order_time": r.order_time,
+        }
+        for r in facts
+    ]
+
+
 def facts_to_menu_engineering_rows(facts: list[OrderFact]) -> list[dict[str, Any]]:
     return [
         {

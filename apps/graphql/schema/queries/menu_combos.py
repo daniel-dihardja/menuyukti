@@ -26,6 +26,44 @@ class MenuComboPairType:
     matrix_category_b: str | None
 
 
+@strawberry.type(description="Co-order intensity for one day and meal-period slot.")
+class ComboPairTimingCellType:
+    day: str
+    meal_period: str
+    meal_period_label: str
+    meal_period_hours_label: str
+    co_order_count: int
+    co_order_index: float
+    attach_rate: float
+
+
+@strawberry.type(description="Hourly co-order count for a combo pair.")
+class ComboPairTimingHourType:
+    hour: int
+    co_order_count: int
+
+
+@strawberry.type(description="Recommended promo window for a combo pair.")
+class ComboPairRecommendedWindowType:
+    best_day: str | None
+    best_meal_period: str | None
+    best_meal_period_label: str | None
+    best_meal_period_hours_label: str | None
+    peak_hour: int | None
+    co_order_index: float | None
+    sample_co_orders: int
+    confidence_tier: str
+
+
+@strawberry.type(description="Timing analytics for when a combo pair is ordered together.")
+class MenuComboPairTimingType:
+    menu_a: str
+    menu_b: str
+    recommended_window: ComboPairRecommendedWindowType
+    day_meal_cells: list[ComboPairTimingCellType]
+    hourly_co_orders: list[ComboPairTimingHourType]
+
+
 @strawberry.type(
     description=(
         "Basket affinity analytics for an analytics run: which menu items appear "
@@ -40,6 +78,7 @@ class MenuCombosPayloadType:
     focus_menus: list[str]
     pairs: list[MenuComboPairType]
     matrix_lift: list[list[float | None]]
+    top_pair_timing: list[MenuComboPairTimingType]
 
 
 def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
@@ -60,6 +99,45 @@ def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
         for p in raw["pairs"]
     ]
 
+    top_pair_timing = [
+        MenuComboPairTimingType(
+            menu_a=t["menu_a"],
+            menu_b=t["menu_b"],
+            recommended_window=ComboPairRecommendedWindowType(
+                best_day=t["recommended_window"]["best_day"],
+                best_meal_period=t["recommended_window"]["best_meal_period"],
+                best_meal_period_label=t["recommended_window"]["best_meal_period_label"],
+                best_meal_period_hours_label=t["recommended_window"].get(
+                    "best_meal_period_hours_label"
+                ),
+                peak_hour=t["recommended_window"]["peak_hour"],
+                co_order_index=t["recommended_window"]["co_order_index"],
+                sample_co_orders=t["recommended_window"]["sample_co_orders"],
+                confidence_tier=t["recommended_window"]["confidence_tier"],
+            ),
+            day_meal_cells=[
+                ComboPairTimingCellType(
+                    day=c["day"],
+                    meal_period=c["meal_period"],
+                    meal_period_label=c["meal_period_label"],
+                    meal_period_hours_label=c["meal_period_hours_label"],
+                    co_order_count=c["co_order_count"],
+                    co_order_index=c["co_order_index"],
+                    attach_rate=c["attach_rate"],
+                )
+                for c in t["day_meal_cells"]
+            ],
+            hourly_co_orders=[
+                ComboPairTimingHourType(
+                    hour=h["hour"],
+                    co_order_count=h["co_order_count"],
+                )
+                for h in t["hourly_co_orders"]
+            ],
+        )
+        for t in raw.get("top_pair_timing", [])
+    ]
+
     return MenuCombosPayloadType(
         total_orders=raw["total_orders"],
         multi_item_order_count=raw["multi_item_order_count"],
@@ -68,6 +146,7 @@ def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
         focus_menus=list(raw["focus_menus"]),
         pairs=pairs,
         matrix_lift=raw["matrix_lift"],
+        top_pair_timing=top_pair_timing,
     )
 
 

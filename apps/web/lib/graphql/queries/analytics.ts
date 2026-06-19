@@ -293,9 +293,70 @@ export const MENU_COMBOS_QUERY = `
         matrixCategoryB
       }
       matrixLift
+      topPairTiming {
+        menuA
+        menuB
+      recommendedWindow {
+        bestDay
+        bestMealPeriod
+        bestMealPeriodLabel
+        bestMealPeriodHoursLabel
+        peakHour
+        coOrderIndex
+        sampleCoOrders
+        confidenceTier
+      }
+      dayMealCells {
+        day
+        mealPeriod
+        mealPeriodLabel
+        mealPeriodHoursLabel
+        coOrderCount
+          coOrderIndex
+          attachRate
+        }
+        hourlyCoOrders {
+          hour
+          coOrderCount
+        }
+      }
     }
   }
 `
+
+export type ComboPairTimingCell = {
+  day: string
+  mealPeriod: string
+  mealPeriodLabel: string
+  mealPeriodHoursLabel: string
+  coOrderCount: number
+  coOrderIndex: number
+  attachRate: number
+}
+
+export type ComboPairTimingHour = {
+  hour: number
+  coOrderCount: number
+}
+
+export type ComboPairRecommendedWindow = {
+  bestDay: string | null
+  bestMealPeriod: string | null
+  bestMealPeriodLabel: string | null
+  bestMealPeriodHoursLabel: string | null
+  peakHour: number | null
+  coOrderIndex: number | null
+  sampleCoOrders: number
+  confidenceTier: string
+}
+
+export type MenuComboPairTiming = {
+  menuA: string
+  menuB: string
+  recommendedWindow: ComboPairRecommendedWindow
+  dayMealCells: ComboPairTimingCell[]
+  hourlyCoOrders: ComboPairTimingHour[]
+}
 
 export type MenuComboPair = {
   menuA: string
@@ -320,6 +381,7 @@ export type MenuCombosData = {
     focusMenus: string[]
     pairs: MenuComboPair[]
     matrixLift: Array<Array<number | null>>
+    topPairTiming: MenuComboPairTiming[]
   } | null
 }
 

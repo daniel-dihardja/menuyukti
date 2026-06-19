@@ -66,6 +66,15 @@ from menuyukti.core.analytics.calculate_menu_basket_affinities import (
     calculate_menu_basket_affinities,
     compute_menu_basket_affinities_from_orders,
 )
+from menuyukti.core.analytics.calculate_combo_pair_timing import (
+    ComboPairInput,
+    ComboPairRecommendedWindow,
+    ComboPairTimingCell,
+    ComboPairTimingHour,
+    ComboPairTimingResult,
+    OrderRowForComboTiming,
+    compute_combo_pair_timing_from_orders,
+)
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
     WEEKDAY_ORDER,
     DailyHeatmapRow,
@@ -186,6 +195,13 @@ __all__ = [
     "compute_menu_heatmaps_from_orders",
     "calculate_menu_basket_affinities",
     "compute_menu_basket_affinities_from_orders",
+    "ComboPairInput",
+    "ComboPairRecommendedWindow",
+    "ComboPairTimingCell",
+    "ComboPairTimingHour",
+    "ComboPairTimingResult",
+    "OrderRowForComboTiming",
+    "compute_combo_pair_timing_from_orders",
     "compute_operating_profile_from_orders",
     "compute_order_metrics_by_day_from_orders",
     "compute_revenue_trends_from_orders",

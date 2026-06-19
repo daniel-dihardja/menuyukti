@@ -35,6 +35,24 @@ export type AdditionalSignalsType = {
   signalConfidence: SignalConfidenceType
 }
 
+/** Select which analytics sections to include in the bundle. */
+export type AnalyticsBundleOptionsInput = {
+  includeCategoryMix?: Scalars['Boolean']['input']
+  includeMenuEngineeringMatrix?: Scalars['Boolean']['input']
+  includeMenuHeatmaps?: Scalars['Boolean']['input']
+  includeOrderMetrics?: Scalars['Boolean']['input']
+}
+
+/** Multiple analytics computations from a single order-fact load. */
+export type AnalyticsBundleType = {
+  __typename?: 'AnalyticsBundleType'
+  analyticsRunId: Scalars['ID']['output']
+  categoryMix?: Maybe<CategoryMixPayloadType>
+  menuEngineeringMatrix?: Maybe<MenuEngineeringMatrixType>
+  menuHeatmaps?: Maybe<Array<MenuHeatmapType>>
+  orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
+}
+
 /** Minimal fields for listing analytics runs by location. */
 export type AnalyticsRunListItemType = {
   __typename?: 'AnalyticsRunListItemType'
@@ -115,6 +133,38 @@ export type CategoryMixRowGqlType = {
   revenue: Scalars['Float']['output']
   revenueShare: Scalars['Float']['output']
   topItem: Scalars['String']['output']
+}
+
+/** Recommended promo window for a combo pair. */
+export type ComboPairRecommendedWindowType = {
+  __typename?: 'ComboPairRecommendedWindowType'
+  bestDay?: Maybe<Scalars['String']['output']>
+  bestMealPeriod?: Maybe<Scalars['String']['output']>
+  bestMealPeriodHoursLabel?: Maybe<Scalars['String']['output']>
+  bestMealPeriodLabel?: Maybe<Scalars['String']['output']>
+  coOrderIndex?: Maybe<Scalars['Float']['output']>
+  confidenceTier: Scalars['String']['output']
+  peakHour?: Maybe<Scalars['Int']['output']>
+  sampleCoOrders: Scalars['Int']['output']
+}
+
+/** Co-order intensity for one day and meal-period slot. */
+export type ComboPairTimingCellType = {
+  __typename?: 'ComboPairTimingCellType'
+  attachRate: Scalars['Float']['output']
+  coOrderCount: Scalars['Int']['output']
+  coOrderIndex: Scalars['Float']['output']
+  day: Scalars['String']['output']
+  mealPeriod: Scalars['String']['output']
+  mealPeriodHoursLabel: Scalars['String']['output']
+  mealPeriodLabel: Scalars['String']['output']
+}
+
+/** Hourly co-order count for a combo pair. */
+export type ComboPairTimingHourType = {
+  __typename?: 'ComboPairTimingHourType'
+  coOrderCount: Scalars['Int']['output']
+  hour: Scalars['Int']['output']
 }
 
 /** Hourly demand distribution for a menu item. */
@@ -200,6 +250,35 @@ export type InstagramSignalsType = {
   fundamentalSignals: FundamentalSignalsType
 }
 
+/** Latest analytics run metadata for a location. */
+export type LatestAnalyticsRunType = {
+  __typename?: 'LatestAnalyticsRunType'
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+}
+
+/** Latest run for a location with composite Instagram signals. */
+export type LatestAnalyticsRunWithSignalsType = {
+  __typename?: 'LatestAnalyticsRunWithSignalsType'
+  analyticsRun?: Maybe<LatestAnalyticsRunType>
+  instagramSignals?: Maybe<InstagramSignalsType>
+}
+
+/** Summary of analytics runs for one location. */
+export type LocationAnalyticsRunSummaryType = {
+  __typename?: 'LocationAnalyticsRunSummaryType'
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+}
+
+/** Run count and latest run for a location. */
+export type LocationAnalyticsSummaryType = {
+  __typename?: 'LocationAnalyticsSummaryType'
+  latestRun?: Maybe<LocationAnalyticsRunSummaryType>
+  locationId: Scalars['Int']['output']
+  runCount: Scalars['Int']['output']
+}
+
 /** Owner-provided click-first brief hints; not AI-generated. */
 export type LocationManualBriefInputType = {
   __typename?: 'LocationManualBriefInputType'
@@ -265,6 +344,45 @@ export type MenuCatalogPayloadType = {
   __typename?: 'MenuCatalogPayloadType'
   analyticsRunId: Scalars['ID']['output']
   items: Array<MenuCatalogItemType>
+}
+
+/** Timing analytics for when a combo pair is ordered together. */
+export type MenuComboPairTimingType = {
+  __typename?: 'MenuComboPairTimingType'
+  dayMealCells: Array<ComboPairTimingCellType>
+  hourlyCoOrders: Array<ComboPairTimingHourType>
+  menuA: Scalars['String']['output']
+  menuB: Scalars['String']['output']
+  recommendedWindow: ComboPairRecommendedWindowType
+}
+
+/** Co-occurrence metrics for a pair of menu items within the same order. */
+export type MenuComboPairType = {
+  __typename?: 'MenuComboPairType'
+  coOrderCount: Scalars['Int']['output']
+  confidenceAToB: Scalars['Float']['output']
+  confidenceBToA: Scalars['Float']['output']
+  lift: Scalars['Float']['output']
+  matrixCategoryA?: Maybe<Scalars['String']['output']>
+  matrixCategoryB?: Maybe<Scalars['String']['output']>
+  menuA: Scalars['String']['output']
+  menuACategory?: Maybe<Scalars['String']['output']>
+  menuB: Scalars['String']['output']
+  menuBCategory?: Maybe<Scalars['String']['output']>
+  support: Scalars['Float']['output']
+}
+
+/** Basket affinity analytics for an analytics run: which menu items appear together in orders, ranked by lift. */
+export type MenuCombosPayloadType = {
+  __typename?: 'MenuCombosPayloadType'
+  avgDistinctItemsPerOrder: Scalars['Float']['output']
+  focusMenus: Array<Scalars['String']['output']>
+  matrixLift: Array<Array<Maybe<Scalars['Float']['output']>>>
+  multiItemOrderCount: Scalars['Int']['output']
+  pairs: Array<MenuComboPairType>
+  scope: Scalars['String']['output']
+  topPairTiming: Array<MenuComboPairTimingType>
+  totalOrders: Scalars['Int']['output']
 }
 
 /** Share of items and margin contribution per BCG category (star, puzzle, plow_horse, low_end). */
@@ -355,6 +473,11 @@ export type MilestoneCampaignBundleType = {
   milestone: NodeType
 }
 
+export type MilestoneOrderInput = {
+  milestoneId: Scalars['ID']['input']
+  order: Scalars['Int']['input']
+}
+
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type Mutation = {
   __typename?: 'Mutation'
@@ -369,7 +492,9 @@ export type Mutation = {
   deleteNode: Scalars['Boolean']['output']
   inviteWorkspaceMember: WorkspaceMembershipType
   removeWorkspaceMember: Scalars['Boolean']['output']
+  reorderMilestones: Scalars['Boolean']['output']
   replacePassCriteria: Scalars['Boolean']['output']
+  setPassCriteriaStatuses: Scalars['Boolean']['output']
   setPassCriterionStatus: Scalars['Boolean']['output']
   startMilestoneAgentRun: Scalars['Boolean']['output']
   updateImageAiFlow: ImageAiFlowType
@@ -467,10 +592,24 @@ export type MutationRemoveWorkspaceMemberArgs = {
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
+export type MutationReorderMilestonesArgs = {
+  locationId: Scalars['Int']['input']
+  orders: Array<MilestoneOrderInput>
+  workflowId: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationReplacePassCriteriaArgs = {
   locationId: Scalars['Int']['input']
   milestoneId: Scalars['ID']['input']
   requirements: Array<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
+export type MutationSetPassCriteriaStatusesArgs = {
+  locationId: Scalars['Int']['input']
+  milestoneId: Scalars['ID']['input']
+  updates: Array<PassCriterionStatusInput>
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
@@ -644,6 +783,11 @@ export type OrderType = {
   orderTime: Scalars['DateTime']['output']
 }
 
+export type PassCriterionStatusInput = {
+  criterionId: Scalars['String']['input']
+  status: Scalars['String']['input']
+}
+
 export type PeriodHeadlineType = {
   __typename?: 'PeriodHeadlineType'
   periodEnd: Scalars['String']['output']
@@ -699,6 +843,8 @@ export type PublicHolidayType = {
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type Query = {
   __typename?: 'Query'
+  /** Return multiple analytics sections for one run using a shared OrderFact load. Use options to omit sections you do not need. */
+  analyticsBundle?: Maybe<AnalyticsBundleType>
   /** Fetch metadata and COGS for a single analytics run by ID. */
   analyticsRun?: Maybe<AnalyticsRunType>
   /** List analytics runs for a location, newest first. Use `first` to cap rows (default 100, max 300). */
@@ -709,12 +855,18 @@ export type Query = {
   imageAiFlows: Array<ImageAiFlowType>
   /** Composite Instagram signals for an analytics run: content heroes, trending items, avoid list, category focus, best posting window, and period headline. Requires order facts; returns null if none. */
   instagramSignals?: Maybe<InstagramSignalsType>
+  /** Resolve the newest analytics run for a location and return instagramSignals in one request (single OrderFact load path when signals are requested). */
+  latestAnalyticsRunWithSignals?: Maybe<LatestAnalyticsRunWithSignalsType>
   /** Fetch one location by id if the caller has access. */
   location?: Maybe<LocationType>
+  /** Analytics run counts and latest run per location in one query. Only returns summaries for locations the caller can access. */
+  locationAnalyticsSummaries: Array<LocationAnalyticsSummaryType>
   /** Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated. */
   locationManualBriefInput?: Maybe<LocationManualBriefInputType>
   /** All locations the current user can access (direct owner or workspace member). */
   locations: Array<LocationType>
+  /** Return basket affinity analytics for an analytics run: menu pairs ordered together, with lift and confidence metrics. Defaults to star items when menu engineering matrix is available; otherwise top items by order presence. When locationId is set, the run must belong to that location. */
+  menuCombos?: Maybe<MenuCombosPayloadType>
   /** Compute the menu engineering BCG matrix for an analytics run. Requires COGS to be set; returns None if no COGS are available. Optionally filter returned items to specific categories (star, puzzle, plow_horse, low_end) — thresholds and distribution always reflect the full dataset. When locationId is set, the run must belong to that location (otherwise returns null). */
   menuEngineeringMatrix?: Maybe<MenuEngineeringMatrixType>
   /** Return hourly and day-of-week demand heatmaps for every menu item in an analytics run. Use this to identify peak selling times per dish. When locationId is set, the run must belong to that location (otherwise returns an empty list). */
@@ -745,6 +897,13 @@ export type Query = {
   /** Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller. */
   workflowCampaignTree?: Maybe<WorkflowCampaignTreeType>
   workspaceMembers: Array<WorkspaceMembershipType>
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryAnalyticsBundleArgs = {
+  analyticsRunId: Scalars['ID']['input']
+  locationId?: InputMaybe<Scalars['ID']['input']>
+  options?: InputMaybe<AnalyticsBundleOptionsInput>
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -781,8 +940,18 @@ export type QueryInstagramSignalsArgs = {
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryLatestAnalyticsRunWithSignalsArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationArgs = {
   id: Scalars['ID']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryLocationAnalyticsSummariesArgs = {
+  locationIds: Array<Scalars['Int']['input']>
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -793,6 +962,12 @@ export type QueryLocationManualBriefInputArgs = {
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryMenuCombosArgs = {
+  analyticsRunId: Scalars['ID']['input']
+  locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */

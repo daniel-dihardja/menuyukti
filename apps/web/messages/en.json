@@ -2364,7 +2364,8 @@
       "insightTitle": "Key insight",
       "insightTopPair": "Guests who order {menuA} often add {menuB} — lift {lift}× above chance. Consider a bundle or \"complete your meal\" promo.",
       "hero": {
-        "liftLabel": "{lift}× lift"
+        "liftLabel": "{lift}× lift",
+        "bestPromoWindow": "Best promo window: {day} · {mealPeriod}"
       },
       "relatedReports": {
         "trigger": "Related reports"
@@ -2383,7 +2384,8 @@
       },
       "tabs": {
         "pairs": "Top combos",
-        "matrix": "Lift matrix"
+        "matrix": "Lift matrix",
+        "timing": "Timing"
       },
       "kpi": {
         "totalOrders": "Total orders",
@@ -2469,6 +2471,77 @@
       "emptyFiltered": {
         "title": "No pairs match your filters",
         "description": "Try a different category or a lower minimum lift."
+      },
+      "timing": {
+        "panelTitle": "When to promote combos",
+        "panelDescription": "Co-order index compares how often a pair appears in each time slot vs. overall traffic. Values above 1 mean the pair over-indexes — a stronger window for bundle promos.",
+        "pairSelectorLabel": "Combo pair",
+        "sections": {
+          "recommendation": "Recommended promo window",
+          "recommendationHint": "The best day and meal period to run a bundle or add-on promo for this pair.",
+          "heatmap": "Timing heatmap",
+          "heatmapHint": "Darker cells show when this pair over-indexes relative to overall traffic.",
+          "hourly": "Hourly detail",
+          "hourlyHint": "Optional drill-down by hour for the selected pair."
+        },
+        "explainTitle": "When to promote combos",
+        "explainBody": "Co-order index compares how often a pair appears in each time slot vs. overall traffic. Values above 1 mean the pair over-indexes — a stronger window for bundle promos.",
+        "recommendationTitle": "Best promo window",
+        "recommendationBody": "Promote {menuA} + {menuB} on {day} · {mealPeriod}",
+        "insufficientData": "Not enough timing data",
+        "insufficientDescription": "Co-orders are too spread out or too few to recommend a specific time slot. Try a longer report period.",
+        "indexLabel": "Co-order index {index}×",
+        "sampleLabel": "Based on {count, plural, one {# co-order} other {# co-orders}} in this slot",
+        "peakHourLabel": "Peak hour {hour}",
+        "lowSampleNote": "Timing insights are directional when sample sizes are small.",
+        "weekdays": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        },
+        "confidence": {
+          "high": "High confidence",
+          "medium": "Medium confidence",
+          "low": "Low confidence",
+          "insufficient": "Insufficient data"
+        },
+        "empty": {
+          "title": "No timing data yet",
+          "description": "Timing appears when guests order combo pairs together across multiple time slots."
+        },
+        "dayMeal": {
+          "title": "Co-order index by day and meal period",
+          "menuColumn": "Meal period",
+          "legendLow": "Lower index",
+          "legendHigh": "Higher index",
+          "unitsLabel": "Co-order index (vs overall traffic in that slot)",
+          "totalsRowLabel": "Total",
+          "sortHint": "Click a column header to sort meal periods by day.",
+          "scrollHint": "Swipe sideways to see all days →",
+          "explainTitle": "How to read this heatmap",
+          "explainBody": "Each cell shows how much the pair over- or under-indexes in that day and meal period. Above 1 is better than average for promos.",
+          "cellAriaLabel": "{mealPeriod} on {day} · index {index}×",
+          "cellTooltip": "{mealPeriod} on {day} · co-order index {index}×"
+        },
+        "hourly": {
+          "title": "Hourly co-orders",
+          "showDetail": "Show hourly detail",
+          "menuColumn": "Pair",
+          "legendLow": "Fewer",
+          "legendHigh": "More",
+          "unitsLabel": "Co-orders per hour",
+          "totalsRowLabel": "Total",
+          "sortHint": "Click a column header to sort by hour.",
+          "scrollHint": "Swipe sideways to see all hours →",
+          "explainTitle": "Hourly co-order counts",
+          "explainBody": "Raw co-order counts for this pair by hour. Use with the day × meal-period view for promo timing.",
+          "cellAriaLabel": "{pair} at {hour}:00 · {count, plural, one {# co-order} other {# co-orders}}",
+          "cellTooltip": "{pair} at {hour}:00 · {count, plural, one {# co-order} other {# co-orders}}"
+        }
       }
     },
     "heatmap": {
