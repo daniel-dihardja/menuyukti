@@ -71,6 +71,8 @@ type Props = {
   highlightCell?: HeatmapHighlightCell | null
   /** When false, hides the totals row. Defaults to true. */
   showTotalsRow?: boolean
+  /** When set, sorting the row label column uses this key order instead of alphabetical. */
+  rowKeyOrder?: readonly string[]
 }
 
 /** Sort by Menu (label) or by column index (e.g. "0", "1"). */
@@ -118,6 +120,7 @@ export function HeatmapMatrix({
   colorScale = 'sequential',
   highlightCell = null,
   showTotalsRow = true,
+  rowKeyOrder,
 }: Props) {
   const isEmbedded = variant === 'embedded'
   const showExplainBlock = showExplanation ?? !isEmbedded
@@ -131,7 +134,16 @@ export function HeatmapMatrix({
   const sortedRows = useMemo(() => {
     if (sortKey === 'label') {
       return [...rows].sort((a, b) => {
-        const cmp = a.label.localeCompare(b.label)
+        let cmp: number
+        if (rowKeyOrder) {
+          const aIndex = rowKeyOrder.indexOf(a.key)
+          const bIndex = rowKeyOrder.indexOf(b.key)
+          const aRank = aIndex >= 0 ? aIndex : rowKeyOrder.length
+          const bRank = bIndex >= 0 ? bIndex : rowKeyOrder.length
+          cmp = aRank - bRank
+        } else {
+          cmp = a.label.localeCompare(b.label)
+        }
         return sortDirection === 'asc' ? cmp : -cmp
       })
     }
@@ -143,7 +155,7 @@ export function HeatmapMatrix({
       const bVal = b.values[columnIndex] ?? 0
       return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
     })
-  }, [rows, sortKey, sortDirection])
+  }, [rows, sortKey, sortDirection, rowKeyOrder])
 
   const displayRows = sortable ? sortedRows : rows
 
