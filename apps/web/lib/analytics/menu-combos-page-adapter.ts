@@ -106,8 +106,43 @@ export function getTopComboPair(pairs: MenuComboPair[]): MenuComboPair | null {
   return sorted[0] ?? null
 }
 
-export function getTopPairsForTiming(pairs: MenuComboPair[], n = 3): MenuComboPair[] {
+export const MAX_TOP_PAIRS_FOR_TIMING = 25
+
+export function getTopPairsForTiming(
+  pairs: MenuComboPair[],
+  n = MAX_TOP_PAIRS_FOR_TIMING,
+): MenuComboPair[] {
   return sortPairsByLift(pairs).slice(0, n)
+}
+
+export function isStrongAffinityPair(pair: Pick<MenuComboPair, 'lift'>): boolean {
+  return pair.lift >= STRONG_LIFT_THRESHOLD
+}
+
+export type TimingPairOption = {
+  timing: MenuComboPairTiming
+  pair: MenuComboPair | null
+}
+
+export function buildTimingPairOptions(
+  pairs: MenuComboPair[],
+  topPairTiming: MenuComboPairTiming[],
+): TimingPairOption[] {
+  return [...topPairTiming]
+    .map((timing) => ({
+      timing,
+      pair: findPairForTiming(pairs, timing),
+    }))
+    .filter((option) => option.pair != null && isStrongAffinityPair(option.pair))
+    .sort((a, b) => {
+      const liftA = a.pair?.lift ?? 0
+      const liftB = b.pair?.lift ?? 0
+      if (liftB !== liftA) return liftB - liftA
+      const coA = a.pair?.coOrderCount ?? 0
+      const coB = b.pair?.coOrderCount ?? 0
+      if (coB !== coA) return coB - coA
+      return pairLabel(a.timing).localeCompare(pairLabel(b.timing))
+    })
 }
 
 export function formatMealPeriodWithHours(

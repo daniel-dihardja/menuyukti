@@ -4,6 +4,7 @@ import {
   adaptSlotDemandHeatmap,
   buildLiftMatrixRows,
   buildOpportunityCells,
+  buildTimingPairOptions,
   deriveComboPairPeakSummary,
   filterPairs,
   findPairForTiming,
@@ -192,15 +193,51 @@ describe('menu-combos-page-adapter', () => {
     expect(liftStrengthClass(1.2)).toBeNull()
   })
 
-  it('returns top three pairs for timing', () => {
+  it('returns top pairs for timing up to the default limit', () => {
     const pairs = getTopPairsForTiming([
       samplePair({ menuA: 'A', menuB: 'B', lift: 1.1 }),
       samplePair({ menuA: 'C', menuB: 'D', lift: 2.5 }),
       samplePair({ menuA: 'E', menuB: 'F', lift: 2.0 }),
       samplePair({ menuA: 'G', menuB: 'H', lift: 1.8 }),
     ])
+    expect(pairs).toHaveLength(4)
+    expect(pairs[0]?.lift).toBe(2.5)
+  })
+
+  it('returns top three pairs for timing when limit is set', () => {
+    const pairs = getTopPairsForTiming(
+      [
+        samplePair({ menuA: 'A', menuB: 'B', lift: 1.1 }),
+        samplePair({ menuA: 'C', menuB: 'D', lift: 2.5 }),
+        samplePair({ menuA: 'E', menuB: 'F', lift: 2.0 }),
+        samplePair({ menuA: 'G', menuB: 'H', lift: 1.8 }),
+      ],
+      3,
+    )
     expect(pairs).toHaveLength(3)
     expect(pairs[0]?.lift).toBe(2.5)
+  })
+
+  it('builds timing pair options for strong affinity pairs sorted by lift descending', () => {
+    const pairs = [
+      samplePair({ menuA: 'A', menuB: 'B', lift: 1.1 }),
+      samplePair({ menuA: 'C', menuB: 'D', lift: 2.5 }),
+      samplePair({ menuA: 'E', menuB: 'F', lift: 2.0 }),
+      samplePair({ menuA: 'G', menuB: 'H', lift: 1.5 }),
+    ]
+    const topPairTiming = [
+      sampleTiming({ menuA: 'A', menuB: 'B' }),
+      sampleTiming({ menuA: 'C', menuB: 'D' }),
+      sampleTiming({ menuA: 'E', menuB: 'F' }),
+      sampleTiming({ menuA: 'G', menuB: 'H' }),
+    ]
+
+    const options = buildTimingPairOptions(pairs, topPairTiming)
+
+    expect(options).toHaveLength(3)
+    expect(options[0]?.pair?.lift).toBe(2.5)
+    expect(options[1]?.pair?.lift).toBe(2.0)
+    expect(options[2]?.pair?.lift).toBe(1.5)
   })
 
   it('finds pair metadata for timing row', () => {
