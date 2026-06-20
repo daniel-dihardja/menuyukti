@@ -612,7 +612,7 @@ class MenuClustererMilestoneOutput(BaseModel):
     groups: list[MenuClustererGroupOutput]
     unassignedItemNames: list[str] = Field(default_factory=list)
     topFoodLeadNames: list[str] = Field(default_factory=list, max_length=12)
-    targetGroupCount: int | None = Field(default=None, ge=4, le=8)
+    targetGroupCount: int | None = Field(default=None, ge=1, le=20)
     sourceMenuTaggerTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
     notes: str | None = None
@@ -620,6 +620,8 @@ class MenuClustererMilestoneOutput(BaseModel):
     @model_validator(mode="after")
     def _validate_lead_group_alignment(self) -> MenuClustererMilestoneOutput:
         hook_groups = [group for group in self.groups if group.profileId == "hook_reel"]
+        if not hook_groups:
+            return self
         if len(self.foodLeads) != len(hook_groups):
             raise ValueError("foodLeads length must match hook_reel groups length")
         for lead, group in zip(self.foodLeads, hook_groups, strict=True):

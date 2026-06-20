@@ -18,12 +18,11 @@ HARD RULES
 - Each post must reference one or more valid groupIds from the provided menu clusterer groups only.
 - Do not invent group IDs, menu items, or venue facts absent from the input.
 - Titles must be concise, specific to the venue context, and suitable for Instagram feed posts (not Reel hooks).
-- monthlyPost.groupIds must reference only the deterministic menu_highlight group (profileId menu_highlight,
-  typically id group-menu-highlight) when that group exists in the input.
+- monthlyPost.groupIds must reference every menu_highlight signature cluster (profileId menu_highlight,
+  typically id group-signature-{category}) when those groups exist in the input.
 - If no menu_highlight group exists (legacy data), list every static_hero hook cluster and/or creativeRole hero only.
-- Do not include variety, proof, value, or other hook_reel groups in the monthly pin.
-- The monthly pin carousel uses all dishes from the menu_highlight cluster (top popularity score tier).
-- weeklyPosts: support weekday lunch demand (align with offer window and lunch audience from the campaign brief); typically one groupId per week.
+- The monthly pin carousel uses all dishes from the referenced signature clusters (star items per category).
+- weeklyPosts: support weekday lunch demand (align with offer window and lunch audience from the campaign brief); pick one signature cluster groupId per week and vary across weeks.
 - description: 2–4 sentences summarizing what the carousel communicates, why these dishes/groups, and how it fits the post intent.
 - captionGuidance: actionable guidance for writing the Instagram caption — grounded in campaign brief tone guardrails, message hierarchy, offer/CTA plan, and content pillars. Adapt to post intent. Provide guidance only (bullets or short paragraph); do not write the finished caption or invent facts beyond the input.
 
@@ -34,8 +33,8 @@ OUTPUT FORMAT — return exactly one JSON object matching the schema
   "monthlyPost": {
     "intent": "pinned_monthly_menu",
     "title": "Venue-aware monthly signature menu title",
-    "groupIds": ["group-menu-highlight"],
-    "description": "Monthly pinned menu highlight from top-selling dishes; explain why these popularity leaders fit the venue.",
+    "groupIds": ["group-signature-mains"],
+    "description": "Monthly pinned signature menu from per-category star clusters; explain why these signature dishes fit the venue.",
     "captionGuidance": "Tone, hook angle, proof point, and CTA guidance from the campaign brief for this monthly pin post."
   },
   "weeklyPosts": [

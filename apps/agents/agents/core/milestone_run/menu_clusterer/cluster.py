@@ -469,8 +469,75 @@ def _venue_name(campaign_brief_data: dict[str, Any] | None) -> str:
     return name or "the venue"
 
 
-def _menu_highlight_cluster_description(
+def _normalize_category(category: str) -> str:
+    return str(category or "").strip() or "(uncategorized)"
+
+
+def _category_slug(category: str) -> str:
+    text = unicodedata.normalize("NFKC", _normalize_category(category))
+    text = re.sub(r"[^a-z0-9]+", "-", text.casefold())
+    return text.strip("-") or "uncategorized"
+
+
+def _is_star_item(item: dict[str, Any]) -> bool:
+    return str(item.get("role") or "").strip().casefold() == "star"
+
+
+def _item_category(item: dict[str, Any]) -> str:
+    return _normalize_category(str(item.get("category") or ""))
+
+
+def _category_matches_main_focus(category: str, main_category: str) -> bool:
+    focus = main_category.strip()
+    if not focus:
+        return False
+    return _normalize_category(category).casefold() == focus.casefold()
+
+
+def _main_category_from_brief(campaign_brief_data: dict[str, Any] | None) -> str:
+    if not isinstance(campaign_brief_data, dict):
+        return ""
+    return str(campaign_brief_data.get("mainCategory") or "").strip()
+
+
+def distinct_categories_with_stars(
+    items: list[dict[str, Any]],
     *,
+    main_category: str = "",
+) -> list[str]:
+    """Unique POS categories that have at least one star item, main category first."""
+    categories: set[str] = set()
+    for item in items:
+        if _is_star_item(item):
+            categories.add(_item_category(item))
+    if not categories:
+        return []
+    return sorted(
+        categories,
+        key=lambda category: (
+            0 if _category_matches_main_focus(category, main_category) else 1,
+            category.casefold(),
+        ),
+    )
+
+
+def select_category_star_items(
+    items: list[dict[str, Any]],
+    category: str,
+) -> list[dict[str, Any]]:
+    """Star items in a category, sorted by popularity then storytelling."""
+    normalized = _normalize_category(category)
+    stars = [
+        item
+        for item in items
+        if _is_star_item(item) and _item_category(item).casefold() == normalized.casefold()
+    ]
+    return sort_items_by_popularity(stars)
+
+
+def _category_signature_cluster_description(
+    *,
+    category: str,
     campaign_brief_data: dict[str, Any] | None,
     item_names: list[str],
 ) -> str:
@@ -480,22 +547,24 @@ def _menu_highlight_cluster_description(
     if len(item_names) > 6:
         dishes = f"{dishes}, and others"
     return (
-        f"Deterministic monthly menu highlight for {venue}: top-selling main-course dishes by "
-        f"popularity score tier ({dishes}). Grouped for the pinned signature carousel; aligns with "
+        f"Deterministic signature cluster for {venue} {category} menu: star dishes by "
+        f"popularity ({dishes}). Grouped for the pinned signature carousel; aligns with "
         f"{focus} strategy."
     )
 
 
-def build_menu_highlight_cluster(
-    highlight_items: list[dict[str, Any]],
+def build_category_signature_cluster(
+    category: str,
+    star_items: list[dict[str, Any]],
     *,
     campaign_brief_data: dict[str, Any] | None = None,
+    group_id: str | None = None,
 ) -> dict[str, Any] | None:
-    """Build the deterministic menu-highlight group for the monthly pinned post."""
-    if not highlight_items:
+    """Build one per-category signature menu_highlight group from star items."""
+    if not star_items:
         return None
 
-    ordered = sorted(highlight_items, key=_food_sort_key)
+    ordered = sort_items_by_popularity(star_items)
     if len(ordered) > MENU_CLUSTERER_HIGHLIGHT_MAX_ITEMS:
         ordered = ordered[:MENU_CLUSTERER_HIGHLIGHT_MAX_ITEMS]
 
@@ -507,15 +576,17 @@ def build_menu_highlight_cluster(
         group_items.append(row)
 
     item_names = [_item_name(item) for item in ordered if _item_name(item)]
-    description = _menu_highlight_cluster_description(
+    description = _category_signature_cluster_description(
+        category=category,
         campaign_brief_data=campaign_brief_data,
         item_names=item_names,
     )
     focus = _strategy_focus(campaign_brief_data)
     offer_window = _offer_window(campaign_brief_data)
+    resolved_id = group_id or f"group-signature-{_category_slug(category)}"
 
     return {
-        "id": MENU_CLUSTERER_HIGHLIGHT_GROUP_ID,
+        "id": resolved_id,
         "leadName": _item_name(lead_item),
         "profileId": MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT,
         "anchor": {"dimension": "reel_moment", "value": "static_hero"},
@@ -528,9 +599,90 @@ def build_menu_highlight_cluster(
         "assetHint": _build_asset_hint(
             lead_item,
             offer_window=offer_window,
-            theme_label="Monthly menu highlight",
+            theme_label=f"{category} signature menu",
         ),
     }
+
+
+def build_per_category_signature_clusters(
+    menu_tagger_items: list[dict[str, Any]],
+    *,
+    campaign_brief_data: dict[str, Any] | None = None,
+    source_menu_tagger_title: str = "",
+    source_campaign_brief_title: str = "",
+    notes: str = "",
+) -> dict[str, Any]:
+    """Build one menu_highlight signature cluster per category that has star items."""
+    main_category = _main_category_from_brief(campaign_brief_data)
+    categories = distinct_categories_with_stars(menu_tagger_items, main_category=main_category)
+    if not categories:
+        raise ValueError(
+            "menu_clusterer requires at least one star item in prior menu_tagger data; "
+            "re-run promotion_candidates or widen category selection"
+        )
+
+    groups: list[dict[str, Any]] = []
+    food_leads: list[dict[str, Any]] = []
+    for category in categories:
+        star_items = select_category_star_items(menu_tagger_items, category)
+        group = build_category_signature_cluster(
+            category,
+            star_items,
+            campaign_brief_data=campaign_brief_data,
+        )
+        if group is None:
+            continue
+        groups.append(group)
+        food_leads.append(star_items[0])
+
+    if not groups:
+        raise ValueError(
+            "menu_clusterer could not build signature clusters from star items; "
+            "re-run promotion_candidates or widen category selection"
+        )
+
+    assigned_keys = _assigned_name_keys(groups)
+    unassigned_item_names = [
+        _item_name(item)
+        for item in menu_tagger_items
+        if _item_name(item) and _name_key(_item_name(item)) not in assigned_keys
+    ]
+    top_food_lead_names = [group["leadName"] for group in groups if str(group.get("leadName") or "").strip()]
+
+    payload: dict[str, Any] = {
+        "foodLeads": food_leads,
+        "groups": groups,
+        "unassignedItemNames": unassigned_item_names,
+        "topFoodLeadNames": top_food_lead_names,
+        "targetGroupCount": len(groups),
+    }
+    title = source_menu_tagger_title.strip()
+    if title:
+        payload["sourceMenuTaggerTitle"] = title
+    campaign_title = source_campaign_brief_title.strip()
+    if campaign_title:
+        payload["sourceCampaignBriefTitle"] = campaign_title
+    note_text = notes.strip()
+    if note_text:
+        payload["notes"] = note_text
+    return payload
+
+
+def build_menu_highlight_cluster(
+    highlight_items: list[dict[str, Any]],
+    *,
+    campaign_brief_data: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Build the deterministic menu-highlight group for the monthly pinned post."""
+    if not highlight_items:
+        return None
+
+    return build_category_signature_cluster(
+        "menu highlight",
+        highlight_items,
+        campaign_brief_data=campaign_brief_data,
+        group_id=MENU_CLUSTERER_HIGHLIGHT_GROUP_ID,
+    )
 
 
 def _finalize_cluster_group(

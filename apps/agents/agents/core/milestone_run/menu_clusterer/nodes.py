@@ -6,19 +6,11 @@ import json
 from typing import Any
 
 import httpx
-from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
-from agents_app.agents.core.milestone_run.llm_from_run_config import (
-    structured_ainvoke_from_run_config,
-)
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
-    MENU_CLUSTERER_MIN_GROUP_COUNT,
-    derive_target_group_count,
-    food_items_only,
-    merge_llm_clusters,
-    rank_top_food_leads,
+    build_per_category_signature_clusters,
+    distinct_categories_with_stars,
 )
-from agents_app.agents.core.milestone_run.menu_clusterer.prompts import format_menu_clusterer_system
 from agents_app.agents.core.milestone_run.menu_clusterer.state import (
     MenuClustererOutput,
     MenuClustererState,
@@ -31,21 +23,11 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
 )
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel, Field, create_model
 
 
 def _trace(state: MenuClustererState, step: str, **extra: Any) -> None:
     payload: dict[str, Any] = {"step": step, **extra}
-    run_id = state.get("run_id")
-    if isinstance(run_id, str) and run_id:
-        payload["run_id"] = run_id
-    get_stream_writer()(payload)
-
-
-def _trace_agent_event(state: MenuClustererState, kind: str, **extra: Any) -> None:
-    payload: dict[str, Any] = {"agent_event": {"kind": kind, **extra}}
     run_id = state.get("run_id")
     if isinstance(run_id, str) and run_id:
         payload["run_id"] = run_id
@@ -90,93 +72,8 @@ def _normalize_generated_output(payload: Any) -> MenuClustererOutput:
     return normalized  # type: ignore[return-value]
 
 
-class MenuClustererClusterDraft(BaseModel):
-    themeLabel: str
-    leadItemName: str
-    supportingItemNames: list[str] = Field(default_factory=list, max_length=4)
-    clusterDescription: str = Field(
-        min_length=40,
-        description=(
-            "Why these items are grouped, why the angle fits this venue's concept, "
-            "and why it works as a Reel."
-        ),
-    )
-
-
-def _menu_clusterer_draft_output_model(min_groups: int) -> type[BaseModel]:
-    return create_model(
-        "MenuClustererDraftOutput",
-        clusters=(list[MenuClustererClusterDraft], Field(min_length=min_groups)),
-        __base__=BaseModel,
-    )
-
-
-MENU_CLUSTERER_MERGE_MAX_ATTEMPTS = 3
-
-
-def _merge_correction_message(error: ValueError) -> HumanMessage:
-    return HumanMessage(
-        content=(
-            "Your previous cluster draft could not be merged with the menu data.\n\n"
-            f"Error: {error}\n\n"
-            "Return a corrected JSON object only. Use exact item names from the tagged food list, "
-            "choose leadItemName only from the top popularity score-tier lead list, ensure every tagged food item "
-            "appears in at least one cluster, and keep each clusterDescription at least 40 characters."
-        )
-    )
-
-
-def _compact_food_item(item: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "name": str(item.get("name") or "").strip(),
-        "role": item.get("role"),
-        "category": item.get("category"),
-        "popularity": item.get("popularity"),
-        "storytellingFit": item.get("storytellingFit"),
-        "tags": item.get("tags"),
-    }
-
-
-def _build_generation_context(
-    *,
-    campaign_brief_data: dict[str, Any],
-    menu_tagger_items: list[dict[str, Any]],
-    top5_leads: list[dict[str, Any]],
-    owner_notes_markdown: str,
-    target_group_count: int,
-) -> str:
-    brief_excerpt = {
-        "venueSnapshot": campaign_brief_data.get("venueSnapshot"),
-        "overallStrategy": campaign_brief_data.get("overallStrategy"),
-        "contentPillars": campaign_brief_data.get("contentPillars"),
-        "audienceHypotheses": campaign_brief_data.get("audienceHypotheses"),
-        "proofOrientedAngles": campaign_brief_data.get("proofOrientedAngles"),
-    }
-    food_items = [_compact_food_item(item) for item in menu_tagger_items if _is_food_kind(item)]
-    top5_names = [str(item.get("name") or "").strip() for item in top5_leads]
-
-    sections = [
-        f"## Target cluster count\nProduce exactly **{target_group_count}** food Reel clusters "
-        "(derived from the tagged food menu size).",
-        "## Full menu coverage\nEvery tagged food item listed below must appear in at least one "
-        "cluster (as leadItemName or supportingItemNames). Items may repeat across clusters.",
-        "## Campaign brief (excerpt)\n```json\n"
-        f"{json.dumps(brief_excerpt, ensure_ascii=False, indent=2)}\n```",
-        "## Top popularity score-tier food leads (position 1 must come from this list; ties included)\n```json\n"
-        f"{json.dumps(top5_names, ensure_ascii=False, indent=2)}\n```",
-        "## Tagged food items\n```json\n"
-        f"{json.dumps(food_items, ensure_ascii=False, indent=2)}\n```",
-    ]
-    if owner_notes_markdown.strip():
-        sections.append(owner_notes_markdown.strip())
-    return "\n\n".join(sections)
-
-
-def _is_food_kind(item: dict[str, Any]) -> bool:
-    tags = item.get("tags")
-    if not isinstance(tags, dict):
-        return False
-    return str(tags.get("kind") or "").strip() == "food"
+def _main_category_from_brief(campaign_brief_data: dict[str, Any]) -> str:
+    return str(campaign_brief_data.get("mainCategory") or "").strip()
 
 
 async def fetch_and_prepare(
@@ -204,17 +101,15 @@ async def fetch_and_prepare(
             "menu_clusterer requires at least one tagged item in prior menu_tagger data"
         )
 
-    food_count = len(food_items_only(menu_tagger_items))
-    target_group_count = derive_target_group_count(food_count)
-    if food_count < target_group_count:
+    main_category = _main_category_from_brief(campaign_brief_data)
+    available_categories = distinct_categories_with_stars(
+        menu_tagger_items,
+        main_category=main_category,
+    )
+    if not available_categories:
         raise ValueError(
-            f"menu_clusterer requires at least {target_group_count} tagged food items in prior "
-            f"menu_tagger data; got {food_count}. Re-run menu_tagger or widen promotion candidates."
-        )
-    if food_count < MENU_CLUSTERER_MIN_GROUP_COUNT:
-        raise ValueError(
-            f"menu_clusterer requires at least {MENU_CLUSTERER_MIN_GROUP_COUNT} tagged food items in prior "
-            f"menu_tagger data; got {food_count}. Re-run menu_tagger or widen promotion candidates."
+            "menu_clusterer requires at least one star item in prior menu_tagger data; "
+            "re-run promotion_candidates or widen category selection"
         )
 
     campaign_brief_row = extract_restaurant_campaign_brief_row(prior_json)
@@ -237,7 +132,7 @@ async def fetch_and_prepare(
         "source_campaign_brief_title": source_campaign_brief_title,
         "menu_tagger_items": menu_tagger_items,
         "source_menu_tagger_title": source_title,
-        "target_group_count": target_group_count,
+        "target_group_count": len(available_categories),
     }
 
 
@@ -252,70 +147,21 @@ async def build_clusters(state: MenuClustererState) -> dict[str, Any]:
     if owner_md:
         owner_notes = owner_md.split("\n\n", 2)[-1].strip() if "\n\n" in owner_md else owner_md
 
-    target_group_count = int(state.get("target_group_count") or MENU_CLUSTERER_MIN_GROUP_COUNT)
+    _trace(
+        state,
+        "build_clusters",
+        targetGroupCount=int(state.get("target_group_count") or 0),
+    )
 
-    top5_leads = rank_top_food_leads(menu_tagger_items)
-    generation_context = _build_generation_context(
+    payload = build_per_category_signature_clusters(
+        menu_tagger_items,
         campaign_brief_data=campaign_brief_data,
-        menu_tagger_items=menu_tagger_items,
-        top5_leads=top5_leads,
-        owner_notes_markdown=str(state.get("owner_notes_markdown") or ""),
-        target_group_count=target_group_count,
+        source_menu_tagger_title=str(state.get("source_menu_tagger_title") or ""),
+        source_campaign_brief_title=str(state.get("source_campaign_brief_title") or ""),
+        notes=owner_notes,
     )
-
-    draft_output_model = _menu_clusterer_draft_output_model(target_group_count)
-    system_prompt = format_menu_clusterer_system(
-        target_group_count=target_group_count,
-        min_group_count=MENU_CLUSTERER_MIN_GROUP_COUNT,
-    )
-
-    _trace(state, "build_clusters_generate", targetGroupCount=target_group_count)
-    _trace_agent_event(state, "chat_model_start")
-
-    base_messages: list[BaseMessage] = [
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=generation_context),
-    ]
-    generated: BaseModel | None = None
-    merge_error: ValueError | None = None
-
-    for attempt in range(1, MENU_CLUSTERER_MERGE_MAX_ATTEMPTS + 1):
-        messages = list(base_messages)
-        if merge_error is not None:
-            messages.append(_merge_correction_message(merge_error))
-        try:
-            generated = await structured_ainvoke_from_run_config(
-                draft_output_model,
-                messages,
-            )
-        except LLMInvokeError as exc:
-            emit_llm_error_step(exc.code, str(exc))
-            raise
-
-        try:
-            clusters = getattr(generated, "clusters", None)
-            if not isinstance(clusters, list):
-                raise ValueError("menu_clusterer LLM draft missing clusters")
-            payload = merge_llm_clusters(
-                clusters,
-                menu_tagger_items=menu_tagger_items,
-                top5_leads=top5_leads,
-                campaign_brief_data=campaign_brief_data,
-                source_menu_tagger_title=str(state.get("source_menu_tagger_title") or ""),
-                source_campaign_brief_title=str(state.get("source_campaign_brief_title") or ""),
-                notes=owner_notes,
-                target_group_count=target_group_count,
-            )
-            normalized = _normalize_generated_output(payload)
-            return {"generated_output": normalized}
-        except ValueError as exc:
-            merge_error = exc
-            if attempt >= MENU_CLUSTERER_MERGE_MAX_ATTEMPTS:
-                raise ValueError(
-                    f"menu_clusterer clustering failed after {attempt} attempts: {exc}"
-                ) from exc
-
-    raise ValueError("menu_clusterer clustering failed")
+    normalized = _normalize_generated_output(payload)
+    return {"generated_output": normalized}
 
 
 async def persist_result(state: MenuClustererState, *, client: httpx.AsyncClient) -> dict[str, Any]:

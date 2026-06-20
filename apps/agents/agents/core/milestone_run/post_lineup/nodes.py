@@ -163,7 +163,7 @@ def _build_generation_context(
         f"{json.dumps(compact_leads, ensure_ascii=False, indent=2)}\n```",
         "## Menu clusterer groups\n```json\n"
         f"{json.dumps(compact_groups, ensure_ascii=False, indent=2)}\n```",
-        "## Group map (monthly pin: menu_highlight group only when present)\n"
+        "## Group map (monthly pin: all menu_highlight signature clusters when present)\n"
         + ("\n".join(role_by_group_id) if role_by_group_id else "_No groups._"),
     ]
     if owner_notes_markdown.strip():
@@ -195,8 +195,7 @@ def _merge_correction_message(error: ValueError, *, expected_week_count: int) ->
             "Use valid groupIds from the provided groups, keep required intents, "
             "match weekIndex values from the week plan, and provide non-empty titles, "
             "descriptions, and captionGuidance. "
-            "monthlyPost.groupIds must reference the menu_highlight group when present; "
-            "do not include variety, proof, or value hook_reel groups."
+            "monthlyPost.groupIds must reference every menu_highlight signature cluster when present."
         )
     )
 
