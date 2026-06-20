@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 import { Button } from '@workspace/ui/components/button'
-import { Checkbox } from '@workspace/ui/components/checkbox'
 import { Label } from '@workspace/ui/components/label'
 import {
   Select,
@@ -14,171 +13,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from '@workspace/ui/components/input-group'
-import { Separator } from '@workspace/ui/components/separator'
-import { TableCell, TableRow } from '@workspace/ui/components/table'
-import { Slider } from '@workspace/ui/components/slider'
+import { useSortableColumns, type SortableTableColumn } from '@/components/sortable-table'
 import { formatCurrencyInput, getCurrencyLocale, parseCurrencyInput } from '@/lib/currency'
-import {
-  SortableTable,
-  useSortableColumns,
-  type SortableTableColumn,
-} from '@/components/sortable-table'
 
-const WE_STEP = 0.01
-const UNCATEGORIZED_KEY = '__uncategorized__'
+import {
+  COGS_UNCATEGORIZED_KEY,
+  CogsCategorySection,
+  type CogsColKey,
+  type CogsFieldBindings,
+  type CogsMenuItem,
+} from './update-cogs-form-sections'
 
 function clampWe(value: number): number {
   if (!Number.isFinite(value)) return 0
   return Math.min(1, Math.max(0, value))
 }
 
-type CogsColKey = 'menuName' | 'rowNumber' | 'cogsWe'
-
-type MenuItem = {
-  id: number
-  menuName: string
-  cogs: number | null
-  quantity: number
-  totalRevenue: number
-  price: number
-  menuCategory: string | null
-}
-
-type CogsAmountInputProps = {
-  item: MenuItem
-  loading: boolean
-  currencyCode: string
-  cogsRaw: string
-  displayFormatted: string
-  isEditing: boolean
-  onCogsInputChange: (raw: string) => void
-  onCogsFocus: () => void
-  onCogsBlur: () => void
-}
-
-function CogsAmountInput({
-  item,
-  loading,
-  currencyCode,
-  cogsRaw,
-  displayFormatted,
-  isEditing,
-  onCogsInputChange,
-  onCogsFocus,
-  onCogsBlur,
-}: CogsAmountInputProps) {
-  return (
-    <InputGroup className="min-w-0">
-      <InputGroupAddon>
-        <InputGroupText>{currencyCode}</InputGroupText>
-      </InputGroupAddon>
-      <InputGroupInput
-        id={`cogs-${item.id}`}
-        name={`cogs-${item.id}`}
-        type="text"
-        inputMode="decimal"
-        value={isEditing ? cogsRaw : displayFormatted}
-        onChange={(event) => onCogsInputChange(event.target.value)}
-        onFocus={onCogsFocus}
-        onBlur={onCogsBlur}
-        placeholder="0.00"
-        disabled={loading}
-        className="text-right tabular-nums"
-      />
-    </InputGroup>
-  )
-}
-
-type WeRatioSliderProps = {
-  item: MenuItem
-  loading: boolean
-  weValue: number
-  onWeSliderChange: (next: number) => void
-  weAriaLabel: string
-}
-
-function WeRatioSlider({
-  item,
-  loading,
-  weValue,
-  onWeSliderChange,
-  weAriaLabel,
-}: WeRatioSliderProps) {
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <Slider
-        id={`we-${item.id}`}
-        value={[weValue]}
-        min={0}
-        max={1}
-        step={WE_STEP}
-        disabled={loading || item.price <= 0}
-        onValueChange={(vals) => {
-          const next = vals[0]
-          if (next === undefined) return
-          onWeSliderChange(next)
-        }}
-        aria-label={weAriaLabel}
-        className="min-w-0 flex-1"
-      />
-      <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-        {Math.round(weValue * 100)}%
-      </span>
-    </div>
-  )
-}
-
-type MenuItemCogsFieldsProps = CogsAmountInputProps & WeRatioSliderProps
-
-function MenuItemCogsFields({
-  item,
-  loading,
-  currencyCode,
-  cogsRaw,
-  displayFormatted,
-  isEditing,
-  onCogsInputChange,
-  onCogsFocus,
-  onCogsBlur,
-  weValue,
-  onWeSliderChange,
-  weAriaLabel,
-}: MenuItemCogsFieldsProps) {
-  return (
-    <div className="flex w-full min-w-0 flex-col gap-2">
-      <CogsAmountInput
-        item={item}
-        loading={loading}
-        currencyCode={currencyCode}
-        cogsRaw={cogsRaw}
-        displayFormatted={displayFormatted}
-        isEditing={isEditing}
-        onCogsInputChange={onCogsInputChange}
-        onCogsFocus={onCogsFocus}
-        onCogsBlur={onCogsBlur}
-      />
-      <WeRatioSlider
-        item={item}
-        loading={loading}
-        weValue={weValue}
-        onWeSliderChange={onWeSliderChange}
-        weAriaLabel={weAriaLabel}
-      />
-    </div>
-  )
-}
-
 type Props = {
   analyticsId: number
-  menuItems: MenuItem[]
+  menuItems: CogsMenuItem[]
   analyticsOptions: Array<{ id: number; name: string }>
   currencyCode: string
 }
@@ -213,8 +66,8 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
 
   const options = useMemo(() => analyticsOptions, [analyticsOptions])
   const groupedMenuItems = useMemo(() => {
-    const categorized = new Map<string, MenuItem[]>()
-    const uncategorized: MenuItem[] = []
+    const categorized = new Map<string, CogsMenuItem[]>()
+    const uncategorized: CogsMenuItem[] = []
 
     for (const item of menuItems) {
       const category = item.menuCategory?.trim()
@@ -240,7 +93,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     }
   }, [menuItems])
   const sortedGroupedMenuItems = useMemo(() => {
-    const sortItems = (items: MenuItem[]) =>
+    const sortItems = (items: CogsMenuItem[]) =>
       [...items].sort((a, b) => {
         const cmp = a.menuName.localeCompare(b.menuName)
         return sortDirection === 'asc' ? cmp : -cmp
@@ -264,7 +117,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
       ...(groupedMenuItems.uncategorized.length > 0
         ? [
             {
-              key: UNCATEGORIZED_KEY,
+              key: COGS_UNCATEGORIZED_KEY,
               label: t('table.uncategorizedTitle'),
               items: groupedMenuItems.uncategorized,
             },
@@ -341,7 +194,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     return formatCurrencyInput(parsed, currencyCode, locale)
   }
 
-  function applyCategoryWe(items: MenuItem[], nextWe: number) {
+  function applyCategoryWe(items: CogsMenuItem[], nextWe: number) {
     setWeValues((prev) => {
       const next = { ...prev }
       for (const item of items) {
@@ -360,7 +213,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     })
   }
 
-  function handleCogsInputChange(item: MenuItem, raw: string) {
+  function handleCogsInputChange(item: CogsMenuItem, raw: string) {
     setCogsValues((prev) => ({
       ...prev,
       [item.id]: raw,
@@ -381,7 +234,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     })
   }
 
-  function handleWeSliderChange(item: MenuItem, next: number) {
+  function handleWeSliderChange(item: CogsMenuItem, next: number) {
     setWeValues((prev) => ({ ...prev, [item.id]: next }))
     const cogsAmount = Math.round(next * item.price)
     setCogsValues((prev) => ({
@@ -412,6 +265,21 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
       className: 'w-[320px]',
     },
   ]
+
+  const fieldBindings: CogsFieldBindings = {
+    activeInputId,
+    cogsValues,
+    currencyCode,
+    formatDisplayValue,
+    loading,
+    onCogsBlur: (itemId) => setActiveInputId((prev) => (prev === itemId ? null : prev)),
+    onCogsFocus: setActiveInputId,
+    onCogsInputChange: handleCogsInputChange,
+    onWeSliderChange: handleWeSliderChange,
+    weValues,
+  }
+
+  let categorizedRowOffset = 0
 
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit}>
@@ -495,228 +363,64 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
         </div>
       )}
 
-      {(() => {
-        let rowNumber = 1
-
-        const renderRow = (item: MenuItem) => {
-          const currentRowNumber = rowNumber
-          rowNumber += 1
-
-          return (
-            <TableRow
-              key={item.id}
-              className="transition-colors focus-within:bg-muted focus-within:ring-1 focus-within:ring-primary/40"
-            >
-              <TableCell className="px-3 py-2 text-sm text-muted-foreground tabular-nums">
-                {currentRowNumber}.
-              </TableCell>
-              <TableCell className="px-3 py-2">
-                <Label htmlFor={`cogs-${item.id}`} className="truncate">
-                  {item.menuName}
-                </Label>
-              </TableCell>
-              <TableCell className="px-3 py-2">
-                <MenuItemCogsFields
-                  item={item}
-                  loading={loading}
-                  currencyCode={currencyCode}
-                  cogsRaw={cogsValues[item.id] ?? ''}
-                  displayFormatted={formatDisplayValue(cogsValues[item.id] ?? '')}
-                  isEditing={activeInputId === item.id}
-                  weValue={weValues[item.id] ?? 0}
-                  onCogsInputChange={(raw) => handleCogsInputChange(item, raw)}
-                  onCogsFocus={() => setActiveInputId(item.id)}
-                  onCogsBlur={() => setActiveInputId((prev) => (prev === item.id ? null : prev))}
-                  onWeSliderChange={(next) => handleWeSliderChange(item, next)}
-                  weAriaLabel={t('table.weAria', { menu: item.menuName })}
-                />
-              </TableCell>
-            </TableRow>
+      <div className="flex flex-col gap-6">
+        {sortedGroupedMenuItems.categorized.map((group) => {
+          const section = (
+            <CogsCategorySection
+              key={group.category}
+              bindings={fieldBindings}
+              categoryWeEnabled={categoryWeEnabled}
+              categoryWeValues={categoryWeValues}
+              items={group.items}
+              onApplyCategoryWe={applyCategoryWe}
+              onCategoryWeEnabledChange={(sectionKey, enabled) => {
+                setCategoryWeEnabled((prev) => ({ ...prev, [sectionKey]: enabled }))
+              }}
+              onCategoryWeValueChange={(sectionKey, value) => {
+                setCategoryWeValues((prev) => ({ ...prev, [sectionKey]: value }))
+              }}
+              onToggleSort={toggleSort}
+              rowNumberOffset={categorizedRowOffset}
+              sectionKey={group.category}
+              sortDirection={sortDirection}
+              sortKey={sortKey}
+              tableColumns={tableColumns}
+              title={group.category}
+            />
           )
-        }
+          categorizedRowOffset += group.items.length
+          return section
+        })}
 
-        const renderCategoryBulkBlock = (sectionKey: string, itemsForApply: MenuItem[]) => (
-          <div className="mb-4 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id={`category-we-enable-${sectionKey}`}
-                checked={categoryWeEnabled[sectionKey] ?? false}
-                onCheckedChange={(checked) => {
-                  setCategoryWeEnabled((prev) => ({
-                    ...prev,
-                    [sectionKey]: checked === true,
-                  }))
-                }}
-                disabled={loading}
-              />
-              <Label htmlFor={`category-we-enable-${sectionKey}`}>
-                {t('table.categoryWe.enable')}
-              </Label>
-            </div>
-            <div className="flex min-w-0 items-center gap-2">
-              <Slider
-                id={`category-we-${sectionKey}`}
-                value={[categoryWeValues[sectionKey] ?? 0]}
-                min={0}
-                max={1}
-                step={WE_STEP}
-                disabled={loading || !(categoryWeEnabled[sectionKey] ?? false)}
-                onValueChange={(vals) => {
-                  const next = vals[0]
-                  if (next === undefined) return
-                  setCategoryWeValues((prev) => ({ ...prev, [sectionKey]: next }))
-                  applyCategoryWe(itemsForApply, next)
-                }}
-                aria-label={t('table.categoryWe.aria', {
-                  category:
-                    sectionKey === UNCATEGORIZED_KEY ? t('table.uncategorizedTitle') : sectionKey,
-                })}
-                className="min-w-0 flex-1"
-              />
-              <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                {Math.round((categoryWeValues[sectionKey] ?? 0) * 100)}%
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">{t('table.categoryWe.hint')}</p>
-          </div>
-        )
+        {sortedGroupedMenuItems.uncategorized.length > 0 ? (
+          <CogsCategorySection
+            bindings={fieldBindings}
+            categoryWeEnabled={categoryWeEnabled}
+            categoryWeValues={categoryWeValues}
+            items={sortedGroupedMenuItems.uncategorized}
+            onApplyCategoryWe={applyCategoryWe}
+            onCategoryWeEnabledChange={(sectionKey, enabled) => {
+              setCategoryWeEnabled((prev) => ({ ...prev, [sectionKey]: enabled }))
+            }}
+            onCategoryWeValueChange={(sectionKey, value) => {
+              setCategoryWeValues((prev) => ({ ...prev, [sectionKey]: value }))
+            }}
+            onToggleSort={toggleSort}
+            rowNumberOffset={categorizedRowOffset}
+            sectionKey={COGS_UNCATEGORIZED_KEY}
+            sortDirection={sortDirection}
+            sortKey={sortKey}
+            tableColumns={tableColumns}
+            title={t('table.uncategorizedTitle')}
+          />
+        ) : null}
 
-        const renderMobileItemBlock = (item: MenuItem, indexInSection: number) => (
-          <div key={item.id} className="min-w-0 py-3 first:pt-0">
-            <div className="flex flex-col gap-3">
-              <div className="min-w-0">
-                <p className="text-xs tabular-nums text-muted-foreground">#{indexInSection}</p>
-                <p className="text-sm font-medium leading-snug break-words">{item.menuName}</p>
-              </div>
-              <FieldGroup className="gap-4">
-                <Field>
-                  <FieldLabel htmlFor={`cogs-${item.id}`}>{t('table.cogs')}</FieldLabel>
-                  <CogsAmountInput
-                    item={item}
-                    loading={loading}
-                    currencyCode={currencyCode}
-                    cogsRaw={cogsValues[item.id] ?? ''}
-                    displayFormatted={formatDisplayValue(cogsValues[item.id] ?? '')}
-                    isEditing={activeInputId === item.id}
-                    onCogsInputChange={(raw) => handleCogsInputChange(item, raw)}
-                    onCogsFocus={() => setActiveInputId(item.id)}
-                    onCogsBlur={() => setActiveInputId((prev) => (prev === item.id ? null : prev))}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor={`we-${item.id}`}>{t('table.we')}</FieldLabel>
-                  <WeRatioSlider
-                    item={item}
-                    loading={loading}
-                    weValue={weValues[item.id] ?? 0}
-                    onWeSliderChange={(next) => handleWeSliderChange(item, next)}
-                    weAriaLabel={t('table.weAria', { menu: item.menuName })}
-                  />
-                </Field>
-              </FieldGroup>
-            </div>
-          </div>
-        )
-
-        const mobileSortLabel =
-          sortKey === 'menuName' && sortDirection === 'asc'
-            ? t('table.sortNameAsc')
-            : t('table.sortNameDesc')
-        const mobileSortAria =
-          sortKey === 'menuName' && sortDirection === 'asc'
-            ? t('table.sortNameButtonAriaAsc')
-            : t('table.sortNameButtonAriaDesc')
-
-        const renderMobileSortToolbar = () => (
-          <div className="flex flex-col gap-1 border-b pb-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-9 w-fit shrink-0 px-2"
-              onClick={() => toggleSort('menuName')}
-              aria-label={mobileSortAria}
-            >
-              {mobileSortLabel}
-            </Button>
-            <p className="text-xs text-muted-foreground">{t('table.sortNameHint')}</p>
-          </div>
-        )
-
-        return (
-          <div className="flex flex-col gap-6">
-            {sortedGroupedMenuItems.categorized.map((group) => (
-              <Card key={group.category} className="min-w-0 overflow-hidden">
-                <CardHeader className="flex min-w-0 flex-col gap-3">
-                  <CardTitle className="break-words">{group.category}</CardTitle>
-                  <div className="lg:hidden">{renderMobileSortToolbar()}</div>
-                </CardHeader>
-                <CardContent className="min-w-0">
-                  {renderCategoryBulkBlock(group.category, group.items)}
-                  <div className="lg:hidden">
-                    <div className="flex flex-col">
-                      {group.items.map((item, idx) => (
-                        <div key={item.id}>
-                          {idx > 0 ? <Separator className="my-0" /> : null}
-                          {renderMobileItemBlock(item, idx + 1)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="hidden lg:block">
-                    <SortableTable<CogsColKey>
-                      columns={tableColumns}
-                      sortKey={sortKey}
-                      sortDirection={sortDirection}
-                      onSort={toggleSort}
-                    >
-                      {group.items.map((item) => renderRow(item))}
-                    </SortableTable>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {sortedGroupedMenuItems.uncategorized.length > 0 && (
-              <Card className="min-w-0 overflow-hidden">
-                <CardHeader className="flex min-w-0 flex-col gap-3">
-                  <CardTitle>{t('table.uncategorizedTitle')}</CardTitle>
-                  <div className="lg:hidden">{renderMobileSortToolbar()}</div>
-                </CardHeader>
-                <CardContent className="min-w-0">
-                  {renderCategoryBulkBlock(UNCATEGORIZED_KEY, sortedGroupedMenuItems.uncategorized)}
-                  <div className="lg:hidden">
-                    <div className="flex flex-col">
-                      {sortedGroupedMenuItems.uncategorized.map((item, idx) => (
-                        <div key={item.id}>
-                          {idx > 0 ? <Separator className="my-0" /> : null}
-                          {renderMobileItemBlock(item, idx + 1)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="hidden lg:block">
-                    <SortableTable<CogsColKey>
-                      columns={tableColumns}
-                      sortKey={sortKey}
-                      sortDirection={sortDirection}
-                      onSort={toggleSort}
-                    >
-                      {sortedGroupedMenuItems.uncategorized.map((item) => renderRow(item))}
-                    </SortableTable>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {error && (
-              <p className="text-sm text-destructive" role="alert" aria-live="assertive">
-                {error}
-              </p>
-            )}
-          </div>
-        )
-      })()}
+        {error ? (
+          <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+            {error}
+          </p>
+        ) : null}
+      </div>
 
       <div className="flex justify-end">
         <Button type="submit" disabled={loading} className="w-full sm:w-auto">

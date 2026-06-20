@@ -353,3 +353,25 @@ export function HeatmapMatrix({
     </Card>
   )
 }
+
+export type HeatmapMatrixCoreProps = Omit<Props, 'variant' | 'showExplanation' | 'showTotalsRow'>
+
+/** Card-wrapped heatmap with explanation and totals row enabled by default. */
+export function HeatmapMatrixCard(props: HeatmapMatrixCoreProps) {
+  return <HeatmapMatrix {...props} showExplanation showTotalsRow variant="card" />
+}
+
+/** Embedded heatmap for parent sections; explanation hidden by default. */
+export function HeatmapMatrixEmbedded(
+  props: HeatmapMatrixCoreProps & { showTotalsRow?: boolean; showExplanation?: boolean },
+) {
+  const { showTotalsRow = true, showExplanation = false, ...rest } = props
+  return (
+    <HeatmapMatrix
+      {...rest}
+      showExplanation={showExplanation}
+      showTotalsRow={showTotalsRow}
+      variant="embedded"
+    />
+  )
+}

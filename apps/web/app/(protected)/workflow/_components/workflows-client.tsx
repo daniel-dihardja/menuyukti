@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { AlertCircle } from 'lucide-react'
 import { useAnalytics } from '../../analytics/use-analytics'
-import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import {
   BLANK_PRESET_SELECTION_KEY,
@@ -100,19 +98,13 @@ export function WorkflowsClient({
   const loadingWorkflows = isNavigating
   const loadingRuns = isNavigating
 
-  const handleWorkflowRenamed = useCallback(
-    (_id: string, _name: string) => {
-      router.refresh()
-    },
-    [router],
-  )
+  const handleWorkflowRenamed = useCallback(() => {
+    router.refresh()
+  }, [router])
 
-  const handleWorkflowDeleted = useCallback(
-    (_id: string) => {
-      router.refresh()
-    },
-    [router],
-  )
+  const handleWorkflowDeleted = useCallback(() => {
+    router.refresh()
+  }, [router])
 
   const canCreateWorkflow = locationId !== null && !loadingRuns
 

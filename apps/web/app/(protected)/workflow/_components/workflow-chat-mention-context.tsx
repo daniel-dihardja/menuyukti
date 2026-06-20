@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, use, useMemo, type ReactNode } from 'react'
 
 import { useTimelineChat, useTimelineWorkspaceState } from './timeline-context'
 
@@ -12,15 +12,11 @@ export function WorkflowChatMentionProvider({ children }: { children: ReactNode 
     () => milestoneState.milestones.map((m) => m.title),
     [milestoneState.milestones],
   )
-  return (
-    <WorkflowChatMentionContext.Provider value={mentionTitles}>
-      {children}
-    </WorkflowChatMentionContext.Provider>
-  )
+  return <WorkflowChatMentionContext value={mentionTitles}>{children}</WorkflowChatMentionContext>
 }
 
 export function useWorkflowChatMentionTitles(): string[] | undefined {
-  return useContext(WorkflowChatMentionContext) ?? undefined
+  return use(WorkflowChatMentionContext) ?? undefined
 }
 
 export function useWorkflowChatMentionItems() {

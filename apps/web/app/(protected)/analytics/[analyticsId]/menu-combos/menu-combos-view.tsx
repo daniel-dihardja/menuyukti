@@ -24,7 +24,7 @@ import {
 } from '@workspace/ui/components/collapsible'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
-import { HeatmapMatrix } from '../heatmap/heatmap-matrix'
+import { HeatmapMatrixCard } from '../heatmap/heatmap-matrix'
 import { MenuCombosBundleIdeas } from './_components/menu-combos-bundle-ideas'
 import { MenuCombosFilters } from './_components/menu-combos-filters'
 import { MenuCombosInsightHero } from './_components/menu-combos-insight-hero'
@@ -225,7 +225,7 @@ export function MenuCombosView({
               </EmptyHeader>
             </Empty>
           ) : (
-            <HeatmapMatrix
+            <HeatmapMatrixCard
               title={t('matrix.title')}
               rows={matrixRows}
               columnLabels={menuCombos.focusMenus}

@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-import { HeatmapMatrix } from '../../heatmap/heatmap-matrix'
+import { HeatmapMatrixEmbedded } from '../../heatmap/heatmap-matrix'
 import {
   adaptSlotDemandHeatmap,
   COMBO_MEAL_PERIODS,
@@ -99,11 +99,10 @@ function VenueHeatmapContent({
   }, [cellBySlot, columnLabels, heatmap.rows, locale, t])
 
   return (
-    <HeatmapMatrix
+    <HeatmapMatrixEmbedded
       rows={heatmap.rows}
       columnLabels={columnLabels}
       density="compact"
-      variant="embedded"
       labels={labels}
       colorScale="venue"
       highlightCell={highlightCell}

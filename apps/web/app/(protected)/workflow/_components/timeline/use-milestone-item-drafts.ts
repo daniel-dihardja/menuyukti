@@ -27,7 +27,7 @@ import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 import type { TimelineActions } from '../timeline-context'
 import { useTimelineWorkspaceState } from '../timeline-context'
-import type { MilestoneInputModel } from './milestone-item-tabs'
+import type { MilestoneInputModel } from './milestone-item-input-model'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
 import type { MenuClustererInputDraft } from './milestone-menu-clusterer-input'
 import type { TimelineMilestone } from './types'

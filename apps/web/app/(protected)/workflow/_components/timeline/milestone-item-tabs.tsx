@@ -1,10 +1,10 @@
 'use client'
 
-import { type ReactNode, type RefObject, useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
-import { FieldSaveStatus, type FieldSaveStatusVariant } from '@/components/field-save-status'
+import { FieldSaveStatus } from '@/components/field-save-status'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { Calendar } from '@workspace/ui/components/calendar'
@@ -25,105 +25,21 @@ import { Textarea } from '@workspace/ui/components/textarea'
 
 import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-description'
 
-import {
-  MilestonePromotionCandidatesInput,
-  type PromotionCandidatesInputDraft,
-} from './milestone-promotion-candidates-input'
-import {
-  MilestoneCampaignBriefInput,
-  type MilestoneCampaignBriefInputProps,
-} from './milestone-campaign-brief-input'
+import { MilestonePromotionCandidatesInput } from './milestone-promotion-candidates-input'
+import { MilestoneCampaignBriefInput } from './milestone-campaign-brief-input'
 import { MilestoneFieldDescription } from './milestone-field-description'
+import { MilestoneMenuClustererInput } from './milestone-menu-clusterer-input'
 import {
-  MilestoneMenuClustererInput,
-  type MenuClustererInputDraft,
-} from './milestone-menu-clusterer-input'
-import type { PassCriteriaRow, TimelineMilestone } from './types'
-import type { CampaignBriefInputDraft } from '@/lib/milestones/campaign-brief-input'
+  useMilestoneItemActions,
+  useMilestoneItemMeta,
+  useMilestoneItemState,
+  type MilestoneItemTabValue,
+} from './milestone-item-context'
+import type { MilestoneInputModel } from './milestone-item-input-model'
 
-export type CampaignWindowInput = {
-  startDate: string
-  endDate: string
-}
+export type { CampaignWindowInput, MilestoneInputModel } from './milestone-item-input-model'
 
-export type MilestoneInputModel =
-  | {
-      type: 'dates'
-      draft: CampaignWindowInput
-      setDraft: (next: CampaignWindowInput) => void
-      saveStatus: FieldSaveStatusVariant
-      saving: boolean
-    }
-  | {
-      type: 'promotion_candidates'
-      draft: PromotionCandidatesInputDraft
-      onChange: (next: PromotionCandidatesInputDraft) => void
-      onNotesBlur: () => void
-      onNotesFocus: () => void
-      mainCategory: string | null
-      saveStatus: FieldSaveStatusVariant
-      saving: boolean
-    }
-  | {
-      type: 'campaign_brief'
-      draft: CampaignBriefInputDraft
-      onChange: MilestoneCampaignBriefInputProps['onDraftChange']
-      onNotesBlur: () => void
-      onNotesFocus: () => void
-      saveStatus: FieldSaveStatusVariant
-      saving: boolean
-    }
-  | {
-      type: 'menu_clusterer'
-      draft: MenuClustererInputDraft
-      onChange: (next: MenuClustererInputDraft) => void
-      onNotesBlur: () => void
-      onNotesFocus: () => void
-      saveStatus: FieldSaveStatusVariant
-      saving: boolean
-    }
-  | {
-      type: 'optional_notes'
-      draft: string
-      setDraft: (v: string) => void
-      onBlur: () => void
-      onFocus: () => void
-      copy: {
-        label: string
-        description: string
-        placeholder: string
-      }
-      saveStatus: FieldSaveStatusVariant
-      saving: boolean
-    }
-  | { type: 'none' }
-
-export type MilestoneItemTabValue = 'input' | 'goal' | 'pass' | 'result' | 'help'
-
-/** Tab panel state and handlers for one milestone (built in `timeline-item`). */
-export type MilestoneItemTabsModel = {
-  milestone: TimelineMilestone
-  activeTab: MilestoneItemTabValue
-  onActiveTabChange: (value: MilestoneItemTabValue) => void
-  goalFieldId: string
-  addCriteriaInputId: string
-  addCriteriaInputRef: RefObject<HTMLInputElement | null>
-  goalDraft: string
-  setGoalDraft: (v: string) => void
-  criteriaRows: PassCriteriaRow[]
-  savingGoal: boolean
-  savingPassCriteria: boolean
-  hasResult: boolean
-  isMilestoneRunning: boolean
-  handleGoalSave: () => void
-  handleAddPassCriterion: () => Promise<void>
-  handleRemovePassCriterion: (index: number) => Promise<void>
-  inputModel: MilestoneInputModel
-}
-
-export type MilestoneItemTabsProps = {
-  model: MilestoneItemTabsModel
-}
+export type { MilestoneItemTabValue } from './milestone-item-context'
 
 function parseDateInputValue(value: string): Date | undefined {
   if (!value) {
@@ -327,26 +243,26 @@ function MilestoneInputTabContent({
   }
 }
 
-export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
+export function MilestoneItemTabs() {
   const {
     milestone,
     activeTab,
-    onActiveTabChange,
-    goalFieldId,
-    addCriteriaInputId,
-    addCriteriaInputRef,
     goalDraft,
-    setGoalDraft,
     criteriaRows,
     savingGoal,
     savingPassCriteria,
     hasResult,
     isMilestoneRunning,
+    inputModel,
+  } = useMilestoneItemState()
+  const {
+    setActiveTab,
+    setGoalDraft,
     handleGoalSave,
     handleAddPassCriterion,
     handleRemovePassCriterion,
-    inputModel,
-  } = model
+  } = useMilestoneItemActions()
+  const { goalFieldId, addCriteriaInputId, addCriteriaInputRef } = useMilestoneItemMeta()
   const t = useTranslations('analytics.workflows.chat')
   const helpDescription = useMemo(() => getMilestoneHelpDescription(milestone, t), [milestone, t])
   const optionalNotesCopy = inputModel.type === 'optional_notes' ? inputModel.copy : null
@@ -355,7 +271,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     <CardContent className="min-w-0 px-3 pt-4 pb-0 md:px-6">
       <Tabs
         className="min-w-0 gap-4"
-        onValueChange={(value) => onActiveTabChange(value as MilestoneItemTabValue)}
+        onValueChange={(value) => setActiveTab(value as MilestoneItemTabValue)}
         value={activeTab}
       >
         <TabsList

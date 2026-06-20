@@ -1,16 +1,19 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import { createContext, useEffect, useMemo, useState } from 'react'
+import { createContext, type ReactNode, use, useEffect, useMemo, useState } from 'react'
 
-type AnalyticsContextValue = {
+type AnalyticsState = {
   locationId: number | null
-  setLocationId: (locationId: number | null) => void
   analyticsId: number | null
+}
+
+type AnalyticsActions = {
+  setLocationId: (locationId: number | null) => void
   setAnalyticsId: (analyticsId: number | null) => void
 }
 
-export const AnalyticsContext = createContext<AnalyticsContextValue | null>(null)
+const AnalyticsStateContext = createContext<AnalyticsState | null>(null)
+const AnalyticsActionsContext = createContext<AnalyticsActions | null>(null)
 
 type AnalyticsProviderProps = {
   children: ReactNode
@@ -30,10 +33,28 @@ export function AnalyticsProvider({
     setAnalyticsId(null)
   }, [locationId])
 
-  const value = useMemo(
-    () => ({ locationId, setLocationId, analyticsId, setAnalyticsId }),
-    [locationId, analyticsId],
-  )
+  const state = useMemo(() => ({ locationId, analyticsId }), [analyticsId, locationId])
+  const actions = useMemo(() => ({ setLocationId, setAnalyticsId }), [])
 
-  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>
+  return (
+    <AnalyticsActionsContext value={actions}>
+      <AnalyticsStateContext value={state}>{children}</AnalyticsStateContext>
+    </AnalyticsActionsContext>
+  )
+}
+
+export function useAnalyticsState(): AnalyticsState {
+  const state = use(AnalyticsStateContext)
+  if (!state) {
+    throw new Error('useAnalyticsState must be used within an AnalyticsProvider')
+  }
+  return state
+}
+
+export function useAnalyticsActions(): AnalyticsActions {
+  const actions = use(AnalyticsActionsContext)
+  if (!actions) {
+    throw new Error('useAnalyticsActions must be used within an AnalyticsProvider')
+  }
+  return actions
 }

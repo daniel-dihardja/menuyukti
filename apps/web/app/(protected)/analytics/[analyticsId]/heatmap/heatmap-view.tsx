@@ -38,7 +38,7 @@ import {
 import type { MenuEngineeringMatrixData, MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
-import { HeatmapMatrix } from './heatmap-matrix'
+import { HeatmapMatrixCard } from './heatmap-matrix'
 import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
 
 type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items'][number]
@@ -336,7 +336,7 @@ export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: 
                   }
                   itemCountLabel={t('insights.itemCount', { count: itemCount })}
                 />
-                <HeatmapMatrix
+                <HeatmapMatrixCard
                   title={dailyTitle}
                   rows={dailyMatrix.rows}
                   columnLabels={dailyMatrix.columnLabels}
@@ -362,7 +362,7 @@ export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: 
                   }
                   itemCountLabel={t('insights.itemCount', { count: itemCount })}
                 />
-                <HeatmapMatrix
+                <HeatmapMatrixCard
                   title={weeklyTitle}
                   rows={weeklyMatrix.rows}
                   columnLabels={weeklyMatrix.columnLabels}

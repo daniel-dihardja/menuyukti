@@ -4,33 +4,22 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { ChevronDown } from 'lucide-react'
 
 import {
-  BRIEF_PROFILE_FIELD_COUNT,
-  BRIEF_TEXT_MAX_LENGTHS,
   briefHintsFromQuickProfile,
-  briefHintsHasAnySelection,
   buildQuickProfilePayload,
   countFilledBriefProfileFields,
   defaultBriefHintsState,
+  BRIEF_PROFILE_FIELD_COUNT,
   type BriefHintsState,
 } from '@/lib/location-quick-profile'
 import {
-  COUNTRY_OPTIONS,
-  SUPPORTED_CURRENCIES,
   countryIdToCountry,
   countryIdToCurrency,
   normalizeCountryId,
   resolveCountrySelection,
 } from '@/lib/locations/country-config'
 import { routes } from '@/lib/routes'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@workspace/ui/components/accordion'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -40,64 +29,22 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@workspace/ui/components/collapsible'
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@workspace/ui/components/field'
-import { Input } from '@workspace/ui/components/input'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from '@workspace/ui/components/input-group'
-import { Progress } from '@workspace/ui/components/progress'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
-import { Switch } from '@workspace/ui/components/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
-import { Textarea } from '@workspace/ui/components/textarea'
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
-export type Weekday =
-  | 'monday'
-  | 'tuesday'
-  | 'wednesday'
-  | 'thursday'
-  | 'friday'
-  | 'saturday'
-  | 'sunday'
+import { LocationBasicsSection } from './location-form-basics-section'
+import { LocationBriefSection } from './location-form-brief-section'
+import { LocationHoursSection } from './location-form-hours-section'
+import {
+  defaultLocationOpeningHours,
+  LOCATION_DEFAULT_CLOSE,
+  LOCATION_DEFAULT_OPEN,
+  type LocationFormValues,
+  type OpeningHourRow,
+  type Weekday,
+} from './location-form-types'
 
-type OpeningHourRow = {
-  dayOfWeek: Weekday
-  closed: boolean
-  openTime: string
-  closeTime: string
-}
-
-type LocationFormValues = {
-  name: string
-  street: string
-  city: string
-  countryId?: string
-  country: string
-  currency: string
-  openingHours: OpeningHourRow[]
-}
+export type { LocationFormValues, OpeningHourRow, Weekday } from './location-form-types'
 
 type LocationFormProps = {
   mode: 'create' | 'edit'
@@ -106,36 +53,7 @@ type LocationFormProps = {
   initialManualQuickProfile?: Record<string, unknown> | null
 }
 
-const WEEKDAYS: Weekday[] = [
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-  'sunday',
-]
-
-const DEFAULT_OPEN = '09:00'
-const DEFAULT_CLOSE = '22:00'
-const EMPTY_SELECT_VALUE = '__none__'
 const FORM_ID = 'location-form'
-
-function defaultOpeningHours(): OpeningHourRow[] {
-  return WEEKDAYS.map((day) => ({
-    dayOfWeek: day,
-    closed: true,
-    openTime: '',
-    closeTime: '',
-  }))
-}
-
-function formatHoursSummary(row: OpeningHourRow, dayLabel: string, closedLabel: string): string {
-  if (row.closed || !row.openTime || !row.closeTime) {
-    return `${dayLabel} · ${closedLabel}`
-  }
-  return `${dayLabel} · ${row.openTime}–${row.closeTime}`
-}
 
 export function LocationForm({
   mode,
@@ -179,7 +97,7 @@ export function LocationForm({
   })
   const country = countryId ? (countryIdToCountry[countryId] ?? '') : ''
   const [openingHours, setOpeningHours] = useState<OpeningHourRow[]>(
-    initialValues?.openingHours ?? defaultOpeningHours(),
+    initialValues?.openingHours ?? defaultLocationOpeningHours(),
   )
   const [hints, setHints] = useState<BriefHintsState>(() =>
     briefHintsFromQuickProfile(initialManualQuickProfile ?? null),
@@ -222,8 +140,8 @@ export function LocationForm({
         return {
           ...row,
           closed: false,
-          openTime: row.openTime || DEFAULT_OPEN,
-          closeTime: row.closeTime || DEFAULT_CLOSE,
+          openTime: row.openTime || LOCATION_DEFAULT_OPEN,
+          closeTime: row.closeTime || LOCATION_DEFAULT_CLOSE,
         }
       }),
     )
@@ -250,8 +168,8 @@ export function LocationForm({
           return {
             ...row,
             closed: false,
-            openTime: DEFAULT_OPEN,
-            closeTime: DEFAULT_CLOSE,
+            openTime: LOCATION_DEFAULT_OPEN,
+            closeTime: LOCATION_DEFAULT_CLOSE,
           }
         }
         return { ...row, closed: true, openTime: '', closeTime: '' }
@@ -261,7 +179,7 @@ export function LocationForm({
 
   function presetAllClosed() {
     markDirty()
-    setOpeningHours(defaultOpeningHours())
+    setOpeningHours(defaultLocationOpeningHours())
   }
 
   function presetCopyMondayToWeekdays() {
@@ -378,86 +296,6 @@ export function LocationForm({
     }
   }
 
-  function renderOpeningHourRow(row: OpeningHourRow, compact = false) {
-    const switchId = `closed-${row.dayOfWeek}`
-    const openId = `open-${row.dayOfWeek}`
-    const closeId = `close-${row.dayOfWeek}`
-    const dayLabel = t(`weekdays.${row.dayOfWeek}`)
-
-    const controls = (
-      <>
-        <div className="flex items-center gap-2 sm:w-48 sm:shrink-0">
-          <Switch
-            id={switchId}
-            checked={!row.closed}
-            disabled={loading}
-            onCheckedChange={(checked) => setRowClosed(row.dayOfWeek, checked !== true)}
-            aria-label={t('openDaySwitchAria', { day: dayLabel })}
-          />
-          <FieldLabel
-            htmlFor={switchId}
-            className="cursor-pointer text-sm font-normal leading-none"
-          >
-            {row.closed ? t('dayClosed') : t('dayOpen')}
-          </FieldLabel>
-        </div>
-        <div className="grid flex-1 grid-cols-2 gap-3 sm:max-w-md">
-          <Field>
-            <FieldLabel htmlFor={openId} className="text-xs text-muted-foreground">
-              {t('opensAt')}
-            </FieldLabel>
-            <Input
-              id={openId}
-              type="time"
-              value={row.openTime}
-              disabled={loading || row.closed}
-              aria-disabled={row.closed}
-              onChange={(e) => updateOpeningHour(row.dayOfWeek, 'openTime', e.target.value)}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor={closeId} className="text-xs text-muted-foreground">
-              {t('closesAt')}
-            </FieldLabel>
-            <Input
-              id={closeId}
-              type="time"
-              value={row.closeTime}
-              disabled={loading || row.closed}
-              aria-disabled={row.closed}
-              onChange={(e) => updateOpeningHour(row.dayOfWeek, 'closeTime', e.target.value)}
-            />
-          </Field>
-        </div>
-      </>
-    )
-
-    if (compact) {
-      return (
-        <AccordionItem key={row.dayOfWeek} value={row.dayOfWeek}>
-          <AccordionTrigger className="py-3 text-sm hover:no-underline">
-            {formatHoursSummary(row, dayLabel, t('dayClosed'))}
-          </AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-3 pb-3">{controls}</AccordionContent>
-        </AccordionItem>
-      )
-    }
-
-    return (
-      <div
-        key={row.dayOfWeek}
-        role="group"
-        aria-labelledby={`${switchId}-label`}
-        className="flex flex-col gap-3 rounded-md border border-border/60 bg-muted/20 p-3 sm:flex-row sm:items-center sm:gap-4"
-      >
-        <p id={`${switchId}-label`} className="min-w-[6.5rem] font-medium capitalize sm:shrink-0">
-          {dayLabel}
-        </p>
-        {controls}
-      </div>
-    )
-  }
-
   const submitLabel =
     loading && mode === 'create'
       ? t('creating')
@@ -493,392 +331,53 @@ export function LocationForm({
                 ) : null}
               </TabsList>
 
-              <TabsContent value="basics" className="flex flex-col gap-4">
-                <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
-                  <Field className="sm:col-span-2">
-                    <FieldLabel htmlFor="name">{t('nameLabel')}</FieldLabel>
-                    <Input
-                      id="name"
-                      name="name"
-                      autoComplete="organization"
-                      placeholder={t('namePlaceholder')}
-                      required
-                      disabled={loading}
-                      value={name}
-                      onChange={(e) => {
-                        markDirty()
-                        setName(e.target.value)
-                      }}
-                    />
-                  </Field>
+              <LocationBasicsSection
+                loading={loading}
+                name={name}
+                street={street}
+                city={city}
+                countryId={countryId}
+                currency={currency}
+                hasManualCurrencyOverride={hasManualCurrencyOverride}
+                showCurrencyAutoHint={showCurrencyAutoHint}
+                onNameChange={setName}
+                onStreetChange={setStreet}
+                onCityChange={setCity}
+                onCountryChange={(nextCountryId) => {
+                  setCountryId(nextCountryId)
+                  if (!hasManualCurrencyOverride && nextCountryId) {
+                    setCurrency(countryIdToCurrency[nextCountryId] ?? '')
+                  }
+                }}
+                onCurrencyChange={(nextCurrency, hasManualOverride) => {
+                  setCurrency(nextCurrency)
+                  setHasManualCurrencyOverride(hasManualOverride)
+                }}
+                onDirty={markDirty}
+              />
 
-                  <Field className="sm:col-span-2">
-                    <FieldLabel htmlFor="street">{t('streetLabel')}</FieldLabel>
-                    <Input
-                      id="street"
-                      name="street"
-                      autoComplete="street-address"
-                      placeholder={t('streetPlaceholder')}
-                      disabled={loading}
-                      value={street}
-                      onChange={(e) => {
-                        markDirty()
-                        setStreet(e.target.value)
-                      }}
-                    />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="city">{t('cityLabel')}</FieldLabel>
-                    <Input
-                      id="city"
-                      name="city"
-                      autoComplete="address-level2"
-                      placeholder={t('cityPlaceholder')}
-                      disabled={loading}
-                      value={city}
-                      onChange={(e) => {
-                        markDirty()
-                        setCity(e.target.value)
-                      }}
-                    />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="country">{t('countryLabel')}</FieldLabel>
-                    <Select
-                      value={countryId || EMPTY_SELECT_VALUE}
-                      onValueChange={(value) => {
-                        markDirty()
-                        const nextCountryId = value === EMPTY_SELECT_VALUE ? '' : value
-                        setCountryId(nextCountryId)
-                        if (!hasManualCurrencyOverride && nextCountryId) {
-                          setCurrency(countryIdToCurrency[nextCountryId] ?? '')
-                        }
-                      }}
-                      disabled={loading}
-                    >
-                      <SelectTrigger id="country" name="country" className="w-full">
-                        <SelectValue placeholder={t('countrySelectPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
-                        {COUNTRY_OPTIONS.map((option) => (
-                          <SelectItem key={option.countryId} value={option.countryId}>
-                            {t(`countryOptions.${option.countryId}`)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-
-                  <Field className="sm:col-span-2 sm:col-start-1">
-                    <FieldLabel htmlFor="currency">{t('currencyLabel')}</FieldLabel>
-                    <Select
-                      value={currency || EMPTY_SELECT_VALUE}
-                      onValueChange={(value) => {
-                        markDirty()
-                        const nextCurrency = value === EMPTY_SELECT_VALUE ? '' : value
-                        setCurrency(nextCurrency)
-                        const defaultCurrency = countryId
-                          ? (countryIdToCurrency[countryId] ?? '')
-                          : ''
-                        setHasManualCurrencyOverride(
-                          Boolean(nextCurrency) && nextCurrency !== defaultCurrency,
-                        )
-                      }}
-                      disabled={loading}
-                    >
-                      <SelectTrigger id="currency" name="currency" className="w-full">
-                        <SelectValue placeholder={t('currencySelectPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
-                        {SUPPORTED_CURRENCIES.map((currencyCode) => (
-                          <SelectItem key={currencyCode} value={currencyCode}>
-                            {t(`currencyOptions.${currencyCode}`)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {showCurrencyAutoHint ? (
-                      <FieldDescription>{t('currencyAutoHint')}</FieldDescription>
-                    ) : null}
-                  </Field>
-                </FieldGroup>
-              </TabsContent>
-
-              <TabsContent value="hours" className="flex flex-col gap-4">
-                <FieldSet>
-                  <FieldLegend variant="label">{t('openingHoursTitle')}</FieldLegend>
-                  <FieldDescription>{t('openingHoursDescription')}</FieldDescription>
-                  <div
-                    className="flex flex-wrap gap-2"
-                    role="group"
-                    aria-label={t('openingHoursPresetsAria')}
-                  >
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={loading}
-                      onClick={presetWeekdaysOnly}
-                    >
-                      {t('presetWeekdays')}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={loading}
-                      onClick={presetCopyMondayToWeekdays}
-                    >
-                      {t('presetCopyMonday')}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={loading}
-                      onClick={presetAllClosed}
-                    >
-                      {t('presetAllClosed')}
-                    </Button>
-                  </div>
-
-                  <Accordion type="single" collapsible className="lg:hidden">
-                    {openingHours.map((row) => renderOpeningHourRow(row, true))}
-                  </Accordion>
-
-                  <div className="hidden flex-col gap-3 lg:flex">
-                    {openingHours.map((row) => renderOpeningHourRow(row))}
-                  </div>
-                </FieldSet>
-              </TabsContent>
+              <LocationHoursSection
+                loading={loading}
+                openingHours={openingHours}
+                onSetRowClosed={setRowClosed}
+                onUpdateOpeningHour={updateOpeningHour}
+                onPresetWeekdaysOnly={presetWeekdaysOnly}
+                onPresetCopyMondayToWeekdays={presetCopyMondayToWeekdays}
+                onPresetAllClosed={presetAllClosed}
+              />
 
               {mode === 'edit' ? (
-                <TabsContent value="marketing" className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {t('profileCompleteness', {
-                          filled: profileFilledCount,
-                          total: BRIEF_PROFILE_FIELD_COUNT,
-                        })}
-                      </p>
-                      <span className="text-sm font-medium tabular-nums">{profileProgress}%</span>
-                    </div>
-                    <Progress value={profileProgress} aria-label={t('tabs.marketing')} />
-                  </div>
-
-                  <Field>
-                    <FieldLabel htmlFor="brief-notes">{tm('notesLabel')}</FieldLabel>
-                    <FieldDescription>{tm('sections.profile.description')}</FieldDescription>
-                    <Textarea
-                      id="brief-notes"
-                      rows={4}
-                      disabled={loading}
-                      placeholder={tm('notesPlaceholder')}
-                      value={hints.notes}
-                      onChange={(e) => setHintField('notes', e.target.value)}
-                    />
-                  </Field>
-
-                  <FieldSet className="rounded-lg border border-border/80 bg-muted/10 p-4">
-                    <FieldLegend>{tm('sections.profile.title')}</FieldLegend>
-                    <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
-                      <Field>
-                        <FieldLabel htmlFor="instagram-handle">
-                          {tm('instagramHandleLabel')}
-                        </FieldLabel>
-                        <InputGroup>
-                          <InputGroupAddon align="inline-start">
-                            <InputGroupText>@</InputGroupText>
-                          </InputGroupAddon>
-                          <InputGroupInput
-                            id="instagram-handle"
-                            inputMode="text"
-                            autoComplete="off"
-                            spellCheck={false}
-                            maxLength={BRIEF_TEXT_MAX_LENGTHS.instagramHandle + 1}
-                            disabled={loading}
-                            placeholder={tm('instagramHandlePlaceholder')}
-                            value={hints.instagramHandle}
-                            onChange={(e) => setHintField('instagramHandle', e.target.value)}
-                          />
-                        </InputGroup>
-                      </Field>
-
-                      <Field>
-                        <FieldLabel htmlFor="neighborhood">{tm('neighborhoodLabel')}</FieldLabel>
-                        <Input
-                          id="neighborhood"
-                          autoComplete="off"
-                          maxLength={BRIEF_TEXT_MAX_LENGTHS.neighborhood}
-                          disabled={loading}
-                          placeholder={tm('neighborhoodPlaceholder')}
-                          value={hints.neighborhood}
-                          onChange={(e) => setHintField('neighborhood', e.target.value)}
-                        />
-                      </Field>
-
-                      <Field>
-                        <FieldLabel htmlFor="phone">{tm('phoneLabel')}</FieldLabel>
-                        <Input
-                          id="phone"
-                          type="tel"
-                          inputMode="tel"
-                          autoComplete="tel"
-                          maxLength={BRIEF_TEXT_MAX_LENGTHS.phone}
-                          disabled={loading}
-                          placeholder={tm('phonePlaceholder')}
-                          value={hints.phone}
-                          onChange={(e) => setHintField('phone', e.target.value)}
-                        />
-                      </Field>
-
-                      <Field>
-                        <FieldLabel htmlFor="contact-email">{tm('contactEmailLabel')}</FieldLabel>
-                        <Input
-                          id="contact-email"
-                          type="email"
-                          inputMode="email"
-                          autoComplete="email"
-                          spellCheck={false}
-                          maxLength={BRIEF_TEXT_MAX_LENGTHS.contactEmail}
-                          disabled={loading}
-                          placeholder={tm('contactEmailPlaceholder')}
-                          value={hints.contactEmail}
-                          onChange={(e) => setHintField('contactEmail', e.target.value)}
-                        />
-                      </Field>
-
-                      <Field className="sm:col-span-2">
-                        <FieldLabel htmlFor="website-url">{tm('websiteUrlLabel')}</FieldLabel>
-                        <Input
-                          id="website-url"
-                          type="url"
-                          inputMode="url"
-                          autoComplete="url"
-                          maxLength={BRIEF_TEXT_MAX_LENGTHS.websiteUrl}
-                          disabled={loading}
-                          placeholder={tm('websiteUrlPlaceholder')}
-                          value={hints.websiteUrl}
-                          onChange={(e) => setHintField('websiteUrl', e.target.value)}
-                        />
-                      </Field>
-                    </FieldGroup>
-
-                    <Collapsible defaultOpen className="mt-4 flex flex-col gap-3">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="flex w-full touch-manipulation justify-between px-0"
-                        >
-                          <span>{t('collapsible.bookAndOrder')}</span>
-                          <ChevronDown className="size-4 shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="flex flex-col gap-4">
-                        <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
-                          <Field>
-                            <FieldLabel htmlFor="reservation-url">
-                              {tm('reservationUrlLabel')}
-                            </FieldLabel>
-                            <Input
-                              id="reservation-url"
-                              type="url"
-                              inputMode="url"
-                              autoComplete="off"
-                              maxLength={BRIEF_TEXT_MAX_LENGTHS.reservationUrl}
-                              disabled={loading}
-                              placeholder={tm('reservationUrlPlaceholder')}
-                              value={hints.reservationUrl}
-                              onChange={(e) => setHintField('reservationUrl', e.target.value)}
-                            />
-                          </Field>
-                          <Field>
-                            <FieldLabel htmlFor="online-order-url">
-                              {tm('onlineOrderUrlLabel')}
-                            </FieldLabel>
-                            <Input
-                              id="online-order-url"
-                              type="url"
-                              inputMode="url"
-                              autoComplete="off"
-                              maxLength={BRIEF_TEXT_MAX_LENGTHS.onlineOrderUrl}
-                              disabled={loading}
-                              placeholder={tm('onlineOrderUrlPlaceholder')}
-                              value={hints.onlineOrderUrl}
-                              onChange={(e) => setHintField('onlineOrderUrl', e.target.value)}
-                            />
-                          </Field>
-                          <Field className="sm:col-span-2">
-                            <FieldLabel htmlFor="menu-url">{tm('menuUrlLabel')}</FieldLabel>
-                            <Input
-                              id="menu-url"
-                              type="url"
-                              inputMode="url"
-                              autoComplete="off"
-                              maxLength={BRIEF_TEXT_MAX_LENGTHS.menuUrl}
-                              disabled={loading}
-                              placeholder={tm('menuUrlPlaceholder')}
-                              value={hints.menuUrl}
-                              onChange={(e) => setHintField('menuUrl', e.target.value)}
-                            />
-                          </Field>
-                        </FieldGroup>
-                      </CollapsibleContent>
-                    </Collapsible>
-
-                    <Collapsible className="flex flex-col gap-3">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="flex w-full touch-manipulation justify-between px-0"
-                        >
-                          <span>{t('collapsible.maps')}</span>
-                          <ChevronDown className="size-4 shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <Field>
-                          <FieldLabel htmlFor="google-maps-url">
-                            {tm('googleMapsUrlLabel')}
-                          </FieldLabel>
-                          <Input
-                            id="google-maps-url"
-                            type="url"
-                            inputMode="url"
-                            autoComplete="off"
-                            maxLength={BRIEF_TEXT_MAX_LENGTHS.googleMapsUrl}
-                            disabled={loading}
-                            placeholder={tm('googleMapsUrlPlaceholder')}
-                            value={hints.googleMapsUrl}
-                            onChange={(e) => setHintField('googleMapsUrl', e.target.value)}
-                          />
-                        </Field>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </FieldSet>
-
-                  {briefHintsHasAnySelection(hints) ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={loading}
-                      onClick={() => {
-                        markDirty()
-                        setHints(defaultBriefHintsState())
-                      }}
-                    >
-                      {tm('resetHints')}
-                    </Button>
-                  ) : null}
-                </TabsContent>
+                <LocationBriefSection
+                  loading={loading}
+                  hints={hints}
+                  profileFilledCount={profileFilledCount}
+                  profileProgress={profileProgress}
+                  onHintFieldChange={setHintField}
+                  onResetHints={() => {
+                    markDirty()
+                    setHints(defaultBriefHintsState())
+                  }}
+                />
               ) : null}
             </Tabs>
 
