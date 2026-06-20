@@ -1,23 +1,10 @@
-import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 
-import { AgentChatDynamic } from './_components/agent-chat-dynamic'
-
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('agentChat')
-  const title = t('metaTitle')
-  const description = t('metaDescription')
-  return {
-    title,
-    description,
-    openGraph: { title, description },
-  }
-}
-
-export default async function AgentPage() {
+export default async function AgentLoading() {
   const t = await getTranslations('agentChat')
   const tDash = await getTranslations('platform.dashboard')
 
@@ -26,7 +13,11 @@ export default async function AgentPage() {
       breadcrumbs={[{ label: tDash('title'), href: routes.dashboard }, { label: t('metaTitle') }]}
       title={t('metaTitle')}
     >
-      <AgentChatDynamic />
+      <div className="flex min-h-[400px] flex-col gap-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="min-h-[280px] flex-1 rounded-lg" />
+        <Skeleton className="h-12 w-full" />
+      </div>
     </AnalyticsPageShell>
   )
 }

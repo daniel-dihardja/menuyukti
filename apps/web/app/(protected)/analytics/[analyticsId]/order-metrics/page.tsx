@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { BarChart3 } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
@@ -28,6 +29,13 @@ import { OrderMetricsView } from './_components/order-metrics-view'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.orderMetrics')
+  const title = t('reportTitle')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
 }
 
 function formatReportPeriod(

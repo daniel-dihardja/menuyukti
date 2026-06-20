@@ -6,7 +6,7 @@ import { routes } from '@/lib/routes'
 import { getCachedShopImagesForSlug } from '@/lib/shop/s3-shop-images'
 import { resolveShopImages } from '@/lib/shop/resolve-shop-images'
 
-import type { ShopProduct } from './shop-catalog'
+import type { ShopProduct } from '@/lib/shop/shop-catalog'
 
 type Props = {
   products: ShopProduct[]

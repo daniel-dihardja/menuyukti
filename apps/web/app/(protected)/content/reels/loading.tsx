@@ -1,26 +1,12 @@
 import { getTranslations } from 'next-intl/server'
-import type { Metadata } from 'next'
-import { auth } from '@clerk/nextjs/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 
-import { ReelsDynamic } from './reels-dynamic'
-
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('reels')
-  const title = t('title')
-  const description = t('description')
-  return { title, description, openGraph: { title, description } }
-}
-
-export default async function Page() {
+export default async function ReelsLoading() {
   const tSidebar = await getTranslations('sidebar')
   const tReels = await getTranslations('reels')
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated || !userId) {
-    throw new Error('Invariant: expected authenticated session under (protected) layout')
-  }
 
   return (
     <AnalyticsPageShell
@@ -32,7 +18,11 @@ export default async function Page() {
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <ReelsDynamic />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={`reel-skel-${i}`} className="aspect-[9/16] w-full rounded-xl" />
+        ))}
+      </div>
     </AnalyticsPageShell>
   )
 }

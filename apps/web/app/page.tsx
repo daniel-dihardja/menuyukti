@@ -5,7 +5,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { Bot, Sparkles } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
-import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
+import { HeroProductPreviewDynamic } from '@/app/_components/landing/hero-product-preview-dynamic'
 import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFeatureSpotlight } from '@/app/_components/landing/landing-feature-spotlight'
@@ -242,7 +242,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
           stacked
           Icon={Bot}
           media={
-            <HeroProductPreview
+            <HeroProductPreviewDynamic
               slides={platformSlides}
               fullWidth
               viewLargerLabel={t('platform.viewLargerLabel')}

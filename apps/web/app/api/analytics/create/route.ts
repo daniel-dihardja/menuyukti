@@ -1,5 +1,6 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { buildGraphqlUploadHeaders, getGraphqlEndpoint } from '@/lib/graphql/client'
 import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
 
 const UPLOAD_SALES_REPORT_MUTATION = `
@@ -10,24 +11,6 @@ const UPLOAD_SALES_REPORT_MUTATION = `
     }
   }
 `
-
-function getGraphqlEndpoint(): string {
-  const endpoint = process.env.GRAPHQL_ENDPOINT
-  if (!endpoint) {
-    throw new Error('GRAPHQL_ENDPOINT is not set')
-  }
-  return endpoint
-}
-
-function buildGraphqlHeaders(userId: string): Headers {
-  const headers = new Headers()
-  const apiKey = process.env.GRAPHQL_INTERNAL_API_KEY
-  if (apiKey) {
-    headers.set('X-Internal-Api-Key', apiKey)
-  }
-  headers.set('X-User-Id', userId)
-  return headers
-}
 
 /**
  * POST /api/analytics/create
@@ -77,7 +60,7 @@ export async function POST(req: Request) {
 
     const res = await fetch(getGraphqlEndpoint(), {
       method: 'POST',
-      headers: buildGraphqlHeaders(userId),
+      headers: buildGraphqlUploadHeaders(userId),
       body: graphqlBody,
     })
 

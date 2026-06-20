@@ -1,9 +1,17 @@
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 
 import { DashboardPwaGuide } from './_components/dashboard-pwa-guide'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('platform.dashboard')
+  const title = t('title')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
 
 export default async function Page() {
   const t = await getTranslations('platform.dashboard')

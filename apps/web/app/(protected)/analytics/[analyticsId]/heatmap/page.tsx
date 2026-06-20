@@ -1,7 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import { routes } from '@/lib/routes'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
@@ -13,11 +15,49 @@ import {
 import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
-import { HeatmapView } from './heatmap-view'
+import { Skeleton } from '@workspace/ui/components/skeleton'
+import { HeatmapViewDynamic } from './heatmap-view-dynamic'
 import { cn } from '@workspace/ui/lib/utils'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.heatmap')
+  const title = t('reportTitle')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
+
+function HeatmapReportSkeleton() {
+  return <Skeleton className="min-h-[24rem] w-full rounded-lg" />
+}
+
+async function HeatmapReportContent({
+  analyticsId,
+  userId,
+  locationId,
+}: {
+  analyticsId: number
+  userId: string
+  locationId: string
+}) {
+  const locale = getAppCurrencyLocale()
+  const id = String(analyticsId)
+  const bundleData = await getCachedAnalyticsBundleHeatmap(userId, id, locationId)
+  const bundle = bundleData.analyticsBundle
+  const menuHeatmaps = bundle?.menuHeatmaps ?? []
+  const matrixItems = bundle?.menuEngineeringMatrix?.items ?? null
+
+  return (
+    <HeatmapViewDynamic
+      analyticsId={analyticsId}
+      menuHeatmaps={menuHeatmaps}
+      matrixItems={matrixItems}
+      locale={locale}
+    />
+  )
 }
 
 export default async function Page({ params }: PageProps) {
@@ -42,13 +82,7 @@ export default async function Page({ params }: PageProps) {
   if (!run) notFound()
 
   const locationId = String(run.locationId)
-  const locale = getAppCurrencyLocale()
-  const bundleData = await getCachedAnalyticsBundleHeatmap(userId, id, locationId)
-  const bundle = bundleData.analyticsBundle
-
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const menuHeatmaps = bundle?.menuHeatmaps ?? []
-  const matrixItems = bundle?.menuEngineeringMatrix?.items ?? null
 
   return (
     <AnalyticsPageShell
@@ -69,12 +103,9 @@ export default async function Page({ params }: PageProps) {
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
-        <HeatmapView
-          analyticsId={analyticsId}
-          menuHeatmaps={menuHeatmaps}
-          matrixItems={matrixItems}
-          locale={locale}
-        />
+        <Suspense fallback={<HeatmapReportSkeleton />}>
+          <HeatmapReportContent analyticsId={analyticsId} userId={userId} locationId={locationId} />
+        </Suspense>
       </section>
     </AnalyticsPageShell>
   )

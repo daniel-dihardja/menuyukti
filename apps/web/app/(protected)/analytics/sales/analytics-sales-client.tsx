@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 
 import { LocationSelect } from './location-select'
 import { SalesTable } from './sales-table'
-import { useLocationAnalytics } from './use-location-analytics'
 import { useDeleteAnalytics } from './use-delete-analytics'
 import UploadExcelClient from './upload-xcel-client'
 import { useUploadAnalytics } from './use-upload-analytics'
@@ -44,20 +43,23 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
     setLocationId(onlyBranch.id)
   }, [locationId, initialLocationId, branches, setLocationId])
 
-  const {
-    analytics: uploads,
-    loading,
-    refetch,
-  } = useLocationAnalytics(locationId, {
-    initialLocationId,
-    initialAnalytics,
-  })
-  const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, refetch)
+  useEffect(() => {
+    if (locationId === null) return
+    if (locationId === initialLocationId) return
+    router.replace(routes.analytics.salesWithLocation(locationId))
+  }, [locationId, initialLocationId, router])
+
+  const isNavigating = locationId !== null && locationId !== initialLocationId
+
+  const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, () =>
+    router.refresh(),
+  )
   const { deleteAnalytics, deleting } = useDeleteAnalytics({
     locationId,
-    onSuccess: refetch,
+    onSuccess: () => router.refresh(),
   })
 
+  const uploads = initialAnalytics
   const hasUploads = uploads.length > 0
 
   return (
@@ -84,7 +86,7 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
         <div className="border rounded-md p-8 text-left text-muted-foreground">
           {t('selectBranch')}
         </div>
-      ) : loading ? (
+      ) : isNavigating ? (
         <div className="border rounded-md p-8 text-left">{t('loading')}</div>
       ) : !hasUploads ? (
         <div className="border rounded-md p-8 text-left space-y-4">

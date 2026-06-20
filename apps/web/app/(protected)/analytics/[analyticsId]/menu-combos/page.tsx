@@ -2,7 +2,9 @@ import { auth } from '@clerk/nextjs/server'
 import { Link2 } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { PageHeading } from '@/components/page-heading'
@@ -26,10 +28,18 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
-import { MenuCombosView } from './menu-combos-view'
+import { Skeleton } from '@workspace/ui/components/skeleton'
+import { MenuCombosViewDynamic } from './menu-combos-view-dynamic'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.menuCombos')
+  const title = t('reportTitle')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
 }
 
 function formatReportPeriod(
@@ -43,6 +53,62 @@ function formatReportPeriod(
   if (periodStart) return formatPreviewDateString(periodStart, locale)
   if (periodEnd) return formatPreviewDateString(periodEnd, locale)
   return null
+}
+
+function MenuCombosReportSkeleton() {
+  return <Skeleton className="min-h-[24rem] w-full rounded-lg" />
+}
+
+async function MenuCombosReportContent({
+  analyticsId,
+  userId,
+  locationId,
+}: {
+  analyticsId: number
+  userId: string
+  locationId: string
+}) {
+  const tMenuCombos = await getTranslations('analytics.menuCombos')
+  const tShared = await getTranslations('analytics.shared')
+  const locale = getAppCurrencyLocale()
+  const id = String(analyticsId)
+
+  const [combosData, matrixData] = await Promise.all([
+    getCachedMenuCombos(userId, id, locationId),
+    getCachedMenuEngineeringMatrix(userId, id, locationId),
+  ])
+
+  const menuCombos = combosData.menuCombos
+  const matrixAvailable =
+    matrixData.menuEngineeringMatrix != null && matrixData.menuEngineeringMatrix.items.length > 0
+
+  if (!menuCombos) {
+    return (
+      <Empty className="border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Link2 aria-hidden />
+          </EmptyMedia>
+          <EmptyTitle>{tMenuCombos('empty.title')}</EmptyTitle>
+          <EmptyDescription>{tMenuCombos('empty.description')}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild variant="outline" size="sm">
+            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  return (
+    <MenuCombosViewDynamic
+      analyticsId={analyticsId}
+      menuCombos={menuCombos}
+      locale={locale}
+      matrixAvailable={matrixAvailable}
+    />
+  )
 }
 
 export default async function Page({ params }: PageProps) {
@@ -68,15 +134,7 @@ export default async function Page({ params }: PageProps) {
 
   const locationId = String(run.locationId)
   const locale = getAppCurrencyLocale()
-  const [combosData, matrixData] = await Promise.all([
-    getCachedMenuCombos(userId, id, locationId),
-    getCachedMenuEngineeringMatrix(userId, id, locationId),
-  ])
-
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const menuCombos = combosData.menuCombos
-  const matrixAvailable =
-    matrixData.menuEngineeringMatrix != null && matrixData.menuEngineeringMatrix.items.length > 0
   const reportPeriod = formatReportPeriod(run.periodStart, run.periodEnd, locale)
   const showFilename = run.filename && run.filename !== analyticsName
 
@@ -117,29 +175,13 @@ export default async function Page({ params }: PageProps) {
           </div>
         </div>
 
-        {!menuCombos ? (
-          <Empty className="border border-dashed">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Link2 aria-hidden />
-              </EmptyMedia>
-              <EmptyTitle>{tMenuCombos('empty.title')}</EmptyTitle>
-              <EmptyDescription>{tMenuCombos('empty.description')}</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button asChild variant="outline" size="sm">
-                <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
-        ) : (
-          <MenuCombosView
+        <Suspense fallback={<MenuCombosReportSkeleton />}>
+          <MenuCombosReportContent
             analyticsId={analyticsId}
-            menuCombos={menuCombos}
-            locale={locale}
-            matrixAvailable={matrixAvailable}
+            userId={userId}
+            locationId={locationId}
           />
-        )}
+        </Suspense>
       </section>
     </AnalyticsPageShell>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import {
@@ -22,7 +22,6 @@ import {
 } from '@workspace/ui/components/card'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   Table,
   TableBody,
@@ -31,26 +30,9 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import type { WorkspaceTeamData } from '@/lib/workspace/members'
 
-type WorkspaceMember = {
-  id: string
-  clerkUserId: string
-  role: string
-  invitedAt: string | null
-  acceptedAt: string | null
-  email: string | null
-  name: string | null
-}
-
-type WorkspaceTeamResponse = {
-  workspace: {
-    id: string
-    name: string
-    ownerClerkUserId: string
-  }
-  isOwner: boolean
-  members: WorkspaceMember[]
-}
+type WorkspaceMember = WorkspaceTeamData['members'][number]
 
 type ApiErrorPayload = {
   code?: string
@@ -81,11 +63,13 @@ function mapApiErrorToMessage(
   return message || t('errors.generic')
 }
 
-export function WorkspaceTeamClient() {
+type Props = {
+  initialData: WorkspaceTeamData
+}
+
+export function WorkspaceTeamClient({ initialData }: Props) {
   const t = useTranslations('workspaceTeam')
-  const [data, setData] = useState<WorkspaceTeamResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  const [data, setData] = useState<WorkspaceTeamData>(initialData)
   const [email, setEmail] = useState('')
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
@@ -93,35 +77,17 @@ export function WorkspaceTeamClient() {
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(null)
 
-  const loadMembers = useCallback(async () => {
-    setLoading(true)
-    setLoadError(null)
-    try {
-      const res = await fetch('/api/workspace/members')
-      const payload = (await res.json().catch(() => null)) as
-        | WorkspaceTeamResponse
-        | ApiErrorPayload
-      if (!res.ok) {
-        setLoadError(mapApiErrorToMessage(payload as ApiErrorPayload, t))
-        setData(null)
-        return
-      }
-      setData(payload as WorkspaceTeamResponse)
-    } catch {
-      setLoadError(t('loadError'))
-      setData(null)
-    } finally {
-      setLoading(false)
+  const reloadMembers = useCallback(async () => {
+    const res = await fetch('/api/workspace/members')
+    const payload = (await res.json().catch(() => null)) as WorkspaceTeamData | ApiErrorPayload
+    if (res.ok) {
+      setData(payload as WorkspaceTeamData)
     }
-  }, [t])
-
-  useEffect(() => {
-    void loadMembers()
-  }, [loadMembers])
+  }, [])
 
   async function handleInvite(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!data?.isOwner) return
+    if (!data.isOwner) return
 
     setInviting(true)
     setInviteError(null)
@@ -141,7 +107,7 @@ export function WorkspaceTeamClient() {
       }
       setEmail('')
       setInviteSuccess(t('inviteSuccess'))
-      await loadMembers()
+      await reloadMembers()
     } catch {
       setInviteError(t('errors.generic'))
     } finally {
@@ -150,7 +116,7 @@ export function WorkspaceTeamClient() {
   }
 
   async function handleRemoveMember(member: WorkspaceMember) {
-    if (!data?.isOwner || member.role === 'owner') return
+    if (!data.isOwner || member.role === 'owner') return
 
     setRemovingId(member.clerkUserId)
     setInviteError(null)
@@ -167,29 +133,12 @@ export function WorkspaceTeamClient() {
         return
       }
       setMemberToRemove(null)
-      await loadMembers()
+      await reloadMembers()
     } catch {
       setInviteError(t('errors.generic'))
     } finally {
       setRemovingId(null)
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-32 w-full max-w-xl" />
-        <Skeleton className="h-48 w-full" />
-      </div>
-    )
-  }
-
-  if (loadError) {
-    return <p className="text-sm text-destructive">{loadError}</p>
-  }
-
-  if (!data) {
-    return <p className="text-sm text-destructive">{t('loadError')}</p>
   }
 
   return (

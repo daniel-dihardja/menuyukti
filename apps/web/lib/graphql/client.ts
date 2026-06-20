@@ -141,3 +141,19 @@ export function graphqlQuery<T>(
   const requestKey = `${operationName ?? 'anonymous'}:${userId ?? ''}:${stableVariablesKey(variables)}`
   return cachedGraphQLRequest<T>(requestKey, query, variables, userId, operationName)
 }
+
+/** Endpoint URL for multipart uploads (GraphQL file uploads). */
+export function getGraphqlEndpoint(): string {
+  return getEndpoint()
+}
+
+/** Headers for multipart GraphQL uploads (no Content-Type — boundary is set by FormData). */
+export function buildGraphqlUploadHeaders(userId: string): Headers {
+  const headers = new Headers()
+  const apiKey = process.env.GRAPHQL_INTERNAL_API_KEY
+  if (apiKey) {
+    headers.set('X-Internal-Api-Key', apiKey)
+  }
+  headers.set('X-User-Id', userId)
+  return headers
+}

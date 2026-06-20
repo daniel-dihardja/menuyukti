@@ -25,7 +25,7 @@ import {
 
 import type { ResolvedShopImage } from '@/lib/shop/resolve-shop-images'
 import { routes } from '@/lib/routes'
-import type { ShopProduct } from './shop-catalog'
+import type { ShopProduct } from '@/lib/shop/shop-catalog'
 import { ShopProductAppBridge } from './shop-product-app-bridge'
 
 type Props = {

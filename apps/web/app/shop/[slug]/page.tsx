@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { cache } from 'react'
 
 import { ShopProductDetail } from '@/components/shop/shop-product-detail'
-import { getShopProductBySlug } from '@/components/shop/shop-catalog'
+import { getShopProductBySlug } from '@/lib/shop/shop-catalog'
 import { resolveShopImages } from '@/lib/shop/resolve-shop-images'
 import { listShopImagesForSlug } from '@/lib/shop/s3-shop-images'
 

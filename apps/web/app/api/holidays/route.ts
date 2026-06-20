@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getCachedLocation, getCachedPublicHolidays } from '@/lib/graphql/cached-queries'
 import { type PublicHolidayItem } from '@/lib/graphql/queries'
@@ -6,12 +6,6 @@ import {
   countryIdToPublicHolidayId,
   resolveCountryIdFromName,
 } from '@/lib/locations/country-config'
-
-function isPrerenderInterrupt(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  const digest = (error as Error & { digest?: string }).digest
-  return digest === 'NEXT_PRERENDER_INTERRUPTED' || digest === 'HANGING_PROMISE_REJECTION'
-}
 
 /**
  * GET /api/holidays?locationId=123&dateStart=2026-04-01&dateEnd=2026-04-30
@@ -22,18 +16,8 @@ function isPrerenderInterrupt(error: unknown): boolean {
  */
 export async function GET(req: Request) {
   try {
-    let isAuthenticated = false
-    let userId: string | null = null
-    try {
-      const authResult = await auth()
-      isAuthenticated = authResult.isAuthenticated
-      userId = authResult.userId
-    } catch (error) {
-      if (isPrerenderInterrupt(error)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      throw error
-    }
+    await connection()
+    const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

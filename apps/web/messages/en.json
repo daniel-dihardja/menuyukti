@@ -5,6 +5,11 @@
     "tryAgain": "Try again",
     "digestLabel": "Reference: {digest}"
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or may have been moved.",
+    "backToHome": "Back to home"
+  },
   "mainHeader": {
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
