@@ -161,9 +161,9 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Restaurant Marketing That Combines Analytics, AI, and Creativity",
-      "subtitle": "Menuyukti combines hospitality marketing expertise with enterprise-grade software and proprietary AI—delivering data-informed strategies, creative social content, and campaigns through one integrated agency workflow.",
-      "badge": "Restaurant marketing agency · Strategy & content · AI-native",
+      "headline": "We read between the bites.",
+      "subtitle": "Restaurant data turned into marketing campaigns, content ideas, and growth opportunities hidden in every order.",
+      "badge": "Built on Data. Inspired by Food.",
       "ctaSecondary": "Sign in"
     },
     "why": {
@@ -1498,14 +1498,14 @@
             "label": "Menu clusterer",
             "title": "Menu clusterer",
             "inputLabel": "Menu clusterer notes",
-            "inputDescription": "Optional guidance for cluster emphasis. The run reads prior Campaign Brief and Menu Tagger data, then builds one deterministic signature cluster per POS category that has star items.",
+            "inputDescription": "Optional guidance for cluster emphasis. The run reads prior Campaign Brief and Menu Tagger data, builds one deterministic signature cluster per POS category that has star items, then uses AI for food-only Reel hook clusters.",
             "inputPlaceholder": "e.g. prioritize signature mains with the highest sales…",
-            "goal": "Read prior Campaign Brief strategy plus tagged menu items from Menu Tagger. Build one **menu_highlight** signature cluster per available POS category that has **star** items (respecting upstream promotion_candidates category selection). Star items within each category are sorted by popularity. Puzzles and other non-star items remain unassigned. Each cluster includes a clusterDescription explaining the category signature lineup and location-concept fit.",
+            "goal": "Read prior Campaign Brief strategy plus tagged menu items from Menu Tagger. Build one **menu_highlight** signature cluster per available POS category that has **star** items (respecting upstream promotion_candidates category selection). Then generate food-only **hook_reel** clusters (4–8, sized from the tagged menu) with varied tag-based combinations (2–5 items each). Every tagged food item must appear in at least one cluster. Each cluster includes a clusterDescription explaining grouping rationale and location-concept fit.",
             "criterionPriorCampaignBrief": "Run used a prior **restaurant_campaign_brief** milestone with saved strategy data.",
             "criterionPriorMenuTagger": "Run used a prior **menu_tagger** milestone with tagged items.",
-            "criterionHookGroupCount": "Data includes one **signature cluster per available category** that has star items.",
-            "criterionTopFiveLead": "Each signature cluster's position-1 item is the **top star** in that category by popularity.",
-            "criterionClusterDescription": "Each signature cluster includes a **clusterDescription** explaining grouping rationale and location-concept fit."
+            "criterionHookGroupCount": "Data includes the derived number of **food Reel hook clusters** (4–8) and one **signature cluster per available category** that has star items.",
+            "criterionTopFiveLead": "Each hook Reel cluster's position-1 item is in the **top popularity score-tier** (top five scores; storytelling breaks ties among same score). Each signature cluster's position-1 item is the **top star** in that category by popularity.",
+            "criterionClusterDescription": "Each cluster includes a **clusterDescription** explaining grouping rationale and location-concept fit."
           },
           "story_lineup": {
             "label": "Story lineup",
