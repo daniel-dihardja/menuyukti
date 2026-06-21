@@ -32,12 +32,16 @@ def build_instagram_signals(
     run: AnalyticsRun,
     *,
     info: strawberry.Info | None = None,
+    order_facts: list | None = None,
 ) -> dict[str, Any] | None:
     """
     Load order facts for ``run`` and the prior run (if any), run analytics pipelines,
     and return a JSON-friendly dict matching :class:`InstagramSignalsResult`.
+
+    When ``order_facts`` is provided, skips loading facts for the current run (caller
+    must pass the same rows that belong to ``run``).
     """
-    facts = load_order_facts(session, run.id, info=info)
+    facts = order_facts if order_facts is not None else load_order_facts(session, run.id, info=info)
     if not facts:
         return None
 

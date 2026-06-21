@@ -150,10 +150,12 @@ async def fetch_location_operating_signals(
         return {
             "analytics_run": None,
             "instagram_signals": None,
+            "slot_demand_profile": [],
         }
     return {
         "analytics_run": payload.get("analyticsRun"),
         "instagram_signals": payload.get("instagramSignals"),
+        "slot_demand_profile": payload.get("slotDemandProfile") or [],
     }
 
 

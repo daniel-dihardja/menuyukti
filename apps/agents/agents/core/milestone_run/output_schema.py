@@ -115,6 +115,25 @@ class CampaignBriefOverallStrategy(BaseModel):
         return values
 
 
+class CampaignBriefSlotCell(BaseModel):
+    day: str
+    mealPeriod: str
+    mealPeriodLabel: str
+    mealPeriodHoursLabel: str
+    orderCount: int
+    demandIndex: float
+    relativeDemand: Literal["low", "average", "high"]
+    posture: Literal["support", "promote", "maintain"]
+
+
+class CampaignBriefSlotPerformance(BaseModel):
+    sourceAnalyticsRunId: str | None = None
+    slots: list[CampaignBriefSlotCell]
+    strongSlots: list[str]
+    slotsNeedingPromotion: list[str]
+    summary: str
+
+
 class CampaignBriefMilestoneOutput(BaseModel):
     venueSnapshot: CampaignBriefVenueSnapshot
     overallStrategy: CampaignBriefOverallStrategy | None = None
@@ -131,6 +150,7 @@ class CampaignBriefMilestoneOutput(BaseModel):
     measurementPlan: list[str]
     testingPlan: list[str]
     riskGuardrails: list[str]
+    slotPerformance: CampaignBriefSlotPerformance | None = None
 
     @staticmethod
     def _normalize_unique(values: Any) -> list[str]:

@@ -250,6 +250,7 @@ type LatestAnalyticsRunType {
 type LatestAnalyticsRunWithSignalsType {
   analyticsRun: LatestAnalyticsRunType
   instagramSignals: InstagramSignalsType
+  slotDemandProfile: [SlotDemandCellType!]!
 }
 
 """Summary of analytics runs for one location."""

@@ -14,12 +14,12 @@ export const LANDING_HERO_HEADLINE_VARIANTS: readonly LandingHeroHeadlineVariant
 const variantClass: Record<LandingHeroHeadlineVariant, string> = {
   default: 'text-foreground',
   warm: 'hero-headline-warm tracking-tight',
-  soft: 'hero-headline-soft font-semibold tracking-tight',
+  soft: 'hero-headline-soft tracking-tight',
   gradient: 'hero-headline-gradient tracking-tight',
 }
 
 const baseClass =
-  'w-full min-w-0 text-balance text-4xl font-bold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]'
+  'w-full min-w-0 text-balance text-4xl font-extrabold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]'
 
 type LandingHeroHeadlineProps = {
   children: ReactNode
