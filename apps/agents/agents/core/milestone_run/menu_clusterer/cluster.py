@@ -736,6 +736,7 @@ def merge_llm_clusters(
     notes: str = "",
     strict_top5_leads: bool = False,
     target_group_count: int | None = None,
+    include_menu_highlight: bool = True,
 ) -> dict[str, Any]:
     food_items = food_items_only(menu_tagger_items)
     resolved_count = (
@@ -829,13 +830,14 @@ def merge_llm_clusters(
 
     groups = assign_remaining_food_items(groups, food_items)
 
-    highlight_items = select_menu_highlight_items(menu_tagger_items)
-    highlight_group = build_menu_highlight_cluster(
-        highlight_items,
-        campaign_brief_data=campaign_brief_data,
-    )
-    if highlight_group is not None:
-        groups = [highlight_group, *groups]
+    if include_menu_highlight:
+        highlight_items = select_menu_highlight_items(menu_tagger_items)
+        highlight_group = build_menu_highlight_cluster(
+            highlight_items,
+            campaign_brief_data=campaign_brief_data,
+        )
+        if highlight_group is not None:
+            groups = [highlight_group, *groups]
 
     assigned_after_assign = _assigned_name_keys(groups)
     unassigned_item_names = [
@@ -862,4 +864,68 @@ def merge_llm_clusters(
     if note_text:
         payload["notes"] = note_text
     payload["targetGroupCount"] = resolved_count
+    return payload
+
+
+def _normalize_signature_group_order(group: dict[str, Any]) -> dict[str, Any]:
+    """Ensure menu_highlight items are popularity-sorted and leadName matches position 1."""
+    raw_items = group.get("items")
+    if not isinstance(raw_items, list):
+        return group
+    items = [row for row in raw_items if isinstance(row, dict)]
+    if len(items) <= 1:
+        return group
+    sorted_items = sort_group_items_by_popularity(items)
+    updated = {**group, "items": sorted_items, "mix": _compute_mix(sorted_items)}
+    lead_name = str(sorted_items[0].get("name") or "").strip()
+    if lead_name:
+        updated["leadName"] = lead_name
+    return updated
+
+
+def combine_hybrid_clusterer_output(
+    *,
+    hook_payload: dict[str, Any],
+    signature_payload: dict[str, Any],
+    menu_tagger_items: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Merge LLM hook_reel clusters with deterministic per-category signature clusters."""
+    signature_groups = [
+        _normalize_signature_group_order(group)
+        for group in signature_payload.get("groups") or []
+        if isinstance(group, dict)
+        and str(group.get("profileId") or "").strip() == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
+    ]
+    hook_groups = [
+        group
+        for group in hook_payload.get("groups") or []
+        if isinstance(group, dict)
+        and str(group.get("profileId") or "").strip() == MENU_CLUSTERER_PROFILE_ID
+    ]
+    if not signature_groups:
+        raise ValueError("menu_clusterer hybrid output requires at least one signature cluster")
+    if not hook_groups:
+        raise ValueError("menu_clusterer hybrid output requires at least one hook_reel cluster")
+
+    combined_groups = signature_groups + hook_groups
+    assigned_keys = _assigned_name_keys(combined_groups)
+    food_items = food_items_only(menu_tagger_items)
+    unassigned_item_names = [
+        _item_name(item)
+        for item in food_items
+        if _item_name(item) and _name_key(_item_name(item)) not in assigned_keys
+    ]
+
+    payload: dict[str, Any] = {
+        "foodLeads": list(hook_payload.get("foodLeads") or []),
+        "groups": combined_groups,
+        "unassignedItemNames": unassigned_item_names,
+        "topFoodLeadNames": list(hook_payload.get("topFoodLeadNames") or []),
+        "targetGroupCount": hook_payload.get("targetGroupCount"),
+        "signatureGroupCount": len(signature_groups),
+    }
+    for key in ("sourceMenuTaggerTitle", "sourceCampaignBriefTitle", "notes"):
+        value = hook_payload.get(key) or signature_payload.get(key)
+        if isinstance(value, str) and value.strip():
+            payload[key] = value.strip()
     return payload

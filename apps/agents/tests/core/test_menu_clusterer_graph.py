@@ -9,6 +9,7 @@ import pytest
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT,
     build_per_category_signature_clusters,
+    combine_hybrid_clusterer_output,
     distinct_categories_with_stars,
     menu_highlight_eligible_items,
     merge_llm_clusters,
@@ -18,6 +19,8 @@ from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     select_top_popularity_food_by_score_rank,
 )
 from agents_app.agents.core.milestone_run.menu_clusterer.nodes import (
+    MenuClustererClusterDraft,
+    _menu_clusterer_draft_output_model,
     build_clusters,
     fetch_and_prepare,
     persist_result,
@@ -157,6 +160,94 @@ def _prior_json() -> str:
             },
         ]
     )
+
+
+def _draft_clusters() -> list[MenuClustererClusterDraft]:
+    return [
+        MenuClustererClusterDraft(
+            themeLabel="Hero signatures",
+            leadItemName="Wings",
+            supportingItemNames=["Ribeye"],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+        MenuClustererClusterDraft(
+            themeLabel="Category variety",
+            leadItemName="Ribeye",
+            supportingItemNames=["Burger", "Fries"],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+        MenuClustererClusterDraft(
+            themeLabel="Proof angle",
+            leadItemName="Burger",
+            supportingItemNames=["Salad"],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+        MenuClustererClusterDraft(
+            themeLabel="Side pairings",
+            leadItemName="Wings",
+            supportingItemNames=["Fries", "Salad"],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
+    ]
+
+
+def test_combine_hybrid_clusterer_output_merges_signature_and_hook_groups() -> None:
+    top5 = rank_top_food_leads(_menu_tagger_items())
+    hook_payload = merge_llm_clusters(
+        _draft_clusters(),
+        menu_tagger_items=_menu_tagger_items(),
+        top5_leads=top5,
+        campaign_brief_data=_campaign_brief_data(),
+        target_group_count=4,
+        include_menu_highlight=False,
+    )
+    signature_payload = build_per_category_signature_clusters(
+        _menu_tagger_items(),
+        campaign_brief_data=_campaign_brief_data(),
+    )
+    payload = combine_hybrid_clusterer_output(
+        hook_payload=hook_payload,
+        signature_payload=signature_payload,
+        menu_tagger_items=_menu_tagger_items(),
+    )
+    normalized, error = validate_skill_output("menu_clusterer", payload)
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert len(normalized["groups"]) == 6
+    assert normalized["targetGroupCount"] == 4
+    assert normalized["signatureGroupCount"] == 2
+    assert normalized["groups"][0]["profileId"] == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
+    assert normalized["groups"][2]["profileId"] == "hook_reel"
+    assert len(normalized["foodLeads"]) == 4
+    assert normalized["unassignedItemNames"] == []
+
+
+def test_combine_hybrid_clusterer_output_normalizes_signature_item_order() -> None:
+    top5 = rank_top_food_leads(_menu_tagger_items())
+    hook_payload = merge_llm_clusters(
+        _draft_clusters(),
+        menu_tagger_items=_menu_tagger_items(),
+        top5_leads=top5,
+        campaign_brief_data=_campaign_brief_data(),
+        target_group_count=4,
+        include_menu_highlight=False,
+    )
+    signature_payload = build_per_category_signature_clusters(
+        _menu_tagger_items(),
+        campaign_brief_data=_campaign_brief_data(),
+    )
+    signature_payload["groups"][0]["items"] = list(
+        reversed(signature_payload["groups"][0]["items"])
+    )
+    signature_payload["groups"][0]["leadName"] = signature_payload["groups"][0]["items"][0]["name"]
+    payload = combine_hybrid_clusterer_output(
+        hook_payload=hook_payload,
+        signature_payload=signature_payload,
+        menu_tagger_items=_menu_tagger_items(),
+    )
+    mains = payload["groups"][0]
+    assert mains["leadName"] == "Ribeye"
+    assert [row["name"] for row in mains["items"]] == ["Ribeye", "Burger"]
 
 
 def test_distinct_categories_with_stars_orders_main_category_first() -> None:
@@ -440,7 +531,7 @@ async def test_fetch_and_prepare_requires_star_items() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_sets_target_group_count_from_categories() -> None:
+async def test_fetch_and_prepare_sets_hook_and_signature_group_counts() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
         return_value=lambda _x: None,
@@ -458,11 +549,14 @@ async def test_fetch_and_prepare_sets_target_group_count_from_categories() -> No
             },
             client=MagicMock(),
         )
-    assert prepared["target_group_count"] == 2
+    assert prepared["target_group_count"] == 4
+    assert prepared["signature_group_count"] == 2
 
 
 @pytest.mark.asyncio
 async def test_build_clusters_and_persist() -> None:
+    draft_model = _menu_clusterer_draft_output_model(4)
+    draft = draft_model(clusters=_draft_clusters())
     state = {
         "milestone_id": "m1",
         "location_id": 1,
@@ -474,19 +568,29 @@ async def test_build_clusters_and_persist() -> None:
         "menu_tagger_items": _menu_tagger_items(),
         "source_menu_tagger_title": "Tagged menu",
         "owner_notes_markdown": "",
-        "target_group_count": 2,
+        "target_group_count": 4,
+        "signature_group_count": 2,
         "result_data": "",
         "milestonedata_written": False,
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
-        return_value=lambda _x: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.menu_clusterer.nodes.structured_ainvoke_from_run_config",
+            new=AsyncMock(return_value=draft),
+        ),
     ):
         built = await build_clusters(state)  # type: ignore[arg-type]
-    assert len(built["generated_output"]["groups"]) == 2
+    assert len(built["generated_output"]["groups"]) == 6
     assert (
         built["generated_output"]["groups"][0]["profileId"] == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
     )
+    assert built["generated_output"]["groups"][2]["profileId"] == "hook_reel"
+    assert built["generated_output"]["signatureGroupCount"] == 2
+    assert built["generated_output"]["targetGroupCount"] == 4
 
     with patch(
         "agents_app.agents.core.milestone_run.menu_clusterer.nodes.upsert_milestonedata_node",

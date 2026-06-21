@@ -392,6 +392,7 @@ export const menuClustererMilestoneDataSchema = z.object({
   unassignedItemNames: z.array(z.string().trim().min(1)),
   topFoodLeadNames: z.array(z.string().trim().min(1)).max(12).default([]),
   targetGroupCount: menuClustererTargetGroupCountSchema.optional(),
+  signatureGroupCount: menuClustererTargetGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),

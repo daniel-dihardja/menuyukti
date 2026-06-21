@@ -7,7 +7,7 @@ from menuyukti.core.models.pos_transaction import POSTransactionLineItem
 
 def normalize_esb_excel_with_rejections(
     data: bytes,
-    skiprows: int = 11,
+    skiprows: int = 10,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Load and normalize ESB Excel export into:
@@ -58,7 +58,7 @@ def normalize_esb_excel_with_rejections(
     return cleaned, rejected
 
 
-def normalize_esb_excel(data: bytes, skiprows: int = 11) -> pd.DataFrame:
+def normalize_esb_excel(data: bytes, skiprows: int = 10) -> pd.DataFrame:
     """
     Load, normalize, and transform an ESB Excel export into clean sales data.
     """

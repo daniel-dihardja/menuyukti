@@ -59,7 +59,7 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 
 ### Dev data (Excel + COGS)
 
-To populate the dev database with the Jan–Mar 2025 report and menu COGS for manual or explorative testing, run `make dev-data` from `apps/graphql`. This uses `reports/Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx` and `notebooks/data/menu_cogs.json` by default; ensure those files exist, or pass `--excel` / `--cogs` when running the script directly. From the repo root: `make -C apps/graphql dev-data`.
+To populate the dev database with the Jun 2026 ESB report and menu COGS for manual or explorative testing, run `make dev-data` from `apps/graphql`. This uses `reports/SalesRecapitulationDetailReport_JUN_2026.xlsx` and `notebooks/data/menu_cogs.json` by default; ensure those files exist, or pass `--excel` / `--cogs` when running the script directly. From the repo root: `make -C apps/graphql dev-data`.
 
 The seeded `Location` row gets `clerk_user_id` from, in order: **`USER_ID` on the make command** (e.g. `make dev-data USER_ID=user_2abc…`), then the **`DEV_CLERK_USER_ID`** environment variable, then the default `dev_local_user`. Use your real Clerk user id (same as the web app’s `X-User-Id`) so ownership checks work when signed in. Examples: `make dev-data USER_ID=user_xxx` or `DEV_CLERK_USER_ID=user_xxx make dev-data`.
 

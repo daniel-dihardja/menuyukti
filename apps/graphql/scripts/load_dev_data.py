@@ -26,7 +26,7 @@ from graphql.reports import normalize_sales_report, persist_sales_report
 from graphql.services.manual_quick_profile import validate_and_normalize_quick_profile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
-DEFAULT_EXCEL = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx"
+DEFAULT_EXCEL = ROOT_DIR / "reports" / "SalesRecapitulationDetailReport_JUN_2026.xlsx"
 DEFAULT_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
 
 # Must match the Clerk user id used by the web app (X-User-Id) so resolvers allow access.

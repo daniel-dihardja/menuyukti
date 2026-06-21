@@ -613,6 +613,7 @@ class MenuClustererMilestoneOutput(BaseModel):
     unassignedItemNames: list[str] = Field(default_factory=list)
     topFoodLeadNames: list[str] = Field(default_factory=list, max_length=12)
     targetGroupCount: int | None = Field(default=None, ge=1, le=20)
+    signatureGroupCount: int | None = Field(default=None, ge=1, le=20)
     sourceMenuTaggerTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
     notes: str | None = None
