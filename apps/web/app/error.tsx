@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl'
 
 import { ErrorFallback } from '@/components/error-fallback'
 
-export default function GlobalError({
+export default function RootError({
   error,
   reset,
 }: {

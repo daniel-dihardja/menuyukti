@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { AlertCircle } from 'lucide-react'
 import { useAnalytics } from '../../analytics/use-analytics'
-import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import {
   BLANK_PRESET_SELECTION_KEY,
@@ -13,9 +11,9 @@ import {
   parsePresetIdFromSelectionKey,
 } from '@/lib/workflows/presets'
 import { routes } from '@/lib/routes'
-import { apiFetch, fetchAnalyticsList } from '@/lib/api/client-fetch'
+import { apiFetch } from '@/lib/api/client-fetch'
 import { CreateWorkflowPanel } from './create-workflow-panel'
-import { WorkflowsTable, WorkflowsTableSkeleton } from './workflows-table'
+import { WorkflowsTable } from './workflows-table'
 
 type Branch = {
   id: number
@@ -55,13 +53,6 @@ export function WorkflowsClient({
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
-  const [workflows, setWorkflows] = useState<WorkflowListItem[]>(initialWorkflows)
-  const [loadingWorkflows, setLoadingWorkflows] = useState(false)
-  const [listError, setListError] = useState<string | null>(null)
-
-  const [analyticsRuns, setAnalyticsRuns] = useState<AnalyticsRunItem[]>(initialAnalyticsRuns)
-  const [loadingRuns, setLoadingRuns] = useState(false)
-  const [runsError, setRunsError] = useState<string | null>(null)
   const [analyticsRunId, setAnalyticsRunId] = useState<number | null>(() => {
     const first = initialAnalyticsRuns[0]
     return first ? first.id : null
@@ -80,114 +71,40 @@ export function WorkflowsClient({
   }, [locationId, initialLocationId, branches, setLocationId])
 
   useEffect(() => {
-    if (locationId === null) {
-      setAnalyticsRuns([])
-      setAnalyticsRunId(null)
-      setRunsError(null)
-      return
-    }
-
-    const seededFromServer = locationId === initialLocationId && initialAnalyticsRuns.length > 0
-
-    const controller = new AbortController()
-    if (!seededFromServer) {
-      setLoadingRuns(true)
-    }
-    setRunsError(null)
-
-    void fetchAnalyticsList(locationId, { signal: controller.signal })
-      .then((list) => {
-        setAnalyticsRuns(list)
-        if (list.length > 0) {
-          setAnalyticsRunId((prev) => {
-            if (prev !== null && list.some((r) => r.id === prev)) {
-              return prev
-            }
-            const first = list[0]
-            return first ? first.id : null
-          })
-        } else {
-          setAnalyticsRunId(null)
-        }
-      })
-      .catch((err: unknown) => {
-        if (err instanceof Error && err.name === 'AbortError') {
-          return
-        }
-        if (!seededFromServer) {
-          setAnalyticsRuns([])
-          setAnalyticsRunId(null)
-        }
-        setRunsError(err instanceof Error ? err.message : t('listFailed'))
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoadingRuns(false)
-        }
-      })
-
-    return () => controller.abort()
-  }, [locationId, t, initialAnalyticsRuns.length, initialLocationId])
+    if (locationId === null) return
+    if (locationId === initialLocationId) return
+    router.replace(routes.workflows.listWithLocation(locationId))
+  }, [locationId, initialLocationId, router])
 
   useEffect(() => {
-    if (locationId === null) {
-      setWorkflows([])
-      setListError(null)
+    if (initialAnalyticsRuns.length === 0) {
+      setAnalyticsRunId(null)
       return
     }
-
-    const seededFromServer = locationId === initialLocationId && initialWorkflows.length > 0
-
-    const controller = new AbortController()
-    if (!seededFromServer) {
-      setLoadingWorkflows(true)
-    }
-    setListError(null)
-
-    void fetch(`/api/workflows?locationId=${locationId}`, {
-      cache: 'no-store',
-      signal: controller.signal,
+    setAnalyticsRunId((prev) => {
+      if (prev !== null && initialAnalyticsRuns.some((r) => r.id === prev)) {
+        return prev
+      }
+      const first = initialAnalyticsRuns[0]
+      return first ? first.id : null
     })
-      .then(async (res) => {
-        const body = (await res.json().catch(() => null)) as {
-          nodes?: WorkflowListItem[]
-          message?: string
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('listFailed'))
-        }
-        return body?.nodes ?? []
-      })
-      .then((nodes) => {
-        setWorkflows(nodes)
-      })
-      .catch((err: unknown) => {
-        if (err instanceof Error && err.name === 'AbortError') {
-          return
-        }
-        if (!seededFromServer) {
-          setWorkflows([])
-        }
-        setListError(err instanceof Error ? err.message : t('listFailed'))
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoadingWorkflows(false)
-        }
-      })
+  }, [initialAnalyticsRuns])
 
-    return () => controller.abort()
-  }, [locationId, t, initialWorkflows.length, initialLocationId])
+  const isNavigating = locationId !== null && locationId !== initialLocationId
 
+  const workflows = initialWorkflows
+  const analyticsRuns = initialAnalyticsRuns
   const hasWorkflows = workflows.length > 0
+  const loadingWorkflows = isNavigating
+  const loadingRuns = isNavigating
 
-  const handleWorkflowRenamed = useCallback((id: string, name: string) => {
-    setWorkflows((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)))
-  }, [])
+  const handleWorkflowRenamed = useCallback(() => {
+    router.refresh()
+  }, [router])
 
-  const handleWorkflowDeleted = useCallback((id: string) => {
-    setWorkflows((prev) => prev.filter((c) => c.id !== id))
-  }, [])
+  const handleWorkflowDeleted = useCallback(() => {
+    router.refresh()
+  }, [router])
 
   const canCreateWorkflow = locationId !== null && !loadingRuns
 
@@ -258,17 +175,11 @@ export function WorkflowsClient({
         onCreate={handleCreateWorkflow}
         onPresetKeyChange={setPresetKey}
         presetKey={presetKey}
-        runsError={runsError}
+        runsError={null}
       />
 
       {locationId === null ? null : loadingWorkflows ? (
-        <WorkflowsTableSkeleton />
-      ) : listError ? (
-        <Alert variant="destructive">
-          <AlertCircle />
-          <AlertTitle>{t('errors.listTitle')}</AlertTitle>
-          <AlertDescription>{listError}</AlertDescription>
-        </Alert>
+        <div className="border rounded-md p-8 text-left text-muted-foreground">{t('loading')}</div>
       ) : hasWorkflows ? (
         <WorkflowsTable
           workflows={workflows}

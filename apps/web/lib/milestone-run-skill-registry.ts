@@ -1,38 +1,104 @@
 /**
- * Public milestone-run skill metadata for UI. Keep in sync with
- * `apps/agents/agents/core/milestone_run/skills.py` (`_build_registry` — id, name, description only).
+ * Milestone preset run metadata for the Skills catalog UI. Keep in sync with
+ * `MILESTONE_PRESET_IDS` in `lib/graphql/node-schemas/milestone-presets.ts` and
+ * `register_preset_runner` in `apps/agents/agents/core/milestone_run/graph.py`.
  */
 
-export type MilestoneRunSkillMeta = {
-  id: string
+import { MILESTONE_PRESET_IDS, type MilestonePresetId } from '@/lib/graphql/node-schemas'
+
+export type MilestonePresetRunMeta = {
+  id: MilestonePresetId
   name: string
   description: string
 }
 
-/** Order matches Python `_build_registry` insertion order. */
-export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
+/** Order matches `MILESTONE_PRESET_IDS`. */
+export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = [
   {
-    id: 'public_holidays',
-    name: 'Public holidays',
+    id: 'dates',
+    name: 'Dates',
     description:
-      "Use when a milestone explicitly needs holiday lookup/confirmation for a date range for this location's country.",
+      'Resolve the campaign date window and list public holidays between startDate and endDate for this location.',
   },
   {
-    id: 'campaign_brief',
+    id: 'restaurant_campaign_brief',
     name: 'Campaign brief',
     description:
-      'Use for the campaign brief milestone: campaign window and holidays plus profile and operating signals—venue snapshot, pillars, audience hypotheses, proof-oriented angles, and tone guardrails.',
+      'Build a factual campaign brief foundation: venue snapshot, strategy, objective, segments, messaging, content pillars, and guardrails grounded in analytics.',
+  },
+  {
+    id: 'promotion_candidates',
+    name: 'Promotion candidates',
+    description:
+      'Fetch promotion-engineering candidates and present star and puzzle menu items by POS menu category for storytelling emphasis.',
+  },
+  {
+    id: 'menu_tagger',
+    name: 'Menu tagger',
+    description:
+      'Read prior Promotion Candidates and attach fixed taxonomy v2 tags to every star and puzzle menu item.',
+  },
+  {
+    id: 'menu_clusterer',
+    name: 'Menu clusterer',
+    description:
+      'Build one signature menu_highlight cluster per POS category from tagged star items, with cluster descriptions tied to campaign strategy.',
+  },
+  {
+    id: 'post_lineup',
+    name: 'Post lineup',
+    description:
+      'Plan Instagram feed carousel posts: a pinned monthly signature menu post plus one weekday lunch post per campaign week.',
+  },
+  {
+    id: 'reel_lineup',
+    name: 'Reel lineup',
+    description:
+      'Plan Instagram Reels: one weekday reel and one weekend reel for each calendar week in the campaign window.',
+  },
+  {
+    id: 'story_lineup',
+    name: 'Story lineup',
+    description:
+      'Select public holidays that deserve Instagram Story greetings plus a recurring user-review story for the scheduler.',
   },
   {
     id: 'culture_hooks',
     name: 'Culture hooks',
     description:
-      'Use for the culture hooks milestone: reads Campaign Brief only, infers location concept and target audience, then proposes non-food intersection topics for culturally relevant Instagram content.',
+      'Infer location concept and target audience from the Campaign Brief, then propose non-food intersection topics for culturally relevant Reels.',
   },
   {
-    id: 'generic',
-    name: 'Generic milestone data prep',
+    id: 'ig_profile',
+    name: 'IG Profile',
     description:
-      'Use for standard milestone runs: read goal, criteria, and milestone data; improve or complete structured JSON for the preset. Evaluation and summary run automatically after skills.',
+      'Generate Instagram username options and bio variations aligned with brand, audience, and campaign objective from the Campaign Brief.',
+  },
+  {
+    id: 'scheduler',
+    name: 'Scheduler',
+    description:
+      'Place feed posts, Stories, and Reels on the calendar with explicit slot kinds and core cadence rules for the campaign window.',
   },
 ] as const
+
+/** @deprecated Use `MILESTONE_PRESET_RUN_REGISTRY`. Kept for transitional imports. */
+export const MILESTONE_RUN_SKILL_REGISTRY = MILESTONE_PRESET_RUN_REGISTRY
+
+/** @deprecated Use `MilestonePresetRunMeta`. */
+export type MilestoneRunSkillMeta = MilestonePresetRunMeta
+
+/** Guard: registry ids must match the GraphQL preset enum order. */
+export function assertPresetRunRegistryInSync(): void {
+  const registryIds = MILESTONE_PRESET_RUN_REGISTRY.map((row) => row.id)
+  if (registryIds.length !== MILESTONE_PRESET_IDS.length) {
+    throw new Error('MILESTONE_PRESET_RUN_REGISTRY length does not match MILESTONE_PRESET_IDS')
+  }
+  for (let i = 0; i < registryIds.length; i++) {
+    if (registryIds[i] !== MILESTONE_PRESET_IDS[i]) {
+      throw new Error(
+        `MILESTONE_PRESET_RUN_REGISTRY out of sync at index ${i}: ${registryIds[i]} vs ${MILESTONE_PRESET_IDS[i]}`,
+      )
+    }
+  }
+}

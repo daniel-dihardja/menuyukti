@@ -18,9 +18,10 @@ import { MilestoneDataPreview } from '../milestone-preview/milestone-data-previe
 import { useTimelineCollapse } from './timeline-collapse-context'
 import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
+import { MilestoneItemProvider, type MilestoneItemTabValue } from './milestone-item-context'
 import { MilestoneItemMobileRunModel } from './milestone-item-mobile-run-model'
 import { TimelineItemHeaderProvider } from './timeline-item-header-context'
-import { MilestoneItemTabs, type MilestoneItemTabValue } from './milestone-item-tabs'
+import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { useMilestoneItemDrafts } from './use-milestone-item-drafts'
 import type { PassCriteriaRow, TimelineMilestone } from './types'
@@ -294,29 +295,35 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >
-                <MilestoneItemMobileRunModel />
-                <Separator />
-                <MilestoneItemTabs
-                  model={{
-                    activeTab,
-                    addCriteriaInputId,
-                    addCriteriaInputRef,
-                    criteriaRows,
-                    goalDraft,
-                    goalFieldId,
+                <MilestoneItemProvider
+                  actions={{
                     handleAddPassCriterion,
                     handleGoalSave,
                     handleRemovePassCriterion,
+                    setActiveTab,
+                    setGoalDraft,
+                  }}
+                  meta={{
+                    addCriteriaInputId,
+                    addCriteriaInputRef,
+                    goalFieldId,
+                  }}
+                  state={{
+                    activeTab,
+                    criteriaRows,
+                    goalDraft,
                     hasResult,
                     inputModel,
                     isMilestoneRunning,
                     milestone,
-                    onActiveTabChange: setActiveTab,
                     savingGoal,
                     savingPassCriteria,
-                    setGoalDraft,
                   }}
-                />
+                >
+                  <MilestoneItemMobileRunModel />
+                  <Separator />
+                  <MilestoneItemTabs />
+                </MilestoneItemProvider>
               </CollapsibleContent>
             </TimelineItemHeaderProvider>
           </Card>

@@ -221,6 +221,11 @@ def calculate_menu_basket_affinities(
     }
 
 
+def _canonical_pair_key(menu_a: str, menu_b: str) -> tuple[str, str]:
+    """Match pair_counts keys from combinations(sorted(in_focus), 2)."""
+    return (menu_a, menu_b) if menu_a <= menu_b else (menu_b, menu_a)
+
+
 def _build_matrix_lift(
     focus: list[str],
     lift_by_pair: dict[tuple[str, str], float],
@@ -231,11 +236,7 @@ def _build_matrix_lift(
         for j, menu_b in enumerate(focus):
             if i == j:
                 continue
-            if i > j:
-                a, b = menu_b, menu_a
-            else:
-                a, b = menu_a, menu_b
-            lift = lift_by_pair.get((a, b))
+            lift = lift_by_pair.get(_canonical_pair_key(menu_a, menu_b))
             if lift is not None:
                 grid[i][j] = lift
     return grid

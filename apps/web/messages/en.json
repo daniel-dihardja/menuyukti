@@ -5,6 +5,11 @@
     "tryAgain": "Try again",
     "digestLabel": "Reference: {digest}"
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or may have been moved.",
+    "backToHome": "Back to home"
+  },
   "mainHeader": {
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
@@ -156,9 +161,9 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Restaurant Marketing That Combines Analytics, AI, and Creativity",
-      "subtitle": "Menuyukti combines hospitality marketing expertise with enterprise-grade software and proprietary AI—delivering data-informed strategies, creative social content, and campaigns through one integrated agency workflow.",
-      "badge": "Restaurant marketing agency · Strategy & content · AI-native",
+      "headline": "We read between the bites.",
+      "subtitle": "Restaurant data turned into marketing campaigns, content ideas, and growth opportunities hidden in every order.",
+      "badge": "Built on Data. Inspired by Food.",
       "ctaSecondary": "Sign in"
     },
     "why": {
@@ -534,10 +539,11 @@
     }
   },
   "skillsPage": {
-    "title": "Skills & tools",
-    "description": "Overview of skills and tools used when the AI prepares milestone data. Names and descriptions match the agents service backend.",
-    "skillsHeading": "Skills",
-    "toolsHeading": "Tools"
+    "title": "Presets & tools",
+    "description": "Overview of milestone presets (LangGraph subgraphs) and chat tools used by the agents service.",
+    "skillsHeading": "Milestone presets",
+    "toolsHeading": "Chat tools",
+    "toolsDescription": "Tools available in workflow and standalone agent chat. Milestone runs use dedicated preset graphs instead of this ReAct tool loop."
   },
   "profile": {
     "title": "Profile",
@@ -1492,14 +1498,14 @@
             "label": "Menu clusterer",
             "title": "Menu clusterer",
             "inputLabel": "Menu clusterer notes",
-            "inputDescription": "Optional guidance for cluster emphasis. The run reads prior Campaign Brief and Menu Tagger data, builds a deterministic monthly menu-highlight cluster from top popularity scores (ties included), then uses AI for food-only Reel hook clusters.",
+            "inputDescription": "Optional guidance for cluster emphasis. The run reads prior Campaign Brief and Menu Tagger data, builds one deterministic signature cluster per POS category that has star items, then uses AI for food-only Reel hook clusters.",
             "inputPlaceholder": "e.g. prioritize signature mains with the highest sales…",
-            "goal": "Read prior Campaign Brief strategy plus tagged menu items from Menu Tagger. Build a deterministic **menu_highlight** cluster from tagged **food main-course** items in the top five distinct popularity scores (include every item that shares an included score). Rank the same score tier as eligible hook-cluster position-1 leads, then generate food-only Reel clusters (4–8, sized from the tagged menu) with varied tag-based combinations (2–5 items each). Every tagged food item must appear in at least one cluster. Each cluster includes a clusterDescription explaining grouping rationale and location-concept fit.",
+            "goal": "Read prior Campaign Brief strategy plus tagged menu items from Menu Tagger. Build one **menu_highlight** signature cluster per available POS category that has **star** items (respecting upstream promotion_candidates category selection). Then generate food-only **hook_reel** clusters (4–8, sized from the tagged menu) with varied tag-based combinations (2–5 items each). Every tagged food item must appear in at least one cluster. Each cluster includes a clusterDescription explaining grouping rationale and location-concept fit.",
             "criterionPriorCampaignBrief": "Run used a prior **restaurant_campaign_brief** milestone with saved strategy data.",
             "criterionPriorMenuTagger": "Run used a prior **menu_tagger** milestone with tagged items.",
-            "criterionHookGroupCount": "Data includes the derived number of **food Reel hook clusters** (4–8) sized to cover the tagged menu.",
-            "criterionTopFiveLead": "Each hook Reel cluster's position-1 item is in the **top popularity score-tier** (top five scores; storytelling breaks ties among same score).",
-            "criterionClusterDescription": "Each food cluster includes a **clusterDescription** explaining grouping rationale and location-concept fit."
+            "criterionHookGroupCount": "Data includes the derived number of **food Reel hook clusters** (4–8) and one **signature cluster per available category** that has star items.",
+            "criterionTopFiveLead": "Each hook Reel cluster's position-1 item is in the **top popularity score-tier** (top five scores; storytelling breaks ties among same score). Each signature cluster's position-1 item is the **top star** in that category by popularity.",
+            "criterionClusterDescription": "Each cluster includes a **clusterDescription** explaining grouping rationale and location-concept fit."
           },
           "story_lineup": {
             "label": "Story lineup",
@@ -1517,9 +1523,9 @@
             "label": "Post lineup",
             "title": "Post lineup",
             "inputLabel": "Post lineup notes",
-            "inputDescription": "Optional guidance for post emphasis. The run reads prior Dates, Campaign brief, and Menu clusterer groups to plan a monthly pin post (menu_highlight cluster: top popularity dishes) and one distinct weekday lunch feed post for each week in the campaign window.",
+            "inputDescription": "Optional guidance for post emphasis. The run reads prior Dates, Campaign brief, and Menu clusterer groups to plan a monthly pin post (per-category signature star clusters) and one distinct weekday lunch feed post for each week in the campaign window.",
             "inputPlaceholder": "e.g. emphasize hero plating and warm lighting on signature mains…",
-            "goal": "Read saved Dates, Campaign brief, and Menu clusterer output from earlier workflow milestones and plan Instagram feed carousel posts: one pinned monthly signature menu post using the deterministic menu_highlight cluster (all top popularity-score-tier dishes as slides) and one distinct weekday lunch post for each calendar week in the campaign window. Each post combines menu clusterer groups into slides with dish names and photo briefs, plus a concept description and caption guidance grounded in the campaign brief. The scheduler assigns publish dates from post intent. Place this milestone after Dates and Menu clusterer in the timeline.",
+            "goal": "Read saved Dates, Campaign brief, and Menu clusterer output from earlier workflow milestones and plan Instagram feed carousel posts: one pinned monthly signature menu post using all per-category menu_highlight signature clusters (star items as slides) and one distinct weekday lunch post for each calendar week in the campaign window. Each post combines menu clusterer groups into slides with dish names and photo briefs, plus a concept description and caption guidance grounded in the campaign brief. The scheduler assigns publish dates from post intent. Place this milestone after Dates and Menu clusterer in the timeline.",
             "criterionPriorDates": "Run used a prior **dates** milestone with saved start and end dates.",
             "criterionPriorCampaignBrief": "Run used a prior **restaurant_campaign_brief** milestone for location context.",
             "criterionPriorMenuClusterer": "Run used a prior **menu_clusterer** milestone with **groups**.",
@@ -1938,7 +1944,7 @@
         "milestonePostLineupPreviewSlideTitle": "Slide {number}: {dishName}",
         "milestonePostLineupPreviewRoleStar": "Star",
         "milestonePostLineupPreviewRolePuzzle": "Puzzle",
-        "milestonePostLineupPreviewHelpPosts": "Instagram feed post concepts built from Dates, Campaign brief context, and Menu clusterer groups. Includes one pinned monthly signature menu post (menu_highlight cluster slides) and one distinct weekday lunch post for each calendar week in the campaign window; each post has a concept description and caption guidance from the campaign brief. Weekly posts include a fixed schedule date.",
+        "milestonePostLineupPreviewHelpPosts": "Instagram feed post concepts built from Dates, Campaign brief context, and Menu clusterer groups. Includes one pinned monthly signature menu post (per-category star signature cluster slides) and one distinct weekday lunch post for each calendar week in the campaign window; each post has a concept description and caption guidance from the campaign brief. Weekly posts include a fixed schedule date.",
         "milestonePostLineupPreviewNotes": "Notes",
         "milestonePostLineupPreviewNoNotes": "No notes added.",
         "milestoneReelLineupPreviewSummary": "{reelCount, plural, =0 {No reels} one {# reel concept} other {# reel concepts}}",
@@ -2597,7 +2603,7 @@
       "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
       "explain": {
         "title": "How to read this heatmap",
-        "body": "Cell color shows relative units sold within the current view. Numbers are order-line quantities by hour or weekday from your sales data—not forecasts. Daily view shows service hours only ({startHour}:00–{endHour}:00) for now."
+        "body": "Cell color shows relative units sold within the current view. Numbers are order-line quantities by hour or weekday from your sales data—not forecasts. Daily view shows your location's opening hours ({startHour}:00–{endHour}:00)."
       }
     },
     "ai": {

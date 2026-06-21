@@ -1,6 +1,5 @@
 /**
- * Daily heatmap hour range (inclusive). Only hours in this range are shown in the daily heatmap matrix.
- * TODO: Make this configurable (e.g. per-location, user preference, or env) and address in a follow-up.
+ * Fallback daily heatmap hour range (inclusive) when a location has no opening hours configured.
  */
-export const DAILY_HEATMAP_START_HOUR = 10
-export const DAILY_HEATMAP_END_HOUR = 22
+export const DAILY_HEATMAP_DEFAULT_START_HOUR = 8
+export const DAILY_HEATMAP_DEFAULT_END_HOUR = 22

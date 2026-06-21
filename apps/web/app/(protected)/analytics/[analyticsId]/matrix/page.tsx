@@ -3,6 +3,7 @@ import { Grid3x3 } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { routes } from '@/lib/routes'
 import { notFound } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -21,11 +22,20 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
-import { MatrixView } from './matrix-view'
+import { Suspense } from 'react'
+import { MatrixViewDynamic } from './matrix-view-dynamic'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.matrix')
+  const title = t('reportTitle')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
 }
 
 function formatReportPeriod(
@@ -39,6 +49,66 @@ function formatReportPeriod(
   if (periodStart) return formatPreviewDateString(periodStart, locale)
   if (periodEnd) return formatPreviewDateString(periodEnd, locale)
   return null
+}
+
+function MatrixReportSkeleton() {
+  return (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={`kpi-${index}`} className="h-36 w-full rounded-lg" />
+        ))}
+      </div>
+      <Skeleton className="min-h-[24rem] w-full rounded-lg" />
+    </>
+  )
+}
+
+async function MatrixReportContent({
+  analyticsId,
+  userId,
+}: {
+  analyticsId: number
+  userId: string
+}) {
+  const tMatrix = await getTranslations('analytics.matrix')
+  const id = String(analyticsId)
+  const matrixData = await getCachedMenuEngineeringMatrix(userId, id)
+  const matrix = matrixData.menuEngineeringMatrix
+  const items = matrix?.items ?? []
+  const distribution = matrix?.distribution ?? []
+  const thresholds = matrix?.thresholds
+  const locale = getAppCurrencyLocale()
+  const currency = getAppCurrencyCode()
+
+  if (!matrix || items.length === 0 || !thresholds) {
+    return (
+      <Empty className="border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Grid3x3 aria-hidden />
+          </EmptyMedia>
+          <EmptyTitle>{tMatrix('empty.title')}</EmptyTitle>
+          <EmptyDescription>{tMatrix('empty.description')}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild size="sm">
+            <Link href={routes.analytics.cogs(analyticsId)}>{tMatrix('empty.cta')}</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  return (
+    <MatrixViewDynamic
+      items={items}
+      distribution={distribution}
+      thresholds={thresholds}
+      locale={locale}
+      currency={currency}
+    />
+  )
 }
 
 export default async function Page({ params }: PageProps) {
@@ -58,21 +128,12 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const [runData, matrixData] = await Promise.all([
-    getCachedAnalyticsRun(userId, id),
-    getCachedMenuEngineeringMatrix(userId, id),
-  ])
+  const runData = await getCachedAnalyticsRun(userId, id)
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const matrix = matrixData.menuEngineeringMatrix
-  const items = matrix?.items ?? []
-  const distribution = matrix?.distribution ?? []
-  const thresholds = matrix?.thresholds
-
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
   const locale = getAppCurrencyLocale()
-  const currency = getAppCurrencyCode()
   const reportPeriod = formatReportPeriod(run.periodStart, run.periodEnd, locale)
   const showFilename = run.filename && run.filename !== analyticsName
 
@@ -122,30 +183,9 @@ export default async function Page({ params }: PageProps) {
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
-        {!matrix || items.length === 0 || !thresholds ? (
-          <Empty className="border border-dashed">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Grid3x3 aria-hidden />
-              </EmptyMedia>
-              <EmptyTitle>{tMatrix('empty.title')}</EmptyTitle>
-              <EmptyDescription>{tMatrix('empty.description')}</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button asChild size="sm">
-                <Link href={routes.analytics.cogs(analyticsId)}>{tMatrix('empty.cta')}</Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
-        ) : (
-          <MatrixView
-            items={items}
-            distribution={distribution}
-            thresholds={thresholds}
-            locale={locale}
-            currency={currency}
-          />
-        )}
+        <Suspense fallback={<MatrixReportSkeleton />}>
+          <MatrixReportContent analyticsId={analyticsId} userId={userId} />
+        </Suspense>
       </section>
     </AnalyticsPageShell>
   )

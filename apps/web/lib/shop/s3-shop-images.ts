@@ -2,7 +2,7 @@ import { cacheLife, cacheTag, revalidateTag } from 'next/cache'
 import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 import { getPresignedGetUrl, getS3Bucket, getS3Client } from '@/lib/assets/storage'
-import { getShopProductBySlug, getShopProductSlugs } from '@/components/shop/shop-catalog'
+import { getShopProductBySlug, getShopProductSlugs } from '@/lib/shop/shop-catalog'
 
 /** S3 key prefix for print shop assets (bucket is `AWS_S3_BUCKET`, default `menuyukti`). */
 export const SHOP_IMAGE_PREFIX = 'menuyukti/shop'

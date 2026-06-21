@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { UpdateCogsForm } from './update-cogs-form'
@@ -19,6 +20,13 @@ type PageProps = {
   params: Promise<{
     analyticsId?: string
   }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.cogs')
+  const title = t('title')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
 }
 
 export default async function Page({ params }: PageProps) {

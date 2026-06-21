@@ -14,22 +14,21 @@ import { cn } from '@workspace/ui/lib/utils'
 import { ChevronUp, MessageSquare } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { useWorkflowChatState } from './workflow-chat-context'
+
 export type WorkflowMobileChatSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  isChatBusy: boolean
-  hasMessages: boolean
   children: ReactNode
 }
 
 export function WorkflowMobileChatSheet({
   open,
   onOpenChange,
-  isChatBusy,
-  hasMessages,
   children,
 }: WorkflowMobileChatSheetProps) {
   const t = useTranslations('analytics.workflows.chat')
+  const { isChatBusy, hasMessages } = useWorkflowChatState()
 
   return (
     <>

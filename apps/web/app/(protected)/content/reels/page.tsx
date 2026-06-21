@@ -1,10 +1,18 @@
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import { auth } from '@clerk/nextjs/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
 
 import { ReelsDynamic } from './reels-dynamic'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('reels')
+  const title = t('title')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
 
 export default async function Page() {
   const tSidebar = await getTranslations('sidebar')

@@ -16,7 +16,7 @@ import { routes } from '@/lib/routes'
 import { resolveShopImages } from '@/lib/shop/resolve-shop-images'
 import { listShopImagesForSlug } from '@/lib/shop/s3-shop-images'
 
-import { filterAndSortShopProducts } from './shop-catalog'
+import { filterAndSortShopProducts } from '@/lib/shop/shop-catalog'
 
 const PREVIEW_COUNT = 4
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, use, type ReactNode } from 'react'
 
 import type { WorkflowMilestoneUiState } from './workflow-milestone-reducer'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
@@ -120,18 +120,16 @@ export function TimelineProvider({
   workspace: TimelineWorkspaceStateValue
 }) {
   return (
-    <TimelineActionsContext.Provider value={actions}>
-      <TimelineChatContext.Provider value={chat}>
-        <TimelineWorkspaceStateContext.Provider value={workspace}>
-          {children}
-        </TimelineWorkspaceStateContext.Provider>
-      </TimelineChatContext.Provider>
-    </TimelineActionsContext.Provider>
+    <TimelineActionsContext value={actions}>
+      <TimelineChatContext value={chat}>
+        <TimelineWorkspaceStateContext value={workspace}>{children}</TimelineWorkspaceStateContext>
+      </TimelineChatContext>
+    </TimelineActionsContext>
   )
 }
 
 export function useTimelineActions(): TimelineActions {
-  const ctx = useContext(TimelineActionsContext)
+  const ctx = use(TimelineActionsContext)
   if (!ctx) {
     throw new Error('useTimelineActions must be used within TimelineProvider')
   }
@@ -139,7 +137,7 @@ export function useTimelineActions(): TimelineActions {
 }
 
 export function useTimelineChat(): TimelineChatState {
-  const ctx = useContext(TimelineChatContext)
+  const ctx = use(TimelineChatContext)
   if (!ctx) {
     throw new Error('useTimelineChat must be used within TimelineProvider')
   }
@@ -147,7 +145,7 @@ export function useTimelineChat(): TimelineChatState {
 }
 
 export function useTimelineWorkspaceState(): TimelineWorkspaceStateValue {
-  const ctx = useContext(TimelineWorkspaceStateContext)
+  const ctx = use(TimelineWorkspaceStateContext)
   if (!ctx) {
     throw new Error('useTimelineWorkspaceState must be used within TimelineProvider')
   }

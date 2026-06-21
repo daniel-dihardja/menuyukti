@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Maximize2, WandSparkles, X } from 'lucide-react'
-import { type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   FieldSaveStatus,
@@ -10,7 +10,7 @@ import {
   type FieldSaveStatusVariant,
 } from '@/components/field-save-status'
 import { MarkdownMessage } from '@/components/markdown-message'
-import { PanelFullscreenContext } from '@/components/panel-fullscreen-context'
+import { usePanelFullscreen } from '@/components/panel-fullscreen-context'
 import type { MarkdownFormatPreset } from '@/lib/markdown-format-presets'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
@@ -367,7 +367,7 @@ function MarkdownEditFieldEditor({
   manualSave,
 }: MarkdownEditFieldEditProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const panelCtx = useContext(PanelFullscreenContext)
+  const panelCtx = usePanelFullscreen()
   const expandButtonRef = useRef<HTMLButtonElement>(null)
   const panelCtxRef = useRef(panelCtx)
   panelCtxRef.current = panelCtx
@@ -376,7 +376,7 @@ function MarkdownEditFieldEditor({
   const [formatError, setFormatError] = useState<string | null>(null)
   /** Preview vs Edit — controlled so switching tabs does not depend on textarea blur order (Radix may hide content before blur). */
   const [innerTab, setInnerTab] = useState('preview')
-  const [isPanelFullscreen, setIsPanelFullscreen] = useState(false)
+  const isPanelFullscreen = panelCtx?.isOpen ?? false
 
   useEffect(() => {
     return () => {
@@ -414,7 +414,6 @@ function MarkdownEditFieldEditor({
 
   const closePanelFullscreen = useCallback(() => {
     panelCtx?.clearContent()
-    setIsPanelFullscreen(false)
     requestAnimationFrame(() => {
       expandButtonRef.current?.focus()
     })
@@ -422,11 +421,8 @@ function MarkdownEditFieldEditor({
 
   const showExpandControl = Boolean(enablePanelFullscreen && panelCtx)
 
-  useEffect(() => {
-    if (!isPanelFullscreen || !panelCtx) {
-      return
-    }
-    panelCtx.setContent(
+  const renderPanelFullscreenContent = useCallback(
+    () => (
       <FullscreenMarkdownShell
         closeLabel={t('milestoneDataCloseFullscreen')}
         regionAriaLabel={fullscreenHeaderTitle ?? t('milestoneDataLabel')}
@@ -461,29 +457,35 @@ function MarkdownEditFieldEditor({
             />
           ) : null}
         </div>
-      </FullscreenMarkdownShell>,
-    )
-  }, [
-    closePanelFullscreen,
-    disabled,
-    editTabLabel,
-    formatError,
-    formatting,
-    fullscreenHeaderTitle,
-    handleFormat,
-    id,
-    innerTab,
-    isPanelFullscreen,
-    manualSave,
-    onChange,
-    panelCtx,
-    placeholder,
-    previewEmptyLabel,
-    previewTabLabel,
-    t,
-    textareaClassName,
-    value,
-  ])
+      </FullscreenMarkdownShell>
+    ),
+    [
+      closePanelFullscreen,
+      disabled,
+      editTabLabel,
+      formatError,
+      formatting,
+      fullscreenHeaderTitle,
+      handleFormat,
+      id,
+      innerTab,
+      manualSave,
+      onChange,
+      placeholder,
+      previewEmptyLabel,
+      previewTabLabel,
+      t,
+      textareaClassName,
+      value,
+    ],
+  )
+
+  useEffect(() => {
+    if (!isPanelFullscreen || !panelCtx) {
+      return
+    }
+    panelCtx.setContent(renderPanelFullscreenContent())
+  }, [isPanelFullscreen, panelCtx, renderPanelFullscreenContent])
 
   const expandHeaderTrailing = showExpandControl ? (
     <Tooltip>
@@ -494,7 +496,7 @@ function MarkdownEditFieldEditor({
           disabled={disabled}
           onClick={(e) => {
             e.stopPropagation()
-            setIsPanelFullscreen(true)
+            panelCtx?.setContent(renderPanelFullscreenContent())
           }}
           onPointerDown={(e) => e.stopPropagation()}
           size="icon"

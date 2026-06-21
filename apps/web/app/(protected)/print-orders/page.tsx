@@ -15,7 +15,7 @@ import {
 } from '@workspace/ui/components/card'
 import { Package } from 'lucide-react'
 
-import { ShopPrintOrdersPreview } from '@/components/shop'
+import { ShopPrintOrdersPreview } from '@/components/shop/shop-print-orders-preview'
 
 export default async function Page() {
   await connection()

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { getShopProductBySlug } from '@/components/shop/shop-catalog'
+import { getShopProductBySlug } from '@/lib/shop/shop-catalog'
 import { getPresignedAttachmentUrl } from '@/lib/assets/storage'
 import { SHOP_DELIVERABLE_PREFIX } from '@/lib/shop/shop-deliverables'
 

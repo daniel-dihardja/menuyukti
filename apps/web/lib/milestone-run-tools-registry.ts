@@ -1,57 +1,68 @@
 /**
- * Milestone-run LangChain tools for UI. Each execute step gets: core read tools (always), optional extras
- * from each skill's SKILL.md `extra_tools` frontmatter (see `make_milestone_run_tools` in
- * `apps/agents/agents/core/milestone_run/tools/`), then `write_result_data`.
- * Order in this array is illustrative (core + common optional).
+ * Chat ReAct tools for the Skills catalog UI. Milestone **runs** use dedicated preset
+ * subgraphs (GraphQL prefetch + structured LLM nodes), not this tool loop.
+ * Keep in sync with `chat_tools_list()` in `apps/agents/agents/core/chat/graph.py`.
  */
-import 'server-only'
 
-export type MilestoneRunToolMeta = {
+export type ChatToolMeta = {
   id: string
   name: string
   description: string
 }
 
-/** Typical order: core reads, optional extras (per skill), write. */
-export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
+/** Tools available to workflow and standalone `/agent` chat (optional `search_web` when Tavily is configured). */
+export const CHAT_TOOLS_REGISTRY: readonly ChatToolMeta[] = [
   {
-    id: 'read_goal',
-    name: 'Read goal',
-    description: 'Return the milestone goal text (from the goal child node, loaded into context).',
-  },
-  {
-    id: 'read_criteria',
-    name: 'Read criteria',
+    id: 'get_milestone_data',
+    name: 'Get milestone data',
     description:
-      'Return pass/fail criteria as a JSON array of objects with id and requirement strings.',
+      'Load the selected milestone: goal, input, pass criteria, eval result, and preset/structured data from GraphQL.',
   },
   {
-    id: 'read_data',
-    name: 'Read data',
-    description: 'Return the current milestone data as JSON text (from the milestonedata child).',
-  },
-  {
-    id: 'read_prior_milestones_data',
-    name: 'Read prior milestones data',
+    id: 'get_milestone_help',
+    name: 'Get milestone help',
     description:
-      "Return JSON text listing earlier milestones' milestonedata (title + data per row). Call when the current milestone is missing context (e.g. campaign dates) that a previous milestone should have set. Empty or unavailable if the run was not scoped to a workflow.",
+      'Return Help-tab guidance for the selected milestone (what it does and optional input notes).',
   },
   {
-    id: 'get_public_holidays',
-    name: 'Get public holidays',
+    id: 'get_milestone_input_json',
+    name: 'Get milestone input JSON',
+    description: 'Return the milestone Input tab payload as formatted JSON.',
+  },
+  {
+    id: 'get_milestone_preset_data_json',
+    name: 'Get milestone preset data JSON',
     description:
-      "Optional extra tool (listed in a skill's SKILL.md `extra_tools` when needed): fetch public holidays for this location's country (YYYY-MM-DD range). Returns a Markdown bullet list (date, name, local name) or a short message if none apply, the country is unknown, or the range is invalid. Use with write_result_data when holidays must be filled in milestone data.",
+      'Return the milestone Data tab preset payload as formatted JSON for the selected milestone.',
+  },
+  {
+    id: 'get_milestone_preset_data_for_milestone',
+    name: 'Get preset data for another milestone',
+    description:
+      'Load preset/structured data from another milestone in the workflow by id (for cross-milestone context in chat).',
+  },
+  {
+    id: 'update_milestone_input',
+    name: 'Update milestone input',
+    description:
+      'Apply JSON-pointer patch operations to the milestone Input tab and persist through GraphQL.',
+  },
+  {
+    id: 'update_milestone_preset_data',
+    name: 'Update milestone preset data',
+    description:
+      'Apply JSON-pointer patch operations to milestone preset data (Data tab) and persist through GraphQL.',
   },
   {
     id: 'search_web',
     name: 'Search web',
     description:
-      'When TAVILY_API_KEY is set on the agents service: Tavily-backed web search for current external facts (titles, URLs, snippets as JSON). Prefer prior milestone data and internal tools first; omitted entirely when the key is unset.',
-  },
-  {
-    id: 'write_result_data',
-    name: 'Write result data',
-    description:
-      'Upsert the milestonedata child under this milestone with structured JSON (preset-specific shape). Updates context result_data and returns a short confirmation including the node id.',
+      'When TAVILY_API_KEY is set: Tavily-backed web search for current external facts. Omitted when the key is unset.',
   },
 ] as const
+
+/** @deprecated Use `CHAT_TOOLS_REGISTRY`. */
+export const MILESTONE_RUN_TOOLS_REGISTRY = CHAT_TOOLS_REGISTRY
+
+/** @deprecated Use `ChatToolMeta`. */
+export type MilestoneRunToolMeta = ChatToolMeta

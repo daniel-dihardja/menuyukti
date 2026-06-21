@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, use, useCallback, useMemo, useState, type ReactNode } from 'react'
 
 type TimelineCollapseContextValue = {
   collapseAllEpoch: number
@@ -20,13 +20,11 @@ export function TimelineCollapseProvider({ children }: { children: ReactNode }) 
     [collapseAllEpoch, collapseAllMilestones],
   )
 
-  return (
-    <TimelineCollapseContext.Provider value={value}>{children}</TimelineCollapseContext.Provider>
-  )
+  return <TimelineCollapseContext value={value}>{children}</TimelineCollapseContext>
 }
 
 export function useTimelineCollapse(): TimelineCollapseContextValue {
-  const ctx = useContext(TimelineCollapseContext)
+  const ctx = use(TimelineCollapseContext)
   if (!ctx) {
     throw new Error('useTimelineCollapse must be used within TimelineCollapseProvider')
   }

@@ -1,15 +1,16 @@
 'use client'
 
-import { createContext, type ReactNode, useCallback, useMemo, useState } from 'react'
+import { createContext, type ReactNode, use, useCallback, useMemo, useState } from 'react'
 
 import { cn } from '@workspace/ui/lib/utils'
 
 export type PanelFullscreenContextValue = {
+  isOpen: boolean
   setContent: (node: ReactNode) => void
   clearContent: () => void
 }
 
-export const PanelFullscreenContext = createContext<PanelFullscreenContextValue | null>(null)
+const PanelFullscreenContext = createContext<PanelFullscreenContextValue | null>(null)
 
 export type PanelFullscreenProviderProps = {
   children: ReactNode
@@ -29,20 +30,25 @@ export function PanelFullscreenProvider({ children, className }: PanelFullscreen
 
   const value = useMemo(
     () => ({
+      isOpen: content != null,
       setContent,
       clearContent,
     }),
-    [setContent, clearContent],
+    [clearContent, content, setContent],
   )
 
   return (
-    <PanelFullscreenContext.Provider value={value}>
+    <PanelFullscreenContext value={value}>
       <div className={cn('relative', className)}>
         {children}
         {content ? (
           <div className="absolute inset-0 z-10 flex min-h-0 flex-col bg-background">{content}</div>
         ) : null}
       </div>
-    </PanelFullscreenContext.Provider>
+    </PanelFullscreenContext>
   )
+}
+
+export function usePanelFullscreen(): PanelFullscreenContextValue | null {
+  return use(PanelFullscreenContext)
 }

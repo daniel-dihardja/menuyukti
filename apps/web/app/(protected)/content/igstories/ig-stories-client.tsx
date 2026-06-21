@@ -217,6 +217,7 @@ export function IgStoriesClient() {
           emptyTitle: t('grid.empty.title'),
           emptyDescription: t('grid.empty.description'),
         }}
+        tileMode="videoHoverPreview"
       />
 
       <AlertDialog

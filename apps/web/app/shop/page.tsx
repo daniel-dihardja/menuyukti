@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
-import { ShopHero, ShopProductGrid, ShopWorkflowContextBanner } from '@/components/shop'
-import { filterAndSortShopProducts } from '@/components/shop/shop-catalog'
+import { ShopHero } from '@/components/shop/shop-hero'
+import { ShopProductGrid } from '@/components/shop/shop-product-grid'
+import { ShopWorkflowContextBanner } from '@/components/shop/shop-workflow-context-banner'
+import { filterAndSortShopProducts } from '@/lib/shop/shop-catalog'
 
 const WORKFLOW_ID_RE = /^\d+$/
 

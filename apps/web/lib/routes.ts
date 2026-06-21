@@ -82,6 +82,8 @@ export const routes = {
 
   workflows: {
     list: '/workflow',
+    listWithLocation: (locationId: string | number) =>
+      `/workflow?locationId=${encodeURIComponent(String(locationId))}`,
     detail: (id: string | number) => `/workflow/${id}`,
   },
 

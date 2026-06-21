@@ -1,4 +1,4 @@
-import type { ShopProduct } from '@/components/shop/shop-catalog'
+import type { ShopProduct } from '@/lib/shop/shop-catalog'
 
 import type { ShopS3Image } from './s3-shop-images'
 

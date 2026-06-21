@@ -30,6 +30,7 @@ import {
   type AssetFlowOption,
 } from '@/lib/assets/client-api'
 
+import { AssetsImageGrid } from './_components/assets-image-grid'
 import {
   assetBackgroundDownloadHref,
   assetDownloadHref,
@@ -38,7 +39,6 @@ import {
   type AssetItem,
   type AssetPreviewItem,
 } from './_components/asset-item-types'
-import { AssetsImageGrid } from './_components/assets-image-grid'
 import { AssetsUploadZone } from './_components/assets-upload-zone'
 import { BackgroundsImageGrid } from './_components/backgrounds-image-grid'
 import { ContentImageCreateDialog } from './_components/content-image-create-dialog'
@@ -640,27 +640,34 @@ export function AssetsClient() {
             onBrowse={() => inputRef.current?.click()}
           />
 
-          <AssetsImageGrid
-            loading={loading}
-            items={items}
-            imageDimensionsByName={imageDimensionsByName}
-            onImageNaturalSize={handleImageNaturalSize}
-            cardFlows={cardFlows}
-            onCardFlowChange={(name, value) => {
-              setCardFlows((prev) => ({ ...prev, [name]: value }))
+          <AssetsImageGrid.Provider
+            actions={{
+              onCardCustomPromptChange: (name, value) => {
+                setCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+              },
+              onCardFlowChange: (name, value) => {
+                setCardFlows((prev) => ({ ...prev, [name]: value }))
+              },
+              onDeleteRequest: setPendingDeleteName,
+              onGenerate,
+              onImageNaturalSize: handleImageNaturalSize,
+              onPreview: (item) => setPreview({ item, kind: 'product' }),
             }}
-            cardCustomPrompts={cardCustomPrompts}
-            onCardCustomPromptChange={(name, value) => {
-              setCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+            state={{
+              aiFlows: productCardAiFlows,
+              cardCustomPrompts,
+              cardFlows,
+              deleting,
+              downloadHrefForName: assetDownloadHref,
+              flowsLoading,
+              generatingByName,
+              imageDimensionsByName,
+              items,
+              loading,
             }}
-            aiFlows={productCardAiFlows}
-            flowsLoading={flowsLoading}
-            generatingByName={generatingByName}
-            deleting={deleting}
-            onPreview={(item) => setPreview({ item, kind: 'product' })}
-            onDeleteRequest={setPendingDeleteName}
-            onGenerate={onGenerate}
-          />
+          >
+            <AssetsImageGrid.DeletableView />
+          </AssetsImageGrid.Provider>
         </TabsContent>
 
         <TabsContent value="backgrounds" className="mt-0 outline-none">
@@ -693,31 +700,36 @@ export function AssetsClient() {
         </TabsContent>
 
         <TabsContent value="designs" className="mt-0 flex flex-col gap-6 outline-none">
-          <AssetsImageGrid
-            loading={designsLoading}
-            items={designItems}
-            imageDimensionsByName={imageDimensionsByName}
-            onImageNaturalSize={handleImageNaturalSize}
-            cardFlows={designCardFlows}
-            onCardFlowChange={(name, value) => {
-              setDesignCardFlows((prev) => ({ ...prev, [name]: value }))
+          <AssetsImageGrid.Provider
+            actions={{
+              onCardCustomPromptChange: (name, value) => {
+                setDesignCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+              },
+              onCardFlowChange: (name, value) => {
+                setDesignCardFlows((prev) => ({ ...prev, [name]: value }))
+              },
+              onDeleteRequest: () => undefined,
+              onGenerate: onDesignGenerate,
+              onImageNaturalSize: handleImageNaturalSize,
+              onPreview: (item) => setPreview({ item, kind: 'design' }),
             }}
-            cardCustomPrompts={designCardCustomPrompts}
-            onCardCustomPromptChange={(name, value) => {
-              setDesignCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+            state={{
+              aiFlows: productCardAiFlows,
+              cardCustomPrompts: designCardCustomPrompts,
+              cardFlows: designCardFlows,
+              deleting: null,
+              downloadHrefForName: designDownloadHref,
+              emptyDescription: t('designs.empty.description'),
+              emptyTitle: t('designs.empty.title'),
+              flowsLoading,
+              generatingByName: designGeneratingByName,
+              imageDimensionsByName,
+              items: designItems,
+              loading: designsLoading,
             }}
-            aiFlows={productCardAiFlows}
-            flowsLoading={flowsLoading}
-            generatingByName={designGeneratingByName}
-            deleting={null}
-            onPreview={(item) => setPreview({ item, kind: 'design' })}
-            onDeleteRequest={() => undefined}
-            onGenerate={onDesignGenerate}
-            downloadHrefForName={designDownloadHref}
-            showDeleteButton={false}
-            emptyTitle={t('designs.empty.title')}
-            emptyDescription={t('designs.empty.description')}
-          />
+          >
+            <AssetsImageGrid.ReadOnlyView />
+          </AssetsImageGrid.Provider>
         </TabsContent>
       </Tabs>
     </div>

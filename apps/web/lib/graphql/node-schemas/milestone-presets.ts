@@ -81,17 +81,11 @@ export const menuTaggerMilestoneInputValueSchema = z.object({
 
 export type MenuTaggerMilestoneInputValue = z.infer<typeof menuTaggerMilestoneInputValueSchema>
 
-export const MENU_CLUSTERER_MIN_GROUP_COUNT = 4
-export const MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 4
-export const MENU_CLUSTERER_MAX_GROUP_COUNT = 8
+export const MENU_CLUSTERER_MIN_GROUP_COUNT = 1
+export const MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 1
+export const MENU_CLUSTERER_MAX_GROUP_COUNT = 20
 
-export const menuClustererTargetGroupCountSchema = z.union([
-  z.literal(4),
-  z.literal(5),
-  z.literal(6),
-  z.literal(7),
-  z.literal(8),
-])
+export const menuClustererTargetGroupCountSchema = z.number().int().min(1).max(20)
 
 export type MenuClustererTargetGroupCount = z.infer<typeof menuClustererTargetGroupCountSchema>
 
@@ -398,6 +392,7 @@ export const menuClustererMilestoneDataSchema = z.object({
   unassignedItemNames: z.array(z.string().trim().min(1)),
   topFoodLeadNames: z.array(z.string().trim().min(1)).max(12).default([]),
   targetGroupCount: menuClustererTargetGroupCountSchema.optional(),
+  signatureGroupCount: menuClustererTargetGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),

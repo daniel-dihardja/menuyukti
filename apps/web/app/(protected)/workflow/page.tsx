@@ -63,7 +63,27 @@ function WorkflowsListSkeleton() {
   )
 }
 
-async function WorkflowsData() {
+function parseRequestedLocationId(raw: string | undefined): number | null {
+  if (!raw) return null
+  const parsed = Number(raw)
+  if (!Number.isInteger(parsed) || parsed < 1) return null
+  return parsed
+}
+
+function resolveInitialLocationId(
+  branches: Array<{ id: number }>,
+  requestedLocationId: number | null,
+): number | null {
+  if (
+    requestedLocationId !== null &&
+    branches.some((branch) => branch.id === requestedLocationId)
+  ) {
+    return requestedLocationId
+  }
+  return branches.length === 1 ? (branches[0]?.id ?? null) : null
+}
+
+async function WorkflowsData({ requestedLocationId }: { requestedLocationId: number | null }) {
   const t = await getTranslations('analytics.workflows')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
@@ -93,7 +113,7 @@ async function WorkflowsData() {
     )
   }
 
-  const initialLocationId = branches.length === 1 ? (branches[0]?.id ?? null) : null
+  const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
   const initialAnalyticsRuns: Array<{ id: number; name: string }> = []
   const initialWorkflows: AnyNode[] = []
   if (initialLocationId !== null) {
@@ -117,13 +137,19 @@ async function WorkflowsData() {
   )
 }
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ locationId?: string }>
+}) {
   const t = await getTranslations('analytics.workflows')
+  const { locationId: locationIdParam } = await searchParams
+  const requestedLocationId = parseRequestedLocationId(locationIdParam)
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
       <Suspense fallback={<WorkflowsListSkeleton />}>
-        <WorkflowsData />
+        <WorkflowsData requestedLocationId={requestedLocationId} />
       </Suspense>
     </AnalyticsPageShell>
   )

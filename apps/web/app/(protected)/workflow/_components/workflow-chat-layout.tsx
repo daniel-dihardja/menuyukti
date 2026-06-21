@@ -2,6 +2,7 @@
 
 import type { ComponentProps, ReactNode } from 'react'
 
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -11,38 +12,29 @@ import {
 import { WorkflowMobileChatSheet } from './workflow-mobile-chat-sheet'
 
 export type WorkflowChatLayoutProps = {
-  isDesktop: boolean
   previewPanelRef: NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
   timelinePane: ReactNode
   previewPane: ReactNode
   chatPane: ReactNode
   mobileChatOpen: boolean
   onMobileChatOpenChange: (open: boolean) => void
-  isChatBusy: boolean
-  hasChatMessages: boolean
 }
 
 export function WorkflowChatLayout({
-  isDesktop,
   previewPanelRef,
   timelinePane,
   previewPane,
   chatPane,
   mobileChatOpen,
   onMobileChatOpenChange,
-  isChatBusy,
-  hasChatMessages,
 }: WorkflowChatLayoutProps) {
+  const isDesktop = useDesktopLayout()
+
   if (!isDesktop) {
     return (
       <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
         <div className="min-h-0 flex-1 overflow-hidden">{timelinePane}</div>
-        <WorkflowMobileChatSheet
-          hasMessages={hasChatMessages}
-          isChatBusy={isChatBusy}
-          onOpenChange={onMobileChatOpenChange}
-          open={mobileChatOpen}
-        >
+        <WorkflowMobileChatSheet onOpenChange={onMobileChatOpenChange} open={mobileChatOpen}>
           {chatPane}
         </WorkflowMobileChatSheet>
       </div>
@@ -58,27 +50,21 @@ export function WorkflowChatLayout({
               {timelinePane}
             </div>
           </ResizablePanel>
-
           <ResizableHandle withHandle />
-
           <ResizablePanel
-            className="bg-background p-3"
-            collapsedSize={0}
+            className="min-w-0"
             collapsible
             defaultSize={34}
-            id="workflow-preview"
-            minSize={20}
+            minSize={22}
             panelRef={previewPanelRef}
           >
-            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
               {previewPane}
             </div>
           </ResizablePanel>
-
           <ResizableHandle withHandle />
-
           <ResizablePanel defaultSize={28} minSize={20}>
-            <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
               {chatPane}
             </div>
           </ResizablePanel>

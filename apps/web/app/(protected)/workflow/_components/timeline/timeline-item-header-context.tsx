@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext } from 'react'
+import { createContext, use } from 'react'
 
 import type { TimelineMilestone } from './types'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -38,15 +38,11 @@ export function TimelineItemHeaderProvider({
   value: TimelineItemHeaderContextValue
   children: React.ReactNode
 }) {
-  return (
-    <TimelineItemHeaderContext.Provider value={value}>
-      {children}
-    </TimelineItemHeaderContext.Provider>
-  )
+  return <TimelineItemHeaderContext value={value}>{children}</TimelineItemHeaderContext>
 }
 
 export function useTimelineItemHeader() {
-  const ctx = useContext(TimelineItemHeaderContext)
+  const ctx = use(TimelineItemHeaderContext)
   if (!ctx) {
     throw new Error('useTimelineItemHeader must be used within TimelineItemHeaderProvider')
   }

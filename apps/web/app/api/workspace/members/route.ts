@@ -6,26 +6,15 @@ import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   INVITE_WORKSPACE_MEMBER_MUTATION,
-  MY_WORKSPACE_QUERY,
   REMOVE_WORKSPACE_MEMBER_MUTATION,
-  WORKSPACE_MEMBERS_QUERY,
   type InviteWorkspaceMemberData,
-  type MyWorkspaceData,
   type RemoveWorkspaceMemberData,
-  type WorkspaceMembersData,
 } from '@/lib/graphql/queries'
+import { getWorkspaceTeamData, type WorkspaceMemberResponse } from '@/lib/workspace/members'
 
 import { inviteWorkspaceMemberSchema, removeWorkspaceMemberSchema } from './schema'
 
-export type WorkspaceMemberResponse = {
-  id: string
-  clerkUserId: string
-  role: string
-  invitedAt: string | null
-  acceptedAt: string | null
-  email: string | null
-  name: string | null
-}
+export type { WorkspaceMemberResponse }
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
@@ -59,47 +48,7 @@ function primaryEmailFromClerkUser(user: {
   return user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? null
 }
 
-async function getWorkspaceForUser(userId: string) {
-  const wsData = await graphqlQuery<MyWorkspaceData>(MY_WORKSPACE_QUERY, {}, userId)
-  return wsData.myWorkspace ?? null
-}
-
-async function enrichMembers(
-  members: WorkspaceMembersData['workspaceMembers'],
-): Promise<WorkspaceMemberResponse[]> {
-  const client = await clerkClient()
-  return Promise.all(
-    members.map(async (member) => {
-      try {
-        const user = await client.users.getUser(member.clerkUserId)
-        return {
-          id: member.id,
-          clerkUserId: member.clerkUserId,
-          role: member.role,
-          invitedAt: member.invitedAt,
-          acceptedAt: member.acceptedAt,
-          email: primaryEmailFromClerkUser(user),
-          name: displayNameFromClerkUser(user),
-        }
-      } catch {
-        return {
-          id: member.id,
-          clerkUserId: member.clerkUserId,
-          role: member.role,
-          invitedAt: member.invitedAt,
-          acceptedAt: member.acceptedAt,
-          email: null,
-          name: null,
-        }
-      }
-    }),
-  )
-}
-
-function assertWorkspaceOwner(
-  workspace: NonNullable<MyWorkspaceData['myWorkspace']>,
-  userId: string,
-) {
+function assertWorkspaceOwner(workspace: { ownerClerkUserId: string }, userId: string) {
   if (workspace.ownerClerkUserId !== userId) {
     throw Object.assign(new Error('Only the workspace owner can manage team members'), {
       status: 403,
@@ -115,27 +64,12 @@ export async function GET() {
       return apiError('UNAUTHORIZED', 'Unauthorized', 401)
     }
 
-    const workspace = await getWorkspaceForUser(userId)
-    if (!workspace) {
+    const teamData = await getWorkspaceTeamData(userId)
+    if (!teamData) {
       return apiError('NOT_FOUND', 'Workspace not found', 404)
     }
 
-    const membersData = await graphqlQuery<WorkspaceMembersData>(
-      WORKSPACE_MEMBERS_QUERY,
-      { workspaceId: workspace.id, first: 100 },
-      userId,
-    )
-    const members = await enrichMembers(membersData.workspaceMembers)
-
-    return NextResponse.json({
-      workspace: {
-        id: workspace.id,
-        name: workspace.name,
-        ownerClerkUserId: workspace.ownerClerkUserId,
-      },
-      isOwner: workspace.ownerClerkUserId === userId,
-      members,
-    })
+    return NextResponse.json(teamData)
   } catch (error) {
     return apiErrorFromUnknown(error, 'Failed to load workspace members')
   }
@@ -149,11 +83,11 @@ export async function POST(req: Request) {
       return apiError('UNAUTHORIZED', 'Unauthorized', 401)
     }
 
-    const workspace = await getWorkspaceForUser(userId)
-    if (!workspace) {
+    const teamData = await getWorkspaceTeamData(userId)
+    if (!teamData) {
       return apiError('NOT_FOUND', 'Workspace not found', 404)
     }
-    assertWorkspaceOwner(workspace, userId)
+    assertWorkspaceOwner(teamData.workspace, userId)
 
     const json = await req.json()
     const { email } = inviteWorkspaceMemberSchema.parse(json)
@@ -168,7 +102,7 @@ export async function POST(req: Request) {
 
     const data = await graphqlQuery<InviteWorkspaceMemberData>(
       INVITE_WORKSPACE_MEMBER_MUTATION,
-      { workspaceId: workspace.id, clerkUserId: invitee.id },
+      { workspaceId: teamData.workspace.id, clerkUserId: invitee.id },
       userId,
     )
 
@@ -203,18 +137,18 @@ export async function DELETE(req: Request) {
       return apiError('UNAUTHORIZED', 'Unauthorized', 401)
     }
 
-    const workspace = await getWorkspaceForUser(userId)
-    if (!workspace) {
+    const teamData = await getWorkspaceTeamData(userId)
+    if (!teamData) {
       return apiError('NOT_FOUND', 'Workspace not found', 404)
     }
-    assertWorkspaceOwner(workspace, userId)
+    assertWorkspaceOwner(teamData.workspace, userId)
 
     const json = await req.json()
     const { clerkUserId } = removeWorkspaceMemberSchema.parse(json)
 
     await graphqlQuery<RemoveWorkspaceMemberData>(
       REMOVE_WORKSPACE_MEMBER_MUTATION,
-      { workspaceId: workspace.id, clerkUserId },
+      { workspaceId: teamData.workspace.id, clerkUserId },
       userId,
     )
 

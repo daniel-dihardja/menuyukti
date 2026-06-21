@@ -22,3 +22,5 @@ This maps cached read functions to the mutation routes that must invalidate them
 
 - `revalidateLocationScopedLists(userId, locationId)` is the shared invalidation helper for location-scoped analytics/workflow list reads.
 - Default cache lifetime for the GraphQL cached reads above is currently `cacheLife({ revalidate: 60 })`.
+- **Cache tuning (future):** workflow and analytics list reads share the same 60s TTL today. If list staleness becomes noticeable after mutations, prefer tag invalidation (already wired) over lowering TTL globally; only shorten `cacheLife` on high-churn entities if needed.
+- **Server Actions:** mutations remain on BFF route handlers (`app/api/**`) for streaming uploads, REST-style client fetches, and consistent cache tag invalidation. Selective Server Actions can be added later for form progressive enhancement where BFF is unnecessary.

@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
 
-import { AgentChat } from './_components/agent-chat'
+import { AgentChatDynamic } from './_components/agent-chat-dynamic'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('agentChat')
@@ -26,7 +26,7 @@ export default async function AgentPage() {
       breadcrumbs={[{ label: tDash('title'), href: routes.dashboard }, { label: t('metaTitle') }]}
       title={t('metaTitle')}
     >
-      <AgentChat />
+      <AgentChatDynamic />
     </AnalyticsPageShell>
   )
 }
