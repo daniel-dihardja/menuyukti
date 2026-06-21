@@ -29,7 +29,7 @@ import {
   EmptyTitle,
 } from '@workspace/ui/components/empty'
 import { Skeleton } from '@workspace/ui/components/skeleton'
-import { MenuCombosViewDynamic } from './menu-combos-view-dynamic'
+import { MenuCombosView } from './menu-combos-view'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
@@ -102,7 +102,7 @@ async function MenuCombosReportContent({
   }
 
   return (
-    <MenuCombosViewDynamic
+    <MenuCombosView
       analyticsId={analyticsId}
       menuCombos={menuCombos}
       locale={locale}

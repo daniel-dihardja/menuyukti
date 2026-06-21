@@ -96,6 +96,23 @@ def test_matrix_lift_symmetric_with_null_diagonal():
     assert matrix[0][1] == matrix[1][0]
 
 
+def test_matrix_lift_matches_pairs_when_focus_order_not_alphabetical():
+    rows = []
+    for i in range(MIN_CO_OCCURRENCE):
+        rows.append(_row(f"B{i}", "Burger"))
+        rows.append(_row(f"B{i}", "Apple"))
+    # Star-style focus: high seller first, not alphabetical (Apple < Burger).
+    result = compute_menu_basket_affinities_from_orders(rows, focus_menus=["Burger", "Apple"])
+    pair = next(
+        (p for p in result["pairs"] if p["menu_a"] == "Apple" and p["menu_b"] == "Burger"),
+        None,
+    )
+    assert pair is not None
+    matrix = result["matrix_lift"]
+    assert matrix[0][1] == pair["lift"]
+    assert matrix[1][0] == pair["lift"]
+
+
 def test_calculate_from_dataframe_empty():
     from menuyukti.core.analytics.calculate_menu_basket_affinities import (
         calculate_menu_basket_affinities,
