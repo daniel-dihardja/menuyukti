@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
-import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
 import {
   buildMenuEngineeringCategoryByMenu,
   CATEGORY_ORDER,
@@ -48,6 +47,8 @@ type HeatmapViewProps = {
   menuHeatmaps: MenuHeatmapsData['menuHeatmaps']
   matrixItems: MatrixItem[] | null
   locale: string
+  dailyStartHour: number
+  dailyEndHour: number
 }
 
 function allMatrixCategoriesSelected(selected: Set<MatrixCategory>): boolean {
@@ -76,7 +77,14 @@ function InsightStrip({ peakLabel, topItemLabel, itemCountLabel }: InsightStripP
   )
 }
 
-export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: HeatmapViewProps) {
+export function HeatmapView({
+  analyticsId,
+  menuHeatmaps,
+  matrixItems,
+  locale,
+  dailyStartHour,
+  dailyEndHour,
+}: HeatmapViewProps) {
   const t = useTranslations('analytics.heatmap')
   const tMatrixCategories = useTranslations('analytics.matrix.categories')
   const [view, setView] = useState<'daily' | 'weekly'>('daily')
@@ -164,8 +172,8 @@ export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: 
   }, [])
 
   const dailyMatrix = useMemo(
-    () => adaptDailyHeatmapMatrix(filteredItems, DAILY_HEATMAP_START_HOUR, DAILY_HEATMAP_END_HOUR),
-    [filteredItems],
+    () => adaptDailyHeatmapMatrix(filteredItems, dailyStartHour, dailyEndHour),
+    [filteredItems, dailyStartHour, dailyEndHour],
   )
   const weeklyMatrix = useMemo(() => adaptWeeklyHeatmapMatrix(filteredItems), [filteredItems])
 
@@ -180,15 +188,15 @@ export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: 
       scrollHint: t('scroll.hint'),
       explainTitle: t('explain.title'),
       explainBody: t('explain.body', {
-        startHour: DAILY_HEATMAP_START_HOUR,
-        endHour: DAILY_HEATMAP_END_HOUR,
+        startHour: dailyStartHour,
+        endHour: dailyEndHour,
       }),
       cellAriaLabel: (menu: string, window: string, count: number) =>
         t('cellAriaLabel', { menu, window, count }),
       cellTooltip: (menu: string, window: string, count: number) =>
         t('tooltip', { menu, window, count }),
     }),
-    [t],
+    [t, dailyStartHour, dailyEndHour],
   )
 
   const reportingPeriod = useMemo(() => {
@@ -227,8 +235,8 @@ export function HeatmapView({ analyticsId, menuHeatmaps, matrixItems, locale }: 
   }
 
   const dailyTitle = t('dailyTitle', {
-    startHour: DAILY_HEATMAP_START_HOUR,
-    endHour: DAILY_HEATMAP_END_HOUR,
+    startHour: dailyStartHour,
+    endHour: dailyEndHour,
   })
   const weeklyTitle = t('weeklyTitle')
 

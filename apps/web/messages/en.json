@@ -2603,7 +2603,7 @@
       "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
       "explain": {
         "title": "How to read this heatmap",
-        "body": "Cell color shows relative units sold within the current view. Numbers are order-line quantities by hour or weekday from your sales data—not forecasts. Daily view shows service hours only ({startHour}:00–{endHour}:00) for now."
+        "body": "Cell color shows relative units sold within the current view. Numbers are order-line quantities by hour or weekday from your sales data—not forecasts. Daily view shows your location's opening hours ({startHour}:00–{endHour}:00)."
       }
     },
     "ai": {

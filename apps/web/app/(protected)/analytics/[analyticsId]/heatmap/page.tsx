@@ -11,7 +11,9 @@ import Link from 'next/link'
 import {
   getCachedAnalyticsRun,
   getCachedAnalyticsBundleHeatmap,
+  getCachedLocation,
 } from '@/lib/graphql/cached-queries'
+import { deriveDailyHeatmapHourRange } from '@/lib/analytics/heatmap-hours'
 import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
@@ -45,10 +47,16 @@ async function HeatmapReportContent({
 }) {
   const locale = getAppCurrencyLocale()
   const id = String(analyticsId)
-  const bundleData = await getCachedAnalyticsBundleHeatmap(userId, id, locationId)
+  const [bundleData, locationData] = await Promise.all([
+    getCachedAnalyticsBundleHeatmap(userId, id, locationId),
+    getCachedLocation(userId, locationId),
+  ])
   const bundle = bundleData.analyticsBundle
   const menuHeatmaps = bundle?.menuHeatmaps ?? []
   const matrixItems = bundle?.menuEngineeringMatrix?.items ?? null
+  const { startHour: dailyStartHour, endHour: dailyEndHour } = deriveDailyHeatmapHourRange(
+    locationData.location?.openingHours ?? [],
+  )
 
   return (
     <HeatmapViewDynamic
@@ -56,6 +64,8 @@ async function HeatmapReportContent({
       menuHeatmaps={menuHeatmaps}
       matrixItems={matrixItems}
       locale={locale}
+      dailyStartHour={dailyStartHour}
+      dailyEndHour={dailyEndHour}
     />
   )
 }
