@@ -395,7 +395,7 @@ def try_menu_clusterer_deterministic_verdict(
         )
         or ("main" in norm and "storytelling" in norm and ("position" in norm or "lead" in norm))
     ):
-        issues: list[str] = []
+        position_issues: list[str] = []
         wants_signature = "signature" in norm or ("top star" in norm or "category" in norm)
         wants_hook = (
             "hook" in norm
@@ -405,7 +405,7 @@ def try_menu_clusterer_deterministic_verdict(
             or ("top" in norm and "5" in norm)
         )
         if signature_groups and wants_signature:
-            issues.extend(
+            position_issues.extend(
                 _validate_signature_groups(
                     signature_groups,
                     empty_message="no menu clusterer signature clusters to validate.",
@@ -417,9 +417,9 @@ def try_menu_clusterer_deterministic_verdict(
                 for name in (data.get("topFoodLeadNames") or [])
                 if str(name).strip()
             }
-            issues.extend(_validate_hook_reel_groups(hook_groups, top5_names=top5_names))
-        if issues:
-            return ("fail", "; ".join(issues[:4]))
+            position_issues.extend(_validate_hook_reel_groups(hook_groups, top5_names=top5_names))
+        if position_issues:
+            return ("fail", "; ".join(position_issues[:4]))
         if wants_signature and wants_hook:
             return (
                 "pass",
