@@ -539,10 +539,11 @@
     }
   },
   "skillsPage": {
-    "title": "Skills & tools",
-    "description": "Overview of skills and tools used when the AI prepares milestone data. Names and descriptions match the agents service backend.",
-    "skillsHeading": "Skills",
-    "toolsHeading": "Tools"
+    "title": "Presets & tools",
+    "description": "Overview of milestone presets (LangGraph subgraphs) and chat tools used by the agents service.",
+    "skillsHeading": "Milestone presets",
+    "toolsHeading": "Chat tools",
+    "toolsDescription": "Tools available in workflow and standalone agent chat. Milestone runs use dedicated preset graphs instead of this ReAct tool loop."
   },
   "profile": {
     "title": "Profile",

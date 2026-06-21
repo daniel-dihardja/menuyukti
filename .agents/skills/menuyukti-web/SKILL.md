@@ -36,31 +36,38 @@ When improving an existing implementation (not only greenfield features), also r
 
 ## Layout (high level)
 
-| Concern                | Typical locations                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------------- |
-| App Router             | [`apps/web/app/`](../../../apps/web/app/)                                               |
-| GraphQL client         | Co-located data fetching / server actions per feature (see existing workflows)          |
-| Workflow UI            | [`apps/web/app/(protected)/workflows/`](<../../../apps/web/app/(protected)/workflows/>) |
-| Shared GraphQL helpers | [`apps/web/lib/graphql/`](../../../apps/web/lib/graphql/)                               |
-| API routes             | [`apps/web/app/api/`](../../../apps/web/app/api/)                                       |
+| Concern                 | Typical locations                                                                                                                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App Router              | [`apps/web/app/`](../../../apps/web/app/)                                                                                                                                                                         |
+| Protected shell         | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/workflow`, `/analytics`, `/canvas`, `/content`, `/agent`, `/skills`, …                                                                    |
+| GraphQL client          | [`apps/web/lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts), [`queries/`](../../../apps/web/lib/graphql/queries/), [`node-schemas/`](../../../apps/web/lib/graphql/node-schemas/)                 |
+| Workflow UI             | [`apps/web/app/(protected)/workflow/`](<../../../apps/web/app/(protected)/workflow/>)                                                                                                                             |
+| Milestone presets (web) | [`apps/web/lib/milestones/preset-definitions.ts`](../../../apps/web/lib/milestones/preset-definitions.ts), [`node-schemas/milestone-presets.ts`](../../../apps/web/lib/graphql/node-schemas/milestone-presets.ts) |
+| API routes (BFF)        | [`apps/web/app/api/`](../../../apps/web/app/api/) — e.g. `/api/workflows/.../milestones/.../run`                                                                                                                  |
 
-Named product features and aliases (e.g. workflow presets): see [`.agents/menuyukti-features.md`](../../menuyukti-features.md).
+Named product features and aliases (e.g. workflow import presets): see [`.agents/menuyukti-features.md`](../../menuyukti-features.md).
 
 Commands: [AGENTS.md](../../../AGENTS.md) § Web.
 
 ## Milestone data and run
 
-Milestone **run** uses LangGraph + a structured skill selector over [`milestone_run/skills`](../../../apps/agents/agents/core/milestone_run/skills/) ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). Milestone data (structured JSON) lives on **`milestonedata`** child nodes; the run BFF calls **`POST .../run`** with `location_id` and `workflow_id` only.
+Milestone **run** uses LangGraph **preset subgraphs** keyed by `milestone.data.presetId` ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). Milestone data (structured JSON) lives on **`milestonedata`** child nodes; the run BFF calls **`POST .../run`** with `location_id` and `workflow_id` only.
 
-### Checklist: new milestone-run skill (agents + UI copy)
+**Chat** (workflow sidebar and `/agent`) uses a separate ReAct graph with milestone read/write tools — see [`milestone-run-tools-registry.ts`](../../../apps/web/lib/milestone-run-tools-registry.ts).
 
-1. **Runtime skill** — add `apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md` and register in `skills.py` ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
-2. **Web registries** — update [`milestone-run-skill-registry.ts`](../../../apps/web/lib/milestone-run-skill-registry.ts) / [`milestone-run-tools-registry.ts`](../../../apps/web/lib/milestone-run-tools-registry.ts) if the UI documents tools or skills.
-3. **GraphQL export/import** — keep milestone `data` JSON compatible when workflows round-trip ([`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)).
+### Checklist: new milestone preset (agents + web)
+
+1. **Agents preset** — add `apps/agents/agents/core/milestone_run/<preset_id>/` and `register_preset_runner` ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
+2. **GraphQL / Zod** — extend `MILESTONE_PRESET_IDS` and milestone data schemas in [`node-schemas/milestone-presets.ts`](../../../apps/web/lib/graphql/node-schemas/milestone-presets.ts).
+3. **Web preset catalog** — update [`preset-definitions.ts`](../../../apps/web/lib/milestones/preset-definitions.ts) (create fields, icons, empty data) and timeline UI (preset select, input tabs, preview components).
+4. **Skills catalog** — add row to [`milestone-run-skill-registry.ts`](../../../apps/web/lib/milestone-run-skill-registry.ts) (`MILESTONE_PRESET_RUN_REGISTRY`).
+5. **Eval** — criterion helpers in `milestone_eval/<preset>_eval.py` when needed.
+6. **GraphQL export/import** — keep milestone `data` JSON compatible when workflows round-trip ([`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)).
 
 ## GraphQL from the web
 
-- Prefer existing patterns in the workflows and protected areas for **authenticated** requests.
+- Use `graphqlQuery` from [`lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts) in Server Components and `app/api/` handlers.
+- Validate node `data` JSON with Zod via `parseNodeData` / schemas under `lib/graphql/node-schemas/` — avoid casting.
 - Keep server/client boundaries aligned with Next.js conventions ([`next-best-practices`](../next-best-practices/SKILL.md)).
 
 ## Related
@@ -73,7 +80,7 @@ Milestone **run** uses LangGraph + a structured skill selector over [`milestone_
 
 ## Canonical docs
 
-- [`apps/web/README.md`](../../../apps/web/README.md) (if present)
+- [`apps/web/README.md`](../../../apps/web/README.md)
 - [`AGENTS.md`](../../../AGENTS.md)
 
 ## Progressive disclosure

@@ -3,8 +3,8 @@ import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
-import { MILESTONE_RUN_SKILL_REGISTRY } from '@/lib/milestone-run-skill-registry'
-import { MILESTONE_RUN_TOOLS_REGISTRY } from '@/lib/milestone-run-tools-registry'
+import { MILESTONE_PRESET_RUN_REGISTRY } from '@/lib/milestone-run-skill-registry'
+import { CHAT_TOOLS_REGISTRY } from '@/lib/milestone-run-tools-registry'
 import { routes } from '@/lib/routes'
 import {
   Card,
@@ -66,14 +66,15 @@ export default async function SkillsAndToolsPage() {
         <h2 id="skills-heading" className="font-semibold text-lg tracking-tight">
           {t('skillsHeading')}
         </h2>
-        <SkillOrToolList items={MILESTONE_RUN_SKILL_REGISTRY} />
+        <SkillOrToolList items={MILESTONE_PRESET_RUN_REGISTRY} />
       </section>
 
       <section className="mt-10 flex flex-col gap-4" aria-labelledby="tools-heading">
         <h2 id="tools-heading" className="font-semibold text-lg tracking-tight">
           {t('toolsHeading')}
         </h2>
-        <SkillOrToolList items={MILESTONE_RUN_TOOLS_REGISTRY} />
+        <p className="text-muted-foreground text-sm leading-relaxed">{t('toolsDescription')}</p>
+        <SkillOrToolList items={CHAT_TOOLS_REGISTRY} />
       </section>
     </AnalyticsPageShell>
   )

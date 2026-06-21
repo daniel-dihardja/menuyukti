@@ -43,7 +43,7 @@ With **Assets** (and the asset studio) open, you can upload or generate images a
 
 ![LangSmith waterfall trace of a complete Menuyukti milestone run](./screenshots/screenshot-langsmith-full-traces-of-a-complete-run.png)
 
-When a milestone runs, the agent service executes a **LangGraph** graph. **LangSmith** (or similar tracing) shows the full waterfall: skill selection, model calls, and tools such as reading the goal, criteria, and linked data—useful for debugging, latency, and token usage during development and operations.
+When a milestone runs, the agent service executes a **LangGraph** graph. **LangSmith** (or similar tracing) shows the full waterfall: preset subgraph steps, model calls, and GraphQL prefetch/persist nodes—useful for debugging, latency, and token usage during development and operations.
 
 ### Platform skills and tools
 

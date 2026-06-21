@@ -1,6 +1,6 @@
 # Menuyukti platform architecture
 
-This document describes how the Menuyukti services and packages fit together, with emphasis on the **agentic AI** path (milestone runs, skills, and tools). For local commands, ports, and CI, see [AGENTS.md](AGENTS.md). For a **user-facing overview and marketer positioning**, see [README.md](README.md).
+This document describes how the Menuyukti services and packages fit together, with emphasis on the **agentic AI** path (milestone runs, presets, and chat tools). For local commands, ports, and CI, see [AGENTS.md](AGENTS.md). For a **user-facing overview and marketer positioning**, see [README.md](README.md).
 
 ## Platform model
 
@@ -39,11 +39,11 @@ Auth and resolver conventions follow `.cursor/rules/python-graphql-conventions.m
 
 ### Entry points
 
-| Endpoint                              | Purpose                                                                                                                                                                                                   |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /chat`                          | Streaming **SSE** chat over a LangGraph graph under `apps/agents/agents/core/chat/`.                                                                                                                      |
-| `POST /milestones/{milestone_id}/run` | **Milestone run**: fetch context → skill selection → ReAct with tools → persist milestone data → `finalize_eval` (shared eval subgraph). Implemented in `apps/agents/agents/core/milestone_run/graph.py`. |
-| `POST /format-markdown`               | Platform helper endpoint for preset-driven Markdown cleanup (free-form notes; implemented in `apps/agents/agents/core/format_markdown/` and `apps/agents/routers/format_markdown.py`).                    |
+| Endpoint                              | Purpose                                                                                                                                                                                      |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /chat`                          | Streaming **SSE** chat over a LangGraph ReAct graph under `apps/agents/agents/core/chat/`.                                                                                                   |
+| `POST /milestones/{milestone_id}/run` | **Milestone run**: fetch context → **dedicated preset subgraph** (by `milestone.data.presetId`) → shared **eval** subgraph. Implemented in `apps/agents/agents/core/milestone_run/graph.py`. |
+| `POST /format-markdown`               | Platform helper endpoint for preset-driven Markdown cleanup (free-form notes; implemented in `apps/agents/agents/core/format_markdown/` and `apps/agents/routers/format_markdown.py`).       |
 
 Shared GraphQL access uses `apps/agents/agents/graphql_base.py` (`graphql_post`, `GRAPHQL_ENDPOINT`, optional internal API key header). Routers authenticate callers with headers such as **`X-Menuyukti-User-Id`**; GraphQL calls use the project’s server-to-server header conventions (see `.cursor/rules/agents-conventions.mdc`).
 
@@ -51,77 +51,73 @@ Shared GraphQL access uses `apps/agents/agents/graphql_base.py` (`graphql_post`,
 
 The compiled graph is `build_milestone_run_graph` in `apps/agents/agents/core/milestone_run/graph.py`. At a high level:
 
-1. **Fetch children** — load milestone and workflow context from GraphQL (`fetch_children` node).
-2. **Skill selection** (optional path) — if the run uses the LLM skill selector, a structured step chooses one or more **skill ids** from `apps/agents/agents/core/milestone_run/skills.py` (`SKILL_REGISTRY`); otherwise execution uses skills already fixed in state. Skill bodies come from per-skill `SKILL.md` files.
-3. **Execute skill** — for each selected skill, a **ReAct** agent (`create_react_agent`) runs with tools from `make_milestone_run_tools` in `apps/agents/agents/core/milestone_run/tools/__init__.py`. The agent persists milestone output through **`write_result_data`** (GraphQL upsert via `apps/agents/agents/core/milestone_data/`).
-4. **Finalize evaluation** — after all selected skills have run, the graph enters **`finalize_eval`**, which invokes the shared **`milestone_eval`** subgraph (`apps/agents/agents/core/milestone_eval/`) for criterion scoring, synthesis, and result persistence as defined by that graph.
+1. **Fetch children** — load milestone and workflow context from GraphQL (`fetch_children` node). Reuses `milestone_eval.nodes.fetch_context` for goal, milestonedata JSON, and pass criteria. When scoped to a workflow, **`fetch_prior_milestones_data`** adds earlier milestones’ saved data.
+2. **Execute preset** — read **`milestone.data.presetId`** and dispatch to a **registered preset runner** (`register_preset_runner` in `graph.py` / `presets/registry.py`). Each preset is a dedicated **`StateGraph`** under `milestone_run/<preset_id>/` with its own nodes, prompts, and GraphQL prefetch helpers.
+3. **Finalize evaluation** — invoke the shared **`milestone_eval`** subgraph for parallel criterion scoring, synthesis, and result persistence.
 
 ```mermaid
 flowchart TD
   fetchChildren[fetchMilestoneContext]
-  selectSkills[skillSelectionLLM]
-  executeSkill[reactAgentWithTools]
+  executePreset[dedicatedPresetSubgraph]
   finalizeEval[milestoneEvalSubgraph]
-  fetchChildren --> selectSkills
-  fetchChildren --> executeSkill
-  selectSkills --> executeSkill
-  executeSkill -->|nextSelectedSkill| executeSkill
-  executeSkill --> finalizeEval
+  fetchChildren --> executePreset
+  executePreset --> finalizeEval
 ```
+
+**Registered preset ids** (must match web `MILESTONE_PRESET_IDS`): `dates`, `restaurant_campaign_brief`, `promotion_candidates`, `menu_tagger`, `menu_clusterer`, `post_lineup`, `reel_lineup`, `story_lineup`, `culture_hooks`, `ig_profile`, `scheduler`.
+
+Legacy ReAct milestone-run tools under `milestone_run/tools/` remain for **unit tests only**; production preset graphs call GraphQL directly from nodes and persist via `milestone_data` upsert + `validate_skill_output`.
 
 ### Context engineering (milestone run and chat)
 
-Both flows ground the model in **GraphQL-backed product state**, but they use different **context packaging** strategies: milestone run **prefetches** structured slices into LangGraph state and uses **tools to surface** them inside ReAct; chat keeps the **thread small** and optionally adds **on-demand** milestone retrieval.
+Both flows ground the model in **GraphQL-backed product state**, but they package context differently: milestone runs **prefetch into LangGraph state** inside preset nodes; chat keeps the **thread small** and loads milestone fields **on demand via tools**.
 
 #### Milestone run
 
-1. **Eager prefetch (`fetch_children`)** — Before any LLM step, the graph loads canonical milestone context from GraphQL. It reuses `milestone_eval.nodes.fetch_context`: child nodes under the milestone supply **goal** text, **milestone data** JSON on `milestonedata`, and **pass criteria** (id + requirement). When the request includes a **`workflow_id`**, **`fetch_prior_milestones_data`** adds earlier milestones’ data (JSON array text) so downstream skills can see the pipeline. The milestone’s own **`data` JSON** is read to decide **LLM skill selection** vs **fixed skill ids** from configuration (`skill_settings`).
+1. **Eager prefetch (`fetch_children`)** — Before the preset subgraph runs, the outer graph loads canonical milestone context from GraphQL (goal, milestonedata, criteria). With a **`workflow_id`**, prior milestones’ data is included for downstream presets (campaign brief → lineups → scheduler, etc.).
 
-2. **Router context (skill selection)** — The structured skill-selection model receives a **single packed user message** (`skill_selector_human_message` in `apps/agents/agents/core/milestone_run/prompts.py`): formatted **skill catalog**, **goal**, **criteria as JSON**, and the **full current milestone data** snapshot. That step is optimized for **routing**, not long tool loops, so relevant fields are **explicitly inlined** once.
+2. **Preset subgraph** — Each preset module owns its topology: GraphQL prefetch nodes, structured LLM calls (`structured_ainvoke_from_run_config`), optional reflect loops, and a **`persist_result`** node that upserts milestonedata through `apps/agents/agents/core/milestone_data/`.
 
-3. **Executor context (per-skill ReAct)** — For each selected skill, the **system prompt** is the **`SKILL.md` body** (task instructions) plus **`INTERMEDIATE_SKILL_PROMPT_SUFFIX`** when another skill will run after this one. The **human message** is short (`execute_skill_task_message`: which skill to run + **goal**). **Goal, criteria, milestone data, and prior-milestone JSON** also live in **`MilestoneRunState`**; the agent retrieves them through **`read_goal`**, **`read_criteria`**, **`read_data`**, and **`read_prior_milestones_data`** (see `make_milestone_run_tools` in `apps/agents/agents/core/milestone_run/tools/__init__.py`). That **tool-backed** pattern avoids pasting large or repetitive blobs on every model turn while keeping a **single source of truth** in state. **`extra_tools`** add further **pull** capabilities (for example external calendars or feeds). **`write_result_data`** commits updated milestone data through GraphQL.
-
-4. **Evaluation subgraph** — `finalize_eval` runs **`milestone_eval`**, whose first node **`fetch_context`** loads goal, milestone data, and criteria **again from GraphQL** before parallel criterion scoring and synthesis. Eval is thus grounded on **fresh** milestone children, not only whatever the ReAct agent last held in memory.
+3. **Evaluation subgraph** — `finalize_eval` runs **`milestone_eval`**, whose **`fetch_context`** node reloads goal, milestone data, and criteria from GraphQL before parallel criterion scoring and synthesis.
 
 #### Chat
 
 1. **Short-term memory** — The streaming chat graph is compiled once with a LangGraph **checkpointer** (`compile_chat_graph` in `apps/agents/agents/core/chat/graph.py`). Each HTTP request sends **only the latest user message**; prior turns live in checkpoint state keyed by **`thread_id`**: `{clerk_user_id}:wf:{workflow_id}` for campaign chat, or `{clerk_user_id}:agent:{client_thread_id}` for the standalone `/agent` page. Production uses **`PostgresSaver`** when `LANGGRAPH_CHECKPOINT_DATABASE_URL` is set; otherwise an in-memory saver (dev only).
 
-2. **ReAct + milestone tool** — The same **`create_react_agent`** graph always includes **`get_milestone_data`**. The tool reads **`milestone_id`**, **`location_id`**, and **`user_id`** from the per-request **`RunnableConfig["configurable"]`** (not from a recompiled graph). If milestone context is missing, the tool tells the model to answer without a milestone fetch. The shared **`httpx` client** is bound per request via a **context variable** (`agents/core/chat/http_context.py`) so it is never stored in checkpoints. **Page refresh** clears the UI transcript until a hydration endpoint exists; **regenerate** may need explicit checkpoint handling later.
+2. **ReAct + milestone tools** — `create_react_agent` exposes tools from `chat_tools_list()` (`get_milestone_data`, help/input/preset read and patch tools, optional **`search_web`**). Context ids come from per-request **`RunnableConfig["configurable"]`**. The shared **`httpx` client** is bound per request via a **context variable** (`agents/core/chat/http_context.py`) so it is never stored in checkpoints.
 
 ### Cross-cutting agentic patterns
 
 - **Milestone pipelines** — work is scoped to a milestone inside a workflow; outputs are stored for downstream milestones or UI.
-- **Plan-and-execute** — some flows use explicit multi-step plans (data → slots → schedule → formats → brief style stages).
-- **Reflect** — drafts can pass through **generate → critique → revise** with iteration bounds.
+- **Plan-and-execute** — preset subgraphs use explicit multi-step plans (data → slots → schedule → formats → brief style stages).
+- **Reflect** — drafts can pass through **generate → critique → revise** with iteration bounds (e.g. campaign brief).
 - **LLMs** — configured via Vercel AI Gateway–compatible settings (`AI_GATEWAY_API_KEY`, `VERCEL_OIDC_TOKEN`, optional `OPENAI_MODEL`); details in [AGENTS.md](AGENTS.md) and `apps/agents/.env.example`.
+- **Tracing** — LangSmith metadata on runs; product DB rows via `startMilestoneAgentRun` / `completeMilestoneAgentRun` (see `apps/agents/README.md`).
 
 ## Skill files (two meanings)
 
-| Kind                           | Location                                                           | Role                                                                                                                                                                                                                                                                                                                 |
-| ------------------------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Runtime milestone skills**   | `apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md` | Loaded by `skill_markdown.py`: YAML frontmatter (`name`, `description`, optional **`extra_tools`**) plus a markdown **body** that instructs the ReAct agent for that milestone. Path resolution: `skill_paths.py` (`get_milestone_run_skill_path`). Each skill must be registered in `skills.py` (`SKILL_REGISTRY`). |
-| **Repository / Cursor skills** | `.agents/skills/`                                                  | **Developer documentation** for humans and IDE agents (how to change GraphQL, web, agents, analytics). **Not executed at runtime.**                                                                                                                                                                                  |
+| Kind                            | Location                                                                   | Role                                                                                                                                |
+| ------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Milestone presets (runtime)** | `apps/agents/agents/core/milestone_run/<preset_id>/` + `graph.py` registry | Dedicated LangGraph subgraph per `presetId`; not markdown skill files. Web catalog: `apps/web/lib/milestone-run-skill-registry.ts`. |
+| **Repository / Cursor skills**  | `.agents/skills/`                                                          | **Developer documentation** for humans and IDE agents (how to change GraphQL, web, agents, analytics). **Not executed at runtime.** |
 
-## Tools (milestone run)
+## Tools
 
-Tools are assembled in order by `make_milestone_run_tools` (see [.agents/skills/menuyukti-agents/SKILL.md](.agents/skills/menuyukti-agents/SKILL.md)):
+| Surface              | Location                                       | Role                                                                                                         |
+| -------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Chat ReAct tools** | `apps/agents/agents/core/chat/tools.py`        | On-demand milestone reads/writes in conversation; catalog in `apps/web/lib/milestone-run-tools-registry.ts`. |
+| **Legacy run tools** | `apps/agents/agents/core/milestone_run/tools/` | Test-only helpers; production presets use nodes + GraphQL instead of a shared ReAct tool loop.               |
 
-1. **Core read tools** — e.g. `read_goal`, `read_criteria`, `read_data`, `read_prior_milestones_data` (LangChain tools under `apps/agents/agents/core/milestone_run/tools/`).
-2. **Optional `search_web`** — when `TAVILY_API_KEY` is set on the agents service, Tavily-backed web search is inserted after the read tools and before `write_result_data`.
-3. **Skill-specific extras** — names listed in the runtime `SKILL.md` **`extra_tools`** YAML list; implementations are registered in `apps/agents/agents/core/milestone_run/tools/registry.py` (`EXTRA_TOOL_FACTORIES`), typically one module per tool (used by preset subgraphs that compose their own tool lists).
-4. **`write_result_data`** — persists milestone data (milestonedata) and result payload through GraphQL.
-
-**Important:** `apps/agents` **does not import** `packages/menuyukti`. Analytics and signals reach the model as **GraphQL JSON** produced after `reports/transform` and related resolvers.
+**Important:** `apps/agents` **does not import** `packages/menuyukti`. Analytics and signals reach preset nodes as **GraphQL JSON** produced after `reports/transform` and related resolvers.
 
 ## Web app (`apps/web`)
 
 - **Stack:** Next.js (App Router), React, TypeScript, **Clerk** auth, **next-intl** for user-facing copy.
-- **Data:** Product entities and analytics are loaded and mutated through GraphQL (patterns under `apps/web/lib/graphql/` and feature routes).
-- **Workflows UI:** Primary campaign experience under `apps/web/app/(protected)/workflows/`.
+- **Data:** Product entities and analytics are loaded and mutated through GraphQL (`apps/web/lib/graphql/` — client, queries, Zod node schemas).
+- **Workflows UI:** Primary campaign experience under `apps/web/app/(protected)/workflow/`.
 - **BFF for milestone run:** The browser does not call the agents service directly with full auth context; Next.js **API routes** proxy/stream to **`POST /milestones/{id}/run`** on the agents service (see [.agents/skills/menuyukti-web/SKILL.md](.agents/skills/menuyukti-web/SKILL.md)).
 - **Chat UI:** Uses **Vercel AI SDK** and **AI Elements**–style components in `packages/ui` for conversational surfaces; long-running **milestone execution** remains on the **Python LangGraph** service.
-- **UI registries:** When adding or renaming runtime skills or documenting tools in the product UI, keep `apps/web/lib/milestone-run-skill-registry.ts` and `apps/web/lib/milestone-run-tools-registry.ts` aligned with `SKILL_REGISTRY` and tool names.
+- **Preset catalog UI:** `/skills` lists milestone presets and chat tools from `milestone-run-skill-registry.ts` and `milestone-run-tools-registry.ts`. When adding a preset, keep web `MILESTONE_PRESET_IDS`, `preset-definitions.ts`, agents `register_preset_runner`, and the catalog registry aligned.
 
 ## Packages (`packages/*`)
 

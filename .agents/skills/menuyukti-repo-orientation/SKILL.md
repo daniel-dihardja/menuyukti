@@ -8,7 +8,7 @@ description: >-
 
 # Menuyukti: repository orientation
 
-This skill is for **Cursor/agents** navigating the repo. Runtime milestone skills for agents live under `apps/agents/agents/core/milestone_run/skills/`.
+This skill is for **Cursor/agents** navigating the repo. **Runtime milestone execution** uses dedicated **preset subgraphs** in `apps/agents/agents/core/milestone_run/<preset_id>/` (see [`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
 
 ## Service map
 
@@ -30,16 +30,16 @@ flowchart LR
 
 ## Domain skills (go deeper)
 
-| Skill                                                    | When to open it                                                                                   |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph milestone run, runtime `SKILL.md` under `milestone_run/skills`. |
-| [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                           |
-| [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, GraphQL from the browser/BFF, milestone UI.                |
-| [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration.       |
+| Skill                                                    | When to open it                                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph milestone run (preset subgraphs + eval), streaming chat.  |
+| [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                     |
+| [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, GraphQL from the browser/BFF, milestone UI.          |
+| [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration. |
 
 ## Cross-app flow: milestone run
 
-The web BFF streams **`POST .../milestones/{id}/run`** to agents; the LangGraph run calls GraphQL for context, tools, and persistence. See [`menuyukti-agents`](../menuyukti-agents/SKILL.md), [`menuyukti-web`](../menuyukti-web/SKILL.md), and [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
+The web BFF streams **`POST .../milestones/{id}/run`** to agents; the LangGraph run resolves **`presetId`**, executes the matching preset subgraph, then runs shared eval. See [`menuyukti-agents`](../menuyukti-agents/SKILL.md), [`menuyukti-web`](../menuyukti-web/SKILL.md), and [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
 
 ## Database ownership
 
