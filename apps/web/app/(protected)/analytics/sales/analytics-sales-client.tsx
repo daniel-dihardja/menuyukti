@@ -31,17 +31,14 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
 
   useEffect(() => {
     if (initialLocationId !== null) {
-      if (locationId !== initialLocationId) {
-        setLocationId(initialLocationId)
-      }
+      setLocationId(initialLocationId)
       return
     }
-    if (locationId !== null) return
     if (branches.length !== 1) return
     const [onlyBranch] = branches
     if (!onlyBranch) return
     setLocationId(onlyBranch.id)
-  }, [locationId, initialLocationId, branches, setLocationId])
+  }, [initialLocationId, branches, setLocationId])
 
   useEffect(() => {
     if (locationId === null) return
