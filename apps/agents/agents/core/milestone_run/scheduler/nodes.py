@@ -13,8 +13,12 @@ from agents_app.agents.core.llm_invoke import (
     emit_llm_error_step,
 )
 from agents_app.agents.core.milestone_run.dates_window import (
+    TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
+    USER_REVIEW_STORY_INTERVAL_WEEKS,
     campaign_weeks,
+    interval_block_index,
     interval_block_starts,
+    top_five_cadence_issues,
     week_has_weekday_in_overlap,
     week_requires_weekly_cadence,
 )
@@ -326,20 +330,6 @@ def _normalize_story_title(story: dict[str, Any]) -> str:
     return str(story.get("title") or "").strip()
 
 
-def _weekly_block_index(iso_date: str, start_date: str, end_date: str) -> int | None:
-    parsed = _parse_iso_date(iso_date)
-    start = _parse_iso_date(start_date)
-    end = _parse_iso_date(end_date)
-    if parsed is None or start is None or end is None or parsed < start or parsed > end:
-        return None
-    for idx, (block_start, block_end) in enumerate(
-        interval_block_starts(start_date, end_date, interval_weeks=4)
-    ):
-        if block_start <= iso_date <= block_end:
-            return idx
-    return None
-
-
 def _lineup_has_candidates(
     lineup_data: dict[str, Any] | None,
     key: str,
@@ -405,7 +395,13 @@ def _build_generation_context(
     ]
 
     weeks = campaign_weeks(start_date, end_date, campaign_brief_data=campaign_brief_data)
-    blocks = list(interval_block_starts(start_date, end_date, interval_weeks=4))
+    top_five_blocks = list(
+        interval_block_starts(
+            start_date,
+            end_date,
+            interval_weeks=TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
+        )
+    )
 
     brief_excerpt = {
         "overallStrategy": campaign_brief_data.get("overallStrategy"),
@@ -429,9 +425,14 @@ def _build_generation_context(
                 }
                 for week in weeks
             ],
-            "fourWeekBlocks": [
-                {"index": idx + 1, "startDate": b_start, "endDate": b_end}
-                for idx, (b_start, b_end) in enumerate(blocks)
+            "topFiveCategoryBlocks": [
+                {
+                    "index": idx + 1,
+                    "intervalWeeks": TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
+                    "startDate": b_start,
+                    "endDate": b_end,
+                }
+                for idx, (b_start, b_end) in enumerate(top_five_blocks)
             ],
             "publicHolidays": dates_data.get("publicHolidays")
             if isinstance(dates_data.get("publicHolidays"), list)
@@ -439,6 +440,19 @@ def _build_generation_context(
         },
         "candidates": {
             "topFiveCategoryPosts": top_five_posts,
+            "topFiveCadence": {
+                "intervalWeeks": TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
+                "rotationOrder": [post["id"] for post in top_five_posts],
+                "rule": (
+                    "Schedule exactly one top_five_category post every "
+                    f"{TOP_FIVE_CATEGORY_INTERVAL_WEEKS} weeks, rotating through rotationOrder. "
+                    "Do not schedule different top_five posts in consecutive weeks."
+                ),
+                "exampleTwoPosts": (
+                    "With posts A and B: week-1 block → A, next block → B, next block → A "
+                    "(not A in week 1 and B in week 2)."
+                ),
+            },
             "weekdayPosts": weekday_posts,
             "weekdayReels": weekday_reels,
             "weekendReels": weekend_reels,
@@ -490,6 +504,7 @@ def _validate_scheduler_rules(
     end_date: str,
     campaign_brief_data: dict[str, Any],
     top_five_post_ids: set[str],
+    top_five_post_order: list[str],
     weekday_post_ids: set[str],
     weekday_reel_ids: set[str],
     weekend_reel_ids: set[str],
@@ -511,7 +526,7 @@ def _validate_scheduler_rules(
         if parsed is not None:
             lunch_window = parsed
 
-    top_five_by_block: dict[int, dict[str, int]] = {}
+    top_five_dated: list[tuple[str, str]] = []
     feedback_by_block: dict[int, int] = {}
     weekday_posts_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
     weekday_reels_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
@@ -532,11 +547,18 @@ def _validate_scheduler_rules(
 
         if slot.kind == "post":
             if source_id in top_five_post_ids:
-                block_index = _weekly_block_index(iso_date, start_date, end_date)
+                block_index = interval_block_index(
+                    iso_date,
+                    start_date,
+                    end_date,
+                    interval_weeks=TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
+                )
                 if block_index is None:
-                    raise ValueError(f"top five post slot {iso_date} is outside 4-week blocks")
-                block_counts = top_five_by_block.setdefault(block_index, {})
-                block_counts[source_id] = block_counts.get(source_id, 0) + 1
+                    raise ValueError(
+                        f"top five post slot {iso_date} is outside "
+                        f"{TOP_FIVE_CATEGORY_INTERVAL_WEEKS}-week blocks"
+                    )
+                top_five_dated.append((iso_date, source_id))
             elif weekday_post_ids and source_id in weekday_post_ids:
                 if not _is_weekday(iso_date):
                     raise ValueError(f"weekday post must be on weekday: {iso_date}")
@@ -572,29 +594,46 @@ def _validate_scheduler_rules(
                     )
                 fixed_story_hits[source_id] = fixed_story_hits.get(source_id, 0) + 1
             elif source_id in feedback_story_ids:
-                block_index = _weekly_block_index(iso_date, start_date, end_date)
+                block_index = interval_block_index(
+                    iso_date,
+                    start_date,
+                    end_date,
+                    interval_weeks=USER_REVIEW_STORY_INTERVAL_WEEKS,
+                )
                 if block_index is None:
-                    raise ValueError(f"feedback story slot {iso_date} is outside 4-week blocks")
+                    raise ValueError(
+                        f"feedback story slot {iso_date} is outside "
+                        f"{USER_REVIEW_STORY_INTERVAL_WEEKS}-week blocks"
+                    )
                 feedback_by_block[block_index] = feedback_by_block.get(block_index, 0) + 1
             else:
                 raise ValueError(
                     f"story sourceId not found in story lineup candidates: {source_id}"
                 )
 
-    total_blocks = len(list(interval_block_starts(start_date, end_date, interval_weeks=4)))
-    for block_index in range(total_blocks):
+    feedback_blocks = list(
+        interval_block_starts(
+            start_date,
+            end_date,
+            interval_weeks=USER_REVIEW_STORY_INTERVAL_WEEKS,
+        )
+    )
+    for block_index in range(len(feedback_blocks)):
         if feedback_story_ids and feedback_by_block.get(block_index, 0) != 1:
             raise ValueError(
-                f"positive user feedback story must be exactly 1 in 4-week block {block_index + 1}"
+                f"positive user feedback story must be exactly 1 in "
+                f"{USER_REVIEW_STORY_INTERVAL_WEEKS}-week block {block_index + 1}"
             )
-        if top_five_post_ids:
-            block_top_five = top_five_by_block.get(block_index, {})
-            for post_id in top_five_post_ids:
-                if block_top_five.get(post_id, 0) != 1:
-                    raise ValueError(
-                        f"top five category post {post_id} must be exactly 1 in 4-week block "
-                        f"{block_index + 1}"
-                    )
+
+    if top_five_post_ids:
+        cadence_issues = top_five_cadence_issues(
+            dated_post_ids=top_five_dated,
+            start_date=start_date,
+            end_date=end_date,
+            lineup_order=top_five_post_order,
+        )
+        if cadence_issues:
+            raise ValueError(cadence_issues[0])
 
     for week in weeks:
         if not week_requires_weekly_cadence(
@@ -725,11 +764,13 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
         if str(item.get("id") or "").strip()
     }
 
-    top_five_post_ids = {
-        row_id
-        for row_id, item in post_by_id.items()
+    top_five_post_order = [
+        str(item.get("id") or "").strip()
+        for item in post_candidates
         if str(item.get("intent") or "").strip() == "top_five_category"
-    }
+        and str(item.get("id") or "").strip()
+    ]
+    top_five_post_ids = set(top_five_post_order)
     weekday_post_ids = {
         row_id
         for row_id, item in post_by_id.items()
@@ -820,6 +861,7 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
                 end_date=end_date,
                 campaign_brief_data=campaign_brief_data,
                 top_five_post_ids=top_five_post_ids,
+                top_five_post_order=top_five_post_order,
                 weekday_post_ids=weekday_post_ids,
                 weekday_reel_ids=weekday_reel_ids,
                 weekend_reel_ids=weekend_reel_ids,

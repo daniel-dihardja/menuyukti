@@ -76,7 +76,7 @@ def _prior_json() -> str:
                         "intent": "top_five_category",
                         "title": "Top 5 MAINS",
                         "category": "MAINS",
-                        "intervalWeeks": 4,
+                        "intervalWeeks": 2,
                         "fixdate": False,
                         "slides": [
                             {
@@ -195,6 +195,13 @@ def _valid_draft() -> SchedulerDraftOutput:
                 sourceId="top-five-mains",
             ),
             SchedulerDraftSlot(
+                kind="post",
+                date="2026-06-15",
+                time="12:00",
+                title="Top 5 MAINS",
+                sourceId="top-five-mains",
+            ),
+            SchedulerDraftSlot(
                 kind="reel",
                 date="2026-06-02",
                 time="12:15",
@@ -262,6 +269,13 @@ def _valid_draft_without_reels() -> SchedulerDraftOutput:
             SchedulerDraftSlot(
                 kind="post",
                 date="2026-06-01",
+                time="12:00",
+                title="Top 5 MAINS",
+                sourceId="top-five-mains",
+            ),
+            SchedulerDraftSlot(
+                kind="post",
+                date="2026-06-15",
                 time="12:00",
                 title="Top 5 MAINS",
                 sourceId="top-five-mains",
@@ -339,7 +353,7 @@ async def test_generate_schedule_with_llm_success() -> None:
     assert isinstance(normalized, dict)
     assert normalized["startDate"] == "2026-06-01"
     assert normalized["endDate"] == "2026-06-28"
-    assert len(normalized["slots"]) == 8
+    assert len(normalized["slots"]) == 9
     post_slot = next(slot for slot in normalized["slots"] if slot.get("kind") == "post")
     assert post_slot.get("post", {}).get("category") == "MAINS"
     assert "scheduleExplanation" in normalized

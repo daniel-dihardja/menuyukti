@@ -12,7 +12,7 @@ const topFivePost = {
   intent: 'top_five_category' as const,
   title: 'Top 5 MAINS',
   category: 'MAINS',
-  intervalWeeks: 4,
+  intervalWeeks: 2,
   fixdate: false,
   slides: [
     {

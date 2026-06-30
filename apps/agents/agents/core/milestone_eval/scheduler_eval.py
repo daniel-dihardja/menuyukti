@@ -60,21 +60,6 @@ def _dates_window():
     return dates_window
 
 
-def _weekly_block_index(iso_date: str, start_date: str, end_date: str) -> int | None:
-    dates_window = _dates_window()
-    parsed = dates_window.parse_iso_date(iso_date)
-    start = dates_window.parse_iso_date(start_date)
-    end = dates_window.parse_iso_date(end_date)
-    if parsed is None or start is None or end is None or parsed < start or parsed > end:
-        return None
-    for idx, (block_start, block_end) in enumerate(
-        dates_window.interval_block_starts(start_date, end_date, interval_weeks=4)
-    ):
-        if block_start <= iso_date <= block_end:
-            return idx
-    return None
-
-
 def _campaign_week_start(iso_date: str, start_date: str, end_date: str) -> str | None:
     for week in _dates_window().campaign_weeks(start_date, end_date):
         if week.week_start <= iso_date <= week.week_end:
@@ -93,9 +78,7 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
     if not weeks:
         return ["scheduler campaign window has no campaign weeks."]
 
-    blocks = list(dates_window.interval_block_starts(start_date, end_date, interval_weeks=4))
-    top_five_ids: set[str] = set()
-    top_five_by_block: dict[int, dict[str, int]] = {}
+    top_five_dated: list[tuple[str, str]] = []
     weekday_posts_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
     weekday_reels_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
     weekend_reels_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
@@ -112,11 +95,7 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
             if isinstance(post, dict):
                 post_id = str(post.get("id") or "").strip()
             if post_id:
-                top_five_ids.add(post_id)
-                block_index = _weekly_block_index(iso_date, start_date, end_date)
-                if block_index is not None:
-                    block_counts = top_five_by_block.setdefault(block_index, {})
-                    block_counts[post_id] = block_counts.get(post_id, 0) + 1
+                top_five_dated.append((iso_date, post_id))
         elif post_kind == "weekday":
             week_start = _campaign_week_start(iso_date, start_date, end_date)
             if week_start is not None:
@@ -132,15 +111,11 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
             if week_start is not None:
                 weekend_reels_by_week[week_start] = weekend_reels_by_week.get(week_start, 0) + 1
 
-    issues: list[str] = []
-    for block_index in range(len(blocks)):
-        block_counts = top_five_by_block.get(block_index, {})
-        for post_id in top_five_ids:
-            count = block_counts.get(post_id, 0)
-            if count != 1:
-                issues.append(
-                    f"4-week block {block_index + 1} has {count} {post_id} posts (expected 1)."
-                )
+    issues = dates_window.top_five_cadence_issues(
+        dated_post_ids=top_five_dated,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
     has_weekday_lunch_posts = any(count > 0 for count in weekday_posts_by_week.values())
     has_weekday_reels = any(count > 0 for count in weekday_reels_by_week.values())
@@ -217,11 +192,16 @@ def enrich_scheduler_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
         if start_date and end_date
         else None,
         "schedulableCampaignWeekIndexes": schedulable_weeks,
-        "expectedFourWeekBlocks": len(
-            dates_window.interval_block_starts(start_date, end_date, interval_weeks=4)
+        "expectedTopFiveCategoryBlocks": len(
+            dates_window.interval_block_starts(
+                start_date,
+                end_date,
+                interval_weeks=dates_window.TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
+            )
         )
         if start_date and end_date
         else None,
+        "topFiveCategoryIntervalWeeks": dates_window.TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
         "cadenceIssues": _cadence_issues(data),
     }
     return enriched
@@ -239,25 +219,40 @@ def try_scheduler_deterministic_verdict(
     issues = _cadence_issues(data)
     issues_text = "; ".join(issues)
 
-    if ("top_five" in normalized or "top five" in normalized) and "block" in normalized:
+    interval_weeks = _dates_window().TOP_FIVE_CATEGORY_INTERVAL_WEEKS
+    top_five_issue_markers = (
+        f"{interval_weeks}-week block",
+        "top_five_category posts on",
+        "top_five_category posts must rotate",
+    )
+
+    if ("top_five" in normalized or "top five" in normalized) and (
+        "block" in normalized or "rotate" in normalized or "every" in normalized
+    ):
         top_five_issues = [
-            issue for issue in issues if "4-week block" in issue and "expected 1" in issue
+            issue
+            for issue in issues
+            if any(marker in issue for marker in top_five_issue_markers)
         ]
         if not top_five_issues:
             return (
                 "pass",
-                "Scheduler schedules each top_five_category post exactly once per 4-week block.",
+                f"Scheduler publishes one top_five_category post every {interval_weeks} weeks, "
+                "rotating through lineup posts.",
             )
         return ("fail", issues_text or "Top five category post cadence is incomplete.")
 
     if "monthly" in normalized and "menu" in normalized and "highlight" in normalized:
         top_five_issues = [
-            issue for issue in issues if "4-week block" in issue and "expected 1" in issue
+            issue
+            for issue in issues
+            if any(marker in issue for marker in top_five_issue_markers)
         ]
         if not top_five_issues:
             return (
                 "pass",
-                "Scheduler schedules each top_five_category post exactly once per 4-week block.",
+                f"Scheduler publishes one top_five_category post every {interval_weeks} weeks, "
+                "rotating through lineup posts.",
             )
         return ("fail", issues_text or "Top five category post cadence is incomplete.")
 

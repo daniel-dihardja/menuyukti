@@ -58,6 +58,12 @@ def _valid_scheduler_payload() -> dict:
             post_id="top-five-mains",
             post_intent="top_five_category",
         ),
+        _slot(
+            kind="post",
+            date="2026-06-16",
+            post_id="top-five-mains",
+            post_intent="top_five_category",
+        ),
     ]
     for week in weeks:
         slots.append(
@@ -88,7 +94,8 @@ def test_enrich_scheduler_eval_payload_adds_cadence_hints() -> None:
     enriched = enrich_scheduler_eval_payload(_valid_scheduler_payload())
     assert enriched["_evalHints"]["requiresStartDate"] is True
     assert enriched["_evalHints"]["expectedCampaignWeeks"] == 4
-    assert enriched["_evalHints"]["expectedFourWeekBlocks"] == 1
+    assert enriched["_evalHints"]["expectedTopFiveCategoryBlocks"] == 2
+    assert enriched["_evalHints"]["topFiveCategoryIntervalWeeks"] == 2
     assert enriched["_evalHints"]["cadenceIssues"] == []
 
 
@@ -130,8 +137,61 @@ def test_top_five_and_reel_same_week_passes() -> None:
 
 def test_top_five_category_verdict_passes() -> None:
     verdict = try_scheduler_deterministic_verdict(
-        "Each top_five_category post is scheduled exactly once in each 4-week block.",
+        "Exactly one top_five_category post is scheduled every 2 weeks, rotating through lineup posts.",
         _valid_scheduler_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_top_five_weekly_alternation_fails() -> None:
+    """Two posts in consecutive weeks (w1 A, w2 B) violates one-post-per-2-week-block rule."""
+    payload = {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-28",
+        "publicHolidays": [],
+        "slots": [
+            _slot(
+                kind="post",
+                date="2026-06-02",
+                post_id="top-five-mains",
+                post_intent="top_five_category",
+            ),
+            _slot(
+                kind="post",
+                date="2026-06-09",
+                post_id="top-five-drinks",
+                post_intent="top_five_category",
+            ),
+        ],
+    }
+    enriched = enrich_scheduler_eval_payload(payload)
+    assert enriched["_evalHints"]["cadenceIssues"]
+
+
+def test_top_five_two_post_rotation_passes() -> None:
+    payload = {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-28",
+        "publicHolidays": [],
+        "slots": [
+            _slot(
+                kind="post",
+                date="2026-06-02",
+                post_id="top-five-mains",
+                post_intent="top_five_category",
+            ),
+            _slot(
+                kind="post",
+                date="2026-06-16",
+                post_id="top-five-drinks",
+                post_intent="top_five_category",
+            ),
+        ],
+    }
+    verdict = try_scheduler_deterministic_verdict(
+        "Exactly one top_five_category post is scheduled every 2 weeks, rotating through lineup posts.",
+        payload,
     )
     assert verdict is not None
     assert verdict[0] == "pass"

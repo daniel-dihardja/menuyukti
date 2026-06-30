@@ -86,7 +86,7 @@ describe('resolvePostLineupPostsForScheduler', () => {
               intent: 'top_five_category',
               title: 'Top 5 MAINS',
               category: 'MAINS',
-              intervalWeeks: 4,
+              intervalWeeks: 2,
               fixdate: false,
               slides: [
                 {
@@ -109,7 +109,7 @@ describe('resolvePostLineupPostsForScheduler', () => {
         intent: 'top_five_category',
         title: 'Top 5 MAINS',
         category: 'MAINS',
-        intervalWeeks: 4,
+        intervalWeeks: 2,
         fixdate: false,
         slides: [
           {

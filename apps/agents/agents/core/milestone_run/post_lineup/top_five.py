@@ -6,6 +6,7 @@ import json
 import re
 from typing import Any, Literal
 
+from agents_app.agents.core.milestone_run.dates_window import TOP_FIVE_CATEGORY_INTERVAL_WEEKS
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     MENU_CLUSTERER_TOP_LEADS,
     distinct_categories_with_stars,
@@ -20,7 +21,7 @@ from pydantic import BaseModel, Field, field_validator
 
 POST_LINEUP_TOP_FIVE_MAX_ITEMS = MENU_CLUSTERER_TOP_LEADS
 POST_LINEUP_TOP_FIVE_ID_PREFIX = "top-five"
-POST_LINEUP_TOP_FIVE_INTERVAL_WEEKS = 4
+POST_LINEUP_TOP_FIVE_INTERVAL_WEEKS = TOP_FIVE_CATEGORY_INTERVAL_WEEKS
 
 
 def _slugify_category(value: str) -> str:
