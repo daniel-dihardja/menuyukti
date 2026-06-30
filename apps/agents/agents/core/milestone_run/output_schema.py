@@ -983,16 +983,32 @@ class SchedulerPostSlotDetailOutput(BaseModel):
     title: str
     description: str | None = None
     captionGuidance: str | None = None
+    category: str | None = None
     slides: list[PostLineupSlideOutput]
     groupIds: list[str] = Field(default_factory=list)
 
-    @field_validator("description", "captionGuidance", mode="before")
+    @field_validator(
+        "description",
+        "captionGuidance",
+        "category",
+        mode="before",
+    )
     @classmethod
     def _normalize_optional_copy(cls, value: Any) -> str | None:
         if value is None:
             return None
         text = str(value).strip()
         return text or None
+
+    @model_validator(mode="after")
+    def _validate_post_by_intent(self) -> SchedulerPostSlotDetailOutput:
+        if self.intent == "top_five_category":
+            if not str(self.category or "").strip():
+                raise ValueError("category is required when intent is top_five_category")
+            for slide in self.slides:
+                if not str(slide.caption or "").strip():
+                    raise ValueError("caption is required on every slide for top_five_category")
+        return self
 
 
 class SchedulerReelSlotDetailOutput(BaseModel):

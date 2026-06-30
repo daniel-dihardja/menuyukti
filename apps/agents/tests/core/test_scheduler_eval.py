@@ -137,6 +137,28 @@ def test_top_five_category_verdict_passes() -> None:
     assert verdict[0] == "pass"
 
 
+def test_weekday_reel_verdict_passes_when_no_reels_scheduled() -> None:
+    payload = {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-28",
+        "publicHolidays": [],
+        "slots": [
+            _slot(
+                kind="post",
+                date="2026-06-02",
+                post_id="top-five-mains",
+                post_intent="top_five_category",
+            ),
+        ],
+    }
+    verdict = try_scheduler_deterministic_verdict(
+        "Exactly one weekday reel is scheduled in each campaign week.",
+        payload,
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
 def test_weekday_reel_verdict_passes() -> None:
     verdict = try_scheduler_deterministic_verdict(
         "Exactly one weekday reel is scheduled in each campaign week.",

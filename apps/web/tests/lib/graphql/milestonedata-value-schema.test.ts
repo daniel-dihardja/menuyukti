@@ -79,4 +79,47 @@ describe('milestonePresetFrom', () => {
       slots: schedulerPayload.slots,
     })
   })
+
+  it('accepts scheduler post slots that omit category when slides include it', () => {
+    const legacyPayload = {
+      ...schedulerPayload,
+      slots: [
+        {
+          kind: 'post',
+          date: '2026-07-03',
+          time: '10:00',
+          title: 'Top 5 DRINK',
+          post: {
+            id: 'top-five-drink',
+            format: 'carousel',
+            intent: 'top_five_category',
+            title: 'Top 5 DRINK',
+            slides: [
+              {
+                dishName: 'Latte',
+                imageBrief: 'Brief.',
+                caption: 'Caption.',
+                category: 'DRINK',
+              },
+            ],
+            groupIds: [],
+          },
+        },
+      ],
+    }
+
+    const data = milestonePresetFrom(
+      {
+        id: '237',
+        name: 'Scheduler',
+        data: { presetId: 'scheduler' },
+        milestonePresetData: legacyPayload,
+      },
+      'scheduler',
+    )
+
+    expect(data).toMatchObject({
+      slots: [{ post: { category: 'DRINK' } }],
+    })
+  })
 })

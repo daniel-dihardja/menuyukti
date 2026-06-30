@@ -754,6 +754,26 @@ export type StoryLineupMilestoneData = z.infer<typeof storyLineupMilestoneDataSc
 
 export const schedulerSlotKindSchema = z.enum(['story', 'post', 'reel'])
 
+/** Embedded post on a scheduler slot; infer category from slides when legacy rows omit it. */
+export const schedulerEmbeddedPostSchema = z.preprocess((value) => {
+  if (value == null || typeof value !== 'object') {
+    return value
+  }
+  const post = value as {
+    intent?: string
+    category?: string
+    slides?: Array<{ category?: string }>
+  }
+  if (post.intent !== 'top_five_category' || post.category?.trim()) {
+    return value
+  }
+  const slideCategory = post.slides?.find((slide) => slide.category?.trim())?.category?.trim()
+  if (!slideCategory) {
+    return value
+  }
+  return { ...post, category: slideCategory }
+}, postLineupPostSchema)
+
 function inferSchedulerSlotKindFromTitle(title: string): z.infer<typeof schedulerSlotKindSchema> {
   const trimmed = title.trimStart()
   if (trimmed.startsWith('Post:')) {
@@ -771,7 +791,7 @@ export const schedulerSlotSchema = z
     date: z.string(),
     time: z.string(),
     title: z.string(),
-    post: postLineupPostSchema.optional(),
+    post: schedulerEmbeddedPostSchema.optional(),
     reel: reelLineupReelSchema.optional(),
   })
   .transform((slot) => ({

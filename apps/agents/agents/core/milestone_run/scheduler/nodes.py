@@ -68,7 +68,7 @@ class SchedulerDraftOutput(BaseModel):
         min_length=1,
         max_length=SCHEDULE_EXPLANATION_MAX_CHARS,
         description=(
-            f"Exactly 2 short sentences (weekday reel, weekend reel timing), "
+            f"Exactly 2 short sentences explaining key scheduling choices, "
             f"max {SCHEDULE_EXPLANATION_MAX_WORDS} words, aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS} "
             f"characters, hard max {SCHEDULE_EXPLANATION_MAX_CHARS} characters."
         ),
@@ -340,6 +340,13 @@ def _weekly_block_index(iso_date: str, start_date: str, end_date: str) -> int | 
     return None
 
 
+def _lineup_has_candidates(
+    lineup_data: dict[str, Any] | None,
+    key: str,
+) -> bool:
+    return bool(_candidate_entries(lineup_data, key))
+
+
 def _build_generation_context(
     *,
     dates_data: dict[str, Any],
@@ -353,6 +360,9 @@ def _build_generation_context(
     posts = _candidate_entries(post_lineup_data, "posts")
     reels = _candidate_entries(reel_lineup_data, "reels")
     stories = _candidate_entries(story_lineup_data, "stories")
+    has_post_lineup = bool(posts)
+    has_reel_lineup = bool(reels)
+    has_story_lineup = bool(stories)
 
     top_five_posts = [
         {
@@ -403,6 +413,11 @@ def _build_generation_context(
         "offerAndCtaPlan": campaign_brief_data.get("offerAndCtaPlan"),
     }
     context_payload = {
+        "availableLineups": {
+            "posts": has_post_lineup,
+            "reels": has_reel_lineup,
+            "stories": has_story_lineup,
+        },
         "window": {
             "startDate": start_date,
             "endDate": end_date,
@@ -433,12 +448,24 @@ def _build_generation_context(
         "campaignBriefExcerpt": brief_excerpt,
     }
 
+    lineup_notes: list[str] = []
+    if not has_post_lineup:
+        lineup_notes.append("No post lineup candidates — do not schedule post slots.")
+    if not has_reel_lineup:
+        lineup_notes.append("No reel lineup candidates — do not schedule reel slots.")
+    if not has_story_lineup:
+        lineup_notes.append("No story lineup candidates — do not schedule story slots.")
+    lineup_note_text = (
+        "\n".join(lineup_notes) + "\n" if lineup_notes else ""
+    )
+
     return (
         "Generate schedule slots using ONLY candidate sourceId values from this input.\n"
         "Return one object with keys `slots` and `scheduleExplanation`.\n"
         "Each slot item has: kind, date, time, title, sourceId.\n"
-        f"scheduleExplanation is required (2 sentences: weekday reel and weekend reel timing; aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS} chars, max "
-        f"{SCHEDULE_EXPLANATION_MAX_CHARS}) per the system instructions.\n\n"
+        f"{lineup_note_text}"
+        f"scheduleExplanation is required (2 short sentences per the system instructions; aim "
+        f"~{SCHEDULE_EXPLANATION_TARGET_CHARS} chars, max {SCHEDULE_EXPLANATION_MAX_CHARS}).\n\n"
         f"```json\n{json.dumps(context_payload, ensure_ascii=False, indent=2)}\n```"
     )
 
@@ -450,9 +477,8 @@ def _scheduler_correction_message(error: str) -> HumanMessage:
             "`slots` and `scheduleExplanation`.\n"
             f"Validation error: {error[:1200]}\n"
             "Each slot item must include: kind, date, time, title, sourceId.\n"
-            f"scheduleExplanation must be exactly 2 short sentences (weekday reel, weekend reel), "
-            f"non-empty, and at most {SCHEDULE_EXPLANATION_MAX_CHARS} "
-            f"characters (aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS})."
+            f"scheduleExplanation must be exactly 2 short sentences, non-empty, and at most "
+            f"{SCHEDULE_EXPLANATION_MAX_CHARS} characters (aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS})."
         )
     )
 
@@ -557,17 +583,18 @@ def _validate_scheduler_rules(
 
     total_blocks = len(list(interval_block_starts(start_date, end_date, interval_weeks=4)))
     for block_index in range(total_blocks):
-        if feedback_by_block.get(block_index, 0) != 1:
+        if feedback_story_ids and feedback_by_block.get(block_index, 0) != 1:
             raise ValueError(
                 f"positive user feedback story must be exactly 1 in 4-week block {block_index + 1}"
             )
-        block_top_five = top_five_by_block.get(block_index, {})
-        for post_id in top_five_post_ids:
-            if block_top_five.get(post_id, 0) != 1:
-                raise ValueError(
-                    f"top five category post {post_id} must be exactly 1 in 4-week block "
-                    f"{block_index + 1}"
-                )
+        if top_five_post_ids:
+            block_top_five = top_five_by_block.get(block_index, {})
+            for post_id in top_five_post_ids:
+                if block_top_five.get(post_id, 0) != 1:
+                    raise ValueError(
+                        f"top five category post {post_id} must be exactly 1 in 4-week block "
+                        f"{block_index + 1}"
+                    )
 
     for week in weeks:
         if not week_requires_weekly_cadence(
@@ -579,16 +606,19 @@ def _validate_scheduler_rules(
             continue
         if weekday_post_ids and weekday_posts_by_week.get(week.week_start, 0) != 1:
             raise ValueError(f"weekday post must be exactly 1 in campaign week {week.week_index}")
-        if week_has_weekday_in_overlap(
-            week.week_start, week.week_end, start_date, end_date
-        ) and weekday_reels_by_week.get(week.week_start, 0) != 1:
+        if (
+            weekday_reel_ids
+            and week_has_weekday_in_overlap(week.week_start, week.week_end, start_date, end_date)
+            and weekday_reels_by_week.get(week.week_start, 0) != 1
+        ):
             raise ValueError(
                 f"weekday reel must be exactly 1 in campaign week {week.week_index}"
             )
 
-    for story_id, hit_count in fixed_story_hits.items():
-        if hit_count != 1:
-            raise ValueError(f"fixed-date story {story_id} must be scheduled exactly once")
+    if fixed_story_by_id:
+        for story_id, hit_count in fixed_story_hits.items():
+            if hit_count != 1:
+                raise ValueError(f"fixed-date story {story_id} must be scheduled exactly once")
 
 
 async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -729,18 +759,41 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
         if str(item.get("reason") or "").strip() == "user_review"
     }
 
+    post_lineup_data = state.get("post_lineup_data")
+    reel_lineup_data = state.get("reel_lineup_data")
+    story_lineup_data = state.get("story_lineup_data")
+
+    has_post_lineup = _lineup_has_candidates(
+        post_lineup_data if isinstance(post_lineup_data, dict) else None,
+        "posts",
+    )
+    has_reel_lineup = _lineup_has_candidates(
+        reel_lineup_data if isinstance(reel_lineup_data, dict) else None,
+        "reels",
+    )
+    has_story_lineup = _lineup_has_candidates(
+        story_lineup_data if isinstance(story_lineup_data, dict) else None,
+        "stories",
+    )
+
     generation_context = _build_generation_context(
         dates_data=dates_data,
         campaign_brief_data=campaign_brief_data,
-        post_lineup_data=state.get("post_lineup_data"),
-        reel_lineup_data=state.get("reel_lineup_data"),
-        story_lineup_data=state.get("story_lineup_data"),
+        post_lineup_data=post_lineup_data if isinstance(post_lineup_data, dict) else None,
+        reel_lineup_data=reel_lineup_data if isinstance(reel_lineup_data, dict) else None,
+        story_lineup_data=story_lineup_data if isinstance(story_lineup_data, dict) else None,
         start_date=start_date,
         end_date=end_date,
     )
 
     base_messages: list[BaseMessage] = [
-        SystemMessage(content=format_scheduler_system()),
+        SystemMessage(
+            content=format_scheduler_system(
+                has_post_lineup=has_post_lineup,
+                has_reel_lineup=has_reel_lineup,
+                has_story_lineup=has_story_lineup,
+            )
+        ),
         HumanMessage(content=generation_context),
     ]
     retry_error: str | None = None

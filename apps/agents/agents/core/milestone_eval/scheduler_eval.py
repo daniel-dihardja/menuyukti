@@ -142,9 +142,9 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
                     f"4-week block {block_index + 1} has {count} {post_id} posts (expected 1)."
                 )
 
-    has_weekday_lunch_posts = any(
-        count > 0 for count in weekday_posts_by_week.values()
-    )
+    has_weekday_lunch_posts = any(count > 0 for count in weekday_posts_by_week.values())
+    has_weekday_reels = any(count > 0 for count in weekday_reels_by_week.values())
+    has_weekend_reels = any(count > 0 for count in weekend_reels_by_week.values())
 
     for week in weeks:
         week_label = f"campaign week {week.week_index}"
@@ -164,7 +164,7 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
                     "top_five_category posts in the same week are allowed)."
                 )
 
-        if dates_window.week_has_weekday_in_overlap(
+        if has_weekday_reels and dates_window.week_has_weekday_in_overlap(
             week.week_start,
             week.week_end,
             start_date,
@@ -176,7 +176,7 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
                     f"{week_label} has {weekday_reel_count} weekday reels (expected 1)."
                 )
 
-        if dates_window.week_has_weekend_in_overlap(
+        if has_weekend_reels and dates_window.week_has_weekend_in_overlap(
             week.week_start,
             week.week_end,
             start_date,
@@ -280,6 +280,12 @@ def try_scheduler_deterministic_verdict(
         return ("fail", issues_text or "Weekday lunch post cadence is incomplete.")
 
     if "weekday" in normalized and "reel" in normalized:
+        has_weekday_reels = any(_classify_reel_slot(slot) == "weekday" for slot in _slots(data))
+        if not has_weekday_reels:
+            return (
+                "pass",
+                "No weekday reels in the lineup; weekday reel cadence is not required.",
+            )
         reel_issues = [issue for issue in issues if "weekday reels" in issue]
         if not reel_issues:
             return (
@@ -290,6 +296,12 @@ def try_scheduler_deterministic_verdict(
         return ("fail", issues_text or "Weekday reel cadence is incomplete.")
 
     if "weekend" in normalized and "reel" in normalized:
+        has_weekend_reels = any(_classify_reel_slot(slot) == "weekend" for slot in _slots(data))
+        if not has_weekend_reels:
+            return (
+                "pass",
+                "No weekend reels in the lineup; weekend reel cadence is not required.",
+            )
         reel_issues = [issue for issue in issues if "weekend reels" in issue]
         if not reel_issues:
             return (
