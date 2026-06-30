@@ -48,7 +48,7 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'post_lineup',
     name: 'Post lineup',
     description:
-      'Plan Instagram feed carousel posts: a pinned monthly signature menu post plus one weekday lunch post per campaign week.',
+      'Plan Instagram feed carousel posts: one Top 5 carousel per star category from menu tagger data.',
   },
   {
     id: 'reel_lineup',
@@ -60,7 +60,7 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'story_lineup',
     name: 'Story lineup',
     description:
-      'Select public holidays that deserve Instagram Story greetings plus a recurring user-review story for the scheduler.',
+      'Select public holidays for Instagram Story greetings and a recurring user-review story.',
   },
   {
     id: 'culture_hooks',

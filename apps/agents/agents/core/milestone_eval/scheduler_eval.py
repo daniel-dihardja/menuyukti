@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
-POST_MONTHLY_ID = "pinned-monthly-menu"
+POST_TOP_FIVE_ID_PREFIX = "top-five-"
 POST_WEEKDAY_ID_PREFIX = "weekday-lunch-post-week"
 REEL_WEEKDAY_ID_PREFIX = "weekday-reel-week"
 REEL_WEEKEND_ID_PREFIX = "weekend-reel-week"
@@ -28,14 +28,14 @@ def _slots(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [row for row in raw if isinstance(row, dict)]
 
 
-def _classify_post_slot(slot: dict[str, Any]) -> Literal["monthly", "weekday", "other", ""]:
+def _classify_post_slot(slot: dict[str, Any]) -> Literal["top_five", "weekday", "other", ""]:
     post = slot.get("post")
     if not isinstance(post, dict):
         return ""
     post_id = str(post.get("id") or "").strip()
     intent = str(post.get("intent") or "").strip()
-    if post_id == POST_MONTHLY_ID or intent == "pinned_monthly_menu":
-        return "monthly"
+    if post_id.startswith(POST_TOP_FIVE_ID_PREFIX) or intent == "top_five_category":
+        return "top_five"
     if post_id.startswith(POST_WEEKDAY_ID_PREFIX) or intent == "weekday_lunch_post":
         return "weekday"
     return "other"
@@ -94,7 +94,8 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
         return ["scheduler campaign window has no campaign weeks."]
 
     blocks = list(dates_window.interval_block_starts(start_date, end_date, interval_weeks=4))
-    monthlies_by_block: dict[int, int] = {idx: 0 for idx in range(len(blocks))}
+    top_five_ids: set[str] = set()
+    top_five_by_block: dict[int, dict[str, int]] = {}
     weekday_posts_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
     weekday_reels_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
     weekend_reels_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
@@ -105,10 +106,17 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
             continue
 
         post_kind = _classify_post_slot(slot)
-        if post_kind == "monthly":
-            block_index = _weekly_block_index(iso_date, start_date, end_date)
-            if block_index is not None:
-                monthlies_by_block[block_index] = monthlies_by_block.get(block_index, 0) + 1
+        if post_kind == "top_five":
+            post = slot.get("post")
+            post_id = ""
+            if isinstance(post, dict):
+                post_id = str(post.get("id") or "").strip()
+            if post_id:
+                top_five_ids.add(post_id)
+                block_index = _weekly_block_index(iso_date, start_date, end_date)
+                if block_index is not None:
+                    block_counts = top_five_by_block.setdefault(block_index, {})
+                    block_counts[post_id] = block_counts.get(post_id, 0) + 1
         elif post_kind == "weekday":
             week_start = _campaign_week_start(iso_date, start_date, end_date)
             if week_start is not None:
@@ -126,11 +134,17 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
 
     issues: list[str] = []
     for block_index in range(len(blocks)):
-        count = monthlies_by_block.get(block_index, 0)
-        if count != 1:
-            issues.append(
-                f"4-week block {block_index + 1} has {count} monthly menu highlight posts (expected 1)."
-            )
+        block_counts = top_five_by_block.get(block_index, {})
+        for post_id in top_five_ids:
+            count = block_counts.get(post_id, 0)
+            if count != 1:
+                issues.append(
+                    f"4-week block {block_index + 1} has {count} {post_id} posts (expected 1)."
+                )
+
+    has_weekday_lunch_posts = any(
+        count > 0 for count in weekday_posts_by_week.values()
+    )
 
     for week in weeks:
         week_label = f"campaign week {week.week_index}"
@@ -142,12 +156,13 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
         ):
             continue
 
-        post_count = weekday_posts_by_week.get(week.week_start, 0)
-        if post_count != 1:
-            issues.append(
-                f"{week_label} has {post_count} weekday lunch posts (expected 1; "
-                "monthly menu highlight posts are separate)."
-            )
+        if has_weekday_lunch_posts:
+            post_count = weekday_posts_by_week.get(week.week_start, 0)
+            if post_count != 1:
+                issues.append(
+                    f"{week_label} has {post_count} weekday lunch posts (expected 1; "
+                    "top_five_category posts in the same week are allowed)."
+                )
 
         if dates_window.week_has_weekday_in_overlap(
             week.week_start,
@@ -224,22 +239,43 @@ def try_scheduler_deterministic_verdict(
     issues = _cadence_issues(data)
     issues_text = "; ".join(issues)
 
-    if "monthly" in normalized and "menu" in normalized and "highlight" in normalized:
-        monthly_issues = [issue for issue in issues if "monthly menu highlight" in issue]
-        if not monthly_issues:
+    if ("top_five" in normalized or "top five" in normalized) and "block" in normalized:
+        top_five_issues = [
+            issue for issue in issues if "4-week block" in issue and "expected 1" in issue
+        ]
+        if not top_five_issues:
             return (
                 "pass",
-                "Scheduler includes exactly one monthly menu highlight post in each 4-week block.",
+                "Scheduler schedules each top_five_category post exactly once per 4-week block.",
             )
-        return ("fail", issues_text or "Monthly menu highlight cadence is incomplete.")
+        return ("fail", issues_text or "Top five category post cadence is incomplete.")
+
+    if "monthly" in normalized and "menu" in normalized and "highlight" in normalized:
+        top_five_issues = [
+            issue for issue in issues if "4-week block" in issue and "expected 1" in issue
+        ]
+        if not top_five_issues:
+            return (
+                "pass",
+                "Scheduler schedules each top_five_category post exactly once per 4-week block.",
+            )
+        return ("fail", issues_text or "Top five category post cadence is incomplete.")
 
     if "weekday" in normalized and "post" in normalized:
+        has_weekday_lunch_posts = any(
+            _classify_post_slot(slot) == "weekday" for slot in _slots(data)
+        )
+        if not has_weekday_lunch_posts:
+            return (
+                "pass",
+                "No weekday lunch posts in the lineup; weekday post cadence is not required.",
+            )
         post_issues = [issue for issue in issues if "weekday lunch posts" in issue]
         if not post_issues:
             return (
                 "pass",
                 "Each schedulable campaign week has exactly one weekday lunch post "
-                "(monthly menu highlight posts in the same week are allowed).",
+                "(top_five_category posts in the same week are allowed).",
             )
         return ("fail", issues_text or "Weekday lunch post cadence is incomplete.")
 

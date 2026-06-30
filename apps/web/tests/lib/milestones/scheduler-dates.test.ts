@@ -81,28 +81,20 @@ describe('resolvePostLineupPostsForScheduler', () => {
           endDate: '2026-06-14',
           posts: [
             {
-              id: 'post-1',
+              id: 'top-five-mains',
               format: 'carousel',
-              intent: 'pinned_monthly_menu',
-              title: 'Monthly top menu',
-              groupIds: ['group-1'],
-              slides: [{ dishName: 'Ribeye', imageBrief: 'Hero brief.' }],
-            },
-            {
-              id: 'weekday-lunch-post-week-2026-06-01',
-              format: 'carousel',
-              intent: 'weekday_lunch_post',
-              title: 'Weekday lunch',
-              groupIds: ['group-1'],
-              slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
-            },
-            {
-              id: 'weekday-lunch-post-week-2026-06-08',
-              format: 'carousel',
-              intent: 'weekday_lunch_post',
-              title: 'Weekday lunch',
-              groupIds: ['group-1'],
-              slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
+              intent: 'top_five_category',
+              title: 'Top 5 MAINS',
+              category: 'MAINS',
+              intervalWeeks: 4,
+              fixdate: false,
+              slides: [
+                {
+                  dishName: 'Ribeye',
+                  imageBrief: 'Hero brief.',
+                  caption: 'Ribeye caption.',
+                },
+              ],
             },
           ],
         },
@@ -112,28 +104,20 @@ describe('resolvePostLineupPostsForScheduler', () => {
 
     expect(resolvePostLineupPostsForScheduler(milestones, '2')).toEqual([
       {
-        id: 'post-1',
+        id: 'top-five-mains',
         format: 'carousel',
-        intent: 'pinned_monthly_menu',
-        title: 'Monthly top menu',
-        groupIds: ['group-1'],
-        slides: [{ dishName: 'Ribeye', imageBrief: 'Hero brief.' }],
-      },
-      {
-        id: 'weekday-lunch-post-week-2026-06-01',
-        format: 'carousel',
-        intent: 'weekday_lunch_post',
-        title: 'Weekday lunch',
-        groupIds: ['group-1'],
-        slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
-      },
-      {
-        id: 'weekday-lunch-post-week-2026-06-08',
-        format: 'carousel',
-        intent: 'weekday_lunch_post',
-        title: 'Weekday lunch',
-        groupIds: ['group-1'],
-        slides: [{ dishName: 'Burger', imageBrief: 'Lunch brief.' }],
+        intent: 'top_five_category',
+        title: 'Top 5 MAINS',
+        category: 'MAINS',
+        intervalWeeks: 4,
+        fixdate: false,
+        slides: [
+          {
+            dishName: 'Ribeye',
+            imageBrief: 'Hero brief.',
+            caption: 'Ribeye caption.',
+          },
+        ],
       },
     ])
   })

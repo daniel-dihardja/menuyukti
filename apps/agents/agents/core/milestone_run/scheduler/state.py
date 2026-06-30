@@ -8,7 +8,7 @@ from typing import Any, Literal, NotRequired, TypedDict
 class SchedulerPostSlotDetail(TypedDict):
     id: str
     format: Literal["carousel"]
-    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
+    intent: Literal["top_five_category", "weekday_lunch_post"]
     title: str
     slides: list[dict[str, str]]
     groupIds: list[str]

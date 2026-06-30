@@ -10,6 +10,7 @@ from agents_app.agents.core.milestone_run.dates_window import CampaignWeek
 class PostLineupSlide(TypedDict):
     dishName: str
     imageBrief: str
+    caption: NotRequired[str]
     role: NotRequired[Literal["star", "puzzle"]]
     category: NotRequired[str]
     storytellingFit: NotRequired[Literal["strong", "weak"]]
@@ -34,12 +35,14 @@ class PostLineupScheduleHints(TypedDict):
 class PostLineupPost(TypedDict):
     id: str
     format: Literal["carousel"]
-    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
+    intent: Literal["top_five_category", "weekday_lunch_post"]
     title: str
-    description: str
-    captionGuidance: str
     slides: list[PostLineupSlide]
-    groupIds: list[str]
+    description: NotRequired[str]
+    captionGuidance: NotRequired[str]
+    category: NotRequired[str]
+    intervalWeeks: NotRequired[int]
+    groupIds: NotRequired[list[str]]
     date: NotRequired[str]
     fixdate: NotRequired[bool]
     scheduleHints: NotRequired[PostLineupScheduleHints]
@@ -51,6 +54,7 @@ class PostLineupOutput(TypedDict):
     endDate: NotRequired[str]
     sourceMenuClustererTitle: NotRequired[str]
     sourceCampaignBriefTitle: NotRequired[str]
+    sourceMenuTaggerTitle: NotRequired[str]
     sourceDatesTitle: NotRequired[str]
     notes: NotRequired[str]
 
@@ -77,6 +81,10 @@ class PostLineupState(TypedDict):
     groups: NotRequired[list[dict[str, Any]]]
     food_leads: NotRequired[list[dict[str, Any]]]
     source_menu_clusterer_title: NotRequired[str]
+    menu_tagger_data: NotRequired[dict[str, Any]]
+    source_menu_tagger_title: NotRequired[str]
+    top_five_categories: NotRequired[list[dict[str, Any]]]
+    top_five_posts: NotRequired[list[dict[str, Any]]]
     generated_output: NotRequired[PostLineupOutput | None]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | list[Any] | None]

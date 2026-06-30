@@ -10,8 +10,10 @@ class StoryLineupStory(TypedDict):
     title: str
     date: NotRequired[str]
     fixdate: NotRequired[bool]
-    reason: NotRequired[Literal["public_holiday"]]
+    reason: NotRequired[Literal["public_holiday", "user_review"]]
     holidayName: NotRequired[str]
+    time: NotRequired[str]
+    intervalWeeks: NotRequired[int]
 
 
 class StoryLineupOutput(TypedDict):

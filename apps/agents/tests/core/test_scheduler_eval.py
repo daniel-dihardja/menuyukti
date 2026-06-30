@@ -55,19 +55,11 @@ def _valid_scheduler_payload() -> dict:
         _slot(
             kind="post",
             date="2026-06-02",
-            post_id="pinned-monthly-menu",
-            post_intent="pinned_monthly_menu",
+            post_id="top-five-mains",
+            post_intent="top_five_category",
         ),
     ]
     for week in weeks:
-        slots.append(
-            _slot(
-                kind="post",
-                date=week.post_date,
-                post_id=f"weekday-lunch-post-week-{week.week_start}",
-                post_intent="weekday_lunch_post",
-            )
-        )
         slots.append(
             _slot(
                 kind="reel",
@@ -100,7 +92,7 @@ def test_enrich_scheduler_eval_payload_adds_cadence_hints() -> None:
     assert enriched["_evalHints"]["cadenceIssues"] == []
 
 
-def test_monthly_and_weekday_post_same_week_passes() -> None:
+def test_top_five_and_reel_same_week_passes() -> None:
     start_date = "2026-06-01"
     end_date = "2026-06-07"
     week = campaign_weeks(start_date, end_date)[0]
@@ -111,14 +103,8 @@ def test_monthly_and_weekday_post_same_week_passes() -> None:
             _slot(
                 kind="post",
                 date="2026-06-02",
-                post_id="pinned-monthly-menu",
-                post_intent="pinned_monthly_menu",
-            ),
-            _slot(
-                kind="post",
-                date=week.post_date,
-                post_id=f"weekday-lunch-post-week-{week.week_start}",
-                post_intent="weekday_lunch_post",
+                post_id="top-five-mains",
+                post_intent="top_five_category",
             ),
             _slot(
                 kind="reel",
@@ -135,25 +121,16 @@ def test_monthly_and_weekday_post_same_week_passes() -> None:
         ],
     }
     verdict = try_scheduler_deterministic_verdict(
-        "Each schedulable campaign week has exactly one weekday lunch post.",
+        "Exactly one weekday reel is scheduled in each campaign week.",
         payload,
     )
     assert verdict is not None
     assert verdict[0] == "pass"
 
 
-def test_monthly_menu_highlight_verdict_passes() -> None:
+def test_top_five_category_verdict_passes() -> None:
     verdict = try_scheduler_deterministic_verdict(
-        "Exactly one monthly menu highlight post is scheduled in each 4-week block.",
-        _valid_scheduler_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_weekday_post_verdict_passes() -> None:
-    verdict = try_scheduler_deterministic_verdict(
-        "Exactly one weekday post is scheduled in each campaign week.",
+        "Each top_five_category post is scheduled exactly once in each 4-week block.",
         _valid_scheduler_payload(),
     )
     assert verdict is not None
@@ -188,19 +165,11 @@ def test_tail_week_without_weekend_does_not_require_weekend_reel() -> None:
         _slot(
             kind="post",
             date="2026-06-02",
-            post_id="pinned-monthly-menu",
-            post_intent="pinned_monthly_menu",
+            post_id="top-five-mains",
+            post_intent="top_five_category",
         ),
     ]
     for week in weeks[:-1]:
-        slots.append(
-            _slot(
-                kind="post",
-                date=week.post_date,
-                post_id=f"weekday-lunch-post-week-{week.week_start}",
-                post_intent="weekday_lunch_post",
-            )
-        )
         slots.append(
             _slot(
                 kind="reel",
@@ -218,14 +187,6 @@ def test_tail_week_without_weekend_does_not_require_weekend_reel() -> None:
             )
         )
     last = weeks[-1]
-    slots.append(
-        _slot(
-            kind="post",
-            date=last.post_date,
-            post_id=f"weekday-lunch-post-week-{last.week_start}",
-            post_intent="weekday_lunch_post",
-        )
-    )
     slots.append(
         _slot(
             kind="reel",
@@ -246,22 +207,3 @@ def test_tail_week_without_weekend_does_not_require_weekend_reel() -> None:
     )
     assert verdict is not None
     assert verdict[0] == "pass"
-
-
-def test_weekday_post_verdict_fails_when_missing_week() -> None:
-    payload = _valid_scheduler_payload()
-    payload["slots"] = [
-        slot
-        for slot in payload["slots"]
-        if not (
-            slot.get("post", {}).get("intent") == "weekday_lunch_post"
-            and slot.get("date") == campaign_weeks("2026-06-01", "2026-06-28")[0].post_date
-        )
-    ]
-    verdict = try_scheduler_deterministic_verdict(
-        "Exactly one weekday post is scheduled in each campaign week.",
-        payload,
-    )
-    assert verdict is not None
-    assert verdict[0] == "fail"
-    assert "weekday lunch posts" in verdict[1]

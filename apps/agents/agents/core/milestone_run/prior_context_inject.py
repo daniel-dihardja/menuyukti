@@ -269,6 +269,36 @@ def extract_menu_tagger_data(prior_milestones_json: str) -> dict[str, Any] | Non
     return None
 
 
+def menu_tagger_prior_error_message(
+    prior_milestones_json: str, *, milestone_id: str = "milestone"
+) -> str:
+    """Actionable error when a milestone cannot read prior menu_tagger data."""
+    base = f"{milestone_id} requires a prior menu_tagger milestone with saved data"
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place menu_tagger before this milestone in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_tagger_preset = any(
+        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "menu_tagger"
+        for row in rows
+    )
+    if not has_tagger_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add a menu_tagger step before this milestone, run it successfully, "
+            "then run this milestone again."
+        )
+    return (
+        f"{base}. A menu_tagger milestone appears earlier in the workflow "
+        "but its saved preset data is missing or invalid — open that step, "
+        "confirm the Data tab shows tagged items, and re-run menu_tagger."
+    )
+
+
 def is_menu_clusterer_milestone_data(data: object) -> bool:
     if not isinstance(data, dict):
         return False

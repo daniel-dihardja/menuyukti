@@ -68,7 +68,7 @@ class SchedulerDraftOutput(BaseModel):
         min_length=1,
         max_length=SCHEDULE_EXPLANATION_MAX_CHARS,
         description=(
-            f"Exactly 3 short sentences (weekday reel, weekend reel, weekday post timing), "
+            f"Exactly 2 short sentences (weekday reel, weekend reel timing), "
             f"max {SCHEDULE_EXPLANATION_MAX_WORDS} words, aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS} "
             f"characters, hard max {SCHEDULE_EXPLANATION_MAX_CHARS} characters."
         ),
@@ -179,7 +179,7 @@ def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
     title = str(post.get("title") or "").strip()
     intent = str(post.get("intent") or "").strip()
     post_format = str(post.get("format") or "").strip()
-    if not post_id or not title or intent not in {"pinned_monthly_menu", "weekday_lunch_post"}:
+    if not post_id or not title or intent not in {"top_five_category", "weekday_lunch_post"}:
         return None
     if post_format != "carousel":
         return None
@@ -200,6 +200,9 @@ def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
             "dishName": dish_name,
             "imageBrief": image_brief,
         }
+        caption = str(slide.get("caption") or "").strip()
+        if caption:
+            slide_payload["caption"] = caption
         role = slide.get("role")
         if role in {"star", "puzzle"}:
             slide_payload["role"] = role
@@ -222,6 +225,9 @@ def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
         "slides": slides,
         "groupIds": group_ids,
     }
+    category = str(post.get("category") or "").strip()
+    if category:
+        payload["category"] = category
     description = str(post.get("description") or "").strip()
     if description:
         payload["description"] = description
@@ -348,10 +354,14 @@ def _build_generation_context(
     reels = _candidate_entries(reel_lineup_data, "reels")
     stories = _candidate_entries(story_lineup_data, "stories")
 
-    monthly_posts = [
-        {"id": str(p.get("id") or "").strip(), "title": str(p.get("title") or "").strip()}
+    top_five_posts = [
+        {
+            "id": str(p.get("id") or "").strip(),
+            "title": str(p.get("title") or "").strip(),
+            "category": str(p.get("category") or "").strip(),
+        }
         for p in posts
-        if str(p.get("intent") or "").strip() == "pinned_monthly_menu"
+        if str(p.get("intent") or "").strip() == "top_five_category"
     ]
     weekday_posts = [
         {"id": str(p.get("id") or "").strip(), "title": str(p.get("title") or "").strip()}
@@ -413,7 +423,7 @@ def _build_generation_context(
             else [],
         },
         "candidates": {
-            "monthlyMenuPosts": monthly_posts,
+            "topFiveCategoryPosts": top_five_posts,
             "weekdayPosts": weekday_posts,
             "weekdayReels": weekday_reels,
             "weekendReels": weekend_reels,
@@ -427,8 +437,7 @@ def _build_generation_context(
         "Generate schedule slots using ONLY candidate sourceId values from this input.\n"
         "Return one object with keys `slots` and `scheduleExplanation`.\n"
         "Each slot item has: kind, date, time, title, sourceId.\n"
-        f"scheduleExplanation is required (3 sentences: weekday reel, weekend reel, weekday "
-        f"post timing; aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS} chars, max "
+        f"scheduleExplanation is required (2 sentences: weekday reel and weekend reel timing; aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS} chars, max "
         f"{SCHEDULE_EXPLANATION_MAX_CHARS}) per the system instructions.\n\n"
         f"```json\n{json.dumps(context_payload, ensure_ascii=False, indent=2)}\n```"
     )
@@ -441,8 +450,8 @@ def _scheduler_correction_message(error: str) -> HumanMessage:
             "`slots` and `scheduleExplanation`.\n"
             f"Validation error: {error[:1200]}\n"
             "Each slot item must include: kind, date, time, title, sourceId.\n"
-            f"scheduleExplanation must be exactly 3 short sentences (weekday reel, weekend reel, "
-            f"weekday post day/time), non-empty, and at most {SCHEDULE_EXPLANATION_MAX_CHARS} "
+            f"scheduleExplanation must be exactly 2 short sentences (weekday reel, weekend reel), "
+            f"non-empty, and at most {SCHEDULE_EXPLANATION_MAX_CHARS} "
             f"characters (aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS})."
         )
     )
@@ -454,7 +463,7 @@ def _validate_scheduler_rules(
     start_date: str,
     end_date: str,
     campaign_brief_data: dict[str, Any],
-    monthly_post_ids: set[str],
+    top_five_post_ids: set[str],
     weekday_post_ids: set[str],
     weekday_reel_ids: set[str],
     weekend_reel_ids: set[str],
@@ -476,7 +485,7 @@ def _validate_scheduler_rules(
         if parsed is not None:
             lunch_window = parsed
 
-    monthlies_by_block: dict[int, int] = {}
+    top_five_by_block: dict[int, dict[str, int]] = {}
     feedback_by_block: dict[int, int] = {}
     weekday_posts_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
     weekday_reels_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
@@ -496,12 +505,13 @@ def _validate_scheduler_rules(
             raise ValueError(f"slot date {iso_date} does not map to a campaign week")
 
         if slot.kind == "post":
-            if source_id in monthly_post_ids:
+            if source_id in top_five_post_ids:
                 block_index = _weekly_block_index(iso_date, start_date, end_date)
                 if block_index is None:
-                    raise ValueError(f"monthly post slot {iso_date} is outside 4-week blocks")
-                monthlies_by_block[block_index] = monthlies_by_block.get(block_index, 0) + 1
-            elif source_id in weekday_post_ids:
+                    raise ValueError(f"top five post slot {iso_date} is outside 4-week blocks")
+                block_counts = top_five_by_block.setdefault(block_index, {})
+                block_counts[source_id] = block_counts.get(source_id, 0) + 1
+            elif weekday_post_ids and source_id in weekday_post_ids:
                 if not _is_weekday(iso_date):
                     raise ValueError(f"weekday post must be on weekday: {iso_date}")
                 if not _is_within_lunch_time(slot_time, lunch_window):
@@ -547,14 +557,17 @@ def _validate_scheduler_rules(
 
     total_blocks = len(list(interval_block_starts(start_date, end_date, interval_weeks=4)))
     for block_index in range(total_blocks):
-        if monthlies_by_block.get(block_index, 0) != 1:
-            raise ValueError(
-                f"monthly menu pin post must be exactly 1 in 4-week block {block_index + 1}"
-            )
         if feedback_by_block.get(block_index, 0) != 1:
             raise ValueError(
                 f"positive user feedback story must be exactly 1 in 4-week block {block_index + 1}"
             )
+        block_top_five = top_five_by_block.get(block_index, {})
+        for post_id in top_five_post_ids:
+            if block_top_five.get(post_id, 0) != 1:
+                raise ValueError(
+                    f"top five category post {post_id} must be exactly 1 in 4-week block "
+                    f"{block_index + 1}"
+                )
 
     for week in weeks:
         if not week_requires_weekly_cadence(
@@ -564,7 +577,7 @@ def _validate_scheduler_rules(
             end_date,
         ):
             continue
-        if weekday_posts_by_week.get(week.week_start, 0) != 1:
+        if weekday_post_ids and weekday_posts_by_week.get(week.week_start, 0) != 1:
             raise ValueError(f"weekday post must be exactly 1 in campaign week {week.week_index}")
         if week_has_weekday_in_overlap(
             week.week_start, week.week_end, start_date, end_date
@@ -682,10 +695,10 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
         if str(item.get("id") or "").strip()
     }
 
-    monthly_post_ids = {
+    top_five_post_ids = {
         row_id
         for row_id, item in post_by_id.items()
-        if str(item.get("intent") or "").strip() == "pinned_monthly_menu"
+        if str(item.get("intent") or "").strip() == "top_five_category"
     }
     weekday_post_ids = {
         row_id
@@ -753,7 +766,7 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
                 start_date=start_date,
                 end_date=end_date,
                 campaign_brief_data=campaign_brief_data,
-                monthly_post_ids=monthly_post_ids,
+                top_five_post_ids=top_five_post_ids,
                 weekday_post_ids=weekday_post_ids,
                 weekday_reel_ids=weekday_reel_ids,
                 weekend_reel_ids=weekend_reel_ids,

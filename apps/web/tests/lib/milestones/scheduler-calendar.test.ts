@@ -36,15 +36,18 @@ import {
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 
 const samplePostDetail = {
-  id: 'pinned-monthly-menu',
+  id: 'top-five-mains',
   format: 'carousel' as const,
-  intent: 'pinned_monthly_menu' as const,
-  title: 'Monthly top menu',
-  groupIds: ['group-1'],
+  intent: 'top_five_category' as const,
+  title: 'Top 5 MAINS',
+  category: 'MAINS',
+  intervalWeeks: 4,
+  fixdate: false,
   slides: [
     {
       dishName: 'Ribeye',
       imageBrief: 'Hero menu photography brief.',
+      caption: 'Ribeye caption.',
     },
   ],
 }
@@ -68,7 +71,7 @@ describe('resolveSchedulerPostDetail', () => {
           kind: 'post',
           date: '2026-06-01',
           time: '10:00',
-          title: 'Monthly top menu',
+          title: 'Top 5 MAINS',
           post: samplePostDetail,
         },
         [],
@@ -83,7 +86,7 @@ describe('resolveSchedulerPostDetail', () => {
           kind: 'post',
           date: '2026-06-01',
           time: '10:00',
-          title: 'Monthly top menu',
+          title: 'Top 5 MAINS',
         },
         [samplePostDetail],
       ),
@@ -93,7 +96,7 @@ describe('resolveSchedulerPostDetail', () => {
   it('merges description and captionGuidance from post_lineup when embedded post lacks copy', () => {
     const postLineupWithCopy = {
       ...samplePostDetail,
-      description: 'Monthly pin concept summary.',
+      description: 'Top 5 concept summary.',
       captionGuidance: 'Lead with hero mains and a reservation CTA.',
     }
     expect(
@@ -102,7 +105,7 @@ describe('resolveSchedulerPostDetail', () => {
           kind: 'post',
           date: '2026-06-01',
           time: '10:00',
-          title: 'Monthly top menu',
+          title: 'Top 5 MAINS',
           post: samplePostDetail,
         },
         [postLineupWithCopy],
@@ -139,7 +142,7 @@ describe('resolveSchedulerPostDetail', () => {
           kind: 'post',
           date: '2026-06-01',
           time: '10:00',
-          title: 'Monthly top menu',
+          title: 'Top 5 MAINS',
           post: embedded,
         },
         [lineupWithMetrics],
@@ -179,7 +182,7 @@ describe('resolveSchedulerPostDetail', () => {
           kind: 'post',
           date: '2026-06-01',
           time: '10:00',
-          title: 'Post: Monthly top menu',
+          title: 'Post: Top 5 MAINS',
           post: {
             ...samplePostDetail,
             slides: [{ dishName: 'Ribeye', imageBrief: 'Embedded brief.' }],
@@ -211,7 +214,7 @@ describe('resolveSchedulerPostDetail', () => {
           kind: 'post',
           date: '2026-06-01',
           time: '10:00',
-          title: 'Monthly top menu',
+          title: 'Top 5 MAINS',
           post: embedded,
         },
         [fallback],
@@ -341,7 +344,7 @@ describe('resolveSchedulerReelDetail', () => {
           kind: 'post',
           date: '2026-06-01',
           time: '10:00',
-          title: 'Monthly top menu',
+          title: 'Top 5 MAINS',
         },
         [sampleReelDetail],
       ),
@@ -449,9 +452,9 @@ describe('schedulerSlotDisplayTitle', () => {
         kind: 'post',
         date: '2026-06-01',
         time: '10:00',
-        title: 'Monthly top menu',
+        title: 'Top 5 MAINS',
       }),
-    ).toBe('Post: Monthly top menu')
+    ).toBe('Post: Top 5 MAINS')
   })
 
   it('rebuilds prefixed titles without double-prefixing', () => {
@@ -495,7 +498,7 @@ describe('schedulerSlotDisplayTime', () => {
         kind: 'post',
         date: '2026-06-01',
         time: '',
-        title: 'Monthly top menu',
+        title: 'Top 5 MAINS',
       }),
     ).toBe(SCHEDULER_MONTHLY_PIN_POST_TIME)
 
@@ -565,7 +568,7 @@ describe('schedulerSlotsForDateDetail', () => {
         kind: 'post' as const,
         date: '2026-06-15',
         time: '10:00',
-        title: 'Monthly top menu',
+        title: 'Top 5 MAINS',
       },
     ]
 

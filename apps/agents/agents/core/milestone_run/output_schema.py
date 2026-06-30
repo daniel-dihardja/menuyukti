@@ -656,12 +656,13 @@ class PostLineupSlideOutput(BaseModel):
     role: Literal["star", "puzzle"] | None = None
     category: str | None = None
     imageBrief: str
+    caption: str | None = None
     storytellingFit: Literal["strong", "weak"] | None = None
     popularity: float | None = Field(default=None, ge=0, le=1)
 
-    @field_validator("dishName", "imageBrief", mode="before")
+    @field_validator("dishName", "imageBrief", "caption", mode="before")
     @classmethod
-    def _normalize_required_text(cls, value: Any) -> str:
+    def _normalize_text_fields(cls, value: Any) -> str:
         return str(value or "").strip()
 
     @field_validator("dishName", "imageBrief")
@@ -734,24 +735,26 @@ class PostLineupScheduleHintsOutput(BaseModel):
 class PostLineupPostOutput(BaseModel):
     id: str
     format: Literal["carousel"]
-    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
+    intent: Literal["top_five_category", "weekday_lunch_post"]
     title: str
-    description: str
-    captionGuidance: str
+    description: str | None = None
+    captionGuidance: str | None = None
+    category: str | None = None
+    intervalWeeks: int | None = None
     slides: list[PostLineupSlideOutput]
     groupIds: list[str] = Field(default_factory=list)
     date: str | None = None
     fixdate: bool | None = None
     scheduleHints: PostLineupScheduleHintsOutput | None = None
 
-    @field_validator("id", "title", "description", "captionGuidance", "date", mode="before")
+    @field_validator("id", "title", "description", "captionGuidance", "date", "category", mode="before")
     @classmethod
     def _normalize_text(cls, value: Any) -> str:
         return str(value or "").strip()
 
-    @field_validator("title", "description", "captionGuidance")
+    @field_validator("title")
     @classmethod
-    def _validate_non_empty_text(cls, value: str) -> str:
+    def _validate_title(cls, value: str) -> str:
         if not value:
             raise ValueError("must be non-empty")
         return value
@@ -763,21 +766,33 @@ class PostLineupPostOutput(BaseModel):
             return []
         return [str(item).strip() for item in value if str(item).strip()]
 
-    @field_validator("groupIds")
-    @classmethod
-    def _validate_group_ids(cls, values: list[str]) -> list[str]:
-        if not values:
-            raise ValueError("must contain at least one group id")
-        return values
-
     @model_validator(mode="after")
-    def _validate_slides_by_intent(self) -> PostLineupPostOutput:
+    def _validate_post_by_intent(self) -> PostLineupPostOutput:
         if not self.slides:
             raise ValueError("must contain at least one slide")
-        max_slides = 12 if self.intent == "pinned_monthly_menu" else 5
-        if len(self.slides) > max_slides:
-            raise ValueError(f"must contain at most {max_slides} slides")
-        return self
+
+        if self.intent == "top_five_category":
+            if not str(self.category or "").strip():
+                raise ValueError("category is required when intent is top_five_category")
+            if len(self.slides) > 5:
+                raise ValueError("top_five_category posts must contain at most 5 slides")
+            for slide in self.slides:
+                if not str(slide.caption or "").strip():
+                    raise ValueError("caption is required on every slide for top_five_category")
+            return self
+
+        if self.intent == "weekday_lunch_post":
+            if not str(self.description or "").strip():
+                raise ValueError("description is required when intent is weekday_lunch_post")
+            if not str(self.captionGuidance or "").strip():
+                raise ValueError("captionGuidance is required when intent is weekday_lunch_post")
+            if not self.groupIds:
+                raise ValueError("groupIds must contain at least one group id for weekday_lunch_post")
+            if len(self.slides) > 5:
+                raise ValueError("weekday_lunch_post must contain at most 5 slides")
+            return self
+
+        raise ValueError(f"unsupported post intent {self.intent!r}")
 
 
 class PostLineupMilestoneOutput(BaseModel):
@@ -786,6 +801,7 @@ class PostLineupMilestoneOutput(BaseModel):
     endDate: str
     sourceMenuClustererTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
+    sourceMenuTaggerTitle: str | None = None
     sourceDatesTitle: str | None = None
     notes: str | None = None
 
@@ -799,42 +815,23 @@ class PostLineupMilestoneOutput(BaseModel):
         if not self.startDate or not self.endDate:
             raise ValueError("startDate and endDate must be non-empty")
 
-        monthly_posts = [post for post in self.posts if post.intent == "pinned_monthly_menu"]
-        weekly_posts = [post for post in self.posts if post.intent == "weekday_lunch_post"]
-
-        if len(monthly_posts) != 1:
-            raise ValueError("must contain exactly one pinned_monthly_menu post")
-        if len(weekly_posts) < 1:
-            raise ValueError("must contain at least one weekday_lunch_post for the campaign window")
-
         window_start = parse_iso_date(self.startDate)
         window_end = parse_iso_date(self.endDate)
         if window_start is None or window_end is None:
             raise ValueError("startDate and endDate must be valid ISO dates")
 
-        from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks
-        from agents_app.agents.core.milestone_run.post_lineup.build import (
-            POST_LINEUP_WEEKLY_POST_ID_PREFIX,
-        )
+        top_five_posts = [post for post in self.posts if post.intent == "top_five_category"]
+        if self.posts and not top_five_posts:
+            raise ValueError("post_lineup posts must use top_five_category intent")
 
-        expected_weeks = count_campaign_weeks(self.startDate, self.endDate)
-        if len(weekly_posts) != expected_weeks:
-            raise ValueError(
-                "must contain one weekday_lunch_post per campaign week in the dates window"
-            )
-
-        seen_week_starts: set[str] = set()
-        prefix = f"{POST_LINEUP_WEEKLY_POST_ID_PREFIX}-"
-        for post in weekly_posts:
-            post_id = str(post.id or "").strip()
-            if not post_id.startswith(prefix):
-                raise ValueError("weekday_lunch_post id must encode campaign week start")
-            week_start = post_id[len(prefix) :]
-            if parse_iso_date(week_start) is None:
-                raise ValueError("weekday_lunch_post id week start must be a valid ISO date")
-            if week_start in seen_week_starts:
-                raise ValueError("weekday_lunch_post entries must map to distinct calendar weeks")
-            seen_week_starts.add(week_start)
+        seen_categories: set[str] = set()
+        for post in top_five_posts:
+            category = str(post.category or "").strip().casefold()
+            if not category:
+                raise ValueError("top_five_category posts must include category")
+            if category in seen_categories:
+                raise ValueError("top_five_category posts must not duplicate categories")
+            seen_categories.add(category)
 
         return self
 
@@ -982,7 +979,7 @@ class ReelLineupMilestoneOutput(BaseModel):
 class SchedulerPostSlotDetailOutput(BaseModel):
     id: str
     format: Literal["carousel"]
-    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"]
+    intent: Literal["top_five_category", "weekday_lunch_post"]
     title: str
     description: str | None = None
     captionGuidance: str | None = None

@@ -71,54 +71,20 @@ def _prior_json() -> str:
             "data": {
                 "posts": [
                     {
-                        "id": "post-monthly",
+                        "id": "top-five-mains",
                         "format": "carousel",
-                        "intent": "pinned_monthly_menu",
-                        "title": "Monthly top menu",
-                        "description": "desc",
-                        "captionGuidance": "caption",
-                        "groupIds": ["g1"],
-                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
-                    },
-                    {
-                        "id": "post-w1",
-                        "format": "carousel",
-                        "intent": "weekday_lunch_post",
-                        "title": "Week 1 lunch",
-                        "description": "desc",
-                        "captionGuidance": "caption",
-                        "groupIds": ["g1"],
-                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
-                    },
-                    {
-                        "id": "post-w2",
-                        "format": "carousel",
-                        "intent": "weekday_lunch_post",
-                        "title": "Week 2 lunch",
-                        "description": "desc",
-                        "captionGuidance": "caption",
-                        "groupIds": ["g1"],
-                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
-                    },
-                    {
-                        "id": "post-w3",
-                        "format": "carousel",
-                        "intent": "weekday_lunch_post",
-                        "title": "Week 3 lunch",
-                        "description": "desc",
-                        "captionGuidance": "caption",
-                        "groupIds": ["g1"],
-                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
-                    },
-                    {
-                        "id": "post-w4",
-                        "format": "carousel",
-                        "intent": "weekday_lunch_post",
-                        "title": "Week 4 lunch",
-                        "description": "desc",
-                        "captionGuidance": "caption",
-                        "groupIds": ["g1"],
-                        "slides": [{"dishName": "Dish", "imageBrief": "img"}],
+                        "intent": "top_five_category",
+                        "title": "Top 5 MAINS",
+                        "category": "MAINS",
+                        "intervalWeeks": 4,
+                        "fixdate": False,
+                        "slides": [
+                            {
+                                "dishName": "Dish",
+                                "imageBrief": "img",
+                                "caption": "Caption.",
+                            }
+                        ],
                     },
                 ]
             },
@@ -225,36 +191,8 @@ def _valid_draft() -> SchedulerDraftOutput:
                 kind="post",
                 date="2026-06-01",
                 time="12:00",
-                title="Monthly top menu",
-                sourceId="post-monthly",
-            ),
-            SchedulerDraftSlot(
-                kind="post",
-                date="2026-06-03",
-                time="12:30",
-                title="Week 1 lunch",
-                sourceId="post-w1",
-            ),
-            SchedulerDraftSlot(
-                kind="post",
-                date="2026-06-10",
-                time="12:30",
-                title="Week 2 lunch",
-                sourceId="post-w2",
-            ),
-            SchedulerDraftSlot(
-                kind="post",
-                date="2026-06-17",
-                time="12:30",
-                title="Week 3 lunch",
-                sourceId="post-w3",
-            ),
-            SchedulerDraftSlot(
-                kind="post",
-                date="2026-06-24",
-                time="12:30",
-                title="Week 4 lunch",
-                sourceId="post-w4",
+                title="Top 5 MAINS",
+                sourceId="top-five-mains",
             ),
             SchedulerDraftSlot(
                 kind="reel",
@@ -308,8 +246,7 @@ def _valid_draft() -> SchedulerDraftOutput:
         ],
         scheduleExplanation=(
             "Weekday reels at 12:15 on Tuesday target lunch breaks in the offer window. "
-            "Saturday 12:15 weekend reels reach leisure diners. "
-            "Weekday posts at 12:30 follow reels when lunch attention peaks."
+            "Saturday 12:15 weekend reels reach leisure diners."
         ),
     )
 
@@ -365,7 +302,7 @@ async def test_generate_schedule_with_llm_success() -> None:
     assert isinstance(normalized, dict)
     assert normalized["startDate"] == "2026-06-01"
     assert normalized["endDate"] == "2026-06-28"
-    assert len(normalized["slots"]) == 12
+    assert len(normalized["slots"]) == 8
     assert "scheduleExplanation" in normalized
     assert normalized["scheduleExplanation"]
 
