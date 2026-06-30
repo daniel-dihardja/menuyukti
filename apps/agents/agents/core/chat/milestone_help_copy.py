@@ -47,8 +47,8 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
         "generate intersection topics between the concept and the audience's likely interests "
-        "(not necessarily food). These intersections should be actionable for Instagram Reels "
-        "ideas that attract potential new customers."
+        "(not food or drink). These intersections should inspire Instagram feed posts, Stories, "
+        "and Reels that attract potential new customers."
     ),
     "ig_profile": (
         "Read Campaign Brief data and generate Instagram profile suggestions — username options "

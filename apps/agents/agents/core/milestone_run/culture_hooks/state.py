@@ -33,6 +33,7 @@ class CultureHooksState(TypedDict):
     prior_milestones_data: NotRequired[str]
     injected_prior_context_markdown: NotRequired[str]
     owner_notes_markdown: NotRequired[str]
+    web_research_markdown: NotRequired[str]
     generation_context_markdown: NotRequired[str]
     generated_output: NotRequired[CultureHooksOutput | None]
     result_data: str

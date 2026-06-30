@@ -1554,9 +1554,9 @@
             "inputLabel": "Culture hooks notes",
             "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
             "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone...",
-            "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not necessarily food). These intersections should be actionable for Instagram Reels ideas that attract potential new customers.",
-            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example.",
-            "criterionNonFood": "Intersections are **not food-centric** (no dish names, recipes, or flavor-led angles).",
+            "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not food or drink). These intersections should inspire Instagram feed posts, Stories, and Reels that attract potential new customers.",
+            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example suitable for a feed post, Story, or Reel.",
+            "criterionNonFood": "Intersections are **not food- or drink-centric** (no dishes, coffee, beverages, recipes, or flavor-led angles).",
             "criterionAudienceConceptInferred": "Data clearly states **locationConcept** and **targetAudience**, both inferred from Campaign Brief context."
           },
           "ig_profile": {

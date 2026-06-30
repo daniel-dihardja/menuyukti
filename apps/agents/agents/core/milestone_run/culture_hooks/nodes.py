@@ -17,6 +17,10 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.core.milestone_run.prior_context_inject import (
+    extract_restaurant_campaign_brief_data,
+)
+from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel
@@ -60,7 +64,12 @@ def _fmt_owner_notes(state: CultureHooksState) -> str:
     )
 
 
-def _build_generation_context(state: CultureHooksState, owner_notes_markdown: str) -> str:
+def _build_generation_context(
+    state: CultureHooksState,
+    owner_notes_markdown: str,
+    *,
+    web_research_markdown: str = "",
+) -> str:
     goal = str(state.get("goal") or "").strip() or "_No goal provided._"
     criteria = state.get("criteria") or []
     criteria_json = json.dumps(criteria, ensure_ascii=False, indent=2)
@@ -75,7 +84,68 @@ def _build_generation_context(state: CultureHooksState, owner_notes_markdown: st
     ]
     if owner_notes_markdown:
         sections.append(owner_notes_markdown)
+    research = web_research_markdown.strip()
+    if research:
+        sections.append(research)
     return "\n\n".join(sections)
+
+
+def _first_non_empty_str(values: object) -> str:
+    if not isinstance(values, list):
+        return ""
+    for raw in values:
+        text = str(raw).strip()
+        if text:
+            return text
+    return ""
+
+
+def _culture_hooks_search_queries(brief: dict[str, Any]) -> list[str]:
+    venue = brief.get("venueSnapshot")
+    city = ""
+    country = ""
+    if isinstance(venue, dict):
+        city = str(venue.get("city") or "").strip()
+        country = str(venue.get("country") or "").strip()
+
+    concept_keyword = ""
+    overall = brief.get("overallStrategy")
+    if isinstance(overall, dict):
+        concept_keyword = str(overall.get("strategyFocus") or overall.get("coreMessage") or "").strip()
+    if not concept_keyword:
+        concept_keyword = _first_non_empty_str(brief.get("messageHierarchy"))
+
+    location_bits = " ".join(part for part in (city, country) if part)
+    queries: list[str] = []
+    if location_bits:
+        queries.append(f"lifestyle subcultures {location_bits} Instagram")
+    if concept_keyword and location_bits:
+        short_keyword = " ".join(concept_keyword.split()[:4])
+        queries.append(f"{short_keyword} culture {location_bits}")
+    elif location_bits:
+        queries.append(f"creative class interests {location_bits}")
+    return queries[:2]
+
+
+async def _run_web_searches(queries: list[str]) -> str:
+    search_tool = make_search_web_tool()
+    if search_tool is None or not queries:
+        return ""
+
+    sections: list[str] = []
+    for query in queries:
+        try:
+            result = await search_tool.ainvoke({"query": query})
+        except Exception as exc:  # pragma: no cover - network/provider failures
+            sections.append(f"### Query: {query}\n\n_Search failed: {exc}_")
+            continue
+        text = str(result).strip()
+        if text:
+            sections.append(f"### Query: {query}\n\n{text}")
+
+    if not sections:
+        return ""
+    return "## Local culture web research (optional)\n\n" + "\n\n".join(sections)
 
 
 class CultureHookIntersectionDraft(BaseModel):
@@ -95,13 +165,39 @@ class CultureHooksDraftOutput(BaseModel):
 async def fetch_and_prepare(
     state: CultureHooksState, *, client: httpx.AsyncClient
 ) -> dict[str, Any]:
-    """Build generation markdown from prior campaign-brief context only."""
+    """Build base generation markdown from prior campaign-brief context."""
     del client
     _trace(state, "execute_skill", skill_id="culture_hooks")
     owner_notes_markdown = _fmt_owner_notes(state)
     generation_context_markdown = _build_generation_context(state, owner_notes_markdown)
     return {
         "owner_notes_markdown": owner_notes_markdown,
+        "generation_context_markdown": generation_context_markdown,
+        "web_research_markdown": "",
+    }
+
+
+async def research_local_culture(state: CultureHooksState) -> dict[str, Any]:
+    """Optionally enrich context with Tavily web research for local culture signals."""
+    prior_json = str(state.get("prior_milestones_data") or "")
+    brief = extract_restaurant_campaign_brief_data(prior_json)
+    if brief is None:
+        return {}
+
+    queries = _culture_hooks_search_queries(brief)
+    web_research_markdown = await _run_web_searches(queries)
+    if not web_research_markdown:
+        return {"web_research_markdown": ""}
+
+    _trace(state, "culture_hooks_web_research", query_count=len(queries))
+    owner_notes_markdown = str(state.get("owner_notes_markdown") or "")
+    generation_context_markdown = _build_generation_context(
+        state,
+        owner_notes_markdown,
+        web_research_markdown=web_research_markdown,
+    )
+    return {
+        "web_research_markdown": web_research_markdown,
         "generation_context_markdown": generation_context_markdown,
     }
 
