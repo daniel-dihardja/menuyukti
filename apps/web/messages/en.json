@@ -1471,7 +1471,7 @@
             "goal": "Resolve the campaign date window and list public holidays between startDate and endDate for this location.",
             "criterionStartDate": "**startDate** is present in the data and matches the selected input window.",
             "criterionEndDate": "**endDate** is present in the data and matches the selected input window.",
-            "criterionPublicHolidays": "**publicHolidays** is generated for the selected date window."
+            "criterionPublicHolidays": "**publicHolidays** is present for the selected date window (an empty list is valid when no holidays fall in range)."
           },
           "promotion_candidates": {
             "label": "Promotion candidates",
@@ -1731,7 +1731,7 @@
         "milestoneDatesPreviewStartDate": "Start date",
         "milestoneDatesPreviewEndDate": "End date",
         "milestoneDatesPreviewPublicHolidays": "Public holidays",
-        "milestoneDatesPreviewNoHolidays": "No holidays generated yet.",
+        "milestoneDatesPreviewNoHolidays": "No public holidays were found between {startDate} and {endDate}.",
         "milestoneCampaignBriefInputPickDate": "Pick a date",
         "milestoneCampaignBriefInputStartDateLabel": "Start date",
         "milestoneCampaignBriefInputStartDateDescription": "Campaign start date used for holiday lookup.",
@@ -1743,7 +1743,7 @@
         "milestoneCampaignBriefPreviewStartDate": "Start date",
         "milestoneCampaignBriefPreviewEndDate": "End date",
         "milestoneCampaignBriefPreviewPublicHolidays": "Public holidays",
-        "milestoneCampaignBriefPreviewNoHolidays": "No holidays generated yet.",
+        "milestoneCampaignBriefPreviewNoHolidays": "No public holidays were found between {startDate} and {endDate}.",
         "milestoneCampaignBriefPreviewVenueSnapshot": "Venue snapshot",
         "milestoneCampaignBriefPreviewOverallStrategy": "Overall strategy",
         "milestoneCampaignBriefPreviewVenueName": "Venue name",

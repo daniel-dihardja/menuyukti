@@ -93,7 +93,8 @@ async def fetch_public_holidays_for_milestone(
         return [], "Location not found."
     country = raw.get("country")
     if not country or not str(country).strip():
-        return [], "No public holiday data available for this location (country not set)."
+        # Campaign window is still valid without holiday data when country is unset.
+        return [], None
 
     data = await graphql_post(
         client,

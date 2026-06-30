@@ -124,6 +124,66 @@ def test_output_schema_valid_dates_payload() -> None:
     assert normalized["startDate"] == "2026-06-01"
 
 
+def test_output_schema_accepts_empty_public_holidays() -> None:
+    payload = {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-30",
+        "publicHolidays": [],
+    }
+    normalized, error = validate_skill_output("dates", payload)
+    assert error is None
+    assert normalized is not None
+    assert normalized["publicHolidays"] == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_dates_context_allows_empty_public_holidays() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "milestone_input": {
+            "type": "dates",
+            "value": {"startDate": "2026-06-01", "endDate": "2026-06-30"},
+        },
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.dates.nodes.fetch_public_holidays_for_milestone",
+            new=AsyncMock(return_value=([], None)),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.dates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await fetch_dates_context(state, client=MagicMock(spec=AsyncMock))
+    assert out["public_holidays"] == []
+
+
+@pytest.mark.asyncio
+async def test_persist_result_writes_empty_public_holidays() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "start_date": "2026-06-01",
+        "end_date": "2026-06-30",
+        "public_holidays": [],
+    }
+    with patch(
+        "agents_app.agents.core.milestone_run.dates.nodes.upsert_milestonedata_node",
+        new=AsyncMock(return_value={}),
+    ) as mock_upsert:
+        out = await persist_result(state, client=MagicMock(spec=AsyncMock))
+
+    mock_upsert.assert_awaited_once()
+    assert out["milestonedata_written"] is True
+    assert out["milestone_data"]["publicHolidays"] == []
+
+
 @pytest.mark.asyncio
 async def test_fetch_dates_context_happy_path() -> None:
     state = {
