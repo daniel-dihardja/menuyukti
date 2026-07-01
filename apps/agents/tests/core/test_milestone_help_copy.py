@@ -10,6 +10,7 @@ from agents_app.agents.core.chat.milestone_help_copy import (
 def test_resolve_what_it_does_preset_catalog() -> None:
     text = resolve_what_it_does("culture_hooks", "custom should not win")
     assert "Campaign Brief data" in text
+    assert "feed posts, Stories, and Reels" in text
     assert "custom should not win" not in text
 
 

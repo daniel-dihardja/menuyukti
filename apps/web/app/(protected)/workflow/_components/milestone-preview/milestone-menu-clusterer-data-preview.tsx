@@ -54,6 +54,7 @@ function priceLevelLabel(
 
 type GroupCardLabels = {
   hookBadgeLabel: string
+  topFiveBadgeLabel: string
   menuHighlightBadgeLabel: string
   detailsBadgeLabel: string
   itemsSectionTitle: string
@@ -95,7 +96,11 @@ function MenuClustererGroupCard({
   labels: GroupCardLabels
 }) {
   const profileBadgeLabel =
-    group.profileId === 'menu_highlight' ? labels.menuHighlightBadgeLabel : labels.hookBadgeLabel
+    group.profileId === 'top_five'
+      ? labels.topFiveBadgeLabel
+      : group.profileId === 'menu_highlight'
+        ? labels.menuHighlightBadgeLabel
+        : labels.hookBadgeLabel
 
   return (
     <Card className="gap-3 py-4 shadow-none">
@@ -361,6 +366,7 @@ export function MilestoneMenuClustererDataPreview({
   const labels = useMemo(
     () => ({
       hookBadgeLabel: t('milestoneMenuClustererPreviewHookBadge'),
+      topFiveBadgeLabel: t('milestoneMenuClustererPreviewTopFiveBadge'),
       menuHighlightBadgeLabel: t('milestoneMenuClustererPreviewMenuHighlightBadge'),
       detailsBadgeLabel: t('milestoneMenuClustererPreviewDetailsBadge'),
       itemsSectionTitle: t('milestoneMenuClustererPreviewItemsSectionTitle'),

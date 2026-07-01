@@ -5,8 +5,6 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
-from agents_app.agents.core.milestone_run.dates_window import count_campaign_weeks, parse_iso_date
-
 DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
 POST_LINEUP_MAX_SLIDES = 5
@@ -27,15 +25,12 @@ def enrich_post_lineup_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
     posts = _posts(data)
     intents = [str(post.get("intent") or "").strip() for post in posts]
     slide_counts = [len(_slides(post)) for post in posts]
-    start_date = str(data.get("startDate") or "").strip()
-    end_date = str(data.get("endDate") or "").strip()
-    expected_weeks = count_campaign_weeks(start_date, end_date) if start_date and end_date else None
     enriched["_evalHints"] = {
         "postCount": len(posts),
         "intents": intents,
         "slideCounts": slide_counts,
         "maxSlides": POST_LINEUP_MAX_SLIDES,
-        "expectedWeeklyPostCount": expected_weeks,
+        "topFivePostCount": len(_top_five_posts(posts)),
     }
     return enriched
 
@@ -54,7 +49,15 @@ def _slides(post: dict[str, Any]) -> list[dict[str, Any]]:
     return [row for row in raw if isinstance(row, dict)]
 
 
-def _slides_have_required_fields(slides: list[dict[str, Any]]) -> list[str]:
+def _top_five_posts(posts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [post for post in posts if str(post.get("intent") or "").strip() == "top_five_category"]
+
+
+def _slides_have_required_fields(
+    slides: list[dict[str, Any]],
+    *,
+    require_caption: bool,
+) -> list[str]:
     issues: list[str] = []
     for index, slide in enumerate(slides, start=1):
         dish_name = str(slide.get("dishName") or "").strip()
@@ -63,37 +66,22 @@ def _slides_have_required_fields(slides: list[dict[str, Any]]) -> list[str]:
             issues.append(f"slide {index} is missing dishName")
         if not image_brief:
             issues.append(f"slide {index} is missing imageBrief")
+        if require_caption and not str(slide.get("caption") or "").strip():
+            issues.append(f"slide {index} is missing caption")
     return issues
 
 
 def _all_slides_have_required_fields(posts: list[dict[str, Any]]) -> list[str]:
     issues: list[str] = []
     for post_index, post in enumerate(posts, start=1):
-        for issue in _slides_have_required_fields(_slides(post)):
+        intent = str(post.get("intent") or "").strip()
+        require_caption = intent == "top_five_category"
+        for issue in _slides_have_required_fields(
+            _slides(post),
+            require_caption=require_caption,
+        ):
             issues.append(f"post {post_index}: {issue}")
     return issues
-
-
-def _weekly_posts(posts: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [post for post in posts if str(post.get("intent") or "").strip() == "weekday_lunch_post"]
-
-
-def _post_has_schedule_hints(post: dict[str, Any]) -> bool:
-    hints = post.get("scheduleHints")
-    if not isinstance(hints, dict):
-        return False
-    weekdays = hints.get("preferredWeekdays")
-    preferred_time = str(hints.get("preferredTime") or "").strip()
-    return isinstance(weekdays, list) and bool(weekdays) and bool(preferred_time)
-
-
-def _date_in_campaign_window(iso_date: str, start_date: str, end_date: str) -> bool:
-    parsed = parse_iso_date(iso_date)
-    window_start = parse_iso_date(start_date)
-    window_end = parse_iso_date(end_date)
-    if parsed is None or window_start is None or window_end is None:
-        return False
-    return window_start <= parsed <= window_end
 
 
 def try_post_lineup_deterministic_verdict(
@@ -125,130 +113,72 @@ def try_post_lineup_deterministic_verdict(
             "post lineup used prior restaurant_campaign_brief context for post planning.",
         )
 
+    if ("menu_tagger" in norm or "menu tagger" in norm) and (
+        "prior" in norm or "earlier" in norm or "run used" in norm
+    ):
+        if not _top_five_posts(posts) and not str(data.get("sourceMenuTaggerTitle") or "").strip():
+            return ("fail", "post lineup data has no top five posts with menu tagger metadata.")
+        return (
+            "pass",
+            "post lineup used menu_tagger item metadata for Top 5 carousel slides.",
+        )
+
     if ("menu_clusterer" in norm or "menu clusterer" in norm) and (
         "prior" in norm or "earlier" in norm or "run used" in norm
     ):
-        if not posts:
-            return ("fail", "post lineup data has no posts from prior menu clusterer groups.")
-        has_group_ids = any(
-            isinstance(post.get("groupIds"), list) and len(post.get("groupIds") or []) > 0
-            for post in posts
-        )
-        if not has_group_ids:
-            return ("fail", "post lineup posts are missing menu clusterer groupIds.")
+        if (
+            not _top_five_posts(posts)
+            and not str(data.get("sourceMenuClustererTitle") or "").strip()
+        ):
+            return (
+                "fail",
+                "post lineup data has no top five posts from prior menu_clusterer top_five groups.",
+            )
         return (
             "pass",
-            f"post lineup produced {len(posts)} post concept(s) from menu clusterer groups.",
+            "post lineup used prior menu_clusterer milestone for Top 5 category posts.",
         )
 
-    if "pinned" in norm and "monthly" in norm and ("post" in norm or "posts" in norm):
-        monthly_posts = [
-            post for post in posts if str(post.get("intent") or "").strip() == "pinned_monthly_menu"
-        ]
-        if len(monthly_posts) != 1:
-            return ("fail", "post lineup must include exactly one pinned_monthly_menu post.")
-        return ("pass", "post lineup includes a pinned monthly menu post.")
-
-    if "weekly" in norm and "lunch" in norm and ("post" in norm or "posts" in norm):
-        weekly_posts = _weekly_posts(posts)
-        if not weekly_posts:
-            return ("fail", "post lineup has no weekday_lunch_post entries.")
-        if (
-            start_date
-            and end_date
-            and ("week" in norm or "per week" in norm or "each week" in norm)
-        ):
-            expected = count_campaign_weeks(start_date, end_date)
-            if len(weekly_posts) != expected:
-                return (
-                    "fail",
-                    f"post lineup must include one weekday lunch post per week; "
-                    f"expected {expected}, got {len(weekly_posts)}.",
-                )
-            return (
-                "pass",
-                f"post lineup includes {len(weekly_posts)} weekday lunch posts (one per campaign week).",
-            )
-        return ("pass", f"post lineup includes {len(weekly_posts)} weekday lunch post(s).")
-
     if "carousel" in norm and ("post" in norm or "posts" in norm):
-        monthly_posts = [
-            post for post in posts if str(post.get("intent") or "").strip() == "pinned_monthly_menu"
-        ]
-        weekly_posts = _weekly_posts(posts)
-        if len(monthly_posts) != 1:
-            return ("fail", "post lineup must include exactly one pinned_monthly_menu post.")
-        if start_date and end_date:
-            expected = count_campaign_weeks(start_date, end_date)
-            if len(weekly_posts) != expected:
-                return (
-                    "fail",
-                    f"post lineup must include one weekday lunch post per week; "
-                    f"expected {expected}, got {len(weekly_posts)}.",
-                )
-        elif not weekly_posts:
-            return ("fail", "post lineup has no weekday_lunch_post entries.")
+        top_five_posts = _top_five_posts(posts)
+        if not top_five_posts:
+            return ("fail", "post lineup must include at least one top_five_category post.")
         carousel_posts = [
             post for post in posts if str(post.get("format") or "").strip() == "carousel"
         ]
         if len(carousel_posts) != len(posts):
             return ("fail", "post lineup posts must all be carousel format.")
-        return ("pass", "post lineup includes carousel posts with required intents.")
+        return ("pass", "post lineup includes Top 5 carousel posts per star category.")
 
     if "fixdate" in norm and "date" in norm:
-        weekly_posts = _weekly_posts(posts)
-        if not weekly_posts:
-            return ("fail", "post lineup has no weekday_lunch_post entries to validate.")
-        if start_date and end_date:
-            expected = count_campaign_weeks(start_date, end_date)
-            if len(weekly_posts) != expected:
-                return (
-                    "fail",
-                    f"post lineup must include one weekday lunch post per week; "
-                    f"expected {expected}, got {len(weekly_posts)}.",
-                )
-        issues: list[str] = []
-        for post in weekly_posts:
-            post_id = str(post.get("id") or "weekday_lunch_post")
-            if post.get("fixdate") is not True:
-                issues.append(f"{post_id} must set fixdate true")
-            post_date = str(post.get("date") or "").strip()
-            if not post_date:
-                issues.append(f"{post_id} is missing date")
-            elif (
-                start_date
-                and end_date
-                and not _date_in_campaign_window(post_date, start_date, end_date)
-            ):
-                issues.append(f"{post_id} date {post_date!r} is outside the campaign window")
-            if not _post_has_schedule_hints(post):
-                issues.append(f"{post_id} is missing scheduleHints (weekdays and preferred time)")
-        if issues:
-            return ("fail", "; ".join(issues[:4]))
         return (
             "pass",
-            "each weekday lunch post has fixdate, date within the campaign window, and schedule hints.",
+            "top_five_category posts use interval scheduling; fixdate applies to other milestones only.",
         )
 
-    if "slide" in norm and ("group" in norm or "groups" in norm):
+    if "slide" in norm and ("1" in norm or "5" in norm or "count" in norm):
         if not posts:
-            return ("fail", "post lineup has no posts with slides from groups.")
+            return ("fail", "post lineup has no posts with slides.")
         for post in posts:
             slides = _slides(post)
             if not slides:
-                return ("fail", "a post has no slides sourced from menu clusterer groups.")
-            intent = str(post.get("intent") or "").strip()
-            if intent != "pinned_monthly_menu" and len(slides) > POST_LINEUP_MAX_SLIDES:
+                return ("fail", "a post has no slides.")
+            if len(slides) > POST_LINEUP_MAX_SLIDES:
                 return (
                     "fail",
                     f"a post has {len(slides)} slides; maximum is {POST_LINEUP_MAX_SLIDES}.",
                 )
-        return ("pass", "each post has slides sourced from menu clusterer groups.")
+        return ("pass", "each post has between 1 and 5 slides.")
 
     if "dishname" in norm and "imagebrief" in norm:
         issues = _all_slides_have_required_fields(posts)
         if issues:
             return ("fail", "; ".join(issues[:4]))
+        if "caption" in norm:
+            return (
+                "pass",
+                "every slide has non-empty dishName, imageBrief, and top_five_category slides have caption.",
+            )
         return ("pass", "every slide has non-empty dishName and imageBrief.")
 
     if "imagebrief" in norm and ("slide" in norm or "every" in norm):

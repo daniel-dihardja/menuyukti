@@ -11,6 +11,7 @@ from agents_app.agents.core.milestone_run.dates_window import (
     pick_least_busy_date,
     preferred_weekdays_for_strategy,
     schedule_hints_for_reel_intent,
+    top_five_cadence_issues,
     week_has_weekend_in_overlap,
     week_requires_weekly_cadence,
 )
@@ -85,6 +86,11 @@ def test_holiday_dates_extracts_iso_dates() -> None:
     assert dates == {"2026-06-15"}
 
 
+def test_interval_block_starts_two_week_blocks() -> None:
+    blocks = interval_block_starts("2026-06-01", "2026-06-28", interval_weeks=2)
+    assert blocks == [("2026-06-01", "2026-06-14"), ("2026-06-15", "2026-06-28")]
+
+
 def test_interval_block_starts_four_week_blocks() -> None:
     blocks = interval_block_starts("2026-06-01", "2026-06-30", interval_weeks=4)
     assert blocks == [("2026-06-01", "2026-06-28")]
@@ -94,6 +100,32 @@ def test_interval_block_starts_four_week_blocks() -> None:
     assert long_blocks[0] == ("2026-06-01", "2026-06-28")
     assert long_blocks[1] == ("2026-06-29", "2026-07-26")
     assert long_blocks[2] == ("2026-07-27", "2026-08-23")
+
+
+def test_top_five_cadence_rejects_weekly_alternation() -> None:
+    issues = top_five_cadence_issues(
+        dated_post_ids=[
+            ("2026-06-02", "top-five-mains"),
+            ("2026-06-09", "top-five-drinks"),
+        ],
+        start_date="2026-06-01",
+        end_date="2026-06-28",
+        lineup_order=["top-five-mains", "top-five-drinks"],
+    )
+    assert any("2-week block 1 has 2" in issue for issue in issues)
+
+
+def test_top_five_cadence_accepts_two_week_rotation() -> None:
+    issues = top_five_cadence_issues(
+        dated_post_ids=[
+            ("2026-06-02", "top-five-mains"),
+            ("2026-06-16", "top-five-drinks"),
+        ],
+        start_date="2026-06-01",
+        end_date="2026-06-28",
+        lineup_order=["top-five-mains", "top-five-drinks"],
+    )
+    assert issues == []
 
 
 def test_pick_least_busy_date_prefers_wednesday_and_avoids_holidays() -> None:

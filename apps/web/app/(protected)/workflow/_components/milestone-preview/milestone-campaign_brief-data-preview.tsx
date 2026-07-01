@@ -14,8 +14,11 @@ import {
   hasCampaignBriefListContent,
   hasCampaignBriefOverallStrategyContent,
   hasCampaignBriefPreviewContent,
+  hasCampaignBriefSlotPerformanceContent,
   hasCampaignBriefVenueSnapshotContent,
 } from '@/lib/milestones/campaign-brief-preview-content'
+import { Badge } from '@workspace/ui/components/badge'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
@@ -48,6 +51,21 @@ type CampaignBriefPreviewLabels = {
   measurementPlan: string
   testingPlan: string
   riskGuardrails: string
+  slotPerformance: string
+  slotPerformanceSummary: string
+  strongSlots: string
+  slotsNeedingPromotion: string
+  slotTableDay: string
+  slotTableMealPeriod: string
+  slotTableDemandIndex: string
+  slotTableTier: string
+  slotTablePosture: string
+  slotPostureSupport: string
+  slotPosturePromote: string
+  slotPostureMaintain: string
+  slotTierLow: string
+  slotTierAverage: string
+  slotTierHigh: string
   emptyList: string
   emptyValue: string
   helpVenueSnapshot: string
@@ -64,6 +82,7 @@ type CampaignBriefPreviewLabels = {
   helpMeasurementPlan: string
   helpTestingPlan: string
   helpRiskGuardrails: string
+  helpSlotPerformance: string
 }
 
 function renderList(items: string[], emptyLabel: string) {
@@ -178,6 +197,105 @@ function OverallStrategyFields({
   )
 }
 
+function postureBadgeClassName(posture: 'support' | 'promote' | 'maintain'): string {
+  switch (posture) {
+    case 'support':
+      return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+    case 'promote':
+      return 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+    default:
+      return 'border-border bg-muted/50 text-muted-foreground'
+  }
+}
+
+function SlotPerformanceFields({
+  slotPerformance,
+  labels,
+}: {
+  slotPerformance: NonNullable<CampaignBriefMilestoneData['slotPerformance']>
+  labels: CampaignBriefPreviewLabels
+}) {
+  const postureLabel = (posture: 'support' | 'promote' | 'maintain') => {
+    switch (posture) {
+      case 'support':
+        return labels.slotPostureSupport
+      case 'promote':
+        return labels.slotPosturePromote
+      default:
+        return labels.slotPostureMaintain
+    }
+  }
+
+  const tierLabel = (tier: 'low' | 'average' | 'high') => {
+    switch (tier) {
+      case 'low':
+        return labels.slotTierLow
+      case 'high':
+        return labels.slotTierHigh
+      default:
+        return labels.slotTierAverage
+    }
+  }
+
+  const weekdayLabel = (day: string) => day.slice(0, 1).toUpperCase() + day.slice(1, 3)
+
+  return (
+    <div className="mt-2 space-y-4">
+      {slotPerformance.summary.trim() ? <p className={mp.body}>{slotPerformance.summary}</p> : null}
+
+      <div>
+        <p className={mp.fieldLabel}>{labels.strongSlots}</p>
+        <div className="mt-2">{renderList(slotPerformance.strongSlots, labels.emptyList)}</div>
+      </div>
+
+      <div>
+        <p className={mp.fieldLabel}>{labels.slotsNeedingPromotion}</p>
+        <div className="mt-2">
+          {renderList(slotPerformance.slotsNeedingPromotion, labels.emptyList)}
+        </div>
+      </div>
+
+      {slotPerformance.slots.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[32rem] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border/80 text-left">
+                <th className={cn(mp.fieldLabel, 'py-2 pr-3')}>{labels.slotTableDay}</th>
+                <th className={cn(mp.fieldLabel, 'py-2 pr-3')}>{labels.slotTableMealPeriod}</th>
+                <th className={cn(mp.fieldLabel, 'py-2 pr-3 text-right')}>
+                  {labels.slotTableDemandIndex}
+                </th>
+                <th className={cn(mp.fieldLabel, 'py-2 pr-3')}>{labels.slotTableTier}</th>
+                <th className={cn(mp.fieldLabel, 'py-2')}>{labels.slotTablePosture}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {slotPerformance.slots.map((slot) => (
+                <tr key={`${slot.day}-${slot.mealPeriod}`} className="border-b border-border/50">
+                  <td className="py-2 pr-3 align-top">{weekdayLabel(slot.day)}</td>
+                  <td className="py-2 pr-3 align-top">{slot.mealPeriodLabel}</td>
+                  <td className="py-2 pr-3 align-top text-right tabular-nums">
+                    {slot.demandIndex.toFixed(2)}×
+                  </td>
+                  <td className="py-2 pr-3 align-top">{tierLabel(slot.relativeDemand)}</td>
+                  <td className="py-2 align-top">
+                    <Badge
+                      variant="outline"
+                      className={cn('text-xs uppercase', postureBadgeClassName(slot.posture))}
+                    >
+                      {postureLabel(slot.posture)}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function CampaignBriefPreviewEmptyState() {
   const t = useTranslations('analytics.workflows.chat')
   return (
@@ -221,6 +339,21 @@ export function MilestoneCampaignBriefDataPreview({
       measurementPlan: t('milestoneCampaignBriefPreviewMeasurementPlan'),
       testingPlan: t('milestoneCampaignBriefPreviewTestingPlan'),
       riskGuardrails: t('milestoneCampaignBriefPreviewRiskGuardrails'),
+      slotPerformance: t('milestoneCampaignBriefPreviewSlotPerformance'),
+      slotPerformanceSummary: t('milestoneCampaignBriefPreviewSlotPerformanceSummary'),
+      strongSlots: t('milestoneCampaignBriefPreviewStrongSlots'),
+      slotsNeedingPromotion: t('milestoneCampaignBriefPreviewSlotsNeedingPromotion'),
+      slotTableDay: t('milestoneCampaignBriefPreviewSlotTableDay'),
+      slotTableMealPeriod: t('milestoneCampaignBriefPreviewSlotTableMealPeriod'),
+      slotTableDemandIndex: t('milestoneCampaignBriefPreviewSlotTableDemandIndex'),
+      slotTableTier: t('milestoneCampaignBriefPreviewSlotTableTier'),
+      slotTablePosture: t('milestoneCampaignBriefPreviewSlotTablePosture'),
+      slotPostureSupport: t('milestoneCampaignBriefPreviewSlotPostureSupport'),
+      slotPosturePromote: t('milestoneCampaignBriefPreviewSlotPosturePromote'),
+      slotPostureMaintain: t('milestoneCampaignBriefPreviewSlotPostureMaintain'),
+      slotTierLow: t('milestoneCampaignBriefPreviewSlotTierLow'),
+      slotTierAverage: t('milestoneCampaignBriefPreviewSlotTierAverage'),
+      slotTierHigh: t('milestoneCampaignBriefPreviewSlotTierHigh'),
       emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
       emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
       helpVenueSnapshot: t('milestoneCampaignBriefPreviewHelpVenueSnapshot'),
@@ -237,6 +370,7 @@ export function MilestoneCampaignBriefDataPreview({
       helpMeasurementPlan: t('milestoneCampaignBriefPreviewHelpMeasurementPlan'),
       helpTestingPlan: t('milestoneCampaignBriefPreviewHelpTestingPlan'),
       helpRiskGuardrails: t('milestoneCampaignBriefPreviewHelpRiskGuardrails'),
+      helpSlotPerformance: t('milestoneCampaignBriefPreviewHelpSlotPerformance'),
     }),
     [t],
   )
@@ -263,6 +397,7 @@ export function MilestoneCampaignBriefDataPreview({
   const showMeasurement = hasCampaignBriefListContent(data.measurementPlan)
   const showTesting = hasCampaignBriefListContent(data.testingPlan)
   const showRisk = hasCampaignBriefListContent(data.riskGuardrails)
+  const showSlotPerformance = hasCampaignBriefSlotPerformanceContent(data.slotPerformance)
 
   return (
     <div className={mp.root}>
@@ -297,6 +432,17 @@ export function MilestoneCampaignBriefDataPreview({
             helpText={labels.helpCampaignObjective}
           >
             <p className={`mt-2 ${mp.body}`}>{data.campaignObjective}</p>
+          </BriefAccordionSection>
+        ) : null}
+
+        {showSlotPerformance && data.slotPerformance ? (
+          <BriefAccordionSection
+            value="slot-performance"
+            title={labels.slotPerformance}
+            helpAria={a(labels.slotPerformance)}
+            helpText={labels.helpSlotPerformance}
+          >
+            <SlotPerformanceFields slotPerformance={data.slotPerformance} labels={labels} />
           </BriefAccordionSection>
         ) : null}
 

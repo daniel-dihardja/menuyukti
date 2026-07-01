@@ -325,10 +325,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.post_lineup.criterionWeeklyFixdate'),
-          status: 'open',
-        },
-        {
           requirement: t('milestonePreset.post_lineup.criterionSlideCount'),
           status: 'open',
         },
@@ -500,10 +496,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       passCriteria: [
         {
           requirement: t('milestonePreset.scheduler.criterionMonthlyMenuHighlight'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.scheduler.criterionWeeklyWeekdayPost'),
           status: 'open',
         },
         {

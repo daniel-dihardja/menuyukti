@@ -18,6 +18,10 @@ from agents_app.agents.core.milestone_eval.campaign_brief_eval import (
     enrich_campaign_brief_eval_payload,
     try_campaign_brief_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_eval.dates_eval import (
+    enrich_dates_eval_payload,
+    try_dates_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.graphql_client import (
     fetch_milestone_node,
     fetch_prior_milestones_data_for_eval,
@@ -76,7 +80,9 @@ def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
                 enrich_reel_lineup_eval_payload(
                     enrich_post_lineup_eval_payload(
                         enrich_menu_clusterer_eval_payload(
-                            enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+                            enrich_menu_tagger_eval_payload(
+                                enrich_dates_eval_payload(enrich_ig_profile_eval_payload(data))
+                            )
                         )
                     )
                 )
@@ -294,6 +300,8 @@ async def evaluate_criterion(
             deterministic = try_scheduler_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_campaign_brief_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_dates_deterministic_verdict(requirement, milestone_data)
         if deterministic is not None:
             status, reasoning = deterministic
             verdict = CriterionVerdict(status=status, reasoning=reasoning)

@@ -6,7 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.campaign_brief.nodes import (
+    _build_slot_performance_payload,
     _extract_top_revenue_category,
+    _fmt_slot_performance_markdown,
     fetch_and_prepare,
 )
 from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
@@ -327,7 +329,13 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.campaign_brief.nodes.fetch_location_operating_signals",
-            new=AsyncMock(return_value={"analytics_run": None, "instagram_signals": None}),
+            new=AsyncMock(
+                return_value={
+                    "analytics_run": None,
+                    "instagram_signals": None,
+                    "slot_demand_profile": [],
+                }
+            ),
         ),
         patch(
             "agents_app.agents.core.milestone_run.campaign_brief.nodes.get_stream_writer",
@@ -337,3 +345,66 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
         out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
     assert "signal_markdown" in out
     assert "operating signals unavailable" in out["signal_markdown"].lower()
+
+
+def test_build_slot_performance_payload_classifies_slots() -> None:
+    signals = {
+        "analytics_run": {"id": "42"},
+        "slot_demand_profile": [
+            {
+                "day": "fri",
+                "mealPeriod": "dinner",
+                "mealPeriodLabel": "Dinner",
+                "mealPeriodHoursLabel": "17:00–21:59",
+                "orderCount": 120,
+                "trafficShare": 0.2,
+                "demandIndex": 1.4,
+                "relativeDemand": "high",
+            },
+            {
+                "day": "mon",
+                "mealPeriod": "lunch",
+                "mealPeriodLabel": "Lunch",
+                "mealPeriodHoursLabel": "11:00–14:59",
+                "orderCount": 5,
+                "trafficShare": 0.01,
+                "demandIndex": 0.5,
+                "relativeDemand": "low",
+            },
+        ],
+    }
+    payload = _build_slot_performance_payload(signals)
+    assert payload is not None
+    assert payload["sourceAnalyticsRunId"] == "42"
+    assert payload["strongSlots"]
+    assert payload["slotsNeedingPromotion"]
+    markdown = _fmt_slot_performance_markdown(payload)
+    assert "## Slot performance" in markdown
+    assert "Strong slots" in markdown
+    assert "Slots needing promotion" in markdown
+
+
+def test_output_schema_accepts_optional_slot_performance() -> None:
+    payload = _valid_campaign_brief_payload()
+    payload["slotPerformance"] = {
+        "sourceAnalyticsRunId": "42",
+        "slots": [
+            {
+                "day": "fri",
+                "mealPeriod": "dinner",
+                "mealPeriodLabel": "Dinner",
+                "mealPeriodHoursLabel": "17:00–21:59",
+                "orderCount": 120,
+                "demandIndex": 1.4,
+                "relativeDemand": "high",
+                "posture": "support",
+            }
+        ],
+        "strongSlots": ["Fri Dinner (1.40×)"],
+        "slotsNeedingPromotion": [],
+        "summary": "1 strong slot(s), 0 slot(s) needing promotion, 0 average.",
+    }
+    normalized, error = validate_skill_output("campaign_brief", payload)
+    assert error is None
+    assert normalized is not None
+    assert normalized["slotPerformance"]["strongSlots"] == ["Fri Dinner (1.40×)"]

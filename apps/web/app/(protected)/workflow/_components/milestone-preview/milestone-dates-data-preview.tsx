@@ -38,7 +38,12 @@ export function MilestoneDatesDataPreview({ data }: MilestoneDatesDataPreviewPro
       <div className="space-y-3">
         <p className={mp.sectionTitle}>{t('milestoneDatesPreviewPublicHolidays')}</p>
         {data.publicHolidays.length === 0 ? (
-          <p className={mp.body}>{t('milestoneDatesPreviewNoHolidays')}</p>
+          <p className={mp.body}>
+            {t('milestoneDatesPreviewNoHolidays', {
+              startDate: formatDate(data.startDate),
+              endDate: formatDate(data.endDate),
+            })}
+          </p>
         ) : (
           <ul className="space-y-2">
             {data.publicHolidays.map((holiday) => (

@@ -106,6 +106,22 @@ class MenuCombosPayloadType:
     top_pair_timing: list[MenuComboPairTimingType]
 
 
+def slot_demand_cells_to_gql(cells: list[dict]) -> list[SlotDemandCellType]:
+    return [
+        SlotDemandCellType(
+            day=c["day"],
+            meal_period=c["meal_period"],
+            meal_period_label=c["meal_period_label"],
+            meal_period_hours_label=c["meal_period_hours_label"],
+            order_count=c["order_count"],
+            traffic_share=c["traffic_share"],
+            demand_index=c["demand_index"],
+            relative_demand=c["relative_demand"],
+        )
+        for c in cells
+    ]
+
+
 def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
     pairs = [
         MenuComboPairType(
@@ -172,19 +188,7 @@ def menu_combos_to_gql(raw: dict) -> MenuCombosPayloadType:
         for t in raw.get("top_pair_timing", [])
     ]
 
-    slot_demand_profile = [
-        SlotDemandCellType(
-            day=c["day"],
-            meal_period=c["meal_period"],
-            meal_period_label=c["meal_period_label"],
-            meal_period_hours_label=c["meal_period_hours_label"],
-            order_count=c["order_count"],
-            traffic_share=c["traffic_share"],
-            demand_index=c["demand_index"],
-            relative_demand=c["relative_demand"],
-        )
-        for c in raw.get("slot_demand_profile", [])
-    ]
+    slot_demand_profile = slot_demand_cells_to_gql(raw.get("slot_demand_profile", []))
 
     return MenuCombosPayloadType(
         total_orders=raw["total_orders"],

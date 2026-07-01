@@ -42,13 +42,13 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'menu_clusterer',
     name: 'Menu clusterer',
     description:
-      'Build one signature menu_highlight cluster per POS category from tagged star items, with cluster descriptions tied to campaign strategy.',
+      'Build one top_five group per POS category from tagged star items (up to five dishes), with cluster descriptions tied to campaign strategy.',
   },
   {
     id: 'post_lineup',
     name: 'Post lineup',
     description:
-      'Plan Instagram feed carousel posts: a pinned monthly signature menu post plus one weekday lunch post per campaign week.',
+      'Plan Instagram feed carousel posts: one Top 5 carousel per star category from menu tagger data.',
   },
   {
     id: 'reel_lineup',
@@ -60,13 +60,13 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'story_lineup',
     name: 'Story lineup',
     description:
-      'Select public holidays that deserve Instagram Story greetings plus a recurring user-review story for the scheduler.',
+      'Select public holidays for Instagram Story greetings and a recurring user-review story.',
   },
   {
     id: 'culture_hooks',
     name: 'Culture hooks',
     description:
-      'Infer location concept and target audience from the Campaign Brief, then propose non-food intersection topics for culturally relevant Reels.',
+      'Infer location concept and target audience from the Campaign Brief, then propose non-food intersection topics for culturally relevant Instagram posts, Stories, and Reels.',
   },
   {
     id: 'ig_profile',

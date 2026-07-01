@@ -140,6 +140,10 @@ class CampaignWeek:
 # (e.g. a 2-day tail at the end of the window).
 MIN_SCHEDULABLE_WEEK_DAYS = 3
 
+# Scheduler cadence: one top_five_category post every N weeks (rotating); user_review stories stay 4-week.
+TOP_FIVE_CATEGORY_INTERVAL_WEEKS = 2
+USER_REVIEW_STORY_INTERVAL_WEEKS = 4
+
 
 def campaign_days_in_week_overlap(
     week_start: str,
@@ -175,9 +179,7 @@ def week_requires_weekly_cadence(
     *,
     min_days: int = MIN_SCHEDULABLE_WEEK_DAYS,
 ) -> bool:
-    return (
-        campaign_days_in_week_overlap(week_start, week_end, window_start, window_end) >= min_days
-    )
+    return campaign_days_in_week_overlap(week_start, week_end, window_start, window_end) >= min_days
 
 
 def week_has_weekday_in_overlap(
@@ -403,3 +405,114 @@ def interval_block_starts(
         blocks.append((cursor.isoformat(), block_end.isoformat()))
         cursor = block_end + timedelta(days=1)
     return blocks
+
+
+def interval_block_index(
+    iso_date: str,
+    start_date: str,
+    end_date: str,
+    *,
+    interval_weeks: int,
+) -> int | None:
+    parsed = parse_iso_date(iso_date)
+    start = parse_iso_date(start_date)
+    end = parse_iso_date(end_date)
+    if parsed is None or start is None or end is None or parsed < start or parsed > end:
+        return None
+    for idx, (block_start, block_end) in enumerate(
+        interval_block_starts(start_date, end_date, interval_weeks=interval_weeks)
+    ):
+        if block_start <= iso_date <= block_end:
+            return idx
+    return None
+
+
+def top_five_cadence_issues(
+    *,
+    dated_post_ids: list[tuple[str, str]],
+    start_date: str,
+    end_date: str,
+    lineup_order: list[str] | None = None,
+    interval_weeks: int = TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
+) -> list[str]:
+    """Validate rotating top_five_category cadence: one post every N weeks, not one per id per block."""
+    if not dated_post_ids:
+        return []
+
+    interval_days = interval_weeks * 7
+    sorted_slots = sorted(dated_post_ids, key=lambda row: row[0])
+    unique_ids = list(dict.fromkeys(post_id for _iso_date, post_id in sorted_slots))
+    rotation_size = len(unique_ids)
+    if rotation_size == 0:
+        return []
+
+    if lineup_order:
+        known = set(unique_ids)
+        expected_rotation = [post_id for post_id in lineup_order if post_id in known]
+        if not expected_rotation:
+            expected_rotation = unique_ids
+    else:
+        expected_rotation = unique_ids
+
+    blocks = interval_block_starts(start_date, end_date, interval_weeks=interval_weeks)
+    posts_per_block: dict[int, int] = {}
+    for iso_date, _post_id in sorted_slots:
+        block_index = interval_block_index(
+            iso_date,
+            start_date,
+            end_date,
+            interval_weeks=interval_weeks,
+        )
+        if block_index is not None:
+            posts_per_block[block_index] = posts_per_block.get(block_index, 0) + 1
+
+    issues: list[str] = []
+    for block_index in range(len(blocks)):
+        count = posts_per_block.get(block_index, 0)
+        if count != 1:
+            issues.append(
+                f"{interval_weeks}-week block {block_index + 1} has {count} "
+                f"top_five_category posts (expected 1)."
+            )
+
+    for idx in range(1, len(sorted_slots)):
+        prev_date = parse_iso_date(sorted_slots[idx - 1][0])
+        curr_date = parse_iso_date(sorted_slots[idx][0])
+        if prev_date is None or curr_date is None:
+            continue
+        gap_days = (curr_date - prev_date).days
+        if gap_days < interval_days:
+            issues.append(
+                f"top_five_category posts on {sorted_slots[idx - 1][0]} and "
+                f"{sorted_slots[idx][0]} are {gap_days} days apart "
+                f"(expected at least {interval_days})."
+            )
+
+    min_same_id_gap = rotation_size * interval_days
+    last_seen_by_id: dict[str, date] = {}
+    for iso_date, post_id in sorted_slots:
+        parsed = parse_iso_date(iso_date)
+        if parsed is None:
+            continue
+        previous = last_seen_by_id.get(post_id)
+        if previous is not None:
+            gap_days = (parsed - previous).days
+            if gap_days < min_same_id_gap:
+                issues.append(
+                    f"{post_id} repeats after {gap_days} days on {iso_date} "
+                    f"(expected at least {min_same_id_gap} when {rotation_size} "
+                    f"top_five_category posts rotate)."
+                )
+        last_seen_by_id[post_id] = parsed
+
+    if rotation_size > 1 and expected_rotation:
+        for idx, (_iso_date, post_id) in enumerate(sorted_slots):
+            expected_id = expected_rotation[idx % len(expected_rotation)]
+            if post_id != expected_id:
+                issues.append(
+                    "top_five_category posts must rotate through lineup order "
+                    f"({', '.join(expected_rotation)}), but position {idx + 1} is {post_id}."
+                )
+                break
+
+    return issues

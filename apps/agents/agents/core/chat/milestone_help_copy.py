@@ -34,9 +34,9 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "weekday lunch scheduling hints for downstream scheduling."
     ),
     "post_lineup": (
-        "Requires a prior Menu clusterer milestone. Reads saved foodLeads and drafts Instagram "
-        "feed post concepts. Builds a pinned monthly menu carousel with one slide per food "
-        "lead, each slide naming the dish and including a high-quality photo brief."
+        "Requires prior Dates, Campaign brief, and Menu tagger milestones. Plans one Top 5 "
+        "Instagram feed carousel per POS category that has star items, with per-slide captions "
+        "grounded in campaign brief tone and menu tagger item metadata."
     ),
     "reel_lineup": (
         "Requires prior dates, Campaign Brief, and Menu clusterer milestones. Plans one weekday "
@@ -47,8 +47,8 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
         "generate intersection topics between the concept and the audience's likely interests "
-        "(not necessarily food). These intersections should be actionable for Instagram Reels "
-        "ideas that attract potential new customers."
+        "(not food or drink). These intersections should inspire Instagram feed posts, Stories, "
+        "and Reels that attract potential new customers."
     ),
     "ig_profile": (
         "Read Campaign Brief data and generate Instagram profile suggestions — username options "

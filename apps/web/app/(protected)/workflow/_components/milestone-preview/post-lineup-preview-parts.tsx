@@ -32,7 +32,10 @@ export function postIntentBadgeLabel(
   if (intent === 'weekday_lunch_post') {
     return t('milestonePostLineupPreviewWeeklyLunchBadge')
   }
-  return t('milestonePostLineupPreviewPinnedBadge')
+  if (intent === 'top_five_category') {
+    return t('milestonePostLineupPreviewTopFiveBadge')
+  }
+  return intent
 }
 
 export function PostLineupPostCopy({ post }: { post: PostLineupPost }) {
@@ -131,6 +134,9 @@ function PostLineupSlideRow({
             value: formatMilestonePopularityPercent(slide.popularity),
           })}
         </Badge>
+      ) : null}
+      {slide.caption?.trim() ? (
+        <p className={`${mp.bodySmall} w-full basis-full`}>{slide.caption.trim()}</p>
       ) : null}
     </div>
   )

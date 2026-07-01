@@ -45,17 +45,11 @@ export async function GET(req: Request) {
     const country = locationData.location?.country
     const countryId = resolveCountryIdFromName(country)
     if (!countryId) {
-      return NextResponse.json(
-        { error: 'Could not determine supported country for this location' },
-        { status: 422 },
-      )
+      return NextResponse.json({ holidays: [] })
     }
     const publicHolidayId = countryIdToPublicHolidayId[countryId]
     if (!publicHolidayId) {
-      return NextResponse.json(
-        { error: 'Could not resolve public holiday country id' },
-        { status: 422 },
-      )
+      return NextResponse.json({ holidays: [] })
     }
 
     const holidaysData = await getCachedPublicHolidays(userId, publicHolidayId, dateStart, dateEnd)

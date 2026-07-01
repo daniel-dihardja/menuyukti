@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.culture_hooks.nodes import (
+    _culture_hooks_search_queries,
     fetch_and_prepare,
     generate_intersections,
+    research_local_culture,
 )
 from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
@@ -197,3 +200,107 @@ async def test_fetch_and_prepare_requires_prior_campaign_brief() -> None:
         ),
     ):
         await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+
+def _sample_campaign_brief() -> dict:
+    return {
+        "venueSnapshot": {"venueName": "Cafe Retro", "city": "Amsterdam", "country": "Netherlands"},
+        "overallStrategy": {
+            "strategyFocus": "Heritage brunch culture",
+            "audiencePriority": ["Young creatives"],
+            "coreMessage": "Nostalgic warmth",
+            "offerWindow": "Weekends",
+            "cadenceGuidance": ["Post twice weekly"],
+        },
+        "contentPillars": ["Heritage"],
+        "audienceHypotheses": ["Weekend social groups"],
+        "proofOrientedAngles": ["Family recipes"],
+        "toneGuardrails": ["Warm and nostalgic"],
+        "campaignObjective": "Grow weekend covers",
+        "mainCategory": "Brunch",
+        "targetSegments": ["Young creatives"],
+        "messageHierarchy": ["Heritage brunch rituals"],
+        "offerAndCtaPlan": ["Reserve a table"],
+        "contentPillarPlan": ["Heritage stories"],
+        "measurementPlan": ["Track reservations"],
+        "testingPlan": ["Test hooks"],
+        "riskGuardrails": ["No alcohol focus"],
+    }
+
+
+def test_culture_hooks_search_queries_from_brief() -> None:
+    queries = _culture_hooks_search_queries(_sample_campaign_brief())
+    assert len(queries) == 2
+    assert "Amsterdam" in queries[0]
+    assert "Heritage brunch culture" in queries[1] or "Heritage brunch rituals" in queries[1]
+
+
+@pytest.mark.asyncio
+async def test_research_local_culture_skips_without_tavily() -> None:
+    prior = json.dumps(
+        [
+            {
+                "title": "Campaign brief",
+                "presetId": "restaurant_campaign_brief",
+                "data": _sample_campaign_brief(),
+            }
+        ]
+    )
+    state = {
+        "prior_milestones_data": prior,
+        "generation_context_markdown": "base context",
+        "owner_notes_markdown": "",
+        "goal": "G",
+        "criteria": [],
+        "injected_prior_context_markdown": "brief",
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.culture_hooks.nodes.make_search_web_tool",
+            return_value=None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await research_local_culture(state)  # type: ignore[arg-type]
+    assert out == {"web_research_markdown": ""}
+
+
+@pytest.mark.asyncio
+async def test_research_local_culture_appends_results_when_tavily_available() -> None:
+    prior = json.dumps(
+        [
+            {
+                "title": "Campaign brief",
+                "presetId": "restaurant_campaign_brief",
+                "data": _sample_campaign_brief(),
+            }
+        ]
+    )
+    state = {
+        "prior_milestones_data": prior,
+        "generation_context_markdown": "## Milestone goal\nG",
+        "owner_notes_markdown": "",
+        "goal": "G",
+        "criteria": [],
+        "injected_prior_context_markdown": "brief",
+    }
+    mock_tool = MagicMock()
+    mock_tool.ainvoke = AsyncMock(return_value="Local art scene snippet")
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.culture_hooks.nodes.make_search_web_tool",
+            return_value=mock_tool,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await research_local_culture(state)  # type: ignore[arg-type]
+
+    assert "Local culture web research" in out["web_research_markdown"]
+    assert "Local art scene snippet" in out["generation_context_markdown"]
+    assert mock_tool.ainvoke.await_count >= 1

@@ -31,7 +31,8 @@ class MenuClustererAnchor(TypedDict):
 class MenuClustererGroup(TypedDict):
     id: str
     leadName: str
-    profileId: Literal["hook_reel", "menu_highlight"]
+    profileId: Literal["hook_reel", "menu_highlight", "top_five"]
+    category: NotRequired[str]
     anchor: MenuClustererAnchor
     items: list[MenuClustererGroupItem]
     mix: MenuClustererGroupMix
@@ -48,7 +49,7 @@ class MenuClustererOutput(TypedDict):
     unassignedItemNames: list[str]
     topFoodLeadNames: NotRequired[list[str]]
     targetGroupCount: NotRequired[int]
-    signatureGroupCount: NotRequired[int]
+    topFiveGroupCount: NotRequired[int]
     sourceMenuTaggerTitle: NotRequired[str]
     sourceCampaignBriefTitle: NotRequired[str]
     notes: NotRequired[str]
@@ -71,7 +72,7 @@ class MenuClustererState(TypedDict):
     menu_tagger_items: NotRequired[list[dict[str, Any]]]
     source_menu_tagger_title: NotRequired[str]
     target_group_count: NotRequired[int]
-    signature_group_count: NotRequired[int]
+    top_five_group_count: NotRequired[int]
     generated_output: NotRequired[MenuClustererOutput | None]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | None]

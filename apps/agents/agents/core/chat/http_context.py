@@ -12,9 +12,9 @@ chat_http_client_var: contextvars.ContextVar[httpx.AsyncClient | None] = context
     default=None,
 )
 
-chat_milestone_node_cache_var: contextvars.ContextVar[dict[tuple[str, str], dict[str, Any] | None] | None] = (
-    contextvars.ContextVar("chat_milestone_node_cache_var", default=None)
-)
+chat_milestone_node_cache_var: contextvars.ContextVar[
+    dict[tuple[str, str], dict[str, Any] | None] | None
+] = contextvars.ContextVar("chat_milestone_node_cache_var", default=None)
 
 
 def get_chat_milestone_cache() -> dict[tuple[str, str], dict[str, Any] | None]:

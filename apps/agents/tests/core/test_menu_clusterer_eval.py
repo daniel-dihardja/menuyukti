@@ -8,8 +8,8 @@ from agents_app.agents.core.milestone_eval.menu_clusterer_eval import (
 )
 
 _CLUSTER_DESCRIPTION = (
-    "Deterministic signature cluster for Cafe Alto MAINS menu: star dishes by "
-    "popularity (Ribeye, Burger). Grouped for the pinned signature carousel; aligns "
+    "Deterministic Top 5 cluster for Cafe Alto MAINS menu: top star dishes by "
+    "popularity (Ribeye, Burger). Grouped for the feed carousel Top 5 post; aligns "
     "with weekday_lunch strategy."
 )
 
@@ -19,9 +19,9 @@ _HOOK_CLUSTER_DESCRIPTION = (
 )
 
 
-def _signature_group(
+def _top_five_group(
     *,
-    group_id: str = "group-signature-mains",
+    group_id: str = "group-top-five-mains",
     lead_name: str = "Ribeye",
     items: list[dict] | None = None,
 ) -> dict:
@@ -48,7 +48,8 @@ def _signature_group(
     return {
         "id": group_id,
         "leadName": lead_name,
-        "profileId": "menu_highlight",
+        "profileId": "top_five",
+        "category": "MAINS" if group_id.endswith("mains") else "SIDES",
         "anchor": {"dimension": "reel_moment", "value": "static_hero"},
         "items": default_items,
         "mix": {
@@ -101,9 +102,9 @@ def _hook_group(*, group_id: str = "group-1", lead_name: str = "Wings") -> dict:
 
 def _sample_payload(*, hybrid: bool = False) -> dict:
     groups = [
-        _signature_group(),
-        _signature_group(
-            group_id="group-signature-sides",
+        _top_five_group(),
+        _top_five_group(
+            group_id="group-top-five-sides",
             lead_name="Fries",
             items=[
                 {
@@ -118,6 +119,7 @@ def _sample_payload(*, hybrid: bool = False) -> dict:
             ],
         ),
     ]
+    groups[1]["category"] = "SIDES"
     if hybrid:
         groups.extend(
             [
@@ -141,7 +143,7 @@ def _sample_payload(*, hybrid: bool = False) -> dict:
         "unassignedItemNames": [] if hybrid else ["Wings"],
         "topFoodLeadNames": ["Wings", "Ribeye", "Burger", "Fries", "Salad"],
         "targetGroupCount": 4 if hybrid else 2,
-        "signatureGroupCount": 2,
+        "topFiveGroupCount": 2,
         "sourceCampaignBriefTitle": "Campaign brief",
     }
 
@@ -149,7 +151,7 @@ def _sample_payload(*, hybrid: bool = False) -> dict:
 def test_enrich_menu_clusterer_eval_payload_adds_hints() -> None:
     enriched = enrich_menu_clusterer_eval_payload(_sample_payload(hybrid=True))
     assert enriched["_evalHints"]["minFoodGroups"] == 4
-    assert enriched["_evalHints"]["signatureGroupCount"] == 2
+    assert enriched["_evalHints"]["topFiveGroupCount"] == 2
     assert enriched["_evalHints"]["topFoodLeadNames"] == [
         "Wings",
         "Ribeye",
@@ -171,7 +173,7 @@ def test_prior_menu_tagger_verdict_passes() -> None:
 def test_hybrid_group_count_verdict_passes() -> None:
     verdict = try_menu_clusterer_deterministic_verdict(
         "Data includes the derived number of food Reel hook clusters (4-8) and one "
-        "signature cluster per available category that has star items.",
+        "top five group per available category that has star items.",
         _sample_payload(hybrid=True),
     )
     assert verdict is not None
@@ -183,16 +185,16 @@ def test_hybrid_group_count_verdict_fails_when_hook_mismatch() -> None:
     payload["groups"] = payload["groups"][:3]
     verdict = try_menu_clusterer_deterministic_verdict(
         "Data includes the derived number of food Reel hook clusters (4-8) and one "
-        "signature cluster per available category that has star items.",
+        "top five group per available category that has star items.",
         payload,
     )
     assert verdict is not None
     assert verdict[0] == "fail"
 
 
-def test_signature_only_group_count_verdict_passes() -> None:
+def test_top_five_only_group_count_verdict_passes() -> None:
     verdict = try_menu_clusterer_deterministic_verdict(
-        "Data includes one signature cluster per available category that has star items.",
+        "Data includes one top five group per available category that has star items.",
         _sample_payload(),
     )
     assert verdict is not None
@@ -211,20 +213,20 @@ def test_prior_campaign_brief_verdict_passes() -> None:
 def test_hybrid_top_lead_verdict_passes() -> None:
     verdict = try_menu_clusterer_deterministic_verdict(
         "Each hook Reel cluster's position-1 item is in the top popularity score-tier "
-        "(top five scores; storytelling breaks ties among same score). Each signature "
-        "cluster's position-1 item is the top star in that category by popularity.",
+        "(top five scores; storytelling breaks ties among same score). Each top five "
+        "group's position-1 item is the top star in that category by popularity.",
         _sample_payload(hybrid=True),
     )
     assert verdict is not None
     assert verdict[0] == "pass"
 
 
-def test_signature_only_top_lead_verdict_ignores_hook_groups() -> None:
+def test_top_five_only_top_lead_verdict_ignores_hook_groups() -> None:
     payload = _sample_payload(hybrid=True)
     payload["groups"][2]["leadName"] = "Salad"
     payload["groups"][2]["items"][0]["name"] = "Salad"
     verdict = try_menu_clusterer_deterministic_verdict(
-        "Each signature cluster's position-1 item is the top star in that category by popularity.",
+        "Each top five group's position-1 item is the top star in that category by popularity.",
         payload,
     )
     assert verdict is not None
@@ -243,11 +245,11 @@ def test_hook_only_top_lead_verdict_fails_when_hook_lead_not_in_top_five() -> No
     assert verdict[0] == "fail"
 
 
-def test_signature_top_star_lead_verdict_fails_when_lead_not_top_star() -> None:
+def test_top_five_top_star_lead_verdict_fails_when_lead_not_top_star() -> None:
     payload = _sample_payload()
     payload["groups"][0]["leadName"] = "Burger"
     verdict = try_menu_clusterer_deterministic_verdict(
-        "Each signature cluster's position-1 item is the top star in that category by popularity.",
+        "Each top five group's position-1 item is the top star in that category by popularity.",
         payload,
     )
     assert verdict is not None
@@ -284,7 +286,7 @@ def test_unassigned_items_verdict_passes_for_hybrid() -> None:
     assert verdict[0] == "pass"
 
 
-def test_unassigned_items_verdict_passes_for_signature_only() -> None:
+def test_unassigned_items_verdict_passes_for_top_five_only() -> None:
     verdict = try_menu_clusterer_deterministic_verdict(
         "Every tagged food item from menu tagger appears in at least one food cluster "
         "(no unassigned items).",

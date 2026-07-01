@@ -287,9 +287,9 @@ def _build_post_from_plan(
     if not isinstance(plan_post, dict):
         raise ValueError("post_lineup plan post must be an object")
     intent_raw = str(plan_post.get("intent") or "").strip()
-    if intent_raw not in ("pinned_monthly_menu", "weekday_lunch_post"):
+    if intent_raw != "weekday_lunch_post":
         raise ValueError(f"post_lineup plan has invalid intent {intent_raw!r}")
-    intent: Literal["pinned_monthly_menu", "weekday_lunch_post"] = intent_raw  # type: ignore[assignment]
+    intent: Literal["weekday_lunch_post"] = intent_raw  # type: ignore[assignment]
 
     title = str(plan_post.get("title") or "").strip()
     if not title:
@@ -307,16 +307,11 @@ def _build_post_from_plan(
     if not isinstance(raw_group_ids, list):
         raise ValueError(f"post_lineup plan for {intent} must include groupIds")
     group_ids = [str(value).strip() for value in raw_group_ids if str(value).strip()]
-    if intent == "pinned_monthly_menu":
-        group_ids = normalize_monthly_pin_group_ids(group_ids, groups_by_id)
     selected_groups = _resolve_groups(group_ids, groups_by_id)
-    slide_cap: int | None = POST_LINEUP_MAX_SLIDES
-    if intent == "pinned_monthly_menu":
-        slide_cap = None
     slides = _slides_from_groups(
         selected_groups,
         food_leads_by_name=food_leads_by_name,
-        max_slides=slide_cap,
+        max_slides=POST_LINEUP_MAX_SLIDES,
     )
     if not slides:
         raise ValueError(f"post_lineup plan for {intent} produced no slides from selected groups")
@@ -392,7 +387,7 @@ def _weekly_plan_by_index(
 
 def build_post_lineup_from_plan(
     *,
-    monthly_post: dict[str, Any],
+    top_five_posts: list[dict[str, Any]],
     weekly_posts: list[dict[str, Any]],
     campaign_weeks: list[CampaignWeek],
     groups: list[dict[str, Any]],
@@ -402,6 +397,7 @@ def build_post_lineup_from_plan(
     end_date: str,
     source_menu_clusterer_title: str = "",
     source_campaign_brief_title: str = "",
+    source_menu_tagger_title: str = "",
     source_dates_title: str = "",
     notes: str = "",
 ) -> dict[str, Any]:
@@ -412,21 +408,7 @@ def build_post_lineup_from_plan(
 
     groups_by_id = _groups_by_id(groups)
     food_leads_by_name = _food_leads_by_name(food_leads)
-    posts: list[dict[str, Any]] = []
-
-    monthly_intent = str(monthly_post.get("intent") or "").strip()
-    if monthly_intent != "pinned_monthly_menu":
-        raise ValueError("monthlyPost intent must be pinned_monthly_menu")
-
-    posts.append(
-        _build_post_from_plan(
-            monthly_post,
-            groups_by_id=groups_by_id,
-            food_leads_by_name=food_leads_by_name,
-            post_id=POST_LINEUP_PINNED_POST_ID,
-            campaign_brief_data=campaign_brief_data,
-        )
-    )
+    posts: list[dict[str, Any]] = list(top_five_posts)
 
     for week, weekly_plan in _weekly_plan_by_index(weekly_posts, campaign_weeks):
         posts.append(
@@ -451,6 +433,43 @@ def build_post_lineup_from_plan(
     source_brief_title = source_campaign_brief_title.strip()
     if source_brief_title:
         payload["sourceCampaignBriefTitle"] = source_brief_title
+    source_tagger_title = source_menu_tagger_title.strip()
+    if source_tagger_title:
+        payload["sourceMenuTaggerTitle"] = source_tagger_title
+    source_dates = source_dates_title.strip()
+    if source_dates:
+        payload["sourceDatesTitle"] = source_dates
+    owner_notes = notes.strip()
+    if owner_notes:
+        payload["notes"] = owner_notes
+    return payload
+
+
+def build_post_lineup_output(
+    *,
+    top_five_posts: list[dict[str, Any]],
+    start_date: str,
+    end_date: str,
+    source_campaign_brief_title: str = "",
+    source_menu_clusterer_title: str = "",
+    source_menu_tagger_title: str = "",
+    source_dates_title: str = "",
+    notes: str = "",
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "posts": list(top_five_posts),
+        "startDate": start_date.strip(),
+        "endDate": end_date.strip(),
+    }
+    source_brief_title = source_campaign_brief_title.strip()
+    if source_brief_title:
+        payload["sourceCampaignBriefTitle"] = source_brief_title
+    source_clusterer_title = source_menu_clusterer_title.strip()
+    if source_clusterer_title:
+        payload["sourceMenuClustererTitle"] = source_clusterer_title
+    source_tagger_title = source_menu_tagger_title.strip()
+    if source_tagger_title:
+        payload["sourceMenuTaggerTitle"] = source_tagger_title
     source_dates = source_dates_title.strip()
     if source_dates:
         payload["sourceDatesTitle"] = source_dates

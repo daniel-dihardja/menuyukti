@@ -46,6 +46,32 @@ describe('hasCampaignBriefPreviewContent', () => {
     ).toBe(true)
   })
 
+  it('returns true when slot performance is populated', () => {
+    expect(
+      hasCampaignBriefPreviewContent({
+        ...emptyBrief,
+        slotPerformance: {
+          sourceAnalyticsRunId: '42',
+          slots: [
+            {
+              day: 'fri',
+              mealPeriod: 'dinner',
+              mealPeriodLabel: 'Dinner',
+              mealPeriodHoursLabel: '17:00–21:59',
+              orderCount: 10,
+              demandIndex: 1.2,
+              relativeDemand: 'high',
+              posture: 'support',
+            },
+          ],
+          strongSlots: ['Fri Dinner (1.20×)'],
+          slotsNeedingPromotion: [],
+          summary: '1 strong slot(s), 0 slot(s) needing promotion, 0 average.',
+        },
+      }),
+    ).toBe(true)
+  })
+
   it('ignores placeholder main category alone', () => {
     expect(
       hasCampaignBriefPreviewContent({

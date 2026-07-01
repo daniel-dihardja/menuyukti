@@ -191,6 +191,29 @@ export const campaignBriefOverallStrategySchema = z.object({
 
 export type CampaignBriefOverallStrategy = z.infer<typeof campaignBriefOverallStrategySchema>
 
+export const campaignBriefSlotCellSchema = z.object({
+  day: z.string(),
+  mealPeriod: z.string(),
+  mealPeriodLabel: z.string(),
+  mealPeriodHoursLabel: z.string(),
+  orderCount: z.number().int().nonnegative(),
+  demandIndex: z.number(),
+  relativeDemand: z.enum(['low', 'average', 'high']),
+  posture: z.enum(['support', 'promote', 'maintain']),
+})
+
+export type CampaignBriefSlotCell = z.infer<typeof campaignBriefSlotCellSchema>
+
+export const campaignBriefSlotPerformanceSchema = z.object({
+  sourceAnalyticsRunId: z.string().nullable().optional(),
+  slots: z.array(campaignBriefSlotCellSchema),
+  strongSlots: z.array(z.string()),
+  slotsNeedingPromotion: z.array(z.string()),
+  summary: z.string(),
+})
+
+export type CampaignBriefSlotPerformance = z.infer<typeof campaignBriefSlotPerformanceSchema>
+
 export const campaignBriefMilestoneDataSchema = z.object({
   venueSnapshot: campaignBriefVenueSnapshotSchema,
   overallStrategy: campaignBriefOverallStrategySchema.optional(),
@@ -207,6 +230,7 @@ export const campaignBriefMilestoneDataSchema = z.object({
   measurementPlan: z.array(z.string()),
   testingPlan: z.array(z.string()),
   riskGuardrails: z.array(z.string()),
+  slotPerformance: campaignBriefSlotPerformanceSchema.optional(),
 })
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
@@ -322,7 +346,7 @@ export const menuTaggerMilestoneDataSchema = z.object({
 
 export type MenuTaggerMilestoneData = z.infer<typeof menuTaggerMilestoneDataSchema>
 
-export const menuClustererProfileIdSchema = z.enum(['hook_reel', 'menu_highlight'])
+export const menuClustererProfileIdSchema = z.enum(['hook_reel', 'menu_highlight', 'top_five'])
 
 export const menuClustererAnchorSchema = z.object({
   dimension: z.literal('reel_moment'),
@@ -364,6 +388,7 @@ export const menuClustererGroupSchema = z
     id: z.string().trim().min(1),
     leadName: z.string().trim().min(1),
     profileId: menuClustererProfileIdSchema,
+    category: z.string().trim().min(1).optional(),
     anchor: menuClustererAnchorSchema,
     items: z.array(menuClustererGroupItemSchema).min(1).max(12),
     mix: menuClustererGroupMixSchema,
@@ -374,12 +399,20 @@ export const menuClustererGroupSchema = z
     assetHint: z.string().trim().min(1).optional(),
   })
   .superRefine((group, ctx) => {
-    const maxItems = group.profileId === 'menu_highlight' ? 12 : 5
+    const maxItems =
+      group.profileId === 'menu_highlight' ? 12 : group.profileId === 'top_five' ? 5 : 5
     if (group.items.length > maxItems) {
       ctx.addIssue({
         code: 'custom',
-        message: `menu_highlight groups allow up to 12 items; hook_reel groups allow up to 5`,
+        message: `top_five and hook_reel groups allow up to 5 items; menu_highlight allows up to 12`,
         path: ['items'],
+      })
+    }
+    if (group.profileId === 'top_five' && !group.category?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'category is required when profileId is top_five',
+        path: ['category'],
       })
     }
   })
@@ -392,7 +425,7 @@ export const menuClustererMilestoneDataSchema = z.object({
   unassignedItemNames: z.array(z.string().trim().min(1)),
   topFoodLeadNames: z.array(z.string().trim().min(1)).max(12).default([]),
   targetGroupCount: menuClustererTargetGroupCountSchema.optional(),
-  signatureGroupCount: menuClustererTargetGroupCountSchema.optional(),
+  topFiveGroupCount: menuClustererTargetGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),
@@ -402,7 +435,7 @@ export type MenuClustererMilestoneData = z.infer<typeof menuClustererMilestoneDa
 
 export const postLineupPostFormatSchema = z.literal('carousel')
 
-export const postLineupPostIntentSchema = z.enum(['pinned_monthly_menu', 'weekday_lunch_post'])
+export const postLineupPostIntentSchema = z.enum(['top_five_category', 'weekday_lunch_post'])
 
 export const postLineupScheduleHintsSchema = z.object({
   preferredWeekdays: z.array(menuClustererWeekdaySchema).min(1),
@@ -416,6 +449,7 @@ export const postLineupSlideSchema = z.object({
   role: menuTaggerItemRoleSchema.optional(),
   category: z.string().trim().min(1).optional(),
   imageBrief: z.string().trim().min(1),
+  caption: z.string().trim().min(1).optional(),
   storytellingFit: z.enum(['strong', 'weak']).optional(),
   popularity: z.number().min(0).max(1).optional(),
 })
@@ -430,14 +464,16 @@ export const postLineupPostSchema = z
     title: z.string().trim().min(1),
     description: z.string().trim().min(1).optional(),
     captionGuidance: z.string().trim().min(1).optional(),
+    category: z.string().trim().min(1).optional(),
+    intervalWeeks: z.number().int().positive().optional(),
     slides: z.array(postLineupSlideSchema).min(1).max(12),
-    groupIds: z.array(z.string().trim().min(1)).min(1),
+    groupIds: z.array(z.string().trim().min(1)).optional(),
     date: z.string().optional(),
     fixdate: z.boolean().optional(),
     scheduleHints: postLineupScheduleHintsSchema.optional(),
   })
   .superRefine((post, ctx) => {
-    const maxSlides = post.intent === 'pinned_monthly_menu' ? 12 : 5
+    const maxSlides = post.intent === 'top_five_category' ? 5 : 5
     if (post.slides.length > maxSlides) {
       ctx.addIssue({
         code: 'custom',
@@ -445,11 +481,50 @@ export const postLineupPostSchema = z
         path: ['slides'],
       })
     }
+    if (post.intent === 'top_five_category') {
+      if (!post.category?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'category is required when intent is top_five_category',
+          path: ['category'],
+        })
+      }
+      post.slides.forEach((slide, slideIndex) => {
+        if (!slide.caption?.trim()) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'caption is required on every slide for top_five_category',
+            path: ['slides', slideIndex, 'caption'],
+          })
+        }
+      })
+    }
+    if (post.intent === 'weekday_lunch_post') {
+      if (!post.description?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'description is required when intent is weekday_lunch_post',
+          path: ['description'],
+        })
+      }
+      if (!post.captionGuidance?.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'captionGuidance is required when intent is weekday_lunch_post',
+          path: ['captionGuidance'],
+        })
+      }
+      if (!post.groupIds?.length) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'groupIds must contain at least one id for weekday_lunch_post',
+          path: ['groupIds'],
+        })
+      }
+    }
   })
 
 export type PostLineupPost = z.infer<typeof postLineupPostSchema>
-
-const POST_LINEUP_WEEKLY_POST_ID_PREFIX = 'weekday-lunch-post-week'
 
 export const postLineupMilestoneDataSchema = z
   .object({
@@ -458,6 +533,7 @@ export const postLineupMilestoneDataSchema = z
     endDate: z.string().optional(),
     sourceMenuClustererTitle: z.string().optional(),
     sourceCampaignBriefTitle: z.string().optional(),
+    sourceMenuTaggerTitle: z.string().optional(),
     sourceDatesTitle: z.string().optional(),
     notes: z.string().optional(),
   })
@@ -476,62 +552,35 @@ export const postLineupMilestoneDataSchema = z
       return
     }
 
-    const monthlyPosts = posts.filter((post) => post.intent === 'pinned_monthly_menu')
-    const weeklyPosts = posts.filter((post) => post.intent === 'weekday_lunch_post')
+    const topFivePosts = posts.filter((post) => post.intent === 'top_five_category')
 
-    if (monthlyPosts.length !== 1) {
+    if (posts.length > 0 && topFivePosts.length === 0) {
       ctx.addIssue({
         code: 'custom',
-        message: 'must contain exactly one pinned_monthly_menu post',
+        message: 'post_lineup posts must use top_five_category intent',
         path: ['posts'],
       })
     }
 
-    if (weeklyPosts.length < 1) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'must contain at least one weekday_lunch_post for the campaign window',
-        path: ['posts'],
-      })
-    }
-
-    const expectedWeeks = countCampaignWeeks(startDate, endDate)
-    if (weeklyPosts.length !== expectedWeeks) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'must contain one weekday_lunch_post per campaign week in the dates window',
-        path: ['posts'],
-      })
-    }
-
-    const seenWeekStarts = new Set<string>()
-    const idPrefix = `${POST_LINEUP_WEEKLY_POST_ID_PREFIX}-`
-    weeklyPosts.forEach((post, index) => {
-      if (!post.id.startsWith(idPrefix)) {
+    const seenCategories = new Set<string>()
+    topFivePosts.forEach((post, index) => {
+      const category = post.category?.trim().toLowerCase()
+      if (!category) {
         ctx.addIssue({
           code: 'custom',
-          message: 'weekday_lunch_post id must encode campaign week start',
-          path: ['posts', index, 'id'],
+          message: 'category is required when intent is top_five_category',
+          path: ['posts', index, 'category'],
         })
         return
       }
-      const weekStart = post.id.slice(idPrefix.length)
-      if (!parseIsoDateOnly(weekStart)) {
+      if (seenCategories.has(category)) {
         ctx.addIssue({
           code: 'custom',
-          message: 'weekday_lunch_post id week start must be a valid ISO date',
-          path: ['posts', index, 'id'],
-        })
-        return
-      }
-      if (seenWeekStarts.has(weekStart)) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'weekday_lunch_post entries must map to distinct calendar weeks',
-          path: ['posts', index, 'id'],
+          message: 'top_five_category posts must not duplicate categories',
+          path: ['posts', index, 'category'],
         })
       }
-      seenWeekStarts.add(weekStart)
+      seenCategories.add(category)
     })
   })
 
@@ -712,6 +761,26 @@ export type StoryLineupMilestoneData = z.infer<typeof storyLineupMilestoneDataSc
 
 export const schedulerSlotKindSchema = z.enum(['story', 'post', 'reel'])
 
+/** Embedded post on a scheduler slot; infer category from slides when legacy rows omit it. */
+export const schedulerEmbeddedPostSchema = z.preprocess((value) => {
+  if (value == null || typeof value !== 'object') {
+    return value
+  }
+  const post = value as {
+    intent?: string
+    category?: string
+    slides?: Array<{ category?: string }>
+  }
+  if (post.intent !== 'top_five_category' || post.category?.trim()) {
+    return value
+  }
+  const slideCategory = post.slides?.find((slide) => slide.category?.trim())?.category?.trim()
+  if (!slideCategory) {
+    return value
+  }
+  return { ...post, category: slideCategory }
+}, postLineupPostSchema)
+
 function inferSchedulerSlotKindFromTitle(title: string): z.infer<typeof schedulerSlotKindSchema> {
   const trimmed = title.trimStart()
   if (trimmed.startsWith('Post:')) {
@@ -729,7 +798,7 @@ export const schedulerSlotSchema = z
     date: z.string(),
     time: z.string(),
     title: z.string(),
-    post: postLineupPostSchema.optional(),
+    post: schedulerEmbeddedPostSchema.optional(),
     reel: reelLineupReelSchema.optional(),
   })
   .transform((slot) => ({

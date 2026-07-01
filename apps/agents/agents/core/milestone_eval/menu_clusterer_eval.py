@@ -34,17 +34,17 @@ def _target_group_count(data: dict[str, Any]) -> int:
     hook_count = len(_hook_reel_groups(_groups(data)))
     if hook_count > 0:
         return hook_count
-    signature_count = len(_signature_groups(_groups(data)))
-    if signature_count > 0:
-        return signature_count
+    top_five_count = len(_top_five_groups(_groups(data)))
+    if top_five_count > 0:
+        return top_five_count
     return MENU_CLUSTERER_DEFAULT_GROUP_COUNT
 
 
-def _signature_group_count(data: dict[str, Any]) -> int:
-    raw = data.get("signatureGroupCount")
+def _top_five_group_count(data: dict[str, Any]) -> int:
+    raw = data.get("topFiveGroupCount")
     if isinstance(raw, int) and raw >= MENU_CLUSTERER_MIN_GROUP_COUNT:
         return min(raw, MENU_CLUSTERER_MAX_GROUP_COUNT)
-    return len(_signature_groups(_groups(data)))
+    return len(_top_five_groups(_groups(data)))
 
 
 def _unassigned_item_names(data: dict[str, Any]) -> list[str]:
@@ -59,7 +59,7 @@ def enrich_menu_clusterer_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
         return data
     enriched = dict(data)
     hook_target = _target_group_count(data)
-    signature_target = _signature_group_count(data)
+    top_five_target = _top_five_group_count(data)
     top_names = data.get("topFoodLeadNames")
     top_food_lead_names: list[str] = []
     if isinstance(top_names, list):
@@ -70,9 +70,13 @@ def enrich_menu_clusterer_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
         "groupSizeRange": [MENU_CLUSTERER_GROUP_MIN_SIZE, MENU_CLUSTERER_HIGHLIGHT_MAX_SIZE],
         "minFoodGroups": hook_target,
         "targetGroupCount": hook_target,
-        "signatureGroupCount": signature_target,
-        "signatureGroupIds": [str(group.get("id") or "") for group in _signature_groups(_groups(data))],
-        "hookReelGroupIds": [str(group.get("id") or "") for group in _hook_reel_groups(_groups(data))],
+        "topFiveGroupCount": top_five_target,
+        "topFiveGroupIds": [
+            str(group.get("id") or "") for group in _top_five_groups(_groups(data))
+        ],
+        "hookReelGroupIds": [
+            str(group.get("id") or "") for group in _hook_reel_groups(_groups(data))
+        ],
         "topFoodLeadNames": top_food_lead_names,
         "leadIsFirstItem": True,
         "clusterDescriptionMinLength": MENU_CLUSTERER_CLUSTER_DESCRIPTION_MIN_LEN,
@@ -91,12 +95,16 @@ def _is_menu_highlight_group(group: dict[str, Any]) -> bool:
     return str(group.get("profileId") or "").strip() == "menu_highlight"
 
 
-def _signature_groups(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [group for group in groups if _is_menu_highlight_group(group)]
+def _is_top_five_group(group: dict[str, Any]) -> bool:
+    return str(group.get("profileId") or "").strip() == "top_five"
+
+
+def _top_five_groups(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [group for group in groups if _is_top_five_group(group)]
 
 
 def _hook_reel_groups(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [group for group in groups if not _is_menu_highlight_group(group)]
+    return [group for group in groups if str(group.get("profileId") or "").strip() == "hook_reel"]
 
 
 def _item_popularity(item: dict[str, Any]) -> float:
@@ -125,7 +133,7 @@ def _groups_have_cluster_descriptions(groups: list[dict[str, Any]]) -> list[str]
     return issues
 
 
-def _validate_signature_groups(groups: list[dict[str, Any]], *, empty_message: str) -> list[str]:
+def _validate_top_five_groups(groups: list[dict[str, Any]], *, empty_message: str) -> list[str]:
     issues: list[str] = []
     if not groups and empty_message:
         issues.append(empty_message)
@@ -137,12 +145,10 @@ def _validate_signature_groups(groups: list[dict[str, Any]], *, empty_message: s
         if not isinstance(items, list) or not items:
             issues.append(f"{group_id} has no items")
             continue
-        if not (
-            MENU_CLUSTERER_GROUP_MIN_SIZE <= len(items) <= MENU_CLUSTERER_HIGHLIGHT_MAX_SIZE
-        ):
+        if not (MENU_CLUSTERER_GROUP_MIN_SIZE <= len(items) <= MENU_CLUSTERER_GROUP_MAX_SIZE):
             issues.append(
                 f"{group_id} must contain between {MENU_CLUSTERER_GROUP_MIN_SIZE} and "
-                f"{MENU_CLUSTERER_HIGHLIGHT_MAX_SIZE} items"
+                f"{MENU_CLUSTERER_GROUP_MAX_SIZE} items"
             )
             continue
         first = items[0] if isinstance(items[0], dict) else {}
@@ -163,19 +169,21 @@ def _validate_signature_groups(groups: list[dict[str, Any]], *, empty_message: s
             if str(row.get("role") or "").strip().casefold() != "star":
                 issues.append(f"{group_id} includes non-star item {row.get('name')!r}")
                 break
-        category = str(first.get("category") or "").strip()
-        if category:
-            for row in items:
-                if not isinstance(row, dict):
-                    continue
-                row_category = str(row.get("category") or "").strip()
-                if row_category and row_category.casefold() != category.casefold():
-                    issues.append(f"{group_id} mixes categories {category!r} and {row_category!r}")
-                    break
+        category = str(group.get("category") or first.get("category") or "").strip()
+        if not category:
+            issues.append(f"{group_id} is missing category")
+            continue
+        for row in items:
+            if not isinstance(row, dict):
+                continue
+            row_category = str(row.get("category") or "").strip()
+            if row_category and row_category.casefold() != category.casefold():
+                issues.append(f"{group_id} mixes categories {category!r} and {row_category!r}")
+                break
         top_popularity = max(_item_popularity(row) for row in items if isinstance(row, dict))
         if _item_popularity(first) < top_popularity:
             issues.append(
-                f"{group_id} (menu_highlight) lead {first_name!r} is not the top star by popularity"
+                f"{group_id} (top_five) lead {first_name!r} is not the top star by popularity"
             )
     return issues
 
@@ -218,15 +226,15 @@ def try_menu_clusterer_deterministic_verdict(
 
     norm = _normalize_requirement(requirement)
     groups = _groups(data)
-    signature_groups = _signature_groups(groups)
+    top_five_groups = _top_five_groups(groups)
     hook_groups = _hook_reel_groups(groups)
-    is_hybrid = bool(signature_groups) and bool(hook_groups)
-    uses_signature_only = bool(signature_groups) and not hook_groups
+    is_hybrid = bool(top_five_groups) and bool(hook_groups)
+    uses_top_five_only = bool(top_five_groups) and not hook_groups
 
     if "menu_tagger" in norm and ("prior" in norm or "earlier" in norm or "run used" in norm):
         if not groups:
             return ("fail", "menu clusterer data has no groups from prior menu_tagger items.")
-        label = "cluster" if is_hybrid else "signature cluster"
+        label = "cluster" if is_hybrid else "top five group"
         return ("pass", f"menu clusterer produced {len(groups)} {label}(s) from tagged items.")
 
     if (("prior" in norm or "run used" in norm) and "campaign" in norm and "brief" in norm) or (
@@ -245,12 +253,12 @@ def try_menu_clusterer_deterministic_verdict(
 
     if "unassigned" in norm and ("food" in norm or "menu" in norm or "tagged" in norm):
         unassigned = _unassigned_item_names(data)
-        if uses_signature_only:
+        if uses_top_five_only:
             if not groups:
-                return ("fail", "menu clusterer data has no signature clusters.")
+                return ("fail", "menu clusterer data has no top five groups.")
             return (
                 "pass",
-                "signature clusters include star items; non-star tagged items may remain unassigned.",
+                "top five groups include star items; non-star tagged items may remain unassigned.",
             )
         if unassigned:
             return (
@@ -271,10 +279,10 @@ def try_menu_clusterer_deterministic_verdict(
         and ("item" in norm or "menu" in norm)
         and ("cluster" in norm or "group" in norm)
     ):
-        if uses_signature_only:
-            if not signature_groups:
-                return ("fail", "menu clusterer data has no signature clusters.")
-            return ("pass", "star items are assigned to per-category signature clusters.")
+        if uses_top_five_only:
+            if not top_five_groups:
+                return ("fail", "menu clusterer data has no top five groups.")
+            return ("pass", "star items are assigned to per-category top five groups.")
         unassigned = _unassigned_item_names(data)
         if unassigned:
             return (
@@ -292,55 +300,66 @@ def try_menu_clusterer_deterministic_verdict(
             or "minimum" in norm
             or "configured number" in norm
             or "derived number" in norm
+            or "one top" in norm
             or "one signature" in norm
             or "per category" in norm
             or "per available" in norm
         )
-        and ("group" in norm or "cluster" in norm or "reel" in norm or "signature" in norm)
+        and (
+            "group" in norm
+            or "cluster" in norm
+            or "reel" in norm
+            or "signature" in norm
+            or "top five" in norm
+        )
         and "drink" not in norm
         and "beverage" not in norm
     ):
         wants_hook = "hook" in norm or "reel" in norm or "derived number" in norm
-        wants_signature = (
-            "signature" in norm or "per category" in norm or "per available" in norm
+        wants_top_five = (
+            "top five" in norm
+            or "top_five" in norm
+            or "signature" in norm
+            or "per category" in norm
+            or "per available" in norm
         )
-        if is_hybrid and wants_hook and wants_signature:
+        if is_hybrid and wants_hook and wants_top_five:
             hook_target = _target_group_count(data)
-            signature_target = _signature_group_count(data)
+            top_five_target = _top_five_group_count(data)
             issues: list[str] = []
             if len(hook_groups) != hook_target:
                 issues.append(
                     f"expected {hook_target} hook Reel cluster(s), got {len(hook_groups)}"
                 )
-            if len(signature_groups) != signature_target:
+            if len(top_five_groups) != top_five_target:
                 issues.append(
-                    f"expected {signature_target} signature cluster(s), got {len(signature_groups)}"
+                    f"expected {top_five_target} top five group(s), got {len(top_five_groups)}"
                 )
             if issues:
                 return ("fail", "; ".join(issues))
             return (
                 "pass",
                 f"menu clusterer produced {len(hook_groups)} hook Reel cluster(s) and "
-                f"{len(signature_groups)} signature cluster(s).",
+                f"{len(top_five_groups)} top five group(s).",
             )
-        if uses_signature_only or (wants_signature and not wants_hook):
-            signature_target = _signature_group_count(data)
-            if len(signature_groups) < MENU_CLUSTERER_MIN_GROUP_COUNT:
+        if uses_top_five_only or (wants_top_five and not wants_hook):
+            top_five_target = _top_five_group_count(data)
+            if len(top_five_groups) < MENU_CLUSTERER_MIN_GROUP_COUNT:
                 return (
                     "fail",
-                    f"menu clusterer has {len(signature_groups)} signature cluster(s); minimum is "
+                    f"menu clusterer has {len(top_five_groups)} top five group(s); minimum is "
                     f"{MENU_CLUSTERER_MIN_GROUP_COUNT}.",
                 )
-            if len(signature_groups) != signature_target:
+            if len(top_five_groups) != top_five_target:
                 return (
                     "fail",
-                    f"menu clusterer has {len(signature_groups)} signature cluster(s); expected "
-                    f"{signature_target}.",
+                    f"menu clusterer has {len(top_five_groups)} top five group(s); expected "
+                    f"{top_five_target}.",
                 )
             return (
                 "pass",
-                f"menu clusterer produced {len(signature_groups)} signature cluster(s) "
-                f"(target {signature_target}).",
+                f"menu clusterer produced {len(top_five_groups)} top five group(s) "
+                f"(target {top_five_target}).",
             )
         hook_target = _target_group_count(data)
         if len(hook_groups) < MENU_CLUSTERER_MIN_GROUP_COUNT:
@@ -396,19 +415,24 @@ def try_menu_clusterer_deterministic_verdict(
         or ("main" in norm and "storytelling" in norm and ("position" in norm or "lead" in norm))
     ):
         position_issues: list[str] = []
-        wants_signature = "signature" in norm or ("top star" in norm or "category" in norm)
+        wants_top_five = (
+            "top five" in norm
+            or "top_five" in norm
+            or "signature" in norm
+            or ("top star" in norm or "category" in norm)
+        )
         wants_hook = (
             "hook" in norm
             or "reel" in norm
             or "score-tier" in norm
             or "score tier" in norm
-            or ("top" in norm and "5" in norm)
+            or ("top" in norm and "5" in norm and "hook" in norm)
         )
-        if signature_groups and wants_signature:
+        if top_five_groups and wants_top_five:
             position_issues.extend(
-                _validate_signature_groups(
-                    signature_groups,
-                    empty_message="no menu clusterer signature clusters to validate.",
+                _validate_top_five_groups(
+                    top_five_groups,
+                    empty_message="no menu clusterer top five groups to validate.",
                 )
             )
         if hook_groups and wants_hook:
@@ -420,16 +444,16 @@ def try_menu_clusterer_deterministic_verdict(
             position_issues.extend(_validate_hook_reel_groups(hook_groups, top5_names=top5_names))
         if position_issues:
             return ("fail", "; ".join(position_issues[:4]))
-        if wants_signature and wants_hook:
+        if wants_top_five and wants_hook:
             return (
                 "pass",
-                "hook Reel leads are top popularity score-tier items and signature leads are top "
-                "stars in their categories.",
+                "hook Reel leads are top popularity score-tier items and top five group leads are "
+                "top stars in their categories.",
             )
-        if wants_signature:
+        if wants_top_five:
             return (
                 "pass",
-                "each signature cluster lead is the top star in its category by popularity.",
+                "each top five group lead is the top star in its category by popularity.",
             )
         return (
             "pass",
