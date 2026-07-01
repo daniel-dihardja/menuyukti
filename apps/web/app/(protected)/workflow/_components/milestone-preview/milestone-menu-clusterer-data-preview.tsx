@@ -54,6 +54,8 @@ function priceLevelLabel(
 
 type GroupCardLabels = {
   hookBadgeLabel: string
+  sameCategoryBadgeLabel: string
+  mixedCategoryBadgeLabel: string
   topFiveBadgeLabel: string
   menuHighlightBadgeLabel: string
   detailsBadgeLabel: string
@@ -80,6 +82,24 @@ type GroupCardLabels = {
   priceLabels: { low: string; mid: string; high: string }
 }
 
+function hookGroupCategoryScope(group: MenuClustererGroup): 'categorical' | 'creative' | null {
+  if (group.profileId !== 'hook_reel') {
+    return null
+  }
+  if (group.categoryScope === 'categorical' || group.categoryScope === 'creative') {
+    return group.categoryScope
+  }
+  const categories = new Set(
+    group.items
+      .map((item) => item.category.trim().toLowerCase())
+      .filter((category) => category.length > 0),
+  )
+  if (categories.size <= 1) {
+    return 'categorical'
+  }
+  return 'creative'
+}
+
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <p className={mp.bodySmall}>
@@ -101,6 +121,7 @@ function MenuClustererGroupCard({
       : group.profileId === 'menu_highlight'
         ? labels.menuHighlightBadgeLabel
         : labels.hookBadgeLabel
+  const categoryScope = hookGroupCategoryScope(group)
 
   return (
     <Card className="gap-3 py-4 shadow-none">
@@ -109,6 +130,12 @@ function MenuClustererGroupCard({
         <MenuClustererGroupCardHeader group={group} labels={labels} hideTitle />
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">{profileBadgeLabel}</Badge>
+          {categoryScope === 'categorical' ? (
+            <Badge variant="outline">{labels.sameCategoryBadgeLabel}</Badge>
+          ) : null}
+          {categoryScope === 'creative' ? (
+            <Badge variant="outline">{labels.mixedCategoryBadgeLabel}</Badge>
+          ) : null}
           <Badge variant="secondary">{labels.detailsBadgeLabel}</Badge>
         </div>
       </CardHeader>
@@ -366,6 +393,8 @@ export function MilestoneMenuClustererDataPreview({
   const labels = useMemo(
     () => ({
       hookBadgeLabel: t('milestoneMenuClustererPreviewHookBadge'),
+      sameCategoryBadgeLabel: t('milestoneMenuClustererPreviewSameCategoryBadge'),
+      mixedCategoryBadgeLabel: t('milestoneMenuClustererPreviewMixedCategoryBadge'),
       topFiveBadgeLabel: t('milestoneMenuClustererPreviewTopFiveBadge'),
       menuHighlightBadgeLabel: t('milestoneMenuClustererPreviewMenuHighlightBadge'),
       detailsBadgeLabel: t('milestoneMenuClustererPreviewDetailsBadge'),

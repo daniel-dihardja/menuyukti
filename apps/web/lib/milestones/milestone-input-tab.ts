@@ -43,37 +43,49 @@ export function optionalNotesFromMilestoneInput(
 
 const DEFAULT_MENU_CLUSTERER_INPUT = {
   notes: '',
+  targetGroupCount: undefined as number | undefined,
 }
 
 export function menuClustererInputFromMilestoneInput(raw: MilestoneInput | undefined): {
   notes: string
+  targetGroupCount?: number
 } {
   if (raw?.type !== 'menu_clusterer' || raw.value == null || typeof raw.value !== 'object') {
     return { ...DEFAULT_MENU_CLUSTERER_INPUT }
   }
   const parsed = menuClustererMilestoneInputValueSchema.safeParse(raw.value)
   if (!parsed.success) {
-    const legacyNotes = (raw.value as { notes?: unknown }).notes
+    const legacy = raw.value as { notes?: unknown; targetGroupCount?: unknown }
+    const legacyCount = legacy.targetGroupCount
     return {
-      notes: typeof legacyNotes === 'string' ? legacyNotes : '',
+      notes: typeof legacy.notes === 'string' ? legacy.notes : '',
+      targetGroupCount:
+        typeof legacyCount === 'number' && Number.isInteger(legacyCount) ? legacyCount : undefined,
     }
   }
   return {
     notes: parsed.data.notes,
+    targetGroupCount: parsed.data.targetGroupCount,
   }
 }
 
-export function normalizeMenuClustererInput(value: { notes: string }): { notes: string } {
-  return {
-    notes: value.notes.trim(),
-  }
+export function normalizeMenuClustererInput(value: { notes: string; targetGroupCount?: number }): {
+  notes: string
+  targetGroupCount?: number
+} {
+  const notes = value.notes.trim()
+  const targetGroupCount =
+    typeof value.targetGroupCount === 'number' && Number.isInteger(value.targetGroupCount)
+      ? value.targetGroupCount
+      : undefined
+  return targetGroupCount === undefined ? { notes } : { notes, targetGroupCount }
 }
 
 export function normalizedMenuClustererInputsEqual(
-  a: { notes: string },
-  b: { notes: string },
+  a: { notes: string; targetGroupCount?: number },
+  b: { notes: string; targetGroupCount?: number },
 ): boolean {
-  return a.notes === b.notes
+  return a.notes === b.notes && a.targetGroupCount === b.targetGroupCount
 }
 
 const DEFAULT_PROMOTION_CANDIDATES_INPUT = {

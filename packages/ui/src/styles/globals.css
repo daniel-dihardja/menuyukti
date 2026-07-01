@@ -800,8 +800,26 @@ html.dark[data-palette='brass'] {
   }
 }
 
-/* Landing hero headline — harmonize with warm hero gradient (see LandingHeroHeadline) */
+/* Landing hero — Jost display scale (see LandingHeroHeadline, app/page.tsx) */
 @layer utilities {
+  .landing-hero-headline {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .landing-hero-subtitle {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.012em;
+  }
+
+  .landing-hero-badge {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.015em;
+  }
+
   .hero-headline-warm {
     color: color-mix(in oklch, var(--foreground) 68%, var(--primary) 32%);
   }

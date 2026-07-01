@@ -283,6 +283,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
+          requirement: t('milestonePreset.menu_clusterer.criterionCategoryScope'),
+          status: 'open',
+        },
+        {
           requirement: t('milestonePreset.menu_clusterer.criterionTopFiveLead'),
           status: 'open',
         },
