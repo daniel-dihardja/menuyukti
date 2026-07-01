@@ -179,9 +179,7 @@ def week_requires_weekly_cadence(
     *,
     min_days: int = MIN_SCHEDULABLE_WEEK_DAYS,
 ) -> bool:
-    return (
-        campaign_days_in_week_overlap(week_start, week_end, window_start, window_end) >= min_days
-    )
+    return campaign_days_in_week_overlap(week_start, week_end, window_start, window_end) >= min_days
 
 
 def week_has_weekday_in_overlap(

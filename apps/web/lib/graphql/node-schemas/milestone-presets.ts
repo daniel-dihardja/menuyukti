@@ -346,7 +346,7 @@ export const menuTaggerMilestoneDataSchema = z.object({
 
 export type MenuTaggerMilestoneData = z.infer<typeof menuTaggerMilestoneDataSchema>
 
-export const menuClustererProfileIdSchema = z.enum(['hook_reel', 'menu_highlight'])
+export const menuClustererProfileIdSchema = z.enum(['hook_reel', 'menu_highlight', 'top_five'])
 
 export const menuClustererAnchorSchema = z.object({
   dimension: z.literal('reel_moment'),
@@ -388,6 +388,7 @@ export const menuClustererGroupSchema = z
     id: z.string().trim().min(1),
     leadName: z.string().trim().min(1),
     profileId: menuClustererProfileIdSchema,
+    category: z.string().trim().min(1).optional(),
     anchor: menuClustererAnchorSchema,
     items: z.array(menuClustererGroupItemSchema).min(1).max(12),
     mix: menuClustererGroupMixSchema,
@@ -398,12 +399,20 @@ export const menuClustererGroupSchema = z
     assetHint: z.string().trim().min(1).optional(),
   })
   .superRefine((group, ctx) => {
-    const maxItems = group.profileId === 'menu_highlight' ? 12 : 5
+    const maxItems =
+      group.profileId === 'menu_highlight' ? 12 : group.profileId === 'top_five' ? 5 : 5
     if (group.items.length > maxItems) {
       ctx.addIssue({
         code: 'custom',
-        message: `menu_highlight groups allow up to 12 items; hook_reel groups allow up to 5`,
+        message: `top_five and hook_reel groups allow up to 5 items; menu_highlight allows up to 12`,
         path: ['items'],
+      })
+    }
+    if (group.profileId === 'top_five' && !group.category?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'category is required when profileId is top_five',
+        path: ['category'],
       })
     }
   })
@@ -416,7 +425,7 @@ export const menuClustererMilestoneDataSchema = z.object({
   unassignedItemNames: z.array(z.string().trim().min(1)),
   topFoodLeadNames: z.array(z.string().trim().min(1)).max(12).default([]),
   targetGroupCount: menuClustererTargetGroupCountSchema.optional(),
-  signatureGroupCount: menuClustererTargetGroupCountSchema.optional(),
+  topFiveGroupCount: menuClustererTargetGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),

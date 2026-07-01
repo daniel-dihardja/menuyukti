@@ -592,7 +592,8 @@ class MenuClustererAnchorOutput(BaseModel):
 class MenuClustererGroupOutput(BaseModel):
     id: str
     leadName: str
-    profileId: Literal["hook_reel", "menu_highlight"]
+    profileId: Literal["hook_reel", "menu_highlight", "top_five"]
+    category: str | None = None
     anchor: MenuClustererAnchorOutput
     items: list[MenuClustererGroupItemOutput]
     mix: MenuClustererGroupMixOutput
@@ -624,6 +625,8 @@ class MenuClustererGroupOutput(BaseModel):
         positions = [item.position for item in self.items]
         if positions != list(range(1, len(self.items) + 1)):
             raise ValueError("item positions must be sequential starting at 1")
+        if self.profileId == "top_five" and not str(self.category or "").strip():
+            raise ValueError("category is required when profileId is top_five")
         return self
 
 
@@ -633,7 +636,7 @@ class MenuClustererMilestoneOutput(BaseModel):
     unassignedItemNames: list[str] = Field(default_factory=list)
     topFoodLeadNames: list[str] = Field(default_factory=list, max_length=12)
     targetGroupCount: int | None = Field(default=None, ge=1, le=20)
-    signatureGroupCount: int | None = Field(default=None, ge=1, le=20)
+    topFiveGroupCount: int | None = Field(default=None, ge=1, le=20)
     sourceMenuTaggerTitle: str | None = None
     sourceCampaignBriefTitle: str | None = None
     notes: str | None = None
@@ -747,7 +750,9 @@ class PostLineupPostOutput(BaseModel):
     fixdate: bool | None = None
     scheduleHints: PostLineupScheduleHintsOutput | None = None
 
-    @field_validator("id", "title", "description", "captionGuidance", "date", "category", mode="before")
+    @field_validator(
+        "id", "title", "description", "captionGuidance", "date", "category", mode="before"
+    )
     @classmethod
     def _normalize_text(cls, value: Any) -> str:
         return str(value or "").strip()
@@ -787,7 +792,9 @@ class PostLineupPostOutput(BaseModel):
             if not str(self.captionGuidance or "").strip():
                 raise ValueError("captionGuidance is required when intent is weekday_lunch_post")
             if not self.groupIds:
-                raise ValueError("groupIds must contain at least one group id for weekday_lunch_post")
+                raise ValueError(
+                    "groupIds must contain at least one group id for weekday_lunch_post"
+                )
             if len(self.slides) > 5:
                 raise ValueError("weekday_lunch_post must contain at most 5 slides")
             return self

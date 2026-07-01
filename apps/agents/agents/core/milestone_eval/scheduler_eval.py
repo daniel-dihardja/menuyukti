@@ -147,9 +147,7 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
         ):
             weekday_reel_count = weekday_reels_by_week.get(week.week_start, 0)
             if weekday_reel_count != 1:
-                issues.append(
-                    f"{week_label} has {weekday_reel_count} weekday reels (expected 1)."
-                )
+                issues.append(f"{week_label} has {weekday_reel_count} weekday reels (expected 1).")
 
         if has_weekend_reels and dates_window.week_has_weekend_in_overlap(
             week.week_start,
@@ -159,9 +157,7 @@ def _cadence_issues(data: dict[str, Any]) -> list[str]:
         ):
             weekend_reel_count = weekend_reels_by_week.get(week.week_start, 0)
             if weekend_reel_count != 1:
-                issues.append(
-                    f"{week_label} has {weekend_reel_count} weekend reels (expected 1)."
-                )
+                issues.append(f"{week_label} has {weekend_reel_count} weekend reels (expected 1).")
 
     return issues
 
@@ -230,9 +226,7 @@ def try_scheduler_deterministic_verdict(
         "block" in normalized or "rotate" in normalized or "every" in normalized
     ):
         top_five_issues = [
-            issue
-            for issue in issues
-            if any(marker in issue for marker in top_five_issue_markers)
+            issue for issue in issues if any(marker in issue for marker in top_five_issue_markers)
         ]
         if not top_five_issues:
             return (
@@ -244,9 +238,7 @@ def try_scheduler_deterministic_verdict(
 
     if "monthly" in normalized and "menu" in normalized and "highlight" in normalized:
         top_five_issues = [
-            issue
-            for issue in issues
-            if any(marker in issue for marker in top_five_issue_markers)
+            issue for issue in issues if any(marker in issue for marker in top_five_issue_markers)
         ]
         if not top_five_issues:
             return (

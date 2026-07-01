@@ -317,7 +317,7 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.post_lineup.criterionPriorMenuTagger'),
+          requirement: t('milestonePreset.post_lineup.criterionPriorMenuClusterer'),
           status: 'open',
         },
         {

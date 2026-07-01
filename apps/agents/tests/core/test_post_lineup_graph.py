@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
-import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    build_per_category_top_five_clusters,
+)
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.post_lineup.build import build_post_lineup_output
 from agents_app.agents.core.milestone_run.post_lineup.nodes import (
@@ -19,7 +21,7 @@ from agents_app.agents.core.milestone_run.post_lineup.top_five import (
     TopFivePostDraft,
     TopFiveSlideDraft,
     build_top_five_posts_from_draft,
-    prepare_top_five_categories,
+    prepare_top_five_categories_from_clusterer,
     validate_top_five_drafts,
 )
 
@@ -114,6 +116,15 @@ def _campaign_brief_data() -> dict:
     }
 
 
+def _menu_clusterer_data() -> dict:
+    return build_per_category_top_five_clusters(
+        _menu_tagger_items(),
+        campaign_brief_data=_campaign_brief_data(),
+        source_menu_tagger_title="Menu tagger",
+        source_campaign_brief_title="Campaign brief",
+    )
+
+
 def _prior_json() -> str:
     return json.dumps(
         [
@@ -140,14 +151,22 @@ def _prior_json() -> str:
                     "usedTags": {},
                 },
             },
+            {
+                "title": "Menu clusterer",
+                "presetId": "menu_clusterer",
+                "data": _menu_clusterer_data(),
+            },
         ]
     )
 
 
 def _top_five_posts() -> list[dict]:
     menu_tagger_data = {"items": _menu_tagger_items()}
-    brief = _campaign_brief_data()
-    categories = prepare_top_five_categories(menu_tagger_data, brief)
+    menu_clusterer_data = _menu_clusterer_data()
+    categories = prepare_top_five_categories_from_clusterer(
+        menu_clusterer_data,
+        menu_tagger_data,
+    )
     drafts = [
         {
             "category": row["category"],
@@ -168,6 +187,7 @@ def test_build_post_lineup_output_creates_top_five_posts_only() -> None:
         top_five_posts=top_five_posts,
         start_date=START_DATE,
         end_date=END_DATE,
+        source_menu_clusterer_title="Menu clusterer",
         source_menu_tagger_title="Menu tagger",
         source_campaign_brief_title="Campaign brief",
         source_dates_title="Campaign dates",
@@ -212,7 +232,7 @@ async def test_fetch_and_prepare_requires_dates_milestone() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_loads_dates_tagger_and_brief() -> None:
+async def test_fetch_and_prepare_loads_dates_clusterer_tagger_and_brief() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.post_lineup.nodes.get_stream_writer",
         return_value=lambda _x: None,
@@ -231,6 +251,7 @@ async def test_fetch_and_prepare_loads_dates_tagger_and_brief() -> None:
     assert prepared["start_date"] == START_DATE
     assert prepared["end_date"] == END_DATE
     assert prepared["source_campaign_brief_title"] == "Campaign brief"
+    assert prepared["source_menu_clusterer_title"] == "Menu clusterer"
     assert prepared["source_menu_tagger_title"] == "Menu tagger"
     assert prepared["source_dates_title"] == "Campaign dates"
     assert len(prepared["top_five_categories"]) >= 1
@@ -245,6 +266,7 @@ async def test_finalize_output_persists_top_five_only() -> None:
             "start_date": START_DATE,
             "end_date": END_DATE,
             "top_five_posts": top_five_posts,
+            "source_menu_clusterer_title": "Menu clusterer",
             "source_menu_tagger_title": "Menu tagger",
             "source_campaign_brief_title": "Campaign brief",
             "source_dates_title": "Campaign dates",

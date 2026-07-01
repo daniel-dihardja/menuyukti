@@ -13,11 +13,11 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
 )
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     MENU_CLUSTERER_MIN_GROUP_COUNT,
-    build_per_category_signature_clusters,
+    build_per_category_top_five_clusters,
+    clusterable_menu_items,
     combine_hybrid_clusterer_output,
     derive_target_group_count,
     distinct_categories_with_stars,
-    food_items_only,
     merge_llm_clusters,
     rank_top_food_leads,
 )
@@ -33,6 +33,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_menu_tagger_row,
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
+    menu_tagger_prior_error_message,
 )
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
@@ -122,14 +123,14 @@ def _merge_correction_message(error: ValueError) -> HumanMessage:
         content=(
             "Your previous cluster draft could not be merged with the menu data.\n\n"
             f"Error: {error}\n\n"
-            "Return a corrected JSON object only. Use exact item names from the tagged food list, "
-            "choose leadItemName only from the top popularity score-tier lead list, ensure every tagged food item "
+            "Return a corrected JSON object only. Use exact item names from the tagged menu list, "
+            "choose leadItemName only from the top popularity score-tier lead list, ensure every tagged menu item "
             "appears in at least one cluster, and keep each clusterDescription at least 40 characters."
         )
     )
 
 
-def _compact_food_item(item: dict[str, Any]) -> dict[str, Any]:
+def _compact_menu_item(item: dict[str, Any]) -> dict[str, Any]:
     return {
         "name": str(item.get("name") or "").strip(),
         "role": item.get("role"),
@@ -155,31 +156,24 @@ def _build_generation_context(
         "audienceHypotheses": campaign_brief_data.get("audienceHypotheses"),
         "proofOrientedAngles": campaign_brief_data.get("proofOrientedAngles"),
     }
-    food_items = [_compact_food_item(item) for item in menu_tagger_items if _is_food_kind(item)]
+    tagged_items = [_compact_menu_item(item) for item in clusterable_menu_items(menu_tagger_items)]
     top5_names = [str(item.get("name") or "").strip() for item in top5_leads]
 
     sections = [
-        f"## Target cluster count\nProduce exactly **{target_group_count}** food Reel clusters "
-        "(derived from the tagged food menu size).",
-        "## Full menu coverage\nEvery tagged food item listed below must appear in at least one "
+        f"## Target cluster count\nProduce exactly **{target_group_count}** Reel hook clusters "
+        "(derived from the tagged menu size).",
+        "## Full menu coverage\nEvery tagged menu item listed below must appear in at least one "
         "cluster (as leadItemName or supportingItemNames). Items may repeat across clusters.",
         "## Campaign brief (excerpt)\n```json\n"
         f"{json.dumps(brief_excerpt, ensure_ascii=False, indent=2)}\n```",
-        "## Top popularity score-tier food leads (position 1 must come from this list; ties included)\n```json\n"
+        "## Top popularity score-tier leads (position 1 must come from this list; ties included)\n```json\n"
         f"{json.dumps(top5_names, ensure_ascii=False, indent=2)}\n```",
-        "## Tagged food items\n```json\n"
-        f"{json.dumps(food_items, ensure_ascii=False, indent=2)}\n```",
+        "## Tagged menu items\n```json\n"
+        f"{json.dumps(tagged_items, ensure_ascii=False, indent=2)}\n```",
     ]
     if owner_notes_markdown.strip():
         sections.append(owner_notes_markdown.strip())
     return "\n\n".join(sections)
-
-
-def _is_food_kind(item: dict[str, Any]) -> bool:
-    tags = item.get("tags")
-    if not isinstance(tags, dict):
-        return False
-    return str(tags.get("kind") or "").strip() == "food"
 
 
 def _main_category_from_brief(campaign_brief_data: dict[str, Any]) -> str:
@@ -202,7 +196,7 @@ async def fetch_and_prepare(
     menu_tagger_data = extract_menu_tagger_data(prior_json)
     if menu_tagger_data is None:
         raise ValueError(
-            "menu_clusterer requires a prior menu_tagger milestone with saved tagged items"
+            menu_tagger_prior_error_message(prior_json, milestone_id="menu_clusterer")
         )
 
     menu_tagger_items = _menu_tagger_items(menu_tagger_data)
@@ -222,17 +216,17 @@ async def fetch_and_prepare(
             "re-run promotion_candidates or widen category selection"
         )
 
-    food_count = len(food_items_only(menu_tagger_items))
-    hook_target_group_count = derive_target_group_count(food_count)
-    if food_count < hook_target_group_count:
+    tagged_count = len(clusterable_menu_items(menu_tagger_items))
+    hook_target_group_count = derive_target_group_count(tagged_count)
+    if tagged_count < hook_target_group_count:
         raise ValueError(
-            f"menu_clusterer requires at least {hook_target_group_count} tagged food items in prior "
-            f"menu_tagger data; got {food_count}. Re-run menu_tagger or widen promotion candidates."
+            f"menu_clusterer requires at least {hook_target_group_count} tagged menu items in prior "
+            f"menu_tagger data; got {tagged_count}. Re-run menu_tagger or widen promotion candidates."
         )
-    if food_count < MENU_CLUSTERER_MIN_GROUP_COUNT:
+    if tagged_count < MENU_CLUSTERER_MIN_GROUP_COUNT:
         raise ValueError(
-            f"menu_clusterer requires at least {MENU_CLUSTERER_MIN_GROUP_COUNT} tagged food items in prior "
-            f"menu_tagger data; got {food_count}. Re-run menu_tagger or widen promotion candidates."
+            f"menu_clusterer requires at least {MENU_CLUSTERER_MIN_GROUP_COUNT} tagged menu items in prior "
+            f"menu_tagger data; got {tagged_count}. Re-run menu_tagger or widen promotion candidates."
         )
 
     campaign_brief_row = extract_restaurant_campaign_brief_row(prior_json)
@@ -256,7 +250,7 @@ async def fetch_and_prepare(
         "menu_tagger_items": menu_tagger_items,
         "source_menu_tagger_title": source_title,
         "target_group_count": hook_target_group_count,
-        "signature_group_count": len(available_categories),
+        "top_five_group_count": len(available_categories),
     }
 
 
@@ -275,7 +269,7 @@ async def build_clusters(state: MenuClustererState) -> dict[str, Any]:
     source_campaign_brief_title = str(state.get("source_campaign_brief_title") or "")
     hook_target_group_count = int(state.get("target_group_count") or MENU_CLUSTERER_MIN_GROUP_COUNT)
 
-    signature_payload = build_per_category_signature_clusters(
+    top_five_payload = build_per_category_top_five_clusters(
         menu_tagger_items,
         campaign_brief_data=campaign_brief_data,
         source_menu_tagger_title=source_menu_tagger_title,
@@ -302,7 +296,7 @@ async def build_clusters(state: MenuClustererState) -> dict[str, Any]:
         state,
         "build_clusters_generate",
         targetGroupCount=hook_target_group_count,
-        signatureGroupCount=int(state.get("signature_group_count") or 0),
+        topFiveGroupCount=int(state.get("top_five_group_count") or 0),
     )
     _trace_agent_event(state, "chat_model_start")
 
@@ -342,7 +336,7 @@ async def build_clusters(state: MenuClustererState) -> dict[str, Any]:
             )
             payload = combine_hybrid_clusterer_output(
                 hook_payload=hook_payload,
-                signature_payload=signature_payload,
+                top_five_payload=top_five_payload,
                 menu_tagger_items=menu_tagger_items,
             )
             normalized = _normalize_generated_output(payload)

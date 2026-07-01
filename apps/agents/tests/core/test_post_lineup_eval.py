@@ -60,14 +60,29 @@ def test_try_post_lineup_deterministic_verdict_dates_prior() -> None:
     assert verdict == ("pass", "post lineup used prior dates milestone for the campaign window.")
 
 
-def test_try_post_lineup_deterministic_verdict_menu_tagger_prior() -> None:
+def test_try_post_lineup_deterministic_verdict_menu_tagger_metadata() -> None:
     verdict = try_post_lineup_deterministic_verdict(
         "Run used a prior menu_tagger milestone with tagged items.",
         _sample_data(),
     )
     assert verdict == (
         "pass",
-        "post lineup used prior menu_tagger milestone for Top 5 category posts.",
+        "post lineup used menu_tagger item metadata for Top 5 carousel slides.",
+    )
+
+
+def test_try_post_lineup_deterministic_verdict_menu_clusterer_prior() -> None:
+    data = {
+        **_sample_data(),
+        "sourceMenuClustererTitle": "Menu clusterer",
+    }
+    verdict = try_post_lineup_deterministic_verdict(
+        "Run used a prior menu_clusterer milestone with top_five groups.",
+        data,
+    )
+    assert verdict == (
+        "pass",
+        "post lineup used prior menu_clusterer milestone for Top 5 category posts.",
     )
 
 
@@ -78,16 +93,6 @@ def test_try_post_lineup_deterministic_verdict_carousel_posts() -> None:
     )
     assert verdict is not None
     assert verdict[0] == "pass"
-
-
-def test_try_post_lineup_deterministic_verdict_legacy_menu_clusterer_criterion() -> None:
-    verdict = try_post_lineup_deterministic_verdict(
-        "Run used a prior menu_clusterer milestone with groups.",
-        _sample_data(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-    assert "menu tagger" in verdict[1].lower()
 
 
 def test_try_post_lineup_deterministic_verdict_slide_fields() -> None:

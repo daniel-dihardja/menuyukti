@@ -111,7 +111,9 @@ def _culture_hooks_search_queries(brief: dict[str, Any]) -> list[str]:
     concept_keyword = ""
     overall = brief.get("overallStrategy")
     if isinstance(overall, dict):
-        concept_keyword = str(overall.get("strategyFocus") or overall.get("coreMessage") or "").strip()
+        concept_keyword = str(
+            overall.get("strategyFocus") or overall.get("coreMessage") or ""
+        ).strip()
     if not concept_keyword:
         concept_keyword = _first_non_empty_str(brief.get("messageHierarchy"))
 

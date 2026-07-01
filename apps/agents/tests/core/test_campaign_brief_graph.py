@@ -329,7 +329,13 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.campaign_brief.nodes.fetch_location_operating_signals",
-            new=AsyncMock(return_value={"analytics_run": None, "instagram_signals": None, "slot_demand_profile": []}),
+            new=AsyncMock(
+                return_value={
+                    "analytics_run": None,
+                    "instagram_signals": None,
+                    "slot_demand_profile": [],
+                }
+            ),
         ),
         patch(
             "agents_app.agents.core.milestone_run.campaign_brief.nodes.get_stream_writer",

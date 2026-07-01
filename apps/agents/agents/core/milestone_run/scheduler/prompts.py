@@ -54,8 +54,8 @@ def format_scheduler_system(
             "- Sentence 1: weekday reel schedule—why you chose that weekday date and time "
             "(use the times from your slots; summarize the pattern if weeks differ).\n"
             "- Sentence 2: weekend reel schedule—why you chose that weekend date and time.\n"
-            "- GOOD (~200 chars): \"Weekday reels at 12:15 on Tue target lunch breaks before "
-            "the weekend push. Saturday 12:15 weekend reel catches leisure diners.\""
+            '- GOOD (~200 chars): "Weekday reels at 12:15 on Tue target lunch breaks before '
+            'the weekend push. Saturday 12:15 weekend reel catches leisure diners."'
         )
     else:
         explanation_guidance = (

@@ -13,12 +13,14 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.post_lineup.build import build_post_lineup_output
-from agents_app.agents.core.milestone_run.post_lineup.prompts import format_post_lineup_top_five_system
+from agents_app.agents.core.milestone_run.post_lineup.prompts import (
+    format_post_lineup_top_five_system,
+)
 from agents_app.agents.core.milestone_run.post_lineup.state import PostLineupOutput, PostLineupState
 from agents_app.agents.core.milestone_run.post_lineup.top_five import (
     PostLineupTopFiveDraft,
     build_top_five_posts_from_draft,
-    prepare_top_five_categories,
+    prepare_top_five_categories_from_clusterer,
     validate_top_five_drafts,
 )
 from agents_app.agents.core.milestone_run.prior_context_inject import (
@@ -26,10 +28,13 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     dates_prior_error_message,
     extract_dates_data,
     extract_dates_row,
+    extract_menu_clusterer_data,
+    extract_menu_clusterer_row,
     extract_menu_tagger_data,
     extract_menu_tagger_row,
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
+    menu_clusterer_prior_error_message,
     menu_tagger_prior_error_message,
 )
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -152,6 +157,10 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
     if menu_tagger_data is None:
         raise ValueError(menu_tagger_prior_error_message(prior_json, milestone_id="post_lineup"))
 
+    menu_clusterer_data = extract_menu_clusterer_data(prior_json)
+    if menu_clusterer_data is None:
+        raise ValueError(menu_clusterer_prior_error_message(prior_json, milestone_id="post_lineup"))
+
     campaign_brief_row = extract_restaurant_campaign_brief_row(prior_json)
     source_campaign_brief_title = ""
     if isinstance(campaign_brief_row, dict):
@@ -173,7 +182,17 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
         if isinstance(title, str) and title.strip():
             source_dates_title = title.strip()
 
-    top_five_categories = prepare_top_five_categories(menu_tagger_data, campaign_brief_data)
+    menu_clusterer_row = extract_menu_clusterer_row(prior_json)
+    source_menu_clusterer_title = ""
+    if isinstance(menu_clusterer_row, dict):
+        clusterer_title = menu_clusterer_row.get("title")
+        if isinstance(clusterer_title, str) and clusterer_title.strip():
+            source_menu_clusterer_title = clusterer_title.strip()
+
+    top_five_categories = prepare_top_five_categories_from_clusterer(
+        menu_clusterer_data,
+        menu_tagger_data,
+    )
 
     return {
         "owner_notes_markdown": _fmt_owner_notes(state),
@@ -183,6 +202,8 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
         "source_dates_title": source_dates_title,
         "campaign_brief_data": campaign_brief_data,
         "source_campaign_brief_title": source_campaign_brief_title,
+        "menu_clusterer_data": menu_clusterer_data,
+        "source_menu_clusterer_title": source_menu_clusterer_title,
         "menu_tagger_data": menu_tagger_data,
         "source_menu_tagger_title": source_menu_tagger_title,
         "top_five_categories": top_five_categories,
@@ -215,8 +236,8 @@ async def generate_top_five_posts(state: PostLineupState) -> dict[str, Any]:
     }
     llm_payload: dict[str, Any] = {
         "campaignBrief": brief_excerpt,
-        "menuTagger": {
-            "taxonomyVersion": menu_tagger_data.get("taxonomyVersion"),
+        "menuClusterer": {
+            "sourceTitle": str(state.get("source_menu_clusterer_title") or "").strip(),
             "categories": _top_five_llm_categories(category_payloads),
         },
     }
@@ -278,6 +299,7 @@ async def finalize_output(state: PostLineupState) -> dict[str, Any]:
         start_date=start_date,
         end_date=end_date,
         source_campaign_brief_title=str(state.get("source_campaign_brief_title") or ""),
+        source_menu_clusterer_title=str(state.get("source_menu_clusterer_title") or ""),
         source_menu_tagger_title=str(state.get("source_menu_tagger_title") or ""),
         source_dates_title=str(state.get("source_dates_title") or ""),
         notes=owner_notes,

@@ -469,9 +469,7 @@ def _build_generation_context(
         lineup_notes.append("No reel lineup candidates — do not schedule reel slots.")
     if not has_story_lineup:
         lineup_notes.append("No story lineup candidates — do not schedule story slots.")
-    lineup_note_text = (
-        "\n".join(lineup_notes) + "\n" if lineup_notes else ""
-    )
+    lineup_note_text = "\n".join(lineup_notes) + "\n" if lineup_notes else ""
 
     return (
         "Generate schedule slots using ONLY candidate sourceId values from this input.\n"
@@ -650,9 +648,7 @@ def _validate_scheduler_rules(
             and week_has_weekday_in_overlap(week.week_start, week.week_end, start_date, end_date)
             and weekday_reels_by_week.get(week.week_start, 0) != 1
         ):
-            raise ValueError(
-                f"weekday reel must be exactly 1 in campaign week {week.week_index}"
-            )
+            raise ValueError(f"weekday reel must be exactly 1 in campaign week {week.week_index}")
 
     if fixed_story_by_id:
         for story_id, hit_count in fixed_story_hits.items():

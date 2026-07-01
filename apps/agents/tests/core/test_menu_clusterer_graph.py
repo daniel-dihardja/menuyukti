@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
-    MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT,
-    build_per_category_signature_clusters,
+    MENU_CLUSTERER_PROFILE_TOP_FIVE,
+    build_per_category_top_five_clusters,
     combine_hybrid_clusterer_output,
     distinct_categories_with_stars,
     menu_highlight_eligible_items,
@@ -63,6 +63,60 @@ def _food_tags(**overrides: object) -> dict:
     }
     base.update(overrides)
     return base
+
+
+def _drink_tags(**overrides: object) -> dict:
+    base = {
+        "kind": "drink",
+        "ingredient": ["coffee"],
+        "taste": ["sweet"],
+        "course": ["beverage"],
+        "reel_moment": "pour",
+        "texture": ["silky"],
+        "prep_style": ["poured"],
+        "occasion": ["brunch"],
+        "serve_temp": "hot",
+        "content_angle": [],
+    }
+    base.update(overrides)
+    return base
+
+
+def _drink_menu_tagger_items() -> list[dict]:
+    return [
+        {
+            "name": "Espresso",
+            "role": "star",
+            "category": "DRINK",
+            "storytellingFit": "strong",
+            "popularity": 0.9,
+            "tags": _drink_tags(),
+        },
+        {
+            "name": "Latte",
+            "role": "star",
+            "category": "DRINK",
+            "storytellingFit": "strong",
+            "popularity": 0.8,
+            "tags": _drink_tags(ingredient=["dairy"]),
+        },
+        {
+            "name": "Iced Tea",
+            "role": "star",
+            "category": "DRINK",
+            "storytellingFit": "weak",
+            "popularity": 0.7,
+            "tags": _drink_tags(ingredient=["tea"], serve_temp="cold"),
+        },
+        {
+            "name": "Matcha",
+            "role": "puzzle",
+            "category": "DRINK",
+            "storytellingFit": "weak",
+            "popularity": 0.6,
+            "tags": _drink_tags(ingredient=["tea"], reel_moment="bubble_fizz"),
+        },
+    ]
 
 
 def _menu_tagger_items() -> list[dict]:
@@ -191,7 +245,7 @@ def _draft_clusters() -> list[MenuClustererClusterDraft]:
     ]
 
 
-def test_combine_hybrid_clusterer_output_merges_signature_and_hook_groups() -> None:
+def test_combine_hybrid_clusterer_output_merges_top_five_and_hook_groups() -> None:
     top5 = rank_top_food_leads(_menu_tagger_items())
     hook_payload = merge_llm_clusters(
         _draft_clusters(),
@@ -201,13 +255,13 @@ def test_combine_hybrid_clusterer_output_merges_signature_and_hook_groups() -> N
         target_group_count=4,
         include_menu_highlight=False,
     )
-    signature_payload = build_per_category_signature_clusters(
+    top_five_payload = build_per_category_top_five_clusters(
         _menu_tagger_items(),
         campaign_brief_data=_campaign_brief_data(),
     )
     payload = combine_hybrid_clusterer_output(
         hook_payload=hook_payload,
-        signature_payload=signature_payload,
+        top_five_payload=top_five_payload,
         menu_tagger_items=_menu_tagger_items(),
     )
     normalized, error = validate_skill_output("menu_clusterer", payload)
@@ -215,14 +269,14 @@ def test_combine_hybrid_clusterer_output_merges_signature_and_hook_groups() -> N
     assert isinstance(normalized, dict)
     assert len(normalized["groups"]) == 6
     assert normalized["targetGroupCount"] == 4
-    assert normalized["signatureGroupCount"] == 2
-    assert normalized["groups"][0]["profileId"] == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
+    assert normalized["topFiveGroupCount"] == 2
+    assert normalized["groups"][0]["profileId"] == MENU_CLUSTERER_PROFILE_TOP_FIVE
     assert normalized["groups"][2]["profileId"] == "hook_reel"
     assert len(normalized["foodLeads"]) == 4
     assert normalized["unassignedItemNames"] == []
 
 
-def test_combine_hybrid_clusterer_output_normalizes_signature_item_order() -> None:
+def test_combine_hybrid_clusterer_output_normalizes_top_five_item_order() -> None:
     top5 = rank_top_food_leads(_menu_tagger_items())
     hook_payload = merge_llm_clusters(
         _draft_clusters(),
@@ -232,17 +286,15 @@ def test_combine_hybrid_clusterer_output_normalizes_signature_item_order() -> No
         target_group_count=4,
         include_menu_highlight=False,
     )
-    signature_payload = build_per_category_signature_clusters(
+    top_five_payload = build_per_category_top_five_clusters(
         _menu_tagger_items(),
         campaign_brief_data=_campaign_brief_data(),
     )
-    signature_payload["groups"][0]["items"] = list(
-        reversed(signature_payload["groups"][0]["items"])
-    )
-    signature_payload["groups"][0]["leadName"] = signature_payload["groups"][0]["items"][0]["name"]
+    top_five_payload["groups"][0]["items"] = list(reversed(top_five_payload["groups"][0]["items"]))
+    top_five_payload["groups"][0]["leadName"] = top_five_payload["groups"][0]["items"][0]["name"]
     payload = combine_hybrid_clusterer_output(
         hook_payload=hook_payload,
-        signature_payload=signature_payload,
+        top_five_payload=top_five_payload,
         menu_tagger_items=_menu_tagger_items(),
     )
     mains = payload["groups"][0]
@@ -260,9 +312,9 @@ def test_select_category_star_items_excludes_puzzles() -> None:
     assert [item["name"] for item in mains] == ["Ribeye", "Burger"]
 
 
-def test_build_per_category_signature_clusters_single_category() -> None:
+def test_build_per_category_top_five_clusters_single_category() -> None:
     food_only = [item for item in _menu_tagger_items() if item["category"] == "MAINS"]
-    payload = build_per_category_signature_clusters(
+    payload = build_per_category_top_five_clusters(
         food_only,
         campaign_brief_data=_campaign_brief_data(),
         source_campaign_brief_title="Campaign brief",
@@ -273,16 +325,18 @@ def test_build_per_category_signature_clusters_single_category() -> None:
     assert len(normalized["groups"]) == 1
     assert normalized["targetGroupCount"] == 1
     group = normalized["groups"][0]
-    assert group["id"] == "group-signature-mains"
-    assert group["profileId"] == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
-    assert group["creativeRole"] == "menu_highlight"
+    assert group["id"] == "group-top-five-mains"
+    assert group["profileId"] == MENU_CLUSTERER_PROFILE_TOP_FIVE
+    assert group["category"] == "MAINS"
+    assert group["creativeRole"] == "top_five"
     assert [row["name"] for row in group["items"]] == ["Ribeye", "Burger"]
     assert normalized["unassignedItemNames"] == ["Wings", "Salad"]
     assert normalized["topFoodLeadNames"] == ["Ribeye"]
+    assert normalized["topFiveGroupCount"] == 1
 
 
-def test_build_per_category_signature_clusters_multiple_categories() -> None:
-    payload = build_per_category_signature_clusters(
+def test_build_per_category_top_five_clusters_multiple_categories() -> None:
+    payload = build_per_category_top_five_clusters(
         _menu_tagger_items(),
         campaign_brief_data=_campaign_brief_data(),
     )
@@ -291,13 +345,13 @@ def test_build_per_category_signature_clusters_multiple_categories() -> None:
     assert isinstance(normalized, dict)
     assert len(normalized["groups"]) == 2
     assert normalized["targetGroupCount"] == 2
-    assert normalized["groups"][0]["id"] == "group-signature-mains"
-    assert normalized["groups"][1]["id"] == "group-signature-sides"
+    assert normalized["groups"][0]["id"] == "group-top-five-mains"
+    assert normalized["groups"][1]["id"] == "group-top-five-sides"
     assigned = {item["name"] for group in normalized["groups"] for item in group["items"]}
     assert assigned == {"Ribeye", "Burger", "Fries"}
 
 
-def test_build_per_category_signature_clusters_requires_stars() -> None:
+def test_build_per_category_top_five_clusters_requires_stars() -> None:
     puzzles_only = [
         {
             "name": "Wings",
@@ -309,7 +363,7 @@ def test_build_per_category_signature_clusters_requires_stars() -> None:
         }
     ]
     with pytest.raises(ValueError, match="star item"):
-        build_per_category_signature_clusters(puzzles_only)
+        build_per_category_top_five_clusters(puzzles_only)
 
 
 def test_rank_top_food_leads_orders_by_popularity_and_storytelling() -> None:
@@ -531,7 +585,7 @@ async def test_fetch_and_prepare_requires_star_items() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_sets_hook_and_signature_group_counts() -> None:
+async def test_fetch_and_prepare_sets_hook_and_top_five_group_counts() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
         return_value=lambda _x: None,
@@ -550,7 +604,47 @@ async def test_fetch_and_prepare_sets_hook_and_signature_group_counts() -> None:
             client=MagicMock(),
         )
     assert prepared["target_group_count"] == 4
-    assert prepared["signature_group_count"] == 2
+    assert prepared["top_five_group_count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_counts_drink_tagged_items() -> None:
+    with patch(
+        "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
+        return_value=lambda _x: None,
+    ):
+        prepared = await fetch_and_prepare(
+            {
+                "milestone_id": "m1",
+                "location_id": 1,
+                "user_id": "u1",
+                "goal": "",
+                "criteria": [],
+                "prior_milestones_data": json.dumps(
+                    [
+                        {
+                            "title": "Campaign brief",
+                            "presetId": "restaurant_campaign_brief",
+                            "data": _campaign_brief_data(),
+                        },
+                        {
+                            "title": "Tagged menu",
+                            "presetId": "menu_tagger",
+                            "data": {
+                                "taxonomyVersion": "v2",
+                                "items": _drink_menu_tagger_items(),
+                                "usedTags": {},
+                            },
+                        },
+                    ]
+                ),
+                "result_data": "",
+                "milestonedata_written": False,
+            },
+            client=MagicMock(),
+        )
+    assert prepared["target_group_count"] == 4
+    assert prepared["top_five_group_count"] == 1
 
 
 @pytest.mark.asyncio
@@ -569,7 +663,7 @@ async def test_build_clusters_and_persist() -> None:
         "source_menu_tagger_title": "Tagged menu",
         "owner_notes_markdown": "",
         "target_group_count": 4,
-        "signature_group_count": 2,
+        "top_five_group_count": 2,
         "result_data": "",
         "milestonedata_written": False,
     }
@@ -585,11 +679,9 @@ async def test_build_clusters_and_persist() -> None:
     ):
         built = await build_clusters(state)  # type: ignore[arg-type]
     assert len(built["generated_output"]["groups"]) == 6
-    assert (
-        built["generated_output"]["groups"][0]["profileId"] == MENU_CLUSTERER_PROFILE_MENU_HIGHLIGHT
-    )
+    assert built["generated_output"]["groups"][0]["profileId"] == MENU_CLUSTERER_PROFILE_TOP_FIVE
     assert built["generated_output"]["groups"][2]["profileId"] == "hook_reel"
-    assert built["generated_output"]["signatureGroupCount"] == 2
+    assert built["generated_output"]["topFiveGroupCount"] == 2
     assert built["generated_output"]["targetGroupCount"] == 4
 
     with patch(

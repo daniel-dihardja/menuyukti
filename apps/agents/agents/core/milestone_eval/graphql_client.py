@@ -111,9 +111,7 @@ async def update_milestone_passcriteria_statuses(
         {
             "milestoneId": milestone_id,
             "locationId": location_id,
-            "updates": [
-                {"criterionId": item["id"], "status": item["status"]} for item in updates
-            ],
+            "updates": [{"criterionId": item["id"], "status": item["status"]} for item in updates],
         },
         user_id,
     )

@@ -42,7 +42,7 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'menu_clusterer',
     name: 'Menu clusterer',
     description:
-      'Build one signature menu_highlight cluster per POS category from tagged star items, with cluster descriptions tied to campaign strategy.',
+      'Build one top_five group per POS category from tagged star items (up to five dishes), with cluster descriptions tied to campaign strategy.',
   },
   {
     id: 'post_lineup',

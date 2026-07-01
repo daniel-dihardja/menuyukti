@@ -11,9 +11,9 @@ INPUT
 ────────────────────────────────────────────────────────────────────────
 You receive ONLY:
 - `campaignBrief`: venue and campaign strategy excerpt
-- `categories`: one entry per POS category with `signatureItems` (dish names to cover) and `taggedItems` (menu tagger metadata: role, popularity, storytellingFit, tags)
+- `menuClusterer.categories`: one entry per POS category from menu clusterer **top_five** groups, each with `signatureItems` (dish names to cover) and `taggedItems` (menu tagger metadata: role, popularity, storytellingFit, tags)
 
-Do not assume menu clusterer groups or any data outside this input.
+Do not assume data outside this input.
 
 ────────────────────────────────────────────────────────────────────────
 HARD RULES

@@ -25,8 +25,6 @@ def enrich_post_lineup_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
     posts = _posts(data)
     intents = [str(post.get("intent") or "").strip() for post in posts]
     slide_counts = [len(_slides(post)) for post in posts]
-    start_date = str(data.get("startDate") or "").strip()
-    end_date = str(data.get("endDate") or "").strip()
     enriched["_evalHints"] = {
         "postCount": len(posts),
         "intents": intents,
@@ -119,18 +117,26 @@ def try_post_lineup_deterministic_verdict(
         "prior" in norm or "earlier" in norm or "run used" in norm
     ):
         if not _top_five_posts(posts) and not str(data.get("sourceMenuTaggerTitle") or "").strip():
-            return ("fail", "post lineup data has no top five posts from prior menu tagger items.")
+            return ("fail", "post lineup data has no top five posts with menu tagger metadata.")
         return (
             "pass",
-            "post lineup used prior menu_tagger milestone for Top 5 category posts.",
+            "post lineup used menu_tagger item metadata for Top 5 carousel slides.",
         )
 
     if ("menu_clusterer" in norm or "menu clusterer" in norm) and (
         "prior" in norm or "earlier" in norm or "run used" in norm
     ):
+        if (
+            not _top_five_posts(posts)
+            and not str(data.get("sourceMenuClustererTitle") or "").strip()
+        ):
+            return (
+                "fail",
+                "post lineup data has no top five posts from prior menu_clusterer top_five groups.",
+            )
         return (
             "pass",
-            "post lineup no longer requires menu clusterer; Top 5 posts are sourced from menu tagger.",
+            "post lineup used prior menu_clusterer milestone for Top 5 category posts.",
         )
 
     if "carousel" in norm and ("post" in norm or "posts" in norm):

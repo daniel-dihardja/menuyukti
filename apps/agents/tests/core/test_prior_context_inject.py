@@ -6,6 +6,7 @@ import json
 
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     build_injected_prior_context_markdown,
+    extract_menu_tagger_data,
     extract_promotion_candidates_data,
     extract_promotion_candidates_row,
     promotion_candidates_prior_error_message,
@@ -134,3 +135,56 @@ def test_extract_promotion_candidates_data_prefers_last_populated_row() -> None:
 def test_promotion_candidates_prior_error_message_when_no_prior_rows() -> None:
     message = promotion_candidates_prior_error_message("[]")
     assert "No earlier milestones" in message
+
+
+def test_build_injected_prior_menu_tagger_shape_fallback() -> None:
+    rows = [
+        {
+            "title": "Tagged menu",
+            "presetId": None,
+            "data": {
+                "taxonomyVersion": "v2",
+                "items": [
+                    {
+                        "name": "Latte",
+                        "role": "star",
+                        "category": "DRINK",
+                        "tags": {"kind": "drink", "course": ["beverage"]},
+                    }
+                ],
+                "usedTags": {},
+            },
+        }
+    ]
+    md, matched = build_injected_prior_context_markdown(json.dumps(rows), ("menu_tagger",))
+    assert "Tagged menu" in md
+    assert matched == ["menu_tagger"]
+
+
+def test_extract_menu_tagger_data_prefers_last_populated_row() -> None:
+    rows = [
+        {
+            "title": "Old tags",
+            "presetId": "menu_tagger",
+            "data": {"taxonomyVersion": "v2", "items": [], "usedTags": {}},
+        },
+        {
+            "title": "Fresh tags",
+            "presetId": "menu_tagger",
+            "data": {
+                "taxonomyVersion": "v2",
+                "items": [
+                    {
+                        "name": "Burger",
+                        "role": "star",
+                        "category": "FOOD",
+                        "tags": {"kind": "food", "course": ["main"]},
+                    }
+                ],
+                "usedTags": {},
+            },
+        },
+    ]
+    data = extract_menu_tagger_data(json.dumps(rows))
+    assert data is not None
+    assert data["items"][0]["name"] == "Burger"

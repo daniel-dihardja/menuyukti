@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Literal
+from typing import Any
 
 from agents_app.agents.core.milestone_run.dates_window import TOP_FIVE_CATEGORY_INTERVAL_WEEKS
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    MENU_CLUSTERER_PROFILE_TOP_FIVE,
     MENU_CLUSTERER_TOP_LEADS,
-    distinct_categories_with_stars,
-    select_category_star_items,
 )
 from agents_app.agents.core.milestone_run.post_lineup.build import (
     _build_image_brief_from_item,
@@ -37,10 +36,114 @@ def _name_key(name: str) -> str:
     return name.strip().casefold()
 
 
+def _top_five_groups(menu_clusterer_data: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_groups = menu_clusterer_data.get("groups")
+    if not isinstance(raw_groups, list):
+        return []
+    return [
+        group
+        for group in raw_groups
+        if isinstance(group, dict)
+        and str(group.get("profileId") or "").strip() == MENU_CLUSTERER_PROFILE_TOP_FIVE
+    ]
+
+
+def _tagger_items_by_name(menu_tagger_data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    raw_items = menu_tagger_data.get("items")
+    if not isinstance(raw_items, list):
+        return {}
+    by_name: dict[str, dict[str, Any]] = {}
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        name = _item_display_name(item)
+        if not name:
+            continue
+        key = _name_key(name)
+        if key not in by_name:
+            by_name[key] = item
+    return by_name
+
+
+def prepare_top_five_categories_from_clusterer(
+    menu_clusterer_data: dict[str, Any],
+    menu_tagger_data: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Build per-category Top 5 payloads from menu_clusterer top_five groups."""
+    groups = _top_five_groups(menu_clusterer_data)
+    if not groups:
+        raise ValueError(
+            "post_lineup requires prior menu_clusterer milestone with at least one top_five group"
+        )
+
+    items_by_name = _tagger_items_by_name(menu_tagger_data)
+    prepared: list[dict[str, Any]] = []
+
+    for group in groups:
+        category = str(group.get("category") or "").strip()
+        raw_items = group.get("items")
+        if not isinstance(raw_items, list) or not raw_items:
+            continue
+
+        group_items = [row for row in raw_items if isinstance(row, dict)]
+        if not category:
+            first_category = (
+                str(group_items[0].get("category") or "").strip() if group_items else ""
+            )
+            category = first_category
+        if not category:
+            raise ValueError(f"top_five group {group.get('id')!r} is missing category")
+
+        signature_items: list[dict[str, Any]] = []
+        star_items: list[dict[str, Any]] = []
+        for row in sorted(group_items, key=lambda item: int(item.get("position") or 0)):
+            dish_name = str(row.get("name") or "").strip()
+            if not dish_name:
+                continue
+            tagger_item = items_by_name.get(_name_key(dish_name))
+            if tagger_item is None:
+                raise ValueError(
+                    f"top_five group for {category} references dish not found in menu_tagger: "
+                    f"{dish_name}"
+                )
+            position = int(row.get("position") or len(signature_items) + 1)
+            signature_items.append({"name": dish_name, "position": position})
+            star_items.append(tagger_item)
+
+        if not signature_items:
+            continue
+        if len(signature_items) > POST_LINEUP_TOP_FIVE_MAX_ITEMS:
+            signature_items = signature_items[:POST_LINEUP_TOP_FIVE_MAX_ITEMS]
+            star_items = star_items[:POST_LINEUP_TOP_FIVE_MAX_ITEMS]
+
+        prepared.append(
+            {
+                "category": category,
+                "signatureItems": signature_items,
+                "starItems": star_items,
+                "groupId": str(group.get("id") or "").strip(),
+            }
+        )
+
+    if not prepared:
+        raise ValueError(
+            "post_lineup could not prepare Top 5 categories from menu_clusterer top_five groups"
+        )
+
+    prepared.sort(key=lambda row: str(row.get("category") or "").casefold())
+    return prepared
+
+
 def prepare_top_five_categories(
     menu_tagger_data: dict[str, Any],
     campaign_brief_data: dict[str, Any],
 ) -> list[dict[str, Any]]:
+    """Legacy helper: derive Top 5 categories directly from menu tagger (tests only)."""
+    from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+        distinct_categories_with_stars,
+        select_category_star_items,
+    )
+
     items = menu_tagger_data.get("items")
     if not isinstance(items, list):
         return []
@@ -143,9 +246,7 @@ def _fill_missing_slide_captions(slides: list[TopFiveSlideDraft]) -> list[TopFiv
 
 class TopFiveSlideDraft(BaseModel):
     dishName: str = Field(description="Exact dish name from signatureItems")
-    caption: str = Field(
-        description="1–3 sentences of finished carousel-frame copy for this dish"
-    )
+    caption: str = Field(description="1–3 sentences of finished carousel-frame copy for this dish")
 
 
 class TopFivePostDraft(BaseModel):
@@ -182,9 +283,7 @@ def validate_top_five_drafts(
     category_payloads: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     if len(drafts) != len(expected_categories):
-        raise ValueError(
-            "top five LLM output must include exactly one post per prepared category"
-        )
+        raise ValueError("top five LLM output must include exactly one post per prepared category")
 
     items_by_category = {
         str(row.get("category") or "").strip().casefold(): row for row in category_payloads
@@ -302,7 +401,9 @@ def build_top_five_posts_from_draft(
             role = item.get("role") if isinstance(item, dict) else None
             if role in ("star", "puzzle"):
                 slide["role"] = role
-            item_category = str(item.get("category") or "").strip() if isinstance(item, dict) else ""
+            item_category = (
+                str(item.get("category") or "").strip() if isinstance(item, dict) else ""
+            )
             if item_category:
                 slide["category"] = item_category
             fit = _optional_storytelling_fit(item if isinstance(item, dict) else {})

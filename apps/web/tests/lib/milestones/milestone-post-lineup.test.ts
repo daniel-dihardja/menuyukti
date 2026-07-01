@@ -23,7 +23,14 @@ describe('post_lineup preset', () => {
       value: { notes: '' },
     })
     expect(fields.milestoneData).toMatchObject({ posts: [] })
-    expect(fields.passCriteria?.length).toBe(6)
+    expect(fields.passCriteria?.map((row) => row.requirement)).toEqual([
+      'milestonePreset.post_lineup.criterionPriorDates',
+      'milestonePreset.post_lineup.criterionPriorCampaignBrief',
+      'milestonePreset.post_lineup.criterionPriorMenuClusterer',
+      'milestonePreset.post_lineup.criterionCarouselPost',
+      'milestonePreset.post_lineup.criterionSlideCount',
+      'milestonePreset.post_lineup.criterionSlideFields',
+    ])
   })
 
   it('milestonedataValueSchema accepts built top five posts for milestone run', () => {

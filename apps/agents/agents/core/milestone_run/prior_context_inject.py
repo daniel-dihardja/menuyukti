@@ -76,6 +76,20 @@ def collect_matched_prior_rows(
                 matched_ids.append("promotion_candidates")
                 break
 
+    if "menu_tagger" in wanted and "menu_tagger" not in matched_ids:
+        for row in rows:
+            data = row.get("data")
+            if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
+                matched.append(
+                    {
+                        "title": row.get("title"),
+                        "presetId": row.get("presetId"),
+                        "data": data,
+                    }
+                )
+                matched_ids.append("menu_tagger")
+                break
+
     return matched, matched_ids
 
 
@@ -197,6 +211,19 @@ def is_menu_tagger_milestone_data(data: object) -> bool:
     return data.get("taxonomyVersion") == "v2" and isinstance(data.get("items"), list)
 
 
+def menu_tagger_has_items(data: dict[str, Any]) -> bool:
+    items = data.get("items")
+    if not isinstance(items, list):
+        return False
+    for raw in items:
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("name") or raw.get("dishName") or "").strip()
+        if name:
+            return True
+    return False
+
+
 def extract_promotion_candidates_row(prior_milestones_json: str) -> dict[str, Any] | None:
     """Return the best matched prior promotion_candidates row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
@@ -252,21 +279,45 @@ def promotion_candidates_prior_error_message(prior_milestones_json: str) -> str:
 
 
 def extract_menu_tagger_row(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return the first matched prior menu_tagger row, or ``None``."""
+    """Return the best matched prior menu_tagger row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"menu_tagger"}))
-    return matched[0] if matched else None
+    if not matched:
+        return None
+    for row in reversed(matched):
+        data = row.get("data")
+        if isinstance(data, dict) and menu_tagger_has_items(data):
+            return row
+    return matched[-1]
 
 
 def extract_menu_tagger_data(prior_milestones_json: str) -> dict[str, Any] | None:
     """Return menu_tagger ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_menu_tagger_row(prior_milestones_json)
-    if row is None:
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"menu_tagger"}))
+    candidates: list[dict[str, Any]] = []
+    seen_ids: set[int] = set()
+    for row in matched:
+        data = row.get("data")
+        if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
+            candidates.append(data)
+            seen_ids.add(id(data))
+
+    if not candidates:
+        for row in rows:
+            data = row.get("data")
+            if not isinstance(data, dict) or not is_menu_tagger_milestone_data(data):
+                continue
+            if id(data) in seen_ids:
+                continue
+            candidates.append(data)
+
+    if not candidates:
         return None
-    data = row.get("data")
-    if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
-        return data
-    return None
+    for data in reversed(candidates):
+        if menu_tagger_has_items(data):
+            return data
+    return candidates[-1]
 
 
 def menu_tagger_prior_error_message(

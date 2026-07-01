@@ -451,6 +451,7 @@ def build_post_lineup_output(
     start_date: str,
     end_date: str,
     source_campaign_brief_title: str = "",
+    source_menu_clusterer_title: str = "",
     source_menu_tagger_title: str = "",
     source_dates_title: str = "",
     notes: str = "",
@@ -463,6 +464,9 @@ def build_post_lineup_output(
     source_brief_title = source_campaign_brief_title.strip()
     if source_brief_title:
         payload["sourceCampaignBriefTitle"] = source_brief_title
+    source_clusterer_title = source_menu_clusterer_title.strip()
+    if source_clusterer_title:
+        payload["sourceMenuClustererTitle"] = source_clusterer_title
     source_tagger_title = source_menu_tagger_title.strip()
     if source_tagger_title:
         payload["sourceMenuTaggerTitle"] = source_tagger_title

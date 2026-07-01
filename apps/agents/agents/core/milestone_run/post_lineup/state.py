@@ -81,6 +81,7 @@ class PostLineupState(TypedDict):
     groups: NotRequired[list[dict[str, Any]]]
     food_leads: NotRequired[list[dict[str, Any]]]
     source_menu_clusterer_title: NotRequired[str]
+    menu_clusterer_data: NotRequired[dict[str, Any]]
     menu_tagger_data: NotRequired[dict[str, Any]]
     source_menu_tagger_title: NotRequired[str]
     top_five_categories: NotRequired[list[dict[str, Any]]]
