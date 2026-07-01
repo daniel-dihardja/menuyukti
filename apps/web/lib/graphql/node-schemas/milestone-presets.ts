@@ -526,8 +526,6 @@ export const postLineupPostSchema = z
 
 export type PostLineupPost = z.infer<typeof postLineupPostSchema>
 
-const POST_LINEUP_WEEKLY_POST_ID_PREFIX = 'weekday-lunch-post-week'
-
 export const postLineupMilestoneDataSchema = z
   .object({
     posts: z.array(postLineupPostSchema),
