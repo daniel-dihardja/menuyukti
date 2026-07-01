@@ -29,15 +29,22 @@ export type HeroProductPreviewProps = {
   modalTitle: string
   /** Use full container width (e.g. stacked landing sections) instead of hero max-width. */
   fullWidth?: boolean
+  /** `large` — taller frame and wider layout for portfolio / landing hero use. */
+  size?: 'default' | 'large' | 'hero'
 }
 
 const HERO_IMAGE_SIZES =
   '(max-width: 640px) 100vw, (max-width: 1152px) min(100vw - 3rem, 1024px), 1024px'
 
+const LARGE_HERO_IMAGE_SIZES =
+  '(max-width: 640px) 100vw, (max-width: 1280px) min(100vw - 2rem, 1280px), 1280px'
+
 const FULL_WIDTH_IMAGE_SIZES = '(max-width: 1152px) 100vw, 1152px'
 
-const carouselNavButtonClassName = cn(
-  'flex size-10 shrink-0 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
+const LARGE_FULL_WIDTH_IMAGE_SIZES = '(max-width: 1536px) 100vw, 1400px'
+
+const carouselNavButtonBaseClassName = cn(
+  'flex shrink-0 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
   'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
   'disabled:pointer-events-none disabled:opacity-40',
 )
@@ -52,7 +59,23 @@ export function HeroProductPreview({
   carouselDotLabels,
   modalTitle,
   fullWidth = false,
+  size = 'default',
 }: HeroProductPreviewProps) {
+  const isLarge = size === 'large'
+  const isHero = size === 'hero'
+  const imageSizes = fullWidth
+    ? isLarge || isHero
+      ? LARGE_FULL_WIDTH_IMAGE_SIZES
+      : FULL_WIDTH_IMAGE_SIZES
+    : isLarge || isHero
+      ? LARGE_HERO_IMAGE_SIZES
+      : HERO_IMAGE_SIZES
+  const aspectClassName = isHero
+    ? 'relative w-full h-[min(34dvh,16rem)] sm:h-[min(38dvh,20rem)] md:h-[min(42dvh,24rem)] lg:h-[min(46dvh,28rem)] xl:h-[min(50dvh,32rem)]'
+    : isLarge
+      ? 'aspect-[16/11] min-h-[220px] sm:aspect-[3/2] sm:min-h-[280px] md:min-h-[360px] lg:min-h-[440px] xl:min-h-[520px]'
+      : 'aspect-video'
+  const navButtonSizeClassName = isLarge || isHero ? 'size-12' : 'size-10'
   const [api, setApi] = useState<CarouselApi>()
   const [activeIndex, setActiveIndex] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
@@ -89,7 +112,11 @@ export function HeroProductPreview({
     <figure
       className={cn(
         'mx-auto w-full min-w-0',
-        fullWidth ? 'mt-8 max-w-none' : 'mt-10 max-w-5xl md:mt-12',
+        isHero
+          ? 'mt-0 max-w-none'
+          : fullWidth || isLarge
+            ? 'mt-8 max-w-none md:mt-10'
+            : 'mt-10 max-w-5xl md:mt-12',
       )}
     >
       <div className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500 motion-reduce:animate-none">
@@ -105,71 +132,95 @@ export function HeroProductPreview({
                 type="button"
                 onClick={() => api?.scrollPrev()}
                 disabled={!canScrollPrev}
-                className={cn(carouselNavButtonClassName, 'hidden lg:flex')}
+                className={cn(
+                  carouselNavButtonBaseClassName,
+                  navButtonSizeClassName,
+                  'hidden lg:flex',
+                )}
                 aria-label={carouselPrevLabel}
               >
-                <ChevronLeft className="size-5" aria-hidden />
+                <ChevronLeft className={cn(isLarge || isHero ? 'size-6' : 'size-5')} aria-hidden />
               </button>
             ) : null}
 
-            <div className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-border bg-muted/20">
-              <div className="relative aspect-video w-full min-w-0 bg-muted/30">
-                <CarouselContent className="ml-0">
-                  {slides.map((slide, index) => (
-                    <CarouselItem key={slide.id} className="basis-full pl-0">
-                      <button
-                        type="button"
-                        onClick={openModal}
-                        className="group relative block h-full w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                        aria-label={`${viewLargerLabel}: ${slide.alt}`}
-                      >
-                        <div className="relative aspect-video w-full min-w-0">
-                          <Image
-                            src={slide.imageSrc}
-                            alt={slide.alt}
-                            fill
-                            className="object-contain object-center"
-                            priority={index === 0}
-                            loading={index === 0 ? undefined : 'lazy'}
-                            sizes={fullWidth ? FULL_WIDTH_IMAGE_SIZES : HERO_IMAGE_SIZES}
+            <div
+              className={cn(
+                'min-w-0 flex-1 overflow-hidden border border-border bg-muted/20 shadow-sm',
+                isLarge || isHero ? 'rounded-3xl' : 'rounded-2xl',
+              )}
+            >
+              <CarouselContent className="ml-0">
+                {slides.map((slide, index) => (
+                  <CarouselItem key={slide.id} className="basis-full pl-0">
+                    <button
+                      type="button"
+                      onClick={openModal}
+                      className="group relative block w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      aria-label={`${viewLargerLabel}: ${slide.alt}`}
+                    >
+                      <div className={cn('relative w-full min-w-0 bg-muted/30', aspectClassName)}>
+                        <Image
+                          src={slide.imageSrc}
+                          alt={slide.alt}
+                          fill
+                          className="object-contain object-center"
+                          priority={index === 0}
+                          loading={index === 0 ? undefined : 'lazy'}
+                          sizes={imageSizes}
+                        />
+                        <span
+                          className={cn(
+                            'pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 font-medium text-foreground shadow-sm backdrop-blur-sm transition group-hover:bg-background',
+                            isLarge || isHero ? 'px-3 py-1.5 text-sm' : 'px-2.5 py-1 text-xs',
+                          )}
+                        >
+                          <ZoomIn
+                            className={cn('shrink-0', isLarge || isHero ? 'size-4' : 'size-3.5')}
+                            aria-hidden
                           />
-                        </div>
-                        <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition group-hover:bg-background">
-                          <ZoomIn className="size-3.5 shrink-0" aria-hidden />
                           {viewLargerLabel}
                         </span>
-                      </button>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </div>
+                      </div>
+                    </button>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
 
-              {showNav ? (
+              {showNav && !isHero ? (
                 <div className="flex items-center justify-center gap-4 border-t border-border/40 bg-muted/10 px-4 py-2.5 lg:hidden">
                   <button
                     type="button"
                     onClick={() => api?.scrollPrev()}
                     disabled={!canScrollPrev}
-                    className={carouselNavButtonClassName}
+                    className={cn(carouselNavButtonBaseClassName, navButtonSizeClassName)}
                     aria-label={carouselPrevLabel}
                   >
-                    <ChevronLeft className="size-5" aria-hidden />
+                    <ChevronLeft
+                      className={cn(isLarge || isHero ? 'size-6' : 'size-5')}
+                      aria-hidden
+                    />
                   </button>
                   <button
                     type="button"
                     onClick={() => api?.scrollNext()}
                     disabled={!canScrollNext}
-                    className={carouselNavButtonClassName}
+                    className={cn(carouselNavButtonBaseClassName, navButtonSizeClassName)}
                     aria-label={carouselNextLabel}
                   >
-                    <ChevronRight className="size-5" aria-hidden />
+                    <ChevronRight
+                      className={cn(isLarge || isHero ? 'size-6' : 'size-5')}
+                      aria-hidden
+                    />
                   </button>
                 </div>
               ) : null}
 
               {showNav ? (
                 <div
-                  className="flex justify-center gap-2 border-t border-border/40 bg-muted/10 px-4 py-3"
+                  className={cn(
+                    'flex justify-center gap-2 border-t border-border/40 bg-muted/10 px-4',
+                    isLarge || isHero ? 'py-3' : 'py-3',
+                  )}
                   role="tablist"
                   aria-label={carouselLabel}
                 >
@@ -183,7 +234,8 @@ export function HeroProductPreview({
                       aria-label={carouselDotLabels[index]}
                       onClick={() => api?.scrollTo(index)}
                       className={cn(
-                        'size-2.5 rounded-full transition',
+                        'rounded-full transition',
+                        isLarge || isHero ? 'size-3' : 'size-2.5',
                         index === activeIndex
                           ? 'scale-110 bg-primary'
                           : 'bg-muted-foreground/35 hover:bg-muted-foreground/55',
@@ -199,10 +251,14 @@ export function HeroProductPreview({
                 type="button"
                 onClick={() => api?.scrollNext()}
                 disabled={!canScrollNext}
-                className={cn(carouselNavButtonClassName, 'hidden lg:flex')}
+                className={cn(
+                  carouselNavButtonBaseClassName,
+                  navButtonSizeClassName,
+                  'hidden lg:flex',
+                )}
                 aria-label={carouselNextLabel}
               >
-                <ChevronRight className="size-5" aria-hidden />
+                <ChevronRight className={cn(isLarge || isHero ? 'size-6' : 'size-5')} aria-hidden />
               </button>
             ) : null}
           </div>
@@ -210,7 +266,16 @@ export function HeroProductPreview({
       </div>
 
       {activeSlide ? (
-        <figcaption className="mt-4 text-pretty text-center text-sm leading-relaxed text-foreground/70">
+        <figcaption
+          className={cn(
+            'mt-3 text-pretty text-center leading-relaxed text-foreground/70',
+            isHero
+              ? 'line-clamp-2 px-2 text-sm md:mx-auto md:max-w-3xl'
+              : isLarge
+                ? 'max-w-4xl px-2 text-base md:mx-auto md:text-lg'
+                : 'text-sm',
+          )}
+        >
           {activeSlide.caption}
         </figcaption>
       ) : null}
