@@ -17,7 +17,6 @@ from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     clusterable_menu_items,
     combine_hybrid_clusterer_output,
     derive_hook_cluster_split,
-    derive_target_group_count,
     distinct_categories_with_clusterable_items,
     distinct_categories_with_stars,
     merge_llm_clusters,

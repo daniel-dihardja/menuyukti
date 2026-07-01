@@ -7,7 +7,6 @@ from typing import Any, Literal
 
 from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     hook_category_scope_issues,
-    is_mixed_category_group,
     is_same_category_group,
 )
 
