@@ -85,12 +85,34 @@ export const MENU_CLUSTERER_MIN_GROUP_COUNT = 1
 export const MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 1
 export const MENU_CLUSTERER_MAX_GROUP_COUNT = 20
 
-export const menuClustererTargetGroupCountSchema = z.number().int().min(1).max(20)
+export const MENU_CLUSTERER_DERIVED_MIN_GROUP_COUNT = 4
 
-export type MenuClustererTargetGroupCount = z.infer<typeof menuClustererTargetGroupCountSchema>
+export const MENU_CLUSTERER_DERIVED_MAX_GROUP_COUNT = 12
+
+/** LLM menu cluster count (milestone input + output targetGroupCount). */
+export const menuClustererHookTargetGroupCountSchema = z
+  .number()
+  .int()
+  .min(MENU_CLUSTERER_DERIVED_MIN_GROUP_COUNT)
+  .max(MENU_CLUSTERER_DERIVED_MAX_GROUP_COUNT)
+
+export type MenuClustererHookTargetGroupCount = z.infer<
+  typeof menuClustererHookTargetGroupCountSchema
+>
+
+/** Per-category top_five group count on clusterer output (not the same as hook cluster count). */
+export const menuClustererTopFiveGroupCountSchema = z.number().int().min(1).max(20)
+
+export type MenuClustererTopFiveGroupCount = z.infer<typeof menuClustererTopFiveGroupCountSchema>
+
+/** @deprecated Use menuClustererHookTargetGroupCountSchema for hook/menu cluster counts. */
+export const menuClustererTargetGroupCountSchema = menuClustererHookTargetGroupCountSchema
+
+export type MenuClustererTargetGroupCount = MenuClustererHookTargetGroupCount
 
 export const menuClustererMilestoneInputValueSchema = z.object({
   notes: z.string(),
+  targetGroupCount: menuClustererHookTargetGroupCountSchema.optional(),
 })
 
 export type MenuClustererMilestoneInputValue = z.infer<
@@ -383,11 +405,14 @@ export const menuClustererWeekdaySchema = z.enum([
   'sunday',
 ])
 
+export const menuClustererCategoryScopeSchema = z.enum(['categorical', 'creative'])
+
 export const menuClustererGroupSchema = z
   .object({
     id: z.string().trim().min(1),
     leadName: z.string().trim().min(1),
     profileId: menuClustererProfileIdSchema,
+    categoryScope: menuClustererCategoryScopeSchema.optional(),
     category: z.string().trim().min(1).optional(),
     anchor: menuClustererAnchorSchema,
     items: z.array(menuClustererGroupItemSchema).min(1).max(12),
@@ -424,8 +449,8 @@ export const menuClustererMilestoneDataSchema = z.object({
   groups: z.array(menuClustererGroupSchema),
   unassignedItemNames: z.array(z.string().trim().min(1)),
   topFoodLeadNames: z.array(z.string().trim().min(1)).max(12).default([]),
-  targetGroupCount: menuClustererTargetGroupCountSchema.optional(),
-  topFiveGroupCount: menuClustererTargetGroupCountSchema.optional(),
+  targetGroupCount: menuClustererHookTargetGroupCountSchema.optional(),
+  topFiveGroupCount: menuClustererTopFiveGroupCountSchema.optional(),
   sourceMenuTaggerTitle: z.string().optional(),
   sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),

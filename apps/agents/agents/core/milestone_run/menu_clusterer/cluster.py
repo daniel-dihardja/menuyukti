@@ -18,7 +18,7 @@ MENU_CLUSTERER_HIGHLIGHT_MAX_ITEMS = 12
 MENU_CLUSTERER_TOP_FOOD_LEAD_NAMES_MAX = 12
 MENU_CLUSTERER_MIN_GROUP_COUNT = 4
 MENU_CLUSTERER_DEFAULT_GROUP_COUNT = 4
-MENU_CLUSTERER_MAX_GROUP_COUNT = 8
+MENU_CLUSTERER_MAX_GROUP_COUNT = 12
 # Backward-compatible alias used in older call sites/tests.
 MENU_CLUSTERER_MIN_GROUPS = MENU_CLUSTERER_MIN_GROUP_COUNT
 MENU_CLUSTERER_GROUP_MAX_SIZE = 5
@@ -37,6 +37,7 @@ _CREATIVE_ROLE_SEQUENCE = (
 
 class MenuClustererClusterDraftLike(Protocol):
     themeLabel: str
+    categoryScope: str
     leadItemName: str
     supportingItemNames: list[str]
     clusterDescription: str
@@ -174,10 +175,10 @@ def _name_key(name: str) -> str:
 
 
 def derive_target_group_count(tagged_item_count: int) -> int:
-    """Derive cluster count from tagged menu size (clamped to 4–8)."""
+    """Derive cluster count from tagged menu size (clamped to 4–12)."""
     if tagged_item_count < MENU_CLUSTERER_MIN_GROUP_COUNT:
         return MENU_CLUSTERER_MIN_GROUP_COUNT
-    by_coverage = math.ceil(tagged_item_count / MENU_CLUSTERER_GROUP_MAX_SIZE)
+    by_coverage = math.ceil(tagged_item_count / 4)
     return max(
         MENU_CLUSTERER_MIN_GROUP_COUNT,
         min(MENU_CLUSTERER_MAX_GROUP_COUNT, by_coverage),
@@ -516,6 +517,67 @@ def _main_category_from_brief(campaign_brief_data: dict[str, Any] | None) -> str
     return str(campaign_brief_data.get("mainCategory") or "").strip()
 
 
+def distinct_categories_with_clusterable_items(
+    items: list[dict[str, Any]],
+    *,
+    main_category: str = "",
+) -> list[str]:
+    """Unique POS categories among clusterable items, main category first."""
+    categories: set[str] = set()
+    for item in clusterable_menu_items(items):
+        categories.add(_item_category(item))
+    if not categories:
+        return []
+    return sorted(
+        categories,
+        key=lambda category: (
+            0 if _category_matches_main_focus(category, main_category) else 1,
+            category.casefold(),
+        ),
+    )
+
+
+def derive_hook_cluster_split(
+    target_count: int,
+    categories: list[str],
+) -> tuple[int, int]:
+    """Split hook cluster budget into same-category and mixed-category counts."""
+    if len(categories) <= 1:
+        return target_count, 0
+
+    same_count = min(len(categories), max(1, target_count // 2))
+    mixed_count = target_count - same_count
+    if mixed_count < 1:
+        same_count = max(1, target_count - 1)
+        mixed_count = target_count - same_count
+    return same_count, mixed_count
+
+
+def _group_item_categories(group: dict[str, Any]) -> set[str]:
+    raw_items = group.get("items")
+    if not isinstance(raw_items, list):
+        return set()
+    categories: set[str] = set()
+    for row in raw_items:
+        if not isinstance(row, dict):
+            continue
+        category = str(row.get("category") or "").strip()
+        if category:
+            categories.add(_normalize_category(category).casefold())
+    return categories
+
+
+def is_same_category_group(group: dict[str, Any]) -> bool:
+    """True when every item in the group shares one POS category."""
+    categories = _group_item_categories(group)
+    return len(categories) == 1
+
+
+def is_mixed_category_group(group: dict[str, Any]) -> bool:
+    """True when the group spans two or more POS categories."""
+    return len(_group_item_categories(group)) >= 2
+
+
 def distinct_categories_with_stars(
     items: list[dict[str, Any]],
     *,
@@ -549,6 +611,58 @@ def select_category_star_items(
         if _is_star_item(item) and _item_category(item).casefold() == normalized.casefold()
     ]
     return sort_items_by_popularity(stars)
+
+
+def select_category_clusterable_items(
+    items: list[dict[str, Any]],
+    category: str,
+) -> list[dict[str, Any]]:
+    """Clusterable items in a category, sorted by popularity then storytelling."""
+    normalized = _normalize_category(category)
+    pool = [
+        item
+        for item in clusterable_menu_items(items)
+        if _item_category(item).casefold() == normalized.casefold()
+    ]
+    return sort_items_by_popularity(pool)
+
+
+def _select_hook_lead_in_category(
+    category_items: list[dict[str, Any]],
+    *,
+    top5_leads: list[dict[str, Any]],
+    cluster_index: int,
+) -> dict[str, Any]:
+    """Pick a hook lead from category items, preferring the global top popularity pool."""
+    if not category_items:
+        raise ValueError("menu_clusterer requires at least one clusterable item in category")
+
+    top5_keys = _top5_name_keys(top5_leads)
+    eligible = [
+        item
+        for item in category_items
+        if _name_key(_item_name(item)) in top5_keys
+    ]
+    pool = eligible if eligible else category_items
+    return pool[cluster_index % len(pool)]
+
+
+def _category_same_hook_cluster_description(
+    *,
+    category: str,
+    campaign_brief_data: dict[str, Any] | None,
+    item_names: list[str],
+) -> str:
+    venue = _venue_name(campaign_brief_data)
+    focus = _strategy_focus(campaign_brief_data)
+    dishes = ", ".join(item_names[:5])
+    if len(item_names) > 5:
+        dishes = f"{dishes}, and others"
+    return (
+        f"Same-category Reel hook cluster for {venue} {category} menu: grouped tagged dishes "
+        f"({dishes}) by shared POS category for a focused hook Reel lineup; aligns with "
+        f"{focus} strategy."
+    )
 
 
 def _category_top_five_cluster_description(
@@ -782,6 +896,8 @@ def _finalize_cluster_group(
     campaign_brief_data: dict[str, Any] | None,
     theme_label: str,
     cluster_description: str,
+    group_id: str | None = None,
+    category: str | None = None,
 ) -> dict[str, Any]:
     raw_tags = lead_item.get("tags")
     tags: dict[str, Any] = raw_tags if isinstance(raw_tags, dict) else {}
@@ -795,8 +911,8 @@ def _finalize_cluster_group(
     offer_window = _offer_window(campaign_brief_data)
     description = cluster_description.strip()
 
-    return {
-        "id": f"group-{index + 1}",
+    group: dict[str, Any] = {
+        "id": group_id or f"group-{index + 1}",
         "leadName": _item_name(lead_item),
         "profileId": MENU_CLUSTERER_PROFILE_ID,
         "anchor": {"dimension": "reel_moment", "value": reel_moment},
@@ -812,6 +928,305 @@ def _finalize_cluster_group(
             theme_label=theme_label,
         ),
     }
+    if category:
+        group["category"] = _normalize_category(category)
+    return group
+
+
+def _build_same_category_hook_cluster(
+    category: str,
+    category_items: list[dict[str, Any]],
+    *,
+    top5_leads: list[dict[str, Any]],
+    cluster_index: int,
+    campaign_brief_data: dict[str, Any] | None = None,
+    group_id: str | None = None,
+) -> dict[str, Any] | None:
+    if not category_items:
+        return None
+
+    lead_item = _select_hook_lead_in_category(
+        category_items,
+        top5_leads=top5_leads,
+        cluster_index=cluster_index,
+    )
+    lead_key = _name_key(_item_name(lead_item))
+    supporting: list[dict[str, Any]] = []
+    for item in category_items:
+        if _name_key(_item_name(item)) == lead_key:
+            continue
+        supporting.append(item)
+        if len(supporting) >= MENU_CLUSTERER_GROUP_MAX_SIZE - 1:
+            break
+
+    item_names = [_item_name(item) for item in [lead_item, *supporting] if _item_name(item)]
+    description = _category_same_hook_cluster_description(
+        category=category,
+        campaign_brief_data=campaign_brief_data,
+        item_names=item_names,
+    )
+    resolved_id = group_id or f"group-hook-same-{_category_slug(category)}-{cluster_index + 1}"
+    theme_label = f"{category} hook Reel"
+
+    return _finalize_cluster_group(
+        lead_item=lead_item,
+        supporting_items=supporting,
+        index=cluster_index,
+        campaign_brief_data=campaign_brief_data,
+        theme_label=theme_label,
+        cluster_description=description,
+        group_id=resolved_id,
+        category=category,
+    )
+
+
+def build_same_category_hook_clusters(
+    menu_tagger_items: list[dict[str, Any]],
+    *,
+    same_count: int,
+    top5_leads: list[dict[str, Any]],
+    campaign_brief_data: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Build deterministic same-POS-category hook_reel groups."""
+    if same_count < 1:
+        return []
+
+    main_category = _main_category_from_brief(campaign_brief_data)
+    categories = distinct_categories_with_clusterable_items(
+        menu_tagger_items,
+        main_category=main_category,
+    )
+    if not categories:
+        raise ValueError("menu_clusterer requires at least one clusterable item for hook clusters")
+
+    groups: list[dict[str, Any]] = []
+    if len(categories) >= 2:
+        for index, category in enumerate(categories[:same_count]):
+            category_items = select_category_clusterable_items(menu_tagger_items, category)
+            group = _build_same_category_hook_cluster(
+                category,
+                category_items,
+                top5_leads=top5_leads,
+                cluster_index=index,
+                campaign_brief_data=campaign_brief_data,
+            )
+            if group is not None:
+                groups.append(group)
+        return groups
+
+    category = categories[0]
+    category_items = select_category_clusterable_items(menu_tagger_items, category)
+    for index in range(same_count):
+        lead_item = _select_hook_lead_in_category(
+            category_items,
+            top5_leads=top5_leads,
+            cluster_index=index,
+        )
+        lead_key = _name_key(_item_name(lead_item))
+        supporting: list[dict[str, Any]] = []
+        offset = index % max(1, len(category_items) - 1) if len(category_items) > 1 else 0
+        for item in category_items[offset:] + category_items[:offset]:
+            if _name_key(_item_name(item)) == lead_key:
+                continue
+            if any(_name_key(_item_name(row)) == _name_key(_item_name(item)) for row in supporting):
+                continue
+            supporting.append(item)
+            if len(supporting) >= MENU_CLUSTERER_GROUP_MAX_SIZE - 1:
+                break
+
+        item_names = [_item_name(item) for item in [lead_item, *supporting] if _item_name(item)]
+        description = _category_same_hook_cluster_description(
+            category=category,
+            campaign_brief_data=campaign_brief_data,
+            item_names=item_names,
+        )
+        group = _finalize_cluster_group(
+            lead_item=lead_item,
+            supporting_items=supporting,
+            index=index,
+            campaign_brief_data=campaign_brief_data,
+            theme_label=f"{category} hook Reel {index + 1}",
+            cluster_description=description,
+            group_id=f"group-hook-same-{_category_slug(category)}-{index + 1}",
+            category=category,
+        )
+        groups.append(group)
+    return groups
+
+
+def _validate_categorical_cluster(
+    group: dict[str, Any],
+    *,
+    cluster_index: int,
+) -> None:
+    if not is_same_category_group(group):
+        raise ValueError(
+            f"cluster {cluster_index + 1} with categoryScope categorical must use one POS category only"
+        )
+
+
+def _validate_creative_cluster(
+    group: dict[str, Any],
+    *,
+    cluster_index: int,
+) -> None:
+    if not is_mixed_category_group(group):
+        raise ValueError(
+            f"cluster {cluster_index + 1} with categoryScope creative must span at least "
+            "two POS categories"
+        )
+
+
+def hook_category_scope_issues(hook_groups: list[dict[str, Any]]) -> list[str]:
+    """Return issues when multi-category menus lack both categorical and creative hook groups."""
+    if not hook_groups:
+        return ["no hook Reel clusters to validate category scope"]
+    has_categorical = any(is_same_category_group(group) for group in hook_groups)
+    has_creative = any(is_mixed_category_group(group) for group in hook_groups)
+    issues: list[str] = []
+    if not has_categorical:
+        issues.append("hook Reel clusters are missing a categorical (same POS category) group")
+    if not has_creative:
+        issues.append("hook Reel clusters are missing a creative (cross-category) group")
+    return issues
+
+
+def _cluster_category_scope(cluster: MenuClustererClusterDraftLike) -> str:
+    return str(getattr(cluster, "categoryScope", "") or "").strip().lower()
+
+
+def _apply_categorical_group_category(group: dict[str, Any]) -> dict[str, Any]:
+    raw_items = group.get("items")
+    if not isinstance(raw_items, list):
+        return group
+    for row in raw_items:
+        if isinstance(row, dict):
+            category = str(row.get("category") or "").strip()
+            if category:
+                return {**group, "category": _normalize_category(category)}
+    return group
+
+
+def _validate_mixed_category_cluster(
+    group: dict[str, Any],
+    *,
+    cluster_index: int,
+) -> None:
+    if is_same_category_group(group):
+        raise ValueError(
+            f"cluster {cluster_index + 1} must span at least two POS categories for mixed hook clusters"
+        )
+
+
+def build_hook_payload_from_same_groups(
+    same_groups: list[dict[str, Any]],
+    *,
+    menu_tagger_items: list[dict[str, Any]],
+    top5_leads: list[dict[str, Any]],
+    target_group_count: int,
+    source_menu_tagger_title: str = "",
+    source_campaign_brief_title: str = "",
+    notes: str = "",
+) -> dict[str, Any]:
+    """Wrap deterministic same-category hook groups into a milestone hook payload."""
+    clusterable_items = clusterable_menu_items(menu_tagger_items)
+    groups = assign_remaining_food_items(list(same_groups), clusterable_items)
+    assigned_after_assign = _assigned_name_keys(groups)
+    unassigned_item_names = [
+        _item_name(item)
+        for item in clusterable_items
+        if _item_name(item) and _name_key(_item_name(item)) not in assigned_after_assign
+    ]
+    food_leads: list[dict[str, Any]] = []
+    by_name = _items_by_name(clusterable_items)
+    for group in groups:
+        if not _is_hook_reel_group(group):
+            continue
+        lead_name = str(group.get("leadName") or "").strip()
+        lead_item = _resolve_food_item(by_name, lead_name)
+        if lead_item is not None:
+            food_leads.append(lead_item)
+
+    payload: dict[str, Any] = {
+        "foodLeads": food_leads,
+        "groups": groups,
+        "unassignedItemNames": unassigned_item_names,
+        "topFoodLeadNames": [_item_name(item) for item in top5_leads if _item_name(item)],
+        "targetGroupCount": target_group_count,
+    }
+    title = source_menu_tagger_title.strip()
+    if title:
+        payload["sourceMenuTaggerTitle"] = title
+    campaign_title = source_campaign_brief_title.strip()
+    if campaign_title:
+        payload["sourceCampaignBriefTitle"] = campaign_title
+    note_text = notes.strip()
+    if note_text:
+        payload["notes"] = note_text
+    return payload
+
+
+def combine_hook_cluster_outputs(
+    *,
+    same_groups: list[dict[str, Any]],
+    mixed_payload: dict[str, Any] | None,
+    menu_tagger_items: list[dict[str, Any]],
+    top5_leads: list[dict[str, Any]],
+    target_group_count: int,
+    source_menu_tagger_title: str = "",
+    source_campaign_brief_title: str = "",
+    notes: str = "",
+) -> dict[str, Any]:
+    """Merge same-category and mixed-category hook_reel groups into one payload."""
+    hook_groups: list[dict[str, Any]] = [
+        group for group in same_groups if isinstance(group, dict) and _is_hook_reel_group(group)
+    ]
+    if mixed_payload is not None:
+        hook_groups.extend(
+            group
+            for group in mixed_payload.get("groups") or []
+            if isinstance(group, dict) and _is_hook_reel_group(group)
+        )
+
+    if not hook_groups:
+        raise ValueError("menu_clusterer hook output requires at least one hook_reel cluster")
+
+    clusterable_items = clusterable_menu_items(menu_tagger_items)
+    hook_groups = assign_remaining_food_items(hook_groups, clusterable_items)
+    assigned_after_assign = _assigned_name_keys(hook_groups)
+    unassigned_item_names = [
+        _item_name(item)
+        for item in clusterable_items
+        if _item_name(item) and _name_key(_item_name(item)) not in assigned_after_assign
+    ]
+
+    by_name = _items_by_name(clusterable_items)
+    food_leads: list[dict[str, Any]] = []
+    for group in hook_groups:
+        lead_name = str(group.get("leadName") or "").strip()
+        lead_item = _resolve_food_item(by_name, lead_name)
+        if lead_item is not None:
+            food_leads.append(lead_item)
+
+    payload: dict[str, Any] = {
+        "foodLeads": food_leads,
+        "groups": hook_groups,
+        "unassignedItemNames": unassigned_item_names,
+        "topFoodLeadNames": [_item_name(item) for item in top5_leads if _item_name(item)],
+        "targetGroupCount": target_group_count,
+    }
+    for key, value in (
+        ("sourceMenuTaggerTitle", source_menu_tagger_title),
+        ("sourceCampaignBriefTitle", source_campaign_brief_title),
+        ("notes", notes),
+    ):
+        if isinstance(value, str) and value.strip():
+            payload[key] = value.strip()
+        elif mixed_payload is not None:
+            fallback = mixed_payload.get(key)
+            if isinstance(fallback, str) and fallback.strip():
+                payload[key] = fallback.strip()
+    return payload
 
 
 def merge_llm_clusters(
@@ -826,6 +1241,8 @@ def merge_llm_clusters(
     strict_top5_leads: bool = False,
     target_group_count: int | None = None,
     include_menu_highlight: bool = True,
+    pos_categories: list[str] | None = None,
+    group_id_offset: int = 0,
 ) -> dict[str, Any]:
     clusterable_items = clusterable_menu_items(menu_tagger_items)
     resolved_count = (
@@ -904,18 +1321,36 @@ def merge_llm_clusters(
             )
 
         theme_label = str(cluster.themeLabel or "").strip()
-        groups.append(
-            _finalize_cluster_group(
-                lead_item=lead_item,
-                supporting_items=supporting,
-                index=index,
-                campaign_brief_data=campaign_brief_data,
-                theme_label=theme_label,
-                cluster_description=description,
+        category_scope = _cluster_category_scope(cluster)
+        if category_scope not in {"categorical", "creative"}:
+            raise ValueError(
+                f"cluster {index + 1} categoryScope must be categorical or creative; "
+                f"got {category_scope!r}"
             )
+
+        group = _finalize_cluster_group(
+            lead_item=lead_item,
+            supporting_items=supporting,
+            index=group_id_offset + index,
+            campaign_brief_data=campaign_brief_data,
+            theme_label=theme_label,
+            cluster_description=description,
         )
+        if category_scope == "categorical":
+            _validate_categorical_cluster(group, cluster_index=index)
+            group = _apply_categorical_group_category(group)
+        else:
+            _validate_creative_cluster(group, cluster_index=index)
+        group = {**group, "categoryScope": category_scope}
+        groups.append(group)
         food_leads.append(lead_item)
         assigned_in_any_group.update(seen_in_group)
+
+    hook_groups = [group for group in groups if _is_hook_reel_group(group)]
+    if pos_categories is not None and len(pos_categories) >= 2:
+        scope_issues = hook_category_scope_issues(hook_groups)
+        if scope_issues:
+            raise ValueError("; ".join(scope_issues))
 
     groups = assign_remaining_food_items(groups, clusterable_items)
 

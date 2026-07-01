@@ -68,6 +68,7 @@ def _hook_group(*, group_id: str = "group-1", lead_name: str = "Wings") -> dict:
         "id": group_id,
         "leadName": lead_name,
         "profileId": "hook_reel",
+        "category": "MAINS",
         "anchor": {"dimension": "reel_moment", "value": "sizzle"},
         "items": [
             {
@@ -100,6 +101,72 @@ def _hook_group(*, group_id: str = "group-1", lead_name: str = "Wings") -> dict:
     }
 
 
+def _hook_group_mixed(*, group_id: str = "group-mixed-1", lead_name: str = "Burger") -> dict:
+    return {
+        "id": group_id,
+        "leadName": lead_name,
+        "profileId": "hook_reel",
+        "anchor": {"dimension": "reel_moment", "value": "sizzle"},
+        "items": [
+            {
+                "name": lead_name,
+                "role": "star",
+                "category": "MAINS",
+                "position": 1,
+                "storytellingFit": "strong",
+                "reelMoment": "sizzle",
+                "popularity": 0.7,
+            },
+            {
+                "name": "Fries",
+                "role": "star",
+                "category": "SIDES",
+                "position": 2,
+                "storytellingFit": "weak",
+                "reelMoment": "static_hero",
+                "popularity": 0.5,
+            },
+        ],
+        "mix": {
+            "priceLevels": [],
+            "storytellingStrongCount": 1,
+            "starCount": 2,
+            "puzzleCount": 0,
+        },
+        "clusterDescription": _HOOK_CLUSTER_DESCRIPTION,
+        "strategyFocus": "weekday_lunch",
+    }
+
+
+def _hook_group_same_sides(*, group_id: str = "group-hook-same-sides") -> dict:
+    return {
+        "id": group_id,
+        "leadName": "Fries",
+        "profileId": "hook_reel",
+        "category": "SIDES",
+        "anchor": {"dimension": "reel_moment", "value": "static_hero"},
+        "items": [
+            {
+                "name": "Fries",
+                "role": "star",
+                "category": "SIDES",
+                "position": 1,
+                "storytellingFit": "weak",
+                "reelMoment": "static_hero",
+                "popularity": 0.5,
+            }
+        ],
+        "mix": {
+            "priceLevels": [],
+            "storytellingStrongCount": 0,
+            "starCount": 1,
+            "puzzleCount": 0,
+        },
+        "clusterDescription": _HOOK_CLUSTER_DESCRIPTION,
+        "strategyFocus": "weekday_lunch",
+    }
+
+
 def _sample_payload(*, hybrid: bool = False) -> dict:
     groups = [
         _top_five_group(),
@@ -123,10 +190,10 @@ def _sample_payload(*, hybrid: bool = False) -> dict:
     if hybrid:
         groups.extend(
             [
-                _hook_group(group_id="group-1", lead_name="Wings"),
-                _hook_group(group_id="group-2", lead_name="Ribeye"),
-                _hook_group(group_id="group-3", lead_name="Burger"),
-                _hook_group(group_id="group-4", lead_name="Fries"),
+                _hook_group(group_id="group-hook-same-mains", lead_name="Wings"),
+                _hook_group_same_sides(),
+                _hook_group_mixed(group_id="group-mixed-1", lead_name="Burger"),
+                _hook_group_mixed(group_id="group-mixed-2", lead_name="Ribeye"),
             ]
         )
     food_leads = []
@@ -294,3 +361,32 @@ def test_unassigned_items_verdict_passes_for_top_five_only() -> None:
     )
     assert verdict is not None
     assert verdict[0] == "pass"
+
+
+def test_category_scope_verdict_passes_for_hybrid() -> None:
+    verdict = try_menu_clusterer_deterministic_verdict(
+        "When the tagged menu spans multiple POS categories, hook_reel clusters include both "
+        "categorical (same POS category, grounded in menu tagger tags) and creative "
+        "(cross-category) groups.",
+        _sample_payload(hybrid=True),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_category_scope_verdict_fails_without_mixed_hooks() -> None:
+    payload = _sample_payload(hybrid=True)
+    top_five_groups = payload["groups"][:2]
+    payload["groups"] = top_five_groups + [
+        _hook_group(group_id="group-hook-same-mains-1", lead_name="Wings"),
+        _hook_group(group_id="group-hook-same-mains-2", lead_name="Ribeye"),
+        _hook_group_same_sides(group_id="group-hook-same-sides-1"),
+        _hook_group(group_id="group-hook-same-mains-3", lead_name="Burger"),
+    ]
+    verdict = try_menu_clusterer_deterministic_verdict(
+        "When the tagged menu spans multiple POS categories, hook_reel clusters include both "
+        "categorical and creative groups.",
+        payload,
+    )
+    assert verdict is not None
+    assert verdict[0] == "fail"

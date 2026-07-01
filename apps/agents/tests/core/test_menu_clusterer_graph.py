@@ -10,10 +10,16 @@ from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
     MENU_CLUSTERER_PROFILE_TOP_FIVE,
     build_per_category_top_five_clusters,
     combine_hybrid_clusterer_output,
+    derive_hook_cluster_split,
+    derive_target_group_count,
+    distinct_categories_with_clusterable_items,
     distinct_categories_with_stars,
+    is_mixed_category_group,
+    is_same_category_group,
     menu_highlight_eligible_items,
     merge_llm_clusters,
     rank_top_food_leads,
+    resolve_target_group_count,
     select_category_star_items,
     select_menu_highlight_items,
     select_top_popularity_food_by_score_rank,
@@ -38,11 +44,13 @@ class _ClusterDraft:
         self,
         *,
         themeLabel: str,
+        categoryScope: str,
         leadItemName: str,
         supportingItemNames: list[str],
         clusterDescription: str,
     ) -> None:
         self.themeLabel = themeLabel
+        self.categoryScope = categoryScope
         self.leadItemName = leadItemName
         self.supportingItemNames = supportingItemNames
         self.clusterDescription = clusterDescription
@@ -219,30 +227,102 @@ def _prior_json() -> str:
 def _draft_clusters() -> list[MenuClustererClusterDraft]:
     return [
         MenuClustererClusterDraft(
-            themeLabel="Hero signatures",
+            themeLabel="Savory mains lineup",
+            categoryScope="categorical",
             leadItemName="Wings",
-            supportingItemNames=["Ribeye"],
+            supportingItemNames=["Ribeye", "Burger"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
         MenuClustererClusterDraft(
-            themeLabel="Category variety",
-            leadItemName="Ribeye",
-            supportingItemNames=["Burger", "Fries"],
+            themeLabel="Sides spotlight",
+            categoryScope="categorical",
+            leadItemName="Fries",
+            supportingItemNames=[],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
         MenuClustererClusterDraft(
-            themeLabel="Proof angle",
+            themeLabel="Main with side pairing",
+            categoryScope="creative",
             leadItemName="Burger",
-            supportingItemNames=["Salad"],
-            clusterDescription=_CLUSTER_DESCRIPTION,
-        ),
-        MenuClustererClusterDraft(
-            themeLabel="Side pairings",
-            leadItemName="Wings",
             supportingItemNames=["Fries", "Salad"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
+        MenuClustererClusterDraft(
+            themeLabel="Cross-category proof",
+            categoryScope="creative",
+            leadItemName="Wings",
+            supportingItemNames=["Fries"],
+            clusterDescription=_CLUSTER_DESCRIPTION,
+        ),
     ]
+
+
+def test_menu_clusterer_cluster_draft_truncates_extra_supporting_items() -> None:
+    draft = MenuClustererClusterDraft(
+        themeLabel="Large cluster",
+        categoryScope="categorical",
+        leadItemName="Ribeye",
+        supportingItemNames=[
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+        ],
+        clusterDescription=_CLUSTER_DESCRIPTION,
+    )
+    assert draft.supportingItemNames == ["A", "B", "C", "D"]
+
+
+def test_derive_target_group_count_scales_with_menu_size() -> None:
+    assert derive_target_group_count(4) == 4
+    assert derive_target_group_count(16) == 4
+    assert derive_target_group_count(20) == 5
+    assert derive_target_group_count(48) == 12
+
+
+def test_resolve_target_group_count_honors_milestone_input() -> None:
+    assert resolve_target_group_count(8, food_item_count=30) == 8
+    assert resolve_target_group_count(20, food_item_count=30) == 12
+    assert resolve_target_group_count(None, food_item_count=20) == 5
+
+
+def test_derive_hook_cluster_split_single_category() -> None:
+    same, mixed = derive_hook_cluster_split(4, ["MAINS"])
+    assert same == 4
+    assert mixed == 0
+
+
+def test_derive_hook_cluster_split_multiple_categories() -> None:
+    same, mixed = derive_hook_cluster_split(4, ["MAINS", "SIDES"])
+    assert same == 2
+    assert mixed == 2
+
+
+def test_distinct_categories_with_clusterable_items_includes_puzzles() -> None:
+    categories = distinct_categories_with_clusterable_items(
+        _menu_tagger_items(),
+        main_category="Mains",
+    )
+    assert categories == ["MAINS", "SIDES"]
+
+
+def test_merge_llm_clusters_validates_category_scope_from_tags() -> None:
+    top5 = rank_top_food_leads(_menu_tagger_items())
+    payload = merge_llm_clusters(
+        _draft_clusters(),
+        menu_tagger_items=_menu_tagger_items(),
+        top5_leads=top5,
+        campaign_brief_data=_campaign_brief_data(),
+        target_group_count=4,
+        include_menu_highlight=False,
+        pos_categories=["MAINS", "SIDES"],
+    )
+    hook_groups = [group for group in payload["groups"] if group.get("profileId") == "hook_reel"]
+    assert len(hook_groups) == 4
+    assert any(is_same_category_group(group) for group in hook_groups)
+    assert any(is_mixed_category_group(group) for group in hook_groups)
 
 
 def test_combine_hybrid_clusterer_output_merges_top_five_and_hook_groups() -> None:
@@ -254,6 +334,7 @@ def test_combine_hybrid_clusterer_output_merges_top_five_and_hook_groups() -> No
         campaign_brief_data=_campaign_brief_data(),
         target_group_count=4,
         include_menu_highlight=False,
+        pos_categories=["MAINS", "SIDES"],
     )
     top_five_payload = build_per_category_top_five_clusters(
         _menu_tagger_items(),
@@ -285,6 +366,7 @@ def test_combine_hybrid_clusterer_output_normalizes_top_five_item_order() -> Non
         campaign_brief_data=_campaign_brief_data(),
         target_group_count=4,
         include_menu_highlight=False,
+        pos_categories=["MAINS", "SIDES"],
     )
     top_five_payload = build_per_category_top_five_clusters(
         _menu_tagger_items(),
@@ -467,24 +549,28 @@ def test_merge_llm_clusters_legacy_path_still_builds_hook_groups() -> None:
     clusters = [
         _ClusterDraft(
             themeLabel="Hero signatures",
+            categoryScope="categorical",
             leadItemName="Ribeye",
             supportingItemNames=["Burger"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
         _ClusterDraft(
             themeLabel="Category variety",
+            categoryScope="creative",
             leadItemName="Burger",
             supportingItemNames=["Fries"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
         _ClusterDraft(
             themeLabel="Proof angle",
+            categoryScope="categorical",
             leadItemName="Ribeye",
             supportingItemNames=["Salad"],
             clusterDescription=_CLUSTER_DESCRIPTION,
         ),
         _ClusterDraft(
             themeLabel="Side pairings",
+            categoryScope="categorical",
             leadItemName="Fries",
             supportingItemNames=[],
             clusterDescription=_CLUSTER_DESCRIPTION,
@@ -605,6 +691,32 @@ async def test_fetch_and_prepare_sets_hook_and_top_five_group_counts() -> None:
         )
     assert prepared["target_group_count"] == 4
     assert prepared["top_five_group_count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_uses_configured_target_group_count() -> None:
+    with patch(
+        "agents_app.agents.core.milestone_run.menu_clusterer.nodes.get_stream_writer",
+        return_value=lambda _x: None,
+    ):
+        prepared = await fetch_and_prepare(
+            {
+                "milestone_id": "m1",
+                "location_id": 1,
+                "user_id": "u1",
+                "goal": "",
+                "criteria": [],
+                "prior_milestones_data": _prior_json(),
+                "milestone_input": {
+                    "type": "menu_clusterer",
+                    "value": {"notes": "more granular", "targetGroupCount": 8},
+                },
+                "result_data": "",
+                "milestonedata_written": False,
+            },
+            client=MagicMock(),
+        )
+    assert prepared["target_group_count"] == 5
 
 
 @pytest.mark.asyncio

@@ -5,6 +5,12 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
+from agents_app.agents.core.milestone_run.menu_clusterer.cluster import (
+    hook_category_scope_issues,
+    is_mixed_category_group,
+    is_same_category_group,
+)
+
 DeterministicVerdict = tuple[Literal["pass", "fail"], str]
 
 MENU_CLUSTERER_GROUP_MIN_SIZE = 1
@@ -105,6 +111,10 @@ def _top_five_groups(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def _hook_reel_groups(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [group for group in groups if str(group.get("profileId") or "").strip() == "hook_reel"]
+
+
+def _hook_category_scope_issues(hook_groups: list[dict[str, Any]]) -> list[str]:
+    return hook_category_scope_issues(hook_groups)
 
 
 def _item_popularity(item: dict[str, Any]) -> float:
@@ -403,6 +413,47 @@ def try_menu_clusterer_deterministic_verdict(
         return (
             "pass",
             "each cluster includes a clusterDescription explaining grouping and venue fit.",
+        )
+
+    if (
+        ("same" in norm and "category" in norm and ("mixed" in norm or "hook" in norm or "creative" in norm or "categorical" in norm))
+        or ("category scope" in norm)
+        or (
+            ("mixed-category" in norm or "creative" in norm)
+            and ("same" in norm or "categorical" in norm)
+            and ("hook" in norm or "reel" in norm or "pos" in norm or "tag" in norm)
+        )
+    ):
+        if uses_top_five_only or not hook_groups:
+            if not hook_groups:
+                return ("fail", "menu clusterer data has no hook Reel clusters.")
+            if len(_top_five_groups(groups)) >= 2:
+                return (
+                    "pass",
+                    "top five groups provide per-category coverage; hook Reel category scope "
+                    "applies when hook clusters are present.",
+                )
+        pos_categories = {
+            str(row.get("category") or "").strip().casefold()
+            for group in hook_groups
+            for row in (group.get("items") or [])
+            if isinstance(row, dict) and str(row.get("category") or "").strip()
+        }
+        if len(pos_categories) <= 1:
+            if hook_groups and all(is_same_category_group(group) for group in hook_groups):
+                return (
+                    "pass",
+                    "hook Reel clusters are same-POS-category only because the tagged menu "
+                    "spans a single category.",
+                )
+            return ("fail", "hook Reel clusters must be same-category for a single-category menu.")
+        scope_issues = _hook_category_scope_issues(hook_groups)
+        if scope_issues:
+            return ("fail", "; ".join(scope_issues[:4]))
+        return (
+            "pass",
+            "hook Reel clusters include both categorical (same POS category) and creative "
+            "(cross-category) groups grounded in menu tagger tags.",
         )
 
     if (
