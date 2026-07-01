@@ -1,24 +1,11 @@
-import { Geist_Mono, Plus_Jakarta_Sans } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 
 import '@workspace/ui/globals.css'
 import { RootShell, RootShellFallback } from '@/app/_components/root-shell'
+import { fontMono, fontSans } from '@/lib/fonts'
 import { stylePaletteScript } from '@/lib/style-palette'
 import { getTranslations } from 'next-intl/server'
-
-const fontSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700', '800'],
-})
-
-const fontMono = Geist_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-mono',
-})
 
 const siteUrl = 'https://menuyukti.com'
 

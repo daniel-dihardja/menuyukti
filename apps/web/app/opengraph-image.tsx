@@ -7,7 +7,7 @@ export const contentType = 'image/png'
 
 async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
   const css = await fetch(
-    `https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@${weight}&display=swap`,
+    `https://fonts.googleapis.com/css2?family=Jost:wght@${weight}&display=swap`,
     {
       headers: {
         'User-Agent':
@@ -18,7 +18,7 @@ async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
 
   const match = css.match(/src: url\((.+?)\) format\('(?:opentype|truetype|woff2?)'\)/)
   if (!match?.[1]) {
-    throw new Error(`Plus Jakarta Sans (${weight}) font URL not found`)
+    throw new Error(`Jost (${weight}) font URL not found`)
   }
 
   return fetch(match[1]).then((res) => res.arrayBuffer())
@@ -39,7 +39,7 @@ export default async function Image() {
         padding: '64px 72px',
         background: 'linear-gradient(165deg, #fdf8f2 0%, #f3e8da 55%, #ebe0d2 100%)',
         color: '#2b241c',
-        fontFamily: 'Plus Jakarta Sans',
+        fontFamily: 'Jost',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -116,8 +116,8 @@ export default async function Image() {
     {
       ...size,
       fonts: [
-        { name: 'Plus Jakarta Sans', data: fontBold, weight: 700, style: 'normal' },
-        { name: 'Plus Jakarta Sans', data: fontSemibold, weight: 600, style: 'normal' },
+        { name: 'Jost', data: fontBold, weight: 700, style: 'normal' },
+        { name: 'Jost', data: fontSemibold, weight: 600, style: 'normal' },
       ],
     },
   )
