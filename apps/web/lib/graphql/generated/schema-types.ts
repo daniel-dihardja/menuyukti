@@ -66,7 +66,7 @@ export type AnalyticsRunOrderMetricsType = {
   __typename?: 'AnalyticsRunOrderMetricsType'
   avgOrderRevenue: Scalars['Float']['output']
   avgOrderSize: Scalars['Float']['output']
-  byDayOfWeek: Array<OrderMetricsByDayOfWeekType>
+  slotDemandProfile: Array<SlotDemandCellType>
 }
 
 /** Metadata for a single analytics run — period, POS system, and optional per-menu COGS. Request `menuItemCogs` only when needed; it loads from the database lazily. Use menuEngineeringMatrix, menuHeatmaps, or orderMetrics queries for computed analytics. */
@@ -167,6 +167,18 @@ export type ComboPairTimingHourType = {
   hour: Scalars['Int']['output']
 }
 
+/** Promo posture for a combo pair's peak window. */
+export type ComboPromoPostureType = {
+  __typename?: 'ComboPromoPostureType'
+  pairCoOrderIndex?: Maybe<Scalars['Float']['output']>
+  peakDay?: Maybe<Scalars['String']['output']>
+  peakMealPeriod?: Maybe<Scalars['String']['output']>
+  promoPosture: Scalars['String']['output']
+  promoReason: Scalars['String']['output']
+  venueDemandIndex?: Maybe<Scalars['Float']['output']>
+  venueRelativeDemand?: Maybe<Scalars['String']['output']>
+}
+
 /** Hourly demand distribution for a menu item. */
 export type DailyHeatmapType = {
   __typename?: 'DailyHeatmapType'
@@ -262,6 +274,7 @@ export type LatestAnalyticsRunWithSignalsType = {
   __typename?: 'LatestAnalyticsRunWithSignalsType'
   analyticsRun?: Maybe<LatestAnalyticsRunType>
   instagramSignals?: Maybe<InstagramSignalsType>
+  slotDemandProfile: Array<SlotDemandCellType>
 }
 
 /** Summary of analytics runs for one location. */
@@ -353,6 +366,7 @@ export type MenuComboPairTimingType = {
   hourlyCoOrders: Array<ComboPairTimingHourType>
   menuA: Scalars['String']['output']
   menuB: Scalars['String']['output']
+  promoPosture: ComboPromoPostureType
   recommendedWindow: ComboPairRecommendedWindowType
 }
 
@@ -381,6 +395,7 @@ export type MenuCombosPayloadType = {
   multiItemOrderCount: Scalars['Int']['output']
   pairs: Array<MenuComboPairType>
   scope: Scalars['String']['output']
+  slotDemandProfile: Array<SlotDemandCellType>
   topPairTiming: Array<MenuComboPairTimingType>
   totalOrders: Scalars['Int']['output']
 }
@@ -757,14 +772,6 @@ export type OrderItemType = {
   totalAfterBillDiscount: Scalars['Float']['output']
 }
 
-/** Average order size and revenue for a single weekday. */
-export type OrderMetricsByDayOfWeekType = {
-  __typename?: 'OrderMetricsByDayOfWeekType'
-  avgOrderRevenue: Scalars['Float']['output']
-  avgOrderSize: Scalars['Float']['output']
-  day: Scalars['String']['output']
-}
-
 export type OrderSignalsType = {
   __typename?: 'OrderSignalsType'
   avgOrderItems: Scalars['Float']['output']
@@ -1094,6 +1101,19 @@ export type SignalConfidenceType = {
   __typename?: 'SignalConfidenceType'
   coverageNotes: Array<Scalars['String']['output']>
   tier: Scalars['String']['output']
+}
+
+/** Venue demand for one day and meal-period slot. */
+export type SlotDemandCellType = {
+  __typename?: 'SlotDemandCellType'
+  day: Scalars['String']['output']
+  demandIndex: Scalars['Float']['output']
+  mealPeriod: Scalars['String']['output']
+  mealPeriodHoursLabel: Scalars['String']['output']
+  mealPeriodLabel: Scalars['String']['output']
+  orderCount: Scalars['Int']['output']
+  relativeDemand: Scalars['String']['output']
+  trafficShare: Scalars['Float']['output']
 }
 
 /** A menu item with rising revenue vs the prior period. */

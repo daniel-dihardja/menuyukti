@@ -86,7 +86,6 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tOrderMetrics('reportTitle')}
-      contentWidth="full"
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
@@ -141,7 +140,7 @@ export default async function Page({ params }: PageProps) {
           <OrderMetricsView
             avgOrderSize={orderMetrics.avgOrderSize}
             avgOrderRevenue={orderMetrics.avgOrderRevenue}
-            byDayOfWeek={orderMetrics.byDayOfWeek}
+            slotDemandProfile={orderMetrics.slotDemandProfile}
             locale={locale}
             currency={currency}
           />

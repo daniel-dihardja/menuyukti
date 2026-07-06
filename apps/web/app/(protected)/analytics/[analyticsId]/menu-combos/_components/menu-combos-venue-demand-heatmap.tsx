@@ -27,16 +27,24 @@ type MenuCombosVenueDemandHeatmapProps = {
   locale: string
   highlightCell: PeakSlotHighlight | null
   weekdayLabel: (day: string) => string
+  translationNamespace?: string
+  translationPrefix?: string
+  gaugePrefix?: string
+  collapsibleOnMobile?: boolean
 }
 
-function tierLabel(tier: RelativeDemand, t: ReturnType<typeof useTranslations>): string {
+function tierLabel(
+  tier: RelativeDemand,
+  t: ReturnType<typeof useTranslations>,
+  gaugePrefix: string,
+): string {
   switch (tier) {
     case 'low':
-      return t('timing.strategy.gauge.tierLow')
+      return t(`${gaugePrefix}.tierLow`)
     case 'high':
-      return t('timing.strategy.gauge.tierHigh')
+      return t(`${gaugePrefix}.tierHigh`)
     default:
-      return t('timing.strategy.gauge.tierAverage')
+      return t(`${gaugePrefix}.tierAverage`)
   }
 }
 
@@ -45,8 +53,11 @@ function VenueHeatmapContent({
   locale,
   highlightCell,
   weekdayLabel,
+  translationNamespace = 'analytics.menuCombos',
+  translationPrefix = 'timing.strategy.venueHeatmap',
+  gaugePrefix = 'timing.strategy.gauge',
 }: MenuCombosVenueDemandHeatmapProps) {
-  const t = useTranslations('analytics.menuCombos')
+  const t = useTranslations(translationNamespace)
 
   const heatmap = useMemo(() => adaptSlotDemandHeatmap(slotDemandProfile), [slotDemandProfile])
 
@@ -70,17 +81,17 @@ function VenueHeatmapContent({
     }
 
     return {
-      menuColumnLabel: t('timing.strategy.venueHeatmap.menuColumn'),
-      legendLow: t('timing.strategy.venueHeatmap.legendLow'),
-      legendHigh: t('timing.strategy.venueHeatmap.legendHigh'),
-      unitsLabel: t('timing.strategy.venueHeatmap.unitsLabel'),
-      totalsRowLabel: t('timing.strategy.venueHeatmap.totalsRowLabel'),
-      sortHint: t('timing.strategy.venueHeatmap.sortHint'),
-      scrollHint: t('timing.strategy.venueHeatmap.scrollHint'),
-      explainTitle: t('timing.strategy.venueHeatmap.explainTitle'),
-      explainBody: t('timing.strategy.venueHeatmap.explainBody'),
+      menuColumnLabel: t(`${translationPrefix}.menuColumn`),
+      legendLow: t(`${translationPrefix}.legendLow`),
+      legendHigh: t(`${translationPrefix}.legendHigh`),
+      unitsLabel: t(`${translationPrefix}.unitsLabel`),
+      totalsRowLabel: t(`${translationPrefix}.totalsRowLabel`),
+      sortHint: t(`${translationPrefix}.sortHint`),
+      scrollHint: t(`${translationPrefix}.scrollHint`),
+      explainTitle: t(`${translationPrefix}.explainTitle`),
+      explainBody: t(`${translationPrefix}.explainBody`),
       cellAriaLabel: (mealPeriod: string, day: string, index: number) =>
-        t('timing.strategy.venueHeatmap.cellAriaLabel', {
+        t(`${translationPrefix}.cellAriaLabel`, {
           mealPeriod,
           day,
           index: formatLift(index, locale),
@@ -88,15 +99,15 @@ function VenueHeatmapContent({
       cellTooltip: (mealPeriod: string, day: string, index: number) => {
         const row = heatmap.rows.find((candidate) => candidate.label === mealPeriod)
         const cell = row ? resolveCell(row.key, day) : undefined
-        return t('timing.strategy.venueHeatmap.cellTooltip', {
+        return t(`${translationPrefix}.cellTooltip`, {
           mealPeriod,
           day,
           index: formatLift(index, locale),
-          tier: tierLabel(cell?.relativeDemand ?? 'average', t),
+          tier: tierLabel(cell?.relativeDemand ?? 'average', t, gaugePrefix),
         })
       },
     }
-  }, [cellBySlot, columnLabels, heatmap.rows, locale, t])
+  }, [cellBySlot, columnLabels, gaugePrefix, heatmap.rows, locale, t, translationPrefix])
 
   return (
     <HeatmapMatrixEmbedded
@@ -113,19 +124,42 @@ function VenueHeatmapContent({
   )
 }
 
-export function MenuCombosVenueDemandHeatmap(props: MenuCombosVenueDemandHeatmapProps) {
-  const t = useTranslations('analytics.menuCombos')
+export function MenuCombosVenueDemandHeatmap({
+  translationNamespace = 'analytics.menuCombos',
+  translationPrefix = 'timing.strategy.venueHeatmap',
+  gaugePrefix = 'timing.strategy.gauge',
+  collapsibleOnMobile = true,
+  ...props
+}: MenuCombosVenueDemandHeatmapProps) {
+  const t = useTranslations(translationNamespace)
+  const contentProps = {
+    ...props,
+    translationNamespace,
+    translationPrefix,
+    gaugePrefix,
+  }
+
+  const header = (
+    <div>
+      <h3 className="text-sm font-medium">{t(`${translationPrefix}.title`)}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">{t(`${translationPrefix}.description`)}</p>
+    </div>
+  )
+
+  if (!collapsibleOnMobile) {
+    return (
+      <div className="flex flex-col gap-3">
+        {header}
+        <VenueHeatmapContent {...contentProps} />
+      </div>
+    )
+  }
 
   return (
     <>
       <div className="hidden flex-col gap-3 md:flex">
-        <div>
-          <h3 className="text-sm font-medium">{t('timing.strategy.venueHeatmap.title')}</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t('timing.strategy.venueHeatmap.description')}
-          </p>
-        </div>
-        <VenueHeatmapContent {...props} />
+        {header}
+        <VenueHeatmapContent {...contentProps} />
       </div>
 
       <Collapsible className="md:hidden">
@@ -135,14 +169,12 @@ export function MenuCombosVenueDemandHeatmap(props: MenuCombosVenueDemandHeatmap
             'hover:bg-muted/40 [&[data-state=open]>svg]:rotate-180',
           )}
         >
-          <span>{t('timing.strategy.venueHeatmap.collapsibleTrigger')}</span>
+          <span>{t(`${translationPrefix}.collapsibleTrigger`)}</span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform" />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-3 flex flex-col gap-3">
-          <p className="text-xs text-muted-foreground">
-            {t('timing.strategy.venueHeatmap.description')}
-          </p>
-          <VenueHeatmapContent {...props} />
+          <p className="text-xs text-muted-foreground">{t(`${translationPrefix}.description`)}</p>
+          <VenueHeatmapContent {...contentProps} />
         </CollapsibleContent>
       </Collapsible>
     </>

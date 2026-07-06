@@ -34,7 +34,7 @@ type AnalyticsRunListItemType {
 type AnalyticsRunOrderMetricsType {
   avgOrderSize: Float!
   avgOrderRevenue: Float!
-  byDayOfWeek: [OrderMetricsByDayOfWeekType!]!
+  slotDemandProfile: [SlotDemandCellType!]!
 }
 
 """
@@ -573,13 +573,6 @@ type OrderItemType {
   totalAfterBillDiscount: Float!
   menuCategory: String!
   menuCategoryDetail: String!
-}
-
-"""Average order size and revenue for a single weekday."""
-type OrderMetricsByDayOfWeekType {
-  day: String!
-  avgOrderSize: Float!
-  avgOrderRevenue: Float!
 }
 
 type OrderSignalsType {
