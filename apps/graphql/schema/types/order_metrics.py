@@ -2,16 +2,11 @@
 
 import strawberry
 
-
-@strawberry.type(description="Average order size and revenue for a single weekday.")
-class OrderMetricsByDayOfWeekType:
-    day: str
-    avgOrderSize: float
-    avgOrderRevenue: float
+from graphql.schema.queries.menu_combos import SlotDemandCellType
 
 
 @strawberry.type(description="Average order size and revenue for an analytics run.")
 class AnalyticsRunOrderMetricsType:
     avgOrderSize: float
     avgOrderRevenue: float
-    byDayOfWeek: list[OrderMetricsByDayOfWeekType]
+    slot_demand_profile: list[SlotDemandCellType]

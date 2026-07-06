@@ -322,10 +322,17 @@ export function HeatmapMatrix({
       </div>
 
       {showExplainBlock ? (
-        <Alert>
-          <AlertTitle className="text-xs">{labels.explainTitle}</AlertTitle>
-          <AlertDescription className="text-xs">{labels.explainBody}</AlertDescription>
-        </Alert>
+        isEmbedded ? (
+          <div>
+            <p className="text-xs font-medium">{labels.explainTitle}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{labels.explainBody}</p>
+          </div>
+        ) : (
+          <Alert>
+            <AlertTitle className="text-xs">{labels.explainTitle}</AlertTitle>
+            <AlertDescription className="text-xs">{labels.explainBody}</AlertDescription>
+          </Alert>
+        )
       ) : null}
 
       {sortable ? <p className="text-xs text-muted-foreground">{labels.sortHint}</p> : null}

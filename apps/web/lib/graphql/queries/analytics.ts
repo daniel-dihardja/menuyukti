@@ -46,26 +46,25 @@ export const ORDER_METRICS_QUERY = `
     orderMetrics(analyticsRunId: $analyticsRunId) {
       avgOrderSize
       avgOrderRevenue
-      byDayOfWeek {
+      slotDemandProfile {
         day
-        avgOrderSize
-        avgOrderRevenue
+        mealPeriod
+        mealPeriodLabel
+        mealPeriodHoursLabel
+        orderCount
+        trafficShare
+        demandIndex
+        relativeDemand
       }
     }
   }
 `
 
-export type OrderMetricsByDayOfWeek = {
-  day: string
-  avgOrderSize: number
-  avgOrderRevenue: number
-}
-
 export type OrderMetricsData = {
   orderMetrics: {
     avgOrderSize: number
     avgOrderRevenue: number
-    byDayOfWeek: OrderMetricsByDayOfWeek[]
+    slotDemandProfile: SlotDemandCell[]
   } | null
 }
 

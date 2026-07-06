@@ -9,7 +9,6 @@ from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
-from menuyukti.core.analytics import compute_order_metrics_by_day_from_orders
 from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -34,10 +33,10 @@ query AnalyticsRunOrderMetrics($id: ID!) {
   orderMetrics(analyticsRunId: $id) {
     avgOrderSize
     avgOrderRevenue
-    byDayOfWeek {
+    slotDemandProfile {
       day
-      avgOrderSize
-      avgOrderRevenue
+      mealPeriod
+      demandIndex
     }
   }
 }
@@ -97,19 +96,6 @@ def _parse_date_value(value):
     return value
 
 
-def _expected_by_day_from_rows(rows):
-    order_rows = [
-        {
-            "order_time": r.orderTime,
-            "bill_number": r.billNumber,
-            "total_after_bill_discount": r.totalAfterBillDiscount,
-            "qty": r.qty,
-        }
-        for r in rows
-    ]
-    return compute_order_metrics_by_day_from_orders(order_rows)
-
-
 def _expected_metrics_from_rows(rows):
     """Compute expected avgOrderSize, avgOrderRevenue, periodStart, periodEnd from rows."""
     orders = defaultdict(list)
@@ -141,16 +127,7 @@ def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
 
     assert pytest.approx(float(metrics["avgOrderSize"]), rel=1e-6) == expected_avg_size
     assert pytest.approx(float(metrics["avgOrderRevenue"]), rel=1e-6) == expected_avg_revenue
-    assert len(metrics["byDayOfWeek"]) == 7
-    expected_by_day = _expected_by_day_from_rows(qa_sales_rows)
-    by_day = {r["day"]: r for r in metrics["byDayOfWeek"]}
-    for expected in expected_by_day:
-        actual = by_day[expected["day"]]
-        assert pytest.approx(float(actual["avgOrderSize"]), rel=1e-6) == expected["avg_order_size"]
-        assert (
-            pytest.approx(float(actual["avgOrderRevenue"]), rel=1e-6)
-            == expected["avg_order_revenue"]
-        )
+    assert len(metrics["slotDemandProfile"]) == 35
     if expected_start is not None:
         assert _parse_date_value(run_data["periodStart"]) == expected_start
     if expected_end is not None:
@@ -231,28 +208,7 @@ def test_order_metrics_for_uploaded_run(tmp_path):
 
     assert pytest.approx(avg_order_size, rel=1e-6) == expected_avg_size
     assert pytest.approx(avg_order_revenue, rel=1e-6) == expected_avg_revenue
-    assert len(metrics["byDayOfWeek"]) == 7
-
-    rows, _ = normalize_sales_report(payload)
-    expected_by_day = compute_order_metrics_by_day_from_orders(
-        [
-            {
-                "order_time": r.orderTime,
-                "bill_number": r.billNumber,
-                "total_after_bill_discount": r.totalAfterBillDiscount,
-                "qty": r.qty,
-            }
-            for r in rows
-        ]
-    )
-    by_day = {r["day"]: r for r in metrics["byDayOfWeek"]}
-    for expected in expected_by_day:
-        actual = by_day[expected["day"]]
-        assert pytest.approx(float(actual["avgOrderSize"]), rel=1e-6) == expected["avg_order_size"]
-        assert (
-            pytest.approx(float(actual["avgOrderRevenue"]), rel=1e-6)
-            == expected["avg_order_revenue"]
-        )
+    assert len(metrics["slotDemandProfile"]) == 35
 
     if expected_start is not None:
         assert period_start == expected_start

@@ -53,7 +53,7 @@ def test_build_order_metrics_returns_averages(analytics_run_with_qa_data: int) -
         result = build_order_metrics(session, run)
         assert result["avg_order_size"] > 0
         assert result["avg_order_revenue"] > 0
-        assert len(result["by_day_of_week"]) == 7
+        assert len(result["slot_demand_profile"]) == 35
     finally:
         session.close()
 

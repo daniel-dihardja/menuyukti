@@ -2183,8 +2183,6 @@
       "orderMetrics": {
         "avgOrderSize": "Avg Order Size",
         "avgOrderRevenue": "Avg Order Revenue",
-        "byDayTitle": "By day of week",
-        "dayColumn": "Day",
         "days": {
           "mon": "Mon",
           "tue": "Tue",
@@ -2311,7 +2309,7 @@
       "pageLoadingTitle": "Loading order metrics…",
       "breadcrumb": "Order Metrics",
       "heading": "Order Metrics",
-      "description": "Average order size and revenue for this sales report, including breakdown by day of week.",
+      "description": "Average order size and revenue for this sales report, with venue demand by day and meal period.",
       "empty": "No order metrics for this run.",
       "emptyTitle": "No order metrics yet",
       "emptyDescription": "This report does not include enough order data to calculate averages. Try another upload or check that the sales file contains order-level detail.",
@@ -2321,11 +2319,27 @@
         "orderSizeHint": "Items per order on average",
         "orderRevenueHint": "Average ticket value"
       },
-      "weeklyTitle": "By day of week",
-      "weeklyDescription": "Compare average order patterns across the week",
-      "insightTitle": "Key insight",
-      "insightPeakRevenue": "{day} has the highest average ticket at {amount}",
-      "peakDayBadge": "Peak day"
+      "venueHeatmap": {
+        "title": "Venue slot strength",
+        "description": "How busy each day and meal period is for this location, compared to the average slot.",
+        "collapsibleTrigger": "Venue slot strength",
+        "menuColumn": "Meal period",
+        "legendLow": "Weaker (light)",
+        "legendHigh": "Stronger (dark)",
+        "unitsLabel": "Venue demand index — darker cells are busier slots",
+        "totalsRowLabel": "Total",
+        "sortHint": "Click a column header to sort meal periods by day.",
+        "scrollHint": "Swipe sideways to see all days →",
+        "explainTitle": "How to read venue demand",
+        "explainBody": "Each cell compares order traffic in that slot to the average across all day and meal-period slots (1.0× = average). Light cells are quieter; dark cells are busier. Values below 1.0 are below average; above 1.0 are above average.",
+        "cellAriaLabel": "{mealPeriod} on {day} · venue demand {index}×",
+        "cellTooltip": "{mealPeriod} on {day} · venue demand {index}× · {tier}",
+        "gauge": {
+          "tierLow": "Below average",
+          "tierAverage": "Average",
+          "tierHigh": "Above average"
+        }
+      }
     },
     "menuCombos": {
       "reportTitle": "Menu Combos",

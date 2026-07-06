@@ -14,7 +14,6 @@ export default async function OrderMetricsLoading() {
   return (
     <AnalyticsPageShell
       title={tOrderMetrics('pageLoadingTitle')}
-      contentWidth="full"
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
@@ -41,8 +40,7 @@ export default async function OrderMetricsLoading() {
           <Skeleton className="h-36 w-full rounded-xl" />
           <Skeleton className="h-36 w-full rounded-xl" />
         </div>
-        <Skeleton className="h-16 w-full rounded-lg" />
-        <Skeleton className="h-56 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </section>
     </AnalyticsPageShell>
   )

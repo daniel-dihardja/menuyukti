@@ -17,7 +17,6 @@ from graphql.tests.fixtures.qa_data import (
 )
 from menuyukti.core.analytics import (
     compute_menu_heatmaps_from_orders,
-    compute_order_metrics_by_day_from_orders,
 )
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     compute_menu_engineering_from_orders,
@@ -34,11 +33,6 @@ query AnalyticsRunOrderMetrics($id: ID!) {
   orderMetrics(analyticsRunId: $id) {
     avgOrderSize
     avgOrderRevenue
-    byDayOfWeek {
-      day
-      avgOrderSize
-      avgOrderRevenue
-    }
   }
 }
 """
@@ -117,19 +111,6 @@ def _expected_order_metrics_from_rows(rows):
     return avg_size, avg_revenue, period_start, period_end
 
 
-def _expected_by_day_from_rows(rows):
-    order_rows = [
-        {
-            "order_time": r.orderTime,
-            "bill_number": r.billNumber,
-            "total_after_bill_discount": r.totalAfterBillDiscount,
-            "qty": r.qty,
-        }
-        for r in rows
-    ]
-    return compute_order_metrics_by_day_from_orders(order_rows)
-
-
 def _normalize_heatmaps(menu_heatmaps):
     out = []
     for m in menu_heatmaps:
@@ -187,16 +168,6 @@ def test_qa_order_metrics(analytics_run_with_qa_data, qa_sales_rows):
 
     assert pytest.approx(float(metrics["avgOrderSize"]), rel=1e-6) == expected_avg_size
     assert pytest.approx(float(metrics["avgOrderRevenue"]), rel=1e-6) == expected_avg_revenue
-    assert len(metrics["byDayOfWeek"]) == 7
-    expected_by_day = _expected_by_day_from_rows(qa_sales_rows)
-    by_day = {r["day"]: r for r in metrics["byDayOfWeek"]}
-    for expected in expected_by_day:
-        actual = by_day[expected["day"]]
-        assert pytest.approx(float(actual["avgOrderSize"]), rel=1e-6) == expected["avg_order_size"]
-        assert (
-            pytest.approx(float(actual["avgOrderRevenue"]), rel=1e-6)
-            == expected["avg_order_revenue"]
-        )
     if expected_start is not None:
         ps = run_data["periodStart"]
         if isinstance(ps, str):
