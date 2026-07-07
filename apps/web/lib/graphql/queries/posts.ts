@@ -165,6 +165,33 @@ export const DELETE_POST_PAGE_MEDIA_VERSION_MUTATION = `
   }
 `
 
+export const CREATE_POST_PAGE_MUTATION = `
+  mutation CreatePostPage($postId: ID!, $mediaS3Key: String, $prompt: String) {
+    createPostPage(postId: $postId, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+      id
+      sortOrder
+      mediaS3Key
+      prompt
+      mediaVersions {
+        id
+        mediaS3Key
+        prompt
+        createdAt
+      }
+    }
+  }
+`
+
+export type CreatePostPageData = {
+  createPostPage: {
+    id: string
+    sortOrder: number
+    mediaS3Key: string | null
+    prompt: string | null
+    mediaVersions: PostPageMediaVersion[]
+  }
+}
+
 export type DeletePostPageMediaVersionData = {
   deletePostPageMediaVersion: {
     id: string
