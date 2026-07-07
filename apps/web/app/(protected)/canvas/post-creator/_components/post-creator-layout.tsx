@@ -12,13 +12,13 @@ import {
 export type PostCreatorLayoutProps = {
   thumbnailsPane: ReactNode
   previewPane: ReactNode
-  chatPane: ReactNode
+  promptPane: ReactNode
 }
 
 export function PostCreatorLayout({
   thumbnailsPane,
   previewPane,
-  chatPane,
+  promptPane,
 }: PostCreatorLayoutProps) {
   const isDesktop = useDesktopLayout()
 
@@ -37,7 +37,7 @@ export function PostCreatorLayout({
         </div>
         <div className="min-h-[12rem] flex-1 overflow-hidden rounded-lg border">
           <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
-            {chatPane}
+            {promptPane}
           </div>
         </div>
       </div>
@@ -48,13 +48,13 @@ export function PostCreatorLayout({
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden">
-          <ResizablePanel defaultSize={25} minSize={18}>
+          <ResizablePanel defaultSize={12} minSize={8}>
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
               {thumbnailsPane}
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel className="min-w-0" defaultSize={45} minSize={30}>
+          <ResizablePanel className="min-w-0" defaultSize={58} minSize={35}>
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
               {previewPane}
             </div>
@@ -62,7 +62,7 @@ export function PostCreatorLayout({
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={30} minSize={20}>
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
-              {chatPane}
+              {promptPane}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
