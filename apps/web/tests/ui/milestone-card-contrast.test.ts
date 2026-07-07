@@ -12,6 +12,7 @@ import {
   WCAG_AA_LARGE_TEXT,
   WCAG_AA_NORMAL_TEXT,
   WCAG_AA_UI_COMPONENT,
+  type OklchColor,
 } from '@/lib/ui/wcag-contrast'
 
 const workspaceRoot = path.resolve(__dirname, '..', '..')
@@ -22,15 +23,18 @@ const globalsCss = readFileSync(
   'utf8',
 )
 const { light, dark } = readThemeTokensFromGlobals(globalsCss)
-const themeModes = [['light', light] as const, ...(dark ? [['dark', dark] as const] : [])]
+const themeModes: Array<readonly ['light' | 'dark', Record<string, OklchColor>]> = [
+  ['light', light],
+  ...(dark ? [['dark', dark] as const] : []),
+]
 
 /** Matches workflow timeline panel surface (app background in light and dark). */
-function milestoneTimelinePanel(tokens: typeof light | typeof dark) {
+function milestoneTimelinePanel(tokens: Record<string, OklchColor>) {
   return tokens.background!
 }
 
 /** Matches default milestone `Card` surface (card in light, muted in dark). */
-function milestoneTimelineCard(tokens: typeof light | typeof dark, mode: 'light' | 'dark') {
+function milestoneTimelineCard(tokens: Record<string, OklchColor>, mode: 'light' | 'dark') {
   return mode === 'light' ? tokens.card! : tokens.muted!
 }
 
