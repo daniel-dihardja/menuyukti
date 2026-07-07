@@ -88,6 +88,7 @@ export function MenuHeatmapContent({
 }: MenuHeatmapContentProps) {
   const t = useTranslations('analytics.heatmap')
   const tMatrixCategories = useTranslations('analytics.matrix.categories')
+  const tMatrixCategoriesShort = useTranslations('analytics.matrix.categoriesShort')
   const categoryFilterId = useId()
   const [view, setView] = useState<'daily' | 'weekly'>('daily')
   const [localCategoryFilter, setLocalCategoryFilter] = useState('all')
@@ -247,6 +248,13 @@ export function MenuHeatmapContent({
   const matrixDensity = isCompact ? 'compact' : 'comfortable'
   const MatrixComponent = isCompact ? HeatmapMatrixEmbedded : HeatmapMatrixCard
 
+  const matrixCategoryProps = hasMatrixFilter
+    ? {
+        matrixCategoryByRowKey: menuEngineeringCategoryByMenu,
+        matrixCategoryLabel: (category: MatrixCategory) => tMatrixCategoriesShort(category),
+      }
+    : {}
+
   return (
     <div className="flex flex-col gap-4">
       <Field className={cn('gap-2', isCompact ? 'max-w-full' : 'max-w-sm')}>
@@ -340,6 +348,7 @@ export function MenuHeatmapContent({
                   sortable
                   defaultSortColumnIndex={dailyPeakColumnIndex}
                   labels={matrixLabels}
+                  {...matrixCategoryProps}
                 />
               </>
             )}
@@ -368,6 +377,7 @@ export function MenuHeatmapContent({
                   sortable
                   defaultSortColumnIndex={weeklyPeakColumnIndex}
                   labels={matrixLabels}
+                  {...matrixCategoryProps}
                 />
               </>
             )}

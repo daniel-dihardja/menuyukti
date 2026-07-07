@@ -2864,6 +2864,12 @@
         "puzzle": "Puzzles",
         "low_end": "Low End"
       },
+      "categoriesShort": {
+        "star": "Star",
+        "plow_horse": "Plow",
+        "puzzle": "Puzzle",
+        "low_end": "Low"
+      },
       "lowEndHighlight": {
         "sliderLabel": "Margin share threshold",
         "sliderAriaLabel": "Highlight bottom margin share up to {value}% of total margin",

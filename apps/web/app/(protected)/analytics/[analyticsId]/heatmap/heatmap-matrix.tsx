@@ -10,7 +10,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip'
+import { Badge } from '@workspace/ui/components/badge'
 import { cn } from '@workspace/ui/lib/utils'
+import type { MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
+import { MATRIX_CATEGORY_BADGE_CLASS } from '@/lib/analytics/matrix-category-styles'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
 import { useCompactLayout } from '@/hooks/use-desktop-layout'
 import {
@@ -73,6 +76,9 @@ type Props = {
   showTotalsRow?: boolean
   /** When set, sorting the row label column uses this key order instead of alphabetical. */
   rowKeyOrder?: readonly string[]
+  /** Menu item name → menu engineering quadrant; shows a compact badge on each row label. */
+  matrixCategoryByRowKey?: ReadonlyMap<string, MatrixCategory>
+  matrixCategoryLabel?: (category: MatrixCategory) => string
 }
 
 /** Sort by Menu (label) or by column index (e.g. "0", "1"). */
@@ -106,6 +112,35 @@ function shortenHourLabel(label: string): string {
   return match ? match[1]! : label
 }
 
+function HeatmapRowLabel({
+  label,
+  category,
+  categoryLabel,
+}: {
+  label: string
+  category?: MatrixCategory
+  categoryLabel?: string
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-1.5">
+      <span className="min-w-0 flex-1 truncate" title={label}>
+        {label}
+      </span>
+      {category && categoryLabel ? (
+        <Badge
+          variant="outline"
+          className={cn(
+            'h-4 shrink-0 px-1 py-0 text-[10px] font-normal leading-none',
+            MATRIX_CATEGORY_BADGE_CLASS[category],
+          )}
+        >
+          {categoryLabel}
+        </Badge>
+      ) : null}
+    </div>
+  )
+}
+
 export function HeatmapMatrix({
   title,
   rows,
@@ -121,6 +156,8 @@ export function HeatmapMatrix({
   highlightCell = null,
   showTotalsRow = true,
   rowKeyOrder,
+  matrixCategoryByRowKey,
+  matrixCategoryLabel,
 }: Props) {
   const isEmbedded = variant === 'embedded'
   const showExplainBlock = showExplanation ?? !isEmbedded
@@ -240,62 +277,76 @@ export function HeatmapMatrix({
             sortable={sortable}
             headerRowClassName="bg-muted hover:bg-muted"
           >
-            {displayRows.map((row) => (
-              <TableRow key={row.key}>
-                <TableCell className={STICKY_ROW_LABEL}>{row.label}</TableCell>
-                {row.values.map((value, i) => {
-                  const windowLabel = columnLabels[i] ?? String(i)
-                  const isDiagonal = maskDiagonal && row.label === windowLabel
-                  const intensity = heatmapIntensity(value, min, max)
-                  const isHighlighted =
-                    highlightCell != null &&
-                    highlightCell.rowKey === row.key &&
-                    highlightCell.columnIndex === i
-                  const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
-                  const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
-                  const displayValue = value > 0 ? (isVenueScale ? value.toFixed(2) : value) : ''
+            {displayRows.map((row) => {
+              const matrixCategory = matrixCategoryByRowKey?.get(row.key)
+              const matrixCategoryShortLabel =
+                matrixCategory && matrixCategoryLabel
+                  ? matrixCategoryLabel(matrixCategory)
+                  : undefined
 
-                  return (
-                    <TableCell
-                      key={`${row.key}-${windowLabel}`}
-                      className={cn(
-                        'text-center text-[11px] font-medium',
-                        DATA_COLUMN_CLASS,
-                        density === 'compact' ? 'h-8' : 'h-10',
-                        isDiagonal && 'bg-muted/30 text-muted-foreground',
-                        !isDiagonal &&
-                          heatmapCellUsesLightText(intensity) &&
-                          'text-primary-foreground',
-                        isHighlighted && 'ring-2 ring-primary ring-offset-1',
-                      )}
-                      style={
-                        isDiagonal
-                          ? undefined
-                          : {
-                              backgroundColor: isVenueScale
-                                ? venueDemandCellBackground(intensity)
-                                : heatmapCellBackground(intensity),
-                            }
-                      }
-                      aria-label={ariaLabel}
-                    >
-                      {isDiagonal ? (
-                        '—'
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex size-full items-center justify-center">
-                              {displayValue}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">{tooltipText}</TooltipContent>
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                  )
-                })}
-              </TableRow>
-            ))}
+              return (
+                <TableRow key={row.key}>
+                  <TableCell className={STICKY_ROW_LABEL}>
+                    <HeatmapRowLabel
+                      label={row.label}
+                      category={matrixCategory}
+                      categoryLabel={matrixCategoryShortLabel}
+                    />
+                  </TableCell>
+                  {row.values.map((value, i) => {
+                    const windowLabel = columnLabels[i] ?? String(i)
+                    const isDiagonal = maskDiagonal && row.label === windowLabel
+                    const intensity = heatmapIntensity(value, min, max)
+                    const isHighlighted =
+                      highlightCell != null &&
+                      highlightCell.rowKey === row.key &&
+                      highlightCell.columnIndex === i
+                    const ariaLabel = labels.cellAriaLabel(row.label, windowLabel, value)
+                    const tooltipText = labels.cellTooltip(row.label, windowLabel, value)
+                    const displayValue = value > 0 ? (isVenueScale ? value.toFixed(2) : value) : ''
+
+                    return (
+                      <TableCell
+                        key={`${row.key}-${windowLabel}`}
+                        className={cn(
+                          'text-center text-[11px] font-medium',
+                          DATA_COLUMN_CLASS,
+                          density === 'compact' ? 'h-8' : 'h-10',
+                          isDiagonal && 'bg-muted/30 text-muted-foreground',
+                          !isDiagonal &&
+                            heatmapCellUsesLightText(intensity) &&
+                            'text-primary-foreground',
+                          isHighlighted && 'ring-2 ring-primary ring-offset-1',
+                        )}
+                        style={
+                          isDiagonal
+                            ? undefined
+                            : {
+                                backgroundColor: isVenueScale
+                                  ? venueDemandCellBackground(intensity)
+                                  : heatmapCellBackground(intensity),
+                              }
+                        }
+                        aria-label={ariaLabel}
+                      >
+                        {isDiagonal ? (
+                          '—'
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex size-full items-center justify-center">
+                                {displayValue}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{tooltipText}</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              )
+            })}
             {showTotalsRow ? (
               <TableRow className="bg-muted hover:bg-muted">
                 <TableCell className={STICKY_TOTALS_LABEL}>{labels.totalsRowLabel}</TableCell>
