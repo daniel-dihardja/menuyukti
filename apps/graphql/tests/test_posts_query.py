@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from graphql.data_sources import (
     InstagramPost,
     InstagramPostPage,
+    InstagramPostPageMediaVersion,
     SessionLocal,
     Workspace,
     WorkspaceMembership,
@@ -45,6 +46,12 @@ query Post($id: ID!) {
       sortOrder
       mediaS3Key
       prompt
+      mediaVersions {
+        id
+        mediaS3Key
+        prompt
+        createdAt
+      }
     }
   }
 }
@@ -84,14 +91,14 @@ mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
 """
 
 OTHER_USER_ID = "clerk_other_user"
-VALID_MEDIA_KEY = (
-    f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
-)
+VALID_MEDIA_KEY = f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+VALID_MEDIA_KEY_2 = f"users/{GRAPHQL_TEST_USER_ID}/posts/bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 
 
 def _seed_workspace(*, owner_id: str = GRAPHQL_TEST_USER_ID) -> int:
     session = SessionLocal()
     try:
+        session.query(InstagramPostPageMediaVersion).delete()
         session.query(InstagramPostPage).delete()
         session.query(InstagramPost).delete()
         session.query(WorkspaceMembership).delete()
@@ -243,6 +250,114 @@ def test_update_post_page_sets_media_and_prompt():
     updated = update_result.data["updatePostPage"]
     assert updated["mediaS3Key"] == VALID_MEDIA_KEY
     assert updated["prompt"] == "A sunny patio brunch"
+
+
+def test_update_post_page_appends_media_versions():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Versioned image"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    first_update = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "First prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not first_update.errors, first_update.errors
+
+    second_update = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY_2,
+                "prompt": "Second prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not second_update.errors, second_update.errors
+    assert second_update.data["updatePostPage"]["mediaS3Key"] == VALID_MEDIA_KEY_2
+
+    post_result = asyncio.run(
+        schema.execute(
+            POST_QUERY,
+            variable_values={"id": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not post_result.errors, post_result.errors
+    page = post_result.data["post"]["pages"][0]
+    versions = page["mediaVersions"]
+    assert len(versions) == 2
+    assert versions[0]["mediaS3Key"] == VALID_MEDIA_KEY_2
+    assert versions[0]["prompt"] == "Second prompt"
+    assert versions[1]["mediaS3Key"] == VALID_MEDIA_KEY
+    assert versions[1]["prompt"] == "First prompt"
+
+
+def test_update_post_page_skips_duplicate_media_version():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Duplicate key"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "Same image",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    repeat_update = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "Same image again",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not repeat_update.errors, repeat_update.errors
+
+    session = SessionLocal()
+    try:
+        page_pk = int(page_id)
+        count = (
+            session.query(InstagramPostPageMediaVersion)
+            .filter(InstagramPostPageMediaVersion.post_page_id == page_pk)
+            .count()
+        )
+        assert count == 1
+    finally:
+        session.close()
 
 
 def test_update_post_page_rejects_invalid_media_key():

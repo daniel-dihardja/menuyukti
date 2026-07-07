@@ -52,10 +52,23 @@ export const POST_QUERY = `
         sortOrder
         mediaS3Key
         prompt
+        mediaVersions {
+          id
+          mediaS3Key
+          prompt
+          createdAt
+        }
       }
     }
   }
 `
+
+export type PostPageMediaVersion = {
+  id: string
+  mediaS3Key: string
+  prompt: string | null
+  createdAt: string | null
+}
 
 export type PostData = {
   post: {
@@ -70,6 +83,7 @@ export type PostData = {
       sortOrder: number
       mediaS3Key: string | null
       prompt: string | null
+      mediaVersions: PostPageMediaVersion[]
     }>
   } | null
 }

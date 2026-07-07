@@ -1,13 +1,14 @@
 'use client'
 
-import { ImageIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useId, useState } from 'react'
+import { useCallback, useId, useState } from 'react'
 
 import { Card } from '@workspace/ui/components/card'
 import { Label } from '@workspace/ui/components/label'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Switch } from '@workspace/ui/components/switch'
+import { Button } from '@workspace/ui/components/button'
 
 import {
   INSTAGRAM_GRID_THUMBNAIL_INSET_X,
@@ -16,20 +17,29 @@ import {
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from './post-creator-constants'
+import type { PostCreatorImageVersion } from './post-creator-thumbnails-pane'
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
 
 export type PostCreatorPreviewPaneProps = {
   imageUrl?: string | null
+  imageVersions?: PostCreatorImageVersion[]
+  selectedVersionIndex?: number
+  onSelectVersionIndex?: (index: number) => void
   isLoading?: boolean
 }
 
+const previewShellClassName = 'w-full max-w-[min(100%,calc((100vh-12rem)*0.8))]'
+
 const previewFrameClassName =
-  'relative w-full max-w-[min(100%,calc((100vh-12rem)*0.8))] overflow-hidden rounded-lg border border-border/60 bg-muted/30'
+  'relative w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
 
 const previewFrameStyle = { aspectRatio: POST_IMAGE_ASPECT_RATIO }
 
 export function PostCreatorPreviewPane({
   imageUrl,
+  imageVersions = [],
+  selectedVersionIndex = 0,
+  onSelectVersionIndex,
   isLoading = false,
 }: PostCreatorPreviewPaneProps) {
   const t = useTranslations('postCreator.preview')
@@ -41,7 +51,30 @@ export function PostCreatorPreviewPane({
     height: POST_IMAGE_HEIGHT,
   })
 
-  const hasImage = Boolean(imageUrl)
+  const versions =
+    imageVersions.length > 0
+      ? imageVersions
+      : imageUrl
+        ? [{ id: 'current', imageUrl, createdAt: '' }]
+        : []
+  const activeVersion = versions[selectedVersionIndex] ?? versions[0]
+  const activeImageUrl = activeVersion?.imageUrl ?? null
+  const hasImage = Boolean(activeImageUrl)
+  const showVersionNav = versions.length > 1 && onSelectVersionIndex
+
+  const goPrev = useCallback(() => {
+    if (!onSelectVersionIndex) return
+    onSelectVersionIndex(
+      selectedVersionIndex === 0 ? versions.length - 1 : selectedVersionIndex - 1,
+    )
+  }, [onSelectVersionIndex, selectedVersionIndex, versions.length])
+
+  const goNext = useCallback(() => {
+    if (!onSelectVersionIndex) return
+    onSelectVersionIndex(
+      selectedVersionIndex === versions.length - 1 ? 0 : selectedVersionIndex + 1,
+    )
+  }, [onSelectVersionIndex, selectedVersionIndex, versions.length])
 
   return (
     <section
@@ -50,12 +83,51 @@ export function PostCreatorPreviewPane({
     >
       <div className="flex min-h-0 flex-1 items-center justify-center">
         {isLoading ? (
-          <Skeleton className={previewFrameClassName} style={previewFrameStyle} />
+          <Skeleton
+            className={`${previewShellClassName} ${previewFrameClassName}`}
+            style={previewFrameStyle}
+          />
         ) : hasImage ? (
-          <div className={previewFrameClassName} style={previewFrameStyle}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
-            <img src={imageUrl!} alt="" className="size-full object-contain" />
-            {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+          <div className="flex w-full items-center justify-center gap-2">
+            {showVersionNav ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={goPrev}
+                className="size-9 shrink-0 rounded-full shadow-sm"
+                aria-label={t('previousVersion')}
+              >
+                <ChevronLeft className="size-4" aria-hidden />
+              </Button>
+            ) : null}
+            <div className={`flex min-w-0 flex-col items-center gap-2 ${previewShellClassName}`}>
+              <div className={previewFrameClassName} style={previewFrameStyle}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
+                <img src={activeImageUrl!} alt="" className="size-full object-contain" />
+                {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+              </div>
+              {showVersionNav ? (
+                <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
+                  {t('versionIndicator', {
+                    current: selectedVersionIndex + 1,
+                    total: versions.length,
+                  })}
+                </p>
+              ) : null}
+            </div>
+            {showVersionNav ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={goNext}
+                className="size-9 shrink-0 rounded-full shadow-sm"
+                aria-label={t('nextVersion')}
+              >
+                <ChevronRight className="size-4" aria-hidden />
+              </Button>
+            ) : null}
           </div>
         ) : (
           <Card

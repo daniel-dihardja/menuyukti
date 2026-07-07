@@ -13,6 +13,7 @@ __all__ = [
     "MenuItemCogs",
     "InstagramPost",
     "InstagramPostPage",
+    "InstagramPostPageMediaVersion",
     "Node",
     "ImageAiFlow",
     "SessionLocal",

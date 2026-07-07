@@ -44,11 +44,29 @@ export async function GET(_req: Request, context: RouteContext) {
         if (page.mediaS3Key && isObjectKeyForPost(page.mediaS3Key, authz.userId)) {
           imageUrl = await getPresignedGetUrl(page.mediaS3Key)
         }
+
+        const imageVersions = await Promise.all(
+          page.mediaVersions.map(async (version) => {
+            if (!isObjectKeyForPost(version.mediaS3Key, authz.userId)) {
+              return null
+            }
+            const versionImageUrl = await getPresignedGetUrl(version.mediaS3Key)
+            return {
+              id: version.id,
+              imageUrl: versionImageUrl,
+              createdAt: version.createdAt,
+            }
+          }),
+        )
+
         return {
           id: page.id,
           sortOrder: page.sortOrder,
           prompt: page.prompt,
           imageUrl,
+          imageVersions: imageVersions.filter(
+            (version): version is NonNullable<typeof version> => version !== null,
+          ),
         }
       }),
     )
@@ -90,7 +108,15 @@ export async function DELETE(_req: Request, context: RouteContext) {
     }
 
     try {
-      await deletePostMediaKeys(post.pages.map((page) => page.mediaS3Key))
+      const mediaKeys = [
+        ...new Set(
+          post.pages.flatMap((page) => [
+            page.mediaS3Key,
+            ...page.mediaVersions.map((version) => version.mediaS3Key),
+          ]),
+        ),
+      ].filter((key): key is string => Boolean(key))
+      await deletePostMediaKeys(mediaKeys)
     } catch (err) {
       console.error('[posts/delete] S3 DeleteObject failed', {
         userIdPrefix: authz.userId.slice(0, 8),

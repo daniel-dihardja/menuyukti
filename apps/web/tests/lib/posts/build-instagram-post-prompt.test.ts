@@ -18,7 +18,7 @@ describe('buildInstagramPostPrompt', () => {
     expect(out.endsWith('Warm kopitiam scene with kaya toast')).toBe(true)
   })
 
-  it('includes safe-zone percentages derived from constants', () => {
+  it('includes composition frame percentages derived from constants', () => {
     const out = buildInstagramPostPrompt({ userPrompt: 'Test scene' })
 
     expect(out).toContain(
@@ -28,6 +28,8 @@ describe('buildInstagramPostPrompt', () => {
       `~${INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT.toFixed(1)}% from the top and bottom`,
     )
     expect(out).toContain(`${POST_IMAGE_WIDTH}×${POST_IMAGE_HEIGHT}`)
+    expect(out).toContain('never draw, outline, or render it')
+    expect(out).toContain('Do not add visible guides, boxes, rectangles')
   })
 
   it('includes reference block when referenceImageCount > 0', () => {

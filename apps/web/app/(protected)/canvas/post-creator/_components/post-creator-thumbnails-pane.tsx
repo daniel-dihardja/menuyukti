@@ -12,11 +12,18 @@ export type PostCreatorReferenceImage = {
   url: string
 }
 
+export type PostCreatorImageVersion = {
+  id: string
+  imageUrl: string
+  createdAt: string
+}
+
 export type PostCreatorPage = {
   id: string
   sortOrder: number
   prompt: string | null
   imageUrl: string | null
+  imageVersions?: PostCreatorImageVersion[]
   referenceImages?: PostCreatorReferenceImage[]
 }
 

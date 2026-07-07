@@ -10,6 +10,7 @@ import { PostCreatorPreviewPane } from './_components/post-creator-preview-pane'
 import { PostCreatorPromptPane } from './_components/post-creator-prompt-pane'
 import {
   PostCreatorThumbnailsPane,
+  type PostCreatorImageVersion,
   type PostCreatorPage,
   type PostCreatorReferenceImage,
 } from './_components/post-creator-thumbnails-pane'
@@ -36,7 +37,21 @@ type PostApiResponse = {
     sortOrder: number
     prompt: string | null
     imageUrl: string | null
+    imageVersions: PostCreatorImageVersion[]
   }>
+}
+
+function resolvePageImageVersions(page: {
+  imageUrl: string | null
+  imageVersions?: PostCreatorImageVersion[]
+}): PostCreatorImageVersion[] {
+  if (page.imageVersions && page.imageVersions.length > 0) {
+    return page.imageVersions
+  }
+  if (page.imageUrl) {
+    return [{ id: 'current', imageUrl: page.imageUrl, createdAt: '' }]
+  }
+  return []
 }
 
 export function PostCreatorClient({ postId }: { postId: string | null }) {
@@ -45,14 +60,22 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [imageVersions, setImageVersions] = useState<PostCreatorImageVersion[]>([])
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0)
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isLoadingPost, setIsLoadingPost] = useState(Boolean(postId))
 
   const applySelectedPage = useCallback((nextPages: PostCreatorPage[], pageId: string) => {
     const page = nextPages.find((p) => p.id === pageId)
+    const versions = resolvePageImageVersions({
+      imageUrl: page?.imageUrl ?? null,
+      imageVersions: page?.imageVersions,
+    })
     setSelectedPageId(pageId)
-    setImageUrl(page?.imageUrl ?? null)
+    setImageVersions(versions)
+    setSelectedVersionIndex(0)
+    setImageUrl(versions[0]?.imageUrl ?? page?.imageUrl ?? null)
     setPrompt(page?.prompt ?? '')
     setReferenceImages(page?.referenceImages ?? [])
   }, [])
@@ -60,7 +83,9 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const syncPageState = useCallback(
     (
       pageId: string,
-      patch: Partial<Pick<PostCreatorPage, 'prompt' | 'imageUrl' | 'referenceImages'>>,
+      patch: Partial<
+        Pick<PostCreatorPage, 'prompt' | 'imageUrl' | 'imageVersions' | 'referenceImages'>
+      >,
     ) => {
       setPages((current) =>
         current.map((page) => (page.id === pageId ? { ...page, ...patch } : page)),
@@ -95,6 +120,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             sortOrder: page.sortOrder,
             prompt: page.prompt,
             imageUrl: page.imageUrl,
+            imageVersions: page.imageVersions,
             referenceImages: [],
           }))
 
@@ -131,8 +157,14 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             : current
 
         const page = withSyncedCurrent.find((p) => p.id === pageId)
+        const versions = resolvePageImageVersions({
+          imageUrl: page?.imageUrl ?? null,
+          imageVersions: page?.imageVersions,
+        })
         setSelectedPageId(pageId)
-        setImageUrl(page?.imageUrl ?? null)
+        setImageVersions(versions)
+        setSelectedVersionIndex(0)
+        setImageUrl(versions[0]?.imageUrl ?? page?.imageUrl ?? null)
         setPrompt(page?.prompt ?? '')
         setReferenceImages(page?.referenceImages ?? [])
         return withSyncedCurrent
@@ -222,17 +254,49 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         return
       }
 
+      const nextVersion: PostCreatorImageVersion = {
+        id: data.name,
+        imageUrl: data.url,
+        createdAt: data.createdAt,
+      }
+      const nextVersions = [
+        nextVersion,
+        ...imageVersions.filter((version) => version.id !== data.name),
+      ]
+      setImageVersions(nextVersions)
+      setSelectedVersionIndex(0)
       setImageUrl(data.url)
 
       if (selectedPageId) {
-        syncPageState(selectedPageId, { imageUrl: data.url, prompt: trimmed })
+        syncPageState(selectedPageId, {
+          imageUrl: data.url,
+          imageVersions: nextVersions,
+          prompt: trimmed,
+        })
       }
     } catch {
       toast.error(tToast('generateError'))
     } finally {
       setIsGenerating(false)
     }
-  }, [isGenerating, postId, prompt, referenceImages, selectedPageId, syncPageState, tToast])
+  }, [
+    imageVersions,
+    isGenerating,
+    postId,
+    prompt,
+    referenceImages,
+    selectedPageId,
+    syncPageState,
+    tToast,
+  ])
+
+  const handleSelectVersionIndex = useCallback(
+    (index: number) => {
+      setSelectedVersionIndex(index)
+      setImageUrl(imageVersions[index]?.imageUrl ?? null)
+    },
+    [imageVersions],
+  )
 
   return (
     <div
@@ -248,7 +312,15 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             onSelectPage={handleSelectPage}
           />
         }
-        previewPane={<PostCreatorPreviewPane imageUrl={imageUrl} isLoading={isGenerating} />}
+        previewPane={
+          <PostCreatorPreviewPane
+            imageUrl={imageUrl}
+            imageVersions={imageVersions}
+            selectedVersionIndex={selectedVersionIndex}
+            onSelectVersionIndex={handleSelectVersionIndex}
+            isLoading={isGenerating}
+          />
+        }
         promptPane={
           <PostCreatorPromptPane
             isGenerating={isGenerating}

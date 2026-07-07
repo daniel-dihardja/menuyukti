@@ -6,10 +6,11 @@ import re
 from datetime import UTC, datetime
 
 import strawberry
+from sqlalchemy.orm import joinedload
 from strawberry import UNSET
 
 from graphql.context import request_session_scope
-from graphql.data_sources import InstagramPostPage
+from graphql.data_sources import InstagramPostPage, InstagramPostPageMediaVersion
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.posts import _load_post_for_user, _post_page_to_gql
 from graphql.schema.types import PostPageType
@@ -72,7 +73,25 @@ class UpdatePostPageMutation:
                         page_row.media_s3_key = None
                     else:
                         _validate_media_s3_key(key_clean, owner_id)
-                        page_row.media_s3_key = key_clean
+                        if key_clean != page_row.media_s3_key:
+                            version_prompt: str | None
+                            if prompt is not UNSET:
+                                if prompt is None:
+                                    version_prompt = None
+                                else:
+                                    prompt_clean = prompt.strip()
+                                    version_prompt = prompt_clean if prompt_clean else None
+                            else:
+                                version_prompt = page_row.prompt
+
+                            page_row.media_s3_key = key_clean
+                            session.add(
+                                InstagramPostPageMediaVersion(
+                                    post_page_id=page_row.id,
+                                    media_s3_key=key_clean,
+                                    prompt=version_prompt,
+                                )
+                            )
 
             if prompt is not UNSET:
                 if prompt is None:
@@ -84,5 +103,11 @@ class UpdatePostPageMutation:
             post_row.updated_at = datetime.now(tz=UTC)
             session.add(page_row)
             session.commit()
-            session.refresh(page_row)
+            page_row = session.get(
+                InstagramPostPage,
+                page_pk,
+                options=[joinedload(InstagramPostPage.media_versions)],
+            )
+            if page_row is None:
+                raise ValueError("Post page not found")
             return _post_page_to_gql(page_row)

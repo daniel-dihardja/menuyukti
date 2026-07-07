@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    desc,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from graphql.data_sources.database import Base
@@ -95,6 +105,42 @@ class InstagramPostPage(Base):
         onupdate=func.now(),
     )
 
+    media_versions: Mapped[list[InstagramPostPageMediaVersion]] = relationship(
+        back_populates="post_page",
+        cascade="all, delete-orphan",
+        order_by=lambda: desc(InstagramPostPageMediaVersion.created_at),
+    )
+
     __table_args__ = (
         UniqueConstraint("post_id", "sort_order", name="uq_instagram_post_page_post_sort_order"),
+    )
+
+
+class InstagramPostPageMediaVersion(Base):
+    """
+    A single generated image version for a post page.
+
+    Each generation appends a row; the page's media_s3_key points at the newest version.
+    """
+
+    __tablename__ = "instagram_post_page_media_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    post_page_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("instagram_post_pages.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    post_page: Mapped[InstagramPostPage] = relationship(back_populates="media_versions")
+    media_s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint(
+            "post_page_id",
+            "media_s3_key",
+            name="uq_instagram_post_page_media_version_page_key",
+        ),
     )
