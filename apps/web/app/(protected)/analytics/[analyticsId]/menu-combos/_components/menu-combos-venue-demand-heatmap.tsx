@@ -90,18 +90,23 @@ function VenueHeatmapContent({
       scrollHint: t(`${translationPrefix}.scrollHint`),
       explainTitle: t(`${translationPrefix}.explainTitle`),
       explainBody: t(`${translationPrefix}.explainBody`),
-      cellAriaLabel: (mealPeriod: string, day: string, index: number) =>
-        t(`${translationPrefix}.cellAriaLabel`, {
+      cellAriaLabel: (mealPeriod: string, day: string, index: number) => {
+        const row = heatmap.rows.find((candidate) => candidate.label === mealPeriod)
+        const cell = row ? resolveCell(row.key, day) : undefined
+        return t(`${translationPrefix}.cellAriaLabel`, {
           mealPeriod,
           day,
+          orderCount: cell?.orderCount ?? 0,
           index: formatLift(index, locale),
-        }),
+        })
+      },
       cellTooltip: (mealPeriod: string, day: string, index: number) => {
         const row = heatmap.rows.find((candidate) => candidate.label === mealPeriod)
         const cell = row ? resolveCell(row.key, day) : undefined
         return t(`${translationPrefix}.cellTooltip`, {
           mealPeriod,
           day,
+          orderCount: cell?.orderCount ?? 0,
           index: formatLift(index, locale),
           tier: tierLabel(cell?.relativeDemand ?? 'average', t, gaugePrefix),
         })
