@@ -92,7 +92,7 @@ export function MenuHeatmapContent({
   const [view, setView] = useState<'daily' | 'weekly'>('daily')
   const [localCategoryFilter, setLocalCategoryFilter] = useState('all')
   const [selectedMatrixCategories, setSelectedMatrixCategories] = useState<Set<MatrixCategory>>(
-    () => new Set(CATEGORY_ORDER),
+    () => new Set<MatrixCategory>(['star']),
   )
 
   const categoryFilter = controlledCategoryFilter ?? localCategoryFilter
