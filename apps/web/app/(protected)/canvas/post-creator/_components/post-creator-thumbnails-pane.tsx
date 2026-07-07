@@ -7,11 +7,17 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { POST_IMAGE_ASPECT_RATIO } from './post-creator-constants'
 
+export type PostCreatorReferenceImage = {
+  name: string
+  url: string
+}
+
 export type PostCreatorPage = {
   id: string
   sortOrder: number
   prompt: string | null
   imageUrl: string | null
+  referenceImages?: PostCreatorReferenceImage[]
 }
 
 export type PostCreatorThumbnailsPaneProps = {

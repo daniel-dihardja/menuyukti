@@ -2,6 +2,9 @@ export const POST_IMAGE_WIDTH = 1080
 export const POST_IMAGE_HEIGHT = 1350
 export const POST_IMAGE_ASPECT_RATIO = '4 / 5'
 
+/** Maximum reference photos per generation request. */
+export const MAX_REFERENCE_IMAGES = 4
+
 /**
  * Visible width when a 4:5 post is center-cropped to a 3:4 profile-grid thumbnail
  * (Instagram clips ~34px from each side at 1080×1350).

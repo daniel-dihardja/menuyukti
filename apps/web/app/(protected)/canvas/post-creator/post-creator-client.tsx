@@ -4,12 +4,14 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+import { MAX_REFERENCE_IMAGES } from './_components/post-creator-constants'
 import { PostCreatorLayout } from './_components/post-creator-layout'
 import { PostCreatorPreviewPane } from './_components/post-creator-preview-pane'
 import { PostCreatorPromptPane } from './_components/post-creator-prompt-pane'
 import {
   PostCreatorThumbnailsPane,
   type PostCreatorPage,
+  type PostCreatorReferenceImage,
 } from './_components/post-creator-thumbnails-pane'
 
 type GenerateResponse = {
@@ -43,6 +45,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isLoadingPost, setIsLoadingPost] = useState(Boolean(postId))
 
@@ -51,7 +54,20 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     setSelectedPageId(pageId)
     setImageUrl(page?.imageUrl ?? null)
     setPrompt(page?.prompt ?? '')
+    setReferenceImages(page?.referenceImages ?? [])
   }, [])
+
+  const syncPageState = useCallback(
+    (
+      pageId: string,
+      patch: Partial<Pick<PostCreatorPage, 'prompt' | 'imageUrl' | 'referenceImages'>>,
+    ) => {
+      setPages((current) =>
+        current.map((page) => (page.id === pageId ? { ...page, ...patch } : page)),
+      )
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!postId) {
@@ -79,6 +95,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             sortOrder: page.sortOrder,
             prompt: page.prompt,
             imageUrl: page.imageUrl,
+            referenceImages: [],
           }))
 
         setPages(loadedPages)
@@ -105,9 +122,58 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
 
   const handleSelectPage = useCallback(
     (pageId: string) => {
-      applySelectedPage(pages, pageId)
+      setPages((current) => {
+        const withSyncedCurrent =
+          selectedPageId !== null
+            ? current.map((page) =>
+                page.id === selectedPageId ? { ...page, prompt, referenceImages } : page,
+              )
+            : current
+
+        const page = withSyncedCurrent.find((p) => p.id === pageId)
+        setSelectedPageId(pageId)
+        setImageUrl(page?.imageUrl ?? null)
+        setPrompt(page?.prompt ?? '')
+        setReferenceImages(page?.referenceImages ?? [])
+        return withSyncedCurrent
+      })
     },
-    [applySelectedPage, pages],
+    [prompt, referenceImages, selectedPageId],
+  )
+
+  const handlePromptChange = useCallback(
+    (value: string) => {
+      setPrompt(value)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { prompt: value })
+      }
+    },
+    [selectedPageId, syncPageState],
+  )
+
+  const handleAddReference = useCallback(
+    (photo: PostCreatorReferenceImage) => {
+      if (referenceImages.some((image) => image.name === photo.name)) return
+      if (referenceImages.length >= MAX_REFERENCE_IMAGES) return
+
+      const next = [...referenceImages, photo]
+      setReferenceImages(next)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { referenceImages: next })
+      }
+    },
+    [referenceImages, selectedPageId, syncPageState],
+  )
+
+  const handleRemoveReference = useCallback(
+    (name: string) => {
+      const next = referenceImages.filter((image) => image.name !== name)
+      setReferenceImages(next)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { referenceImages: next })
+      }
+    },
+    [referenceImages, selectedPageId, syncPageState],
   )
 
   const handleGenerate = useCallback(async () => {
@@ -116,10 +182,20 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
 
     setIsGenerating(true)
     try {
-      const body: { prompt: string; postId?: string; pageId?: string } = { prompt: trimmed }
+      const body: {
+        prompt: string
+        postId?: string
+        pageId?: string
+        referenceImages?: string[]
+      } = { prompt: trimmed }
+
       if (postId && selectedPageId) {
         body.postId = postId
         body.pageId = selectedPageId
+      }
+
+      if (referenceImages.length > 0) {
+        body.referenceImages = referenceImages.map((image) => image.name)
       }
 
       const res = await fetch('/api/posts/generate', {
@@ -149,18 +225,14 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       setImageUrl(data.url)
 
       if (selectedPageId) {
-        setPages((current) =>
-          current.map((page) =>
-            page.id === selectedPageId ? { ...page, imageUrl: data.url, prompt: trimmed } : page,
-          ),
-        )
+        syncPageState(selectedPageId, { imageUrl: data.url, prompt: trimmed })
       }
     } catch {
       toast.error(tToast('generateError'))
     } finally {
       setIsGenerating(false)
     }
-  }, [isGenerating, postId, prompt, selectedPageId, tToast])
+  }, [isGenerating, postId, prompt, referenceImages, selectedPageId, syncPageState, tToast])
 
   return (
     <div
@@ -180,9 +252,12 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         promptPane={
           <PostCreatorPromptPane
             isGenerating={isGenerating}
-            onPromptChange={setPrompt}
+            onAddReference={handleAddReference}
+            onPromptChange={handlePromptChange}
+            onRemoveReference={handleRemoveReference}
             onSubmit={() => void handleGenerate()}
             prompt={prompt}
+            referenceImages={referenceImages}
           />
         }
       />

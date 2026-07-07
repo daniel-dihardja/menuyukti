@@ -19,6 +19,20 @@ export async function loadPhotos(init?: RequestInit): Promise<PhotoCatalogItem[]
   return result.data.items ?? []
 }
 
+export async function uploadPhoto(file: File): Promise<PhotoCatalogItem> {
+  const fd = new FormData()
+  fd.set('file', file)
+  const result = await apiFetch<PhotoCatalogItem>(
+    '/api/photos/upload',
+    { method: 'POST', body: fd },
+    'Failed to upload photo',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data
+}
+
 export function photoDownloadHref(name: string): string {
   return `/api/photos/download?name=${encodeURIComponent(name)}`
 }

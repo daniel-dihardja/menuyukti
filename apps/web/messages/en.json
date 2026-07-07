@@ -701,9 +701,21 @@
     "promptPane": "Prompt",
     "prompt": {
       "label": "Image prompt",
-      "placeholder": "Describe the Instagram post image you want to generate…",
+      "placeholder": "Describe the Instagram post image you want to generate… Type @ to attach a reference photo.",
       "generate": "Generate image",
-      "generating": "Generating…"
+      "generating": "Generating…",
+      "picker": {
+        "ariaLabel": "Reference photo picker",
+        "empty": "No matching photos. Upload one or add photos in Content → Photos.",
+        "upload": "Upload photo",
+        "uploading": "Uploading…",
+        "uploadError": "Couldn’t upload that photo. Try again.",
+        "maxReached": "Maximum reference photos reached. Remove one to add another."
+      },
+      "references": {
+        "ariaLabel": "Reference photos for generation",
+        "remove": "Remove reference photo"
+      }
     },
     "preview": {
       "ariaLabel": "Generated post image preview",

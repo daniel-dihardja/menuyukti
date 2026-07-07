@@ -1,4 +1,4 @@
-import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { randomUUID } from 'crypto'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -11,17 +11,20 @@ import {
   getPresignedGetUrl,
   getS3Bucket,
   getS3Client,
+  isSafeAssetFilename,
   userPostsObjectKey,
+  userPhotosObjectKey,
 } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphql/queries/posts'
-import { runTextToImageGeneration } from '@/lib/leonardo'
+import { runTextToImageWithReferences } from '@/lib/leonardo'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 const bodySchema = z.object({
   prompt: z.string().trim().min(1).max(3000),
   postId: z.string().regex(/^\d+$/).optional(),
   pageId: z.string().regex(/^\d+$/).optional(),
+  referenceImages: z.array(z.string().min(1)).max(4).optional(),
 })
 
 function truncateStack(stack: string, max = 4000): string {
@@ -46,7 +49,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Invalid body' }, { status: 400 })
   }
 
-  const { prompt, postId, pageId } = parsed.data
+  const { prompt, postId, pageId, referenceImages = [] } = parsed.data
   if ((postId && !pageId) || (!postId && pageId)) {
     return NextResponse.json(
       { message: 'postId and pageId must be provided together' },
@@ -54,9 +57,54 @@ export async function POST(req: Request) {
     )
   }
 
+  const referenceBuffers: Buffer[] = []
+  if (referenceImages.length > 0) {
+    const s3 = getS3Client()
+    const bucket = getS3Bucket()
+
+    for (const name of referenceImages) {
+      if (!isSafeAssetFilename(name)) {
+        return NextResponse.json({ message: `Invalid reference image: ${name}` }, { status: 400 })
+      }
+
+      const key = userPhotosObjectKey(userId, name)
+      try {
+        const result = await s3.send(
+          new GetObjectCommand({
+            Bucket: bucket,
+            Key: key,
+          }),
+        )
+        const bytes = await result.Body?.transformToByteArray()
+        if (!bytes) {
+          return NextResponse.json(
+            { message: `Reference image not found: ${name}` },
+            { status: 400 },
+          )
+        }
+        referenceBuffers.push(Buffer.from(bytes))
+      } catch (err) {
+        console.error('[posts/generate] S3 GetObject failed for reference image', {
+          userIdPrefix: userId.slice(0, 8),
+          name,
+          message: err instanceof Error ? err.message : String(err),
+        })
+        return NextResponse.json(
+          { message: `Failed to read reference image: ${name}` },
+          { status: 400 },
+        )
+      }
+    }
+  }
+
   let outBuffer: Buffer
   try {
-    outBuffer = await runTextToImageGeneration(prompt, POST_IMAGE_WIDTH, POST_IMAGE_HEIGHT)
+    outBuffer = await runTextToImageWithReferences(
+      prompt,
+      POST_IMAGE_WIDTH,
+      POST_IMAGE_HEIGHT,
+      referenceBuffers,
+    )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Processing failed'
     const stack = err instanceof Error ? err.stack : undefined

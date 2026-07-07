@@ -576,6 +576,62 @@ export async function runTextToImageGeneration(
 }
 
 /**
+ * Text-to-image with optional reference photos — uploads init images, generates, resizes to target 4:5 → WebP.
+ */
+export async function runTextToImageWithReferences(
+  prompt: string,
+  width: number,
+  height: number,
+  referenceBuffers: Buffer[],
+  model: string = TEXT_TO_IMAGE_MODEL,
+): Promise<Buffer> {
+  if (referenceBuffers.length === 0) {
+    return runTextToImageGeneration(prompt, width, height, model)
+  }
+
+  logInfo('runTextToImageWithReferences: start', {
+    model,
+    width,
+    height,
+    referenceCount: referenceBuffers.length,
+    promptPreview: truncateBody(prompt, 120),
+  })
+
+  const flow: NanoBananaFlowConfig = { model, prompt }
+
+  let generationId: string
+  if (referenceBuffers.length === 1) {
+    const initImageId = await uploadInitImage(referenceBuffers[0]!, 'webp')
+    generationId = await createNanoBananaGeneration({
+      ...flow,
+      uploadedImageId: initImageId,
+      width,
+      height,
+    })
+  } else {
+    const uploadedImageIds = await Promise.all(
+      referenceBuffers.map((buf) => uploadInitImage(buf, 'webp')),
+    )
+    generationId = await createNanoBananaCompositionGeneration({
+      ...flow,
+      uploadedImageIds,
+      width,
+      height,
+    })
+  }
+
+  const imageUrl = await pollGeneration(generationId)
+  const raw = await downloadLeonardoResult(imageUrl, 'runTextToImageWithReferences')
+  const out = await sharp(raw)
+    .resize(width, height, { fit: 'cover' })
+    .webp({ quality: 85 })
+    .toBuffer()
+
+  logInfo('runTextToImageWithReferences: done', { outputBytes: out.length })
+  return out
+}
+
+/**
  * Poll until COMPLETE — GET /api/rest/v1/generations/{id} (only status endpoint Leonardo documents).
  */
 export async function pollGeneration(generationId: string): Promise<string> {
