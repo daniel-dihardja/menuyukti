@@ -36,7 +36,7 @@ export function CreatePostButton() {
       setError(result.error)
       return
     }
-    router.push(routes.canvasPostCreatorWithId(result.data.id))
+    router.push(routes.postsDetail(result.data.id))
   }
 
   return (

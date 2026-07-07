@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
@@ -19,15 +20,18 @@ type PageProps = {
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams
+  const legacyPostId = params.postId?.trim()
+  if (legacyPostId) {
+    redirect(routes.postsDetail(legacyPostId))
+  }
+
   const tSidebar = await getTranslations('sidebar')
   const tPostCreator = await getTranslations('postCreator')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
-
-  const params = await searchParams
-  const postId = params.postId?.trim() || null
 
   return (
     <AnalyticsPageShell
@@ -39,7 +43,7 @@ export default async function Page({ searchParams }: PageProps) {
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <PostCreatorDynamic postId={postId} />
+      <PostCreatorDynamic postId={null} />
     </AnalyticsPageShell>
   )
 }

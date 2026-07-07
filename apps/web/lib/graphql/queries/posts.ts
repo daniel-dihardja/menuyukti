@@ -49,3 +49,13 @@ export type CreatePostData = {
     locationId: number | null
   }
 }
+
+export const DELETE_POST_MUTATION = `
+  mutation DeletePost($id: ID!) {
+    deletePost(id: $id)
+  }
+`
+
+export type DeletePostData = {
+  deletePost: boolean
+}

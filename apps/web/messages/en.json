@@ -719,9 +719,22 @@
       "updatedAt": "Last updated",
       "updated": "Updated {date}",
       "untitled": "Untitled post",
+      "action": "Actions",
+      "actionsForRow": "Actions for {name}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete this post?",
+      "deleteConfirmDescription": "This permanently removes the post draft. You can't undo this action.",
+      "deleteConfirmCancel": "Cancel",
+      "deleteConfirmAction": "Delete post",
+      "deleteError": "Could not delete the post. Please try again.",
       "statusLabels": {
         "draft": "Draft",
         "published": "Published"
+      },
+      "mobile": {
+        "actionsTrigger": "Actions",
+        "sheetDescription": "Edit or delete this post"
       }
     }
   },

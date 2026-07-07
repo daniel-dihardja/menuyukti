@@ -33,6 +33,12 @@ mutation CreatePost($title: String) {
 }
 """
 
+DELETE_POST = """
+mutation DeletePost($id: ID!) {
+  deletePost(id: $id)
+}
+"""
+
 OTHER_USER_ID = "clerk_other_user"
 
 
@@ -120,3 +126,63 @@ def test_posts_hidden_from_other_workspace_user():
     result = asyncio.run(schema.execute(POSTS_QUERY, context_value={"user_id": OTHER_USER_ID}))
     assert not result.errors, result.errors
     assert result.data["posts"] == []
+
+
+def test_delete_post_requires_auth():
+    result = schema.execute_sync(DELETE_POST, variable_values={"id": "1"})
+    assert result.errors is not None
+
+
+def test_delete_post_and_list_posts():
+    workspace_id = _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "To delete"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST,
+            variable_values={"id": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    assert delete_result.data["deletePost"] is True
+
+    list_result = asyncio.run(schema.execute(POSTS_QUERY, context_value=graphql_auth_context()))
+    assert not list_result.errors, list_result.errors
+    assert list_result.data["posts"] == []
+
+
+def test_delete_post_denied_for_other_workspace_user():
+    workspace_id = _seed_workspace()
+    session = SessionLocal()
+    try:
+        post = InstagramPost(
+            workspace_id=workspace_id,
+            title="Owner draft",
+            status="draft",
+            created_by_clerk_user_id=GRAPHQL_TEST_USER_ID,
+        )
+        session.add(post)
+        session.commit()
+        session.refresh(post)
+        post_id = str(post.id)
+    finally:
+        session.close()
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST,
+            variable_values={"id": post_id},
+            context_value={"user_id": OTHER_USER_ID},
+        )
+    )
+    assert delete_result.errors is not None
