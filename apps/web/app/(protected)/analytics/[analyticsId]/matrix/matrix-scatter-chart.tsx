@@ -13,17 +13,17 @@ const CHART_HEIGHT = 480
 const MARGIN = { top: 28, right: 28, bottom: 52, left: 72 }
 
 const QUADRANT_FILL: Record<MatrixCategory, string> = {
-  star: 'rgba(16, 185, 129, 0.08)',
-  plow_horse: 'rgba(245, 158, 11, 0.08)',
-  puzzle: 'rgba(14, 165, 233, 0.08)',
-  low_end: 'rgba(244, 63, 94, 0.08)',
+  star: 'rgba(47, 212, 199, 0.08)',
+  plow_horse: 'rgba(242, 183, 90, 0.08)',
+  puzzle: 'rgba(135, 201, 255, 0.08)',
+  low_end: 'rgba(182, 157, 255, 0.08)',
 }
 
 const POINT_FILL: Record<MatrixCategory, string> = {
-  star: '#10b981',
-  plow_horse: '#f59e0b',
-  puzzle: '#0ea5e9',
-  low_end: '#f43f5e',
+  star: '#2fd4c7',
+  plow_horse: '#f2b75a',
+  puzzle: '#87c9ff',
+  low_end: '#b69dff',
 }
 
 export type MatrixScatterItem = {

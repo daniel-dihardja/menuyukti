@@ -104,9 +104,6 @@ importers:
       next-intl:
         specifier: ^4.3.12
         version: 4.5.6(next@16.0.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
-      next-themes:
-        specifier: ^0.4.6
-        version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nuqs:
         specifier: ^2.8.9
         version: 2.8.9(next@16.0.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
@@ -230,8 +227,6 @@ importers:
       typescript-eslint:
         specifier: ^8.39.0
         version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
-
-  packages/sosmed: {}
 
   packages/typescript-config: {}
 

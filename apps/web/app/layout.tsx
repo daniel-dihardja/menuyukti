@@ -4,16 +4,12 @@ import { Suspense } from 'react'
 import '@workspace/ui/globals.css'
 import { RootShell, RootShellFallback } from '@/app/_components/root-shell'
 import { fontMono, fontSans } from '@/lib/fonts'
-import { stylePaletteScript } from '@/lib/style-palette'
 import { getTranslations } from 'next-intl/server'
 
 const siteUrl = 'https://menuyukti.com'
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fdf8f2' },
-    { media: '(prefers-color-scheme: dark)', color: '#2b241c' },
-  ],
+  themeColor: '#f8f5f0',
   width: 'device-width',
   initialScale: 1,
 }
@@ -77,14 +73,8 @@ export default function RootLayout({
     children,
   }
   return (
-    <html lang="en" suppressHydrationWarning data-palette="espresso">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: stylePaletteScript(),
-          }}
-        />
-      </head>
+    <html lang="en" suppressHydrationWarning>
+      <head />
       <Suspense fallback={<RootShellFallback {...shellProps} />}>
         <RootShell {...shellProps} />
       </Suspense>

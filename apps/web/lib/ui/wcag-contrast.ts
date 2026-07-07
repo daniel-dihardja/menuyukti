@@ -14,6 +14,36 @@ export function parseOklch(value: string): OklchColor {
   return { l, c: Number(match[2]), h: Number(match[3]), alpha }
 }
 
+export function parseHex(value: string): OklchColor {
+  const hex = value.trim().replace(/^#/, '')
+  let r: number
+  let g: number
+  let b: number
+  if (hex.length === 3) {
+    r = Number.parseInt(hex[0]! + hex[0]!, 16) / 255
+    g = Number.parseInt(hex[1]! + hex[1]!, 16) / 255
+    b = Number.parseInt(hex[2]! + hex[2]!, 16) / 255
+  } else if (hex.length === 6) {
+    r = Number.parseInt(hex.slice(0, 2), 16) / 255
+    g = Number.parseInt(hex.slice(2, 4), 16) / 255
+    b = Number.parseInt(hex.slice(4, 6), 16) / 255
+  } else {
+    throw new Error(`Unsupported color: ${value}`)
+  }
+  return rgbToOklch([r, g, b])
+}
+
+function parseColorValue(value: string): OklchColor {
+  const trimmed = value.trim()
+  if (trimmed.startsWith('oklch(')) {
+    return parseOklch(trimmed)
+  }
+  if (trimmed.startsWith('#')) {
+    return parseHex(trimmed)
+  }
+  throw new Error(`Unsupported color: ${value}`)
+}
+
 function parseOklchChannel(raw: string): number {
   if (raw.endsWith('%')) {
     return Number(raw.slice(0, -1)) / 100
@@ -135,28 +165,70 @@ export function mixAlphaOver(
   return blendOver(background, { ...overlay, alpha })
 }
 
-/** Parse simple theme tokens from packages/ui globals.css (:root / .dark blocks). */
+/** Parse simple theme tokens from packages/ui globals.css (:root / optional .dark blocks). */
 export function readThemeTokensFromGlobals(css: string): {
   light: Record<string, OklchColor>
-  dark: Record<string, OklchColor>
+  dark?: Record<string, OklchColor>
 } {
-  const light = parseBlock(css, ':root')
-  const dark = parseBlock(css, '.dark')
+  const lightRaw = parseRawBlock(css, ':root')
+  if (!lightRaw) {
+    throw new Error('Missing :root block')
+  }
+  const light = rawToOklchTokens(lightRaw)
+  const darkRaw = parseRawBlock(css, '.dark')
+  const dark = darkRaw ? rawToOklchTokens(darkRaw) : undefined
   return { light, dark }
 }
 
-function parseBlock(css: string, selector: string): Record<string, OklchColor> {
+function parseRawBlock(css: string, selector: string): Record<string, string> | null {
   const escaped = selector.replace('.', '\\.')
   const blockRe = new RegExp(`${escaped}\\s*\\{([^}]+)\\}`, 's')
   const match = css.match(blockRe)
   if (!match) {
-    throw new Error(`Missing ${selector} block`)
+    return null
   }
-  const tokens: Record<string, OklchColor> = {}
-  const declRe = /--([a-z0-9-]+):\s*(oklch\([^)]+\))/gi
+  const tokens: Record<string, string> = {}
+  const declRe = /--([a-z0-9-]+):\s*([^;]+);/gi
   let decl: RegExpExecArray | null
   while ((decl = declRe.exec(match[1]!)) !== null) {
-    tokens[decl[1]!] = parseOklch(decl[2]!)
+    tokens[decl[1]!] = decl[2]!.trim()
+  }
+  return tokens
+}
+
+function resolveCssVars(raw: Record<string, string>): Record<string, string> {
+  const resolved: Record<string, string> = { ...raw }
+  const maxPasses = Object.keys(raw).length + 1
+  for (let pass = 0; pass < maxPasses; pass++) {
+    let changed = false
+    for (const [key, value] of Object.entries(resolved)) {
+      const varMatch = value.match(/^var\(--([a-z0-9-]+)\)$/)
+      if (!varMatch) {
+        continue
+      }
+      const ref = varMatch[1]!
+      const target = resolved[ref]
+      if (target && target !== value) {
+        resolved[key] = target
+        changed = true
+      }
+    }
+    if (!changed) {
+      break
+    }
+  }
+  return resolved
+}
+
+function rawToOklchTokens(raw: Record<string, string>): Record<string, OklchColor> {
+  const resolved = resolveCssVars(raw)
+  const tokens: Record<string, OklchColor> = {}
+  for (const [key, value] of Object.entries(resolved)) {
+    try {
+      tokens[key] = parseColorValue(value)
+    } catch {
+      // Skip non-color tokens (radius, shadows, etc.).
+    }
   }
   return tokens
 }

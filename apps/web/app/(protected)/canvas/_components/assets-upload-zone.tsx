@@ -66,7 +66,7 @@ export function AssetsUploadZone({
         className={cn(
           'group relative overflow-hidden border-2 border-dashed transition-[border-color,background-color,box-shadow,opacity] duration-300',
           dragActive
-            ? 'border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
+            ? 'border-primary bg-primary/5 shadow-[0_0_0_1px_color-mix(in srgb, var(--primary) 20%, transparent)]'
             : 'border-muted-foreground/25 bg-gradient-to-br from-muted/40 via-background to-muted/20 hover:border-primary/40 hover:shadow-md',
           uploading && 'pointer-events-none opacity-80',
         )}
@@ -84,7 +84,7 @@ export function AssetsUploadZone({
         }}
         onDrop={onDrop}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--primary)/0.06),_transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in srgb, var(--primary) 6%, transparent),_transparent_55%)]" />
         <div className="relative flex flex-col gap-3 px-4 py-7 sm:gap-3 sm:px-5 sm:py-8">
           <div className="flex items-start gap-3 sm:items-center sm:gap-4">
             <div
@@ -126,7 +126,7 @@ export function AssetsUploadZone({
                   className={cn(
                     'h-10 w-full justify-between rounded-lg border-border/80 bg-background/90 px-3 shadow-sm transition-[box-shadow,border-color] duration-200',
                     'hover:border-primary/30 hover:bg-background',
-                    'data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.25)]',
+                    'data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_color-mix(in srgb, var(--ring) 25%, transparent)]',
                   )}
                 >
                   <SelectValue />
