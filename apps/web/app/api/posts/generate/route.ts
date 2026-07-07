@@ -18,6 +18,7 @@ import {
 import { graphqlQuery } from '@/lib/graphql/client'
 import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphql/queries/posts'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
+import { buildInstagramPostPrompt } from '@/lib/posts/build-instagram-post-prompt'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 const bodySchema = z.object({
@@ -97,10 +98,15 @@ export async function POST(req: Request) {
     }
   }
 
+  const leonardoPrompt = buildInstagramPostPrompt({
+    userPrompt: prompt,
+    referenceImageCount: referenceBuffers.length,
+  })
+
   let outBuffer: Buffer
   try {
     outBuffer = await runTextToImageWithReferences(
-      prompt,
+      leonardoPrompt,
       POST_IMAGE_WIDTH,
       POST_IMAGE_HEIGHT,
       referenceBuffers,
