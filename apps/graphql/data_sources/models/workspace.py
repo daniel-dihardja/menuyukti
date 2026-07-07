@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
+    from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.location import Location
 
 
@@ -32,6 +33,7 @@ class Workspace(Base):
 
     memberships: Mapped[list[WorkspaceMembership]] = relationship(back_populates="workspace")
     locations: Mapped[list[Location]] = relationship(back_populates="workspace")
+    instagram_posts: Mapped[list[InstagramPost]] = relationship(back_populates="workspace")
 
 
 class WorkspaceMembership(Base):

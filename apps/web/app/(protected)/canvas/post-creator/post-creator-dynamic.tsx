@@ -16,6 +16,6 @@ const PostCreatorClient = dynamic(
   },
 )
 
-export function PostCreatorDynamic() {
-  return <PostCreatorClient />
+export function PostCreatorDynamic({ postId }: { postId: string | null }) {
+  return <PostCreatorClient postId={postId} />
 }

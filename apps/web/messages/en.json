@@ -570,7 +570,7 @@
     "workflows": "Workflow",
     "skills": "Skills & tools",
     "studio": "Studio",
-    "postCreator": "Post Creator",
+    "posts": "Posts",
     "content": "Content",
     "photos": "Photos",
     "igReels": "IG Reels",
@@ -700,6 +700,29 @@
       "emptyDescription": "Generate a post image using the chat panel.",
       "dimensionsLabel": "Post size",
       "dimensions": "{width} × {height}"
+    }
+  },
+  "posts": {
+    "title": "Posts",
+    "description": "Create and manage standalone Instagram post drafts.",
+    "create": "Create new post",
+    "creating": "Creating…",
+    "createError": "Failed to create post",
+    "empty": {
+      "title": "No posts yet",
+      "description": "Create your first post draft to start designing in Post Creator."
+    },
+    "table": {
+      "index": "#",
+      "title": "Title",
+      "status": "Status",
+      "updatedAt": "Last updated",
+      "updated": "Updated {date}",
+      "untitled": "Untitled post",
+      "statusLabels": {
+        "draft": "Draft",
+        "published": "Published"
+      }
     }
   },
   "photos": {

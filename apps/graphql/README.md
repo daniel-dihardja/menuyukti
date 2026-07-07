@@ -25,7 +25,13 @@ Schema changes are **versioned** under [`alembic/`](./alembic/) (revision script
 2. Set `DATABASE_URL` in `apps/graphql/.env` (loaded by `python-dotenv` in `graphql.data_sources.database` and Alembic `env.py`). Use a PostgreSQL URL, e.g. `postgresql+psycopg2://user:pass@host:5432/dbname`.
 3. Apply migrations: `make db-upgrade` (or `PYTHONPATH=../.. uv run alembic upgrade head` from `apps/graphql`).
 4. After a model change, generate a revision: `make db-generate MSG=short_description`, then review the file under `alembic/versions/`, run `make db-upgrade`, and commit the new revision.
-5. **Existing databases** that were created with `create_all` before Alembic: after deploying this workflow, either run `alembic upgrade head` if the live schema already matches the initial revision, or use `make db-stamp-head` only if you have verified the schema matches and must not re-run DDL (see Alembic docs for `stamp`).
+5. **Existing databases** that were created with `create_all` before Alembic: if `make db-upgrade` fails with **DuplicateTable** (tables exist but Alembic has no version), the live schema likely already matches an older revision. Stamp that revision, then upgrade:
+   ```bash
+   make db-current          # often empty
+   make db-stamp REV=r7s8t9u0v1w2   # last revision before your pending migration(s)
+   make db-upgrade          # applies only newer revisions
+   ```
+   Use `make db-stamp-head` only when you have verified the schema already matches **head** and must not re-run any DDL. For a clean PostgreSQL database: `make drop-db` then `make db-upgrade` (destructive).
 
 The app still falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when `DATABASE_URL` is unset (handy for quick local runs). The pytest suite forces a SQLite test DB in `tests/conftest.py` and uses `create_all` — it does not run Alembic.
 

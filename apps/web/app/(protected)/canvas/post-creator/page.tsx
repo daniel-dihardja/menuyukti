@@ -14,7 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title, description, openGraph: { title, description } }
 }
 
-export default async function Page() {
+type PageProps = {
+  searchParams: Promise<{ postId?: string }>
+}
+
+export default async function Page({ searchParams }: PageProps) {
   const tSidebar = await getTranslations('sidebar')
   const tPostCreator = await getTranslations('postCreator')
   const { isAuthenticated, userId } = await auth()
@@ -22,17 +26,20 @@ export default async function Page() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
+  const params = await searchParams
+  const postId = params.postId?.trim() || null
+
   return (
     <AnalyticsPageShell
       title={tPostCreator('title')}
       breadcrumbs={[
-        { label: tSidebar('studio'), href: routes.canvas },
+        { label: tSidebar('posts'), href: routes.posts },
         { label: tPostCreator('title'), href: routes.canvasPostCreator },
       ]}
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <PostCreatorDynamic />
+      <PostCreatorDynamic postId={postId} />
     </AnalyticsPageShell>
   )
 }

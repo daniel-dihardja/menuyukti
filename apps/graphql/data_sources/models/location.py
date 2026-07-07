@@ -45,7 +45,10 @@ class Location(Base):
     )
 
     workspace: Mapped[Workspace | None] = relationship(back_populates="locations")
-    instagram_posts: Mapped[list[InstagramPost]] = relationship(back_populates="location")
+    instagram_posts: Mapped[list[InstagramPost]] = relationship(
+        back_populates="location",
+        foreign_keys="InstagramPost.location_id",
+    )
     nodes: Mapped[list[Node]] = relationship(
         "Node",
         back_populates="location",

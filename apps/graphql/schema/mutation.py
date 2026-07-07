@@ -4,6 +4,7 @@ from graphql.schema.mutations import (
     CreateImageAiFlowMutation,
     CreateLocationMutation,
     CreateNodeMutation,
+    CreatePostMutation,
     CreateWorkflowFromPayloadMutation,
     CreateWorkspaceMutation,
     DeleteAnalyticsRunMutation,
@@ -35,6 +36,7 @@ from graphql.schema.mutations import (
 class Mutation(
     UploadSalesReportMutation,
     CreateNodeMutation,
+    CreatePostMutation,
     CreateWorkflowFromPayloadMutation,
     DeleteNodeMutation,
     UpdateNodeMutation,

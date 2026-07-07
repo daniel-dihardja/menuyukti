@@ -29,9 +29,7 @@ def build_order_metrics(
     """Return average order size/revenue and venue slot demand profile."""
     facts = order_facts if order_facts is not None else load_order_facts(session, run.id, info=info)
     slot_demand_profile = (
-        compute_slot_demand_profile_from_orders(facts_to_combo_timing_rows(facts))
-        if facts
-        else []
+        compute_slot_demand_profile_from_orders(facts_to_combo_timing_rows(facts)) if facts else []
     )
 
     if not facts:

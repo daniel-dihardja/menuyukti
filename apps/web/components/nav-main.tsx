@@ -9,6 +9,7 @@ import {
   MapPin,
   Megaphone,
   Sparkles,
+  SquarePen,
   Store,
 } from 'lucide-react'
 import {
@@ -70,7 +71,12 @@ const NAV_WORKSPACE: NavItem[] = [
     href: routes.canvas,
     icon: <Sparkles className="w-4 h-4" />,
     separatorBefore: true,
-    children: [{ key: 'postCreator', labelKey: 'postCreator', href: routes.canvasPostCreator }],
+  },
+  {
+    key: 'posts',
+    labelKey: 'posts',
+    href: routes.posts,
+    icon: <SquarePen className="w-4 h-4" />,
   },
   {
     key: 'workflows',

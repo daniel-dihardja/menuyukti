@@ -1,6 +1,7 @@
 from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_location import CreateLocationMutation
 from .create_node import CreateNodeMutation
+from .create_post import CreatePostMutation
 from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
@@ -25,6 +26,7 @@ __all__ = [
     "CreateImageAiFlowMutation",
     "CreateLocationMutation",
     "CreateNodeMutation",
+    "CreatePostMutation",
     "CreateWorkflowFromPayloadMutation",
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
