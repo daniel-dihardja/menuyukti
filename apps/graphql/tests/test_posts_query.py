@@ -3,7 +3,13 @@
 import asyncio
 from datetime import UTC, datetime
 
-from graphql.data_sources import InstagramPost, SessionLocal, Workspace, WorkspaceMembership
+from graphql.data_sources import (
+    InstagramPost,
+    InstagramPostPage,
+    SessionLocal,
+    Workspace,
+    WorkspaceMembership,
+)
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
@@ -17,6 +23,29 @@ query Posts($first: Int) {
     locationId
     createdAt
     updatedAt
+    pages {
+      id
+      sortOrder
+      mediaS3Key
+      prompt
+    }
+  }
+}
+"""
+
+POST_QUERY = """
+query Post($id: ID!) {
+  post(id: $id) {
+    id
+    title
+    status
+    workspaceId
+    pages {
+      id
+      sortOrder
+      mediaS3Key
+      prompt
+    }
   }
 }
 """
@@ -29,6 +58,10 @@ mutation CreatePost($title: String) {
     status
     workspaceId
     locationId
+    pages {
+      id
+      sortOrder
+    }
   }
 }
 """
@@ -39,12 +72,27 @@ mutation DeletePost($id: ID!) {
 }
 """
 
+UPDATE_POST_PAGE = """
+mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
+  updatePostPage(id: $id, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+    id
+    sortOrder
+    mediaS3Key
+    prompt
+  }
+}
+"""
+
 OTHER_USER_ID = "clerk_other_user"
+VALID_MEDIA_KEY = (
+    f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+)
 
 
 def _seed_workspace(*, owner_id: str = GRAPHQL_TEST_USER_ID) -> int:
     session = SessionLocal()
     try:
+        session.query(InstagramPostPage).delete()
         session.query(InstagramPost).delete()
         session.query(WorkspaceMembership).delete()
         session.query(Workspace).delete()
@@ -98,6 +146,8 @@ def test_create_post_and_list_posts():
     assert created["status"] == "draft"
     assert created["locationId"] is None
     assert created["workspaceId"] == str(workspace_id)
+    assert len(created["pages"]) == 1
+    assert created["pages"][0]["sortOrder"] == 0
 
     list_result = asyncio.run(schema.execute(POSTS_QUERY, context_value=graphql_auth_context()))
     assert not list_result.errors, list_result.errors
@@ -105,20 +155,135 @@ def test_create_post_and_list_posts():
     assert len(posts) == 1
     assert posts[0]["id"] == created["id"]
     assert posts[0]["title"] == "Summer special"
+    assert len(posts[0]["pages"]) == 1
+
+
+def test_post_query_returns_single_post_with_pages():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Carousel draft"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+
+    post_result = asyncio.run(
+        schema.execute(
+            POST_QUERY,
+            variable_values={"id": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not post_result.errors, post_result.errors
+    post = post_result.data["post"]
+    assert post is not None
+    assert post["title"] == "Carousel draft"
+    assert len(post["pages"]) == 1
+
+
+def test_post_query_hidden_from_other_workspace_user():
+    workspace_id = _seed_workspace()
+    session = SessionLocal()
+    try:
+        post = InstagramPost(
+            workspace_id=workspace_id,
+            title="Owner draft",
+            status="draft",
+            created_by_clerk_user_id=GRAPHQL_TEST_USER_ID,
+        )
+        session.add(post)
+        session.flush()
+        session.add(InstagramPostPage(post_id=post.id, sort_order=0))
+        session.commit()
+        session.refresh(post)
+        post_id = str(post.id)
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            POST_QUERY,
+            variable_values={"id": post_id},
+            context_value={"user_id": OTHER_USER_ID},
+        )
+    )
+    assert not result.errors, result.errors
+    assert result.data["post"] is None
+
+
+def test_update_post_page_sets_media_and_prompt():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "With image"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    update_result = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "A sunny patio brunch",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not update_result.errors, update_result.errors
+    updated = update_result.data["updatePostPage"]
+    assert updated["mediaS3Key"] == VALID_MEDIA_KEY
+    assert updated["prompt"] == "A sunny patio brunch"
+
+
+def test_update_post_page_rejects_invalid_media_key():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Bad key"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    update_result = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": "users/other-user/posts/evil.webp",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert update_result.errors is not None
 
 
 def test_posts_hidden_from_other_workspace_user():
     workspace_id = _seed_workspace()
     session = SessionLocal()
     try:
-        session.add(
-            InstagramPost(
-                workspace_id=workspace_id,
-                title="Owner draft",
-                status="draft",
-                created_by_clerk_user_id=GRAPHQL_TEST_USER_ID,
-            )
+        post = InstagramPost(
+            workspace_id=workspace_id,
+            title="Owner draft",
+            status="draft",
+            created_by_clerk_user_id=GRAPHQL_TEST_USER_ID,
         )
+        session.add(post)
+        session.flush()
+        session.add(InstagramPostPage(post_id=post.id, sort_order=0))
         session.commit()
     finally:
         session.close()
@@ -134,7 +299,7 @@ def test_delete_post_requires_auth():
 
 
 def test_delete_post_and_list_posts():
-    workspace_id = _seed_workspace()
+    _seed_workspace()
 
     create_result = asyncio.run(
         schema.execute(
@@ -172,6 +337,8 @@ def test_delete_post_denied_for_other_workspace_user():
             created_by_clerk_user_id=GRAPHQL_TEST_USER_ID,
         )
         session.add(post)
+        session.flush()
+        session.add(InstagramPostPage(post_id=post.id, sort_order=0))
         session.commit()
         session.refresh(post)
         post_id = str(post.id)

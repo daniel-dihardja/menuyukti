@@ -13,11 +13,15 @@ import {
   getS3Client,
   userPostsObjectKey,
 } from '@/lib/assets/storage'
+import { graphqlQuery } from '@/lib/graphql/client'
+import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphql/queries/posts'
 import { runTextToImageGeneration } from '@/lib/leonardo'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 const bodySchema = z.object({
   prompt: z.string().trim().min(1).max(3000),
+  postId: z.string().regex(/^\d+$/).optional(),
+  pageId: z.string().regex(/^\d+$/).optional(),
 })
 
 function truncateStack(stack: string, max = 4000): string {
@@ -42,7 +46,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Invalid body' }, { status: 400 })
   }
 
-  const { prompt } = parsed.data
+  const { prompt, postId, pageId } = parsed.data
+  if ((postId && !pageId) || (!postId && pageId)) {
+    return NextResponse.json(
+      { message: 'postId and pageId must be provided together' },
+      { status: 400 },
+    )
+  }
 
   let outBuffer: Buffer
   try {
@@ -91,11 +101,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Storage upload failed' }, { status: 502 })
   }
 
+  if (postId && pageId) {
+    try {
+      await graphqlQuery<UpdatePostPageData>(
+        UPDATE_POST_PAGE_MUTATION,
+        { id: pageId, mediaS3Key: outputKey, prompt },
+        userId,
+      )
+    } catch (err) {
+      console.error('[posts/generate] updatePostPage failed', {
+        userIdPrefix: userId.slice(0, 8),
+        postId,
+        pageId,
+        message: err instanceof Error ? err.message : String(err),
+      })
+      return NextResponse.json({ message: 'Failed to save image to post page' }, { status: 502 })
+    }
+  }
+
   const url = await getPresignedGetUrl(outputKey)
   return NextResponse.json({
     url,
     name: filename,
     size: outBuffer.byteLength,
     createdAt,
+    pageId: pageId ?? null,
   })
 }

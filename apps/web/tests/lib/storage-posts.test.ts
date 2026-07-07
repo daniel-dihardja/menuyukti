@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isObjectKeyForPost,
   isObjectKeyForUser,
+  parsePostObjectKey,
   userPostsObjectKey,
   userPostsPrefix,
 } from '@/lib/assets/storage'
@@ -49,5 +50,20 @@ describe('isObjectKeyForPost', () => {
   it('rejects unsafe filenames', () => {
     const key = `users/${USER_ID}/posts/not-a-uuid.webp`
     expect(isObjectKeyForPost(key, USER_ID)).toBe(false)
+  })
+})
+
+describe('parsePostObjectKey', () => {
+  it('parses valid post keys', () => {
+    const key = userPostsObjectKey(USER_ID, VALID_FILENAME)
+    expect(parsePostObjectKey(key)).toEqual({
+      userId: USER_ID,
+      filename: VALID_FILENAME,
+    })
+  })
+
+  it('rejects invalid keys', () => {
+    expect(parsePostObjectKey(`users/${USER_ID}/${VALID_FILENAME}`)).toBeNull()
+    expect(parsePostObjectKey(`users/${USER_ID}/posts/not-a-uuid.webp`)).toBeNull()
   })
 })

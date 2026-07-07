@@ -20,6 +20,7 @@ from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .update_node import UpdateNodeMutation
+from .update_post_page import UpdatePostPageMutation
 from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
@@ -45,6 +46,7 @@ __all__ = [
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateNodeMutation",
+    "UpdatePostPageMutation",
     "UpdateMenuItemCogsBulkMutation",
     "UpsertMenuItemCogsBulkMutation",
     "UploadSalesReportMutation",

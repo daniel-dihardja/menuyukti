@@ -1,14 +1,71 @@
 import { NextResponse, connection } from 'next/server'
 import { z } from 'zod'
 
+import { deletePostMediaKeys, getPresignedGetUrl, isObjectKeyForPost } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { DELETE_POST_MUTATION, type DeletePostData } from '@/lib/graphql/queries/posts'
+import {
+  DELETE_POST_MUTATION,
+  POST_QUERY,
+  type DeletePostData,
+  type PostData,
+} from '@/lib/graphql/queries/posts'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 const idParamSchema = z.string().trim().min(1).regex(/^\d+$/)
 
 type RouteContext = {
   params: Promise<{ id: string }>
+}
+
+export async function GET(_req: Request, context: RouteContext) {
+  try {
+    await connection()
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) {
+      return authz.response
+    }
+
+    const { id: rawId } = await context.params
+    const idParsed = idParamSchema.safeParse(rawId)
+    if (!idParsed.success) {
+      return NextResponse.json({ error: 'Invalid post id' }, { status: 400 })
+    }
+
+    const data = await graphqlQuery<PostData>(POST_QUERY, { id: idParsed.data }, authz.userId)
+
+    const post = data.post
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    }
+
+    const pages = await Promise.all(
+      post.pages.map(async (page) => {
+        let imageUrl: string | null = null
+        if (page.mediaS3Key && isObjectKeyForPost(page.mediaS3Key, authz.userId)) {
+          imageUrl = await getPresignedGetUrl(page.mediaS3Key)
+        }
+        return {
+          id: page.id,
+          sortOrder: page.sortOrder,
+          prompt: page.prompt,
+          imageUrl,
+        }
+      }),
+    )
+
+    return NextResponse.json({
+      id: post.id,
+      title: post.title,
+      status: post.status,
+      caption: post.caption,
+      mediaType: post.mediaType,
+      workspaceId: post.workspaceId,
+      pages,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load post'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: Request, context: RouteContext) {
@@ -23,6 +80,24 @@ export async function DELETE(_req: Request, context: RouteContext) {
     const idParsed = idParamSchema.safeParse(rawId)
     if (!idParsed.success) {
       return NextResponse.json({ error: 'Invalid post id' }, { status: 400 })
+    }
+
+    const postData = await graphqlQuery<PostData>(POST_QUERY, { id: idParsed.data }, authz.userId)
+
+    const post = postData.post
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    }
+
+    try {
+      await deletePostMediaKeys(post.pages.map((page) => page.mediaS3Key))
+    } catch (err) {
+      console.error('[posts/delete] S3 DeleteObject failed', {
+        userIdPrefix: authz.userId.slice(0, 8),
+        postId: idParsed.data,
+        message: err instanceof Error ? err.message : String(err),
+      })
+      return NextResponse.json({ error: 'Failed to delete post images' }, { status: 502 })
     }
 
     const data = await graphqlQuery<DeletePostData>(

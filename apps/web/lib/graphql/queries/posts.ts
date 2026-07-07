@@ -10,6 +10,11 @@ export const POSTS_QUERY = `
       workspaceId
       createdAt
       updatedAt
+      pages {
+        id
+        sortOrder
+        mediaS3Key
+      }
     }
   }
 `
@@ -25,7 +30,48 @@ export type PostsData = {
     workspaceId: string | null
     createdAt: string | null
     updatedAt: string | null
+    pages: Array<{
+      id: string
+      sortOrder: number
+      mediaS3Key: string | null
+    }>
   }>
+}
+
+export const POST_QUERY = `
+  query Post($id: ID!) {
+    post(id: $id) {
+      id
+      title
+      status
+      caption
+      mediaType
+      workspaceId
+      pages {
+        id
+        sortOrder
+        mediaS3Key
+        prompt
+      }
+    }
+  }
+`
+
+export type PostData = {
+  post: {
+    id: string
+    title: string | null
+    status: string
+    caption: string | null
+    mediaType: string | null
+    workspaceId: string | null
+    pages: Array<{
+      id: string
+      sortOrder: number
+      mediaS3Key: string | null
+      prompt: string | null
+    }>
+  } | null
 }
 
 export const CREATE_POST_MUTATION = `
@@ -36,6 +82,10 @@ export const CREATE_POST_MUTATION = `
       status
       workspaceId
       locationId
+      pages {
+        id
+        sortOrder
+      }
     }
   }
 `
@@ -47,6 +97,10 @@ export type CreatePostData = {
     status: string
     workspaceId: string | null
     locationId: number | null
+    pages: Array<{
+      id: string
+      sortOrder: number
+    }>
   }
 }
 
@@ -58,4 +112,24 @@ export const DELETE_POST_MUTATION = `
 
 export type DeletePostData = {
   deletePost: boolean
+}
+
+export const UPDATE_POST_PAGE_MUTATION = `
+  mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
+    updatePostPage(id: $id, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+      id
+      sortOrder
+      mediaS3Key
+      prompt
+    }
+  }
+`
+
+export type UpdatePostPageData = {
+  updatePostPage: {
+    id: string
+    sortOrder: number
+    mediaS3Key: string | null
+    prompt: string | null
+  }
 }

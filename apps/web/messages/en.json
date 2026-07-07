@@ -692,6 +692,11 @@
     "title": "Post Creator",
     "description": "Generate post images with AI from a text prompt.",
     "thumbnailsPane": "Post page thumbnails",
+    "thumbnails": {
+      "ariaLabel": "Post page thumbnails",
+      "pageLabel": "Page {number}",
+      "empty": "No pages yet"
+    },
     "previewPane": "Generated post image",
     "promptPane": "Prompt",
     "prompt": {
@@ -710,6 +715,7 @@
       "gridSafeZoneDescription": "Shows where Instagram may crop portrait posts in profile grid thumbnails ({insetX}px from the left and right edges, {insetY}px from the top and bottom edges)."
     },
     "toast": {
+      "loadError": "Failed to load post. Please refresh and try again.",
       "generateError": "Failed to generate post image. Please try again.",
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again."

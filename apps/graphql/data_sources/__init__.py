@@ -12,6 +12,7 @@ __all__ = [
     "OrderFact",
     "MenuItemCogs",
     "InstagramPost",
+    "InstagramPostPage",
     "Node",
     "ImageAiFlow",
     "SessionLocal",

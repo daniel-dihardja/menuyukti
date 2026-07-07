@@ -1,4 +1,4 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { DeleteObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 /** Short-lived presigned GET URLs for private bucket objects (list + post-upload display). */
@@ -103,6 +103,50 @@ export function isObjectKeyForPost(key: string, userId: string): boolean {
   if (!key.startsWith(prefix) || key.length <= prefix.length) return false
   const filename = key.slice(prefix.length)
   return isSafeAssetFilename(filename)
+}
+
+/** Parse and validate `users/{userId}/posts/{filename}` keys. */
+export function parsePostObjectKey(key: string): { userId: string; filename: string } | null {
+  const postsMarker = `/${ASSET_POSTS_SUBDIR}/`
+  const usersPrefix = `${ASSET_USERS_PREFIX}/`
+  if (!key.startsWith(usersPrefix) || !key.includes(postsMarker)) return null
+
+  const userIdEnd = key.indexOf(postsMarker)
+  const userId = key.slice(usersPrefix.length, userIdEnd)
+  if (!userId || userId.includes('/')) return null
+  if (!isObjectKeyForPost(key, userId)) return null
+
+  const filename = key.slice(userIdEnd + postsMarker.length)
+  return { userId, filename }
+}
+
+/** Delete validated post media objects from S3 (no-op for invalid or missing keys). */
+export async function deletePostMediaKeys(
+  keys: Iterable<string | null | undefined>,
+): Promise<void> {
+  const objectKeys = [
+    ...new Set(
+      [...keys]
+        .filter((key): key is string => typeof key === 'string' && key.length > 0)
+        .filter((key) => parsePostObjectKey(key) !== null),
+    ),
+  ]
+
+  if (objectKeys.length === 0) return
+
+  const s3 = getS3Client()
+  const bucket = getS3Bucket()
+
+  await Promise.all(
+    objectKeys.map((key) =>
+      s3.send(
+        new DeleteObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        }),
+      ),
+    ),
+  )
 }
 
 /** S3 prefix: `users/<userId>/reels/`. */

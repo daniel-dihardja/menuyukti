@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import strawberry
+from sqlalchemy.orm import joinedload
 
 from graphql.context import request_session_scope
-from graphql.data_sources import InstagramPost, Workspace, WorkspaceMembership
+from graphql.data_sources import InstagramPost, InstagramPostPage, Workspace, WorkspaceMembership
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.posts import _post_to_gql
 from graphql.schema.types import PostType
@@ -51,6 +52,15 @@ class CreatePostMutation:
                 created_by_clerk_user_id=user_id,
             )
             session.add(row)
+            session.flush()
+            session.add(InstagramPostPage(post_id=row.id, sort_order=0))
             session.commit()
-            session.refresh(row)
-            return _post_to_gql(row)
+            loaded = (
+                session.query(InstagramPost)
+                .options(joinedload(InstagramPost.pages))
+                .filter(InstagramPost.id == row.id)
+                .first()
+            )
+            if loaded is None:
+                raise ValueError("Failed to load created post")
+            return _post_to_gql(loaded)

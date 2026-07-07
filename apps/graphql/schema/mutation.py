@@ -23,6 +23,7 @@ from graphql.schema.mutations import (
     UpdateLocationMutation,
     UpdateMenuItemCogsBulkMutation,
     UpdateNodeMutation,
+    UpdatePostPageMutation,
     UploadSalesReportMutation,
     UpsertMenuItemCogsBulkMutation,
 )
@@ -42,6 +43,7 @@ class Mutation(
     DeleteNodeMutation,
     DeletePostMutation,
     UpdateNodeMutation,
+    UpdatePostPageMutation,
     ReplacePassCriteriaMutation,
     SetPassCriterionStatusMutation,
     SetPassCriteriaStatusesMutation,
