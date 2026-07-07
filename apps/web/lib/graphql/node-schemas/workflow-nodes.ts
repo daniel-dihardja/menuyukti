@@ -105,7 +105,7 @@ export const resultNodeSchema = baseNode.extend({
 /** Workflow root node `data` JSON. */
 export const workflowDataSchema = z
   .object({
-    analyticsRunId: z.number().optional(),
+    analyticsRunId: z.union([z.number().int().positive(), z.string().regex(/^\d+$/)]).optional(),
   })
   .passthrough()
 

@@ -1365,10 +1365,10 @@
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
         "stopChatAriaLabel": "Stop generating",
         "submitChatAriaLabel": "Send message",
-        "mobileChatOpenLabel": "Workflow assistant",
-        "mobileChatOpenAriaLabel": "Open workflow assistant",
-        "mobileChatSheetTitle": "Workflow assistant",
-        "mobileChatSheetDescription": "Chat with the workflow assistant to plan milestones and get help.",
+        "mobileChatOpenLabel": "Assistant & visualizations",
+        "mobileChatOpenAriaLabel": "Open assistant and visualizations",
+        "mobileChatSheetTitle": "Assistant & visualizations",
+        "mobileChatSheetDescription": "Chat with the workflow assistant or add charts from your linked sales report.",
         "mobileChatCloseAriaLabel": "Close assistant",
         "mobileChatEmptyHint": "Ask about milestones, data, or next steps.",
         "mobileChatContinueHint": "Continue conversation",
@@ -2028,6 +2028,31 @@
           "generating": "Generating...",
           "generate": "Generate",
           "generateError": "Couldn't generate the image. Try again."
+        }
+      },
+      "sidePanel": {
+        "chatTab": "Chat",
+        "visualizationsTab": "Visualizations"
+      },
+      "visualizations": {
+        "panelTitle": "Charts",
+        "emptyTitle": "No charts yet",
+        "emptyDescription": "Add a chart from the catalog to explore analytics alongside your workflow.",
+        "addButton": "Add visualization",
+        "addMenuAriaLabel": "Add visualization",
+        "removeAriaLabel": "Remove {title}",
+        "noAnalyticsRunTitle": "Link a sales report",
+        "noAnalyticsRunDescription": "This workflow needs a linked sales report before charts can load. Create a new workflow with a sales report selected, or update the workflow when that option is available.",
+        "loadErrorTitle": "Could not load chart",
+        "loadErrorDescription": "The chart data could not be loaded. Please try again.",
+        "retry": "Retry",
+        "emptyDataDescription": "No slot demand data is available for this sales report.",
+        "fallbackRunHint": "Showing data from a newer sales report for this location because the workflow's linked report has no slot demand data.",
+        "catalog": {
+          "venue_slot_strength_heatmap": {
+            "title": "Venue slot strength",
+            "description": "Weekday and meal-period demand heatmap for this location."
+          }
         }
       },
       "workspace": {

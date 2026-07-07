@@ -98,6 +98,21 @@ export function WorkflowPreviewPanelSkeleton({ className }: { className?: string
   )
 }
 
+function WorkflowSidePanelSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn('flex h-full min-h-0 min-w-0 flex-col overflow-hidden', className)}
+    >
+      <div className="flex shrink-0 gap-2 border-b px-2 pt-2">
+        <Skeleton className="h-8 w-14 rounded-md" />
+        <Skeleton className="h-8 w-24 rounded-md" />
+      </div>
+      <WorkflowChatPanelSkeleton className="min-h-0 flex-1" />
+    </div>
+  )
+}
+
 function WorkflowChatPanelSkeleton({ className }: { className?: string }) {
   return (
     <div
@@ -149,7 +164,7 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
               <WorkflowPreviewPanelSkeleton className="flex-1" />
             </div>
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-l">
-              <WorkflowChatPanelSkeleton />
+              <WorkflowSidePanelSkeleton />
             </div>
           </div>
         </div>
