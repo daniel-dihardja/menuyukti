@@ -7,7 +7,12 @@ import {
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
-import { getPresignedGetUrl, getS3Bucket, getS3Client, userObjectKey } from '@/lib/assets/storage'
+import {
+  getPresignedGetUrl,
+  getS3Bucket,
+  getS3Client,
+  userPostsObjectKey,
+} from '@/lib/assets/storage'
 import { runTextToImageGeneration } from '@/lib/leonardo'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
@@ -63,7 +68,7 @@ export async function POST(req: Request) {
 
   const id = randomUUID()
   const filename = `${id}.webp`
-  const outputKey = userObjectKey(userId, filename)
+  const outputKey = userPostsObjectKey(userId, filename)
   const createdAt = new Date().toISOString()
 
   const s3 = getS3Client()

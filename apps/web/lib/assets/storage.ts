@@ -58,6 +58,7 @@ export function isSafeAssetFilename(name: string): boolean {
 
 const ASSET_DESIGNS_SUBDIR = 'designs'
 const ASSET_PHOTOS_SUBDIR = 'photos'
+const ASSET_POSTS_SUBDIR = 'posts'
 const ASSET_REELS_SUBDIR = 'reels'
 const ASSET_IG_STORIES_SUBDIR = 'igstories'
 
@@ -83,6 +84,22 @@ export function userPhotosObjectKey(userId: string, filename: string): string {
 
 export function isObjectKeyForPhoto(key: string, userId: string): boolean {
   const prefix = userPhotosPrefix(userId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeAssetFilename(filename)
+}
+
+/** S3 prefix: `users/<userId>/posts/`. */
+export function userPostsPrefix(userId: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_POSTS_SUBDIR}/`
+}
+
+export function userPostsObjectKey(userId: string, filename: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_POSTS_SUBDIR}/${filename}`
+}
+
+export function isObjectKeyForPost(key: string, userId: string): boolean {
+  const prefix = userPostsPrefix(userId)
   if (!key.startsWith(prefix) || key.length <= prefix.length) return false
   const filename = key.slice(prefix.length)
   return isSafeAssetFilename(filename)
