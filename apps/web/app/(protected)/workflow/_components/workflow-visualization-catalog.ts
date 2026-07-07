@@ -1,4 +1,4 @@
-export type WorkflowVisualizationId = 'venue_slot_strength_heatmap'
+export type WorkflowVisualizationId = 'venue_slot_strength_heatmap' | 'menu_item_heatmap'
 
 export type WorkflowVisualizationCatalogEntry = {
   id: WorkflowVisualizationId
@@ -6,6 +6,7 @@ export type WorkflowVisualizationCatalogEntry = {
 
 export const WORKFLOW_VISUALIZATION_CATALOG: WorkflowVisualizationCatalogEntry[] = [
   { id: 'venue_slot_strength_heatmap' },
+  { id: 'menu_item_heatmap' },
 ]
 
 export const WORKFLOW_VISUALIZATION_IDS: WorkflowVisualizationId[] =

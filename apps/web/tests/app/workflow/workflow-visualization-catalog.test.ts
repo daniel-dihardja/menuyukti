@@ -10,9 +10,9 @@ import {
 } from '@/app/(protected)/workflow/_components/workflow-visualization-catalog'
 
 describe('workflow-visualization-catalog', () => {
-  it('includes venue slot strength heatmap in the catalog', () => {
+  it('includes venue slot strength and menu item heatmap in the catalog', () => {
     expect(WORKFLOW_VISUALIZATION_CATALOG).toEqual(
-      expect.arrayContaining([{ id: 'venue_slot_strength_heatmap' }]),
+      expect.arrayContaining([{ id: 'venue_slot_strength_heatmap' }, { id: 'menu_item_heatmap' }]),
     )
   })
 
@@ -34,9 +34,9 @@ describe('workflow-visualization-catalog', () => {
   it('parseStoredVisualizationIds keeps only known ids', () => {
     expect(
       parseStoredVisualizationIds(
-        JSON.stringify(['venue_slot_strength_heatmap', 'unknown_chart', 42]),
+        JSON.stringify(['venue_slot_strength_heatmap', 'menu_item_heatmap', 'unknown_chart', 42]),
       ),
-    ).toEqual(['venue_slot_strength_heatmap'])
+    ).toEqual(['venue_slot_strength_heatmap', 'menu_item_heatmap'])
   })
 
   it('parseStoredVisualizationIds returns empty array for invalid json', () => {
@@ -46,11 +46,17 @@ describe('workflow-visualization-catalog', () => {
 
   it('getAvailableCatalogEntries hides already-added charts', () => {
     expect(getAvailableCatalogEntries([])).toHaveLength(WORKFLOW_VISUALIZATION_CATALOG.length)
-    expect(getAvailableCatalogEntries(['venue_slot_strength_heatmap'])).toEqual([])
+    expect(getAvailableCatalogEntries(['venue_slot_strength_heatmap'])).toEqual([
+      { id: 'menu_item_heatmap' },
+    ])
+    expect(
+      getAvailableCatalogEntries(['venue_slot_strength_heatmap', 'menu_item_heatmap']),
+    ).toEqual([])
   })
 
   it('isWorkflowVisualizationId validates catalog ids', () => {
     expect(isWorkflowVisualizationId('venue_slot_strength_heatmap')).toBe(true)
+    expect(isWorkflowVisualizationId('menu_item_heatmap')).toBe(true)
     expect(isWorkflowVisualizationId('other')).toBe(false)
   })
 })

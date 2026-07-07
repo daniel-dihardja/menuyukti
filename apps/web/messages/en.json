@@ -2047,11 +2047,16 @@
         "loadErrorDescription": "The chart data could not be loaded. Please try again.",
         "retry": "Retry",
         "emptyDataDescription": "No slot demand data is available for this sales report.",
+        "emptyMenuHeatmapDescription": "No menu heatmap data is available for this sales report.",
         "fallbackRunHint": "Showing data from a newer sales report for this location because the workflow's linked report has no slot demand data.",
         "catalog": {
           "venue_slot_strength_heatmap": {
             "title": "Venue slot strength",
             "description": "Weekday and meal-period demand heatmap for this location."
+          },
+          "menu_item_heatmap": {
+            "title": "Menu item heatmap",
+            "description": "When each menu item sells by hour and day of week."
           }
         }
       },

@@ -19,6 +19,7 @@ import {
   getAvailableCatalogEntries,
   type WorkflowVisualizationId,
 } from './workflow-visualization-catalog'
+import { WorkflowMenuItemHeatmapCard } from './workflow-menu-item-heatmap-card'
 import { WorkflowVenueSlotStrengthCard } from './workflow-venue-slot-strength-card'
 
 type WorkflowVisualizationsPaneProps = {
@@ -39,6 +40,8 @@ function VisualizationCardBody({
       return (
         <WorkflowVenueSlotStrengthCard analyticsRunId={analyticsRunId} locationId={locationId} />
       )
+    case 'menu_item_heatmap':
+      return <WorkflowMenuItemHeatmapCard analyticsRunId={analyticsRunId} locationId={locationId} />
     default:
       return null
   }
