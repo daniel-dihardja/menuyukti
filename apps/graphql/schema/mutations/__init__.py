@@ -1,11 +1,14 @@
 from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_location import CreateLocationMutation
 from .create_node import CreateNodeMutation
+from .create_post import CreatePostMutation
 from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_node import DeleteNodeMutation
+from .delete_post import DeletePostMutation
+from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
 from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
@@ -18,6 +21,7 @@ from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .update_node import UpdateNodeMutation
+from .update_post_page import UpdatePostPageMutation
 from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
@@ -25,11 +29,14 @@ __all__ = [
     "CreateImageAiFlowMutation",
     "CreateLocationMutation",
     "CreateNodeMutation",
+    "CreatePostMutation",
     "CreateWorkflowFromPayloadMutation",
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteImageAiFlowMutation",
     "DeleteNodeMutation",
+    "DeletePostMutation",
+    "DeletePostPageMediaVersionMutation",
     "InviteWorkspaceMemberMutation",
     "MilestoneAgentRunMutation",
     "RemoveWorkspaceMemberMutation",
@@ -41,6 +48,7 @@ __all__ = [
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateNodeMutation",
+    "UpdatePostPageMutation",
     "UpdateMenuItemCogsBulkMutation",
     "UpsertMenuItemCogsBulkMutation",
     "UploadSalesReportMutation",

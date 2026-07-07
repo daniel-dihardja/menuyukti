@@ -3,7 +3,7 @@ UV=uv run
 UVICORN=uv run uvicorn
 ALEMBIC=PYTHONPATH=../.. uv run alembic
 
-.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp-head db-check drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
+.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
 
 install:
 	uv sync --all-groups
@@ -30,6 +30,12 @@ db-history:
 
 db-current:
 	$(ALEMBIC) current
+
+# Mark the DB at a revision without running DDL (existing create_all DBs). Example:
+#   make db-stamp REV=r7s8t9u0v1w2 && make db-upgrade
+db-stamp:
+	@if [ -z "$(REV)" ]; then echo "REV is required: make db-stamp REV=r7s8t9u0v1w2"; exit 1; fi
+	$(ALEMBIC) stamp $(REV)
 
 db-stamp-head:
 	$(ALEMBIC) stamp head

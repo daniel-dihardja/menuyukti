@@ -420,6 +420,217 @@ export async function createNanoBananaCompositionGeneration(
   return genId
 }
 
+/** Default Nano Banana model for prompt-only generations (no image reference). */
+export const TEXT_TO_IMAGE_MODEL = 'gemini-2.5-flash-image'
+
+export type CreateTextToImageParams = {
+  model: string
+  prompt: string
+  width: number
+  height: number
+  styleIds?: string[]
+  promptEnhance?: 'OFF' | 'ON'
+}
+
+/**
+ * Nano Banana text-to-image — POST /api/rest/v2/generations without image_reference guidances.
+ * @see https://docs.leonardo.ai/docs/nano-banana
+ */
+export async function createTextToImageGeneration(
+  params: CreateTextToImageParams,
+): Promise<string> {
+  const { model, prompt, width, height, styleIds, promptEnhance = 'OFF' } = params
+
+  const w = snapNanoBananaDimension(width)
+  const h = snapNanoBananaDimension(height)
+
+  const parameters: Record<string, unknown> = {
+    prompt,
+    quantity: 1,
+    prompt_enhance: promptEnhance,
+    width: w,
+    height: h,
+  }
+
+  if (styleIds && styleIds.length > 0) {
+    parameters.style_ids = styleIds
+  }
+
+  const body = {
+    model,
+    parameters,
+    public: false,
+  }
+
+  logInfo('generations v2: creating text-to-image job', {
+    model,
+    width: w,
+    height: h,
+    promptPreview: truncateBody(prompt, 120),
+    hasStyleIds: Boolean(styleIds?.length),
+  })
+
+  const res = await fetch(`${BASE_V2}/generations`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  })
+
+  const rawText = await res.text()
+  const data = parseJsonBody(rawText)
+
+  if (data === null && rawText) {
+    logError('generations v2 text-to-image: response is not JSON', {
+      status: res.status,
+      body: truncateBody(rawText),
+    })
+    throw new Error(`Leonardo v2 text-to-image failed: ${res.status} (invalid JSON)`)
+  }
+
+  if (!res.ok) {
+    logError('generations v2 text-to-image: API error', {
+      status: res.status,
+      body: truncateBody(rawText),
+    })
+    throw new Error(`Leonardo v2 text-to-image failed: ${res.status} ${truncateBody(rawText, 500)}`)
+  }
+
+  let genId = generationIdFromCreateResponse(data)
+
+  if (!genId) {
+    const loc = res.headers.get('location') ?? res.headers.get('Location')
+    if (loc) {
+      const m = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i.exec(loc)
+      if (m?.[1]) {
+        genId = m[1]
+        logInfo('generations v2 text-to-image: using generation id from Location header', {
+          generationId: genId,
+        })
+      }
+    }
+  }
+
+  if (!genId) {
+    const snippet = truncateBody(JSON.stringify(data), 800)
+    logError('generations v2 text-to-image: missing generationId in response', { raw: snippet })
+    throw new Error(
+      `Leonardo v2 text-to-image response missing generationId.${process.env.NODE_ENV === 'development' ? ` Response: ${snippet}` : ''}`,
+    )
+  }
+
+  logInfo('generations v2 text-to-image: job created', { generationId: genId })
+  return genId
+}
+
+async function downloadLeonardoResult(imageUrl: string, logContext: string): Promise<Buffer> {
+  const imgRes = await fetch(imageUrl)
+  if (!imgRes.ok) {
+    logError(`${logContext}: download result failed`, {
+      status: imgRes.status,
+      urlHost: (() => {
+        try {
+          return new URL(imageUrl).host
+        } catch {
+          return 'invalid-url'
+        }
+      })(),
+    })
+    throw new Error(`Failed to download Leonardo result: ${imgRes.status}`)
+  }
+
+  const arrayBuffer = await imgRes.arrayBuffer()
+  return Buffer.from(arrayBuffer)
+}
+
+/**
+ * Full pipeline: text prompt → v2 Nano Banana generation → poll → download → resize to target 4:5 → WebP.
+ */
+export async function runTextToImageGeneration(
+  prompt: string,
+  width: number,
+  height: number,
+  model: string = TEXT_TO_IMAGE_MODEL,
+): Promise<Buffer> {
+  logInfo('runTextToImageGeneration: start', {
+    model,
+    width,
+    height,
+    promptPreview: truncateBody(prompt, 120),
+  })
+
+  const generationId = await createTextToImageGeneration({
+    model,
+    prompt,
+    width,
+    height,
+  })
+  const imageUrl = await pollGeneration(generationId)
+  const raw = await downloadLeonardoResult(imageUrl, 'runTextToImageGeneration')
+  const out = await sharp(raw)
+    .resize(width, height, { fit: 'cover' })
+    .webp({ quality: 85 })
+    .toBuffer()
+
+  logInfo('runTextToImageGeneration: done', { outputBytes: out.length })
+  return out
+}
+
+/**
+ * Text-to-image with optional reference photos — uploads init images, generates, resizes to target 4:5 → WebP.
+ */
+export async function runTextToImageWithReferences(
+  prompt: string,
+  width: number,
+  height: number,
+  referenceBuffers: Buffer[],
+  model: string = TEXT_TO_IMAGE_MODEL,
+): Promise<Buffer> {
+  if (referenceBuffers.length === 0) {
+    return runTextToImageGeneration(prompt, width, height, model)
+  }
+
+  logInfo('runTextToImageWithReferences: start', {
+    model,
+    width,
+    height,
+    referenceCount: referenceBuffers.length,
+    promptPreview: truncateBody(prompt, 120),
+  })
+
+  const flow: NanoBananaFlowConfig = { model, prompt }
+
+  let generationId: string
+  if (referenceBuffers.length === 1) {
+    const initImageId = await uploadInitImage(referenceBuffers[0]!, 'webp')
+    generationId = await createNanoBananaGeneration({
+      ...flow,
+      uploadedImageId: initImageId,
+      width,
+      height,
+    })
+  } else {
+    const uploadedImageIds = await Promise.all(
+      referenceBuffers.map((buf) => uploadInitImage(buf, 'webp')),
+    )
+    generationId = await createNanoBananaCompositionGeneration({
+      ...flow,
+      uploadedImageIds,
+      width,
+      height,
+    })
+  }
+
+  const imageUrl = await pollGeneration(generationId)
+  const raw = await downloadLeonardoResult(imageUrl, 'runTextToImageWithReferences')
+  const out = await sharp(raw)
+    .resize(width, height, { fit: 'cover' })
+    .webp({ quality: 85 })
+    .toBuffer()
+
+  logInfo('runTextToImageWithReferences: done', { outputBytes: out.length })
+  return out
+}
+
 /**
  * Poll until COMPLETE — GET /api/rest/v1/generations/{id} (only status endpoint Leonardo documents).
  */

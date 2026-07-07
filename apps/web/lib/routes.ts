@@ -8,6 +8,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflow',
   '/canvas',
+  '/posts',
   '/content',
   '/advisor',
   '/print-orders',
@@ -64,7 +65,11 @@ export const routes = {
 
   /** AI studio (brand library + generation). */
   canvas: '/canvas',
+  canvasPostCreator: '/canvas/post-creator',
   canvasSession: (id: string | number) => `/canvas/${id}`,
+  /** Standalone Instagram post drafts (admin). */
+  posts: '/posts',
+  postsDetail: (id: string | number) => `/posts/${encodeURIComponent(String(id))}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
   agent: '/advisor',
   printOrders: '/print-orders',

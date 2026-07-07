@@ -570,6 +570,7 @@
     "workflows": "Workflow",
     "skills": "Skills & tools",
     "studio": "Studio",
+    "posts": "Posts",
     "content": "Content",
     "photos": "Photos",
     "igReels": "IG Reels",
@@ -685,6 +686,107 @@
       "previewDescription": "Browse popular pieces without leaving Menuyukti. Checkout opens in the public catalog.",
       "previewFootnote": "The full catalog is open to everyone — share links with your team.",
       "browseFullCatalog": "Browse full catalogue"
+    }
+  },
+  "postCreator": {
+    "title": "Post Creator",
+    "description": "Generate post images with AI from a text prompt.",
+    "thumbnailsPane": "Post page thumbnails",
+    "thumbnails": {
+      "ariaLabel": "Post page thumbnails",
+      "pageLabel": "Page {number}",
+      "empty": "No pages yet"
+    },
+    "previewPane": "Generated post image",
+    "promptPane": "Prompt",
+    "prompt": {
+      "label": "Image prompt",
+      "placeholder": "Describe the Instagram post image you want to generate… Type @ to attach a reference photo.",
+      "generate": "Generate image",
+      "generating": "Generating…",
+      "picker": {
+        "ariaLabel": "Reference photo picker",
+        "empty": "No matching photos. Upload one or add photos in Content → Photos.",
+        "upload": "Upload photo",
+        "uploading": "Uploading…",
+        "uploadError": "Couldn’t upload that photo. Try again.",
+        "maxReached": "Maximum reference photos reached. Remove one to add another."
+      },
+      "references": {
+        "ariaLabel": "Reference photos for generation",
+        "remove": "Remove reference photo"
+      }
+    },
+    "preview": {
+      "ariaLabel": "Generated post image preview",
+      "emptyTitle": "No post image yet",
+      "emptyDescription": "Enter a prompt in the panel on the right and generate an image.",
+      "dimensionsLabel": "Post size",
+      "dimensions": "{width} × {height}",
+      "gridSafeZoneToggle": "Grid thumbnail safe zone",
+      "gridSafeZoneDescription": "Shows where Instagram may crop portrait posts in profile grid thumbnails ({insetX}px from the left and right edges, {insetY}px from the top and bottom edges).",
+      "previousVersion": "Previous generated image",
+      "nextVersion": "Next generated image",
+      "versionIndicator": "{current} of {total}",
+      "versionsAriaLabel": "Generated image versions",
+      "versionOptionLabel": "Generated image {current} of {total}",
+      "versionOptionPreviewLabel": "Generated image {current} of {total}, previewing",
+      "versionOptionPostImageLabel": "Generated image {current} of {total}, post image",
+      "versionOptionPostImagePreviewLabel": "Generated image {current} of {total}, post image and previewing",
+      "useAsPostImage": "Use as post image",
+      "useAsPostImageCommitting": "Setting post image…",
+      "committingPostImage": "Setting post image…",
+      "generating": "Generating…",
+      "deleteImage": "Delete image",
+      "deleteConfirmTitle": "Delete this generated image?",
+      "deleteConfirmDescription": "This removes the image from this page's version history. This cannot be undone.",
+      "deleteConfirmCancel": "Cancel",
+      "deleteConfirmAction": "Delete image",
+      "deleteImageDeleting": "Deleting…"
+    },
+    "toast": {
+      "loadError": "Failed to load post. Please refresh and try again.",
+      "generateError": "Failed to generate post image. Please try again.",
+      "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
+      "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
+      "imageSelectError": "Failed to update post image. Please try again.",
+      "deleteImageError": "Failed to delete image. Please try again."
+    }
+  },
+  "posts": {
+    "title": "Posts",
+    "description": "Create and manage standalone Instagram post drafts.",
+    "create": "Create new post",
+    "creating": "Creating…",
+    "createError": "Failed to create post",
+    "empty": {
+      "title": "No posts yet",
+      "description": "Create your first post draft to start designing in Post Creator."
+    },
+    "table": {
+      "index": "#",
+      "title": "Title",
+      "status": "Status",
+      "updatedAt": "Last updated",
+      "updated": "Updated {date}",
+      "untitled": "Untitled post",
+      "action": "Actions",
+      "actionsForRow": "Actions for {name}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete this post?",
+      "deleteConfirmDescription": "This permanently removes the post draft. You can't undo this action.",
+      "deleteConfirmCancel": "Cancel",
+      "deleteConfirmAction": "Delete post",
+      "deleteError": "Could not delete the post. Please try again.",
+      "statusLabels": {
+        "draft": "Draft",
+        "published": "Published"
+      },
+      "mobile": {
+        "actionsTrigger": "Actions",
+        "sheetDescription": "Edit or delete this post"
+      }
     }
   },
   "photos": {

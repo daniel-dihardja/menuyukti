@@ -139,9 +139,7 @@ def test_menu_combos_with_synthetic_facts(analytics_run_with_qa_data):
     if expected["pairs"]:
         assert payload["pairs"][0]["lift"] == pytest.approx(expected["pairs"][0]["lift"])
         top_timing = payload["topPairTiming"]
-        assert len(top_timing) == len(
-            [p for p in payload["pairs"] if p["lift"] >= 1.5]
-        )
+        assert len(top_timing) == len([p for p in payload["pairs"] if p["lift"] >= 1.5])
         if top_timing:
             top_pair = max(payload["pairs"], key=lambda p: (p["lift"], p["coOrderCount"]))
             assert top_timing[0]["menuA"] == top_pair["menuA"]

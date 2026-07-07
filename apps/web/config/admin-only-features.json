@@ -9,8 +9,8 @@
     {
       "id": "studio",
       "description": "AI asset studio (brand library + generation).",
-      "routePrefixes": ["/canvas"],
-      "navKeys": ["studio"]
+      "routePrefixes": ["/canvas", "/posts"],
+      "navKeys": ["studio", "posts"]
     },
     {
       "id": "printOrders",
