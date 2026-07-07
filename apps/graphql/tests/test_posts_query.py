@@ -90,6 +90,23 @@ mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
 }
 """
 
+CREATE_POST_PAGE = """
+mutation CreatePostPage($postId: ID!, $mediaS3Key: String, $prompt: String) {
+  createPostPage(postId: $postId, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+    id
+    sortOrder
+    mediaS3Key
+    prompt
+    mediaVersions {
+      id
+      mediaS3Key
+      prompt
+      createdAt
+    }
+  }
+}
+"""
+
 OTHER_USER_ID = "clerk_other_user"
 VALID_MEDIA_KEY = f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 VALID_MEDIA_KEY_2 = f"users/{GRAPHQL_TEST_USER_ID}/posts/bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
@@ -668,3 +685,134 @@ def test_delete_post_page_media_version_last_version_clears_committed():
     page = delete_result.data["deletePostPageMediaVersion"]
     assert page["mediaS3Key"] is None
     assert page["mediaVersions"] == []
+
+
+def test_create_post_page_requires_auth():
+    result = asyncio.run(
+        schema.execute(
+            CREATE_POST_PAGE,
+            variable_values={"postId": "1"},
+            context_value={},
+        )
+    )
+    assert result.errors is not None
+
+
+def test_create_post_page_adds_second_page():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Carousel"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+
+    page_result = asyncio.run(
+        schema.execute(
+            CREATE_POST_PAGE,
+            variable_values={"postId": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not page_result.errors, page_result.errors
+    page = page_result.data["createPostPage"]
+    assert page["sortOrder"] == 1
+    assert page["mediaS3Key"] is None
+    assert page["mediaVersions"] == []
+
+
+def test_create_post_page_sets_media_and_prompt():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "With media"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+
+    page_result = asyncio.run(
+        schema.execute(
+            CREATE_POST_PAGE,
+            variable_values={
+                "postId": post_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "Copied prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not page_result.errors, page_result.errors
+    page = page_result.data["createPostPage"]
+    assert page["sortOrder"] == 1
+    assert page["mediaS3Key"] == VALID_MEDIA_KEY
+    assert page["prompt"] == "Copied prompt"
+    assert len(page["mediaVersions"]) == 1
+    assert page["mediaVersions"][0]["mediaS3Key"] == VALID_MEDIA_KEY
+    assert page["mediaVersions"][0]["prompt"] == "Copied prompt"
+
+
+def test_create_post_page_rejects_max_pages():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Max pages"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+
+    for _ in range(9):
+        page_result = asyncio.run(
+            schema.execute(
+                CREATE_POST_PAGE,
+                variable_values={"postId": post_id},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert not page_result.errors, page_result.errors
+
+    overflow_result = asyncio.run(
+        schema.execute(
+            CREATE_POST_PAGE,
+            variable_values={"postId": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert overflow_result.errors is not None
+    assert "maximum" in str(overflow_result.errors[0]).lower()
+
+
+def test_create_post_page_denied_for_other_workspace_user():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Private"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+
+    _seed_workspace(owner_id=OTHER_USER_ID)
+
+    page_result = asyncio.run(
+        schema.execute(
+            CREATE_POST_PAGE,
+            variable_values={"postId": post_id},
+            context_value={"user_id": OTHER_USER_ID},
+        )
+    )
+    assert page_result.errors is not None

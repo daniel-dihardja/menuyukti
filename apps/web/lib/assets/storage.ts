@@ -1,4 +1,12 @@
-import { DeleteObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { randomUUID } from 'crypto'
+
+import {
+  CopyObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 /** Short-lived presigned GET URLs for private bucket objects (list + post-upload display). */
@@ -261,6 +269,51 @@ export function isObjectKeyForDesign(key: string, userId: string): boolean {
   if (!key.startsWith(prefix) || key.length <= prefix.length) return false
   const filename = key.slice(prefix.length)
   return isSafeDesignFilename(filename)
+}
+
+/** Copy a post media object to a new UUID-based key for the same user. */
+export async function copyPostMediaKey(sourceKey: string, userId: string): Promise<string> {
+  if (!isObjectKeyForPost(sourceKey, userId)) {
+    throw new Error('Invalid source post media key')
+  }
+
+  const filename = `${randomUUID()}.webp`
+  const destinationKey = userPostsObjectKey(userId, filename)
+  const s3 = getS3Client()
+  const bucket = getS3Bucket()
+
+  try {
+    await s3.send(
+      new CopyObjectCommand({
+        Bucket: bucket,
+        CopySource: `${bucket}/${sourceKey}`,
+        Key: destinationKey,
+        ContentType: 'image/webp',
+      }),
+    )
+    return destinationKey
+  } catch {
+    const result = await s3.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: sourceKey,
+      }),
+    )
+    const bytes = await result.Body?.transformToByteArray()
+    if (!bytes) {
+      throw new Error('Source post media not found')
+    }
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: destinationKey,
+        Body: Buffer.from(bytes),
+        ContentType: 'image/webp',
+      }),
+    )
+    return destinationKey
+  }
 }
 
 export async function getPresignedGetUrl(objectKey: string): Promise<string> {

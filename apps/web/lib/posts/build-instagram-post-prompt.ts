@@ -42,6 +42,29 @@ function buildReferenceImagesBlock(
   return buildPhotoReferenceImagesBlock(referenceImageCount)
 }
 
+function buildPhotographyLightingBlock(): string {
+  return `PHOTOGRAPHY & LIGHTING (default unless creative direction overrides):
+- Commercial editorial food photography — not illustration, not CGI.
+- Warm directional window light from upper-left or upper-right (~3200–4000K); soft shadows; no harsh flash or cool blue cast.
+- 45–60° hero angle for plated dishes (or overhead flat lay when the dish suits it); shallow depth of field; sharp focus on the hero dish; soft background bokeh.
+- Minimal, intentional props and surfaces that support the scene without competing with the food.
+- Natural food textures and appetizing colors; no plastic or waxy food, no distorted utensils or hands, no text or logos.`
+}
+
+function buildPostEditPhotographyBlock(): string {
+  return `PHOTOGRAPHY & LIGHTING (default unless creative direction overrides):
+- Preserve the reference image's composition, camera angle, and lighting unless creative direction explicitly requests changes.
+- Apply only the edits described in creative direction; maintain photorealistic Instagram polish throughout.
+- Natural food textures and appetizing colors; no plastic or waxy food, no distorted utensils or hands, no text or logos.`
+}
+
+function buildPhotographyBlock(referenceImageSource: ReferenceImageSource): string {
+  if (referenceImageSource === 'post') {
+    return buildPostEditPhotographyBlock()
+  }
+  return buildPhotographyLightingBlock()
+}
+
 export function buildInstagramPostPrompt({
   userPrompt,
   referenceImageCount = 0,
@@ -56,6 +79,8 @@ export function buildInstagramPostPrompt({
       ? `\n\n${buildReferenceImagesBlock(referenceImageCount, referenceImageSource)}`
       : ''
 
+  const photographyBlock = `\n\n${buildPhotographyBlock(referenceImageSource)}`
+
   return `You are generating a photorealistic Instagram portrait post image.
 
 OUTPUT:
@@ -68,7 +93,7 @@ COMPOSITION (NON-NEGOTIABLE):
 - Background, texture, and atmosphere may extend into the outer margins; products must not.
 - Keep products centered horizontally within the frame with comfortable padding.
 - Leave intentional negative space; do not push products into the outer crop margins.
-- Do not add visible guides, boxes, rectangles, borders, frames, masks, white blocks, or overlay markings of any kind.${referenceBlock}
+- Do not add visible guides, boxes, rectangles, borders, frames, masks, white blocks, or overlay markings of any kind.${referenceBlock}${photographyBlock}
 
 CREATIVE DIRECTION (follow the user's vision):
 ${trimmed}`

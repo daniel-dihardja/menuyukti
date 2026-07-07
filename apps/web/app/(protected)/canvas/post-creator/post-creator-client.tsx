@@ -111,6 +111,17 @@ type DeleteVersionResponse = {
   imageVersions: PostCreatorImageVersion[]
 }
 
+type CreatePageResponse = {
+  id: string
+  sortOrder: number
+  prompt: string | null
+  mediaS3Key: string | null
+  imageUrl: string | null
+  imageVersions: PostCreatorImageVersion[]
+}
+
+const MAX_POST_PAGES = 10
+
 export function PostCreatorClient({ postId }: { postId: string | null }) {
   const tToast = useTranslations('postCreator.toast')
   const tPreview = useTranslations('postCreator.preview')
@@ -124,6 +135,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
+  const [isAddingPage, setIsAddingPage] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isLoadingPost, setIsLoadingPost] = useState(Boolean(postId))
 
@@ -535,6 +547,78 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     tToast,
   ])
 
+  const handleAddPage = useCallback(async () => {
+    if (!postId || isAddingPage || pages.length >= MAX_POST_PAGES) {
+      if (pages.length >= MAX_POST_PAGES) {
+        toast.error(tToast('maxPagesReached'))
+      }
+      return
+    }
+
+    const syncedPages =
+      selectedPageId !== null
+        ? pages.map((page) =>
+            page.id === selectedPageId
+              ? { ...page, prompt, referenceImages, previewVersionIndex }
+              : page,
+          )
+        : pages
+
+    const lastPage = [...syncedPages].toSorted((a, b) => a.sortOrder - b.sortOrder).at(-1)
+    if (!lastPage) {
+      return
+    }
+
+    setPages(syncedPages)
+    setIsAddingPage(true)
+    try {
+      const res = await fetch(`/api/posts/${postId}/pages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ copyFromPageId: lastPage.id }),
+      })
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        if (res.status === 400 && data.error?.includes('10 images')) {
+          toast.error(tToast('maxPagesReached'))
+        } else {
+          toast.error(tToast('addPageError'))
+        }
+        return
+      }
+
+      const data = (await res.json()) as CreatePageResponse
+      const newPage: PostCreatorPage = {
+        id: data.id,
+        sortOrder: data.sortOrder,
+        prompt: data.prompt,
+        mediaS3Key: data.mediaS3Key,
+        imageUrl: data.imageUrl,
+        imageVersions: data.imageVersions,
+        referenceImages: [],
+      }
+
+      const nextPages = [...syncedPages, newPage].toSorted((a, b) => a.sortOrder - b.sortOrder)
+      setPages(nextPages)
+      applySelectedPage(nextPages, newPage.id)
+    } catch {
+      toast.error(tToast('addPageError'))
+    } finally {
+      setIsAddingPage(false)
+    }
+  }, [
+    applySelectedPage,
+    isAddingPage,
+    pages,
+    postId,
+    previewVersionIndex,
+    prompt,
+    referenceImages,
+    selectedPageId,
+    tToast,
+  ])
+
   const previewImageUrl =
     imageVersions[previewVersionIndex]?.imageUrl ??
     pages.find((page) => page.id === selectedPageId)?.imageUrl ??
@@ -552,6 +636,9 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             pages={pages}
             selectedPageId={selectedPageId}
             onSelectPage={handleSelectPage}
+            onAddPage={postId ? () => void handleAddPage() : undefined}
+            canAddPage={Boolean(postId) && pages.length > 0 && pages.length < MAX_POST_PAGES}
+            isAddingPage={isAddingPage}
           />
         }
         previewPane={

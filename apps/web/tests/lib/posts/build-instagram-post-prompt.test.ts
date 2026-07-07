@@ -84,10 +84,36 @@ describe('buildInstagramPostPrompt', () => {
 
     const outputIndex = out.indexOf('OUTPUT:')
     const compositionIndex = out.indexOf('COMPOSITION (NON-NEGOTIABLE):')
+    const photographyIndex = out.indexOf('PHOTOGRAPHY & LIGHTING')
     const creativeIndex = out.indexOf('CREATIVE DIRECTION')
 
     expect(outputIndex).toBeGreaterThanOrEqual(0)
     expect(compositionIndex).toBeGreaterThan(outputIndex)
-    expect(creativeIndex).toBeGreaterThan(compositionIndex)
+    expect(photographyIndex).toBeGreaterThan(compositionIndex)
+    expect(creativeIndex).toBeGreaterThan(photographyIndex)
+  })
+
+  it('includes full photography block for new scene generations', () => {
+    const out = buildInstagramPostPrompt({ userPrompt: 'Hero dish on marble' })
+
+    expect(out).toContain('PHOTOGRAPHY & LIGHTING')
+    expect(out).toContain('Warm directional window light')
+    expect(out).toContain('45–60° hero angle')
+    expect(out).toContain('soft background bokeh')
+    expect(out).toContain('no plastic or waxy food')
+    expect(out).not.toContain("Preserve the reference image's composition")
+  })
+
+  it('includes lighter photography block for post-edit generations', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Make the background warmer',
+      referenceImageCount: 1,
+      referenceImageSource: 'post',
+    })
+
+    expect(out).toContain('PHOTOGRAPHY & LIGHTING')
+    expect(out).toContain("Preserve the reference image's composition, camera angle, and lighting")
+    expect(out).toContain('Apply only the edits described in creative direction')
+    expect(out).not.toContain('45–60° hero angle')
   })
 })

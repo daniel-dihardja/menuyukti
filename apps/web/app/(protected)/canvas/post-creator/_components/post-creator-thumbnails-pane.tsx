@@ -1,8 +1,9 @@
 'use client'
 
-import { ImageIcon } from 'lucide-react'
+import { ImageIcon, Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { POST_IMAGE_ASPECT_RATIO } from './post-creator-constants'
@@ -34,6 +35,9 @@ export type PostCreatorThumbnailsPaneProps = {
   pages: PostCreatorPage[]
   selectedPageId: string | null
   onSelectPage: (pageId: string) => void
+  onAddPage?: () => void
+  canAddPage?: boolean
+  isAddingPage?: boolean
   isLoading?: boolean
 }
 
@@ -41,6 +45,9 @@ export function PostCreatorThumbnailsPane({
   pages,
   selectedPageId,
   onSelectPage,
+  onAddPage,
+  canAddPage = false,
+  isAddingPage = false,
   isLoading = false,
 }: PostCreatorThumbnailsPaneProps) {
   const t = useTranslations('postCreator.thumbnails')
@@ -106,6 +113,24 @@ export function PostCreatorThumbnailsPane({
           </button>
         )
       })}
+      {onAddPage ? (
+        <div className="flex shrink-0 justify-center pt-1">
+          <button
+            type="button"
+            aria-label={isAddingPage ? t('addingPage') : t('addPage')}
+            disabled={!canAddPage || isAddingPage || isLoading}
+            onClick={onAddPage}
+            className={cn(
+              'flex size-10 items-center justify-center rounded-full border border-dashed border-border/60 bg-muted/20 text-muted-foreground transition-colors',
+              'hover:border-border hover:bg-muted/40 hover:text-foreground',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              'disabled:pointer-events-none disabled:opacity-50',
+            )}
+          >
+            {isAddingPage ? <Spinner /> : <Plus aria-hidden className="size-5" />}
+          </button>
+        </div>
+      ) : null}
     </section>
   )
 }

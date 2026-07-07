@@ -695,7 +695,9 @@
     "thumbnails": {
       "ariaLabel": "Post page thumbnails",
       "pageLabel": "Page {number}",
-      "empty": "No pages yet"
+      "empty": "No pages yet",
+      "addPage": "Add page",
+      "addingPage": "Adding page…"
     },
     "previewPane": "Generated post image",
     "promptPane": "Prompt",
@@ -750,7 +752,9 @@
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "imageSelectError": "Failed to update post image. Please try again.",
-      "deleteImageError": "Failed to delete image. Please try again."
+      "deleteImageError": "Failed to delete image. Please try again.",
+      "addPageError": "Failed to add page. Please try again.",
+      "maxPagesReached": "Instagram carousels support up to 10 images."
     }
   },
   "posts": {
@@ -2863,6 +2867,12 @@
         "plow_horse": "Plow Horses",
         "puzzle": "Puzzles",
         "low_end": "Low End"
+      },
+      "categoriesShort": {
+        "star": "Star",
+        "plow_horse": "Plow",
+        "puzzle": "Puzzle",
+        "low_end": "Low"
       },
       "lowEndHighlight": {
         "sliderLabel": "Margin share threshold",
