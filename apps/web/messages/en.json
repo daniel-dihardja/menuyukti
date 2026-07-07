@@ -693,7 +693,14 @@
     "description": "Generate post images with AI-assisted chat.",
     "thumbnailsPane": "Post page thumbnails",
     "previewPane": "Generated post image",
-    "chatPane": "Chat"
+    "chatPane": "Chat",
+    "preview": {
+      "ariaLabel": "Generated post image preview",
+      "emptyTitle": "No post image yet",
+      "emptyDescription": "Generate a post image using the chat panel.",
+      "dimensionsLabel": "Post size",
+      "dimensions": "{width} × {height}"
+    }
   },
   "photos": {
     "title": "Photos",
