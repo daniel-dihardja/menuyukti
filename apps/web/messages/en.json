@@ -727,13 +727,22 @@
       "gridSafeZoneDescription": "Shows where Instagram may crop portrait posts in profile grid thumbnails ({insetX}px from the left and right edges, {insetY}px from the top and bottom edges).",
       "previousVersion": "Previous generated image",
       "nextVersion": "Next generated image",
-      "versionIndicator": "{current} of {total}"
+      "versionIndicator": "{current} of {total}",
+      "versionsAriaLabel": "Generated image versions",
+      "versionOptionLabel": "Generated image {current} of {total}",
+      "versionOptionPreviewLabel": "Generated image {current} of {total}, previewing",
+      "versionOptionPostImageLabel": "Generated image {current} of {total}, post image",
+      "versionOptionPostImagePreviewLabel": "Generated image {current} of {total}, post image and previewing",
+      "useAsPostImage": "Use as post image",
+      "useAsPostImageCommitting": "Setting post image…",
+      "committingPostImage": "Setting post image…"
     },
     "toast": {
       "loadError": "Failed to load post. Please refresh and try again.",
       "generateError": "Failed to generate post image. Please try again.",
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
-      "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again."
+      "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
+      "imageSelectError": "Failed to update post image. Please try again."
     }
   },
   "posts": {

@@ -14,6 +14,7 @@ export type PostCreatorReferenceImage = {
 
 export type PostCreatorImageVersion = {
   id: string
+  mediaS3Key: string
   imageUrl: string
   createdAt: string
 }
@@ -23,7 +24,9 @@ export type PostCreatorPage = {
   sortOrder: number
   prompt: string | null
   imageUrl: string | null
+  mediaS3Key?: string | null
   imageVersions?: PostCreatorImageVersion[]
+  previewVersionIndex?: number
   referenceImages?: PostCreatorReferenceImage[]
 }
 

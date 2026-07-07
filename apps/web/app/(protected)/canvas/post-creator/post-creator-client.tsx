@@ -18,6 +18,7 @@ import {
 type GenerateResponse = {
   url: string
   name: string
+  mediaS3Key: string
   size: number
   createdAt: string
   pageId: string | null
@@ -36,6 +37,7 @@ type PostApiResponse = {
     id: string
     sortOrder: number
     prompt: string | null
+    mediaS3Key: string | null
     imageUrl: string | null
     imageVersions: PostCreatorImageVersion[]
   }>
@@ -43,15 +45,51 @@ type PostApiResponse = {
 
 function resolvePageImageVersions(page: {
   imageUrl: string | null
+  mediaS3Key?: string | null
   imageVersions?: PostCreatorImageVersion[]
 }): PostCreatorImageVersion[] {
   if (page.imageVersions && page.imageVersions.length > 0) {
     return page.imageVersions
   }
   if (page.imageUrl) {
-    return [{ id: 'current', imageUrl: page.imageUrl, createdAt: '' }]
+    return [
+      {
+        id: 'current',
+        mediaS3Key: page.mediaS3Key ?? '',
+        imageUrl: page.imageUrl,
+        createdAt: '',
+      },
+    ]
   }
   return []
+}
+
+function resolvePostImageVersionIndex(
+  versions: PostCreatorImageVersion[],
+  activeMediaS3Key: string | null | undefined,
+): number {
+  if (activeMediaS3Key) {
+    const byKey = versions.findIndex((version) => version.mediaS3Key === activeMediaS3Key)
+    if (byKey >= 0) {
+      return byKey
+    }
+  }
+  return 0
+}
+
+function resolvePreviewVersionIndex(
+  versions: PostCreatorImageVersion[],
+  postImageIndex: number,
+  storedPreviewIndex?: number,
+): number {
+  if (
+    storedPreviewIndex != null &&
+    storedPreviewIndex >= 0 &&
+    storedPreviewIndex < versions.length
+  ) {
+    return storedPreviewIndex
+  }
+  return postImageIndex
 }
 
 export function PostCreatorClient({ postId }: { postId: string | null }) {
@@ -59,23 +97,31 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [pages, setPages] = useState<PostCreatorPage[]>([])
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [imageVersions, setImageVersions] = useState<PostCreatorImageVersion[]>([])
-  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0)
+  const [previewVersionIndex, setPreviewVersionIndex] = useState(0)
+  const [postImageVersionIndex, setPostImageVersionIndex] = useState(0)
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
   const [isLoadingPost, setIsLoadingPost] = useState(Boolean(postId))
 
   const applySelectedPage = useCallback((nextPages: PostCreatorPage[], pageId: string) => {
     const page = nextPages.find((p) => p.id === pageId)
     const versions = resolvePageImageVersions({
       imageUrl: page?.imageUrl ?? null,
+      mediaS3Key: page?.mediaS3Key,
       imageVersions: page?.imageVersions,
     })
+    const committedIndex = resolvePostImageVersionIndex(versions, page?.mediaS3Key)
+    const previewIndex = resolvePreviewVersionIndex(
+      versions,
+      committedIndex,
+      page?.previewVersionIndex,
+    )
     setSelectedPageId(pageId)
     setImageVersions(versions)
-    setSelectedVersionIndex(0)
-    setImageUrl(versions[0]?.imageUrl ?? page?.imageUrl ?? null)
+    setPostImageVersionIndex(committedIndex)
+    setPreviewVersionIndex(previewIndex)
     setPrompt(page?.prompt ?? '')
     setReferenceImages(page?.referenceImages ?? [])
   }, [])
@@ -84,7 +130,15 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     (
       pageId: string,
       patch: Partial<
-        Pick<PostCreatorPage, 'prompt' | 'imageUrl' | 'imageVersions' | 'referenceImages'>
+        Pick<
+          PostCreatorPage,
+          | 'prompt'
+          | 'imageUrl'
+          | 'mediaS3Key'
+          | 'imageVersions'
+          | 'previewVersionIndex'
+          | 'referenceImages'
+        >
       >,
     ) => {
       setPages((current) =>
@@ -119,6 +173,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             id: page.id,
             sortOrder: page.sortOrder,
             prompt: page.prompt,
+            mediaS3Key: page.mediaS3Key,
             imageUrl: page.imageUrl,
             imageVersions: page.imageVersions,
             referenceImages: [],
@@ -152,25 +207,34 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         const withSyncedCurrent =
           selectedPageId !== null
             ? current.map((page) =>
-                page.id === selectedPageId ? { ...page, prompt, referenceImages } : page,
+                page.id === selectedPageId
+                  ? { ...page, prompt, referenceImages, previewVersionIndex }
+                  : page,
               )
             : current
 
         const page = withSyncedCurrent.find((p) => p.id === pageId)
         const versions = resolvePageImageVersions({
           imageUrl: page?.imageUrl ?? null,
+          mediaS3Key: page?.mediaS3Key,
           imageVersions: page?.imageVersions,
         })
+        const committedIndex = resolvePostImageVersionIndex(versions, page?.mediaS3Key)
+        const previewIndex = resolvePreviewVersionIndex(
+          versions,
+          committedIndex,
+          page?.previewVersionIndex,
+        )
         setSelectedPageId(pageId)
         setImageVersions(versions)
-        setSelectedVersionIndex(0)
-        setImageUrl(versions[0]?.imageUrl ?? page?.imageUrl ?? null)
+        setPostImageVersionIndex(committedIndex)
+        setPreviewVersionIndex(previewIndex)
         setPrompt(page?.prompt ?? '')
         setReferenceImages(page?.referenceImages ?? [])
         return withSyncedCurrent
       })
     },
-    [prompt, referenceImages, selectedPageId],
+    [previewVersionIndex, prompt, referenceImages, selectedPageId],
   )
 
   const handlePromptChange = useCallback(
@@ -256,21 +320,24 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
 
       const nextVersion: PostCreatorImageVersion = {
         id: data.name,
+        mediaS3Key: data.mediaS3Key,
         imageUrl: data.url,
         createdAt: data.createdAt,
       }
       const nextVersions = [
         nextVersion,
-        ...imageVersions.filter((version) => version.id !== data.name),
+        ...imageVersions.filter((version) => version.mediaS3Key !== data.mediaS3Key),
       ]
       setImageVersions(nextVersions)
-      setSelectedVersionIndex(0)
-      setImageUrl(data.url)
+      setPreviewVersionIndex(0)
+      setPostImageVersionIndex(0)
 
       if (selectedPageId) {
         syncPageState(selectedPageId, {
           imageUrl: data.url,
+          mediaS3Key: data.mediaS3Key,
           imageVersions: nextVersions,
+          previewVersionIndex: 0,
           prompt: trimmed,
         })
       }
@@ -290,13 +357,95 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     tToast,
   ])
 
-  const handleSelectVersionIndex = useCallback(
+  const handlePreviewVersion = useCallback(
     (index: number) => {
-      setSelectedVersionIndex(index)
-      setImageUrl(imageVersions[index]?.imageUrl ?? null)
+      if (index === previewVersionIndex || isCommittingPostImage) {
+        return
+      }
+
+      setPreviewVersionIndex(index)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { previewVersionIndex: index })
+      }
     },
-    [imageVersions],
+    [isCommittingPostImage, previewVersionIndex, selectedPageId, syncPageState],
   )
+
+  const handleUseAsPostImage = useCallback(async () => {
+    if (isCommittingPostImage || previewVersionIndex === postImageVersionIndex) {
+      return
+    }
+
+    const version = imageVersions[previewVersionIndex]
+    if (!version) {
+      return
+    }
+
+    const previousPostImageIndex = postImageVersionIndex
+    const previousPage = pages.find((page) => page.id === selectedPageId)
+
+    setPostImageVersionIndex(previewVersionIndex)
+    if (selectedPageId) {
+      syncPageState(selectedPageId, {
+        imageUrl: version.imageUrl,
+        mediaS3Key: version.mediaS3Key || previousPage?.mediaS3Key,
+      })
+    }
+
+    if (!postId || !selectedPageId || !version.mediaS3Key) {
+      return
+    }
+
+    setIsCommittingPostImage(true)
+    try {
+      const res = await fetch(`/api/posts/${postId}/pages/${selectedPageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to set post image')
+      }
+
+      const data = (await res.json()) as { imageUrl?: string; mediaS3Key?: string }
+      const nextImageUrl = data.imageUrl ?? version.imageUrl
+      const nextMediaS3Key = data.mediaS3Key ?? version.mediaS3Key
+
+      if (selectedPageId) {
+        syncPageState(selectedPageId, {
+          imageUrl: nextImageUrl,
+          mediaS3Key: nextMediaS3Key,
+        })
+      }
+    } catch {
+      setPostImageVersionIndex(previousPostImageIndex)
+      if (selectedPageId && previousPage) {
+        syncPageState(selectedPageId, {
+          imageUrl: previousPage.imageUrl,
+          mediaS3Key: previousPage.mediaS3Key,
+        })
+      }
+      toast.error(tToast('imageSelectError'))
+    } finally {
+      setIsCommittingPostImage(false)
+    }
+  }, [
+    imageVersions,
+    isCommittingPostImage,
+    pages,
+    postId,
+    postImageVersionIndex,
+    previewVersionIndex,
+    selectedPageId,
+    syncPageState,
+    tToast,
+  ])
+
+  const previewImageUrl =
+    imageVersions[previewVersionIndex]?.imageUrl ??
+    pages.find((page) => page.id === selectedPageId)?.imageUrl ??
+    null
 
   return (
     <div
@@ -314,11 +463,14 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         }
         previewPane={
           <PostCreatorPreviewPane
-            imageUrl={imageUrl}
+            imageUrl={previewImageUrl}
             imageVersions={imageVersions}
-            selectedVersionIndex={selectedVersionIndex}
-            onSelectVersionIndex={handleSelectVersionIndex}
+            previewVersionIndex={previewVersionIndex}
+            postImageVersionIndex={postImageVersionIndex}
+            onPreviewVersionIndex={handlePreviewVersion}
+            onUseAsPostImage={() => void handleUseAsPostImage()}
             isLoading={isGenerating}
+            isCommittingPostImage={isCommittingPostImage}
           />
         }
         promptPane={

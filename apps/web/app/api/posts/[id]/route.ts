@@ -53,6 +53,7 @@ export async function GET(_req: Request, context: RouteContext) {
             const versionImageUrl = await getPresignedGetUrl(version.mediaS3Key)
             return {
               id: version.id,
+              mediaS3Key: version.mediaS3Key,
               imageUrl: versionImageUrl,
               createdAt: version.createdAt,
             }
@@ -63,6 +64,7 @@ export async function GET(_req: Request, context: RouteContext) {
           id: page.id,
           sortOrder: page.sortOrder,
           prompt: page.prompt,
+          mediaS3Key: page.mediaS3Key,
           imageUrl,
           imageVersions: imageVersions.filter(
             (version): version is NonNullable<typeof version> => version !== null,

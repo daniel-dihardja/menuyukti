@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useCallback, useId, useState } from 'react'
+import { useCallback, useId, useState, type KeyboardEvent } from 'react'
 
 import { Card } from '@workspace/ui/components/card'
 import { Label } from '@workspace/ui/components/label'
@@ -19,13 +19,17 @@ import {
 } from './post-creator-constants'
 import type { PostCreatorImageVersion } from './post-creator-thumbnails-pane'
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
+import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
 
 export type PostCreatorPreviewPaneProps = {
   imageUrl?: string | null
   imageVersions?: PostCreatorImageVersion[]
-  selectedVersionIndex?: number
-  onSelectVersionIndex?: (index: number) => void
+  previewVersionIndex?: number
+  postImageVersionIndex?: number
+  onPreviewVersionIndex?: (index: number) => void
+  onUseAsPostImage?: () => void
   isLoading?: boolean
+  isCommittingPostImage?: boolean
 }
 
 const previewShellClassName = 'w-full max-w-[min(100%,calc((100vh-12rem)*0.8))]'
@@ -38,9 +42,12 @@ const previewFrameStyle = { aspectRatio: POST_IMAGE_ASPECT_RATIO }
 export function PostCreatorPreviewPane({
   imageUrl,
   imageVersions = [],
-  selectedVersionIndex = 0,
-  onSelectVersionIndex,
+  previewVersionIndex = 0,
+  postImageVersionIndex = 0,
+  onPreviewVersionIndex,
+  onUseAsPostImage,
   isLoading = false,
+  isCommittingPostImage = false,
 }: PostCreatorPreviewPaneProps) {
   const t = useTranslations('postCreator.preview')
   const gridSafeZoneToggleId = useId()
@@ -55,26 +62,58 @@ export function PostCreatorPreviewPane({
     imageVersions.length > 0
       ? imageVersions
       : imageUrl
-        ? [{ id: 'current', imageUrl, createdAt: '' }]
+        ? [{ id: 'current', mediaS3Key: '', imageUrl, createdAt: '' }]
         : []
-  const activeVersion = versions[selectedVersionIndex] ?? versions[0]
-  const activeImageUrl = activeVersion?.imageUrl ?? null
-  const hasImage = Boolean(activeImageUrl)
-  const showVersionNav = versions.length > 1 && onSelectVersionIndex
+  const previewVersion = versions[previewVersionIndex] ?? versions[0]
+  const previewImageUrl = previewVersion?.imageUrl ?? null
+  const hasImage = Boolean(previewImageUrl)
+  const showVersionNav = versions.length > 1 && onPreviewVersionIndex
+  const canCommitPostImage =
+    showVersionNav && onUseAsPostImage && previewVersionIndex !== postImageVersionIndex
+
+  const previewVersionAt = useCallback(
+    (index: number) => {
+      if (!onPreviewVersionIndex || isCommittingPostImage) return
+      onPreviewVersionIndex(index)
+    },
+    [isCommittingPostImage, onPreviewVersionIndex],
+  )
 
   const goPrev = useCallback(() => {
-    if (!onSelectVersionIndex) return
-    onSelectVersionIndex(
-      selectedVersionIndex === 0 ? versions.length - 1 : selectedVersionIndex - 1,
-    )
-  }, [onSelectVersionIndex, selectedVersionIndex, versions.length])
+    if (!onPreviewVersionIndex || isCommittingPostImage) return
+    previewVersionAt(previewVersionIndex === 0 ? versions.length - 1 : previewVersionIndex - 1)
+  }, [
+    isCommittingPostImage,
+    onPreviewVersionIndex,
+    previewVersionAt,
+    previewVersionIndex,
+    versions.length,
+  ])
 
   const goNext = useCallback(() => {
-    if (!onSelectVersionIndex) return
-    onSelectVersionIndex(
-      selectedVersionIndex === versions.length - 1 ? 0 : selectedVersionIndex + 1,
-    )
-  }, [onSelectVersionIndex, selectedVersionIndex, versions.length])
+    if (!onPreviewVersionIndex || isCommittingPostImage) return
+    previewVersionAt(previewVersionIndex === versions.length - 1 ? 0 : previewVersionIndex + 1)
+  }, [
+    isCommittingPostImage,
+    onPreviewVersionIndex,
+    previewVersionAt,
+    previewVersionIndex,
+    versions.length,
+  ])
+
+  const handlePreviewKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!showVersionNav) return
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        goPrev()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        goNext()
+      }
+    },
+    [goNext, goPrev, showVersionNav],
+  )
 
   return (
     <section
@@ -88,45 +127,76 @@ export function PostCreatorPreviewPane({
             style={previewFrameStyle}
           />
         ) : hasImage ? (
-          <div className="flex w-full items-center justify-center gap-2">
-            {showVersionNav ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={goPrev}
-                className="size-9 shrink-0 rounded-full shadow-sm"
-                aria-label={t('previousVersion')}
-              >
-                <ChevronLeft className="size-4" aria-hidden />
-              </Button>
-            ) : null}
-            <div className={`flex min-w-0 flex-col items-center gap-2 ${previewShellClassName}`}>
-              <div className={previewFrameClassName} style={previewFrameStyle}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
-                <img src={activeImageUrl!} alt="" className="size-full object-contain" />
-                {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+          <div
+            className="flex w-full flex-col items-center gap-3"
+            onKeyDown={handlePreviewKeyDown}
+            tabIndex={showVersionNav ? 0 : undefined}
+          >
+            <div className="flex w-full items-center justify-center gap-2">
+              {showVersionNav ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={goPrev}
+                  disabled={isCommittingPostImage}
+                  className="size-9 shrink-0 rounded-full shadow-sm"
+                  aria-label={t('previousVersion')}
+                >
+                  <ChevronLeft className="size-4" aria-hidden />
+                </Button>
+              ) : null}
+              <div className={`flex min-w-0 flex-col items-center gap-2 ${previewShellClassName}`}>
+                <div className={previewFrameClassName} style={previewFrameStyle}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
+                  <img src={previewImageUrl!} alt="" className="size-full object-contain" />
+                  {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+                  {canCommitPostImage ? (
+                    <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center p-3">
+                      <Button
+                        type="button"
+                        onClick={onUseAsPostImage}
+                        disabled={isCommittingPostImage}
+                        className="shadow-md"
+                      >
+                        {isCommittingPostImage
+                          ? t('useAsPostImageCommitting')
+                          : t('useAsPostImage')}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+                {showVersionNav ? (
+                  <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
+                    {t('versionIndicator', {
+                      current: previewVersionIndex + 1,
+                      total: versions.length,
+                    })}
+                  </p>
+                ) : null}
               </div>
               {showVersionNav ? (
-                <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
-                  {t('versionIndicator', {
-                    current: selectedVersionIndex + 1,
-                    total: versions.length,
-                  })}
-                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={goNext}
+                  disabled={isCommittingPostImage}
+                  className="size-9 shrink-0 rounded-full shadow-sm"
+                  aria-label={t('nextVersion')}
+                >
+                  <ChevronRight className="size-4" aria-hidden />
+                </Button>
               ) : null}
             </div>
             {showVersionNav ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={goNext}
-                className="size-9 shrink-0 rounded-full shadow-sm"
-                aria-label={t('nextVersion')}
-              >
-                <ChevronRight className="size-4" aria-hidden />
-              </Button>
+              <PostCreatorVersionFilmstrip
+                versions={versions}
+                previewIndex={previewVersionIndex}
+                postImageIndex={postImageVersionIndex}
+                onPreviewIndex={previewVersionAt}
+                isCommitting={isCommittingPostImage}
+              />
             ) : null}
           </div>
         ) : (

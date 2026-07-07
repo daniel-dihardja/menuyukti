@@ -360,6 +360,80 @@ def test_update_post_page_skips_duplicate_media_version():
         session.close()
 
 
+def test_update_post_page_reselects_existing_media_version():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Reselect version"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "First prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY_2,
+                "prompt": "Second prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    reselect_result = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not reselect_result.errors, reselect_result.errors
+    assert reselect_result.data["updatePostPage"]["mediaS3Key"] == VALID_MEDIA_KEY
+
+    session = SessionLocal()
+    try:
+        page_pk = int(page_id)
+        count = (
+            session.query(InstagramPostPageMediaVersion)
+            .filter(InstagramPostPageMediaVersion.post_page_id == page_pk)
+            .count()
+        )
+        assert count == 2
+    finally:
+        session.close()
+
+    post_result = asyncio.run(
+        schema.execute(
+            POST_QUERY,
+            variable_values={"id": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not post_result.errors, post_result.errors
+    page = post_result.data["post"]["pages"][0]
+    assert page["mediaS3Key"] == VALID_MEDIA_KEY
+
+
 def test_update_post_page_rejects_invalid_media_key():
     _seed_workspace()
 

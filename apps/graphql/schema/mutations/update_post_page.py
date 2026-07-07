@@ -52,7 +52,11 @@ class UpdatePostPageMutation:
             raise ValueError("Invalid post page id")
 
         with request_session_scope(info) as session:
-            page_row = session.get(InstagramPostPage, page_pk)
+            page_row = session.get(
+                InstagramPostPage,
+                page_pk,
+                options=[joinedload(InstagramPostPage.media_versions)],
+            )
             if page_row is None:
                 raise ValueError("Post page not found")
 
@@ -74,24 +78,35 @@ class UpdatePostPageMutation:
                     else:
                         _validate_media_s3_key(key_clean, owner_id)
                         if key_clean != page_row.media_s3_key:
-                            version_prompt: str | None
-                            if prompt is not UNSET:
-                                if prompt is None:
-                                    version_prompt = None
-                                else:
-                                    prompt_clean = prompt.strip()
-                                    version_prompt = prompt_clean if prompt_clean else None
-                            else:
-                                version_prompt = page_row.prompt
-
                             page_row.media_s3_key = key_clean
-                            session.add(
-                                InstagramPostPageMediaVersion(
-                                    post_page_id=page_row.id,
-                                    media_s3_key=key_clean,
-                                    prompt=version_prompt,
-                                )
+                            existing_version = next(
+                                (
+                                    version
+                                    for version in page_row.media_versions
+                                    if version.media_s3_key == key_clean
+                                ),
+                                None,
                             )
+                            if existing_version is None:
+                                version_prompt: str | None
+                                if prompt is not UNSET:
+                                    if prompt is None:
+                                        version_prompt = None
+                                    else:
+                                        prompt_clean = prompt.strip()
+                                        version_prompt = (
+                                            prompt_clean if prompt_clean else None
+                                        )
+                                else:
+                                    version_prompt = page_row.prompt
+
+                                session.add(
+                                    InstagramPostPageMediaVersion(
+                                        post_page_id=page_row.id,
+                                        media_s3_key=key_clean,
+                                        prompt=version_prompt,
+                                    )
+                                )
 
             if prompt is not UNSET:
                 if prompt is None:

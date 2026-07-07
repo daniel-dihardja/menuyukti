@@ -177,6 +177,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     url,
     name: filename,
+    mediaS3Key: outputKey,
     size: outBuffer.byteLength,
     createdAt,
     pageId: pageId ?? null,
