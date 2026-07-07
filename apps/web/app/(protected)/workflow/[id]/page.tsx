@@ -15,6 +15,7 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { WorkflowWorkspace } from '../_components/workflow-workspace'
 import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
 import type { TimelineMilestone } from '../_components/timeline-workspace'
+import { parseWorkflowAnalyticsRunId } from '@/lib/workflows/parse-workflow-analytics-run-id'
 
 const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 
@@ -78,11 +79,7 @@ async function WorkflowDetailContent({
   if (locationId == null) {
     notFound()
   }
-  const analyticsRunId =
-    typeof workflowNode.data?.analyticsRunId === 'number' &&
-    Number.isInteger(workflowNode.data.analyticsRunId)
-      ? workflowNode.data.analyticsRunId
-      : null
+  const analyticsRunId = parseWorkflowAnalyticsRunId(workflowNode.data)
 
   const initialMilestones: TimelineMilestone[] = tree.milestones.map((bundle) => {
     const m = parseNode(bundle.milestone)

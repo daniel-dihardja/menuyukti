@@ -31,7 +31,7 @@ import { TimelineWorkspace } from './timeline-workspace'
 import { WorkflowChatLayout } from './workflow-chat-layout'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
 import { WorkflowChatProvider } from './workflow-chat-context'
-import { WorkflowChatPane } from './workflow-chat-pane'
+import { WorkflowSidePanel } from './workflow-side-panel'
 import { useWorkflowChat } from './use-workflow-chat'
 
 import {
@@ -265,7 +265,7 @@ export function WorkflowChatPanel({
       <WorkflowChatProvider actions={workflowChat.actions} state={workflowChat.state}>
         <WorkflowChatMentionProvider>
           <WorkflowChatLayout
-            chatPane={<WorkflowChatPane />}
+            chatPane={<WorkflowSidePanel workflowId={workflowId} />}
             mobileChatOpen={mobileChatOpen}
             onMobileChatOpenChange={setMobileChatOpen}
             previewPane={<WorkflowPreviewPanelBodyLazy />}
