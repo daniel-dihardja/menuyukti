@@ -1,8 +1,21 @@
 'use client'
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
+import { Button } from '@workspace/ui/components/button'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+
+import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 
 import { MAX_REFERENCE_IMAGES } from './_components/post-creator-constants'
 import { PostCreatorLayout } from './_components/post-creator-layout'
@@ -92,8 +105,15 @@ function resolvePreviewVersionIndex(
   return postImageIndex
 }
 
+type DeleteVersionResponse = {
+  mediaS3Key: string | null
+  imageUrl: string | null
+  imageVersions: PostCreatorImageVersion[]
+}
+
 export function PostCreatorClient({ postId }: { postId: string | null }) {
   const tToast = useTranslations('postCreator.toast')
+  const tPreview = useTranslations('postCreator.preview')
   const [pages, setPages] = useState<PostCreatorPage[]>([])
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
@@ -103,6 +123,8 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
+  const [isDeletingVersion, setIsDeletingVersion] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isLoadingPost, setIsLoadingPost] = useState(Boolean(postId))
 
   const applySelectedPage = useCallback((nextPages: PostCreatorPage[], pageId: string) => {
@@ -283,6 +305,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         postId?: string
         pageId?: string
         referenceImages?: string[]
+        referencePostImages?: string[]
       } = { prompt: trimmed }
 
       if (postId && selectedPageId) {
@@ -292,6 +315,13 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
 
       if (referenceImages.length > 0) {
         body.referenceImages = referenceImages.map((image) => image.name)
+      } else {
+        const previewFilename = parsePostMediaFilename(
+          imageVersions[previewVersionIndex]?.mediaS3Key,
+        )
+        if (previewFilename) {
+          body.referencePostImages = [previewFilename]
+        }
       }
 
       const res = await fetch('/api/posts/generate', {
@@ -350,6 +380,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     imageVersions,
     isGenerating,
     postId,
+    previewVersionIndex,
     prompt,
     referenceImages,
     selectedPageId,
@@ -442,6 +473,68 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     tToast,
   ])
 
+  const handleRequestDeleteVersion = useCallback(() => {
+    const version = imageVersions[previewVersionIndex]
+    if (!version?.mediaS3Key || !postId || !selectedPageId) {
+      return
+    }
+    setDeleteDialogOpen(true)
+  }, [imageVersions, postId, previewVersionIndex, selectedPageId])
+
+  const handleConfirmDeleteVersion = useCallback(async () => {
+    const version = imageVersions[previewVersionIndex]
+    if (!version?.mediaS3Key || !postId || !selectedPageId || isDeletingVersion) {
+      return
+    }
+
+    setIsDeletingVersion(true)
+    try {
+      const res = await fetch(`/api/posts/${postId}/pages/${selectedPageId}/versions`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to delete image version')
+      }
+
+      const data = (await res.json()) as DeleteVersionResponse
+      const nextVersions = data.imageVersions
+      const nextPreviewIndex =
+        nextVersions.length === 0
+          ? 0
+          : Math.min(previewVersionIndex, Math.max(0, nextVersions.length - 1))
+      const nextCommittedIndex = resolvePostImageVersionIndex(nextVersions, data.mediaS3Key)
+
+      setImageVersions(nextVersions)
+      setPreviewVersionIndex(nextPreviewIndex)
+      setPostImageVersionIndex(nextCommittedIndex)
+      setDeleteDialogOpen(false)
+
+      if (selectedPageId) {
+        syncPageState(selectedPageId, {
+          imageUrl: data.imageUrl,
+          mediaS3Key: data.mediaS3Key,
+          imageVersions: nextVersions,
+          previewVersionIndex: nextPreviewIndex,
+        })
+      }
+    } catch {
+      toast.error(tToast('deleteImageError'))
+    } finally {
+      setIsDeletingVersion(false)
+    }
+  }, [
+    imageVersions,
+    isDeletingVersion,
+    postId,
+    previewVersionIndex,
+    selectedPageId,
+    syncPageState,
+    tToast,
+  ])
+
   const previewImageUrl =
     imageVersions[previewVersionIndex]?.imageUrl ??
     pages.find((page) => page.id === selectedPageId)?.imageUrl ??
@@ -469,8 +562,10 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             postImageVersionIndex={postImageVersionIndex}
             onPreviewVersionIndex={handlePreviewVersion}
             onUseAsPostImage={() => void handleUseAsPostImage()}
+            onDeleteVersion={postId && selectedPageId ? handleRequestDeleteVersion : undefined}
             isLoading={isGenerating}
             isCommittingPostImage={isCommittingPostImage}
+            isDeletingVersion={isDeletingVersion}
           />
         }
         promptPane={
@@ -485,6 +580,42 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
           />
         }
       />
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingVersion) {
+            setDeleteDialogOpen(false)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tPreview('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{tPreview('deleteConfirmDescription')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingVersion} type="button">
+              {tPreview('deleteConfirmCancel')}
+            </AlertDialogCancel>
+            <Button
+              className={isDeletingVersion ? 'inline-flex items-center gap-2' : undefined}
+              disabled={isDeletingVersion}
+              onClick={() => void handleConfirmDeleteVersion()}
+              type="button"
+              variant="destructive"
+            >
+              {isDeletingVersion ? (
+                <>
+                  <Spinner />
+                  {tPreview('deleteConfirmAction')}
+                </>
+              ) : (
+                tPreview('deleteConfirmAction')
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

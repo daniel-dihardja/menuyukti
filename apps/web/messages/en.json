@@ -735,14 +735,22 @@
       "versionOptionPostImagePreviewLabel": "Generated image {current} of {total}, post image and previewing",
       "useAsPostImage": "Use as post image",
       "useAsPostImageCommitting": "Setting post image…",
-      "committingPostImage": "Setting post image…"
+      "committingPostImage": "Setting post image…",
+      "generating": "Generating…",
+      "deleteImage": "Delete image",
+      "deleteConfirmTitle": "Delete this generated image?",
+      "deleteConfirmDescription": "This removes the image from this page's version history. This cannot be undone.",
+      "deleteConfirmCancel": "Cancel",
+      "deleteConfirmAction": "Delete image",
+      "deleteImageDeleting": "Deleting…"
     },
     "toast": {
       "loadError": "Failed to load post. Please refresh and try again.",
       "generateError": "Failed to generate post image. Please try again.",
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
-      "imageSelectError": "Failed to update post image. Please try again."
+      "imageSelectError": "Failed to update post image. Please try again.",
+      "deleteImageError": "Failed to delete image. Please try again."
     }
   },
   "posts": {

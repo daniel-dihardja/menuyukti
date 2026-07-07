@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ImageIcon, Loader2, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCallback, useId, useState, type KeyboardEvent } from 'react'
 
@@ -13,7 +13,6 @@ import { Button } from '@workspace/ui/components/button'
 import {
   INSTAGRAM_GRID_THUMBNAIL_INSET_X,
   INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
-  POST_IMAGE_ASPECT_RATIO,
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from './post-creator-constants'
@@ -28,16 +27,18 @@ export type PostCreatorPreviewPaneProps = {
   postImageVersionIndex?: number
   onPreviewVersionIndex?: (index: number) => void
   onUseAsPostImage?: () => void
+  onDeleteVersion?: () => void
   isLoading?: boolean
   isCommittingPostImage?: boolean
+  isDeletingVersion?: boolean
 }
 
-const previewShellClassName = 'w-full max-w-[min(100%,calc((100vh-12rem)*0.8))]'
+const previewContentMaxWidthClassName = 'w-full max-w-[min(100%,calc((100vh-12rem)*0.8))]'
+
+const previewShellClassName = `flex min-h-0 min-w-0 flex-1 flex-col items-center gap-2 ${previewContentMaxWidthClassName}`
 
 const previewFrameClassName =
-  'relative w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
-
-const previewFrameStyle = { aspectRatio: POST_IMAGE_ASPECT_RATIO }
+  'relative aspect-[4/5] max-h-full max-w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
 
 export function PostCreatorPreviewPane({
   imageUrl,
@@ -46,8 +47,10 @@ export function PostCreatorPreviewPane({
   postImageVersionIndex = 0,
   onPreviewVersionIndex,
   onUseAsPostImage,
+  onDeleteVersion,
   isLoading = false,
   isCommittingPostImage = false,
+  isDeletingVersion = false,
 }: PostCreatorPreviewPaneProps) {
   const t = useTranslations('postCreator.preview')
   const gridSafeZoneToggleId = useId()
@@ -67,23 +70,34 @@ export function PostCreatorPreviewPane({
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
   const previewImageUrl = previewVersion?.imageUrl ?? null
   const hasImage = Boolean(previewImageUrl)
+  const showLoadingPlaceholder = isLoading && !hasImage
   const showVersionNav = versions.length > 1 && onPreviewVersionIndex
   const canCommitPostImage =
     showVersionNav && onUseAsPostImage && previewVersionIndex !== postImageVersionIndex
 
+  const canDeleteVersion =
+    hasImage &&
+    Boolean(onDeleteVersion) &&
+    Boolean(previewVersion?.mediaS3Key) &&
+    !isLoading &&
+    !isCommittingPostImage &&
+    !isDeletingVersion
+
   const previewVersionAt = useCallback(
     (index: number) => {
-      if (!onPreviewVersionIndex || isCommittingPostImage) return
+      if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
       onPreviewVersionIndex(index)
     },
-    [isCommittingPostImage, onPreviewVersionIndex],
+    [isCommittingPostImage, isDeletingVersion, isLoading, onPreviewVersionIndex],
   )
 
   const goPrev = useCallback(() => {
-    if (!onPreviewVersionIndex || isCommittingPostImage) return
+    if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
     previewVersionAt(previewVersionIndex === 0 ? versions.length - 1 : previewVersionIndex - 1)
   }, [
     isCommittingPostImage,
+    isDeletingVersion,
+    isLoading,
     onPreviewVersionIndex,
     previewVersionAt,
     previewVersionIndex,
@@ -91,10 +105,12 @@ export function PostCreatorPreviewPane({
   ])
 
   const goNext = useCallback(() => {
-    if (!onPreviewVersionIndex || isCommittingPostImage) return
+    if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
     previewVersionAt(previewVersionIndex === versions.length - 1 ? 0 : previewVersionIndex + 1)
   }, [
     isCommittingPostImage,
+    isDeletingVersion,
+    isLoading,
     onPreviewVersionIndex,
     previewVersionAt,
     previewVersionIndex,
@@ -120,54 +136,102 @@ export function PostCreatorPreviewPane({
       aria-label={t('ariaLabel')}
       className="flex h-full min-h-0 flex-col overflow-hidden p-4"
     >
-      <div className="flex min-h-0 flex-1 items-center justify-center">
-        {isLoading ? (
-          <Skeleton
-            className={`${previewShellClassName} ${previewFrameClassName}`}
-            style={previewFrameStyle}
-          />
+      <div className="flex min-h-0 flex-1 items-stretch justify-center overflow-hidden px-2 py-3">
+        {showLoadingPlaceholder ? (
+          <div
+            className={`flex min-h-0 flex-1 items-center justify-center ${previewContentMaxWidthClassName}`}
+          >
+            <Skeleton className={`w-full ${previewFrameClassName}`} />
+          </div>
         ) : hasImage ? (
           <div
-            className="flex w-full flex-col items-center gap-3"
+            className={`flex min-h-0 flex-1 flex-col items-center gap-3 ${previewContentMaxWidthClassName}`}
             onKeyDown={handlePreviewKeyDown}
             tabIndex={showVersionNav ? 0 : undefined}
           >
-            <div className="flex w-full items-center justify-center gap-2">
+            <div className="flex min-h-0 w-full flex-1 items-stretch justify-center gap-2">
               {showVersionNav ? (
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
                   onClick={goPrev}
-                  disabled={isCommittingPostImage}
-                  className="size-9 shrink-0 rounded-full shadow-sm"
+                  disabled={isCommittingPostImage || isLoading || isDeletingVersion}
+                  className="size-9 shrink-0 self-center rounded-full shadow-sm"
                   aria-label={t('previousVersion')}
                 >
                   <ChevronLeft className="size-4" aria-hidden />
                 </Button>
               ) : null}
-              <div className={`flex min-w-0 flex-col items-center gap-2 ${previewShellClassName}`}>
-                <div className={previewFrameClassName} style={previewFrameStyle}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
-                  <img src={previewImageUrl!} alt="" className="size-full object-contain" />
-                  {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
-                  {canCommitPostImage ? (
-                    <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center p-3">
-                      <Button
-                        type="button"
-                        onClick={onUseAsPostImage}
-                        disabled={isCommittingPostImage}
-                        className="shadow-md"
+              <div className={previewShellClassName}>
+                <div className="flex min-h-0 flex-1 items-center justify-center">
+                  <div className={previewFrameClassName}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
+                    <img src={previewImageUrl!} alt="" className="size-full object-contain" />
+                    {isLoading ? (
+                      <div
+                        className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/60"
+                        aria-live="polite"
                       >
-                        {isCommittingPostImage
-                          ? t('useAsPostImageCommitting')
-                          : t('useAsPostImage')}
-                      </Button>
-                    </div>
-                  ) : null}
+                        <Loader2
+                          className="size-8 animate-spin text-muted-foreground"
+                          aria-hidden
+                        />
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {t('generating')}
+                        </span>
+                      </div>
+                    ) : null}
+                    {isDeletingVersion ? (
+                      <div
+                        className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/60"
+                        aria-live="polite"
+                      >
+                        <Loader2
+                          className="size-8 animate-spin text-muted-foreground"
+                          aria-hidden
+                        />
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {t('deleteImageDeleting')}
+                        </span>
+                      </div>
+                    ) : null}
+                    {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+                    {canDeleteVersion ? (
+                      <div className="absolute top-2 right-2 z-40">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={onDeleteVersion}
+                          className="size-8 shadow-sm"
+                          aria-label={t('deleteImage')}
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                        </Button>
+                      </div>
+                    ) : null}
+                    {canCommitPostImage ? (
+                      <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center p-3">
+                        <Button
+                          type="button"
+                          onClick={onUseAsPostImage}
+                          disabled={isCommittingPostImage}
+                          className="shadow-md"
+                        >
+                          {isCommittingPostImage
+                            ? t('useAsPostImageCommitting')
+                            : t('useAsPostImage')}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
                 {showVersionNav ? (
-                  <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
+                  <p
+                    className="shrink-0 pt-1 text-xs font-medium text-muted-foreground"
+                    aria-live="polite"
+                  >
                     {t('versionIndicator', {
                       current: previewVersionIndex + 1,
                       total: versions.length,
@@ -181,8 +245,8 @@ export function PostCreatorPreviewPane({
                   variant="outline"
                   size="icon"
                   onClick={goNext}
-                  disabled={isCommittingPostImage}
-                  className="size-9 shrink-0 rounded-full shadow-sm"
+                  disabled={isCommittingPostImage || isLoading || isDeletingVersion}
+                  className="size-9 shrink-0 self-center rounded-full shadow-sm"
                   aria-label={t('nextVersion')}
                 >
                   <ChevronRight className="size-4" aria-hidden />
@@ -190,32 +254,34 @@ export function PostCreatorPreviewPane({
               ) : null}
             </div>
             {showVersionNav ? (
-              <PostCreatorVersionFilmstrip
-                versions={versions}
-                previewIndex={previewVersionIndex}
-                postImageIndex={postImageVersionIndex}
-                onPreviewIndex={previewVersionAt}
-                isCommitting={isCommittingPostImage}
-              />
+              <div className="w-full shrink-0">
+                <PostCreatorVersionFilmstrip
+                  versions={versions}
+                  previewIndex={previewVersionIndex}
+                  postImageIndex={postImageVersionIndex}
+                  onPreviewIndex={previewVersionAt}
+                  isCommitting={isCommittingPostImage || isLoading || isDeletingVersion}
+                />
+              </div>
             ) : null}
           </div>
         ) : (
-          <Card
-            className="relative flex size-full max-h-full flex-col items-center justify-center border-dashed bg-muted/20 p-6 text-center"
-            style={{
-              ...previewFrameStyle,
-              maxWidth: 'min(100%, calc((100vh - 12rem) * 0.8))',
-            }}
+          <div
+            className={`flex min-h-0 flex-1 items-center justify-center ${previewContentMaxWidthClassName}`}
           >
-            <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />
+            <Card
+              className={`relative flex w-full flex-col items-center justify-center border-dashed bg-muted/20 p-6 text-center ${previewFrameClassName}`}
+            >
+              <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
+                <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
               </div>
-              <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
-              <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
-            </div>
-            {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
-          </Card>
+              {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+            </Card>
+          </div>
         )}
       </div>
 

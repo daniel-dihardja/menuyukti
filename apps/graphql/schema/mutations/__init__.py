@@ -8,6 +8,7 @@ from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
+from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
 from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
@@ -35,6 +36,7 @@ __all__ = [
     "DeleteImageAiFlowMutation",
     "DeleteNodeMutation",
     "DeletePostMutation",
+    "DeletePostPageMediaVersionMutation",
     "InviteWorkspaceMemberMutation",
     "MilestoneAgentRunMutation",
     "RemoveWorkspaceMemberMutation",

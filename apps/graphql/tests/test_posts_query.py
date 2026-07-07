@@ -542,3 +542,255 @@ def test_delete_post_denied_for_other_workspace_user():
         )
     )
     assert delete_result.errors is not None
+
+
+DELETE_POST_PAGE_MEDIA_VERSION = """
+mutation DeletePostPageMediaVersion($pageId: ID!, $mediaS3Key: String!) {
+  deletePostPageMediaVersion(pageId: $pageId, mediaS3Key: $mediaS3Key) {
+    id
+    mediaS3Key
+    mediaVersions {
+      id
+      mediaS3Key
+    }
+  }
+}
+"""
+
+
+def _create_post_with_two_versions() -> tuple[str, str]:
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Delete version"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    for key, prompt in (
+        (VALID_MEDIA_KEY, "First prompt"),
+        (VALID_MEDIA_KEY_2, "Second prompt"),
+    ):
+        update_result = asyncio.run(
+            schema.execute(
+                UPDATE_POST_PAGE,
+                variable_values={"id": page_id, "mediaS3Key": key, "prompt": prompt},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert not update_result.errors, update_result.errors
+
+    return create_result.data["createPost"]["id"], page_id
+
+
+def test_delete_post_page_media_version_requires_auth():
+    result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": "1", "mediaS3Key": VALID_MEDIA_KEY},
+            context_value={},
+        )
+    )
+    assert result.errors is not None
+
+
+def test_delete_post_page_media_version_non_committed():
+    _seed_workspace()
+    _, page_id = _create_post_with_two_versions()
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": page_id, "mediaS3Key": VALID_MEDIA_KEY},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    page = delete_result.data["deletePostPageMediaVersion"]
+    assert page["mediaS3Key"] == VALID_MEDIA_KEY_2
+    assert len(page["mediaVersions"]) == 1
+    assert page["mediaVersions"][0]["mediaS3Key"] == VALID_MEDIA_KEY_2
+
+
+def test_delete_post_page_media_version_committed_reassigns():
+    _seed_workspace()
+    _, page_id = _create_post_with_two_versions()
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": page_id, "mediaS3Key": VALID_MEDIA_KEY_2},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    page = delete_result.data["deletePostPageMediaVersion"]
+    assert page["mediaS3Key"] == VALID_MEDIA_KEY
+    assert len(page["mediaVersions"]) == 1
+    assert page["mediaVersions"][0]["mediaS3Key"] == VALID_MEDIA_KEY
+
+
+def test_delete_post_page_media_version_last_version_clears_committed():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Delete last"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "Only version",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": page_id, "mediaS3Key": VALID_MEDIA_KEY},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    page = delete_result.data["deletePostPageMediaVersion"]
+    assert page["mediaS3Key"] is None
+    assert page["mediaVersions"] == []
+
+
+DELETE_POST_PAGE_MEDIA_VERSION = """
+mutation DeletePostPageMediaVersion($pageId: ID!, $mediaS3Key: String!) {
+  deletePostPageMediaVersion(pageId: $pageId, mediaS3Key: $mediaS3Key) {
+    id
+    mediaS3Key
+    mediaVersions {
+      id
+      mediaS3Key
+    }
+  }
+}
+"""
+
+
+def _create_post_with_two_versions() -> tuple[str, str]:
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Delete version"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    for key, prompt in (
+        (VALID_MEDIA_KEY, "First prompt"),
+        (VALID_MEDIA_KEY_2, "Second prompt"),
+    ):
+        update_result = asyncio.run(
+            schema.execute(
+                UPDATE_POST_PAGE,
+                variable_values={"id": page_id, "mediaS3Key": key, "prompt": prompt},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert not update_result.errors, update_result.errors
+
+    return create_result.data["createPost"]["id"], page_id
+
+
+def test_delete_post_page_media_version_requires_auth():
+    result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": "1", "mediaS3Key": VALID_MEDIA_KEY},
+            context_value={},
+        )
+    )
+    assert result.errors is not None
+
+
+def test_delete_post_page_media_version_non_committed():
+    _seed_workspace()
+    _, page_id = _create_post_with_two_versions()
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": page_id, "mediaS3Key": VALID_MEDIA_KEY},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    page = delete_result.data["deletePostPageMediaVersion"]
+    assert page["mediaS3Key"] == VALID_MEDIA_KEY_2
+    assert len(page["mediaVersions"]) == 1
+    assert page["mediaVersions"][0]["mediaS3Key"] == VALID_MEDIA_KEY_2
+
+
+def test_delete_post_page_media_version_committed_reassigns():
+    _seed_workspace()
+    _, page_id = _create_post_with_two_versions()
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": page_id, "mediaS3Key": VALID_MEDIA_KEY_2},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    page = delete_result.data["deletePostPageMediaVersion"]
+    assert page["mediaS3Key"] == VALID_MEDIA_KEY
+    assert len(page["mediaVersions"]) == 1
+    assert page["mediaVersions"][0]["mediaS3Key"] == VALID_MEDIA_KEY
+
+
+def test_delete_post_page_media_version_last_version_clears_committed():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Delete last"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "Only version",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE_MEDIA_VERSION,
+            variable_values={"pageId": page_id, "mediaS3Key": VALID_MEDIA_KEY},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    page = delete_result.data["deletePostPageMediaVersion"]
+    assert page["mediaS3Key"] is None
+    assert page["mediaVersions"] == []

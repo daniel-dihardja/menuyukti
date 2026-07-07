@@ -32,14 +32,40 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('Do not add visible guides, boxes, rectangles')
   })
 
-  it('includes reference block when referenceImageCount > 0', () => {
+  it('includes photo reference block when referenceImageCount > 0', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Hero dish on marble',
       referenceImageCount: 2,
+      referenceImageSource: 'photo',
     })
 
     expect(out).toContain('REFERENCE IMAGES:')
     expect(out).toContain('You receive 2 reference photo(s)')
+    expect(out).toContain("Preserve each product's identity")
+  })
+
+  it('includes post-edit reference block when referenceImageSource is post', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Make the background warmer',
+      referenceImageCount: 1,
+      referenceImageSource: 'post',
+    })
+
+    expect(out).toContain('REFERENCE IMAGE:')
+    expect(out).toContain('current post design')
+    expect(out).toContain('Apply the requested edits')
+    expect(out).not.toContain("Preserve each product's identity")
+  })
+
+  it('uses photo reference block for mixed source', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Combine products into the scene',
+      referenceImageCount: 3,
+      referenceImageSource: 'mixed',
+    })
+
+    expect(out).toContain('REFERENCE IMAGES:')
+    expect(out).toContain('You receive 3 reference photo(s)')
     expect(out).toContain("Preserve each product's identity")
   })
 
@@ -50,6 +76,7 @@ describe('buildInstagramPostPrompt', () => {
     })
 
     expect(out).not.toContain('REFERENCE IMAGES:')
+    expect(out).not.toContain('REFERENCE IMAGE:')
   })
 
   it('places foundation sections before creative direction', () => {

@@ -44,7 +44,7 @@ export function PostCreatorVersionFilmstrip({
       role="listbox"
       aria-label={t('versionsAriaLabel')}
       aria-busy={isCommitting}
-      className="flex w-full max-w-[min(100%,calc((100vh-12rem)*0.8))] gap-2 overflow-x-auto px-1 pb-1"
+      className="flex w-full gap-2 overflow-x-auto px-1 pb-1"
     >
       {versions.map((version, index) => {
         const isPreview = index === previewIndex
