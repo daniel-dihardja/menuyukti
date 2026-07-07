@@ -5,9 +5,9 @@ import { Leaf, MenuIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
-import { HeaderStylePaletteToggle } from '@/components/style-palette-toggle'
 import { Button } from '@workspace/ui/components/button'
 import { Separator } from '@workspace/ui/components/separator'
 import {
@@ -26,6 +26,14 @@ export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
   const isLanding = pathname === '/'
+  const [isScrolled, setIsScrolled] = React.useState(false)
+
+  React.useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const workflowsActive =
     pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
@@ -34,7 +42,7 @@ export function MainHeader() {
 
   const navLinkClass = (active: boolean) =>
     cn(
-      'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+      'rounded-none px-3 py-2 text-sm font-medium transition-colors',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
       active
         ? 'bg-accent text-accent-foreground'
@@ -44,7 +52,9 @@ export function MainHeader() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full shrink-0 border-b border-border bg-background/95 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur supports-[backdrop-filter]:bg-background/80',
+        'sticky top-0 z-50 w-full shrink-0 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-[16px]',
+        isScrolled ? 'border-b border-border' : 'border-b border-transparent',
+        'bg-canvas/72',
       )}
     >
       <div className="box-border flex h-14 w-full min-w-0 items-center justify-between gap-3 sm:gap-4">
@@ -76,7 +86,6 @@ export function MainHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">
-          <HeaderStylePaletteToggle />
           {showMobileMainMenu ? (
             <div className="sm:hidden">
               <Sheet>

@@ -7,7 +7,7 @@ export const contentType = 'image/png'
 
 async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
   const css = await fetch(
-    `https://fonts.googleapis.com/css2?family=Jost:wght@${weight}&display=swap`,
+    `https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@${weight}&display=swap`,
     {
       headers: {
         'User-Agent':
@@ -18,7 +18,7 @@ async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
 
   const match = css.match(/src: url\((.+?)\) format\('(?:opentype|truetype|woff2?)'\)/)
   if (!match?.[1]) {
-    throw new Error(`Jost (${weight}) font URL not found`)
+    throw new Error(`Plus Jakarta Sans (${weight}) font URL not found`)
   }
 
   return fetch(match[1]).then((res) => res.arrayBuffer())
@@ -26,7 +26,7 @@ async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
 
 export default async function Image() {
   const t = await getTranslations('metadata')
-  const [fontBold, fontSemibold] = await Promise.all([loadGoogleFont(700), loadGoogleFont(600)])
+  const [fontBold, fontSemibold] = await Promise.all([loadGoogleFont(800), loadGoogleFont(600)])
 
   return new ImageResponse(
     <div
@@ -37,9 +37,9 @@ export default async function Image() {
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '64px 72px',
-        background: 'linear-gradient(165deg, #fdf8f2 0%, #f3e8da 55%, #ebe0d2 100%)',
-        color: '#2b241c',
-        fontFamily: 'Jost',
+        background: '#f8f5f0',
+        color: '#171717',
+        fontFamily: 'Plus Jakarta Sans',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -47,31 +47,33 @@ export default async function Image() {
           style={{
             width: 44,
             height: 44,
-            borderRadius: 12,
-            background: '#c17f3a',
+            borderRadius: 0,
+            background: '#2fd4c7',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#fffaf5',
+            color: '#171717',
             fontSize: 28,
-            fontWeight: 700,
+            fontWeight: 800,
           }}
         >
           M
         </div>
-        <div style={{ fontSize: 36, fontWeight: 700, letterSpacing: '-0.02em' }}>Menuyukti</div>
+        <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.02em' }}>Menuyukti</div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 980 }}>
         <div
           style={{
             alignSelf: 'flex-start',
-            borderRadius: 999,
-            background: 'rgba(193, 127, 58, 0.14)',
-            color: '#8a5a28',
+            borderRadius: 0,
+            background: '#b8f3dd',
+            color: '#1eb8ac',
             fontSize: 22,
             fontWeight: 600,
             padding: '10px 20px',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
           }}
         >
           {t('ogImageBadge')}
@@ -79,8 +81,8 @@ export default async function Image() {
         <div
           style={{
             fontSize: 58,
-            fontWeight: 700,
-            lineHeight: 1.12,
+            fontWeight: 800,
+            lineHeight: 1.05,
             letterSpacing: '-0.03em',
           }}
         >
@@ -89,9 +91,9 @@ export default async function Image() {
         <div
           style={{
             fontSize: 26,
-            fontWeight: 600,
+            fontWeight: 500,
             lineHeight: 1.45,
-            color: 'rgba(43, 36, 28, 0.78)',
+            color: '#6b655f',
             maxWidth: 900,
           }}
         >
@@ -106,7 +108,7 @@ export default async function Image() {
           justifyContent: 'space-between',
           fontSize: 22,
           fontWeight: 600,
-          color: 'rgba(43, 36, 28, 0.55)',
+          color: '#9c968f',
         }}
       >
         <span>menuyukti.com</span>
@@ -116,8 +118,8 @@ export default async function Image() {
     {
       ...size,
       fonts: [
-        { name: 'Jost', data: fontBold, weight: 700, style: 'normal' },
-        { name: 'Jost', data: fontSemibold, weight: 600, style: 'normal' },
+        { name: 'Plus Jakarta Sans', data: fontBold, weight: 800, style: 'normal' },
+        { name: 'Plus Jakarta Sans', data: fontSemibold, weight: 600, style: 'normal' },
       ],
     },
   )

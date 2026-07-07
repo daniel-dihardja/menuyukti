@@ -5,19 +5,11 @@ import { cn } from '@workspace/ui/lib/utils'
 import { Sparkles } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
-import {
-  LandingHeroHeadline,
-  parseLandingHeroHeadlineVariant,
-} from '@/app/_components/landing/landing-hero-headline'
+import { LandingHeroHeadline } from '@/app/_components/landing/landing-hero-headline'
 import { routes } from '@/lib/routes'
 
-type LandingPageProps = {
-  searchParams: Promise<{ heroHeadline?: string | string[] }>
-}
-
-export default async function LandingPage({ searchParams }: LandingPageProps) {
+export default async function LandingPage() {
   const t = await getTranslations('landing')
-  const heroHeadlineVariant = parseLandingHeroHeadlineVariant((await searchParams).heroHeadline)
 
   const horizontalPadding =
     'pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))]'
@@ -35,12 +27,13 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
         <section
           className={cn(
             'relative flex min-h-full w-full min-w-0 flex-1 flex-col justify-center',
-            'bg-gradient-to-b from-hero-gradient-from to-hero-gradient-to font-sans',
+            'bg-background font-sans',
             horizontalPadding,
             'py-12 md:py-16',
           )}
         >
-          <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col items-center text-center">
+          <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
+          <div className="relative mx-auto flex w-full min-w-0 max-w-6xl flex-col items-center text-center">
             <Badge
               variant="secondary"
               className="landing-hero-badge mb-3 inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 whitespace-normal px-3 py-1.5 text-center text-balance leading-snug"
@@ -48,11 +41,9 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
               <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
               {t('hero.badge')}
             </Badge>
-            <LandingHeroHeadline variant={heroHeadlineVariant}>
-              {t('hero.headline')}
-            </LandingHeroHeadline>
+            <LandingHeroHeadline>{t('hero.headline')}</LandingHeroHeadline>
 
-            <p className="landing-hero-subtitle mx-auto mt-4 max-w-2xl text-pretty text-center text-lg leading-relaxed text-foreground/80 md:mt-5 md:text-xl md:leading-relaxed">
+            <p className="landing-hero-subtitle mx-auto mt-4 max-w-2xl text-pretty text-center text-lg md:mt-5 md:text-xl">
               {t('hero.subtitle')}
             </p>
 

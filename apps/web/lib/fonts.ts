@@ -1,14 +1,15 @@
-import { Geist_Mono, Jost } from 'next/font/google'
+import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google'
 
-export const fontSans = Jost({
+export const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
   weight: ['400', '500', '600', '700', '800'],
 })
 
-export const fontMono = Geist_Mono({
+export const fontMono = JetBrains_Mono({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-mono',
+  weight: ['400', '500'],
 })

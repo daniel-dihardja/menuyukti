@@ -560,19 +560,6 @@
       "generic": "Something went wrong. Please try again."
     }
   },
-  "stylePalette": {
-    "label": "Color style",
-    "amber": "Golden Amber",
-    "saffron": "Saffron Spark",
-    "nectar": "Golden Nectar",
-    "coral": "Coral & Peach",
-    "hearth": "Open Hearth",
-    "terracotta": "Mediterranean Clay",
-    "brass": "Brass Ledger",
-    "sage": "Farm & Herb",
-    "bistro": "Wine Bistro",
-    "espresso": "Roastery"
-  },
   "sidebar": {
     "groupLabel": "Menuyukti",
     "dashboard": "Dashboard",
