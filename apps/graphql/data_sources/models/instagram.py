@@ -14,6 +14,7 @@ from sqlalchemy import (
     UniqueConstraint,
     desc,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -95,7 +96,12 @@ class InstagramPostPage(Base):
         index=True,
     )
     post: Mapped[InstagramPost] = relationship(back_populates="pages")
-    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    sort_order: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default=text("0"),
+        nullable=False,
+    )
     media_s3_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
