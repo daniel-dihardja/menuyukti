@@ -570,6 +570,7 @@
     "workflows": "Workflow",
     "skills": "Skills & tools",
     "studio": "Studio",
+    "postCreator": "Post Creator",
     "content": "Content",
     "photos": "Photos",
     "igReels": "IG Reels",
@@ -686,6 +687,13 @@
       "previewFootnote": "The full catalog is open to everyone — share links with your team.",
       "browseFullCatalog": "Browse full catalogue"
     }
+  },
+  "postCreator": {
+    "title": "Post Creator",
+    "description": "Generate post images with AI-assisted chat.",
+    "thumbnailsPane": "Post page thumbnails",
+    "previewPane": "Generated post image",
+    "chatPane": "Chat"
   },
   "photos": {
     "title": "Photos",

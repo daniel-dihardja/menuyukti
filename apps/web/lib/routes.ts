@@ -64,6 +64,7 @@ export const routes = {
 
   /** AI studio (brand library + generation). */
   canvas: '/canvas',
+  canvasPostCreator: '/canvas/post-creator',
   canvasSession: (id: string | number) => `/canvas/${id}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
   agent: '/advisor',

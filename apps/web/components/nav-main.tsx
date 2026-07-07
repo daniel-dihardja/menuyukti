@@ -70,6 +70,7 @@ const NAV_WORKSPACE: NavItem[] = [
     href: routes.canvas,
     icon: <Sparkles className="w-4 h-4" />,
     separatorBefore: true,
+    children: [{ key: 'postCreator', labelKey: 'postCreator', href: routes.canvasPostCreator }],
   },
   {
     key: 'workflows',
