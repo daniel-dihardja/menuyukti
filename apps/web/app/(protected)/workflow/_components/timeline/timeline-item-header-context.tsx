@@ -22,6 +22,7 @@ type TimelineItemHeaderContextValue = {
   }
   milestoneRunChatModel: ChatGatewayModelId
   onMilestoneRunChatModelChange: (id: ChatGatewayModelId) => void
+  savingRunChatModel?: boolean
   actions: {
     run?: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
     stopRun?: () => void

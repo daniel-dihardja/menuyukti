@@ -18,6 +18,7 @@ export type TimelineMilestoneState = Pick<
   | 'savingGoalMilestoneId'
   | 'savingDataMilestoneId'
   | 'savingMilestoneSettingsMilestoneId'
+  | 'savingRunChatModelMilestoneId'
   | 'movingMilestoneId'
   | 'runningMilestoneId'
   | 'runningStep'
@@ -37,6 +38,7 @@ export type TimelineErrors = Pick<
   | 'milestoneRunError'
   | 'milestoneRunCriteriaHint'
   | 'milestoneSettingsError'
+  | 'runChatModelError'
 >
 
 export type TimelineActions = {
@@ -48,6 +50,7 @@ export type TimelineActions = {
   onUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   onUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>
   onUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
+  onUpdateMilestoneRunChatModel: (id: string, runChatModel: ChatGatewayModelId) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
   onRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
   onStopMilestoneRun: () => void
@@ -90,6 +93,7 @@ export function splitMilestoneUiState(ui: WorkflowMilestoneUiState): {
     milestoneRunError,
     milestoneRunCriteriaHint,
     milestoneSettingsError,
+    runChatModelError,
     ...milestoneState
   } = ui
   return {
@@ -104,6 +108,7 @@ export function splitMilestoneUiState(ui: WorkflowMilestoneUiState): {
       milestoneRunError,
       milestoneRunCriteriaHint,
       milestoneSettingsError,
+      runChatModelError,
     },
   }
 }

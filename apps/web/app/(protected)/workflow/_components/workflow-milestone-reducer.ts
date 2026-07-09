@@ -28,6 +28,8 @@ export type WorkflowMilestoneUiState = {
   milestoneRunCriteriaHint: string | null
   savingMilestoneSettingsMilestoneId: string | null
   milestoneSettingsError: string | null
+  savingRunChatModelMilestoneId: string | null
+  runChatModelError: string | null
 }
 
 export function createInitialWorkflowMilestoneUiState(
@@ -56,6 +58,8 @@ export function createInitialWorkflowMilestoneUiState(
     milestoneRunCriteriaHint: null,
     savingMilestoneSettingsMilestoneId: null,
     milestoneSettingsError: null,
+    savingRunChatModelMilestoneId: null,
+    runChatModelError: null,
   }
 }
 

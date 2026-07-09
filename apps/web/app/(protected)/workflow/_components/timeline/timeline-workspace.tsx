@@ -31,6 +31,7 @@ function toErrorMap(errors: TimelineErrors): TimelineErrorMap {
     milestoneData: errors.milestoneDataError,
     milestoneRun: errors.milestoneRunError,
     milestoneSettings: errors.milestoneSettingsError,
+    runChatModel: errors.runChatModelError,
     milestoneRunCriteriaHint: errors.milestoneRunCriteriaHint,
   }
 }

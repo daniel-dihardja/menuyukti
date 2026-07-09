@@ -11,6 +11,7 @@ export function toTimelineActions(ops: WorkflowTimelineOpsHandles): TimelineActi
     onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
     onUpdateMilestoneData: ops.handleUpdateMilestoneData,
     onUpdateMilestoneInput: ops.handleUpdateMilestoneInput,
+    onUpdateMilestoneRunChatModel: ops.handleUpdateMilestoneRunChatModel,
     onHydrateMilestoneData: ops.handleHydrateMilestoneData,
     onRunMilestone: ops.handleRunMilestone,
     onStopMilestoneRun: ops.handleStopMilestoneRun,

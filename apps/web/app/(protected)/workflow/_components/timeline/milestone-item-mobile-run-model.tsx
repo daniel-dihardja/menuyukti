@@ -6,8 +6,14 @@ import { Separator } from '@workspace/ui/components/separator'
 import { useTimelineItemHeader } from './timeline-item-header-context'
 
 export function MilestoneItemMobileRunModel() {
-  const { isMobile, actions, milestoneRunChatModel, onMilestoneRunChatModelChange, runState } =
-    useTimelineItemHeader()
+  const {
+    isMobile,
+    actions,
+    milestoneRunChatModel,
+    onMilestoneRunChatModelChange,
+    runState,
+    savingRunChatModel = false,
+  } = useTimelineItemHeader()
   const isRunning = runState === 'running'
 
   if (!isMobile || !actions.run) {
@@ -24,7 +30,7 @@ export function MilestoneItemMobileRunModel() {
       >
         <ChatGatewayModelSelect
           className="w-full max-w-none"
-          disabled={isRunning || runState === 'blocked'}
+          disabled={isRunning || runState === 'blocked' || savingRunChatModel}
           onValueChange={onMilestoneRunChatModelChange}
           value={milestoneRunChatModel}
         />

@@ -403,7 +403,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       body.presetId !== undefined ||
       body.milestoneInput !== undefined ||
       body.passCriterias !== undefined ||
-      body.goal !== undefined
+      body.goal !== undefined ||
+      body.runChatModel !== undefined
     ) {
       const mn = validated.milestoneNode
       const merged: Record<string, unknown> = {
@@ -422,6 +423,9 @@ export async function PATCH(req: Request, context: RouteContext) {
       }
       if (body.goal !== undefined) {
         merged.milestoneGoal = body.goal
+      }
+      if (body.runChatModel !== undefined) {
+        merged.runChatModel = body.runChatModel
       }
       parseUpdateNodeData(
         await graphqlQuery<UpdateNodeDataRaw>(

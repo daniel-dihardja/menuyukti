@@ -1,3 +1,4 @@
+import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type {
   PromotionCandidateMenuItem,
   MilestonePresetId,
@@ -141,6 +142,8 @@ export type TimelineMilestone = {
   presetId?: MilestonePresetId
   /** Typed per-milestone input; stored on milestone `data` JSON. */
   milestoneInput?: MilestoneInput
+  /** LLM model for milestone agent runs; stored on milestone `data` JSON. */
+  runChatModel?: ChatGatewayModelId
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
   /** Derived rail status from pass criteria + optional run outcome. */

@@ -3,6 +3,9 @@
  */
 
 import { z } from 'zod'
+
+import { isAllowedChatGatewayModel } from '@/lib/chat/gateway-chat-models'
+
 import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
@@ -28,6 +31,13 @@ export const milestoneDataSchema = z
     presetId: milestonePresetIdSchema.optional(),
     milestoneInput: milestoneInputSchema.optional(),
     passCriterias: z.array(passCriteriaSchema).optional(),
+    /** Per-milestone LLM model for agent runs; stored on milestone node `data` JSON. */
+    runChatModel: z
+      .string()
+      .optional()
+      .refine((v) => v === undefined || isAllowedChatGatewayModel(v), {
+        message: 'Unsupported chat model',
+      }),
   })
   .passthrough()
 

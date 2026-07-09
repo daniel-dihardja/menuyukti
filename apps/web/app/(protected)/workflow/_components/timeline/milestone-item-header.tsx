@@ -41,6 +41,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
     movement,
     milestoneRunChatModel,
     onMilestoneRunChatModelChange,
+    savingRunChatModel = false,
     actions,
   } = useTimelineItemHeader()
   const MilestoneIcon = milestonePresetIconFor(milestone.presetId)
@@ -73,7 +74,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
             {!isMobile ? (
               <span className="inline-flex shrink-0" onPointerDown={(e) => e.stopPropagation()}>
                 <ChatGatewayModelSelect
-                  disabled={isRunning || runState === 'blocked'}
+                  disabled={isRunning || runState === 'blocked' || savingRunChatModel}
                   onValueChange={onMilestoneRunChatModelChange}
                   value={milestoneRunChatModel}
                 />
