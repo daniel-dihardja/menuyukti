@@ -46,7 +46,7 @@ export default async function Page({ params }: PageProps) {
     <AnalyticsPageShell
       title={tPostCreator('title')}
       breadcrumbs={[
-        { label: tPosts('title'), href: routes.posts },
+        { label: tPosts('title'), href: routes.igStudio },
         { label: tPostCreator('title') },
       ]}
       contentWidth="full"

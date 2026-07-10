@@ -36,7 +36,7 @@ export function CreatePostButton() {
       setError(result.error)
       return
     }
-    router.push(routes.postsDetail(result.data.id))
+    router.push(routes.igStudioDetail(result.data.id))
   }
 
   return (

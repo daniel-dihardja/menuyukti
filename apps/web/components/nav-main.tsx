@@ -70,7 +70,7 @@ const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'posts',
     labelKey: 'posts',
-    href: routes.posts,
+    href: routes.igStudio,
     icon: <SquarePen className="w-4 h-4" />,
   },
   {

@@ -30,6 +30,8 @@ const nextConfig = {
       { source: '/content/photos', destination: '/media', permanent: true },
       { source: '/content/photos/:path*', destination: '/media/:path*', permanent: true },
       { source: '/api/photos/:path*', destination: '/api/media/:path*', permanent: true },
+      { source: '/posts', destination: '/ig-studio', permanent: true },
+      { source: '/posts/:path*', destination: '/ig-studio/:path*', permanent: true },
     ]
   },
   async rewrites() {

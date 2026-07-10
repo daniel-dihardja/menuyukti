@@ -23,7 +23,7 @@ export default async function Page({ searchParams }: PageProps) {
   const params = await searchParams
   const legacyPostId = params.postId?.trim()
   if (legacyPostId) {
-    redirect(routes.postsDetail(legacyPostId))
+    redirect(routes.igStudioDetail(legacyPostId))
   }
 
   const tSidebar = await getTranslations('sidebar')
@@ -37,7 +37,7 @@ export default async function Page({ searchParams }: PageProps) {
     <AnalyticsPageShell
       title={tPostCreator('title')}
       breadcrumbs={[
-        { label: tSidebar('posts'), href: routes.posts },
+        { label: tSidebar('posts'), href: routes.igStudio },
         { label: tPostCreator('title'), href: routes.canvasPostCreator },
       ]}
       contentWidth="full"

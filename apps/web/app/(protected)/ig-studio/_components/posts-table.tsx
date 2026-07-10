@@ -127,7 +127,7 @@ export function PostsTable({ posts }: PostsTableProps) {
           id: 'edit',
           label: t('edit'),
           icon: Pencil,
-          href: routes.postsDetail(post.id),
+          href: routes.igStudioDetail(post.id),
         },
         {
           id: 'delete',

@@ -45,7 +45,7 @@ export default async function Page() {
   return (
     <AnalyticsPageShell
       title={t('title')}
-      breadcrumbs={[{ label: t('title'), href: routes.posts }]}
+      breadcrumbs={[{ label: t('title'), href: routes.igStudio }]}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
     >
       <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>

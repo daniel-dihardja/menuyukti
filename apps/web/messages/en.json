@@ -570,7 +570,7 @@
     "workflows": "Workflow",
     "skills": "Skills & tools",
     "studio": "Studio",
-    "posts": "Posts",
+    "posts": "IG Studio",
     "content": "Content",
     "media": "Media",
     "igReels": "IG Reels",
@@ -758,7 +758,7 @@
     }
   },
   "posts": {
-    "title": "Posts",
+    "title": "IG Studio",
     "description": "Create and manage standalone Instagram post drafts.",
     "create": "Create new post",
     "creating": "Creating…",
