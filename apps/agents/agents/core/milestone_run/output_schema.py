@@ -1139,6 +1139,20 @@ class StoryLineupMilestoneOutput(BaseModel):
     sourceDatesTitle: str | None = None
 
 
+class IgPlanMilestoneOutput(BaseModel):
+    planMarkdown: str = Field(min_length=1)
+    sourceAnalyticsRunId: str = Field(min_length=1)
+    reportingPeriod: str = Field(min_length=1)
+
+    @field_validator("planMarkdown", "sourceAnalyticsRunId", "reportingPeriod")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
@@ -1152,6 +1166,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "scheduler": SchedulerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,
+    "ig_plan": IgPlanMilestoneOutput,
 }
 
 

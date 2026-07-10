@@ -30,6 +30,7 @@ import {
   cultureHooksMilestoneDataSchema,
   datesMilestoneDataSchema,
   igProfileMilestoneDataSchema,
+  igPlanMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -127,6 +128,12 @@ const EMPTY_CULTURE_HOOKS_DATA: MilestonedataValue = {
 const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
   usernames: [],
   bios: [],
+}
+
+const EMPTY_IG_PLAN_DATA: MilestonedataValue = {
+  planMarkdown: '',
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
 }
 
 const EMPTY_MENU_TAGGER_DATA: MilestonedataValue = {
@@ -478,6 +485,36 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_profile.criterionBioVariations'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_plan: {
+    id: 'ig_plan',
+    icon: CalendarDays,
+    inputType: 'optional_notes',
+    dataSchema: igPlanMilestoneDataSchema,
+    emptyData: EMPTY_IG_PLAN_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_plan.title'),
+      milestoneInput: {
+        type: 'ig_plan',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_IG_PLAN_DATA,
+      goal: t('milestonePreset.ig_plan.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_plan.criterionWeeklyEntries'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_plan.criterionSlotGrounding'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_plan.criterionScheduleExplanation'),
           status: 'open',
         },
       ],

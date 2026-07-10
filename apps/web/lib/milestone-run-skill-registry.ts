@@ -75,6 +75,12 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
       'Generate Instagram username options and bio variations aligned with brand, audience, and campaign objective from the Campaign Brief.',
   },
   {
+    id: 'ig_plan',
+    name: 'IG Plan',
+    description:
+      'Build a weekly Instagram schedule from venue slot strength, menu engineering matrix, and per-slot promotion candidates on the latest analytics run.',
+  },
+  {
     id: 'scheduler',
     name: 'Scheduler',
     description:

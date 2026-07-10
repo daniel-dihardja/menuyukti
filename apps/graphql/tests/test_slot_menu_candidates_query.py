@@ -104,14 +104,10 @@ def test_slot_menu_candidates_with_qa_data(
         assert got_cell["posture"] == exp_cell["posture"]
         assert got_cell["insufficientData"] == exp_cell["insufficient_data"]
         assert len(got_cell["candidates"]) == len(exp_cell["candidates"])
-        for exp_item, got_item in zip(
-            exp_cell["candidates"], got_cell["candidates"], strict=True
-        ):
+        for exp_item, got_item in zip(exp_cell["candidates"], got_cell["candidates"], strict=True):
             assert got_item["menu"] == exp_item["menu"]
             assert got_item["rank"] == exp_item["rank"]
-            assert (
-                pytest.approx(float(got_item["score"]), rel=1e-6) == exp_item["score"]
-            )
+            assert pytest.approx(float(got_item["score"]), rel=1e-6) == exp_item["score"]
             assert got_item["globalCategory"] == exp_item["global_category"]
 
 

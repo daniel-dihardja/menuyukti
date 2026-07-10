@@ -15,6 +15,7 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('ig_plan')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_tagger')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_clusterer')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_lineup')).toBe(true)
@@ -153,6 +154,44 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts ig_plan milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'ig_plan', value: { notes: 'emphasize lunch reels' } },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'ig_plan',
+        value: { notes: 'emphasize lunch reels' },
+      })
+    }
+  })
+
+  it('patchMilestoneSchema accepts ig_plan milestoneData', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      presetId: 'ig_plan',
+      milestoneData: {
+        planMarkdown: '## Weekly cadence\n\n3 posts, 2 reels, 4 stories per week.',
+        sourceAnalyticsRunId: '42',
+        reportingPeriod: '2025-01-01 to 2025-03-31',
+      },
+    })
+    expect(parsed.success).toBe(true)
+  })
+
+  it('patchMilestoneSchema accepts ig_plan empty milestoneData seed', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      presetId: 'ig_plan',
+      milestoneData: {
+        planMarkdown: '',
+        sourceAnalyticsRunId: '',
+        reportingPeriod: '',
+      },
+      milestoneInput: { type: 'ig_plan', value: { notes: '' } },
+    })
+    expect(parsed.success).toBe(true)
+  })
+
   it('patchMilestoneSchema accepts ig_profile empty milestoneData seed', () => {
     const parsed = patchMilestoneSchema.safeParse({
       presetId: 'ig_profile',
@@ -267,6 +306,35 @@ describe('milestone optional notes', () => {
     expect(fields.milestoneData).toEqual({
       usernames: [],
       bios: [],
+    })
+  })
+
+  it('patchMilestoneSchema accepts the full ig_plan preset-create payload', () => {
+    const fields = getMilestonePresetCreateFields('ig_plan', (k) => k)
+    const parsed = patchMilestoneSchema.safeParse({
+      name: fields.name,
+      presetId: 'ig_plan',
+      milestoneData: fields.milestoneData,
+      milestoneInput: fields.milestoneInput,
+      goal: fields.goal,
+      passCriterias: (fields.passCriteria ?? []).map((row, index) => ({
+        id: `pc-${index}`,
+        ...row,
+      })),
+    })
+    expect(parsed.success).toBe(true)
+  })
+
+  it('getMilestonePresetCreateFields seeds ig_plan milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('ig_plan', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'ig_plan',
+      value: { notes: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      planMarkdown: '',
+      sourceAnalyticsRunId: '',
+      reportingPeriod: '',
     })
   })
 

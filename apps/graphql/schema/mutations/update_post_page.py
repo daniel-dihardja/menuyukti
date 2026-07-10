@@ -94,9 +94,7 @@ class UpdatePostPageMutation:
                                         version_prompt = None
                                     else:
                                         prompt_clean = prompt.strip()
-                                        version_prompt = (
-                                            prompt_clean if prompt_clean else None
-                                        )
+                                        version_prompt = prompt_clean if prompt_clean else None
                                 else:
                                     version_prompt = page_row.prompt
 

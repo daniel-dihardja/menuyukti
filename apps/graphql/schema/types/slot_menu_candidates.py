@@ -26,9 +26,7 @@ class SlotMenuCandidateItemType:
 
 
 @strawberry.type(
-    description=(
-        "Promotion candidates and venue demand metadata for one day × meal-period slot."
-    )
+    description=("Promotion candidates and venue demand metadata for one day × meal-period slot.")
 )
 class SlotMenuCandidatesCellType:
     day: str

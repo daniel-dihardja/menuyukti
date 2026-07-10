@@ -12,6 +12,7 @@ export const PRESET_GOAL_TRANSLATION_KEYS = {
   story_lineup: 'milestonePreset.story_lineup.goal',
   culture_hooks: 'milestonePreset.culture_hooks.goal',
   ig_profile: 'milestonePreset.ig_profile.goal',
+  ig_plan: 'milestonePreset.ig_plan.goal',
   scheduler: 'milestonePreset.scheduler.goal',
 } as const
 

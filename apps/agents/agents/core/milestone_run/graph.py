@@ -14,6 +14,7 @@ from agents_app.agents.core.milestone_run.campaign_brief.graph import build_camp
 from agents_app.agents.core.milestone_run.culture_hooks.graph import build_culture_hooks_graph
 from agents_app.agents.core.milestone_run.dates.graph import build_dates_graph
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
+from agents_app.agents.core.milestone_run.ig_plan.graph import build_ig_plan_graph
 from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profile_graph
 from agents_app.agents.core.milestone_run.menu_clusterer.graph import build_menu_clusterer_graph
 from agents_app.agents.core.milestone_run.menu_tagger.graph import build_menu_tagger_graph
@@ -301,6 +302,23 @@ async def _run_culture_hooks(
     }
 
 
+async def _run_ig_plan(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+    final_sub = await _stream_subgraph(
+        build_ig_plan_graph(client),
+        _base_initial(state),
+        state=state,
+    )
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
 async def _run_ig_profile(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
@@ -459,6 +477,7 @@ def _register_preset_runners() -> None:
     register_preset_runner("scheduler", _run_scheduler)
     register_preset_runner("culture_hooks", _run_culture_hooks)
     register_preset_runner("ig_profile", _run_ig_profile)
+    register_preset_runner("ig_plan", _run_ig_plan)
     register_preset_runner("dates", _run_dates)
 
 

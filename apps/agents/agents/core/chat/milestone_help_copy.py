@@ -54,6 +54,11 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "Read Campaign Brief data and generate Instagram profile suggestions — username options "
         "and three bio variations — aligned with brand, audience, and campaign objective."
     ),
+    "ig_plan": (
+        "Fetch location profile, venue slot strength, menu engineering matrix (star, plow horse, "
+        "puzzle), and per-slot promotion candidates from the latest analytics run, then generate a "
+        "weekly Instagram schedule with demand-based timing and analytics-grounded dish promotion."
+    ),
     "scheduler": (
         "Reads the campaign window from dates, business strategy from Campaign Brief, and "
         "saved post and story lineups. It places feed posts and Stories on the calendar between "
@@ -107,6 +112,7 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "promotion_candidates",
         "culture_hooks",
         "ig_profile",
+        "ig_plan",
         "menu_tagger",
         "menu_clusterer",
         "post_lineup",

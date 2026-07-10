@@ -4,6 +4,7 @@ from graphql.schema.queries import (
     AnalyticsBundleQuery,
     AnalyticsRunQuery,
     CategoryMixQuery,
+    IgPlanInputsQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
     LatestAnalyticsRunWithSignalsQuery,
@@ -59,5 +60,6 @@ class Query(
     MilestonePriorDataQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
+    IgPlanInputsQuery,
 ):
     pass

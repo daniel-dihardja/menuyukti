@@ -35,6 +35,7 @@ export const milestonePresetIdSchema = z.enum([
   'story_lineup',
   'culture_hooks',
   'ig_profile',
+  'ig_plan',
   'scheduler',
 ])
 
@@ -74,6 +75,12 @@ export const igProfileMilestoneInputValueSchema = z.object({
 })
 
 export type IgProfileMilestoneInputValue = z.infer<typeof igProfileMilestoneInputValueSchema>
+
+export const igPlanMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type IgPlanMilestoneInputValue = z.infer<typeof igPlanMilestoneInputValueSchema>
 
 export const menuTaggerMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -342,6 +349,14 @@ export const igProfileMilestoneDataSchema = z
   }))
 
 export type IgProfileMilestoneData = z.infer<typeof igProfileMilestoneDataSchema>
+
+export const igPlanMilestoneDataSchema = z.object({
+  planMarkdown: z.string().default(''),
+  sourceAnalyticsRunId: z.string().trim().default(''),
+  reportingPeriod: z.string().trim().default(''),
+})
+
+export type IgPlanMilestoneData = z.infer<typeof igPlanMilestoneDataSchema>
 
 export const menuTaggerItemRoleSchema = z.enum(['star', 'puzzle'])
 

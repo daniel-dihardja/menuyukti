@@ -68,7 +68,11 @@ class DeletePostPageMediaVersionMutation:
             _validate_media_s3_key(key_clean, owner_id)
 
             version_row = next(
-                (version for version in page_row.media_versions if version.media_s3_key == key_clean),
+                (
+                    version
+                    for version in page_row.media_versions
+                    if version.media_s3_key == key_clean
+                ),
                 None,
             )
             if version_row is None:
