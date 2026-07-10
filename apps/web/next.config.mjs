@@ -27,7 +27,9 @@ const nextConfig = {
       { source: '/campaigns', destination: '/workflow', permanent: true },
       { source: '/campaigns/:path*', destination: '/workflow/:path*', permanent: true },
       { source: '/workflows', destination: '/workflow', permanent: true },
-      { source: '/workflows/:path*', destination: '/workflow/:path*', permanent: true },
+      { source: '/content/photos', destination: '/media', permanent: true },
+      { source: '/content/photos/:path*', destination: '/media/:path*', permanent: true },
+      { source: '/api/photos/:path*', destination: '/api/media/:path*', permanent: true },
     ]
   },
   async rewrites() {

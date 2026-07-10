@@ -9,6 +9,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/workflow',
   '/canvas',
   '/posts',
+  '/media',
   '/content',
   '/advisor',
   '/print-orders',
@@ -56,9 +57,12 @@ export const routes = {
     campaignSignals: (analyticsId: string | number) => `/analytics/${analyticsId}/campaign-signals`,
   },
 
+  media: '/media',
+
   content: {
     root: '/content',
-    photos: '/content/photos',
+    /** @deprecated Use `routes.media`. Kept for legacy redirects. */
+    photos: '/media',
     reels: '/content/reels',
     igStories: '/content/igstories',
   },

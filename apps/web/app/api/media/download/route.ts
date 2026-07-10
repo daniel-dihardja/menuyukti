@@ -6,7 +6,8 @@ import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import {
   getS3Bucket,
   getS3Client,
-  isSafeAssetFilename,
+  isSafePhotoFilename,
+  photoContentTypeForFilename,
   userPhotosObjectKey,
 } from '@/lib/assets/storage'
 
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url)
   const name = url.searchParams.get('name')?.trim() ?? ''
-  if (!name || !isSafeAssetFilename(name)) {
+  if (!name || !isSafePhotoFilename(name)) {
     return NextResponse.json({ message: 'Invalid filename' }, { status: 400 })
   }
 
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
     return new NextResponse(webStream as unknown as BodyInit, {
       status: 200,
       headers: {
-        'Content-Type': 'image/webp',
+        'Content-Type': result.ContentType ?? photoContentTypeForFilename(name),
         'Content-Disposition': `attachment; filename="${name}"`,
         ...(result.ContentLength != null ? { 'Content-Length': String(result.ContentLength) } : {}),
       },
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
     if (err instanceof NoSuchKey || (err as { name?: string })?.name === 'NoSuchKey') {
       return NextResponse.json({ message: 'Not found' }, { status: 404 })
     }
-    console.error('[photos/download] S3 GetObject failed', {
+    console.error('[media/download] S3 GetObject failed', {
       userIdPrefix: userId.slice(0, 8),
       message: err instanceof Error ? err.message : String(err),
     })

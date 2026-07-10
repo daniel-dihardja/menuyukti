@@ -19,16 +19,16 @@ import { cn } from '@workspace/ui/lib/utils'
 import { ContentMediaGrid } from '@/app/(protected)/content/_components/content-media-grid'
 import { ContentMediaPreviewDialog } from '@/app/(protected)/content/_components/content-media-preview-dialog'
 import type { ContentCatalogItem } from '@/app/(protected)/content/_components/content-catalog-types'
-import { loadPhotos, photoDownloadHref, type PhotoCatalogItem } from '@/lib/photos/client-api'
+import { loadMedia, mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
 
-import { PhotosUploadZone } from './_components/photos-upload-zone'
+import { MediaUploadZone } from './_components/media-upload-zone'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 
-export function PhotosClient() {
-  const t = useTranslations('photos')
+export function MediaClient() {
+  const t = useTranslations('media')
   const inputRef = useRef<HTMLInputElement>(null)
-  const [items, setItems] = useState<PhotoCatalogItem[]>([])
+  const [items, setItems] = useState<MediaCatalogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -49,7 +49,7 @@ export function PhotosClient() {
     async (silent = false, signal?: AbortSignal) => {
       if (!silent) setLoading(true)
       try {
-        const list = await loadPhotos({ signal })
+        const list = await loadMedia({ signal })
         setItems(list)
       } catch (e) {
         if (e instanceof Error && e.name === 'AbortError') {
@@ -90,7 +90,7 @@ export function PhotosClient() {
         list.map(async (file) => {
           const fd = new FormData()
           fd.set('file', file)
-          const res = await fetch('/api/photos/upload', {
+          const res = await fetch('/api/media/upload', {
             method: 'POST',
             body: fd,
           })
@@ -98,7 +98,7 @@ export function PhotosClient() {
             const err = (await res.json().catch(() => ({}))) as { message?: string }
             throw new Error(err.message ?? 'upload')
           }
-          return res.json() as Promise<PhotoCatalogItem>
+          return res.json() as Promise<MediaCatalogItem>
         }),
       )
       const ok = results.filter((r) => r.status === 'fulfilled').length
@@ -132,7 +132,7 @@ export function PhotosClient() {
   const onDelete = async (name: string) => {
     setDeleting(name)
     try {
-      const res = await fetch('/api/photos/delete', {
+      const res = await fetch('/api/media/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -167,7 +167,7 @@ export function PhotosClient() {
 
       <p className="text-sm text-muted-foreground">{t('description')}</p>
 
-      <PhotosUploadZone
+      <MediaUploadZone
         inputRef={inputRef}
         uploading={uploading}
         dragActive={dragActive}
@@ -186,7 +186,7 @@ export function PhotosClient() {
         deleting={deleting}
         onPreview={setPreview}
         onDeleteRequest={setPendingDeleteName}
-        getDownloadHref={photoDownloadHref}
+        getDownloadHref={mediaDownloadHref}
         emptyIcon={ImageIcon}
         labels={{
           previewImage: t('grid.viewLarge'),

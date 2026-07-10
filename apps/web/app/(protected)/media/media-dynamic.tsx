@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
-const PhotosClient = dynamic(() => import('./photos-client').then((m) => m.PhotosClient), {
+const MediaClient = dynamic(() => import('./media-client').then((m) => m.MediaClient), {
   ssr: false,
   loading: () => (
     <div className="flex min-h-[200px] items-center justify-center p-8">
@@ -13,6 +13,6 @@ const PhotosClient = dynamic(() => import('./photos-client').then((m) => m.Photo
   ),
 })
 
-export function PhotosDynamic() {
-  return <PhotosClient />
+export function MediaDynamic() {
+  return <MediaClient />
 }

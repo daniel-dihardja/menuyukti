@@ -1,13 +1,14 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
+import sharp from 'sharp'
 
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
-import { prepareUploadImage } from '@/lib/assets/prepare-upload-image'
 import {
   getPresignedGetUrl,
   getS3Bucket,
   getS3Client,
+  photoExtensionForMime,
   userPhotosObjectKey,
 } from '@/lib/assets/storage'
 
@@ -42,25 +43,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Invalid file type' }, { status: 400 })
   }
 
+  const extension = photoExtensionForMime(mime)
+  if (!extension) {
+    return NextResponse.json({ message: 'Invalid file type' }, { status: 400 })
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer())
-  let webpBuffer: Buffer
   try {
-    const prepared = await prepareUploadImage(buffer)
-    webpBuffer = prepared.webpBuffer
+    const metadata = await sharp(buffer).metadata()
+    if (!metadata.width || !metadata.height) {
+      return NextResponse.json({ message: 'Could not read image dimensions' }, { status: 400 })
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not read image dimensions'
-    if (message === 'Could not read image dimensions') {
-      return NextResponse.json({ message }, { status: 400 })
-    }
-    console.error('[photos/upload] image preprocessing failed', {
+    console.error('[media/upload] image validation failed', {
       userIdPrefix: userId.slice(0, 8),
       message,
     })
-    return NextResponse.json({ message: 'Failed to process image' }, { status: 500 })
+    return NextResponse.json({ message: 'Could not read image dimensions' }, { status: 400 })
   }
 
   const id = randomUUID()
-  const filename = `${id}.webp`
+  const filename = `${id}.${extension}`
   const key = userPhotosObjectKey(userId, filename)
   const s3 = getS3Client()
   const bucket = getS3Bucket()
@@ -70,12 +74,12 @@ export async function POST(req: Request) {
       new PutObjectCommand({
         Bucket: bucket,
         Key: key,
-        Body: webpBuffer,
-        ContentType: 'image/webp',
+        Body: buffer,
+        ContentType: mime,
       }),
     )
   } catch (err) {
-    console.error('[photos/upload] S3 PutObject failed', {
+    console.error('[media/upload] S3 PutObject failed', {
       userIdPrefix: userId.slice(0, 8),
       message: err instanceof Error ? err.message : String(err),
     })
@@ -88,7 +92,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     url,
     name: filename,
-    size: webpBuffer.byteLength,
+    size: buffer.byteLength,
     createdAt,
   })
 }

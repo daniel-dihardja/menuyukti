@@ -12,7 +12,7 @@ export default async function ReelsLoading() {
     <AnalyticsPageShell
       title={tReels('title')}
       breadcrumbs={[
-        { label: tSidebar('content'), href: routes.content.photos },
+        { label: tSidebar('media'), href: routes.media },
         { label: tSidebar('igReels'), href: routes.content.reels },
       ]}
       contentWidth="full"

@@ -8,7 +8,7 @@ import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { cn } from '@workspace/ui/lib/utils'
 
-export type PhotosUploadZoneProps = {
+export type MediaUploadZoneProps = {
   inputRef: RefObject<HTMLInputElement | null>
   uploading: boolean
   dragActive: boolean
@@ -18,7 +18,7 @@ export type PhotosUploadZoneProps = {
   onBrowse: () => void
 }
 
-export function PhotosUploadZone({
+export function MediaUploadZone({
   inputRef,
   uploading,
   dragActive,
@@ -26,8 +26,8 @@ export function PhotosUploadZone({
   onInputChange,
   onDrop,
   onBrowse,
-}: PhotosUploadZoneProps) {
-  const t = useTranslations('photos')
+}: MediaUploadZoneProps) {
+  const t = useTranslations('media')
 
   return (
     <section>

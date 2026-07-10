@@ -7,7 +7,7 @@ import {
   getS3Bucket,
   getS3Client,
   isObjectKeyForPhoto,
-  isSafeAssetFilename,
+  isSafePhotoFilename,
   userPhotosPrefix,
 } from '@/lib/assets/storage'
 
@@ -40,7 +40,7 @@ export async function GET() {
         if (!key || !obj.LastModified) continue
         if (!isObjectKeyForPhoto(key, userId)) continue
         const name = key.slice(prefix.length)
-        if (!isSafeAssetFilename(name)) continue
+        if (!isSafePhotoFilename(name)) continue
 
         const url = await getPresignedGetUrl(key)
         rows.push({
@@ -54,11 +54,11 @@ export async function GET() {
       continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined
     } while (continuationToken)
   } catch (err) {
-    console.error('[photos/list] S3 list failed', {
+    console.error('[media/list] S3 list failed', {
       userIdPrefix: userId.slice(0, 8),
       message: err instanceof Error ? err.message : String(err),
     })
-    return NextResponse.json({ message: 'Failed to list photos' }, { status: 502 })
+    return NextResponse.json({ message: 'Failed to list media' }, { status: 502 })
   }
 
   const sortedRows = rows.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))

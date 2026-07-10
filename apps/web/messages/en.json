@@ -572,7 +572,7 @@
     "studio": "Studio",
     "posts": "Posts",
     "content": "Content",
-    "photos": "Photos",
+    "media": "Media",
     "igReels": "IG Reels",
     "igStories": "IG Stories",
     "printShop": "Print shop",
@@ -708,15 +708,15 @@
       "generating": "Generating…",
       "picker": {
         "ariaLabel": "Reference photo picker",
-        "empty": "No matching photos. Upload one or add photos in Content → Photos.",
-        "upload": "Upload photo",
+        "empty": "No matching media. Upload one or add files in Media.",
+        "upload": "Upload file",
         "uploading": "Uploading…",
-        "uploadError": "Couldn’t upload that photo. Try again.",
-        "maxReached": "Maximum reference photos reached. Remove one to add another."
+        "uploadError": "Couldn’t upload that file. Try again.",
+        "maxReached": "Maximum reference images reached. Remove one to add another."
       },
       "references": {
-        "ariaLabel": "Reference photos for generation",
-        "remove": "Remove reference photo"
+        "ariaLabel": "Reference images for generation",
+        "remove": "Remove reference image"
       }
     },
     "preview": {
@@ -793,11 +793,11 @@
       }
     }
   },
-  "photos": {
-    "title": "Photos",
-    "description": "Upload restaurant and campaign photos. Files are resized to 1024px on the shortest side and saved as WebP.",
+  "media": {
+    "title": "Media",
+    "description": "Upload restaurant and campaign photos and videos in their original format and resolution.",
     "upload": {
-      "title": "Upload photos",
+      "title": "Upload media",
       "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
       "browse": "Browse files",
       "uploading": "Uploading…",
@@ -805,11 +805,11 @@
     },
     "grid": {
       "empty": {
-        "title": "No photos yet",
-        "description": "Upload your first photo to build your content library."
+        "title": "No media yet",
+        "description": "Upload your first file to build your media library."
       },
       "delete": "Remove",
-      "deleteConfirm": "Remove this photo?",
+      "deleteConfirm": "Remove this file?",
       "deleteAction": "Remove",
       "cancel": "Cancel",
       "viewLarge": "View larger",
@@ -819,12 +819,12 @@
       "close": "Close preview"
     },
     "toast": {
-      "uploaded": "Photo uploaded",
+      "uploaded": "File uploaded",
       "uploadError": "Couldn’t upload that file. Try again.",
-      "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
-      "loadError": "Couldn’t load your photos. Refresh the page.",
-      "deleted": "Photo removed",
-      "deleteError": "Couldn’t remove that photo. Try again."
+      "uploadPartial": "Some files couldn’t be uploaded. Check your files and try again.",
+      "loadError": "Couldn’t load your media. Refresh the page.",
+      "deleted": "File removed",
+      "deleteError": "Couldn’t remove that file. Try again."
     }
   },
   "reels": {

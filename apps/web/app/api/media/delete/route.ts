@@ -6,7 +6,7 @@ import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import {
   getS3Bucket,
   getS3Client,
-  isSafeAssetFilename,
+  isSafePhotoFilename,
   userPhotosObjectKey,
 } from '@/lib/assets/storage'
 
@@ -32,7 +32,7 @@ export async function DELETE(req: Request) {
   }
 
   const { name } = parsed.data
-  if (!isSafeAssetFilename(name)) {
+  if (!isSafePhotoFilename(name)) {
     return NextResponse.json({ message: 'Invalid filename' }, { status: 400 })
   }
 
@@ -48,7 +48,7 @@ export async function DELETE(req: Request) {
       }),
     )
   } catch (err) {
-    console.error('[photos/delete] S3 DeleteObject failed', {
+    console.error('[media/delete] S3 DeleteObject failed', {
       userIdPrefix: userId.slice(0, 8),
       message: err instanceof Error ? err.message : String(err),
     })
