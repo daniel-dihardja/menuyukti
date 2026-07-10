@@ -18,6 +18,7 @@ from .promotion_engineering_candidates import PromotionEngineeringCandidatesQuer
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
 from .revenue_trends import RevenueTrendsQuery
+from .slot_menu_candidates import SlotMenuCandidatesQuery
 from .weekly_demand_pattern import WeeklyDemandPatternQuery
 from .workflow_campaign_tree import WorkflowCampaignTreeQuery
 from .workspace import WorkspaceQuery
@@ -39,6 +40,7 @@ __all__ = [
     "MenuHeatmapsQuery",
     "PromotionMenuItemsQuery",
     "PromotionEngineeringCandidatesQuery",
+    "SlotMenuCandidatesQuery",
     "PublicHolidaysQuery",
     "NodesQuery",
     "OperatingProfileQuery",

@@ -75,6 +75,14 @@ from menuyukti.core.analytics.calculate_combo_pair_timing import (
     OrderRowForComboTiming,
     compute_combo_pair_timing_from_orders,
 )
+from menuyukti.core.analytics.calculate_slot_menu_candidates import (
+    OrderRowForSlotMenuCandidates,
+    SlotMenuCandidateItem,
+    SlotMenuCandidatesCell,
+    SlotMenuCandidatesOptions,
+    SlotMenuCandidatesResult,
+    compute_slot_menu_candidates,
+)
 from menuyukti.core.analytics.calculate_slot_demand_profile import (
     OrderRowForSlotDemand,
     PromoPostureResult,
@@ -214,12 +222,18 @@ __all__ = [
     "OrderRowForComboTiming",
     "compute_combo_pair_timing_from_orders",
     "OrderRowForSlotDemand",
+    "OrderRowForSlotMenuCandidates",
     "PromoPostureResult",
     "SlotDemandCell",
+    "SlotMenuCandidateItem",
+    "SlotMenuCandidatesCell",
+    "SlotMenuCandidatesOptions",
+    "SlotMenuCandidatesResult",
     "VenueSlotPerformanceCell",
     "VenueSlotPerformanceSummary",
     "calculate_slot_demand_profile",
     "compute_slot_demand_profile_from_orders",
+    "compute_slot_menu_candidates",
     "derive_combo_promo_posture",
     "summarize_venue_slot_performance",
     "compute_operating_profile_from_orders",
