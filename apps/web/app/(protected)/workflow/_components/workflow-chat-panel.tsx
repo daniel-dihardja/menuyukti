@@ -16,11 +16,9 @@ import {
   useLayoutEffect,
   useMemo,
   useReducer,
-  useRef,
   useState,
   useTransition,
 } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { parseAsString, useQueryState } from 'nuqs'
 import { PanelRight } from 'lucide-react'
 
@@ -129,39 +127,22 @@ export function WorkflowChatPanel({
   })
 
   const [selectedMilestoneId, setSelectedMilestoneId] = useQueryState('milestone', parseAsString)
-  const searchParams = useSearchParams()
-
-  const milestonesRef = useRef(milestoneUi.milestones)
-  const selectedIdRef = useRef(selectedMilestoneId)
-  milestonesRef.current = milestoneUi.milestones
-  selectedIdRef.current = selectedMilestoneId
 
   useEffect(() => {
     const milestones = milestoneUi.milestones
     if (milestones.length === 0) {
+      if (selectedMilestoneId !== null) {
+        void setSelectedMilestoneId(null)
+      }
+      return
+    }
+    if (
+      selectedMilestoneId !== null &&
+      !milestones.some((milestone) => milestone.id === selectedMilestoneId)
+    ) {
       void setSelectedMilestoneId(null)
-      return
     }
-    if (selectedMilestoneId !== null && milestones.some((m) => m.id === selectedMilestoneId)) {
-      return
-    }
-    const frame = requestAnimationFrame(() => {
-      const m = milestonesRef.current
-      const s = selectedIdRef.current
-      if (m.length === 0) {
-        return
-      }
-      if (s !== null && m.some((x) => x.id === s)) {
-        return
-      }
-      const fromUrl = searchParams.get('milestone')
-      if (fromUrl !== null && fromUrl !== '' && m.some((x) => x.id === fromUrl)) {
-        return
-      }
-      void setSelectedMilestoneId(m[0]?.id ?? null)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [milestoneUi.milestones, searchParams, selectedMilestoneId, setSelectedMilestoneId])
+  }, [milestoneUi.milestones, selectedMilestoneId, setSelectedMilestoneId])
 
   const handleSelectMilestone = useCallback(
     (id: string | null) => {
