@@ -20,7 +20,7 @@ import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 import { MAX_REFERENCE_IMAGES } from './_components/post-creator-constants'
 import { PostCreatorLayout } from './_components/post-creator-layout'
 import { PostCreatorPreviewPane } from './_components/post-creator-preview-pane'
-import { PostCreatorPromptPane } from './_components/post-creator-prompt-pane'
+import { PostCreatorRightPane } from './_components/post-creator-right-pane'
 import {
   PostCreatorThumbnailsPane,
   type PostCreatorImageVersion,
@@ -136,6 +136,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
   const [isAddingPage, setIsAddingPage] = useState(false)
+  const [isDuplicatingPage, setIsDuplicatingPage] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isLoadingPost, setIsLoadingPost] = useState(Boolean(postId))
 
@@ -547,35 +548,34 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     tToast,
   ])
 
-  const handleAddPage = useCallback(async () => {
-    if (!postId || isAddingPage || pages.length >= MAX_POST_PAGES) {
-      if (pages.length >= MAX_POST_PAGES) {
-        toast.error(tToast('maxPagesReached'))
+  const createPageFromSource = useCallback(
+    async (copyFromPageId: string) => {
+      if (!postId || pages.length >= MAX_POST_PAGES) {
+        if (pages.length >= MAX_POST_PAGES) {
+          toast.error(tToast('maxPagesReached'))
+        }
+        return
       }
-      return
-    }
 
-    const syncedPages =
-      selectedPageId !== null
-        ? pages.map((page) =>
-            page.id === selectedPageId
-              ? { ...page, prompt, referenceImages, previewVersionIndex }
-              : page,
-          )
-        : pages
+      const syncedPages =
+        selectedPageId !== null
+          ? pages.map((page) =>
+              page.id === selectedPageId
+                ? { ...page, prompt, referenceImages, previewVersionIndex }
+                : page,
+            )
+          : pages
 
-    const lastPage = [...syncedPages].toSorted((a, b) => a.sortOrder - b.sortOrder).at(-1)
-    if (!lastPage) {
-      return
-    }
+      if (!syncedPages.some((page) => page.id === copyFromPageId)) {
+        return
+      }
 
-    setPages(syncedPages)
-    setIsAddingPage(true)
-    try {
+      setPages(syncedPages)
+
       const res = await fetch(`/api/posts/${postId}/pages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ copyFromPageId: lastPage.id }),
+        body: JSON.stringify({ copyFromPageId }),
       })
 
       if (!res.ok) {
@@ -602,19 +602,70 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       const nextPages = [...syncedPages, newPage].toSorted((a, b) => a.sortOrder - b.sortOrder)
       setPages(nextPages)
       applySelectedPage(nextPages, newPage.id)
+    },
+    [
+      applySelectedPage,
+      pages,
+      postId,
+      previewVersionIndex,
+      prompt,
+      referenceImages,
+      selectedPageId,
+      tToast,
+    ],
+  )
+
+  const handleAddPage = useCallback(async () => {
+    if (!postId || isAddingPage || isDuplicatingPage || pages.length >= MAX_POST_PAGES) {
+      if (pages.length >= MAX_POST_PAGES) {
+        toast.error(tToast('maxPagesReached'))
+      }
+      return
+    }
+
+    const lastPage = [...pages].toSorted((a, b) => a.sortOrder - b.sortOrder).at(-1)
+    if (!lastPage) {
+      return
+    }
+
+    setIsAddingPage(true)
+    try {
+      await createPageFromSource(lastPage.id)
     } catch {
       toast.error(tToast('addPageError'))
     } finally {
       setIsAddingPage(false)
     }
+  }, [createPageFromSource, isAddingPage, isDuplicatingPage, pages, postId, tToast])
+
+  const handleDuplicatePage = useCallback(async () => {
+    if (
+      !postId ||
+      !selectedPageId ||
+      isAddingPage ||
+      isDuplicatingPage ||
+      pages.length >= MAX_POST_PAGES
+    ) {
+      if (pages.length >= MAX_POST_PAGES) {
+        toast.error(tToast('maxPagesReached'))
+      }
+      return
+    }
+
+    setIsDuplicatingPage(true)
+    try {
+      await createPageFromSource(selectedPageId)
+    } catch {
+      toast.error(tToast('addPageError'))
+    } finally {
+      setIsDuplicatingPage(false)
+    }
   }, [
-    applySelectedPage,
+    createPageFromSource,
     isAddingPage,
-    pages,
+    isDuplicatingPage,
+    pages.length,
     postId,
-    previewVersionIndex,
-    prompt,
-    referenceImages,
     selectedPageId,
     tToast,
   ])
@@ -637,8 +688,16 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             selectedPageId={selectedPageId}
             onSelectPage={handleSelectPage}
             onAddPage={postId ? () => void handleAddPage() : undefined}
+            onDuplicatePage={postId ? () => void handleDuplicatePage() : undefined}
             canAddPage={Boolean(postId) && pages.length > 0 && pages.length < MAX_POST_PAGES}
+            canDuplicatePage={
+              Boolean(postId) &&
+              Boolean(selectedPageId) &&
+              pages.length > 0 &&
+              pages.length < MAX_POST_PAGES
+            }
             isAddingPage={isAddingPage}
+            isDuplicatingPage={isDuplicatingPage}
           />
         }
         previewPane={
@@ -656,7 +715,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
           />
         }
         promptPane={
-          <PostCreatorPromptPane
+          <PostCreatorRightPane
             isGenerating={isGenerating}
             onAddReference={handleAddReference}
             onPromptChange={handlePromptChange}

@@ -697,7 +697,24 @@
       "pageLabel": "Page {number}",
       "empty": "No pages yet",
       "addPage": "Add page",
-      "addingPage": "Adding page…"
+      "addingPage": "Adding page…",
+      "duplicatePage": "Duplicate",
+      "duplicatingPage": "Duplicating…"
+    },
+    "tabs": {
+      "prompt": "Prompt",
+      "settings": "Settings",
+      "history": "History"
+    },
+    "settings": {
+      "title": "Generation settings",
+      "format": "Format",
+      "model": "Model",
+      "modelValue": "Leonardo"
+    },
+    "history": {
+      "emptyTitle": "No history here yet",
+      "emptyDescription": "Generation history for this page appears in the preview when you have multiple versions."
     },
     "previewPane": "Generated post image",
     "promptPane": "Prompt",
@@ -717,12 +734,17 @@
       "references": {
         "ariaLabel": "Reference images for generation",
         "remove": "Remove reference image"
+      },
+      "tip": {
+        "title": "Tip",
+        "description": "Type @ in the prompt to attach a reference photo from your media library."
       }
     },
     "preview": {
       "ariaLabel": "Generated post image preview",
       "emptyTitle": "No post image yet",
       "emptyDescription": "Enter a prompt in the panel on the right and generate an image.",
+      "formatLabel": "Instagram Post (4:5)",
       "dimensionsLabel": "Post size",
       "dimensions": "{width} × {height}",
       "gridSafeZoneToggle": "Grid thumbnail safe zone",

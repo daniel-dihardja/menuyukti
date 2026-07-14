@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useId, useMemo } from 'react'
 import { toast } from 'sonner'
 
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Textarea } from '@workspace/ui/components/textarea'
@@ -35,7 +36,6 @@ export function PostCreatorPromptPane({
   onRemoveReference,
 }: PostCreatorPromptPaneProps) {
   const t = useTranslations('postCreator.prompt')
-  const tPane = useTranslations('postCreator')
   const promptId = useId()
   const canSubmit = prompt.trim().length > 0 && !isGenerating && !disabled
   const selectedNames = useMemo(
@@ -44,10 +44,7 @@ export function PostCreatorPromptPane({
   )
 
   return (
-    <section
-      aria-label={tPane('promptPane')}
-      className="flex h-full min-h-0 flex-col overflow-hidden p-4"
-    >
+    <div className="flex h-full min-h-0 flex-col overflow-hidden p-4 pt-0">
       <form
         className="flex min-h-0 flex-col gap-3"
         onSubmit={(e) => {
@@ -87,6 +84,10 @@ export function PostCreatorPromptPane({
           onRemove={onRemoveReference}
           removeLabel={t('references.remove')}
         />
+        <Alert>
+          <AlertTitle>{t('tip.title')}</AlertTitle>
+          <AlertDescription>{t('tip.description')}</AlertDescription>
+        </Alert>
         <Button className="w-full shrink-0" disabled={!canSubmit} type="submit">
           {isGenerating ? (
             <>
@@ -101,6 +102,6 @@ export function PostCreatorPromptPane({
           )}
         </Button>
       </form>
-    </section>
+    </div>
   )
 }

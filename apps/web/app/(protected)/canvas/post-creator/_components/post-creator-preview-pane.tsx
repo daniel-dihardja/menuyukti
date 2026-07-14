@@ -287,7 +287,7 @@ export function PostCreatorPreviewPane({
 
       <div className="flex shrink-0 flex-col gap-3 pt-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-center text-sm text-muted-foreground sm:text-left">
-          <span className="font-medium text-foreground">{t('dimensionsLabel')}</span>
+          <span className="font-medium text-foreground">{t('formatLabel')}</span>
           {' · '}
           {dimensions}
         </p>
