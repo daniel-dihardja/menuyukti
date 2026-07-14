@@ -10,6 +10,9 @@ from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
+from agents_app.agents.core.milestone_eval.ig_format_eval import (
+    enrich_ig_format_eval_payload,
+)
 from agents_app.agents.core.milestone_eval.ig_menu_picker_eval import (
     enrich_ig_menu_picker_eval_payload,
 )
@@ -20,6 +23,7 @@ from agents_app.agents.core.milestone_run.campaign_brief.graph import build_camp
 from agents_app.agents.core.milestone_run.culture_hooks.graph import build_culture_hooks_graph
 from agents_app.agents.core.milestone_run.dates.graph import build_dates_graph
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
+from agents_app.agents.core.milestone_run.ig_format.graph import build_ig_format_graph
 from agents_app.agents.core.milestone_run.ig_menu_picker.graph import build_ig_menu_picker_graph
 from agents_app.agents.core.milestone_run.ig_plan.graph import build_ig_plan_graph
 from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profile_graph
@@ -133,6 +137,17 @@ def _resolve_eval_raw_data(state: MilestoneRunState) -> str:
     ):
         return json.dumps(
             enrich_ig_menu_picker_eval_payload(milestone_data),
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    if (
+        preset_id == "ig_format"
+        and isinstance(milestone_data, dict)
+        and isinstance(milestone_data.get("entries"), list)
+    ):
+        return json.dumps(
+            enrich_ig_format_eval_payload(milestone_data),
             ensure_ascii=False,
             indent=2,
         )
@@ -387,6 +402,30 @@ async def _run_ig_menu_picker(
     }
 
 
+async def _run_ig_format(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    initial["result_data"] = ""
+    initial["milestonedata_written"] = False
+    final_sub = await _stream_subgraph(
+        build_ig_format_graph(client),
+        initial,
+        state=state,
+    )
+    eval_raw = final_sub.get("raw_data") or final_sub.get("result_data") or state.get("raw_data")
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(eval_raw or ""),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
 async def _run_ig_profile(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
@@ -547,6 +586,7 @@ def _register_preset_runners() -> None:
     register_preset_runner("ig_profile", _run_ig_profile)
     register_preset_runner("ig_plan", _run_ig_plan)
     register_preset_runner("ig_menu_picker", _run_ig_menu_picker)
+    register_preset_runner("ig_format", _run_ig_format)
     register_preset_runner("dates", _run_dates)
 
 

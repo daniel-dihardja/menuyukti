@@ -13,6 +13,8 @@ export const PRESET_GOAL_TRANSLATION_KEYS = {
   culture_hooks: 'milestonePreset.culture_hooks.goal',
   ig_profile: 'milestonePreset.ig_profile.goal',
   ig_plan: 'milestonePreset.ig_plan.goal',
+  ig_menu_picker: 'milestonePreset.ig_menu_picker.goal',
+  ig_format: 'milestonePreset.ig_format.goal',
   scheduler: 'milestonePreset.scheduler.goal',
 } as const
 

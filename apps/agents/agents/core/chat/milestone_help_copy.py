@@ -61,6 +61,16 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "aggressively_grow), then assign objectives, content pillars, and product roles — "
         "without selecting specific menu items."
     ),
+    "ig_menu_picker": (
+        "Read prior IG Plan milestone data, filter by selected slots, fetch menu engineering "
+        "and per-slot candidates from the workflow-pinned analytics run, then attach 1–3 menu "
+        "items per selected entry with a short rationale."
+    ),
+    "ig_format": (
+        "Read prior IG Menu Picker milestone data and assign an Instagram format (reel, post, "
+        "post-carousel, or story) to each entry with menu items, preserving plan strategy and "
+        "dish selections."
+    ),
     "scheduler": (
         "Reads the campaign window from dates, business strategy from Campaign Brief, and "
         "saved post and story lineups. It places feed posts and Stories on the calendar between "
@@ -115,6 +125,8 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "culture_hooks",
         "ig_profile",
         "ig_plan",
+        "ig_menu_picker",
+        "ig_format",
         "menu_tagger",
         "menu_clusterer",
         "post_lineup",

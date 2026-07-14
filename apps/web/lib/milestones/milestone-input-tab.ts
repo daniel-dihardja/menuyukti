@@ -3,6 +3,7 @@ import {
   promotionCandidatesMilestoneInputValueSchema,
   menuClustererMilestoneInputValueSchema,
   igMenuPickerMilestoneInputValueSchema,
+  igFormatMilestoneInputValueSchema,
 } from '@/lib/graphql/node-schemas'
 import { IG_MENU_PICKER_NONE_SELECTED_SENTINEL } from '@/lib/milestones/ig-menu-picker-input'
 import {
@@ -315,4 +316,16 @@ export function normalizedIgMenuPickerInputsEqual(
   b: { notes: string; selectedSlotKeys: string[] },
 ): boolean {
   return igMenuPickerInputEqual(normalizeIgMenuPickerInput(a), normalizeIgMenuPickerInput(b))
+}
+
+export function igFormatNotesFromMilestoneInput(raw: MilestoneInput | undefined): string {
+  if (raw?.type !== 'ig_format' || raw.value == null || typeof raw.value !== 'object') {
+    return ''
+  }
+  const parsed = igFormatMilestoneInputValueSchema.safeParse(raw.value)
+  if (!parsed.success) {
+    const legacy = raw.value as { notes?: unknown }
+    return typeof legacy.notes === 'string' ? legacy.notes : ''
+  }
+  return parsed.data.notes
 }

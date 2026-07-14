@@ -11,8 +11,10 @@ import {
   igProfileMilestoneDataSchema,
   igPlanMilestoneDataSchema,
   igMenuPickerMilestoneDataSchema,
+  igFormatMilestoneDataSchema,
   igPlanMilestoneInputValueSchema,
   igMenuPickerMilestoneInputValueSchema,
+  igFormatMilestoneInputValueSchema,
   igProfileMilestoneInputValueSchema,
   menuTaggerMilestoneDataSchema,
   menuTaggerMilestoneInputValueSchema,
@@ -57,6 +59,8 @@ export const patchMilestoneSchema = z
         cultureHooksMilestoneDataSchema,
         igProfileMilestoneDataSchema,
         igPlanMilestoneDataSchema,
+        igMenuPickerMilestoneDataSchema,
+        igFormatMilestoneDataSchema,
         menuTaggerMilestoneDataSchema,
         menuClustererMilestoneDataSchema,
         postLineupMilestoneDataSchema,
@@ -92,6 +96,10 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('ig_menu_picker'),
           value: igMenuPickerMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('ig_format'),
+          value: igFormatMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('menu_tagger'),

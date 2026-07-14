@@ -66,6 +66,16 @@ export type MilestoneInputModel =
       saving: boolean
     }
   | {
+      type: 'ig_format'
+      milestoneId: string
+      notes: string
+      onNotesChange: (next: string) => void
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
       type: 'optional_notes'
       draft: string
       setDraft: (v: string) => void

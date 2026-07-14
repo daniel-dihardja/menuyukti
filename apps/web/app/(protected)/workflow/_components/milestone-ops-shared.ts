@@ -5,6 +5,7 @@ import {
   igProfileMilestoneDataSchema,
   igPlanMilestoneDataSchema,
   igMenuPickerMilestoneDataSchema,
+  igFormatMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
@@ -78,6 +79,10 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'ig_menu_picker') {
     const parsed = igMenuPickerMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'ig_format') {
+    const parsed = igFormatMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'scheduler') {

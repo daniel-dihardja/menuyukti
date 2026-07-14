@@ -37,6 +37,7 @@ export const milestonePresetIdSchema = z.enum([
   'ig_profile',
   'ig_plan',
   'ig_menu_picker',
+  'ig_format',
   'scheduler',
 ])
 
@@ -426,6 +427,33 @@ export const igMenuPickerMilestoneDataSchema = z.object({
 })
 
 export type IgMenuPickerMilestoneData = z.infer<typeof igMenuPickerMilestoneDataSchema>
+
+export const igFormatMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type IgFormatMilestoneInputValue = z.infer<typeof igFormatMilestoneInputValueSchema>
+
+export const igFormatTypeSchema = z.enum(['reel', 'post', 'post-carousel', 'story'])
+
+export type IgFormatType = z.infer<typeof igFormatTypeSchema>
+
+export const igFormatEntrySchema = igMenuPickerEntrySchema.extend({
+  type: igFormatTypeSchema,
+  formatRationale: z.string().trim().default(''),
+})
+
+export type IgFormatEntry = z.infer<typeof igFormatEntrySchema>
+
+export const igFormatMilestoneDataSchema = z.object({
+  scheduleExplanation: z.string().default(''),
+  entries: z.array(igFormatEntrySchema).default([]),
+  sourceAnalyticsRunId: z.string().trim().default(''),
+  reportingPeriod: z.string().trim().default(''),
+  sourceIgMenuPickerTitle: z.string().trim().optional(),
+})
+
+export type IgFormatMilestoneData = z.infer<typeof igFormatMilestoneDataSchema>
 
 export const menuTaggerItemRoleSchema = z.enum(['star', 'puzzle'])
 

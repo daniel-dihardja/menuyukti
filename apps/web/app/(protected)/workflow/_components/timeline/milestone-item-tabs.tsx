@@ -30,6 +30,7 @@ import { MilestoneCampaignBriefInput } from './milestone-campaign-brief-input'
 import { MilestoneFieldDescription } from './milestone-field-description'
 import { MilestoneMenuClustererInput } from './milestone-menu-clusterer-input'
 import { MilestoneIgMenuPickerInput } from './milestone-ig-menu-picker-input'
+import { MilestoneIgFormatInput } from './milestone-ig-format-input'
 import {
   useMilestoneItemActions,
   useMilestoneItemMeta,
@@ -295,6 +296,17 @@ function MilestoneInputTabContent({
             t={t}
           />
         </>
+      )
+    case 'ig_format':
+      return (
+        <MilestoneIgFormatInput
+          disabled={isMilestoneRunning}
+          milestoneId={inputModel.milestoneId}
+          notes={inputModel.notes}
+          onNotesBlur={inputModel.onNotesBlur}
+          onNotesChange={inputModel.onNotesChange}
+          onNotesFocus={inputModel.onNotesFocus}
+        />
       )
     case 'optional_notes':
       return (

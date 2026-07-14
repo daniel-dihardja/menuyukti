@@ -33,6 +33,7 @@ import {
   igProfileMilestoneDataSchema,
   igPlanMilestoneDataSchema,
   igMenuPickerMilestoneDataSchema,
+  igFormatMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -55,6 +56,7 @@ export type MilestonePresetInputType =
   | 'campaign_brief'
   | 'menu_clusterer'
   | 'ig_menu_picker'
+  | 'ig_format'
   | 'optional_notes'
   | 'none'
 
@@ -141,6 +143,13 @@ const EMPTY_IG_PLAN_DATA: MilestonedataValue = {
 }
 
 const EMPTY_IG_MENU_PICKER_DATA: MilestonedataValue = {
+  scheduleExplanation: '',
+  entries: [],
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
+}
+
+const EMPTY_IG_FORMAT_DATA: MilestonedataValue = {
   scheduleExplanation: '',
   entries: [],
   sourceAnalyticsRunId: '',
@@ -556,6 +565,40 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_menu_picker.criterionSelectedEntriesOnly'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_format: {
+    id: 'ig_format',
+    icon: GalleryVerticalEnd,
+    inputType: 'ig_format',
+    dataSchema: igFormatMilestoneDataSchema,
+    emptyData: EMPTY_IG_FORMAT_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_format.title'),
+      milestoneInput: {
+        type: 'ig_format',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_IG_FORMAT_DATA,
+      goal: t('milestonePreset.ig_format.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_format.criterionPriorIgMenuPicker'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_format.criterionValidType'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_format.criterionSlotCoverage'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_format.criterionCarouselMenuItems'),
           status: 'open',
         },
       ],

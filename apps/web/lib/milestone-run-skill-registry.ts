@@ -87,6 +87,12 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
       'Read prior IG Plan entries, fetch slot menu candidates from the workflow-pinned sales report, and attach 1–3 menu items per selected slot.',
   },
   {
+    id: 'ig_format',
+    name: 'IG Format',
+    description:
+      'Read prior IG Menu Picker entries with menu items and assign an Instagram format (reel, post, post-carousel, or story) per slot with a short rationale.',
+  },
+  {
     id: 'scheduler',
     name: 'Scheduler',
     description:

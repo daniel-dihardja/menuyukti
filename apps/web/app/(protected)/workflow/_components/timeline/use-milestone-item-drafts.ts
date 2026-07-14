@@ -26,6 +26,7 @@ import {
   menuClustererInputFromMilestoneInput,
   igMenuPickerInputFromMilestoneInput,
   igMenuPickerInputEqual,
+  igFormatNotesFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -107,6 +108,7 @@ export function useMilestoneItemDrafts(
   const isCampaignBriefPreset = inputType === 'campaign_brief'
   const isMenuClustererPreset = inputType === 'menu_clusterer'
   const isIgMenuPickerPreset = inputType === 'ig_menu_picker'
+  const isIgFormatPreset = inputType === 'ig_format'
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
@@ -124,11 +126,15 @@ export function useMilestoneItemDrafts(
   const [igMenuPickerDraft, setIgMenuPickerDraft] = useState<IgMenuPickerInputDraft>(() =>
     igMenuPickerInputFromMilestoneInput(milestone.milestoneInput),
   )
-  const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
-    milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
-      ? optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
-      : '',
-  )
+  const [optionalNotesDraft, setOptionalNotesDraft] = useState(() => {
+    if (milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
+      return optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
+    }
+    if (milestone.presetId === 'ig_format') {
+      return igFormatNotesFromMilestoneInput(milestone.milestoneInput)
+    }
+    return ''
+  })
 
   useEffect(() => {
     if (isDatesPreset) {
@@ -230,11 +236,17 @@ export function useMilestoneItemDrafts(
   }, [milestone.presetId, milestone.id, milestone.milestoneInput])
 
   useEffect(() => {
-    if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
+    if (
+      !milestonePresetHasDefaultOptionalNotesInput(milestone.presetId) &&
+      milestone.presetId !== 'ig_format'
+    ) {
       previousMilestoneIdRef.current = milestone.id
       return
     }
-    const server = optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
+    const server =
+      milestone.presetId === 'ig_format'
+        ? igFormatNotesFromMilestoneInput(milestone.milestoneInput)
+        : optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId!)
     setOptionalNotesDraft((prev) => {
       if (previousMilestoneIdRef.current !== milestone.id) {
         previousMilestoneIdRef.current = milestone.id
@@ -285,6 +297,10 @@ export function useMilestoneItemDrafts(
     inputDraft.endDate !== serverDatesInput.endDate
 
   const optionalNotesDirty = useMemo(() => {
+    if (milestone.presetId === 'ig_format') {
+      const server = igFormatNotesFromMilestoneInput(milestone.milestoneInput).trim()
+      return optionalNotesDraft.trim() !== server
+    }
     if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
       return false
     }
@@ -363,6 +379,12 @@ export function useMilestoneItemDrafts(
       return {
         type: 'ig_menu_picker',
         value: normalizeIgMenuPickerInput(igMenuPickerDraftRef.current),
+      }
+    }
+    if (m.presetId === 'ig_format') {
+      return {
+        type: 'ig_format',
+        value: { notes: optionalNotesDraftRef.current.trim() },
       }
     }
     if (m.presetId && milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
@@ -525,6 +547,27 @@ export function useMilestoneItemDrafts(
         }
         return { ok, milestoneInput: milestoneInputPayload }
       }
+      if (m.presetId === 'ig_format') {
+        const server = igFormatNotesFromMilestoneInput(m.milestoneInput)
+        const trimmedDraft = optionalNotesDraftRef.current.trim()
+        const trimmedServer = server.trim()
+        if (trimmedDraft === trimmedServer) {
+          if (normalizeOptionalNotesDraft && optionalNotesDraftRef.current !== trimmedDraft) {
+            setOptionalNotesDraft(trimmedDraft)
+          }
+          return { ok: true, milestoneInput: milestoneInputPayload }
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'ig_format',
+          value: { notes: trimmedDraft },
+        })
+        if (!ok) {
+          setOptionalNotesDraft(server)
+        } else if (normalizeOptionalNotesDraft) {
+          setOptionalNotesDraft(trimmedDraft)
+        }
+        return { ok, milestoneInput: milestoneInputPayload }
+      }
       if (milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
         const server = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId)
         const trimmedDraft = optionalNotesDraftRef.current.trim()
@@ -581,7 +624,10 @@ export function useMilestoneItemDrafts(
     if (usesManualInputSave) {
       return
     }
-    const dirty = (isDatesPreset && inputDirty) || (usesOptionalNotesInput && optionalNotesDirty)
+    const dirty =
+      (isDatesPreset && inputDirty) ||
+      (usesOptionalNotesInput && optionalNotesDirty) ||
+      (isIgFormatPreset && optionalNotesDirty)
     if (!dirty) {
       return
     }
@@ -604,6 +650,7 @@ export function useMilestoneItemDrafts(
     inputDraft,
     usesManualInputSave,
     usesOptionalNotesInput,
+    isIgFormatPreset,
     isDatesPreset,
     isMilestoneRunning,
     onUpdateMilestoneInput,
@@ -631,7 +678,7 @@ export function useMilestoneItemDrafts(
         (isCampaignBriefPreset && campaignBriefDirty) ||
         (isMenuClustererPreset && menuClustererDirty) ||
         (isIgMenuPickerPreset && igMenuPickerDirty) ||
-        (usesOptionalNotesInput && optionalNotesDirty)
+        ((usesOptionalNotesInput || isIgFormatPreset) && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
 
@@ -762,6 +809,18 @@ export function useMilestoneItemDrafts(
         saving: savingInput,
       }
     }
+    if (isIgFormatPreset) {
+      return {
+        type: 'ig_format',
+        milestoneId: milestone.id,
+        notes: optionalNotesDraft,
+        onNotesChange: handleOptionalNotesDraftChange,
+        onNotesBlur: handleOptionalNotesBlur,
+        onNotesFocus: handleOptionalNotesFocus,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
     if (usesOptionalNotesInput && milestone.presetId) {
       const presetId = milestone.presetId
       const base = `milestonePreset.${presetId}` as const
@@ -799,6 +858,7 @@ export function useMilestoneItemDrafts(
     isCampaignBriefPreset,
     isDatesPreset,
     isIgMenuPickerPreset,
+    isIgFormatPreset,
     isMenuClustererPreset,
     isPromotionCandidatesPreset,
     manualSave,

@@ -1239,6 +1239,27 @@ class IgMenuPickerMilestoneOutput(BaseModel):
         return text
 
 
+class IgFormatEntryOutput(IgMenuPickerEntryOutput):
+    type: Literal["reel", "post", "post-carousel", "story"]
+    formatRationale: str = ""
+
+
+class IgFormatMilestoneOutput(BaseModel):
+    scheduleExplanation: str = Field(min_length=1)
+    entries: list[IgFormatEntryOutput] = Field(min_length=1)
+    sourceAnalyticsRunId: str = Field(min_length=1)
+    reportingPeriod: str = Field(min_length=1)
+    sourceIgMenuPickerTitle: str | None = None
+
+    @field_validator("scheduleExplanation", "sourceAnalyticsRunId", "reportingPeriod")
+    @classmethod
+    def _validate_non_empty_header(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
@@ -1254,6 +1275,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "ig_profile": IgProfileMilestoneOutput,
     "ig_plan": IgPlanMilestoneOutput,
     "ig_menu_picker": IgMenuPickerMilestoneOutput,
+    "ig_format": IgFormatMilestoneOutput,
 }
 
 

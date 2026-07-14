@@ -16,7 +16,12 @@ def is_ig_menu_picker_milestone_data(data: dict[str, Any]) -> bool:
     entries = data.get("entries")
     if not isinstance(entries, list):
         return False
-    return any(isinstance(row, dict) and "menuItems" in row for row in entries)
+    return any(
+        isinstance(row, dict)
+        and "menuItems" in row
+        and "type" not in row
+        for row in entries
+    )
 
 
 def _entries(data: dict[str, Any]) -> list[dict[str, Any]]:
