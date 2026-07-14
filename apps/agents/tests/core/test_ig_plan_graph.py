@@ -10,6 +10,7 @@ from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.ig_plan.nodes import (
     IgPlanDraftOutput,
     IgPlanEntryDraft,
+    _trim_campaign_brief_for_prompt,
     fetch_and_prepare,
     generate_plan_with_llm,
     persist_result,
@@ -155,7 +156,10 @@ async def test_routing_ig_plan_uses_dedicated_graph_path() -> None:
     mock_eval.astream = _fake_eval_astream
     payload = _valid_ig_plan_payload()
 
-    async def _fake_ig_plan_astream(*_a: object, **_k: object):
+    captured_initial: dict[str, object] = {}
+
+    async def _fake_ig_plan_astream(initial: dict[str, object], **_k: object):
+        captured_initial.update(initial)
         yield (
             "values",
             {
@@ -204,6 +208,10 @@ async def test_routing_ig_plan_uses_dedicated_graph_path() -> None:
             return_value=mock_eval,
         ),
         patch("agents_app.agents.core.milestone_run.graph.build_ig_plan_graph") as mock_build,
+        patch(
+            "agents_app.agents.core.milestone_run.graph.fetch_prior_milestones_data",
+            new=AsyncMock(return_value=_prior_milestones_json()),
+        ),
     ):
         mock_graph = MagicMock()
         mock_graph.astream = _fake_ig_plan_astream
@@ -214,10 +222,12 @@ async def test_routing_ig_plan_uses_dedicated_graph_path() -> None:
                 **_minimal_initial(),
                 "preset_id": "ig_plan",
                 "milestone_id": "m-ig-plan",
+                "workflow_id": "wf-1",
             }
         )
 
     mock_build.assert_called_once()
+    assert captured_initial.get("prior_milestones_data") == _prior_milestones_json()
 
 
 def test_output_schema_valid_ig_plan_payload() -> None:
@@ -270,6 +280,49 @@ def test_output_schema_rejects_missing_reporting_period() -> None:
     assert error is not None
 
 
+def _campaign_brief_data() -> dict:
+    return {
+        "venueSnapshot": {
+            "venueName": "Cafe Alto",
+            "city": "Berlin",
+            "country": "Germany",
+            "currency": "EUR",
+        },
+        "overallStrategy": {
+            "strategyFocus": "weekday_lunch",
+            "audiencePriority": ["Weekday lunch nearby workers"],
+            "coreMessage": "Promote weekday lunch for nearby workers.",
+            "offerWindow": "11:00-14:00",
+            "cadenceGuidance": ["Publish lunch-focused content on Tuesday."],
+        },
+        "contentPillars": ["Hero signatures", "Category variety"],
+        "audienceHypotheses": ["Lunch nearby workers"],
+        "proofOrientedAngles": ["Top sellers lead conversions"],
+        "toneGuardrails": ["Be specific"],
+        "campaignObjective": "Increase weekday lunch visits",
+        "mainCategory": "Mains",
+        "targetSegments": ["Weekday lunch workers"],
+        "messageHierarchy": ["Hero promise"],
+        "offerAndCtaPlan": ["Keep offers margin-safe"],
+        "contentPillarPlan": ["Signature dishes via Reels"],
+        "measurementPlan": ["Track saves weekly"],
+        "testingPlan": ["Test lunch windows"],
+        "riskGuardrails": ["Avoid unverified claims"],
+    }
+
+
+def _prior_milestones_json() -> str:
+    return json.dumps(
+        [
+            {
+                "title": "Campaign brief",
+                "presetId": "restaurant_campaign_brief",
+                "data": _campaign_brief_data(),
+            }
+        ]
+    )
+
+
 def _ig_plan_fetch_fixture() -> dict:
     return {
         "analyticsRunId": "42",
@@ -309,6 +362,29 @@ def _ig_plan_fetch_fixture() -> dict:
 
 
 @pytest.mark.asyncio
+async def test_fetch_and_prepare_requires_prior_campaign_brief() -> None:
+    client = MagicMock(spec=AsyncMock)
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "Weekly IG plan",
+        "criteria": [],
+        "prior_milestones_data": "",
+        "result_data": "",
+        "milestonedata_written": False,
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_plan.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
+        pytest.raises(ValueError, match="restaurant_campaign_brief"),
+    ):
+        await fetch_and_prepare(state, client=client)
+
+
+@pytest.mark.asyncio
 async def test_fetch_and_prepare_builds_generation_context() -> None:
     client = MagicMock(spec=AsyncMock)
     state = {
@@ -317,6 +393,7 @@ async def test_fetch_and_prepare_builds_generation_context() -> None:
         "user_id": "u1",
         "goal": "Weekly IG plan",
         "criteria": [],
+        "prior_milestones_data": _prior_milestones_json(),
         "milestone_input": {"type": "ig_plan", "value": {"notes": "focus lunch"}},
         "result_data": "",
         "milestonedata_written": False,
@@ -335,12 +412,17 @@ async def test_fetch_and_prepare_builds_generation_context() -> None:
         out = await fetch_and_prepare(state, client=client)
 
     assert out["analytics_run_id"] == "42"
+    assert isinstance(out.get("campaign_brief_data"), dict)
+    assert out["campaign_brief_data"]["campaignObjective"] == "Increase weekday lunch visits"
     context = str(out.get("generation_context_json") or "")
     assert "## Goal" in context
     assert "## Owner notes" in context
+    assert "## Campaign brief" in context
     assert "## Analytics inputs" in context
     assert "Weekly IG plan" in context
     assert "focus lunch" in context
+    assert "campaignObjective" in context
+    assert "Increase weekday lunch visits" in context
     assert "locationProfile" in context
     assert "Trattoria Roma" in context
     assert "Italian" in context
@@ -350,12 +432,23 @@ async def test_fetch_and_prepare_builds_generation_context() -> None:
     assert "openingHours" in context
     assert '"openTime": "11:00"' in context
     assert "structured JSON" in context
+    assert "measurementPlan" not in context
+    assert "testingPlan" not in context
+
+
+def test_trim_campaign_brief_excludes_operational_fields() -> None:
+    trimmed = _trim_campaign_brief_for_prompt(_campaign_brief_data())
+    assert trimmed["campaignObjective"] == "Increase weekday lunch visits"
+    assert "measurementPlan" not in trimmed
+    assert "testingPlan" not in trimmed
+    assert "messageHierarchy" not in trimmed
 
 
 def test_ig_plan_user_message_includes_sections() -> None:
     payload = {
         "goal": "Weekly plan",
         "ownerNotes": "focus lunch",
+        "campaignBrief": _trim_campaign_brief_for_prompt(_campaign_brief_data()),
         "locationProfile": {"identity": {"name": "Trattoria Roma"}},
         "slotPerformance": {"slots": []},
         "menuEngineeringMatrix": {"distribution": []},
@@ -367,15 +460,22 @@ def test_ig_plan_user_message_includes_sections() -> None:
     )
     assert "## Goal" in message
     assert "## Owner notes" in message
+    assert "## Campaign brief" in message
     assert "## Analytics inputs" in message
     assert "Weekly plan" in message
     assert "focus lunch" in message
+    assert "campaignObjective" in message
     assert "locationProfile" in message
     assert "Trattoria Roma" in message
 
 
 def test_build_ig_plan_messages_shape() -> None:
-    payload = {"goal": None, "ownerNotes": None, "slotPerformance": {}}
+    payload = {
+        "goal": None,
+        "ownerNotes": None,
+        "campaignBrief": _trim_campaign_brief_for_prompt(_campaign_brief_data()),
+        "slotPerformance": {},
+    }
     messages = build_ig_plan_messages(
         goal="G1",
         owner_notes="notes",
@@ -385,14 +485,19 @@ def test_build_ig_plan_messages_shape() -> None:
     assert isinstance(messages[0], SystemMessage)
     assert messages[0].content == IG_PLAN_SYSTEM
     assert isinstance(messages[1], HumanMessage)
-    assert "## Goal" in str(messages[1].content)
-    assert "G1" in str(messages[1].content)
+    human = str(messages[1].content)
+    assert "## Goal" in human
+    assert "G1" in human
+    assert "## Campaign brief" in human
+    assert "campaignObjective" in human
 
 
 def test_ig_plan_system_is_strategy_only() -> None:
     system = IG_PLAN_SYSTEM
     assert "slot strategy grid" in system
     assert "marketing opportunity" in system
+    assert "campaignBrief" in system
+    assert "SOURCE PRECEDENCE" in system
     for field in (
         "objective",
         "pillar",
@@ -451,6 +556,7 @@ async def test_generate_plan_returns_structured_payload() -> None:
     state = {
         "goal": "Weekly IG plan",
         "milestone_input": {"type": "ig_plan", "value": {"notes": "focus lunch"}},
+        "campaign_brief_data": _campaign_brief_data(),
         "slot_menu_candidates": _slot_candidates_fixture(),
         "analytics_run_id": "42",
         "location_profile": {"identity": {"name": "Trattoria Roma"}},

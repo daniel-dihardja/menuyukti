@@ -22,6 +22,10 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.core.milestone_run.prior_context_inject import (
+    campaign_brief_prior_error_message,
+    extract_restaurant_campaign_brief_data,
+)
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     _fmt_manual_brief_hints,
 )
@@ -99,10 +103,42 @@ def _build_location_profile_context(location_raw: dict[str, Any]) -> dict[str, A
     return context
 
 
+def _trim_campaign_brief_for_prompt(brief: dict[str, Any]) -> dict[str, Any]:
+    """Strategy-relevant campaign brief fields for weekly slot planning."""
+    return {
+        "venueSnapshot": brief.get("venueSnapshot"),
+        "overallStrategy": brief.get("overallStrategy"),
+        "campaignObjective": brief.get("campaignObjective"),
+        "targetSegments": brief.get("targetSegments"),
+        "audienceHypotheses": brief.get("audienceHypotheses"),
+        "contentPillars": brief.get("contentPillars"),
+        "contentPillarPlan": brief.get("contentPillarPlan"),
+        "toneGuardrails": brief.get("toneGuardrails"),
+        "riskGuardrails": brief.get("riskGuardrails"),
+        "offerAndCtaPlan": brief.get("offerAndCtaPlan"),
+        "mainCategory": brief.get("mainCategory"),
+    }
+
+
+def _resolve_campaign_brief_data(state: IgPlanState) -> dict[str, Any]:
+    stored = state.get("campaign_brief_data")
+    if isinstance(stored, dict):
+        return stored
+
+    prior_json = str(state.get("prior_milestones_data") or "")
+    campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
+    if campaign_brief_data is None:
+        raise ValueError(
+            campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan")
+        )
+    return campaign_brief_data
+
+
 def _build_context_payload(
     *,
     goal: str,
     owner_notes: str,
+    campaign_brief: dict[str, Any],
     location_profile: dict[str, Any],
     slot_performance: dict[str, Any],
     menu_engineering_matrix: dict[str, Any],
@@ -110,6 +146,7 @@ def _build_context_payload(
     return {
         "goal": goal.strip() or None,
         "ownerNotes": owner_notes or None,
+        "campaignBrief": _trim_campaign_brief_for_prompt(campaign_brief),
         "locationProfile": location_profile or None,
         "slotPerformance": slot_performance,
         "menuEngineeringMatrix": _trim_matrix_for_prompt(menu_engineering_matrix),
@@ -197,6 +234,14 @@ async def _invoke_ig_plan_structured(messages: list[BaseMessage]) -> IgPlanDraft
 
 async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     _trace(state, "execute_skill", skill_id="ig_plan")
+
+    prior_json = str(state.get("prior_milestones_data") or "")
+    campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
+    if campaign_brief_data is None:
+        raise ValueError(
+            campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan")
+        )
+
     pinned_run_id = str(state.get("analytics_run_id") or "").strip() or None
     fetched = await fetch_ig_plan_inputs(
         int(state["location_id"]),
@@ -217,6 +262,7 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
     context_payload = _build_context_payload(
         goal=goal,
         owner_notes=owner_notes,
+        campaign_brief=campaign_brief_data,
         location_profile=location_profile,
         slot_performance=slot_performance,
         menu_engineering_matrix=menu_matrix,
@@ -227,6 +273,7 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
         context_payload=context_payload,
     )
     return {
+        "campaign_brief_data": campaign_brief_data,
         "location_raw": location_raw,
         "location_profile": location_profile,
         "analytics_run_id": fetched["analyticsRunId"],
@@ -260,11 +307,14 @@ async def generate_plan_with_llm(state: IgPlanState) -> dict[str, Any]:
     if not isinstance(menu_matrix, dict):
         menu_matrix = {}
 
+    campaign_brief_data = _resolve_campaign_brief_data(state)
+
     goal = str(state.get("goal") or "")
     owner_notes = _fmt_owner_notes(state)
     context_payload = _build_context_payload(
         goal=goal,
         owner_notes=owner_notes,
+        campaign_brief=campaign_brief_data,
         location_profile=location_profile,
         slot_performance=slot_performance,
         menu_engineering_matrix=menu_matrix,

@@ -1650,12 +1650,13 @@
             "label": "IG Plan",
             "title": "IG Plan",
             "inputLabel": "IG Plan notes",
-            "inputDescription": "Optional guidance for weekly cadence or marketing emphasis. The run fetches venue slot demand signals and menu engineering portfolio distribution from the latest analytics run.",
+            "inputDescription": "Optional guidance for weekly cadence or marketing emphasis. Requires a prior **Campaign Brief** milestone with saved data. The run also fetches venue slot demand signals and menu engineering portfolio distribution from the workflow-pinned analytics run.",
             "inputPlaceholder": "e.g. push afternoon traffic Wed–Fri; protect Friday dinner…",
-            "goal": "Read venue slot demand signals and menu engineering portfolio distribution from the latest analytics run, then output a **weekly slot strategy grid** in `entries[]`. Each entry defines publish **day** and **slot** (HH:MM), marketing **objective**, content **pillar**, target **mealPeriod**, **slotStrategy** (`maintain`, `support`, `grow`, or `aggressively_grow`), and **productRole** (`star`, `puzzle`, or `plow_horse`). Optimize for marketing opportunity — not demand reinforcement. Strategy only; no dish names, hooks, captions, or format assignments.",
+            "goal": "Read prior **Campaign Brief** strategy (objectives, pillars, cadence, audience) together with venue slot demand signals and menu engineering portfolio distribution from the workflow-pinned analytics run, then output a **weekly slot strategy grid** in `entries[]`. Each entry defines publish **day** and **slot** (HH:MM), marketing **objective**, content **pillar**, target **mealPeriod**, **slotStrategy** (`maintain`, `support`, `grow`, or `aggressively_grow`), and **productRole** (`star`, `puzzle`, or `plow_horse`). Classify slots from analytics; ground objectives and pillar mix in the campaign brief. Strategy only; no dish names, hooks, captions, or format assignments.",
             "criterionWeeklyEntries": "Data includes a non-empty **entries** array. Each row has **day**, **slot** (HH:MM), **objective**, **pillar**, **mealPeriod**, **productRole**, **slotStrategy**, and **slotKey**. Rows are grouped in weekday order (monday through sunday).",
             "criterionSlotGrounding": "Each entry uses a valid **slotStrategy** (`maintain`, `support`, `grow`, or `aggressively_grow`), **pillar**, and **productRole** (`star`, `puzzle`, or `plow_horse`). Publish **slot** times should be plausible for the venue day when opening hours are available.",
-            "criterionScheduleExplanation": "Data includes a non-empty **scheduleExplanation** summarizing the weekly marketing allocation strategy."
+            "criterionScheduleExplanation": "Data includes a non-empty **scheduleExplanation** summarizing the weekly marketing allocation strategy.",
+            "criterionCampaignBriefAlignment": "The weekly plan reflects prior **Campaign Brief** strategy, content pillars, and cadence guidance — objectives and pillar mix align with the brief without contradicting analytics-based slot classification."
           },
           "ig_menu_picker": {
             "label": "IG Menu Picker",

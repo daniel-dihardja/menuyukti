@@ -29,6 +29,7 @@ Do **not** ask: "Where are customers already coming?"
 Ask: "Where can marketing create the greatest business impact?"
 
 Marketing opportunity weighs:
+- Campaign brief strategy (objectives, pillars, cadence, audience priority)
 - Historical venue demand (relative strength across weekly slots)
 - Business objectives (milestone goal, owner notes)
 - Growth potential (weak slots = higher incremental upside)
@@ -46,9 +47,11 @@ INPUT
 You receive a human message with:
 - **Goal** — milestone goal string for this run
 - **Owner notes** — optional owner-provided notes from milestone input
+- **Campaign brief** — trimmed JSON from a prior `restaurant_campaign_brief` milestone
 - **Analytics inputs** — JSON object with:
   - `goal` — same milestone goal (may be null when empty)
   - `ownerNotes` — same owner notes (may be null when empty)
+  - `campaignBrief` — same campaign brief excerpt (also shown above for readability)
   - `locationProfile` — venue identity, **opening hours** (`openingHours`), owner quick profile
   - `slotPerformance` — demand signals per day × meal-period slot (`demandIndex`,
     `orderCount`, `relativeDemand`, `mealPeriodHoursLabel`, etc.)
@@ -58,8 +61,43 @@ You receive a human message with:
 Do not assume data outside this input. Ignore any legacy analytics `posture` labels
 if present — you classify slots yourself.
 
+────────────────────────────────────────────────────────────────────────
+SOURCE PRECEDENCE — who decides what
+────────────────────────────────────────────────────────────────────────
+| Field / decision | Primary source | Campaign brief role |
+|------------------|----------------|---------------------|
+| `slotStrategy` | `slotPerformance` (venue-relative demand ranking) | Shift emphasis when brief calls for pushing a segment or period |
+| `productRole` | Menu engineering matrix + slot leverage | Align with `mainCategory` and discovery goals |
+| `objective` | Campaign brief + owner notes + goal | Brief should strongly influence business intent per slot |
+| `pillar` | Brief themes + slot strategy | Map free-text brief pillars to allowed enum values |
+| `day`, `slot`, `mealPeriod` | `openingHours` + analytics | Brief `cadenceGuidance` informs frequency, not invented demand |
+
+Owner notes and milestone goal may shift emphasis but must not invent demand data or
+override analytics-based slot classification without brief-backed rationale.
+
+────────────────────────────────────────────────────────────────────────
+HOW TO USE THE CAMPAIGN BRIEF (`campaignBrief`)
+────────────────────────────────────────────────────────────────────────
+1. **Strategy foundation** — read `overallStrategy` (`strategyFocus`, `audiencePriority`,
+   `coreMessage`, `cadenceGuidance`, `offerWindow`) for weekly rhythm and where to
+   concentrate entries across the week.
+2. **Objectives** — ground each entry's `objective` in `campaignObjective`, `targetSegments`,
+   `audienceHypotheses`, and `offerAndCtaPlan` (business intent only — not copy or CTAs).
+3. **Pillar mix** — use `contentPillars` and `contentPillarPlan` to diversify `pillar`
+   choices across the week. Brief pillars are **free-text themes**; output `pillar` must
+   still be one of: `hero`, `reminder`, `lifestyle`, `community`, `social_proof`,
+   `educational`, `product_discovery`. Map themes to the closest enum value.
+4. **Guardrails** — respect `toneGuardrails` and `riskGuardrails` when wording objectives.
+5. **Menu focus** — use `mainCategory` as a tie-breaker for `productRole` emphasis when
+   analytics allow multiple valid roles.
+
+Do **not** use `measurementPlan` or `testingPlan` from the brief — they are operational,
+not scheduling signals.
+
 Use these data sources as follows:
-0. **Location profile** (`locationProfile`): use `openingHours` (`dayOfWeek`, `openTime`,
+0. **Campaign brief** (`campaignBrief`): strategic foundation for objectives, pillar variety,
+   cadence, and audience weighting — see precedence table above.
+1. **Location profile** (`locationProfile`): use `openingHours` (`dayOfWeek`, `openTime`,
    `closeTime`) — do not schedule entries on weekdays missing from `openingHours`; `slot`
    publish times must fall within that day's open window. Owner profile shapes tone of
    objectives, not dish selection.
@@ -167,7 +205,8 @@ or markdown."""
 
 IG_PLAN_USER_TEMPLATE = """Generate a weekly Instagram slot strategy grid as structured JSON only.
 Return `scheduleExplanation` and `entries` per the system schema. Optimize for marketing
-opportunity, not demand reinforcement. No dish names or creative copy.
+opportunity, not demand reinforcement. Ground objectives and pillar mix in the campaign
+brief; classify slots from analytics. No dish names or creative copy.
 
 ## Goal
 {goal}
@@ -175,9 +214,14 @@ opportunity, not demand reinforcement. No dish names or creative copy.
 ## Owner notes
 {owner_notes}
 
+## Campaign brief
+```json
+{campaign_brief_json}
+```
+
 ## Analytics inputs
 ```json
-{context_json}
+{analytics_json}
 ```"""
 
 IG_PLAN_EMPTY_RETRY_MESSAGE = (
@@ -206,11 +250,19 @@ def format_ig_plan_user_message(
     owner_notes: str,
     context_payload: dict[str, Any],
 ) -> str:
-    context_json = json.dumps(context_payload, ensure_ascii=False, indent=2)
+    payload = dict(context_payload)
+    campaign_brief = payload.pop("campaignBrief", None)
+    campaign_brief_json = json.dumps(
+        campaign_brief if isinstance(campaign_brief, dict) else {},
+        ensure_ascii=False,
+        indent=2,
+    )
+    analytics_json = json.dumps(payload, ensure_ascii=False, indent=2)
     return IG_PLAN_USER_TEMPLATE.format(
         goal=_display_goal(goal),
         owner_notes=_display_owner_notes(owner_notes),
-        context_json=context_json,
+        campaign_brief_json=campaign_brief_json,
+        analytics_json=analytics_json,
     )
 
 

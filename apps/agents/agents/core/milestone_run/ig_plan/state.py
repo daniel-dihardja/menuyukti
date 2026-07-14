@@ -34,6 +34,8 @@ class IgPlanState(TypedDict):
     milestone_input: NotRequired[dict[str, Any] | None]
     run_id: NotRequired[str]
     traceparent: NotRequired[str | None]
+    prior_milestones_data: NotRequired[str]
+    campaign_brief_data: NotRequired[dict[str, Any]]
     location_raw: NotRequired[dict[str, Any]]
     location_profile: NotRequired[dict[str, Any]]
     analytics_run_id: NotRequired[str]

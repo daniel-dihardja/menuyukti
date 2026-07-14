@@ -537,6 +537,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           requirement: t('milestonePreset.ig_plan.criterionScheduleExplanation'),
           status: 'open',
         },
+        {
+          requirement: t('milestonePreset.ig_plan.criterionCampaignBriefAlignment'),
+          status: 'open',
+        },
       ],
     }),
   },

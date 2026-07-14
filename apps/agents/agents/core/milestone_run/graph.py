@@ -361,9 +361,11 @@ async def _run_culture_hooks(
 
 
 async def _run_ig_plan(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
     final_sub = await _stream_subgraph(
         build_ig_plan_graph(client),
-        _base_initial(state),
+        initial,
         state=state,
     )
     eval_raw = final_sub.get("raw_data") or final_sub.get("result_data") or state.get("raw_data")

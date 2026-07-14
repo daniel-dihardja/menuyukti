@@ -78,7 +78,7 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'ig_plan',
     name: 'IG Plan',
     description:
-      'Build a weekly Instagram schedule from venue slot strength, menu engineering matrix, and per-slot promotion candidates on the workflow-pinned analytics run.',
+      'Read prior Campaign Brief strategy together with venue slot demand signals and menu engineering portfolio distribution from the workflow-pinned analytics run, then build a weekly slot strategy grid (objectives, pillars, slotStrategy, productRole). Strategy only — no dish names or formats.',
   },
   {
     id: 'ig_menu_picker',
