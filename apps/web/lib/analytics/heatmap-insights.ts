@@ -40,11 +40,11 @@ export function findTopRowByTotal(rows: HeatmapInsightRow[]): HeatmapInsightRow 
   if (rows.length === 0) return null
 
   let top = rows[0]!
-  let topTotal = rowTotal(top)
+  let topTotal = computeRowTotal(top)
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i]!
-    const total = rowTotal(row)
+    const total = computeRowTotal(row)
     if (total > topTotal) {
       top = row
       topTotal = total
@@ -66,6 +66,6 @@ export function computeScaleBounds(rows: HeatmapInsightRow[]): { min: number; ma
   }
 }
 
-function rowTotal(row: HeatmapInsightRow): number {
+export function computeRowTotal(row: HeatmapInsightRow): number {
   return row.values.reduce((sum, value) => sum + value, 0)
 }

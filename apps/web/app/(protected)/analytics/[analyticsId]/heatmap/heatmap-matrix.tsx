@@ -14,13 +14,14 @@ import { Badge } from '@workspace/ui/components/badge'
 import { cn } from '@workspace/ui/lib/utils'
 import type { MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
 import { MATRIX_CATEGORY_BADGE_CLASS } from '@/lib/analytics/matrix-category-styles'
-import { SortableTable, useSortableColumns } from '@/components/sortable-table'
+import { SortableTable } from '@/components/sortable-table'
 import { useCompactLayout } from '@/hooks/use-desktop-layout'
 import {
   computeColumnTotals,
   computeScaleBounds,
   findPeakColumnIndex,
 } from '@/lib/analytics/heatmap-insights'
+import { sortHeatmapRows, useHeatmapSort, type HeatmapSortKey } from '@/lib/analytics/heatmap-sort'
 import {
   heatmapCellBackground,
   heatmapCellUsesLightText,
@@ -80,9 +81,6 @@ type Props = {
   matrixCategoryByRowKey?: ReadonlyMap<string, MatrixCategory>
   matrixCategoryLabel?: (category: MatrixCategory) => string
 }
-
-/** Sort by Menu (label) or by column index (e.g. "0", "1"). */
-type HeatmapSortKey = 'label' | string
 
 const STICKY_EDGE =
   'border-r border-border shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08)] dark:shadow-[4px_0_8px_-4px_rgba(0,0,0,0.35)]'
@@ -163,36 +161,12 @@ export function HeatmapMatrix({
   const showExplainBlock = showExplanation ?? !isEmbedded
   const isMobile = useCompactLayout()
   const initialSortKey = String(defaultSortColumnIndex) as HeatmapSortKey
-  const { sortKey, sortDirection, toggleSort } = useSortableColumns<HeatmapSortKey>(
-    initialSortKey,
-    'desc',
+  const { sortKey, sortDirection, toggleSort } = useHeatmapSort(initialSortKey, 'desc')
+
+  const sortedRows = useMemo(
+    () => sortHeatmapRows(rows, sortKey, sortDirection, rowKeyOrder),
+    [rows, sortKey, sortDirection, rowKeyOrder],
   )
-
-  const sortedRows = useMemo(() => {
-    if (sortKey === 'label') {
-      return [...rows].sort((a, b) => {
-        let cmp: number
-        if (rowKeyOrder) {
-          const aIndex = rowKeyOrder.indexOf(a.key)
-          const bIndex = rowKeyOrder.indexOf(b.key)
-          const aRank = aIndex >= 0 ? aIndex : rowKeyOrder.length
-          const bRank = bIndex >= 0 ? bIndex : rowKeyOrder.length
-          cmp = aRank - bRank
-        } else {
-          cmp = a.label.localeCompare(b.label)
-        }
-        return sortDirection === 'asc' ? cmp : -cmp
-      })
-    }
-    const columnIndex = parseInt(sortKey, 10)
-    if (Number.isNaN(columnIndex)) return rows
-
-    return [...rows].sort((a, b) => {
-      const aVal = a.values[columnIndex] ?? 0
-      const bVal = b.values[columnIndex] ?? 0
-      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
-    })
-  }, [rows, sortKey, sortDirection, rowKeyOrder])
 
   const displayRows = sortable ? sortedRows : rows
 

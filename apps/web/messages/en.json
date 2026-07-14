@@ -2810,7 +2810,7 @@
         "label": "Total"
       },
       "sort": {
-        "hint": "Click a column header to sort. Click again to toggle ascending or descending."
+        "hint": "Click a column header to sort by that hour or day. Click again to reverse; a third click clears the column and sorts items by total units sold."
       },
       "scroll": {
         "hint": "Swipe sideways to see all hours →"
