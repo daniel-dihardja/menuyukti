@@ -213,23 +213,29 @@ async def fetch_ig_plan_inputs(
     *,
     client: httpx.AsyncClient,
     max_candidates_per_slot: int = 5,
+    analytics_run_id: str | None = None,
 ) -> IgPlanInputsFetchResult:
     """Fetch composite IG Plan inputs (location profile + analytics) in one GraphQL request."""
     from agents_app.agents.core.milestone_run.ig_plan.slot_performance import (
         build_slot_performance_payload,
     )
 
+    variables: dict[str, Any] = {
+        "locationId": location_id,
+        "options": {
+            "includeLowEnd": False,
+            "maxCandidatesPerSlot": max_candidates_per_slot,
+            "matrixCategories": ["star", "plow_horse", "puzzle"],
+        },
+    }
+    pinned_run_id = str(analytics_run_id or "").strip()
+    if pinned_run_id:
+        variables["analyticsRunId"] = pinned_run_id
+
     data = await graphql_post(
         client,
         IG_PLAN_INPUTS_QUERY,
-        {
-            "locationId": location_id,
-            "options": {
-                "includeLowEnd": False,
-                "maxCandidatesPerSlot": max_candidates_per_slot,
-                "matrixCategories": ["star", "plow_horse", "puzzle"],
-            },
-        },
+        variables,
         user_id,
     )
     raw = data.get("igPlanInputs")

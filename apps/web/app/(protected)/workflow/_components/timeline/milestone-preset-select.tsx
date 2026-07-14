@@ -97,6 +97,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.ig_profile.label')
     case 'ig_plan':
       return t('milestonePreset.ig_plan.label')
+    case 'ig_menu_picker':
+      return t('milestonePreset.ig_menu_picker.label')
     case 'scheduler':
       return t('milestonePreset.scheduler.label')
     default: {

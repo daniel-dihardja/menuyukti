@@ -10,6 +10,7 @@ import {
   ListChecks,
   Milestone,
   Tags,
+  UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react'
 import type { z } from 'zod'
@@ -31,6 +32,7 @@ import {
   datesMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   igPlanMilestoneDataSchema,
+  igMenuPickerMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -52,6 +54,7 @@ export type MilestonePresetInputType =
   | 'promotion_candidates'
   | 'campaign_brief'
   | 'menu_clusterer'
+  | 'ig_menu_picker'
   | 'optional_notes'
   | 'none'
 
@@ -131,6 +134,13 @@ const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
 }
 
 const EMPTY_IG_PLAN_DATA: MilestonedataValue = {
+  scheduleExplanation: '',
+  entries: [],
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
+}
+
+const EMPTY_IG_MENU_PICKER_DATA: MilestonedataValue = {
   scheduleExplanation: '',
   entries: [],
   sourceAnalyticsRunId: '',
@@ -516,6 +526,36 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_plan.criterionScheduleExplanation'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_menu_picker: {
+    id: 'ig_menu_picker',
+    icon: UtensilsCrossed,
+    inputType: 'ig_menu_picker',
+    dataSchema: igMenuPickerMilestoneDataSchema,
+    emptyData: EMPTY_IG_MENU_PICKER_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_menu_picker.title'),
+      milestoneInput: {
+        type: 'ig_menu_picker',
+        value: { notes: '', selectedSlotKeys: [] },
+      },
+      milestoneData: EMPTY_IG_MENU_PICKER_DATA,
+      goal: t('milestonePreset.ig_menu_picker.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_menu_picker.criterionPriorIgPlan'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_menu_picker.criterionMenuItemsPerEntry'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_menu_picker.criterionSelectedEntriesOnly'),
           status: 'open',
         },
       ],

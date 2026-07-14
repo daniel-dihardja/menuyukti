@@ -5,7 +5,7 @@ from __future__ import annotations
 import strawberry
 
 from graphql.context import request_session_scope
-from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.auth import get_analytics_run_if_owner, is_location_owner, user_id_from_info
 from graphql.schema.mappers.menu_engineering_matrix import matrix_data_to_gql
 from graphql.schema.mappers.slot_menu_candidates import slot_menu_candidates_data_to_gql
 from graphql.schema.queries.latest_analytics_run_signals import LatestAnalyticsRunType
@@ -83,6 +83,7 @@ class IgPlanInputsQuery:
         self,
         info: strawberry.Info,
         location_id: int,
+        analytics_run_id: strawberry.ID | None = None,
         options: IgPlanInputsOptionsInput | None = None,
     ) -> IgPlanInputsType | None:
         user_id = user_id_from_info(info)
@@ -90,11 +91,22 @@ class IgPlanInputsQuery:
             if not is_location_owner(session, location_id, user_id, info=info):
                 return None
 
+            pinned_run_id: int | None = None
+            if analytics_run_id is not None:
+                raw_run_id = str(analytics_run_id).strip()
+                if not raw_run_id.isdigit():
+                    return None
+                pinned = get_analytics_run_if_owner(session, int(raw_run_id), user_id, info=info)
+                if pinned is None or pinned.location_id != location_id:
+                    return None
+                pinned_run_id = pinned.id
+
             with compute_timeout():
                 data = build_ig_plan_inputs(
                     session,
                     location_id,
                     _options_from_input(options),
+                    analytics_run_id=pinned_run_id,
                     info=info,
                 )
             if data is None:

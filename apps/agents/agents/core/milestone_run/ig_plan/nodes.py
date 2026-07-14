@@ -197,10 +197,12 @@ async def _invoke_ig_plan_structured(messages: list[BaseMessage]) -> IgPlanDraft
 
 async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     _trace(state, "execute_skill", skill_id="ig_plan")
+    pinned_run_id = str(state.get("analytics_run_id") or "").strip() or None
     fetched = await fetch_ig_plan_inputs(
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
+        analytics_run_id=pinned_run_id,
     )
     location_raw = fetched["locationRaw"]
     slot_performance = fetched["slotPerformance"]

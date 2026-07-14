@@ -36,6 +36,7 @@ export const milestonePresetIdSchema = z.enum([
   'culture_hooks',
   'ig_profile',
   'ig_plan',
+  'ig_menu_picker',
   'scheduler',
 ])
 
@@ -395,6 +396,36 @@ export const igPlanMilestoneDataSchema = z.object({
 })
 
 export type IgPlanMilestoneData = z.infer<typeof igPlanMilestoneDataSchema>
+
+export const igMenuPickerMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+  selectedSlotKeys: z.array(z.string().trim().min(1)).default([]),
+})
+
+export type IgMenuPickerMilestoneInputValue = z.infer<typeof igMenuPickerMilestoneInputValueSchema>
+
+export const igMenuPickerMenuItemSchema = z.object({
+  menu: z.string().trim().min(1),
+  rationale: z.string().trim().default(''),
+})
+
+export type IgMenuPickerMenuItem = z.infer<typeof igMenuPickerMenuItemSchema>
+
+export const igMenuPickerEntrySchema = igPlanEntrySchema.extend({
+  menuItems: z.array(igMenuPickerMenuItemSchema).min(1).max(3),
+})
+
+export type IgMenuPickerEntry = z.infer<typeof igMenuPickerEntrySchema>
+
+export const igMenuPickerMilestoneDataSchema = z.object({
+  scheduleExplanation: z.string().default(''),
+  entries: z.array(igMenuPickerEntrySchema).default([]),
+  sourceAnalyticsRunId: z.string().trim().default(''),
+  reportingPeriod: z.string().trim().default(''),
+  sourceIgPlanTitle: z.string().trim().optional(),
+})
+
+export type IgMenuPickerMilestoneData = z.infer<typeof igMenuPickerMilestoneDataSchema>
 
 export const menuTaggerItemRoleSchema = z.enum(['star', 'puzzle'])
 

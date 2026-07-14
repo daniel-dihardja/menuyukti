@@ -425,8 +425,8 @@ query SlotMenuCandidates(
 """
 
 IG_PLAN_INPUTS_QUERY = """
-query IgPlanInputs($locationId: Int!, $options: IgPlanInputsOptionsInput) {
-  igPlanInputs(locationId: $locationId, options: $options) {
+query IgPlanInputs($locationId: Int!, $analyticsRunId: ID, $options: IgPlanInputsOptionsInput) {
+  igPlanInputs(locationId: $locationId, analyticsRunId: $analyticsRunId, options: $options) {
     version
     coverageNotes
     location {

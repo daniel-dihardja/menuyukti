@@ -78,6 +78,58 @@ def _location_id(run_id: int) -> int:
         session.close()
 
 
+_QUERY_WITH_RUN = """
+query IgPlanInputs($locationId: Int!, $analyticsRunId: ID, $options: IgPlanInputsOptionsInput) {
+  igPlanInputs(locationId: $locationId, analyticsRunId: $analyticsRunId, options: $options) {
+    version
+    analyticsRun {
+      id
+      name
+    }
+    slotDemandProfile {
+      day
+      mealPeriod
+    }
+    menuEngineeringMatrix {
+      items {
+        menu
+        category
+      }
+    }
+    slotMenuCandidates {
+      reportingPeriod
+      slots {
+        day
+        mealPeriod
+      }
+    }
+  }
+}
+"""
+
+
+def test_ig_plan_inputs_explicit_analytics_run_id(analytics_run_with_qa_data: int) -> None:
+    run_id = analytics_run_with_qa_data
+    location_id = _location_id(run_id)
+
+    result = asyncio.run(
+        schema.execute(
+            _QUERY_WITH_RUN,
+            variable_values={
+                "locationId": location_id,
+                "analyticsRunId": str(run_id),
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors, result.errors
+    payload = result.data["igPlanInputs"]
+    assert payload is not None
+    assert payload["analyticsRun"]["id"] == str(run_id)
+    assert len(payload["slotDemandProfile"]) == 35
+    assert payload["slotMenuCandidates"] is not None
+
+
 def test_ig_plan_inputs_unauthorized_returns_null() -> None:
     result = asyncio.run(
         schema.execute(

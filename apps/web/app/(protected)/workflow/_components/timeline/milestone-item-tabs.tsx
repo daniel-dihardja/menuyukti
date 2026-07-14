@@ -29,6 +29,7 @@ import { MilestonePromotionCandidatesInput } from './milestone-promotion-candida
 import { MilestoneCampaignBriefInput } from './milestone-campaign-brief-input'
 import { MilestoneFieldDescription } from './milestone-field-description'
 import { MilestoneMenuClustererInput } from './milestone-menu-clusterer-input'
+import { MilestoneIgMenuPickerInput } from './milestone-ig-menu-picker-input'
 import {
   useMilestoneItemActions,
   useMilestoneItemMeta,
@@ -202,6 +203,24 @@ function MilestoneInputTabContent({
           <MilestoneMenuClustererInput
             disabled={isMilestoneRunning}
             draft={inputModel.draft}
+            onDraftChange={inputModel.onChange}
+            onNotesBlur={inputModel.onNotesBlur}
+            onNotesFocus={inputModel.onNotesFocus}
+          />
+          <FieldSaveStatus
+            className="text-muted-foreground"
+            messages={fieldSaveMessages(t)}
+            status={inputModel.saveStatus}
+          />
+        </>
+      )
+    case 'ig_menu_picker':
+      return (
+        <>
+          <MilestoneIgMenuPickerInput
+            disabled={isMilestoneRunning}
+            draft={inputModel.draft}
+            milestoneId={inputModel.milestoneId}
             onDraftChange={inputModel.onChange}
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}

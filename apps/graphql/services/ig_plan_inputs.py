@@ -9,6 +9,7 @@ import strawberry
 from menuyukti.core.analytics import compute_slot_demand_profile_from_orders
 from sqlalchemy.orm import Session, selectinload
 
+from graphql.access import get_analytics_run_if_owner
 from graphql.data_sources import AnalyticsRun, Location
 from graphql.services.menu_engineering import (
     MenuEngineeringMatrixData,
@@ -87,9 +88,14 @@ def build_ig_plan_inputs(
     location_id: int,
     options: IgPlanInputsOptions | None = None,
     *,
+    analytics_run_id: int | None = None,
     info: strawberry.Info | None = None,
 ) -> IgPlanInputsData | None:
-    """Load location profile and latest-run analytics inputs with a shared OrderFact load."""
+    """Load location profile and analytics inputs with a shared OrderFact load.
+
+    When ``analytics_run_id`` is set, use that run (must belong to ``location_id``).
+    Otherwise resolve the newest analytics run for the location.
+    """
     opts = options or IgPlanInputsOptions()
     location_row = (
         session.query(Location)
@@ -125,12 +131,37 @@ def build_ig_plan_inputs(
     )
 
     coverage_notes: list[str] = []
-    run = (
-        session.query(AnalyticsRun)
-        .where(AnalyticsRun.location_id == location_id)
-        .order_by(AnalyticsRun.id.desc())
-        .first()
-    )
+    run: AnalyticsRun | None = None
+    if analytics_run_id is not None:
+        user_id = ""
+        if info is not None:
+            from graphql.schema.auth import user_id_from_info
+
+            user_id = user_id_from_info(info) or ""
+        if user_id:
+            run = get_analytics_run_if_owner(session, analytics_run_id, user_id, info=info)
+        else:
+            run = session.get(AnalyticsRun, analytics_run_id)
+        if run is None:
+            return None
+        if run.location_id != location_id:
+            coverage_notes.append("Requested analytics run does not belong to this location.")
+            return IgPlanInputsData(
+                version=IG_PLAN_INPUTS_VERSION,
+                location=location_snapshot,
+                analytics_run=None,
+                slot_demand_profile=[],
+                menu_engineering_matrix=None,
+                slot_menu_candidates=None,
+                coverage_notes=coverage_notes,
+            )
+    else:
+        run = (
+            session.query(AnalyticsRun)
+            .where(AnalyticsRun.location_id == location_id)
+            .order_by(AnalyticsRun.id.desc())
+            .first()
+        )
     if run is None:
         coverage_notes.append("No analytics run found for this location.")
         return IgPlanInputsData(

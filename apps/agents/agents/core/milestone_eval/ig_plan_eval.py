@@ -41,6 +41,12 @@ def _normalize_requirement(requirement: str) -> str:
 
 
 def is_ig_plan_milestone_data(data: dict[str, Any]) -> bool:
+    from agents_app.agents.core.milestone_eval.ig_menu_picker_eval import (
+        is_ig_menu_picker_milestone_data,
+    )
+
+    if is_ig_menu_picker_milestone_data(data):
+        return False
     entries = data.get("entries")
     return isinstance(entries, list) and isinstance(data.get("scheduleExplanation"), str)
 

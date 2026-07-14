@@ -15,12 +15,16 @@ import {
   milestonePresetHasDefaultOptionalNotesInput,
   normalizePromotionCandidatesInput,
   normalizeMenuClustererInput,
+  normalizeIgMenuPickerInput,
   normalizedPromotionCandidatesInputsEqual,
   normalizedMenuClustererInputsEqual,
+  normalizedIgMenuPickerInputsEqual,
   optionalNotesFromMilestoneInput,
   promotionCandidatesDraftFromNormalized,
   promotionCandidatesInputFromMilestoneInput,
   menuClustererInputFromMilestoneInput,
+  igMenuPickerInputFromMilestoneInput,
+  igMenuPickerInputEqual,
 } from '@/lib/milestones/milestone-input-tab'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -30,6 +34,7 @@ import { useTimelineWorkspaceState } from '../timeline-context'
 import type { MilestoneInputModel } from './milestone-item-input-model'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
 import type { MenuClustererInputDraft } from './milestone-menu-clusterer-input'
+import type { IgMenuPickerInputDraft } from './milestone-ig-menu-picker-input'
 import type { TimelineMilestone } from './types'
 
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
@@ -93,6 +98,7 @@ export function useMilestoneItemDrafts(
   const isPromotionCandidatesPreset = inputType === 'promotion_candidates'
   const isCampaignBriefPreset = inputType === 'campaign_brief'
   const isMenuClustererPreset = inputType === 'menu_clusterer'
+  const isIgMenuPickerPreset = inputType === 'ig_menu_picker'
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
@@ -106,6 +112,9 @@ export function useMilestoneItemDrafts(
   )
   const [menuClustererDraft, setMenuClustererDraft] = useState<MenuClustererInputDraft>(() =>
     menuClustererInputFromMilestoneInput(milestone.milestoneInput),
+  )
+  const [igMenuPickerDraft, setIgMenuPickerDraft] = useState<IgMenuPickerInputDraft>(() =>
+    igMenuPickerInputFromMilestoneInput(milestone.milestoneInput),
   )
   const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
     milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
@@ -126,12 +135,16 @@ export function useMilestoneItemDrafts(
     if (milestone.presetId === 'menu_clusterer') {
       setMenuClustererDraft(menuClustererInputFromMilestoneInput(milestone.milestoneInput))
     }
+    if (milestone.presetId === 'ig_menu_picker') {
+      setIgMenuPickerDraft(igMenuPickerInputFromMilestoneInput(milestone.milestoneInput))
+    }
   }, [milestone.id, milestone.milestoneInput, milestone.presetId])
 
   const previousMilestoneIdRef = useRef(milestone.id)
   const promotionCandidatesFocusedRef = useRef(false)
   const campaignBriefFocusedRef = useRef(false)
   const menuClustererFocusedRef = useRef(false)
+  const igMenuPickerFocusedRef = useRef(false)
   const optionalNotesFocusedRef = useRef(false)
 
   useEffect(() => {
@@ -198,6 +211,27 @@ export function useMilestoneItemDrafts(
   }, [milestone.presetId, milestone.id, milestone.milestoneInput])
 
   useEffect(() => {
+    if (milestone.presetId !== 'ig_menu_picker') {
+      previousMilestoneIdRef.current = milestone.id
+      return
+    }
+    const server = igMenuPickerInputFromMilestoneInput(milestone.milestoneInput)
+    setIgMenuPickerDraft((prev) => {
+      if (previousMilestoneIdRef.current !== milestone.id) {
+        previousMilestoneIdRef.current = milestone.id
+        return server
+      }
+      if (!igMenuPickerInputEqual(prev, server)) {
+        if (!igMenuPickerFocusedRef.current) {
+          return server
+        }
+        return prev
+      }
+      return prev
+    })
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
+
+  useEffect(() => {
     if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
       previousMilestoneIdRef.current = milestone.id
       return
@@ -230,6 +264,8 @@ export function useMilestoneItemDrafts(
   campaignBriefDraftRef.current = campaignBriefDraft
   const menuClustererDraftRef = useRef(menuClustererDraft)
   menuClustererDraftRef.current = menuClustererDraft
+  const igMenuPickerDraftRef = useRef(igMenuPickerDraft)
+  igMenuPickerDraftRef.current = igMenuPickerDraft
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
   const debounceTimerRef = useRef<number | null>(null)
@@ -287,6 +323,14 @@ export function useMilestoneItemDrafts(
     const server = menuClustererInputFromMilestoneInput(milestone.milestoneInput)
     return !menuClustererInputEqual(menuClustererDraft, server)
   }, [isMenuClustererPreset, milestone.milestoneInput, menuClustererDraft])
+
+  const igMenuPickerDirty = useMemo(() => {
+    if (!isIgMenuPickerPreset) {
+      return false
+    }
+    const server = igMenuPickerInputFromMilestoneInput(milestone.milestoneInput)
+    return !normalizedIgMenuPickerInputsEqual(igMenuPickerDraft, server)
+  }, [igMenuPickerDraft, isIgMenuPickerPreset, milestone.milestoneInput])
 
   const performMilestoneInputFlush = useCallback(
     async ({
@@ -378,6 +422,22 @@ export function useMilestoneItemDrafts(
         }
         return ok
       }
+      if (m.presetId === 'ig_menu_picker') {
+        const server = igMenuPickerInputFromMilestoneInput(m.milestoneInput)
+        const normalizedDraft = normalizeIgMenuPickerInput(igMenuPickerDraftRef.current)
+        const normalizedServer = normalizeIgMenuPickerInput(server)
+        if (normalizedIgMenuPickerInputsEqual(normalizedDraft, normalizedServer)) {
+          return true
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'ig_menu_picker',
+          value: normalizedDraft,
+        })
+        if (!ok) {
+          setIgMenuPickerDraft(server)
+        }
+        return ok
+      }
       if (milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
         const server = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId)
         const trimmedDraft = optionalNotesDraftRef.current.trim()
@@ -432,10 +492,12 @@ export function useMilestoneItemDrafts(
       (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
       (isCampaignBriefPreset && campaignBriefDirty) ||
       (isMenuClustererPreset && menuClustererDirty) ||
+      (isIgMenuPickerPreset && igMenuPickerDirty) ||
       (!isDatesPreset &&
         !isPromotionCandidatesPreset &&
         !isCampaignBriefPreset &&
         !isMenuClustererPreset &&
+        !isIgMenuPickerPreset &&
         usesOptionalNotesInput &&
         optionalNotesDirty)
     if (!dirty) {
@@ -459,12 +521,15 @@ export function useMilestoneItemDrafts(
     campaignBriefDraft,
     menuClustererDirty,
     menuClustererDraft,
+    igMenuPickerDirty,
+    igMenuPickerDraft,
     promotionCandidatesDirty,
     promotionCandidatesDraft,
     flushMilestoneInputSave,
     inputDirty,
     inputDraft,
     isCampaignBriefPreset,
+    isIgMenuPickerPreset,
     isMenuClustererPreset,
     isPromotionCandidatesPreset,
     usesOptionalNotesInput,
@@ -492,6 +557,7 @@ export function useMilestoneItemDrafts(
         (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
         (isCampaignBriefPreset && campaignBriefDirty) ||
         (isMenuClustererPreset && menuClustererDirty) ||
+        (isIgMenuPickerPreset && igMenuPickerDirty) ||
         (usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
@@ -553,6 +619,21 @@ export function useMilestoneItemDrafts(
     setMenuClustererDraft(next)
   }, [])
 
+  const handleIgMenuPickerNotesBlur = useCallback(() => {
+    igMenuPickerFocusedRef.current = false
+    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
+  }, [flushMilestoneInputSave])
+
+  const handleIgMenuPickerNotesFocus = useCallback(() => {
+    igMenuPickerFocusedRef.current = true
+  }, [])
+
+  const handleIgMenuPickerDraftChange = useCallback((next: IgMenuPickerInputDraft) => {
+    igMenuPickerFocusedRef.current = true
+    igMenuPickerDraftRef.current = next
+    setIgMenuPickerDraft(next)
+  }, [])
+
   const inputModel = useMemo((): MilestoneInputModel => {
     if (isDatesPreset) {
       return {
@@ -597,6 +678,18 @@ export function useMilestoneItemDrafts(
         saving: savingInput,
       }
     }
+    if (isIgMenuPickerPreset) {
+      return {
+        type: 'ig_menu_picker',
+        milestoneId: milestone.id,
+        draft: igMenuPickerDraft,
+        onChange: handleIgMenuPickerDraftChange,
+        onNotesBlur: handleIgMenuPickerNotesBlur,
+        onNotesFocus: handleIgMenuPickerNotesFocus,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
     if (usesOptionalNotesInput && milestone.presetId) {
       const presetId = milestone.presetId
       const base = `milestonePreset.${presetId}` as const
@@ -626,6 +719,9 @@ export function useMilestoneItemDrafts(
     handleMenuClustererDraftChange,
     handleMenuClustererNotesBlur,
     handleMenuClustererNotesFocus,
+    handleIgMenuPickerDraftChange,
+    handleIgMenuPickerNotesBlur,
+    handleIgMenuPickerNotesFocus,
     handleOptionalNotesBlur,
     handleOptionalNotesDraftChange,
     handleOptionalNotesFocus,
@@ -636,9 +732,12 @@ export function useMilestoneItemDrafts(
     inputSaveStatus,
     isCampaignBriefPreset,
     isDatesPreset,
+    isIgMenuPickerPreset,
     isMenuClustererPreset,
     isPromotionCandidatesPreset,
+    milestone.id,
     milestone.presetId,
+    igMenuPickerDraft,
     optionalNotesDraft,
     promotionCandidatesDraft,
     menuClustererDraft,

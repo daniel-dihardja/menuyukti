@@ -59,6 +59,10 @@ class MilestoneRunBody(BaseModel):
         alias="model",
         description="Vercel AI Gateway id for generation and eval; must be in the chat allowlist.",
     )
+    analytics_run_id: str | None = Field(
+        default=None,
+        description="Workflow-pinned analytics run id from workflow.data.analyticsRunId.",
+    )
 
 
 @router.post("/milestones/{milestone_id}/run")
@@ -88,6 +92,7 @@ async def milestone_run(
                 milestone_data=body.milestone_data,
                 traceparent=tp,
                 chat_gateway_model=gateway_model,
+                analytics_run_id=body.analytics_run_id,
             ):
                 yield line
         except Exception as e:

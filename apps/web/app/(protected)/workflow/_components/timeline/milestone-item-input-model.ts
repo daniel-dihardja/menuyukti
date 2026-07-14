@@ -3,6 +3,7 @@ import type { CampaignBriefInputDraft } from '@/lib/milestones/campaign-brief-in
 
 import type { MilestoneCampaignBriefInputProps } from './milestone-campaign-brief-input'
 import type { MenuClustererInputDraft } from './milestone-menu-clusterer-input'
+import type { IgMenuPickerInputDraft } from './milestone-ig-menu-picker-input'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
 
 export type CampaignWindowInput = {
@@ -41,6 +42,16 @@ export type MilestoneInputModel =
       type: 'menu_clusterer'
       draft: MenuClustererInputDraft
       onChange: (next: MenuClustererInputDraft) => void
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
+      type: 'ig_menu_picker'
+      milestoneId: string
+      draft: IgMenuPickerInputDraft
+      onChange: (next: IgMenuPickerInputDraft) => void
       onNotesBlur: () => void
       onNotesFocus: () => void
       saveStatus: FieldSaveStatusVariant
