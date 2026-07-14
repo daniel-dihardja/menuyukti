@@ -10,7 +10,13 @@ from agents_app.agents.core.milestone_run.ig_plan.nodes import (
     fetch_and_prepare,
     generate_plan_with_llm,
 )
+from agents_app.agents.core.milestone_run.ig_plan.prompts import (
+    IG_PLAN_SYSTEM,
+    build_ig_plan_messages,
+    format_ig_plan_user_message,
+)
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from langchain_core.messages import HumanMessage, SystemMessage
 
 
 async def _fake_eval_astream(*_a: object, **_k: object):
@@ -275,6 +281,11 @@ async def test_fetch_and_prepare_builds_generation_context() -> None:
 
     assert out["analytics_run_id"] == "42"
     context = str(out.get("generation_context_json") or "")
+    assert "## Goal" in context
+    assert "## Owner notes" in context
+    assert "## Analytics inputs" in context
+    assert "Weekly IG plan" in context
+    assert "focus lunch" in context
     assert "locationProfile" in context
     assert "Trattoria Roma" in context
     assert "Italian" in context
@@ -283,6 +294,55 @@ async def test_fetch_and_prepare_builds_generation_context() -> None:
     assert "slotMenuCandidates" in context
     assert "Margherita Pizza" in context
     assert "markdown" in context.lower()
+
+
+def test_ig_plan_user_message_includes_sections() -> None:
+    payload = {
+        "goal": "Weekly plan",
+        "ownerNotes": "focus lunch",
+        "locationProfile": {"identity": {"name": "Trattoria Roma"}},
+        "slotPerformance": {"slots": []},
+        "menuEngineeringMatrix": {"items": []},
+        "slotMenuCandidates": {"slots": []},
+    }
+    message = format_ig_plan_user_message(
+        goal="Weekly plan",
+        owner_notes="focus lunch",
+        context_payload=payload,
+    )
+    assert "## Goal" in message
+    assert "## Owner notes" in message
+    assert "## Analytics inputs" in message
+    assert "Weekly plan" in message
+    assert "focus lunch" in message
+    assert "locationProfile" in message
+    assert "Trattoria Roma" in message
+
+
+def test_build_ig_plan_messages_shape() -> None:
+    payload = {"goal": None, "ownerNotes": None, "slotPerformance": {}}
+    messages = build_ig_plan_messages(
+        goal="G1",
+        owner_notes="notes",
+        context_payload=payload,
+    )
+    assert len(messages) == 2
+    assert isinstance(messages[0], SystemMessage)
+    assert messages[0].content == IG_PLAN_SYSTEM
+    assert isinstance(messages[1], HumanMessage)
+    assert "## Goal" in str(messages[1].content)
+    assert "G1" in str(messages[1].content)
+
+
+def test_ig_plan_empty_owner_notes_renders_placeholder() -> None:
+    message = format_ig_plan_user_message(
+        goal="",
+        owner_notes="",
+        context_payload={"slotPerformance": {}},
+    )
+    assert "## Owner notes" in message
+    assert "(none)" in message
+    assert "(not provided)" in message
 
 
 @pytest.mark.asyncio
@@ -294,8 +354,13 @@ async def test_generate_plan_returns_markdown_payload() -> None:
         "Monday 11:30 reel — Margherita Pizza"
     )
     state = {
+        "goal": "Weekly IG plan",
+        "milestone_input": {"type": "ig_plan", "value": {"notes": "focus lunch"}},
         "slot_menu_candidates": _slot_candidates_fixture(),
         "analytics_run_id": "42",
+        "location_profile": {"identity": {"name": "Trattoria Roma"}},
+        "slot_performance": _slot_performance_fixture(),
+        "menu_engineering_matrix": _matrix_fixture(),
         "generation_context_json": "{}",
         "result_data": "",
         "milestonedata_written": False,

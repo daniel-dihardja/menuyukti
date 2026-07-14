@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 import httpx
@@ -10,14 +9,18 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_ig_plan_inputs,
     upsert_milestonedata_node,
 )
-from agents_app.agents.core.milestone_run.ig_plan.prompts import IG_PLAN_SYSTEM
+from agents_app.agents.core.milestone_run.ig_plan.prompts import (
+    build_ig_plan_messages,
+    empty_plan_retry_message,
+    format_ig_plan_user_message,
+)
 from agents_app.agents.core.milestone_run.ig_plan.state import IgPlanOutput, IgPlanState
 from agents_app.agents.core.milestone_run.llm_from_run_config import astream_collect_from_run_config
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     _fmt_manual_brief_hints,
 )
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage
 from langgraph.config import get_stream_writer
 
 IG_PLAN_MAX_ATTEMPTS = 2
@@ -189,7 +192,7 @@ def _build_location_profile_context(location_raw: dict[str, Any]) -> dict[str, A
     return context
 
 
-def _build_generation_context(
+def _build_context_payload(
     *,
     goal: str,
     owner_notes: str,
@@ -197,8 +200,8 @@ def _build_generation_context(
     slot_performance: dict[str, Any],
     menu_engineering_matrix: dict[str, Any],
     slot_menu_candidates: dict[str, Any],
-) -> str:
-    context_payload = {
+) -> dict[str, Any]:
+    return {
         "goal": goal.strip() or None,
         "ownerNotes": owner_notes or None,
         "locationProfile": location_profile or None,
@@ -206,11 +209,6 @@ def _build_generation_context(
         "menuEngineeringMatrix": _trim_matrix_for_prompt(menu_engineering_matrix),
         "slotMenuCandidates": _trim_slot_candidates_for_prompt(slot_menu_candidates),
     }
-    return (
-        "Generate a weekly Instagram schedule using ONLY menu names present in the inputs.\n"
-        "Return your plan as **markdown** (headings, bullet lists, and/or tables).\n\n"
-        f"```json\n{json.dumps(context_payload, ensure_ascii=False, indent=2)}\n```"
-    )
 
 
 def _normalize_generated_output(payload: Any) -> IgPlanOutput:
@@ -222,22 +220,13 @@ def _normalize_generated_output(payload: Any) -> IgPlanOutput:
     return normalized  # type: ignore[return-value]
 
 
-def _empty_plan_retry_message() -> HumanMessage:
-    return HumanMessage(
-        content=(
-            "Your previous response was empty. Return a complete weekly Instagram "
-            "content plan in markdown with headings, cadence summary, and per-slot entries."
-        )
-    )
-
-
 async def _invoke_ig_plan_markdown(messages: list[BaseMessage]) -> str:
     for attempt in range(1, IG_PLAN_MAX_ATTEMPTS + 1):
         text = (await astream_collect_from_run_config(messages)).strip()
         if text:
             return text
         if attempt < IG_PLAN_MAX_ATTEMPTS:
-            messages = [*messages, _empty_plan_retry_message()]
+            messages = [*messages, empty_plan_retry_message()]
     raise ValueError("ig_plan planning returned empty markdown")
 
 
@@ -261,13 +250,19 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
 
     location_profile = _build_location_profile_context(location_raw)
     owner_notes = _fmt_owner_notes(state)
-    generation_context_json = _build_generation_context(
-        goal=str(state.get("goal") or ""),
+    goal = str(state.get("goal") or "")
+    context_payload = _build_context_payload(
+        goal=goal,
         owner_notes=owner_notes,
         location_profile=location_profile,
         slot_performance=slot_performance,
         menu_engineering_matrix=menu_matrix,
         slot_menu_candidates=slot_candidates,
+    )
+    generation_context_json = format_ig_plan_user_message(
+        goal=goal,
+        owner_notes=owner_notes,
+        context_payload=context_payload,
     )
     return {
         "location_raw": location_raw,
@@ -294,10 +289,31 @@ async def generate_plan_with_llm(state: IgPlanState) -> dict[str, Any]:
     if not reporting_period:
         raise ValueError("ig_plan requires reportingPeriod from slot menu candidates")
 
-    messages: list[BaseMessage] = [
-        SystemMessage(content=IG_PLAN_SYSTEM),
-        HumanMessage(content=str(state.get("generation_context_json") or "").strip()),
-    ]
+    location_profile = state.get("location_profile")
+    if not isinstance(location_profile, dict):
+        location_profile = {}
+    slot_performance = state.get("slot_performance")
+    if not isinstance(slot_performance, dict):
+        slot_performance = {}
+    menu_matrix = state.get("menu_engineering_matrix")
+    if not isinstance(menu_matrix, dict):
+        menu_matrix = {}
+
+    goal = str(state.get("goal") or "")
+    owner_notes = _fmt_owner_notes(state)
+    context_payload = _build_context_payload(
+        goal=goal,
+        owner_notes=owner_notes,
+        location_profile=location_profile,
+        slot_performance=slot_performance,
+        menu_engineering_matrix=menu_matrix,
+        slot_menu_candidates=slot_candidates,
+    )
+    messages = build_ig_plan_messages(
+        goal=goal,
+        owner_notes=owner_notes,
+        context_payload=context_payload,
+    )
 
     _trace(state, "generate_plan_with_llm")
     _trace_agent_event(state, "chat_model_start")
