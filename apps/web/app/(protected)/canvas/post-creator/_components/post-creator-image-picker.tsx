@@ -27,7 +27,7 @@ import {
   type ReactNode,
 } from 'react'
 
-import { loadPhotos, uploadPhoto, type PhotoCatalogItem } from '@/lib/photos/client-api'
+import { loadMedia, uploadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 
 import { MAX_REFERENCE_IMAGES } from './post-creator-constants'
 import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
@@ -77,26 +77,26 @@ export function PostCreatorImagePicker({
   children,
 }: PostCreatorImagePickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [photos, setPhotos] = useState<PhotoCatalogItem[]>([])
-  const [loadingPhotos, setLoadingPhotos] = useState(false)
+  const [mediaItems, setMediaItems] = useState<MediaCatalogItem[]>([])
+  const [loadingMedia, setLoadingMedia] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
 
   const mention = parseMentionAtEnd(value)
   const atMaxReferences = selectedNames.size >= MAX_REFERENCE_IMAGES
 
-  const filteredPhotos = useMemo(() => {
+  const filteredMedia = useMemo(() => {
     if (!mention) return []
     const query = mention.filterQuery
-    return photos.filter(
+    return mediaItems.filter(
       (p) =>
         !selectedNames.has(p.name) && (query.length === 0 || p.name.toLowerCase().includes(query)),
     )
-  }, [mention, photos, selectedNames])
+  }, [mention, mediaItems, selectedNames])
 
   const menuOpen = mention !== null && !disabled
 
-  const selectableCount = filteredPhotos.length + (atMaxReferences ? 0 : 1)
+  const selectableCount = filteredMedia.length + (atMaxReferences ? 0 : 1)
   const showUploadRow = !atMaxReferences
 
   useEffect(() => {
@@ -107,19 +107,19 @@ export function PostCreatorImagePicker({
 
     let cancelled = false
 
-    async function fetchPhotos() {
-      setLoadingPhotos(true)
+    async function fetchMedia() {
+      setLoadingMedia(true)
       try {
-        const list = await loadPhotos()
-        if (!cancelled) setPhotos(list)
+        const list = await loadMedia()
+        if (!cancelled) setMediaItems(list)
       } catch {
-        if (!cancelled) setPhotos([])
+        if (!cancelled) setMediaItems([])
       } finally {
-        if (!cancelled) setLoadingPhotos(false)
+        if (!cancelled) setLoadingMedia(false)
       }
     }
 
-    void fetchPhotos()
+    void fetchMedia()
 
     return () => {
       cancelled = true
@@ -131,10 +131,10 @@ export function PostCreatorImagePicker({
     setActiveIndex((prev) => Math.min(prev, Math.max(0, selectableCount - 1)))
   }, [menuOpen, selectableCount])
 
-  const handleSelectPhoto = useCallback(
-    (photo: PhotoCatalogItem) => {
-      if (selectedNames.has(photo.name) || atMaxReferences) return
-      onAddReference({ name: photo.name, url: photo.url })
+  const handleSelectMedia = useCallback(
+    (item: MediaCatalogItem) => {
+      if (selectedNames.has(item.name) || atMaxReferences) return
+      onAddReference({ name: item.name, url: item.url })
       onValueChange(stripTrailingMention(value))
     },
     [atMaxReferences, onAddReference, onValueChange, selectedNames, value],
@@ -148,16 +148,16 @@ export function PostCreatorImagePicker({
       setUploading(true)
       try {
         const file = list[0]!
-        const uploaded = await uploadPhoto(file)
-        setPhotos((prev) => [uploaded, ...prev.filter((p) => p.name !== uploaded.name)])
-        handleSelectPhoto(uploaded)
+        const uploaded = await uploadMedia(file)
+        setMediaItems((prev) => [uploaded, ...prev.filter((p) => p.name !== uploaded.name)])
+        handleSelectMedia(uploaded)
       } catch (err) {
         onUploadError?.(err instanceof Error ? err.message : 'Upload failed')
       } finally {
         setUploading(false)
       }
     },
-    [atMaxReferences, handleSelectPhoto, onUploadError],
+    [atMaxReferences, handleSelectMedia, onUploadError],
   )
 
   const handleFileInputChange = useCallback(
@@ -199,15 +199,15 @@ export function PostCreatorImagePicker({
           fileInputRef.current?.click()
           return
         }
-        const photoIndex = showUploadRow ? activeIndex - 1 : activeIndex
-        const photo = filteredPhotos[photoIndex]
-        if (photo) handleSelectPhoto(photo)
+        const mediaIndex = showUploadRow ? activeIndex - 1 : activeIndex
+        const item = filteredMedia[mediaIndex]
+        if (item) handleSelectMedia(item)
       }
     },
     [
       activeIndex,
-      filteredPhotos,
-      handleSelectPhoto,
+      filteredMedia,
+      handleSelectMedia,
       menuOpen,
       onValueChange,
       selectableCount,
@@ -242,7 +242,7 @@ export function PostCreatorImagePicker({
         </PopoverHeader>
         <Command shouldFilter={false}>
           <CommandList>
-            {loadingPhotos ? (
+            {loadingMedia ? (
               <div className="flex items-center justify-center gap-2 px-3 py-6 text-muted-foreground text-sm">
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               </div>
@@ -272,24 +272,24 @@ export function PostCreatorImagePicker({
                     </CommandItem>
                   </CommandGroup>
                 ) : null}
-                {filteredPhotos.length > 0 ? (
+                {filteredMedia.length > 0 ? (
                   <CommandGroup aria-label={pickerAriaLabel}>
-                    {filteredPhotos.map((photo, i) => {
+                    {filteredMedia.map((item, i) => {
                       const rowIndex = showUploadRow ? i + 1 : i
                       return (
                         <CommandItem
-                          key={photo.name}
+                          key={item.name}
                           className={cn(
                             'flex w-full items-center gap-2',
                             rowIndex === activeIndex && 'bg-accent text-accent-foreground',
                           )}
-                          onSelect={() => handleSelectPhoto(photo)}
-                          value={photo.name}
+                          onSelect={() => handleSelectMedia(item)}
+                          value={item.name}
                         >
-                          {photo.url ? (
+                          {item.url ? (
                             // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
                             <img
-                              src={photo.url}
+                              src={item.url}
                               alt=""
                               className="size-8 shrink-0 rounded object-cover"
                             />
@@ -299,7 +299,7 @@ export function PostCreatorImagePicker({
                               aria-hidden
                             />
                           )}
-                          <span className="truncate text-sm">{photo.name}</span>
+                          <span className="truncate text-sm">{item.name}</span>
                         </CommandItem>
                       )
                     })}
@@ -311,7 +311,7 @@ export function PostCreatorImagePicker({
                     </CommandEmpty>
                   )
                 )}
-                {showUploadRow && filteredPhotos.length === 0 && !loadingPhotos ? (
+                {showUploadRow && filteredMedia.length === 0 && !loadingMedia ? (
                   <CommandEmpty className="px-3 py-6 text-center text-muted-foreground text-sm">
                     {emptyLabel}
                   </CommandEmpty>

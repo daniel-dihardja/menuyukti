@@ -39,7 +39,6 @@ from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import LOCATION_QUERY
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
-from menuyukti.core.analytics import SlotDemandCell, summarize_venue_slot_performance
 from pydantic import BaseModel
 
 
@@ -213,132 +212,12 @@ def _trace_agent_event(state: CampaignBriefState, kind: str, **extra: Any) -> No
     get_stream_writer()(payload)
 
 
-_DAY_LABELS = {
-    "mon": "Mon",
-    "tue": "Tue",
-    "wed": "Wed",
-    "thu": "Thu",
-    "fri": "Fri",
-    "sat": "Sat",
-    "sun": "Sun",
-}
-
-
-def _graphql_slot_profile_to_cells(raw: list[Any]) -> list[SlotDemandCell]:
-    cells: list[SlotDemandCell] = []
-    for row in raw:
-        if not isinstance(row, dict):
-            continue
-        day = str(row.get("day") or "").strip()
-        meal_period = str(row.get("mealPeriod") or row.get("meal_period") or "").strip()
-        if not day or not meal_period:
-            continue
-        relative = str(row.get("relativeDemand") or row.get("relative_demand") or "average")
-        if relative not in {"low", "average", "high"}:
-            relative = "average"
-        cells.append(
-            SlotDemandCell(
-                day=day,
-                meal_period=meal_period,
-                meal_period_label=str(
-                    row.get("mealPeriodLabel") or row.get("meal_period_label") or meal_period
-                ),
-                meal_period_hours_label=str(
-                    row.get("mealPeriodHoursLabel") or row.get("meal_period_hours_label") or ""
-                ),
-                order_count=int(row.get("orderCount") or row.get("order_count") or 0),
-                traffic_share=float(row.get("trafficShare") or row.get("traffic_share") or 0.0),
-                demand_index=float(row.get("demandIndex") or row.get("demand_index") or 0.0),
-                relative_demand=relative,  # type: ignore[typeddict-item]
-            )
-        )
-    return cells
-
-
-def _extract_analytics_run_id(signals_raw: dict[str, Any] | None) -> str | None:
-    if not isinstance(signals_raw, dict):
-        return None
-    run = signals_raw.get("analytics_run")
-    if not isinstance(run, dict):
-        return None
-    run_id = str(run.get("id") or "").strip()
-    return run_id or None
-
-
-def _build_slot_performance_payload(
-    signals_raw: dict[str, Any] | None,
-) -> dict[str, Any] | None:
-    if not isinstance(signals_raw, dict):
-        return None
-    profile_raw = signals_raw.get("slot_demand_profile")
-    if not isinstance(profile_raw, list) or not profile_raw:
-        return None
-    cells = _graphql_slot_profile_to_cells(profile_raw)
-    summary = summarize_venue_slot_performance(cells)
-    if summary is None:
-        return None
-    return {
-        "sourceAnalyticsRunId": _extract_analytics_run_id(signals_raw),
-        "slots": [
-            {
-                "day": slot["day"],
-                "mealPeriod": slot["meal_period"],
-                "mealPeriodLabel": slot["meal_period_label"],
-                "mealPeriodHoursLabel": slot["meal_period_hours_label"],
-                "orderCount": slot["order_count"],
-                "demandIndex": slot["demand_index"],
-                "relativeDemand": slot["relative_demand"],
-                "posture": slot["posture"],
-            }
-            for slot in summary["slots"]
-        ],
-        "strongSlots": summary["strong_slots"],
-        "slotsNeedingPromotion": summary["slots_needing_promotion"],
-        "summary": summary["summary"],
-    }
-
-
-def _fmt_slot_performance_markdown(slot_performance: dict[str, Any]) -> str:
-    lines: list[str] = ["## Slot performance"]
-    summary = str(slot_performance.get("summary") or "").strip()
-    if summary:
-        lines.append(summary)
-
-    strong = slot_performance.get("strongSlots")
-    if isinstance(strong, list) and strong:
-        lines.append("\n**Strong slots (support with hero content):**")
-        lines.extend(f"- {str(item)}" for item in strong if str(item).strip())
-
-    promote = slot_performance.get("slotsNeedingPromotion")
-    if isinstance(promote, list) and promote:
-        lines.append("\n**Slots needing promotion:**")
-        lines.extend(f"- {str(item)}" for item in promote if str(item).strip())
-
-    slots = slot_performance.get("slots")
-    if isinstance(slots, list) and slots:
-        lines.append("\n**All slots (day × meal period, demand index):**")
-        lines.append("| Day | Meal period | Index | Tier | Posture |")
-        lines.append("| --- | --- | ---: | --- | --- |")
-        for slot in slots:
-            if not isinstance(slot, dict):
-                continue
-            day = _DAY_LABELS.get(str(slot.get("day") or ""), str(slot.get("day") or ""))
-            period = str(slot.get("mealPeriodLabel") or slot.get("mealPeriod") or "").strip()
-            index = float(slot.get("demandIndex") or 0.0)
-            tier = str(slot.get("relativeDemand") or "average")
-            posture = str(slot.get("posture") or "maintain")
-            lines.append(f"| {day} | {period} | {index:.2f}× | {tier} | {posture} |")
-
-    return "\n".join(lines)
-
-
 def _build_signal_markdown(
     *,
     location_data: dict[str, Any],
     location_raw: dict[str, Any],
     signals: dict[str, Any],
     milestone_input: dict[str, Any] | None,
-    slot_performance: dict[str, Any] | None = None,
 ) -> str:
     currency = str(location_raw.get("currency") or "")
     sections: list[str] = ["## Location profile"]
@@ -458,9 +337,6 @@ def _build_signal_markdown(
         if notes_md:
             sections.append(notes_md)
 
-    if slot_performance:
-        sections.append(_fmt_slot_performance_markdown(slot_performance))
-
     return "\n\n".join(sections)
 
 
@@ -483,13 +359,11 @@ async def fetch_and_prepare(
     location_data, signals = await asyncio.gather(location_task, signals_task)
     raw_loc = location_data.get("location")
     location_raw = raw_loc if isinstance(raw_loc, dict) else {}
-    slot_performance = _build_slot_performance_payload(signals)
     signal_markdown = _build_signal_markdown(
         location_data=location_data,
         location_raw=location_raw,
         signals=signals,
         milestone_input=state.get("milestone_input"),
-        slot_performance=slot_performance,
     )
     reflection_enabled, reflection_max_revisions = parse_reflection_config(
         state.get("milestone_input")
@@ -502,7 +376,6 @@ async def fetch_and_prepare(
         "reflection_max_revisions": reflection_max_revisions,
         "reflection_iteration": 0,
         "reflection_critiques": [],
-        "slot_performance_raw": slot_performance,
     }
 
 
@@ -594,13 +467,6 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
         payload["mainCategory"] = _extract_top_revenue_category(
             signals_raw if isinstance(signals_raw, dict) else None
         )
-        slot_performance = state.get("slot_performance_raw")
-        if not isinstance(slot_performance, dict):
-            slot_performance = _build_slot_performance_payload(
-                signals_raw if isinstance(signals_raw, dict) else None
-            )
-        if isinstance(slot_performance, dict):
-            payload["slotPerformance"] = slot_performance
         for list_key in _CAMPAIGN_BRIEF_LIST_FIELDS:
             _normalize_campaign_list(payload, list_key)
 

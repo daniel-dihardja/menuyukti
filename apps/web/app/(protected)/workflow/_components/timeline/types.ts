@@ -1,3 +1,4 @@
+import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type {
   PromotionCandidateMenuItem,
   MilestonePresetId,
@@ -7,6 +8,7 @@ import type {
   MenuClustererMilestoneData,
   StoryLineupMilestoneData,
   SchedulerMilestoneData,
+  IgPlanMilestoneData,
 } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
 
@@ -114,6 +116,7 @@ export type {
   ReelLineupMilestoneData,
   MenuClustererMilestoneData,
   StoryLineupMilestoneData,
+  IgPlanMilestoneData,
 }
 
 export type MilestoneDataValue =
@@ -127,6 +130,7 @@ export type MilestoneDataValue =
   | StoryLineupMilestoneData
   | CultureHooksMilestoneData
   | IgProfileMilestoneData
+  | IgPlanMilestoneData
   | SchedulerMilestoneData
 
 export type TimelineMilestone = {
@@ -141,6 +145,8 @@ export type TimelineMilestone = {
   presetId?: MilestonePresetId
   /** Typed per-milestone input; stored on milestone `data` JSON. */
   milestoneInput?: MilestoneInput
+  /** LLM model for milestone agent runs; stored on milestone `data` JSON. */
+  runChatModel?: ChatGatewayModelId
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
   /** Derived rail status from pass criteria + optional run outcome. */

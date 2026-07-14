@@ -64,6 +64,53 @@ export function isSafeAssetFilename(name: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i.test(name)
 }
 
+const PHOTO_FILE_EXTENSIONS = ['webp', 'jpg', 'jpeg', 'png', 'gif', 'avif', 'tif', 'tiff'] as const
+
+const SAFE_PHOTO_FILENAME_RE = new RegExp(
+  `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(${PHOTO_FILE_EXTENSIONS.join('|')})$`,
+  'i',
+)
+
+/** UUID-based image filenames for the Photos library (original format preserved on upload). */
+export function isSafePhotoFilename(name: string): boolean {
+  return SAFE_PHOTO_FILENAME_RE.test(name)
+}
+
+const PHOTO_MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'image/avif': 'avif',
+  'image/tiff': 'tiff',
+}
+
+export function photoExtensionForMime(mime: string): string | null {
+  return PHOTO_MIME_TO_EXT[mime.toLowerCase()] ?? null
+}
+
+export function photoContentTypeForFilename(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg'
+    case 'png':
+      return 'image/png'
+    case 'webp':
+      return 'image/webp'
+    case 'gif':
+      return 'image/gif'
+    case 'avif':
+      return 'image/avif'
+    case 'tif':
+    case 'tiff':
+      return 'image/tiff'
+    default:
+      return 'application/octet-stream'
+  }
+}
+
 const ASSET_DESIGNS_SUBDIR = 'designs'
 const ASSET_PHOTOS_SUBDIR = 'photos'
 const ASSET_POSTS_SUBDIR = 'posts'
@@ -94,7 +141,7 @@ export function isObjectKeyForPhoto(key: string, userId: string): boolean {
   const prefix = userPhotosPrefix(userId)
   if (!key.startsWith(prefix) || key.length <= prefix.length) return false
   const filename = key.slice(prefix.length)
-  return isSafeAssetFilename(filename)
+  return isSafePhotoFilename(filename)
 }
 
 /** S3 prefix: `users/<userId>/posts/`. */

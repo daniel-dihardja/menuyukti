@@ -148,6 +148,16 @@ export type UpdatePostPageData = {
   }
 }
 
+export const DELETE_POST_PAGE_MUTATION = `
+  mutation DeletePostPage($pageId: ID!) {
+    deletePostPage(pageId: $pageId)
+  }
+`
+
+export type DeletePostPageData = {
+  deletePostPage: boolean
+}
+
 export const DELETE_POST_PAGE_MEDIA_VERSION_MUTATION = `
   mutation DeletePostPageMediaVersion($pageId: ID!, $mediaS3Key: String!) {
     deletePostPageMediaVersion(pageId: $pageId, mediaS3Key: $mediaS3Key) {

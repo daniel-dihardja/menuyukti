@@ -17,6 +17,7 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     ANALYTICS_RUNS_QUERY,
+    IG_PLAN_INPUTS_QUERY,
     LATEST_ANALYTICS_RUN_WITH_SIGNALS_QUERY,
     LOCATION_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
@@ -151,18 +152,155 @@ async def fetch_location_operating_signals(
         return {
             "analytics_run": None,
             "instagram_signals": None,
-            "slot_demand_profile": [],
         }
     return {
         "analytics_run": payload.get("analyticsRun"),
         "instagram_signals": payload.get("instagramSignals"),
-        "slot_demand_profile": payload.get("slotDemandProfile") or [],
     }
 
 
 class PromotionEngineeringCandidatesFetchResult(TypedDict):
     candidates: dict[str, Any] | None
     analyticsRunId: str | None
+
+
+class IgPlanInputsFetchResult(TypedDict):
+    analyticsRunId: str
+    locationRaw: dict[str, Any]
+    slotPerformance: dict[str, Any]
+    menuEngineeringMatrix: dict[str, Any]
+    slotMenuCandidates: dict[str, Any]
+    coverageNotes: list[str]
+
+
+def _location_snapshot_to_raw(location: dict[str, Any]) -> dict[str, Any]:
+    manual = location.get("manualBriefInput")
+    manual_dict = manual if isinstance(manual, dict) else None
+    opening_hours_raw = location.get("openingHours")
+    opening_hours: list[dict[str, str]] = []
+    if isinstance(opening_hours_raw, list):
+        for row in opening_hours_raw:
+            if not isinstance(row, dict):
+                continue
+            day = str(row.get("dayOfWeek") or "").strip()
+            open_time = str(row.get("openTime") or "").strip()
+            close_time = str(row.get("closeTime") or "").strip()
+            if day and open_time and close_time:
+                opening_hours.append(
+                    {
+                        "dayOfWeek": day,
+                        "openTime": open_time,
+                        "closeTime": close_time,
+                    }
+                )
+    return {
+        "id": location.get("id"),
+        "name": location.get("name"),
+        "street": location.get("street"),
+        "city": location.get("city"),
+        "country": location.get("country"),
+        "currency": location.get("currency"),
+        "manualBriefInput": manual_dict,
+        "openingHours": opening_hours,
+    }
+
+
+async def fetch_ig_plan_inputs(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+    max_candidates_per_slot: int = 5,
+    analytics_run_id: str | None = None,
+) -> IgPlanInputsFetchResult:
+    """Fetch composite IG Plan inputs (location profile + analytics) in one GraphQL request."""
+    from agents_app.agents.core.milestone_run.ig_plan.slot_performance import (
+        build_slot_performance_payload,
+    )
+
+    variables: dict[str, Any] = {
+        "locationId": location_id,
+        "options": {
+            "includeLowEnd": False,
+            "maxCandidatesPerSlot": max_candidates_per_slot,
+            "matrixCategories": ["star", "plow_horse", "puzzle"],
+        },
+    }
+    pinned_run_id = str(analytics_run_id or "").strip()
+    if pinned_run_id:
+        variables["analyticsRunId"] = pinned_run_id
+
+    data = await graphql_post(
+        client,
+        IG_PLAN_INPUTS_QUERY,
+        variables,
+        user_id,
+    )
+    raw = data.get("igPlanInputs")
+    if not isinstance(raw, dict):
+        raise ValueError("ig_plan requires location access and igPlanInputs data")
+
+    location = raw.get("location")
+    if not isinstance(location, dict):
+        raise ValueError("ig_plan requires location profile data")
+
+    analytics_run = raw.get("analyticsRun")
+    if not isinstance(analytics_run, dict):
+        raise ValueError("ig_plan requires at least one analytics run for this location")
+    run_id = str(analytics_run.get("id") or "").strip()
+    if not run_id:
+        raise ValueError("ig_plan requires a valid analytics run id")
+
+    slot_profile = raw.get("slotDemandProfile")
+    profile_list = slot_profile if isinstance(slot_profile, list) else []
+    slot_performance = build_slot_performance_payload({"slot_demand_profile": profile_list})
+    if slot_performance is None:
+        raise ValueError(
+            "ig_plan requires venue slot strength data (slotDemandProfile) from the latest analytics run"
+        )
+
+    matrix = raw.get("menuEngineeringMatrix")
+    if not isinstance(matrix, dict):
+        raise ValueError(
+            "ig_plan requires menu engineering matrix data (COGS must be set on the analytics run)"
+        )
+
+    slot_candidates = raw.get("slotMenuCandidates")
+    if not isinstance(slot_candidates, dict):
+        raise ValueError(
+            "ig_plan requires slot menu promotion candidates (analytics run must have order facts)"
+        )
+
+    coverage_notes = raw.get("coverageNotes")
+    notes = [str(note) for note in coverage_notes if str(note).strip()] if isinstance(
+        coverage_notes, list
+    ) else []
+
+    slot_performance["sourceAnalyticsRunId"] = run_id
+    return {
+        "analyticsRunId": run_id,
+        "locationRaw": _location_snapshot_to_raw(location),
+        "slotPerformance": slot_performance,
+        "menuEngineeringMatrix": matrix,
+        "slotMenuCandidates": slot_candidates,
+        "coverageNotes": notes,
+    }
+
+
+async def fetch_ig_plan_analytics(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+    max_candidates_per_slot: int = 5,
+) -> IgPlanInputsFetchResult:
+    """Deprecated alias for :func:`fetch_ig_plan_inputs`."""
+    return await fetch_ig_plan_inputs(
+        location_id,
+        user_id,
+        client=client,
+        max_candidates_per_slot=max_candidates_per_slot,
+    )
 
 
 async def fetch_promotion_engineering_candidates(
@@ -230,6 +368,8 @@ async def upsert_milestonedata_node(
 
 __all__ = [
     "delete_node",
+    "fetch_ig_plan_inputs",
+    "fetch_ig_plan_analytics",
     "fetch_promotion_engineering_candidates",
     "fetch_location_operating_signals",
     "fetch_milestone_children",

@@ -4,6 +4,7 @@ from graphql.schema.queries import (
     AnalyticsBundleQuery,
     AnalyticsRunQuery,
     CategoryMixQuery,
+    IgPlanInputsQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
     LatestAnalyticsRunWithSignalsQuery,
@@ -21,6 +22,7 @@ from graphql.schema.queries import (
     PromotionMenuItemsQuery,
     PublicHolidaysQuery,
     RevenueTrendsQuery,
+    SlotMenuCandidatesQuery,
     WeeklyDemandPatternQuery,
     WorkflowCampaignTreeQuery,
     WorkspaceQuery,
@@ -47,6 +49,7 @@ class Query(
     MenuCatalogQuery,
     PromotionMenuItemsQuery,
     PromotionEngineeringCandidatesQuery,
+    SlotMenuCandidatesQuery,
     PublicHolidaysQuery,
     OperatingProfileQuery,
     PostsQuery,
@@ -57,5 +60,6 @@ class Query(
     MilestonePriorDataQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
+    IgPlanInputsQuery,
 ):
     pass

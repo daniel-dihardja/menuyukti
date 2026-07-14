@@ -55,15 +55,10 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <LayoutDashboard className="w-4 h-4" />,
   },
   {
-    key: 'content',
-    labelKey: 'content',
-    href: routes.content.photos,
+    key: 'media',
+    labelKey: 'media',
+    href: routes.media,
     icon: <Image className="w-4 h-4" />,
-    children: [
-      { key: 'photos', labelKey: 'photos', href: routes.content.photos },
-      { key: 'igReels', labelKey: 'igReels', href: routes.content.reels },
-      { key: 'igStories', labelKey: 'igStories', href: routes.content.igStories },
-    ],
   },
   {
     key: 'studio',
@@ -75,7 +70,7 @@ const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'posts',
     labelKey: 'posts',
-    href: routes.posts,
+    href: routes.igStudio,
     icon: <SquarePen className="w-4 h-4" />,
   },
   {

@@ -54,6 +54,28 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "Read Campaign Brief data and generate Instagram profile suggestions — username options "
         "and three bio variations — aligned with brand, audience, and campaign objective."
     ),
+    "ig_plan": (
+        "Read prior Campaign Brief data together with location profile, venue slot demand signals, "
+        "and menu engineering portfolio distribution from the workflow-pinned analytics run, then "
+        "generate a weekly slot strategy grid. Classify each meal period by marketing opportunity "
+        "(maintain, support, grow, aggressively_grow), then assign objectives, content pillars, "
+        "and product roles — without selecting specific menu items."
+    ),
+    "ig_menu_picker": (
+        "Read prior IG Plan milestone data, filter by selected slots, fetch menu engineering "
+        "and per-slot candidates from the workflow-pinned analytics run, then attach 1–3 menu "
+        "items per selected entry with a short rationale."
+    ),
+    "ig_format": (
+        "Read prior IG Menu Picker milestone data and assign an Instagram format (reel, post, "
+        "post-carousel, or story) to each entry with menu items, preserving plan strategy and "
+        "dish selections."
+    ),
+    "ig_text": (
+        "Read prior IG Format milestone data and Campaign Brief orientation, then generate "
+        "Instagram copy (headline, caption, and format-specific fields) as texts per slot while "
+        "preserving plan strategy, dishes, and format assignments."
+    ),
     "scheduler": (
         "Reads the campaign window from dates, business strategy from Campaign Brief, and "
         "saved post and story lineups. It places feed posts and Stories on the calendar between "
@@ -107,6 +129,10 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "promotion_candidates",
         "culture_hooks",
         "ig_profile",
+        "ig_plan",
+        "ig_menu_picker",
+        "ig_format",
+        "ig_text",
         "menu_tagger",
         "menu_clusterer",
         "post_lineup",

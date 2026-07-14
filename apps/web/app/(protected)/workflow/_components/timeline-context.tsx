@@ -15,9 +15,9 @@ export type TimelineMilestoneState = Pick<
   | 'creating'
   | 'deletingMilestoneId'
   | 'savingPassCriteriaMilestoneId'
-  | 'savingGoalMilestoneId'
   | 'savingDataMilestoneId'
   | 'savingMilestoneSettingsMilestoneId'
+  | 'savingRunChatModelMilestoneId'
   | 'movingMilestoneId'
   | 'runningMilestoneId'
   | 'runningStep'
@@ -32,11 +32,11 @@ export type TimelineErrors = Pick<
   | 'deleteError'
   | 'moveError'
   | 'passCriteriaError'
-  | 'goalError'
   | 'milestoneDataError'
   | 'milestoneRunError'
   | 'milestoneRunCriteriaHint'
   | 'milestoneSettingsError'
+  | 'runChatModelError'
 >
 
 export type TimelineActions = {
@@ -45,11 +45,15 @@ export type TimelineActions = {
   onDeleteMilestone: (id: string) => void | Promise<void>
   onMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>
   onUpdatePassCriteria: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
-  onUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   onUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>
   onUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
+  onUpdateMilestoneRunChatModel: (id: string, runChatModel: ChatGatewayModelId) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
-  onRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+  onRunMilestone: (
+    id: string,
+    chatModel?: ChatGatewayModelId,
+    options?: { milestoneInput?: MilestoneInput },
+  ) => void | Promise<void>
   onStopMilestoneRun: () => void
 }
 
@@ -85,11 +89,11 @@ export function splitMilestoneUiState(ui: WorkflowMilestoneUiState): {
     deleteError,
     moveError,
     passCriteriaError,
-    goalError,
     milestoneDataError,
     milestoneRunError,
     milestoneRunCriteriaHint,
     milestoneSettingsError,
+    runChatModelError,
     ...milestoneState
   } = ui
   return {
@@ -99,11 +103,11 @@ export function splitMilestoneUiState(ui: WorkflowMilestoneUiState): {
       deleteError,
       moveError,
       passCriteriaError,
-      goalError,
       milestoneDataError,
       milestoneRunError,
       milestoneRunCriteriaHint,
       milestoneSettingsError,
+      runChatModelError,
     },
   }
 }

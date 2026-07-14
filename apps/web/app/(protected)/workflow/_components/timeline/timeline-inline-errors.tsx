@@ -7,10 +7,10 @@ export const TIMELINE_ERROR_KEYS = [
   'delete',
   'move',
   'passCriteria',
-  'goal',
   'milestoneData',
   'milestoneRun',
   'milestoneSettings',
+  'runChatModel',
   'milestoneRunCriteriaHint',
 ] as const
 

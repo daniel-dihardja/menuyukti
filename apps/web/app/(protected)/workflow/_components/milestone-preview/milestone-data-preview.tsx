@@ -12,6 +12,10 @@ import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-da
 import { MilestoneCultureHooksDataPreview } from './milestone-culture-hooks-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-preview'
+import { MilestoneIgPlanDataPreview } from './milestone-ig-plan-data-preview'
+import { MilestoneIgMenuPickerDataPreview } from './milestone-ig-menu-picker-data-preview'
+import { MilestoneIgFormatDataPreview } from './milestone-ig-format-data-preview'
+import { MilestoneIgTextDataPreview } from './milestone-ig-text-data-preview'
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestonePostLineupDataPreview } from './milestone-post-lineup-data-preview'
 import { MilestoneReelLineupDataPreview } from './milestone-reel-lineup-data-preview'
@@ -97,6 +101,30 @@ function renderParsedPreview(
       return (
         <MilestoneIgProfileDataPreview
           data={data as Parameters<typeof MilestoneIgProfileDataPreview>[0]['data']}
+        />
+      )
+    case 'ig_plan':
+      return (
+        <MilestoneIgPlanDataPreview
+          data={data as Parameters<typeof MilestoneIgPlanDataPreview>[0]['data']}
+        />
+      )
+    case 'ig_menu_picker':
+      return (
+        <MilestoneIgMenuPickerDataPreview
+          data={data as Parameters<typeof MilestoneIgMenuPickerDataPreview>[0]['data']}
+        />
+      )
+    case 'ig_format':
+      return (
+        <MilestoneIgFormatDataPreview
+          data={data as Parameters<typeof MilestoneIgFormatDataPreview>[0]['data']}
+        />
+      )
+    case 'ig_text':
+      return (
+        <MilestoneIgTextDataPreview
+          data={data as Parameters<typeof MilestoneIgTextDataPreview>[0]['data']}
         />
       )
     case 'scheduler':

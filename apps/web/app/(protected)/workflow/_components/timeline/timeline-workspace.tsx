@@ -27,10 +27,10 @@ function toErrorMap(errors: TimelineErrors): TimelineErrorMap {
     delete: errors.deleteError,
     move: errors.moveError,
     passCriteria: errors.passCriteriaError,
-    goal: errors.goalError,
     milestoneData: errors.milestoneDataError,
     milestoneRun: errors.milestoneRunError,
     milestoneSettings: errors.milestoneSettingsError,
+    runChatModel: errors.runChatModelError,
     milestoneRunCriteriaHint: errors.milestoneRunCriteriaHint,
   }
 }

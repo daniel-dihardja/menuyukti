@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { isAllowedChatGatewayModel } from '@/lib/chat/gateway-chat-models'
 import {
   datesMilestoneDataSchema,
   datesMilestoneInputValueSchema,
@@ -8,6 +9,14 @@ import {
   cultureHooksMilestoneDataSchema,
   cultureHooksMilestoneInputValueSchema,
   igProfileMilestoneDataSchema,
+  igPlanMilestoneDataSchema,
+  igMenuPickerMilestoneDataSchema,
+  igFormatMilestoneDataSchema,
+  igTextMilestoneDataSchema,
+  igPlanMilestoneInputValueSchema,
+  igMenuPickerMilestoneInputValueSchema,
+  igFormatMilestoneInputValueSchema,
+  igTextMilestoneInputValueSchema,
   igProfileMilestoneInputValueSchema,
   menuTaggerMilestoneDataSchema,
   menuTaggerMilestoneInputValueSchema,
@@ -51,6 +60,10 @@ export const patchMilestoneSchema = z
         promotionCandidatesMilestoneDataSchema,
         cultureHooksMilestoneDataSchema,
         igProfileMilestoneDataSchema,
+        igPlanMilestoneDataSchema,
+        igMenuPickerMilestoneDataSchema,
+        igFormatMilestoneDataSchema,
+        igTextMilestoneDataSchema,
         menuTaggerMilestoneDataSchema,
         menuClustererMilestoneDataSchema,
         postLineupMilestoneDataSchema,
@@ -78,6 +91,22 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('ig_profile'),
           value: igProfileMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('ig_plan'),
+          value: igPlanMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('ig_menu_picker'),
+          value: igMenuPickerMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('ig_format'),
+          value: igFormatMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('ig_text'),
+          value: igTextMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('menu_tagger'),
@@ -108,6 +137,14 @@ export const patchMilestoneSchema = z
       .optional(),
     presetId: milestonePresetIdSchema.optional(),
     passCriterias: z.array(passCriteriaRowSchema).optional(),
+    /** LLM model for milestone agent runs; stored on milestone node `data` JSON. */
+    runChatModel: z
+      .string()
+      .max(120)
+      .optional()
+      .refine((v) => v === undefined || isAllowedChatGatewayModel(v), {
+        message: 'Unsupported chat model',
+      }),
     move: z.enum(['up', 'down']).optional(),
   })
   .refine(
@@ -118,9 +155,10 @@ export const patchMilestoneSchema = z
       v.milestoneInput !== undefined ||
       v.presetId !== undefined ||
       v.passCriterias !== undefined ||
+      v.runChatModel !== undefined ||
       v.move !== undefined,
     {
       message:
-        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, passCriterias, or move',
+        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, passCriterias, runChatModel, or move',
     },
   )

@@ -20,7 +20,7 @@ import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 import { MAX_REFERENCE_IMAGES } from './_components/post-creator-constants'
 import { PostCreatorLayout } from './_components/post-creator-layout'
 import { PostCreatorPreviewPane } from './_components/post-creator-preview-pane'
-import { PostCreatorPromptPane } from './_components/post-creator-prompt-pane'
+import { PostCreatorRightPane } from './_components/post-creator-right-pane'
 import {
   PostCreatorThumbnailsPane,
   type PostCreatorImageVersion,
@@ -105,6 +105,27 @@ function resolvePreviewVersionIndex(
   return postImageIndex
 }
 
+function pageHasGeneratedImage(
+  page: Pick<PostCreatorPage, 'imageUrl' | 'mediaS3Key' | 'imageVersions'> | undefined,
+  versions: PostCreatorImageVersion[],
+): boolean {
+  if (versions.length > 0) {
+    return true
+  }
+  if (page?.imageVersions && page.imageVersions.length > 0) {
+    return true
+  }
+  if (page?.mediaS3Key) {
+    return true
+  }
+  if (page?.imageUrl) {
+    return true
+  }
+  return false
+}
+
+type DeleteTarget = 'page' | 'version'
+
 type DeleteVersionResponse = {
   mediaS3Key: string | null
   imageUrl: string | null
@@ -136,7 +157,9 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
   const [isAddingPage, setIsAddingPage] = useState(false)
+  const [isDuplicatingPage, setIsDuplicatingPage] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>('version')
   const [isLoadingPost, setIsLoadingPost] = useState(Boolean(postId))
 
   const applySelectedPage = useCallback((nextPages: PostCreatorPage[], pageId: string) => {
@@ -485,13 +508,28 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     tToast,
   ])
 
-  const handleRequestDeleteVersion = useCallback(() => {
-    const version = imageVersions[previewVersionIndex]
-    if (!version?.mediaS3Key || !postId || !selectedPageId) {
+  const handleRequestDelete = useCallback(() => {
+    if (!postId || !selectedPageId) {
       return
     }
+
+    const selectedPage = pages.find((page) => page.id === selectedPageId)
+    if (!pageHasGeneratedImage(selectedPage, imageVersions)) {
+      if (pages.length <= 1) {
+        return
+      }
+      setDeleteTarget('page')
+      setDeleteDialogOpen(true)
+      return
+    }
+
+    const version = imageVersions[previewVersionIndex]
+    if (!version?.mediaS3Key) {
+      return
+    }
+    setDeleteTarget('version')
     setDeleteDialogOpen(true)
-  }, [imageVersions, postId, previewVersionIndex, selectedPageId])
+  }, [imageVersions, pages, postId, previewVersionIndex, selectedPageId])
 
   const handleConfirmDeleteVersion = useCallback(async () => {
     const version = imageVersions[previewVersionIndex]
@@ -547,35 +585,86 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     tToast,
   ])
 
-  const handleAddPage = useCallback(async () => {
-    if (!postId || isAddingPage || pages.length >= MAX_POST_PAGES) {
-      if (pages.length >= MAX_POST_PAGES) {
-        toast.error(tToast('maxPagesReached'))
-      }
+  const handleConfirmDeletePage = useCallback(async () => {
+    if (!postId || !selectedPageId || isDeletingVersion) {
       return
     }
 
-    const syncedPages =
-      selectedPageId !== null
-        ? pages.map((page) =>
-            page.id === selectedPageId
-              ? { ...page, prompt, referenceImages, previewVersionIndex }
-              : page,
-          )
-        : pages
-
-    const lastPage = [...syncedPages].toSorted((a, b) => a.sortOrder - b.sortOrder).at(-1)
-    if (!lastPage) {
-      return
-    }
-
-    setPages(syncedPages)
-    setIsAddingPage(true)
+    setIsDeletingVersion(true)
     try {
+      const res = await fetch(`/api/posts/${postId}/pages/${selectedPageId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to delete post page')
+      }
+
+      const data = (await res.json()) as { pages: Array<{ id: string; sortOrder: number }> }
+      const removedIndex = pages.findIndex((page) => page.id === selectedPageId)
+      const nextPages = pages
+        .filter((page) => page.id !== selectedPageId)
+        .map((page) => {
+          const updated = data.pages.find((candidate) => candidate.id === page.id)
+          return updated ? { ...page, sortOrder: updated.sortOrder } : page
+        })
+        .toSorted((a, b) => a.sortOrder - b.sortOrder)
+
+      setPages(nextPages)
+      setDeleteDialogOpen(false)
+
+      if (nextPages.length > 0) {
+        const nextSelectedIndex = Math.min(Math.max(removedIndex, 0), nextPages.length - 1)
+        applySelectedPage(nextPages, nextPages[nextSelectedIndex]!.id)
+      } else {
+        setSelectedPageId(null)
+        setImageVersions([])
+        setPrompt('')
+        setReferenceImages([])
+      }
+    } catch {
+      toast.error(tToast('deletePageError'))
+    } finally {
+      setIsDeletingVersion(false)
+    }
+  }, [applySelectedPage, isDeletingVersion, pages, postId, selectedPageId, tToast])
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (deleteTarget === 'page') {
+      await handleConfirmDeletePage()
+      return
+    }
+    await handleConfirmDeleteVersion()
+  }, [deleteTarget, handleConfirmDeletePage, handleConfirmDeleteVersion])
+
+  const createPageFromSource = useCallback(
+    async (copyFromPageId: string) => {
+      if (!postId || pages.length >= MAX_POST_PAGES) {
+        if (pages.length >= MAX_POST_PAGES) {
+          toast.error(tToast('maxPagesReached'))
+        }
+        return
+      }
+
+      const syncedPages =
+        selectedPageId !== null
+          ? pages.map((page) =>
+              page.id === selectedPageId
+                ? { ...page, prompt, referenceImages, previewVersionIndex }
+                : page,
+            )
+          : pages
+
+      if (!syncedPages.some((page) => page.id === copyFromPageId)) {
+        return
+      }
+
+      setPages(syncedPages)
+
       const res = await fetch(`/api/posts/${postId}/pages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ copyFromPageId: lastPage.id }),
+        body: JSON.stringify({ copyFromPageId }),
       })
 
       if (!res.ok) {
@@ -602,19 +691,70 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       const nextPages = [...syncedPages, newPage].toSorted((a, b) => a.sortOrder - b.sortOrder)
       setPages(nextPages)
       applySelectedPage(nextPages, newPage.id)
+    },
+    [
+      applySelectedPage,
+      pages,
+      postId,
+      previewVersionIndex,
+      prompt,
+      referenceImages,
+      selectedPageId,
+      tToast,
+    ],
+  )
+
+  const handleAddPage = useCallback(async () => {
+    if (!postId || isAddingPage || isDuplicatingPage || pages.length >= MAX_POST_PAGES) {
+      if (pages.length >= MAX_POST_PAGES) {
+        toast.error(tToast('maxPagesReached'))
+      }
+      return
+    }
+
+    const lastPage = [...pages].toSorted((a, b) => a.sortOrder - b.sortOrder).at(-1)
+    if (!lastPage) {
+      return
+    }
+
+    setIsAddingPage(true)
+    try {
+      await createPageFromSource(lastPage.id)
     } catch {
       toast.error(tToast('addPageError'))
     } finally {
       setIsAddingPage(false)
     }
+  }, [createPageFromSource, isAddingPage, isDuplicatingPage, pages, postId, tToast])
+
+  const handleDuplicatePage = useCallback(async () => {
+    if (
+      !postId ||
+      !selectedPageId ||
+      isAddingPage ||
+      isDuplicatingPage ||
+      pages.length >= MAX_POST_PAGES
+    ) {
+      if (pages.length >= MAX_POST_PAGES) {
+        toast.error(tToast('maxPagesReached'))
+      }
+      return
+    }
+
+    setIsDuplicatingPage(true)
+    try {
+      await createPageFromSource(selectedPageId)
+    } catch {
+      toast.error(tToast('addPageError'))
+    } finally {
+      setIsDuplicatingPage(false)
+    }
   }, [
-    applySelectedPage,
+    createPageFromSource,
     isAddingPage,
-    pages,
+    isDuplicatingPage,
+    pages.length,
     postId,
-    previewVersionIndex,
-    prompt,
-    referenceImages,
     selectedPageId,
     tToast,
   ])
@@ -623,6 +763,9 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     imageVersions[previewVersionIndex]?.imageUrl ??
     pages.find((page) => page.id === selectedPageId)?.imageUrl ??
     null
+
+  const selectedPage = pages.find((page) => page.id === selectedPageId)
+  const canRemoveEmptyPage = pages.length > 1 && !pageHasGeneratedImage(selectedPage, imageVersions)
 
   return (
     <div
@@ -637,26 +780,36 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             selectedPageId={selectedPageId}
             onSelectPage={handleSelectPage}
             onAddPage={postId ? () => void handleAddPage() : undefined}
+            onDuplicatePage={postId ? () => void handleDuplicatePage() : undefined}
             canAddPage={Boolean(postId) && pages.length > 0 && pages.length < MAX_POST_PAGES}
+            canDuplicatePage={
+              Boolean(postId) &&
+              Boolean(selectedPageId) &&
+              pages.length > 0 &&
+              pages.length < MAX_POST_PAGES
+            }
             isAddingPage={isAddingPage}
+            isDuplicatingPage={isDuplicatingPage}
           />
         }
         previewPane={
           <PostCreatorPreviewPane
             imageUrl={previewImageUrl}
+            mediaS3Key={selectedPage?.mediaS3Key ?? imageVersions[previewVersionIndex]?.mediaS3Key}
             imageVersions={imageVersions}
             previewVersionIndex={previewVersionIndex}
             postImageVersionIndex={postImageVersionIndex}
             onPreviewVersionIndex={handlePreviewVersion}
             onUseAsPostImage={() => void handleUseAsPostImage()}
-            onDeleteVersion={postId && selectedPageId ? handleRequestDeleteVersion : undefined}
+            onDeleteVersion={postId && selectedPageId ? handleRequestDelete : undefined}
+            canRemoveEmptyPage={canRemoveEmptyPage}
             isLoading={isGenerating}
             isCommittingPostImage={isCommittingPostImage}
             isDeletingVersion={isDeletingVersion}
           />
         }
         promptPane={
-          <PostCreatorPromptPane
+          <PostCreatorRightPane
             isGenerating={isGenerating}
             onAddReference={handleAddReference}
             onPromptChange={handlePromptChange}
@@ -677,8 +830,16 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tPreview('deleteConfirmTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>{tPreview('deleteConfirmDescription')}</AlertDialogDescription>
+            <AlertDialogTitle>
+              {deleteTarget === 'page'
+                ? tPreview('removePageConfirmTitle')
+                : tPreview('deleteConfirmTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget === 'page'
+                ? tPreview('removePageConfirmDescription')
+                : tPreview('deleteConfirmDescription')}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeletingVersion} type="button">
@@ -687,15 +848,19 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             <Button
               className={isDeletingVersion ? 'inline-flex items-center gap-2' : undefined}
               disabled={isDeletingVersion}
-              onClick={() => void handleConfirmDeleteVersion()}
+              onClick={() => void handleConfirmDelete()}
               type="button"
               variant="destructive"
             >
               {isDeletingVersion ? (
                 <>
                   <Spinner />
-                  {tPreview('deleteConfirmAction')}
+                  {deleteTarget === 'page'
+                    ? tPreview('removePageConfirmAction')
+                    : tPreview('deleteConfirmAction')}
                 </>
+              ) : deleteTarget === 'page' ? (
+                tPreview('removePageConfirmAction')
               ) : (
                 tPreview('deleteConfirmAction')
               )}

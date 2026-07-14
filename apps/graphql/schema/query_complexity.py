@@ -21,6 +21,8 @@ _HEAVY_ROOT_FIELDS: dict[str, int] = {
     "operatingProfile": 20,
     "promotionMenuItems": 20,
     "promotionEngineeringCandidates": 20,
+    "igPlanInputs": 45,
+    "slotMenuCandidates": 30,
     "weeklyDemandPattern": 15,
     "workflowCampaignTree": 15,
 }

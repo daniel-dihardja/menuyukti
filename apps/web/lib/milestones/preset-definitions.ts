@@ -10,6 +10,8 @@ import {
   ListChecks,
   Milestone,
   Tags,
+  Type,
+  UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react'
 import type { z } from 'zod'
@@ -30,6 +32,10 @@ import {
   cultureHooksMilestoneDataSchema,
   datesMilestoneDataSchema,
   igProfileMilestoneDataSchema,
+  igPlanMilestoneDataSchema,
+  igMenuPickerMilestoneDataSchema,
+  igFormatMilestoneDataSchema,
+  igTextMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -51,6 +57,9 @@ export type MilestonePresetInputType =
   | 'promotion_candidates'
   | 'campaign_brief'
   | 'menu_clusterer'
+  | 'ig_menu_picker'
+  | 'ig_format'
+  | 'ig_text'
   | 'optional_notes'
   | 'none'
 
@@ -127,6 +136,34 @@ const EMPTY_CULTURE_HOOKS_DATA: MilestonedataValue = {
 const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
   usernames: [],
   bios: [],
+}
+
+const EMPTY_IG_PLAN_DATA: MilestonedataValue = {
+  scheduleExplanation: '',
+  entries: [],
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
+}
+
+const EMPTY_IG_MENU_PICKER_DATA: MilestonedataValue = {
+  scheduleExplanation: '',
+  entries: [],
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
+}
+
+const EMPTY_IG_FORMAT_DATA: MilestonedataValue = {
+  scheduleExplanation: '',
+  entries: [],
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
+}
+
+const EMPTY_IG_TEXT_DATA: MilestonedataValue = {
+  scheduleExplanation: '',
+  entries: [],
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
 }
 
 const EMPTY_MENU_TAGGER_DATA: MilestonedataValue = {
@@ -478,6 +515,142 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_profile.criterionBioVariations'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_plan: {
+    id: 'ig_plan',
+    icon: CalendarDays,
+    inputType: 'optional_notes',
+    dataSchema: igPlanMilestoneDataSchema,
+    emptyData: EMPTY_IG_PLAN_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_plan.title'),
+      milestoneInput: {
+        type: 'ig_plan',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_IG_PLAN_DATA,
+      goal: t('milestonePreset.ig_plan.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_plan.criterionWeeklyEntries'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_plan.criterionSlotGrounding'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_plan.criterionScheduleExplanation'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_plan.criterionCampaignBriefAlignment'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_menu_picker: {
+    id: 'ig_menu_picker',
+    icon: UtensilsCrossed,
+    inputType: 'ig_menu_picker',
+    dataSchema: igMenuPickerMilestoneDataSchema,
+    emptyData: EMPTY_IG_MENU_PICKER_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_menu_picker.title'),
+      milestoneInput: {
+        type: 'ig_menu_picker',
+        value: { notes: '', selectedSlotKeys: [] },
+      },
+      milestoneData: EMPTY_IG_MENU_PICKER_DATA,
+      goal: t('milestonePreset.ig_menu_picker.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_menu_picker.criterionPriorIgPlan'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_menu_picker.criterionMenuItemsPerEntry'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_menu_picker.criterionSelectedEntriesOnly'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_format: {
+    id: 'ig_format',
+    icon: GalleryVerticalEnd,
+    inputType: 'ig_format',
+    dataSchema: igFormatMilestoneDataSchema,
+    emptyData: EMPTY_IG_FORMAT_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_format.title'),
+      milestoneInput: {
+        type: 'ig_format',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_IG_FORMAT_DATA,
+      goal: t('milestonePreset.ig_format.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_format.criterionPriorIgMenuPicker'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_format.criterionValidType'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_format.criterionSlotCoverage'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_format.criterionCarouselMenuItems'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_text: {
+    id: 'ig_text',
+    icon: Type,
+    inputType: 'ig_text',
+    dataSchema: igTextMilestoneDataSchema,
+    emptyData: EMPTY_IG_TEXT_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_text.title'),
+      milestoneInput: {
+        type: 'ig_text',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_IG_TEXT_DATA,
+      goal: t('milestonePreset.ig_text.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_text.criterionPriorIgFormat'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionSlotCoverage'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionNonemptyTexts'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionRequiredFields'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionCampaignBriefAlignment'),
           status: 'open',
         },
       ],

@@ -10,25 +10,20 @@ export type MilestoneItemTabValue = 'input' | 'goal' | 'pass' | 'result' | 'help
 export type MilestoneItemState = {
   milestone: TimelineMilestone
   activeTab: MilestoneItemTabValue
-  goalDraft: string
   criteriaRows: PassCriteriaRow[]
   hasResult: boolean
   isMilestoneRunning: boolean
-  savingGoal: boolean
   savingPassCriteria: boolean
   inputModel: MilestoneInputModel
 }
 
 export type MilestoneItemActions = {
   setActiveTab: (value: MilestoneItemTabValue) => void
-  setGoalDraft: (v: string) => void
-  handleGoalSave: () => void
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
 }
 
 export type MilestoneItemMeta = {
-  goalFieldId: string
   addCriteriaInputId: string
   addCriteriaInputRef: RefObject<HTMLInputElement | null>
 }

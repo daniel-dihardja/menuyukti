@@ -3,11 +3,16 @@ import type { CampaignBriefInputDraft } from '@/lib/milestones/campaign-brief-in
 
 import type { MilestoneCampaignBriefInputProps } from './milestone-campaign-brief-input'
 import type { MenuClustererInputDraft } from './milestone-menu-clusterer-input'
+import type { IgMenuPickerInputDraft } from './milestone-ig-menu-picker-input'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
 
 export type CampaignWindowInput = {
   startDate: string
   endDate: string
+}
+
+export type MilestoneInputManualSave = {
+  onSave: () => void
 }
 
 export type MilestoneInputModel =
@@ -25,6 +30,7 @@ export type MilestoneInputModel =
       onNotesBlur: () => void
       onNotesFocus: () => void
       mainCategory: string | null
+      manualSave: MilestoneInputManualSave
       saveStatus: FieldSaveStatusVariant
       saving: boolean
     }
@@ -34,6 +40,7 @@ export type MilestoneInputModel =
       onChange: MilestoneCampaignBriefInputProps['onDraftChange']
       onNotesBlur: () => void
       onNotesFocus: () => void
+      manualSave: MilestoneInputManualSave
       saveStatus: FieldSaveStatusVariant
       saving: boolean
     }
@@ -41,6 +48,38 @@ export type MilestoneInputModel =
       type: 'menu_clusterer'
       draft: MenuClustererInputDraft
       onChange: (next: MenuClustererInputDraft) => void
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      manualSave: MilestoneInputManualSave
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
+      type: 'ig_menu_picker'
+      milestoneId: string
+      draft: IgMenuPickerInputDraft
+      onChange: (next: IgMenuPickerInputDraft) => void
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      manualSave: MilestoneInputManualSave
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
+      type: 'ig_format'
+      milestoneId: string
+      notes: string
+      onNotesChange: (next: string) => void
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
+      type: 'ig_text'
+      milestoneId: string
+      notes: string
+      onNotesChange: (next: string) => void
       onNotesBlur: () => void
       onNotesFocus: () => void
       saveStatus: FieldSaveStatusVariant

@@ -20,11 +20,18 @@ export type WorkflowTimelineOpsHandles = {
   handleDeleteMilestone: (id: string) => void | Promise<void>
   handleMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>
   handleUpdatePassCriteria: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
-  handleUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   handleUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>
   handleUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
+  handleUpdateMilestoneRunChatModel: (
+    id: string,
+    runChatModel: ChatGatewayModelId,
+  ) => Promise<boolean>
   handleHydrateMilestoneData: (id: string) => Promise<void>
-  handleRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+  handleRunMilestone: (
+    id: string,
+    chatModel?: ChatGatewayModelId,
+    options?: { milestoneInput?: MilestoneInput },
+  ) => void | Promise<void>
   handleStopMilestoneRun: () => void
 }
 

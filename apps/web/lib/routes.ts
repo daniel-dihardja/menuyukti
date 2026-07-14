@@ -8,7 +8,8 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflow',
   '/canvas',
-  '/posts',
+  '/ig-studio',
+  '/media',
   '/content',
   '/advisor',
   '/print-orders',
@@ -56,9 +57,12 @@ export const routes = {
     campaignSignals: (analyticsId: string | number) => `/analytics/${analyticsId}/campaign-signals`,
   },
 
+  media: '/media',
+
   content: {
     root: '/content',
-    photos: '/content/photos',
+    /** @deprecated Use `routes.media`. Kept for legacy redirects. */
+    photos: '/media',
     reels: '/content/reels',
     igStories: '/content/igstories',
   },
@@ -68,8 +72,8 @@ export const routes = {
   canvasPostCreator: '/canvas/post-creator',
   canvasSession: (id: string | number) => `/canvas/${id}`,
   /** Standalone Instagram post drafts (admin). */
-  posts: '/posts',
-  postsDetail: (id: string | number) => `/posts/${encodeURIComponent(String(id))}`,
+  igStudio: '/ig-studio',
+  igStudioDetail: (id: string | number) => `/ig-studio/${encodeURIComponent(String(id))}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
   agent: '/advisor',
   printOrders: '/print-orders',

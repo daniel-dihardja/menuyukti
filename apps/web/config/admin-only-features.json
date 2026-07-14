@@ -9,7 +9,7 @@
     {
       "id": "studio",
       "description": "AI asset studio (brand library + generation).",
-      "routePrefixes": ["/canvas", "/posts"],
+      "routePrefixes": ["/canvas", "/ig-studio"],
       "navKeys": ["studio", "posts"]
     },
     {

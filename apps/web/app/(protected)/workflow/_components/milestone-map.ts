@@ -1,3 +1,4 @@
+import { isAllowedChatGatewayModel, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import {
   milestoneDataSchema,
   milestoneInputSchema,
@@ -143,6 +144,14 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const rm = resultMarkdownFromMilestoneResult(node)
   const normalizedData = normalizeMilestonePresetData(presetId, data)
 
+  let runChatModel: ChatGatewayModelId | undefined
+  if (parsed.success && parsed.data.runChatModel != null) {
+    const raw = parsed.data.runChatModel
+    if (isAllowedChatGatewayModel(raw)) {
+      runChatModel = raw
+    }
+  }
+
   return {
     id: node.id,
     title: node.name,
@@ -150,6 +159,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     data: normalizedData,
     presetId,
     milestoneInput,
+    runChatModel,
     passCriteria,
     resultMarkdown: rm,
     status: deriveMilestoneRailStatus(passCriteria, rm),

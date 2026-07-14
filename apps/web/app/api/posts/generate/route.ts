@@ -13,6 +13,7 @@ import {
   getS3Client,
   isObjectKeyForPost,
   isSafeAssetFilename,
+  isSafePhotoFilename,
   userPostsObjectKey,
   userPhotosObjectKey,
 } from '@/lib/assets/storage'
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
   const referenceBuffers: Buffer[] = []
 
   for (const name of referenceImages) {
-    if (!isSafeAssetFilename(name)) {
+    if (!isSafePhotoFilename(name)) {
       return NextResponse.json({ message: `Invalid reference image: ${name}` }, { status: 400 })
     }
 

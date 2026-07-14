@@ -4,7 +4,7 @@ import { type ReactNode, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
-import { FieldSaveStatus } from '@/components/field-save-status'
+import { FieldSaveStatus, type FieldSaveStatusVariant } from '@/components/field-save-status'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { Calendar } from '@workspace/ui/components/calendar'
@@ -29,6 +29,9 @@ import { MilestonePromotionCandidatesInput } from './milestone-promotion-candida
 import { MilestoneCampaignBriefInput } from './milestone-campaign-brief-input'
 import { MilestoneFieldDescription } from './milestone-field-description'
 import { MilestoneMenuClustererInput } from './milestone-menu-clusterer-input'
+import { MilestoneIgMenuPickerInput } from './milestone-ig-menu-picker-input'
+import { MilestoneIgFormatInput } from './milestone-ig-format-input'
+import { MilestoneIgTextInput } from './milestone-ig-text-input'
 import {
   useMilestoneItemActions,
   useMilestoneItemMeta,
@@ -67,6 +70,62 @@ function fieldSaveMessages(t: (key: string) => string) {
     saved: t('fieldSaveStatusSaved'),
     unsaved: t('fieldSaveStatusUnsaved'),
   }
+}
+
+function MilestoneManualInputSaveFooter({
+  disabled,
+  manualSave,
+  saveStatus,
+  saveButtonLabel,
+  t,
+}: {
+  disabled: boolean
+  manualSave: { onSave: () => void }
+  saveStatus: FieldSaveStatusVariant
+  saveButtonLabel: string
+  t: (key: string) => string
+}) {
+  const isSaved = saveStatus === 'saved'
+  const isSaving = saveStatus === 'saving'
+  const messages = fieldSaveMessages(t)
+
+  if (isSaved) {
+    return (
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <FieldSaveStatus
+          className="text-muted-foreground"
+          messages={messages}
+          status={saveStatus}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+      <Button
+        disabled={disabled || isSaving}
+        onClick={(e) => {
+          e.stopPropagation()
+          manualSave.onSave()
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        size="sm"
+        type="button"
+      >
+        {saveButtonLabel}
+      </Button>
+      {isSaving ? (
+        <FieldSaveStatus
+          className="text-muted-foreground"
+          messages={messages}
+          status={saveStatus}
+        />
+      ) : (
+        <FieldSaveStatus className="text-muted-foreground" messages={messages} status="unsaved" />
+      )}
+    </div>
+  )
 }
 
 function MilestoneTabEmpty({ children }: { children: ReactNode }) {
@@ -172,10 +231,12 @@ function MilestoneInputTabContent({
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}
           />
-          <FieldSaveStatus
-            className="text-muted-foreground"
-            messages={fieldSaveMessages(t)}
-            status={inputModel.saveStatus}
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
           />
         </>
       )
@@ -189,10 +250,12 @@ function MilestoneInputTabContent({
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}
           />
-          <FieldSaveStatus
-            className="text-muted-foreground"
-            messages={fieldSaveMessages(t)}
-            status={inputModel.saveStatus}
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
           />
         </>
       )
@@ -206,12 +269,56 @@ function MilestoneInputTabContent({
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}
           />
-          <FieldSaveStatus
-            className="text-muted-foreground"
-            messages={fieldSaveMessages(t)}
-            status={inputModel.saveStatus}
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
           />
         </>
+      )
+    case 'ig_menu_picker':
+      return (
+        <>
+          <MilestoneIgMenuPickerInput
+            disabled={isMilestoneRunning}
+            draft={inputModel.draft}
+            milestoneId={inputModel.milestoneId}
+            onDraftChange={inputModel.onChange}
+            onNotesBlur={inputModel.onNotesBlur}
+            onNotesFocus={inputModel.onNotesFocus}
+          />
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
+          />
+        </>
+      )
+    case 'ig_format':
+      return (
+        <MilestoneIgFormatInput
+          disabled={isMilestoneRunning}
+          milestoneId={inputModel.milestoneId}
+          notes={inputModel.notes}
+          onNotesBlur={inputModel.onNotesBlur}
+          onNotesChange={inputModel.onNotesChange}
+          onNotesFocus={inputModel.onNotesFocus}
+        />
+      )
+    case 'ig_text':
+      return (
+        <MilestoneIgTextInput
+          disabled={isMilestoneRunning}
+          milestoneId={inputModel.milestoneId}
+          notes={inputModel.notes}
+          onNotesBlur={inputModel.onNotesBlur}
+          onNotesChange={inputModel.onNotesChange}
+          onNotesFocus={inputModel.onNotesFocus}
+        />
       )
     case 'optional_notes':
       return (
@@ -247,22 +354,15 @@ export function MilestoneItemTabs() {
   const {
     milestone,
     activeTab,
-    goalDraft,
     criteriaRows,
-    savingGoal,
     savingPassCriteria,
     hasResult,
     isMilestoneRunning,
     inputModel,
   } = useMilestoneItemState()
-  const {
-    setActiveTab,
-    setGoalDraft,
-    handleGoalSave,
-    handleAddPassCriterion,
-    handleRemovePassCriterion,
-  } = useMilestoneItemActions()
-  const { goalFieldId, addCriteriaInputId, addCriteriaInputRef } = useMilestoneItemMeta()
+  const { setActiveTab, handleAddPassCriterion, handleRemovePassCriterion } =
+    useMilestoneItemActions()
+  const { addCriteriaInputId, addCriteriaInputRef } = useMilestoneItemMeta()
   const t = useTranslations('analytics.workflows.chat')
   const helpDescription = useMemo(() => getMilestoneHelpDescription(milestone, t), [milestone, t])
   const optionalNotesCopy = inputModel.type === 'optional_notes' ? inputModel.copy : null
@@ -295,22 +395,11 @@ export function MilestoneItemTabs() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="goal">
-          <FieldGroup className="gap-4">
-            <Field>
-              <FieldLabel htmlFor={goalFieldId}>{t('milestoneTabGoal')}</FieldLabel>
-              <Textarea
-                className="min-h-[120px] resize-y whitespace-pre-wrap"
-                disabled={savingGoal}
-                id={goalFieldId}
-                onBlur={() => handleGoalSave()}
-                onChange={(e) => setGoalDraft(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                placeholder={t('milestoneGoalPlaceholder')}
-                value={goalDraft}
-              />
-            </Field>
-          </FieldGroup>
+          {milestone.goal?.trim() ? (
+            <MarkdownMessage content={milestone.goal} />
+          ) : (
+            <MilestoneTabEmpty>{t('milestoneGoalEmpty')}</MilestoneTabEmpty>
+          )}
         </TabsContent>
         <TabsContent value="input">
           <MilestoneInputTabContent

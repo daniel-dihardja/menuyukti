@@ -3,12 +3,13 @@ import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
 import { getPythonAgentsUrl } from '@/lib/config'
+import { isAllowedChatGatewayModel } from '@/lib/chat/gateway-chat-models'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import { milestonedataValueSchema, milestoneInputSchema } from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
-import { isAllowedChatGatewayModel } from '@/lib/chat/gateway-chat-models'
+import { parseWorkflowAnalyticsRunId } from '@/lib/workflows/parse-workflow-analytics-run-id'
 
 export const maxDuration = 180
 
@@ -151,6 +152,8 @@ export async function POST(req: Request, context: RouteContext) {
 
   const traceparent = req.headers.get('traceparent')?.trim()
 
+  const workflowAnalyticsRunId = parseWorkflowAnalyticsRunId(rootNode.data)
+
   const baseUrl = getPythonAgentsUrl()
   let agentRes: Response
   try {
@@ -168,6 +171,9 @@ export async function POST(req: Request, context: RouteContext) {
         milestone_input: milestoneInput,
         milestone_data: milestoneDataPayload,
         ...(chatModel != null ? { model: chatModel } : {}),
+        ...(workflowAnalyticsRunId !== null
+          ? { analytics_run_id: String(workflowAnalyticsRunId) }
+          : {}),
       }),
       signal: req.signal,
     })

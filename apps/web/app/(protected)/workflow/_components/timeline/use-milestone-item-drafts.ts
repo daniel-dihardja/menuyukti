@@ -13,14 +13,21 @@ import {
 import { extractCampaignBriefMainCategory } from '@/lib/milestones/campaign-brief-main-category'
 import {
   milestonePresetHasDefaultOptionalNotesInput,
+  milestonePresetUsesManualInputSave,
   normalizePromotionCandidatesInput,
   normalizeMenuClustererInput,
+  normalizeIgMenuPickerInput,
   normalizedPromotionCandidatesInputsEqual,
   normalizedMenuClustererInputsEqual,
+  normalizedIgMenuPickerInputsEqual,
   optionalNotesFromMilestoneInput,
   promotionCandidatesDraftFromNormalized,
   promotionCandidatesInputFromMilestoneInput,
   menuClustererInputFromMilestoneInput,
+  igMenuPickerInputFromMilestoneInput,
+  igMenuPickerInputEqual,
+  igFormatNotesFromMilestoneInput,
+  igTextNotesFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -30,7 +37,14 @@ import { useTimelineWorkspaceState } from '../timeline-context'
 import type { MilestoneInputModel } from './milestone-item-input-model'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
 import type { MenuClustererInputDraft } from './milestone-menu-clusterer-input'
+import type { IgMenuPickerInputDraft } from './milestone-ig-menu-picker-input'
 import type { TimelineMilestone } from './types'
+import type { MilestoneInput } from './types'
+
+type MilestoneInputFlushResult = {
+  ok: boolean
+  milestoneInput?: MilestoneInput
+}
 
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
 const MILESTONE_INPUT_AUTOSAVE_DEBOUNCE_MS = 1200
@@ -88,11 +102,16 @@ export function useMilestoneItemDrafts(
   )
 
   const inputType = milestonePresetInputType(milestone.presetId)
+  const usesManualInputSave = milestonePresetUsesManualInputSave(inputType)
   const usesOptionalNotesInput = inputType === 'optional_notes'
   const isDatesPreset = inputType === 'dates'
   const isPromotionCandidatesPreset = inputType === 'promotion_candidates'
   const isCampaignBriefPreset = inputType === 'campaign_brief'
   const isMenuClustererPreset = inputType === 'menu_clusterer'
+  const isIgMenuPickerPreset = inputType === 'ig_menu_picker'
+  const isIgFormatPreset = inputType === 'ig_format'
+  const isIgTextPreset = inputType === 'ig_text'
+  const isIgNotesPreset = isIgFormatPreset || isIgTextPreset
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
@@ -107,46 +126,50 @@ export function useMilestoneItemDrafts(
   const [menuClustererDraft, setMenuClustererDraft] = useState<MenuClustererInputDraft>(() =>
     menuClustererInputFromMilestoneInput(milestone.milestoneInput),
   )
-  const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
-    milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
-      ? optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
-      : '',
+  const [igMenuPickerDraft, setIgMenuPickerDraft] = useState<IgMenuPickerInputDraft>(() =>
+    igMenuPickerInputFromMilestoneInput(milestone.milestoneInput),
   )
+  const [optionalNotesDraft, setOptionalNotesDraft] = useState(() => {
+    if (milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
+      return optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
+    }
+    if (milestone.presetId === 'ig_format') {
+      return igFormatNotesFromMilestoneInput(milestone.milestoneInput)
+    }
+    if (milestone.presetId === 'ig_text') {
+      return igTextNotesFromMilestoneInput(milestone.milestoneInput)
+    }
+    return ''
+  })
 
   useEffect(() => {
-    setInputDraft(datesInputFromMilestone(milestone.milestoneInput))
-    if (milestone.presetId === 'promotion_candidates') {
-      setPromotionCandidatesDraft(
-        promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput),
-      )
+    if (isDatesPreset) {
+      setInputDraft(datesInputFromMilestone(milestone.milestoneInput))
     }
-    if (milestone.presetId === 'restaurant_campaign_brief') {
-      setCampaignBriefDraft(campaignBriefInputFromMilestoneInput(milestone.milestoneInput))
-    }
-    if (milestone.presetId === 'menu_clusterer') {
-      setMenuClustererDraft(menuClustererInputFromMilestoneInput(milestone.milestoneInput))
-    }
-  }, [milestone.id, milestone.milestoneInput, milestone.presetId])
+  }, [isDatesPreset, milestone.id, milestone.milestoneInput])
 
   const previousMilestoneIdRef = useRef(milestone.id)
-  const promotionCandidatesFocusedRef = useRef(false)
-  const campaignBriefFocusedRef = useRef(false)
-  const menuClustererFocusedRef = useRef(false)
+  const hasUnsavedManualEditsRef = useRef(false)
   const optionalNotesFocusedRef = useRef(false)
 
   useEffect(() => {
+    hasUnsavedManualEditsRef.current = false
+    previousMilestoneIdRef.current = milestone.id
+  }, [milestone.id])
+
+  useEffect(() => {
     if (milestone.presetId !== 'promotion_candidates') {
-      previousMilestoneIdRef.current = milestone.id
       return
     }
     const server = promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput)
     setPromotionCandidatesDraft((prev) => {
       if (previousMilestoneIdRef.current !== milestone.id) {
         previousMilestoneIdRef.current = milestone.id
+        hasUnsavedManualEditsRef.current = false
         return server
       }
       if (!promotionCandidatesInputEqual(prev, server)) {
-        if (!promotionCandidatesFocusedRef.current) {
+        if (!hasUnsavedManualEditsRef.current) {
           return server
         }
         return prev
@@ -157,17 +180,17 @@ export function useMilestoneItemDrafts(
 
   useEffect(() => {
     if (milestone.presetId !== 'restaurant_campaign_brief') {
-      previousMilestoneIdRef.current = milestone.id
       return
     }
     const server = campaignBriefInputFromMilestoneInput(milestone.milestoneInput)
     setCampaignBriefDraft((prev) => {
       if (previousMilestoneIdRef.current !== milestone.id) {
         previousMilestoneIdRef.current = milestone.id
+        hasUnsavedManualEditsRef.current = false
         return server
       }
       if (!normalizedCampaignBriefInputsEqual(prev, server)) {
-        if (!campaignBriefFocusedRef.current) {
+        if (!hasUnsavedManualEditsRef.current) {
           return server
         }
         return prev
@@ -178,17 +201,17 @@ export function useMilestoneItemDrafts(
 
   useEffect(() => {
     if (milestone.presetId !== 'menu_clusterer') {
-      previousMilestoneIdRef.current = milestone.id
       return
     }
     const server = menuClustererInputFromMilestoneInput(milestone.milestoneInput)
     setMenuClustererDraft((prev) => {
       if (previousMilestoneIdRef.current !== milestone.id) {
         previousMilestoneIdRef.current = milestone.id
+        hasUnsavedManualEditsRef.current = false
         return server
       }
       if (!menuClustererInputEqual(prev, server)) {
-        if (!menuClustererFocusedRef.current) {
+        if (!hasUnsavedManualEditsRef.current) {
           return server
         }
         return prev
@@ -198,11 +221,39 @@ export function useMilestoneItemDrafts(
   }, [milestone.presetId, milestone.id, milestone.milestoneInput])
 
   useEffect(() => {
-    if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
+    if (milestone.presetId !== 'ig_menu_picker') {
+      return
+    }
+    const server = igMenuPickerInputFromMilestoneInput(milestone.milestoneInput)
+    setIgMenuPickerDraft((prev) => {
+      if (previousMilestoneIdRef.current !== milestone.id) {
+        previousMilestoneIdRef.current = milestone.id
+        hasUnsavedManualEditsRef.current = false
+        return server
+      }
+      if (!igMenuPickerInputEqual(prev, server)) {
+        if (!hasUnsavedManualEditsRef.current) {
+          return server
+        }
+        return prev
+      }
+      return prev
+    })
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
+
+  useEffect(() => {
+    if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId) && !isIgNotesPreset) {
       previousMilestoneIdRef.current = milestone.id
       return
     }
-    const server = optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
+    let server = ''
+    if (milestone.presetId === 'ig_format') {
+      server = igFormatNotesFromMilestoneInput(milestone.milestoneInput)
+    } else if (milestone.presetId === 'ig_text') {
+      server = igTextNotesFromMilestoneInput(milestone.milestoneInput)
+    } else if (milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
+      server = optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
+    }
     setOptionalNotesDraft((prev) => {
       if (previousMilestoneIdRef.current !== milestone.id) {
         previousMilestoneIdRef.current = milestone.id
@@ -216,7 +267,7 @@ export function useMilestoneItemDrafts(
       }
       return prev === server ? prev : server
     })
-  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput, isIgNotesPreset])
 
   const milestoneRef = useRef(milestone)
   milestoneRef.current = milestone
@@ -230,6 +281,8 @@ export function useMilestoneItemDrafts(
   campaignBriefDraftRef.current = campaignBriefDraft
   const menuClustererDraftRef = useRef(menuClustererDraft)
   menuClustererDraftRef.current = menuClustererDraft
+  const igMenuPickerDraftRef = useRef(igMenuPickerDraft)
+  igMenuPickerDraftRef.current = igMenuPickerDraft
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
   const debounceTimerRef = useRef<number | null>(null)
@@ -251,6 +304,14 @@ export function useMilestoneItemDrafts(
     inputDraft.endDate !== serverDatesInput.endDate
 
   const optionalNotesDirty = useMemo(() => {
+    if (milestone.presetId === 'ig_format') {
+      const server = igFormatNotesFromMilestoneInput(milestone.milestoneInput).trim()
+      return optionalNotesDraft.trim() !== server
+    }
+    if (milestone.presetId === 'ig_text') {
+      const server = igTextNotesFromMilestoneInput(milestone.milestoneInput).trim()
+      return optionalNotesDraft.trim() !== server
+    }
     if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
       return false
     }
@@ -288,22 +349,89 @@ export function useMilestoneItemDrafts(
     return !menuClustererInputEqual(menuClustererDraft, server)
   }, [isMenuClustererPreset, milestone.milestoneInput, menuClustererDraft])
 
+  const igMenuPickerDirty = useMemo(() => {
+    if (!isIgMenuPickerPreset) {
+      return false
+    }
+    const server = igMenuPickerInputFromMilestoneInput(milestone.milestoneInput)
+    return !normalizedIgMenuPickerInputsEqual(igMenuPickerDraft, server)
+  }, [igMenuPickerDraft, isIgMenuPickerPreset, milestone.milestoneInput])
+
+  const buildMilestoneInputPayload = useCallback((): MilestoneInput | undefined => {
+    const m = milestoneRef.current
+    if (m.presetId === 'dates') {
+      return {
+        type: 'dates',
+        value: {
+          startDate: inputDraftRef.current.startDate,
+          endDate: inputDraftRef.current.endDate,
+        },
+      }
+    }
+    if (m.presetId === 'promotion_candidates') {
+      return {
+        type: 'promotion_candidates',
+        value: normalizePromotionCandidatesInput(promotionCandidatesDraftRef.current),
+      }
+    }
+    if (m.presetId === 'restaurant_campaign_brief') {
+      return {
+        type: 'restaurant_campaign_brief',
+        value: normalizeCampaignBriefInput(campaignBriefDraftRef.current),
+      }
+    }
+    if (m.presetId === 'menu_clusterer') {
+      return {
+        type: 'menu_clusterer',
+        value: normalizeMenuClustererInput(menuClustererDraftRef.current),
+      }
+    }
+    if (m.presetId === 'ig_menu_picker') {
+      return {
+        type: 'ig_menu_picker',
+        value: normalizeIgMenuPickerInput(igMenuPickerDraftRef.current),
+      }
+    }
+    if (m.presetId === 'ig_format') {
+      return {
+        type: 'ig_format',
+        value: { notes: optionalNotesDraftRef.current.trim() },
+      }
+    }
+    if (m.presetId === 'ig_text') {
+      return {
+        type: 'ig_text',
+        value: { notes: optionalNotesDraftRef.current.trim() },
+      }
+    }
+    if (m.presetId && milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
+      return {
+        type: m.presetId,
+        value: { notes: optionalNotesDraftRef.current.trim() },
+      }
+    }
+    return undefined
+  }, [])
+
   const performMilestoneInputFlush = useCallback(
     async ({
+      finalizeDraft,
       normalizeOptionalNotesDraft,
     }: {
+      finalizeDraft: boolean
       normalizeOptionalNotesDraft: boolean
-    }): Promise<boolean> => {
+    }): Promise<MilestoneInputFlushResult> => {
+      const milestoneInputPayload = buildMilestoneInputPayload()
       const onUpdate = onUpdateMilestoneInputRef.current
       if (!onUpdate) {
-        return true
+        return { ok: true, milestoneInput: milestoneInputPayload }
       }
       const m = milestoneRef.current
       if (m.presetId === 'dates') {
         const server = datesInputFromMilestone(m.milestoneInput)
         const draft = inputDraftRef.current
         if (draft.startDate === server.startDate && draft.endDate === server.endDate) {
-          return true
+          return { ok: true, milestoneInput: milestoneInputPayload }
         }
         const ok = await onUpdate(m.id, {
           type: 'dates',
@@ -315,7 +443,7 @@ export function useMilestoneItemDrafts(
         if (!ok) {
           setInputDraft(server)
         }
-        return ok
+        return { ok, milestoneInput: milestoneInputPayload }
       }
       if (m.presetId === 'promotion_candidates') {
         const server = promotionCandidatesInputFromMilestoneInput(m.milestoneInput)
@@ -323,17 +451,18 @@ export function useMilestoneItemDrafts(
           promotionCandidatesDraftRef.current,
         )
         const normalizedServer = normalizePromotionCandidatesInput(server)
+        const canonicalDraft = promotionCandidatesDraftFromNormalized(normalizedDraft)
         if (normalizedPromotionCandidatesInputsEqual(normalizedDraft, normalizedServer)) {
           if (
-            normalizeOptionalNotesDraft &&
-            !promotionCandidatesInputEqual(
-              promotionCandidatesDraftRef.current,
-              promotionCandidatesDraftFromNormalized(normalizedDraft),
-            )
+            finalizeDraft &&
+            !promotionCandidatesInputEqual(promotionCandidatesDraftRef.current, canonicalDraft)
           ) {
-            setPromotionCandidatesDraft(promotionCandidatesDraftFromNormalized(normalizedDraft))
+            setPromotionCandidatesDraft(canonicalDraft)
           }
-          return true
+          if (finalizeDraft) {
+            hasUnsavedManualEditsRef.current = false
+          }
+          return { ok: true, milestoneInput: milestoneInputPayload }
         }
         const ok = await onUpdate(m.id, {
           type: 'promotion_candidates',
@@ -341,17 +470,27 @@ export function useMilestoneItemDrafts(
         })
         if (!ok) {
           setPromotionCandidatesDraft(server)
-        } else if (normalizeOptionalNotesDraft) {
-          setPromotionCandidatesDraft(promotionCandidatesDraftFromNormalized(normalizedDraft))
+        } else if (finalizeDraft) {
+          setPromotionCandidatesDraft(canonicalDraft)
+          hasUnsavedManualEditsRef.current = false
         }
-        return ok
+        return { ok, milestoneInput: milestoneInputPayload }
       }
       if (m.presetId === 'restaurant_campaign_brief') {
         const server = campaignBriefInputFromMilestoneInput(m.milestoneInput)
         const normalizedDraft = normalizeCampaignBriefInput(campaignBriefDraftRef.current)
         const normalizedServer = normalizeCampaignBriefInput(server)
         if (normalizedCampaignBriefInputsEqual(normalizedDraft, normalizedServer)) {
-          return true
+          if (
+            finalizeDraft &&
+            !normalizedCampaignBriefInputsEqual(campaignBriefDraftRef.current, normalizedDraft)
+          ) {
+            setCampaignBriefDraft(normalizedDraft)
+          }
+          if (finalizeDraft) {
+            hasUnsavedManualEditsRef.current = false
+          }
+          return { ok: true, milestoneInput: milestoneInputPayload }
         }
         const ok = await onUpdate(m.id, {
           type: 'restaurant_campaign_brief',
@@ -359,15 +498,27 @@ export function useMilestoneItemDrafts(
         })
         if (!ok) {
           setCampaignBriefDraft(server)
+        } else if (finalizeDraft) {
+          setCampaignBriefDraft(normalizedDraft)
+          hasUnsavedManualEditsRef.current = false
         }
-        return ok
+        return { ok, milestoneInput: milestoneInputPayload }
       }
       if (m.presetId === 'menu_clusterer') {
         const server = menuClustererInputFromMilestoneInput(m.milestoneInput)
         const normalizedDraft = normalizeMenuClustererInput(menuClustererDraftRef.current)
         const normalizedServer = normalizeMenuClustererInput(server)
         if (normalizedMenuClustererInputsEqual(normalizedDraft, normalizedServer)) {
-          return true
+          if (
+            finalizeDraft &&
+            !menuClustererInputEqual(menuClustererDraftRef.current, normalizedDraft)
+          ) {
+            setMenuClustererDraft(normalizedDraft)
+          }
+          if (finalizeDraft) {
+            hasUnsavedManualEditsRef.current = false
+          }
+          return { ok: true, milestoneInput: milestoneInputPayload }
         }
         const ok = await onUpdate(m.id, {
           type: 'menu_clusterer',
@@ -375,8 +526,85 @@ export function useMilestoneItemDrafts(
         })
         if (!ok) {
           setMenuClustererDraft(server)
+        } else if (finalizeDraft) {
+          setMenuClustererDraft(normalizedDraft)
+          hasUnsavedManualEditsRef.current = false
         }
-        return ok
+        return { ok, milestoneInput: milestoneInputPayload }
+      }
+      if (m.presetId === 'ig_menu_picker') {
+        const server = igMenuPickerInputFromMilestoneInput(m.milestoneInput)
+        const normalizedDraft = normalizeIgMenuPickerInput(igMenuPickerDraftRef.current)
+        const normalizedServer = normalizeIgMenuPickerInput(server)
+        const canonicalDraft = {
+          notes: normalizedDraft.notes,
+          selectedSlotKeys: normalizedDraft.selectedSlotKeys,
+        }
+        if (normalizedIgMenuPickerInputsEqual(normalizedDraft, normalizedServer)) {
+          if (
+            finalizeDraft &&
+            !igMenuPickerInputEqual(igMenuPickerDraftRef.current, canonicalDraft)
+          ) {
+            setIgMenuPickerDraft(canonicalDraft)
+          }
+          if (finalizeDraft) {
+            hasUnsavedManualEditsRef.current = false
+          }
+          return { ok: true, milestoneInput: milestoneInputPayload }
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'ig_menu_picker',
+          value: normalizedDraft,
+        })
+        if (!ok) {
+          setIgMenuPickerDraft(server)
+        } else if (finalizeDraft) {
+          setIgMenuPickerDraft(canonicalDraft)
+          hasUnsavedManualEditsRef.current = false
+        }
+        return { ok, milestoneInput: milestoneInputPayload }
+      }
+      if (m.presetId === 'ig_format') {
+        const server = igFormatNotesFromMilestoneInput(m.milestoneInput)
+        const trimmedDraft = optionalNotesDraftRef.current.trim()
+        const trimmedServer = server.trim()
+        if (trimmedDraft === trimmedServer) {
+          if (normalizeOptionalNotesDraft && optionalNotesDraftRef.current !== trimmedDraft) {
+            setOptionalNotesDraft(trimmedDraft)
+          }
+          return { ok: true, milestoneInput: milestoneInputPayload }
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'ig_format',
+          value: { notes: trimmedDraft },
+        })
+        if (!ok) {
+          setOptionalNotesDraft(server)
+        } else if (normalizeOptionalNotesDraft) {
+          setOptionalNotesDraft(trimmedDraft)
+        }
+        return { ok, milestoneInput: milestoneInputPayload }
+      }
+      if (m.presetId === 'ig_text') {
+        const server = igTextNotesFromMilestoneInput(m.milestoneInput)
+        const trimmedDraft = optionalNotesDraftRef.current.trim()
+        const trimmedServer = server.trim()
+        if (trimmedDraft === trimmedServer) {
+          if (normalizeOptionalNotesDraft && optionalNotesDraftRef.current !== trimmedDraft) {
+            setOptionalNotesDraft(trimmedDraft)
+          }
+          return { ok: true, milestoneInput: milestoneInputPayload }
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'ig_text',
+          value: { notes: trimmedDraft },
+        })
+        if (!ok) {
+          setOptionalNotesDraft(server)
+        } else if (normalizeOptionalNotesDraft) {
+          setOptionalNotesDraft(trimmedDraft)
+        }
+        return { ok, milestoneInput: milestoneInputPayload }
       }
       if (milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
         const server = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId)
@@ -386,7 +614,7 @@ export function useMilestoneItemDrafts(
           if (normalizeOptionalNotesDraft && optionalNotesDraftRef.current !== trimmedDraft) {
             setOptionalNotesDraft(trimmedDraft)
           }
-          return true
+          return { ok: true, milestoneInput: milestoneInputPayload }
         }
         const ok = await onUpdate(m.id, {
           type: m.presetId,
@@ -397,27 +625,31 @@ export function useMilestoneItemDrafts(
         } else if (normalizeOptionalNotesDraft) {
           setOptionalNotesDraft(trimmedDraft)
         }
-        return ok
+        return { ok, milestoneInput: milestoneInputPayload }
       }
-      return true
+      return { ok: true, milestoneInput: milestoneInputPayload }
     },
-    [],
+    [buildMilestoneInputPayload],
   )
 
   const flushMilestoneInputSave = useCallback(
-    async (options?: { normalizeOptionalNotesDraft?: boolean }): Promise<boolean> => {
+    async (options?: {
+      finalizeDraft?: boolean
+      normalizeOptionalNotesDraft?: boolean
+    }): Promise<MilestoneInputFlushResult> => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = null
       }
+      const finalizeDraft = options?.finalizeDraft ?? usesManualInputSave
       const normalizeOptionalNotesDraft = options?.normalizeOptionalNotesDraft ?? false
       const run = flushChainRef.current.then(() =>
-        performMilestoneInputFlush({ normalizeOptionalNotesDraft }),
+        performMilestoneInputFlush({ finalizeDraft, normalizeOptionalNotesDraft }),
       )
-      flushChainRef.current = run.catch(() => false)
+      flushChainRef.current = run.then((result) => result.ok).catch(() => false)
       return run
     },
-    [performMilestoneInputFlush],
+    [performMilestoneInputFlush, usesManualInputSave],
   )
 
   useEffect(() => {
@@ -427,23 +659,19 @@ export function useMilestoneItemDrafts(
     if (isMilestoneRunning) {
       return
     }
+    if (usesManualInputSave) {
+      return
+    }
     const dirty =
       (isDatesPreset && inputDirty) ||
-      (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
-      (isCampaignBriefPreset && campaignBriefDirty) ||
-      (isMenuClustererPreset && menuClustererDirty) ||
-      (!isDatesPreset &&
-        !isPromotionCandidatesPreset &&
-        !isCampaignBriefPreset &&
-        !isMenuClustererPreset &&
-        usesOptionalNotesInput &&
-        optionalNotesDirty)
+      (usesOptionalNotesInput && optionalNotesDirty) ||
+      (isIgNotesPreset && optionalNotesDirty)
     if (!dirty) {
       return
     }
     const id = window.setTimeout(() => {
       debounceTimerRef.current = null
-      void flushMilestoneInputSave()
+      void flushMilestoneInputSave({ finalizeDraft: false })
     }, MILESTONE_INPUT_AUTOSAVE_DEBOUNCE_MS)
     debounceTimerRef.current = id
     return () => {
@@ -455,19 +683,14 @@ export function useMilestoneItemDrafts(
   }, [
     optionalNotesDirty,
     optionalNotesDraft,
-    campaignBriefDirty,
-    campaignBriefDraft,
-    menuClustererDirty,
-    menuClustererDraft,
-    promotionCandidatesDirty,
-    promotionCandidatesDraft,
     flushMilestoneInputSave,
     inputDirty,
     inputDraft,
-    isCampaignBriefPreset,
-    isMenuClustererPreset,
-    isPromotionCandidatesPreset,
+    usesManualInputSave,
     usesOptionalNotesInput,
+    isIgFormatPreset,
+    isIgTextPreset,
+    isIgNotesPreset,
     isDatesPreset,
     isMilestoneRunning,
     onUpdateMilestoneInput,
@@ -475,13 +698,15 @@ export function useMilestoneItemDrafts(
 
   const handleRunMilestoneWithInputFlush = useCallback(
     async (id: string, chatModel?: ChatGatewayModelId) => {
+      let milestoneInputForRun: MilestoneInput | undefined
       if (id === milestone.id) {
-        const ok = await flushMilestoneInputSave()
-        if (!ok) {
+        const flushResult = await flushMilestoneInputSave()
+        if (!flushResult.ok) {
           return
         }
+        milestoneInputForRun = flushResult.milestoneInput
       }
-      await onRunMilestone(id, chatModel)
+      await onRunMilestone(id, chatModel, { milestoneInput: milestoneInputForRun })
     },
     [flushMilestoneInputSave, milestone.id, onRunMilestone],
   )
@@ -492,66 +717,77 @@ export function useMilestoneItemDrafts(
         (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
         (isCampaignBriefPreset && campaignBriefDirty) ||
         (isMenuClustererPreset && menuClustererDirty) ||
-        (usesOptionalNotesInput && optionalNotesDirty)
+        (isIgMenuPickerPreset && igMenuPickerDirty) ||
+        ((usesOptionalNotesInput || isIgNotesPreset) && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
 
+  const handleManualInputSave = useCallback(() => {
+    void flushMilestoneInputSave({ finalizeDraft: true })
+  }, [flushMilestoneInputSave])
+
   const handleOptionalNotesBlur = useCallback(() => {
     optionalNotesFocusedRef.current = false
-    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
+    void flushMilestoneInputSave({
+      finalizeDraft: false,
+      normalizeOptionalNotesDraft: true,
+    })
   }, [flushMilestoneInputSave])
 
   const handleOptionalNotesFocus = useCallback(() => {
     optionalNotesFocusedRef.current = true
   }, [])
 
-  const handlePromotionCandidatesNotesBlur = useCallback(() => {
-    promotionCandidatesFocusedRef.current = false
-    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
-  }, [flushMilestoneInputSave])
+  const handleManualInputNotesBlur = useCallback(() => {}, [])
 
-  const handlePromotionCandidatesNotesFocus = useCallback(() => {
-    promotionCandidatesFocusedRef.current = true
+  const handleManualInputNotesFocus = useCallback(() => {}, [])
+
+  const markManualInputDirty = useCallback(() => {
+    hasUnsavedManualEditsRef.current = true
   }, [])
 
   const handlePromotionCandidatesDraftChange = useCallback(
     (next: PromotionCandidatesInputDraft) => {
-      promotionCandidatesFocusedRef.current = true
+      markManualInputDirty()
       promotionCandidatesDraftRef.current = next
       setPromotionCandidatesDraft(next)
     },
-    [],
+    [markManualInputDirty],
   )
 
-  const handleCampaignBriefDraftChange = useCallback((next: CampaignBriefInputDraft) => {
-    campaignBriefFocusedRef.current = true
-    campaignBriefDraftRef.current = next
-    setCampaignBriefDraft(next)
-  }, [])
+  const handleCampaignBriefDraftChange = useCallback(
+    (next: CampaignBriefInputDraft) => {
+      markManualInputDirty()
+      campaignBriefDraftRef.current = next
+      setCampaignBriefDraft(next)
+    },
+    [markManualInputDirty],
+  )
 
-  const handleCampaignBriefNotesBlur = useCallback(() => {
-    campaignBriefFocusedRef.current = false
-    void flushMilestoneInputSave()
-  }, [flushMilestoneInputSave])
+  const handleMenuClustererDraftChange = useCallback(
+    (next: MenuClustererInputDraft) => {
+      markManualInputDirty()
+      menuClustererDraftRef.current = next
+      setMenuClustererDraft(next)
+    },
+    [markManualInputDirty],
+  )
 
-  const handleCampaignBriefNotesFocus = useCallback(() => {
-    campaignBriefFocusedRef.current = true
-  }, [])
+  const handleIgMenuPickerDraftChange = useCallback(
+    (next: IgMenuPickerInputDraft) => {
+      markManualInputDirty()
+      igMenuPickerDraftRef.current = next
+      setIgMenuPickerDraft(next)
+    },
+    [markManualInputDirty],
+  )
 
-  const handleMenuClustererNotesBlur = useCallback(() => {
-    menuClustererFocusedRef.current = false
-    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
-  }, [flushMilestoneInputSave])
-
-  const handleMenuClustererNotesFocus = useCallback(() => {
-    menuClustererFocusedRef.current = true
-  }, [])
-
-  const handleMenuClustererDraftChange = useCallback((next: MenuClustererInputDraft) => {
-    menuClustererFocusedRef.current = true
-    menuClustererDraftRef.current = next
-    setMenuClustererDraft(next)
-  }, [])
+  const manualSave = useMemo(
+    () => ({
+      onSave: handleManualInputSave,
+    }),
+    [handleManualInputSave],
+  )
 
   const inputModel = useMemo((): MilestoneInputModel => {
     if (isDatesPreset) {
@@ -568,9 +804,10 @@ export function useMilestoneItemDrafts(
         type: 'promotion_candidates',
         draft: promotionCandidatesDraft,
         onChange: handlePromotionCandidatesDraftChange,
-        onNotesBlur: handlePromotionCandidatesNotesBlur,
-        onNotesFocus: handlePromotionCandidatesNotesFocus,
+        onNotesBlur: handleManualInputNotesBlur,
+        onNotesFocus: handleManualInputNotesFocus,
         mainCategory: campaignBriefMainCategory,
+        manualSave,
         saveStatus: inputSaveStatus,
         saving: savingInput,
       }
@@ -580,8 +817,9 @@ export function useMilestoneItemDrafts(
         type: 'campaign_brief',
         draft: campaignBriefDraft,
         onChange: handleCampaignBriefDraftChange,
-        onNotesBlur: handleCampaignBriefNotesBlur,
-        onNotesFocus: handleCampaignBriefNotesFocus,
+        onNotesBlur: handleManualInputNotesBlur,
+        onNotesFocus: handleManualInputNotesFocus,
+        manualSave,
         saveStatus: inputSaveStatus,
         saving: savingInput,
       }
@@ -591,8 +829,46 @@ export function useMilestoneItemDrafts(
         type: 'menu_clusterer',
         draft: menuClustererDraft,
         onChange: handleMenuClustererDraftChange,
-        onNotesBlur: handleMenuClustererNotesBlur,
-        onNotesFocus: handleMenuClustererNotesFocus,
+        onNotesBlur: handleManualInputNotesBlur,
+        onNotesFocus: handleManualInputNotesFocus,
+        manualSave,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    if (isIgMenuPickerPreset) {
+      return {
+        type: 'ig_menu_picker',
+        milestoneId: milestone.id,
+        draft: igMenuPickerDraft,
+        onChange: handleIgMenuPickerDraftChange,
+        onNotesBlur: handleManualInputNotesBlur,
+        onNotesFocus: handleManualInputNotesFocus,
+        manualSave,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    if (isIgFormatPreset) {
+      return {
+        type: 'ig_format',
+        milestoneId: milestone.id,
+        notes: optionalNotesDraft,
+        onNotesChange: handleOptionalNotesDraftChange,
+        onNotesBlur: handleOptionalNotesBlur,
+        onNotesFocus: handleOptionalNotesFocus,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    if (isIgTextPreset) {
+      return {
+        type: 'ig_text',
+        milestoneId: milestone.id,
+        notes: optionalNotesDraft,
+        onNotesChange: handleOptionalNotesDraftChange,
+        onNotesBlur: handleOptionalNotesBlur,
+        onNotesFocus: handleOptionalNotesFocus,
         saveStatus: inputSaveStatus,
         saving: savingInput,
       }
@@ -620,25 +896,28 @@ export function useMilestoneItemDrafts(
     campaignBriefDraft,
     campaignBriefMainCategory,
     handleCampaignBriefDraftChange,
-    handleCampaignBriefNotesBlur,
-    handleCampaignBriefNotesFocus,
     handleDatesDraftChange,
+    handleManualInputNotesBlur,
+    handleManualInputNotesFocus,
     handleMenuClustererDraftChange,
-    handleMenuClustererNotesBlur,
-    handleMenuClustererNotesFocus,
+    handleIgMenuPickerDraftChange,
     handleOptionalNotesBlur,
     handleOptionalNotesDraftChange,
     handleOptionalNotesFocus,
     handlePromotionCandidatesDraftChange,
-    handlePromotionCandidatesNotesBlur,
-    handlePromotionCandidatesNotesFocus,
     inputDraft,
     inputSaveStatus,
     isCampaignBriefPreset,
     isDatesPreset,
+    isIgMenuPickerPreset,
+    isIgFormatPreset,
+    isIgTextPreset,
     isMenuClustererPreset,
     isPromotionCandidatesPreset,
+    manualSave,
+    milestone.id,
     milestone.presetId,
+    igMenuPickerDraft,
     optionalNotesDraft,
     promotionCandidatesDraft,
     menuClustererDraft,

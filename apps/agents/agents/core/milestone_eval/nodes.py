@@ -28,10 +28,26 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
     update_milestone_passcriteria_statuses,
     upsert_result_node,
 )
+from agents_app.agents.core.milestone_eval.ig_format_eval import (
+    enrich_ig_format_eval_payload,
+    try_ig_format_deterministic_verdict,
+)
+from agents_app.agents.core.milestone_eval.ig_menu_picker_eval import (
+    enrich_ig_menu_picker_eval_payload,
+    try_ig_menu_picker_deterministic_verdict,
+)
+from agents_app.agents.core.milestone_eval.ig_plan_eval import (
+    enrich_ig_plan_eval_payload,
+    try_ig_plan_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.ig_profile_eval import (
     enrich_ig_profile_eval_payload,
     parse_milestone_data_from_eval_raw,
     try_ig_profile_deterministic_verdict,
+)
+from agents_app.agents.core.milestone_eval.ig_text_eval import (
+    enrich_ig_text_eval_payload,
+    try_ig_text_deterministic_verdict,
 )
 from agents_app.agents.core.milestone_eval.menu_clusterer_eval import (
     enrich_menu_clusterer_eval_payload,
@@ -74,14 +90,24 @@ _logger = logging.getLogger(__name__)
 
 
 def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
-    return enrich_campaign_brief_eval_payload(
-        enrich_scheduler_eval_payload(
-            enrich_story_lineup_eval_payload(
-                enrich_reel_lineup_eval_payload(
-                    enrich_post_lineup_eval_payload(
-                        enrich_menu_clusterer_eval_payload(
-                            enrich_menu_tagger_eval_payload(
-                                enrich_dates_eval_payload(enrich_ig_profile_eval_payload(data))
+    return enrich_ig_text_eval_payload(
+        enrich_ig_format_eval_payload(
+            enrich_ig_menu_picker_eval_payload(
+                enrich_ig_plan_eval_payload(
+                    enrich_campaign_brief_eval_payload(
+                        enrich_scheduler_eval_payload(
+                            enrich_story_lineup_eval_payload(
+                                enrich_reel_lineup_eval_payload(
+                                    enrich_post_lineup_eval_payload(
+                                        enrich_menu_clusterer_eval_payload(
+                                            enrich_menu_tagger_eval_payload(
+                                                enrich_dates_eval_payload(
+                                                    enrich_ig_profile_eval_payload(data)
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
                             )
                         )
                     )
@@ -125,6 +151,7 @@ _OWNER_NOTES_INPUT_TYPES = frozenset(
         "story_lineup",
         "scheduler",
         "ig_profile",
+        "ig_format",
     },
 )
 
@@ -285,7 +312,15 @@ async def evaluate_criterion(
 
     milestone_data = parse_milestone_data_from_eval_raw(raw_data)
     if milestone_data is not None:
-        deterministic = try_ig_profile_deterministic_verdict(requirement, milestone_data)
+        deterministic = try_ig_text_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_ig_format_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_ig_menu_picker_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_ig_plan_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_ig_profile_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_menu_tagger_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:

@@ -570,9 +570,9 @@
     "workflows": "Workflow",
     "skills": "Skills & tools",
     "studio": "Studio",
-    "posts": "Posts",
+    "posts": "IG Studio",
     "content": "Content",
-    "photos": "Photos",
+    "media": "Media",
     "igReels": "IG Reels",
     "igStories": "IG Stories",
     "printShop": "Print shop",
@@ -697,7 +697,24 @@
       "pageLabel": "Page {number}",
       "empty": "No pages yet",
       "addPage": "Add page",
-      "addingPage": "Adding page…"
+      "addingPage": "Adding page…",
+      "duplicatePage": "Duplicate",
+      "duplicatingPage": "Duplicating…"
+    },
+    "tabs": {
+      "prompt": "Prompt",
+      "settings": "Settings",
+      "history": "History"
+    },
+    "settings": {
+      "title": "Generation settings",
+      "format": "Format",
+      "model": "Model",
+      "modelValue": "Leonardo"
+    },
+    "history": {
+      "emptyTitle": "No history here yet",
+      "emptyDescription": "Generation history for this page appears in the preview when you have multiple versions."
     },
     "previewPane": "Generated post image",
     "promptPane": "Prompt",
@@ -708,21 +725,26 @@
       "generating": "Generating…",
       "picker": {
         "ariaLabel": "Reference photo picker",
-        "empty": "No matching photos. Upload one or add photos in Content → Photos.",
-        "upload": "Upload photo",
+        "empty": "No matching media. Upload one or add files in Media.",
+        "upload": "Upload file",
         "uploading": "Uploading…",
-        "uploadError": "Couldn’t upload that photo. Try again.",
-        "maxReached": "Maximum reference photos reached. Remove one to add another."
+        "uploadError": "Couldn’t upload that file. Try again.",
+        "maxReached": "Maximum reference images reached. Remove one to add another."
       },
       "references": {
-        "ariaLabel": "Reference photos for generation",
-        "remove": "Remove reference photo"
+        "ariaLabel": "Reference images for generation",
+        "remove": "Remove reference image"
+      },
+      "tip": {
+        "title": "Tip",
+        "description": "Type @ in the prompt to attach a reference photo from your media library."
       }
     },
     "preview": {
       "ariaLabel": "Generated post image preview",
       "emptyTitle": "No post image yet",
       "emptyDescription": "Enter a prompt in the panel on the right and generate an image.",
+      "formatLabel": "Instagram Post (4:5)",
       "dimensionsLabel": "Post size",
       "dimensions": "{width} × {height}",
       "gridSafeZoneToggle": "Grid thumbnail safe zone",
@@ -740,8 +762,12 @@
       "committingPostImage": "Setting post image…",
       "generating": "Generating…",
       "deleteImage": "Delete image",
+      "removePage": "Remove page",
       "deleteConfirmTitle": "Delete this generated image?",
       "deleteConfirmDescription": "This removes the image from this page's version history. This cannot be undone.",
+      "removePageConfirmTitle": "Remove this page?",
+      "removePageConfirmDescription": "This removes the empty page from your post. This cannot be undone.",
+      "removePageConfirmAction": "Remove page",
       "deleteConfirmCancel": "Cancel",
       "deleteConfirmAction": "Delete image",
       "deleteImageDeleting": "Deleting…"
@@ -753,12 +779,13 @@
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "imageSelectError": "Failed to update post image. Please try again.",
       "deleteImageError": "Failed to delete image. Please try again.",
+      "deletePageError": "Failed to remove page. Please try again.",
       "addPageError": "Failed to add page. Please try again.",
       "maxPagesReached": "Instagram carousels support up to 10 images."
     }
   },
   "posts": {
-    "title": "Posts",
+    "title": "IG Studio",
     "description": "Create and manage standalone Instagram post drafts.",
     "create": "Create new post",
     "creating": "Creating…",
@@ -793,11 +820,11 @@
       }
     }
   },
-  "photos": {
-    "title": "Photos",
-    "description": "Upload restaurant and campaign photos. Files are resized to 1024px on the shortest side and saved as WebP.",
+  "media": {
+    "title": "Media",
+    "description": "Upload restaurant and campaign photos and videos in their original format and resolution.",
     "upload": {
-      "title": "Upload photos",
+      "title": "Upload media",
       "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
       "browse": "Browse files",
       "uploading": "Uploading…",
@@ -805,11 +832,11 @@
     },
     "grid": {
       "empty": {
-        "title": "No photos yet",
-        "description": "Upload your first photo to build your content library."
+        "title": "No media yet",
+        "description": "Upload your first file to build your media library."
       },
       "delete": "Remove",
-      "deleteConfirm": "Remove this photo?",
+      "deleteConfirm": "Remove this file?",
       "deleteAction": "Remove",
       "cancel": "Cancel",
       "viewLarge": "View larger",
@@ -819,12 +846,12 @@
       "close": "Close preview"
     },
     "toast": {
-      "uploaded": "Photo uploaded",
+      "uploaded": "File uploaded",
       "uploadError": "Couldn’t upload that file. Try again.",
-      "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
-      "loadError": "Couldn’t load your photos. Refresh the page.",
-      "deleted": "Photo removed",
-      "deleteError": "Couldn’t remove that photo. Try again."
+      "uploadPartial": "Some files couldn’t be uploaded. Check your files and try again.",
+      "loadError": "Couldn’t load your media. Refresh the page.",
+      "deleted": "File removed",
+      "deleteError": "Couldn’t remove that file. Try again."
     }
   },
   "reels": {
@@ -1619,6 +1646,54 @@
             "criterionBioBreakdown": "Each bio variation breakdown covers **hook**, **value prop**, **CTA**, and **tone**, grounded in Campaign Brief context.",
             "criterionBioVariations": "Data includes **3 distinct bio variations** in the bios array."
           },
+          "ig_plan": {
+            "label": "IG Plan",
+            "title": "IG Plan",
+            "inputLabel": "IG Plan notes",
+            "inputDescription": "Optional guidance for weekly cadence or marketing emphasis. Requires a prior **Campaign Brief** milestone with saved data. The run also fetches venue slot demand signals and menu engineering portfolio distribution from the workflow-pinned analytics run.",
+            "inputPlaceholder": "e.g. push afternoon traffic Wed–Fri; protect Friday dinner…",
+            "goal": "Read prior **Campaign Brief** strategy (objectives, pillars, cadence, audience) together with venue slot demand signals and menu engineering portfolio distribution from the workflow-pinned analytics run, then output a **weekly slot strategy grid** in `entries[]`. Each entry defines publish **day** and **slot** (HH:MM), marketing **objective**, content **pillar**, target **mealPeriod**, **slotStrategy** (`maintain`, `support`, `grow`, or `aggressively_grow`), and **productRole** (`star`, `puzzle`, or `plow_horse`). Classify slots from analytics; ground objectives and pillar mix in the campaign brief. Strategy only; no dish names, hooks, captions, or format assignments.",
+            "criterionWeeklyEntries": "Data includes a non-empty **entries** array. Each row has **day**, **slot** (HH:MM), **objective**, **pillar**, **mealPeriod**, **productRole**, **slotStrategy**, and **slotKey**. Rows are grouped in weekday order (monday through sunday).",
+            "criterionSlotGrounding": "Each entry uses a valid **slotStrategy** (`maintain`, `support`, `grow`, or `aggressively_grow`), **pillar**, and **productRole** (`star`, `puzzle`, or `plow_horse`). Publish **slot** times should be plausible for the venue day when opening hours are available.",
+            "criterionScheduleExplanation": "Data includes a non-empty **scheduleExplanation** summarizing the weekly marketing allocation strategy.",
+            "criterionCampaignBriefAlignment": "The weekly plan reflects prior **Campaign Brief** strategy, content pillars, and cadence guidance — objectives and pillar mix align with the brief without contradicting analytics-based slot classification."
+          },
+          "ig_menu_picker": {
+            "label": "IG Menu Picker",
+            "title": "IG Menu Picker",
+            "inputLabel": "IG Menu Picker notes",
+            "inputDescription": "Select which IG Plan slots to process and add optional guidance for menu emphasis. The run uses the workflow-pinned sales report for slot menu candidates.",
+            "inputPlaceholder": "e.g. favor vegetarian stars for weekday lunch slots…",
+            "goal": "Read prior **IG Plan** milestone data, filter by selected slots, fetch menu engineering and per-slot candidates from the workflow-pinned analytics run, then attach **1–3 menu items** per selected entry with a short rationale.",
+            "criterionPriorIgPlan": "A prior **ig_plan** milestone with saved **entries** exists earlier in the workflow.",
+            "criterionMenuItemsPerEntry": "Each selected entry in the output has **1–3 menuItems** with non-empty **menu** names.",
+            "criterionSelectedEntriesOnly": "Output **entries** include only slots selected on the Input tab (empty selection = all IG Plan entries)."
+          },
+          "ig_format": {
+            "label": "IG Format",
+            "title": "IG Format",
+            "inputLabel": "IG Format notes",
+            "inputDescription": "Optional guidance for format emphasis. Menu picker entries are read-only — the run assigns a format to every prior slot with menu items.",
+            "inputPlaceholder": "e.g. favor reels for aggressively_grow slots; use carousels for multi-dish discovery…",
+            "goal": "Read prior **IG Menu Picker** milestone data and assign an Instagram **format** (`reel`, `post`, `post-carousel`, or `story`) to each entry with menu items, preserving plan strategy and dish selections.",
+            "criterionPriorIgMenuPicker": "A prior **ig_menu_picker** milestone with saved **entries** that include **menuItems** exists earlier in the workflow.",
+            "criterionValidType": "Each output entry has a valid **type** (`reel`, `post`, `post-carousel`, or `story`) and non-empty **formatRationale**.",
+            "criterionSlotCoverage": "Output **entries** slot coverage matches the prior menu picker (same slotKeys, no extras or omissions).",
+            "criterionCarouselMenuItems": "**post-carousel** is used only when an entry has **2+ menuItems**."
+          },
+          "ig_text": {
+            "label": "IG Text",
+            "title": "IG Text",
+            "inputLabel": "IG Text notes",
+            "inputDescription": "Optional guidance for copy tone and emphasis. IG Format entries are read-only — the run generates text fields per slot using Campaign Brief orientation.",
+            "inputPlaceholder": "e.g. keep headlines short in Bahasa Indonesia; playful tone for weekend slots…",
+            "goal": "Read prior **IG Format** milestone data and **Campaign Brief** orientation, then generate Instagram **texts** (`field` + `value`) per slot while preserving plan strategy, dishes, and format assignments.",
+            "criterionPriorIgFormat": "A prior **ig_format** milestone with saved **entries** that include **type** and **menuItems** exists earlier in the workflow.",
+            "criterionSlotCoverage": "Output **entries** slot coverage matches the prior IG Format (same slotKeys, no extras or omissions).",
+            "criterionNonemptyTexts": "Every output entry has a non-empty **texts** array with non-empty **field** and **value** pairs.",
+            "criterionRequiredFields": "Each entry includes all required text **fields** for its format **type** (post, reel, story, or post-carousel with indexed slide fields).",
+            "criterionCampaignBriefAlignment": "Generated copy aligns with **Campaign Brief** tone, messaging, and guardrails used as orientation."
+          },
           "scheduler": {
             "label": "Scheduler",
             "title": "Scheduler",
@@ -1670,6 +1745,7 @@
         "milestonesDeleteError": "Could not delete milestone. Please try again.",
         "milestonesPassCriteriaError": "Could not save pass criteria. Please try again.",
         "milestonesGoalError": "Could not save goal. Please try again.",
+        "milestonesRunChatModelError": "Could not save model selection. Please try again.",
         "milestonesMilestoneDataError": "Could not save milestone data. Please try again.",
         "moveMilestoneUp": "Move milestone up",
         "moveMilestoneDown": "Move milestone down",
@@ -1767,6 +1843,7 @@
         "milestoneSettingsSaving": "Saving…",
         "milestoneSettingsSaveError": "Could not save milestone settings. Please try again.",
         "milestoneRunFixedSkillsFailHint": "Some criteria did not pass. Open Settings and switch to Auto-select skills, or edit the data, then run again.",
+        "milestoneGoalEmpty": "No goal defined.",
         "milestoneGoalPlaceholder": "Describe desired outcome…",
         "milestoneInputUnsupported": "No custom input is configured for this milestone preset.",
         "milestoneDatesInputPickDate": "Pick a date",
@@ -1813,22 +1890,6 @@
         "milestoneCampaignBriefPreviewMeasurementPlan": "Measurement plan",
         "milestoneCampaignBriefPreviewTestingPlan": "Testing plan",
         "milestoneCampaignBriefPreviewRiskGuardrails": "Risk guardrails",
-        "milestoneCampaignBriefPreviewSlotPerformance": "Slot performance",
-        "milestoneCampaignBriefPreviewSlotPerformanceSummary": "Summary",
-        "milestoneCampaignBriefPreviewStrongSlots": "Strong slots",
-        "milestoneCampaignBriefPreviewSlotsNeedingPromotion": "Slots needing promotion",
-        "milestoneCampaignBriefPreviewSlotTableDay": "Day",
-        "milestoneCampaignBriefPreviewSlotTableMealPeriod": "Meal period",
-        "milestoneCampaignBriefPreviewSlotTableDemandIndex": "Demand index",
-        "milestoneCampaignBriefPreviewSlotTableTier": "Tier",
-        "milestoneCampaignBriefPreviewSlotTablePosture": "Posture",
-        "milestoneCampaignBriefPreviewSlotPostureSupport": "Support",
-        "milestoneCampaignBriefPreviewSlotPosturePromote": "Promote",
-        "milestoneCampaignBriefPreviewSlotPostureMaintain": "Maintain",
-        "milestoneCampaignBriefPreviewSlotTierLow": "Below average",
-        "milestoneCampaignBriefPreviewSlotTierAverage": "Average",
-        "milestoneCampaignBriefPreviewSlotTierHigh": "Above average",
-        "milestoneCampaignBriefPreviewHelpSlotPerformance": "Venue slot performance compares order traffic for each day and meal period against the average slot (1.0× = average). Strong slots already draw traffic—support them with hero content. Slots needing promotion are quieter windows where targeted Instagram content can help fill demand.",
         "milestoneCampaignBriefPreviewEmptyList": "No entries yet.",
         "milestoneCampaignBriefPreviewEmptyValue": "Not set",
         "milestoneCampaignBriefPreviewHelpLearnMoreAria": "Learn more: {section}",
@@ -2073,6 +2134,63 @@
         "milestoneIgProfilePreviewValueProp": "Value prop",
         "milestoneIgProfilePreviewCta": "CTA",
         "milestoneIgProfilePreviewTone": "Tone",
+        "milestoneIgPlanPreviewEmptyPlan": "No Instagram slot strategy generated yet. Run the milestone to produce a weekly strategy grid.",
+        "milestoneIgPlanPreviewReportingPeriod": "Reporting period",
+        "milestoneIgPlanPreviewScheduleExplanation": "Schedule strategy",
+        "milestoneIgPlanPreviewEntries": "Weekly slot strategy",
+        "milestoneIgPlanPreviewEmptyEntries": "No strategy entries generated yet.",
+        "milestoneIgPlanPreviewColDay": "Day",
+        "milestoneIgPlanPreviewColTime": "Slot",
+        "milestoneIgPlanPreviewColObjective": "Objective",
+        "milestoneIgPlanPreviewColPillar": "Pillar",
+        "milestoneIgPlanPreviewColMealPeriod": "Meal period",
+        "milestoneIgPlanPreviewColSlotStrategy": "Slot strategy",
+        "milestoneIgPlanPreviewColProductRole": "Product role",
+        "milestoneIgMenuPickerPreviewEmptyPlan": "No menu picks generated yet. Run the milestone after IG Plan to attach dishes to selected slots.",
+        "milestoneIgMenuPickerPreviewReportingPeriod": "Reporting period",
+        "milestoneIgMenuPickerPreviewScheduleExplanation": "Schedule strategy",
+        "milestoneIgMenuPickerPreviewEntries": "Selected slots with menu items",
+        "milestoneIgMenuPickerPreviewEmptyEntries": "No entries with menu items yet.",
+        "milestoneIgMenuPickerPreviewColMenuItems": "Menu items",
+        "milestoneIgMenuPickerPreviewSourceIgPlan": "Source IG Plan",
+        "milestoneIgMenuPickerInputNoPriorIgPlanTitle": "IG Plan required",
+        "milestoneIgMenuPickerInputNoPriorIgPlanBody": "Add and run an IG Plan milestone before this step so slot entries are available to select.",
+        "milestoneIgMenuPickerInputNoEntriesTitle": "No IG Plan entries",
+        "milestoneIgMenuPickerInputNoEntriesBody": "The prior IG Plan milestone has no saved entries. Run IG Plan first, then return here.",
+        "milestoneIgMenuPickerInputEntriesLabel": "IG Plan slots",
+        "milestoneIgMenuPickerInputEntriesDescription": "Choose which weekly slots to attach menu items to. Leave all selected to process every IG Plan entry.",
+        "milestoneIgMenuPickerInputSelectAll": "Select all",
+        "milestoneIgMenuPickerInputClearAll": "Clear all",
+        "milestoneIgMenuPickerInputNotesLabel": "Notes",
+        "milestoneIgMenuPickerInputNotesDescription": "Optional guidance for menu emphasis when picking dishes.",
+        "milestoneIgMenuPickerInputNotesPlaceholder": "e.g. highlight lunch stars on weekdays…",
+        "milestoneIgFormatPreviewEmptyPlan": "No format assignments yet. Run the milestone after IG Menu Picker to assign Instagram formats per slot.",
+        "milestoneIgFormatPreviewReportingPeriod": "Reporting period",
+        "milestoneIgFormatPreviewScheduleExplanation": "Schedule strategy",
+        "milestoneIgFormatPreviewEntries": "Slots with menu items and formats",
+        "milestoneIgFormatPreviewEmptyEntries": "No entries with formats yet.",
+        "milestoneIgFormatPreviewColFormat": "Format",
+        "milestoneIgFormatPreviewSourceIgMenuPicker": "Source IG Menu Picker",
+        "milestoneIgFormatInputNoPriorMenuPickerTitle": "IG Menu Picker required",
+        "milestoneIgFormatInputNoPriorMenuPickerBody": "Add and run an IG Menu Picker milestone before this step so entries with menu items are available.",
+        "milestoneIgFormatInputEntriesLabel": "Menu picker entries",
+        "milestoneIgFormatInputEntriesDescription": "These slots and dishes come from the prior IG Menu Picker milestone. Formats are assigned to all entries when you run this milestone.",
+        "milestoneIgFormatInputNotesLabel": "Notes",
+        "milestoneIgFormatInputNotesDescription": "Optional guidance for format emphasis when assigning reel, post, carousel, or story per slot.",
+        "milestoneIgFormatInputNotesPlaceholder": "e.g. use reels for hero dishes on aggressively_grow slots…",
+        "milestoneIgTextPreviewEmpty": "No text content yet. Run the milestone after IG Format to generate copy per slot.",
+        "milestoneIgTextPreviewSourceIgFormat": "Source IG Format",
+        "milestoneIgTextPreviewSourceCampaignBrief": "Campaign brief (orientation)",
+        "milestoneIgTextPreviewEntries": "Slots with generated text",
+        "milestoneIgTextPreviewEmptyEntries": "No entries with texts yet.",
+        "milestoneIgTextPreviewSlide": "Slide {index}",
+        "milestoneIgTextInputNoPriorFormatTitle": "IG Format required",
+        "milestoneIgTextInputNoPriorFormatBody": "Add and run an IG Format milestone before this step so formatted slots with menu items are available.",
+        "milestoneIgTextInputEntriesLabel": "IG Format entries",
+        "milestoneIgTextInputEntriesDescription": "These slots, formats, and dishes come from the prior IG Format milestone. Text fields are generated for all entries when you run this milestone.",
+        "milestoneIgTextInputNotesLabel": "Notes",
+        "milestoneIgTextInputNotesDescription": "Optional guidance for copy tone and emphasis. Campaign Brief orientation is applied automatically from earlier workflow milestones.",
+        "milestoneIgTextInputNotesPlaceholder": "e.g. short headlines in Bahasa Indonesia; playful CTA on weekend slots…",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
         "milestonePreviewToggle": "Data preview",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",
@@ -2704,7 +2822,7 @@
         "label": "Total"
       },
       "sort": {
-        "hint": "Click a column header to sort. Click again to toggle ascending or descending."
+        "hint": "Click a column header to sort by that hour or day. Click again to reverse; a third click clears the column and sorts items by total units sold."
       },
       "scroll": {
         "hint": "Swipe sideways to see all hours →"

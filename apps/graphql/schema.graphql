@@ -113,29 +113,6 @@ type ComboPairRecommendedWindowType {
   confidenceTier: String!
 }
 
-"""Promo posture for a combo pair's peak window."""
-type ComboPromoPostureType {
-  promoPosture: String!
-  peakDay: String
-  peakMealPeriod: String
-  pairCoOrderIndex: Float
-  venueDemandIndex: Float
-  venueRelativeDemand: String
-  promoReason: String!
-}
-
-"""Venue demand for one day and meal-period slot."""
-type SlotDemandCellType {
-  day: String!
-  mealPeriod: String!
-  mealPeriodLabel: String!
-  mealPeriodHoursLabel: String!
-  orderCount: Int!
-  trafficShare: Float!
-  demandIndex: Float!
-  relativeDemand: String!
-}
-
 """Co-order intensity for one day and meal-period slot."""
 type ComboPairTimingCellType {
   day: String!
@@ -151,6 +128,17 @@ type ComboPairTimingCellType {
 type ComboPairTimingHourType {
   hour: Int!
   coOrderCount: Int!
+}
+
+"""Promo posture for a combo pair's peak window."""
+type ComboPromoPostureType {
+  promoPosture: String!
+  peakDay: String
+  peakMealPeriod: String
+  pairCoOrderIndex: Float
+  venueDemandIndex: Float
+  venueRelativeDemand: String
+  promoReason: String!
 }
 
 """Hourly demand distribution for a menu item."""
@@ -212,6 +200,38 @@ type FundamentalSignalsType {
   sales: FundamentalSalesSignalsType!
   categoryFocus: CategoryFocusType
   trendingItems: [TrendingItemType!]!
+}
+
+"""Options for the IG Plan composite inputs query."""
+input IgPlanInputsOptionsInput {
+  matrixCategories: [String!] = null
+  maxCandidatesPerSlot: Int = null
+  includeLowEnd: Boolean = null
+}
+
+"""
+Composite IG Plan inputs for a location: owner location profile plus latest-run slot demand, menu engineering matrix, and slot menu candidates from one OrderFact load.
+"""
+type IgPlanInputsType {
+  version: Int!
+  location: IgPlanLocationSnapshotType!
+  analyticsRun: LatestAnalyticsRunType
+  slotDemandProfile: [SlotDemandCellType!]!
+  menuEngineeringMatrix: MenuEngineeringMatrixType
+  slotMenuCandidates: SlotMenuCandidatesType
+  coverageNotes: [String!]!
+}
+
+"""Location identity and owner quick profile for IG Plan."""
+type IgPlanLocationSnapshotType {
+  id: ID!
+  name: String!
+  street: String
+  city: String
+  country: String
+  currency: String
+  manualBriefInput: LocationManualBriefInputType
+  openingHours: [OpeningHourType!]!
 }
 
 type ImageAiFlowType {
@@ -478,9 +498,15 @@ type Mutation {
   """
   uploadSalesReport(file: Upload!, locationId: ID!, includeLineItems: Boolean! = false): ExcelUploadResult!
   createNode(locationId: Int!, nodeType: String!, name: String = null, parentId: ID = null, description: String = null, data: JSON = null): NodeType!
+  createPost(title: String = null): PostType!
+  createPostPage(postId: ID!, mediaS3Key: String, prompt: String): PostPageType!
   createWorkflowFromPayload(locationId: Int!, payload: JSON!, analyticsRunId: Int = null): NodeType!
   deleteNode(id: ID!): Boolean!
+  deletePost(id: ID!): Boolean!
+  deletePostPage(pageId: ID!): Boolean!
+  deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
+  updatePostPage(id: ID!, mediaS3Key: String, prompt: String): PostPageType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
   setPassCriteriaStatuses(milestoneId: ID!, locationId: Int!, updates: [PassCriterionStatusInput!]!): Boolean!
@@ -602,6 +628,39 @@ type PeriodHeadlineType {
   totalRevenue: Float!
   previousPeriodTotalRevenue: Float!
   revenueVsPreviousPct: Float
+}
+
+"""A single generated image version for a post page."""
+type PostPageMediaVersionType {
+  id: ID!
+  mediaS3Key: String!
+  prompt: String
+  createdAt: DateTime
+}
+
+"""A single page/slide within an Instagram post."""
+type PostPageType {
+  id: ID!
+  sortOrder: Int!
+  mediaS3Key: String
+  prompt: String
+  mediaVersions: [PostPageMediaVersionType!]!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""A standalone Instagram post draft or published post."""
+type PostType {
+  id: ID!
+  title: String
+  status: String!
+  caption: String
+  mediaType: String
+  locationId: Int
+  workspaceId: ID
+  pages: [PostPageType!]!
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 
 """
@@ -746,8 +805,19 @@ type Query {
   Top star and puzzle menu items derived from menu engineering. Each element in `starItems` / `puzzleItems` is an object with `menu`, `quantity` (units sold in the bucket), and `popularity` (share of bucket quantity, 0–1). When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` and `puzzleItems`. Optional `maxStarItems` / `maxPuzzleItems` default to 5 and 10; pass 0 or a negative value for unlimited. Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`.
   """
   promotionEngineeringCandidates(analyticsRunId: ID!, locationId: ID = null, maxStarItems: Int = null, maxPuzzleItems: Int = null): JSON
+
+  """
+  Rank menu promotion candidates per venue slot (day × meal_period). Combines slot demand profile, per-slot order-line sales, and global menu engineering classification. Returns null when the run has no order facts. When COGS are missing, matrixAvailable is false and candidates are ranked by slot sales only. When locationId is set, the run must belong to that location (otherwise returns null).
+  """
+  slotMenuCandidates(analyticsRunId: ID!, locationId: ID = null, options: SlotMenuCandidatesOptionsInput = null): SlotMenuCandidatesType
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
   operatingProfile(locationId: ID!, analyticsRunId: ID!): OperatingProfileType
+
+  """Posts in workspaces the current user belongs to, newest first."""
+  posts(first: Int = null): [PostType!]!
+
+  """A single post in the caller's workspace, with pages."""
+  post(id: ID!): PostType
 
   """
   Composite Instagram signals for an analytics run: content heroes, trending items, avoid list, category focus, best posting window, and period headline. Requires order facts; returns null if none.
@@ -777,6 +847,11 @@ type Query {
   workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
   imageAiFlows(includeInactive: Boolean! = false): [ImageAiFlowType!]!
   imageAiFlow(slug: String!): ImageAiFlowType
+
+  """
+  Return location profile and latest analytics-run inputs for IG Plan in one request. Uses a single OrderFact load for slot demand, menu engineering matrix, and slot menu candidates. Returns null when the caller cannot access the location.
+  """
+  igPlanInputs(locationId: Int!, analyticsRunId: ID, options: IgPlanInputsOptionsInput = null): IgPlanInputsType
 }
 
 """Per-menu revenue comparison between two analytics periods."""
@@ -801,6 +876,75 @@ type RevenueTrendsPayloadType {
 type SignalConfidenceType {
   tier: String!
   coverageNotes: [String!]!
+}
+
+"""Venue demand for one day and meal-period slot."""
+type SlotDemandCellType {
+  day: String!
+  mealPeriod: String!
+  mealPeriodLabel: String!
+  mealPeriodHoursLabel: String!
+  orderCount: Int!
+  trafficShare: Float!
+  demandIndex: Float!
+  relativeDemand: String!
+}
+
+"""
+A ranked menu item suitable for Instagram promotion in a specific day × meal-period slot.
+"""
+type SlotMenuCandidateItemType {
+  menu: String!
+  globalCategory: String
+  globalAction: String
+  slotQuantity: Int!
+  slotShare: Float!
+  slotAffinity: Float!
+  slotRevenue: Float
+  contributionMargin: Float
+  contributionMarginPercentage: Float
+  menuCategory: String
+  menuCategoryDetail: String
+  rank: Int!
+  score: Float!
+  recommendedUse: String!
+}
+
+"""
+Promotion candidates and venue demand metadata for one day × meal-period slot.
+"""
+type SlotMenuCandidatesCellType {
+  day: String!
+  mealPeriod: String!
+  mealPeriodLabel: String!
+  mealPeriodHoursLabel: String!
+  orderCount: Int!
+  demandIndex: Float!
+  relativeDemand: String!
+  posture: String!
+  recommendedCategories: [String!]!
+  totalItemQuantity: Int!
+  insufficientData: Boolean!
+  candidates: [SlotMenuCandidateItemType!]!
+}
+
+"""Options for per-slot menu promotion candidate ranking and filtering."""
+input SlotMenuCandidatesOptionsInput {
+  maxCandidatesPerSlot: Int = null
+  minVenueOrdersInSlot: Int = null
+  minItemQtyInSlot: Int = null
+  includeLowEnd: Boolean = null
+  slotsFilter: String = null
+}
+
+"""
+Per-slot menu promotion candidates for an analytics run, combining venue slot demand, per-slot sales, and global menu engineering classification.
+"""
+type SlotMenuCandidatesType {
+  reportingPeriod: String!
+  matrixAvailable: Boolean!
+  coverageNotes: [String!]!
+  slots: [SlotMenuCandidatesCellType!]!
 }
 
 """A menu item with rising revenue vs the prior period."""

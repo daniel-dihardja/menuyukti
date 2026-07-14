@@ -130,6 +130,7 @@ async def iter_milestone_run_sse_lines(
     milestone_data: dict[str, Any] | list[Any] | None = None,
     traceparent: str | None = None,
     chat_gateway_model: str | None = None,
+    analytics_run_id: str | None = None,
 ) -> AsyncIterator[str]:
     """Stream Server-Sent Event lines: run_id, custom step payloads, then a final ``done`` object."""
     run_id = str(uuid.uuid4())
@@ -181,6 +182,8 @@ async def iter_milestone_run_sse_lines(
         initial["traceparent"] = traceparent
     if chat_gateway_model:
         initial["chat_gateway_model"] = chat_gateway_model
+    if isinstance(analytics_run_id, str) and analytics_run_id.strip():
+        initial["analytics_run_id"] = analytics_run_id.strip()
 
     final_state: dict[str, Any] | None = None
     timeline: list[dict[str, Any]] = []

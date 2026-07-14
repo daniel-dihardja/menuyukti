@@ -18,7 +18,7 @@ export default async function Page() {
     <AnalyticsPageShell
       title={tIgStories('title')}
       breadcrumbs={[
-        { label: tSidebar('content'), href: routes.content.photos },
+        { label: tSidebar('media'), href: routes.media },
         { label: tSidebar('igStories'), href: routes.content.igStories },
       ]}
       contentWidth="full"

@@ -75,6 +75,30 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
       'Generate Instagram username options and bio variations aligned with brand, audience, and campaign objective from the Campaign Brief.',
   },
   {
+    id: 'ig_plan',
+    name: 'IG Plan',
+    description:
+      'Read prior Campaign Brief strategy together with venue slot demand signals and menu engineering portfolio distribution from the workflow-pinned analytics run, then build a weekly slot strategy grid (objectives, pillars, slotStrategy, productRole). Strategy only — no dish names or formats.',
+  },
+  {
+    id: 'ig_menu_picker',
+    name: 'IG Menu Picker',
+    description:
+      'Read prior IG Plan entries, fetch slot menu candidates from the workflow-pinned sales report, and attach 1–3 menu items per selected slot.',
+  },
+  {
+    id: 'ig_format',
+    name: 'IG Format',
+    description:
+      'Read prior IG Menu Picker entries with menu items and assign an Instagram format (reel, post, post-carousel, or story) per slot with a short rationale.',
+  },
+  {
+    id: 'ig_text',
+    name: 'IG Text',
+    description:
+      'Read prior IG Format entries and Campaign Brief orientation, then generate Instagram copy as texts per slot while preserving plan strategy, dishes, and format assignments.',
+  },
+  {
     id: 'scheduler',
     name: 'Scheduler',
     description:

@@ -25,6 +25,8 @@ class MilestoneRunState(TypedDict):
     criteria: list[dict[str, str]]
     # JSON text: prior milestones' milestonedata rows (empty if no workflow_id or no earlier milestones).
     prior_milestones_data: str
+    # Workflow-pinned sales report id from workflow.data.analyticsRunId (optional).
+    analytics_run_id: NotRequired[str | None]
     # Milestone preset id from milestone node data (dedicated graph dispatch key).
     preset_id: str
     # Written by agent tools / graph merge

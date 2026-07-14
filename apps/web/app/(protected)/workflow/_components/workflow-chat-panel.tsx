@@ -16,17 +16,16 @@ import {
   useLayoutEffect,
   useMemo,
   useReducer,
-  useRef,
   useState,
   useTransition,
 } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { parseAsString, useQueryState } from 'nuqs'
 import { PanelRight } from 'lucide-react'
 
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type { TimelineMilestone } from './timeline-workspace'
+import type { MilestoneInput } from './timeline/types'
 import { TimelineWorkspace } from './timeline-workspace'
 import { WorkflowChatLayout } from './workflow-chat-layout'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
@@ -128,39 +127,22 @@ export function WorkflowChatPanel({
   })
 
   const [selectedMilestoneId, setSelectedMilestoneId] = useQueryState('milestone', parseAsString)
-  const searchParams = useSearchParams()
-
-  const milestonesRef = useRef(milestoneUi.milestones)
-  const selectedIdRef = useRef(selectedMilestoneId)
-  milestonesRef.current = milestoneUi.milestones
-  selectedIdRef.current = selectedMilestoneId
 
   useEffect(() => {
     const milestones = milestoneUi.milestones
     if (milestones.length === 0) {
+      if (selectedMilestoneId !== null) {
+        void setSelectedMilestoneId(null)
+      }
+      return
+    }
+    if (
+      selectedMilestoneId !== null &&
+      !milestones.some((milestone) => milestone.id === selectedMilestoneId)
+    ) {
       void setSelectedMilestoneId(null)
-      return
     }
-    if (selectedMilestoneId !== null && milestones.some((m) => m.id === selectedMilestoneId)) {
-      return
-    }
-    const frame = requestAnimationFrame(() => {
-      const m = milestonesRef.current
-      const s = selectedIdRef.current
-      if (m.length === 0) {
-        return
-      }
-      if (s !== null && m.some((x) => x.id === s)) {
-        return
-      }
-      const fromUrl = searchParams.get('milestone')
-      if (fromUrl !== null && fromUrl !== '' && m.some((x) => x.id === fromUrl)) {
-        return
-      }
-      void setSelectedMilestoneId(m[0]?.id ?? null)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [milestoneUi.milestones, searchParams, selectedMilestoneId, setSelectedMilestoneId])
+  }, [milestoneUi.milestones, selectedMilestoneId, setSelectedMilestoneId])
 
   const handleSelectMilestone = useCallback(
     (id: string | null) => {
@@ -170,9 +152,13 @@ export function WorkflowChatPanel({
   )
 
   const handleRunMilestone = useCallback(
-    async (milestoneId: string, chatModel?: ChatGatewayModelId) => {
+    async (
+      milestoneId: string,
+      chatModel?: ChatGatewayModelId,
+      runOptions?: { milestoneInput?: MilestoneInput },
+    ) => {
       void setSelectedMilestoneId(milestoneId)
-      await ops.handleRunMilestone(milestoneId, chatModel)
+      await ops.handleRunMilestone(milestoneId, chatModel, runOptions)
     },
     [ops, setSelectedMilestoneId],
   )

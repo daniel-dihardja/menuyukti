@@ -90,6 +90,20 @@ def collect_matched_prior_rows(
                 matched_ids.append("menu_tagger")
                 break
 
+    if "ig_plan" in wanted and "ig_plan" not in matched_ids:
+        for row in rows:
+            data = row.get("data")
+            if isinstance(data, dict) and is_ig_plan_milestone_data(data):
+                matched.append(
+                    {
+                        "title": row.get("title"),
+                        "presetId": row.get("presetId"),
+                        "data": data,
+                    }
+                )
+                matched_ids.append("ig_plan")
+                break
+
     return matched, matched_ids
 
 
@@ -247,6 +261,233 @@ def extract_promotion_candidates_data(prior_milestones_json: str) -> dict[str, A
         if promotion_candidates_has_items(data):
             return data
     return candidates[-1]
+
+
+def is_ig_plan_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    entries = data.get("entries")
+    return isinstance(entries, list)
+
+
+def ig_plan_has_entries(data: dict[str, Any]) -> bool:
+    entries = data.get("entries")
+    if not isinstance(entries, list):
+        return False
+    for raw in entries:
+        if not isinstance(raw, dict):
+            continue
+        if str(raw.get("slotKey") or "").strip():
+            return True
+    return False
+
+
+def extract_ig_plan_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the best matched prior ig_plan row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"ig_plan"}))
+    if not matched:
+        return None
+    for row in reversed(matched):
+        data = row.get("data")
+        if isinstance(data, dict) and ig_plan_has_entries(data):
+            return row
+    return matched[-1]
+
+
+def extract_ig_plan_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return ig_plan ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_ig_plan_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_ig_plan_milestone_data(data):
+        return data
+    return None
+
+
+def ig_plan_prior_error_message(
+    prior_milestones_json: str, *, milestone_id: str = "ig_menu_picker"
+) -> str:
+    """Actionable error when ig_menu_picker cannot read prior ig_plan data."""
+    base = f"{milestone_id} requires a prior ig_plan milestone with saved entries"
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place ig_plan before ig_menu_picker in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_ig_plan_preset = any(
+        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "ig_plan"
+        for row in rows
+    )
+    if not has_ig_plan_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add an ig_plan step before ig_menu_picker, run it successfully, "
+            "then run ig_menu_picker again."
+        )
+    return (
+        f"{base}. An ig_plan milestone appears earlier in the workflow "
+        "but its saved preset data is missing or has no entries — open that step, "
+        "confirm the Data tab shows weekly slot strategy entries, and re-run ig_plan."
+    )
+
+
+def ig_menu_picker_has_entries(data: dict[str, Any]) -> bool:
+    entries = data.get("entries")
+    if not isinstance(entries, list):
+        return False
+    for raw in entries:
+        if not isinstance(raw, dict):
+            continue
+        slot_key = str(raw.get("slotKey") or "").strip()
+        menu_items = raw.get("menuItems")
+        if slot_key and isinstance(menu_items, list) and len(menu_items) > 0:
+            return True
+    return False
+
+
+def extract_ig_menu_picker_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the best matched prior ig_menu_picker row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"ig_menu_picker"}))
+    if not matched:
+        return None
+    for row in reversed(matched):
+        data = row.get("data")
+        if isinstance(data, dict) and ig_menu_picker_has_entries(data):
+            return row
+    return matched[-1]
+
+
+def extract_ig_menu_picker_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return ig_menu_picker ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_ig_menu_picker_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and ig_menu_picker_has_entries(data):
+        return data
+    return None
+
+
+def is_ig_format_milestone_data(data: dict[str, Any]) -> bool:
+    entries = data.get("entries")
+    if not isinstance(entries, list):
+        return False
+    return any(
+        isinstance(row, dict) and "menuItems" in row and "type" in row for row in entries
+    )
+
+
+def ig_format_has_entries(data: dict[str, Any]) -> bool:
+    entries = data.get("entries")
+    if not isinstance(entries, list):
+        return False
+    for raw in entries:
+        if not isinstance(raw, dict):
+            continue
+        slot_key = str(raw.get("slotKey") or "").strip()
+        menu_items = raw.get("menuItems")
+        fmt_type = str(raw.get("type") or "").strip()
+        if slot_key and fmt_type and isinstance(menu_items, list) and len(menu_items) > 0:
+            return True
+    return False
+
+
+def extract_ig_format_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the best matched prior ig_format row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"ig_format"}))
+    if not matched:
+        return None
+    for row in reversed(matched):
+        data = row.get("data")
+        if isinstance(data, dict) and ig_format_has_entries(data):
+            return row
+    return matched[-1]
+
+
+def extract_ig_format_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return ig_format ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_ig_format_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and ig_format_has_entries(data):
+        return data
+    return None
+
+
+def ig_format_prior_error_message(
+    prior_milestones_json: str, *, milestone_id: str = "ig_text"
+) -> str:
+    """Actionable error when ig_text cannot read prior ig_format data."""
+    base = (
+        f"{milestone_id} requires a prior ig_format milestone with saved entries "
+        "that include menuItems and type"
+    )
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place ig_format before ig_text in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_format_preset = any(
+        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "ig_format"
+        for row in rows
+    )
+    if not has_format_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add an ig_format step before ig_text, run it successfully, "
+            "then run ig_text again."
+        )
+    return (
+        f"{base}. An ig_format milestone appears earlier in the workflow "
+        "but its saved preset data is missing or has no entries with menuItems and type — "
+        "open that step, confirm the Data tab shows formatted slots, and re-run ig_format."
+    )
+
+
+def ig_menu_picker_prior_error_message(
+    prior_milestones_json: str, *, milestone_id: str = "ig_format"
+) -> str:
+    """Actionable error when ig_format cannot read prior ig_menu_picker data."""
+    base = (
+        f"{milestone_id} requires a prior ig_menu_picker milestone with saved entries "
+        "that include menuItems"
+    )
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place ig_menu_picker before ig_format in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_menu_picker_preset = any(
+        isinstance((preset_id := row.get("presetId")), str)
+        and preset_id.strip() == "ig_menu_picker"
+        for row in rows
+    )
+    if not has_menu_picker_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add an ig_menu_picker step before ig_format, run it successfully, "
+            "then run ig_format again."
+        )
+    return (
+        f"{base}. An ig_menu_picker milestone appears earlier in the workflow "
+        "but its saved preset data is missing or has no entries with menuItems — "
+        "open that step, confirm the Data tab shows slots with dishes, and re-run "
+        "ig_menu_picker."
+    )
 
 
 def promotion_candidates_prior_error_message(prior_milestones_json: str) -> str:

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   computeColumnTotals,
+  computeRowTotal,
   computeScaleBounds,
   findPeakColumnIndex,
   findTopRowByTotal,
@@ -12,6 +13,13 @@ const sampleRows: HeatmapInsightRow[] = [
   { key: 'a', label: 'Burger', values: [2, 1, 1] },
   { key: 'b', label: 'Fries', values: [0, 3, 4] },
 ]
+
+describe('computeRowTotal', () => {
+  it('sums all values in a row', () => {
+    expect(computeRowTotal(sampleRows[0]!)).toBe(4)
+    expect(computeRowTotal(sampleRows[1]!)).toBe(7)
+  })
+})
 
 describe('computeColumnTotals', () => {
   it('sums values per column', () => {

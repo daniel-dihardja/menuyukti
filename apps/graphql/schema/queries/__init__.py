@@ -1,6 +1,7 @@
 from .analytics_bundle import AnalyticsBundleQuery
 from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
+from .ig_plan_inputs import IgPlanInputsQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .latest_analytics_run_signals import LatestAnalyticsRunWithSignalsQuery
@@ -18,6 +19,7 @@ from .promotion_engineering_candidates import PromotionEngineeringCandidatesQuer
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
 from .revenue_trends import RevenueTrendsQuery
+from .slot_menu_candidates import SlotMenuCandidatesQuery
 from .weekly_demand_pattern import WeeklyDemandPatternQuery
 from .workflow_campaign_tree import WorkflowCampaignTreeQuery
 from .workspace import WorkspaceQuery
@@ -28,6 +30,7 @@ __all__ = [
     "LatestAnalyticsRunWithSignalsQuery",
     "WorkflowCampaignTreeQuery",
     "CategoryMixQuery",
+    "IgPlanInputsQuery",
     "ImageAiFlowsQuery",
     "InstagramSignalsQuery",
     "LocationsQuery",
@@ -39,6 +42,7 @@ __all__ = [
     "MenuHeatmapsQuery",
     "PromotionMenuItemsQuery",
     "PromotionEngineeringCandidatesQuery",
+    "SlotMenuCandidatesQuery",
     "PublicHolidaysQuery",
     "NodesQuery",
     "OperatingProfileQuery",

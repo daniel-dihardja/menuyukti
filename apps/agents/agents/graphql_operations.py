@@ -311,16 +311,6 @@ query LatestAnalyticsRunWithSignals($locationId: Int!) {
         }
       }
     }
-    slotDemandProfile {
-      day
-      mealPeriod
-      mealPeriodLabel
-      mealPeriodHoursLabel
-      orderCount
-      trafficShare
-      demandIndex
-      relativeDemand
-    }
   }
 }
 """
@@ -338,6 +328,186 @@ query PromotionEngineeringCandidates(
     maxStarItems: $maxStarItems
     maxPuzzleItems: $maxPuzzleItems
   )
+}
+"""
+
+MENU_ENGINEERING_MATRIX_QUERY = """
+query MenuEngineeringMatrix(
+  $analyticsRunId: ID!
+  $locationId: ID
+  $categories: [String!]
+) {
+  menuEngineeringMatrix(
+    analyticsRunId: $analyticsRunId
+    locationId: $locationId
+    categories: $categories
+  ) {
+    thresholds {
+      avgPopularity
+      avgContributionMargin
+      totalCogs
+      totalProfit
+      totalMargin
+    }
+    distribution {
+      category
+      itemCount
+      itemShare
+      marginShare
+    }
+    items {
+      menu
+      quantity
+      totalRevenue
+      contributionMargin
+      contributionMarginPercentage
+      weValue
+      category
+      action
+      menuCategory
+      menuCategoryDetail
+    }
+  }
+}
+"""
+
+SLOT_MENU_CANDIDATES_QUERY = """
+query SlotMenuCandidates(
+  $analyticsRunId: ID!
+  $locationId: ID
+  $options: SlotMenuCandidatesOptionsInput
+) {
+  slotMenuCandidates(
+    analyticsRunId: $analyticsRunId
+    locationId: $locationId
+    options: $options
+  ) {
+    reportingPeriod
+    matrixAvailable
+    coverageNotes
+    slots {
+      day
+      mealPeriod
+      mealPeriodLabel
+      mealPeriodHoursLabel
+      orderCount
+      demandIndex
+      relativeDemand
+      posture
+      recommendedCategories
+      totalItemQuantity
+      insufficientData
+      candidates {
+        menu
+        globalCategory
+        globalAction
+        slotQuantity
+        slotShare
+        slotAffinity
+        recommendedUse
+        rank
+        score
+        menuCategory
+      }
+    }
+  }
+}
+"""
+
+IG_PLAN_INPUTS_QUERY = """
+query IgPlanInputs($locationId: Int!, $analyticsRunId: ID, $options: IgPlanInputsOptionsInput) {
+  igPlanInputs(locationId: $locationId, analyticsRunId: $analyticsRunId, options: $options) {
+    version
+    coverageNotes
+    location {
+      id
+      name
+      street
+      city
+      country
+      currency
+      openingHours {
+        dayOfWeek
+        openTime
+        closeTime
+      }
+      manualBriefInput {
+        locationId
+        quickProfile
+      }
+    }
+    analyticsRun {
+      id
+      name
+    }
+    slotDemandProfile {
+      day
+      mealPeriod
+      mealPeriodLabel
+      mealPeriodHoursLabel
+      orderCount
+      trafficShare
+      demandIndex
+      relativeDemand
+    }
+    menuEngineeringMatrix {
+      thresholds {
+        avgPopularity
+        avgContributionMargin
+        totalCogs
+        totalProfit
+        totalMargin
+      }
+      distribution {
+        category
+        itemCount
+        itemShare
+        marginShare
+      }
+      items {
+        menu
+        quantity
+        totalRevenue
+        contributionMargin
+        contributionMarginPercentage
+        weValue
+        category
+        action
+        menuCategory
+        menuCategoryDetail
+      }
+    }
+    slotMenuCandidates {
+      reportingPeriod
+      matrixAvailable
+      coverageNotes
+      slots {
+        day
+        mealPeriod
+        mealPeriodLabel
+        mealPeriodHoursLabel
+        orderCount
+        demandIndex
+        relativeDemand
+        posture
+        recommendedCategories
+        totalItemQuantity
+        insufficientData
+        candidates {
+          menu
+          globalCategory
+          globalAction
+          slotQuantity
+          slotShare
+          slotAffinity
+          recommendedUse
+          rank
+          score
+          menuCategory
+        }
+      }
+    }
+  }
 }
 """
 

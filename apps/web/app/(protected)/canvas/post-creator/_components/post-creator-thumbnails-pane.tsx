@@ -3,6 +3,7 @@
 import { ImageIcon, Plus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -36,8 +37,11 @@ export type PostCreatorThumbnailsPaneProps = {
   selectedPageId: string | null
   onSelectPage: (pageId: string) => void
   onAddPage?: () => void
+  onDuplicatePage?: () => void
   canAddPage?: boolean
+  canDuplicatePage?: boolean
   isAddingPage?: boolean
+  isDuplicatingPage?: boolean
   isLoading?: boolean
 }
 
@@ -46,8 +50,11 @@ export function PostCreatorThumbnailsPane({
   selectedPageId,
   onSelectPage,
   onAddPage,
+  onDuplicatePage,
   canAddPage = false,
+  canDuplicatePage = false,
   isAddingPage = false,
+  isDuplicatingPage = false,
   isLoading = false,
 }: PostCreatorThumbnailsPaneProps) {
   const t = useTranslations('postCreator.thumbnails')
@@ -114,11 +121,11 @@ export function PostCreatorThumbnailsPane({
         )
       })}
       {onAddPage ? (
-        <div className="flex shrink-0 justify-center pt-1">
+        <div className="flex shrink-0 flex-col items-center gap-2 pt-1">
           <button
             type="button"
             aria-label={isAddingPage ? t('addingPage') : t('addPage')}
-            disabled={!canAddPage || isAddingPage || isLoading}
+            disabled={!canAddPage || isAddingPage || isDuplicatingPage || isLoading}
             onClick={onAddPage}
             className={cn(
               'flex size-10 items-center justify-center rounded-full border border-dashed border-border/60 bg-muted/20 text-muted-foreground transition-colors',
@@ -129,6 +136,25 @@ export function PostCreatorThumbnailsPane({
           >
             {isAddingPage ? <Spinner /> : <Plus aria-hidden className="size-5" />}
           </button>
+          {onDuplicatePage ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs"
+              disabled={!canDuplicatePage || isAddingPage || isDuplicatingPage || isLoading}
+              onClick={onDuplicatePage}
+            >
+              {isDuplicatingPage ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Spinner />
+                  {t('duplicatingPage')}
+                </span>
+              ) : (
+                t('duplicatePage')
+              )}
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </section>
