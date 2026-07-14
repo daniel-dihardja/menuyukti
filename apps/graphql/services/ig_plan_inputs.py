@@ -31,6 +31,13 @@ class IgPlanInputsOptions:
 
 
 @dataclass
+class IgPlanOpeningHour:
+    day_of_week: str
+    open_time: str
+    close_time: str
+
+
+@dataclass
 class IgPlanLocationSnapshot:
     id: int
     name: str
@@ -40,6 +47,7 @@ class IgPlanLocationSnapshot:
     currency: str | None
     manual_brief_location_id: int
     quick_profile: dict[str, Any]
+    opening_hours: list[IgPlanOpeningHour] = field(default_factory=list)
 
 
 @dataclass
@@ -106,6 +114,14 @@ def build_ig_plan_inputs(
         currency=location_row.currency,
         manual_brief_location_id=manual.location_id,
         quick_profile=quick_profile,
+        opening_hours=[
+            IgPlanOpeningHour(
+                day_of_week=hour.day_of_week,
+                open_time=hour.open_time.strftime("%H:%M"),
+                close_time=hour.close_time.strftime("%H:%M"),
+            )
+            for hour in location_row.opening_hours
+        ],
     )
 
     coverage_notes: list[str] = []

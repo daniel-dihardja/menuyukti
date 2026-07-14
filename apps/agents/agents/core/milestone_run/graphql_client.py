@@ -178,6 +178,23 @@ class IgPlanInputsFetchResult(TypedDict):
 def _location_snapshot_to_raw(location: dict[str, Any]) -> dict[str, Any]:
     manual = location.get("manualBriefInput")
     manual_dict = manual if isinstance(manual, dict) else None
+    opening_hours_raw = location.get("openingHours")
+    opening_hours: list[dict[str, str]] = []
+    if isinstance(opening_hours_raw, list):
+        for row in opening_hours_raw:
+            if not isinstance(row, dict):
+                continue
+            day = str(row.get("dayOfWeek") or "").strip()
+            open_time = str(row.get("openTime") or "").strip()
+            close_time = str(row.get("closeTime") or "").strip()
+            if day and open_time and close_time:
+                opening_hours.append(
+                    {
+                        "dayOfWeek": day,
+                        "openTime": open_time,
+                        "closeTime": close_time,
+                    }
+                )
     return {
         "id": location.get("id"),
         "name": location.get("name"),
@@ -186,6 +203,7 @@ def _location_snapshot_to_raw(location: dict[str, Any]) -> dict[str, Any]:
         "country": location.get("country"),
         "currency": location.get("currency"),
         "manualBriefInput": manual_dict,
+        "openingHours": opening_hours,
     }
 
 

@@ -131,7 +131,8 @@ const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
 }
 
 const EMPTY_IG_PLAN_DATA: MilestonedataValue = {
-  planMarkdown: '',
+  scheduleExplanation: '',
+  entries: [],
   sourceAnalyticsRunId: '',
   reportingPeriod: '',
 }

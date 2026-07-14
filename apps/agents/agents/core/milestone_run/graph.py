@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from functools import partial
 from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
+from agents_app.agents.core.milestone_eval.ig_plan_eval import enrich_ig_plan_eval_payload
+from agents_app.agents.core.milestone_eval.ig_profile_eval import parse_milestone_data_from_eval_raw
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.campaign_brief.graph import build_campaign_brief_graph
 from agents_app.agents.core.milestone_run.culture_hooks.graph import build_culture_hooks_graph
@@ -95,6 +98,28 @@ def _base_initial(state: MilestoneRunState) -> dict[str, Any]:
     if isinstance(tp, str) and tp.strip():
         initial["traceparent"] = tp.strip()
     return initial
+
+
+def _resolve_eval_raw_data(state: MilestoneRunState) -> str:
+    """Prefer structured milestone JSON for eval; avoid narrative result_data summaries."""
+    raw = str(state.get("raw_data") or "").strip()
+    if parse_milestone_data_from_eval_raw(raw) is not None:
+        return raw
+
+    preset_id = str(state.get("preset_id") or "").strip()
+    milestone_data = state.get("milestone_data")
+    if (
+        preset_id == "ig_plan"
+        and isinstance(milestone_data, dict)
+        and isinstance(milestone_data.get("entries"), list)
+    ):
+        return json.dumps(
+            enrich_ig_plan_eval_payload(milestone_data),
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    return str(state.get("result_data") or "")
 
 
 async def _run_campaign_brief(
@@ -308,9 +333,10 @@ async def _run_ig_plan(state: MilestoneRunState, *, client: httpx.AsyncClient) -
         _base_initial(state),
         state=state,
     )
+    eval_raw = final_sub.get("raw_data") or final_sub.get("result_data") or state.get("raw_data")
     return {
         "result_data": str(final_sub.get("result_data", "")),
-        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "raw_data": str(eval_raw or ""),
         "milestone_data": final_sub.get("milestone_data"),
         "milestonedata_written": bool(final_sub.get("milestonedata_written")),
         "result_summary": str(state.get("result_summary", "")),
@@ -425,7 +451,7 @@ async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient)
         "location_id": int(state["location_id"]),
         "user_id": str(state["user_id"]),
         "goal": str(state.get("goal", "")),
-        "raw_data": str(state.get("raw_data") or state.get("result_data") or ""),
+        "raw_data": _resolve_eval_raw_data(state),
         "criteria": list(state.get("criteria") or []),
         "preset_id": str(state.get("preset_id") or "").strip(),
         "evaluated": [],

@@ -55,9 +55,11 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "and three bio variations — aligned with brand, audience, and campaign objective."
     ),
     "ig_plan": (
-        "Fetch location profile, venue slot strength, menu engineering matrix (star, plow horse, "
-        "puzzle), and per-slot promotion candidates from the latest analytics run, then generate a "
-        "weekly Instagram schedule with demand-based timing and analytics-grounded dish promotion."
+        "Fetch location profile, venue slot demand signals, and menu engineering portfolio "
+        "distribution from the latest analytics run, then generate a weekly slot strategy grid. "
+        "Classify each meal period by marketing opportunity (maintain, support, grow, "
+        "aggressively_grow), then assign objectives, content pillars, and product roles — "
+        "without selecting specific menu items."
     ),
     "scheduler": (
         "Reads the campaign window from dates, business strategy from Campaign Brief, and "

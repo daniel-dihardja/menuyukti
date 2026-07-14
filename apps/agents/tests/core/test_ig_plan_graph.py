@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.ig_plan.nodes import (
+    IgPlanDraftOutput,
+    IgPlanEntryDraft,
     fetch_and_prepare,
     generate_plan_with_llm,
+    persist_result,
 )
 from agents_app.agents.core.milestone_run.ig_plan.prompts import (
     IG_PLAN_SYSTEM,
@@ -119,15 +123,26 @@ def _slot_candidates_fixture() -> dict:
     }
 
 
+def _valid_ig_plan_entry() -> dict:
+    return {
+        "day": "wednesday",
+        "slot": "14:30",
+        "objective": "Increase afternoon traffic",
+        "pillar": "hero",
+        "mealPeriod": "afternoon",
+        "productRole": "puzzle",
+        "slotStrategy": "aggressively_grow",
+        "slotKey": "wednesday-afternoon",
+    }
+
+
 def _valid_ig_plan_payload() -> dict:
     return {
-        "planMarkdown": (
-            "## Weekly cadence\n\n"
-            "3 posts, 2 reels, 4 stories per week.\n\n"
-            "## Weekly content plan\n\n"
-            "| Day | Time | Format | Menu |\n"
-            "| monday | 11:30 | reel | Margherita Pizza |\n"
+        "scheduleExplanation": (
+            "Allocate hero pushes to weak afternoon and evening slots; use lighter "
+            "reminder pillars on strong lunch periods."
         ),
+        "entries": [_valid_ig_plan_entry()],
         "sourceAnalyticsRunId": "42",
         "reportingPeriod": "2025-01-01 to 2025-03-31",
     }
@@ -138,13 +153,14 @@ async def test_routing_ig_plan_uses_dedicated_graph_path() -> None:
     client = MagicMock(spec=AsyncMock)
     mock_eval = MagicMock()
     mock_eval.astream = _fake_eval_astream
+    payload = _valid_ig_plan_payload()
 
     async def _fake_ig_plan_astream(*_a: object, **_k: object):
         yield (
             "values",
             {
-                "result_data": _valid_ig_plan_payload()["planMarkdown"],
-                "milestone_data": _valid_ig_plan_payload(),
+                "result_data": payload["scheduleExplanation"],
+                "milestone_data": payload,
                 "milestonedata_written": True,
             },
         )
@@ -208,12 +224,39 @@ def test_output_schema_valid_ig_plan_payload() -> None:
     normalized, error = validate_skill_output("ig_plan", _valid_ig_plan_payload())
     assert error is None
     assert isinstance(normalized, dict)
-    assert "Weekly cadence" in normalized["planMarkdown"]
+    assert normalized["scheduleExplanation"].startswith("Allocate hero pushes")
+    assert len(normalized["entries"]) == 1
+    assert normalized["entries"][0]["slotKey"] == "wednesday-afternoon"
+    assert normalized["entries"][0]["slotStrategy"] == "aggressively_grow"
 
 
-def test_output_schema_rejects_empty_plan_markdown() -> None:
+def test_output_schema_rejects_empty_schedule_explanation() -> None:
     payload = _valid_ig_plan_payload()
-    payload["planMarkdown"] = "   "
+    payload["scheduleExplanation"] = "   "
+    normalized, error = validate_skill_output("ig_plan", payload)
+    assert normalized is None
+    assert error is not None
+
+
+def test_output_schema_rejects_empty_entries() -> None:
+    payload = _valid_ig_plan_payload()
+    payload["entries"] = []
+    normalized, error = validate_skill_output("ig_plan", payload)
+    assert normalized is None
+    assert error is not None
+
+
+def test_output_schema_rejects_invalid_slot_time() -> None:
+    payload = _valid_ig_plan_payload()
+    payload["entries"][0]["slot"] = "9:30"
+    normalized, error = validate_skill_output("ig_plan", payload)
+    assert normalized is None
+    assert error is not None
+
+
+def test_output_schema_rejects_invalid_day() -> None:
+    payload = _valid_ig_plan_payload()
+    payload["entries"][0]["day"] = "mon"
     normalized, error = validate_skill_output("ig_plan", payload)
     assert normalized is None
     assert error is not None
@@ -237,6 +280,18 @@ def _ig_plan_fetch_fixture() -> dict:
             "city": "Milan",
             "country": "IT",
             "currency": "EUR",
+            "openingHours": [
+                {
+                    "dayOfWeek": "monday",
+                    "openTime": "11:00",
+                    "closeTime": "22:00",
+                },
+                {
+                    "dayOfWeek": "tuesday",
+                    "openTime": "11:00",
+                    "closeTime": "22:00",
+                },
+            ],
             "manualBriefInput": {
                 "locationId": 1,
                 "quickProfile": {
@@ -291,9 +346,10 @@ async def test_fetch_and_prepare_builds_generation_context() -> None:
     assert "Italian" in context
     assert "slotPerformance" in context
     assert "menuEngineeringMatrix" in context
-    assert "slotMenuCandidates" in context
-    assert "Margherita Pizza" in context
-    assert "markdown" in context.lower()
+    assert "slotMenuCandidates" not in context
+    assert "openingHours" in context
+    assert '"openTime": "11:00"' in context
+    assert "structured JSON" in context
 
 
 def test_ig_plan_user_message_includes_sections() -> None:
@@ -302,8 +358,7 @@ def test_ig_plan_user_message_includes_sections() -> None:
         "ownerNotes": "focus lunch",
         "locationProfile": {"identity": {"name": "Trattoria Roma"}},
         "slotPerformance": {"slots": []},
-        "menuEngineeringMatrix": {"items": []},
-        "slotMenuCandidates": {"slots": []},
+        "menuEngineeringMatrix": {"distribution": []},
     }
     message = format_ig_plan_user_message(
         goal="Weekly plan",
@@ -334,6 +389,37 @@ def test_build_ig_plan_messages_shape() -> None:
     assert "G1" in str(messages[1].content)
 
 
+def test_ig_plan_system_is_strategy_only() -> None:
+    system = IG_PLAN_SYSTEM
+    assert "slot strategy grid" in system
+    assert "marketing opportunity" in system
+    for field in (
+        "objective",
+        "pillar",
+        "mealPeriod",
+        "productRole",
+        "slotStrategy",
+        "slotKey",
+    ):
+        assert field in system
+    for strategy in ("maintain", "support", "grow", "aggressively_grow"):
+        assert strategy in system
+    for pillar in ("lifestyle", "community", "social_proof", "educational", "product_discovery"):
+        assert pillar in system
+    assert "openingHours" in system
+    assert "Do not include dish names" in system
+    assert "Product Selection node" in system
+    for removed in (
+        "Instagram format guide",
+        "formatRationale",
+        "hookIdea",
+        "companionStory",
+        "planMarkdown",
+        "slotMenuCandidates",
+    ):
+        assert removed not in system
+
+
 def test_ig_plan_empty_owner_notes_renders_placeholder() -> None:
     message = format_ig_plan_user_message(
         goal="",
@@ -346,12 +432,21 @@ def test_ig_plan_empty_owner_notes_renders_placeholder() -> None:
 
 
 @pytest.mark.asyncio
-async def test_generate_plan_returns_markdown_payload() -> None:
-    plan_markdown = (
-        "## Weekly cadence\n\n"
-        "3 posts, 2 reels, 4 stories.\n\n"
-        "## Weekly content plan\n\n"
-        "Monday 11:30 reel — Margherita Pizza"
+async def test_generate_plan_returns_structured_payload() -> None:
+    draft = IgPlanDraftOutput(
+        scheduleExplanation="Push weak afternoon slots with hero puzzle discovery.",
+        entries=[
+            IgPlanEntryDraft(
+                day="wednesday",
+                slot="14:30",
+                objective="Increase afternoon traffic",
+                pillar="hero",
+                mealPeriod="afternoon",
+                productRole="puzzle",
+                slotStrategy="aggressively_grow",
+                slotKey="wednesday-afternoon",
+            )
+        ],
     )
     state = {
         "goal": "Weekly IG plan",
@@ -368,9 +463,9 @@ async def test_generate_plan_returns_markdown_payload() -> None:
 
     with (
         patch(
-            "agents_app.agents.core.milestone_run.ig_plan.nodes.astream_collect_from_run_config",
+            "agents_app.agents.core.milestone_run.ig_plan.nodes.structured_ainvoke_from_run_config",
             new_callable=AsyncMock,
-            return_value=plan_markdown,
+            return_value=draft,
         ),
         patch(
             "agents_app.agents.core.milestone_run.ig_plan.nodes.get_stream_writer",
@@ -380,6 +475,110 @@ async def test_generate_plan_returns_markdown_payload() -> None:
         out = await generate_plan_with_llm(state)  # type: ignore[arg-type]
 
     generated = out["generated_output"]
-    assert generated["planMarkdown"] == plan_markdown
+    assert generated["scheduleExplanation"] == draft.scheduleExplanation
+    assert generated["entries"][0]["slotKey"] == "wednesday-afternoon"
+    assert generated["entries"][0]["slotStrategy"] == "aggressively_grow"
     assert generated["sourceAnalyticsRunId"] == "42"
     assert generated["reportingPeriod"] == "2025-01-01 to 2025-03-31"
+
+
+@pytest.mark.asyncio
+async def test_persist_result_uses_json_raw_data_for_eval() -> None:
+    payload = _valid_ig_plan_payload()
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "generated_output": payload,
+        "location_profile": {
+            "openingHours": [
+                {"dayOfWeek": "wednesday", "openTime": "11:00", "closeTime": "22:00"},
+            ],
+        },
+        "slot_performance": {
+            "slots": [
+                {
+                    "day": "wednesday",
+                    "mealPeriod": "afternoon",
+                    "relativeDemand": "low",
+                }
+            ]
+        },
+        "result_data": "",
+        "milestonedata_written": False,
+    }
+    with patch(
+        "agents_app.agents.core.milestone_run.ig_plan.nodes.upsert_milestonedata_node",
+        new_callable=AsyncMock,
+    ) as mock_upsert:
+        out = await persist_result(state, client=MagicMock(spec=AsyncMock))  # type: ignore[arg-type]
+
+    mock_upsert.assert_awaited_once()
+    assert "weekly slot entries." in out["result_data"]
+    assert '"entries"' in out["raw_data"]
+    assert '"slotKey": "wednesday-afternoon"' in out["raw_data"]
+    assert '"_evalHints"' in out["raw_data"]
+    assert out["raw_data"] != out["result_data"]
+
+
+def test_normalize_sorts_entries_by_day() -> None:
+    from agents_app.agents.core.milestone_run.ig_plan.nodes import _normalize_generated_output
+
+    payload = {
+        "scheduleExplanation": "Weekly allocation across weak and strong slots.",
+        "entries": [
+            {
+                "day": "friday",
+                "slot": "12:00",
+                "objective": "Friday lunch",
+                "pillar": "hero",
+                "mealPeriod": "lunch",
+                "productRole": "star",
+                "slotStrategy": "support",
+                "slotKey": "friday-lunch",
+            },
+            {
+                "day": "monday",
+                "slot": "11:30",
+                "objective": "Monday lunch",
+                "pillar": "reminder",
+                "mealPeriod": "lunch",
+                "productRole": "star",
+                "slotStrategy": "maintain",
+                "slotKey": "monday-lunch",
+            },
+        ],
+        "sourceAnalyticsRunId": "42",
+        "reportingPeriod": "2025-01-01 to 2025-03-31",
+    }
+    normalized = _normalize_generated_output(payload)
+    assert normalized["entries"][0]["day"] == "monday"
+    assert normalized["entries"][1]["day"] == "friday"
+
+
+def test_resolve_eval_raw_data_prefers_structured_json() -> None:
+    from agents_app.agents.core.milestone_run.graph import _resolve_eval_raw_data
+
+    payload = _valid_ig_plan_payload()
+    resolved = _resolve_eval_raw_data(
+        {
+            "milestone_id": "m1",
+            "location_id": 1,
+            "user_id": "u1",
+            "workflow_id": None,
+            "goal": "",
+            "raw_data": "",
+            "milestone_data": payload,
+            "criteria": [],
+            "prior_milestones_data": "",
+            "preset_id": "ig_plan",
+            "result_data": "Narrative summary only.",
+            "milestonedata_written": True,
+            "result_summary": "",
+            "result_node_id": None,
+            "last_criteria_verdicts": [],
+        }
+    )
+    parsed = json.loads(resolved)
+    assert isinstance(parsed.get("entries"), list)
+    assert parsed["entries"][0]["slotKey"] == "wednesday-afternoon"

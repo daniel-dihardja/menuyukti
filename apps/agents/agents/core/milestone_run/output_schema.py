@@ -1139,14 +1139,67 @@ class StoryLineupMilestoneOutput(BaseModel):
     sourceDatesTitle: str | None = None
 
 
+class IgPlanEntryOutput(BaseModel):
+    day: str
+    slot: str
+    objective: str
+    pillar: Literal[
+        "hero",
+        "reminder",
+        "lifestyle",
+        "community",
+        "social_proof",
+        "educational",
+        "product_discovery",
+    ]
+    mealPeriod: str
+    productRole: Literal["star", "puzzle", "plow_horse"]
+    slotStrategy: Literal["maintain", "support", "grow", "aggressively_grow"]
+    slotKey: str
+
+    @field_validator("day")
+    @classmethod
+    def _validate_day(cls, value: str) -> str:
+        text = value.strip().lower()
+        allowed = {
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        }
+        if text not in allowed:
+            raise ValueError("day must be a lowercase English weekday")
+        return text
+
+    @field_validator("slot")
+    @classmethod
+    def _validate_slot(cls, value: str) -> str:
+        text = value.strip()
+        if not re.fullmatch(r"\d{2}:\d{2}", text):
+            raise ValueError("slot must be HH:MM in 24-hour format")
+        return text
+
+    @field_validator("objective", "mealPeriod", "slotKey")
+    @classmethod
+    def _validate_non_empty_text(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+
 class IgPlanMilestoneOutput(BaseModel):
-    planMarkdown: str = Field(min_length=1)
+    scheduleExplanation: str = Field(min_length=1)
+    entries: list[IgPlanEntryOutput] = Field(min_length=1)
     sourceAnalyticsRunId: str = Field(min_length=1)
     reportingPeriod: str = Field(min_length=1)
 
-    @field_validator("planMarkdown", "sourceAnalyticsRunId", "reportingPeriod")
+    @field_validator("scheduleExplanation", "sourceAnalyticsRunId", "reportingPeriod")
     @classmethod
-    def _validate_non_empty_text(cls, value: str) -> str:
+    def _validate_non_empty_header(cls, value: str) -> str:
         text = value.strip()
         if not text:
             raise ValueError("must be non-empty")

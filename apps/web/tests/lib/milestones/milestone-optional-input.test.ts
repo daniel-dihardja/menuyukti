@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { patchMilestoneSchema } from '@/app/api/workflows/[id]/milestones/schema'
+import { igPlanMilestoneDataSchema } from '@/lib/graphql/node-schemas'
 import {
   milestonePresetHasDefaultOptionalNotesInput,
   normalizePromotionCandidatesInput,
@@ -171,7 +172,19 @@ describe('milestone optional notes', () => {
     const parsed = patchMilestoneSchema.safeParse({
       presetId: 'ig_plan',
       milestoneData: {
-        planMarkdown: '## Weekly cadence\n\n3 posts, 2 reels, 4 stories per week.',
+        scheduleExplanation: 'Push weak afternoon slots with hero puzzle discovery.',
+        entries: [
+          {
+            day: 'wednesday',
+            slot: '14:30',
+            objective: 'Increase afternoon traffic',
+            pillar: 'hero',
+            mealPeriod: 'afternoon',
+            productRole: 'puzzle',
+            slotStrategy: 'aggressively_grow',
+            slotKey: 'wednesday-afternoon',
+          },
+        ],
         sourceAnalyticsRunId: '42',
         reportingPeriod: '2025-01-01 to 2025-03-31',
       },
@@ -183,7 +196,8 @@ describe('milestone optional notes', () => {
     const parsed = patchMilestoneSchema.safeParse({
       presetId: 'ig_plan',
       milestoneData: {
-        planMarkdown: '',
+        scheduleExplanation: '',
+        entries: [],
         sourceAnalyticsRunId: '',
         reportingPeriod: '',
       },
@@ -297,6 +311,30 @@ describe('milestone optional notes', () => {
     expect(parsed.success).toBe(true)
   })
 
+  it('igPlanMilestoneDataSchema parses structured slot strategy entries', () => {
+    const parsed = igPlanMilestoneDataSchema.safeParse({
+      scheduleExplanation: 'Push puzzle items on low-demand breakfast slots.',
+      entries: [
+        {
+          day: 'tuesday',
+          slot: '09:00',
+          objective: 'Increase Tue breakfast',
+          pillar: 'hero',
+          mealPeriod: 'breakfast',
+          productRole: 'puzzle',
+          slotStrategy: 'aggressively_grow',
+          slotKey: 'tuesday-breakfast',
+        },
+      ],
+      sourceAnalyticsRunId: '42',
+      reportingPeriod: '2025-01-01 to 2025-03-31',
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.entries[0]?.productRole).toBe('puzzle')
+    }
+  })
+
   it('getMilestonePresetCreateFields seeds ig_profile milestoneInput', () => {
     const fields = getMilestonePresetCreateFields('ig_profile', (k) => k)
     expect(fields.milestoneInput).toEqual({
@@ -332,7 +370,8 @@ describe('milestone optional notes', () => {
       value: { notes: '' },
     })
     expect(fields.milestoneData).toEqual({
-      planMarkdown: '',
+      scheduleExplanation: '',
+      entries: [],
       sourceAnalyticsRunId: '',
       reportingPeriod: '',
     })

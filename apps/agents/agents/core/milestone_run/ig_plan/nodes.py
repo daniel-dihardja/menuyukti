@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
+from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_ig_plan_inputs,
     upsert_milestonedata_node,
@@ -15,13 +17,17 @@ from agents_app.agents.core.milestone_run.ig_plan.prompts import (
     format_ig_plan_user_message,
 )
 from agents_app.agents.core.milestone_run.ig_plan.state import IgPlanOutput, IgPlanState
-from agents_app.agents.core.milestone_run.llm_from_run_config import astream_collect_from_run_config
+from agents_app.agents.core.milestone_run.llm_from_run_config import (
+    structured_ainvoke_from_run_config,
+)
+from agents_app.agents.core.milestone_eval.ig_plan_eval import sort_ig_plan_entries
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     _fmt_manual_brief_hints,
 )
 from langchain_core.messages import BaseMessage
 from langgraph.config import get_stream_writer
+from pydantic import BaseModel, Field
 
 IG_PLAN_MAX_ATTEMPTS = 2
 
@@ -60,119 +66,17 @@ def _fmt_owner_notes(state: IgPlanState) -> str:
     return text
 
 
-def _collect_allowed_menu_names(
-    *,
-    slot_menu_candidates: dict[str, Any],
-    menu_engineering_matrix: dict[str, Any],
-) -> set[str]:
-    names: set[str] = set()
-    slots = slot_menu_candidates.get("slots")
-    if isinstance(slots, list):
-        for cell in slots:
-            if not isinstance(cell, dict):
-                continue
-            candidates = cell.get("candidates")
-            if not isinstance(candidates, list):
-                continue
-            for item in candidates:
-                if not isinstance(item, dict):
-                    continue
-                menu = str(item.get("menu") or "").strip()
-                if menu:
-                    names.add(menu)
-    items = menu_engineering_matrix.get("items")
-    if isinstance(items, list):
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            menu = str(item.get("menu") or "").strip()
-            if menu:
-                names.add(menu)
-    return names
-
-
-def _trim_matrix_for_prompt(matrix: dict[str, Any], *, per_category: int = 8) -> dict[str, Any]:
-    items = matrix.get("items")
-    if not isinstance(items, list):
-        return matrix
-    by_category: dict[str, list[dict[str, Any]]] = {
-        "star": [],
-        "plow_horse": [],
-        "puzzle": [],
-    }
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        category = str(item.get("category") or "").strip()
-        if category not in by_category:
-            continue
-        if len(by_category[category]) >= per_category:
-            continue
-        by_category[category].append(
-            {
-                "menu": item.get("menu"),
-                "category": category,
-                "action": item.get("action"),
-                "quantity": item.get("quantity"),
-                "contributionMargin": item.get("contributionMargin"),
-                "weValue": item.get("weValue"),
-                "menuCategory": item.get("menuCategory"),
-            }
-        )
-    trimmed_items = by_category["star"] + by_category["plow_horse"] + by_category["puzzle"]
+def _trim_matrix_for_prompt(matrix: dict[str, Any]) -> dict[str, Any]:
+    """Portfolio distribution only — strategy node does not select menu items."""
     return {
         "thresholds": matrix.get("thresholds"),
         "distribution": matrix.get("distribution"),
-        "items": trimmed_items,
     }
 
 
-def _trim_slot_candidates_for_prompt(candidates: dict[str, Any]) -> dict[str, Any]:
-    slots = candidates.get("slots")
-    if not isinstance(slots, list):
-        return candidates
-    trimmed_slots: list[dict[str, Any]] = []
-    for cell in slots:
-        if not isinstance(cell, dict):
-            continue
-        if cell.get("insufficientData") is True:
-            continue
-        raw_candidates = cell.get("candidates")
-        candidate_rows: list[dict[str, Any]] = []
-        if isinstance(raw_candidates, list):
-            for item in raw_candidates:
-                if not isinstance(item, dict):
-                    continue
-                candidate_rows.append(
-                    {
-                        "menu": item.get("menu"),
-                        "globalCategory": item.get("globalCategory"),
-                        "recommendedUse": item.get("recommendedUse"),
-                        "rank": item.get("rank"),
-                        "score": item.get("score"),
-                    }
-                )
-        if not candidate_rows:
-            continue
-        trimmed_slots.append(
-            {
-                "day": cell.get("day"),
-                "mealPeriod": cell.get("mealPeriod"),
-                "mealPeriodLabel": cell.get("mealPeriodLabel"),
-                "mealPeriodHoursLabel": cell.get("mealPeriodHoursLabel"),
-                "demandIndex": cell.get("demandIndex"),
-                "relativeDemand": cell.get("relativeDemand"),
-                "posture": cell.get("posture"),
-                "recommendedCategories": cell.get("recommendedCategories"),
-                "candidates": candidate_rows,
-            }
-        )
-    return {
-        "reportingPeriod": candidates.get("reportingPeriod"),
-        "matrixAvailable": candidates.get("matrixAvailable"),
-        "coverageNotes": candidates.get("coverageNotes"),
-        "slots": trimmed_slots,
-    }
+def _slot_performance_has_signals(slot_performance: dict[str, Any]) -> bool:
+    slots = slot_performance.get("slots")
+    return isinstance(slots, list) and len(slots) > 0
 
 
 def _build_location_profile_context(location_raw: dict[str, Any]) -> dict[str, Any]:
@@ -187,6 +91,9 @@ def _build_location_profile_context(location_raw: dict[str, Any]) -> dict[str, A
     context: dict[str, Any] = {}
     if identity:
         context["identity"] = identity
+    opening_hours = location_raw.get("openingHours")
+    if isinstance(opening_hours, list) and opening_hours:
+        context["openingHours"] = opening_hours
     if manual_md:
         context["ownerProfileMarkdown"] = manual_md
     return context
@@ -199,7 +106,6 @@ def _build_context_payload(
     location_profile: dict[str, Any],
     slot_performance: dict[str, Any],
     menu_engineering_matrix: dict[str, Any],
-    slot_menu_candidates: dict[str, Any],
 ) -> dict[str, Any]:
     return {
         "goal": goal.strip() or None,
@@ -207,27 +113,86 @@ def _build_context_payload(
         "locationProfile": location_profile or None,
         "slotPerformance": slot_performance,
         "menuEngineeringMatrix": _trim_matrix_for_prompt(menu_engineering_matrix),
-        "slotMenuCandidates": _trim_slot_candidates_for_prompt(slot_menu_candidates),
+    }
+
+
+def _build_eval_hints(
+    *,
+    payload: dict[str, Any],
+    location_profile: dict[str, Any],
+    slot_performance: dict[str, Any],
+) -> dict[str, Any]:
+    opening_hours = location_profile.get("openingHours")
+    hours = opening_hours if isinstance(opening_hours, list) else []
+
+    demand_by_key: dict[str, str] = {}
+    slots = slot_performance.get("slots")
+    if isinstance(slots, list):
+        for cell in slots:
+            if not isinstance(cell, dict):
+                continue
+            day = str(cell.get("day") or "").strip().lower()
+            meal_period = str(cell.get("mealPeriod") or "").strip().lower()
+            if not day or not meal_period:
+                continue
+            relative = str(cell.get("relativeDemand") or "").strip().lower()
+            if relative in {"low", "average", "high"}:
+                demand_by_key[f"{day}-{meal_period}"] = relative
+
+    entries = payload.get("entries")
+    entry_count = len(entries) if isinstance(entries, list) else 0
+    return {
+        "entryCount": entry_count,
+        "openingHours": hours,
+        "slotDemandByKey": demand_by_key,
     }
 
 
 def _normalize_generated_output(payload: Any) -> IgPlanOutput:
     if not isinstance(payload, dict):
         raise ValueError("ig_plan output validation failed")
+    entries = payload.get("entries")
+    if isinstance(entries, list):
+        payload = {
+            **payload,
+            "entries": sort_ig_plan_entries([row for row in entries if isinstance(row, dict)]),
+        }
     normalized, error = validate_skill_output("ig_plan", payload)
     if error is not None or not isinstance(normalized, dict):
         raise ValueError(error or "ig_plan output validation failed")
     return normalized  # type: ignore[return-value]
 
 
-async def _invoke_ig_plan_markdown(messages: list[BaseMessage]) -> str:
+class IgPlanEntryDraft(BaseModel):
+    day: str
+    slot: str
+    objective: str
+    pillar: str
+    mealPeriod: str
+    productRole: str
+    slotStrategy: str
+    slotKey: str
+
+
+class IgPlanDraftOutput(BaseModel):
+    scheduleExplanation: str = Field(min_length=1)
+    entries: list[IgPlanEntryDraft] = Field(min_length=1)
+
+
+async def _invoke_ig_plan_structured(messages: list[BaseMessage]) -> IgPlanDraftOutput:
+    last_error: Exception | None = None
     for attempt in range(1, IG_PLAN_MAX_ATTEMPTS + 1):
-        text = (await astream_collect_from_run_config(messages)).strip()
-        if text:
-            return text
+        try:
+            generated = await structured_ainvoke_from_run_config(IgPlanDraftOutput, messages)
+        except LLMInvokeError as exc:
+            emit_llm_error_step(exc.code, str(exc))
+            raise ValueError(str(exc)) from exc
+        if generated.entries and generated.scheduleExplanation.strip():
+            return generated
+        last_error = ValueError("ig_plan planning returned empty structured output")
         if attempt < IG_PLAN_MAX_ATTEMPTS:
             messages = [*messages, empty_plan_retry_message()]
-    raise ValueError("ig_plan planning returned empty markdown")
+    raise last_error or ValueError("ig_plan planning returned empty structured output")
 
 
 async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -241,12 +206,8 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
     slot_performance = fetched["slotPerformance"]
     menu_matrix = fetched["menuEngineeringMatrix"]
     slot_candidates = fetched["slotMenuCandidates"]
-    allowed_menu_names = _collect_allowed_menu_names(
-        slot_menu_candidates=slot_candidates,
-        menu_engineering_matrix=menu_matrix,
-    )
-    if not allowed_menu_names:
-        raise ValueError("ig_plan requires at least one promotable menu item in analytics data")
+    if not _slot_performance_has_signals(slot_performance):
+        raise ValueError("ig_plan requires venue slot strength signals in slotPerformance")
 
     location_profile = _build_location_profile_context(location_raw)
     owner_notes = _fmt_owner_notes(state)
@@ -257,7 +218,6 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
         location_profile=location_profile,
         slot_performance=slot_performance,
         menu_engineering_matrix=menu_matrix,
-        slot_menu_candidates=slot_candidates,
     )
     generation_context_json = format_ig_plan_user_message(
         goal=goal,
@@ -271,7 +231,6 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
         "slot_performance": slot_performance,
         "menu_engineering_matrix": menu_matrix,
         "slot_menu_candidates": slot_candidates,
-        "allowed_menu_names": allowed_menu_names,
         "generation_context_json": generation_context_json,
     }
 
@@ -307,7 +266,6 @@ async def generate_plan_with_llm(state: IgPlanState) -> dict[str, Any]:
         location_profile=location_profile,
         slot_performance=slot_performance,
         menu_engineering_matrix=menu_matrix,
-        slot_menu_candidates=slot_candidates,
     )
     messages = build_ig_plan_messages(
         goal=goal,
@@ -317,9 +275,9 @@ async def generate_plan_with_llm(state: IgPlanState) -> dict[str, Any]:
 
     _trace(state, "generate_plan_with_llm")
     _trace_agent_event(state, "chat_model_start")
-    plan_markdown = await _invoke_ig_plan_markdown(messages)
+    generated = await _invoke_ig_plan_structured(messages)
     payload: dict[str, Any] = {
-        "planMarkdown": plan_markdown,
+        **generated.model_dump(),
         "sourceAnalyticsRunId": analytics_run_id,
         "reportingPeriod": reporting_period,
     }
@@ -330,6 +288,13 @@ async def generate_plan_with_llm(state: IgPlanState) -> dict[str, Any]:
 
 async def persist_result(state: IgPlanState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     payload = _normalize_generated_output(state.get("generated_output"))
+    location_profile = state.get("location_profile")
+    if not isinstance(location_profile, dict):
+        location_profile = {}
+    slot_performance = state.get("slot_performance")
+    if not isinstance(slot_performance, dict):
+        slot_performance = {}
+
     await upsert_milestonedata_node(
         str(state["milestone_id"]),
         int(state["location_id"]),
@@ -337,10 +302,22 @@ async def persist_result(state: IgPlanState, *, client: httpx.AsyncClient) -> di
         str(state["user_id"]),
         client=client,
     )
-    plan_markdown = str(payload.get("planMarkdown") or "").strip()
+    schedule_explanation = str(payload.get("scheduleExplanation") or "").strip()
+    entries = payload.get("entries")
+    entry_count = len(entries) if isinstance(entries, list) else 0
+    result_data = f"{schedule_explanation}\n\n{entry_count} weekly slot entries."
+    eval_payload = {
+        **payload,
+        "_evalHints": _build_eval_hints(
+            payload=payload,
+            location_profile=location_profile,
+            slot_performance=slot_performance,
+        ),
+    }
+    eval_raw_data = json.dumps(eval_payload, ensure_ascii=False, indent=2)
     return {
-        "result_data": plan_markdown,
+        "result_data": result_data,
         "milestone_data": payload,
         "milestonedata_written": True,
-        "raw_data": plan_markdown,
+        "raw_data": eval_raw_data,
     }

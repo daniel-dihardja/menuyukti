@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import time
 
-from graphql.data_sources import AnalyticsRun, Location, SessionLocal
+from graphql.data_sources import AnalyticsRun, Location, LocationOpeningHour, SessionLocal
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
@@ -19,6 +20,11 @@ query IgPlanInputs($locationId: Int!, $options: IgPlanInputsOptionsInput) {
       city
       country
       currency
+      openingHours {
+        dayOfWeek
+        openTime
+        closeTime
+      }
       manualBriefInput {
         locationId
         quickProfile
@@ -151,3 +157,47 @@ def test_ig_plan_inputs_location_without_run_returns_profile_only() -> None:
     assert payload["menuEngineeringMatrix"] is None
     assert payload["slotMenuCandidates"] is None
     assert any("No analytics run" in note for note in payload["coverageNotes"])
+
+
+def test_ig_plan_inputs_returns_opening_hours() -> None:
+    session = SessionLocal()
+    try:
+        location = Location(
+            name="Hours Test Venue",
+            street="2 Hours St",
+            city="Testville",
+            country="NL",
+            currency="EUR",
+            clerk_user_id=GRAPHQL_TEST_USER_ID,
+        )
+        session.add(location)
+        session.flush()
+        session.add(
+            LocationOpeningHour(
+                location_id=location.id,
+                day_of_week="wednesday",
+                open_time=time(hour=12, minute=0),
+                close_time=time(hour=21, minute=30),
+            )
+        )
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            _QUERY,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors, result.errors
+    payload = result.data["igPlanInputs"]
+    assert payload is not None
+    hours = payload["location"]["openingHours"]
+    assert len(hours) == 1
+    assert hours[0]["dayOfWeek"] == "wednesday"
+    assert hours[0]["openTime"] == "12:00"
+    assert hours[0]["closeTime"] == "21:30"

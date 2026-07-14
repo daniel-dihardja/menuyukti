@@ -436,6 +436,11 @@ query IgPlanInputs($locationId: Int!, $options: IgPlanInputsOptionsInput) {
       city
       country
       currency
+      openingHours {
+        dayOfWeek
+        openTime
+        closeTime
+      }
       manualBriefInput {
         locationId
         quickProfile

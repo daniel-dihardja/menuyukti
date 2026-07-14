@@ -5,8 +5,20 @@ from __future__ import annotations
 from typing import Any, NotRequired, TypedDict
 
 
+class IgPlanEntry(TypedDict):
+    day: str
+    slot: str
+    objective: str
+    pillar: str
+    mealPeriod: str
+    productRole: str
+    slotStrategy: str
+    slotKey: str
+
+
 class IgPlanOutput(TypedDict):
-    planMarkdown: str
+    scheduleExplanation: str
+    entries: list[IgPlanEntry]
     sourceAnalyticsRunId: str
     reportingPeriod: str
 
@@ -28,9 +40,9 @@ class IgPlanState(TypedDict):
     slot_performance: NotRequired[dict[str, Any]]
     menu_engineering_matrix: NotRequired[dict[str, Any]]
     slot_menu_candidates: NotRequired[dict[str, Any]]
-    allowed_menu_names: NotRequired[set[str]]
     generation_context_json: NotRequired[str]
     generated_output: NotRequired[IgPlanOutput | None]
     result_data: str
+    raw_data: NotRequired[str]
     milestone_data: NotRequired[dict[str, Any] | list[Any] | None]
     milestonedata_written: bool

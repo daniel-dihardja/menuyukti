@@ -10,6 +10,7 @@ from graphql.schema.mappers.menu_engineering_matrix import matrix_data_to_gql
 from graphql.schema.mappers.slot_menu_candidates import slot_menu_candidates_data_to_gql
 from graphql.schema.queries.latest_analytics_run_signals import LatestAnalyticsRunType
 from graphql.schema.queries.menu_combos import SlotDemandCellType, slot_demand_cells_to_gql
+from graphql.schema.types.location import OpeningHourType
 from graphql.schema.types.location_manual_brief_input import LocationManualBriefInputType
 from graphql.schema.types.menu_engineering_matrix import MenuEngineeringMatrixType
 from graphql.schema.types.slot_menu_candidates import SlotMenuCandidatesType
@@ -30,6 +31,7 @@ class IgPlanLocationSnapshotType:
     country: str | None
     currency: str | None
     manual_brief_input: LocationManualBriefInputType | None
+    opening_hours: list[OpeningHourType]
 
 
 @strawberry.input(description="Options for the IG Plan composite inputs query.")
@@ -110,6 +112,14 @@ class IgPlanInputsQuery:
                 country=data.location.country,
                 currency=data.location.currency,
                 manual_brief_input=manual,
+                opening_hours=[
+                    OpeningHourType(
+                        day_of_week=hour.day_of_week,
+                        open_time=hour.open_time,
+                        close_time=hour.close_time,
+                    )
+                    for hour in data.location.opening_hours
+                ],
             )
             analytics_run = (
                 LatestAnalyticsRunType(
