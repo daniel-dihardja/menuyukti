@@ -440,8 +440,7 @@ def _build_eval_hints(state: IgMenuPickerState, payload: dict[str, Any]) -> dict
                     all_plan_keys.append(key)
 
     selected_keys = _read_selected_slot_keys(state)
-    empty_means_all = selected_keys is None
-    expected = list(all_plan_keys) if empty_means_all else sorted(selected_keys)
+    expected = list(all_plan_keys) if selected_keys is None else sorted(selected_keys)
 
     entries = payload.get("entries")
     output_keys: list[str] = []
@@ -456,7 +455,7 @@ def _build_eval_hints(state: IgMenuPickerState, payload: dict[str, Any]) -> dict
     return {
         "hasPriorIgPlan": has_prior,
         "priorIgPlanEntryCount": len(all_plan_keys),
-        "emptySelectionMeansAll": empty_means_all,
+        "emptySelectionMeansAll": selected_keys is None,
         "selectedSlotKeys": sorted(selected_keys) if selected_keys else [],
         "igPlanSlotKeys": all_plan_keys,
         "expectedOutputSlotKeys": expected,

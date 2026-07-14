@@ -156,20 +156,20 @@ def try_ig_format_deterministic_verdict(
         expected_set = set(expected)
         extra = sorted(output_set - expected_set)
         missing = sorted(expected_set - output_set)
-        issues: list[str] = []
+        coverage_issues: list[str] = []
         if extra:
-            issues.append("unexpected slotKeys: " + ", ".join(extra[:5]))
+            coverage_issues.append("unexpected slotKeys: " + ", ".join(extra[:5]))
         if missing:
-            issues.append("missing slotKeys: " + ", ".join(missing[:5]))
-        if issues:
-            return ("fail", "; ".join(issues))
+            coverage_issues.append("missing slotKeys: " + ", ".join(missing[:5]))
+        if coverage_issues:
+            return ("fail", "; ".join(coverage_issues))
         return (
             "pass",
             f"Output includes exactly the {len(expected)} slot(s) from the prior menu picker.",
         )
 
     if _is_carousel_requirement(norm):
-        issues: list[str] = []
+        carousel_issues: list[str] = []
         for index, entry in enumerate(entries, start=1):
             fmt_type = str(entry.get("type") or "").strip()
             if fmt_type != "post-carousel":
@@ -177,11 +177,11 @@ def try_ig_format_deterministic_verdict(
             menu_items = entry.get("menuItems")
             count = len(menu_items) if isinstance(menu_items, list) else 0
             if count < 2:
-                issues.append(
+                carousel_issues.append(
                     f"entry {index} uses post-carousel but has {count} menuItem(s); need 2–3"
                 )
-        if issues:
-            return ("fail", "; ".join(issues[:6]) + ("…" if len(issues) > 6 else ""))
+        if carousel_issues:
+            return ("fail", "; ".join(carousel_issues[:6]) + ("…" if len(carousel_issues) > 6 else ""))
         return (
             "pass",
             "Every post-carousel entry has at least two menuItems.",

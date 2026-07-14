@@ -168,13 +168,13 @@ def try_ig_menu_picker_deterministic_verdict(
         expected_set = set(expected)
         extra = sorted(output_set - expected_set)
         missing = sorted(expected_set - output_set)
-        issues: list[str] = []
+        slot_issues: list[str] = []
         if extra:
-            issues.append("unexpected slotKeys: " + ", ".join(extra[:5]))
+            slot_issues.append("unexpected slotKeys: " + ", ".join(extra[:5]))
         if missing:
-            issues.append("missing slotKeys: " + ", ".join(missing[:5]))
-        if issues:
-            return ("fail", "; ".join(issues))
+            slot_issues.append("missing slotKeys: " + ", ".join(missing[:5]))
+        if slot_issues:
+            return ("fail", "; ".join(slot_issues))
         return (
             "pass",
             f"Output includes exactly the {len(expected)} selected slot(s) from the Input tab.",
