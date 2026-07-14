@@ -20,6 +20,7 @@ import {
   type WorkflowVisualizationId,
 } from './workflow-visualization-catalog'
 import { WorkflowMenuItemHeatmapCard } from './workflow-menu-item-heatmap-card'
+import { WorkflowPairLiftMatrixCard } from './workflow-pair-lift-matrix-card'
 import { WorkflowVenueSlotStrengthCard } from './workflow-venue-slot-strength-card'
 
 type WorkflowVisualizationsPaneProps = {
@@ -42,6 +43,8 @@ function VisualizationCardBody({
       )
     case 'menu_item_heatmap':
       return <WorkflowMenuItemHeatmapCard analyticsRunId={analyticsRunId} locationId={locationId} />
+    case 'pair_lift_matrix_heatmap':
+      return <WorkflowPairLiftMatrixCard analyticsRunId={analyticsRunId} locationId={locationId} />
     default:
       return null
   }

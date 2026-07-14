@@ -429,6 +429,28 @@ export type MenuCombosData = {
   } | null
 }
 
+export const MENU_COMBOS_LIFT_MATRIX_QUERY = `
+  query MenuCombosLiftMatrix($id: ID!, $locationId: ID) {
+    menuCombos(analyticsRunId: $id, locationId: $locationId) {
+      focusMenus
+      matrixLift
+      totalOrders
+      multiItemOrderCount
+      scope
+    }
+  }
+`
+
+export type MenuCombosLiftMatrixData = {
+  menuCombos: {
+    focusMenus: string[]
+    matrixLift: Array<Array<number | null>>
+    totalOrders: number
+    multiItemOrderCount: number
+    scope: string
+  } | null
+}
+
 export const PROMOTION_MENU_ITEMS_QUERY = `
   query PromotionMenuItems($id: ID!, $locationId: ID) {
     promotionMenuItems(analyticsRunId: $id, locationId: $locationId) {

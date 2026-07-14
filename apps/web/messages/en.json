@@ -2164,6 +2164,7 @@
         "retry": "Retry",
         "emptyDataDescription": "No slot demand data is available for this sales report.",
         "emptyMenuHeatmapDescription": "No menu heatmap data is available for this sales report.",
+        "emptyPairLiftMatrixDescription": "At least two focus menu items are required to show the lift matrix.",
         "fallbackRunHint": "Showing data from a newer sales report for this location because the workflow's linked report has no slot demand data.",
         "catalog": {
           "venue_slot_strength_heatmap": {
@@ -2173,6 +2174,10 @@
           "menu_item_heatmap": {
             "title": "Menu item heatmap",
             "description": "When each menu item sells by hour and day of week."
+          },
+          "pair_lift_matrix_heatmap": {
+            "title": "Pair lift matrix",
+            "description": "How strongly menu items are ordered together vs. chance alone."
           }
         }
       },
