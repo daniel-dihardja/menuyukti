@@ -58,7 +58,7 @@ export function WorkflowChatLayout({
             minSize={22}
             panelRef={previewPanelRef}
           >
-            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background p-2">
               {previewPane}
             </div>
           </ResizablePanel>
