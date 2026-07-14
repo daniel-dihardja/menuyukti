@@ -4,7 +4,7 @@ import { type ReactNode, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
-import { FieldSaveStatus } from '@/components/field-save-status'
+import { FieldSaveStatus, type FieldSaveStatusVariant } from '@/components/field-save-status'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { Calendar } from '@workspace/ui/components/calendar'
@@ -68,6 +68,62 @@ function fieldSaveMessages(t: (key: string) => string) {
     saved: t('fieldSaveStatusSaved'),
     unsaved: t('fieldSaveStatusUnsaved'),
   }
+}
+
+function MilestoneManualInputSaveFooter({
+  disabled,
+  manualSave,
+  saveStatus,
+  saveButtonLabel,
+  t,
+}: {
+  disabled: boolean
+  manualSave: { onSave: () => void }
+  saveStatus: FieldSaveStatusVariant
+  saveButtonLabel: string
+  t: (key: string) => string
+}) {
+  const isSaved = saveStatus === 'saved'
+  const isSaving = saveStatus === 'saving'
+  const messages = fieldSaveMessages(t)
+
+  if (isSaved) {
+    return (
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <FieldSaveStatus
+          className="text-muted-foreground"
+          messages={messages}
+          status={saveStatus}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+      <Button
+        disabled={disabled || isSaving}
+        onClick={(e) => {
+          e.stopPropagation()
+          manualSave.onSave()
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        size="sm"
+        type="button"
+      >
+        {saveButtonLabel}
+      </Button>
+      {isSaving ? (
+        <FieldSaveStatus
+          className="text-muted-foreground"
+          messages={messages}
+          status={saveStatus}
+        />
+      ) : (
+        <FieldSaveStatus className="text-muted-foreground" messages={messages} status="unsaved" />
+      )}
+    </div>
+  )
 }
 
 function MilestoneTabEmpty({ children }: { children: ReactNode }) {
@@ -173,10 +229,12 @@ function MilestoneInputTabContent({
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}
           />
-          <FieldSaveStatus
-            className="text-muted-foreground"
-            messages={fieldSaveMessages(t)}
-            status={inputModel.saveStatus}
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
           />
         </>
       )
@@ -190,10 +248,12 @@ function MilestoneInputTabContent({
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}
           />
-          <FieldSaveStatus
-            className="text-muted-foreground"
-            messages={fieldSaveMessages(t)}
-            status={inputModel.saveStatus}
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
           />
         </>
       )
@@ -207,10 +267,12 @@ function MilestoneInputTabContent({
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}
           />
-          <FieldSaveStatus
-            className="text-muted-foreground"
-            messages={fieldSaveMessages(t)}
-            status={inputModel.saveStatus}
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
           />
         </>
       )
@@ -225,10 +287,12 @@ function MilestoneInputTabContent({
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}
           />
-          <FieldSaveStatus
-            className="text-muted-foreground"
-            messages={fieldSaveMessages(t)}
-            status={inputModel.saveStatus}
+          <MilestoneManualInputSaveFooter
+            disabled={isMilestoneRunning}
+            manualSave={inputModel.manualSave}
+            saveButtonLabel={t('fieldSaveButton')}
+            saveStatus={inputModel.saveStatus}
+            t={t}
           />
         </>
       )

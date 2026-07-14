@@ -27,6 +27,7 @@ import { PanelRight } from 'lucide-react'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type { TimelineMilestone } from './timeline-workspace'
+import type { MilestoneInput } from './timeline/types'
 import { TimelineWorkspace } from './timeline-workspace'
 import { WorkflowChatLayout } from './workflow-chat-layout'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
@@ -170,9 +171,13 @@ export function WorkflowChatPanel({
   )
 
   const handleRunMilestone = useCallback(
-    async (milestoneId: string, chatModel?: ChatGatewayModelId) => {
+    async (
+      milestoneId: string,
+      chatModel?: ChatGatewayModelId,
+      runOptions?: { milestoneInput?: MilestoneInput },
+    ) => {
       void setSelectedMilestoneId(milestoneId)
-      await ops.handleRunMilestone(milestoneId, chatModel)
+      await ops.handleRunMilestone(milestoneId, chatModel, runOptions)
     },
     [ops, setSelectedMilestoneId],
   )

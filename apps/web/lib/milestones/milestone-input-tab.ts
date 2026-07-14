@@ -8,7 +8,21 @@ import { IG_MENU_PICKER_NONE_SELECTED_SENTINEL } from '@/lib/milestones/ig-menu-
 import {
   milestonePresetInputType,
   type MilestonePresetId,
+  type MilestonePresetInputType,
 } from '@/lib/milestones/preset-definitions'
+
+/** Complex input forms (checkboxes, selects) use explicit Save; simple fields keep debounced autosave. */
+export function milestonePresetUsesManualInputSave(inputType: MilestonePresetInputType): boolean {
+  switch (inputType) {
+    case 'promotion_candidates':
+    case 'campaign_brief':
+    case 'menu_clusterer':
+    case 'ig_menu_picker':
+      return true
+    default:
+      return false
+  }
+}
 
 /** Presets whose Input tab uses the default optional owner-notes textarea (not custom widgets like dates). */
 export function milestonePresetHasDefaultOptionalNotesInput(

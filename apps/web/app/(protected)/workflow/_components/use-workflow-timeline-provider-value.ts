@@ -28,7 +28,11 @@ export type WorkflowTimelineOpsHandles = {
     runChatModel: ChatGatewayModelId,
   ) => Promise<boolean>
   handleHydrateMilestoneData: (id: string) => Promise<void>
-  handleRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+  handleRunMilestone: (
+    id: string,
+    chatModel?: ChatGatewayModelId,
+    options?: { milestoneInput?: MilestoneInput },
+  ) => void | Promise<void>
   handleStopMilestoneRun: () => void
 }
 

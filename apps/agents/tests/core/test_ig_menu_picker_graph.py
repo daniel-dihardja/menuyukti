@@ -112,6 +112,29 @@ def test_read_selected_slot_keys_empty_means_all() -> None:
     assert _read_selected_slot_keys(state) is None
 
 
+def test_read_selected_slot_keys_honors_explicit_subset() -> None:
+    state = {
+        "milestone_input": {
+            "type": "ig_menu_picker",
+            "value": {
+                "notes": "",
+                "selectedSlotKeys": ["wednesday-afternoon", "friday-evening"],
+            },
+        }
+    }
+    assert _read_selected_slot_keys(state) == {"wednesday-afternoon", "friday-evening"}
+
+
+def test_read_selected_slot_keys_ignores_none_selected_sentinel() -> None:
+    state = {
+        "milestone_input": {
+            "type": "ig_menu_picker",
+            "value": {"notes": "", "selectedSlotKeys": ["__no_slots_selected__"]},
+        }
+    }
+    assert _read_selected_slot_keys(state) is None
+
+
 def test_filter_plan_entries_by_selection() -> None:
     entries = [
         _valid_ig_plan_entry(),
@@ -192,6 +215,49 @@ async def test_fetch_and_prepare_passes_analytics_run_id_to_graphql() -> None:
     mock_fetch.assert_awaited_once_with(1, "u1", client=client, analytics_run_id="99")
     assert result["analytics_run_id"] == "99"
     assert len(result["selected_plan_entries"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_filters_to_selected_slot_keys() -> None:
+    client = MagicMock()
+    plan_payload = _valid_ig_plan_payload()
+    plan_payload["entries"] = [
+        _valid_ig_plan_entry(),
+        {**_valid_ig_plan_entry(), "slotKey": "friday-evening", "day": "friday"},
+    ]
+    prior_json = json.dumps(
+        [{"title": "IG Plan", "presetId": "ig_plan", "data": plan_payload}]
+    )
+    state = {
+        "location_id": 1,
+        "user_id": "u1",
+        "analytics_run_id": "99",
+        "prior_milestones_data": prior_json,
+        "milestone_input": {
+            "type": "ig_menu_picker",
+            "value": {"notes": "", "selectedSlotKeys": ["wednesday-afternoon"]},
+        },
+    }
+    fetched = {
+        "analyticsRunId": "99",
+        "locationRaw": {"name": "Test"},
+        "slotPerformance": {"slots": []},
+        "menuEngineeringMatrix": _matrix_fixture(),
+        "slotMenuCandidates": _slot_candidates_fixture(),
+    }
+    with patch(
+        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.fetch_ig_plan_inputs",
+        new_callable=AsyncMock,
+        return_value=fetched,
+    ):
+        with patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ):
+            result = await fetch_and_prepare(state, client=client)
+
+    assert len(result["selected_plan_entries"]) == 1
+    assert result["selected_plan_entries"][0]["slotKey"] == "wednesday-afternoon"
 
 
 @pytest.mark.asyncio

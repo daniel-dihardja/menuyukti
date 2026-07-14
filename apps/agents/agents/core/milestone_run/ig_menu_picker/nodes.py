@@ -34,6 +34,7 @@ from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field
 
 IG_MENU_PICKER_MAX_ATTEMPTS = 2
+IG_MENU_PICKER_NONE_SELECTED_SENTINEL = "__no_slots_selected__"
 
 
 def _trace(state: IgMenuPickerState, step: str, **extra: Any) -> None:
@@ -79,6 +80,7 @@ def _read_selected_slot_keys(state: IgMenuPickerState) -> set[str] | None:
     if not isinstance(keys_raw, list):
         return None
     keys = {str(k).strip() for k in keys_raw if str(k).strip()}
+    keys.discard(IG_MENU_PICKER_NONE_SELECTED_SENTINEL)
     return keys if keys else None
 
 
@@ -464,6 +466,20 @@ def _build_eval_hints(state: IgMenuPickerState, payload: dict[str, Any]) -> dict
 
 async def persist_result(state: IgMenuPickerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     payload = _normalize_generated_output(state.get("generated_output"))
+    selected_keys = _read_selected_slot_keys(state)
+    if selected_keys is not None:
+        entries = payload.get("entries")
+        if isinstance(entries, list):
+            payload = {
+                **payload,
+                "entries": [
+                    row
+                    for row in entries
+                    if isinstance(row, dict)
+                    and str(row.get("slotKey") or "").strip() in selected_keys
+                ],
+            }
+            payload = _normalize_generated_output(payload)
     eval_payload = {**payload, "_evalHints": _build_eval_hints(state, payload)}
     await upsert_milestonedata_node(
         str(state["milestone_id"]),

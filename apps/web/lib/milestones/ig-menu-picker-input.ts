@@ -7,6 +7,58 @@ import {
 
 export const IG_MENU_PICKER_NONE_SELECTED_SENTINEL = '__no_slots_selected__'
 
+export function isIgMenuPickerNoneSelected(selectedSlotKeys: string[]): boolean {
+  return (
+    selectedSlotKeys.length === 1 && selectedSlotKeys[0] === IG_MENU_PICKER_NONE_SELECTED_SENTINEL
+  )
+}
+
+export function isIgMenuPickerAllSelected(selectedSlotKeys: string[]): boolean {
+  return selectedSlotKeys.length === 0
+}
+
+export function isIgMenuPickerSlotSelected(slotKey: string, selectedSlotKeys: string[]): boolean {
+  if (isIgMenuPickerNoneSelected(selectedSlotKeys)) {
+    return false
+  }
+  if (isIgMenuPickerAllSelected(selectedSlotKeys)) {
+    return true
+  }
+  return selectedSlotKeys.includes(slotKey)
+}
+
+/** Returns normalized selectedSlotKeys after toggling one slot. */
+export function toggleIgMenuPickerSlotKey(
+  selectedSlotKeys: string[],
+  allSlotKeys: string[],
+  slotKey: string,
+  checked: boolean,
+): string[] {
+  let effectiveSelected: string[]
+  if (isIgMenuPickerAllSelected(selectedSlotKeys)) {
+    effectiveSelected = [...allSlotKeys]
+  } else if (isIgMenuPickerNoneSelected(selectedSlotKeys)) {
+    effectiveSelected = []
+  } else {
+    effectiveSelected = [...selectedSlotKeys]
+  }
+
+  let next: string[]
+  if (checked) {
+    next = effectiveSelected.includes(slotKey) ? effectiveSelected : [...effectiveSelected, slotKey]
+  } else {
+    next = effectiveSelected.filter((key) => key !== slotKey)
+  }
+
+  if (next.length === allSlotKeys.length) {
+    return []
+  }
+  if (next.length === 0) {
+    return [IG_MENU_PICKER_NONE_SELECTED_SENTINEL]
+  }
+  return next
+}
+
 export function findPriorIgPlanMilestone(
   milestones: TimelineMilestone[],
   currentMilestoneId: string,

@@ -4,11 +4,15 @@ import { patchMilestoneSchema } from '@/app/api/workflows/[id]/milestones/schema
 import { igPlanMilestoneDataSchema } from '@/lib/graphql/node-schemas'
 import {
   milestonePresetHasDefaultOptionalNotesInput,
+  milestonePresetUsesManualInputSave,
   normalizePromotionCandidatesInput,
   optionalNotesFromMilestoneInput,
   promotionCandidatesInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
-import { getMilestonePresetCreateFields } from '@/lib/milestones/preset-definitions'
+import {
+  getMilestonePresetCreateFields,
+  milestonePresetInputType,
+} from '@/lib/milestones/preset-definitions'
 
 describe('milestone optional notes', () => {
   it('milestonePresetHasDefaultOptionalNotesInput includes supported presets', () => {
@@ -23,6 +27,20 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
+  })
+
+  it('milestonePresetUsesManualInputSave marks complex input presets only', () => {
+    expect(milestonePresetUsesManualInputSave('promotion_candidates')).toBe(true)
+    expect(milestonePresetUsesManualInputSave('campaign_brief')).toBe(true)
+    expect(milestonePresetUsesManualInputSave('menu_clusterer')).toBe(true)
+    expect(milestonePresetUsesManualInputSave('ig_menu_picker')).toBe(true)
+    expect(milestonePresetUsesManualInputSave('dates')).toBe(false)
+    expect(milestonePresetUsesManualInputSave('optional_notes')).toBe(false)
+    expect(milestonePresetUsesManualInputSave('none')).toBe(false)
+    expect(
+      milestonePresetUsesManualInputSave(milestonePresetInputType('promotion_candidates')),
+    ).toBe(true)
+    expect(milestonePresetUsesManualInputSave(milestonePresetInputType('ig_plan'))).toBe(false)
   })
 
   it('promotionCandidatesInputFromMilestoneInput reads notes and categories', () => {

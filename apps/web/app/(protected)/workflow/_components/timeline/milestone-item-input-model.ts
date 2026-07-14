@@ -11,6 +11,10 @@ export type CampaignWindowInput = {
   endDate: string
 }
 
+export type MilestoneInputManualSave = {
+  onSave: () => void
+}
+
 export type MilestoneInputModel =
   | {
       type: 'dates'
@@ -26,6 +30,7 @@ export type MilestoneInputModel =
       onNotesBlur: () => void
       onNotesFocus: () => void
       mainCategory: string | null
+      manualSave: MilestoneInputManualSave
       saveStatus: FieldSaveStatusVariant
       saving: boolean
     }
@@ -35,6 +40,7 @@ export type MilestoneInputModel =
       onChange: MilestoneCampaignBriefInputProps['onDraftChange']
       onNotesBlur: () => void
       onNotesFocus: () => void
+      manualSave: MilestoneInputManualSave
       saveStatus: FieldSaveStatusVariant
       saving: boolean
     }
@@ -44,6 +50,7 @@ export type MilestoneInputModel =
       onChange: (next: MenuClustererInputDraft) => void
       onNotesBlur: () => void
       onNotesFocus: () => void
+      manualSave: MilestoneInputManualSave
       saveStatus: FieldSaveStatusVariant
       saving: boolean
     }
@@ -54,6 +61,7 @@ export type MilestoneInputModel =
       onChange: (next: IgMenuPickerInputDraft) => void
       onNotesBlur: () => void
       onNotesFocus: () => void
+      manualSave: MilestoneInputManualSave
       saveStatus: FieldSaveStatusVariant
       saving: boolean
     }

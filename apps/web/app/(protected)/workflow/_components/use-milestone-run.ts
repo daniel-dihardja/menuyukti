@@ -129,7 +129,11 @@ export function useMilestoneRun(
   )
 
   const handleRunMilestone = useCallback(
-    async (milestoneId: string, chatModel: ChatGatewayModelId = DEFAULT_CHAT_GATEWAY_MODEL) => {
+    async (
+      milestoneId: string,
+      chatModel: ChatGatewayModelId = DEFAULT_CHAT_GATEWAY_MODEL,
+      runOptions?: { milestoneInput?: MilestoneInput },
+    ) => {
       abortRef.current?.abort()
       const controller = new AbortController()
       abortRef.current = controller
@@ -165,7 +169,7 @@ export function useMilestoneRun(
         if (cached) {
           hydrateBody = {
             goal: cached.goal ?? '',
-            milestoneInput: cached.milestoneInput ?? undefined,
+            milestoneInput: runOptions?.milestoneInput ?? cached.milestoneInput ?? undefined,
             milestoneData: cached.data ?? undefined,
           }
         } else {
@@ -182,6 +186,12 @@ export function useMilestoneRun(
             throw new Error(fetched?.message ?? t('milestoneRunError'))
           }
           hydrateBody = fetched ?? { goal: '' }
+          if (runOptions?.milestoneInput !== undefined) {
+            hydrateBody = {
+              ...hydrateBody,
+              milestoneInput: runOptions.milestoneInput,
+            }
+          }
         }
 
         const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}/run`, {

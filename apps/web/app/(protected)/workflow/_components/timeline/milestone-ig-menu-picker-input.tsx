@@ -19,8 +19,10 @@ import { Textarea } from '@workspace/ui/components/textarea'
 import type { IgPlanEntry } from '@/lib/graphql/node-schemas'
 import {
   findPriorIgPlanMilestone,
-  resolveIgPlanEntriesForMenuPicker,
+  isIgMenuPickerSlotSelected,
   IG_MENU_PICKER_NONE_SELECTED_SENTINEL,
+  resolveIgPlanEntriesForMenuPicker,
+  toggleIgMenuPickerSlotKey,
 } from '@/lib/milestones/ig-menu-picker-input'
 
 import { MilestoneFieldDescription } from './milestone-field-description'
@@ -69,51 +71,26 @@ export function MilestoneIgMenuPickerInput({
     [milestoneId, milestoneState.milestones],
   )
 
-  const selectedSet = useMemo(() => new Set(draft.selectedSlotKeys), [draft.selectedSlotKeys])
+  const allSlotKeys = useMemo(() => entries.map((entry) => entry.slotKey), [entries])
 
   const isEntrySelected = useCallback(
-    (slotKey: string) => {
-      if (
-        draft.selectedSlotKeys.length === 1 &&
-        draft.selectedSlotKeys[0] === IG_MENU_PICKER_NONE_SELECTED_SENTINEL
-      ) {
-        return false
-      }
-      if (draft.selectedSlotKeys.length === 0) {
-        return true
-      }
-      return selectedSet.has(slotKey)
-    },
-    [draft.selectedSlotKeys, selectedSet],
+    (slotKey: string) => isIgMenuPickerSlotSelected(slotKey, draft.selectedSlotKeys),
+    [draft.selectedSlotKeys],
   )
 
   const toggleSlotKey = useCallback(
     (slotKey: string, checked: boolean) => {
-      const allKeys = entries.map((entry) => entry.slotKey)
-      const effectiveSelected =
-        draft.selectedSlotKeys.length === 0 ||
-        (draft.selectedSlotKeys.length === 1 &&
-          draft.selectedSlotKeys[0] === IG_MENU_PICKER_NONE_SELECTED_SENTINEL)
-          ? allKeys
-          : [...draft.selectedSlotKeys]
-
-      let next: string[]
-      if (checked) {
-        next = effectiveSelected.includes(slotKey)
-          ? effectiveSelected
-          : [...effectiveSelected, slotKey]
-      } else {
-        next = effectiveSelected.filter((key) => key !== slotKey)
-      }
-      const normalized =
-        next.length === allKeys.length
-          ? []
-          : next.length === 0
-            ? [IG_MENU_PICKER_NONE_SELECTED_SENTINEL]
-            : next
-      onDraftChange({ ...draft, selectedSlotKeys: normalized })
+      onDraftChange({
+        ...draft,
+        selectedSlotKeys: toggleIgMenuPickerSlotKey(
+          draft.selectedSlotKeys,
+          allSlotKeys,
+          slotKey,
+          checked,
+        ),
+      })
     },
-    [draft, entries, onDraftChange],
+    [allSlotKeys, draft, onDraftChange],
   )
 
   const selectAll = useCallback(() => {

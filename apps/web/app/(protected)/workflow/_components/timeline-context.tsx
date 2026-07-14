@@ -52,7 +52,11 @@ export type TimelineActions = {
   onUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
   onUpdateMilestoneRunChatModel: (id: string, runChatModel: ChatGatewayModelId) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
-  onRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
+  onRunMilestone: (
+    id: string,
+    chatModel?: ChatGatewayModelId,
+    options?: { milestoneInput?: MilestoneInput },
+  ) => void | Promise<void>
   onStopMilestoneRun: () => void
 }
 
