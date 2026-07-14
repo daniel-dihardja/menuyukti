@@ -36,20 +36,6 @@ export function hasCampaignBriefListContent(items: string[]): boolean {
   return items.length > 0
 }
 
-export function hasCampaignBriefSlotPerformanceContent(
-  slotPerformance: CampaignBriefMilestoneData['slotPerformance'],
-): boolean {
-  if (!slotPerformance) {
-    return false
-  }
-  return (
-    slotPerformance.slots.length > 0 ||
-    slotPerformance.strongSlots.length > 0 ||
-    slotPerformance.slotsNeedingPromotion.length > 0 ||
-    slotPerformance.summary.trim().length > 0
-  )
-}
-
 /** True when the milestone has generated brief content worth showing in the preview panel. */
 export function hasCampaignBriefPreviewContent(data: CampaignBriefMilestoneData): boolean {
   if (hasCampaignBriefVenueSnapshotContent(data.venueSnapshot)) {
@@ -62,9 +48,6 @@ export function hasCampaignBriefPreviewContent(data: CampaignBriefMilestoneData)
     return true
   }
   if (hasTrimmed(data.mainCategory) && data.mainCategory !== PLACEHOLDER_MAIN_CATEGORY) {
-    return true
-  }
-  if (hasCampaignBriefSlotPerformanceContent(data.slotPerformance)) {
     return true
   }
   return [

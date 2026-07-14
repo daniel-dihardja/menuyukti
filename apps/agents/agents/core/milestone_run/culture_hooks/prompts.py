@@ -42,7 +42,7 @@ HOW TO EXTRACT CONTEXT FROM THE CAMPAIGN BRIEF
    - contentPillarPlan: lists existing content themes already planned for the venue; intersections should introduce cultural angles not already covered by these pillars.
    - riskGuardrails: explicit local rules and cultural sensitivities — rule out any intersection topic that would conflict with these guardrails.
 
-Do NOT use mainCategory, offerAndCtaPlan, slotPerformance, measurementPlan, or testingPlan to select intersection topics — those fields are operational, not cultural-identity signals.
+Do NOT use mainCategory, offerAndCtaPlan, measurementPlan, or testingPlan to select intersection topics — those fields are operational, not cultural-identity signals.
 
 ────────────────────────────────────────────────────────────────────────
 OUTPUT FORMAT — return exactly one JSON object, no markdown, no prose outside JSON

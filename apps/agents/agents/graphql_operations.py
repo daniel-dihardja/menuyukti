@@ -311,16 +311,6 @@ query LatestAnalyticsRunWithSignals($locationId: Int!) {
         }
       }
     }
-    slotDemandProfile {
-      day
-      mealPeriod
-      mealPeriodLabel
-      mealPeriodHoursLabel
-      orderCount
-      trafficShare
-      demandIndex
-      relativeDemand
-    }
   }
 }
 """

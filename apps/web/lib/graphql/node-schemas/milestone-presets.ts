@@ -222,29 +222,6 @@ export const campaignBriefOverallStrategySchema = z.object({
 
 export type CampaignBriefOverallStrategy = z.infer<typeof campaignBriefOverallStrategySchema>
 
-export const campaignBriefSlotCellSchema = z.object({
-  day: z.string(),
-  mealPeriod: z.string(),
-  mealPeriodLabel: z.string(),
-  mealPeriodHoursLabel: z.string(),
-  orderCount: z.number().int().nonnegative(),
-  demandIndex: z.number(),
-  relativeDemand: z.enum(['low', 'average', 'high']),
-  posture: z.enum(['support', 'promote', 'maintain']),
-})
-
-export type CampaignBriefSlotCell = z.infer<typeof campaignBriefSlotCellSchema>
-
-export const campaignBriefSlotPerformanceSchema = z.object({
-  sourceAnalyticsRunId: z.string().nullable().optional(),
-  slots: z.array(campaignBriefSlotCellSchema),
-  strongSlots: z.array(z.string()),
-  slotsNeedingPromotion: z.array(z.string()),
-  summary: z.string(),
-})
-
-export type CampaignBriefSlotPerformance = z.infer<typeof campaignBriefSlotPerformanceSchema>
-
 export const campaignBriefMilestoneDataSchema = z.object({
   venueSnapshot: campaignBriefVenueSnapshotSchema,
   overallStrategy: campaignBriefOverallStrategySchema.optional(),
@@ -261,7 +238,6 @@ export const campaignBriefMilestoneDataSchema = z.object({
   measurementPlan: z.array(z.string()),
   testingPlan: z.array(z.string()),
   riskGuardrails: z.array(z.string()),
-  slotPerformance: campaignBriefSlotPerformanceSchema.optional(),
 })
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>

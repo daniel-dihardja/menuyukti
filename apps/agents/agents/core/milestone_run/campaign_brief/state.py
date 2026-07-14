@@ -31,7 +31,6 @@ class CampaignBriefState(TypedDict):
     reflection_iteration: NotRequired[int]
     reflection_critiques: NotRequired[list[ReflectionCritique]]
     generated_output: NotRequired[dict[str, Any] | None]
-    slot_performance_raw: NotRequired[dict[str, Any] | None]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | list[Any] | None]
     milestonedata_written: bool
