@@ -342,22 +342,15 @@ export function MilestoneItemTabs() {
   const {
     milestone,
     activeTab,
-    goalDraft,
     criteriaRows,
-    savingGoal,
     savingPassCriteria,
     hasResult,
     isMilestoneRunning,
     inputModel,
   } = useMilestoneItemState()
-  const {
-    setActiveTab,
-    setGoalDraft,
-    handleGoalSave,
-    handleAddPassCriterion,
-    handleRemovePassCriterion,
-  } = useMilestoneItemActions()
-  const { goalFieldId, addCriteriaInputId, addCriteriaInputRef } = useMilestoneItemMeta()
+  const { setActiveTab, handleAddPassCriterion, handleRemovePassCriterion } =
+    useMilestoneItemActions()
+  const { addCriteriaInputId, addCriteriaInputRef } = useMilestoneItemMeta()
   const t = useTranslations('analytics.workflows.chat')
   const helpDescription = useMemo(() => getMilestoneHelpDescription(milestone, t), [milestone, t])
   const optionalNotesCopy = inputModel.type === 'optional_notes' ? inputModel.copy : null
@@ -390,22 +383,11 @@ export function MilestoneItemTabs() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="goal">
-          <FieldGroup className="gap-4">
-            <Field>
-              <FieldLabel htmlFor={goalFieldId}>{t('milestoneTabGoal')}</FieldLabel>
-              <Textarea
-                className="min-h-[120px] resize-y whitespace-pre-wrap"
-                disabled={savingGoal}
-                id={goalFieldId}
-                onBlur={() => handleGoalSave()}
-                onChange={(e) => setGoalDraft(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                placeholder={t('milestoneGoalPlaceholder')}
-                value={goalDraft}
-              />
-            </Field>
-          </FieldGroup>
+          {milestone.goal?.trim() ? (
+            <MarkdownMessage content={milestone.goal} />
+          ) : (
+            <MilestoneTabEmpty>{t('milestoneGoalEmpty')}</MilestoneTabEmpty>
+          )}
         </TabsContent>
         <TabsContent value="input">
           <MilestoneInputTabContent

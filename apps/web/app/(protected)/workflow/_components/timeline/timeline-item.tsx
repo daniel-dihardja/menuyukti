@@ -57,7 +57,6 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
     deletingMilestoneId,
     movingMilestoneId,
     savingPassCriteriaMilestoneId,
-    savingGoalMilestoneId,
     savingDataMilestoneId,
     savingRunChatModelMilestoneId,
     runningMilestoneId,
@@ -78,7 +77,6 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
   const {
     onDeleteMilestone,
     onUpdatePassCriteria,
-    onUpdateMilestoneGoal,
     onUpdateMilestoneInput,
     onUpdateMilestoneRunChatModel,
     onMoveMilestone,
@@ -95,7 +93,6 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
   const lastMilestoneIdRef = useRef(milestone.id)
   const hadMilestoneDataRef = useRef(milestone.data != null)
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
-  const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
   const addCriteriaInputRef = useRef<HTMLInputElement>(null)
   const wasMilestoneRunningRef = useRef(false)
   const [activeTab, setActiveTab] = useState<MilestoneItemTabValue>('input')
@@ -143,7 +140,6 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
   }, [isMobile, milestone.id, milestone.data])
 
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
-  const savingGoal = savingGoalMilestoneId === milestone.id
   const savingInput = savingDataMilestoneId === milestone.id
   const savingRunChatModel = savingRunChatModelMilestoneId === milestone.id
 
@@ -153,10 +149,6 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
     savingInput,
     isMilestoneRunning,
   })
-
-  useEffect(() => {
-    setGoalDraft(milestone.goal ?? '')
-  }, [milestone.id, milestone.goal])
 
   useEffect(() => {
     setMilestoneRunChatModel(milestone.runChatModel ?? DEFAULT_CHAT_GATEWAY_MODEL)
@@ -200,24 +192,7 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
     await onUpdatePassCriteria(milestone.id, next)
   }
 
-  const goalFieldId = `milestone-goal-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
-
-  const handleGoalSave = () => {
-    if (!onUpdateMilestoneGoal || savingGoal) {
-      return
-    }
-    const server = milestone.goal ?? ''
-    if (goalDraft === server) {
-      return
-    }
-    void (async () => {
-      const ok = await onUpdateMilestoneGoal(milestone.id, goalDraft)
-      if (!ok) {
-        setGoalDraft(server)
-      }
-    })()
-  }
 
   const handleMilestoneRunChatModelChange = useCallback(
     (nextModel: ChatGatewayModelId) => {
@@ -326,25 +301,20 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
                 <MilestoneItemProvider
                   actions={{
                     handleAddPassCriterion,
-                    handleGoalSave,
                     handleRemovePassCriterion,
                     setActiveTab,
-                    setGoalDraft,
                   }}
                   meta={{
                     addCriteriaInputId,
                     addCriteriaInputRef,
-                    goalFieldId,
                   }}
                   state={{
                     activeTab,
                     criteriaRows,
-                    goalDraft,
                     hasResult,
                     inputModel,
                     isMilestoneRunning,
                     milestone,
-                    savingGoal,
                     savingPassCriteria,
                   }}
                 >

@@ -8,7 +8,6 @@ export function toTimelineActions(ops: WorkflowTimelineOpsHandles): TimelineActi
     onDeleteMilestone: ops.handleDeleteMilestone,
     onMoveMilestone: ops.handleMoveMilestone,
     onUpdatePassCriteria: ops.handleUpdatePassCriteria,
-    onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
     onUpdateMilestoneData: ops.handleUpdateMilestoneData,
     onUpdateMilestoneInput: ops.handleUpdateMilestoneInput,
     onUpdateMilestoneRunChatModel: ops.handleUpdateMilestoneRunChatModel,
