@@ -29,15 +29,7 @@ export function milestonePresetUsesManualInputSave(inputType: MilestonePresetInp
 /** Presets whose Input tab uses the default optional owner-notes textarea (not custom widgets like dates). */
 export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
-): presetId is
-  | 'culture_hooks'
-  | 'ig_profile'
-  | 'ig_plan'
-  | 'menu_tagger'
-  | 'post_lineup'
-  | 'reel_lineup'
-  | 'story_lineup'
-  | 'scheduler' {
+): presetId is 'culture_hooks' | 'ig_profile' | 'ig_plan' | 'menu_tagger' | 'scheduler' {
   return milestonePresetInputType(presetId) === 'optional_notes'
 }
 
@@ -49,9 +41,6 @@ export function optionalNotesFromMilestoneInput(
     | 'ig_profile'
     | 'ig_plan'
     | 'menu_tagger'
-    | 'post_lineup'
-    | 'reel_lineup'
-    | 'story_lineup'
     | 'scheduler',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {

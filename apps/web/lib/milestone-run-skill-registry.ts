@@ -45,24 +45,6 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
       'Build one top_five group per POS category from tagged star items (up to five dishes), with cluster descriptions tied to campaign strategy.',
   },
   {
-    id: 'post_lineup',
-    name: 'Post lineup',
-    description:
-      'Plan Instagram feed carousel posts: one Top 5 carousel per star category from menu tagger data.',
-  },
-  {
-    id: 'reel_lineup',
-    name: 'Reel lineup',
-    description:
-      'Plan Instagram Reels: one weekday reel and one weekend reel for each calendar week in the campaign window.',
-  },
-  {
-    id: 'story_lineup',
-    name: 'Story lineup',
-    description:
-      'Select public holidays for Instagram Story greetings and a recurring user-review story.',
-  },
-  {
     id: 'culture_hooks',
     name: 'Culture hooks',
     description:

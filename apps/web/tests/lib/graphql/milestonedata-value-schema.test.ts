@@ -20,23 +20,7 @@ const schedulerPayload = {
       kind: 'post',
       date: '2026-06-01',
       time: '10:00',
-      title: 'Top 5 MAINS',
-      post: {
-        id: 'top-five-mains',
-        format: 'carousel',
-        intent: 'top_five_category',
-        title: 'Top 5 MAINS',
-        category: 'MAINS',
-        intervalWeeks: 2,
-        fixdate: false,
-        slides: [
-          {
-            dishName: 'Ribeye',
-            imageBrief: 'Hero menu photography brief.',
-            caption: 'Ribeye caption.',
-          },
-        ],
-      },
+      title: 'Post: Top 5 MAINS',
     },
   ],
 }
@@ -59,7 +43,7 @@ describe('milestonedataValueSchema', () => {
       slots: schedulerPayload.slots,
     })
     expect(parsed.data.slots[0]?.kind).toBe('story')
-    expect(parsed.data.slots[1]?.post?.slides[0]?.dishName).toBe('Ribeye')
+    expect(parsed.data.slots[1]?.title).toBe('Post: Top 5 MAINS')
   })
 })
 
@@ -77,49 +61,6 @@ describe('milestonePresetFrom', () => {
 
     expect(data).toMatchObject({
       slots: schedulerPayload.slots,
-    })
-  })
-
-  it('accepts scheduler post slots that omit category when slides include it', () => {
-    const legacyPayload = {
-      ...schedulerPayload,
-      slots: [
-        {
-          kind: 'post',
-          date: '2026-07-03',
-          time: '10:00',
-          title: 'Top 5 DRINK',
-          post: {
-            id: 'top-five-drink',
-            format: 'carousel',
-            intent: 'top_five_category',
-            title: 'Top 5 DRINK',
-            slides: [
-              {
-                dishName: 'Latte',
-                imageBrief: 'Brief.',
-                caption: 'Caption.',
-                category: 'DRINK',
-              },
-            ],
-            groupIds: [],
-          },
-        },
-      ],
-    }
-
-    const data = milestonePresetFrom(
-      {
-        id: '237',
-        name: 'Scheduler',
-        data: { presetId: 'scheduler' },
-        milestonePresetData: legacyPayload,
-      },
-      'scheduler',
-    )
-
-    expect(data).toMatchObject({
-      slots: [{ post: { category: 'DRINK' } }],
     })
   })
 })

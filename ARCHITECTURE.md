@@ -64,7 +64,7 @@ flowchart TD
   executePreset --> finalizeEval
 ```
 
-**Registered preset ids** (must match web `MILESTONE_PRESET_IDS`): `dates`, `restaurant_campaign_brief`, `promotion_candidates`, `menu_tagger`, `menu_clusterer`, `post_lineup`, `reel_lineup`, `story_lineup`, `culture_hooks`, `ig_profile`, `ig_plan`, `scheduler`.
+**Registered preset ids** (must match web `MILESTONE_PRESET_IDS`): `dates`, `restaurant_campaign_brief`, `promotion_candidates`, `menu_tagger`, `menu_clusterer`, `culture_hooks`, `ig_profile`, `ig_plan`, `ig_menu_picker`, `ig_format`, `ig_text`, `scheduler`.
 
 Legacy ReAct milestone-run tools under `milestone_run/tools/` remain for **unit tests only**; production preset graphs call GraphQL directly from nodes and persist via `milestone_data` upsert + `validate_skill_output`.
 

@@ -57,29 +57,17 @@ from agents_app.agents.core.milestone_eval.menu_tagger_eval import (
     enrich_menu_tagger_eval_payload,
     try_menu_tagger_deterministic_verdict,
 )
-from agents_app.agents.core.milestone_eval.post_lineup_eval import (
-    enrich_post_lineup_eval_payload,
-    try_post_lineup_deterministic_verdict,
-)
 from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
     SYNTHESIS_SYSTEM,
     eval_human_message,
     synthesis_human_message,
 )
-from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
-    enrich_reel_lineup_eval_payload,
-    try_reel_lineup_deterministic_verdict,
-)
 from agents_app.agents.core.milestone_eval.scheduler_eval import (
     enrich_scheduler_eval_payload,
     try_scheduler_deterministic_verdict,
 )
 from agents_app.agents.core.milestone_eval.state import CriterionEval, MilestoneEvalState
-from agents_app.agents.core.milestone_eval.story_lineup_eval import (
-    enrich_story_lineup_eval_payload,
-    try_story_lineup_deterministic_verdict,
-)
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
@@ -96,16 +84,10 @@ def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
                 enrich_ig_plan_eval_payload(
                     enrich_campaign_brief_eval_payload(
                         enrich_scheduler_eval_payload(
-                            enrich_story_lineup_eval_payload(
-                                enrich_reel_lineup_eval_payload(
-                                    enrich_post_lineup_eval_payload(
-                                        enrich_menu_clusterer_eval_payload(
-                                            enrich_menu_tagger_eval_payload(
-                                                enrich_dates_eval_payload(
-                                                    enrich_ig_profile_eval_payload(data)
-                                                )
-                                            )
-                                        )
+                            enrich_menu_clusterer_eval_payload(
+                                enrich_menu_tagger_eval_payload(
+                                    enrich_dates_eval_payload(
+                                        enrich_ig_profile_eval_payload(data)
                                     )
                                 )
                             )
@@ -146,9 +128,6 @@ _OWNER_NOTES_INPUT_TYPES = frozenset(
         "culture_hooks",
         "menu_tagger",
         "menu_clusterer",
-        "post_lineup",
-        "reel_lineup",
-        "story_lineup",
         "scheduler",
         "ig_profile",
         "ig_format",
@@ -325,12 +304,6 @@ async def evaluate_criterion(
             deterministic = try_menu_tagger_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_menu_clusterer_deterministic_verdict(requirement, milestone_data)
-        if deterministic is None:
-            deterministic = try_post_lineup_deterministic_verdict(requirement, milestone_data)
-        if deterministic is None:
-            deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
-        if deterministic is None:
-            deterministic = try_story_lineup_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_scheduler_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:

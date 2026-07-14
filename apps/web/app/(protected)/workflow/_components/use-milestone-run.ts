@@ -7,8 +7,6 @@ import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/
 
 import { deriveMilestoneRailStatus } from './milestone-map'
 import { parseDataPreviewForPreset, type MilestoneOpsContext } from './milestone-ops-shared'
-import { hasPostLineupPosts, isEmptyPostLineupData } from '@/lib/milestones/post-lineup'
-import { hasReelLineupReels, isEmptyReelLineupData } from '@/lib/milestones/reel-lineup'
 import { normalizeMilestonePresetData } from '@/lib/milestones/preset-definitions'
 import type {
   MilestoneDataValue,
@@ -99,19 +97,9 @@ export function useMilestoneRun(
                   ? body.passCriterias
                   : m.passCriteria
               const goalText = typeof body.goal === 'string' ? body.goal : (m.goal ?? '')
-              const keepExistingPostLineup =
-                body.presetId === 'post_lineup' &&
-                isEmptyPostLineupData(dataValue) &&
-                hasPostLineupPosts(m.data)
-              const keepExistingReelLineup =
-                body.presetId === 'reel_lineup' &&
-                isEmptyReelLineupData(dataValue) &&
-                hasReelLineupReels(m.data)
               const next: TimelineMilestone = {
                 ...m,
-                ...(dataValue !== undefined && !keepExistingPostLineup && !keepExistingReelLineup
-                  ? { data: dataValue }
-                  : {}),
+                ...(dataValue !== undefined ? { data: dataValue } : {}),
                 presetId: body.presetId ?? m.presetId,
                 milestoneInput: body.milestoneInput ?? m.milestoneInput,
                 goal: goalText.trim() ? goalText : undefined,

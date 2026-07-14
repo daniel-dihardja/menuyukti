@@ -17,11 +17,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { MilestonePreviewListDetailShell } from '@/app/(protected)/workflow/_components/milestone-preview/milestone-preview-list-detail'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import type {
-  PostLineupPost,
-  ReelLineupReel,
-  SchedulerMilestoneData,
-} from '@/lib/graphql/node-schemas'
+import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import {
   canGoToNextMonth,
   canGoToNextWeek,
@@ -36,8 +32,6 @@ import {
   nextWeekStartIso,
   previousMonthStartIso,
   previousWeekStartIso,
-  resolveSchedulerPostDetail,
-  resolveSchedulerReelDetail,
   schedulerSlotClassName,
   schedulerSlotDisplayTime,
   schedulerSlotKind,
@@ -54,8 +48,6 @@ import { SchedulerCalendarMonthGrid } from './scheduler-calendar-month-grid'
 import { SchedulerCalendarMonthList } from './scheduler-calendar-month-list'
 import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
 import { SchedulerCalendarWeekGrid } from './scheduler-calendar-week-grid'
-import { PostLineupDetailCard } from './post-lineup-preview-parts'
-import { ReelLineupDetailCard } from './reel-lineup-preview-parts'
 
 export type SchedulerCalendarViewMode = 'week' | 'month'
 
@@ -65,8 +57,6 @@ export type SchedulerCalendarProps = {
   locale: string
   slots?: SchedulerMilestoneData['slots']
   publicHolidays?: SchedulerMilestoneData['publicHolidays']
-  postLineupPosts?: PostLineupPost[]
-  reelLineupReels?: ReelLineupReel[]
   className?: string
 }
 
@@ -86,93 +76,9 @@ function formatSchedulerDateDetailLabel(isoDate: string, locale: string): string
 type SchedulerCalendarDateDetailProps = {
   selectedDateIso: string
   slots: SchedulerMilestoneData['slots']
-  postLineupPosts?: PostLineupPost[]
-  reelLineupReels?: ReelLineupReel[]
 }
 
-function SchedulerSlotDetailHeader({ slot }: { slot: SchedulerMilestoneData['slots'][number] }) {
-  const slotKind = schedulerSlotKind(slot)
-
-  return (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
-      <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
-        {schedulerSlotDisplayTime(slot)}
-      </span>
-      <Badge variant="outline" className={schedulerSlotClassName(slotKind)}>
-        {schedulerSlotTypeLabel(slotKind)}
-      </Badge>
-    </div>
-  )
-}
-
-function lineupIndexForPost(post: PostLineupPost, postLineupPosts?: PostLineupPost[]): number {
-  const index = postLineupPosts?.findIndex((entry) => entry.id === post.id) ?? -1
-  return index >= 0 ? index : 0
-}
-
-function lineupIndexForReel(reel: ReelLineupReel, reelLineupReels?: ReelLineupReel[]): number {
-  const index = reelLineupReels?.findIndex((entry) => entry.id === reel.id) ?? -1
-  return index >= 0 ? index : 0
-}
-
-function SchedulerPostSlotDetailCard({
-  slot,
-  post,
-  postLineupPosts,
-}: {
-  slot: SchedulerMilestoneData['slots'][number]
-  post: PostLineupPost
-  postLineupPosts?: PostLineupPost[]
-}) {
-  const t = useTranslations('analytics.workflows.chat')
-  const roleStarLabel = t('milestonePostLineupPreviewRoleStar')
-  const rolePuzzleLabel = t('milestonePostLineupPreviewRolePuzzle')
-
-  return (
-    <>
-      <SchedulerSlotDetailHeader slot={slot} />
-      <PostLineupDetailCard
-        post={post}
-        index={lineupIndexForPost(post, postLineupPosts)}
-        roleStarLabel={roleStarLabel}
-        rolePuzzleLabel={rolePuzzleLabel}
-      />
-    </>
-  )
-}
-
-function SchedulerReelSlotDetailCard({
-  slot,
-  reel,
-  reelLineupReels,
-}: {
-  slot: SchedulerMilestoneData['slots'][number]
-  reel: ReelLineupReel
-  reelLineupReels?: ReelLineupReel[]
-}) {
-  const t = useTranslations('analytics.workflows.chat')
-  const roleStarLabel = t('milestonePostLineupPreviewRoleStar')
-  const rolePuzzleLabel = t('milestonePostLineupPreviewRolePuzzle')
-
-  return (
-    <>
-      <SchedulerSlotDetailHeader slot={slot} />
-      <ReelLineupDetailCard
-        reel={reel}
-        index={lineupIndexForReel(reel, reelLineupReels)}
-        roleStarLabel={roleStarLabel}
-        rolePuzzleLabel={rolePuzzleLabel}
-      />
-    </>
-  )
-}
-
-function SchedulerCalendarDateDetail({
-  selectedDateIso,
-  slots,
-  postLineupPosts,
-  reelLineupReels,
-}: SchedulerCalendarDateDetailProps) {
+function SchedulerCalendarDateDetail({ selectedDateIso, slots }: SchedulerCalendarDateDetailProps) {
   const t = useTranslations('analytics.workflows.chat')
   const selectedDaySlots = useMemo(
     () => schedulerSlotsForDateDetail(slots, selectedDateIso),
@@ -190,62 +96,29 @@ function SchedulerCalendarDateDetail({
   return (
     <div className="flex flex-col gap-2">
       {selectedDaySlots.map((slot) => {
-        const postDetail = resolveSchedulerPostDetail(slot, postLineupPosts)
-        const reelDetail = resolveSchedulerReelDetail(slot, reelLineupReels)
         const slotKind = schedulerSlotKind(slot)
-        const isPostSlot = slotKind === 'post'
-        const isReelSlot = slotKind === 'reel'
 
         return (
           <article
             key={`${slot.date}-${slot.time}-${slot.title}`}
             className="rounded-lg border border-border/80 bg-background px-3 py-3 shadow-xs"
           >
-            {isPostSlot && postDetail ? (
-              <SchedulerPostSlotDetailCard
-                slot={slot}
-                post={postDetail}
-                postLineupPosts={postLineupPosts}
-              />
-            ) : isReelSlot && reelDetail ? (
-              <SchedulerReelSlotDetailCard
-                slot={slot}
-                reel={reelDetail}
-                reelLineupReels={reelLineupReels}
-              />
-            ) : (
-              <>
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
-                    {schedulerSlotDisplayTime(slot)}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={schedulerSlotClassName(schedulerSlotKind(slot))}
-                  >
-                    {schedulerSlotTypeLabel(schedulerSlotKind(slot))}
-                  </Badge>
-                </div>
-                <p
-                  className={cn(
-                    'rounded-md border px-2 py-1 text-sm font-medium leading-relaxed',
-                    schedulerSlotClassName(schedulerSlotKind(slot)),
-                  )}
-                >
-                  <SchedulerSlotDisplayTitle slot={slot} />
-                </p>
-                {isPostSlot ? (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t('milestoneSchedulerPreviewPostDetailMissing')}
-                  </p>
-                ) : null}
-                {isReelSlot ? (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t('milestoneSchedulerPreviewReelDetailMissing')}
-                  </p>
-                ) : null}
-              </>
-            )}
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
+                {schedulerSlotDisplayTime(slot)}
+              </span>
+              <Badge variant="outline" className={schedulerSlotClassName(slotKind)}>
+                {schedulerSlotTypeLabel(slotKind)}
+              </Badge>
+            </div>
+            <p
+              className={cn(
+                'rounded-md border px-2 py-1 text-sm font-medium leading-relaxed',
+                schedulerSlotClassName(slotKind),
+              )}
+            >
+              <SchedulerSlotDisplayTitle slot={slot} />
+            </p>
           </article>
         )
       })}
@@ -259,8 +132,6 @@ export function SchedulerCalendar({
   locale,
   slots = [],
   publicHolidays = [],
-  postLineupPosts,
-  reelLineupReels,
   className,
 }: SchedulerCalendarProps) {
   const t = useTranslations('analytics.workflows.chat')
@@ -508,12 +379,7 @@ export function SchedulerCalendar({
         list={calendarContent}
         detail={
           selectedDateIso ? (
-            <SchedulerCalendarDateDetail
-              selectedDateIso={selectedDateIso}
-              slots={slots}
-              postLineupPosts={postLineupPosts}
-              reelLineupReels={reelLineupReels}
-            />
+            <SchedulerCalendarDateDetail selectedDateIso={selectedDateIso} slots={slots} />
           ) : null
         }
       />

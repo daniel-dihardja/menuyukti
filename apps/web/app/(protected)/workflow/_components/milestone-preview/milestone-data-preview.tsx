@@ -17,9 +17,6 @@ import { MilestoneIgMenuPickerDataPreview } from './milestone-ig-menu-picker-dat
 import { MilestoneIgFormatDataPreview } from './milestone-ig-format-data-preview'
 import { MilestoneIgTextDataPreview } from './milestone-ig-text-data-preview'
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
-import { MilestonePostLineupDataPreview } from './milestone-post-lineup-data-preview'
-import { MilestoneReelLineupDataPreview } from './milestone-reel-lineup-data-preview'
-import { MilestoneStoryLineupDataPreview } from './milestone-story-lineup-data-preview'
 import { MilestoneMenuClustererDataPreview } from './milestone-menu-clusterer-data-preview'
 import { MilestoneSchedulerDataPreview } from './milestone-scheduler-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
@@ -71,24 +68,6 @@ function renderParsedPreview(
       return (
         <MilestoneMenuClustererDataPreview
           data={data as Parameters<typeof MilestoneMenuClustererDataPreview>[0]['data']}
-        />
-      )
-    case 'post_lineup':
-      return (
-        <MilestonePostLineupDataPreview
-          data={data as Parameters<typeof MilestonePostLineupDataPreview>[0]['data']}
-        />
-      )
-    case 'reel_lineup':
-      return (
-        <MilestoneReelLineupDataPreview
-          data={data as Parameters<typeof MilestoneReelLineupDataPreview>[0]['data']}
-        />
-      )
-    case 'story_lineup':
-      return (
-        <MilestoneStoryLineupDataPreview
-          data={data as Parameters<typeof MilestoneStoryLineupDataPreview>[0]['data']}
         />
       )
     case 'culture_hooks':

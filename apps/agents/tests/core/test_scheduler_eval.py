@@ -6,286 +6,98 @@ from agents_app.agents.core.milestone_eval.scheduler_eval import (
     enrich_scheduler_eval_payload,
     try_scheduler_deterministic_verdict,
 )
-from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
 
 
-def _slot(
-    *,
-    kind: str,
-    date: str,
-    post_id: str | None = None,
-    post_intent: str | None = None,
-    reel_id: str | None = None,
-    reel_intent: str | None = None,
-) -> dict:
-    payload: dict = {
+def _slot(*, kind: str, date: str, title: str = "Slot title") -> dict:
+    return {
         "kind": kind,
         "date": date,
         "time": "12:00",
-        "title": f"{kind} slot",
+        "title": title,
     }
-    if post_id is not None or post_intent is not None:
-        payload["post"] = {
-            "id": post_id or "post-unknown",
-            "format": "carousel",
-            "intent": post_intent or "",
-            "title": "Post",
-            "description": "desc",
-            "slides": [{"dishName": "Dish", "imageBrief": "img"}],
-            "groupIds": ["g1"],
-        }
-    if reel_id is not None or reel_intent is not None:
-        payload["reel"] = {
-            "id": reel_id or "reel-unknown",
-            "format": "reel",
-            "intent": reel_intent or "",
-            "title": "Reel",
-            "description": "desc",
-            "explanation": "why",
-            "groupIds": ["g1"],
-        }
-    return payload
 
 
 def _valid_scheduler_payload() -> dict:
-    start_date = "2026-06-01"
-    end_date = "2026-06-28"
-    weeks = campaign_weeks(start_date, end_date)
-    slots: list[dict] = [
-        _slot(
-            kind="post",
-            date="2026-06-02",
-            post_id="top-five-mains",
-            post_intent="top_five_category",
-        ),
-        _slot(
-            kind="post",
-            date="2026-06-16",
-            post_id="top-five-mains",
-            post_intent="top_five_category",
-        ),
-    ]
-    for week in weeks:
-        slots.append(
-            _slot(
-                kind="reel",
-                date=week.week_start,
-                reel_id=f"weekday-reel-week-{week.week_start}",
-                reel_intent="weekday_reel",
-            )
-        )
-        slots.append(
-            _slot(
-                kind="reel",
-                date=week.week_end,
-                reel_id=f"weekend-reel-week-{week.week_start}",
-                reel_intent="weekend_reel",
-            )
-        )
     return {
-        "startDate": start_date,
-        "endDate": end_date,
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-28",
+        "sourceCampaignBriefTitle": "Campaign brief",
         "publicHolidays": [],
-        "slots": slots,
+        "slots": [
+            _slot(kind="post", date="2026-06-02", title="Post: Top 5 MAINS"),
+            _slot(kind="reel", date="2026-06-09", title="Reel: Weekday lunch"),
+            _slot(kind="story", date="2026-06-15", title="Story: Holiday greeting"),
+        ],
     }
 
 
-def test_enrich_scheduler_eval_payload_adds_cadence_hints() -> None:
+def test_enrich_scheduler_eval_payload_adds_window_hints() -> None:
     enriched = enrich_scheduler_eval_payload(_valid_scheduler_payload())
     assert enriched["_evalHints"]["requiresStartDate"] is True
     assert enriched["_evalHints"]["expectedCampaignWeeks"] == 4
-    assert enriched["_evalHints"]["expectedTopFiveCategoryBlocks"] == 2
-    assert enriched["_evalHints"]["topFiveCategoryIntervalWeeks"] == 2
-    assert enriched["_evalHints"]["cadenceIssues"] == []
+    assert enriched["_evalHints"]["slotCount"] == 3
+    assert enriched["_evalHints"]["slotDateIssues"] == []
 
 
-def test_top_five_and_reel_same_week_passes() -> None:
-    start_date = "2026-06-01"
-    end_date = "2026-06-07"
-    week = campaign_weeks(start_date, end_date)[0]
-    payload = {
-        "startDate": start_date,
-        "endDate": end_date,
-        "slots": [
-            _slot(
-                kind="post",
-                date="2026-06-02",
-                post_id="top-five-mains",
-                post_intent="top_five_category",
-            ),
-            _slot(
-                kind="reel",
-                date=week.week_start,
-                reel_id=f"weekday-reel-week-{week.week_start}",
-                reel_intent="weekday_reel",
-            ),
-            _slot(
-                kind="reel",
-                date="2026-06-07",
-                reel_id=f"weekend-reel-week-{week.week_start}",
-                reel_intent="weekend_reel",
-            ),
-        ],
-    }
+def test_dates_window_verdict_passes() -> None:
     verdict = try_scheduler_deterministic_verdict(
-        "Exactly one weekday reel is scheduled in each campaign week.",
-        payload,
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_top_five_category_verdict_passes() -> None:
-    verdict = try_scheduler_deterministic_verdict(
-        "Exactly one top_five_category post is scheduled every 2 weeks, rotating through lineup posts.",
+        "Scheduler data includes startDate and endDate from prior dates.",
         _valid_scheduler_payload(),
     )
     assert verdict is not None
     assert verdict[0] == "pass"
 
 
-def test_top_five_weekly_alternation_fails() -> None:
-    """Two posts in consecutive weeks (w1 A, w2 B) violates one-post-per-2-week-block rule."""
-    payload = {
-        "startDate": "2026-06-01",
-        "endDate": "2026-06-28",
-        "publicHolidays": [],
-        "slots": [
-            _slot(
-                kind="post",
-                date="2026-06-02",
-                post_id="top-five-mains",
-                post_intent="top_five_category",
-            ),
-            _slot(
-                kind="post",
-                date="2026-06-09",
-                post_id="top-five-drinks",
-                post_intent="top_five_category",
-            ),
-        ],
-    }
-    enriched = enrich_scheduler_eval_payload(payload)
-    assert enriched["_evalHints"]["cadenceIssues"]
-
-
-def test_top_five_two_post_rotation_passes() -> None:
-    payload = {
-        "startDate": "2026-06-01",
-        "endDate": "2026-06-28",
-        "publicHolidays": [],
-        "slots": [
-            _slot(
-                kind="post",
-                date="2026-06-02",
-                post_id="top-five-mains",
-                post_intent="top_five_category",
-            ),
-            _slot(
-                kind="post",
-                date="2026-06-16",
-                post_id="top-five-drinks",
-                post_intent="top_five_category",
-            ),
-        ],
-    }
+def test_slots_in_window_verdict_passes() -> None:
     verdict = try_scheduler_deterministic_verdict(
-        "Exactly one top_five_category post is scheduled every 2 weeks, rotating through lineup posts.",
-        payload,
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_weekday_reel_verdict_passes_when_no_reels_scheduled() -> None:
-    payload = {
-        "startDate": "2026-06-01",
-        "endDate": "2026-06-28",
-        "publicHolidays": [],
-        "slots": [
-            _slot(
-                kind="post",
-                date="2026-06-02",
-                post_id="top-five-mains",
-                post_intent="top_five_category",
-            ),
-        ],
-    }
-    verdict = try_scheduler_deterministic_verdict(
-        "Exactly one weekday reel is scheduled in each campaign week.",
-        payload,
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_weekday_reel_verdict_passes() -> None:
-    verdict = try_scheduler_deterministic_verdict(
-        "Exactly one weekday reel is scheduled in each campaign week.",
+        "All scheduled slot dates fall within the campaign window.",
         _valid_scheduler_payload(),
     )
     assert verdict is not None
     assert verdict[0] == "pass"
 
 
-def test_weekend_reel_verdict_passes() -> None:
+def test_slots_in_window_verdict_fails_for_out_of_range_date() -> None:
+    payload = {
+        **_valid_scheduler_payload(),
+        "slots": [_slot(kind="post", date="2026-07-01", title="Post: Outside window")],
+    }
     verdict = try_scheduler_deterministic_verdict(
-        "Exactly one weekend reel is scheduled in each campaign week.",
+        "All scheduled slot dates fall within the campaign window.",
+        payload,
+    )
+    assert verdict is not None
+    assert verdict[0] == "fail"
+
+
+def test_campaign_brief_context_verdict_passes_with_source_title() -> None:
+    verdict = try_scheduler_deterministic_verdict(
+        "Scheduler used prior restaurant_campaign_brief strategy for timing and cadence.",
         _valid_scheduler_payload(),
     )
     assert verdict is not None
     assert verdict[0] == "pass"
 
 
-def test_tail_week_without_weekend_does_not_require_weekend_reel() -> None:
-    """Campaign ends Thu: final week has no Sat/Sun in-window — weekend reel optional."""
-    start_date = "2026-06-01"
-    end_date = "2026-06-25"
-    weeks = campaign_weeks(start_date, end_date)
-    assert len(weeks) >= 2
-    slots: list[dict] = [
-        _slot(
-            kind="post",
-            date="2026-06-02",
-            post_id="top-five-mains",
-            post_intent="top_five_category",
-        ),
-    ]
-    for week in weeks[:-1]:
-        slots.append(
-            _slot(
-                kind="reel",
-                date=week.week_start,
-                reel_id=f"weekday-reel-week-{week.week_start}",
-                reel_intent="weekday_reel",
-            )
-        )
-        slots.append(
-            _slot(
-                kind="reel",
-                date=week.week_end,
-                reel_id=f"weekend-reel-week-{week.week_start}",
-                reel_intent="weekend_reel",
-            )
-        )
-    last = weeks[-1]
-    slots.append(
-        _slot(
-            kind="reel",
-            date=last.week_start,
-            reel_id=f"weekday-reel-week-{last.week_start}",
-            reel_intent="weekday_reel",
-        )
-    )
-    payload = {
-        "startDate": start_date,
-        "endDate": end_date,
-        "publicHolidays": [],
-        "slots": slots,
-    }
+def test_at_least_one_slot_verdict_passes() -> None:
     verdict = try_scheduler_deterministic_verdict(
-        "Exactly one weekend reel is scheduled in each campaign week.",
-        payload,
+        "Scheduler includes at least one scheduled slot.",
+        _valid_scheduler_payload(),
     )
     assert verdict is not None
     assert verdict[0] == "pass"
+
+
+def test_at_least_one_slot_verdict_fails_when_empty() -> None:
+    payload = {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-28",
+        "publicHolidays": [],
+        "slots": [],
+    }
+    verdict = try_scheduler_deterministic_verdict(
+        "Scheduler includes at least one scheduled slot.",
+        payload,
+    )
+    assert verdict is not None
+    assert verdict[0] == "fail"
