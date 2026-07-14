@@ -202,6 +202,38 @@ type FundamentalSignalsType {
   trendingItems: [TrendingItemType!]!
 }
 
+"""Options for the IG Plan composite inputs query."""
+input IgPlanInputsOptionsInput {
+  matrixCategories: [String!] = null
+  maxCandidatesPerSlot: Int = null
+  includeLowEnd: Boolean = null
+}
+
+"""
+Composite IG Plan inputs for a location: owner location profile plus latest-run slot demand, menu engineering matrix, and slot menu candidates from one OrderFact load.
+"""
+type IgPlanInputsType {
+  version: Int!
+  location: IgPlanLocationSnapshotType!
+  analyticsRun: LatestAnalyticsRunType
+  slotDemandProfile: [SlotDemandCellType!]!
+  menuEngineeringMatrix: MenuEngineeringMatrixType
+  slotMenuCandidates: SlotMenuCandidatesType
+  coverageNotes: [String!]!
+}
+
+"""Location identity and owner quick profile for IG Plan."""
+type IgPlanLocationSnapshotType {
+  id: ID!
+  name: String!
+  street: String
+  city: String
+  country: String
+  currency: String
+  manualBriefInput: LocationManualBriefInputType
+  openingHours: [OpeningHourType!]!
+}
+
 type ImageAiFlowType {
   id: Int!
   slug: String!
@@ -815,6 +847,11 @@ type Query {
   workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
   imageAiFlows(includeInactive: Boolean! = false): [ImageAiFlowType!]!
   imageAiFlow(slug: String!): ImageAiFlowType
+
+  """
+  Return location profile and latest analytics-run inputs for IG Plan in one request. Uses a single OrderFact load for slot demand, menu engineering matrix, and slot menu candidates. Returns null when the caller cannot access the location.
+  """
+  igPlanInputs(locationId: Int!, options: IgPlanInputsOptionsInput = null): IgPlanInputsType
 }
 
 """Per-menu revenue comparison between two analytics periods."""
