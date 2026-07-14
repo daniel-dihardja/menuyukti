@@ -3,9 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/timeline/types'
 import {
   findPriorDatesMilestone,
-  findPriorPostLineupMilestone,
   parseIsoDateOnly,
-  resolvePostLineupPostsForScheduler,
   resolveSchedulerWindow,
 } from '@/lib/milestones/scheduler-dates'
 
@@ -55,71 +53,6 @@ describe('findPriorDatesMilestone', () => {
   it('returns undefined when no prior dates milestone exists', () => {
     const milestones = [milestone('1', 'promotion_candidates'), milestone('2', 'scheduler')]
     expect(findPriorDatesMilestone(milestones, '2')).toBeUndefined()
-  })
-})
-
-describe('findPriorPostLineupMilestone', () => {
-  it('returns the nearest post_lineup milestone before the scheduler', () => {
-    const milestones = [
-      milestone('1', 'post_lineup', { title: 'Posts A' }),
-      milestone('2', 'story_lineup'),
-      milestone('3', 'post_lineup', { title: 'Posts B' }),
-      milestone('4', 'scheduler'),
-    ]
-
-    expect(findPriorPostLineupMilestone(milestones, '4')?.id).toBe('3')
-    expect(findPriorPostLineupMilestone(milestones, '2')?.id).toBe('1')
-  })
-})
-
-describe('resolvePostLineupPostsForScheduler', () => {
-  it('returns parsed posts from the prior post_lineup milestone', () => {
-    const milestones = [
-      milestone('1', 'post_lineup', {
-        data: {
-          startDate: '2026-06-01',
-          endDate: '2026-06-14',
-          posts: [
-            {
-              id: 'top-five-mains',
-              format: 'carousel',
-              intent: 'top_five_category',
-              title: 'Top 5 MAINS',
-              category: 'MAINS',
-              intervalWeeks: 2,
-              fixdate: false,
-              slides: [
-                {
-                  dishName: 'Ribeye',
-                  imageBrief: 'Hero brief.',
-                  caption: 'Ribeye caption.',
-                },
-              ],
-            },
-          ],
-        },
-      }),
-      milestone('2', 'scheduler'),
-    ]
-
-    expect(resolvePostLineupPostsForScheduler(milestones, '2')).toEqual([
-      {
-        id: 'top-five-mains',
-        format: 'carousel',
-        intent: 'top_five_category',
-        title: 'Top 5 MAINS',
-        category: 'MAINS',
-        intervalWeeks: 2,
-        fixdate: false,
-        slides: [
-          {
-            dishName: 'Ribeye',
-            imageBrief: 'Hero brief.',
-            caption: 'Ribeye caption.',
-          },
-        ],
-      },
-    ])
   })
 })
 

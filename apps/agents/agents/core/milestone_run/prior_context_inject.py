@@ -666,30 +666,6 @@ def menu_clusterer_prior_error_message(
     )
 
 
-def is_post_lineup_milestone_data(data: object) -> bool:
-    if not isinstance(data, dict):
-        return False
-    posts = data.get("posts")
-    return isinstance(posts, list) and len(posts) > 0
-
-
-def extract_post_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return the first matched prior post_lineup row, or ``None``."""
-    rows = _parse_prior_milestone_rows(prior_milestones_json)
-    matched, _ = collect_matched_prior_rows(rows, frozenset({"post_lineup"}))
-    return matched[0] if matched else None
-
-
-def extract_post_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return post_lineup ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_post_lineup_row(prior_milestones_json)
-    if row is None:
-        return None
-    data = row.get("data")
-    if isinstance(data, dict) and is_post_lineup_milestone_data(data):
-        return data
-    return None
-
 
 def is_dates_milestone_data(data: object) -> bool:
     if not isinstance(data, dict):
@@ -724,83 +700,6 @@ def extract_dates_data(prior_milestones_json: str) -> dict[str, Any] | None:
         return data
     return None
 
-
-def is_story_lineup_milestone_data(data: object) -> bool:
-    if not isinstance(data, dict):
-        return False
-    stories = data.get("stories")
-    return isinstance(stories, list)
-
-
-def extract_story_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return the first matched prior story_lineup row, or ``None``."""
-    rows = _parse_prior_milestone_rows(prior_milestones_json)
-    matched, _ = collect_matched_prior_rows(rows, frozenset({"story_lineup"}))
-    return matched[0] if matched else None
-
-
-def extract_story_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return story_lineup ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_story_lineup_row(prior_milestones_json)
-    if row is None:
-        return None
-    data = row.get("data")
-    if isinstance(data, dict) and is_story_lineup_milestone_data(data):
-        return data
-    return None
-
-
-def is_reel_lineup_milestone_data(data: object) -> bool:
-    if not isinstance(data, dict):
-        return False
-    reels = data.get("reels")
-    return isinstance(reels, list) and len(reels) > 0
-
-
-def extract_reel_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return the first matched prior reel_lineup row, or ``None``."""
-    rows = _parse_prior_milestone_rows(prior_milestones_json)
-    matched, _ = collect_matched_prior_rows(rows, frozenset({"reel_lineup"}))
-    return matched[0] if matched else None
-
-
-def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return reel_lineup ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_reel_lineup_row(prior_milestones_json)
-    if row is None:
-        return None
-    data = row.get("data")
-    if isinstance(data, dict) and is_reel_lineup_milestone_data(data):
-        return data
-    return None
-
-
-def story_lineup_prior_error_message(prior_milestones_json: str) -> str:
-    """Actionable error when scheduler cannot read prior story_lineup data."""
-    base = "scheduler requires a prior story_lineup milestone with saved stories"
-    rows = _parse_prior_milestone_rows(prior_milestones_json)
-    if not rows:
-        return (
-            f"{base}. No earlier milestones were returned for this workflow step — "
-            "place story_lineup before scheduler in the timeline."
-        )
-
-    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
-    has_story_lineup_preset = any(
-        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "story_lineup"
-        for row in rows
-    )
-    if not has_story_lineup_preset:
-        return (
-            f"{base}. Earlier milestones are: {', '.join(titles)}. "
-            "Add a story_lineup step before scheduler, run it successfully, "
-            "then run scheduler again."
-        )
-    return (
-        f"{base}. A story_lineup milestone appears earlier in the workflow "
-        "but its saved preset data is missing or invalid — open that step, "
-        "confirm the Data tab shows stories, and re-run story_lineup."
-    )
 
 
 def dates_prior_error_message(

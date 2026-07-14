@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from typing import Any, Literal
 
@@ -12,16 +13,7 @@ from agents_app.agents.core.llm_invoke import (
     LLMInvokeError,
     emit_llm_error_step,
 )
-from agents_app.agents.core.milestone_run.dates_window import (
-    TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
-    USER_REVIEW_STORY_INTERVAL_WEEKS,
-    campaign_weeks,
-    interval_block_index,
-    interval_block_starts,
-    top_five_cadence_issues,
-    week_has_weekday_in_overlap,
-    week_requires_weekly_cadence,
-)
+from agents_app.agents.core.milestone_run.dates_window import campaign_weeks
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
@@ -32,14 +24,8 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     dates_prior_error_message,
     extract_dates_data,
     extract_dates_row,
-    extract_post_lineup_data,
-    extract_post_lineup_row,
-    extract_reel_lineup_data,
-    extract_reel_lineup_row,
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
-    extract_story_lineup_data,
-    extract_story_lineup_row,
 )
 from agents_app.agents.core.milestone_run.scheduler.prompts import (
     SCHEDULE_EXPLANATION_MAX_CHARS,
@@ -52,18 +38,15 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field
 
-DEFAULT_POST_SLOT_TIME = "12:00"
-DEFAULT_STORY_SLOT_TIME = "10:00"
-DEFAULT_REEL_SLOT_TIME = "12:00"
 SCHEDULER_MAX_ATTEMPTS = 3
+_TIME_PATTERN = re.compile(r"^\d{2}:\d{2}$")
 
 
 class SchedulerDraftSlot(BaseModel):
     kind: Literal["story", "post", "reel"]
     date: str
     time: str
-    title: str
-    sourceId: str = Field(min_length=1)
+    title: str = Field(min_length=1)
 
 
 class SchedulerDraftOutput(BaseModel):
@@ -114,306 +97,22 @@ def _parse_iso_date(value: str) -> date | None:
         return None
 
 
-def _parse_time_range(value: str) -> tuple[str, str] | None:
-    text = value.strip()
-    if not text or "-" not in text:
-        return None
-    start, end = [part.strip() for part in text.split("-", 1)]
-    if len(start) == 5 and len(end) == 5 and ":" in start and ":" in end:
-        return start, end
-    return None
-
-
-def _is_weekday(iso_date: str) -> bool:
-    parsed = _parse_iso_date(iso_date)
-    return parsed is not None and parsed.weekday() < 5
-
-
-def _is_weekend(iso_date: str) -> bool:
-    parsed = _parse_iso_date(iso_date)
-    return parsed is not None and parsed.weekday() >= 5
-
-
-def _is_within_lunch_time(value: str, lunch_window: tuple[str, str]) -> bool:
-    start, end = lunch_window
-    return start <= value <= end
-
-
-def _optional_storytelling_fit(item: dict[str, Any]) -> str | None:
-    raw = item.get("storytellingFit")
-    if raw in {"strong", "weak"}:
-        return raw
-    return None
-
-
-def _optional_popularity(item: dict[str, Any]) -> float | None:
-    raw = item.get("popularity")
-    if isinstance(raw, bool):
-        return None
-    if isinstance(raw, (int, float)):
-        value = float(raw)
-        if 0 <= value <= 1:
-            return value
-    return None
-
-
-def _lineup_item_metrics(item: dict[str, Any]) -> dict[str, Any]:
-    metrics: dict[str, Any] = {}
-    category = str(item.get("category") or "").strip()
-    if category:
-        metrics["category"] = category
-    storytelling_fit = _optional_storytelling_fit(item)
-    if storytelling_fit is not None:
-        metrics["storytellingFit"] = storytelling_fit
-    popularity = _optional_popularity(item)
-    if popularity is not None:
-        metrics["popularity"] = popularity
-    return metrics
-
-
-def _candidate_entries(lineup: dict[str, Any] | None, key: str) -> list[dict[str, Any]]:
-    values = lineup.get(key) if isinstance(lineup, dict) else None
-    if not isinstance(values, list):
-        return []
-    return [row for row in values if isinstance(row, dict)]
-
-
-def _post_slot_detail(post: dict[str, Any]) -> dict[str, Any] | None:
-    post_id = str(post.get("id") or "").strip()
-    title = str(post.get("title") or "").strip()
-    intent = str(post.get("intent") or "").strip()
-    post_format = str(post.get("format") or "").strip()
-    if not post_id or not title or intent not in {"top_five_category", "weekday_lunch_post"}:
-        return None
-    if post_format != "carousel":
-        return None
-
-    raw_slides = post.get("slides")
-    if not isinstance(raw_slides, list) or not raw_slides:
-        return None
-
-    slides: list[dict[str, Any]] = []
-    for slide in raw_slides:
-        if not isinstance(slide, dict):
-            continue
-        dish_name = str(slide.get("dishName") or "").strip()
-        image_brief = str(slide.get("imageBrief") or "").strip()
-        if not dish_name or not image_brief:
-            continue
-        slide_payload: dict[str, Any] = {
-            "dishName": dish_name,
-            "imageBrief": image_brief,
-        }
-        caption = str(slide.get("caption") or "").strip()
-        if caption:
-            slide_payload["caption"] = caption
-        role = slide.get("role")
-        if role in {"star", "puzzle"}:
-            slide_payload["role"] = role
-        slide_payload.update(_lineup_item_metrics(slide))
-        slides.append(slide_payload)
-
-    if not slides:
-        return None
-
-    raw_group_ids = post.get("groupIds")
-    group_ids: list[str] = []
-    if isinstance(raw_group_ids, list):
-        group_ids = [str(value).strip() for value in raw_group_ids if str(value).strip()]
-
-    payload: dict[str, Any] = {
-        "id": post_id,
-        "format": "carousel",
-        "intent": intent,
-        "title": title,
-        "slides": slides,
-        "groupIds": group_ids,
-    }
-    category = str(post.get("category") or "").strip()
-    if category:
-        payload["category"] = category
-    description = str(post.get("description") or "").strip()
-    if description:
-        payload["description"] = description
-    caption_guidance = str(post.get("captionGuidance") or "").strip()
-    if caption_guidance:
-        payload["captionGuidance"] = caption_guidance
-    return payload
-
-
-def _reel_slot_detail(reel: dict[str, Any]) -> dict[str, Any] | None:
-    reel_id = str(reel.get("id") or "").strip()
-    title = str(reel.get("title") or "").strip()
-    intent = str(reel.get("intent") or "").strip()
-    post_format = str(reel.get("format") or "").strip()
-    description = str(reel.get("description") or "").strip()
-    explanation = str(reel.get("explanation") or "").strip()
-    if (
-        not reel_id
-        or not title
-        or intent not in {"weekday_reel", "weekend_reel"}
-        or post_format != "reel"
-        or not description
-        or not explanation
-    ):
-        return None
-
-    raw_group_ids = reel.get("groupIds")
-    group_ids: list[str] = []
-    if isinstance(raw_group_ids, list):
-        group_ids = [str(value).strip() for value in raw_group_ids if str(value).strip()]
-    if not group_ids:
-        return None
-
-    hero_dishes: list[dict[str, Any]] = []
-    raw_hero_dishes = reel.get("heroDishes")
-    if isinstance(raw_hero_dishes, list):
-        for dish in raw_hero_dishes:
-            if not isinstance(dish, dict):
-                continue
-            name = str(dish.get("name") or "").strip()
-            if not name:
-                continue
-            dish_payload: dict[str, Any] = {"name": name}
-            reel_moment = str(dish.get("reelMoment") or "").strip()
-            if reel_moment:
-                dish_payload["reelMoment"] = reel_moment
-            role = dish.get("role")
-            if role in {"star", "puzzle"}:
-                dish_payload["role"] = role
-            dish_payload.update(_lineup_item_metrics(dish))
-            hero_dishes.append(dish_payload)
-
-    payload: dict[str, Any] = {
-        "id": reel_id,
-        "format": "reel",
-        "intent": intent,
-        "title": title,
-        "description": description,
-        "explanation": explanation,
-        "groupIds": group_ids,
-    }
-    if hero_dishes:
-        payload["heroDishes"] = hero_dishes
-    return payload
-
-
-def _to_schedule_slot(
-    draft: SchedulerDraftSlot,
-    *,
-    post_by_id: dict[str, dict[str, Any]],
-    reel_by_id: dict[str, dict[str, Any]],
-    story_by_id: dict[str, dict[str, Any]],
-) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "kind": draft.kind,
-        "date": draft.date.strip(),
-        "time": draft.time.strip(),
-        "title": draft.title.strip(),
-    }
-    if draft.kind == "post":
-        detail = _post_slot_detail(post_by_id.get(draft.sourceId, {}))
-        if detail is not None:
-            payload["post"] = detail
-    elif draft.kind == "reel":
-        detail = _reel_slot_detail(reel_by_id.get(draft.sourceId, {}))
-        if detail is not None:
-            payload["reel"] = detail
-    elif draft.kind == "story":
-        story = story_by_id.get(draft.sourceId, {})
-        if not payload["title"]:
-            payload["title"] = str(story.get("title") or "").strip()
-    return payload
-
-
-def _normalize_story_title(story: dict[str, Any]) -> str:
-    return str(story.get("title") or "").strip()
-
-
-def _lineup_has_candidates(
-    lineup_data: dict[str, Any] | None,
-    key: str,
-) -> bool:
-    return bool(_candidate_entries(lineup_data, key))
-
-
 def _build_generation_context(
     *,
     dates_data: dict[str, Any],
     campaign_brief_data: dict[str, Any],
-    post_lineup_data: dict[str, Any] | None,
-    reel_lineup_data: dict[str, Any] | None,
-    story_lineup_data: dict[str, Any] | None,
     start_date: str,
     end_date: str,
 ) -> str:
-    posts = _candidate_entries(post_lineup_data, "posts")
-    reels = _candidate_entries(reel_lineup_data, "reels")
-    stories = _candidate_entries(story_lineup_data, "stories")
-    has_post_lineup = bool(posts)
-    has_reel_lineup = bool(reels)
-    has_story_lineup = bool(stories)
-
-    top_five_posts = [
-        {
-            "id": str(p.get("id") or "").strip(),
-            "title": str(p.get("title") or "").strip(),
-            "category": str(p.get("category") or "").strip(),
-        }
-        for p in posts
-        if str(p.get("intent") or "").strip() == "top_five_category"
-    ]
-    weekday_posts = [
-        {"id": str(p.get("id") or "").strip(), "title": str(p.get("title") or "").strip()}
-        for p in posts
-        if str(p.get("intent") or "").strip() == "weekday_lunch_post"
-    ]
-    weekday_reels = [
-        {"id": str(r.get("id") or "").strip(), "title": str(r.get("title") or "").strip()}
-        for r in reels
-        if str(r.get("intent") or "").strip() == "weekday_reel"
-    ]
-    weekend_reels = [
-        {"id": str(r.get("id") or "").strip(), "title": str(r.get("title") or "").strip()}
-        for r in reels
-        if str(r.get("intent") or "").strip() == "weekend_reel"
-    ]
-    fixed_stories = [
-        {
-            "id": str(s.get("id") or "").strip(),
-            "title": _normalize_story_title(s),
-            "date": str(s.get("date") or "").strip(),
-            "time": str(s.get("time") or "").strip() or DEFAULT_STORY_SLOT_TIME,
-        }
-        for s in stories
-        if s.get("fixdate") is True and str(s.get("date") or "").strip()
-    ]
-    feedback_stories = [
-        {"id": str(s.get("id") or "").strip(), "title": _normalize_story_title(s)}
-        for s in stories
-        if str(s.get("reason") or "").strip() == "user_review"
-    ]
-
     weeks = campaign_weeks(start_date, end_date, campaign_brief_data=campaign_brief_data)
-    top_five_blocks = list(
-        interval_block_starts(
-            start_date,
-            end_date,
-            interval_weeks=TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
-        )
-    )
-
     brief_excerpt = {
         "overallStrategy": campaign_brief_data.get("overallStrategy"),
         "messageHierarchy": campaign_brief_data.get("messageHierarchy"),
         "offerAndCtaPlan": campaign_brief_data.get("offerAndCtaPlan"),
+        "contentPillars": campaign_brief_data.get("contentPillars"),
+        "contentPillarPlan": campaign_brief_data.get("contentPillarPlan"),
     }
     context_payload = {
-        "availableLineups": {
-            "posts": has_post_lineup,
-            "reels": has_reel_lineup,
-            "stories": has_story_lineup,
-        },
         "window": {
             "startDate": start_date,
             "endDate": end_date,
@@ -425,57 +124,17 @@ def _build_generation_context(
                 }
                 for week in weeks
             ],
-            "topFiveCategoryBlocks": [
-                {
-                    "index": idx + 1,
-                    "intervalWeeks": TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
-                    "startDate": b_start,
-                    "endDate": b_end,
-                }
-                for idx, (b_start, b_end) in enumerate(top_five_blocks)
-            ],
             "publicHolidays": dates_data.get("publicHolidays")
             if isinstance(dates_data.get("publicHolidays"), list)
             else [],
         },
-        "candidates": {
-            "topFiveCategoryPosts": top_five_posts,
-            "topFiveCadence": {
-                "intervalWeeks": TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
-                "rotationOrder": [post["id"] for post in top_five_posts],
-                "rule": (
-                    "Schedule exactly one top_five_category post every "
-                    f"{TOP_FIVE_CATEGORY_INTERVAL_WEEKS} weeks, rotating through rotationOrder. "
-                    "Do not schedule different top_five posts in consecutive weeks."
-                ),
-                "exampleTwoPosts": (
-                    "With posts A and B: week-1 block → A, next block → B, next block → A "
-                    "(not A in week 1 and B in week 2)."
-                ),
-            },
-            "weekdayPosts": weekday_posts,
-            "weekdayReels": weekday_reels,
-            "weekendReels": weekend_reels,
-            "fixedDateStories": fixed_stories,
-            "userFeedbackStories": feedback_stories,
-        },
         "campaignBriefExcerpt": brief_excerpt,
     }
 
-    lineup_notes: list[str] = []
-    if not has_post_lineup:
-        lineup_notes.append("No post lineup candidates — do not schedule post slots.")
-    if not has_reel_lineup:
-        lineup_notes.append("No reel lineup candidates — do not schedule reel slots.")
-    if not has_story_lineup:
-        lineup_notes.append("No story lineup candidates — do not schedule story slots.")
-    lineup_note_text = "\n".join(lineup_notes) + "\n" if lineup_notes else ""
-
     return (
-        "Generate schedule slots using ONLY candidate sourceId values from this input.\n"
+        "Generate schedule slots from the campaign window and campaign brief excerpt below.\n"
         "Return one object with keys `slots` and `scheduleExplanation`.\n"
-        "Each slot item has: kind, date, time, title, sourceId.\n"
-        f"{lineup_note_text}"
+        "Each slot item has: kind, date, time, title.\n"
         f"scheduleExplanation is required (2 short sentences per the system instructions; aim "
         f"~{SCHEDULE_EXPLANATION_TARGET_CHARS} chars, max {SCHEDULE_EXPLANATION_MAX_CHARS}).\n\n"
         f"```json\n{json.dumps(context_payload, ensure_ascii=False, indent=2)}\n```"
@@ -488,7 +147,7 @@ def _scheduler_correction_message(error: str) -> HumanMessage:
             "Your previous output was invalid. Return a corrected JSON object with keys "
             "`slots` and `scheduleExplanation`.\n"
             f"Validation error: {error[:1200]}\n"
-            "Each slot item must include: kind, date, time, title, sourceId.\n"
+            "Each slot item must include: kind, date, time, title.\n"
             f"scheduleExplanation must be exactly 2 short sentences, non-empty, and at most "
             f"{SCHEDULE_EXPLANATION_MAX_CHARS} characters (aim ~{SCHEDULE_EXPLANATION_TARGET_CHARS})."
         )
@@ -501,159 +160,40 @@ def _validate_scheduler_rules(
     start_date: str,
     end_date: str,
     campaign_brief_data: dict[str, Any],
-    top_five_post_ids: set[str],
-    top_five_post_order: list[str],
-    weekday_post_ids: set[str],
-    weekday_reel_ids: set[str],
-    weekend_reel_ids: set[str],
-    fixed_story_by_id: dict[str, tuple[str, str]],
-    feedback_story_ids: set[str],
 ) -> None:
     weeks = campaign_weeks(start_date, end_date, campaign_brief_data=campaign_brief_data)
     if not weeks:
         raise ValueError("scheduler requires at least one campaign week")
 
-    lunch_window = ("11:00", "14:00")
-    offer_window = (
-        campaign_brief_data.get("overallStrategy", {}).get("offerWindow")
-        if isinstance(campaign_brief_data.get("overallStrategy"), dict)
-        else None
-    )
-    if isinstance(offer_window, str):
-        parsed = _parse_time_range(offer_window)
-        if parsed is not None:
-            lunch_window = parsed
-
-    top_five_dated: list[tuple[str, str]] = []
-    feedback_by_block: dict[int, int] = {}
-    weekday_posts_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
-    weekday_reels_by_week: dict[str, int] = {week.week_start: 0 for week in weeks}
-    fixed_story_hits: dict[str, int] = {story_id: 0 for story_id in fixed_story_by_id}
+    if not slots:
+        raise ValueError("scheduler must include at least one slot")
 
     for slot in slots:
         iso_date = slot.date.strip()
         slot_time = slot.time.strip()
-        source_id = slot.sourceId.strip()
+        title = slot.title.strip()
+
         if _parse_iso_date(iso_date) is None:
             raise ValueError(f"invalid slot date: {iso_date}")
         if iso_date < start_date or iso_date > end_date:
             raise ValueError(f"slot date {iso_date} is outside campaign window")
+        if not _TIME_PATTERN.match(slot_time):
+            raise ValueError(f"invalid slot time (expected HH:MM): {slot_time}")
+        if not title:
+            raise ValueError("slot title must be non-empty")
 
         week = next((row for row in weeks if row.week_start <= iso_date <= row.week_end), None)
         if week is None:
             raise ValueError(f"slot date {iso_date} does not map to a campaign week")
 
-        if slot.kind == "post":
-            if source_id in top_five_post_ids:
-                block_index = interval_block_index(
-                    iso_date,
-                    start_date,
-                    end_date,
-                    interval_weeks=TOP_FIVE_CATEGORY_INTERVAL_WEEKS,
-                )
-                if block_index is None:
-                    raise ValueError(
-                        f"top five post slot {iso_date} is outside "
-                        f"{TOP_FIVE_CATEGORY_INTERVAL_WEEKS}-week blocks"
-                    )
-                top_five_dated.append((iso_date, source_id))
-            elif weekday_post_ids and source_id in weekday_post_ids:
-                if not _is_weekday(iso_date):
-                    raise ValueError(f"weekday post must be on weekday: {iso_date}")
-                if not _is_within_lunch_time(slot_time, lunch_window):
-                    raise ValueError(f"weekday post must be during lunch time: {slot_time}")
-                weekday_posts_by_week[week.week_start] = (
-                    weekday_posts_by_week.get(week.week_start, 0) + 1
-                )
-            else:
-                raise ValueError(f"post sourceId not found in post lineup candidates: {source_id}")
 
-        elif slot.kind == "reel":
-            if source_id in weekday_reel_ids:
-                if not _is_weekday(iso_date):
-                    raise ValueError(f"weekday reel must be on weekday: {iso_date}")
-                if not _is_within_lunch_time(slot_time, lunch_window):
-                    raise ValueError(f"weekday reel must be during lunch time: {slot_time}")
-                weekday_reels_by_week[week.week_start] = (
-                    weekday_reels_by_week.get(week.week_start, 0) + 1
-                )
-            elif source_id in weekend_reel_ids:
-                if not _is_weekend(iso_date):
-                    raise ValueError(f"weekend reel must be on weekend: {iso_date}")
-            else:
-                raise ValueError(f"reel sourceId not found in reel lineup candidates: {source_id}")
-
-        else:
-            if source_id in fixed_story_by_id:
-                expected_date, _expected_time = fixed_story_by_id[source_id]
-                if iso_date != expected_date:
-                    raise ValueError(
-                        f"fixed-date story {source_id} must be on {expected_date}, got {iso_date}"
-                    )
-                fixed_story_hits[source_id] = fixed_story_hits.get(source_id, 0) + 1
-            elif source_id in feedback_story_ids:
-                block_index = interval_block_index(
-                    iso_date,
-                    start_date,
-                    end_date,
-                    interval_weeks=USER_REVIEW_STORY_INTERVAL_WEEKS,
-                )
-                if block_index is None:
-                    raise ValueError(
-                        f"feedback story slot {iso_date} is outside "
-                        f"{USER_REVIEW_STORY_INTERVAL_WEEKS}-week blocks"
-                    )
-                feedback_by_block[block_index] = feedback_by_block.get(block_index, 0) + 1
-            else:
-                raise ValueError(
-                    f"story sourceId not found in story lineup candidates: {source_id}"
-                )
-
-    feedback_blocks = list(
-        interval_block_starts(
-            start_date,
-            end_date,
-            interval_weeks=USER_REVIEW_STORY_INTERVAL_WEEKS,
-        )
-    )
-    for block_index in range(len(feedback_blocks)):
-        if feedback_story_ids and feedback_by_block.get(block_index, 0) != 1:
-            raise ValueError(
-                f"positive user feedback story must be exactly 1 in "
-                f"{USER_REVIEW_STORY_INTERVAL_WEEKS}-week block {block_index + 1}"
-            )
-
-    if top_five_post_ids:
-        cadence_issues = top_five_cadence_issues(
-            dated_post_ids=top_five_dated,
-            start_date=start_date,
-            end_date=end_date,
-            lineup_order=top_five_post_order,
-        )
-        if cadence_issues:
-            raise ValueError(cadence_issues[0])
-
-    for week in weeks:
-        if not week_requires_weekly_cadence(
-            week.week_start,
-            week.week_end,
-            start_date,
-            end_date,
-        ):
-            continue
-        if weekday_post_ids and weekday_posts_by_week.get(week.week_start, 0) != 1:
-            raise ValueError(f"weekday post must be exactly 1 in campaign week {week.week_index}")
-        if (
-            weekday_reel_ids
-            and week_has_weekday_in_overlap(week.week_start, week.week_end, start_date, end_date)
-            and weekday_reels_by_week.get(week.week_start, 0) != 1
-        ):
-            raise ValueError(f"weekday reel must be exactly 1 in campaign week {week.week_index}")
-
-    if fixed_story_by_id:
-        for story_id, hit_count in fixed_story_hits.items():
-            if hit_count != 1:
-                raise ValueError(f"fixed-date story {story_id} must be scheduled exactly once")
+def _to_schedule_slot(draft: SchedulerDraftSlot) -> dict[str, Any]:
+    return {
+        "kind": draft.kind,
+        "date": draft.date.strip(),
+        "time": draft.time.strip(),
+        "title": draft.title.strip(),
+    }
 
 
 async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -669,10 +209,6 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
     if campaign_brief_data is None:
         raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="scheduler"))
 
-    post_lineup_data = extract_post_lineup_data(prior_json)
-    story_lineup_data = extract_story_lineup_data(prior_json)
-    reel_lineup_data = extract_reel_lineup_data(prior_json)
-
     dates_row = extract_dates_row(prior_json)
     source_dates_title = ""
     if isinstance(dates_row, dict):
@@ -687,38 +223,11 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
         if isinstance(brief_title, str) and brief_title.strip():
             source_campaign_brief_title = brief_title.strip()
 
-    post_lineup_row = extract_post_lineup_row(prior_json)
-    source_post_lineup_title = ""
-    if isinstance(post_lineup_row, dict):
-        post_title = post_lineup_row.get("title")
-        if isinstance(post_title, str) and post_title.strip():
-            source_post_lineup_title = post_title.strip()
-
-    story_lineup_row = extract_story_lineup_row(prior_json)
-    source_story_lineup_title = ""
-    if isinstance(story_lineup_row, dict):
-        story_title = story_lineup_row.get("title")
-        if isinstance(story_title, str) and story_title.strip():
-            source_story_lineup_title = story_title.strip()
-
-    reel_lineup_row = extract_reel_lineup_row(prior_json)
-    source_reel_lineup_title = ""
-    if isinstance(reel_lineup_row, dict):
-        reel_title = reel_lineup_row.get("title")
-        if isinstance(reel_title, str) and reel_title.strip():
-            source_reel_lineup_title = reel_title.strip()
-
     return {
         "dates_data": dates_data,
         "source_dates_title": source_dates_title,
         "campaign_brief_data": campaign_brief_data,
         "source_campaign_brief_title": source_campaign_brief_title,
-        "post_lineup_data": post_lineup_data,
-        "source_post_lineup_title": source_post_lineup_title,
-        "story_lineup_data": story_lineup_data,
-        "source_story_lineup_title": source_story_lineup_title,
-        "reel_lineup_data": reel_lineup_data,
-        "source_reel_lineup_title": source_reel_lineup_title,
     }
 
 
@@ -740,97 +249,15 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
     if not isinstance(public_holidays, list):
         public_holidays = []
 
-    post_candidates = _candidate_entries(state.get("post_lineup_data"), "posts")
-    reel_candidates = _candidate_entries(state.get("reel_lineup_data"), "reels")
-    story_candidates = _candidate_entries(state.get("story_lineup_data"), "stories")
-
-    post_by_id = {
-        str(item.get("id") or "").strip(): item
-        for item in post_candidates
-        if str(item.get("id") or "").strip()
-    }
-    reel_by_id = {
-        str(item.get("id") or "").strip(): item
-        for item in reel_candidates
-        if str(item.get("id") or "").strip()
-    }
-    story_by_id = {
-        str(item.get("id") or "").strip(): item
-        for item in story_candidates
-        if str(item.get("id") or "").strip()
-    }
-
-    top_five_post_order = [
-        str(item.get("id") or "").strip()
-        for item in post_candidates
-        if str(item.get("intent") or "").strip() == "top_five_category"
-        and str(item.get("id") or "").strip()
-    ]
-    top_five_post_ids = set(top_five_post_order)
-    weekday_post_ids = {
-        row_id
-        for row_id, item in post_by_id.items()
-        if str(item.get("intent") or "").strip() == "weekday_lunch_post"
-    }
-    weekday_reel_ids = {
-        row_id
-        for row_id, item in reel_by_id.items()
-        if str(item.get("intent") or "").strip() == "weekday_reel"
-    }
-    weekend_reel_ids = {
-        row_id
-        for row_id, item in reel_by_id.items()
-        if str(item.get("intent") or "").strip() == "weekend_reel"
-    }
-    fixed_story_by_id = {
-        row_id: (
-            str(item.get("date") or "").strip(),
-            str(item.get("time") or "").strip() or DEFAULT_STORY_SLOT_TIME,
-        )
-        for row_id, item in story_by_id.items()
-        if item.get("fixdate") is True and str(item.get("date") or "").strip()
-    }
-    feedback_story_ids = {
-        row_id
-        for row_id, item in story_by_id.items()
-        if str(item.get("reason") or "").strip() == "user_review"
-    }
-
-    post_lineup_data = state.get("post_lineup_data")
-    reel_lineup_data = state.get("reel_lineup_data")
-    story_lineup_data = state.get("story_lineup_data")
-
-    has_post_lineup = _lineup_has_candidates(
-        post_lineup_data if isinstance(post_lineup_data, dict) else None,
-        "posts",
-    )
-    has_reel_lineup = _lineup_has_candidates(
-        reel_lineup_data if isinstance(reel_lineup_data, dict) else None,
-        "reels",
-    )
-    has_story_lineup = _lineup_has_candidates(
-        story_lineup_data if isinstance(story_lineup_data, dict) else None,
-        "stories",
-    )
-
     generation_context = _build_generation_context(
         dates_data=dates_data,
         campaign_brief_data=campaign_brief_data,
-        post_lineup_data=post_lineup_data if isinstance(post_lineup_data, dict) else None,
-        reel_lineup_data=reel_lineup_data if isinstance(reel_lineup_data, dict) else None,
-        story_lineup_data=story_lineup_data if isinstance(story_lineup_data, dict) else None,
         start_date=start_date,
         end_date=end_date,
     )
 
     base_messages: list[BaseMessage] = [
-        SystemMessage(
-            content=format_scheduler_system(
-                has_post_lineup=has_post_lineup,
-                has_reel_lineup=has_reel_lineup,
-                has_story_lineup=has_story_lineup,
-            )
-        ),
+        SystemMessage(content=format_scheduler_system()),
         HumanMessage(content=generation_context),
     ]
     retry_error: str | None = None
@@ -856,23 +283,8 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
                 start_date=start_date,
                 end_date=end_date,
                 campaign_brief_data=campaign_brief_data,
-                top_five_post_ids=top_five_post_ids,
-                top_five_post_order=top_five_post_order,
-                weekday_post_ids=weekday_post_ids,
-                weekday_reel_ids=weekday_reel_ids,
-                weekend_reel_ids=weekend_reel_ids,
-                fixed_story_by_id=fixed_story_by_id,
-                feedback_story_ids=feedback_story_ids,
             )
-            schedule_slots = [
-                _to_schedule_slot(
-                    slot,
-                    post_by_id=post_by_id,
-                    reel_by_id=reel_by_id,
-                    story_by_id=story_by_id,
-                )
-                for slot in generated.slots
-            ]
+            schedule_slots = [_to_schedule_slot(slot) for slot in generated.slots]
             schedule_slots.sort(
                 key=lambda slot: (
                     str(slot.get("date") or ""),
@@ -905,15 +317,6 @@ async def generate_schedule_with_llm(state: SchedulerState) -> dict[str, Any]:
             ).strip()
             if source_campaign_brief_title:
                 payload["sourceCampaignBriefTitle"] = source_campaign_brief_title
-            source_post_lineup_title = str(state.get("source_post_lineup_title") or "").strip()
-            if source_post_lineup_title:
-                payload["sourcePostLineupTitle"] = source_post_lineup_title
-            source_story_lineup_title = str(state.get("source_story_lineup_title") or "").strip()
-            if source_story_lineup_title:
-                payload["sourceStoryLineupTitle"] = source_story_lineup_title
-            source_reel_lineup_title = str(state.get("source_reel_lineup_title") or "").strip()
-            if source_reel_lineup_title:
-                payload["sourceReelLineupTitle"] = source_reel_lineup_title
 
             normalized = _normalize_generated_output(payload)
             _trace_agent_event(state, "chat_model_end")

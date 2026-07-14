@@ -22,12 +22,6 @@ import {
   menuTaggerMilestoneInputValueSchema,
   menuClustererMilestoneDataSchema,
   menuClustererMilestoneInputValueSchema,
-  postLineupMilestoneDataSchema,
-  postLineupMilestoneInputValueSchema,
-  reelLineupMilestoneDataSchema,
-  reelLineupMilestoneInputValueSchema,
-  storyLineupMilestoneDataSchema,
-  storyLineupMilestoneInputValueSchema,
   schedulerMilestoneDataSchema,
   schedulerMilestoneInputValueSchema,
   milestonePresetIdSchema,
@@ -66,9 +60,6 @@ export const patchMilestoneSchema = z
         igTextMilestoneDataSchema,
         menuTaggerMilestoneDataSchema,
         menuClustererMilestoneDataSchema,
-        postLineupMilestoneDataSchema,
-        reelLineupMilestoneDataSchema,
-        storyLineupMilestoneDataSchema,
         schedulerMilestoneDataSchema,
       ])
       .nullable()
@@ -115,18 +106,6 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('menu_clusterer'),
           value: menuClustererMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('post_lineup'),
-          value: postLineupMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('reel_lineup'),
-          value: reelLineupMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('story_lineup'),
-          value: storyLineupMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('scheduler'),

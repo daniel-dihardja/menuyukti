@@ -46,9 +46,6 @@ These **`presetId`** values must stay aligned with web `MILESTONE_PRESET_IDS` an
 | `promotion_candidates`      | `promotion_candidates/` |
 | `menu_tagger`               | `menu_tagger/`          |
 | `menu_clusterer`            | `menu_clusterer/`       |
-| `post_lineup`               | `post_lineup/`          |
-| `reel_lineup`               | `reel_lineup/`          |
-| `story_lineup`              | `story_lineup/`         |
 | `culture_hooks`             | `culture_hooks/`        |
 | `ig_profile`                | `ig_profile/`           |
 | `ig_plan`                   | `ig_plan/`              |

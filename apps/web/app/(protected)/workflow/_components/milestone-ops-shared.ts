@@ -9,10 +9,7 @@ import {
   igTextMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
-  postLineupMilestoneDataSchema,
-  reelLineupMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
-  storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
@@ -52,18 +49,6 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'menu_clusterer') {
     const parsed = menuClustererMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
-  if (presetId === 'post_lineup') {
-    const parsed = postLineupMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
-  if (presetId === 'reel_lineup') {
-    const parsed = reelLineupMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
-  if (presetId === 'story_lineup') {
-    const parsed = storyLineupMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'culture_hooks') {

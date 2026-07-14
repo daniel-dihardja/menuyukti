@@ -115,7 +115,7 @@ Menuyukti is organized as a **campaign workflow**: an ordered list of milestones
 
 **Workflows.** Instagram campaign work runs in sequence: define the campaign window, identify promotion candidates, draft post and reel lineups, assign schedule slots. The product reflects that order so each step can use output from the previous one.
 
-**Milestones.** Each step is a bounded unit of agent work with persisted results. For example, a `post_lineup` milestone outputs carousel posts with per-slide fields. A `reel_lineup` milestone outputs short-form concepts with hooks and clip structure. A later `scheduler` milestone reads those structures directly.
+**Milestones.** Each step is a bounded unit of agent work with persisted results. For example, an `ig_plan` milestone outputs a weekly slot strategy grid. A `scheduler` milestone reads the campaign window from **dates** and strategy from **restaurant_campaign_brief**, then places title-only calendar slots.
 
 **Structured outputs.** Downstream steps consume JSON fields, not free text from a conversation. A reel lineup includes hooks, intent, and schedule hints because the scheduler milestone reads those fields programmatically.
 
@@ -187,7 +187,7 @@ Architecture followed the workflow model above.
 
 ### LangGraph
 
-Each milestone preset (`post_lineup`, `reel_lineup`, `story_lineup`, `scheduler`, and others) is a separate subgraph: prefetch context from GraphQL, structured LLM calls, optional reflect loops (generate → critique → revise), persist results, then a shared evaluation subgraph.
+Each milestone preset (`dates`, `restaurant_campaign_brief`, `scheduler`, `ig_plan`, and others) is a separate subgraph: prefetch context from GraphQL, structured LLM calls, optional reflect loops (generate → critique → revise), persist results, then a shared evaluation subgraph.
 
 ### GraphQL
 

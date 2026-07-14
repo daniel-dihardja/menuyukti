@@ -33,17 +33,6 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "combinations (2–5 items each). Each cluster includes a clusterDescription and "
         "weekday lunch scheduling hints for downstream scheduling."
     ),
-    "post_lineup": (
-        "Requires prior Dates, Campaign brief, and Menu tagger milestones. Plans one Top 5 "
-        "Instagram feed carousel per POS category that has star items, with per-slide captions "
-        "grounded in campaign brief tone and menu tagger item metadata."
-    ),
-    "reel_lineup": (
-        "Requires prior dates, Campaign Brief, and Menu clusterer milestones. Plans one weekday "
-        "and one weekend Instagram Reel per campaign week between the saved start and end dates. "
-        "Uses AI to pick a menu clusterer group per reel plus titles, descriptions, "
-        "and strategic explanations."
-    ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
         "generate intersection topics between the concept and the audience's likely interests "
@@ -77,9 +66,9 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "preserving plan strategy, dishes, and format assignments."
     ),
     "scheduler": (
-        "Reads the campaign window from dates, business strategy from Campaign Brief, and "
-        "saved post and story lineups. It places feed posts and Stories on the calendar between "
-        "the start and end dates. Reel slots can be scheduled from a prior Reel lineup milestone when present."
+        "Reads the campaign window from dates and business strategy from Campaign Brief, then "
+        "places feed posts, Stories, and Reels on the calendar as title-only slots with explicit "
+        "kind, date, and time between the start and end dates."
     ),
 }
 
@@ -135,8 +124,6 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "ig_text",
         "menu_tagger",
         "menu_clusterer",
-        "post_lineup",
-        "reel_lineup",
         "scheduler",
     ):
         return "\n".join(

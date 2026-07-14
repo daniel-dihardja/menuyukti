@@ -4,12 +4,7 @@ import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 
 import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
-import {
-  parseIsoDateOnly,
-  resolvePostLineupPostsForScheduler,
-  resolveReelLineupReelsForScheduler,
-  resolveSchedulerWindow,
-} from '@/lib/milestones/scheduler-dates'
+import { parseIsoDateOnly, resolveSchedulerWindow } from '@/lib/milestones/scheduler-dates'
 
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { TimelineMilestone } from '../timeline/types'
@@ -43,14 +38,6 @@ export function MilestoneSchedulerDataPreview({
   const resolution = useMemo(
     () => resolveSchedulerWindow({ milestone, milestones }),
     [milestone, milestones],
-  )
-  const postLineupPosts = useMemo(
-    () => resolvePostLineupPostsForScheduler(milestones, milestone.id),
-    [milestones, milestone.id],
-  )
-  const reelLineupReels = useMemo(
-    () => resolveReelLineupReelsForScheduler(milestones, milestone.id),
-    [milestones, milestone.id],
   )
 
   if (resolution.status === 'no_prior_dates') {
@@ -92,8 +79,6 @@ export function MilestoneSchedulerDataPreview({
         locale={locale}
         slots={data.slots ?? []}
         publicHolidays={window.publicHolidays}
-        postLineupPosts={postLineupPosts}
-        reelLineupReels={reelLineupReels}
         windowEnd={window.endDate}
         windowStart={window.startDate}
       />

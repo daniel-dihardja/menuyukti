@@ -23,7 +23,7 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('ig_plan')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_tagger')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_clusterer')).toBe(false)
-    expect(milestonePresetHasDefaultOptionalNotesInput('post_lineup')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)

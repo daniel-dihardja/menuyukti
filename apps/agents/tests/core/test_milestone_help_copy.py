@@ -14,11 +14,11 @@ def test_resolve_what_it_does_preset_catalog() -> None:
     assert "custom should not win" not in text
 
 
-def test_scheduler_help_mentions_posts_stories_and_campaign_brief() -> None:
+def test_scheduler_help_mentions_dates_campaign_brief_and_slots() -> None:
     text = resolve_what_it_does("scheduler", None)
     assert "Campaign Brief" in text
-    assert "post and story lineups" in text
-    assert "Reel lineup milestone" in text
+    assert "dates" in text
+    assert "title-only slots" in text
 
 
 def test_resolve_what_it_does_custom_when_no_catalog() -> None:
