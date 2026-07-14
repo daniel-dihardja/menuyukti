@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
+from agents_app.agents.core.milestone_eval.ig_plan_eval import sort_ig_plan_entries
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_ig_plan_inputs,
     upsert_milestonedata_node,
@@ -20,7 +21,6 @@ from agents_app.agents.core.milestone_run.ig_plan.state import IgPlanOutput, IgP
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
-from agents_app.agents.core.milestone_eval.ig_plan_eval import sort_ig_plan_entries
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     _fmt_manual_brief_hints,

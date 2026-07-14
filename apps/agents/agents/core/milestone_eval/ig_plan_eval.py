@@ -110,9 +110,7 @@ def _is_weekly_entries_requirement(norm: str) -> bool:
         return True
     if "weekly" in norm and "entries" in norm:
         return True
-    if "posture" in norm and "slotkey" in norm:
-        return True
-    return False
+    return "posture" in norm and "slotkey" in norm
 
 
 def _is_slot_grounding_requirement(norm: str) -> bool:
@@ -122,9 +120,7 @@ def _is_slot_grounding_requirement(norm: str) -> bool:
         return True
     if "productrole" in norm and "align" in norm:
         return True
-    if "posture" in norm and "productrole" in norm:
-        return True
-    return False
+    return "posture" in norm and "productrole" in norm
 
 
 def _strategy_alignment_issues(entry: dict[str, Any]) -> list[str]:
