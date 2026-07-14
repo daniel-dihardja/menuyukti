@@ -15,6 +15,7 @@ import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-previ
 import { MilestoneIgPlanDataPreview } from './milestone-ig-plan-data-preview'
 import { MilestoneIgMenuPickerDataPreview } from './milestone-ig-menu-picker-data-preview'
 import { MilestoneIgFormatDataPreview } from './milestone-ig-format-data-preview'
+import { MilestoneIgTextDataPreview } from './milestone-ig-text-data-preview'
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestonePostLineupDataPreview } from './milestone-post-lineup-data-preview'
 import { MilestoneReelLineupDataPreview } from './milestone-reel-lineup-data-preview'
@@ -118,6 +119,12 @@ function renderParsedPreview(
       return (
         <MilestoneIgFormatDataPreview
           data={data as Parameters<typeof MilestoneIgFormatDataPreview>[0]['data']}
+        />
+      )
+    case 'ig_text':
+      return (
+        <MilestoneIgTextDataPreview
+          data={data as Parameters<typeof MilestoneIgTextDataPreview>[0]['data']}
         />
       )
     case 'scheduler':

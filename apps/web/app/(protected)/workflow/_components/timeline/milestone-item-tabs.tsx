@@ -31,6 +31,7 @@ import { MilestoneFieldDescription } from './milestone-field-description'
 import { MilestoneMenuClustererInput } from './milestone-menu-clusterer-input'
 import { MilestoneIgMenuPickerInput } from './milestone-ig-menu-picker-input'
 import { MilestoneIgFormatInput } from './milestone-ig-format-input'
+import { MilestoneIgTextInput } from './milestone-ig-text-input'
 import {
   useMilestoneItemActions,
   useMilestoneItemMeta,
@@ -300,6 +301,17 @@ function MilestoneInputTabContent({
     case 'ig_format':
       return (
         <MilestoneIgFormatInput
+          disabled={isMilestoneRunning}
+          milestoneId={inputModel.milestoneId}
+          notes={inputModel.notes}
+          onNotesBlur={inputModel.onNotesBlur}
+          onNotesChange={inputModel.onNotesChange}
+          onNotesFocus={inputModel.onNotesFocus}
+        />
+      )
+    case 'ig_text':
+      return (
+        <MilestoneIgTextInput
           disabled={isMilestoneRunning}
           milestoneId={inputModel.milestoneId}
           notes={inputModel.notes}

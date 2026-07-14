@@ -93,6 +93,12 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
       'Read prior IG Menu Picker entries with menu items and assign an Instagram format (reel, post, post-carousel, or story) per slot with a short rationale.',
   },
   {
+    id: 'ig_text',
+    name: 'IG Text',
+    description:
+      'Read prior IG Format entries and Campaign Brief orientation, then generate Instagram copy as texts per slot while preserving plan strategy, dishes, and format assignments.',
+  },
+  {
     id: 'scheduler',
     name: 'Scheduler',
     description:

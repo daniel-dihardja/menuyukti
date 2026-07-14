@@ -71,6 +71,11 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "post-carousel, or story) to each entry with menu items, preserving plan strategy and "
         "dish selections."
     ),
+    "ig_text": (
+        "Read prior IG Format milestone data and Campaign Brief orientation, then generate "
+        "Instagram copy (headline, caption, and format-specific fields) as texts per slot while "
+        "preserving plan strategy, dishes, and format assignments."
+    ),
     "scheduler": (
         "Reads the campaign window from dates, business strategy from Campaign Brief, and "
         "saved post and story lineups. It places feed posts and Stories on the calendar between "
@@ -127,6 +132,7 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "ig_plan",
         "ig_menu_picker",
         "ig_format",
+        "ig_text",
         "menu_tagger",
         "menu_clusterer",
         "post_lineup",

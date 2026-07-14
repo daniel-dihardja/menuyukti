@@ -52,6 +52,9 @@ These **`presetId`** values must stay aligned with web `MILESTONE_PRESET_IDS` an
 | `culture_hooks`             | `culture_hooks/`        |
 | `ig_profile`                | `ig_profile/`           |
 | `ig_plan`                   | `ig_plan/`              |
+| `ig_menu_picker`            | `ig_menu_picker/`       |
+| `ig_format`                 | `ig_format/`            |
+| `ig_text`                   | `ig_text/`              |
 | `scheduler`                 | `scheduler/`            |
 
 ## Adding a preset

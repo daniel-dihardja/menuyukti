@@ -52,6 +52,7 @@ _PRESET_TO_SKILL_ID: dict[str, str] = {
     "ig_plan": "ig_plan",
     "ig_menu_picker": "ig_menu_picker",
     "ig_format": "ig_format",
+    "ig_text": "ig_text",
     "dates": "dates",
     "public_holidays": "public_holidays",
 }
@@ -95,6 +96,7 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             "ig_plan": "ig_plan",
             "ig_menu_picker": "ig_menu_picker",
             "ig_format": "ig_format",
+    "ig_text": "ig_text",
             "dates": "dates",
             "public_holidays": "public_holidays",
         }

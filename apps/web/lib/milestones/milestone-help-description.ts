@@ -15,6 +15,7 @@ export const PRESET_GOAL_TRANSLATION_KEYS = {
   ig_plan: 'milestonePreset.ig_plan.goal',
   ig_menu_picker: 'milestonePreset.ig_menu_picker.goal',
   ig_format: 'milestonePreset.ig_format.goal',
+  ig_text: 'milestonePreset.ig_text.goal',
   scheduler: 'milestonePreset.scheduler.goal',
 } as const
 

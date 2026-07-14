@@ -1240,6 +1240,86 @@ class IgFormatMilestoneOutput(BaseModel):
         return text
 
 
+def _ig_text_required_fields(fmt_type: str, menu_item_count: int) -> list[str]:
+    if fmt_type == "post":
+        return ["headline", "subline", "productName", "caption"]
+    if fmt_type == "reel":
+        return ["hook", "onScreenText", "caption"]
+    if fmt_type == "story":
+        return ["headline", "cta", "caption"]
+    if fmt_type == "post-carousel":
+        required = ["caption"]
+        for index in range(1, menu_item_count + 1):
+            required.extend([f"slide_{index}_headline", f"slide_{index}_productName"])
+        return required
+    return []
+
+
+class IgTextFieldOutput(BaseModel):
+    field: str = Field(min_length=1)
+    value: str = Field(min_length=1)
+
+    @field_validator("field", "value")
+    @classmethod
+    def _validate_non_empty(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+
+class IgTextEntryOutput(IgFormatEntryOutput):
+    texts: list[IgTextFieldOutput] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _validate_texts_for_type(self) -> IgTextEntryOutput:
+        fmt_type = str(self.type or "").strip()
+        menu_items = self.menuItems or []
+        required = _ig_text_required_fields(fmt_type, len(menu_items))
+        if not required:
+            raise ValueError(f"unsupported ig_text format type {fmt_type!r}")
+
+        by_field = {row.field: row.value for row in self.texts}
+        missing = [name for name in required if name not in by_field]
+        if missing:
+            raise ValueError(
+                f"missing required text fields for {fmt_type}: {', '.join(missing[:6])}"
+                + ("…" if len(missing) > 6 else "")
+            )
+
+        if fmt_type == "post":
+            expected_menu = menu_items[0].menu.strip() if menu_items else ""
+            actual = by_field.get("productName", "").strip()
+            if expected_menu and actual != expected_menu:
+                raise ValueError("productName must match the single menuItems[0].menu value")
+        elif fmt_type == "post-carousel":
+            for index, item in enumerate(menu_items, start=1):
+                expected_menu = item.menu.strip()
+                actual = by_field.get(f"slide_{index}_productName", "").strip()
+                if expected_menu and actual != expected_menu:
+                    raise ValueError(
+                        f"slide_{index}_productName must match menuItems[{index - 1}].menu"
+                    )
+        return self
+
+
+class IgTextMilestoneOutput(BaseModel):
+    scheduleExplanation: str = Field(min_length=1)
+    entries: list[IgTextEntryOutput] = Field(min_length=1)
+    sourceAnalyticsRunId: str = Field(min_length=1)
+    reportingPeriod: str = Field(min_length=1)
+    sourceIgFormatTitle: str | None = None
+    sourceCampaignBriefTitle: str | None = None
+
+    @field_validator("scheduleExplanation", "sourceAnalyticsRunId", "reportingPeriod")
+    @classmethod
+    def _validate_non_empty_header(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
@@ -1256,6 +1336,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "ig_plan": IgPlanMilestoneOutput,
     "ig_menu_picker": IgMenuPickerMilestoneOutput,
     "ig_format": IgFormatMilestoneOutput,
+    "ig_text": IgTextMilestoneOutput,
 }
 
 

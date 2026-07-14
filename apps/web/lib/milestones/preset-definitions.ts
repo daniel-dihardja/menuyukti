@@ -10,6 +10,7 @@ import {
   ListChecks,
   Milestone,
   Tags,
+  Type,
   UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react'
@@ -34,6 +35,7 @@ import {
   igPlanMilestoneDataSchema,
   igMenuPickerMilestoneDataSchema,
   igFormatMilestoneDataSchema,
+  igTextMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -57,6 +59,7 @@ export type MilestonePresetInputType =
   | 'menu_clusterer'
   | 'ig_menu_picker'
   | 'ig_format'
+  | 'ig_text'
   | 'optional_notes'
   | 'none'
 
@@ -150,6 +153,13 @@ const EMPTY_IG_MENU_PICKER_DATA: MilestonedataValue = {
 }
 
 const EMPTY_IG_FORMAT_DATA: MilestonedataValue = {
+  scheduleExplanation: '',
+  entries: [],
+  sourceAnalyticsRunId: '',
+  reportingPeriod: '',
+}
+
+const EMPTY_IG_TEXT_DATA: MilestonedataValue = {
   scheduleExplanation: '',
   entries: [],
   sourceAnalyticsRunId: '',
@@ -603,6 +613,44 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_format.criterionCarouselMenuItems'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_text: {
+    id: 'ig_text',
+    icon: Type,
+    inputType: 'ig_text',
+    dataSchema: igTextMilestoneDataSchema,
+    emptyData: EMPTY_IG_TEXT_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_text.title'),
+      milestoneInput: {
+        type: 'ig_text',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_IG_TEXT_DATA,
+      goal: t('milestonePreset.ig_text.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_text.criterionPriorIgFormat'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionSlotCoverage'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionNonemptyTexts'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionRequiredFields'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_text.criterionCampaignBriefAlignment'),
           status: 'open',
         },
       ],
