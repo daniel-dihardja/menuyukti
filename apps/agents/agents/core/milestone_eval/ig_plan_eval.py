@@ -160,9 +160,11 @@ def try_ig_plan_deterministic_verdict(
     norm = _normalize_requirement(requirement)
     entries = _entries(data)
     hints = _eval_hints(data)
-    opening_hours = _opening_hours_index(
-        hints.get("openingHours") if isinstance(hints.get("openingHours"), list) else []
-    )
+    raw_opening_hours = hints.get("openingHours")
+    hours_list: list[dict[str, Any]] = []
+    if isinstance(raw_opening_hours, list):
+        hours_list = [row for row in raw_opening_hours if isinstance(row, dict)]
+    opening_hours = _opening_hours_index(hours_list)
 
     if "scheduleexplanation" in norm or "schedule explanation" in norm:
         explanation = str(data.get("scheduleExplanation") or "").strip()
@@ -232,9 +234,9 @@ def try_ig_plan_deterministic_verdict(
     if _is_slot_grounding_requirement(norm):
         if not entries:
             return ("fail", "entries must contain at least one strategy row.")
-        issues: list[str] = []
+        grounding_issues: list[str] = []
         for index, entry in enumerate(entries, start=1):
-            issues.extend(
+            grounding_issues.extend(
                 f"entry {index}: {issue}"
                 for issue in _strategy_alignment_issues(entry)
             )
@@ -244,13 +246,13 @@ def try_ig_plan_deterministic_verdict(
                 if day in opening_hours and slot:
                     open_time, close_time = opening_hours[day]
                     if not _slot_within_hours(slot, open_time, close_time):
-                        issues.append(
+                        grounding_issues.append(
                             f"entry {index} slot {slot} is outside opening hours "
                             f"{open_time}-{close_time} on {day}"
                         )
 
-        if issues:
-            return ("fail", "; ".join(issues[:6]) + ("…" if len(issues) > 6 else ""))
+        if grounding_issues:
+            return ("fail", "; ".join(grounding_issues[:6]) + ("…" if len(grounding_issues) > 6 else ""))
         grounding = "each entry has valid slotStrategy, pillar, and productRole"
         if opening_hours:
             grounding += "; publish slots fall within opening hours"
