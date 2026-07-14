@@ -13,8 +13,8 @@ from agents_app.agents.core.milestone_run.ig_menu_picker.nodes import (
     _filter_plan_entries,
     _read_selected_slot_keys,
     fetch_and_prepare,
-    pick_menu_items_with_llm,
     persist_result,
+    pick_menu_items_with_llm,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 
@@ -179,9 +179,8 @@ async def test_fetch_and_prepare_requires_analytics_run_id() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
         return_value=lambda _payload: None,
-    ):
-        with pytest.raises(ValueError, match="workflow-pinned analytics run"):
-            await fetch_and_prepare(state, client=client)
+    ), pytest.raises(ValueError, match="workflow-pinned analytics run"):
+        await fetch_and_prepare(state, client=client)
 
 
 @pytest.mark.asyncio
@@ -205,12 +204,11 @@ async def test_fetch_and_prepare_passes_analytics_run_id_to_graphql() -> None:
         "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.fetch_ig_plan_inputs",
         new_callable=AsyncMock,
         return_value=fetched,
-    ) as mock_fetch:
-        with patch(
-            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
-            return_value=lambda _payload: None,
-        ):
-            result = await fetch_and_prepare(state, client=client)
+    ) as mock_fetch, patch(
+        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+        return_value=lambda _payload: None,
+    ):
+        result = await fetch_and_prepare(state, client=client)
 
     mock_fetch.assert_awaited_once_with(1, "u1", client=client, analytics_run_id="99")
     assert result["analytics_run_id"] == "99"
@@ -249,12 +247,11 @@ async def test_fetch_and_prepare_filters_to_selected_slot_keys() -> None:
         "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.fetch_ig_plan_inputs",
         new_callable=AsyncMock,
         return_value=fetched,
+    ), patch(
+        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+        return_value=lambda _payload: None,
     ):
-        with patch(
-            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
-            return_value=lambda _payload: None,
-        ):
-            result = await fetch_and_prepare(state, client=client)
+        result = await fetch_and_prepare(state, client=client)
 
     assert len(result["selected_plan_entries"]) == 1
     assert result["selected_plan_entries"][0]["slotKey"] == "wednesday-afternoon"
@@ -285,16 +282,18 @@ async def test_pick_menu_items_with_llm_merges_plan_and_picks() -> None:
         "slot_menu_candidates": _slot_candidates_fixture(),
         "generation_context_json": json.dumps({"entries": []}),
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.structured_ainvoke_from_run_config",
-        new_callable=AsyncMock,
-        return_value=picks,
-    ):
-        with patch(
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.structured_ainvoke_from_run_config",
+            new_callable=AsyncMock,
+            return_value=picks,
+        ),
+        patch(
             "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
             return_value=lambda _payload: None,
-        ):
-            result = await pick_menu_items_with_llm(state)
+        ),
+    ):
+        result = await pick_menu_items_with_llm(state)
 
     output = result["generated_output"]
     assert output["sourceAnalyticsRunId"] == "42"
@@ -326,12 +325,11 @@ async def test_persist_result_upserts_milestonedata() -> None:
     with patch(
         "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.upsert_milestonedata_node",
         new_callable=AsyncMock,
-    ) as mock_upsert:
-        with patch(
-            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
-            return_value=lambda _payload: None,
-        ):
-            result = await persist_result(state, client=client)
+    ) as mock_upsert, patch(
+        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+        return_value=lambda _payload: None,
+    ):
+        result = await persist_result(state, client=client)
 
     mock_upsert.assert_awaited_once()
     assert result["milestonedata_written"] is True
