@@ -4,8 +4,10 @@ import { z } from 'zod'
 import { getPresignedGetUrl, isObjectKeyForPost } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
+  DELETE_POST_PAGE_MUTATION,
   POST_QUERY,
   UPDATE_POST_PAGE_MUTATION,
+  type DeletePostPageData,
   type PostData,
   type UpdatePostPageData,
 } from '@/lib/graphql/queries/posts'
@@ -92,6 +94,78 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
     if (message.includes('not found')) {
       return NextResponse.json({ error: message }, { status: 404 })
+    }
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function DELETE(_req: Request, context: RouteContext) {
+  try {
+    await connection()
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) {
+      return authz.response
+    }
+
+    const { id: rawPostId, pageId: rawPageId } = await context.params
+    const postIdParsed = idParamSchema.safeParse(rawPostId)
+    const pageIdParsed = idParamSchema.safeParse(rawPageId)
+    if (!postIdParsed.success || !pageIdParsed.success) {
+      return NextResponse.json({ error: 'Invalid post or page id' }, { status: 400 })
+    }
+
+    const postData = await graphqlQuery<PostData>(
+      POST_QUERY,
+      { id: postIdParsed.data },
+      authz.userId,
+    )
+
+    const post = postData.post
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    }
+
+    const page = post.pages.find((candidate) => candidate.id === pageIdParsed.data)
+    if (!page) {
+      return NextResponse.json({ error: 'Post page not found' }, { status: 404 })
+    }
+
+    if (post.pages.length <= 1) {
+      return NextResponse.json({ error: 'Post must keep at least one page' }, { status: 400 })
+    }
+
+    if (page.mediaS3Key || page.mediaVersions.length > 0) {
+      return NextResponse.json(
+        { error: 'Cannot delete a page that has generated images' },
+        { status: 400 },
+      )
+    }
+
+    await graphqlQuery<DeletePostPageData>(
+      DELETE_POST_PAGE_MUTATION,
+      { pageId: pageIdParsed.data },
+      authz.userId,
+    )
+
+    const remainingPages = post.pages
+      .filter((candidate) => candidate.id !== pageIdParsed.data)
+      .toSorted((a, b) => a.sortOrder - b.sortOrder)
+      .map((candidate, index) => ({
+        id: candidate.id,
+        sortOrder: index,
+      }))
+
+    return NextResponse.json({ pages: remainingPages })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete post page'
+    if (message.includes('Not allowed')) {
+      return NextResponse.json({ error: message }, { status: 403 })
+    }
+    if (message.includes('not found')) {
+      return NextResponse.json({ error: message }, { status: 404 })
+    }
+    if (message.includes('at least one page') || message.includes('generated images')) {
+      return NextResponse.json({ error: message }, { status: 400 })
     }
     return NextResponse.json({ error: message }, { status: 500 })
   }

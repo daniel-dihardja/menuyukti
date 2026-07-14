@@ -816,3 +816,166 @@ def test_create_post_page_denied_for_other_workspace_user():
         )
     )
     assert page_result.errors is not None
+
+
+DELETE_POST_PAGE = """
+mutation DeletePostPage($pageId: ID!) {
+  deletePostPage(pageId: $pageId)
+}
+"""
+
+POST_WITH_PAGES = """
+query Post($id: ID!) {
+  post(id: $id) {
+    id
+    pages {
+      id
+      sortOrder
+      mediaS3Key
+      mediaVersions {
+        id
+      }
+    }
+  }
+}
+"""
+
+
+def test_delete_post_page_requires_auth():
+    result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE,
+            variable_values={"pageId": "1"},
+            context_value={},
+        )
+    )
+    assert result.errors is not None
+
+
+def test_delete_post_page_removes_empty_secondary_page():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Remove empty page"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+    first_page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    page_result = asyncio.run(
+        schema.execute(
+            CREATE_POST_PAGE,
+            variable_values={"postId": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not page_result.errors, page_result.errors
+    second_page_id = page_result.data["createPostPage"]["id"]
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE,
+            variable_values={"pageId": second_page_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_result.errors, delete_result.errors
+    assert delete_result.data["deletePostPage"] is True
+
+    post_result = asyncio.run(
+        schema.execute(
+            POST_WITH_PAGES,
+            variable_values={"id": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not post_result.errors, post_result.errors
+    pages = post_result.data["post"]["pages"]
+    assert len(pages) == 1
+    assert pages[0]["id"] == first_page_id
+    assert pages[0]["sortOrder"] == 0
+
+
+def test_delete_post_page_rejects_last_page():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Single page"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE,
+            variable_values={"pageId": page_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert delete_result.errors is not None
+    assert "at least one page" in str(delete_result.errors[0]).lower()
+
+
+def test_delete_post_page_rejects_page_with_media():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "With media page"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+    first_page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": first_page_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "prompt": "Generated",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    page_result = asyncio.run(
+        schema.execute(
+            CREATE_POST_PAGE,
+            variable_values={"postId": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not page_result.errors, page_result.errors
+    second_page_id = page_result.data["createPostPage"]["id"]
+
+    delete_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE,
+            variable_values={"pageId": first_page_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert delete_result.errors is not None
+    assert "generated images" in str(delete_result.errors[0]).lower()
+
+    still_there_result = asyncio.run(
+        schema.execute(
+            DELETE_POST_PAGE,
+            variable_values={"pageId": second_page_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not still_there_result.errors, still_there_result.errors
+    assert still_there_result.data["deletePostPage"] is True

@@ -22,12 +22,14 @@ import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
 
 export type PostCreatorPreviewPaneProps = {
   imageUrl?: string | null
+  mediaS3Key?: string | null
   imageVersions?: PostCreatorImageVersion[]
   previewVersionIndex?: number
   postImageVersionIndex?: number
   onPreviewVersionIndex?: (index: number) => void
   onUseAsPostImage?: () => void
   onDeleteVersion?: () => void
+  canRemoveEmptyPage?: boolean
   isLoading?: boolean
   isCommittingPostImage?: boolean
   isDeletingVersion?: boolean
@@ -42,12 +44,14 @@ const previewFrameClassName =
 
 export function PostCreatorPreviewPane({
   imageUrl,
+  mediaS3Key,
   imageVersions = [],
   previewVersionIndex = 0,
   postImageVersionIndex = 0,
   onPreviewVersionIndex,
   onUseAsPostImage,
   onDeleteVersion,
+  canRemoveEmptyPage = false,
   isLoading = false,
   isCommittingPostImage = false,
   isDeletingVersion = false,
@@ -65,7 +69,7 @@ export function PostCreatorPreviewPane({
     imageVersions.length > 0
       ? imageVersions
       : imageUrl
-        ? [{ id: 'current', mediaS3Key: '', imageUrl, createdAt: '' }]
+        ? [{ id: 'current', mediaS3Key: mediaS3Key ?? '', imageUrl, createdAt: '' }]
         : []
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
   const previewImageUrl = previewVersion?.imageUrl ?? null
@@ -82,6 +86,16 @@ export function PostCreatorPreviewPane({
     !isLoading &&
     !isCommittingPostImage &&
     !isDeletingVersion
+
+  const canRemovePage =
+    !hasImage &&
+    canRemoveEmptyPage &&
+    Boolean(onDeleteVersion) &&
+    !isLoading &&
+    !isCommittingPostImage &&
+    !isDeletingVersion
+
+  const showRemoveButton = canDeleteVersion || canRemovePage
 
   const previewVersionAt = useCallback(
     (index: number) => {
@@ -197,7 +211,7 @@ export function PostCreatorPreviewPane({
                       </div>
                     ) : null}
                     {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
-                    {canDeleteVersion ? (
+                    {showRemoveButton ? (
                       <div className="absolute top-2 right-2 z-40">
                         <Button
                           type="button"
@@ -272,6 +286,20 @@ export function PostCreatorPreviewPane({
             <Card
               className={`relative flex w-full flex-col items-center justify-center border-dashed bg-muted/20 p-6 text-center ${previewFrameClassName}`}
             >
+              {showRemoveButton ? (
+                <div className="absolute top-2 right-2 z-40">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    onClick={onDeleteVersion}
+                    className="size-8 shadow-sm"
+                    aria-label={t('removePage')}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </Button>
+                </div>
+              ) : null}
               <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                   <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />

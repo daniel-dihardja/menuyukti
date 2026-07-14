@@ -762,8 +762,12 @@
       "committingPostImage": "Setting post image…",
       "generating": "Generating…",
       "deleteImage": "Delete image",
+      "removePage": "Remove page",
       "deleteConfirmTitle": "Delete this generated image?",
       "deleteConfirmDescription": "This removes the image from this page's version history. This cannot be undone.",
+      "removePageConfirmTitle": "Remove this page?",
+      "removePageConfirmDescription": "This removes the empty page from your post. This cannot be undone.",
+      "removePageConfirmAction": "Remove page",
       "deleteConfirmCancel": "Cancel",
       "deleteConfirmAction": "Delete image",
       "deleteImageDeleting": "Deleting…"
@@ -775,6 +779,7 @@
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "imageSelectError": "Failed to update post image. Please try again.",
       "deleteImageError": "Failed to delete image. Please try again.",
+      "deletePageError": "Failed to remove page. Please try again.",
       "addPageError": "Failed to add page. Please try again.",
       "maxPagesReached": "Instagram carousels support up to 10 images."
     }

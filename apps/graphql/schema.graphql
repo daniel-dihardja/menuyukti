@@ -471,6 +471,7 @@ type Mutation {
   createWorkflowFromPayload(locationId: Int!, payload: JSON!, analyticsRunId: Int = null): NodeType!
   deleteNode(id: ID!): Boolean!
   deletePost(id: ID!): Boolean!
+  deletePostPage(pageId: ID!): Boolean!
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String): PostPageType!
