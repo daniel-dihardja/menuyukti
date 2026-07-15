@@ -23,10 +23,6 @@ import { WorkflowMenuItemHeatmapCard } from './workflow-menu-item-heatmap-card'
 import { WorkflowPairLiftMatrixCard } from './workflow-pair-lift-matrix-card'
 import { WorkflowVenueSlotStrengthCard } from './workflow-venue-slot-strength-card'
 
-type WorkflowVisualizationsPaneProps = {
-  workflowId: string
-}
-
 function VisualizationCardBody({
   id,
   analyticsRunId,
@@ -50,7 +46,7 @@ function VisualizationCardBody({
   }
 }
 
-export function WorkflowVisualizationsPane({ workflowId }: WorkflowVisualizationsPaneProps) {
+export function WorkflowVisualizationsPane() {
   const t = useTranslations('analytics.workflows.visualizations')
   const { analyticsRunId, locationId } = useTimelineWorkspaceState()
   const { addedIds, addVisualization, removeVisualization, hydrated } =

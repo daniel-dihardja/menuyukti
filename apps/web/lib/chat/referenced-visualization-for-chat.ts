@@ -1,4 +1,3 @@
-import { buildLiftMatrixRows } from '@/lib/analytics/menu-combos-page-adapter'
 import { loadMenuHeatmapsForWorkflow } from '@/lib/analytics/load-menu-heatmaps-for-workflow'
 import { loadPairLiftMatrixForWorkflow } from '@/lib/analytics/load-pair-lift-matrix-for-workflow'
 import { loadSlotDemandProfileForWorkflow } from '@/lib/analytics/load-slot-demand-profile'

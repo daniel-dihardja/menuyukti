@@ -261,7 +261,7 @@ export function WorkflowChatPanel({
         <WorkflowVisualizationsProvider workflowId={workflowId}>
           <WorkflowChatMentionProvider milestoneTitles={milestoneTitles}>
             <WorkflowChatLayout
-              chatPane={<WorkflowSidePanel workflowId={workflowId} />}
+              chatPane={<WorkflowSidePanel />}
               mobileChatOpen={mobileChatOpen}
               onMobileChatOpenChange={setMobileChatOpen}
               previewPane={<WorkflowPreviewPanelBodyLazy />}
