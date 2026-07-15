@@ -181,7 +181,7 @@ async def test_get_milestone_preset_data_json_requires_context() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_milestone_preset_data_for_milestone_success(
+async def test_get_milestone_preset_data_json_for_explicit_milestone_success(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     node = {
@@ -192,7 +192,7 @@ async def test_get_milestone_preset_data_for_milestone_success(
     monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
     monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
 
-    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke(
         {"milestone_id": "42"},
         config={
             "configurable": {
@@ -210,7 +210,7 @@ async def test_get_milestone_preset_data_for_milestone_success(
 
 
 @pytest.mark.asyncio
-async def test_get_milestone_preset_data_for_milestone_rejects_parent_mismatch(
+async def test_get_milestone_preset_data_json_rejects_parent_mismatch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     node = _milestone_node(milestone_preset_data=_culture_hooks_payload(), parent_id="999")
@@ -218,7 +218,7 @@ async def test_get_milestone_preset_data_for_milestone_rejects_parent_mismatch(
     monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
     monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
 
-    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke(
         {"milestone_id": "42"},
         config={"configurable": {"workflow_id": "100", "location_id": 7, "user_id": "u1"}},
     )
@@ -226,8 +226,8 @@ async def test_get_milestone_preset_data_for_milestone_rejects_parent_mismatch(
 
 
 @pytest.mark.asyncio
-async def test_get_milestone_preset_data_for_milestone_rejects_bad_milestone_id() -> None:
-    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+async def test_get_milestone_preset_data_json_rejects_bad_milestone_id() -> None:
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke(
         {"milestone_id": "  "},
         config={"configurable": {"workflow_id": "100", "location_id": 7, "user_id": "u1"}},
     )
@@ -235,9 +235,88 @@ async def test_get_milestone_preset_data_for_milestone_rejects_bad_milestone_id(
 
 
 @pytest.mark.asyncio
-async def test_get_milestone_preset_data_for_milestone_requires_workflow_id() -> None:
-    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+async def test_get_milestone_preset_data_json_requires_workflow_id_for_cross_milestone() -> None:
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke(
         {"milestone_id": "42"},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "workflow_id" in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_data_with_explicit_milestone_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    node = _milestone_node(milestone_input=_campaign_brief_input_payload())
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_data.ainvoke(
+        {"milestone_id": "42"},
+        config={"configurable": {"workflow_id": "100", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "## Milestone" in out
+    assert "**id**: 42" in out
+    assert fetch_mock.await_args is not None
+    assert fetch_mock.await_args.args[0] == "42"
+
+
+def _workflow_tree_fixture(*, selected_id: str = "42") -> dict:
+    return {
+        "workflow": {"id": "100", "name": "Summer campaign", "locationId": 7},
+        "milestones": [
+            {
+                "milestone": {
+                    "id": selected_id,
+                    "name": "Campaign Brief",
+                    "milestoneGoal": None,
+                    "data": {"presetId": "restaurant_campaign_brief"},
+                }
+            },
+            {
+                "milestone": {
+                    "id": "43",
+                    "name": "IG Plan",
+                    "milestoneGoal": None,
+                    "data": {"presetId": "ig_plan"},
+                }
+            },
+        ],
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_workflow_overview_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    tree = _workflow_tree_fixture()
+    fetch_tree_mock = AsyncMock(return_value=tree)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_workflow_campaign_tree", fetch_tree_mock)
+
+    out = await chat_tools.get_workflow_overview.ainvoke(
+        {},
+        config={
+            "configurable": {
+                "workflow_id": "100",
+                "location_id": 7,
+                "user_id": "u1",
+                "milestone_id": "42",
+            }
+        },
+    )
+    assert "# Workflow overview" in out
+    assert "**id**: 42" in out
+    assert "Campaign Brief" in out
+    assert "**(selected in UI)**" in out
+    assert "presetId" in out
+    assert "ig_plan" in out
+    fetch_tree_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_workflow_overview_requires_workflow_id() -> None:
+    out = await chat_tools.get_workflow_overview.ainvoke(
+        {},
         config={"configurable": {"location_id": 7, "user_id": "u1"}},
     )
     assert "workflow_id" in out

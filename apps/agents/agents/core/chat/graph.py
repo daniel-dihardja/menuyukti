@@ -10,8 +10,8 @@ from agents_app.agents.core.chat.tools import (
     get_milestone_data,
     get_milestone_help,
     get_milestone_input_json,
-    get_milestone_preset_data_for_milestone,
     get_milestone_preset_data_json,
+    get_workflow_overview,
     update_milestone_input,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
@@ -29,11 +29,11 @@ CHAT_RECURSION_LIMIT = 20
 def chat_tools_list() -> list:
     """Build chat ReAct tools (optional ``search_web`` when ``TAVILY_API_KEY`` is set)."""
     tools: list = [
+        get_workflow_overview,
         get_milestone_data,
         get_milestone_help,
         get_milestone_input_json,
         get_milestone_preset_data_json,
-        get_milestone_preset_data_for_milestone,
         update_milestone_input,
         get_location_data,
     ]
@@ -46,7 +46,11 @@ def chat_tools_list() -> list:
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     """Prepend the chat system prompt."""
     messages = state.get("messages") or []
-    prompt_body = build_system_prompt()
+    cfg = get_config() or {}
+    conf = cfg.get("configurable") or {}
+    raw_index = conf.get("workflow_milestone_index_md")
+    index_md = raw_index.strip() if isinstance(raw_index, str) else None
+    prompt_body = build_system_prompt(workflow_milestone_index_md=index_md)
     return [SystemMessage(content=prompt_body), *messages]
 
 

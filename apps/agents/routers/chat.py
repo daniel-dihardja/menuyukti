@@ -8,7 +8,9 @@ from typing import Annotated, Any, Literal
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
 from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
+from agents_app.agents.core.chat.graphql_client import fetch_workflow_campaign_tree
 from agents_app.agents.core.chat.http_context import chat_http_client_var
+from agents_app.agents.core.chat.workflow_overview import format_workflow_milestone_index_compact
 from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -76,6 +78,7 @@ def _runnable_config(
     location_id: int | None,
     user_id: str | None,
     chat_gateway_model: str | None,
+    workflow_milestone_index_md: str | None = None,
 ) -> RunnableConfig:
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
@@ -86,7 +89,31 @@ def _runnable_config(
     }
     if chat_gateway_model is not None:
         configurable["chat_gateway_model"] = chat_gateway_model
+    if workflow_milestone_index_md:
+        configurable["workflow_milestone_index_md"] = workflow_milestone_index_md
     return RunnableConfig(configurable=configurable, recursion_limit=CHAT_RECURSION_LIMIT)
+
+
+async def _workflow_milestone_index_md(
+    client: httpx.AsyncClient,
+    *,
+    workflow_id: str | None,
+    location_id: int | None,
+    user_id: str | None,
+    milestone_id: str | None,
+) -> str | None:
+    if not workflow_id or location_id is None or not user_id:
+        return None
+    tree = await fetch_workflow_campaign_tree(str(workflow_id), str(user_id), client=client)
+    if not tree:
+        return None
+    workflow = tree.get("workflow")
+    if isinstance(workflow, dict):
+        wf_loc = workflow.get("locationId")
+        if wf_loc is not None and int(wf_loc) != int(location_id):
+            return None
+    selected = str(milestone_id) if milestone_id is not None else None
+    return format_workflow_milestone_index_compact(tree, selected_milestone_id=selected)
 
 
 def _resolved_chat_gateway_model(raw: str | None) -> str | None:
@@ -207,6 +234,13 @@ async def chat_stream(
         body.workflow_chat_session_id,
     )
     gateway_model = _resolved_chat_gateway_model(body.chat_model)
+    index_md = await _workflow_milestone_index_md(
+        client,
+        workflow_id=body.workflow_id,
+        location_id=body.location_id,
+        user_id=x_menuyukti_user_id,
+        milestone_id=body.milestone_id,
+    )
     cfg = _runnable_config(
         thread_id=thread_id,
         workflow_id=body.workflow_id,
@@ -214,6 +248,7 @@ async def chat_stream(
         location_id=body.location_id,
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
+        workflow_milestone_index_md=index_md,
     )
 
     async def event_stream():

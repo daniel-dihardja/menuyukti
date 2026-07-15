@@ -11,6 +11,7 @@ from agents_app.agents.graphql_operations import (
     NODE_BY_ID_QUERY,
     REPLACE_PASS_CRITERIA_MUTATION,
     UPDATE_NODE_MUTATION,
+    WORKFLOW_CAMPAIGN_TREE_QUERY,
 )
 
 
@@ -34,6 +35,31 @@ async def fetch_milestone_node(
     if cache_key is not None:
         get_chat_milestone_cache()[(milestone_id, f"{user_id}:{cache_key}")] = node
     return node
+
+
+async def fetch_workflow_campaign_tree(
+    workflow_id: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Return workflow campaign tree payload or None when missing or unauthorized."""
+    cache = get_chat_milestone_cache()
+    memo_key = (workflow_id, f"{user_id}:workflow_overview")
+    if memo_key in cache:
+        cached = cache[memo_key]
+        return cached if isinstance(cached, dict) else None
+
+    data = await graphql_post(
+        client,
+        WORKFLOW_CAMPAIGN_TREE_QUERY,
+        {"workflowId": workflow_id},
+        user_id,
+    )
+    raw = data.get("workflowCampaignTree")
+    tree = raw if isinstance(raw, dict) else None
+    cache[memo_key] = tree
+    return tree
 
 
 async def upsert_milestone_goal(

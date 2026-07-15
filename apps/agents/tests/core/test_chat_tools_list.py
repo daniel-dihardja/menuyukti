@@ -17,7 +17,9 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list()]
     assert "search_web" not in names
+    assert "get_workflow_overview" in names
     assert "get_milestone_data" in names
+    assert "get_milestone_preset_data_for_milestone" not in names
     assert "get_location_data" in names
 
 

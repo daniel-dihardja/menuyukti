@@ -13,39 +13,40 @@ export type ChatToolMeta = {
 /** Tools available to workflow and standalone `/agent` chat (optional `search_web` when Tavily is configured). */
 export const CHAT_TOOLS_REGISTRY: readonly ChatToolMeta[] = [
   {
+    id: 'get_workflow_overview',
+    name: 'Get workflow overview',
+    description:
+      'List milestones in the current workflow with id, name, presetId, and short help summaries for cross-milestone discovery.',
+  },
+  {
     id: 'get_milestone_data',
     name: 'Get milestone data',
     description:
-      'Load the selected milestone: goal, input, pass criteria, eval result, and preset/structured data from GraphQL.',
+      'Load a milestone (selected or by id): goal, input, pass criteria, eval result, and preset/structured data from GraphQL.',
   },
   {
     id: 'get_milestone_help',
     name: 'Get milestone help',
     description:
-      'Return Help-tab guidance for the selected milestone (what it does and optional input notes).',
+      'Return Help-tab guidance for the selected milestone or a specific workflow milestone id.',
   },
   {
     id: 'get_milestone_input_json',
     name: 'Get milestone input JSON',
-    description: 'Return the milestone Input tab payload as formatted JSON.',
+    description:
+      'Return the milestone Input tab payload as formatted JSON for the selected or specified milestone.',
   },
   {
     id: 'get_milestone_preset_data_json',
     name: 'Get milestone preset data JSON',
     description:
-      'Return the milestone Data tab preset payload as formatted JSON for the selected milestone.',
-  },
-  {
-    id: 'get_milestone_preset_data_for_milestone',
-    name: 'Get preset data for another milestone',
-    description:
-      'Load preset/structured data from another milestone in the workflow by id (for cross-milestone context in chat).',
+      'Return the milestone Data tab preset payload as formatted JSON for the selected or specified milestone.',
   },
   {
     id: 'update_milestone_input',
     name: 'Update milestone input',
     description:
-      'Apply JSON-pointer patch operations to the milestone Input tab and persist through GraphQL.',
+      'Apply JSON-pointer patch operations to the UI-selected milestone Input tab and persist through GraphQL.',
   },
   {
     id: 'get_location_data',
