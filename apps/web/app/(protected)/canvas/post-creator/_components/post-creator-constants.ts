@@ -5,7 +5,7 @@ export const POST_IMAGE_ASPECT_RATIO = '4 / 5'
 /** Maximum reference photos attached in the prompt panel. */
 export const MAX_ATTACHED_REFERENCE_PHOTOS = 5
 
-/** Maximum total references per generation (1 previous result + up to 5 photos). */
+/** Maximum total references per generation (1 template + up to 5 product photos). */
 export const MAX_GENERATION_REFERENCES = 6
 
 /**

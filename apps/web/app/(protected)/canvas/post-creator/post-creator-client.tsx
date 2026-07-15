@@ -155,6 +155,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [previewVersionIndex, setPreviewVersionIndex] = useState(0)
   const [postImageVersionIndex, setPostImageVersionIndex] = useState(0)
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
+  const [templateImage, setTemplateImage] = useState<PostCreatorReferenceImage | null>(null)
   const [usePreviousResult, setUsePreviousResult] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
@@ -184,9 +185,12 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     setPreviewVersionIndex(previewIndex)
     setPrompt(page?.prompt ?? '')
     setReferenceImages(page?.referenceImages ?? [])
+    setTemplateImage(page?.templateImage ?? null)
     const previewMediaS3Key = versions[previewIndex]?.mediaS3Key ?? page?.mediaS3Key ?? null
     setUsePreviousResult(
-      page?.usePreviousResult ?? Boolean(parsePostMediaFilename(previewMediaS3Key)),
+      page?.templateImage
+        ? false
+        : (page?.usePreviousResult ?? Boolean(parsePostMediaFilename(previewMediaS3Key))),
     )
   }, [])
 
@@ -202,6 +206,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
           | 'imageVersions'
           | 'previewVersionIndex'
           | 'referenceImages'
+          | 'templateImage'
           | 'usePreviousResult'
         >
       >,
@@ -277,6 +282,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
                       ...page,
                       prompt,
                       referenceImages,
+                      templateImage,
                       previewVersionIndex,
                       usePreviousResult,
                     }
@@ -302,14 +308,24 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         setPreviewVersionIndex(previewIndex)
         setPrompt(page?.prompt ?? '')
         setReferenceImages(page?.referenceImages ?? [])
+        setTemplateImage(page?.templateImage ?? null)
         const previewMediaS3Key = versions[previewIndex]?.mediaS3Key ?? page?.mediaS3Key ?? null
         setUsePreviousResult(
-          page?.usePreviousResult ?? Boolean(parsePostMediaFilename(previewMediaS3Key)),
+          page?.templateImage
+            ? false
+            : (page?.usePreviousResult ?? Boolean(parsePostMediaFilename(previewMediaS3Key))),
         )
         return withSyncedCurrent
       })
     },
-    [previewVersionIndex, prompt, referenceImages, selectedPageId, usePreviousResult],
+    [
+      previewVersionIndex,
+      prompt,
+      referenceImages,
+      selectedPageId,
+      templateImage,
+      usePreviousResult,
+    ],
   )
 
   const handlePromptChange = useCallback(
@@ -370,16 +386,54 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     [referenceImages, selectedPageId, syncPageState],
   )
 
+  const handleSelectTemplate = useCallback(
+    (design: { name: string; url: string }) => {
+      const next: PostCreatorReferenceImage = {
+        name: design.name,
+        url: design.url,
+        enabled: true,
+      }
+      setTemplateImage(next)
+      setUsePreviousResult(false)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { templateImage: next, usePreviousResult: false })
+      }
+    },
+    [selectedPageId, syncPageState],
+  )
+
+  const handleClearTemplate = useCallback(() => {
+    setTemplateImage(null)
+    if (selectedPageId) {
+      syncPageState(selectedPageId, { templateImage: null })
+    }
+  }, [selectedPageId, syncPageState])
+
   const handleGenerate = useCallback(async () => {
     const trimmed = prompt.trim()
     if (!trimmed || isGenerating) return
 
     const previewMediaS3Key = imageVersions[previewVersionIndex]?.mediaS3Key
-    const { references, tooManyReferences } = resolveGenerationReferences({
-      referenceImages,
-      usePreviousResult,
-      previewMediaS3Key,
-    })
+    const { mode, references, tooManyReferences, hasTemplatePreviousConflict } =
+      resolveGenerationReferences({
+        templateImage,
+        referenceImages,
+        usePreviousResult,
+        previewMediaS3Key,
+      })
+
+    if (hasTemplatePreviousConflict) {
+      toast.error(tPrompt('generation.templatePreviousConflict'))
+      return
+    }
+
+    if (mode === 'template-composite' && templateImage) {
+      const enabledProductCount = referenceImages.filter((image) => image.enabled).length
+      if (enabledProductCount === 0) {
+        toast.error(tPrompt('generation.templateNeedsProducts'))
+        return
+      }
+    }
 
     if (tooManyReferences) {
       toast.error(tPrompt('generation.tooManyReferences'))
@@ -469,6 +523,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     syncPageState,
     tPrompt,
     tToast,
+    templateImage,
     usePreviousResult,
   ])
 
@@ -678,6 +733,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         setImageVersions([])
         setPrompt('')
         setReferenceImages([])
+        setTemplateImage(null)
         setUsePreviousResult(false)
       }
     } catch {
@@ -712,6 +768,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
                     ...page,
                     prompt,
                     referenceImages,
+                    templateImage,
                     previewVersionIndex,
                     usePreviousResult,
                   }
@@ -765,6 +822,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       referenceImages,
       selectedPageId,
       tToast,
+      templateImage,
       usePreviousResult,
     ],
   )
@@ -835,13 +893,25 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const hasPreviewableVersion = Boolean(parsePostMediaFilename(previewMediaS3Key))
 
   const generationReferenceSummary = useMemo(() => {
-    const { references } = resolveGenerationReferences({
+    const { mode, references } = resolveGenerationReferences({
+      templateImage,
       referenceImages,
       usePreviousResult,
       previewMediaS3Key,
     })
-    const includesPrevious = references.some((reference) => reference.type === 'previous-result')
     const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
+
+    if (mode === 'template-composite' && templateImage) {
+      return tPrompt('generation.referenceSummaryTemplateComposite', {
+        count: enabledPhotoCount,
+        template: templateImage.name,
+      })
+    }
+    if (mode === 'filled-edit') {
+      return tPrompt('generation.referenceSummaryFilledEdit')
+    }
+
+    const includesPrevious = references.some((reference) => reference.type === 'previous-result')
 
     if (includesPrevious && enabledPhotoCount > 0) {
       return tPrompt('generation.referenceSummaryPreviousAndPhotos', { count: enabledPhotoCount })
@@ -853,7 +923,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       return tPrompt('generation.referenceSummaryPhotosOnly', { count: enabledPhotoCount })
     }
     return tPrompt('generation.referenceSummaryTextOnly')
-  }, [previewMediaS3Key, referenceImages, tPrompt, usePreviousResult])
+  }, [previewMediaS3Key, referenceImages, tPrompt, templateImage, usePreviousResult])
 
   const canRemoveEmptyPage = pages.length > 1 && !pageHasGeneratedImage(selectedPage, imageVersions)
 
@@ -909,8 +979,11 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
             onSubmit={() => void handleGenerate()}
             onToggleReferenceEnabled={handleToggleReferenceEnabled}
             onUsePreviousResultChange={handleUsePreviousResultChange}
+            onClearTemplate={handleClearTemplate}
+            onSelectTemplate={handleSelectTemplate}
             prompt={prompt}
             referenceImages={referenceImages}
+            templateImage={templateImage}
             usePreviousResult={usePreviousResult}
           />
         }

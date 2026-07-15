@@ -14,6 +14,7 @@ import { Textarea } from '@workspace/ui/components/textarea'
 
 import { PostCreatorImagePicker } from './post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from './post-creator-reference-thumbnails'
+import { PostCreatorTemplatePicker } from './post-creator-template-picker'
 import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
 
 export type PostCreatorPromptPaneProps = {
@@ -22,6 +23,9 @@ export type PostCreatorPromptPaneProps = {
   onSubmit: () => void
   isGenerating: boolean
   disabled?: boolean
+  templateImage: PostCreatorReferenceImage | null
+  onSelectTemplate: (design: { name: string; url: string }) => void
+  onClearTemplate: () => void
   referenceImages: PostCreatorReferenceImage[]
   onAddReference: (photo: PostCreatorReferenceImage) => void
   onRemoveReference: (name: string) => void
@@ -38,6 +42,9 @@ export function PostCreatorPromptPane({
   onSubmit,
   isGenerating,
   disabled = false,
+  templateImage,
+  onSelectTemplate,
+  onClearTemplate,
   referenceImages,
   onAddReference,
   onRemoveReference,
@@ -50,11 +57,13 @@ export function PostCreatorPromptPane({
   const t = useTranslations('postCreator.prompt')
   const previousResultId = useId()
   const promptId = useId()
+  const templateFieldId = useId()
   const canSubmit = prompt.trim().length > 0 && !isGenerating && !disabled
   const selectedNames = useMemo(
     () => new Set(referenceImages.map((image) => image.name)),
     [referenceImages],
   )
+  const previousResultDisabled = disabled || isGenerating || templateImage != null
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden p-4 pt-0">
@@ -65,6 +74,20 @@ export function PostCreatorPromptPane({
           if (canSubmit) onSubmit()
         }}
       >
+        <Field className="gap-1.5">
+          <FieldLabel htmlFor={templateFieldId}>{t('template.label')}</FieldLabel>
+          <PostCreatorTemplatePicker
+            disabled={disabled || isGenerating}
+            emptyLabel={t('template.empty')}
+            fromMediaLabel={t('template.fromMedia')}
+            pickLabel={t('template.pick')}
+            pickerAriaLabel={t('template.pickerAriaLabel')}
+            removeLabel={t('template.remove')}
+            templateImage={templateImage}
+            onClearTemplate={onClearTemplate}
+            onSelectTemplate={onSelectTemplate}
+          />
+        </Field>
         <Field className="gap-1.5">
           <FieldLabel htmlFor={promptId}>{t('label')}</FieldLabel>
           <PostCreatorImagePicker
@@ -95,12 +118,15 @@ export function PostCreatorPromptPane({
           disabled={disabled || isGenerating}
           images={referenceImages}
           includeLabel={t('references.include')}
-          indexLabel={(index) => t('references.indexLabel', { index })}
+          indexLabel={(index) => {
+            const refIndex = templateImage ? index + 2 : index + 1
+            return t('references.indexLabel', { index: refIndex })
+          }}
           onRemove={onRemoveReference}
           onToggleEnabled={onToggleReferenceEnabled}
           removeLabel={t('references.remove')}
         />
-        {hasPreviewableVersion ? (
+        {hasPreviewableVersion && !templateImage ? (
           <div className="flex items-start justify-between gap-3 rounded-md border border-border/60 px-3 py-2">
             <div className="space-y-1">
               <Label htmlFor={previousResultId} className="text-sm font-medium">
@@ -111,7 +137,7 @@ export function PostCreatorPromptPane({
             <Switch
               id={previousResultId}
               checked={usePreviousResult}
-              disabled={disabled || isGenerating}
+              disabled={previousResultDisabled}
               onCheckedChange={onUsePreviousResultChange}
             />
           </div>

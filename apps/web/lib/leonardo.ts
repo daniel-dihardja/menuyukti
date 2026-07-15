@@ -92,6 +92,8 @@ export type CreateNanoBananaCompositionParams = NanoBananaFlowConfig & {
   /** Output size — snapped to Nano Banana allowed dimensions */
   width: number
   height: number
+  /** Per-image reference strength; defaults to imageReferenceStrength for each. */
+  imageReferenceStrengths?: ImageReferenceStrength[]
 }
 
 function parseJsonBody(rawText: string): unknown {
@@ -321,6 +323,7 @@ export async function createNanoBananaCompositionGeneration(
     height,
     styleIds,
     imageReferenceStrength = 'MID',
+    imageReferenceStrengths,
     promptEnhance = 'OFF',
   } = params
 
@@ -339,12 +342,12 @@ export async function createNanoBananaCompositionGeneration(
     width: w,
     height: h,
     guidances: {
-      image_reference: sanitizedUploadedIds.map((imageId) => ({
+      image_reference: sanitizedUploadedIds.map((imageId, index) => ({
         image: {
           id: imageId,
           type: 'UPLOADED',
         },
-        strength: imageReferenceStrength,
+        strength: imageReferenceStrengths?.[index] ?? imageReferenceStrength,
       })),
     },
   }
@@ -584,6 +587,7 @@ export async function runTextToImageWithReferences(
   height: number,
   referenceBuffers: Buffer[],
   model: string = TEXT_TO_IMAGE_MODEL,
+  referenceStrengths?: ImageReferenceStrength[],
 ): Promise<Buffer> {
   if (referenceBuffers.length === 0) {
     return runTextToImageGeneration(prompt, width, height, model)
@@ -597,26 +601,32 @@ export async function runTextToImageWithReferences(
     promptPreview: truncateBody(prompt, 120),
   })
 
+  const normalizedBuffers = await Promise.all(
+    referenceBuffers.map((buf) => sharp(buf).webp({ quality: 85 }).toBuffer()),
+  )
+
   const flow: NanoBananaFlowConfig = { model, prompt }
 
   let generationId: string
-  if (referenceBuffers.length === 1) {
-    const initImageId = await uploadInitImage(referenceBuffers[0]!, 'webp')
+  if (normalizedBuffers.length === 1) {
+    const initImageId = await uploadInitImage(normalizedBuffers[0]!, 'webp')
     generationId = await createNanoBananaGeneration({
       ...flow,
       uploadedImageId: initImageId,
       width,
       height,
+      imageReferenceStrength: referenceStrengths?.[0] ?? 'MID',
     })
   } else {
     const uploadedImageIds = await Promise.all(
-      referenceBuffers.map((buf) => uploadInitImage(buf, 'webp')),
+      normalizedBuffers.map((buf) => uploadInitImage(buf, 'webp')),
     )
     generationId = await createNanoBananaCompositionGeneration({
       ...flow,
       uploadedImageIds,
       width,
       height,
+      imageReferenceStrengths: referenceStrengths,
     })
   }
 

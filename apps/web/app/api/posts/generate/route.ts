@@ -12,6 +12,7 @@ import {
   getPresignedGetUrl,
   getS3Bucket,
   getS3Client,
+  isObjectKeyForPhoto,
   isObjectKeyForPost,
   isSafeAssetFilename,
   isSafePhotoFilename,
@@ -25,9 +26,14 @@ import {
   buildInstagramPostPrompt,
   type PromptReference,
 } from '@/lib/posts/build-instagram-post-prompt'
+import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 const generationReferenceSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('template'),
+    name: z.string().min(1),
+  }),
   z.object({
     type: z.literal('previous-result'),
     filename: z.string().min(1),
@@ -108,10 +114,55 @@ export async function POST(req: Request) {
     )
   }
 
+  const hasTemplate = references.some((reference) => reference.type === 'template')
+  const hasPrevious = references.some((reference) => reference.type === 'previous-result')
+  if (hasTemplate && hasPrevious) {
+    return NextResponse.json(
+      { message: 'Template and previous result cannot be used together' },
+      { status: 400 },
+    )
+  }
+
+  const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
+
+  let mode: GenerationMode
+  if (hasTemplate && enabledPhotoCount > 0) {
+    mode = 'template-composite'
+  } else if (hasPrevious && !hasTemplate && enabledPhotoCount === 0) {
+    mode = 'filled-edit'
+  } else {
+    mode = 'fresh-scene'
+  }
+
+  if (mode === 'template-composite' && (!hasTemplate || enabledPhotoCount === 0)) {
+    return NextResponse.json(
+      { message: 'Template composite requires a template and at least one product photo' },
+      { status: 400 },
+    )
+  }
+
   const referenceBuffers: Buffer[] = []
   const promptReferences: PromptReference[] = []
 
   for (const reference of references) {
+    if (reference.type === 'template') {
+      const { name } = reference
+      if (!isSafePhotoFilename(name)) {
+        return NextResponse.json({ message: `Invalid template image: ${name}` }, { status: 400 })
+      }
+
+      const key = userPhotosObjectKey(userId, name)
+      if (!isObjectKeyForPhoto(key, userId)) {
+        return NextResponse.json({ message: `Invalid template image: ${name}` }, { status: 400 })
+      }
+
+      const buffer = await loadReferenceBuffer(key, name, userId)
+      if (buffer instanceof NextResponse) return buffer
+      referenceBuffers.push(buffer)
+      promptReferences.push({ type: 'template' })
+      continue
+    }
+
     if (reference.type === 'previous-result') {
       const { filename } = reference
       if (!isSafeAssetFilename(filename)) {
@@ -150,6 +201,7 @@ export async function POST(req: Request) {
 
   const leonardoPrompt = buildInstagramPostPrompt({
     userPrompt: prompt,
+    mode,
     references: promptReferences,
   })
 
@@ -160,6 +212,8 @@ export async function POST(req: Request) {
       POST_IMAGE_WIDTH,
       POST_IMAGE_HEIGHT,
       referenceBuffers,
+      undefined,
+      mode === 'template-composite' ? referenceBuffers.map(() => 'HIGH' as const) : undefined,
     )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Processing failed'

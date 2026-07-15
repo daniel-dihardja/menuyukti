@@ -727,10 +727,18 @@
     "previewPane": "Generated post image",
     "promptPane": "Prompt",
     "prompt": {
-      "label": "Image prompt",
-      "placeholder": "Describe the Instagram post image you want to generate… Type @ to attach a reference photo.",
+      "label": "Creative direction",
+      "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder (left slot), Ref 3 → Ice Americano (right slot)\n\nType @ to attach product photos in slot order.",
       "generate": "Generate image",
       "generating": "Generating…",
+      "template": {
+        "label": "Layout template",
+        "pick": "Choose template from Media",
+        "pickerAriaLabel": "Layout template picker",
+        "empty": "No media yet. Upload a layout template in Media first.",
+        "remove": "Remove layout template",
+        "fromMedia": "From Media"
+      },
       "picker": {
         "ariaLabel": "Reference photo picker",
         "empty": "No matching media. Upload one or add files in Media.",
@@ -746,19 +754,23 @@
         "indexLabel": "Ref {index}"
       },
       "previousResult": {
-        "label": "Use previous result as reference",
-        "description": "Includes the currently previewed generated image as Reference 1. Turn off for a fresh composition from checked photos only."
+        "label": "Use last filled result for edits",
+        "description": "Includes the currently previewed generated image for small tweaks after compositing. Not used when a layout template is attached."
       },
       "generation": {
-        "referenceSummaryTextOnly": "Next generation: prompt only (no references).",
+        "referenceSummaryTextOnly": "Next generation: creative direction only (no references).",
+        "referenceSummaryFilledEdit": "Next generation: edit last filled result only.",
+        "referenceSummaryTemplateComposite": "Next generation: template “{template}” + {count, plural, one {# product} other {# products}} (Ref 2+).",
         "referenceSummaryPreviousOnly": "Next generation: previous result only.",
         "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummaryPreviousAndPhotos": "Next generation: previous result + {count, plural, one {# checked photo} other {# checked photos}}.",
-        "tooManyReferences": "Too many references selected. Use at most 5 checked photos plus the previous result (6 total)."
+        "tooManyReferences": "Too many references selected. Use at most 1 template and 5 checked product photos (6 total).",
+        "templateNeedsProducts": "Attach at least one checked product photo to fill the template.",
+        "templatePreviousConflict": "Turn off “Use last filled result” when using a layout template."
       },
       "tip": {
         "title": "Tip",
-        "description": "Type @ to attach reference photos. Use the checkboxes to include or exclude photos per generation. When a preview exists, turn off “Use previous result” to start fresh from checked photos only."
+        "description": "Attach a layout template from Media, add product photos with @ (Ref 2 = first slot, Ref 3 = second, …). In creative direction, set the headline and map each Ref to its placeholder — e.g. Ref 2 → Roti Bluder left cup, Ref 3 → Ice Americano right cup."
       }
     },
     "preview": {

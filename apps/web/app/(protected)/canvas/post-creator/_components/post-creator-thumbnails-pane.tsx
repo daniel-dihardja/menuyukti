@@ -35,6 +35,7 @@ export type PostCreatorPage = {
   imageVersions?: PostCreatorImageVersion[]
   previewVersionIndex?: number
   referenceImages?: PostCreatorReferenceImage[]
+  templateImage?: PostCreatorReferenceImage | null
   usePreviousResult?: boolean
 }
 

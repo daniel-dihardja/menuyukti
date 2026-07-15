@@ -6,20 +6,21 @@ import {
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
-import { buildInstagramPostPrompt } from '@/lib/posts/build-instagram-post-prompt'
+import { buildInstagramPostPrompt, detectPromptMode } from '@/lib/posts/build-instagram-post-prompt'
 
 describe('buildInstagramPostPrompt', () => {
-  it('places trimmed user prompt under CREATIVE DIRECTION', () => {
+  it('places trimmed user prompt under CREATIVE DIRECTION for fresh scene', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: '  Warm kopitiam scene with kaya toast  ',
+      mode: 'fresh-scene',
     })
 
     expect(out).toContain("CREATIVE DIRECTION (follow the user's vision):")
     expect(out.endsWith('Warm kopitiam scene with kaya toast')).toBe(true)
   })
 
-  it('includes composition frame percentages derived from constants', () => {
-    const out = buildInstagramPostPrompt({ userPrompt: 'Test scene' })
+  it('includes composition frame percentages derived from constants in fresh scene', () => {
+    const out = buildInstagramPostPrompt({ userPrompt: 'Test scene', mode: 'fresh-scene' })
 
     expect(out).toContain(
       `~${INSTAGRAM_GRID_THUMBNAIL_INSET_X_PERCENT.toFixed(1)}% from the left and right edges`,
@@ -32,9 +33,10 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('Do not add visible guides, boxes, rectangles')
   })
 
-  it('includes indexed photo reference block when only photos are provided', () => {
+  it('includes indexed photo reference block when only photos are provided in fresh scene', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Hero dish on marble',
+      mode: 'fresh-scene',
       references: [{ type: 'photo' }, { type: 'photo' }],
     })
 
@@ -44,72 +46,110 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('Preserve product identity')
   })
 
-  it('includes indexed previous-result block when only previous result is provided', () => {
+  it('includes template composite task and product fidelity blocks', () => {
     const out = buildInstagramPostPrompt({
-      userPrompt: 'Make the background warmer',
+      userPrompt: 'Ref 3 → center hero bowl',
+      mode: 'template-composite',
+      references: [{ type: 'template' }, { type: 'photo' }, { type: 'photo' }, { type: 'photo' }],
+    })
+
+    expect(out).toContain('compositing real product photos into a fixed Instagram post TEMPLATE')
+    expect(out).toContain('SLOT FILL — IN-PAINT, NOT OVERLAY')
+    expect(out).toContain('FORBIDDEN:')
+    expect(out).toContain('TEXT FROM CREATIVE DIRECTION')
+    expect(out).toContain('PRODUCT IMAGE HERE')
+    expect(out).toContain('Reference 1 — TEMPLATE')
+    expect(out).toContain('Reference 2 — PRODUCT (Slot A)')
+    expect(out).toContain('Reference 3 — PRODUCT (Slot B)')
+    expect(out).toContain('Reference 4 — PRODUCT (Slot C)')
+    expect(out).toContain('PRODUCT FIDELITY (NON-NEGOTIABLE)')
+    expect(out).toContain('Do NOT stretch, squash, warp, morph')
+    expect(out).toContain('PRESERVE / REPLACE / REMOVE')
+    expect(out).toContain('COMPLETION CHECKLIST')
+    expect(out).toContain('Creative direction may override which product fills which placeholder')
+    expect(out).toContain('CREATIVE DIRECTION (headline, product names, slot mapping')
+    expect(out.endsWith('Ref 3 → center hero bowl')).toBe(true)
+  })
+
+  it('includes filled edit block for filled-edit mode', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Warm the background slightly',
+      mode: 'filled-edit',
       references: [{ type: 'previous-result' }],
     })
 
-    expect(out).toContain('REFERENCE IMAGES (in upload order):')
-    expect(out).toContain('Reference 1 — PREVIOUS RESULT')
-    expect(out).toContain('Apply requested edits')
-    expect(out).not.toContain('Reference 2 — PRODUCT PHOTO')
-  })
-
-  it('includes indexed mixed block when previous result and photos are provided', () => {
-    const out = buildInstagramPostPrompt({
-      userPrompt: 'Combine products into the scene',
-      references: [{ type: 'previous-result' }, { type: 'photo' }, { type: 'photo' }],
-    })
-
-    expect(out).toContain('Reference 1 — PREVIOUS RESULT')
-    expect(out).toContain('Reference 2 — PRODUCT PHOTO')
-    expect(out).toContain('Reference 3 — PRODUCT PHOTO')
+    expect(out).toContain('You are editing a photorealistic Instagram portrait post image')
+    expect(out).toContain('Reference 1 — FILLED RESULT')
+    expect(out).toContain("Preserve the reference image's composition, camera angle, and lighting")
+    expect(out).toContain('CREATIVE DIRECTION (apply only the requested edits):')
+    expect(out).not.toContain('TEMPLATE')
+    expect(out).not.toContain('PRODUCT FIDELITY')
   })
 
   it('omits reference block when references is empty', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Hero dish on marble',
+      mode: 'fresh-scene',
       references: [],
     })
 
     expect(out).not.toContain('REFERENCE IMAGES (in upload order):')
   })
 
-  it('places foundation sections before creative direction', () => {
-    const out = buildInstagramPostPrompt({ userPrompt: 'My creative brief' })
+  it('places foundation sections before creative direction in template composite', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'My creative brief',
+      mode: 'template-composite',
+      references: [{ type: 'template' }, { type: 'photo' }],
+    })
 
-    const outputIndex = out.indexOf('OUTPUT:')
-    const compositionIndex = out.indexOf('COMPOSITION (NON-NEGOTIABLE):')
-    const photographyIndex = out.indexOf('PHOTOGRAPHY & LIGHTING')
+    const taskIndex = out.indexOf('TASK:')
+    const slotFillIndex = out.indexOf('SLOT FILL')
+    const productFidelityIndex = out.indexOf('PRODUCT FIDELITY')
     const creativeIndex = out.indexOf('CREATIVE DIRECTION')
 
-    expect(outputIndex).toBeGreaterThanOrEqual(0)
-    expect(compositionIndex).toBeGreaterThan(outputIndex)
-    expect(photographyIndex).toBeGreaterThan(compositionIndex)
-    expect(creativeIndex).toBeGreaterThan(photographyIndex)
+    expect(taskIndex).toBeGreaterThanOrEqual(0)
+    expect(slotFillIndex).toBeGreaterThan(taskIndex)
+    expect(productFidelityIndex).toBeGreaterThan(slotFillIndex)
+    expect(creativeIndex).toBeGreaterThan(productFidelityIndex)
   })
 
   it('includes full photography block for new scene generations', () => {
-    const out = buildInstagramPostPrompt({ userPrompt: 'Hero dish on marble' })
+    const out = buildInstagramPostPrompt({ userPrompt: 'Hero dish on marble', mode: 'fresh-scene' })
 
     expect(out).toContain('PHOTOGRAPHY & LIGHTING')
     expect(out).toContain('Warm directional window light')
     expect(out).toContain('45–60° hero angle')
     expect(out).toContain('soft background bokeh')
-    expect(out).toContain('no plastic or waxy food')
     expect(out).not.toContain("Preserve the reference image's composition")
   })
 
-  it('includes lighter photography block when previous result is included', () => {
+  it('includes lighter photography block when previous result is included in fresh scene', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Make the background warmer',
+      mode: 'fresh-scene',
       references: [{ type: 'previous-result' }, { type: 'photo' }],
     })
 
     expect(out).toContain('PHOTOGRAPHY & LIGHTING')
     expect(out).toContain("Preserve the reference image's composition, camera angle, and lighting")
-    expect(out).toContain('Apply only the edits described in creative direction')
     expect(out).not.toContain('45–60° hero angle')
+  })
+})
+
+describe('detectPromptMode', () => {
+  it('detects template-composite when template and products are present', () => {
+    expect(detectPromptMode([{ type: 'template' }, { type: 'photo' }, { type: 'photo' }])).toBe(
+      'template-composite',
+    )
+  })
+
+  it('detects filled-edit when only previous result is present', () => {
+    expect(detectPromptMode([{ type: 'previous-result' }])).toBe('filled-edit')
+  })
+
+  it('detects fresh-scene otherwise', () => {
+    expect(detectPromptMode([{ type: 'photo' }])).toBe('fresh-scene')
+    expect(detectPromptMode([])).toBe('fresh-scene')
   })
 })
