@@ -3,6 +3,7 @@
 import { Show } from '@clerk/nextjs'
 import Link from 'next/link'
 import { Fragment, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { SidebarTrigger } from '@workspace/ui/components/sidebar'
 import { Separator } from '@workspace/ui/components/separator'
 import {
@@ -37,6 +38,7 @@ export function SidebarTriggerClient({
   showBreadcrumb,
 }: SidebarTriggerClientProps) {
   void _title
+  const t = useTranslations('appShell')
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     setMounted(true)
@@ -50,7 +52,7 @@ export function SidebarTriggerClient({
 
   return (
     <div className="flex h-16 w-full min-w-0 shrink-0 items-center gap-2 border-b px-4">
-      <SidebarTrigger aria-label="Toggle sidebar" className="-ml-1 shrink-0" />
+      <SidebarTrigger aria-label={t('toggleSidebarAria')} className="-ml-1 shrink-0" />
 
       <Separator orientation="vertical" className="mr-2 shrink-0 data-[orientation=vertical]:h-4" />
 
@@ -106,7 +108,7 @@ export function SidebarTriggerClient({
                             type="button"
                             variant="ghost"
                             size="icon-sm"
-                            aria-label="Open breadcrumb navigation"
+                            aria-label={t('openBreadcrumbNavAria')}
                           >
                             <BreadcrumbEllipsis className="size-7" />
                           </Button>

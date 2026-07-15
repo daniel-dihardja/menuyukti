@@ -181,7 +181,13 @@ export function PostCreatorPreviewPane({
                 <div className="flex min-h-0 flex-1 items-center justify-center">
                   <div className={previewFrameClassName}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
-                    <img src={previewImageUrl!} alt="" className="size-full object-contain" />
+                    <img
+                      src={previewImageUrl!}
+                      alt={t('previewImageAlt')}
+                      width={POST_IMAGE_WIDTH}
+                      height={POST_IMAGE_HEIGHT}
+                      className="size-full object-contain"
+                    />
                     {isLoading ? (
                       <div
                         className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/60"

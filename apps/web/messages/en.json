@@ -10,6 +10,14 @@
     "description": "The page you are looking for does not exist or may have been moved.",
     "backToHome": "Back to home"
   },
+  "common": {
+    "close": "Close"
+  },
+  "appShell": {
+    "skipToContent": "Skip to content",
+    "toggleSidebarAria": "Toggle sidebar",
+    "openBreadcrumbNavAria": "Open breadcrumb navigation"
+  },
   "mainHeader": {
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
@@ -760,6 +768,7 @@
       "useAsPostImage": "Use as post image",
       "useAsPostImageCommitting": "Setting post image…",
       "committingPostImage": "Setting post image…",
+      "previewImageAlt": "Generated post preview",
       "generating": "Generating…",
       "deleteImage": "Delete image",
       "removePage": "Remove page",
@@ -1121,8 +1130,8 @@
           "run": "Run Agent",
           "rerun": "Re-run Agent",
           "clear": "Clear Output",
-          "clearing": "Clearing...",
-          "running": "Running..."
+          "clearing": "Clearing…",
+          "running": "Running…"
         },
         "output": {
           "title": "Agent Output",
@@ -1171,8 +1180,8 @@
           "run": "Run Agent",
           "rerun": "Re-run Agent",
           "clear": "Clear Output",
-          "clearing": "Clearing...",
-          "running": "Running..."
+          "clearing": "Clearing…",
+          "running": "Running…"
         },
         "output": {
           "title": "Agent Output",
@@ -1606,7 +1615,7 @@
             "title": "Culture hooks",
             "inputLabel": "Culture hooks notes",
             "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
-            "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone...",
+            "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone…",
             "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not food or drink). These intersections should inspire Instagram feed posts, Stories, and Reels that attract potential new customers.",
             "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example suitable for a feed post, Story, or Reel.",
             "criterionNonFood": "Intersections are **not food- or drink-centric** (no dishes, coffee, beverages, recipes, or flavor-led angles).",
@@ -2148,7 +2157,7 @@
           "cancel": "Cancel",
           "continue": "Continue",
           "back": "Back",
-          "generating": "Generating...",
+          "generating": "Generating…",
           "generate": "Generate",
           "generateError": "Couldn't generate the image. Try again."
         }
@@ -2290,7 +2299,7 @@
         "placeholder": "Select analytics",
         "noOptions": "No other analytics available",
         "action": "Import",
-        "importing": "Importing..."
+        "importing": "Importing…"
       },
       "table": {
         "title": "Edit COGS per menu item",
@@ -2312,7 +2321,7 @@
       },
       "actions": {
         "save": "Save COGS",
-        "saving": "Saving..."
+        "saving": "Saving…"
       },
       "errors": {
         "updateFailed": "Failed to update COGS",

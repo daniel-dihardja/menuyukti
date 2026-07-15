@@ -7,7 +7,11 @@ import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { POST_IMAGE_ASPECT_RATIO } from './post-creator-constants'
+import {
+  POST_IMAGE_ASPECT_RATIO,
+  POST_IMAGE_HEIGHT,
+  POST_IMAGE_WIDTH,
+} from './post-creator-constants'
 
 export type PostCreatorReferenceImage = {
   name: string
@@ -110,7 +114,13 @@ export function PostCreatorThumbnailsPane({
           >
             {page.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-              <img src={page.imageUrl} alt="" className="size-full object-cover" />
+              <img
+                src={page.imageUrl}
+                alt=""
+                width={POST_IMAGE_WIDTH}
+                height={POST_IMAGE_HEIGHT}
+                className="size-full object-cover"
+              />
             ) : (
               <div className="flex size-full flex-col items-center justify-center gap-1 bg-muted/30 p-1 text-muted-foreground">
                 <ImageIcon aria-hidden className="h-4 w-4" />

@@ -11,6 +11,8 @@ import {
 } from '@/components/field-save-status'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { usePanelFullscreen } from '@/components/panel-fullscreen-context'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 import type { MarkdownFormatPreset } from '@/lib/markdown-format-presets'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
@@ -311,6 +313,8 @@ function FullscreenMarkdownShell({
   onClose,
   children,
 }: FullscreenMarkdownShellProps) {
+  const isDesktop = useDesktopLayout()
+
   return (
     <div
       aria-label={regionAriaLabel}
@@ -329,7 +333,7 @@ function FullscreenMarkdownShell({
           <TooltipTrigger asChild>
             <Button
               aria-label={closeLabel}
-              autoFocus
+              autoFocus={isDesktop}
               onClick={(e) => {
                 e.stopPropagation()
                 onClose()
@@ -371,6 +375,7 @@ function MarkdownEditFieldEditor({
   const expandButtonRef = useRef<HTMLButtonElement>(null)
   const panelCtxRef = useRef(panelCtx)
   panelCtxRef.current = panelCtx
+  useUnsavedChangesGuard(Boolean(manualSave?.status === 'unsaved'))
 
   const [formatting, setFormatting] = useState(false)
   const [formatError, setFormatError] = useState<string | null>(null)

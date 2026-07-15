@@ -235,7 +235,7 @@ export function PostsTable({ posts }: PostsTableProps) {
 
   useEffect(() => {
     if (editingId === null) return
-    const onKeyDown = (e: KeyboardEvent) => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         cancelEdit()
       }

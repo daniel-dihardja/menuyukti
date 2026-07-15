@@ -5,6 +5,8 @@ import { X } from 'lucide-react'
 
 import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
 
+const REFERENCE_THUMB_SIZE = 56
+
 export type PostCreatorReferenceThumbnailsProps = {
   images: PostCreatorReferenceImage[]
   onRemove: (name: string) => void
@@ -31,7 +33,13 @@ export function PostCreatorReferenceThumbnails({
           role="listitem"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
-          <img src={image.url} alt="" className="size-full object-cover" />
+          <img
+            src={image.url}
+            alt=""
+            width={REFERENCE_THUMB_SIZE}
+            height={REFERENCE_THUMB_SIZE}
+            className="size-full object-cover"
+          />
           <Button
             type="button"
             variant="secondary"

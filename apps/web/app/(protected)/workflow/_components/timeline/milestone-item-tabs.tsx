@@ -1,10 +1,11 @@
 'use client'
 
 import { type ReactNode, useMemo } from 'react'
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
 import { FieldSaveStatus, type FieldSaveStatusVariant } from '@/components/field-save-status'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { Calendar } from '@workspace/ui/components/calendar'
@@ -59,9 +60,9 @@ function formatDateForInput(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-function formatDateButtonLabel(value: string): string {
+function formatDateButtonLabel(value: string, formatDate: (date: Date) => string): string {
   const parsed = parseDateInputValue(value)
-  return parsed ? parsed.toLocaleDateString() : value
+  return parsed ? formatDate(parsed) : value
 }
 
 function fieldSaveMessages(t: (key: string) => string) {
@@ -142,10 +143,12 @@ function MilestoneInputTabContent({
   inputModel,
   isMilestoneRunning,
   t,
+  formatDateLabel,
 }: {
   inputModel: MilestoneInputModel
   isMilestoneRunning: boolean
   t: (key: string) => string
+  formatDateLabel: (value: string) => string
 }) {
   switch (inputModel.type) {
     case 'dates':
@@ -164,7 +167,7 @@ function MilestoneInputTabContent({
                 >
                   <CalendarDays aria-hidden data-icon="inline-start" />
                   {inputModel.draft.startDate
-                    ? formatDateButtonLabel(inputModel.draft.startDate)
+                    ? formatDateLabel(inputModel.draft.startDate)
                     : t('milestoneDatesInputPickDate')}
                 </Button>
               </PopoverTrigger>
@@ -195,7 +198,7 @@ function MilestoneInputTabContent({
                 >
                   <CalendarDays aria-hidden data-icon="inline-start" />
                   {inputModel.draft.endDate
-                    ? formatDateButtonLabel(inputModel.draft.endDate)
+                    ? formatDateLabel(inputModel.draft.endDate)
                     : t('milestoneDatesInputPickDate')}
                 </Button>
               </PopoverTrigger>
@@ -364,6 +367,11 @@ export function MilestoneItemTabs() {
     useMilestoneItemActions()
   const { addCriteriaInputId, addCriteriaInputRef } = useMilestoneItemMeta()
   const t = useTranslations('analytics.workflows.chat')
+  const format = useFormatter()
+  const formatDateLabel = (value: string) =>
+    formatDateButtonLabel(value, (date) => format.dateTime(date, { dateStyle: 'medium' }))
+  const hasUnsavedInput = inputModel.type !== 'none' && inputModel.saveStatus === 'unsaved'
+  useUnsavedChangesGuard(hasUnsavedInput)
   const helpDescription = useMemo(() => getMilestoneHelpDescription(milestone, t), [milestone, t])
   const optionalNotesCopy = inputModel.type === 'optional_notes' ? inputModel.copy : null
 
@@ -403,6 +411,7 @@ export function MilestoneItemTabs() {
         </TabsContent>
         <TabsContent value="input">
           <MilestoneInputTabContent
+            formatDateLabel={formatDateLabel}
             inputModel={inputModel}
             isMilestoneRunning={isMilestoneRunning}
             t={t}

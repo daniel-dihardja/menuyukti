@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
+import { useCloseLabel } from '@/hooks/use-close-label'
 import { Button } from '@workspace/ui/components/button'
 import { Separator } from '@workspace/ui/components/separator'
 import {
@@ -25,6 +26,7 @@ import { cn } from '@workspace/ui/lib/utils'
 export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
+  const closeLabel = useCloseLabel()
   const isLanding = pathname === '/'
   const [isScrolled, setIsScrolled] = React.useState(false)
 
@@ -102,6 +104,7 @@ export function MainHeader() {
                 </SheetTrigger>
                 <SheetContent
                   side="bottom"
+                  closeLabel={closeLabel}
                   className="flex flex-col gap-0 rounded-t-xl border-t px-0 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]"
                 >
                   <SheetHeader className="flex flex-col gap-1 px-4 text-left">

@@ -14,6 +14,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { ChevronUp, MessageSquare } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { useCloseLabel } from '@/hooks/use-close-label'
 import { useWorkflowChatMeta } from './workflow-chat-context'
 
 export type WorkflowMobileChatSheetProps = {
@@ -28,6 +29,7 @@ export function WorkflowMobileChatSheet({
   children,
 }: WorkflowMobileChatSheetProps) {
   const t = useTranslations('analytics.workflows.chat')
+  const closeLabel = useCloseLabel()
   const { isChatBusy, hasMessages } = useWorkflowChatMeta()
 
   return (
@@ -70,6 +72,7 @@ export function WorkflowMobileChatSheet({
         <SheetContent
           id="workflow-mobile-chat"
           side="bottom"
+          closeLabel={closeLabel}
           className={cn(
             'flex h-[min(92dvh,900px)] flex-col gap-0 rounded-t-xl border-t p-0',
             'pb-[max(0.5rem,env(safe-area-inset-bottom))]',

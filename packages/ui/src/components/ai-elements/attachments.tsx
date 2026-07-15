@@ -191,7 +191,7 @@ export const Attachment = ({ data, onRemove, className, children, ...props }: At
           variant === 'inline' && [
             'flex h-8 cursor-pointer select-none items-center gap-1.5',
             'rounded-md border border-border px-1.5',
-            'font-medium text-sm transition-all',
+            'font-medium text-sm transition-[background-color,color,border-color]',
             'hover:bg-accent hover:text-accent-foreground',
           ],
           variant === 'list' && [

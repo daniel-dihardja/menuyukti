@@ -1,5 +1,6 @@
 import { SidebarInset, SidebarProvider } from '@workspace/ui/components/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
+import { ProtectedSkipLink } from '@/components/protected-skip-link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { routes } from '@/lib/routes'
@@ -13,7 +14,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <SidebarProvider className="h-svh min-h-0">
       <AppSidebar />
-      <SidebarInset className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</SidebarInset>
+      <SidebarInset className="min-h-0 min-w-0 flex-1 overflow-hidden">
+        <ProtectedSkipLink />
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   )
 }
