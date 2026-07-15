@@ -167,7 +167,7 @@ async def _stream_chat_events(
             runnable_config,
             stream_mode=["messages", "updates"],
         ):
-            if mode == "messages":
+            if mode == "messages" and isinstance(chunk, tuple) and len(chunk) == 2:
                 msg_chunk, _metadata = chunk
                 text = _chunk_text(getattr(msg_chunk, "content", None))
                 if text:
