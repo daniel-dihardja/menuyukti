@@ -251,8 +251,7 @@ def try_ig_plan_deterministic_verdict(
         grounding_issues: list[str] = []
         for index, entry in enumerate(entries, start=1):
             grounding_issues.extend(
-                f"entry {index}: {issue}"
-                for issue in _strategy_alignment_issues(entry)
+                f"entry {index}: {issue}" for issue in _strategy_alignment_issues(entry)
             )
             if opening_hours:
                 day = str(entry.get("day") or "").strip().lower()
@@ -266,7 +265,10 @@ def try_ig_plan_deterministic_verdict(
                         )
 
         if grounding_issues:
-            return ("fail", "; ".join(grounding_issues[:6]) + ("…" if len(grounding_issues) > 6 else ""))
+            return (
+                "fail",
+                "; ".join(grounding_issues[:6]) + ("…" if len(grounding_issues) > 6 else ""),
+            )
         grounding = "each entry has valid slotStrategy, pillar, and productRole"
         if opening_hours:
             grounding += "; publish slots fall within opening hours"

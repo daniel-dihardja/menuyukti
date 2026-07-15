@@ -174,12 +174,18 @@ async def test_fetch_and_prepare_requires_analytics_run_id() -> None:
         "location_id": 1,
         "user_id": "u1",
         "prior_milestones_data": _prior_milestones_json(),
-        "milestone_input": {"type": "ig_menu_picker", "value": {"notes": "", "selectedSlotKeys": []}},
+        "milestone_input": {
+            "type": "ig_menu_picker",
+            "value": {"notes": "", "selectedSlotKeys": []},
+        },
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
-    ), pytest.raises(ValueError, match="workflow-pinned analytics run"):
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
+        pytest.raises(ValueError, match="workflow-pinned analytics run"),
+    ):
         await fetch_and_prepare(state, client=client)
 
 
@@ -191,7 +197,10 @@ async def test_fetch_and_prepare_passes_analytics_run_id_to_graphql() -> None:
         "user_id": "u1",
         "analytics_run_id": "99",
         "prior_milestones_data": _prior_milestones_json(),
-        "milestone_input": {"type": "ig_menu_picker", "value": {"notes": "", "selectedSlotKeys": []}},
+        "milestone_input": {
+            "type": "ig_menu_picker",
+            "value": {"notes": "", "selectedSlotKeys": []},
+        },
     }
     fetched = {
         "analyticsRunId": "99",
@@ -200,13 +209,16 @@ async def test_fetch_and_prepare_passes_analytics_run_id_to_graphql() -> None:
         "menuEngineeringMatrix": _matrix_fixture(),
         "slotMenuCandidates": _slot_candidates_fixture(),
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.fetch_ig_plan_inputs",
-        new_callable=AsyncMock,
-        return_value=fetched,
-    ) as mock_fetch, patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.fetch_ig_plan_inputs",
+            new_callable=AsyncMock,
+            return_value=fetched,
+        ) as mock_fetch,
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
     ):
         result = await fetch_and_prepare(state, client=client)
 
@@ -223,9 +235,7 @@ async def test_fetch_and_prepare_filters_to_selected_slot_keys() -> None:
         _valid_ig_plan_entry(),
         {**_valid_ig_plan_entry(), "slotKey": "friday-evening", "day": "friday"},
     ]
-    prior_json = json.dumps(
-        [{"title": "IG Plan", "presetId": "ig_plan", "data": plan_payload}]
-    )
+    prior_json = json.dumps([{"title": "IG Plan", "presetId": "ig_plan", "data": plan_payload}])
     state = {
         "location_id": 1,
         "user_id": "u1",
@@ -243,13 +253,16 @@ async def test_fetch_and_prepare_filters_to_selected_slot_keys() -> None:
         "menuEngineeringMatrix": _matrix_fixture(),
         "slotMenuCandidates": _slot_candidates_fixture(),
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.fetch_ig_plan_inputs",
-        new_callable=AsyncMock,
-        return_value=fetched,
-    ), patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.fetch_ig_plan_inputs",
+            new_callable=AsyncMock,
+            return_value=fetched,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
     ):
         result = await fetch_and_prepare(state, client=client)
 
@@ -322,12 +335,15 @@ async def test_persist_result_upserts_milestonedata() -> None:
         "user_id": "u1",
         "generated_output": payload,
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.upsert_milestonedata_node",
-        new_callable=AsyncMock,
-    ) as mock_upsert, patch(
-        "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.upsert_milestonedata_node",
+            new_callable=AsyncMock,
+        ) as mock_upsert,
+        patch(
+            "agents_app.agents.core.milestone_run.ig_menu_picker.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
     ):
         result = await persist_result(state, client=client)
 

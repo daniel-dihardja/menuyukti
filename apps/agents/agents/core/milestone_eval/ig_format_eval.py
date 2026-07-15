@@ -22,9 +22,7 @@ def is_ig_format_milestone_data(data: dict[str, Any]) -> bool:
     entries = data.get("entries")
     if not isinstance(entries, list):
         return False
-    return any(
-        isinstance(row, dict) and "menuItems" in row and "type" in row for row in entries
-    )
+    return any(isinstance(row, dict) and "menuItems" in row and "type" in row for row in entries)
 
 
 def _entries(data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -53,11 +51,7 @@ def _is_prior_ig_menu_picker_requirement(norm: str) -> bool:
         return False
     if not ("menu picker" in norm or "ig_menu_picker" in norm.replace(" ", "_")):
         return False
-    return (
-        "exists earlier" in norm
-        or "earlier in the workflow" in norm
-        or "with saved" in norm
-    )
+    return "exists earlier" in norm or "earlier in the workflow" in norm or "with saved" in norm
 
 
 def _is_valid_type_requirement(norm: str) -> bool:
@@ -185,7 +179,10 @@ def try_ig_format_deterministic_verdict(
                     f"entry {index} uses post-carousel but has {count} menuItem(s); need 2–3"
                 )
         if carousel_issues:
-            return ("fail", "; ".join(carousel_issues[:6]) + ("…" if len(carousel_issues) > 6 else ""))
+            return (
+                "fail",
+                "; ".join(carousel_issues[:6]) + ("…" if len(carousel_issues) > 6 else ""),
+            )
         return (
             "pass",
             "Every post-carousel entry has at least two menuItems.",

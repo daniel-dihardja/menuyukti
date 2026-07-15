@@ -638,11 +638,7 @@ def _select_hook_lead_in_category(
         raise ValueError("menu_clusterer requires at least one clusterable item in category")
 
     top5_keys = _top5_name_keys(top5_leads)
-    eligible = [
-        item
-        for item in category_items
-        if _name_key(_item_name(item)) in top5_keys
-    ]
+    eligible = [item for item in category_items if _name_key(_item_name(item)) in top5_keys]
     pool = eligible if eligible else category_items
     return pool[cluster_index % len(pool)]
 

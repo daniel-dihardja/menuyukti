@@ -8,21 +8,23 @@ from typing import Annotated, Any, Literal
 
 from agents_app.agents.core.chat.graphql_client import (
     fetch_milestone_node,
+    fetch_workflow_campaign_tree,
 )
 from agents_app.agents.core.chat.graphql_client import (
     update_milestone_input as persist_milestone_input,
 )
-from agents_app.agents.core.chat.graphql_client import (
-    update_milestone_preset_data as persist_milestone_preset_data,
-)
 from agents_app.agents.core.chat.http_context import get_chat_http_client
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
-from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.core.chat.workflow_overview import format_workflow_overview_markdown
+from agents_app.agents.core.location_page_format import format_location_page_markdown
+from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
+    LOCATION_QUERY,
     MILESTONE_HELP_QUERY,
     MILESTONE_INPUT_QUERY,
     MILESTONE_PRESET_DATA_QUERY,
+    NODE_BY_ID_QUERY,
 )
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
@@ -38,22 +40,6 @@ _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
         "milestoneResult",
     },
 )
-
-_PRESET_TO_SKILL_ID: dict[str, str] = {
-    "restaurant_campaign_brief": "campaign_brief",
-    "promotion_candidates": "promotion_candidates",
-    "menu_tagger": "menu_tagger",
-    "menu_clusterer": "menu_clusterer",
-    "scheduler": "scheduler",
-    "culture_hooks": "culture_hooks",
-    "ig_profile": "ig_profile",
-    "ig_plan": "ig_plan",
-    "ig_menu_picker": "ig_menu_picker",
-    "ig_format": "ig_format",
-    "ig_text": "ig_text",
-    "dates": "dates",
-    "public_holidays": "public_holidays",
-}
 
 
 def _format_json(data: Any) -> str:
@@ -92,7 +78,7 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             "ig_plan": "ig_plan",
             "ig_menu_picker": "ig_menu_picker",
             "ig_format": "ig_format",
-    "ig_text": "ig_text",
+            "ig_text": "ig_text",
             "dates": "dates",
             "public_holidays": "public_holidays",
         }
@@ -236,37 +222,102 @@ def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
 
 def _milestone_context_from_config(
     config: RunnableConfig | None,
-) -> tuple[str | None, int | None, str | None]:
+) -> tuple[str | None, int | None, str | None, str | None]:
     c = (config or {}).get("configurable") or {}
     milestone_id = c.get("milestone_id")
     location_id = c.get("location_id")
     user_id = c.get("user_id")
+    workflow_id = c.get("workflow_id")
     return (
         str(milestone_id) if milestone_id is not None else None,
         int(location_id) if location_id is not None else None,
         str(user_id) if user_id is not None else None,
+        str(workflow_id) if workflow_id is not None else None,
     )
+
+
+def _normalize_explicit_milestone_id(milestone_id: str | None) -> tuple[str | None, str | None]:
+    if milestone_id is None:
+        return None, None
+    target = str(milestone_id).strip()
+    if not target:
+        return None, "Error: milestone_id must be a non-empty numeric id."
+    if not target.isdigit():
+        return None, "Error: milestone_id must be a non-empty numeric id."
+    return target, None
+
+
+async def _load_milestone_for_chat(
+    config: RunnableConfig | None,
+    *,
+    milestone_id: str | None = None,
+    query: str = NODE_BY_ID_QUERY,
+    cache_key: str | None = "full",
+) -> tuple[str | None, dict[str, Any] | None, str | None]:
+    """Load and validate a milestone for chat reads.
+
+    Returns ``(resolved_milestone_id, node, error_message)``.
+    """
+    selected_id, location_id, user_id, workflow_id = _milestone_context_from_config(config)
+    explicit, explicit_err = _normalize_explicit_milestone_id(milestone_id)
+    if explicit_err is not None:
+        return None, None, explicit_err
+
+    target_id = explicit or selected_id
+    if not target_id or location_id is None or not user_id:
+        if explicit:
+            return (
+                None,
+                None,
+                "Error: location or user context is missing. "
+                "Cannot load milestone data outside a campaign chat.",
+            )
+        return (
+            None,
+            None,
+            "Milestone context is not available (no milestone selected or missing location). "
+            "Ask the user to select a milestone first, or call get_workflow_overview "
+            "to list milestones in the workflow.",
+        )
+
+    if not workflow_id and explicit and (not selected_id or explicit != selected_id):
+        return (
+            None,
+            None,
+            "Error: workflow context is missing (workflow_id). "
+            "Cannot load another milestone without a workflow scope.",
+        )
+
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(
+        target_id,
+        user_id,
+        client=client,
+        query=query,
+        cache_key=cache_key,
+    )
+    if not node:
+        return None, None, "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return None, None, "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return None, None, "Error: milestone location does not match the campaign context."
+
+    if workflow_id:
+        parent = node.get("parentId")
+        if parent is None or str(parent) != str(workflow_id):
+            return None, None, "Error: milestone does not belong to this workflow."
+
+    return target_id, node, None
 
 
 async def _load_selected_milestone_node(
     config: RunnableConfig | None,
 ) -> tuple[dict[str, Any] | None, str | None]:
-    milestone_id, location_id, user_id = _milestone_context_from_config(config)
-    if not milestone_id or location_id is None or not user_id:
-        return (
-            None,
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Ask the user to select a milestone first.",
-        )
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(milestone_id, user_id, client=client)
-    if not node:
-        return None, "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return None, "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return None, "Error: milestone location does not match the campaign context."
+    _target_id, node, err = await _load_milestone_for_chat(config)
+    if err is not None:
+        return None, err
     return node, None
 
 
@@ -425,143 +476,103 @@ def _apply_patch_operation(
 
 
 @tool
-async def get_milestone_data(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
-    """Load the selected milestone row: goal, input, pass criteria, eval result, and preset/structured data.
+async def get_workflow_overview(
+    config: Annotated[RunnableConfig, InjectedToolArg()],
+) -> str:
+    """List milestones in the current workflow: id, name, presetId, and short help summary.
 
-    All fields come from the milestone node (no child nodes). Call when the user asks about the
-    currently selected milestone's inputs, outputs, criteria, or run payload."""
-    c = config.get("configurable") or {}
-    milestone_id = c.get("milestone_id")
+    Call first when the user asks about another milestone, compares milestones, pipeline order,
+    or when the target milestone is ambiguous. Then fetch details with get_milestone_* tools."""
+    c = (config or {}).get("configurable") or {}
+    workflow_id = c.get("workflow_id")
     location_id = c.get("location_id")
     user_id = c.get("user_id")
-    if not milestone_id or location_id is None or not user_id:
-        return (
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Answer from the conversation only, or ask the user to select a milestone."
-        )
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(str(milestone_id), str(user_id), client=client)
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
+    selected_milestone_id = c.get("milestone_id")
 
-    return _format_milestone_snapshot(str(milestone_id), node)
+    if not workflow_id:
+        return (
+            "Error: workflow context is missing (workflow_id). "
+            "Open campaign workflow chat to inspect milestones across the pipeline."
+        )
+    if location_id is None or not user_id:
+        return (
+            "Error: location or user context is missing. "
+            "Cannot load workflow overview outside a campaign chat."
+        )
+
+    client = get_chat_http_client()
+    tree = await fetch_workflow_campaign_tree(str(workflow_id), str(user_id), client=client)
+    if not tree:
+        return "Error: workflow not found or access denied."
+
+    workflow = tree.get("workflow")
+    if isinstance(workflow, dict):
+        wf_loc = workflow.get("locationId")
+        if wf_loc is not None and int(wf_loc) != int(location_id):
+            return "Error: workflow location does not match the campaign context."
+
+    selected = str(selected_milestone_id) if selected_milestone_id is not None else None
+    return format_workflow_overview_markdown(tree, selected_milestone_id=selected)
 
 
 @tool
-async def get_milestone_input_json(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
-    """Load only milestoneInput JSON for the selected milestone."""
-    milestone_id, location_id, user_id = _milestone_context_from_config(config)
-    if not milestone_id or location_id is None or not user_id:
-        return (
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Ask the user to select a milestone first."
-        )
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(
-        milestone_id,
-        user_id,
-        client=client,
+async def get_milestone_data(
+    milestone_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Load a milestone row: goal, input, pass criteria, eval result, and preset/structured data.
+
+    Omit milestone_id for the UI-selected milestone; pass an id from get_workflow_overview
+    to read any milestone in the current workflow."""
+    target_id, node, err = await _load_milestone_for_chat(config, milestone_id=milestone_id)
+    if err is not None or node is None or target_id is None:
+        return err or "Error: milestone not found."
+    return _format_milestone_snapshot(target_id, node)
+
+
+@tool
+async def get_milestone_input_json(
+    milestone_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Load milestoneInput JSON for the selected milestone or a specific workflow milestone id."""
+    target_id, node, err = await _load_milestone_for_chat(
+        config,
+        milestone_id=milestone_id,
         query=MILESTONE_INPUT_QUERY,
         cache_key="input",
     )
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
+    if err is not None or node is None:
+        return err or "Error: milestone not found."
     return _format_json_shortcut_section("Input (milestoneInput)", node.get("milestoneInput"))
 
 
 @tool
 async def get_milestone_preset_data_json(
-    config: Annotated[RunnableConfig, InjectedToolArg()],
+    milestone_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Load only milestonePresetData JSON for the selected milestone."""
-    milestone_id, location_id, user_id = _milestone_context_from_config(config)
-    if not milestone_id or location_id is None or not user_id:
-        return (
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Ask the user to select a milestone first."
-        )
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(
-        milestone_id,
-        user_id,
-        client=client,
+    """Load milestonePresetData JSON for the selected milestone or a specific workflow milestone id."""
+    target_id, node, err = await _load_milestone_for_chat(
+        config,
+        milestone_id=milestone_id,
         query=MILESTONE_PRESET_DATA_QUERY,
         cache_key="preset",
     )
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
-    return _format_json_shortcut_section(
-        "Preset data (milestonePresetData)",
-        node.get("milestonePresetData"),
-    )
+    if err is not None or node is None:
+        return err or "Error: milestone not found."
 
-
-@tool
-async def get_milestone_preset_data_for_milestone(
-    milestone_id: str,
-    config: Annotated[RunnableConfig, InjectedToolArg()],
-) -> str:
-    """Load milestonePresetData for a milestone in the current workflow by id.
-
-    Use when the user message is exactly ``/preset <id>`` with a numeric milestone id.
-    The milestone must belong to the same workflow and location as the chat context."""
-    target = str(milestone_id or "").strip()
-    if not target or not target.isdigit():
-        return "Error: milestone_id must be a non-empty numeric id."
-
-    c = (config or {}).get("configurable") or {}
-    workflow_id = c.get("workflow_id")
-    location_id = c.get("location_id")
-    user_id = c.get("user_id")
-
-    if not workflow_id:
-        return "Error: workflow context is missing (workflow_id). Cannot load another milestone."
-    if location_id is None or not user_id:
-        return (
-            "Error: location or user context is missing. "
-            "Cannot load milestone preset data outside a campaign chat."
+    title = "Preset data (milestonePresetData)"
+    if milestone_id is not None:
+        raw_name = node.get("name")
+        display = (
+            raw_name.strip()
+            if isinstance(raw_name, str) and raw_name.strip()
+            else (target_id or "")
         )
+        title = f"Preset data — {display} (milestonePresetData)"
 
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(
-        target,
-        str(user_id),
-        client=client,
-        query=MILESTONE_PRESET_DATA_QUERY,
-        cache_key="preset",
-    )
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
-    parent = node.get("parentId")
-    if parent is None or str(parent) != str(workflow_id):
-        return "Error: milestone does not belong to this workflow."
-
-    raw_name = node.get("name")
-    display = raw_name.strip() if isinstance(raw_name, str) and raw_name.strip() else target
-    return _format_json_shortcut_section(
-        f"Preset data — {display} (milestonePresetData)",
-        node.get("milestonePresetData"),
-    )
+    return _format_json_shortcut_section(title, node.get("milestonePresetData"))
 
 
 def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
@@ -573,33 +584,24 @@ def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
 
 
 @tool
-async def get_milestone_help(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
-    """Return Help-tab style guidance for the selected milestone (what it does + optional input).
+async def get_milestone_help(
+    milestone_id: str | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Return Help-tab guidance (what it does + optional input) for a workflow milestone.
 
-    Call when the user asks for milestone help or sends exactly ``/help``."""
-    milestone_id, location_id, user_id = _milestone_context_from_config(config)
-    if not milestone_id or location_id is None or not user_id:
-        return (
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Ask the user to select a milestone first."
-        )
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(
-        milestone_id,
-        user_id,
-        client=client,
+    Omit milestone_id for the UI-selected milestone. Call when the user asks for milestone help
+    or sends exactly ``/help`` (selected milestone only)."""
+    target_id, node, err = await _load_milestone_for_chat(
+        config,
+        milestone_id=milestone_id,
         query=MILESTONE_HELP_QUERY,
         cache_key="help",
     )
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
+    if err is not None or node is None:
+        return err or "Error: milestone not found."
     name = node.get("name")
-    title = str(name) if name is not None else str(milestone_id or "")
+    title = str(name) if name is not None else str(target_id or "")
     goal = node.get("milestoneGoal")
     goal_str = goal.strip() if isinstance(goal, str) else None
     return format_milestone_help_markdown(
@@ -706,101 +708,27 @@ async def update_milestone_input(
 
 
 @tool
-async def update_milestone_preset_data(
-    operations: list[dict[str, Any]],
-    dry_run: bool = False,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Apply partial updates to selected milestonePresetData using JSON-pointer-like patch operations.
+async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
+    """Load location-page data for the campaign venue: basics, opening hours, owner quick profile.
 
-    Operation shape:
-    - ``op``: ``add`` | ``replace`` | ``remove``
-    - ``path``: JSON pointer (example: ``/intersections/1/topic``)
-    - ``value``: required for ``add`` and ``replace``; ignored for ``remove``.
-    """
+    Call when the user asks about venue hours, address, cuisine, contact links, or other
+    location settings configured on the location page."""
     c = (config or {}).get("configurable") or {}
-    milestone_id = c.get("milestone_id")
     location_id = c.get("location_id")
     user_id = c.get("user_id")
-    if not milestone_id or location_id is None or not user_id:
+    if location_id is None or not user_id:
         return (
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Ask the user to select a milestone first."
+            "Location context is not available (missing location). "
+            "Open workflow chat for a campaign with a linked location."
         )
-    if not isinstance(operations, list) or len(operations) == 0:
-        return "At least one patch operation is required."
-
     client = get_chat_http_client()
-    node = await fetch_milestone_node(str(milestone_id), str(user_id), client=client)
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
-
-    raw_data = node.get("data")
-    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
-    raw_preset = milestone_node_data.get("presetId")
-    preset_id = raw_preset.strip() if isinstance(raw_preset, str) else ""
-    skill_id = _PRESET_TO_SKILL_ID.get(preset_id)
-    if not skill_id:
-        return (
-            "Error: this milestone preset is not supported for partial chat updates yet. "
-            f"(presetId={preset_id or 'unknown'})"
-        )
-
-    current_payload = node.get("milestonePresetData")
-    if current_payload is None:
-        working_payload: Any = {}
-    elif isinstance(current_payload, (dict, list)):
-        working_payload = deepcopy(current_payload)
-    else:
-        return "Error: current milestonePresetData is not a JSON object or array."
-
-    for i, op_row in enumerate(operations, start=1):
-        if not isinstance(op_row, dict):
-            return f"Operation #{i} must be an object."
-        op = str(op_row.get("op") or "").strip().lower()
-        if op not in {"add", "replace", "remove"}:
-            return f"Operation #{i} has unsupported op {op!r}."
-        path = op_row.get("path")
-        if not isinstance(path, str):
-            return f"Operation #{i} requires string field 'path'."
-        if op in {"add", "replace"} and "value" not in op_row:
-            return f"Operation #{i} requires 'value' for op={op!r}."
-        value = op_row.get("value")
-        next_payload, err = _apply_patch_operation(
-            working_payload,
-            op=op,  # type: ignore[arg-type]
-            path=path,
-            value=value,
-        )
-        if err is not None or next_payload is None:
-            return f"Operation #{i} failed: {err or 'invalid operation'}"
-        working_payload = next_payload
-
-    normalized, validation_error = validate_skill_output(skill_id, working_payload)
-    if validation_error is not None or normalized is None:
-        return (
-            "Patched data is invalid for this milestone preset. "
-            f"Validation error: {validation_error or 'unknown error'}"
-        )
-
-    if dry_run:
-        return (
-            f"Validated {len(operations)} operation(s) for preset '{skill_id}'. "
-            "No data was saved because dry_run=true."
-        )
-
-    await persist_milestone_preset_data(
-        str(milestone_id),
-        normalized,
+    loc_data = await graphql_post(
+        client,
+        LOCATION_QUERY,
+        {"id": str(location_id)},
         str(user_id),
-        client=client,
     )
-    return (
-        f"Saved milestonePresetData for milestone id={milestone_id} "
-        f"with {len(operations)} operation(s)."
-    )
+    raw_loc = loc_data.get("location")
+    if not isinstance(raw_loc, dict):
+        return "Location not found or access denied."
+    return format_location_page_markdown(raw_loc)

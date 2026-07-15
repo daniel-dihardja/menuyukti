@@ -280,9 +280,7 @@ def _build_eval_hints(state: IgFormatState, payload: dict[str, Any]) -> dict[str
         "expectedOutputSlotKeys": source_keys,
         "outputSlotKeys": output_keys,
         "priorIgMenuPickerTitle": (
-            str(prior_row.get("title") or "").strip()
-            if isinstance(prior_row, dict)
-            else ""
+            str(prior_row.get("title") or "").strip() if isinstance(prior_row, dict) else ""
         ),
     }
 

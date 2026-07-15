@@ -89,7 +89,9 @@ def test_is_ig_text_milestone_data_requires_texts_type_and_menu_items() -> None:
 
 
 def test_prior_ig_format_passes_with_hints() -> None:
-    verdict = try_ig_text_deterministic_verdict(_PRIOR_IG_FORMAT_REQ, _payload(_entry("monday-lunch")))
+    verdict = try_ig_text_deterministic_verdict(
+        _PRIOR_IG_FORMAT_REQ, _payload(_entry("monday-lunch"))
+    )
     assert verdict is not None
     assert verdict[0] == "pass"
 

@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
+from agents_app.agents.core.location_page_format import fmt_manual_brief_hints
 from agents_app.agents.core.milestone_eval.ig_plan_eval import sort_ig_plan_entries
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_ig_plan_inputs,
@@ -25,9 +26,6 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     campaign_brief_prior_error_message,
     extract_restaurant_campaign_brief_data,
-)
-from agents_app.agents.core.milestone_run.tools.get_location_profile import (
-    _fmt_manual_brief_hints,
 )
 from langchain_core.messages import BaseMessage
 from langgraph.config import get_stream_writer
@@ -91,7 +89,7 @@ def _build_location_profile_context(location_raw: dict[str, Any]) -> dict[str, A
         if text:
             identity[key] = text
 
-    manual_md = _fmt_manual_brief_hints(location_raw)
+    manual_md = fmt_manual_brief_hints(location_raw)
     context: dict[str, Any] = {}
     if identity:
         context["identity"] = identity
@@ -128,9 +126,7 @@ def _resolve_campaign_brief_data(state: IgPlanState) -> dict[str, Any]:
     prior_json = str(state.get("prior_milestones_data") or "")
     campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
     if campaign_brief_data is None:
-        raise ValueError(
-            campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan")
-        )
+        raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan"))
     return campaign_brief_data
 
 
@@ -238,9 +234,7 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
     prior_json = str(state.get("prior_milestones_data") or "")
     campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
     if campaign_brief_data is None:
-        raise ValueError(
-            campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan")
-        )
+        raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan"))
 
     pinned_run_id = str(state.get("analytics_run_id") or "").strip() or None
     fetched = await fetch_ig_plan_inputs(

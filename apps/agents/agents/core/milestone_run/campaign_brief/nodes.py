@@ -9,6 +9,7 @@ from typing import Any
 import httpx
 from agents_app.agents.core.campaign_brief.objective import normalize_campaign_objective
 from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
+from agents_app.agents.core.location_page_format import fmt_manual_brief_hints
 from agents_app.agents.core.milestone_run.campaign_brief.prompts import CAMPAIGN_BRIEF_SYSTEM
 from agents_app.agents.core.milestone_run.campaign_brief.reflect_config import (
     parse_reflection_config,
@@ -29,7 +30,6 @@ from agents_app.agents.core.milestone_run.output_schema import (
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     _fmt_ai_social_settings,
     _fmt_fundamental_signals,
-    _fmt_manual_brief_hints,
     _fmt_matrix_signals,
     _fmt_milestone_campaign_brief_owner_notes,
     _fmt_operating_profile,
@@ -233,7 +233,7 @@ def _build_signal_markdown(
         if text:
             identity_lines.append(f"- **{label}**: {text}")
     sections.append("\n".join(identity_lines) if identity_lines else "_No profile fields set._")
-    manual_md = _fmt_manual_brief_hints(location_raw)
+    manual_md = fmt_manual_brief_hints(location_raw)
     if manual_md:
         sections.append(manual_md)
 

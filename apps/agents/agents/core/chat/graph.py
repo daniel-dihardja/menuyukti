@@ -6,13 +6,13 @@ from typing import Any
 
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
+    get_location_data,
     get_milestone_data,
     get_milestone_help,
     get_milestone_input_json,
-    get_milestone_preset_data_for_milestone,
     get_milestone_preset_data_json,
+    get_workflow_overview,
     update_milestone_input,
-    update_milestone_preset_data,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 from agents_app.models.llm_config import chat_llm_for_gateway_model
@@ -29,13 +29,13 @@ CHAT_RECURSION_LIMIT = 20
 def chat_tools_list() -> list:
     """Build chat ReAct tools (optional ``search_web`` when ``TAVILY_API_KEY`` is set)."""
     tools: list = [
+        get_workflow_overview,
         get_milestone_data,
         get_milestone_help,
         get_milestone_input_json,
         get_milestone_preset_data_json,
-        get_milestone_preset_data_for_milestone,
         update_milestone_input,
-        update_milestone_preset_data,
+        get_location_data,
     ]
     web = make_search_web_tool()
     if web is not None:

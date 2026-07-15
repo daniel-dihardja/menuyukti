@@ -141,10 +141,13 @@ async def test_fetch_and_prepare_requires_prior_menu_picker() -> None:
         "prior_milestones_data": "[]",
         "milestone_input": {"type": "ig_format", "value": {"notes": ""}},
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_format.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
-    ), pytest.raises(ValueError, match="prior ig_menu_picker"):
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_format.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
+        pytest.raises(ValueError, match="prior ig_menu_picker"),
+    ):
         await fetch_and_prepare(state, client=client)
 
 
@@ -191,13 +194,16 @@ async def test_assign_formats_with_llm_merges_picks_onto_menu_picker_rows() -> N
         "prior_ig_menu_picker_row": {"title": "IG Menu Picker"},
         "source_menu_picker_entries": [source_entry],
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_format.nodes.structured_ainvoke_from_run_config",
-        new_callable=AsyncMock,
-        return_value=picks,
-    ), patch(
-        "agents_app.agents.core.milestone_run.ig_format.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_format.nodes.structured_ainvoke_from_run_config",
+            new_callable=AsyncMock,
+            return_value=picks,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.ig_format.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
     ):
         result = await assign_formats_with_llm(state)
 
@@ -230,12 +236,15 @@ async def test_persist_result_writes_eval_hints() -> None:
         "source_menu_picker_entries": [_menu_picker_entry()],
         "prior_ig_menu_picker_row": {"title": "IG Menu Picker"},
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_format.nodes.upsert_milestonedata_node",
-        new_callable=AsyncMock,
-    ) as mock_upsert, patch(
-        "agents_app.agents.core.milestone_run.ig_format.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_format.nodes.upsert_milestonedata_node",
+            new_callable=AsyncMock,
+        ) as mock_upsert,
+        patch(
+            "agents_app.agents.core.milestone_run.ig_format.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
     ):
         result = await persist_result(state, client=client)
 

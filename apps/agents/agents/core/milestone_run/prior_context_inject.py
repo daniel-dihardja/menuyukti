@@ -378,9 +378,7 @@ def is_ig_format_milestone_data(data: dict[str, Any]) -> bool:
     entries = data.get("entries")
     if not isinstance(entries, list):
         return False
-    return any(
-        isinstance(row, dict) and "menuItems" in row and "type" in row for row in entries
-    )
+    return any(isinstance(row, dict) and "menuItems" in row and "type" in row for row in entries)
 
 
 def ig_format_has_entries(data: dict[str, Any]) -> bool:
@@ -666,7 +664,6 @@ def menu_clusterer_prior_error_message(
     )
 
 
-
 def is_dates_milestone_data(data: object) -> bool:
     if not isinstance(data, dict):
         return False
@@ -699,7 +696,6 @@ def extract_dates_data(prior_milestones_json: str) -> dict[str, Any] | None:
     if isinstance(data, dict) and is_dates_milestone_data(data):
         return data
     return None
-
 
 
 def dates_prior_error_message(

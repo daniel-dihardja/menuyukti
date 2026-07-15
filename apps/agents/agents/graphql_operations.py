@@ -45,6 +45,7 @@ query MilestoneInput($id: ID!) {
     id
     nodeType
     locationId
+    parentId
     milestoneInput
   }
 }
@@ -54,8 +55,10 @@ MILESTONE_PRESET_DATA_QUERY = """
 query MilestonePresetData($id: ID!) {
   node(id: $id) {
     id
+    name
     nodeType
     locationId
+    parentId
     milestonePresetData
   }
 }
@@ -67,10 +70,31 @@ query MilestoneHelp($id: ID!) {
     id
     nodeType
     locationId
+    parentId
     name
     milestoneGoal
     data
     passCriterias
+  }
+}
+"""
+
+WORKFLOW_CAMPAIGN_TREE_QUERY = """
+query WorkflowCampaignTree($workflowId: ID!) {
+  workflowCampaignTree(workflowId: $workflowId) {
+    workflow {
+      id
+      name
+      locationId
+    }
+    milestones {
+      milestone {
+        id
+        name
+        milestoneGoal
+        data
+      }
+    }
   }
 }
 """
@@ -168,6 +192,11 @@ query GetLocation($id: ID!) {
     country
     currency
     workspaceId
+    openingHours {
+      dayOfWeek
+      openTime
+      closeTime
+    }
     manualBriefInput {
       locationId
       quickProfile

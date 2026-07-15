@@ -86,9 +86,7 @@ def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
                         enrich_scheduler_eval_payload(
                             enrich_menu_clusterer_eval_payload(
                                 enrich_menu_tagger_eval_payload(
-                                    enrich_dates_eval_payload(
-                                        enrich_ig_profile_eval_payload(data)
-                                    )
+                                    enrich_dates_eval_payload(enrich_ig_profile_eval_payload(data))
                                 )
                             )
                         )

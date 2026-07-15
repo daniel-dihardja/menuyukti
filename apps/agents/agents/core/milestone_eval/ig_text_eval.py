@@ -65,11 +65,7 @@ def _is_prior_ig_format_requirement(norm: str) -> bool:
         return False
     if "ig format" not in norm and "ig_format" not in norm.replace(" ", "_"):
         return False
-    return (
-        "exists earlier" in norm
-        or "earlier in the workflow" in norm
-        or "with saved" in norm
-    )
+    return "exists earlier" in norm or "earlier in the workflow" in norm or "with saved" in norm
 
 
 def _is_slot_coverage_requirement(norm: str) -> bool:
