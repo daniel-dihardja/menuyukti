@@ -16,6 +16,7 @@ import {
 export type PostCreatorReferenceImage = {
   name: string
   url: string
+  enabled: boolean
 }
 
 export type PostCreatorImageVersion = {
@@ -34,6 +35,7 @@ export type PostCreatorPage = {
   imageVersions?: PostCreatorImageVersion[]
   previewVersionIndex?: number
   referenceImages?: PostCreatorReferenceImage[]
+  usePreviousResult?: boolean
 }
 
 export type PostCreatorThumbnailsPaneProps = {

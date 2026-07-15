@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
+import { Label } from '@workspace/ui/components/label'
+import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
 
 import { PostCreatorImagePicker } from './post-creator-image-picker'
@@ -23,6 +25,11 @@ export type PostCreatorPromptPaneProps = {
   referenceImages: PostCreatorReferenceImage[]
   onAddReference: (photo: PostCreatorReferenceImage) => void
   onRemoveReference: (name: string) => void
+  onToggleReferenceEnabled: (name: string, enabled: boolean) => void
+  hasPreviewableVersion: boolean
+  usePreviousResult: boolean
+  onUsePreviousResultChange: (value: boolean) => void
+  generationReferenceSummary: string | null
 }
 
 export function PostCreatorPromptPane({
@@ -34,8 +41,14 @@ export function PostCreatorPromptPane({
   referenceImages,
   onAddReference,
   onRemoveReference,
+  onToggleReferenceEnabled,
+  hasPreviewableVersion,
+  usePreviousResult,
+  onUsePreviousResultChange,
+  generationReferenceSummary,
 }: PostCreatorPromptPaneProps) {
   const t = useTranslations('postCreator.prompt')
+  const previousResultId = useId()
   const promptId = useId()
   const canSubmit = prompt.trim().length > 0 && !isGenerating && !disabled
   const selectedNames = useMemo(
@@ -81,13 +94,35 @@ export function PostCreatorPromptPane({
           ariaLabel={t('references.ariaLabel')}
           disabled={disabled || isGenerating}
           images={referenceImages}
+          includeLabel={t('references.include')}
+          indexLabel={(index) => t('references.indexLabel', { index })}
           onRemove={onRemoveReference}
+          onToggleEnabled={onToggleReferenceEnabled}
           removeLabel={t('references.remove')}
         />
+        {hasPreviewableVersion ? (
+          <div className="flex items-start justify-between gap-3 rounded-md border border-border/60 px-3 py-2">
+            <div className="space-y-1">
+              <Label htmlFor={previousResultId} className="text-sm font-medium">
+                {t('previousResult.label')}
+              </Label>
+              <p className="text-muted-foreground text-xs">{t('previousResult.description')}</p>
+            </div>
+            <Switch
+              id={previousResultId}
+              checked={usePreviousResult}
+              disabled={disabled || isGenerating}
+              onCheckedChange={onUsePreviousResultChange}
+            />
+          </div>
+        ) : null}
         <Alert>
           <AlertTitle>{t('tip.title')}</AlertTitle>
           <AlertDescription>{t('tip.description')}</AlertDescription>
         </Alert>
+        {generationReferenceSummary ? (
+          <p className="text-muted-foreground text-xs">{generationReferenceSummary}</p>
+        ) : null}
         <Button className="w-full shrink-0" disabled={!canSubmit} type="submit">
           {isGenerating ? (
             <>

@@ -737,15 +737,28 @@
         "upload": "Upload file",
         "uploading": "Uploading…",
         "uploadError": "Couldn’t upload that file. Try again.",
-        "maxReached": "Maximum reference images reached. Remove one to add another."
+        "maxReached": "Maximum reference photos reached (5). Remove one to add another."
       },
       "references": {
         "ariaLabel": "Reference images for generation",
-        "remove": "Remove reference image"
+        "remove": "Remove reference image",
+        "include": "Include in generation",
+        "indexLabel": "Ref {index}"
+      },
+      "previousResult": {
+        "label": "Use previous result as reference",
+        "description": "Includes the currently previewed generated image as Reference 1. Turn off for a fresh composition from checked photos only."
+      },
+      "generation": {
+        "referenceSummaryTextOnly": "Next generation: prompt only (no references).",
+        "referenceSummaryPreviousOnly": "Next generation: previous result only.",
+        "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
+        "referenceSummaryPreviousAndPhotos": "Next generation: previous result + {count, plural, one {# checked photo} other {# checked photos}}.",
+        "tooManyReferences": "Too many references selected. Use at most 5 checked photos plus the previous result (6 total)."
       },
       "tip": {
         "title": "Tip",
-        "description": "Type @ in the prompt to attach a reference photo from your media library."
+        "description": "Type @ to attach reference photos. Use the checkboxes to include or exclude photos per generation. When a preview exists, turn off “Use previous result” to start fresh from checked photos only."
       }
     },
     "preview": {

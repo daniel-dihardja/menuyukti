@@ -5,41 +5,37 @@ import {
   POST_IMAGE_WIDTH,
 } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 
-export type ReferenceImageSource = 'photo' | 'post' | 'mixed'
+export type PromptReference = { type: 'previous-result' } | { type: 'photo' }
 
 export type BuildInstagramPostPromptOptions = {
   userPrompt: string
-  referenceImageCount?: number
-  referenceImageSource?: ReferenceImageSource
+  references?: PromptReference[]
 }
 
 function formatInsetPercent(value: number): string {
   return value.toFixed(1)
 }
 
-function buildPhotoReferenceImagesBlock(referenceImageCount: number): string {
-  return `REFERENCE IMAGES:
-- You receive ${referenceImageCount} reference photo(s) showing real menu products.
-- Preserve each product's identity: shape, plating, colors, portions, and key details.
-- Place every referenced product entirely inside the inner composition frame.
-- Do not crop, clip, or partially hide any product at the frame boundary.`
+function buildPreviousResultReferenceLine(index: number): string {
+  return `- Reference ${index} — PREVIOUS RESULT: the current post design from the last generation. Preserve overall composition, layout, and key visual elements unless creative direction asks to change them. Apply requested edits while maintaining photorealistic quality and Instagram-ready polish. Do not reintroduce placeholder boxes, labels, or guide markings.`
 }
 
-function buildPostEditReferenceImagesBlock(referenceImageCount: number): string {
-  return `REFERENCE IMAGE:
-- You receive ${referenceImageCount} reference image(s) of the current post design.
-- Preserve the overall composition, layout, and key visual elements unless the creative direction asks to change them.
-- Apply the requested edits while maintaining photorealistic quality and Instagram-ready polish.`
+function buildPhotoReferenceLine(index: number): string {
+  return `- Reference ${index} — PRODUCT PHOTO: a real menu product photo. Preserve product identity — shape, plating, colors, portions, and key details. Place the product entirely inside the inner composition frame. Do not crop, clip, or partially hide the product at the frame boundary.`
 }
 
-function buildReferenceImagesBlock(
-  referenceImageCount: number,
-  referenceImageSource: ReferenceImageSource,
-): string {
-  if (referenceImageSource === 'post') {
-    return buildPostEditReferenceImagesBlock(referenceImageCount)
-  }
-  return buildPhotoReferenceImagesBlock(referenceImageCount)
+function buildIndexedReferenceBlock(references: PromptReference[]): string {
+  if (references.length === 0) return ''
+
+  const lines = references.map((reference, index) => {
+    const refNumber = index + 1
+    return reference.type === 'previous-result'
+      ? buildPreviousResultReferenceLine(refNumber)
+      : buildPhotoReferenceLine(refNumber)
+  })
+
+  return `REFERENCE IMAGES (in upload order):
+${lines.join('\n')}`
 }
 
 function buildPhotographyLightingBlock(): string {
@@ -58,8 +54,9 @@ function buildPostEditPhotographyBlock(): string {
 - Natural food textures and appetizing colors; no plastic or waxy food, no distorted utensils or hands, no text or logos.`
 }
 
-function buildPhotographyBlock(referenceImageSource: ReferenceImageSource): string {
-  if (referenceImageSource === 'post') {
+function buildPhotographyBlock(references: PromptReference[]): string {
+  const hasPreviousResult = references.some((reference) => reference.type === 'previous-result')
+  if (hasPreviousResult) {
     return buildPostEditPhotographyBlock()
   }
   return buildPhotographyLightingBlock()
@@ -67,19 +64,16 @@ function buildPhotographyBlock(referenceImageSource: ReferenceImageSource): stri
 
 export function buildInstagramPostPrompt({
   userPrompt,
-  referenceImageCount = 0,
-  referenceImageSource = 'photo',
+  references = [],
 }: BuildInstagramPostPromptOptions): string {
   const trimmed = userPrompt.trim()
   const insetXPercent = formatInsetPercent(INSTAGRAM_GRID_THUMBNAIL_INSET_X_PERCENT)
   const insetYPercent = formatInsetPercent(INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT)
 
   const referenceBlock =
-    referenceImageCount > 0
-      ? `\n\n${buildReferenceImagesBlock(referenceImageCount, referenceImageSource)}`
-      : ''
+    references.length > 0 ? `\n\n${buildIndexedReferenceBlock(references)}` : ''
 
-  const photographyBlock = `\n\n${buildPhotographyBlock(referenceImageSource)}`
+  const photographyBlock = `\n\n${buildPhotographyBlock(references)}`
 
   return `You are generating a photorealistic Instagram portrait post image.
 

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import {
+  MAX_GENERATION_REFERENCES,
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
@@ -22,18 +23,26 @@ import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphq
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
-  type ReferenceImageSource,
+  type PromptReference,
 } from '@/lib/posts/build-instagram-post-prompt'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
-const MAX_REFERENCE_IMAGES = 4
+const generationReferenceSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('previous-result'),
+    filename: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal('photo'),
+    name: z.string().min(1),
+  }),
+])
 
 const bodySchema = z.object({
   prompt: z.string().trim().min(1).max(3000),
   postId: z.string().regex(/^\d+$/).optional(),
   pageId: z.string().regex(/^\d+$/).optional(),
-  referenceImages: z.array(z.string().min(1)).max(MAX_REFERENCE_IMAGES).optional(),
-  referencePostImages: z.array(z.string().min(1)).max(MAX_REFERENCE_IMAGES).optional(),
+  references: z.array(generationReferenceSchema).max(MAX_GENERATION_REFERENCES).optional(),
 })
 
 function truncateStack(stack: string, max = 4000): string {
@@ -91,7 +100,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Invalid body' }, { status: 400 })
   }
 
-  const { prompt, postId, pageId, referenceImages = [], referencePostImages = [] } = parsed.data
+  const { prompt, postId, pageId, references = [] } = parsed.data
   if ((postId && !pageId) || (!postId && pageId)) {
     return NextResponse.json(
       { message: 'postId and pageId must be provided together' },
@@ -99,13 +108,35 @@ export async function POST(req: Request) {
     )
   }
 
-  if (referenceImages.length + referencePostImages.length > MAX_REFERENCE_IMAGES) {
-    return NextResponse.json({ message: 'Too many reference images' }, { status: 400 })
-  }
-
   const referenceBuffers: Buffer[] = []
+  const promptReferences: PromptReference[] = []
 
-  for (const name of referenceImages) {
+  for (const reference of references) {
+    if (reference.type === 'previous-result') {
+      const { filename } = reference
+      if (!isSafeAssetFilename(filename)) {
+        return NextResponse.json(
+          { message: `Invalid previous result image: ${filename}` },
+          { status: 400 },
+        )
+      }
+
+      const key = userPostsObjectKey(userId, filename)
+      if (!isObjectKeyForPost(key, userId)) {
+        return NextResponse.json(
+          { message: `Invalid previous result image: ${filename}` },
+          { status: 400 },
+        )
+      }
+
+      const buffer = await loadReferenceBuffer(key, filename, userId)
+      if (buffer instanceof NextResponse) return buffer
+      referenceBuffers.push(buffer)
+      promptReferences.push({ type: 'previous-result' })
+      continue
+    }
+
+    const { name } = reference
     if (!isSafePhotoFilename(name)) {
       return NextResponse.json({ message: `Invalid reference image: ${name}` }, { status: 400 })
     }
@@ -114,40 +145,12 @@ export async function POST(req: Request) {
     const buffer = await loadReferenceBuffer(key, name, userId)
     if (buffer instanceof NextResponse) return buffer
     referenceBuffers.push(buffer)
+    promptReferences.push({ type: 'photo' })
   }
-
-  for (const name of referencePostImages) {
-    if (!isSafeAssetFilename(name)) {
-      return NextResponse.json(
-        { message: `Invalid reference post image: ${name}` },
-        { status: 400 },
-      )
-    }
-
-    const key = userPostsObjectKey(userId, name)
-    if (!isObjectKeyForPost(key, userId)) {
-      return NextResponse.json(
-        { message: `Invalid reference post image: ${name}` },
-        { status: 400 },
-      )
-    }
-
-    const buffer = await loadReferenceBuffer(key, name, userId)
-    if (buffer instanceof NextResponse) return buffer
-    referenceBuffers.push(buffer)
-  }
-
-  const referenceImageSource: ReferenceImageSource =
-    referenceImages.length > 0 && referencePostImages.length > 0
-      ? 'mixed'
-      : referencePostImages.length > 0
-        ? 'post'
-        : 'photo'
 
   const leonardoPrompt = buildInstagramPostPrompt({
     userPrompt: prompt,
-    referenceImageCount: referenceBuffers.length,
-    referenceImageSource,
+    references: promptReferences,
   })
 
   let outBuffer: Buffer

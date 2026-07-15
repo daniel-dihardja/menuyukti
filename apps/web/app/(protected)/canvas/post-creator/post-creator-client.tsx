@@ -12,12 +12,13 @@ import {
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 
-import { MAX_REFERENCE_IMAGES } from './_components/post-creator-constants'
+import { MAX_ATTACHED_REFERENCE_PHOTOS } from './_components/post-creator-constants'
 import { PostCreatorLayout } from './_components/post-creator-layout'
 import { PostCreatorPreviewPane } from './_components/post-creator-preview-pane'
 import { PostCreatorRightPane } from './_components/post-creator-right-pane'
@@ -146,6 +147,7 @@ const MAX_POST_PAGES = 10
 export function PostCreatorClient({ postId }: { postId: string | null }) {
   const tToast = useTranslations('postCreator.toast')
   const tPreview = useTranslations('postCreator.preview')
+  const tPrompt = useTranslations('postCreator.prompt')
   const [pages, setPages] = useState<PostCreatorPage[]>([])
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
@@ -153,6 +155,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const [previewVersionIndex, setPreviewVersionIndex] = useState(0)
   const [postImageVersionIndex, setPostImageVersionIndex] = useState(0)
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
+  const [usePreviousResult, setUsePreviousResult] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
@@ -181,6 +184,10 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     setPreviewVersionIndex(previewIndex)
     setPrompt(page?.prompt ?? '')
     setReferenceImages(page?.referenceImages ?? [])
+    const previewMediaS3Key = versions[previewIndex]?.mediaS3Key ?? page?.mediaS3Key ?? null
+    setUsePreviousResult(
+      page?.usePreviousResult ?? Boolean(parsePostMediaFilename(previewMediaS3Key)),
+    )
   }, [])
 
   const syncPageState = useCallback(
@@ -195,6 +202,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
           | 'imageVersions'
           | 'previewVersionIndex'
           | 'referenceImages'
+          | 'usePreviousResult'
         >
       >,
     ) => {
@@ -265,7 +273,13 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
           selectedPageId !== null
             ? current.map((page) =>
                 page.id === selectedPageId
-                  ? { ...page, prompt, referenceImages, previewVersionIndex }
+                  ? {
+                      ...page,
+                      prompt,
+                      referenceImages,
+                      previewVersionIndex,
+                      usePreviousResult,
+                    }
                   : page,
               )
             : current
@@ -288,10 +302,14 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         setPreviewVersionIndex(previewIndex)
         setPrompt(page?.prompt ?? '')
         setReferenceImages(page?.referenceImages ?? [])
+        const previewMediaS3Key = versions[previewIndex]?.mediaS3Key ?? page?.mediaS3Key ?? null
+        setUsePreviousResult(
+          page?.usePreviousResult ?? Boolean(parsePostMediaFilename(previewMediaS3Key)),
+        )
         return withSyncedCurrent
       })
     },
-    [previewVersionIndex, prompt, referenceImages, selectedPageId],
+    [previewVersionIndex, prompt, referenceImages, selectedPageId, usePreviousResult],
   )
 
   const handlePromptChange = useCallback(
@@ -307,15 +325,38 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
   const handleAddReference = useCallback(
     (photo: PostCreatorReferenceImage) => {
       if (referenceImages.some((image) => image.name === photo.name)) return
-      if (referenceImages.length >= MAX_REFERENCE_IMAGES) return
+      if (referenceImages.length >= MAX_ATTACHED_REFERENCE_PHOTOS) return
 
-      const next = [...referenceImages, photo]
+      const next = [...referenceImages, { ...photo, enabled: photo.enabled ?? true }]
       setReferenceImages(next)
       if (selectedPageId) {
         syncPageState(selectedPageId, { referenceImages: next })
       }
     },
     [referenceImages, selectedPageId, syncPageState],
+  )
+
+  const handleToggleReferenceEnabled = useCallback(
+    (name: string, enabled: boolean) => {
+      const next = referenceImages.map((image) =>
+        image.name === name ? { ...image, enabled } : image,
+      )
+      setReferenceImages(next)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { referenceImages: next })
+      }
+    },
+    [referenceImages, selectedPageId, syncPageState],
+  )
+
+  const handleUsePreviousResultChange = useCallback(
+    (value: boolean) => {
+      setUsePreviousResult(value)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { usePreviousResult: value })
+      }
+    },
+    [selectedPageId, syncPageState],
   )
 
   const handleRemoveReference = useCallback(
@@ -333,14 +374,25 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     const trimmed = prompt.trim()
     if (!trimmed || isGenerating) return
 
+    const previewMediaS3Key = imageVersions[previewVersionIndex]?.mediaS3Key
+    const { references, tooManyReferences } = resolveGenerationReferences({
+      referenceImages,
+      usePreviousResult,
+      previewMediaS3Key,
+    })
+
+    if (tooManyReferences) {
+      toast.error(tPrompt('generation.tooManyReferences'))
+      return
+    }
+
     setIsGenerating(true)
     try {
       const body: {
         prompt: string
         postId?: string
         pageId?: string
-        referenceImages?: string[]
-        referencePostImages?: string[]
+        references?: typeof references
       } = { prompt: trimmed }
 
       if (postId && selectedPageId) {
@@ -348,15 +400,8 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         body.pageId = selectedPageId
       }
 
-      if (referenceImages.length > 0) {
-        body.referenceImages = referenceImages.map((image) => image.name)
-      } else {
-        const previewFilename = parsePostMediaFilename(
-          imageVersions[previewVersionIndex]?.mediaS3Key,
-        )
-        if (previewFilename) {
-          body.referencePostImages = [previewFilename]
-        }
+      if (references.length > 0) {
+        body.references = references
       }
 
       const res = await fetch('/api/posts/generate', {
@@ -396,6 +441,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       setImageVersions(nextVersions)
       setPreviewVersionIndex(0)
       setPostImageVersionIndex(0)
+      setUsePreviousResult(true)
 
       if (selectedPageId) {
         syncPageState(selectedPageId, {
@@ -404,6 +450,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
           imageVersions: nextVersions,
           previewVersionIndex: 0,
           prompt: trimmed,
+          usePreviousResult: true,
         })
       }
     } catch {
@@ -420,7 +467,9 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     referenceImages,
     selectedPageId,
     syncPageState,
+    tPrompt,
     tToast,
+    usePreviousResult,
   ])
 
   const handlePreviewVersion = useCallback(
@@ -562,12 +611,20 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       setPostImageVersionIndex(nextCommittedIndex)
       setDeleteDialogOpen(false)
 
+      const nextUsePreviousResult =
+        nextVersions.length > 0 &&
+        Boolean(
+          parsePostMediaFilename(nextVersions[nextPreviewIndex]?.mediaS3Key ?? data.mediaS3Key),
+        )
+      setUsePreviousResult(nextUsePreviousResult)
+
       if (selectedPageId) {
         syncPageState(selectedPageId, {
           imageUrl: data.imageUrl,
           mediaS3Key: data.mediaS3Key,
           imageVersions: nextVersions,
           previewVersionIndex: nextPreviewIndex,
+          usePreviousResult: nextUsePreviousResult,
         })
       }
     } catch {
@@ -621,6 +678,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         setImageVersions([])
         setPrompt('')
         setReferenceImages([])
+        setUsePreviousResult(false)
       }
     } catch {
       toast.error(tToast('deletePageError'))
@@ -650,7 +708,13 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         selectedPageId !== null
           ? pages.map((page) =>
               page.id === selectedPageId
-                ? { ...page, prompt, referenceImages, previewVersionIndex }
+                ? {
+                    ...page,
+                    prompt,
+                    referenceImages,
+                    previewVersionIndex,
+                    usePreviousResult,
+                  }
                 : page,
             )
           : pages
@@ -701,6 +765,7 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
       referenceImages,
       selectedPageId,
       tToast,
+      usePreviousResult,
     ],
   )
 
@@ -765,6 +830,31 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     null
 
   const selectedPage = pages.find((page) => page.id === selectedPageId)
+  const previewMediaS3Key =
+    imageVersions[previewVersionIndex]?.mediaS3Key ?? selectedPage?.mediaS3Key ?? null
+  const hasPreviewableVersion = Boolean(parsePostMediaFilename(previewMediaS3Key))
+
+  const generationReferenceSummary = useMemo(() => {
+    const { references } = resolveGenerationReferences({
+      referenceImages,
+      usePreviousResult,
+      previewMediaS3Key,
+    })
+    const includesPrevious = references.some((reference) => reference.type === 'previous-result')
+    const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
+
+    if (includesPrevious && enabledPhotoCount > 0) {
+      return tPrompt('generation.referenceSummaryPreviousAndPhotos', { count: enabledPhotoCount })
+    }
+    if (includesPrevious) {
+      return tPrompt('generation.referenceSummaryPreviousOnly')
+    }
+    if (enabledPhotoCount > 0) {
+      return tPrompt('generation.referenceSummaryPhotosOnly', { count: enabledPhotoCount })
+    }
+    return tPrompt('generation.referenceSummaryTextOnly')
+  }, [previewMediaS3Key, referenceImages, tPrompt, usePreviousResult])
+
   const canRemoveEmptyPage = pages.length > 1 && !pageHasGeneratedImage(selectedPage, imageVersions)
 
   return (
@@ -810,13 +900,18 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
         }
         promptPane={
           <PostCreatorRightPane
+            generationReferenceSummary={generationReferenceSummary}
+            hasPreviewableVersion={hasPreviewableVersion}
             isGenerating={isGenerating}
             onAddReference={handleAddReference}
             onPromptChange={handlePromptChange}
             onRemoveReference={handleRemoveReference}
             onSubmit={() => void handleGenerate()}
+            onToggleReferenceEnabled={handleToggleReferenceEnabled}
+            onUsePreviousResultChange={handleUsePreviousResultChange}
             prompt={prompt}
             referenceImages={referenceImages}
+            usePreviousResult={usePreviousResult}
           />
         }
       />

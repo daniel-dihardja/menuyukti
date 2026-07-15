@@ -29,7 +29,7 @@ import {
 
 import { loadMedia, uploadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 
-import { MAX_REFERENCE_IMAGES } from './post-creator-constants'
+import { MAX_ATTACHED_REFERENCE_PHOTOS } from './post-creator-constants'
 import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
 
 const MENTION_AT_END = /(?:^|\s)@([^\s@]*)$/
@@ -83,7 +83,7 @@ export function PostCreatorImagePicker({
   const [activeIndex, setActiveIndex] = useState(0)
 
   const mention = parseMentionAtEnd(value)
-  const atMaxReferences = selectedNames.size >= MAX_REFERENCE_IMAGES
+  const atMaxReferences = selectedNames.size >= MAX_ATTACHED_REFERENCE_PHOTOS
 
   const filteredMedia = useMemo(() => {
     if (!mention) return []
@@ -134,7 +134,7 @@ export function PostCreatorImagePicker({
   const handleSelectMedia = useCallback(
     (item: MediaCatalogItem) => {
       if (selectedNames.has(item.name) || atMaxReferences) return
-      onAddReference({ name: item.name, url: item.url })
+      onAddReference({ name: item.name, url: item.url, enabled: true })
       onValueChange(stripTrailingMention(value))
     },
     [atMaxReferences, onAddReference, onValueChange, selectedNames, value],
