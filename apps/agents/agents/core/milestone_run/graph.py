@@ -255,7 +255,6 @@ async def _run_menu_clusterer(
     }
 
 
-
 async def _run_scheduler(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
@@ -346,9 +345,7 @@ async def _run_ig_menu_picker(
     }
 
 
-async def _run_ig_format(
-    state: MilestoneRunState, *, client: httpx.AsyncClient
-) -> dict[str, Any]:
+async def _run_ig_format(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
     initial["result_data"] = ""
@@ -370,9 +367,7 @@ async def _run_ig_format(
     }
 
 
-async def _run_ig_text(
-    state: MilestoneRunState, *, client: httpx.AsyncClient
-) -> dict[str, Any]:
+async def _run_ig_text(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     initial = _base_initial(state)
     prior = str(state.get("prior_milestones_data") or "")
     initial["prior_milestones_data"] = prior

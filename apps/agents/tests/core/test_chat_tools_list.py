@@ -18,6 +18,7 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     names = [getattr(t, "name", "") for t in chat_tools_list()]
     assert "search_web" not in names
     assert "get_milestone_data" in names
+    assert "get_location_data" in names
 
 
 def test_chat_tools_list_includes_search_web_with_key(monkeypatch: pytest.MonkeyPatch) -> None:

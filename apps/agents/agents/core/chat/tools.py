@@ -15,7 +15,10 @@ from agents_app.agents.core.chat.graphql_client import (
 from agents_app.agents.core.chat.http_context import get_chat_http_client
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
+from agents_app.agents.core.location_page_format import format_location_page_markdown
+from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
+    LOCATION_QUERY,
     MILESTONE_HELP_QUERY,
     MILESTONE_INPUT_QUERY,
     MILESTONE_PRESET_DATA_QUERY,
@@ -72,7 +75,7 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             "ig_plan": "ig_plan",
             "ig_menu_picker": "ig_menu_picker",
             "ig_format": "ig_format",
-    "ig_text": "ig_text",
+            "ig_text": "ig_text",
             "dates": "dates",
             "public_holidays": "public_holidays",
         }
@@ -683,3 +686,30 @@ async def update_milestone_input(
     return (
         f"Saved milestoneInput for milestone id={milestone_id} with {len(operations)} operation(s)."
     )
+
+
+@tool
+async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
+    """Load location-page data for the campaign venue: basics, opening hours, owner quick profile.
+
+    Call when the user asks about venue hours, address, cuisine, contact links, or other
+    location settings configured on the location page."""
+    c = (config or {}).get("configurable") or {}
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    if location_id is None or not user_id:
+        return (
+            "Location context is not available (missing location). "
+            "Open workflow chat for a campaign with a linked location."
+        )
+    client = get_chat_http_client()
+    loc_data = await graphql_post(
+        client,
+        LOCATION_QUERY,
+        {"id": str(location_id)},
+        str(user_id),
+    )
+    raw_loc = loc_data.get("location")
+    if not isinstance(raw_loc, dict):
+        return "Location not found or access denied."
+    return format_location_page_markdown(raw_loc)

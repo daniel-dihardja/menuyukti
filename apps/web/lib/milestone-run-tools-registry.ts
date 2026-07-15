@@ -48,6 +48,12 @@ export const CHAT_TOOLS_REGISTRY: readonly ChatToolMeta[] = [
       'Apply JSON-pointer patch operations to the milestone Input tab and persist through GraphQL.',
   },
   {
+    id: 'get_location_data',
+    name: 'Get location data',
+    description:
+      'Load location-page data for the campaign venue: basics, opening hours, and owner quick profile from GraphQL.',
+  },
+  {
     id: 'search_web',
     name: 'Search web',
     description:

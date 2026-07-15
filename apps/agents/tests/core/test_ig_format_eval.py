@@ -82,7 +82,9 @@ def test_is_ig_format_milestone_data_requires_type_and_menu_items() -> None:
 
 
 def test_prior_menu_picker_passes_with_hints() -> None:
-    verdict = try_ig_format_deterministic_verdict(_PRIOR_MENU_PICKER_REQ, _payload(_entry("monday-lunch")))
+    verdict = try_ig_format_deterministic_verdict(
+        _PRIOR_MENU_PICKER_REQ, _payload(_entry("monday-lunch"))
+    )
     assert verdict is not None
     assert verdict[0] == "pass"
 

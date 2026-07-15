@@ -415,7 +415,11 @@ def try_menu_clusterer_deterministic_verdict(
         )
 
     if (
-        ("same" in norm and "category" in norm and ("mixed" in norm or "hook" in norm or "creative" in norm or "categorical" in norm))
+        (
+            "same" in norm
+            and "category" in norm
+            and ("mixed" in norm or "hook" in norm or "creative" in norm or "categorical" in norm)
+        )
         or ("category scope" in norm)
         or (
             ("mixed-category" in norm or "creative" in norm)

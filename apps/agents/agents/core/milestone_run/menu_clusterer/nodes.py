@@ -210,7 +210,7 @@ def _build_generation_context(
         scope_guidance += (
             f" Include roughly **{same_count} categorical** (same POS category; categoryScope "
             f'"categorical") and **{creative_count} creative** (cross-category pairings such as '
-            f"snacks with drinks; categoryScope \"creative\"). POS categories on this menu: "
+            f'snacks with drinks; categoryScope "creative"). POS categories on this menu: '
             f"{', '.join(pos_categories)}."
         )
     else:
@@ -257,9 +257,7 @@ async def fetch_and_prepare(
 
     menu_tagger_data = extract_menu_tagger_data(prior_json)
     if menu_tagger_data is None:
-        raise ValueError(
-            menu_tagger_prior_error_message(prior_json, milestone_id="menu_clusterer")
-        )
+        raise ValueError(menu_tagger_prior_error_message(prior_json, milestone_id="menu_clusterer"))
 
     menu_tagger_items = _menu_tagger_items(menu_tagger_data)
     if not menu_tagger_items:

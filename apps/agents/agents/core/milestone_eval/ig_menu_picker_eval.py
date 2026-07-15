@@ -17,10 +17,7 @@ def is_ig_menu_picker_milestone_data(data: dict[str, Any]) -> bool:
     if not isinstance(entries, list):
         return False
     return any(
-        isinstance(row, dict)
-        and "menuItems" in row
-        and "type" not in row
-        for row in entries
+        isinstance(row, dict) and "menuItems" in row and "type" not in row for row in entries
     )
 
 
@@ -152,9 +149,7 @@ def try_ig_menu_picker_deterministic_verdict(
             if isinstance(selected_raw, list):
                 selected_keys = [str(key).strip() for key in selected_raw if str(key).strip()]
             empty_means_all = bool(hints.get("emptySelectionMeansAll"))
-            expected = (
-                ig_plan_keys if empty_means_all or not selected_keys else selected_keys
-            )
+            expected = ig_plan_keys if empty_means_all or not selected_keys else selected_keys
 
         if not expected and not output_keys:
             return ("fail", "No output entries and no expected slot selection hints.")

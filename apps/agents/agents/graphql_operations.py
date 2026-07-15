@@ -168,6 +168,11 @@ query GetLocation($id: ID!) {
     country
     currency
     workspaceId
+    openingHours {
+      dayOfWeek
+      openTime
+      closeTime
+    }
     manualBriefInput {
       locationId
       quickProfile

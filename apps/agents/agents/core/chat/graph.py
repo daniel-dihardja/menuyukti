@@ -6,6 +6,7 @@ from typing import Any
 
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
+    get_location_data,
     get_milestone_data,
     get_milestone_help,
     get_milestone_input_json,
@@ -34,6 +35,7 @@ def chat_tools_list() -> list:
         get_milestone_preset_data_json,
         get_milestone_preset_data_for_milestone,
         update_milestone_input,
+        get_location_data,
     ]
     web = make_search_web_tool()
     if web is not None:

@@ -209,7 +209,10 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                 {
                     "agent": {
                         "messages": [
-                            AIMessage(content="", tool_calls=[{"name": "get_milestone_data", "id": "1", "args": {}}]),
+                            AIMessage(
+                                content="",
+                                tool_calls=[{"name": "get_milestone_data", "id": "1", "args": {}}],
+                            ),
                         ],
                     },
                 },
@@ -218,7 +221,9 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                 "updates",
                 {
                     "tools": {
-                        "messages": [ToolMessage(content="ok", tool_call_id="1", name="get_milestone_data")],
+                        "messages": [
+                            ToolMessage(content="ok", tool_call_id="1", name="get_milestone_data")
+                        ],
                     },
                 },
             ),

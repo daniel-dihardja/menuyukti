@@ -222,10 +222,13 @@ async def test_fetch_and_prepare_requires_prior_ig_format() -> None:
         "injected_prior_context_markdown": "Campaign brief orientation.",
         "milestone_input": {"type": "ig_text", "value": {"notes": ""}},
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
-    ), pytest.raises(ValueError, match="prior ig_format"):
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
+        pytest.raises(ValueError, match="prior ig_format"),
+    ):
         await fetch_and_prepare(state, client=client)
 
 
@@ -239,10 +242,13 @@ async def test_fetch_and_prepare_requires_campaign_brief_injection() -> None:
         "injected_prior_context_markdown": "",
         "milestone_input": {"type": "ig_text", "value": {"notes": ""}},
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
-    ), pytest.raises(ValueError, match="restaurant_campaign_brief"):
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
+        pytest.raises(ValueError, match="restaurant_campaign_brief"),
+    ):
         await fetch_and_prepare(state, client=client)
 
 
@@ -297,13 +303,16 @@ async def test_generate_texts_with_llm_merges_picks_onto_format_rows() -> None:
         "injected_prior_context_markdown": "Tone: warm and local.",
         "source_campaign_brief_title": "Campaign Brief",
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_text.nodes.structured_ainvoke_from_run_config",
-        new_callable=AsyncMock,
-        return_value=picks,
-    ), patch(
-        "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_text.nodes.structured_ainvoke_from_run_config",
+            new_callable=AsyncMock,
+            return_value=picks,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
     ):
         result = await generate_texts_with_llm(state)
 
@@ -332,12 +341,15 @@ async def test_persist_result_writes_eval_hints() -> None:
         "prior_ig_format_row": {"title": "IG Format"},
         "source_campaign_brief_title": "Campaign Brief",
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.ig_text.nodes.upsert_milestonedata_node",
-        new_callable=AsyncMock,
-    ) as mock_upsert, patch(
-        "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
-        return_value=lambda _payload: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.ig_text.nodes.upsert_milestonedata_node",
+            new_callable=AsyncMock,
+        ) as mock_upsert,
+        patch(
+            "agents_app.agents.core.milestone_run.ig_text.nodes.get_stream_writer",
+            return_value=lambda _payload: None,
+        ),
     ):
         result = await persist_result(state, client=client)
 

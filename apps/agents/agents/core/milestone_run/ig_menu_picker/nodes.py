@@ -260,13 +260,13 @@ def _merge_plan_with_picks(
         merged_keys = {str(row.get("slotKey") or "").strip() for row in merged}
         missing = sorted(set(plan_by_key) - merged_keys)
         if missing:
-            raise ValueError(
-                "ig_menu_picker LLM omitted slotKeys: " + ", ".join(missing[:5])
-            )
+            raise ValueError("ig_menu_picker LLM omitted slotKeys: " + ", ".join(missing[:5]))
     return sort_ig_plan_entries(merged)
 
 
-async def fetch_and_prepare(state: IgMenuPickerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def fetch_and_prepare(
+    state: IgMenuPickerState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     _trace(state, "execute_skill", skill_id="ig_menu_picker")
 
     analytics_run_id = str(state.get("analytics_run_id") or "").strip()

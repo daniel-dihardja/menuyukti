@@ -272,9 +272,11 @@ async def fetch_ig_plan_inputs(
         )
 
     coverage_notes = raw.get("coverageNotes")
-    notes = [str(note) for note in coverage_notes if str(note).strip()] if isinstance(
-        coverage_notes, list
-    ) else []
+    notes = (
+        [str(note) for note in coverage_notes if str(note).strip()]
+        if isinstance(coverage_notes, list)
+        else []
+    )
 
     slot_performance["sourceAnalyticsRunId"] = run_id
     return {

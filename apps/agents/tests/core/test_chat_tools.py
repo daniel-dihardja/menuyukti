@@ -503,3 +503,60 @@ async def test_update_milestone_input_missing_operations_returns_guidance(
     )
     assert "Missing required field 'operations'" in out
     persist_mock.assert_not_awaited()
+
+
+def _location_page_payload() -> dict:
+    return {
+        "name": "Harbor Kitchen",
+        "street": "5 Pier Lane",
+        "city": "Hamburg",
+        "country": "DE",
+        "currency": "EUR",
+        "openingHours": [
+            {"dayOfWeek": "friday", "openTime": "12:00", "closeTime": "23:00"},
+        ],
+        "manualBriefInput": {
+            "locationId": 7,
+            "quickProfile": {"cuisineTypes": ["Seafood"]},
+        },
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_location_data_returns_formatted_markdown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    graphql_mock = AsyncMock(return_value={"location": _location_page_payload()})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "graphql_post", graphql_mock)
+
+    out = await chat_tools.get_location_data.ainvoke(
+        {},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "**Name**: Harbor Kitchen" in out
+    assert "**friday**: 12:00–23:00" in out
+    assert "**Cuisine types**: Seafood" in out
+    graphql_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_location_data_missing_location_context() -> None:
+    out = await chat_tools.get_location_data.ainvoke(
+        {},
+        config={"configurable": {"user_id": "u1"}},
+    )
+    assert "Location context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_get_location_data_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
+    graphql_mock = AsyncMock(return_value={"location": None})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "graphql_post", graphql_mock)
+
+    out = await chat_tools.get_location_data.ainvoke(
+        {},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert out == "Location not found or access denied."
