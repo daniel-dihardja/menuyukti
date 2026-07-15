@@ -8,16 +8,28 @@ import { useWorkflowVisualizationsState } from './workflow-visualizations-contex
 
 const WorkflowChatMentionContext = createContext<string[] | null>(null)
 
-export function WorkflowChatMentionProvider({ children }: { children: ReactNode }) {
-  const { milestoneState } = useTimelineWorkspaceState()
+export type WorkflowChatMentionTitle = {
+  id: string
+  title: string | null | undefined
+}
+
+export function WorkflowChatMentionProvider({
+  children,
+  milestoneTitles,
+}: {
+  children: ReactNode
+  milestoneTitles: ReadonlyArray<WorkflowChatMentionTitle>
+}) {
   const { addedIds } = useWorkflowVisualizationsState()
   const tViz = useTranslations('analytics.workflows.visualizations.catalog')
 
   const mentionTitles = useMemo(() => {
-    const milestoneTitles = milestoneState.milestones.map((m) => m.title)
+    const titles = milestoneTitles
+      .map((m) => m.title?.trim())
+      .filter((title): title is string => Boolean(title))
     const visualizationTitles = addedIds.map((id) => tViz(`${id}.title`))
-    return [...milestoneTitles, ...visualizationTitles]
-  }, [addedIds, milestoneState.milestones, tViz])
+    return [...titles, ...visualizationTitles]
+  }, [addedIds, milestoneTitles, tViz])
 
   return <WorkflowChatMentionContext value={mentionTitles}>{children}</WorkflowChatMentionContext>
 }

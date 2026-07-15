@@ -28,6 +28,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { ChatMessageParts } from '@/components/chat-message-parts'
+import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 export function AgentChat() {
@@ -63,6 +64,7 @@ export function AgentChat() {
     useChat({
       id: agentThreadId,
       transport,
+      experimental_throttle: CHAT_STREAM_THROTTLE_MS,
     })
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
