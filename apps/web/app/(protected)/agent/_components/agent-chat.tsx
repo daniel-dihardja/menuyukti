@@ -102,7 +102,11 @@ export function AgentChat() {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="mx-auto flex h-full min-h-0 min-w-0 w-full max-w-2xl flex-1 flex-col overflow-hidden">
-        <Conversation aria-live="polite" className="h-full min-h-0 flex-1">
+        <Conversation
+          aria-live="polite"
+          className="h-full min-h-0 flex-1"
+          resize={isChatBusy ? 'instant' : 'smooth'}
+        >
           <ConversationContent>
             {error ? (
               <Alert aria-live="polite" className="items-start" variant="destructive">
@@ -142,7 +146,11 @@ export function AgentChat() {
                             <span>{t('thinking')}</span>
                           </div>
                         ) : (
-                          <ChatMessageParts message={msg} role={msg.role} />
+                          <ChatMessageParts
+                            isStreaming={isActiveStream}
+                            message={msg}
+                            role={msg.role}
+                          />
                         )}
                       </MessageContent>
                     </Message>

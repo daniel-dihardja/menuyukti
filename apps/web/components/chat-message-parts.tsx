@@ -17,6 +17,7 @@ import {
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import { memo } from 'react'
 
 import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
 
@@ -49,22 +50,32 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
   )
 }
 
-export function ChatMessageParts({
+function AssistantTextPart({ text, isStreaming }: { text: string; isStreaming: boolean }) {
+  if (isStreaming) {
+    return <MessageResponse>{text}</MessageResponse>
+  }
+  return <MarkdownMessage content={text} />
+}
+
+export const ChatMessageParts = memo(function ChatMessageParts({
   message,
   role,
   mentionTitles,
+  isStreaming = false,
 }: {
   message: UIMessage
   role: UIMessage['role']
   /** When set, multi-word `@Milestone title` spans match these titles (campaign chat). */
   mentionTitles?: string[]
+  /** When true, assistant text uses incremental Streamdown instead of full markdown re-parse. */
+  isStreaming?: boolean
 }) {
   const parts = message.parts
 
   if (!parts?.length) {
     const fallback = getPlainText(message)
     if (role === 'assistant') {
-      return <MarkdownMessage content={fallback} />
+      return <AssistantTextPart isStreaming={isStreaming} text={fallback} />
     }
     return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={fallback} />
   }
@@ -74,6 +85,7 @@ export function ChatMessageParts({
       {parts.map((part, index) => (
         <MessagePartRenderer
           key={`${message.id}-${index}`}
+          isStreaming={isStreaming}
           mentionTitles={mentionTitles}
           part={part}
           role={role}
@@ -81,7 +93,7 @@ export function ChatMessageParts({
       ))}
     </>
   )
-}
+})
 
 function getPlainText(message: UIMessage): string {
   return (
@@ -92,19 +104,21 @@ function getPlainText(message: UIMessage): string {
   )
 }
 
-function MessagePartRenderer({
+const MessagePartRenderer = memo(function MessagePartRenderer({
   part,
   role,
   mentionTitles,
+  isStreaming,
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
   mentionTitles?: string[]
+  isStreaming: boolean
 }) {
   if (part.type === 'text') {
     const text = part.text
     if (role === 'assistant') {
-      return <MarkdownMessage content={text} />
+      return <AssistantTextPart isStreaming={isStreaming} text={text} />
     }
     return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={text} />
   }
@@ -162,4 +176,4 @@ function MessagePartRenderer({
   }
 
   return null
-}
+})

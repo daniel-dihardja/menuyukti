@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import { appendWorkflowChatMention } from '@/lib/chat/append-workflow-chat-mention'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
@@ -31,13 +32,6 @@ export type UseWorkflowChatOptions = {
   selectedMilestoneId: string | null
   milestoneTitles: ReadonlyArray<{ id: string; title: string | null | undefined }>
   onHydrateAfterChat: (milestoneId: string) => void
-}
-
-function appendMentionToText(current: string, label: string): string {
-  const normalized = label.replace(/\s+/g, ' ').trim()
-  const mention = normalized.startsWith('@') ? normalized : `@${normalized}`
-  const prefix = current.length > 0 && !current.endsWith(' ') ? `${current} ` : current
-  return `${prefix}${mention} `
 }
 
 export function useWorkflowChat({
@@ -191,7 +185,7 @@ export function useWorkflowChat({
       const rawTitle = milestoneTitles.find((m) => m.id === milestoneId)?.title?.trim() ?? ''
       const label = rawTitle.length > 0 ? rawTitle.replace(/\s+/g, ' ') : milestoneId
       presetReferenceMilestoneIdRef.current = milestoneId
-      setText((current) => appendMentionToText(current, label))
+      setText((current) => appendWorkflowChatMention(current, label))
     },
     [milestoneTitles, status],
   )
@@ -202,7 +196,7 @@ export function useWorkflowChat({
         return
       }
       referencedVisualizationIdRef.current = visualizationId
-      setText((current) => appendMentionToText(current, title))
+      setText((current) => appendWorkflowChatMention(current, title))
     },
     [status],
   )

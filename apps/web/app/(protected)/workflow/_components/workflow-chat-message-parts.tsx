@@ -9,10 +9,19 @@ import { useWorkflowChatMentionTitles } from './workflow-chat-mention-context'
 export function WorkflowChatMessageParts({
   message,
   role,
+  isStreaming,
 }: {
   message: UIMessage
   role: UIMessage['role']
+  isStreaming?: boolean
 }) {
   const mentionTitles = useWorkflowChatMentionTitles()
-  return <ChatMessageParts mentionTitles={mentionTitles} message={message} role={role} />
+  return (
+    <ChatMessageParts
+      isStreaming={isStreaming}
+      mentionTitles={mentionTitles}
+      message={message}
+      role={role}
+    />
+  )
 }

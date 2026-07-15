@@ -27,6 +27,9 @@ const SSE_EVENT = {
   TEXT_END: 'text-end',
   FINISH: 'finish',
   ERROR: 'error',
+  TOOL_INPUT_START: 'tool-input-start',
+  TOOL_INPUT_AVAILABLE: 'tool-input-available',
+  TOOL_OUTPUT_AVAILABLE: 'tool-output-available',
 } as const
 
 const SSE_DONE = '[DONE]' as const
@@ -47,16 +50,84 @@ function lastUserMessageToPython(messages: UIMessage[]): Array<{ role: 'user'; c
   return []
 }
 
-/** SSE lines from `apps/agents` POST /chat: `data: {"token":"..."}\\n\\n` */
-interface PythonTokenChunk {
+/** SSE lines from `apps/agents` POST /chat. */
+interface PythonStreamChunk {
   token?: string
   error?: string
+  status?: 'tool_start' | 'tool_end'
+  tool?: string
+}
+
+type StreamForwardContext = {
+  textPartId: string
+  textStarted: boolean
+  toolCallIds: Map<string, string>
+}
+
+function ensureTextStarted(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  encoder: TextEncoder,
+  ctx: StreamForwardContext,
+): void {
+  if (ctx.textStarted) {
+    return
+  }
+  ctx.textStarted = true
+  controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_START, id: ctx.textPartId })))
+}
+
+function forwardToolStart(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  encoder: TextEncoder,
+  ctx: StreamForwardContext,
+  toolName: string,
+): void {
+  const toolCallId = crypto.randomUUID()
+  ctx.toolCallIds.set(toolName, toolCallId)
+  controller.enqueue(
+    encoder.encode(
+      sseLine({
+        type: SSE_EVENT.TOOL_INPUT_START,
+        toolCallId,
+        toolName,
+      }),
+    ),
+  )
+  controller.enqueue(
+    encoder.encode(
+      sseLine({
+        type: SSE_EVENT.TOOL_INPUT_AVAILABLE,
+        toolCallId,
+        toolName,
+        input: {},
+      }),
+    ),
+  )
+}
+
+function forwardToolEnd(
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  encoder: TextEncoder,
+  ctx: StreamForwardContext,
+  toolName: string,
+): void {
+  const toolCallId = ctx.toolCallIds.get(toolName) ?? crypto.randomUUID()
+  ctx.toolCallIds.delete(toolName)
+  controller.enqueue(
+    encoder.encode(
+      sseLine({
+        type: SSE_EVENT.TOOL_OUTPUT_AVAILABLE,
+        toolCallId,
+        output: '',
+      }),
+    ),
+  )
 }
 
 async function parsePythonSSEAndForward(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   controller: ReadableStreamDefaultController<Uint8Array>,
-  textPartId: string,
+  ctx: StreamForwardContext,
   encoder: TextEncoder,
   abortSignal: AbortSignal,
 ): Promise<void> {
@@ -80,19 +151,32 @@ async function parsePythonSSEAndForward(
         if (!payload) continue
         if (payload === SSE_DONE) continue
         try {
-          const data = JSON.parse(payload) as PythonTokenChunk
+          const data = JSON.parse(payload) as PythonStreamChunk
           if (data.error) {
             controller.enqueue(
               encoder.encode(sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })),
             )
             return
           }
+          if (
+            data.status === 'tool_start' &&
+            typeof data.tool === 'string' &&
+            data.tool.length > 0
+          ) {
+            forwardToolStart(controller, encoder, ctx, data.tool)
+            continue
+          }
+          if (data.status === 'tool_end' && typeof data.tool === 'string' && data.tool.length > 0) {
+            forwardToolEnd(controller, encoder, ctx, data.tool)
+            continue
+          }
           if (typeof data.token === 'string' && data.token.length > 0) {
+            ensureTextStarted(controller, encoder, ctx)
             controller.enqueue(
               encoder.encode(
                 sseLine({
                   type: SSE_EVENT.TEXT_DELTA,
-                  id: textPartId,
+                  id: ctx.textPartId,
                   delta: data.token,
                 }),
               ),
@@ -166,46 +250,62 @@ export async function POST(req: Request) {
     const locationIdNum = Number(locationId)
     const analyticsRunIdNum = analyticsRunId !== undefined ? Number(analyticsRunId) : null
 
-    if (presetReferenceMilestoneId !== undefined) {
-      let loaded: Awaited<ReturnType<typeof loadReferencedMilestonePresetForChat>>
-      try {
-        loaded = await loadReferencedMilestonePresetForChat(userId, {
-          workflowId,
-          locationId: locationIdNum,
-          presetReferenceMilestoneId,
-        })
-      } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err)
-        return jsonError(`Failed to load referenced milestone: ${detail}`, 502)
-      }
-      if (!loaded.ok) {
-        return jsonError(loaded.message, loaded.status)
-      }
-      referenceSections.push(formatPresetDataMarkdownSection(loaded.title, loaded.presetPayload))
+    const presetPromise =
+      presetReferenceMilestoneId !== undefined
+        ? loadReferencedMilestonePresetForChat(userId, {
+            workflowId,
+            locationId: locationIdNum,
+            presetReferenceMilestoneId,
+          }).catch((err: unknown) => {
+            const detail = err instanceof Error ? err.message : String(err)
+            throw new Error(`Failed to load referenced milestone: ${detail}`)
+          })
+        : Promise.resolve(null)
+
+    const visualizationPromise =
+      referencedVisualizationId !== undefined
+        ? loadReferencedVisualizationForChat(userId, {
+            workflowId,
+            locationId: locationIdNum,
+            referencedVisualizationId,
+            analyticsRunId: analyticsRunIdNum,
+          }).catch((err: unknown) => {
+            const detail = err instanceof Error ? err.message : String(err)
+            throw new Error(`Failed to load referenced visualization: ${detail}`)
+          })
+        : Promise.resolve(null)
+
+    let presetLoaded: Awaited<ReturnType<typeof loadReferencedMilestonePresetForChat>> | null
+    let visualizationLoaded: Awaited<ReturnType<typeof loadReferencedVisualizationForChat>> | null
+    try {
+      ;[presetLoaded, visualizationLoaded] = await Promise.all([
+        presetPromise,
+        visualizationPromise,
+      ])
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err)
+      return jsonError(detail, 502)
     }
 
-    if (referencedVisualizationId !== undefined) {
-      let loaded: Awaited<ReturnType<typeof loadReferencedVisualizationForChat>>
-      try {
-        loaded = await loadReferencedVisualizationForChat(userId, {
-          workflowId,
-          locationId: locationIdNum,
-          referencedVisualizationId,
-          analyticsRunId: analyticsRunIdNum,
-        })
-      } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err)
-        return jsonError(`Failed to load referenced visualization: ${detail}`, 502)
+    if (presetLoaded !== null) {
+      if (!presetLoaded.ok) {
+        return jsonError(presetLoaded.message, presetLoaded.status)
       }
-      if (!loaded.ok) {
-        return jsonError(loaded.message, loaded.status)
+      referenceSections.push(
+        formatPresetDataMarkdownSection(presetLoaded.title, presetLoaded.presetPayload),
+      )
+    }
+
+    if (visualizationLoaded !== null) {
+      if (!visualizationLoaded.ok) {
+        return jsonError(visualizationLoaded.message, visualizationLoaded.status)
       }
       referenceSections.push(
         formatVisualizationDataMarkdownSection({
-          title: loaded.title,
-          visualizationId: loaded.visualizationId,
-          payload: loaded.payload,
-          usedFallbackRun: loaded.usedFallbackRun,
+          title: visualizationLoaded.title,
+          visualizationId: visualizationLoaded.visualizationId,
+          payload: visualizationLoaded.payload,
+          usedFallbackRun: visualizationLoaded.usedFallbackRun,
         }),
       )
     }
@@ -261,15 +361,21 @@ export async function POST(req: Request) {
   const messageId = crypto.randomUUID()
   const textPartId = crypto.randomUUID()
   const encoder = new TextEncoder()
+  const streamCtx: StreamForwardContext = {
+    textPartId,
+    textStarted: false,
+    toolCallIds: new Map(),
+  }
 
   const stream = new ReadableStream({
     async start(controller) {
       controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.START, messageId })))
-      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_START, id: textPartId })))
 
       const reader = agentRes.body?.getReader()
       if (!reader) {
-        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
+        if (streamCtx.textStarted) {
+          controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
+        }
         controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })))
         controller.enqueue(encoder.encode(sseLine(SSE_DONE)))
         controller.close()
@@ -277,11 +383,13 @@ export async function POST(req: Request) {
       }
 
       try {
-        await parsePythonSSEAndForward(reader, controller, textPartId, encoder, req.signal)
+        await parsePythonSSEAndForward(reader, controller, streamCtx, encoder, req.signal)
         if (req.signal.aborted) {
           return
         }
-        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
+        if (streamCtx.textStarted) {
+          controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
+        }
         controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })))
         controller.enqueue(encoder.encode(sseLine(SSE_DONE)))
         controller.close()

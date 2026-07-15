@@ -57,7 +57,7 @@ export function WorkflowChatPane() {
 
   return (
     <>
-      <Conversation aria-live="polite">
+      <Conversation aria-live="polite" resize={isChatBusy ? 'instant' : 'smooth'}>
         <ConversationContent>
           {error ? (
             <Alert aria-live="polite" className="items-start" variant="destructive">
@@ -96,7 +96,11 @@ export function WorkflowChatPane() {
                           <span>{t('thinking')}</span>
                         </div>
                       ) : (
-                        <WorkflowChatMessageParts message={msg} role={msg.role} />
+                        <WorkflowChatMessageParts
+                          isStreaming={isActiveStream}
+                          message={msg}
+                          role={msg.role}
+                        />
                       )}
                     </MessageContent>
                   </Message>

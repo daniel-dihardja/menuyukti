@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from typing import Annotated, Any, Literal
 
 import httpx
@@ -13,7 +13,7 @@ from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, ConfigDict, Field
@@ -103,6 +103,57 @@ def _resolved_chat_gateway_model(raw: str | None) -> str | None:
     return s
 
 
+def _chunk_text(content: object) -> str | None:
+    """Extract streamable text from LangChain message chunk content."""
+    if not content:
+        return None
+    if isinstance(content, str):
+        return content if content else None
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                if block.get("type") == "text":
+                    text = block.get("text")
+                    if isinstance(text, str) and text:
+                        parts.append(text)
+        joined = "".join(parts)
+        return joined if joined else None
+    return None
+
+
+def _tool_name_from_call(tool_call: object) -> str | None:
+    if isinstance(tool_call, dict):
+        name = tool_call.get("name")
+        return name if isinstance(name, str) and name else None
+    name = getattr(tool_call, "name", None)
+    return name if isinstance(name, str) and name else None
+
+
+def _tool_events_from_update(update: object) -> Iterator[tuple[str, str]]:
+    """Yield (tool_start|tool_end, tool_name) pairs from a LangGraph updates chunk."""
+    if not isinstance(update, dict):
+        return
+    for state_delta in update.values():
+        if not isinstance(state_delta, dict):
+            continue
+        messages = state_delta.get("messages") or []
+        for msg in messages:
+            if isinstance(msg, AIMessage):
+                for tool_call in msg.tool_calls or []:
+                    name = _tool_name_from_call(tool_call)
+                    if name:
+                        yield ("tool_start", name)
+            elif isinstance(msg, ToolMessage):
+                name = getattr(msg, "name", None)
+                if isinstance(name, str) and name:
+                    yield ("tool_end", name)
+                else:
+                    yield ("tool_end", "tool")
+
+
 async def _stream_chat_events(
     graph: CompiledStateGraph,
     lc_messages: list[BaseMessage],
@@ -112,25 +163,19 @@ async def _stream_chat_events(
 ) -> AsyncIterator[str]:
     token = chat_http_client_var.set(http_client)
     try:
-        async for event in graph.astream_events(
+        async for mode, chunk in graph.astream(
             {"messages": lc_messages},
             runnable_config,
-            version="v2",
+            stream_mode=["messages", "updates"],
         ):
-            if event.get("event") != "on_chat_model_stream":
-                continue
-            data = event.get("data") or {}
-            chunk = data.get("chunk")
-            if chunk is None:
-                continue
-            text = getattr(chunk, "content", None)
-            if not text:
-                continue
-            if isinstance(text, str):
-                yield _sse_data_line({"token": text})
-            elif isinstance(text, list):
-                # Skip non-text blocks in streaming for now
-                continue
+            if mode == "messages":
+                msg_chunk, _metadata = chunk
+                text = _chunk_text(getattr(msg_chunk, "content", None))
+                if text:
+                    yield _sse_data_line({"token": text})
+            elif mode == "updates":
+                for status, tool_name in _tool_events_from_update(chunk):
+                    yield _sse_data_line({"status": status, "tool": tool_name})
     except asyncio.CancelledError:
         raise
     except Exception as exc:
