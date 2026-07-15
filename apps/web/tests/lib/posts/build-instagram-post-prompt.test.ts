@@ -53,6 +53,7 @@ describe('buildInstagramPostPrompt', () => {
       references: [{ type: 'template' }, { type: 'photo' }, { type: 'photo' }, { type: 'photo' }],
     })
 
+    expect(out).toContain('Match the TEMPLATE reference dimensions exactly: 1080×1350 pixels')
     expect(out).toContain('compositing real product photos into a fixed Instagram post TEMPLATE')
     expect(out).toContain('SLOT FILL — IN-PAINT, NOT OVERLAY')
     expect(out).toContain('FORBIDDEN:')
@@ -69,6 +70,19 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('Creative direction may override which product fills which placeholder')
     expect(out).toContain('CREATIVE DIRECTION (headline, product names, slot mapping')
     expect(out.endsWith('Ref 3 → center hero bowl')).toBe(true)
+  })
+
+  it('uses template output dimensions in template-composite mode when provided', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Headline: Weekend specials',
+      mode: 'template-composite',
+      references: [{ type: 'template' }, { type: 'photo' }],
+      outputDimensions: { width: 1248, height: 1664 },
+    })
+
+    expect(out).toContain('Match the TEMPLATE reference dimensions exactly: 1248×1664 pixels')
+    expect(out).toContain('aspect ratio 3:4')
+    expect(out).not.toContain('1080×1350')
   })
 
   it('includes filled edit block for filled-edit mode', () => {

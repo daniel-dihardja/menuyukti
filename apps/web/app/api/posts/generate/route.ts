@@ -1,6 +1,7 @@
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { randomUUID } from 'crypto'
 import { NextResponse } from 'next/server'
+import sharp from 'sharp'
 import { z } from 'zod'
 
 import {
@@ -24,6 +25,7 @@ import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphq
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
+  type OutputDimensions,
   type PromptReference,
 } from '@/lib/posts/build-instagram-post-prompt'
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
@@ -54,6 +56,14 @@ const bodySchema = z.object({
 function truncateStack(stack: string, max = 4000): string {
   if (stack.length <= max) return stack
   return `${stack.slice(0, max)}…(truncated)`
+}
+
+async function readImageDimensions(buffer: Buffer): Promise<OutputDimensions> {
+  const metadata = await sharp(buffer, { autoOrient: true }).metadata()
+  if (!metadata.width || !metadata.height) {
+    throw new Error('Could not read image dimensions')
+  }
+  return { width: metadata.width, height: metadata.height }
 }
 
 async function loadReferenceBuffer(
@@ -143,6 +153,7 @@ export async function POST(req: Request) {
 
   const referenceBuffers: Buffer[] = []
   const promptReferences: PromptReference[] = []
+  let templateOutputDimensions: OutputDimensions | undefined
 
   for (const reference of references) {
     if (reference.type === 'template') {
@@ -158,6 +169,19 @@ export async function POST(req: Request) {
 
       const buffer = await loadReferenceBuffer(key, name, userId)
       if (buffer instanceof NextResponse) return buffer
+      try {
+        templateOutputDimensions = await readImageDimensions(buffer)
+      } catch (err) {
+        console.error('[posts/generate] template dimension read failed', {
+          userIdPrefix: userId.slice(0, 8),
+          name,
+          message: err instanceof Error ? err.message : String(err),
+        })
+        return NextResponse.json(
+          { message: `Could not read template dimensions: ${name}` },
+          { status: 400 },
+        )
+      }
       referenceBuffers.push(buffer)
       promptReferences.push({ type: 'template' })
       continue
@@ -199,18 +223,25 @@ export async function POST(req: Request) {
     promptReferences.push({ type: 'photo' })
   }
 
+  const outputWidth = templateOutputDimensions?.width ?? POST_IMAGE_WIDTH
+  const outputHeight = templateOutputDimensions?.height ?? POST_IMAGE_HEIGHT
+
   const leonardoPrompt = buildInstagramPostPrompt({
     userPrompt: prompt,
     mode,
     references: promptReferences,
+    outputDimensions:
+      mode === 'template-composite' && templateOutputDimensions
+        ? templateOutputDimensions
+        : undefined,
   })
 
   let outBuffer: Buffer
   try {
     outBuffer = await runTextToImageWithReferences(
       leonardoPrompt,
-      POST_IMAGE_WIDTH,
-      POST_IMAGE_HEIGHT,
+      outputWidth,
+      outputHeight,
       referenceBuffers,
       undefined,
       mode === 'template-composite' ? referenceBuffers.map(() => 'HIGH' as const) : undefined,

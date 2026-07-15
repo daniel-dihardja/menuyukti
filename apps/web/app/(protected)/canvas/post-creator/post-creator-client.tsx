@@ -882,12 +882,13 @@ export function PostCreatorClient({ postId }: { postId: string | null }) {
     tToast,
   ])
 
+  const selectedPage = pages.find((page) => page.id === selectedPageId)
+
   const previewImageUrl =
     imageVersions[previewVersionIndex]?.imageUrl ??
-    pages.find((page) => page.id === selectedPageId)?.imageUrl ??
+    selectedPage?.imageUrl ??
+    templateImage?.url ??
     null
-
-  const selectedPage = pages.find((page) => page.id === selectedPageId)
   const previewMediaS3Key =
     imageVersions[previewVersionIndex]?.mediaS3Key ?? selectedPage?.mediaS3Key ?? null
   const hasPreviewableVersion = Boolean(parsePostMediaFilename(previewMediaS3Key))

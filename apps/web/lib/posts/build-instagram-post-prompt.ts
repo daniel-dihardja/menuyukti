@@ -9,14 +9,37 @@ import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 
 export type PromptReference = { type: 'template' } | { type: 'previous-result' } | { type: 'photo' }
 
+export type OutputDimensions = {
+  width: number
+  height: number
+}
+
 export type BuildInstagramPostPromptOptions = {
   userPrompt: string
   mode: GenerationMode
   references?: PromptReference[]
+  /** When compositing into a template, use the template's pixel dimensions. */
+  outputDimensions?: OutputDimensions
 }
 
 function formatInsetPercent(value: number): string {
   return value.toFixed(1)
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b)
+}
+
+function formatAspectRatio(width: number, height: number): string {
+  const divisor = gcd(width, height)
+  return `${width / divisor}:${height / divisor}`
+}
+
+function resolveOutputDimensions(dimensions?: OutputDimensions): OutputDimensions {
+  return {
+    width: dimensions?.width ?? POST_IMAGE_WIDTH,
+    height: dimensions?.height ?? POST_IMAGE_HEIGHT,
+  }
 }
 
 function slotLabel(productIndex: number): string {
@@ -171,13 +194,26 @@ function buildCompositionBlock(mode: GenerationMode): string {
 - Do not add visible guides, boxes, rectangles, borders, frames, masks, white blocks, or overlay markings of any kind.`
 }
 
-function buildOutputBlock(): string {
+function buildOutputBlock(mode: GenerationMode, dimensions?: OutputDimensions): string {
+  const { width, height } = resolveOutputDimensions(dimensions)
+  const ratio = formatAspectRatio(width, height)
+
+  if (mode === 'template-composite') {
+    return `OUTPUT:
+- Match the TEMPLATE reference dimensions exactly: ${width}×${height} pixels (aspect ratio ${ratio}).
+- Instagram-ready, no watermarks, no UI chrome.`
+  }
+
   return `OUTPUT:
-- Aspect ratio 4:5, ${POST_IMAGE_WIDTH}×${POST_IMAGE_HEIGHT} pixels.
+- Aspect ratio ${ratio}, ${width}×${height} pixels.
 - Instagram-ready, no watermarks, no UI chrome.`
 }
 
-function buildTemplateCompositePrompt(userPrompt: string, references: PromptReference[]): string {
+function buildTemplateCompositePrompt(
+  userPrompt: string,
+  references: PromptReference[],
+  outputDimensions?: OutputDimensions,
+): string {
   const trimmed = userPrompt.trim()
   const referenceBlock =
     references.length > 0
@@ -191,7 +227,7 @@ In-paint each placeholder region in the template with the corresponding product 
 Erase placeholder art completely and render the product inside the same slot bounds.
 The result must look like one finished design — not a template with photos pasted on top.
 
-${buildOutputBlock()}
+${buildOutputBlock('template-composite', outputDimensions)}
 
 ${buildSlotFillBlock()}
 
@@ -215,7 +251,11 @@ CREATIVE DIRECTION (headline, product names, slot mapping — map Ref 2, Ref 3, 
 ${trimmed}`
 }
 
-function buildFilledEditPrompt(userPrompt: string, references: PromptReference[]): string {
+function buildFilledEditPrompt(
+  userPrompt: string,
+  references: PromptReference[],
+  outputDimensions?: OutputDimensions,
+): string {
   const trimmed = userPrompt.trim()
   const referenceBlock =
     references.length > 0 ? `\n\n${buildIndexedReferenceBlock(references, 'filled-edit')}` : ''
@@ -223,7 +263,7 @@ function buildFilledEditPrompt(userPrompt: string, references: PromptReference[]
 
   return `You are editing a photorealistic Instagram portrait post image.
 
-${buildOutputBlock()}
+${buildOutputBlock('filled-edit', outputDimensions)}
 
 ${buildCompositionBlock('filled-edit')}${referenceBlock}${photographyBlock}
 
@@ -231,7 +271,11 @@ CREATIVE DIRECTION (apply only the requested edits):
 ${trimmed}`
 }
 
-function buildFreshScenePrompt(userPrompt: string, references: PromptReference[]): string {
+function buildFreshScenePrompt(
+  userPrompt: string,
+  references: PromptReference[],
+  outputDimensions?: OutputDimensions,
+): string {
   const trimmed = userPrompt.trim()
   const referenceBlock =
     references.length > 0 ? `\n\n${buildIndexedReferenceBlock(references, 'fresh-scene')}` : ''
@@ -240,7 +284,7 @@ function buildFreshScenePrompt(userPrompt: string, references: PromptReference[]
 
   return `You are generating a photorealistic Instagram portrait post image.
 
-${buildOutputBlock()}
+${buildOutputBlock('fresh-scene', outputDimensions)}
 
 ${buildCompositionBlock('fresh-scene')}${referenceBlock}${photographyBlock}
 
@@ -266,13 +310,14 @@ export function buildInstagramPostPrompt({
   userPrompt,
   mode,
   references = [],
+  outputDimensions,
 }: BuildInstagramPostPromptOptions): string {
   switch (mode) {
     case 'template-composite':
-      return buildTemplateCompositePrompt(userPrompt, references)
+      return buildTemplateCompositePrompt(userPrompt, references, outputDimensions)
     case 'filled-edit':
-      return buildFilledEditPrompt(userPrompt, references)
+      return buildFilledEditPrompt(userPrompt, references, outputDimensions)
     case 'fresh-scene':
-      return buildFreshScenePrompt(userPrompt, references)
+      return buildFreshScenePrompt(userPrompt, references, outputDimensions)
   }
 }
