@@ -46,11 +46,7 @@ def chat_tools_list() -> list:
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     """Prepend the chat system prompt."""
     messages = state.get("messages") or []
-    cfg = get_config() or {}
-    conf = cfg.get("configurable") or {}
-    raw_index = conf.get("workflow_milestone_index_md")
-    index_md = raw_index.strip() if isinstance(raw_index, str) else None
-    prompt_body = build_system_prompt(workflow_milestone_index_md=index_md)
+    prompt_body = build_system_prompt()
     return [SystemMessage(content=prompt_body), *messages]
 
 

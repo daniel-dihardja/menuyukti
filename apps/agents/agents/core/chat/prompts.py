@@ -6,6 +6,8 @@ SYSTEM_PROMPT = (
     "Answer clearly and concisely; offer sensible next steps when helpful. "
     "When milestone-specific tools are available in the conversation, use them so answers stay "
     "grounded in the user's workflow data. "
+    "Workflow milestone ids and names are not preloaded; call get_workflow_overview when listing "
+    "milestones or when the target milestone is unclear. "
     "For questions about the UI-selected milestone only, call get_milestone_data without milestone_id. "
     "For cross-milestone questions, comparisons, or when the target milestone is unclear, call "
     "get_workflow_overview first, then fetch the relevant milestone(s) with get_milestone_data, "
@@ -29,10 +31,6 @@ SYSTEM_PROMPT = (
 )
 
 
-def build_system_prompt(*, workflow_milestone_index_md: str | None = None) -> str:
+def build_system_prompt() -> str:
     """Return the system prompt for the chat graph."""
-    body = SYSTEM_PROMPT
-    index = (workflow_milestone_index_md or "").strip()
-    if index:
-        body = f"{body}\n\n{index}"
-    return body
+    return SYSTEM_PROMPT
