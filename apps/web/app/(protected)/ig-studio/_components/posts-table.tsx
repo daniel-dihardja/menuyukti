@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Pencil, SquarePen, Trash2 } from 'lucide-react'
+import { Check, Pencil, SquarePen, Trash2 } from 'lucide-react'
 
 import {
   ResponsiveActionMenu,
@@ -31,6 +32,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { Input } from '@workspace/ui/components/input'
 import { Spinner } from '@workspace/ui/components/spinner'
 import {
   Table,
@@ -72,6 +74,114 @@ function displayTitle(post: PostListItem, untitledLabel: string): string {
   return post.title?.trim() || untitledLabel
 }
 
+function storedTitle(post: PostListItem): string {
+  return post.title?.trim() ?? ''
+}
+
+type PostTitleEditorProps = {
+  post: PostListItem
+  untitledLabel: string
+  editingId: string | null
+  draftTitle: string
+  saving: boolean
+  renameError: string | null
+  editContainerRef: React.RefObject<HTMLDivElement | null>
+  onDraftChange: (value: string) => void
+  onStartEdit: (post: PostListItem) => void
+  onSaveEdit: () => void
+  onDraftKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void
+  editTitleAria: string
+  saveTitleAria: string
+  titleLabel: string
+  className?: string
+}
+
+function PostTitleEditor({
+  post,
+  untitledLabel,
+  editingId,
+  draftTitle,
+  saving,
+  renameError,
+  editContainerRef,
+  onDraftChange,
+  onStartEdit,
+  onSaveEdit,
+  onDraftKeyDown,
+  editTitleAria,
+  saveTitleAria,
+  titleLabel,
+  className,
+}: PostTitleEditorProps) {
+  const title = displayTitle(post, untitledLabel)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editingId !== post.id) return
+    const input = inputRef.current
+    if (!input) return
+    input.focus()
+    input.select()
+  }, [editingId, post.id])
+
+  if (editingId === post.id) {
+    return (
+      <div ref={editContainerRef} className={`flex flex-col gap-1 ${className ?? ''}`}>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Input
+            ref={inputRef}
+            aria-invalid={renameError ? true : undefined}
+            aria-label={titleLabel}
+            name="postTitle"
+            className="min-w-0 flex-1"
+            disabled={saving}
+            onChange={(e) => onDraftChange(e.target.value)}
+            onKeyDown={onDraftKeyDown}
+            value={draftTitle}
+          />
+          <Button
+            aria-label={saveTitleAria}
+            disabled={saving || draftTitle.trim().length === 0}
+            onClick={() => void onSaveEdit()}
+            size="icon-sm"
+            type="button"
+            variant="secondary"
+          >
+            {saving ? <Spinner /> : <Check aria-hidden />}
+          </Button>
+        </div>
+        {renameError ? (
+          <p className="text-destructive text-sm" role="alert">
+            {renameError}
+          </p>
+        ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <div className={`flex min-w-0 items-center gap-1 ${className ?? ''}`}>
+      <Link
+        className="min-w-0 flex-1 truncate font-medium text-foreground underline-offset-4 hover:underline"
+        href={routes.igStudioDetail(post.id)}
+        title={title}
+      >
+        {title}
+      </Link>
+      <Button
+        aria-label={editTitleAria}
+        className="shrink-0"
+        onClick={() => onStartEdit(post)}
+        size="icon-sm"
+        type="button"
+        variant="ghost"
+      >
+        <Pencil aria-hidden />
+      </Button>
+    </div>
+  )
+}
+
 function PostsEmptyState() {
   const t = useTranslations('posts.empty')
 
@@ -104,6 +214,11 @@ export function PostsTable({ posts }: PostsTableProps) {
   }, [])
 
   const [rows, setRows] = useState(posts)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draftTitle, setDraftTitle] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const editContainerRef = useRef<HTMLDivElement>(null)
   const [pendingDelete, setPendingDelete] = useState<PostListItem | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -111,6 +226,119 @@ export function PostsTable({ posts }: PostsTableProps) {
   useEffect(() => {
     setRows(posts)
   }, [posts])
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null)
+    setDraftTitle('')
+    setRenameError(null)
+  }, [])
+
+  useEffect(() => {
+    if (editingId === null) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        cancelEdit()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [editingId, cancelEdit])
+
+  useEffect(() => {
+    if (editingId === null) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (saving) return
+      const el = editContainerRef.current
+      if (!el?.contains(e.target as Node)) {
+        cancelEdit()
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [editingId, saving, cancelEdit])
+
+  const startEdit = useCallback((post: PostListItem) => {
+    setEditingId(post.id)
+    setDraftTitle(storedTitle(post))
+    setRenameError(null)
+  }, [])
+
+  const saveEdit = useCallback(async () => {
+    if (editingId === null || saving) return
+    const trimmed = draftTitle.trim()
+    if (!trimmed) return
+
+    const row = rows.find((post) => post.id === editingId)
+    if (row && trimmed === storedTitle(row)) {
+      cancelEdit()
+      return
+    }
+
+    setSaving(true)
+    setRenameError(null)
+    try {
+      const result = await apiFetch<{ title?: string; updatedAt?: string | null }>(
+        `/api/posts/${encodeURIComponent(editingId)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: trimmed }),
+        },
+        t('renameError'),
+      )
+      if (!result.ok) {
+        setRenameError(result.error)
+        return
+      }
+      const nextTitle = result.data.title ?? trimmed
+      setRows((current) =>
+        current.map((post) =>
+          post.id === editingId
+            ? {
+                ...post,
+                title: nextTitle,
+                updatedAt: result.data.updatedAt ?? post.updatedAt,
+              }
+            : post,
+        ),
+      )
+      cancelEdit()
+      router.refresh()
+    } catch {
+      setRenameError(t('renameError'))
+    } finally {
+      setSaving(false)
+    }
+  }, [cancelEdit, draftTitle, editingId, rows, router, saving, t])
+
+  const onDraftKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        void saveEdit()
+      }
+    },
+    [saveEdit],
+  )
+
+  const titleEditorProps = useMemo(
+    () => ({
+      editingId,
+      draftTitle,
+      saving,
+      renameError,
+      editContainerRef,
+      onDraftChange: setDraftTitle,
+      onStartEdit: startEdit,
+      onSaveEdit: saveEdit,
+      onDraftKeyDown,
+      editTitleAria: t('editTitleAria'),
+      saveTitleAria: t('saveTitleAria'),
+      titleLabel: t('title'),
+      untitledLabel: t('untitled'),
+    }),
+    [draftTitle, editingId, onDraftKeyDown, renameError, saveEdit, saving, startEdit, t],
+  )
 
   const actionMenuProps = useMemo(
     () => ({
@@ -184,9 +412,7 @@ export function PostsTable({ posts }: PostsTableProps) {
               className="flex flex-col gap-2 rounded-lg border border-border px-4 py-3"
             >
               <div className="flex min-w-0 items-start justify-between gap-2">
-                <span className="truncate font-medium" title={title}>
-                  {title}
-                </span>
+                <PostTitleEditor post={post} className="min-w-0 flex-1" {...titleEditorProps} />
                 <Badge variant={statusBadgeVariant(post.status)} className="shrink-0">
                   {tStatus(post.status as 'draft' | 'published', {
                     defaultValue: post.status,
@@ -225,10 +451,8 @@ export function PostsTable({ posts }: PostsTableProps) {
               return (
                 <TableRow key={post.id}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <span className="truncate font-medium" title={title}>
-                      {title}
-                    </span>
+                  <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
+                    <PostTitleEditor post={post} {...titleEditorProps} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={statusBadgeVariant(post.status)} className="w-fit">

@@ -810,6 +810,9 @@
       "deleteConfirmCancel": "Cancel",
       "deleteConfirmAction": "Delete post",
       "deleteError": "Could not delete the post. Please try again.",
+      "editTitleAria": "Edit post title",
+      "saveTitleAria": "Save post title",
+      "renameError": "Could not save the title. Please try again.",
       "statusLabels": {
         "draft": "Draft",
         "published": "Published"

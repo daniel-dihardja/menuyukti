@@ -506,6 +506,7 @@ type Mutation {
   deletePostPage(pageId: ID!): Boolean!
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
+  updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String): PostPageType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
@@ -851,7 +852,7 @@ type Query {
   """
   Return location profile and latest analytics-run inputs for IG Plan in one request. Uses a single OrderFact load for slot demand, menu engineering matrix, and slot menu candidates. Returns null when the caller cannot access the location.
   """
-  igPlanInputs(locationId: Int!, analyticsRunId: ID, options: IgPlanInputsOptionsInput = null): IgPlanInputsType
+  igPlanInputs(locationId: Int!, analyticsRunId: ID = null, options: IgPlanInputsOptionsInput = null): IgPlanInputsType
 }
 
 """Per-menu revenue comparison between two analytics periods."""
