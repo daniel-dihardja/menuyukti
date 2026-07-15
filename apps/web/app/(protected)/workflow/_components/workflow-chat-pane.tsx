@@ -49,6 +49,7 @@ export function WorkflowChatPane() {
     handleSubmit,
     handleSelectSlashCommand,
     handleSelectMention,
+    handleSelectVisualizationMention,
     handleRetry,
     handleClearChat,
     stop,
@@ -125,6 +126,7 @@ export function WorkflowChatPane() {
             mentionAriaLabel={tMention('ariaLabel')}
             mentionEmptyLabel={tMention('empty')}
             onSelectMention={handleSelectMention}
+            onSelectVisualizationMention={handleSelectVisualizationMention}
             onSelectSlashCommand={(cmd) => void handleSelectSlashCommand(cmd)}
             onValueChange={setText}
             slashAriaLabel={tSlash('ariaLabel')}

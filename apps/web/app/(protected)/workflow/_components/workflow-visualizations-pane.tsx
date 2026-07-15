@@ -14,7 +14,7 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 
 import { useTimelineWorkspaceState } from './timeline-context'
-import { useWorkflowVisualizations } from './use-workflow-visualizations'
+import { useWorkflowVisualizationsState } from './workflow-visualizations-context'
 import {
   getAvailableCatalogEntries,
   type WorkflowVisualizationId,
@@ -54,7 +54,7 @@ export function WorkflowVisualizationsPane({ workflowId }: WorkflowVisualization
   const t = useTranslations('analytics.workflows.visualizations')
   const { analyticsRunId, locationId } = useTimelineWorkspaceState()
   const { addedIds, addVisualization, removeVisualization, hydrated } =
-    useWorkflowVisualizations(workflowId)
+    useWorkflowVisualizationsState()
 
   const availableEntries = getAvailableCatalogEntries(addedIds)
   const canAdd = availableEntries.length > 0

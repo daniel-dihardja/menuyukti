@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { WORKFLOW_VISUALIZATION_ID_VALUES } from '@/lib/workflow/workflow-visualization-ids'
+
 const messagePartSchema = z
   .object({
     type: z.string(),
@@ -22,6 +24,10 @@ export const chatRequestBodySchema = z.object({
   locationId: z.string().regex(/^\d+$/, 'Invalid location id').optional(),
   /** When set, the BFF loads this milestone’s preset from GraphQL and inlines it into the user message (requires workflowId + locationId). */
   presetReferenceMilestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
+  /** When set, the BFF loads this attached visualization and inlines analytics data (requires workflowId + locationId). */
+  referencedVisualizationId: z.enum(WORKFLOW_VISUALIZATION_ID_VALUES).optional(),
+  /** Workflow-linked analytics run; used when loading visualization references. */
+  analyticsRunId: z.string().regex(/^\d+$/, 'Invalid analytics run id').optional(),
   /** Opaque id for `/agent` chat (no workflow); required by agents when `workflowId` is absent. */
   agentThreadId: z.string().min(1).optional(),
   /**

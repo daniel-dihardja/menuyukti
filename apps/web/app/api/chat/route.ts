@@ -1,8 +1,11 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { UIMessage } from 'ai'
-import { buildUserContentWithReferencedPreset } from '@/lib/chat/build-user-content-with-referenced-preset'
+import { buildUserContentWithReferencedSources } from '@/lib/chat/build-user-content-with-referenced-sources'
+import { formatPresetDataMarkdownSection } from '@/lib/chat/format-payload-for-chat'
+import { formatVisualizationDataMarkdownSection } from '@/lib/chat/format-visualization-for-chat'
 import { loadReferencedMilestonePresetForChat } from '@/lib/chat/referenced-milestone-for-chat'
+import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { chatRequestBodySchema } from './schema'
 
@@ -133,6 +136,8 @@ export async function POST(req: Request) {
     milestoneId,
     locationId,
     presetReferenceMilestoneId,
+    referencedVisualizationId,
+    analyticsRunId,
     agentThreadId,
     workflowChatSessionId,
     model,
@@ -149,30 +154,71 @@ export async function POST(req: Request) {
   }
 
   let messagesForPython = pythonMessages
-  if (presetReferenceMilestoneId !== undefined) {
+  const referenceSections: string[] = []
+
+  if (presetReferenceMilestoneId !== undefined || referencedVisualizationId !== undefined) {
     if (workflowId === undefined || locationId === undefined) {
-      return jsonError('presetReferenceMilestoneId requires workflowId and locationId', 400)
+      return jsonError(
+        'Referenced milestone or visualization requires workflowId and locationId',
+        400,
+      )
     }
-    let loaded: Awaited<ReturnType<typeof loadReferencedMilestonePresetForChat>>
-    try {
-      loaded = await loadReferencedMilestonePresetForChat(userId, {
-        workflowId,
-        locationId: Number(locationId),
-        presetReferenceMilestoneId,
-      })
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err)
-      return jsonError(`Failed to load referenced milestone: ${detail}`, 502)
+    const locationIdNum = Number(locationId)
+    const analyticsRunIdNum = analyticsRunId !== undefined ? Number(analyticsRunId) : null
+
+    if (presetReferenceMilestoneId !== undefined) {
+      let loaded: Awaited<ReturnType<typeof loadReferencedMilestonePresetForChat>>
+      try {
+        loaded = await loadReferencedMilestonePresetForChat(userId, {
+          workflowId,
+          locationId: locationIdNum,
+          presetReferenceMilestoneId,
+        })
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err)
+        return jsonError(`Failed to load referenced milestone: ${detail}`, 502)
+      }
+      if (!loaded.ok) {
+        return jsonError(loaded.message, loaded.status)
+      }
+      referenceSections.push(formatPresetDataMarkdownSection(loaded.title, loaded.presetPayload))
     }
-    if (!loaded.ok) {
-      return jsonError(loaded.message, loaded.status)
+
+    if (referencedVisualizationId !== undefined) {
+      let loaded: Awaited<ReturnType<typeof loadReferencedVisualizationForChat>>
+      try {
+        loaded = await loadReferencedVisualizationForChat(userId, {
+          workflowId,
+          locationId: locationIdNum,
+          referencedVisualizationId,
+          analyticsRunId: analyticsRunIdNum,
+        })
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err)
+        return jsonError(`Failed to load referenced visualization: ${detail}`, 502)
+      }
+      if (!loaded.ok) {
+        return jsonError(loaded.message, loaded.status)
+      }
+      referenceSections.push(
+        formatVisualizationDataMarkdownSection({
+          title: loaded.title,
+          visualizationId: loaded.visualizationId,
+          payload: loaded.payload,
+          usedFallbackRun: loaded.usedFallbackRun,
+        }),
+      )
     }
-    const merged = buildUserContentWithReferencedPreset({
-      userText: pythonMessages[0]!.content,
-      milestoneTitle: loaded.title,
-      presetPayload: loaded.presetPayload,
-    })
-    messagesForPython = [{ role: 'user' as const, content: merged }]
+
+    messagesForPython = [
+      {
+        role: 'user' as const,
+        content: buildUserContentWithReferencedSources({
+          userText: pythonMessages[0]!.content,
+          sections: referenceSections,
+        }),
+      },
+    ]
   }
 
   let agentRes: Response

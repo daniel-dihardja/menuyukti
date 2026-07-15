@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
 
@@ -26,14 +27,23 @@ export type WorkflowChatSlashCommand = {
 export type UseWorkflowChatOptions = {
   workflowId: string
   locationId: number
+  analyticsRunId: number | null
   selectedMilestoneId: string | null
   milestoneTitles: ReadonlyArray<{ id: string; title: string | null | undefined }>
   onHydrateAfterChat: (milestoneId: string) => void
 }
 
+function appendMentionToText(current: string, label: string): string {
+  const normalized = label.replace(/\s+/g, ' ').trim()
+  const mention = normalized.startsWith('@') ? normalized : `@${normalized}`
+  const prefix = current.length > 0 && !current.endsWith(' ') ? `${current} ` : current
+  return `${prefix}${mention} `
+}
+
 export function useWorkflowChat({
   workflowId,
   locationId,
+  analyticsRunId,
   selectedMilestoneId,
   milestoneTitles,
   onHydrateAfterChat,
@@ -44,6 +54,7 @@ export function useWorkflowChat({
   const chatApiContextRef = useRef({
     workflowId,
     locationId,
+    analyticsRunId,
     milestoneId: selectedMilestoneId,
   })
   const workflowChatSessionIdRef = useRef<string | null>(null)
@@ -53,9 +64,11 @@ export function useWorkflowChat({
   const selectedChatModelRef = useRef<ChatGatewayModelId>(DEFAULT_CHAT_GATEWAY_MODEL)
   selectedChatModelRef.current = selectedChatModel
   const presetReferenceMilestoneIdRef = useRef<string | null>(null)
+  const referencedVisualizationIdRef = useRef<WorkflowVisualizationId | null>(null)
   chatApiContextRef.current = {
     workflowId,
     locationId,
+    analyticsRunId,
     milestoneId: selectedMilestoneId,
   }
 
@@ -75,7 +88,9 @@ export function useWorkflowChat({
           const ctx = chatApiContextRef.current
           const lastUser = [...messages].reverse().find((m) => m.role === 'user')
           const presetRef = presetReferenceMilestoneIdRef.current
+          const vizRef = referencedVisualizationIdRef.current
           presetReferenceMilestoneIdRef.current = null
+          referencedVisualizationIdRef.current = null
           const sessionId = workflowChatSessionIdRef.current
           return {
             body: {
@@ -84,7 +99,11 @@ export function useWorkflowChat({
               workflowId: ctx.workflowId,
               locationId: String(ctx.locationId),
               ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
+              ...(ctx.analyticsRunId !== null
+                ? { analyticsRunId: String(ctx.analyticsRunId) }
+                : {}),
               ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
+              ...(vizRef !== null ? { referencedVisualizationId: vizRef } : {}),
               ...(sessionId !== null ? { workflowChatSessionId: sessionId } : {}),
               model: selectedChatModelRef.current,
             },
@@ -131,11 +150,7 @@ export function useWorkflowChat({
   }, [status, error, selectedMilestoneId, onHydrateAfterChat])
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const next = event.target.value
-    setText(next)
-    if (!next.trimStart().startsWith('@')) {
-      presetReferenceMilestoneIdRef.current = null
-    }
+    setText(event.target.value)
   }, [])
 
   const handleSubmit = useCallback(
@@ -175,11 +190,21 @@ export function useWorkflowChat({
       }
       const rawTitle = milestoneTitles.find((m) => m.id === milestoneId)?.title?.trim() ?? ''
       const label = rawTitle.length > 0 ? rawTitle.replace(/\s+/g, ' ') : milestoneId
-      const atMessage = label.startsWith('@') ? label : `@${label}`
       presetReferenceMilestoneIdRef.current = milestoneId
-      setText(`${atMessage} `)
+      setText((current) => appendMentionToText(current, label))
     },
     [milestoneTitles, status],
+  )
+
+  const handleSelectVisualizationMention = useCallback(
+    (visualizationId: WorkflowVisualizationId, title: string) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      referencedVisualizationIdRef.current = visualizationId
+      setText((current) => appendMentionToText(current, title))
+    },
+    [status],
   )
 
   const handleRetry = useCallback(async () => {
@@ -193,6 +218,7 @@ export function useWorkflowChat({
     setMessages([])
     setText('')
     presetReferenceMilestoneIdRef.current = null
+    referencedVisualizationIdRef.current = null
     const sid = crypto.randomUUID()
     workflowChatSessionIdRef.current = sid
     if (typeof window !== 'undefined') {
@@ -224,6 +250,7 @@ export function useWorkflowChat({
       handleSubmit,
       handleSelectSlashCommand,
       handleSelectMention,
+      handleSelectVisualizationMention,
       handleRetry,
       handleClearChat,
       stop,

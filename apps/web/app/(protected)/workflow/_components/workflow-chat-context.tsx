@@ -22,6 +22,8 @@ export type WorkflowChatState = {
   slashCommands: WorkflowChatSlashCommand[]
 }
 
+import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
+
 export type WorkflowChatActions = {
   setText: (value: string) => void
   setSelectedChatModel: (model: ChatGatewayModelId) => void
@@ -29,6 +31,10 @@ export type WorkflowChatActions = {
   handleSubmit: (message: PromptInputMessage) => Promise<void>
   handleSelectSlashCommand: (command: string) => Promise<void>
   handleSelectMention: (milestoneId: string) => void
+  handleSelectVisualizationMention: (
+    visualizationId: WorkflowVisualizationId,
+    title: string,
+  ) => void
   handleRetry: () => Promise<void>
   handleClearChat: () => void
   stop: () => void

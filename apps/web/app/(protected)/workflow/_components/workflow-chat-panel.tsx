@@ -31,6 +31,7 @@ import { WorkflowChatLayout } from './workflow-chat-layout'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
 import { WorkflowChatProvider } from './workflow-chat-context'
 import { WorkflowSidePanel } from './workflow-side-panel'
+import { WorkflowVisualizationsProvider } from './workflow-visualizations-context'
 import { useWorkflowChat } from './use-workflow-chat'
 
 import {
@@ -189,6 +190,7 @@ export function WorkflowChatPanel({
   const workflowChat = useWorkflowChat({
     workflowId,
     locationId,
+    analyticsRunId,
     selectedMilestoneId,
     milestoneTitles,
     onHydrateAfterChat,
@@ -249,20 +251,22 @@ export function WorkflowChatPanel({
       workspace={timelineSlices.workspace}
     >
       <WorkflowChatProvider actions={workflowChat.actions} state={workflowChat.state}>
-        <WorkflowChatMentionProvider>
-          <WorkflowChatLayout
-            chatPane={<WorkflowSidePanel workflowId={workflowId} />}
-            mobileChatOpen={mobileChatOpen}
-            onMobileChatOpenChange={setMobileChatOpen}
-            previewPane={<WorkflowPreviewPanelBodyLazy />}
-            previewPanelRef={previewPanelRef}
-            timelinePane={
-              <TimelineWorkspace
-                timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
-              />
-            }
-          />
-        </WorkflowChatMentionProvider>
+        <WorkflowVisualizationsProvider workflowId={workflowId}>
+          <WorkflowChatMentionProvider>
+            <WorkflowChatLayout
+              chatPane={<WorkflowSidePanel workflowId={workflowId} />}
+              mobileChatOpen={mobileChatOpen}
+              onMobileChatOpenChange={setMobileChatOpen}
+              previewPane={<WorkflowPreviewPanelBodyLazy />}
+              previewPanelRef={previewPanelRef}
+              timelinePane={
+                <TimelineWorkspace
+                  timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
+                />
+              }
+            />
+          </WorkflowChatMentionProvider>
+        </WorkflowVisualizationsProvider>
       </WorkflowChatProvider>
     </TimelineProvider>
   )
