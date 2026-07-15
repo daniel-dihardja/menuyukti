@@ -114,11 +114,10 @@ def _chunk_text(content: object) -> str | None:
         for block in content:
             if isinstance(block, str):
                 parts.append(block)
-            elif isinstance(block, dict):
-                if block.get("type") == "text":
-                    text = block.get("text")
-                    if isinstance(text, str) and text:
-                        parts.append(text)
+            elif isinstance(block, dict) and block.get("type") == "text":
+                text = block.get("text")
+                if isinstance(text, str) and text:
+                    parts.append(text)
         joined = "".join(parts)
         return joined if joined else None
     return None
