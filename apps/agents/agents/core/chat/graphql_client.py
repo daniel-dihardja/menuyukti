@@ -79,27 +79,6 @@ async def replace_pass_criteria(
         raise RuntimeError(msg)
 
 
-async def update_milestone_preset_data(
-    milestone_id: str,
-    payload: Any,
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-) -> dict[str, Any]:
-    """Update ``milestonePresetData`` on a milestone node via ``updateNode``."""
-    upd = await graphql_post(
-        client,
-        UPDATE_NODE_MUTATION,
-        {"id": milestone_id, "data": {"milestonePresetData": payload}},
-        user_id,
-    )
-    node = upd.get("updateNode")
-    if not isinstance(node, dict):
-        msg = "updateNode returned invalid payload"
-        raise RuntimeError(msg)
-    return node
-
-
 async def update_milestone_input(
     milestone_id: str,
     payload: Any,

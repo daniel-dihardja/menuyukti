@@ -48,12 +48,6 @@ export const CHAT_TOOLS_REGISTRY: readonly ChatToolMeta[] = [
       'Apply JSON-pointer patch operations to the milestone Input tab and persist through GraphQL.',
   },
   {
-    id: 'update_milestone_preset_data',
-    name: 'Update milestone preset data',
-    description:
-      'Apply JSON-pointer patch operations to milestone preset data (Data tab) and persist through GraphQL.',
-  },
-  {
     id: 'search_web',
     name: 'Search web',
     description:

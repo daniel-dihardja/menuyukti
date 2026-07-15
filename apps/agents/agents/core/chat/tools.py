@@ -12,13 +12,9 @@ from agents_app.agents.core.chat.graphql_client import (
 from agents_app.agents.core.chat.graphql_client import (
     update_milestone_input as persist_milestone_input,
 )
-from agents_app.agents.core.chat.graphql_client import (
-    update_milestone_preset_data as persist_milestone_preset_data,
-)
 from agents_app.agents.core.chat.http_context import get_chat_http_client
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
-from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.graphql_operations import (
     MILESTONE_HELP_QUERY,
     MILESTONE_INPUT_QUERY,
@@ -38,22 +34,6 @@ _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
         "milestoneResult",
     },
 )
-
-_PRESET_TO_SKILL_ID: dict[str, str] = {
-    "restaurant_campaign_brief": "campaign_brief",
-    "promotion_candidates": "promotion_candidates",
-    "menu_tagger": "menu_tagger",
-    "menu_clusterer": "menu_clusterer",
-    "scheduler": "scheduler",
-    "culture_hooks": "culture_hooks",
-    "ig_profile": "ig_profile",
-    "ig_plan": "ig_plan",
-    "ig_menu_picker": "ig_menu_picker",
-    "ig_format": "ig_format",
-    "ig_text": "ig_text",
-    "dates": "dates",
-    "public_holidays": "public_holidays",
-}
 
 
 def _format_json(data: Any) -> str:
@@ -702,105 +682,4 @@ async def update_milestone_input(
     )
     return (
         f"Saved milestoneInput for milestone id={milestone_id} with {len(operations)} operation(s)."
-    )
-
-
-@tool
-async def update_milestone_preset_data(
-    operations: list[dict[str, Any]],
-    dry_run: bool = False,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Apply partial updates to selected milestonePresetData using JSON-pointer-like patch operations.
-
-    Operation shape:
-    - ``op``: ``add`` | ``replace`` | ``remove``
-    - ``path``: JSON pointer (example: ``/intersections/1/topic``)
-    - ``value``: required for ``add`` and ``replace``; ignored for ``remove``.
-    """
-    c = (config or {}).get("configurable") or {}
-    milestone_id = c.get("milestone_id")
-    location_id = c.get("location_id")
-    user_id = c.get("user_id")
-    if not milestone_id or location_id is None or not user_id:
-        return (
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Ask the user to select a milestone first."
-        )
-    if not isinstance(operations, list) or len(operations) == 0:
-        return "At least one patch operation is required."
-
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(str(milestone_id), str(user_id), client=client)
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
-
-    raw_data = node.get("data")
-    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
-    raw_preset = milestone_node_data.get("presetId")
-    preset_id = raw_preset.strip() if isinstance(raw_preset, str) else ""
-    skill_id = _PRESET_TO_SKILL_ID.get(preset_id)
-    if not skill_id:
-        return (
-            "Error: this milestone preset is not supported for partial chat updates yet. "
-            f"(presetId={preset_id or 'unknown'})"
-        )
-
-    current_payload = node.get("milestonePresetData")
-    if current_payload is None:
-        working_payload: Any = {}
-    elif isinstance(current_payload, (dict, list)):
-        working_payload = deepcopy(current_payload)
-    else:
-        return "Error: current milestonePresetData is not a JSON object or array."
-
-    for i, op_row in enumerate(operations, start=1):
-        if not isinstance(op_row, dict):
-            return f"Operation #{i} must be an object."
-        op = str(op_row.get("op") or "").strip().lower()
-        if op not in {"add", "replace", "remove"}:
-            return f"Operation #{i} has unsupported op {op!r}."
-        path = op_row.get("path")
-        if not isinstance(path, str):
-            return f"Operation #{i} requires string field 'path'."
-        if op in {"add", "replace"} and "value" not in op_row:
-            return f"Operation #{i} requires 'value' for op={op!r}."
-        value = op_row.get("value")
-        next_payload, err = _apply_patch_operation(
-            working_payload,
-            op=op,  # type: ignore[arg-type]
-            path=path,
-            value=value,
-        )
-        if err is not None or next_payload is None:
-            return f"Operation #{i} failed: {err or 'invalid operation'}"
-        working_payload = next_payload
-
-    normalized, validation_error = validate_skill_output(skill_id, working_payload)
-    if validation_error is not None or normalized is None:
-        return (
-            "Patched data is invalid for this milestone preset. "
-            f"Validation error: {validation_error or 'unknown error'}"
-        )
-
-    if dry_run:
-        return (
-            f"Validated {len(operations)} operation(s) for preset '{skill_id}'. "
-            "No data was saved because dry_run=true."
-        )
-
-    await persist_milestone_preset_data(
-        str(milestone_id),
-        normalized,
-        str(user_id),
-        client=client,
-    )
-    return (
-        f"Saved milestonePresetData for milestone id={milestone_id} "
-        f"with {len(operations)} operation(s)."
     )

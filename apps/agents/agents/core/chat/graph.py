@@ -12,7 +12,6 @@ from agents_app.agents.core.chat.tools import (
     get_milestone_preset_data_for_milestone,
     get_milestone_preset_data_json,
     update_milestone_input,
-    update_milestone_preset_data,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 from agents_app.models.llm_config import chat_llm_for_gateway_model
@@ -35,7 +34,6 @@ def chat_tools_list() -> list:
         get_milestone_preset_data_json,
         get_milestone_preset_data_for_milestone,
         update_milestone_input,
-        update_milestone_preset_data,
     ]
     web = make_search_web_tool()
     if web is not None:

@@ -18,8 +18,6 @@ SYSTEM_PROMPT = (
     "return that tool result directly. "
     "When users request edits to selected milestone input data, use update_milestone_input "
     "with minimal patch operations (add/replace/remove) rather than rewriting the whole payload. "
-    "When users request edits to selected milestone preset data, use update_milestone_preset_data "
-    "with minimal patch operations (add/replace/remove) rather than rewriting the whole payload. "
     "If the target path or item is ambiguous, ask one concise clarification before updating."
 )
 
