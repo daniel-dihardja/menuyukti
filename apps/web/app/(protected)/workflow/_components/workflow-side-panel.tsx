@@ -11,11 +11,7 @@ import { WorkflowVisualizationsPane } from './workflow-visualizations-pane'
 
 export type WorkflowSidePanelTab = 'chat' | 'visualizations'
 
-export type WorkflowSidePanelProps = {
-  workflowId: string
-}
-
-export function WorkflowSidePanel({ workflowId }: WorkflowSidePanelProps) {
+export function WorkflowSidePanel() {
   const t = useTranslations('analytics.workflows.sidePanel')
   const [activeTab, setActiveTab] = useState<WorkflowSidePanelTab>('chat')
 
@@ -50,9 +46,7 @@ export function WorkflowSidePanel({ workflowId }: WorkflowSidePanelProps) {
       </TabsContent>
 
       <TabsContent className="mt-0 min-h-0 flex-1 overflow-y-auto" value="visualizations">
-        {activeTab === 'visualizations' ? (
-          <WorkflowVisualizationsPane workflowId={workflowId} />
-        ) : null}
+        {activeTab === 'visualizations' ? <WorkflowVisualizationsPane /> : null}
       </TabsContent>
     </Tabs>
   )

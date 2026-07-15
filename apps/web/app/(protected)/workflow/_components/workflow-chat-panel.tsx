@@ -28,10 +28,10 @@ import type { TimelineMilestone } from './timeline-workspace'
 import type { MilestoneInput } from './timeline/types'
 import { TimelineWorkspace } from './timeline-workspace'
 import { WorkflowChatLayout } from './workflow-chat-layout'
+import { WorkflowChatHost } from './workflow-chat-host'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
-import { WorkflowChatProvider } from './workflow-chat-context'
 import { WorkflowSidePanel } from './workflow-side-panel'
-import { useWorkflowChat } from './use-workflow-chat'
+import { WorkflowVisualizationsProvider } from './workflow-visualizations-context'
 
 import {
   workflowMilestoneReducer,
@@ -103,6 +103,7 @@ export function WorkflowChatPanel({
 }: WorkflowChatPanelProps) {
   const t = useTranslations('analytics.workflows.chat')
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
+  const [chatBusy, setChatBusy] = useState(false)
   const [, startPreviewTransition] = useTransition()
 
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
@@ -186,20 +187,19 @@ export function WorkflowChatPanel({
     [handleHydrateMilestoneData],
   )
 
-  const workflowChat = useWorkflowChat({
-    workflowId,
-    locationId,
-    selectedMilestoneId,
-    milestoneTitles,
-    onHydrateAfterChat,
-  })
+  const onPrefetchMilestoneReference = useCallback(
+    (milestoneId: string) => {
+      void handleHydrateMilestoneData(milestoneId)
+    },
+    [handleHydrateMilestoneData],
+  )
 
   const timelineSlices = useWorkflowTimelineProviderSlices(
     milestoneUi,
     workflowId,
     locationId,
     analyticsRunId,
-    workflowChat.state.isChatBusy,
+    chatBusy,
     selectedMilestoneId,
     handleSelectMilestone,
     timelineOps,
@@ -248,22 +248,33 @@ export function WorkflowChatPanel({
       chat={timelineSlices.chat}
       workspace={timelineSlices.workspace}
     >
-      <WorkflowChatProvider actions={workflowChat.actions} state={workflowChat.state}>
-        <WorkflowChatMentionProvider>
-          <WorkflowChatLayout
-            chatPane={<WorkflowSidePanel workflowId={workflowId} />}
-            mobileChatOpen={mobileChatOpen}
-            onMobileChatOpenChange={setMobileChatOpen}
-            previewPane={<WorkflowPreviewPanelBodyLazy />}
-            previewPanelRef={previewPanelRef}
-            timelinePane={
-              <TimelineWorkspace
-                timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
-              />
-            }
-          />
-        </WorkflowChatMentionProvider>
-      </WorkflowChatProvider>
+      <WorkflowChatHost
+        analyticsRunId={analyticsRunId}
+        locationId={locationId}
+        milestoneTitles={milestoneTitles}
+        onBusyChange={setChatBusy}
+        onHydrateAfterChat={onHydrateAfterChat}
+        onPrefetchMilestoneReference={onPrefetchMilestoneReference}
+        selectedMilestoneId={selectedMilestoneId}
+        workflowId={workflowId}
+      >
+        <WorkflowVisualizationsProvider workflowId={workflowId}>
+          <WorkflowChatMentionProvider milestoneTitles={milestoneTitles}>
+            <WorkflowChatLayout
+              chatPane={<WorkflowSidePanel />}
+              mobileChatOpen={mobileChatOpen}
+              onMobileChatOpenChange={setMobileChatOpen}
+              previewPane={<WorkflowPreviewPanelBodyLazy />}
+              previewPanelRef={previewPanelRef}
+              timelinePane={
+                <TimelineWorkspace
+                  timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
+                />
+              }
+            />
+          </WorkflowChatMentionProvider>
+        </WorkflowVisualizationsProvider>
+      </WorkflowChatHost>
     </TimelineProvider>
   )
 }

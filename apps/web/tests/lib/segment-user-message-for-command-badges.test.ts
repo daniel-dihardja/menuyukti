@@ -49,4 +49,17 @@ describe('segmentUserMessageForCommandBadges', () => {
       { kind: 'text', value: ' hi' },
     ])
   })
+
+  it('badges attached visualization titles alongside milestones', () => {
+    expect(
+      segmentUserMessageForCommandBadges('@Campaign Brief @Pair lift matrix question', {
+        mentionTitles: ['Campaign Brief', 'Pair lift matrix'],
+      }),
+    ).toEqual([
+      { kind: 'mention', value: '@Campaign Brief' },
+      { kind: 'text', value: ' ' },
+      { kind: 'mention', value: '@Pair lift matrix' },
+      { kind: 'text', value: ' question' },
+    ])
+  })
 })

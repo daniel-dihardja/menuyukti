@@ -24,6 +24,9 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react'
+import { useTranslations } from 'next-intl'
+
+import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
 export type SlashCommandDefinition = {
   id: string
@@ -36,6 +39,10 @@ export type MilestoneMentionItem = {
   title: string
 }
 
+type MentionMenuEntry =
+  | { kind: 'milestone'; id: string; title: string }
+  | { kind: 'visualization'; id: WorkflowVisualizationId; title: string }
+
 export type WorkflowChatComposerMenusProps = {
   value: string
   onValueChange: (next: string) => void
@@ -43,6 +50,7 @@ export type WorkflowChatComposerMenusProps = {
   onSelectSlashCommand: (command: string) => void
   slashAriaLabel: string
   onSelectMention: (milestoneId: string) => void
+  onSelectVisualizationMention: (visualizationId: WorkflowVisualizationId, title: string) => void
   mentionAriaLabel: string
   mentionEmptyLabel: string
   children: ReactNode
@@ -55,16 +63,23 @@ export function WorkflowChatComposerMenus({
   onSelectSlashCommand,
   slashAriaLabel,
   onSelectMention,
+  onSelectVisualizationMention,
   mentionAriaLabel,
   mentionEmptyLabel,
   children,
 }: WorkflowChatComposerMenusProps) {
-  const { milestones, selectedMilestoneId, mentionMenusDisabled } = useWorkflowChatMentionItems()
+  const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
+  const { milestones, visualizations, selectedMilestoneId, mentionMenusDisabled } =
+    useWorkflowChatMentionItems()
+
   const otherMilestones = useMemo(
     () =>
-      milestones.filter((m) =>
-        selectedMilestoneId === null ? true : m.id !== selectedMilestoneId,
-      ),
+      milestones
+        .filter((m) => (selectedMilestoneId === null ? true : m.id !== selectedMilestoneId))
+        .map((m) => ({
+          id: m.id,
+          title: m.title?.trim() ?? m.id,
+        })),
     [milestones, selectedMilestoneId],
   )
 
@@ -79,20 +94,43 @@ export function WorkflowChatComposerMenus({
 
   /** trimEnd so `@Title ` after picking still matches; avoid trim() stripping intentional leading spaces in rare cases. */
   const mentionFilterQuery = value.startsWith('@') ? value.slice(1).toLowerCase().trimEnd() : ''
-  const filteredMentions = useMemo(() => {
+
+  const filteredMilestones = useMemo(() => {
     if (!value.startsWith('@')) {
       return []
     }
     return otherMilestones.filter((m) => m.title.toLowerCase().includes(mentionFilterQuery))
   }, [mentionFilterQuery, otherMilestones, value])
 
+  const filteredVisualizations = useMemo(() => {
+    if (!value.startsWith('@')) {
+      return []
+    }
+    return visualizations.filter((v) => v.title.toLowerCase().includes(mentionFilterQuery))
+  }, [mentionFilterQuery, value, visualizations])
+
+  const flatMentionEntries = useMemo((): MentionMenuEntry[] => {
+    const milestoneEntries: MentionMenuEntry[] = filteredMilestones.map((m) => ({
+      kind: 'milestone',
+      id: m.id,
+      title: m.title,
+    }))
+    const visualizationEntries: MentionMenuEntry[] = filteredVisualizations.map((v) => ({
+      kind: 'visualization',
+      id: v.id as WorkflowVisualizationId,
+      title: v.title,
+    }))
+    return [...milestoneEntries, ...visualizationEntries]
+  }, [filteredMilestones, filteredVisualizations])
+
   const slashMenuOpen = value.startsWith('/') && filteredSlash.length > 0
+  const hasMentionCandidates = otherMilestones.length > 0 || visualizations.length > 0
   /** Hide popover once the typed tail is not a mention prefix (e.g. `@Brief what is…`) so CommandEmpty does not flash. */
   const mentionMenuOpen =
     value.startsWith('@') &&
     !mentionMenusDisabled &&
-    otherMilestones.length > 0 &&
-    (filteredMentions.length > 0 || mentionFilterQuery.length === 0)
+    hasMentionCandidates &&
+    (flatMentionEntries.length > 0 || mentionFilterQuery.length === 0)
 
   const menuOpen = slashMenuOpen || mentionMenuOpen
   const panelAriaLabel = slashMenuOpen ? slashAriaLabel : mentionAriaLabel
@@ -113,12 +151,23 @@ export function WorkflowChatComposerMenus({
       setMentionActiveIndex(0)
       return
     }
-    if (filteredMentions.length === 0) {
+    if (flatMentionEntries.length === 0) {
       setMentionActiveIndex(0)
       return
     }
-    setMentionActiveIndex((prev) => Math.min(prev, filteredMentions.length - 1))
-  }, [filteredMentions.length, mentionMenuOpen])
+    setMentionActiveIndex((prev) => Math.min(prev, flatMentionEntries.length - 1))
+  }, [flatMentionEntries.length, mentionMenuOpen])
+
+  const selectMentionEntry = useCallback(
+    (entry: MentionMenuEntry) => {
+      if (entry.kind === 'milestone') {
+        onSelectMention(entry.id)
+        return
+      }
+      onSelectVisualizationMention(entry.id, entry.title)
+    },
+    [onSelectMention, onSelectVisualizationMention],
+  )
 
   const handleKeyDownCapture = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -127,16 +176,16 @@ export function WorkflowChatComposerMenus({
       }
 
       if (mentionMenuOpen) {
-        if (filteredMentions.length > 0) {
+        if (flatMentionEntries.length > 0) {
           if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setMentionActiveIndex((i) => (i + 1) % filteredMentions.length)
+            setMentionActiveIndex((i) => (i + 1) % flatMentionEntries.length)
             return
           }
           if (e.key === 'ArrowUp') {
             e.preventDefault()
             setMentionActiveIndex(
-              (i) => (i - 1 + filteredMentions.length) % filteredMentions.length,
+              (i) => (i - 1 + flatMentionEntries.length) % flatMentionEntries.length,
             )
             return
           }
@@ -147,9 +196,9 @@ export function WorkflowChatComposerMenus({
           }
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
-            const m = filteredMentions[mentionActiveIndex]
-            if (m) {
-              onSelectMention(m.id)
+            const entry = flatMentionEntries[mentionActiveIndex]
+            if (entry) {
+              selectMentionEntry(entry)
             }
             return
           }
@@ -186,17 +235,19 @@ export function WorkflowChatComposerMenus({
       }
     },
     [
-      filteredMentions,
+      flatMentionEntries,
       filteredSlash,
       mentionActiveIndex,
       mentionMenuOpen,
-      onSelectMention,
       onSelectSlashCommand,
       onValueChange,
+      selectMentionEntry,
       slashActiveIndex,
       slashMenuOpen,
     ],
   )
+
+  let flatIndex = -1
 
   return (
     <Popover open={menuOpen}>
@@ -235,25 +286,69 @@ export function WorkflowChatComposerMenus({
               </CommandGroup>
             ) : (
               <>
-                {filteredMentions.length > 0 ? (
-                  <CommandGroup aria-label={mentionAriaLabel}>
-                    {filteredMentions.map((m, i) => (
-                      <CommandItem
-                        key={m.id}
-                        className={cn(
-                          'w-full items-start',
-                          i === mentionActiveIndex && 'bg-accent text-accent-foreground',
-                        )}
-                        onSelect={() => onSelectMention(m.id)}
-                        value={m.title}
+                {flatMentionEntries.length > 0 ? (
+                  <>
+                    {filteredMilestones.length > 0 ? (
+                      <CommandGroup
+                        heading={tMention('milestonesGroup')}
+                        aria-label={mentionAriaLabel}
                       >
-                        <span className="font-medium">{m.title}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                        {filteredMilestones.map((m) => {
+                          flatIndex += 1
+                          const activeIndex = flatIndex
+                          return (
+                            <CommandItem
+                              key={`milestone-${m.id}`}
+                              className={cn(
+                                'w-full items-start',
+                                activeIndex === mentionActiveIndex &&
+                                  'bg-accent text-accent-foreground',
+                              )}
+                              onSelect={() => onSelectMention(m.id)}
+                              value={m.title}
+                            >
+                              <span className="font-medium">{m.title}</span>
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    ) : null}
+                    {filteredVisualizations.length > 0 ? (
+                      <CommandGroup
+                        heading={tMention('visualizationsGroup')}
+                        aria-label={tMention('visualizationsAriaLabel')}
+                      >
+                        {filteredVisualizations.map((v) => {
+                          flatIndex += 1
+                          const activeIndex = flatIndex
+                          return (
+                            <CommandItem
+                              key={`viz-${v.id}`}
+                              className={cn(
+                                'w-full items-start',
+                                activeIndex === mentionActiveIndex &&
+                                  'bg-accent text-accent-foreground',
+                              )}
+                              onSelect={() =>
+                                onSelectVisualizationMention(
+                                  v.id as WorkflowVisualizationId,
+                                  v.title,
+                                )
+                              }
+                              value={v.title}
+                            >
+                              <span className="font-medium">{v.title}</span>
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    ) : null}
+                  </>
                 ) : (
                   <CommandEmpty className="px-3 py-6 text-center text-muted-foreground text-sm">
-                    {mentionEmptyLabel}
+                    {visualizations.length === 0 && otherMilestones.length > 0
+                      ? tMention('noAttachedCharts')
+                      : mentionEmptyLabel}
                   </CommandEmpty>
                 )}
               </>

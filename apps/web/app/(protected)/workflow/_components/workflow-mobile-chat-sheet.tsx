@@ -14,7 +14,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { ChevronUp, MessageSquare } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
-import { useWorkflowChatState } from './workflow-chat-context'
+import { useWorkflowChatMeta } from './workflow-chat-context'
 
 export type WorkflowMobileChatSheetProps = {
   open: boolean
@@ -28,7 +28,7 @@ export function WorkflowMobileChatSheet({
   children,
 }: WorkflowMobileChatSheetProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const { isChatBusy, hasMessages } = useWorkflowChatState()
+  const { isChatBusy, hasMessages } = useWorkflowChatMeta()
 
   return (
     <>
@@ -68,7 +68,6 @@ export function WorkflowMobileChatSheet({
 
       <Sheet onOpenChange={onOpenChange} open={open}>
         <SheetContent
-          forceMount
           id="workflow-mobile-chat"
           side="bottom"
           className={cn(
@@ -86,7 +85,9 @@ export function WorkflowMobileChatSheet({
               </SheetDescription>
             </SheetHeader>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col divide-y overflow-hidden">{children}</div>
+          <div className="flex min-h-0 flex-1 flex-col divide-y overflow-hidden">
+            {open ? children : null}
+          </div>
         </SheetContent>
       </Sheet>
     </>

@@ -1,24 +1,22 @@
-export type WorkflowVisualizationId =
-  | 'venue_slot_strength_heatmap'
-  | 'menu_item_heatmap'
-  | 'pair_lift_matrix_heatmap'
+import {
+  WORKFLOW_VISUALIZATION_ID_VALUES,
+  isWorkflowVisualizationId,
+  type WorkflowVisualizationId,
+} from '@/lib/workflow/workflow-visualization-ids'
+
+export type { WorkflowVisualizationId }
+export { WORKFLOW_VISUALIZATION_ID_VALUES, isWorkflowVisualizationId }
 
 export type WorkflowVisualizationCatalogEntry = {
   id: WorkflowVisualizationId
 }
 
-export const WORKFLOW_VISUALIZATION_CATALOG: WorkflowVisualizationCatalogEntry[] = [
-  { id: 'venue_slot_strength_heatmap' },
-  { id: 'menu_item_heatmap' },
-  { id: 'pair_lift_matrix_heatmap' },
+export const WORKFLOW_VISUALIZATION_CATALOG: WorkflowVisualizationCatalogEntry[] =
+  WORKFLOW_VISUALIZATION_ID_VALUES.map((id) => ({ id }))
+
+export const WORKFLOW_VISUALIZATION_IDS: WorkflowVisualizationId[] = [
+  ...WORKFLOW_VISUALIZATION_ID_VALUES,
 ]
-
-export const WORKFLOW_VISUALIZATION_IDS: WorkflowVisualizationId[] =
-  WORKFLOW_VISUALIZATION_CATALOG.map((entry) => entry.id)
-
-export function isWorkflowVisualizationId(value: string): value is WorkflowVisualizationId {
-  return WORKFLOW_VISUALIZATION_IDS.includes(value as WorkflowVisualizationId)
-}
 
 export function addVisualizationId(
   addedIds: WorkflowVisualizationId[],

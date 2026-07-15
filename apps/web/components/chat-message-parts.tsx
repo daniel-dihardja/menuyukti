@@ -1,7 +1,7 @@
 'use client'
 
 import type { DynamicToolUIPart, ToolUIPart, UIMessage, UITools } from 'ai'
-import { isReasoningUIPart, isToolUIPart } from 'ai'
+import { isToolUIPart } from 'ai'
 import {
   Reasoning,
   ReasoningContent,
@@ -16,18 +16,17 @@ import {
 } from '@workspace/ui/components/ai-elements/tool'
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
+import { memo } from 'react'
 
+import {
+  isReasoningStreaming,
+  joinReasoningText,
+  partitionMessageParts,
+} from '@/lib/chat/partition-message-parts'
 import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
 
-const MarkdownMessage = dynamic(
-  () => import('@/components/markdown-message').then((mod) => mod.MarkdownMessage),
-  {
-    loading: () => <MessageResponse className="text-muted-foreground">...</MessageResponse>,
-  },
-)
-
 function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
   const header =
     part.type === 'dynamic-tool' ? (
       <ToolHeader state={part.state} toolName={part.toolName} type="dynamic-tool" />
@@ -36,7 +35,7 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
     )
 
   return (
-    <Tool defaultOpen={part.state !== 'output-available'}>
+    <Tool defaultOpen={isInFlight}>
       {header}
       <ToolContent>
         {'input' in part && part.input !== undefined ? <ToolInput input={part.input} /> : null}
@@ -49,29 +48,46 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
   )
 }
 
-export function ChatMessageParts({
+function AssistantTextPart({ text }: { text: string }) {
+  return <MessageResponse>{text}</MessageResponse>
+}
+
+export const ChatMessageParts = memo(function ChatMessageParts({
   message,
   role,
   mentionTitles,
+  isStreaming = false,
 }: {
   message: UIMessage
   role: UIMessage['role']
   /** When set, multi-word `@Milestone title` spans match these titles (campaign chat). */
   mentionTitles?: string[]
+  /** When true, assistant text uses incremental Streamdown rendering. */
+  isStreaming?: boolean
 }) {
   const parts = message.parts
 
   if (!parts?.length) {
     const fallback = getPlainText(message)
     if (role === 'assistant') {
-      return <MarkdownMessage content={fallback} />
+      return <AssistantTextPart text={fallback} />
     }
     return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={fallback} />
   }
 
+  const { reasoningParts, otherParts } = partitionMessageParts(parts)
+  const reasoningText = joinReasoningText(reasoningParts)
+  const reasoningStreaming = isReasoningStreaming(reasoningParts, isStreaming)
+
   return (
     <>
-      {parts.map((part, index) => (
+      {reasoningParts.length > 0 ? (
+        <Reasoning isStreaming={reasoningStreaming}>
+          <ReasoningTrigger />
+          <ReasoningContent>{reasoningText}</ReasoningContent>
+        </Reasoning>
+      ) : null}
+      {otherParts.map((part, index) => (
         <MessagePartRenderer
           key={`${message.id}-${index}`}
           mentionTitles={mentionTitles}
@@ -81,7 +97,7 @@ export function ChatMessageParts({
       ))}
     </>
   )
-}
+})
 
 function getPlainText(message: UIMessage): string {
   return (
@@ -92,7 +108,7 @@ function getPlainText(message: UIMessage): string {
   )
 }
 
-function MessagePartRenderer({
+const MessagePartRenderer = memo(function MessagePartRenderer({
   part,
   role,
   mentionTitles,
@@ -104,18 +120,9 @@ function MessagePartRenderer({
   if (part.type === 'text') {
     const text = part.text
     if (role === 'assistant') {
-      return <MarkdownMessage content={text} />
+      return <AssistantTextPart text={text} />
     }
     return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={text} />
-  }
-
-  if (isReasoningUIPart(part)) {
-    return (
-      <Reasoning isStreaming={part.state === 'streaming'}>
-        <ReasoningTrigger />
-        <ReasoningContent>{part.text}</ReasoningContent>
-      </Reasoning>
-    )
   }
 
   if (isToolUIPart(part)) {
@@ -162,4 +169,4 @@ function MessagePartRenderer({
   }
 
   return null
-}
+})

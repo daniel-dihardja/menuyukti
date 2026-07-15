@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import {
   WORKFLOW_VISUALIZATION_CATALOG,
+  WORKFLOW_VISUALIZATION_IDS,
   addVisualizationId,
   getAvailableCatalogEntries,
   isWorkflowVisualizationId,
   parseStoredVisualizationIds,
   removeVisualizationId,
 } from '@/app/(protected)/workflow/_components/workflow-visualization-catalog'
+import { WORKFLOW_VISUALIZATION_ID_VALUES } from '@/lib/workflow/workflow-visualization-ids'
 
 describe('workflow-visualization-catalog', () => {
   it('includes venue slot strength, menu item heatmap, and pair lift matrix in the catalog', () => {
@@ -74,5 +76,12 @@ describe('workflow-visualization-catalog', () => {
     expect(isWorkflowVisualizationId('menu_item_heatmap')).toBe(true)
     expect(isWorkflowVisualizationId('pair_lift_matrix_heatmap')).toBe(true)
     expect(isWorkflowVisualizationId('other')).toBe(false)
+  })
+
+  it('keeps catalog ids in sync with shared lib values', () => {
+    expect(WORKFLOW_VISUALIZATION_IDS).toEqual([...WORKFLOW_VISUALIZATION_ID_VALUES])
+    expect(WORKFLOW_VISUALIZATION_CATALOG.map((entry) => entry.id)).toEqual([
+      ...WORKFLOW_VISUALIZATION_ID_VALUES,
+    ])
   })
 })
