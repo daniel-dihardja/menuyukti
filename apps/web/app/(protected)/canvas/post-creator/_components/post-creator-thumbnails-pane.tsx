@@ -7,64 +7,25 @@ import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { usePostCreator } from '../_context/use-post-creator'
 import {
   POST_IMAGE_ASPECT_RATIO,
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from './post-creator-constants'
 
-export type PostCreatorReferenceImage = {
-  name: string
-  url: string
-  enabled: boolean
-}
+export type {
+  PostCreatorImageVersion,
+  PostCreatorPage,
+  PostCreatorReferenceImage,
+} from '@/lib/posts/post-creator-types'
 
-export type PostCreatorImageVersion = {
-  id: string
-  mediaS3Key: string
-  imageUrl: string
-  createdAt: string
-}
-
-export type PostCreatorPage = {
-  id: string
-  sortOrder: number
-  prompt: string | null
-  imageUrl: string | null
-  mediaS3Key?: string | null
-  imageVersions?: PostCreatorImageVersion[]
-  previewVersionIndex?: number
-  referenceImages?: PostCreatorReferenceImage[]
-  templateImage?: PostCreatorReferenceImage | null
-  usePreviousResult?: boolean
-}
-
-export type PostCreatorThumbnailsPaneProps = {
-  pages: PostCreatorPage[]
-  selectedPageId: string | null
-  onSelectPage: (pageId: string) => void
-  onAddPage?: () => void
-  onDuplicatePage?: () => void
-  canAddPage?: boolean
-  canDuplicatePage?: boolean
-  isAddingPage?: boolean
-  isDuplicatingPage?: boolean
-  isLoading?: boolean
-}
-
-export function PostCreatorThumbnailsPane({
-  pages,
-  selectedPageId,
-  onSelectPage,
-  onAddPage,
-  onDuplicatePage,
-  canAddPage = false,
-  canDuplicatePage = false,
-  isAddingPage = false,
-  isDuplicatingPage = false,
-  isLoading = false,
-}: PostCreatorThumbnailsPaneProps) {
+export function PostCreatorThumbnailsPane() {
   const t = useTranslations('postCreator.thumbnails')
+  const { state, actions, meta } = usePostCreator()
+  const { pages, selectedPageId, isAddingPage, isDuplicatingPage, isLoadingPost: isLoading } = state
+  const { selectPage, addPage, duplicatePage } = actions
+  const { canPersistPages, canAddPage, canDuplicatePage } = meta
 
   if (isLoading) {
     return (
@@ -106,7 +67,7 @@ export function PostCreatorThumbnailsPane({
             type="button"
             aria-label={label}
             aria-pressed={isSelected}
-            onClick={() => onSelectPage(page.id)}
+            onClick={() => selectPage(page.id)}
             className={cn(
               'relative w-full shrink-0 overflow-hidden rounded-md border bg-muted/20 transition-colors',
               isSelected
@@ -133,13 +94,13 @@ export function PostCreatorThumbnailsPane({
           </button>
         )
       })}
-      {onAddPage ? (
+      {canPersistPages ? (
         <div className="flex shrink-0 flex-col items-center gap-2 pt-1">
           <button
             type="button"
             aria-label={isAddingPage ? t('addingPage') : t('addPage')}
             disabled={!canAddPage || isAddingPage || isDuplicatingPage || isLoading}
-            onClick={onAddPage}
+            onClick={() => void addPage()}
             className={cn(
               'flex size-10 items-center justify-center rounded-full border border-dashed border-border/60 bg-muted/20 text-muted-foreground transition-colors',
               'hover:border-border hover:bg-muted/40 hover:text-foreground',
@@ -149,25 +110,23 @@ export function PostCreatorThumbnailsPane({
           >
             {isAddingPage ? <Spinner /> : <Plus aria-hidden className="size-5" />}
           </button>
-          {onDuplicatePage ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-auto px-2 py-1 text-xs"
-              disabled={!canDuplicatePage || isAddingPage || isDuplicatingPage || isLoading}
-              onClick={onDuplicatePage}
-            >
-              {isDuplicatingPage ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Spinner />
-                  {t('duplicatingPage')}
-                </span>
-              ) : (
-                t('duplicatePage')
-              )}
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-auto px-2 py-1 text-xs"
+            disabled={!canDuplicatePage || isAddingPage || isDuplicatingPage || isLoading}
+            onClick={() => void duplicatePage()}
+          >
+            {isDuplicatingPage ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Spinner />
+                {t('duplicatingPage')}
+              </span>
+            ) : (
+              t('duplicatePage')
+            )}
+          </Button>
         </div>
       ) : null}
     </section>

@@ -12,58 +12,37 @@ import { Label } from '@workspace/ui/components/label'
 import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
 
+import { usePostCreator } from '../_context/use-post-creator'
 import { PostCreatorImagePicker } from './post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from './post-creator-reference-thumbnails'
 import { PostCreatorTemplatePicker } from './post-creator-template-picker'
-import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
 
-export type PostCreatorPromptPaneProps = {
-  prompt: string
-  onPromptChange: (value: string) => void
-  onSubmit: () => void
-  isGenerating: boolean
-  disabled?: boolean
-  templateImage: PostCreatorReferenceImage | null
-  onSelectTemplate: (design: { name: string; url: string }) => void
-  onClearTemplate: () => void
-  referenceImages: PostCreatorReferenceImage[]
-  onAddReference: (photo: PostCreatorReferenceImage) => void
-  onRemoveReference: (name: string) => void
-  onToggleReferenceEnabled: (name: string, enabled: boolean) => void
-  hasPreviewableVersion: boolean
-  usePreviousResult: boolean
-  onUsePreviousResultChange: (value: boolean) => void
-  generationReferenceSummary: string | null
-}
-
-export function PostCreatorPromptPane({
-  prompt,
-  onPromptChange,
-  onSubmit,
-  isGenerating,
-  disabled = false,
-  templateImage,
-  onSelectTemplate,
-  onClearTemplate,
-  referenceImages,
-  onAddReference,
-  onRemoveReference,
-  onToggleReferenceEnabled,
-  hasPreviewableVersion,
-  usePreviousResult,
-  onUsePreviousResultChange,
-  generationReferenceSummary,
-}: PostCreatorPromptPaneProps) {
+export function PostCreatorPromptPane() {
   const t = useTranslations('postCreator.prompt')
+  const { state, actions, meta } = usePostCreator()
+  const { prompt, isGenerating, templateImage, referenceImages, usePreviousResult } = state
+  const {
+    setPrompt,
+    generate,
+    addReference,
+    removeReference,
+    toggleReferenceEnabled,
+    setUsePreviousResult,
+    selectTemplate,
+    clearTemplate,
+  } = actions
+  const { hasPreviewableVersion, generationReferenceSummary } = meta
+
   const previousResultId = useId()
   const promptId = useId()
   const templateFieldId = useId()
-  const canSubmit = prompt.trim().length > 0 && !isGenerating && !disabled
+  const disabled = isGenerating
+  const canSubmit = prompt.trim().length > 0 && !isGenerating
   const selectedNames = useMemo(
     () => new Set(referenceImages.map((image) => image.name)),
     [referenceImages],
   )
-  const previousResultDisabled = disabled || isGenerating || templateImage != null
+  const previousResultDisabled = disabled || templateImage != null
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden p-4 pt-0">
@@ -71,32 +50,32 @@ export function PostCreatorPromptPane({
         className="flex min-h-0 flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault()
-          if (canSubmit) onSubmit()
+          if (canSubmit) void generate()
         }}
       >
         <Field className="gap-1.5">
           <FieldLabel htmlFor={templateFieldId}>{t('template.label')}</FieldLabel>
           <PostCreatorTemplatePicker
-            disabled={disabled || isGenerating}
+            disabled={disabled}
             emptyLabel={t('template.empty')}
             fromMediaLabel={t('template.fromMedia')}
             pickLabel={t('template.pick')}
             pickerAriaLabel={t('template.pickerAriaLabel')}
             removeLabel={t('template.remove')}
             templateImage={templateImage}
-            onClearTemplate={onClearTemplate}
-            onSelectTemplate={onSelectTemplate}
+            onClearTemplate={clearTemplate}
+            onSelectTemplate={selectTemplate}
           />
         </Field>
         <Field className="gap-1.5">
           <FieldLabel htmlFor={promptId}>{t('label')}</FieldLabel>
           <PostCreatorImagePicker
-            disabled={disabled || isGenerating}
+            disabled={disabled}
             emptyLabel={t('picker.empty')}
             maxReachedLabel={t('picker.maxReached')}
-            onAddReference={onAddReference}
+            onAddReference={addReference}
             onUploadError={() => toast.error(t('picker.uploadError'))}
-            onValueChange={onPromptChange}
+            onValueChange={setPrompt}
             pickerAriaLabel={t('picker.ariaLabel')}
             selectedNames={selectedNames}
             uploadLabel={t('picker.upload')}
@@ -106,8 +85,8 @@ export function PostCreatorPromptPane({
             <Textarea
               id={promptId}
               className="min-h-[160px] resize-y"
-              disabled={disabled || isGenerating}
-              onChange={(e) => onPromptChange(e.target.value)}
+              disabled={disabled}
+              onChange={(e) => setPrompt(e.target.value)}
               placeholder={t('placeholder')}
               value={prompt}
             />
@@ -115,15 +94,15 @@ export function PostCreatorPromptPane({
         </Field>
         <PostCreatorReferenceThumbnails
           ariaLabel={t('references.ariaLabel')}
-          disabled={disabled || isGenerating}
+          disabled={disabled}
           images={referenceImages}
           includeLabel={t('references.include')}
           indexLabel={(index) => {
             const refIndex = templateImage ? index + 2 : index + 1
             return t('references.indexLabel', { index: refIndex })
           }}
-          onRemove={onRemoveReference}
-          onToggleEnabled={onToggleReferenceEnabled}
+          onRemove={removeReference}
+          onToggleEnabled={toggleReferenceEnabled}
           removeLabel={t('references.remove')}
         />
         {hasPreviewableVersion && !templateImage ? (
@@ -138,7 +117,7 @@ export function PostCreatorPromptPane({
               id={previousResultId}
               checked={usePreviousResult}
               disabled={previousResultDisabled}
-              onCheckedChange={onUsePreviousResultChange}
+              onCheckedChange={setUsePreviousResult}
             />
           </div>
         ) : null}

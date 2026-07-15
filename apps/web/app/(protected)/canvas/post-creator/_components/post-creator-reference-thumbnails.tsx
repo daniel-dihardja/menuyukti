@@ -5,7 +5,7 @@ import { Checkbox } from '@workspace/ui/components/checkbox'
 import { cn } from '@workspace/ui/lib/utils'
 import { X } from 'lucide-react'
 
-import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
+import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 
 const REFERENCE_THUMB_SIZE = 56
 

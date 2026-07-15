@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { z } from 'zod'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { PostCreatorDynamic } from '@/app/(protected)/canvas/post-creator/post-creator-dynamic'
+import { PersistedPostCreator } from '@/app/(protected)/canvas/post-creator/post-creator-dynamic'
 import { routes } from '@/lib/routes'
 
 const postIdParamSchema = z.string().regex(/^\d+$/, 'Invalid post id')
@@ -52,7 +52,7 @@ export default async function Page({ params }: PageProps) {
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <PostCreatorDynamic postId={parsed.data} />
+      <PersistedPostCreator postId={parsed.data} />
     </AnalyticsPageShell>
   )
 }

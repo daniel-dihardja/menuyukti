@@ -5,11 +5,9 @@ import { useTranslations } from 'next-intl'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
 import { POST_IMAGE_HEIGHT, POST_IMAGE_WIDTH } from './post-creator-constants'
-import { PostCreatorPromptPane, type PostCreatorPromptPaneProps } from './post-creator-prompt-pane'
+import { PostCreatorPromptPane } from './post-creator-prompt-pane'
 
-export type PostCreatorRightPaneProps = PostCreatorPromptPaneProps
-
-export function PostCreatorRightPane(props: PostCreatorRightPaneProps) {
+export function PostCreatorRightPane() {
   const tTabs = useTranslations('postCreator.tabs')
   const tSettings = useTranslations('postCreator.settings')
   const tPreview = useTranslations('postCreator.preview')
@@ -35,7 +33,7 @@ export function PostCreatorRightPane(props: PostCreatorRightPaneProps) {
           value="prompt"
           className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden"
         >
-          <PostCreatorPromptPane {...props} />
+          <PostCreatorPromptPane />
         </TabsContent>
         <TabsContent
           value="settings"

@@ -1,4 +1,4 @@
-import type { PostCreatorReferenceImage } from '@/app/(protected)/canvas/post-creator/_components/post-creator-thumbnails-pane'
+import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 

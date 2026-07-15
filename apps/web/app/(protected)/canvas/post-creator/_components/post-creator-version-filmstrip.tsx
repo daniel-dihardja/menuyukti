@@ -11,7 +11,7 @@ import {
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from './post-creator-constants'
-import type { PostCreatorImageVersion } from './post-creator-thumbnails-pane'
+import type { PostCreatorImageVersion } from '@/lib/posts/post-creator-types'
 
 export type PostCreatorVersionFilmstripProps = {
   versions: PostCreatorImageVersion[]

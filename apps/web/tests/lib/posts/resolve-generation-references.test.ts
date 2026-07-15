@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { PostCreatorReferenceImage } from '@/app/(protected)/canvas/post-creator/_components/post-creator-thumbnails-pane'
+import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
 
 const USER_ID = 'user_test_123'

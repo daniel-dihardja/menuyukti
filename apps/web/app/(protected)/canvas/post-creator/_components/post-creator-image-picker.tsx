@@ -30,7 +30,7 @@ import {
 import { loadMedia, uploadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 
 import { MAX_ATTACHED_REFERENCE_PHOTOS } from './post-creator-constants'
-import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
+import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 
 const MENTION_AT_END = /(?:^|\s)@([^\s@]*)$/
 

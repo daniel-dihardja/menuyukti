@@ -10,30 +10,15 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Switch } from '@workspace/ui/components/switch'
 import { Button } from '@workspace/ui/components/button'
 
+import { usePostCreator } from '../_context/use-post-creator'
 import {
   INSTAGRAM_GRID_THUMBNAIL_INSET_X,
   INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from './post-creator-constants'
-import type { PostCreatorImageVersion } from './post-creator-thumbnails-pane'
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
 import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
-
-export type PostCreatorPreviewPaneProps = {
-  imageUrl?: string | null
-  mediaS3Key?: string | null
-  imageVersions?: PostCreatorImageVersion[]
-  previewVersionIndex?: number
-  postImageVersionIndex?: number
-  onPreviewVersionIndex?: (index: number) => void
-  onUseAsPostImage?: () => void
-  onDeleteVersion?: () => void
-  canRemoveEmptyPage?: boolean
-  isLoading?: boolean
-  isCommittingPostImage?: boolean
-  isDeletingVersion?: boolean
-}
 
 const previewContentMaxWidthClassName = 'w-full max-w-[min(100%,calc((100vh-12rem)*0.8))]'
 
@@ -42,21 +27,25 @@ const previewShellClassName = `flex min-h-0 min-w-0 flex-1 flex-col items-center
 const previewFrameClassName =
   'relative aspect-[4/5] max-h-full max-w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
 
-export function PostCreatorPreviewPane({
-  imageUrl,
-  mediaS3Key,
-  imageVersions = [],
-  previewVersionIndex = 0,
-  postImageVersionIndex = 0,
-  onPreviewVersionIndex,
-  onUseAsPostImage,
-  onDeleteVersion,
-  canRemoveEmptyPage = false,
-  isLoading = false,
-  isCommittingPostImage = false,
-  isDeletingVersion = false,
-}: PostCreatorPreviewPaneProps) {
+export function PostCreatorPreviewPane() {
   const t = useTranslations('postCreator.preview')
+  const { state, actions, meta } = usePostCreator()
+  const {
+    imageVersions,
+    previewVersionIndex,
+    postImageVersionIndex,
+    isGenerating: isLoading,
+    isCommittingPostImage,
+    isDeletingVersion,
+  } = state
+  const { previewVersion: onPreviewVersionIndex, commitPostImage, requestDelete } = actions
+  const {
+    previewImageUrl: imageUrl,
+    selectedPageMediaS3Key: mediaS3Key,
+    canRemoveEmptyPage,
+    canDelete,
+  } = meta
+
   const gridSafeZoneToggleId = useId()
   const [showGridSafeZone, setShowGridSafeZone] = useState(true)
 
@@ -75,9 +64,11 @@ export function PostCreatorPreviewPane({
   const previewImageUrl = previewVersion?.imageUrl ?? null
   const hasImage = Boolean(previewImageUrl)
   const showLoadingPlaceholder = isLoading && !hasImage
-  const showVersionNav = versions.length > 1 && onPreviewVersionIndex
-  const canCommitPostImage =
-    showVersionNav && onUseAsPostImage && previewVersionIndex !== postImageVersionIndex
+  const showVersionNav = versions.length > 1
+  const canCommitPostImage = showVersionNav && previewVersionIndex !== postImageVersionIndex
+
+  const onDeleteVersion = canDelete ? requestDelete : undefined
+  const onUseAsPostImage = canCommitPostImage ? () => void commitPostImage() : undefined
 
   const canDeleteVersion =
     hasImage &&
@@ -99,33 +90,31 @@ export function PostCreatorPreviewPane({
 
   const previewVersionAt = useCallback(
     (index: number) => {
-      if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
+      if (isCommittingPostImage || isLoading || isDeletingVersion) return
       onPreviewVersionIndex(index)
     },
     [isCommittingPostImage, isDeletingVersion, isLoading, onPreviewVersionIndex],
   )
 
   const goPrev = useCallback(() => {
-    if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
+    if (isCommittingPostImage || isLoading || isDeletingVersion) return
     previewVersionAt(previewVersionIndex === 0 ? versions.length - 1 : previewVersionIndex - 1)
   }, [
     isCommittingPostImage,
     isDeletingVersion,
     isLoading,
-    onPreviewVersionIndex,
     previewVersionAt,
     previewVersionIndex,
     versions.length,
   ])
 
   const goNext = useCallback(() => {
-    if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
+    if (isCommittingPostImage || isLoading || isDeletingVersion) return
     previewVersionAt(previewVersionIndex === versions.length - 1 ? 0 : previewVersionIndex + 1)
   }, [
     isCommittingPostImage,
     isDeletingVersion,
     isLoading,
-    onPreviewVersionIndex,
     previewVersionAt,
     previewVersionIndex,
     versions.length,

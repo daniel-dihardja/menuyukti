@@ -21,7 +21,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { loadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 
-import type { PostCreatorReferenceImage } from './post-creator-thumbnails-pane'
+import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 
 export type PostCreatorTemplatePickerProps = {
   templateImage: PostCreatorReferenceImage | null
