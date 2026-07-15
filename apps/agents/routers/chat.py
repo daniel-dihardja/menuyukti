@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 from collections.abc import AsyncIterator, Iterator
 from typing import Annotated, Any, Literal
 
@@ -21,6 +22,7 @@ from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter()
+_logger = logging.getLogger(__name__)
 
 
 class ChatMessage(BaseModel):
@@ -104,7 +106,15 @@ async def _workflow_milestone_index_md(
 ) -> str | None:
     if not workflow_id or location_id is None or not user_id:
         return None
-    tree = await fetch_workflow_campaign_tree(str(workflow_id), str(user_id), client=client)
+    try:
+        tree = await fetch_workflow_campaign_tree(str(workflow_id), str(user_id), client=client)
+    except Exception as exc:
+        _logger.debug(
+            "Skipping workflow milestone index prefetch for workflow_id=%s: %s",
+            workflow_id,
+            exc,
+        )
+        return None
     if not tree:
         return None
     workflow = tree.get("workflow")
