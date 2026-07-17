@@ -4,8 +4,9 @@ import type { UIMessage } from 'ai'
 import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/prompt-input'
 import { createContext, use, useMemo, type ReactNode } from 'react'
 
-import type { WorkflowChatSlashCommand } from './use-workflow-chat'
+import type { PendingMediaAttachment, WorkflowChatSlashCommand } from './use-workflow-chat'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
 export type WorkflowChatStatus = 'submitted' | 'streaming' | 'ready' | 'error'
@@ -23,6 +24,7 @@ export type WorkflowChatComposerState = {
   selectedChatModel: ChatGatewayModelId
   isSubmitDisabled: boolean
   slashCommands: WorkflowChatSlashCommand[]
+  pendingMediaAttachments: PendingMediaAttachment[]
 }
 
 /** @deprecated Prefer useWorkflowChatMessages + useWorkflowChatComposerState */
@@ -42,6 +44,8 @@ export type WorkflowChatActions = {
     visualizationId: WorkflowVisualizationId,
     title: string,
   ) => void
+  handleSelectMediaMention: (item: MediaCatalogItem) => void
+  handleRemovePendingMedia: (id: string) => void
   handleRetry: () => Promise<void>
   handleClearChat: () => void
   stop: () => void

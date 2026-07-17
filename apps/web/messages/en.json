@@ -1554,6 +1554,9 @@
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
         "stopChatAriaLabel": "Stop generating",
         "submitChatAriaLabel": "Send message",
+        "attachImageAriaLabel": "Attach image",
+        "attachImageTooltip": "Attach an image from your device",
+        "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
         "mobileChatOpenLabel": "Assistant & visualizations",
         "mobileChatOpenAriaLabel": "Open assistant and visualizations",
         "mobileChatSheetTitle": "Assistant & visualizations",
@@ -1577,12 +1580,16 @@
           }
         },
         "mentionMenu": {
-          "ariaLabel": "Insert milestone preset request",
+          "ariaLabel": "Insert milestone, chart, or media reference",
           "empty": "No milestones match your filter.",
           "milestonesGroup": "Milestones",
           "visualizationsGroup": "Attached charts",
           "visualizationsAriaLabel": "Insert attached chart data",
-          "noAttachedCharts": "No attached charts match your filter. Add charts on the Visualizations tab first."
+          "noAttachedCharts": "No attached charts match your filter. Add charts on the Visualizations tab first.",
+          "mediaGroup": "Media",
+          "mediaAriaLabel": "Attach image from Media library",
+          "mediaLoading": "Loading media…",
+          "mediaEmpty": "No media files yet. Upload images on the Media page, or use the paperclip to attach from your device."
         },
         "artifactTitle": "Artifact",
         "artifactPlaceholder": "Content will appear here as you work with the assistant.",

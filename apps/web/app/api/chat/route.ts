@@ -1,7 +1,7 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { UIMessage } from 'ai'
-import { buildUserContentWithReferencedSources } from '@/lib/chat/build-user-content-with-referenced-sources'
+import { buildPythonUserMessage, ChatImageError } from '@/lib/chat/build-python-user-message'
 import { formatPresetDataMarkdownSection } from '@/lib/chat/format-payload-for-chat'
 import { formatVisualizationDataMarkdownSection } from '@/lib/chat/format-visualization-for-chat'
 import { loadReferencedMilestonePresetForChat } from '@/lib/chat/referenced-milestone-for-chat'
@@ -33,22 +33,6 @@ const SSE_EVENT = {
 } as const
 
 const SSE_DONE = '[DONE]' as const
-
-/** LangGraph checkpoint stores prior turns; each request sends only the latest user message. */
-function lastUserMessageToPython(messages: UIMessage[]): Array<{ role: 'user'; content: string }> {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i]!
-    if (m.role !== 'user') continue
-    const text =
-      m.parts
-        ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-        .map((p) => p.text)
-        .join('') ?? ''
-    if (!text.trim()) continue
-    return [{ role: 'user', content: text }]
-  }
-  return []
-}
 
 /** SSE lines from `apps/agents` POST /chat. */
 interface PythonStreamChunk {
@@ -221,6 +205,7 @@ export async function POST(req: Request) {
     locationId,
     presetReferenceMilestoneId,
     referencedVisualizationId,
+    referencedMediaNames,
     analyticsRunId,
     agentThreadId,
     workflowChatSessionId,
@@ -232,12 +217,6 @@ export async function POST(req: Request) {
     return jsonError('workflowId or agentThreadId is required', 400)
   }
 
-  const pythonMessages = lastUserMessageToPython(messages)
-  if (pythonMessages.length === 0) {
-    return jsonError('No user message with text content found in request', 400)
-  }
-
-  let messagesForPython = pythonMessages
   const referenceSections: string[] = []
 
   if (presetReferenceMilestoneId !== undefined || referencedVisualizationId !== undefined) {
@@ -309,16 +288,22 @@ export async function POST(req: Request) {
         }),
       )
     }
+  }
 
-    messagesForPython = [
-      {
-        role: 'user' as const,
-        content: buildUserContentWithReferencedSources({
-          userText: pythonMessages[0]!.content,
-          sections: referenceSections,
-        }),
-      },
-    ]
+  let pythonMessage: Awaited<ReturnType<typeof buildPythonUserMessage>>
+  try {
+    pythonMessage = await buildPythonUserMessage({
+      messages,
+      userId,
+      referencedMediaNames,
+      referenceTextSections: referenceSections,
+    })
+  } catch (err) {
+    if (err instanceof ChatImageError) {
+      return jsonError(err.message, err.status)
+    }
+    const detail = err instanceof Error ? err.message : String(err)
+    return jsonError(detail, 400)
   }
 
   let agentRes: Response
@@ -330,7 +315,7 @@ export async function POST(req: Request) {
         'X-Menuyukti-User-Id': userId,
       },
       body: JSON.stringify({
-        messages: messagesForPython,
+        messages: [pythonMessage],
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
         ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),

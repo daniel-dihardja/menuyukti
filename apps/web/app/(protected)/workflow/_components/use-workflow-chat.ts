@@ -1,16 +1,29 @@
 'use client'
 
-import type { UIMessage } from 'ai'
+import type { FileUIPart, UIMessage } from 'ai'
 import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/prompt-input'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { appendWorkflowChatMention } from '@/lib/chat/append-workflow-chat-mention'
+import {
+  clearWorkflowChatMentionTrigger,
+  mediaTypeFromFilename,
+} from '@/lib/chat/workflow-chat-media-mention'
+import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
+
+export type PendingMediaAttachment = {
+  id: string
+  name: string
+  url: string
+  mediaType: string
+}
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
 
@@ -47,6 +60,9 @@ export function useWorkflowChat({
 }: UseWorkflowChatOptions) {
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const [text, setText] = useState('')
+  const [pendingMediaAttachments, setPendingMediaAttachments] = useState<PendingMediaAttachment[]>(
+    [],
+  )
 
   const chatApiContextRef = useRef({
     workflowId,
@@ -62,6 +78,8 @@ export function useWorkflowChat({
   selectedChatModelRef.current = selectedChatModel
   const pendingPresetReferenceMilestoneIdRef = useRef<string | null>(null)
   const pendingReferencedVisualizationIdRef = useRef<WorkflowVisualizationId | null>(null)
+  const pendingMediaAttachmentsRef = useRef<PendingMediaAttachment[]>([])
+  pendingMediaAttachmentsRef.current = pendingMediaAttachments
   chatApiContextRef.current = {
     workflowId,
     locationId,
@@ -146,12 +164,14 @@ export function useWorkflowChat({
   const buildSendBody = useCallback(() => {
     const presetRef = pendingPresetReferenceMilestoneIdRef.current
     const vizRef = pendingReferencedVisualizationIdRef.current
+    const mediaNames = pendingMediaAttachmentsRef.current.map((m) => m.name)
     pendingPresetReferenceMilestoneIdRef.current = null
     pendingReferencedVisualizationIdRef.current = null
     return {
       model: selectedChatModelRef.current,
       ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
       ...(vizRef !== null ? { referencedVisualizationId: vizRef } : {}),
+      ...(mediaNames.length > 0 ? { referencedMediaNames: mediaNames } : {}),
     }
   }, [])
 
@@ -159,23 +179,65 @@ export function useWorkflowChat({
     setText(event.target.value)
   }, [])
 
+  const handleSelectMediaMention = useCallback(
+    (item: MediaCatalogItem) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      setPendingMediaAttachments((prev) => {
+        if (prev.some((m) => m.name === item.name)) {
+          return prev
+        }
+        if (prev.length >= CHAT_MAX_IMAGES) {
+          return prev
+        }
+        const mediaType = mediaTypeFromFilename(item.name)
+        return [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            name: item.name,
+            url: item.url,
+            mediaType,
+          },
+        ]
+      })
+      setText((current) => clearWorkflowChatMentionTrigger(current))
+    },
+    [status],
+  )
+
+  const handleRemovePendingMedia = useCallback((id: string) => {
+    setPendingMediaAttachments((prev) => prev.filter((m) => m.id !== id))
+  }, [])
+
   const handleSubmit = useCallback(
     async (message: PromptInputMessage) => {
+      const mediaFiles: FileUIPart[] = pendingMediaAttachmentsRef.current.map((m) => ({
+        type: 'file' as const,
+        filename: m.name,
+        mediaType: m.mediaType,
+        url: m.url,
+      }))
+      const uploadFiles = message.files ?? []
+      const allFiles = [...uploadFiles, ...mediaFiles].slice(0, CHAT_MAX_IMAGES)
       const hasText = Boolean(message.text?.trim())
-      const hasAttachments = Boolean(message.files?.length)
+      const hasAttachments = allFiles.length > 0
 
       if (!(hasText || hasAttachments)) {
         return
       }
 
       const content = message.text?.trim() || 'Sent with attachments'
+      const body = buildSendBody()
       setText('')
+      setPendingMediaAttachments([])
       await sendMessage(
         {
           text: content,
-          ...(message.files?.length ? { files: message.files } : {}),
+          ...(allFiles.length > 0 ? { files: allFiles } : {}),
         },
-        { body: buildSendBody() },
+        { body },
       )
     },
     [sendMessage, buildSendBody],
@@ -227,6 +289,7 @@ export function useWorkflowChat({
     clearError()
     setMessages([])
     setText('')
+    setPendingMediaAttachments([])
     pendingPresetReferenceMilestoneIdRef.current = null
     pendingReferencedVisualizationIdRef.current = null
     const sid = crypto.randomUUID()
@@ -237,7 +300,8 @@ export function useWorkflowChat({
   }, [workflowId, stop, clearError, setMessages])
 
   const isChatBusy = status === 'streaming' || status === 'submitted'
-  const isSubmitDisabled = !text.trim() && !isChatBusy
+  /** True when the composer has no text and no pending media library chips (upload files are checked in the submit control). */
+  const isSubmitDisabled = !text.trim() && pendingMediaAttachments.length === 0 && !isChatBusy
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
   const messagesState = useMemo(
@@ -257,8 +321,9 @@ export function useWorkflowChat({
       selectedChatModel,
       isSubmitDisabled,
       slashCommands,
+      pendingMediaAttachments,
     }),
-    [text, selectedChatModel, isSubmitDisabled, slashCommands],
+    [text, selectedChatModel, isSubmitDisabled, slashCommands, pendingMediaAttachments],
   )
 
   const actions = useMemo(
@@ -270,6 +335,8 @@ export function useWorkflowChat({
       handleSelectSlashCommand,
       handleSelectMention,
       handleSelectVisualizationMention,
+      handleSelectMediaMention,
+      handleRemovePendingMedia,
       handleRetry,
       handleClearChat,
       stop,
@@ -280,6 +347,8 @@ export function useWorkflowChat({
       handleSelectSlashCommand,
       handleSelectMention,
       handleSelectVisualizationMention,
+      handleSelectMediaMention,
+      handleRemovePendingMedia,
       handleRetry,
       handleClearChat,
       stop,

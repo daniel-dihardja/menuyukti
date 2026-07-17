@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { isSafePhotoFilename } from '@/lib/assets/storage'
+import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { WORKFLOW_VISUALIZATION_ID_VALUES } from '@/lib/workflow/workflow-visualization-ids'
 
 const messagePartSchema = z
@@ -17,6 +19,11 @@ const messageSchema = z
   })
   .passthrough()
 
+const mediaFilenameSchema = z
+  .string()
+  .min(1)
+  .refine((name) => isSafePhotoFilename(name), 'Invalid media filename')
+
 export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
   workflowId: z.string().regex(/^\d+$/, 'Invalid workflow id').optional(),
@@ -28,6 +35,8 @@ export const chatRequestBodySchema = z.object({
   referencedVisualizationId: z.enum(WORKFLOW_VISUALIZATION_ID_VALUES).optional(),
   /** Workflow-linked analytics run; used when loading visualization references. */
   analyticsRunId: z.string().regex(/^\d+$/, 'Invalid analytics run id').optional(),
+  /** Media library filenames to load from S3 and attach as vision inputs (max 4). */
+  referencedMediaNames: z.array(mediaFilenameSchema).max(CHAT_MAX_IMAGES).optional(),
   /** Opaque id for `/agent` chat (no workflow); required by agents when `workflowId` is absent. */
   agentThreadId: z.string().min(1).optional(),
   /**

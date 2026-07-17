@@ -21,9 +21,37 @@ from pydantic import BaseModel, ConfigDict, Field
 router = APIRouter()
 
 
+class ChatTextContentBlock(BaseModel):
+    type: Literal["text"]
+    text: str = Field(min_length=1)
+
+
+class ChatImageUrlObject(BaseModel):
+    url: str = Field(min_length=1)
+
+
+class ChatImageUrlContentBlock(BaseModel):
+    type: Literal["image_url"]
+    image_url: ChatImageUrlObject | str
+
+
+ChatContentBlock = Annotated[
+    ChatTextContentBlock | ChatImageUrlContentBlock,
+    Field(discriminator="type"),
+]
+
+
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
-    content: str = Field(min_length=1)
+    content: str | list[ChatContentBlock] = Field(
+        description="Plain text or OpenAI-style multimodal content blocks.",
+    )
+
+    def model_post_init(self, __context: Any) -> None:
+        if isinstance(self.content, str) and not self.content.strip():
+            raise ValueError("content must be a non-empty string or content block list")
+        if isinstance(self.content, list) and len(self.content) == 0:
+            raise ValueError("content must be a non-empty string or content block list")
 
 
 class ChatRequest(BaseModel):
