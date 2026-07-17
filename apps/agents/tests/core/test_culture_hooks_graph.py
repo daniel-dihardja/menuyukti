@@ -48,29 +48,35 @@ def _minimal_initial() -> dict:
 
 def _valid_culture_hooks_payload() -> dict:
     return {
-        "locationConcept": "Retro-inspired peranakan heritage with intergenerational values.",
-        "targetAudience": "Urban professionals and young families who value nostalgic lifestyle cues.",
+        "locationConcept": (
+            "Italian trattoria concept rooted in regional Italian heritage, "
+            "serving guests in a German city with a warm neighbourhood atmosphere."
+        ),
+        "targetAudience": (
+            "Urban professionals and couples in Germany who enjoy travel culture "
+            "and Mediterranean lifestyle aesthetics beyond food alone."
+        ),
         "intersections": [
             {
-                "topic": "Bring-your-own container habits",
-                "conceptLink": "Links retro practices with modern sustainability.",
-                "audienceRelevance": "Audience wants practical eco habits that feel authentic.",
-                "contentExample": "Carousel with old-vs-new takeaway rituals and simple reusable tips.",
+                "topic": "Tuscany hill towns",
+                "conceptLink": "Links the restaurant's Italian origin story to iconic regional landscapes.",
+                "audienceRelevance": "German audiences often associate Tuscany with aspirational travel and weekend escapes.",
+                "contentExample": "Reel opening on a hill-town skyline with soft ambient sound, inviting save-for-later travel mood.",
             },
             {
-                "topic": "Heirloom home routines",
-                "conceptLink": "Connects heritage concept with family traditions.",
-                "audienceRelevance": "Young families look for meaningful traditions to revive.",
-                "contentExample": "Reel on one old-school family routine adapted for modern life.",
+                "topic": "Amalfi coastal culture",
+                "conceptLink": "Connects coastal Italian identity to the venue's leisurely hospitality vibe.",
+                "audienceRelevance": "Local diners follow Mediterranean travel content and coastal lifestyle imagery.",
+                "contentExample": "Carousel of Amalfi cliff walks and colour palettes with a Story sticker for dream destinations.",
             },
             {
-                "topic": "Community repair mindset",
-                "conceptLink": "Retro spirit values care, repair, and longevity.",
-                "audienceRelevance": "Urban audiences are interested in low-waste living.",
-                "contentExample": "Single post featuring a weekly small repair challenge with community tag.",
+                "topic": "Roman neighbourhood rituals",
+                "conceptLink": "Grounds the concept in everyday Roman street life rather than tourist clichés.",
+                "audienceRelevance": "City audiences relate to neighbourhood routines and slow evening walks.",
+                "contentExample": "Feed post about evening passeggiata culture with a short caption inviting comments on favourite streets.",
             },
         ],
-        "guardrailCheck": "All intersections are non-food and grounded in campaign brief signals.",
+        "guardrailCheck": "All intersections are non-food heritage/place topics grounded in campaign brief signals.",
     }
 
 
@@ -204,22 +210,22 @@ async def test_fetch_and_prepare_requires_prior_campaign_brief() -> None:
 
 def _sample_campaign_brief() -> dict:
     return {
-        "venueSnapshot": {"venueName": "Cafe Retro", "city": "Amsterdam", "country": "Netherlands"},
+        "venueSnapshot": {"venueName": "Trattoria Verde", "city": "Munich", "country": "Germany"},
         "overallStrategy": {
-            "strategyFocus": "Heritage brunch culture",
-            "audiencePriority": ["Young creatives"],
-            "coreMessage": "Nostalgic warmth",
+            "strategyFocus": "Italian neighbourhood hospitality",
+            "audiencePriority": ["Urban professionals"],
+            "coreMessage": "A slice of Italy in the city",
             "offerWindow": "Weekends",
             "cadenceGuidance": ["Post twice weekly"],
         },
-        "contentPillars": ["Heritage"],
+        "contentPillars": ["Italian heritage"],
         "audienceHypotheses": ["Weekend social groups"],
-        "proofOrientedAngles": ["Family recipes"],
-        "toneGuardrails": ["Warm and nostalgic"],
+        "proofOrientedAngles": ["Family roots in Italy"],
+        "toneGuardrails": ["Warm and welcoming"],
         "campaignObjective": "Grow weekend covers",
-        "mainCategory": "Brunch",
-        "targetSegments": ["Young creatives"],
-        "messageHierarchy": ["Heritage brunch rituals"],
+        "mainCategory": "Italian",
+        "targetSegments": ["Urban professionals"],
+        "messageHierarchy": ["Authentic Italian neighbourhood feel"],
         "offerAndCtaPlan": ["Reserve a table"],
         "contentPillarPlan": ["Heritage stories"],
         "measurementPlan": ["Track reservations"],
@@ -231,8 +237,29 @@ def _sample_campaign_brief() -> dict:
 def test_culture_hooks_search_queries_from_brief() -> None:
     queries = _culture_hooks_search_queries(_sample_campaign_brief())
     assert len(queries) == 2
-    assert "Amsterdam" in queries[0]
-    assert "Heritage brunch culture" in queries[1] or "Heritage brunch rituals" in queries[1]
+    assert "Italian places landmarks culture popular with people in Germany" == queries[0]
+    assert "Italian travel culture Instagram Munich Germany" == queries[1]
+
+
+def test_culture_hooks_search_queries_fallback_without_origin() -> None:
+    brief = {
+        "venueSnapshot": {"venueName": "Cafe Local", "city": "Amsterdam", "country": "Netherlands"},
+        "mainCategory": "",
+        "messageHierarchy": [],
+        "proofOrientedAngles": [],
+        "contentPillars": [],
+        "overallStrategy": {
+            "strategyFocus": "",
+            "audiencePriority": [],
+            "coreMessage": "",
+            "offerWindow": "",
+            "cadenceGuidance": [],
+        },
+    }
+    queries = _culture_hooks_search_queries(brief)
+    assert len(queries) == 2
+    assert "lifestyle subcultures Amsterdam Netherlands Instagram" == queries[0]
+    assert "creative class interests Amsterdam Netherlands" == queries[1]
 
 
 @pytest.mark.asyncio
@@ -301,6 +328,6 @@ async def test_research_local_culture_appends_results_when_tavily_available() ->
     ):
         out = await research_local_culture(state)  # type: ignore[arg-type]
 
-    assert "Local culture web research" in out["web_research_markdown"]
+    assert "Heritage and audience culture web research" in out["web_research_markdown"]
     assert "Local art scene snippet" in out["generation_context_markdown"]
     assert mock_tool.ainvoke.await_count >= 1

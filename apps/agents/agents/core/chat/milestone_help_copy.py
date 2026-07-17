@@ -34,10 +34,11 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "weekday lunch scheduling hints for downstream scheduling."
     ),
     "culture_hooks": (
-        "Use Campaign Brief data to identify the location concept and target audience, then "
-        "generate intersection topics between the concept and the audience's likely interests "
-        "(not food or drink). These intersections should inspire Instagram feed posts, Stories, "
-        "and Reels that attract potential new customers."
+        "Use Campaign Brief data to infer the restaurant's concept/origin geography and the "
+        "venue's local target audience, then list non-food, non-drink heritage/place topics "
+        "(regions, landmarks, place-tied rituals) that the audience would find interesting or "
+        "share affinity with. These topics should inspire Instagram feed posts, Stories, and "
+        "Reels that attract potential new customers."
     ),
     "ig_profile": (
         "Read Campaign Brief data and generate Instagram profile suggestions — username options "

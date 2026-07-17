@@ -1660,12 +1660,12 @@
             "label": "Culture hooks",
             "title": "Culture hooks",
             "inputLabel": "Culture hooks notes",
-            "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
-            "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone…",
-            "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not food or drink). These intersections should inspire Instagram feed posts, Stories, and Reels that attract potential new customers.",
-            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example suitable for a feed post, Story, or Reel.",
+            "inputDescription": "Optional direction for tone and emphasis. The run uses prior Campaign Brief data to infer heritage/origin places and topics the local audience would find interesting (non-food, non-drink).",
+            "inputPlaceholder": "e.g. prioritize Italian coastal towns and family travel nostalgia…",
+            "goal": "Use Campaign Brief data to infer the restaurant's concept/origin geography and the venue's local target audience, then list 3–5 non-food, non-drink heritage/place topics (regions, landmarks, place-tied rituals) that the audience would find interesting or share affinity with. These topics should inspire Instagram feed posts, Stories, and Reels that attract potential new customers.",
+            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example suitable for a feed post, Story, or Reel. Prefer heritage/origin place topics when origin is inferable.",
             "criterionNonFood": "Intersections are **not food- or drink-centric** (no dishes, coffee, beverages, recipes, or flavor-led angles).",
-            "criterionAudienceConceptInferred": "Data clearly states **locationConcept** and **targetAudience**, both inferred from Campaign Brief context."
+            "criterionAudienceConceptInferred": "Data clearly states **locationConcept** (concept and inferred origin geography when available) and **targetAudience**, both inferred from Campaign Brief context."
           },
           "ig_profile": {
             "label": "IG Profile",

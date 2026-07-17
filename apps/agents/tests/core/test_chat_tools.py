@@ -8,29 +8,29 @@ from agents_app.agents.core.chat import tools as chat_tools
 
 def _culture_hooks_payload() -> dict:
     return {
-        "locationConcept": "Modern Indonesian comfort food",
-        "targetAudience": "Young professionals in city center",
+        "locationConcept": "Italian trattoria with regional heritage for guests in Germany.",
+        "targetAudience": "Young professionals in the city who enjoy Mediterranean travel culture.",
         "intersections": [
             {
-                "topic": "Ramadan buka puasa moments",
-                "conceptLink": "Comfort dishes for group sharing",
-                "audienceRelevance": "Fits after-work social dinners",
-                "contentExample": "Carousel: best group platter combos",
+                "topic": "Tuscany hill towns",
+                "conceptLink": "Origin geography of the restaurant concept",
+                "audienceRelevance": "Aspirational travel interest among local diners",
+                "contentExample": "Reel: hill-town skyline mood without menu focus",
             },
             {
-                "topic": "Rainy season warm meals",
-                "conceptLink": "Soup and grilled pairings",
-                "audienceRelevance": "Seasonal craving alignment",
-                "contentExample": "Reel: kitchen steam shots + plating",
+                "topic": "Amalfi coastal culture",
+                "conceptLink": "Coastal Italian identity behind the brand",
+                "audienceRelevance": "Audience follows Mediterranean lifestyle content",
+                "contentExample": "Carousel of cliff walks and colour palettes",
             },
             {
-                "topic": "Sunday family gathering",
-                "conceptLink": "Bundle menu for 4-6 people",
-                "audienceRelevance": "Weekend planning use case",
-                "contentExample": "Static post: bundle and reservation CTA",
+                "topic": "Roman neighbourhood rituals",
+                "conceptLink": "Everyday street culture tied to Italian roots",
+                "audienceRelevance": "City audiences relate to neighbourhood evening walks",
+                "contentExample": "Feed post on passeggiata culture with comment prompt",
             },
         ],
-        "guardrailCheck": "No politics, no insensitive or divisive framing.",
+        "guardrailCheck": "No politics, no food-or-drink-centric topics.",
     }
 
 
