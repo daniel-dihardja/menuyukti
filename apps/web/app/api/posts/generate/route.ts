@@ -18,11 +18,13 @@ import {
 } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphql/queries/posts'
+import { LOCATION_STYLE_QUERY, type LocationStyleData } from '@/lib/graphql/queries/location-styles'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
   type OutputDimensions,
   type PromptReference,
+  type StylePackPrompt,
 } from '@/lib/posts/build-instagram-post-prompt'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
@@ -53,6 +55,7 @@ const bodySchema = z.object({
   pageId: z.string().regex(/^\d+$/).optional(),
   references: z.array(generationReferenceSchema).max(MAX_GENERATION_REFERENCES).optional(),
   model: z.enum(LEONARDO_POST_MODEL_IDS).optional(),
+  styleId: z.number().int().positive().optional(),
 })
 
 function truncateStack(stack: string, max = 4000): string {
@@ -124,10 +127,44 @@ export async function POST(req: Request) {
     pageId,
     references = [],
     model = DEFAULT_LEONARDO_POST_MODEL,
+    styleId,
   } = parsed.data
   if ((postId && !pageId) || (!postId && pageId)) {
     return NextResponse.json(
       { message: 'postId and pageId must be provided together' },
+      { status: 400 },
+    )
+  }
+
+  let stylePack: StylePackPrompt | undefined
+  let styleImageName: string | undefined
+  if (styleId != null) {
+    let styleData: LocationStyleData
+    try {
+      styleData = await graphqlQuery<LocationStyleData>(
+        LOCATION_STYLE_QUERY,
+        { id: styleId },
+        userId,
+      )
+    } catch (err) {
+      console.error('[posts/generate] locationStyle query failed', {
+        userIdPrefix: userId.slice(0, 8),
+        styleId,
+        message: err instanceof Error ? err.message : String(err),
+      })
+      return NextResponse.json({ message: 'Failed to load style pack' }, { status: 502 })
+    }
+    const style = styleData.locationStyle
+    if (!style) {
+      return NextResponse.json({ message: 'Style pack not found' }, { status: 404 })
+    }
+    stylePack = { name: style.name, rules: style.rules }
+    styleImageName = style.referenceImageName
+  }
+
+  if (references.length + (stylePack ? 1 : 0) > MAX_GENERATION_REFERENCES) {
+    return NextResponse.json(
+      { message: `Too many reference images (max ${MAX_GENERATION_REFERENCES})` },
       { status: 400 },
     )
   }
@@ -156,6 +193,26 @@ export async function POST(req: Request) {
   const promptReferences: PromptReference[] = []
   let templateOutputDimensions: OutputDimensions | undefined
   let previousResultOutputDimensions: OutputDimensions | undefined
+
+  if (styleImageName) {
+    if (!isSafePhotoFilename(styleImageName)) {
+      return NextResponse.json(
+        { message: `Invalid style reference image: ${styleImageName}` },
+        { status: 400 },
+      )
+    }
+    const styleKey = userPhotosObjectKey(userId, styleImageName)
+    if (!isObjectKeyForPhoto(styleKey, userId)) {
+      return NextResponse.json(
+        { message: `Invalid style reference image: ${styleImageName}` },
+        { status: 400 },
+      )
+    }
+    const styleBuffer = await loadReferenceBuffer(styleKey, styleImageName, userId)
+    if (styleBuffer instanceof NextResponse) return styleBuffer
+    referenceBuffers.push(styleBuffer)
+    promptReferences.push({ type: 'style' })
+  }
 
   for (const reference of references) {
     if (reference.type === 'template') {
@@ -252,6 +309,7 @@ export async function POST(req: Request) {
       mode,
       references: promptReferences,
       outputDimensions,
+      style: stylePack,
     })
 
     outBuffer = await runTextToImageWithReferences(

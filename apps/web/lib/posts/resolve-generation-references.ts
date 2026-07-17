@@ -13,6 +13,8 @@ export type ResolveGenerationReferencesInput = {
   templateImage: PostCreatorReferenceImage | null
   referenceImages: PostCreatorReferenceImage[]
   previewMediaS3Key: string | null | undefined
+  /** When true, reserve one slot for a server-side style reference image. */
+  styleSelected?: boolean
 }
 
 export type ResolveGenerationReferencesResult = {
@@ -84,6 +86,7 @@ export function resolveGenerationReferences(
   return {
     mode,
     references,
-    tooManyReferences: references.length > MAX_GENERATION_REFERENCES,
+    tooManyReferences:
+      references.length > MAX_GENERATION_REFERENCES - (input.styleSelected ? 1 : 0),
   }
 }

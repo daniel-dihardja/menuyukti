@@ -3,6 +3,7 @@ import strawberry
 from graphql.schema.mutations import (
     CreateImageAiFlowMutation,
     CreateLocationMutation,
+    CreateLocationStyleMutation,
     CreateNodeMutation,
     CreatePostMutation,
     CreatePostPageMutation,
@@ -10,6 +11,7 @@ from graphql.schema.mutations import (
     CreateWorkspaceMutation,
     DeleteAnalyticsRunMutation,
     DeleteImageAiFlowMutation,
+    DeleteLocationStyleMutation,
     DeleteNodeMutation,
     DeletePostMutation,
     DeletePostPageMediaVersionMutation,
@@ -24,6 +26,7 @@ from graphql.schema.mutations import (
     UpdateImageAiFlowMutation,
     UpdateLocationManualBriefInputMutation,
     UpdateLocationMutation,
+    UpdateLocationStyleMutation,
     UpdateMenuItemCogsBulkMutation,
     UpdateNodeMutation,
     UpdatePostMutation,
@@ -57,6 +60,7 @@ class Mutation(
     SetPassCriteriaStatusesMutation,
     ReorderMilestonesMutation,
     CreateLocationMutation,
+    CreateLocationStyleMutation,
     CreateWorkspaceMutation,
     InviteWorkspaceMemberMutation,
     MilestoneAgentRunMutation,
@@ -67,7 +71,9 @@ class Mutation(
     UpdateImageAiFlowMutation,
     DeleteAnalyticsRunMutation,
     DeleteImageAiFlowMutation,
+    DeleteLocationStyleMutation,
     UpdateLocationMutation,
     UpdateLocationManualBriefInputMutation,
+    UpdateLocationStyleMutation,
 ):
     pass

@@ -8,6 +8,7 @@ __all__ = [
     "Location",
     "LocationOpeningHour",
     "LocationManualBriefInput",
+    "LocationStyle",
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",

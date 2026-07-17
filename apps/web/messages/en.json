@@ -731,6 +731,21 @@
       "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder, Ref 3 → Ice Americano\n\nType @ to attach product photos in order.",
       "generate": "Generate image",
       "generating": "Generating…",
+      "location": {
+        "label": "Location",
+        "placeholder": "Select location",
+        "none": "No location",
+        "description": "Choose a location to apply one of its style packs."
+      },
+      "style": {
+        "label": "Style pack",
+        "placeholder": "Select style",
+        "none": "No style",
+        "defaultSuffix": "default",
+        "description": "Applied automatically to this generation — you don’t need to repeat style rules in the prompt.",
+        "needsLocation": "Select a location to choose a style pack.",
+        "loadError": "Failed to load style packs for this location."
+      },
       "template": {
         "label": "Layout template",
         "pick": "Choose template from Media",
@@ -1245,7 +1260,7 @@
       "title": "Locations",
       "description": "Power analytics and Instagram campaigns for each venue. Configure basics here, then upload POS sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
-      "detailDescription": "Update location information and opening hours.",
+      "detailDescription": "Update location information, opening hours, and visual style packs.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -1380,6 +1395,42 @@
           "menuUrlPlaceholder": "https://yourvenue.com/menu",
           "googleMapsUrlLabel": "Google Maps / directions",
           "googleMapsUrlPlaceholder": "https://maps.google.com/?q=Your+Venue"
+        }
+      },
+      "styles": {
+        "title": "Style packs",
+        "description": "Define reusable visual styles with an example image and rules. Apply them when generating Instagram posts.",
+        "add": "Add style",
+        "loading": "Loading styles…",
+        "empty": "No style packs yet. Add one to reuse a look across post generations.",
+        "defaultBadge": "Default",
+        "edit": "Edit style",
+        "delete": "Delete style",
+        "deleteConfirm": "Delete style \"{name}\"? This cannot be undone.",
+        "createTitle": "New style pack",
+        "editTitle": "Edit style pack",
+        "nameLabel": "Name",
+        "namePlaceholder": "Warm editorial lunch",
+        "rulesLabel": "Style rules",
+        "rulesPlaceholder": "Warm window light, soft shadows, natural food textures, muted earth tones. Avoid neon or cool blue casts.",
+        "imageLabel": "Reference image",
+        "imagePick": "Choose from media",
+        "imagePickerAria": "Choose style reference image",
+        "imageEmpty": "No media yet. Upload photos in Media first.",
+        "imageRemove": "Remove reference image",
+        "imageFromMedia": "From media library",
+        "defaultLabel": "Use as default for this location",
+        "save": "Save style",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "toast": {
+          "loadError": "Failed to load style packs.",
+          "validation": "Name, rules, and a reference image are required.",
+          "created": "Style pack created.",
+          "updated": "Style pack updated.",
+          "deleted": "Style pack deleted.",
+          "saveError": "Failed to save style pack.",
+          "deleteError": "Failed to delete style pack."
         }
       }
     },

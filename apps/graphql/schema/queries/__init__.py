@@ -6,6 +6,7 @@ from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .latest_analytics_run_signals import LatestAnalyticsRunWithSignalsQuery
 from .location_manual_brief_input import LocationManualBriefInputQuery
+from .location_styles import LocationStylesQuery
 from .locations import LocationsQuery
 from .menu_catalog import MenuCatalogQuery
 from .menu_combos import MenuCombosQuery
@@ -35,6 +36,7 @@ __all__ = [
     "InstagramSignalsQuery",
     "LocationsQuery",
     "LocationManualBriefInputQuery",
+    "LocationStylesQuery",
     "MenuCatalogQuery",
     "MilestonePriorDataQuery",
     "MenuCombosQuery",

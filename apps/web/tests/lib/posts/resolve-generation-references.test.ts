@@ -132,4 +132,40 @@ describe('resolveGenerationReferences', () => {
     expect(references).toHaveLength(7)
     expect(tooManyReferences).toBe(true)
   })
+
+  it('reserves a slot for style when styleSelected is true', () => {
+    const { references, tooManyReferences } = resolveGenerationReferences({
+      templateImage: template('layout.webp'),
+      referenceImages: [
+        photo('1.webp'),
+        photo('2.webp'),
+        photo('3.webp'),
+        photo('4.webp'),
+        photo('5.webp'),
+      ],
+      previewMediaS3Key: null,
+      styleSelected: true,
+    })
+
+    expect(references).toHaveLength(6)
+    expect(tooManyReferences).toBe(true)
+  })
+
+  it('allows max client refs when style is not selected', () => {
+    const { tooManyReferences } = resolveGenerationReferences({
+      templateImage: null,
+      referenceImages: [
+        photo('1.webp'),
+        photo('2.webp'),
+        photo('3.webp'),
+        photo('4.webp'),
+        photo('5.webp'),
+        photo('6.webp'),
+      ],
+      previewMediaS3Key: null,
+      styleSelected: false,
+    })
+
+    expect(tooManyReferences).toBe(false)
+  })
 })

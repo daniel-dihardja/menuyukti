@@ -180,6 +180,26 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain("Preserve the reference image's composition, camera angle, and lighting")
     expect(out).not.toContain('45–60° hero angle')
   })
+
+  it('injects STYLE PACK block and style reference before creative direction', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Pad thai bowl lunch offer',
+      mode: 'fresh-scene',
+      references: [{ type: 'style' }, { type: 'photo' }],
+      style: {
+        name: 'Warm editorial',
+        rules: 'Warm window light; soft shadows; no neon.',
+      },
+    })
+
+    expect(out).toContain('STYLE PACK — "Warm editorial":')
+    expect(out).toContain('Warm window light; soft shadows; no neon.')
+    expect(out).toContain('Reference 1 — STYLE REFERENCE')
+    expect(out).toContain('Do NOT copy its subject')
+    expect(out).toContain('Reference 2 — PRODUCT PHOTO')
+    expect(out.indexOf('STYLE PACK')).toBeLessThan(out.indexOf('CREATIVE DIRECTION'))
+    expect(out.endsWith('Pad thai bowl lunch offer')).toBe(true)
+  })
 })
 
 describe('detectPromptMode', () => {

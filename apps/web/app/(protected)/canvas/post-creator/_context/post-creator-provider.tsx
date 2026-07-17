@@ -97,6 +97,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     DEFAULT_LEONARDO_POST_MODEL,
   )
   const [previewSource, setPreviewSource] = useState<PostCreatorPreviewSource>('version')
+  const [locationId, setLocationIdState] = useState<number | null>(null)
+  const [styleId, setStyleIdState] = useState<number | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
@@ -359,6 +361,15 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     [selectedPageId, syncPageState],
   )
 
+  const setLocationId = useCallback((next: number | null) => {
+    setLocationIdState(next)
+    setStyleIdState(null)
+  }, [])
+
+  const setStyleId = useCallback((next: number | null) => {
+    setStyleIdState(next)
+  }, [])
+
   const generate = useCallback(async () => {
     const trimmed = prompt.trim()
     if (!trimmed || isGenerating) return
@@ -370,6 +381,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       templateImage: activeTemplate,
       referenceImages,
       previewMediaS3Key: activePreviewMediaS3Key,
+      styleSelected: styleId != null,
     })
 
     if (tooManyReferences) {
@@ -385,6 +397,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         pageId?: string
         references?: typeof references
         model?: LeonardoPostModelId
+        styleId?: number
       } = { prompt: trimmed, model: generationModel }
 
       if (canPersistPages && postId && selectedPageId) {
@@ -394,6 +407,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
 
       if (references.length > 0) {
         body.references = references
+      }
+
+      if (styleId != null) {
+        body.styleId = styleId
       }
 
       const res = await fetch('/api/posts/generate', {
@@ -463,6 +480,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     prompt,
     referenceImages,
     selectedPageId,
+    styleId,
     syncPageState,
     tPrompt,
     tToast,
@@ -860,6 +878,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       templateImage: activeTemplate,
       referenceImages,
       previewMediaS3Key,
+      styleSelected: styleId != null,
     })
     const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
 
@@ -890,7 +909,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       return tPrompt('generation.referenceSummaryPhotosOnly', { count: enabledPhotoCount })
     }
     return tPrompt('generation.referenceSummaryTextOnly')
-  }, [activeTemplate, previewMediaS3Key, referenceImages, tPrompt])
+  }, [activeTemplate, previewMediaS3Key, referenceImages, styleId, tPrompt])
 
   const canRemoveEmptyPage = pages.length > 1 && !pageHasGeneratedImage(selectedPage, imageVersions)
   const canAddPage = canPersistPages && pages.length > 0 && pages.length < MAX_POST_PAGES
@@ -911,6 +930,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         templateImage,
         generationModel,
         previewSource,
+        locationId,
+        styleId,
         isGenerating,
         isCommittingPostImage,
         isDeletingVersion,
@@ -937,6 +958,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         selectTemplate,
         clearTemplate,
         setGenerationModel,
+        setLocationId,
+        setStyleId,
       },
       meta: {
         mode,
@@ -980,6 +1003,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       isDuplicatingPage,
       isGenerating,
       isLoadingPost,
+      locationId,
       mode,
       pages,
       postId,
@@ -998,7 +1022,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       selectedPage?.mediaS3Key,
       selectedPageId,
       setGenerationModel,
+      setLocationId,
       setPromptValue,
+      setStyleId,
+      styleId,
       templateImage,
       toggleReferenceEnabled,
     ],

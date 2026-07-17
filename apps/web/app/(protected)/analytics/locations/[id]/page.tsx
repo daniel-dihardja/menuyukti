@@ -9,6 +9,7 @@ import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
 import { LocationForm, type Weekday } from '../location-form'
 import { LOCATION_DETAIL_SECTION_CLASS, LocationNextSteps } from '../location-next-steps'
+import { LocationStylesSection } from '../location-styles-section'
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -91,6 +92,7 @@ export default async function Page({ params }: PageProps) {
             }),
           }}
         />
+        <LocationStylesSection locationId={Number(location.id)} />
       </section>
     </AnalyticsPageShell>
   )

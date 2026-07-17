@@ -29,6 +29,8 @@ export type PostCreatorState = {
   templateImage: PostCreatorReferenceImage | null
   generationModel: LeonardoPostModelId
   previewSource: PostCreatorPreviewSource
+  locationId: number | null
+  styleId: number | null
   isGenerating: boolean
   isCommittingPostImage: boolean
   isDeletingVersion: boolean
@@ -56,6 +58,8 @@ export type PostCreatorActions = {
   selectTemplate: (design: { name: string; url: string }) => void
   clearTemplate: () => void
   setGenerationModel: (model: LeonardoPostModelId) => void
+  setLocationId: (locationId: number | null) => void
+  setStyleId: (styleId: number | null) => void
 }
 
 export type PostCreatorMeta = {
