@@ -8,7 +8,6 @@ import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
-import { Label } from '@workspace/ui/components/label'
 import {
   Select,
   SelectContent,
@@ -16,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
-import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
 
 import {
@@ -33,28 +31,20 @@ import { PostCreatorTemplatePicker } from './post-creator-template-picker'
 export function PostCreatorPromptPane() {
   const t = useTranslations('postCreator.prompt')
   const { state, actions, meta } = usePostCreator()
-  const {
-    prompt,
-    isGenerating,
-    templateImage,
-    referenceImages,
-    usePreviousResult,
-    generationModel,
-  } = state
+  const { prompt, isGenerating, templateImage, referenceImages, generationModel, previewSource } =
+    state
   const {
     setPrompt,
     generate,
     addReference,
     removeReference,
     toggleReferenceEnabled,
-    setUsePreviousResult,
     selectTemplate,
     clearTemplate,
     setGenerationModel,
   } = actions
-  const { hasPreviewableVersion, generationReferenceSummary } = meta
+  const { generationReferenceSummary } = meta
 
-  const previousResultId = useId()
   const promptId = useId()
   const templateFieldId = useId()
   const modelFieldId = useId()
@@ -65,7 +55,7 @@ export function PostCreatorPromptPane() {
     () => new Set(referenceImages.map((image) => image.name)),
     [referenceImages],
   )
-  const previousResultDisabled = disabled || templateImage != null
+  const templateActiveForGeneration = previewSource === 'template' && templateImage != null
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden p-4 pt-0">
@@ -152,29 +142,13 @@ export function PostCreatorPromptPane() {
           images={referenceImages}
           includeLabel={t('references.include')}
           indexLabel={(index) => {
-            const refIndex = templateImage ? index + 2 : index + 1
+            const refIndex = templateActiveForGeneration ? index + 2 : index + 1
             return t('references.indexLabel', { index: refIndex })
           }}
           onRemove={removeReference}
           onToggleEnabled={toggleReferenceEnabled}
           removeLabel={t('references.remove')}
         />
-        {hasPreviewableVersion && !templateImage ? (
-          <div className="flex items-start justify-between gap-3 rounded-md border border-border/60 px-3 py-2">
-            <div className="space-y-1">
-              <Label htmlFor={previousResultId} className="text-sm font-medium">
-                {t('previousResult.label')}
-              </Label>
-              <p className="text-muted-foreground text-xs">{t('previousResult.description')}</p>
-            </div>
-            <Switch
-              id={previousResultId}
-              checked={usePreviousResult}
-              disabled={previousResultDisabled}
-              onCheckedChange={setUsePreviousResult}
-            />
-          </div>
-        ) : null}
         <Alert>
           <AlertTitle>{t('tip.title')}</AlertTitle>
           <AlertDescription>{t('tip.description')}</AlertDescription>

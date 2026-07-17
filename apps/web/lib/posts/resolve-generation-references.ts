@@ -12,7 +12,6 @@ export type GenerationMode = 'template-composite' | 'filled-edit' | 'fresh-scene
 export type ResolveGenerationReferencesInput = {
   templateImage: PostCreatorReferenceImage | null
   referenceImages: PostCreatorReferenceImage[]
-  usePreviousResult: boolean
   previewMediaS3Key: string | null | undefined
 }
 
@@ -20,7 +19,6 @@ export type ResolveGenerationReferencesResult = {
   mode: GenerationMode
   references: GenerationReference[]
   tooManyReferences: boolean
-  hasTemplatePreviousConflict: boolean
 }
 
 function enabledPhotos(referenceImages: PostCreatorReferenceImage[]): PostCreatorReferenceImage[] {
@@ -30,13 +28,11 @@ function enabledPhotos(referenceImages: PostCreatorReferenceImage[]): PostCreato
 export function detectGenerationMode(input: {
   templateImage: PostCreatorReferenceImage | null
   enabledPhotoCount: number
-  usePreviousResult: boolean
   previewMediaS3Key: string | null | undefined
 }): GenerationMode {
   const hasTemplate = input.templateImage != null
   const hasProducts = input.enabledPhotoCount > 0
-  const hasPrevious =
-    input.usePreviousResult && parsePostMediaFilename(input.previewMediaS3Key) != null
+  const hasPrevious = parsePostMediaFilename(input.previewMediaS3Key) != null
 
   // Template alone is enough (headline/style edits); products are optional fills.
   if (hasTemplate) {
@@ -52,15 +48,11 @@ export function resolveGenerationReferences(
   input: ResolveGenerationReferencesInput,
 ): ResolveGenerationReferencesResult {
   const photos = enabledPhotos(input.referenceImages)
-  const hasTemplate = input.templateImage != null
-  const hasPrevious =
-    input.usePreviousResult && parsePostMediaFilename(input.previewMediaS3Key) != null
-  const hasTemplatePreviousConflict = hasTemplate && hasPrevious
+  const hasPrevious = parsePostMediaFilename(input.previewMediaS3Key) != null
 
   const mode = detectGenerationMode({
     templateImage: input.templateImage,
     enabledPhotoCount: photos.length,
-    usePreviousResult: input.usePreviousResult,
     previewMediaS3Key: input.previewMediaS3Key,
   })
 
@@ -93,6 +85,5 @@ export function resolveGenerationReferences(
     mode,
     references,
     tooManyReferences: references.length > MAX_GENERATION_REFERENCES,
-    hasTemplatePreviousConflict,
   }
 }

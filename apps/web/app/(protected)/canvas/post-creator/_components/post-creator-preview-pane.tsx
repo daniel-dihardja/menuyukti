@@ -35,17 +35,13 @@ export function PostCreatorPreviewPane() {
     previewVersionIndex,
     postImageVersionIndex,
     templateImage,
+    previewSource,
     isGenerating: isLoading,
     isCommittingPostImage,
     isDeletingVersion,
   } = state
   const { previewVersion: onPreviewVersionIndex, commitPostImage, requestDelete } = actions
-  const {
-    previewImageUrl: imageUrl,
-    selectedPageMediaS3Key: mediaS3Key,
-    canRemoveEmptyPage,
-    canDelete,
-  } = meta
+  const { selectedPageMediaS3Key: mediaS3Key, canRemoveEmptyPage, canDelete } = meta
 
   const gridSafeZoneToggleId = useId()
   const [showGridSafeZone, setShowGridSafeZone] = useState(true)
@@ -55,16 +51,15 @@ export function PostCreatorPreviewPane() {
     height: POST_IMAGE_HEIGHT,
   })
 
-  const versions =
-    imageVersions.length > 0
-      ? imageVersions
-      : imageUrl
-        ? [{ id: 'current', mediaS3Key: mediaS3Key ?? '', imageUrl, createdAt: '' }]
-        : []
+  const versions = imageVersions.length > 0 ? imageVersions : []
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
-  const generatedImageUrl = previewVersion?.imageUrl ?? null
-  const showingTemplateOnly = !generatedImageUrl && Boolean(templateImage?.url)
-  const previewImageUrl = generatedImageUrl ?? templateImage?.url ?? null
+  const generatedImageUrl = previewSource === 'version' ? (previewVersion?.imageUrl ?? null) : null
+  const showingTemplateOnly =
+    previewSource === 'template' || (!generatedImageUrl && Boolean(templateImage?.url))
+  const previewImageUrl =
+    previewSource === 'template'
+      ? (templateImage?.url ?? null)
+      : (generatedImageUrl ?? templateImage?.url ?? null)
   const hasGeneratedImage = Boolean(generatedImageUrl)
   const hasImage = Boolean(previewImageUrl)
   const showLoadingPlaceholder = isLoading && !hasImage
@@ -270,7 +265,7 @@ export function PostCreatorPreviewPane() {
               <div className="w-full shrink-0">
                 <PostCreatorVersionFilmstrip
                   versions={versions}
-                  previewIndex={previewVersionIndex}
+                  previewIndex={previewSource === 'version' ? previewVersionIndex : -1}
                   postImageIndex={postImageVersionIndex}
                   onPreviewIndex={previewVersionAt}
                   isCommitting={isCommittingPostImage || isLoading || isDeletingVersion}

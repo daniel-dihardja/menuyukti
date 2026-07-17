@@ -6,10 +6,8 @@ import {
 } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 import {
   resolveGenerationOutputDimensions,
-  resolveUsePreviousResultForPage,
+  resolvePreviewSourceForPage,
 } from '@/lib/posts/post-creator-utils'
-
-const PREVIEW_KEY = 'users/user_test/posts/11111111-1111-1111-1111-111111111111.webp'
 
 describe('resolveGenerationOutputDimensions', () => {
   it('uses previous-result size for filled-edit instead of default 4:5', () => {
@@ -39,34 +37,29 @@ describe('resolveGenerationOutputDimensions', () => {
   })
 })
 
-describe('resolveUsePreviousResultForPage', () => {
-  it('returns false when a layout template is active', () => {
+describe('resolvePreviewSourceForPage', () => {
+  it('returns stored previewSource when present', () => {
     expect(
-      resolveUsePreviousResultForPage(
-        {
-          templateImage: {
-            name: 'layout.webp',
-            url: 'https://example.com/layout.webp',
-            enabled: true,
-          },
-          usePreviousResult: true,
-          mediaS3Key: PREVIEW_KEY,
-        },
-        PREVIEW_KEY,
-      ),
-    ).toBe(false)
+      resolvePreviewSourceForPage({
+        templateImage: null,
+        previewSource: 'template',
+      }),
+    ).toBe('template')
   })
 
-  it('defaults to true when a preview exists and no template is set', () => {
+  it('defaults to template when a layout template is set', () => {
     expect(
-      resolveUsePreviousResultForPage(
-        {
-          templateImage: null,
-          usePreviousResult: undefined,
-          mediaS3Key: PREVIEW_KEY,
+      resolvePreviewSourceForPage({
+        templateImage: {
+          name: 'layout.webp',
+          url: 'https://example.com/layout.webp',
+          enabled: true,
         },
-        PREVIEW_KEY,
-      ),
-    ).toBe(true)
+      }),
+    ).toBe('template')
+  })
+
+  it('defaults to version when no template is set', () => {
+    expect(resolvePreviewSourceForPage({ templateImage: null })).toBe('version')
   })
 })

@@ -3,7 +3,6 @@ import {
   POST_IMAGE_WIDTH,
 } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 import type { OutputDimensions } from '@/lib/posts/build-instagram-post-prompt'
-import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 
 import type { PostCreatorImageVersion, PostCreatorPage } from './post-creator-types'
@@ -94,12 +93,13 @@ export function pageHasGeneratedImage(
   return false
 }
 
-export function resolveUsePreviousResultForPage(
-  page: Pick<PostCreatorPage, 'templateImage' | 'usePreviousResult' | 'mediaS3Key'> | undefined,
-  previewMediaS3Key: string | null,
-): boolean {
-  if (page?.templateImage) {
-    return false
+export type PostCreatorPreviewSource = 'version' | 'template'
+
+export function resolvePreviewSourceForPage(
+  page: Pick<PostCreatorPage, 'templateImage' | 'previewSource'> | undefined,
+): PostCreatorPreviewSource {
+  if (page?.previewSource === 'template' || page?.previewSource === 'version') {
+    return page.previewSource
   }
-  return page?.usePreviousResult ?? Boolean(parsePostMediaFilename(previewMediaS3Key))
+  return page?.templateImage ? 'template' : 'version'
 }

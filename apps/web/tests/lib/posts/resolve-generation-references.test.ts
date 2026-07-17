@@ -16,17 +16,14 @@ function template(name: string): PostCreatorReferenceImage {
 
 describe('resolveGenerationReferences', () => {
   it('returns template-composite mode with template first then photos', () => {
-    const { mode, references, tooManyReferences, hasTemplatePreviousConflict } =
-      resolveGenerationReferences({
-        templateImage: template('layout.webp'),
-        referenceImages: [photo('a.webp'), photo('b.webp')],
-        usePreviousResult: false,
-        previewMediaS3Key: PREVIEW_KEY,
-      })
+    const { mode, references, tooManyReferences } = resolveGenerationReferences({
+      templateImage: template('layout.webp'),
+      referenceImages: [photo('a.webp'), photo('b.webp')],
+      previewMediaS3Key: null,
+    })
 
     expect(mode).toBe('template-composite')
     expect(tooManyReferences).toBe(false)
-    expect(hasTemplatePreviousConflict).toBe(false)
     expect(references).toEqual([
       { type: 'template', name: 'layout.webp' },
       { type: 'photo', name: 'a.webp' },
@@ -34,11 +31,10 @@ describe('resolveGenerationReferences', () => {
     ])
   })
 
-  it('returns filled-edit mode with previous result only', () => {
+  it('returns filled-edit mode when preview has a generated image and no photos', () => {
     const { mode, references } = resolveGenerationReferences({
       templateImage: null,
       referenceImages: [photo('a.webp', false)],
-      usePreviousResult: true,
       previewMediaS3Key: PREVIEW_KEY,
     })
 
@@ -51,11 +47,10 @@ describe('resolveGenerationReferences', () => {
     ])
   })
 
-  it('returns fresh-scene with previous and photos when no template', () => {
+  it('returns fresh-scene with previous and photos when preview has a generated image', () => {
     const { mode, references } = resolveGenerationReferences({
       templateImage: null,
       referenceImages: [photo('a.webp'), photo('b.webp', false), photo('c.webp')],
-      usePreviousResult: true,
       previewMediaS3Key: PREVIEW_KEY,
     })
 
@@ -70,12 +65,11 @@ describe('resolveGenerationReferences', () => {
     ])
   })
 
-  it('returns fresh-scene with photos only when previous result is off', () => {
+  it('returns fresh-scene with photos only when preview has no generated image', () => {
     const { mode, references } = resolveGenerationReferences({
       templateImage: null,
       referenceImages: [photo('a.webp'), photo('b.webp', false), photo('c.webp')],
-      usePreviousResult: false,
-      previewMediaS3Key: PREVIEW_KEY,
+      previewMediaS3Key: null,
     })
 
     expect(mode).toBe('fresh-scene')
@@ -89,23 +83,20 @@ describe('resolveGenerationReferences', () => {
     const { mode, references } = resolveGenerationReferences({
       templateImage: template('layout.webp'),
       referenceImages: [photo('a.webp', false)],
-      usePreviousResult: false,
-      previewMediaS3Key: PREVIEW_KEY,
+      previewMediaS3Key: null,
     })
 
     expect(mode).toBe('template-composite')
     expect(references).toEqual([{ type: 'template', name: 'layout.webp' }])
   })
 
-  it('flags template and previous result conflict', () => {
-    const { mode, hasTemplatePreviousConflict, references } = resolveGenerationReferences({
+  it('prefers template over preview media when both are provided by the caller', () => {
+    const { mode, references } = resolveGenerationReferences({
       templateImage: template('layout.webp'),
       referenceImages: [photo('a.webp')],
-      usePreviousResult: true,
       previewMediaS3Key: PREVIEW_KEY,
     })
 
-    expect(hasTemplatePreviousConflict).toBe(true)
     expect(mode).toBe('template-composite')
     expect(references).toEqual([
       { type: 'template', name: 'layout.webp' },
@@ -117,8 +108,7 @@ describe('resolveGenerationReferences', () => {
     const { mode, references } = resolveGenerationReferences({
       templateImage: null,
       referenceImages: [photo('a.webp', false)],
-      usePreviousResult: false,
-      previewMediaS3Key: PREVIEW_KEY,
+      previewMediaS3Key: null,
     })
 
     expect(mode).toBe('fresh-scene')
@@ -136,8 +126,7 @@ describe('resolveGenerationReferences', () => {
         photo('5.webp'),
         photo('6.webp'),
       ],
-      usePreviousResult: false,
-      previewMediaS3Key: PREVIEW_KEY,
+      previewMediaS3Key: null,
     })
 
     expect(references).toHaveLength(7)
