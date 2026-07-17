@@ -41,7 +41,7 @@ export function PostCreatorPreviewPane() {
     isDeletingVersion,
   } = state
   const { previewVersion: onPreviewVersionIndex, commitPostImage, requestDelete } = actions
-  const { selectedPageMediaS3Key: mediaS3Key, canRemoveEmptyPage, canDelete } = meta
+  const { canRemoveEmptyPage, canDelete } = meta
 
   const gridSafeZoneToggleId = useId()
   const [showGridSafeZone, setShowGridSafeZone] = useState(true)
