@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { WorkflowTimelineSkeleton } from '../workflow-workspace-skeleton'
@@ -20,7 +21,13 @@ export function TimelineWorkspaceLoadError({ message }: { message: string }) {
   )
 }
 
-export function TimelineWorkspaceEmpty({ createError }: { createError: string | null }) {
+export function TimelineWorkspaceEmpty({
+  createError,
+  createControls,
+}: {
+  createError: string | null
+  createControls: ReactNode
+}) {
   const t = useTranslations('analytics.workflows.chat')
   return (
     <div
@@ -34,6 +41,7 @@ export function TimelineWorkspaceEmpty({ createError }: { createError: string | 
         </h3>
         <p className="text-muted-foreground text-sm">{t('timelineEmptyDescription')}</p>
       </div>
+      {createControls}
       {createError ? (
         <p className="max-w-md text-destructive text-sm" role="alert">
           {createError}

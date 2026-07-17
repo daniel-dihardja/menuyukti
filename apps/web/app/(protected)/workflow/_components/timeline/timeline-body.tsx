@@ -7,14 +7,16 @@ import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
-import { useTimelineWorkspaceState } from '../timeline-context'
+import { useTimelineActions, useTimelineWorkspaceState } from '../timeline-context'
+import { MilestoneCreateControls } from './milestone-preset-select'
 import { TimelineItem } from './timeline-item'
 
 export function TimelineBody() {
   const t = useTranslations('analytics.workflows.chat')
   const isDesktop = useDesktopLayout()
   const { milestoneState, onSelectMilestone } = useTimelineWorkspaceState()
-  const { milestones } = milestoneState
+  const { milestones, creating } = milestoneState
+  const { onCreateMilestone, onCreateMilestoneFromPreset } = useTimelineActions()
 
   const handleBackgroundClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -32,7 +34,7 @@ export function TimelineBody() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-0 min-w-0 flex-1" onClick={handleBackgroundClick}>
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden" onClick={handleBackgroundClick}>
         <ScrollArea className="h-full min-h-0 min-w-0">
           <div
             aria-label={t('timelineListLabel')}
@@ -51,6 +53,14 @@ export function TimelineBody() {
                 />
               )
             })}
+            <div className="flex justify-center pt-2 pb-4 md:pt-4">
+              <MilestoneCreateControls
+                creating={creating}
+                disabled={creating}
+                onCreateMilestone={onCreateMilestone}
+                onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
+              />
+            </div>
           </div>
         </ScrollArea>
       </div>

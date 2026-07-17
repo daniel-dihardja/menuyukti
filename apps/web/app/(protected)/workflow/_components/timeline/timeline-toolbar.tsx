@@ -2,14 +2,13 @@
 
 import type { ReactNode } from 'react'
 
-import { ListCollapse, Plus } from 'lucide-react'
+import { ListCollapse } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { useTimelineCollapse } from './timeline-collapse-context'
 
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Spinner } from '@workspace/ui/components/spinner'
 import {
   Tooltip,
   TooltipContent,
@@ -68,41 +67,6 @@ export function TimelineToolbarCollapseAllButton() {
       </TooltipTrigger>
       <TooltipContent side="bottom">
         <p>{t('collapseAllMilestones')}</p>
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-export function TimelineToolbarCreateButton({
-  createLabel,
-  creatingLabel,
-  onCreateMilestone,
-  creating,
-}: {
-  createLabel: string
-  creatingLabel: string
-  onCreateMilestone: () => boolean | Promise<boolean>
-  creating: boolean
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex">
-          <Button
-            aria-busy={creating}
-            aria-label={creating ? creatingLabel : createLabel}
-            disabled={creating}
-            onClick={() => void onCreateMilestone()}
-            size="icon"
-            type="button"
-            variant="default"
-          >
-            {creating ? <Spinner /> : <Plus aria-hidden />}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        <p>{creating ? creatingLabel : createLabel}</p>
       </TooltipContent>
     </Tooltip>
   )
