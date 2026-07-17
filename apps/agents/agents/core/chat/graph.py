@@ -73,7 +73,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
     )
 
 
-def _normalize_user_content(content: Any) -> str | list[dict[str, Any]]:
+def _normalize_user_content(content: Any) -> str | list[str | dict[Any, Any]]:
     """Accept plain text or OpenAI-style multimodal content blocks."""
     if isinstance(content, str):
         if not content.strip():
@@ -85,7 +85,7 @@ def _normalize_user_content(content: Any) -> str | list[dict[str, Any]]:
         msg = "User message content must be a non-empty string or content block list"
         raise ValueError(msg)
 
-    blocks: list[dict[str, Any]] = []
+    blocks: list[str | dict[Any, Any]] = []
     has_text = False
     has_image = False
     for block in content:
