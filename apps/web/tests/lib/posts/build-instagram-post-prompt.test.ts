@@ -72,6 +72,22 @@ describe('buildInstagramPostPrompt', () => {
     expect(out.endsWith('Ref 3 → center hero bowl')).toBe(true)
   })
 
+  it('uses a style/headline prompt when only a template is provided', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Headline: Weekend specials',
+      mode: 'template-composite',
+      references: [{ type: 'template' }],
+    })
+
+    expect(out).toContain('editing a fixed Instagram post TEMPLATE for style and copy updates')
+    expect(out).toContain('master layout and visual style guide')
+    expect(out).toContain('Reference 1 — TEMPLATE')
+    expect(out).toContain('CREATIVE DIRECTION (headline, labels, style notes):')
+    expect(out).not.toContain('SLOT FILL — IN-PAINT, NOT OVERLAY')
+    expect(out).not.toContain('PRODUCT FIDELITY')
+    expect(out.endsWith('Headline: Weekend specials')).toBe(true)
+  })
+
   it('uses template output dimensions in template-composite mode when provided', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Headline: Weekend specials',
@@ -171,6 +187,10 @@ describe('detectPromptMode', () => {
     expect(detectPromptMode([{ type: 'template' }, { type: 'photo' }, { type: 'photo' }])).toBe(
       'template-composite',
     )
+  })
+
+  it('detects template-composite when only a template is present', () => {
+    expect(detectPromptMode([{ type: 'template' }])).toBe('template-composite')
   })
 
   it('detects filled-edit when only previous result is present', () => {

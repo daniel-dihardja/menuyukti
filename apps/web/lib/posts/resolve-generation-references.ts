@@ -38,10 +38,11 @@ export function detectGenerationMode(input: {
   const hasPrevious =
     input.usePreviousResult && parsePostMediaFilename(input.previewMediaS3Key) != null
 
-  if (hasTemplate && hasProducts) {
+  // Template alone is enough (headline/style edits); products are optional fills.
+  if (hasTemplate) {
     return 'template-composite'
   }
-  if (hasPrevious && !hasTemplate && !hasProducts) {
+  if (hasPrevious && !hasProducts) {
     return 'filled-edit'
   }
   return 'fresh-scene'
@@ -65,7 +66,8 @@ export function resolveGenerationReferences(
 
   const references: GenerationReference[] = []
 
-  if (mode === 'template-composite' && input.templateImage) {
+  // Always attach the layout template when selected (products optional).
+  if (input.templateImage) {
     references.push({ type: 'template', name: input.templateImage.name })
     for (const image of photos) {
       references.push({ type: 'photo', name: image.name })

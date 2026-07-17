@@ -85,6 +85,18 @@ describe('resolveGenerationReferences', () => {
     ])
   })
 
+  it('returns template-composite with template only when no product photos are attached', () => {
+    const { mode, references } = resolveGenerationReferences({
+      templateImage: template('layout.webp'),
+      referenceImages: [photo('a.webp', false)],
+      usePreviousResult: false,
+      previewMediaS3Key: PREVIEW_KEY,
+    })
+
+    expect(mode).toBe('template-composite')
+    expect(references).toEqual([{ type: 'template', name: 'layout.webp' }])
+  })
+
   it('flags template and previous result conflict', () => {
     const { mode, hasTemplatePreviousConflict, references } = resolveGenerationReferences({
       templateImage: template('layout.webp'),

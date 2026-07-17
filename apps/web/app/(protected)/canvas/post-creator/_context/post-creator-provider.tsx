@@ -400,14 +400,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       return
     }
 
-    if (genMode === 'template-composite' && templateImage) {
-      const enabledProductCount = referenceImages.filter((image) => image.enabled).length
-      if (enabledProductCount === 0) {
-        toast.error(tPrompt('generation.templateNeedsProducts'))
-        return
-      }
-    }
-
     if (tooManyReferences) {
       toast.error(tPrompt('generation.tooManyReferences'))
       return
@@ -889,6 +881,11 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
 
     if (genMode === 'template-composite' && templateImage) {
+      if (enabledPhotoCount === 0) {
+        return tPrompt('generation.referenceSummaryTemplateOnly', {
+          template: templateImage.name,
+        })
+      }
       return tPrompt('generation.referenceSummaryTemplateComposite', {
         count: enabledPhotoCount,
         template: templateImage.name,

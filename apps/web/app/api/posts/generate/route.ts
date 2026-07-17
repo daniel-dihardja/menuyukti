@@ -144,19 +144,12 @@ export async function POST(req: Request) {
   const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
 
   let mode: GenerationMode
-  if (hasTemplate && enabledPhotoCount > 0) {
+  if (hasTemplate) {
     mode = 'template-composite'
-  } else if (hasPrevious && !hasTemplate && enabledPhotoCount === 0) {
+  } else if (hasPrevious && enabledPhotoCount === 0) {
     mode = 'filled-edit'
   } else {
     mode = 'fresh-scene'
-  }
-
-  if (mode === 'template-composite' && (!hasTemplate || enabledPhotoCount === 0)) {
-    return NextResponse.json(
-      { message: 'Template composite requires a template and at least one product photo' },
-      { status: 400 },
-    )
   }
 
   const referenceBuffers: Buffer[] = []

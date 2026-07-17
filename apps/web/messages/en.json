@@ -779,16 +779,16 @@
         "referenceSummaryTextOnly": "Next generation: creative direction only (no references).",
         "referenceSummaryFilledEdit": "Next generation: edit last filled result only.",
         "referenceSummaryTemplateComposite": "Next generation: template “{template}” + {count, plural, one {# product} other {# products}} (Ref 2+).",
+        "referenceSummaryTemplateOnly": "Next generation: template “{template}” only (headline/style).",
         "referenceSummaryPreviousOnly": "Next generation: previous result only.",
         "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummaryPreviousAndPhotos": "Next generation: previous result + {count, plural, one {# checked photo} other {# checked photos}}.",
         "tooManyReferences": "Too many references selected. Use at most 1 template and 5 checked product photos (6 total).",
-        "templateNeedsProducts": "Attach at least one checked product photo to fill the template.",
         "templatePreviousConflict": "Turn off “Use last filled result” when using a layout template."
       },
       "tip": {
         "title": "Tip",
-        "description": "Attach a layout template from Media, add product photos with @ (Ref 2 = first placeholder, Ref 3 = second, …), then describe headline and product mapping in creative direction."
+        "description": "Attach a layout template from Media for headline/style edits. Optionally add product photos with @ (Ref 2 = first placeholder, Ref 3 = second, …), then describe changes in creative direction."
       }
     },
     "preview": {
@@ -812,6 +812,7 @@
       "useAsPostImageCommitting": "Setting post image…",
       "committingPostImage": "Setting post image…",
       "previewImageAlt": "Generated post preview",
+      "templatePreviewImageAlt": "Selected layout template preview",
       "generating": "Generating…",
       "deleteImage": "Delete image",
       "removePage": "Remove page",

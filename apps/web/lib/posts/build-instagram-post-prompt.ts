@@ -216,16 +216,39 @@ function buildOutputBlock(mode: GenerationMode, dimensions?: OutputDimensions): 
 - Instagram-ready, no watermarks, no UI chrome.`
 }
 
+function buildTemplateStyleOnlyTaskBlock(): string {
+  return `TASK:
+Use the TEMPLATE as the master layout and visual style guide.
+Apply creative direction — especially headline, labels, and copy changes — while preserving the template's composition, colors, typography style, and decorations.
+Product placeholder regions may stay as designed, or be refined only if creative direction asks. Do not invent unrelated product photography unless requested.`
+}
+
 function buildTemplateCompositePrompt(
   userPrompt: string,
   references: PromptReference[],
   outputDimensions?: OutputDimensions,
 ): string {
   const trimmed = userPrompt.trim()
+  const hasProductPhotos = references.some((reference) => reference.type === 'photo')
   const referenceBlock =
     references.length > 0
       ? `\n\n${buildIndexedReferenceBlock(references, 'template-composite')}`
       : ''
+
+  if (!hasProductPhotos) {
+    return `You are editing a fixed Instagram post TEMPLATE for style and copy updates.
+
+${buildTemplateStyleOnlyTaskBlock()}
+
+${buildOutputBlock('template-composite', outputDimensions)}
+
+${buildCompositionBlock('template-composite')}${referenceBlock}
+
+${buildTextReplacementBlock()}
+
+CREATIVE DIRECTION (headline, labels, style notes):
+${trimmed}`
+  }
 
   const taskBlock = `TASK:
 In-paint each placeholder region in the template with the corresponding product photo.
@@ -310,10 +333,10 @@ export function detectPromptMode(references: PromptReference[]): GenerationMode 
   const hasPrevious = references.some((reference) => reference.type === 'previous-result')
   const productCount = references.filter((reference) => reference.type === 'photo').length
 
-  if (hasTemplate && productCount > 0) {
+  if (hasTemplate) {
     return 'template-composite'
   }
-  if (hasPrevious && !hasTemplate && productCount === 0) {
+  if (hasPrevious && productCount === 0) {
     return 'filled-edit'
   }
   return 'fresh-scene'

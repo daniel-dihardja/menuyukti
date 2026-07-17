@@ -34,6 +34,7 @@ export function PostCreatorPreviewPane() {
     imageVersions,
     previewVersionIndex,
     postImageVersionIndex,
+    templateImage,
     isGenerating: isLoading,
     isCommittingPostImage,
     isDeletingVersion,
@@ -61,17 +62,21 @@ export function PostCreatorPreviewPane() {
         ? [{ id: 'current', mediaS3Key: mediaS3Key ?? '', imageUrl, createdAt: '' }]
         : []
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
-  const previewImageUrl = previewVersion?.imageUrl ?? null
+  const generatedImageUrl = previewVersion?.imageUrl ?? null
+  const showingTemplateOnly = !generatedImageUrl && Boolean(templateImage?.url)
+  const previewImageUrl = generatedImageUrl ?? templateImage?.url ?? null
+  const hasGeneratedImage = Boolean(generatedImageUrl)
   const hasImage = Boolean(previewImageUrl)
   const showLoadingPlaceholder = isLoading && !hasImage
   const showVersionNav = versions.length > 1
-  const canCommitPostImage = showVersionNav && previewVersionIndex !== postImageVersionIndex
+  const canCommitPostImage =
+    hasGeneratedImage && showVersionNav && previewVersionIndex !== postImageVersionIndex
 
   const onDeleteVersion = canDelete ? requestDelete : undefined
   const onUseAsPostImage = canCommitPostImage ? () => void commitPostImage() : undefined
 
   const canDeleteVersion =
-    hasImage &&
+    hasGeneratedImage &&
     Boolean(onDeleteVersion) &&
     Boolean(previewVersion?.mediaS3Key) &&
     !isLoading &&
@@ -79,7 +84,7 @@ export function PostCreatorPreviewPane() {
     !isDeletingVersion
 
   const canRemovePage =
-    !hasImage &&
+    !hasGeneratedImage &&
     canRemoveEmptyPage &&
     Boolean(onDeleteVersion) &&
     !isLoading &&
@@ -87,6 +92,7 @@ export function PostCreatorPreviewPane() {
     !isDeletingVersion
 
   const showRemoveButton = canDeleteVersion || canRemovePage
+  const previewImageAlt = showingTemplateOnly ? t('templatePreviewImageAlt') : t('previewImageAlt')
 
   const previewVersionAt = useCallback(
     (index: number) => {
@@ -172,7 +178,7 @@ export function PostCreatorPreviewPane() {
                     {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
                     <img
                       src={previewImageUrl!}
-                      alt={t('previewImageAlt')}
+                      alt={previewImageAlt}
                       className="size-full object-contain"
                     />
                     {isLoading ? (
