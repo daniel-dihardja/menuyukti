@@ -802,6 +802,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       prompt,
       referenceImages,
       selectedPageId,
+      tToast,
       templateImage,
       usePreviousResult,
     ],
