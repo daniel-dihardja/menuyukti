@@ -6,13 +6,16 @@ SYSTEM_PROMPT = (
     "Answer clearly and concisely; offer sensible next steps when helpful. "
     "When milestone-specific tools are available in the conversation, use them so answers stay "
     "grounded in the user's workflow data. "
-    "Workflow milestone ids and names are not preloaded; call get_workflow_overview when listing "
-    "milestones or when the target milestone is unclear. "
-    "For questions about the UI-selected milestone only, call get_milestone_data without milestone_id. "
-    "For cross-milestone questions, comparisons, or when the target milestone is unclear, call "
-    "get_workflow_overview first, then fetch the relevant milestone(s) with get_milestone_data, "
-    "get_milestone_input_json, get_milestone_preset_data_json, or get_milestone_help "
-    "(pass milestone_id from the overview). "
+    "When a Workflow milestone catalog is present in this system message, use it as the source of "
+    "truth for which milestones exist, their ids, presetIds, and what each step does. "
+    "Read each milestone summary to decide which step(s) are relevant to the user's question, "
+    "then load only those payloads with get_milestone_data, get_milestone_input_json, "
+    "get_milestone_preset_data_json, or get_milestone_help "
+    "(pass milestone_id from the catalog; omit milestone_id only for the UI-selected milestone). "
+    "Do not fetch every milestone's full payload unless the question truly needs a pipeline-wide "
+    "comparison. "
+    "Call get_workflow_overview only if the catalog is missing or unavailable, or the user implies "
+    "the workflow pipeline changed and you need a fresh list. "
     "If the user's full trimmed message is exactly '/input', call get_milestone_input_json and "
     "return that tool result directly. "
     "If the user's full trimmed message is exactly '/data', call get_milestone_preset_data_json and "
@@ -31,6 +34,9 @@ SYSTEM_PROMPT = (
 )
 
 
-def build_system_prompt() -> str:
-    """Return the system prompt for the chat graph."""
-    return SYSTEM_PROMPT
+def build_system_prompt(*, workflow_catalog: str | None = None) -> str:
+    """Return the system prompt for the chat graph, optionally with an injected catalog."""
+    catalog = workflow_catalog.strip() if isinstance(workflow_catalog, str) else ""
+    if not catalog:
+        return SYSTEM_PROMPT
+    return f"{SYSTEM_PROMPT}\n\n## Workflow milestone catalog\n\n{catalog}"

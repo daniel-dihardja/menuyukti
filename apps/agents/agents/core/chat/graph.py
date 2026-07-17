@@ -44,9 +44,13 @@ def chat_tools_list() -> list:
 
 
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
-    """Prepend the chat system prompt."""
+    """Prepend the chat system prompt (with optional injected workflow catalog)."""
     messages = state.get("messages") or []
-    prompt_body = build_system_prompt()
+    cfg = get_config() or {}
+    conf = cfg.get("configurable") or {}
+    raw_catalog = conf.get("workflow_catalog_markdown")
+    catalog = raw_catalog if isinstance(raw_catalog, str) else None
+    prompt_body = build_system_prompt(workflow_catalog=catalog)
     return [SystemMessage(content=prompt_body), *messages]
 
 

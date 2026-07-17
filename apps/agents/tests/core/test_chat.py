@@ -1,6 +1,6 @@
 """HTTP tests for streaming chat."""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from agents_app.server import app
@@ -12,6 +12,19 @@ from langchain_core.messages import AIMessage, AIMessageChunk, ToolMessage
 def client() -> TestClient:
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture(autouse=True)
+def _stub_workflow_catalog(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Avoid real GraphQL during chat HTTP tests; return a fixed catalog for workflow chats."""
+
+    async def fake_catalog(**_kwargs: object) -> str:
+        return "# Workflow overview\n\n## 1. Stub\n- **id**: 1\n"
+
+    monkeypatch.setattr(
+        "agents_app.routers.chat.load_workflow_catalog_markdown",
+        AsyncMock(side_effect=fake_catalog),
+    )
 
 
 def _install_mock_astream(
@@ -273,6 +286,7 @@ def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
     assert captured["config"]["configurable"]["milestone_id"] == "42"
     assert captured["config"]["configurable"]["location_id"] == 7
     assert captured["config"]["configurable"]["user_id"] == "user-1"
+    assert "# Workflow overview" in captured["config"]["configurable"]["workflow_catalog_markdown"]
 
 
 def test_chat_workflow_session_suffixes_thread_id(client: TestClient) -> None:
@@ -323,6 +337,7 @@ def test_chat_agent_thread_id(client: TestClient) -> None:
         assert response.status_code == 200
 
     assert captured["config"]["configurable"]["thread_id"] == "u-2:agent:opaque-uuid"
+    assert "workflow_catalog_markdown" not in captured["config"]["configurable"]
 
 
 def test_chat_multimodal_user_content(client: TestClient) -> None:
