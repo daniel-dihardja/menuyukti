@@ -15,6 +15,7 @@ import {
   PopoverTitle,
 } from '@workspace/ui/components/popover'
 import { cn } from '@workspace/ui/lib/utils'
+import { Loader2 } from 'lucide-react'
 import { useWorkflowChatMentionItems } from './workflow-chat-mention-context'
 import {
   useCallback,
@@ -26,6 +27,8 @@ import {
 } from 'react'
 import { useTranslations } from 'next-intl'
 
+import { formatMediaMentionLabel } from '@/lib/chat/workflow-chat-media-mention'
+import { loadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
 export type SlashCommandDefinition = {
@@ -42,6 +45,7 @@ export type MilestoneMentionItem = {
 type MentionMenuEntry =
   | { kind: 'milestone'; id: string; title: string }
   | { kind: 'visualization'; id: WorkflowVisualizationId; title: string }
+  | { kind: 'media'; item: MediaCatalogItem }
 
 export type WorkflowChatComposerMenusProps = {
   value: string
@@ -51,6 +55,7 @@ export type WorkflowChatComposerMenusProps = {
   slashAriaLabel: string
   onSelectMention: (milestoneId: string) => void
   onSelectVisualizationMention: (visualizationId: WorkflowVisualizationId, title: string) => void
+  onSelectMediaMention: (item: MediaCatalogItem) => void
   mentionAriaLabel: string
   mentionEmptyLabel: string
   children: ReactNode
@@ -64,6 +69,7 @@ export function WorkflowChatComposerMenus({
   slashAriaLabel,
   onSelectMention,
   onSelectVisualizationMention,
+  onSelectMediaMention,
   mentionAriaLabel,
   mentionEmptyLabel,
   children,
@@ -71,6 +77,10 @@ export function WorkflowChatComposerMenus({
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
   const { milestones, visualizations, selectedMilestoneId, mentionMenusDisabled } =
     useWorkflowChatMentionItems()
+
+  const [mediaItems, setMediaItems] = useState<MediaCatalogItem[]>([])
+  const [mediaLoading, setMediaLoading] = useState(false)
+  const [mediaLoadAttempted, setMediaLoadAttempted] = useState(false)
 
   const otherMilestones = useMemo(
     () =>
@@ -94,6 +104,36 @@ export function WorkflowChatComposerMenus({
 
   /** trimEnd so `@Title ` after picking still matches; avoid trim() stripping intentional leading spaces in rare cases. */
   const mentionFilterQuery = value.startsWith('@') ? value.slice(1).toLowerCase().trimEnd() : ''
+  const mentionMenuOpenBase = value.startsWith('@') && !mentionMenusDisabled
+
+  useEffect(() => {
+    if (!mentionMenuOpenBase) {
+      return
+    }
+    let cancelled = false
+    setMediaLoading(true)
+    void loadMedia()
+      .then((list) => {
+        if (!cancelled) {
+          setMediaItems(list)
+          setMediaLoadAttempted(true)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMediaItems([])
+          setMediaLoadAttempted(true)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setMediaLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [mentionMenuOpenBase])
 
   const filteredMilestones = useMemo(() => {
     if (!value.startsWith('@')) {
@@ -109,6 +149,18 @@ export function WorkflowChatComposerMenus({
     return visualizations.filter((v) => v.title.toLowerCase().includes(mentionFilterQuery))
   }, [mentionFilterQuery, value, visualizations])
 
+  const filteredMedia = useMemo(() => {
+    if (!value.startsWith('@')) {
+      return []
+    }
+    return mediaItems.filter((item) => {
+      const label = formatMediaMentionLabel(item.name).toLowerCase()
+      return (
+        item.name.toLowerCase().includes(mentionFilterQuery) || label.includes(mentionFilterQuery)
+      )
+    })
+  }, [mentionFilterQuery, mediaItems, value])
+
   const flatMentionEntries = useMemo((): MentionMenuEntry[] => {
     const milestoneEntries: MentionMenuEntry[] = filteredMilestones.map((m) => ({
       kind: 'milestone',
@@ -120,17 +172,25 @@ export function WorkflowChatComposerMenus({
       id: v.id as WorkflowVisualizationId,
       title: v.title,
     }))
-    return [...milestoneEntries, ...visualizationEntries]
-  }, [filteredMilestones, filteredVisualizations])
+    const mediaEntries: MentionMenuEntry[] = filteredMedia.map((item) => ({
+      kind: 'media',
+      item,
+    }))
+    return [...milestoneEntries, ...visualizationEntries, ...mediaEntries]
+  }, [filteredMilestones, filteredVisualizations, filteredMedia])
 
   const slashMenuOpen = value.startsWith('/') && filteredSlash.length > 0
-  const hasMentionCandidates = otherMilestones.length > 0 || visualizations.length > 0
+  const hasMentionCandidates =
+    otherMilestones.length > 0 ||
+    visualizations.length > 0 ||
+    mediaItems.length > 0 ||
+    mediaLoading ||
+    !mediaLoadAttempted
   /** Hide popover once the typed tail is not a mention prefix (e.g. `@Brief what is…`) so CommandEmpty does not flash. */
   const mentionMenuOpen =
-    value.startsWith('@') &&
-    !mentionMenusDisabled &&
+    mentionMenuOpenBase &&
     hasMentionCandidates &&
-    (flatMentionEntries.length > 0 || mentionFilterQuery.length === 0)
+    (flatMentionEntries.length > 0 || mentionFilterQuery.length === 0 || mediaLoading)
 
   const menuOpen = slashMenuOpen || mentionMenuOpen
   const panelAriaLabel = slashMenuOpen ? slashAriaLabel : mentionAriaLabel
@@ -164,9 +224,13 @@ export function WorkflowChatComposerMenus({
         onSelectMention(entry.id)
         return
       }
-      onSelectVisualizationMention(entry.id, entry.title)
+      if (entry.kind === 'visualization') {
+        onSelectVisualizationMention(entry.id, entry.title)
+        return
+      }
+      onSelectMediaMention(entry.item)
     },
-    [onSelectMention, onSelectVisualizationMention],
+    [onSelectMention, onSelectVisualizationMention, onSelectMediaMention],
   )
 
   const handleKeyDownCapture = useCallback(
@@ -286,7 +350,7 @@ export function WorkflowChatComposerMenus({
               </CommandGroup>
             ) : (
               <>
-                {flatMentionEntries.length > 0 ? (
+                {flatMentionEntries.length > 0 || mediaLoading ? (
                   <>
                     {filteredMilestones.length > 0 ? (
                       <CommandGroup
@@ -343,12 +407,56 @@ export function WorkflowChatComposerMenus({
                         })}
                       </CommandGroup>
                     ) : null}
+                    {mediaLoading && filteredMedia.length === 0 ? (
+                      <CommandGroup heading={tMention('mediaGroup')}>
+                        <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
+                          <Loader2 className="size-4 animate-spin" />
+                          {tMention('mediaLoading')}
+                        </div>
+                      </CommandGroup>
+                    ) : null}
+                    {filteredMedia.length > 0 ? (
+                      <CommandGroup
+                        heading={tMention('mediaGroup')}
+                        aria-label={tMention('mediaAriaLabel')}
+                      >
+                        {filteredMedia.map((item) => {
+                          flatIndex += 1
+                          const activeIndex = flatIndex
+                          const label = formatMediaMentionLabel(item.name)
+                          return (
+                            <CommandItem
+                              key={`media-${item.name}`}
+                              className={cn(
+                                'w-full items-center gap-2',
+                                activeIndex === mentionActiveIndex &&
+                                  'bg-accent text-accent-foreground',
+                              )}
+                              onSelect={() => onSelectMediaMention(item)}
+                              value={item.name}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element -- tiny mention preview */}
+                              <img
+                                alt=""
+                                className="size-8 shrink-0 rounded object-cover"
+                                height={32}
+                                src={item.url}
+                                width={32}
+                              />
+                              <span className="min-w-0 truncate font-medium">{label}</span>
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    ) : null}
                   </>
                 ) : (
                   <CommandEmpty className="px-3 py-6 text-center text-muted-foreground text-sm">
-                    {visualizations.length === 0 && otherMilestones.length > 0
-                      ? tMention('noAttachedCharts')
-                      : mentionEmptyLabel}
+                    {mediaLoadAttempted && mediaItems.length === 0 && otherMilestones.length === 0
+                      ? tMention('mediaEmpty')
+                      : visualizations.length === 0 && otherMilestones.length > 0
+                        ? tMention('noAttachedCharts')
+                        : mentionEmptyLabel}
                   </CommandEmpty>
                 )}
               </>

@@ -156,8 +156,14 @@ export const TestResultsProgress = ({
       {children ?? (
         <>
           <div className="flex h-2 overflow-hidden rounded-full bg-muted">
-            <div className="bg-green-500 transition-all" style={{ width: `${passedPercent}%` }} />
-            <div className="bg-red-500 transition-all" style={{ width: `${failedPercent}%` }} />
+            <div
+              className="bg-green-500 transition-[width] duration-200"
+              style={{ width: `${passedPercent}%` }}
+            />
+            <div
+              className="bg-red-500 transition-[width] duration-200"
+              style={{ width: `${failedPercent}%` }}
+            />
           </div>
           <div className="flex justify-between text-muted-foreground text-xs">
             <span>

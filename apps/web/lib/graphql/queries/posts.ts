@@ -128,6 +128,26 @@ export type DeletePostData = {
   deletePost: boolean
 }
 
+export const UPDATE_POST_MUTATION = `
+  mutation UpdatePost($id: ID!, $title: String!) {
+    updatePost(id: $id, title: $title) {
+      id
+      title
+      status
+      updatedAt
+    }
+  }
+`
+
+export type UpdatePostData = {
+  updatePost: {
+    id: string
+    title: string | null
+    status: string
+    updatedAt: string | null
+  }
+}
+
 export const UPDATE_POST_PAGE_MUTATION = `
   mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
     updatePostPage(id: $id, mediaS3Key: $mediaS3Key, prompt: $prompt) {

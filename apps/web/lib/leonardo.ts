@@ -1,5 +1,11 @@
 import sharp from 'sharp'
 
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  snapLeonardoPostDimension,
+  type LeonardoPostModelId,
+} from '@/lib/posts/leonardo-post-models'
+
 /** Presigned init-image upload + poll status — only REST paths Leonardo exposes for these. */
 const BASE_V1 = 'https://cloud.leonardo.ai/api/rest/v1'
 /** Nano Banana and other v2 models — https://docs.leonardo.ai/docs/nano-banana */
@@ -9,23 +15,6 @@ const POLL_INTERVAL_MS = 2000
 const POLL_MAX_MS = 120_000
 
 const LOG_PREFIX = '[leonardo]'
-
-/** Per Nano Banana docs — width/height must be one of these (excluding 0, which we avoid here). */
-const NANO_BANANA_ALLOWED_DIMS = [672, 768, 832, 864, 896, 1024, 1152, 1184, 1248, 1344] as const
-
-function snapNanoBananaDimension(n: number): number {
-  if (!Number.isFinite(n) || n <= 0) return 1024
-  let best: number = 1024
-  let bestDiff = Infinity
-  for (const d of NANO_BANANA_ALLOWED_DIMS) {
-    const diff = Math.abs(d - n)
-    if (diff < bestDiff) {
-      bestDiff = diff
-      best = d
-    }
-  }
-  return best
-}
 
 function truncateBody(text: string, max = 1500): string {
   if (text.length <= max) return text
@@ -70,12 +59,32 @@ export type ImageReferenceStrength = 'LOW' | 'MID' | 'HIGH'
 /** Config for remove-background via Nano Banana / v2 generations API. */
 export type NanoBananaFlowConfig = {
   /** e.g. `gemini-2.5-flash-image` per https://docs.leonardo.ai/docs/nano-banana */
-  model: string
+  model: LeonardoPostModelId | string
   prompt: string
   /** Optional preset styles; omit or use `"None"` style UUID. */
   styleIds?: string[]
   imageReferenceStrength?: ImageReferenceStrength
   promptEnhance?: 'OFF' | 'ON'
+}
+
+function resolvePostModelId(model: string): LeonardoPostModelId {
+  return model === 'nano-banana-2' ||
+    model === 'gemini-image-2' ||
+    model === 'gemini-2.5-flash-image'
+    ? model
+    : DEFAULT_LEONARDO_POST_MODEL
+}
+
+function snapModelDimensions(
+  model: string,
+  width: number,
+  height: number,
+): { width: number; height: number } {
+  const modelId = resolvePostModelId(model)
+  return {
+    width: snapLeonardoPostDimension(modelId, width, 'width'),
+    height: snapLeonardoPostDimension(modelId, height, 'height'),
+  }
 }
 
 export type CreateNanoBananaParams = NanoBananaFlowConfig & {
@@ -92,6 +101,8 @@ export type CreateNanoBananaCompositionParams = NanoBananaFlowConfig & {
   /** Output size — snapped to Nano Banana allowed dimensions */
   width: number
   height: number
+  /** Per-image reference strength; defaults to imageReferenceStrength for each. */
+  imageReferenceStrengths?: ImageReferenceStrength[]
 }
 
 function parseJsonBody(rawText: string): unknown {
@@ -129,6 +140,47 @@ type GetGenerationV1Response = {
     status?: string | null
     generated_images?: { url?: string | null }[] | null
   } | null
+}
+
+async function uploadToPresignedUrl(params: {
+  url: string
+  fieldsRaw: string
+  buffer: Buffer
+  extension: 'webp' | 'png' | 'jpg' | 'jpeg'
+  logLabel: string
+}): Promise<void> {
+  const { url, fieldsRaw, buffer, extension, logLabel } = params
+
+  let fields: Record<string, string>
+  try {
+    fields = JSON.parse(fieldsRaw) as Record<string, string>
+  } catch {
+    logError(`${logLabel}: fields JSON parse failed`, {
+      fieldsPreview: truncateBody(fieldsRaw, 200),
+    })
+    throw new Error(`Leonardo ${logLabel} fields is not valid JSON`)
+  }
+
+  const formData = new FormData()
+  for (const [k, v] of Object.entries(fields)) {
+    formData.append(k, v)
+  }
+
+  const filename = extension === 'jpeg' ? 'image.jpg' : `image.${extension}`
+  const blob = new Blob([new Uint8Array(buffer)], {
+    type: extension === 'webp' ? 'image/webp' : extension === 'png' ? 'image/png' : 'image/jpeg',
+  })
+  formData.append('file', blob, filename)
+
+  const putRes = await fetch(url, { method: 'POST', body: formData })
+  if (!putRes.ok && putRes.status !== 204) {
+    const text = await putRes.text()
+    logError(`${logLabel}: S3 presigned upload failed`, {
+      status: putRes.status,
+      body: truncateBody(text),
+    })
+    throw new Error(`Leonardo S3 upload failed: ${putRes.status} ${truncateBody(text, 500)}`)
+  }
 }
 
 /**
@@ -171,36 +223,7 @@ export async function uploadInitImage(
     throw new Error('Leonardo init-image response missing id, url, or fields')
   }
 
-  let fields: Record<string, string>
-  try {
-    fields = JSON.parse(fieldsRaw) as Record<string, string>
-  } catch {
-    logError('init-image: fields JSON parse failed', {
-      fieldsPreview: truncateBody(fieldsRaw, 200),
-    })
-    throw new Error('Leonardo init-image fields is not valid JSON')
-  }
-
-  const formData = new FormData()
-  for (const [k, v] of Object.entries(fields)) {
-    formData.append(k, v)
-  }
-
-  const filename = extension === 'jpeg' ? 'image.jpg' : `image.${extension}`
-  const blob = new Blob([new Uint8Array(buffer)], {
-    type: extension === 'webp' ? 'image/webp' : extension === 'png' ? 'image/png' : 'image/jpeg',
-  })
-  formData.append('file', blob, filename)
-
-  const putRes = await fetch(url, { method: 'POST', body: formData })
-  if (!putRes.ok && putRes.status !== 204) {
-    const text = await putRes.text()
-    logError('init-image: S3 presigned upload failed', {
-      status: putRes.status,
-      body: truncateBody(text),
-    })
-    throw new Error(`Leonardo S3 upload failed: ${putRes.status} ${truncateBody(text, 500)}`)
-  }
+  await uploadToPresignedUrl({ url, fieldsRaw, buffer, extension, logLabel: 'init-image' })
 
   logInfo('init-image: upload complete', { initImageId: id })
   return id
@@ -222,8 +245,7 @@ export async function createNanoBananaGeneration(params: CreateNanoBananaParams)
     promptEnhance = 'OFF',
   } = params
 
-  const w = snapNanoBananaDimension(width)
-  const h = snapNanoBananaDimension(height)
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
 
   const parameters: Record<string, unknown> = {
     prompt,
@@ -321,6 +343,7 @@ export async function createNanoBananaCompositionGeneration(
     height,
     styleIds,
     imageReferenceStrength = 'MID',
+    imageReferenceStrengths,
     promptEnhance = 'OFF',
   } = params
 
@@ -329,8 +352,7 @@ export async function createNanoBananaCompositionGeneration(
     throw new Error('At least one uploaded image id is required')
   }
 
-  const w = snapNanoBananaDimension(width)
-  const h = snapNanoBananaDimension(height)
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
 
   const parameters: Record<string, unknown> = {
     prompt,
@@ -339,12 +361,12 @@ export async function createNanoBananaCompositionGeneration(
     width: w,
     height: h,
     guidances: {
-      image_reference: sanitizedUploadedIds.map((imageId) => ({
+      image_reference: sanitizedUploadedIds.map((imageId, index) => ({
         image: {
           id: imageId,
           type: 'UPLOADED',
         },
-        strength: imageReferenceStrength,
+        strength: imageReferenceStrengths?.[index] ?? imageReferenceStrength,
       })),
     },
   }
@@ -421,7 +443,7 @@ export async function createNanoBananaCompositionGeneration(
 }
 
 /** Default Nano Banana model for prompt-only generations (no image reference). */
-export const TEXT_TO_IMAGE_MODEL = 'gemini-2.5-flash-image'
+export const TEXT_TO_IMAGE_MODEL: LeonardoPostModelId = DEFAULT_LEONARDO_POST_MODEL
 
 export type CreateTextToImageParams = {
   model: string
@@ -441,8 +463,7 @@ export async function createTextToImageGeneration(
 ): Promise<string> {
   const { model, prompt, width, height, styleIds, promptEnhance = 'OFF' } = params
 
-  const w = snapNanoBananaDimension(width)
-  const h = snapNanoBananaDimension(height)
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
 
   const parameters: Record<string, unknown> = {
     prompt,
@@ -584,6 +605,7 @@ export async function runTextToImageWithReferences(
   height: number,
   referenceBuffers: Buffer[],
   model: string = TEXT_TO_IMAGE_MODEL,
+  referenceStrengths?: ImageReferenceStrength[],
 ): Promise<Buffer> {
   if (referenceBuffers.length === 0) {
     return runTextToImageGeneration(prompt, width, height, model)
@@ -597,33 +619,39 @@ export async function runTextToImageWithReferences(
     promptPreview: truncateBody(prompt, 120),
   })
 
+  const normalizedBuffers = await Promise.all(
+    referenceBuffers.map((buf) => sharp(buf).webp({ quality: 85 }).toBuffer()),
+  )
+
   const flow: NanoBananaFlowConfig = { model, prompt }
 
   let generationId: string
-  if (referenceBuffers.length === 1) {
-    const initImageId = await uploadInitImage(referenceBuffers[0]!, 'webp')
+  if (normalizedBuffers.length === 1) {
+    const initImageId = await uploadInitImage(normalizedBuffers[0]!, 'webp')
     generationId = await createNanoBananaGeneration({
       ...flow,
       uploadedImageId: initImageId,
       width,
       height,
+      imageReferenceStrength: referenceStrengths?.[0] ?? 'MID',
     })
   } else {
     const uploadedImageIds = await Promise.all(
-      referenceBuffers.map((buf) => uploadInitImage(buf, 'webp')),
+      normalizedBuffers.map((buf) => uploadInitImage(buf, 'webp')),
     )
     generationId = await createNanoBananaCompositionGeneration({
       ...flow,
       uploadedImageIds,
       width,
       height,
+      imageReferenceStrengths: referenceStrengths,
     })
   }
 
   const imageUrl = await pollGeneration(generationId)
   const raw = await downloadLeonardoResult(imageUrl, 'runTextToImageWithReferences')
   const out = await sharp(raw)
-    .resize(width, height, { fit: 'cover' })
+    .resize(width, height, { fit: 'fill' })
     .webp({ quality: 85 })
     .toBuffer()
 

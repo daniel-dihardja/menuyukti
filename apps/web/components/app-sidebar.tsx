@@ -37,7 +37,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       )}
     >
       <Leaf className="size-4 shrink-0" aria-hidden />
-      <span className="truncate group-data-[collapsible=icon]:hidden">{brandLabel}</span>
+      <span className="truncate group-data-[collapsible=icon]:hidden" translate="no">
+        {brandLabel}
+      </span>
     </Link>
   )
 

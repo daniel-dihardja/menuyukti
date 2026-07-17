@@ -73,15 +73,74 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
     )
 
 
-def incremental_user_message(messages: list[dict[str, str]]) -> HumanMessage:
+def _normalize_user_content(content: Any) -> str | list[str | dict[Any, Any]]:
+    """Accept plain text or OpenAI-style multimodal content blocks."""
+    if isinstance(content, str):
+        if not content.strip():
+            msg = "User message content must be non-empty"
+            raise ValueError(msg)
+        return content
+
+    if not isinstance(content, list) or len(content) == 0:
+        msg = "User message content must be a non-empty string or content block list"
+        raise ValueError(msg)
+
+    blocks: list[str | dict[Any, Any]] = []
+    has_text = False
+    has_image = False
+    for block in content:
+        if not isinstance(block, dict):
+            msg = "Each content block must be an object"
+            raise ValueError(msg)
+        block_type = block.get("type")
+        if block_type == "text":
+            text = block.get("text")
+            if not isinstance(text, str) or not text.strip():
+                msg = "text content blocks must include non-empty text"
+                raise ValueError(msg)
+            blocks.append({"type": "text", "text": text})
+            has_text = True
+        elif block_type == "image_url":
+            image_url = block.get("image_url")
+            if isinstance(image_url, str) and image_url.strip():
+                url = image_url.strip()
+            elif isinstance(image_url, dict):
+                raw_url = image_url.get("url")
+                if not isinstance(raw_url, str) or not raw_url.strip():
+                    msg = "image_url blocks must include a non-empty url"
+                    raise ValueError(msg)
+                url = raw_url.strip()
+            else:
+                msg = "image_url blocks must include a url string or {url} object"
+                raise ValueError(msg)
+            if not (url.startswith("data:image/") or url.startswith("https://")):
+                msg = "image_url must be a data:image/... or https:// URL"
+                raise ValueError(msg)
+            blocks.append({"type": "image_url", "image_url": {"url": url}})
+            has_image = True
+        else:
+            msg = f"Unsupported content block type: {block_type!r}"
+            raise ValueError(msg)
+
+    if not has_text and not has_image:
+        msg = "User message content must include text or image blocks"
+        raise ValueError(msg)
+
+    # Image-only turns need a text cue so tool-calling models still have instruction text.
+    if has_image and not has_text:
+        blocks.insert(0, {"type": "text", "text": "Please analyze the attached image(s)."})
+
+    return blocks
+
+
+def incremental_user_message(messages: list[dict[str, Any]]) -> HumanMessage:
     """Validate the request carries exactly one new user message (checkpoint supplies prior turns)."""
     if len(messages) != 1:
         msg = "Expected exactly one user message per request"
         raise ValueError(msg)
     m = messages[0]
     role = m["role"]
-    content = m["content"]
     if role != "user":
         msg = f"Message must be user role, got {role}"
         raise ValueError(msg)
-    return HumanMessage(content=content)
+    return HumanMessage(content=_normalize_user_content(m["content"]))

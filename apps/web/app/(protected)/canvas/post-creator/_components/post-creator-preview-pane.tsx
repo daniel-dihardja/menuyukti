@@ -10,30 +10,15 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Switch } from '@workspace/ui/components/switch'
 import { Button } from '@workspace/ui/components/button'
 
+import { usePostCreator } from '../_context/use-post-creator'
 import {
   INSTAGRAM_GRID_THUMBNAIL_INSET_X,
   INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from './post-creator-constants'
-import type { PostCreatorImageVersion } from './post-creator-thumbnails-pane'
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
 import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
-
-export type PostCreatorPreviewPaneProps = {
-  imageUrl?: string | null
-  mediaS3Key?: string | null
-  imageVersions?: PostCreatorImageVersion[]
-  previewVersionIndex?: number
-  postImageVersionIndex?: number
-  onPreviewVersionIndex?: (index: number) => void
-  onUseAsPostImage?: () => void
-  onDeleteVersion?: () => void
-  canRemoveEmptyPage?: boolean
-  isLoading?: boolean
-  isCommittingPostImage?: boolean
-  isDeletingVersion?: boolean
-}
 
 const previewContentMaxWidthClassName = 'w-full max-w-[min(100%,calc((100vh-12rem)*0.8))]'
 
@@ -42,21 +27,22 @@ const previewShellClassName = `flex min-h-0 min-w-0 flex-1 flex-col items-center
 const previewFrameClassName =
   'relative aspect-[4/5] max-h-full max-w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
 
-export function PostCreatorPreviewPane({
-  imageUrl,
-  mediaS3Key,
-  imageVersions = [],
-  previewVersionIndex = 0,
-  postImageVersionIndex = 0,
-  onPreviewVersionIndex,
-  onUseAsPostImage,
-  onDeleteVersion,
-  canRemoveEmptyPage = false,
-  isLoading = false,
-  isCommittingPostImage = false,
-  isDeletingVersion = false,
-}: PostCreatorPreviewPaneProps) {
+export function PostCreatorPreviewPane() {
   const t = useTranslations('postCreator.preview')
+  const { state, actions, meta } = usePostCreator()
+  const {
+    imageVersions,
+    previewVersionIndex,
+    postImageVersionIndex,
+    templateImage,
+    previewSource,
+    isGenerating: isLoading,
+    isCommittingPostImage,
+    isDeletingVersion,
+  } = state
+  const { previewVersion: onPreviewVersionIndex, commitPostImage, requestDelete } = actions
+  const { canRemoveEmptyPage, canDelete } = meta
+
   const gridSafeZoneToggleId = useId()
   const [showGridSafeZone, setShowGridSafeZone] = useState(true)
 
@@ -65,22 +51,27 @@ export function PostCreatorPreviewPane({
     height: POST_IMAGE_HEIGHT,
   })
 
-  const versions =
-    imageVersions.length > 0
-      ? imageVersions
-      : imageUrl
-        ? [{ id: 'current', mediaS3Key: mediaS3Key ?? '', imageUrl, createdAt: '' }]
-        : []
+  const versions = imageVersions.length > 0 ? imageVersions : []
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
-  const previewImageUrl = previewVersion?.imageUrl ?? null
+  const generatedImageUrl = previewSource === 'version' ? (previewVersion?.imageUrl ?? null) : null
+  const showingTemplateOnly =
+    previewSource === 'template' || (!generatedImageUrl && Boolean(templateImage?.url))
+  const previewImageUrl =
+    previewSource === 'template'
+      ? (templateImage?.url ?? null)
+      : (generatedImageUrl ?? templateImage?.url ?? null)
+  const hasGeneratedImage = Boolean(generatedImageUrl)
   const hasImage = Boolean(previewImageUrl)
   const showLoadingPlaceholder = isLoading && !hasImage
-  const showVersionNav = versions.length > 1 && onPreviewVersionIndex
+  const showVersionNav = versions.length > 1
   const canCommitPostImage =
-    showVersionNav && onUseAsPostImage && previewVersionIndex !== postImageVersionIndex
+    hasGeneratedImage && showVersionNav && previewVersionIndex !== postImageVersionIndex
+
+  const onDeleteVersion = canDelete ? requestDelete : undefined
+  const onUseAsPostImage = canCommitPostImage ? () => void commitPostImage() : undefined
 
   const canDeleteVersion =
-    hasImage &&
+    hasGeneratedImage &&
     Boolean(onDeleteVersion) &&
     Boolean(previewVersion?.mediaS3Key) &&
     !isLoading &&
@@ -88,7 +79,7 @@ export function PostCreatorPreviewPane({
     !isDeletingVersion
 
   const canRemovePage =
-    !hasImage &&
+    !hasGeneratedImage &&
     canRemoveEmptyPage &&
     Boolean(onDeleteVersion) &&
     !isLoading &&
@@ -96,36 +87,35 @@ export function PostCreatorPreviewPane({
     !isDeletingVersion
 
   const showRemoveButton = canDeleteVersion || canRemovePage
+  const previewImageAlt = showingTemplateOnly ? t('templatePreviewImageAlt') : t('previewImageAlt')
 
   const previewVersionAt = useCallback(
     (index: number) => {
-      if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
+      if (isCommittingPostImage || isLoading || isDeletingVersion) return
       onPreviewVersionIndex(index)
     },
     [isCommittingPostImage, isDeletingVersion, isLoading, onPreviewVersionIndex],
   )
 
   const goPrev = useCallback(() => {
-    if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
+    if (isCommittingPostImage || isLoading || isDeletingVersion) return
     previewVersionAt(previewVersionIndex === 0 ? versions.length - 1 : previewVersionIndex - 1)
   }, [
     isCommittingPostImage,
     isDeletingVersion,
     isLoading,
-    onPreviewVersionIndex,
     previewVersionAt,
     previewVersionIndex,
     versions.length,
   ])
 
   const goNext = useCallback(() => {
-    if (!onPreviewVersionIndex || isCommittingPostImage || isLoading || isDeletingVersion) return
+    if (isCommittingPostImage || isLoading || isDeletingVersion) return
     previewVersionAt(previewVersionIndex === versions.length - 1 ? 0 : previewVersionIndex + 1)
   }, [
     isCommittingPostImage,
     isDeletingVersion,
     isLoading,
-    onPreviewVersionIndex,
     previewVersionAt,
     previewVersionIndex,
     versions.length,
@@ -181,7 +171,11 @@ export function PostCreatorPreviewPane({
                 <div className="flex min-h-0 flex-1 items-center justify-center">
                   <div className={previewFrameClassName}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
-                    <img src={previewImageUrl!} alt="" className="size-full object-contain" />
+                    <img
+                      src={previewImageUrl!}
+                      alt={previewImageAlt}
+                      className="size-full object-contain"
+                    />
                     {isLoading ? (
                       <div
                         className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-background/60"
@@ -271,7 +265,7 @@ export function PostCreatorPreviewPane({
               <div className="w-full shrink-0">
                 <PostCreatorVersionFilmstrip
                   versions={versions}
-                  previewIndex={previewVersionIndex}
+                  previewIndex={previewSource === 'version' ? previewVersionIndex : -1}
                   postImageIndex={postImageVersionIndex}
                   onPreviewIndex={previewVersionAt}
                   isCommitting={isCommittingPostImage || isLoading || isDeletingVersion}

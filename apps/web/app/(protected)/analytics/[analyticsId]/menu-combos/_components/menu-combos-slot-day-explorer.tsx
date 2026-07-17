@@ -24,6 +24,7 @@ import {
 import { cn } from '@workspace/ui/lib/utils'
 
 import { MenuCombosSlotIndexGauge } from './menu-combos-slot-index-gauge'
+import { useCloseLabel } from '@/hooks/use-close-label'
 
 type MenuCombosSlotDayExplorerProps = {
   cells: OpportunityCell[]
@@ -60,6 +61,7 @@ export function MenuCombosSlotDayExplorer({
   weekdayLabel,
 }: MenuCombosSlotDayExplorerProps) {
   const t = useTranslations('analytics.menuCombos')
+  const closeLabel = useCloseLabel()
   const initialDay = defaultDay ?? COMBO_WEEKDAYS[0]
   const [selectedDay, setSelectedDay] = useState<ComboWeekday>(initialDay)
   const [sheetCell, setSheetCell] = useState<OpportunityCell | null>(null)
@@ -180,7 +182,11 @@ export function MenuCombosSlotDayExplorer({
       </ul>
 
       <Sheet open={sheetCell != null} onOpenChange={(open) => !open && setSheetCell(null)}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-xl">
+        <SheetContent
+          side="bottom"
+          closeLabel={closeLabel}
+          className="max-h-[85vh] overflow-y-auto rounded-t-xl"
+        >
           {sheetCell ? (
             <>
               <SheetHeader>

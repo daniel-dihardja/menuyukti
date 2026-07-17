@@ -6,8 +6,12 @@ import { useEffect, useRef } from 'react'
 
 import { cn } from '@workspace/ui/lib/utils'
 
-import { POST_IMAGE_ASPECT_RATIO } from './post-creator-constants'
-import type { PostCreatorImageVersion } from './post-creator-thumbnails-pane'
+import {
+  POST_IMAGE_ASPECT_RATIO,
+  POST_IMAGE_HEIGHT,
+  POST_IMAGE_WIDTH,
+} from './post-creator-constants'
+import type { PostCreatorImageVersion } from '@/lib/posts/post-creator-types'
 
 export type PostCreatorVersionFilmstripProps = {
   versions: PostCreatorImageVersion[]
@@ -91,7 +95,13 @@ export function PostCreatorVersionFilmstrip({
             style={{ aspectRatio: POST_IMAGE_ASPECT_RATIO }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
-            <img src={version.imageUrl} alt="" className="size-full object-cover" />
+            <img
+              src={version.imageUrl}
+              alt=""
+              width={POST_IMAGE_WIDTH}
+              height={POST_IMAGE_HEIGHT}
+              className="size-full object-cover"
+            />
             {isPostImage ? (
               <span className="absolute bottom-1 right-1 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
                 <Check className="size-2.5" aria-hidden />

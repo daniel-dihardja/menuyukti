@@ -5,24 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Pencil, SquarePen, Trash2 } from 'lucide-react'
 
-import {
-  ResponsiveActionMenu,
-  type ResponsiveActionMenuItem,
-} from '@/app/(protected)/analytics/_components/responsive-action-menu'
+import { type ResponsiveActionMenuItem } from '@/app/(protected)/analytics/_components/responsive-action-menu'
 import { apiFetch } from '@/lib/api/client-fetch'
 import { routes } from '@/lib/routes'
 import { CreatePostButton } from './create-post-button'
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@workspace/ui/components/alert-dialog'
-import { Badge } from '@workspace/ui/components/badge'
-import { Button } from '@workspace/ui/components/button'
+import { DeletePostDialog } from './delete-post-dialog'
+import { PostListCard, PostTableRow } from './post-list-row'
+import { type PostListItem } from './posts-table-types'
+import { usePostTitleEdit } from './use-post-title-edit'
 import {
   Empty,
   EmptyContent,
@@ -31,45 +21,12 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
-import { Spinner } from '@workspace/ui/components/spinner'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table'
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table'
 
-export type PostListItem = {
-  id: string
-  title: string | null
-  status: string
-  updatedAt: string | null
-}
+export type { PostListItem } from './posts-table-types'
 
 type PostsTableProps = {
   posts: PostListItem[]
-}
-
-function formatUpdatedAt(value: string | null, locale: string): string {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
-}
-
-function statusBadgeVariant(status: string): 'secondary' | 'outline' | 'default' {
-  if (status === 'published') return 'default'
-  if (status === 'draft') return 'secondary'
-  return 'outline'
-}
-
-function displayTitle(post: PostListItem, untitledLabel: string): string {
-  return post.title?.trim() || untitledLabel
 }
 
 function PostsEmptyState() {
@@ -94,7 +51,6 @@ function PostsEmptyState() {
 export function PostsTable({ posts }: PostsTableProps) {
   const router = useRouter()
   const t = useTranslations('posts.table')
-  const tStatus = useTranslations('posts.table.statusLabels')
   const tMobile = useTranslations('posts.table.mobile')
   const locale = useMemo(() => {
     if (typeof navigator !== 'undefined' && navigator.language) {
@@ -107,6 +63,8 @@ export function PostsTable({ posts }: PostsTableProps) {
   const [pendingDelete, setPendingDelete] = useState<PostListItem | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const titleEdit = usePostTitleEdit({ rows, setRows })
 
   useEffect(() => {
     setRows(posts)
@@ -176,36 +134,16 @@ export function PostsTable({ posts }: PostsTableProps) {
   return (
     <>
       <ul className="flex flex-col gap-3 lg:hidden">
-        {rows.map((post) => {
-          const title = displayTitle(post, t('untitled'))
-          return (
-            <li
-              key={post.id}
-              className="flex flex-col gap-2 rounded-lg border border-border px-4 py-3"
-            >
-              <div className="flex min-w-0 items-start justify-between gap-2">
-                <span className="truncate font-medium" title={title}>
-                  {title}
-                </span>
-                <Badge variant={statusBadgeVariant(post.status)} className="shrink-0">
-                  {tStatus(post.status as 'draft' | 'published', {
-                    defaultValue: post.status,
-                  })}
-                </Badge>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {t('updated', { date: formatUpdatedAt(post.updatedAt, locale) })}
-              </span>
-              <ResponsiveActionMenu
-                {...actionMenuProps}
-                desktopTriggerAriaLabel={t('actionsForRow', { name: title })}
-                items={buildActionItems(post)}
-                sheetId={`post-actions-${post.id}`}
-                sheetTitle={title}
-              />
-            </li>
-          )
-        })}
+        {rows.map((post) => (
+          <PostListCard
+            key={post.id}
+            post={post}
+            locale={locale}
+            titleEdit={titleEdit}
+            actionMenuProps={actionMenuProps}
+            buildActionItems={buildActionItems}
+          />
+        ))}
       </ul>
 
       <div className="-mx-4 hidden w-[calc(100%+2rem)] border-x-0 border-y lg:mx-0 lg:block lg:w-full lg:rounded-md lg:border">
@@ -220,84 +158,34 @@ export function PostsTable({ posts }: PostsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((post, index) => {
-              const title = displayTitle(post, t('untitled'))
-              return (
-                <TableRow key={post.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <span className="truncate font-medium" title={title}>
-                      {title}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusBadgeVariant(post.status)} className="w-fit">
-                      {tStatus(post.status as 'draft' | 'published', {
-                        defaultValue: post.status,
-                      })}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatUpdatedAt(post.updatedAt, locale)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ResponsiveActionMenu
-                      {...actionMenuProps}
-                      desktopTriggerAriaLabel={t('actionsForRow', { name: title })}
-                      items={buildActionItems(post)}
-                      sheetId={`post-actions-desktop-${post.id}`}
-                      sheetTitle={title}
-                    />
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+            {rows.map((post, index) => (
+              <TableRow key={post.id}>
+                <PostTableRow
+                  post={post}
+                  index={index}
+                  locale={locale}
+                  titleEdit={titleEdit}
+                  actionMenuProps={actionMenuProps}
+                  buildActionItems={buildActionItems}
+                />
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
 
-      <AlertDialog
+      <DeletePostDialog
+        pendingDelete={pendingDelete}
+        deleting={deleting}
+        deleteError={deleteError}
         onOpenChange={(open) => {
           if (open) return
           if (deleting) return
           setPendingDelete(null)
           setDeleteError(null)
         }}
-        open={pendingDelete !== null}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('deleteConfirmDescription')}</AlertDialogDescription>
-            {deleteError ? (
-              <p className="text-destructive text-sm" role="alert">
-                {deleteError}
-              </p>
-            ) : null}
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting} type="button">
-              {t('deleteConfirmCancel')}
-            </AlertDialogCancel>
-            <Button
-              className={deleting ? 'inline-flex items-center gap-2' : undefined}
-              disabled={deleting}
-              onClick={() => void confirmDeletePost()}
-              type="button"
-              variant="destructive"
-            >
-              {deleting ? (
-                <>
-                  <Spinner />
-                  {t('deleteConfirmAction')}
-                </>
-              ) : (
-                t('deleteConfirmAction')
-              )}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onConfirm={() => void confirmDeletePost()}
+      />
     </>
   )
 }

@@ -153,6 +153,25 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   }
 
   if (part.type === 'file') {
+    const isImage =
+      typeof part.mediaType === 'string' && part.mediaType.startsWith('image/') && Boolean(part.url)
+    if (isImage) {
+      return (
+        <figure className="my-1 max-w-xs">
+          {/* eslint-disable-next-line @next/next/no-img-element -- chat attachment preview */}
+          <img
+            alt={part.filename ?? 'Attached image'}
+            className="max-h-48 rounded-md border border-border object-contain"
+            src={part.url}
+          />
+          {part.filename ? (
+            <figcaption className="mt-1 truncate text-muted-foreground text-xs">
+              {part.filename}
+            </figcaption>
+          ) : null}
+        </figure>
+      )
+    }
     return <p className="text-muted-foreground text-xs">File: {part.filename ?? part.mediaType}</p>
   }
 

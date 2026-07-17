@@ -33,9 +33,9 @@ function milestoneTimelinePanel(tokens: Record<string, OklchColor>) {
   return tokens.background!
 }
 
-/** Matches default milestone `Card` surface (card in light, muted in dark). */
-function milestoneTimelineCard(tokens: Record<string, OklchColor>, mode: 'light' | 'dark') {
-  return mode === 'light' ? tokens.card! : tokens.muted!
+/** Matches default milestone `Card` surface (`bg-card` in light and dark). */
+function milestoneTimelineCard(tokens: Record<string, OklchColor>) {
+  return tokens.card!
 }
 
 /** Minimum card-vs-panel ratios achievable with design tokens (see vitest diagnostics). */
@@ -59,7 +59,7 @@ describe('milestone card contrast (borderless selection)', () => {
     it(`${mode}: title text on default card meets WCAG AA`, () => {
       expectContrast(
         tokens['card-foreground']!,
-        milestoneTimelineCard(tokens, mode),
+        milestoneTimelineCard(tokens),
         WCAG_AA_NORMAL_TEXT,
         `${mode} card-foreground on milestone card`,
       )
@@ -68,7 +68,7 @@ describe('milestone card contrast (borderless selection)', () => {
     it(`${mode}: muted icons on default card meet UI contrast`, () => {
       expectContrast(
         tokens['muted-foreground']!,
-        milestoneTimelineCard(tokens, mode),
+        milestoneTimelineCard(tokens),
         WCAG_AA_UI_COMPONENT,
         `${mode} muted-foreground on milestone card`,
       )
@@ -77,7 +77,7 @@ describe('milestone card contrast (borderless selection)', () => {
     it(`${mode}: complete check icon on default card meets UI contrast`, () => {
       expectContrast(
         tokens.success!,
-        milestoneTimelineCard(tokens, mode),
+        milestoneTimelineCard(tokens),
         WCAG_AA_UI_COMPONENT,
         `${mode} success on milestone card`,
       )
@@ -86,7 +86,7 @@ describe('milestone card contrast (borderless selection)', () => {
     it(`${mode}: primary selection border meets UI contrast on card`, () => {
       expectContrast(
         tokens.primary!,
-        milestoneTimelineCard(tokens, mode),
+        milestoneTimelineCard(tokens),
         MIN_PRIMARY_ON_CARD[mode],
         `${mode} primary border on milestone card`,
       )
@@ -94,7 +94,7 @@ describe('milestone card contrast (borderless selection)', () => {
 
     it(`${mode}: milestone card surface contrasts with timeline panel`, () => {
       const panel = milestoneTimelinePanel(tokens)
-      const card = milestoneTimelineCard(tokens, mode)
+      const card = milestoneTimelineCard(tokens)
       expectContrast(
         card,
         panel,
@@ -115,7 +115,7 @@ describe('milestone card contrast (borderless selection)', () => {
     expect(layoutSource).toContain('bg-background')
     expect(bodySource).toContain('md:p-4')
     expect(itemSource).toContain('shadow-none')
-    expect(itemSource).toContain('dark:bg-muted')
+    expect(itemSource).toContain('bg-card')
     expect(itemSource).toContain('border border-primary')
     expect(itemSource).not.toContain('bg-accent')
     expect(itemSource).not.toContain('ring-2 ring-ring ring-offset')

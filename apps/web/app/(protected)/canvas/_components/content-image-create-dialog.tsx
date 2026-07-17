@@ -37,6 +37,8 @@ import {
 } from '@/lib/assets/client-api'
 
 import { AiFlowSelectOption } from './ai-flow-select-option'
+import { useCloseLabel } from '@/hooks/use-close-label'
+import { POST_IMAGE_WIDTH } from '../post-creator/_components/post-creator-constants'
 
 type ContentImageCreateDialogProps = {
   open: boolean
@@ -62,6 +64,7 @@ export function ContentImageCreateDialog({
   onGeneratingChange,
 }: ContentImageCreateDialogProps) {
   const t = useTranslations('analytics.workflows.chat.contentImageDialog')
+  const closeLabel = useCloseLabel()
 
   const [products, setProducts] = useState<AssetCatalogItem[]>([])
   const [backgrounds, setBackgrounds] = useState<BackgroundItem[]>([])
@@ -163,7 +166,10 @@ export function ContentImageCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-full max-w-3xl flex-col gap-0 rounded-none p-0 sm:h-auto sm:max-h-[90vh] sm:rounded-xl">
+      <DialogContent
+        closeLabel={closeLabel}
+        className="flex h-[100dvh] max-h-[100dvh] w-full max-w-3xl flex-col gap-0 rounded-none p-0 sm:h-auto sm:max-h-[90vh] sm:rounded-xl"
+      >
         <DialogHeader className="shrink-0 border-b px-4 py-4 text-left sm:px-6">
           <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>{t('descriptionSelect')}</DialogDescription>
@@ -209,7 +215,13 @@ export function ContentImageCreateDialog({
                         }
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.url} alt="" className="aspect-square w-full object-cover" />
+                        <img
+                          src={item.url}
+                          alt=""
+                          width={POST_IMAGE_WIDTH}
+                          height={POST_IMAGE_WIDTH}
+                          className="aspect-square w-full object-cover"
+                        />
                         <span className="absolute right-2 top-2 rounded-full bg-background/90 p-1">
                           {selected ? <Check className="size-4 text-primary" /> : null}
                         </span>
@@ -252,7 +264,13 @@ export function ContentImageCreateDialog({
                         }
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.url} alt="" className="aspect-square w-full object-cover" />
+                        <img
+                          src={item.url}
+                          alt=""
+                          width={POST_IMAGE_WIDTH}
+                          height={POST_IMAGE_WIDTH}
+                          className="aspect-square w-full object-cover"
+                        />
                         <span className="absolute right-2 top-2 rounded-full bg-background/90 p-1">
                           {selected ? <Check className="size-4 text-primary" /> : null}
                         </span>

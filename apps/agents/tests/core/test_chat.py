@@ -325,6 +325,55 @@ def test_chat_agent_thread_id(client: TestClient) -> None:
     assert captured["config"]["configurable"]["thread_id"] == "u-2:agent:opaque-uuid"
 
 
+def test_chat_multimodal_user_content(client: TestClient) -> None:
+    mock_graph = MagicMock()
+    _install_mock_astream(
+        mock_graph,
+        chunks=[("messages", (AIMessageChunk(content="Looks tasty"), {}))],
+    )
+    client.app.state.chat_graph = mock_graph
+
+    data_url = "data:image/png;base64,iVBORw0KGgo="
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "workflow_id": "10",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Describe this dish"},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ],
+                }
+            ],
+        },
+    ) as response:
+        assert response.status_code == 200
+        text = "".join(response.iter_text())
+        assert "Looks tasty" in text
+
+    args, _kwargs = mock_graph.astream.call_args
+    human = args[0]["messages"][0]
+    assert isinstance(human.content, list)
+    assert human.content[0]["type"] == "text"
+    assert human.content[1]["type"] == "image_url"
+
+
+def test_chat_empty_content_rejected(client: TestClient) -> None:
+    mock_graph = MagicMock()
+    client.app.state.chat_graph = mock_graph
+    response = client.post(
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={"messages": [{"role": "user", "content": ""}], "workflow_id": "10"},
+    )
+    assert response.status_code == 422
+    mock_graph.astream.assert_not_called()
+
+
 def test_lifespan_compiles_chat_graph(client: TestClient) -> None:
     assert client.app.state.chat_graph is not None
     assert client.app.state.chat_checkpointer is not None

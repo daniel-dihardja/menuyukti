@@ -42,7 +42,8 @@ export function AnalyticsPageShell({
           <SidebarTriggerClient title={title} breadcrumbs={breadcrumbs} />
         </header>
 
-        <div
+        <main
+          id="main-content"
           className={cn(
             'mx-auto flex w-full min-h-0 min-w-0 max-w-full flex-1 flex-col gap-6 overflow-y-auto',
             ANALYTICS_PAGE_SHELL_PADDING_CLASS,
@@ -51,7 +52,7 @@ export function AnalyticsPageShell({
           )}
         >
           {children}
-        </div>
+        </main>
       </div>
     </>
   )

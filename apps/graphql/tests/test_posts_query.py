@@ -79,6 +79,17 @@ mutation DeletePost($id: ID!) {
 }
 """
 
+UPDATE_POST = """
+mutation UpdatePost($id: ID!, $title: String!) {
+  updatePost(id: $id, title: $title) {
+    id
+    title
+    status
+    updatedAt
+  }
+}
+"""
+
 UPDATE_POST_PAGE = """
 mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
   updatePostPage(id: $id, mediaS3Key: $mediaS3Key, prompt: $prompt) {
@@ -502,6 +513,73 @@ def test_posts_hidden_from_other_workspace_user():
 def test_delete_post_requires_auth():
     result = schema.execute_sync(DELETE_POST, variable_values={"id": "1"})
     assert result.errors is not None
+
+
+def test_update_post_requires_auth():
+    result = schema.execute_sync(
+        UPDATE_POST,
+        variable_values={"id": "1", "title": "Renamed"},
+    )
+    assert result.errors is not None
+
+
+def test_update_post_title():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Original title"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+
+    update_result = asyncio.run(
+        schema.execute(
+            UPDATE_POST,
+            variable_values={"id": post_id, "title": "Renamed title"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not update_result.errors, update_result.errors
+    updated = update_result.data["updatePost"]
+    assert updated["id"] == post_id
+    assert updated["title"] == "Renamed title"
+
+    list_result = asyncio.run(schema.execute(POSTS_QUERY, context_value=graphql_auth_context()))
+    assert not list_result.errors, list_result.errors
+    assert list_result.data["posts"][0]["title"] == "Renamed title"
+
+
+def test_update_post_denied_for_other_workspace_user():
+    workspace_id = _seed_workspace()
+    session = SessionLocal()
+    try:
+        post = InstagramPost(
+            workspace_id=workspace_id,
+            title="Owner draft",
+            status="draft",
+            created_by_clerk_user_id=GRAPHQL_TEST_USER_ID,
+        )
+        session.add(post)
+        session.flush()
+        session.add(InstagramPostPage(post_id=post.id, sort_order=0))
+        session.commit()
+        session.refresh(post)
+        post_id = str(post.id)
+    finally:
+        session.close()
+
+    update_result = asyncio.run(
+        schema.execute(
+            UPDATE_POST,
+            variable_values={"id": post_id, "title": "Hijacked"},
+            context_value={"user_id": OTHER_USER_ID},
+        )
+    )
+    assert update_result.errors is not None
 
 
 def test_delete_post_and_list_posts():

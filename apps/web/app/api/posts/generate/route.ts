@@ -1,16 +1,15 @@
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { randomUUID } from 'crypto'
 import { NextResponse } from 'next/server'
+import sharp from 'sharp'
 import { z } from 'zod'
 
-import {
-  POST_IMAGE_HEIGHT,
-  POST_IMAGE_WIDTH,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 import {
   getPresignedGetUrl,
   getS3Bucket,
   getS3Client,
+  isObjectKeyForPhoto,
   isObjectKeyForPost,
   isSafeAssetFilename,
   isSafePhotoFilename,
@@ -22,23 +21,51 @@ import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphq
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
-  type ReferenceImageSource,
+  type OutputDimensions,
+  type PromptReference,
 } from '@/lib/posts/build-instagram-post-prompt'
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  LEONARDO_POST_MODEL_IDS,
+} from '@/lib/posts/leonardo-post-models'
+import { resolveGenerationOutputDimensions } from '@/lib/posts/post-creator-utils'
+import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
-const MAX_REFERENCE_IMAGES = 4
+const generationReferenceSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('template'),
+    name: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal('previous-result'),
+    filename: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal('photo'),
+    name: z.string().min(1),
+  }),
+])
 
 const bodySchema = z.object({
   prompt: z.string().trim().min(1).max(3000),
   postId: z.string().regex(/^\d+$/).optional(),
   pageId: z.string().regex(/^\d+$/).optional(),
-  referenceImages: z.array(z.string().min(1)).max(MAX_REFERENCE_IMAGES).optional(),
-  referencePostImages: z.array(z.string().min(1)).max(MAX_REFERENCE_IMAGES).optional(),
+  references: z.array(generationReferenceSchema).max(MAX_GENERATION_REFERENCES).optional(),
+  model: z.enum(LEONARDO_POST_MODEL_IDS).optional(),
 })
 
 function truncateStack(stack: string, max = 4000): string {
   if (stack.length <= max) return stack
   return `${stack.slice(0, max)}…(truncated)`
+}
+
+async function readImageDimensions(buffer: Buffer): Promise<OutputDimensions> {
+  const metadata = await sharp(buffer, { autoOrient: true }).metadata()
+  if (!metadata.width || !metadata.height) {
+    throw new Error('Could not read image dimensions')
+  }
+  return { width: metadata.width, height: metadata.height }
 }
 
 async function loadReferenceBuffer(
@@ -91,7 +118,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Invalid body' }, { status: 400 })
   }
 
-  const { prompt, postId, pageId, referenceImages = [], referencePostImages = [] } = parsed.data
+  const {
+    prompt,
+    postId,
+    pageId,
+    references = [],
+    model = DEFAULT_LEONARDO_POST_MODEL,
+  } = parsed.data
   if ((postId && !pageId) || (!postId && pageId)) {
     return NextResponse.json(
       { message: 'postId and pageId must be provided together' },
@@ -99,13 +132,101 @@ export async function POST(req: Request) {
     )
   }
 
-  if (referenceImages.length + referencePostImages.length > MAX_REFERENCE_IMAGES) {
-    return NextResponse.json({ message: 'Too many reference images' }, { status: 400 })
+  const hasTemplate = references.some((reference) => reference.type === 'template')
+  const hasPrevious = references.some((reference) => reference.type === 'previous-result')
+  if (hasTemplate && hasPrevious) {
+    return NextResponse.json(
+      { message: 'Template and previous result cannot be used together' },
+      { status: 400 },
+    )
+  }
+
+  const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
+
+  let mode: GenerationMode
+  if (hasTemplate) {
+    mode = 'template-composite'
+  } else if (hasPrevious && enabledPhotoCount === 0) {
+    mode = 'filled-edit'
+  } else {
+    mode = 'fresh-scene'
   }
 
   const referenceBuffers: Buffer[] = []
+  const promptReferences: PromptReference[] = []
+  let templateOutputDimensions: OutputDimensions | undefined
+  let previousResultOutputDimensions: OutputDimensions | undefined
 
-  for (const name of referenceImages) {
+  for (const reference of references) {
+    if (reference.type === 'template') {
+      const { name } = reference
+      if (!isSafePhotoFilename(name)) {
+        return NextResponse.json({ message: `Invalid template image: ${name}` }, { status: 400 })
+      }
+
+      const key = userPhotosObjectKey(userId, name)
+      if (!isObjectKeyForPhoto(key, userId)) {
+        return NextResponse.json({ message: `Invalid template image: ${name}` }, { status: 400 })
+      }
+
+      const buffer = await loadReferenceBuffer(key, name, userId)
+      if (buffer instanceof NextResponse) return buffer
+      try {
+        templateOutputDimensions = await readImageDimensions(buffer)
+      } catch (err) {
+        console.error('[posts/generate] template dimension read failed', {
+          userIdPrefix: userId.slice(0, 8),
+          name,
+          message: err instanceof Error ? err.message : String(err),
+        })
+        return NextResponse.json(
+          { message: `Could not read template dimensions: ${name}` },
+          { status: 400 },
+        )
+      }
+      referenceBuffers.push(buffer)
+      promptReferences.push({ type: 'template' })
+      continue
+    }
+
+    if (reference.type === 'previous-result') {
+      const { filename } = reference
+      if (!isSafeAssetFilename(filename)) {
+        return NextResponse.json(
+          { message: `Invalid previous result image: ${filename}` },
+          { status: 400 },
+        )
+      }
+
+      const key = userPostsObjectKey(userId, filename)
+      if (!isObjectKeyForPost(key, userId)) {
+        return NextResponse.json(
+          { message: `Invalid previous result image: ${filename}` },
+          { status: 400 },
+        )
+      }
+
+      const buffer = await loadReferenceBuffer(key, filename, userId)
+      if (buffer instanceof NextResponse) return buffer
+      try {
+        previousResultOutputDimensions = await readImageDimensions(buffer)
+      } catch (err) {
+        console.error('[posts/generate] previous result dimension read failed', {
+          userIdPrefix: userId.slice(0, 8),
+          filename,
+          message: err instanceof Error ? err.message : String(err),
+        })
+        return NextResponse.json(
+          { message: `Could not read previous result dimensions: ${filename}` },
+          { status: 400 },
+        )
+      }
+      referenceBuffers.push(buffer)
+      promptReferences.push({ type: 'previous-result' })
+      continue
+    }
+
+    const { name } = reference
     if (!isSafePhotoFilename(name)) {
       return NextResponse.json({ message: `Invalid reference image: ${name}` }, { status: 400 })
     }
@@ -114,49 +235,32 @@ export async function POST(req: Request) {
     const buffer = await loadReferenceBuffer(key, name, userId)
     if (buffer instanceof NextResponse) return buffer
     referenceBuffers.push(buffer)
+    promptReferences.push({ type: 'photo' })
   }
 
-  for (const name of referencePostImages) {
-    if (!isSafeAssetFilename(name)) {
-      return NextResponse.json(
-        { message: `Invalid reference post image: ${name}` },
-        { status: 400 },
-      )
-    }
-
-    const key = userPostsObjectKey(userId, name)
-    if (!isObjectKeyForPost(key, userId)) {
-      return NextResponse.json(
-        { message: `Invalid reference post image: ${name}` },
-        { status: 400 },
-      )
-    }
-
-    const buffer = await loadReferenceBuffer(key, name, userId)
-    if (buffer instanceof NextResponse) return buffer
-    referenceBuffers.push(buffer)
-  }
-
-  const referenceImageSource: ReferenceImageSource =
-    referenceImages.length > 0 && referencePostImages.length > 0
-      ? 'mixed'
-      : referencePostImages.length > 0
-        ? 'post'
-        : 'photo'
-
-  const leonardoPrompt = buildInstagramPostPrompt({
-    userPrompt: prompt,
-    referenceImageCount: referenceBuffers.length,
-    referenceImageSource,
+  const outputDimensions = resolveGenerationOutputDimensions({
+    mode,
+    templateDimensions: templateOutputDimensions,
+    previousResultDimensions: previousResultOutputDimensions,
   })
+  const { width: outputWidth, height: outputHeight } = outputDimensions
 
   let outBuffer: Buffer
   try {
+    const leonardoPrompt = buildInstagramPostPrompt({
+      userPrompt: prompt,
+      mode,
+      references: promptReferences,
+      outputDimensions,
+    })
+
     outBuffer = await runTextToImageWithReferences(
       leonardoPrompt,
-      POST_IMAGE_WIDTH,
-      POST_IMAGE_HEIGHT,
+      outputWidth,
+      outputHeight,
       referenceBuffers,
+      model,
+      mode === 'template-composite' ? referenceBuffers.map(() => 'HIGH' as const) : undefined,
     )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Processing failed'

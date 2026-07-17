@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
 
-import { PostCreatorDynamic } from './post-creator-dynamic'
+import { EphemeralPostCreator } from './post-creator-dynamic'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('postCreator')
@@ -43,7 +43,7 @@ export default async function Page({ searchParams }: PageProps) {
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <PostCreatorDynamic postId={null} />
+      <EphemeralPostCreator />
     </AnalyticsPageShell>
   )
 }

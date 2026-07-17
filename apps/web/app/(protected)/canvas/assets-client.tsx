@@ -42,6 +42,7 @@ import {
 import { AssetsUploadZone } from './_components/assets-upload-zone'
 import { BackgroundsImageGrid } from './_components/backgrounds-image-grid'
 import { ContentImageCreateDialog } from './_components/content-image-create-dialog'
+import { useCloseLabel } from '@/hooks/use-close-label'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 
@@ -56,6 +57,7 @@ const canvasTabParser = parseAsStringLiteral([
 export function AssetsClient() {
   const t = useTranslations('assets')
   const tImageFlows = useTranslations('imageFlows')
+  const closeLabel = useCloseLabel()
   const format = useFormatter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [canvasTab, setCanvasTab] = useQueryState('tab', canvasTabParser)
@@ -502,6 +504,7 @@ export function AssetsClient() {
         {preview ? (
           <DialogContent
             key={preview.item.name}
+            closeLabel={closeLabel}
             overlayClassName="bg-black/80 backdrop-blur-sm"
             showCloseButton
             className={cn(

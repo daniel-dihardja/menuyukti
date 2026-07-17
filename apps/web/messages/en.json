@@ -10,6 +10,14 @@
     "description": "The page you are looking for does not exist or may have been moved.",
     "backToHome": "Back to home"
   },
+  "common": {
+    "close": "Close"
+  },
+  "appShell": {
+    "skipToContent": "Skip to content",
+    "toggleSidebarAria": "Toggle sidebar",
+    "openBreadcrumbNavAria": "Open breadcrumb navigation"
+  },
   "mainHeader": {
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
@@ -719,25 +727,63 @@
     "previewPane": "Generated post image",
     "promptPane": "Prompt",
     "prompt": {
-      "label": "Image prompt",
-      "placeholder": "Describe the Instagram post image you want to generate… Type @ to attach a reference photo.",
+      "label": "Creative direction",
+      "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder, Ref 3 → Ice Americano\n\nType @ to attach product photos in order.",
       "generate": "Generate image",
       "generating": "Generating…",
+      "template": {
+        "label": "Layout template",
+        "pick": "Choose template from Media",
+        "pickerAriaLabel": "Layout template picker",
+        "empty": "No media yet. Upload a layout template in Media first.",
+        "remove": "Remove layout template",
+        "fromMedia": "From Media"
+      },
+      "model": {
+        "label": "Image model",
+        "description": "Leonardo model used for this generation.",
+        "options": {
+          "flash": {
+            "name": "Nano Banana",
+            "blurb": "Fast and cost-efficient. Strong at multi-reference edits; good default for iteration."
+          },
+          "nanoBanana2": {
+            "name": "Nano Banana 2",
+            "blurb": "Balanced speed and quality. Better texture, text, and consistency than original Nano Banana."
+          },
+          "pro": {
+            "name": "Nano Banana Pro",
+            "blurb": "Highest instruction following for complex template fills. Slower and uses more tokens."
+          }
+        }
+      },
       "picker": {
         "ariaLabel": "Reference photo picker",
         "empty": "No matching media. Upload one or add files in Media.",
         "upload": "Upload file",
         "uploading": "Uploading…",
         "uploadError": "Couldn’t upload that file. Try again.",
-        "maxReached": "Maximum reference images reached. Remove one to add another."
+        "maxReached": "Maximum reference photos reached (5). Remove one to add another."
       },
       "references": {
         "ariaLabel": "Reference images for generation",
-        "remove": "Remove reference image"
+        "remove": "Remove reference image",
+        "include": "Include in generation",
+        "indexLabel": "Ref {index}"
+      },
+      "generation": {
+        "referenceSummaryTextOnly": "Next generation: creative direction only (no references).",
+        "referenceSummaryFilledEdit": "Next generation: edit the image in preview only.",
+        "referenceSummaryTemplateComposite": "Next generation: template “{template}” + {count, plural, one {# product} other {# products}} (Ref 2+).",
+        "referenceSummaryTemplateOnly": "Next generation: template “{template}” only (headline/style).",
+        "referenceSummaryPreviousOnly": "Next generation: edit the image in preview.",
+        "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
+        "referenceSummaryPreviousAndPhotos": "Next generation: image in preview + {count, plural, one {# checked photo} other {# checked photos}}.",
+        "tooManyReferences": "Too many references selected. Use at most 1 template and 5 checked product photos (6 total)."
       },
       "tip": {
         "title": "Tip",
-        "description": "Type @ in the prompt to attach a reference photo from your media library."
+        "description": "The image in the preview is used as the edit reference. Attach a layout template to start from a blank layout, or pick a generated version to edit that result. Optionally add product photos with @, then describe changes in creative direction."
       }
     },
     "preview": {
@@ -760,6 +806,8 @@
       "useAsPostImage": "Use as post image",
       "useAsPostImageCommitting": "Setting post image…",
       "committingPostImage": "Setting post image…",
+      "previewImageAlt": "Generated post preview",
+      "templatePreviewImageAlt": "Selected layout template preview",
       "generating": "Generating…",
       "deleteImage": "Delete image",
       "removePage": "Remove page",
@@ -810,6 +858,9 @@
       "deleteConfirmCancel": "Cancel",
       "deleteConfirmAction": "Delete post",
       "deleteError": "Could not delete the post. Please try again.",
+      "editTitleAria": "Edit post title",
+      "saveTitleAria": "Save post title",
+      "renameError": "Could not save the title. Please try again.",
       "statusLabels": {
         "draft": "Draft",
         "published": "Published"
@@ -1118,8 +1169,8 @@
           "run": "Run Agent",
           "rerun": "Re-run Agent",
           "clear": "Clear Output",
-          "clearing": "Clearing...",
-          "running": "Running..."
+          "clearing": "Clearing…",
+          "running": "Running…"
         },
         "output": {
           "title": "Agent Output",
@@ -1168,8 +1219,8 @@
           "run": "Run Agent",
           "rerun": "Re-run Agent",
           "clear": "Clear Output",
-          "clearing": "Clearing...",
-          "running": "Running..."
+          "clearing": "Clearing…",
+          "running": "Running…"
         },
         "output": {
           "title": "Agent Output",
@@ -1498,6 +1549,9 @@
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
         "stopChatAriaLabel": "Stop generating",
         "submitChatAriaLabel": "Send message",
+        "attachImageAriaLabel": "Attach image",
+        "attachImageTooltip": "Attach an image from your device",
+        "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
         "mobileChatOpenLabel": "Assistant & visualizations",
         "mobileChatOpenAriaLabel": "Open assistant and visualizations",
         "mobileChatSheetTitle": "Assistant & visualizations",
@@ -1521,12 +1575,16 @@
           }
         },
         "mentionMenu": {
-          "ariaLabel": "Insert milestone preset request",
+          "ariaLabel": "Insert milestone, chart, or media reference",
           "empty": "No milestones match your filter.",
           "milestonesGroup": "Milestones",
           "visualizationsGroup": "Attached charts",
           "visualizationsAriaLabel": "Insert attached chart data",
-          "noAttachedCharts": "No attached charts match your filter. Add charts on the Visualizations tab first."
+          "noAttachedCharts": "No attached charts match your filter. Add charts on the Visualizations tab first.",
+          "mediaGroup": "Media",
+          "mediaAriaLabel": "Attach image from Media library",
+          "mediaLoading": "Loading media…",
+          "mediaEmpty": "No media files yet. Upload images on the Media page, or use the paperclip to attach from your device."
         },
         "artifactTitle": "Artifact",
         "artifactPlaceholder": "Content will appear here as you work with the assistant.",
@@ -1603,7 +1661,7 @@
             "title": "Culture hooks",
             "inputLabel": "Culture hooks notes",
             "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
-            "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone...",
+            "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone…",
             "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not food or drink). These intersections should inspire Instagram feed posts, Stories, and Reels that attract potential new customers.",
             "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example suitable for a feed post, Story, or Reel.",
             "criterionNonFood": "Intersections are **not food- or drink-centric** (no dishes, coffee, beverages, recipes, or flavor-led angles).",
@@ -2145,7 +2203,7 @@
           "cancel": "Cancel",
           "continue": "Continue",
           "back": "Back",
-          "generating": "Generating...",
+          "generating": "Generating…",
           "generate": "Generate",
           "generateError": "Couldn't generate the image. Try again."
         }
@@ -2287,7 +2345,7 @@
         "placeholder": "Select analytics",
         "noOptions": "No other analytics available",
         "action": "Import",
-        "importing": "Importing..."
+        "importing": "Importing…"
       },
       "table": {
         "title": "Edit COGS per menu item",
@@ -2309,7 +2367,7 @@
       },
       "actions": {
         "save": "Save COGS",
-        "saving": "Saving..."
+        "saving": "Saving…"
       },
       "errors": {
         "updateFailed": "Failed to update COGS",

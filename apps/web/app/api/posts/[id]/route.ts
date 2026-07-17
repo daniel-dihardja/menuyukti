@@ -6,10 +6,13 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_POST_MUTATION,
   POST_QUERY,
+  UPDATE_POST_MUTATION,
   type DeletePostData,
   type PostData,
+  type UpdatePostData,
 } from '@/lib/graphql/queries/posts'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { patchPostSchema } from './schema'
 
 const idParamSchema = z.string().trim().min(1).regex(/^\d+$/)
 
@@ -84,6 +87,51 @@ export async function GET(_req: Request, context: RouteContext) {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load post'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+export async function PATCH(req: Request, context: RouteContext) {
+  try {
+    await connection()
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) {
+      return authz.response
+    }
+
+    const { id: rawId } = await context.params
+    const idParsed = idParamSchema.safeParse(rawId)
+    if (!idParsed.success) {
+      return NextResponse.json({ error: 'Invalid post id' }, { status: 400 })
+    }
+
+    const json = await req.json()
+    const patch = patchPostSchema.parse(json)
+
+    const data = await graphqlQuery<UpdatePostData>(
+      UPDATE_POST_MUTATION,
+      { id: idParsed.data, title: patch.title },
+      authz.userId,
+    )
+
+    const post = data.updatePost
+    return NextResponse.json({
+      id: post.id,
+      title: post.title,
+      status: post.status,
+      updatedAt: post.updatedAt,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update post'
+    if (message.includes('Post not found')) {
+      return NextResponse.json({ error: message }, { status: 404 })
+    }
+    if (message.includes('Not allowed')) {
+      return NextResponse.json({ error: message }, { status: 403 })
+    }
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
