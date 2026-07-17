@@ -4,6 +4,11 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  isLeonardoPostModelId,
+  type LeonardoPostModelId,
+} from '@/lib/posts/leonardo-post-models'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
 import {
@@ -87,6 +92,9 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const [postImageVersionIndex, setPostImageVersionIndex] = useState(0)
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
   const [templateImage, setTemplateImage] = useState<PostCreatorReferenceImage | null>(null)
+  const [generationModel, setGenerationModelState] = useState<LeonardoPostModelId>(
+    DEFAULT_LEONARDO_POST_MODEL,
+  )
   const [usePreviousResult, setUsePreviousResult] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
@@ -117,6 +125,11 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     setPrompt(page?.prompt ?? '')
     setReferenceImages(page?.referenceImages ?? [])
     setTemplateImage(page?.templateImage ?? null)
+    setGenerationModelState(
+      isLeonardoPostModelId(page?.generationModel)
+        ? page.generationModel
+        : DEFAULT_LEONARDO_POST_MODEL,
+    )
     const previewMediaS3Key = versions[previewIndex]?.mediaS3Key ?? page?.mediaS3Key ?? null
     setUsePreviousResult(resolveUsePreviousResultForPage(page, previewMediaS3Key))
   }, [])
@@ -135,6 +148,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           | 'referenceImages'
           | 'templateImage'
           | 'usePreviousResult'
+          | 'generationModel'
         >
       >,
     ) => {
@@ -144,6 +158,16 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     },
     [],
   )
+
+  useEffect(() => {
+    if (!templateImage || !usePreviousResult) {
+      return
+    }
+    setUsePreviousResult(false)
+    if (selectedPageId) {
+      syncPageState(selectedPageId, { usePreviousResult: false })
+    }
+  }, [templateImage, usePreviousResult, selectedPageId, syncPageState])
 
   useEffect(() => {
     if (!canPersistPages || !postId) {
@@ -210,6 +234,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                       prompt,
                       referenceImages,
                       templateImage,
+                      generationModel,
                       previewVersionIndex,
                       usePreviousResult,
                     }
@@ -236,12 +261,18 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         setPrompt(page?.prompt ?? '')
         setReferenceImages(page?.referenceImages ?? [])
         setTemplateImage(page?.templateImage ?? null)
+        setGenerationModelState(
+          isLeonardoPostModelId(page?.generationModel)
+            ? page.generationModel
+            : DEFAULT_LEONARDO_POST_MODEL,
+        )
         const previewMediaS3Key = versions[previewIndex]?.mediaS3Key ?? page?.mediaS3Key ?? null
         setUsePreviousResult(resolveUsePreviousResultForPage(page, previewMediaS3Key))
         return withSyncedCurrent
       })
     },
     [
+      generationModel,
       previewVersionIndex,
       prompt,
       referenceImages,
@@ -319,7 +350,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setTemplateImage(next)
       setUsePreviousResult(false)
       if (selectedPageId) {
-        syncPageState(selectedPageId, { templateImage: next, usePreviousResult: false })
+        syncPageState(selectedPageId, {
+          templateImage: next,
+          usePreviousResult: false,
+        })
       }
     },
     [selectedPageId, syncPageState],
@@ -328,9 +362,21 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const clearTemplate = useCallback(() => {
     setTemplateImage(null)
     if (selectedPageId) {
-      syncPageState(selectedPageId, { templateImage: null })
+      syncPageState(selectedPageId, {
+        templateImage: null,
+      })
     }
   }, [selectedPageId, syncPageState])
+
+  const setGenerationModel = useCallback(
+    (model: LeonardoPostModelId) => {
+      setGenerationModelState(model)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { generationModel: model })
+      }
+    },
+    [selectedPageId, syncPageState],
+  )
 
   const generate = useCallback(async () => {
     const trimmed = prompt.trim()
@@ -374,7 +420,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         postId?: string
         pageId?: string
         references?: typeof references
-      } = { prompt: trimmed }
+        model?: LeonardoPostModelId
+      } = { prompt: trimmed, model: generationModel }
 
       if (canPersistPages && postId && selectedPageId) {
         body.postId = postId
@@ -422,7 +469,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setImageVersions(nextVersions)
       setPreviewVersionIndex(0)
       setPostImageVersionIndex(0)
-      setUsePreviousResult(true)
+      const nextUsePreviousResult = genMode !== 'template-composite'
+      setUsePreviousResult(nextUsePreviousResult)
 
       if (selectedPageId) {
         syncPageState(selectedPageId, {
@@ -431,7 +479,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           imageVersions: nextVersions,
           previewVersionIndex: 0,
           prompt: trimmed,
-          usePreviousResult: true,
+          usePreviousResult: nextUsePreviousResult,
         })
       }
     } catch {
@@ -441,6 +489,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     }
   }, [
     canPersistPages,
+    generationModel,
     imageVersions,
     isGenerating,
     postId,
@@ -573,6 +622,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setDeleteDialogOpen(false)
 
       const nextUsePreviousResult =
+        !templateImage &&
         nextVersions.length > 0 &&
         Boolean(
           parsePostMediaFilename(nextVersions[nextPreviewIndex]?.mediaS3Key ?? data.mediaS3Key),
@@ -600,6 +650,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     previewVersionIndex,
     selectedPageId,
     syncPageState,
+    templateImage,
     tToast,
   ])
 
@@ -704,6 +755,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                     prompt,
                     referenceImages,
                     templateImage,
+                    generationModel,
                     previewVersionIndex,
                     usePreviousResult,
                   }
@@ -751,13 +803,13 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     [
       applySelectedPage,
       canPersistPages,
+      generationModel,
       pages,
       postId,
       previewVersionIndex,
       prompt,
       referenceImages,
       selectedPageId,
-      tToast,
       templateImage,
       usePreviousResult,
     ],
@@ -821,10 +873,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const selectedPage = pages.find((page) => page.id === selectedPageId)
 
   const previewImageUrl =
-    imageVersions[previewVersionIndex]?.imageUrl ??
-    selectedPage?.imageUrl ??
-    templateImage?.url ??
-    null
+    imageVersions[previewVersionIndex]?.imageUrl ?? selectedPage?.imageUrl ?? null
+
   const previewMediaS3Key =
     imageVersions[previewVersionIndex]?.mediaS3Key ?? selectedPage?.mediaS3Key ?? null
   const hasPreviewableVersion = Boolean(parsePostMediaFilename(previewMediaS3Key))
@@ -879,6 +929,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         postImageVersionIndex,
         referenceImages,
         templateImage,
+        generationModel,
         usePreviousResult,
         isGenerating,
         isCommittingPostImage,
@@ -906,6 +957,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         setUsePreviousResult: setUsePreviousResultValue,
         selectTemplate,
         clearTemplate,
+        setGenerationModel,
       },
       meta: {
         mode,
@@ -939,6 +991,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       deleteTarget,
       duplicatePage,
       generate,
+      generationModel,
       generationReferenceSummary,
       hasPreviewableVersion,
       imageVersions,
@@ -964,6 +1017,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       selectTemplate,
       selectedPage?.mediaS3Key,
       selectedPageId,
+      setGenerationModel,
       setPromptValue,
       setUsePreviousResultValue,
       templateImage,

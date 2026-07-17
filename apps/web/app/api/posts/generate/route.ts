@@ -4,11 +4,7 @@ import { NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { z } from 'zod'
 
-import {
-  MAX_GENERATION_REFERENCES,
-  POST_IMAGE_HEIGHT,
-  POST_IMAGE_WIDTH,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 import {
   getPresignedGetUrl,
   getS3Bucket,
@@ -28,6 +24,11 @@ import {
   type OutputDimensions,
   type PromptReference,
 } from '@/lib/posts/build-instagram-post-prompt'
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  LEONARDO_POST_MODEL_IDS,
+} from '@/lib/posts/leonardo-post-models'
+import { resolveGenerationOutputDimensions } from '@/lib/posts/post-creator-utils'
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
@@ -51,6 +52,7 @@ const bodySchema = z.object({
   postId: z.string().regex(/^\d+$/).optional(),
   pageId: z.string().regex(/^\d+$/).optional(),
   references: z.array(generationReferenceSchema).max(MAX_GENERATION_REFERENCES).optional(),
+  model: z.enum(LEONARDO_POST_MODEL_IDS).optional(),
 })
 
 function truncateStack(stack: string, max = 4000): string {
@@ -116,7 +118,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Invalid body' }, { status: 400 })
   }
 
-  const { prompt, postId, pageId, references = [] } = parsed.data
+  const {
+    prompt,
+    postId,
+    pageId,
+    references = [],
+    model = DEFAULT_LEONARDO_POST_MODEL,
+  } = parsed.data
   if ((postId && !pageId) || (!postId && pageId)) {
     return NextResponse.json(
       { message: 'postId and pageId must be provided together' },
@@ -154,6 +162,7 @@ export async function POST(req: Request) {
   const referenceBuffers: Buffer[] = []
   const promptReferences: PromptReference[] = []
   let templateOutputDimensions: OutputDimensions | undefined
+  let previousResultOutputDimensions: OutputDimensions | undefined
 
   for (const reference of references) {
     if (reference.type === 'template') {
@@ -206,6 +215,19 @@ export async function POST(req: Request) {
 
       const buffer = await loadReferenceBuffer(key, filename, userId)
       if (buffer instanceof NextResponse) return buffer
+      try {
+        previousResultOutputDimensions = await readImageDimensions(buffer)
+      } catch (err) {
+        console.error('[posts/generate] previous result dimension read failed', {
+          userIdPrefix: userId.slice(0, 8),
+          filename,
+          message: err instanceof Error ? err.message : String(err),
+        })
+        return NextResponse.json(
+          { message: `Could not read previous result dimensions: ${filename}` },
+          { status: 400 },
+        )
+      }
       referenceBuffers.push(buffer)
       promptReferences.push({ type: 'previous-result' })
       continue
@@ -223,27 +245,28 @@ export async function POST(req: Request) {
     promptReferences.push({ type: 'photo' })
   }
 
-  const outputWidth = templateOutputDimensions?.width ?? POST_IMAGE_WIDTH
-  const outputHeight = templateOutputDimensions?.height ?? POST_IMAGE_HEIGHT
-
-  const leonardoPrompt = buildInstagramPostPrompt({
-    userPrompt: prompt,
+  const outputDimensions = resolveGenerationOutputDimensions({
     mode,
-    references: promptReferences,
-    outputDimensions:
-      mode === 'template-composite' && templateOutputDimensions
-        ? templateOutputDimensions
-        : undefined,
+    templateDimensions: templateOutputDimensions,
+    previousResultDimensions: previousResultOutputDimensions,
   })
+  const { width: outputWidth, height: outputHeight } = outputDimensions
 
   let outBuffer: Buffer
   try {
+    const leonardoPrompt = buildInstagramPostPrompt({
+      userPrompt: prompt,
+      mode,
+      references: promptReferences,
+      outputDimensions,
+    })
+
     outBuffer = await runTextToImageWithReferences(
       leonardoPrompt,
       outputWidth,
       outputHeight,
       referenceBuffers,
-      undefined,
+      model,
       mode === 'template-composite' ? referenceBuffers.map(() => 'HIGH' as const) : undefined,
     )
   } catch (err) {

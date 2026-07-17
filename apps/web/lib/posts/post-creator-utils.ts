@@ -1,6 +1,30 @@
+import {
+  POST_IMAGE_HEIGHT,
+  POST_IMAGE_WIDTH,
+} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+import type { OutputDimensions } from '@/lib/posts/build-instagram-post-prompt'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
+import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 
 import type { PostCreatorImageVersion, PostCreatorPage } from './post-creator-types'
+
+/**
+ * Resolve Leonardo output size: template wins for composites; otherwise keep the
+ * previous filled result's pixel size so square (or other) edits aren't forced into 4:5.
+ */
+export function resolveGenerationOutputDimensions(input: {
+  mode: GenerationMode
+  templateDimensions?: OutputDimensions
+  previousResultDimensions?: OutputDimensions
+}): OutputDimensions {
+  if (input.mode === 'template-composite' && input.templateDimensions) {
+    return input.templateDimensions
+  }
+  if (input.previousResultDimensions) {
+    return input.previousResultDimensions
+  }
+  return { width: POST_IMAGE_WIDTH, height: POST_IMAGE_HEIGHT }
+}
 
 export function resolvePageImageVersions(page: {
   imageUrl: string | null

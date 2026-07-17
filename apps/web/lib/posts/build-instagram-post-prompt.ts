@@ -47,7 +47,7 @@ function slotLabel(productIndex: number): string {
 }
 
 function buildTemplateReferenceLine(index: number): string {
-  return `- Reference ${index} — TEMPLATE: the master layout. Use it for background, typography style, slot positions, and decorative elements. Each placeholder region (grey/white product boxes, cups with "PRODUCT IMAGE HERE", generic image icons, diamond-grid mockups) marks exactly where a product photo must be IN-PAINTED — not overlaid on top.`
+  return `- Reference ${index} — TEMPLATE: the master layout. Use it for background, typography style, slot positions, and decorative elements. Each placeholder region (grey/white product boxes, cups with "PRODUCT IMAGE HERE", generic image icons, diamond-grid mockups, grey "SLOT A" guides) marks exactly where a product photo must be IN-PAINTED — not overlaid on top.`
 }
 
 function buildProductReferenceLine(index: number, slotIndex: number): string {
@@ -96,7 +96,7 @@ ${lines.join('\n')}${mappingNote}`
 function buildSlotFillBlock(): string {
   return `SLOT FILL — IN-PAINT, NOT OVERLAY (CRITICAL):
 - This is slot in-painting, NOT sticker compositing. Do not paste product cutouts on top of an unchanged template.
-- For each placeholder: (1) erase ALL placeholder pixels in that region — boxes, borders, grey fill, diamond grids, icons, and "PRODUCT IMAGE HERE" text; (2) render the mapped product photo inside the same bounding box; (3) blend edges naturally with the template background.
+- For each placeholder: (1) erase ALL placeholder pixels in that region — boxes, borders, grey fill, diamond grids, icons, "PRODUCT IMAGE HERE", and "SLOT A" guide labels; (2) render the mapped product photo inside the same bounding box; (3) blend edges naturally with the template background.
 - Products must sit IN the slot footprint (same position and approximate scale as the placeholder). Do not float products beside, above, or in front of placeholders while leaving the placeholder visible.
 - If a product photo includes its own background, remove/replace that background so only the product appears in the slot — the slot area should show the product on the template scene, not a rectangular photo card.
 - Zero placeholder UI may remain in the output. If any placeholder marking is still visible, the result is wrong — fix it.`
@@ -119,7 +119,7 @@ function buildTextReplacementBlock(): string {
 function buildForbiddenOverlayBlock(): string {
   return `FORBIDDEN:
 - Overlaying unchanged product photos on top of visible placeholders.
-- Leaving any placeholder box, grid pattern, icon, or "PRODUCT IMAGE HERE" text in the output.
+- Leaving any placeholder box, grid pattern, icon, "PRODUCT IMAGE HERE", or "SLOT A" guide text in the output.
 - Placing a product outside its assigned slot while the slot still shows placeholder art.
 - Collage/sticker-style floating cutouts that ignore slot geometry.`
 }
@@ -128,7 +128,7 @@ function buildPreserveReplaceRemoveBlock(): string {
   return `PRESERVE / REPLACE / REMOVE:
 - PRESERVE from template: background color/texture, headline typography style, decorative doodles, logos, and layout grid — outside placeholder pixels.
 - REPLACE: every placeholder pixel region with the mapped product photo, in-painted to fit the slot.
-- REMOVE completely: placeholder boxes, diamond grids, mock cup fills, generic icons, "PRODUCT IMAGE HERE", and any guide/label inside placeholder areas.`
+- REMOVE completely: placeholder boxes, diamond grids, mock cup fills, generic icons, "PRODUCT IMAGE HERE", "SLOT A" labels, dashed slot guides, and any guide/label inside placeholder areas.`
 }
 
 function buildProductFidelityBlock(): string {
@@ -150,7 +150,7 @@ function buildIntegrationBlock(): string {
 
 function buildCompletionChecklistBlock(): string {
   return `COMPLETION CHECKLIST (verify before output):
-- [ ] Every placeholder region is fully erased — no boxes, grids, icons, or "PRODUCT IMAGE HERE" remain.
+- [ ] Every placeholder region is fully erased — no boxes, grids, icons, "PRODUCT IMAGE HERE", or "SLOT A" guides remain.
 - [ ] Each mapped product appears inside its slot footprint, not floating on top of an unchanged placeholder.
 - [ ] Products match their reference photos (recognizable dish/drink).
 - [ ] Headline and product labels match creative direction; placeholder tokens replaced.
@@ -204,6 +204,13 @@ function buildOutputBlock(mode: GenerationMode, dimensions?: OutputDimensions): 
 - Instagram-ready, no watermarks, no UI chrome.`
   }
 
+  if (mode === 'filled-edit') {
+    return `OUTPUT:
+- Match the FILLED RESULT reference dimensions exactly: ${width}×${height} pixels (aspect ratio ${ratio}).
+- Do not crop, stretch, letterbox, or change the canvas size.
+- Instagram-ready, no watermarks, no UI chrome.`
+  }
+
   return `OUTPUT:
 - Aspect ratio ${ratio}, ${width}×${height} pixels.
 - Instagram-ready, no watermarks, no UI chrome.`
@@ -220,12 +227,18 @@ function buildTemplateCompositePrompt(
       ? `\n\n${buildIndexedReferenceBlock(references, 'template-composite')}`
       : ''
 
-  return `You are compositing real product photos into a fixed Instagram post TEMPLATE.
-
-TASK:
+  const taskBlock = `TASK:
 In-paint each placeholder region in the template with the corresponding product photo.
 Erase placeholder art completely and render the product inside the same slot bounds.
-The result must look like one finished design — not a template with photos pasted on top.
+Preserve template background, typography, and decorations outside placeholders.
+The result must look like one finished design — not a template with photos pasted on top.`
+
+  const creativeDirectionHeader =
+    'CREATIVE DIRECTION (headline, product names, slot mapping — map Ref 2, Ref 3, … to slots when order differs):'
+
+  return `You are compositing real product photos into a fixed Instagram post TEMPLATE.
+
+${taskBlock}
 
 ${buildOutputBlock('template-composite', outputDimensions)}
 
@@ -247,7 +260,7 @@ ${buildForbiddenOverlayBlock()}
 
 ${buildCompletionChecklistBlock()}
 
-CREATIVE DIRECTION (headline, product names, slot mapping — map Ref 2, Ref 3, … to slots when order differs):
+${creativeDirectionHeader}
 ${trimmed}`
 }
 

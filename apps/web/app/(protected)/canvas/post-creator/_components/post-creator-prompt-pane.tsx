@@ -7,10 +7,23 @@ import { toast } from 'sonner'
 
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
-import { Field, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
 import { Label } from '@workspace/ui/components/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
+
+import {
+  getLeonardoPostModelMessageKey,
+  isLeonardoPostModelId,
+  LEONARDO_POST_MODEL_IDS,
+} from '@/lib/posts/leonardo-post-models'
 
 import { usePostCreator } from '../_context/use-post-creator'
 import { PostCreatorImagePicker } from './post-creator-image-picker'
@@ -20,7 +33,14 @@ import { PostCreatorTemplatePicker } from './post-creator-template-picker'
 export function PostCreatorPromptPane() {
   const t = useTranslations('postCreator.prompt')
   const { state, actions, meta } = usePostCreator()
-  const { prompt, isGenerating, templateImage, referenceImages, usePreviousResult } = state
+  const {
+    prompt,
+    isGenerating,
+    templateImage,
+    referenceImages,
+    usePreviousResult,
+    generationModel,
+  } = state
   const {
     setPrompt,
     generate,
@@ -30,12 +50,15 @@ export function PostCreatorPromptPane() {
     setUsePreviousResult,
     selectTemplate,
     clearTemplate,
+    setGenerationModel,
   } = actions
   const { hasPreviewableVersion, generationReferenceSummary } = meta
 
   const previousResultId = useId()
   const promptId = useId()
   const templateFieldId = useId()
+  const modelFieldId = useId()
+  const modelBlurbId = `${modelFieldId}-blurb`
   const disabled = isGenerating
   const canSubmit = prompt.trim().length > 0 && !isGenerating
   const selectedNames = useMemo(
@@ -66,6 +89,37 @@ export function PostCreatorPromptPane() {
             onClearTemplate={clearTemplate}
             onSelectTemplate={selectTemplate}
           />
+        </Field>
+        <Field className="gap-1.5">
+          <FieldLabel htmlFor={modelFieldId}>{t('model.label')}</FieldLabel>
+          <Select
+            value={generationModel}
+            onValueChange={(value) => {
+              if (isLeonardoPostModelId(value)) {
+                setGenerationModel(value)
+              }
+            }}
+            disabled={disabled}
+          >
+            <SelectTrigger
+              id={modelFieldId}
+              className="w-full"
+              aria-label={t('model.label')}
+              aria-describedby={modelBlurbId}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LEONARDO_POST_MODEL_IDS.map((modelId) => (
+                <SelectItem key={modelId} value={modelId}>
+                  {t(`model.options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldDescription id={modelBlurbId}>
+            {t(`model.options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
+          </FieldDescription>
         </Field>
         <Field className="gap-1.5">
           <FieldLabel htmlFor={promptId}>{t('label')}</FieldLabel>

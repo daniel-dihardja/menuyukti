@@ -173,8 +173,6 @@ export function PostCreatorPreviewPane() {
                     <img
                       src={previewImageUrl!}
                       alt={t('previewImageAlt')}
-                      width={POST_IMAGE_WIDTH}
-                      height={POST_IMAGE_HEIGHT}
                       className="size-full object-contain"
                     />
                     {isLoading ? (

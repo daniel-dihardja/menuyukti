@@ -728,7 +728,7 @@
     "promptPane": "Prompt",
     "prompt": {
       "label": "Creative direction",
-      "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder (left slot), Ref 3 → Ice Americano (right slot)\n\nType @ to attach product photos in slot order.",
+      "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder, Ref 3 → Ice Americano\n\nType @ to attach product photos in order.",
       "generate": "Generate image",
       "generating": "Generating…",
       "template": {
@@ -738,6 +738,24 @@
         "empty": "No media yet. Upload a layout template in Media first.",
         "remove": "Remove layout template",
         "fromMedia": "From Media"
+      },
+      "model": {
+        "label": "Image model",
+        "description": "Leonardo model used for this generation.",
+        "options": {
+          "flash": {
+            "name": "Nano Banana",
+            "blurb": "Fast and cost-efficient. Strong at multi-reference edits; good default for iteration."
+          },
+          "nanoBanana2": {
+            "name": "Nano Banana 2",
+            "blurb": "Balanced speed and quality. Better texture, text, and consistency than original Nano Banana."
+          },
+          "pro": {
+            "name": "Nano Banana Pro",
+            "blurb": "Highest instruction following for complex template fills. Slower and uses more tokens."
+          }
+        }
       },
       "picker": {
         "ariaLabel": "Reference photo picker",
@@ -770,7 +788,7 @@
       },
       "tip": {
         "title": "Tip",
-        "description": "Attach a layout template from Media, add product photos with @ (Ref 2 = first slot, Ref 3 = second, …). In creative direction, set the headline and map each Ref to its placeholder — e.g. Ref 2 → Roti Bluder left cup, Ref 3 → Ice Americano right cup."
+        "description": "Attach a layout template from Media, add product photos with @ (Ref 2 = first placeholder, Ref 3 = second, …), then describe headline and product mapping in creative direction."
       }
     },
     "preview": {

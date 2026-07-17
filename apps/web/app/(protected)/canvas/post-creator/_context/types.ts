@@ -4,6 +4,7 @@ import type {
   PostCreatorPage,
   PostCreatorReferenceImage,
 } from '@/lib/posts/post-creator-types'
+import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
 
 export type {
   PostCreatorDeleteTarget,
@@ -25,6 +26,7 @@ export type PostCreatorState = {
   postImageVersionIndex: number
   referenceImages: PostCreatorReferenceImage[]
   templateImage: PostCreatorReferenceImage | null
+  generationModel: LeonardoPostModelId
   usePreviousResult: boolean
   isGenerating: boolean
   isCommittingPostImage: boolean
@@ -53,6 +55,7 @@ export type PostCreatorActions = {
   setUsePreviousResult: (value: boolean) => void
   selectTemplate: (design: { name: string; url: string }) => void
   clearTemplate: () => void
+  setGenerationModel: (model: LeonardoPostModelId) => void
 }
 
 export type PostCreatorMeta = {

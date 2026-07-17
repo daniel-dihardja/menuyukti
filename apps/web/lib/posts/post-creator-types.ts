@@ -1,3 +1,5 @@
+import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
+
 export type PostCreatorReferenceImage = {
   name: string
   url: string
@@ -22,6 +24,7 @@ export type PostCreatorPage = {
   referenceImages?: PostCreatorReferenceImage[]
   templateImage?: PostCreatorReferenceImage | null
   usePreviousResult?: boolean
+  generationModel?: LeonardoPostModelId
 }
 
 export type PostCreatorDeleteTarget = 'page' | 'version'

@@ -100,6 +100,21 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).not.toContain('PRODUCT FIDELITY')
   })
 
+  it('preserves previous-result dimensions in filled-edit output instructions', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Warm the background slightly',
+      mode: 'filled-edit',
+      references: [{ type: 'previous-result' }],
+      outputDimensions: { width: 1080, height: 1080 },
+    })
+
+    expect(out).toContain(
+      'Match the FILLED RESULT reference dimensions exactly: 1080×1080 pixels (aspect ratio 1:1)',
+    )
+    expect(out).toContain('Do not crop, stretch, letterbox, or change the canvas size')
+    expect(out).not.toContain('1080×1350')
+  })
+
   it('omits reference block when references is empty', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Hero dish on marble',

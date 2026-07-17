@@ -1,5 +1,11 @@
 import sharp from 'sharp'
 
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  snapLeonardoPostDimension,
+  type LeonardoPostModelId,
+} from '@/lib/posts/leonardo-post-models'
+
 /** Presigned init-image upload + poll status — only REST paths Leonardo exposes for these. */
 const BASE_V1 = 'https://cloud.leonardo.ai/api/rest/v1'
 /** Nano Banana and other v2 models — https://docs.leonardo.ai/docs/nano-banana */
@@ -10,22 +16,11 @@ const POLL_MAX_MS = 120_000
 
 const LOG_PREFIX = '[leonardo]'
 
-/** Per Nano Banana docs — width/height must be one of these (excluding 0, which we avoid here). */
-const NANO_BANANA_ALLOWED_DIMS = [672, 768, 832, 864, 896, 1024, 1152, 1184, 1248, 1344] as const
+/** Leonardo Diffusion XL — default for Canvas Inpainting per Leonardo docs. */
+export const DEFAULT_INPAINT_MODEL_ID = '1e60896f-3c26-4296-8ecc-53e2afecc132'
 
-function snapNanoBananaDimension(n: number): number {
-  if (!Number.isFinite(n) || n <= 0) return 1024
-  let best: number = 1024
-  let bestDiff = Infinity
-  for (const d of NANO_BANANA_ALLOWED_DIMS) {
-    const diff = Math.abs(d - n)
-    if (diff < bestDiff) {
-      bestDiff = diff
-      best = d
-    }
-  }
-  return best
-}
+/** Default init_strength for canvas inpaint (~0.80 UI inpaint strength). */
+export const DEFAULT_INPAINT_INIT_STRENGTH = 0.2
 
 function truncateBody(text: string, max = 1500): string {
   if (text.length <= max) return text
@@ -70,12 +65,32 @@ export type ImageReferenceStrength = 'LOW' | 'MID' | 'HIGH'
 /** Config for remove-background via Nano Banana / v2 generations API. */
 export type NanoBananaFlowConfig = {
   /** e.g. `gemini-2.5-flash-image` per https://docs.leonardo.ai/docs/nano-banana */
-  model: string
+  model: LeonardoPostModelId | string
   prompt: string
   /** Optional preset styles; omit or use `"None"` style UUID. */
   styleIds?: string[]
   imageReferenceStrength?: ImageReferenceStrength
   promptEnhance?: 'OFF' | 'ON'
+}
+
+function resolvePostModelId(model: string): LeonardoPostModelId {
+  return model === 'nano-banana-2' ||
+    model === 'gemini-image-2' ||
+    model === 'gemini-2.5-flash-image'
+    ? model
+    : DEFAULT_LEONARDO_POST_MODEL
+}
+
+function snapModelDimensions(
+  model: string,
+  width: number,
+  height: number,
+): { width: number; height: number } {
+  const modelId = resolvePostModelId(model)
+  return {
+    width: snapLeonardoPostDimension(modelId, width, 'width'),
+    height: snapLeonardoPostDimension(modelId, height, 'height'),
+  }
 }
 
 export type CreateNanoBananaParams = NanoBananaFlowConfig & {
@@ -133,6 +148,51 @@ type GetGenerationV1Response = {
   } | null
 }
 
+function getInpaintModelId(): string {
+  return process.env.LEONARDO_INPAINT_MODEL_ID?.trim() || DEFAULT_INPAINT_MODEL_ID
+}
+
+async function uploadToPresignedUrl(params: {
+  url: string
+  fieldsRaw: string
+  buffer: Buffer
+  extension: 'webp' | 'png' | 'jpg' | 'jpeg'
+  logLabel: string
+}): Promise<void> {
+  const { url, fieldsRaw, buffer, extension, logLabel } = params
+
+  let fields: Record<string, string>
+  try {
+    fields = JSON.parse(fieldsRaw) as Record<string, string>
+  } catch {
+    logError(`${logLabel}: fields JSON parse failed`, {
+      fieldsPreview: truncateBody(fieldsRaw, 200),
+    })
+    throw new Error(`Leonardo ${logLabel} fields is not valid JSON`)
+  }
+
+  const formData = new FormData()
+  for (const [k, v] of Object.entries(fields)) {
+    formData.append(k, v)
+  }
+
+  const filename = extension === 'jpeg' ? 'image.jpg' : `image.${extension}`
+  const blob = new Blob([new Uint8Array(buffer)], {
+    type: extension === 'webp' ? 'image/webp' : extension === 'png' ? 'image/png' : 'image/jpeg',
+  })
+  formData.append('file', blob, filename)
+
+  const putRes = await fetch(url, { method: 'POST', body: formData })
+  if (!putRes.ok && putRes.status !== 204) {
+    const text = await putRes.text()
+    logError(`${logLabel}: S3 presigned upload failed`, {
+      status: putRes.status,
+      body: truncateBody(text),
+    })
+    throw new Error(`Leonardo S3 upload failed: ${putRes.status} ${truncateBody(text, 500)}`)
+  }
+}
+
 /**
  * Request presigned upload details and upload the image bytes to Leonardo S3.
  * @param buffer — image bytes (WebP from our pipeline)
@@ -173,39 +233,202 @@ export async function uploadInitImage(
     throw new Error('Leonardo init-image response missing id, url, or fields')
   }
 
-  let fields: Record<string, string>
-  try {
-    fields = JSON.parse(fieldsRaw) as Record<string, string>
-  } catch {
-    logError('init-image: fields JSON parse failed', {
-      fieldsPreview: truncateBody(fieldsRaw, 200),
-    })
-    throw new Error('Leonardo init-image fields is not valid JSON')
-  }
-
-  const formData = new FormData()
-  for (const [k, v] of Object.entries(fields)) {
-    formData.append(k, v)
-  }
-
-  const filename = extension === 'jpeg' ? 'image.jpg' : `image.${extension}`
-  const blob = new Blob([new Uint8Array(buffer)], {
-    type: extension === 'webp' ? 'image/webp' : extension === 'png' ? 'image/png' : 'image/jpeg',
-  })
-  formData.append('file', blob, filename)
-
-  const putRes = await fetch(url, { method: 'POST', body: formData })
-  if (!putRes.ok && putRes.status !== 204) {
-    const text = await putRes.text()
-    logError('init-image: S3 presigned upload failed', {
-      status: putRes.status,
-      body: truncateBody(text),
-    })
-    throw new Error(`Leonardo S3 upload failed: ${putRes.status} ${truncateBody(text, 500)}`)
-  }
+  await uploadToPresignedUrl({ url, fieldsRaw, buffer, extension, logLabel: 'init-image' })
 
   logInfo('init-image: upload complete', { initImageId: id })
   return id
+}
+
+export type CanvasInitAndMaskIds = {
+  canvasInitId: string
+  canvasMaskId: string
+}
+
+function pickString(record: Record<string, unknown>, ...keys: string[]): string | null {
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return null
+}
+
+type ParsedCanvasUpload = {
+  canvasInitId: string
+  initUrl: string
+  initFields: string
+  canvasMaskId: string
+  maskUrl: string
+  maskFields: string
+}
+
+/** Leonardo's live API uses `masksImageId` / `masksUrl` (plural); docs show singular variants. */
+export function parseCanvasInitImageResponse(data: unknown): ParsedCanvasUpload | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null
+  const root = data as Record<string, unknown>
+  const upload = root.uploadCanvasInitImage ?? root.upload_canvas_init_image
+  if (!upload || typeof upload !== 'object' || Array.isArray(upload)) return null
+  const u = upload as Record<string, unknown>
+
+  const canvasInitId = pickString(u, 'initImageId', 'init_image_id')
+  const initUrl = pickString(u, 'initUrl', 'init_url')
+  const initFields = pickString(u, 'initFields', 'init_fields')
+  const canvasMaskId = pickString(
+    u,
+    'masksImageId',
+    'maskImageId',
+    'masks_image_id',
+    'mask_image_id',
+  )
+  const maskUrl = pickString(u, 'masksUrl', 'maskUrl', 'masks_url', 'mask_url')
+  const maskFields = pickString(u, 'masksFields', 'maskFields', 'masks_fields', 'mask_fields')
+
+  if (!canvasInitId || !initUrl || !initFields || !canvasMaskId || !maskUrl || !maskFields) {
+    return null
+  }
+
+  return { canvasInitId, initUrl, initFields, canvasMaskId, maskUrl, maskFields }
+}
+
+/**
+ * Upload init + mask pair for Leonardo Canvas Inpainting.
+ * @see https://docs.leonardo.ai/docs/generate-images-using-canvas-inpainting
+ */
+export async function uploadCanvasInitAndMask(
+  initBuffer: Buffer,
+  maskBuffer: Buffer,
+  extension: 'png' | 'jpg' | 'jpeg' | 'webp' = 'png',
+): Promise<CanvasInitAndMaskIds> {
+  logInfo('canvas-init-image: requesting presigned upload', {
+    extension,
+    initBytes: initBuffer.length,
+    maskBytes: maskBuffer.length,
+  })
+
+  const res = await fetch(`${BASE_V1}/canvas-init-image`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ initExtension: extension, maskExtension: extension }),
+  })
+
+  const rawText = await res.text()
+  if (!res.ok) {
+    logError('canvas-init-image: API error', { status: res.status, body: truncateBody(rawText) })
+    throw new Error(
+      `Leonardo canvas-init-image failed: ${res.status} ${truncateBody(rawText, 500)}`,
+    )
+  }
+
+  const data = parseJsonBody(rawText)
+  const parsed = parseCanvasInitImageResponse(data)
+
+  if (!parsed) {
+    logError('canvas-init-image: unexpected response shape', {
+      snapshot: truncateBody(rawText, 1200),
+    })
+    throw new Error('Leonardo canvas-init-image response missing init or mask upload details')
+  }
+
+  const { canvasInitId, initUrl, initFields, canvasMaskId, maskUrl, maskFields } = parsed
+
+  await uploadToPresignedUrl({
+    url: initUrl,
+    fieldsRaw: initFields,
+    buffer: initBuffer,
+    extension,
+    logLabel: 'canvas-init',
+  })
+  await uploadToPresignedUrl({
+    url: maskUrl,
+    fieldsRaw: maskFields,
+    buffer: maskBuffer,
+    extension,
+    logLabel: 'canvas-mask',
+  })
+
+  logInfo('canvas-init-image: upload complete', { canvasInitId, canvasMaskId })
+  return { canvasInitId, canvasMaskId }
+}
+
+export type CreateCanvasInpaintParams = {
+  prompt: string
+  canvasInitId: string
+  canvasMaskId: string
+  width: number
+  height: number
+  initStrength?: number
+  guidanceScale?: number
+  modelId?: string
+  numImages?: number
+}
+
+/**
+ * Leonardo v1 Canvas Inpainting — POST /api/rest/v1/generations.
+ */
+export async function createCanvasInpaintGeneration(
+  params: CreateCanvasInpaintParams,
+): Promise<string> {
+  const {
+    prompt,
+    canvasInitId,
+    canvasMaskId,
+    width,
+    height,
+    initStrength = DEFAULT_INPAINT_INIT_STRENGTH,
+    guidanceScale = 7,
+    modelId = getInpaintModelId(),
+    numImages = 1,
+  } = params
+
+  const body = {
+    prompt,
+    width,
+    height,
+    canvasRequest: true,
+    canvasRequestType: 'INPAINT',
+    canvasInitId,
+    canvasMaskId,
+    init_strength: initStrength,
+    guidance_scale: guidanceScale,
+    num_images: numImages,
+    modelId,
+  }
+
+  logInfo('generations v1: creating canvas inpaint job', {
+    modelId,
+    width,
+    height,
+    initStrength,
+    promptPreview: truncateBody(prompt, 120),
+  })
+
+  const res = await fetch(`${BASE_V1}/generations`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  })
+
+  const rawText = await res.text()
+  const data = parseJsonBody(rawText)
+
+  if (!res.ok) {
+    logError('generations v1 inpaint: API error', {
+      status: res.status,
+      body: truncateBody(rawText),
+    })
+    throw new Error(`Leonardo canvas inpaint failed: ${res.status} ${truncateBody(rawText, 500)}`)
+  }
+
+  const genId = generationIdFromCreateResponse(data)
+  if (!genId) {
+    const snippet = truncateBody(JSON.stringify(data), 800)
+    logError('generations v1 inpaint: missing generationId', { raw: snippet })
+    throw new Error(
+      `Leonardo canvas inpaint response missing generationId.${process.env.NODE_ENV === 'development' ? ` Response: ${snippet}` : ''}`,
+    )
+  }
+
+  logInfo('generations v1 inpaint: job created', { generationId: genId })
+  return genId
 }
 
 /**
@@ -224,8 +447,7 @@ export async function createNanoBananaGeneration(params: CreateNanoBananaParams)
     promptEnhance = 'OFF',
   } = params
 
-  const w = snapNanoBananaDimension(width)
-  const h = snapNanoBananaDimension(height)
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
 
   const parameters: Record<string, unknown> = {
     prompt,
@@ -332,8 +554,7 @@ export async function createNanoBananaCompositionGeneration(
     throw new Error('At least one uploaded image id is required')
   }
 
-  const w = snapNanoBananaDimension(width)
-  const h = snapNanoBananaDimension(height)
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
 
   const parameters: Record<string, unknown> = {
     prompt,
@@ -424,7 +645,7 @@ export async function createNanoBananaCompositionGeneration(
 }
 
 /** Default Nano Banana model for prompt-only generations (no image reference). */
-export const TEXT_TO_IMAGE_MODEL = 'gemini-2.5-flash-image'
+export const TEXT_TO_IMAGE_MODEL: LeonardoPostModelId = DEFAULT_LEONARDO_POST_MODEL
 
 export type CreateTextToImageParams = {
   model: string
@@ -444,8 +665,7 @@ export async function createTextToImageGeneration(
 ): Promise<string> {
   const { model, prompt, width, height, styleIds, promptEnhance = 'OFF' } = params
 
-  const w = snapNanoBananaDimension(width)
-  const h = snapNanoBananaDimension(height)
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
 
   const parameters: Record<string, unknown> = {
     prompt,
@@ -633,7 +853,7 @@ export async function runTextToImageWithReferences(
   const imageUrl = await pollGeneration(generationId)
   const raw = await downloadLeonardoResult(imageUrl, 'runTextToImageWithReferences')
   const out = await sharp(raw)
-    .resize(width, height, { fit: 'cover' })
+    .resize(width, height, { fit: 'fill' })
     .webp({ quality: 85 })
     .toBuffer()
 
