@@ -18,6 +18,7 @@ def _style_to_gql(row: LocationStyle) -> LocationStyleType:
         rules=row.rules,
         reference_image_name=row.reference_image_name,
         is_default=bool(row.is_default),
+        style_spec=row.style_spec,
     )
 
 

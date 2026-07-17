@@ -200,6 +200,63 @@ describe('buildInstagramPostPrompt', () => {
     expect(out.indexOf('STYLE PACK')).toBeLessThan(out.indexOf('CREATIVE DIRECTION'))
     expect(out.endsWith('Pad thai bowl lunch offer')).toBe(true)
   })
+
+  it('compiles Style Spec controls and strips bracket overrides from creative direction', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'cold brew [headline=none]',
+      mode: 'fresh-scene',
+      style: {
+        name: 'Warm Oat',
+        rules: 'fallback rules',
+        styleSpec: {
+          schemaVersion: 1,
+          kind: 'template',
+          baseRules: ['Cream background; mustard accents.'],
+          controls: {
+            headline: {
+              type: 'enum',
+              values: ['auto', 'none'],
+              default: 'auto',
+              instructions: {
+                auto: 'Place a headline when provided.',
+                none: 'Leave the headline area empty.',
+              },
+            },
+            productName: {
+              type: 'enum',
+              values: ['auto', 'none'],
+              default: 'auto',
+              instructions: {
+                auto: 'Place product name when provided.',
+                none: 'Omit product name.',
+              },
+            },
+            backgroundIllustration: {
+              type: 'enum',
+              values: ['template_default', 'none'],
+              default: 'template_default',
+              instructions: {
+                template_default: 'Keep template line art.',
+                none: 'No background illustrations.',
+              },
+            },
+          },
+          defaults: {
+            headline: 'auto',
+            productName: 'auto',
+            backgroundIllustration: 'template_default',
+          },
+        },
+      },
+    })
+
+    expect(out).toContain('Cream background; mustard accents.')
+    expect(out).toContain('CONTROLS (resolved):')
+    expect(out).toContain('headline: none → Leave the headline area empty.')
+    expect(out).not.toContain('[headline=none]')
+    expect(out.endsWith('cold brew')).toBe(true)
+    expect(out).not.toContain('fallback rules')
+  })
 })
 
 describe('detectPromptMode', () => {

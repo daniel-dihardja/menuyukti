@@ -143,6 +143,13 @@ async function loadMediaBytes(
   }
 }
 
+/** Load a user photo from S3 and return a normalized vision data URL. */
+export async function loadUserPhotoAsDataUrl(userId: string, name: string): Promise<string> {
+  const { buffer, mime } = await loadMediaBytes(userId, name)
+  const { dataUrl } = await normalizeImageBuffer(buffer, mime)
+  return dataUrl
+}
+
 function lastUserMessageParts(messages: UIMessage[]): {
   text: string
   fileDataUrls: string[]

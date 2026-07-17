@@ -19,6 +19,7 @@ import {
 import { graphqlQuery } from '@/lib/graphql/client'
 import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphql/queries/posts'
 import { LOCATION_STYLE_QUERY, type LocationStyleData } from '@/lib/graphql/queries/location-styles'
+import { parseStyleSpec } from '@/lib/location-styles/style-spec'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
@@ -158,7 +159,11 @@ export async function POST(req: Request) {
     if (!style) {
       return NextResponse.json({ message: 'Style pack not found' }, { status: 404 })
     }
-    stylePack = { name: style.name, rules: style.rules }
+    stylePack = {
+      name: style.name,
+      rules: style.rules,
+      styleSpec: parseStyleSpec(style.styleSpec),
+    }
     styleImageName = style.referenceImageName
   }
 

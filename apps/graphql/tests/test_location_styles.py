@@ -18,6 +18,7 @@ query LocationStyles($locationId: Int!) {
     rules
     referenceImageName
     isDefault
+    styleSpec
   }
 }
 """
@@ -31,6 +32,7 @@ query LocationStyle($id: Int!) {
     rules
     referenceImageName
     isDefault
+    styleSpec
   }
 }
 """
@@ -42,6 +44,7 @@ mutation CreateStyle(
   $rules: String!
   $referenceImageName: String!
   $isDefault: Boolean
+  $styleSpec: JSON
 ) {
   createLocationStyle(
     locationId: $locationId
@@ -49,6 +52,7 @@ mutation CreateStyle(
     rules: $rules
     referenceImageName: $referenceImageName
     isDefault: $isDefault
+    styleSpec: $styleSpec
   ) {
     id
     locationId
@@ -56,6 +60,7 @@ mutation CreateStyle(
     rules
     referenceImageName
     isDefault
+    styleSpec
   }
 }
 """
@@ -67,6 +72,7 @@ mutation UpdateStyle(
   $rules: String
   $referenceImageName: String
   $isDefault: Boolean
+  $styleSpec: JSON
 ) {
   updateLocationStyle(
     id: $id
@@ -74,12 +80,14 @@ mutation UpdateStyle(
     rules: $rules
     referenceImageName: $referenceImageName
     isDefault: $isDefault
+    styleSpec: $styleSpec
   ) {
     id
     name
     rules
     referenceImageName
     isDefault
+    styleSpec
   }
 }
 """
@@ -236,3 +244,84 @@ def test_get_one_denied_for_other_user(style_location_id: int):
     )
     assert denied.errors is None
     assert denied.data["locationStyle"] is None
+
+
+_SAMPLE_SPEC = {
+    "schemaVersion": 1,
+    "kind": "template",
+    "baseRules": [
+        "Cream background; black line art; mustard accents only.",
+        "Only the product in the cup may be photorealistic.",
+    ],
+    "controls": {
+        "headline": {
+            "type": "enum",
+            "values": ["auto", "none"],
+            "default": "auto",
+            "instructions": {
+                "auto": "Place a short headline top-left when provided.",
+                "none": "Leave the headline area empty.",
+            },
+        },
+        "productName": {
+            "type": "enum",
+            "values": ["auto", "none"],
+            "default": "auto",
+            "instructions": {
+                "auto": "Place product name under the cup when provided.",
+                "none": "Omit product name.",
+            },
+        },
+        "backgroundIllustration": {
+            "type": "enum",
+            "values": ["template_default", "none"],
+            "default": "template_default",
+            "instructions": {
+                "template_default": "Keep template line-art decorations.",
+                "none": "No background illustrations.",
+            },
+        },
+    },
+    "defaults": {
+        "headline": "auto",
+        "productName": "auto",
+        "backgroundIllustration": "template_default",
+    },
+}
+
+
+def test_create_with_style_spec_syncs_rules(style_location_id: int):
+    created = _execute(
+        _CREATE,
+        {
+            "locationId": style_location_id,
+            "name": "Warm Oat",
+            "rules": "ignored when styleSpec is set",
+            "referenceImageName": "warm-oat.webp",
+            "styleSpec": _SAMPLE_SPEC,
+        },
+    )
+    assert created.errors is None
+    style = created.data["createLocationStyle"]
+    assert style["rules"] == (
+        "Cream background; black line art; mustard accents only.\n"
+        "Only the product in the cup may be photorealistic."
+    )
+    assert style["styleSpec"]["schemaVersion"] == 1
+    assert style["styleSpec"]["kind"] == "template"
+    assert style["styleSpec"]["controls"]["headline"]["default"] == "auto"
+
+
+def test_create_rejects_invalid_style_spec(style_location_id: int):
+    result = _execute(
+        _CREATE,
+        {
+            "locationId": style_location_id,
+            "name": "Bad",
+            "rules": "fallback",
+            "referenceImageName": "x.webp",
+            "styleSpec": {"schemaVersion": 1, "kind": "template"},
+        },
+    )
+    assert result.errors is not None
+    assert any("baseRules" in str(err) for err in result.errors)

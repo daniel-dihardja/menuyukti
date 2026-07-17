@@ -44,6 +44,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       variables.referenceImageName = body.referenceImageName
     }
     if (body.isDefault !== undefined) variables.isDefault = body.isDefault
+    if (body.styleSpec !== undefined) variables.styleSpec = body.styleSpec
 
     const data = await graphqlQuery<UpdateLocationStyleData>(
       UPDATE_LOCATION_STYLE_MUTATION,

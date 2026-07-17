@@ -2,14 +2,22 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import strawberry
+from strawberry.scalars import JSON
 
 from graphql.context import request_session_scope
 from graphql.data_sources.models.location_style import LocationStyle
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.queries.location_styles import _style_to_gql
 from graphql.schema.types.location_style import LocationStyleType
-from graphql.services.location_style import clear_other_defaults, validate_style_fields
+from graphql.services.location_style import (
+    clear_other_defaults,
+    rules_from_style_spec,
+    validate_style_fields,
+    validate_style_spec,
+)
 
 
 @strawberry.type
@@ -23,6 +31,7 @@ class UpdateLocationStyleMutation:
         rules: str | None = None,
         reference_image_name: str | None = None,
         is_default: bool | None = None,
+        style_spec: JSON | None = None,
     ) -> LocationStyleType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -35,10 +44,20 @@ class UpdateLocationStyleMutation:
             require_location_owner(session, row.location_id, user_id)
 
             next_name = name if name is not None else row.name
-            next_rules = rules if rules is not None else row.rules
             next_image = (
-                reference_image_name if reference_image_name is not None else row.reference_image_name
+                reference_image_name
+                if reference_image_name is not None
+                else row.reference_image_name
             )
+
+            normalized_spec: dict[str, Any] | None
+            if style_spec is not None:
+                normalized_spec = validate_style_spec(style_spec)
+                next_rules = rules_from_style_spec(normalized_spec)
+            else:
+                normalized_spec = row.style_spec
+                next_rules = rules if rules is not None else row.rules
+
             name_clean, rules_clean, image_clean = validate_style_fields(
                 name=next_name,
                 rules=next_rules,
@@ -47,6 +66,8 @@ class UpdateLocationStyleMutation:
             row.name = name_clean
             row.rules = rules_clean
             row.reference_image_name = image_clean
+            if style_spec is not None:
+                row.style_spec = normalized_spec
 
             if is_default is not None:
                 if is_default:

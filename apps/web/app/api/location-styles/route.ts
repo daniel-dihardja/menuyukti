@@ -60,6 +60,7 @@ export async function POST(req: Request) {
         rules: body.rules,
         referenceImageName: body.referenceImageName,
         isDefault: body.isDefault ?? false,
+        ...(body.styleSpec != null ? { styleSpec: body.styleSpec } : {}),
       },
       userId,
     )

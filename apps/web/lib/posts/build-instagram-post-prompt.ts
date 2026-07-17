@@ -4,6 +4,11 @@ import {
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+import {
+  compileStyleSpec,
+  parseStyleControlOverrides,
+  type StyleSpec,
+} from '@/lib/location-styles/style-spec'
 
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 
@@ -21,6 +26,7 @@ export type OutputDimensions = {
 export type StylePackPrompt = {
   name: string
   rules: string
+  styleSpec?: StyleSpec | null
 }
 
 export type BuildInstagramPostPromptOptions = {
@@ -234,10 +240,35 @@ function buildOutputBlock(mode: GenerationMode, dimensions?: OutputDimensions): 
 - Instagram-ready, no watermarks, no UI chrome.`
 }
 
-function buildStylePackBlock(style: StylePackPrompt): string {
+function buildStylePackBlock(style: StylePackPrompt, overridesBody?: string): string {
+  const body = overridesBody?.trim() || style.rules.trim()
   return `STYLE PACK — "${style.name}":
 Apply these visual rules to the entire output (unless creative direction explicitly overrides a detail):
-${style.rules.trim()}`
+${body}`
+}
+
+function resolveStyleAndPrompt(
+  userPrompt: string,
+  style?: StylePackPrompt,
+): { prompt: string; styleBlock?: string } {
+  const trimmed = userPrompt.trim()
+  if (!style) {
+    return { prompt: trimmed }
+  }
+
+  if (style.styleSpec) {
+    const { overrides, cleanedPrompt } = parseStyleControlOverrides(trimmed)
+    const { body } = compileStyleSpec(style.styleSpec, overrides)
+    return {
+      prompt: cleanedPrompt || trimmed,
+      styleBlock: buildStylePackBlock(style, body),
+    }
+  }
+
+  return {
+    prompt: trimmed,
+    styleBlock: buildStylePackBlock(style),
+  }
 }
 
 function buildTemplateStyleOnlyTaskBlock(): string {
@@ -253,11 +284,12 @@ function appendCreativeDirection(
   userPrompt: string,
   style?: StylePackPrompt,
 ): string {
-  const styleBlock = style ? `\n\n${buildStylePackBlock(style)}` : ''
-  return `${body}${styleBlock}
+  const { prompt, styleBlock } = resolveStyleAndPrompt(userPrompt, style)
+  const styleSection = styleBlock ? `\n\n${styleBlock}` : ''
+  return `${body}${styleSection}
 
 ${header}
-${userPrompt}`
+${prompt}`
 }
 
 function buildTemplateCompositePrompt(

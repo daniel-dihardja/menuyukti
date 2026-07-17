@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import JSON
 
 from graphql.data_sources.database import Base
 
@@ -28,6 +30,10 @@ class LocationStyle(Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     rules: Mapped[str] = mapped_column(Text, nullable=False)
     reference_image_name: Mapped[str] = mapped_column(String(512), nullable=False)
+    style_spec: Mapped[dict | None] = mapped_column(
+        JSONB().with_variant(JSON(), "sqlite"),
+        nullable=True,
+    )
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
