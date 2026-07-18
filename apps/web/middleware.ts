@@ -9,6 +9,7 @@ import { routes } from '@/lib/routes'
 const isProtectedRoute = createRouteMatcher([
   '/analytics(.*)',
   '/workflow(.*)',
+  '/calendar(.*)',
   '/canvas(.*)',
   '/ig-studio(.*)',
   '/media(.*)',

@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  CalendarDays,
   ChevronRight,
   FileUp,
   Image,
@@ -72,6 +73,12 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'posts',
     href: routes.igStudio,
     icon: <SquarePen className="w-4 h-4" />,
+  },
+  {
+    key: 'calendar',
+    labelKey: 'calendar',
+    href: routes.calendar,
+    icon: <CalendarDays className="w-4 h-4" />,
   },
   {
     key: 'workflows',

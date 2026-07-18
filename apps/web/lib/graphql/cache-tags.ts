@@ -45,3 +45,7 @@ export function graphqlAnalyticsRunComputationsCacheTag(
 export function graphqlWorkflowCampaignTreeCacheTag(userId: string, workflowId: string): string {
   return `graphql-workflow-campaign-tree-${userId}-${workflowId}`
 }
+
+export function graphqlSchedulerCalendarCacheTag(userId: string, locationId: number): string {
+  return `graphql-scheduler-calendar-${userId}-${locationId}`
+}

@@ -8,7 +8,7 @@ import { parseIsoDateOnly, resolveSchedulerWindow } from '@/lib/milestones/sched
 
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { TimelineMilestone } from '../timeline/types'
-import { SchedulerCalendar } from './scheduler-calendar'
+import { SchedulerCalendar } from '@/components/scheduler-calendar/scheduler-calendar'
 import { SchedulerScheduleExplanation } from './scheduler-schedule-explanation'
 
 export type MilestoneSchedulerDataPreviewProps = {

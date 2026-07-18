@@ -576,6 +576,7 @@
     "branches": "Locations",
     "reports": "Reports",
     "workflows": "Workflow",
+    "calendar": "Calendar",
     "skills": "Skills & tools",
     "studio": "Studio",
     "posts": "IG Studio",
@@ -681,6 +682,27 @@
             }
           }
         }
+      }
+    },
+    "calendar": {
+      "title": "Calendar",
+      "description": "Your restaurant content schedule by month.",
+      "branchLabel": "Location",
+      "branchPlaceholder": "Select a location",
+      "branchDescription": "Entries will be scoped to this location when scheduling is connected.",
+      "selectBranch": "Select a location to view the schedule.",
+      "loading": "Loading schedule…",
+      "monthPrevious": "Previous month",
+      "monthNext": "Next month",
+      "today": "Today",
+      "empty": {
+        "title": "No schedule yet",
+        "description": "Scheduled posts will appear here once they are published to the calendar."
+      },
+      "noBranches": {
+        "title": "Create a location first",
+        "description": "Add a location before viewing the calendar schedule.",
+        "cta": "Add location"
       }
     },
     "printOrders": {
