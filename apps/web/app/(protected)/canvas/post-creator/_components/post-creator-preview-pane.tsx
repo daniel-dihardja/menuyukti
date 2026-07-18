@@ -16,7 +16,11 @@ import {
 } from '@/lib/posts/leonardo-post-dimensions'
 
 import { usePostCreator } from '../_context/use-post-creator'
-import { clampSafeZoneInsetPx, safeZoneInsetPercents } from './post-creator-constants'
+import {
+  clampSafeZoneInsetPx,
+  normalizeSolidBackgroundColor,
+  safeZoneInsetPercents,
+} from './post-creator-constants'
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
 import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
 
@@ -45,6 +49,8 @@ export function PostCreatorPreviewPane() {
     generationModel,
     safeZoneInsetXPx,
     safeZoneInsetYPx,
+    solidBackgroundEnabled,
+    solidBackgroundColor,
   } = state
   const { previewVersion: onPreviewVersionIndex, commitPostImage, requestDelete } = actions
   const { canRemoveEmptyPage, canDelete } = meta
@@ -91,6 +97,7 @@ export function PostCreatorPreviewPane() {
       : (generatedImageUrl ?? templateImage?.url ?? null)
   const hasGeneratedImage = Boolean(generatedImageUrl)
   const hasImage = Boolean(previewImageUrl)
+  const showSolidBackgroundPreview = solidBackgroundEnabled && !hasImage && !showingTemplateOnly
   const showLoadingPlaceholder = isLoading && !hasImage
   const showVersionNav = versions.length > 1
   const canCommitPostImage =
@@ -310,8 +317,15 @@ export function PostCreatorPreviewPane() {
             className={`flex min-h-0 flex-1 items-center justify-center ${previewContentMaxWidthClassName}`}
           >
             <Card
-              className={`relative flex w-full flex-col items-center justify-center border-dashed bg-muted/20 p-6 text-center ${previewFrameClassName}`}
-              style={previewFrameStyle}
+              className={`relative flex w-full flex-col items-center justify-center border-dashed p-6 text-center ${previewFrameClassName} ${
+                showSolidBackgroundPreview ? 'border-border/40' : 'bg-muted/20'
+              }`}
+              style={{
+                ...previewFrameStyle,
+                ...(showSolidBackgroundPreview
+                  ? { backgroundColor: normalizeSolidBackgroundColor(solidBackgroundColor) }
+                  : null),
+              }}
             >
               {showRemoveButton ? (
                 <div className="absolute top-2 right-2 z-40">
@@ -327,13 +341,15 @@ export function PostCreatorPreviewPane() {
                   </Button>
                 </div>
               ) : null}
-              <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />
+              {showSolidBackgroundPreview ? null : (
+                <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
                 </div>
-                <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
-                <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
-              </div>
+              )}
               {safeZoneOverlay}
             </Card>
           </div>

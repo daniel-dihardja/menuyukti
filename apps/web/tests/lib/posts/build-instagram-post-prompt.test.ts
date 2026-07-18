@@ -46,6 +46,26 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('Preserve product identity')
   })
 
+  it('includes solid background canvas reference line in fresh scene', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Flat lay with coffee',
+      mode: 'fresh-scene',
+      references: [{ type: 'background-color', color: '#ffffff' }, { type: 'photo' }],
+    })
+
+    expect(out).toContain('REFERENCE IMAGES (in upload order):')
+    expect(out).toContain('Reference 1 — BACKGROUND CANVAS: a flat solid field in #ffffff')
+    expect(out).toContain('This is not a layout template')
+    expect(out).toContain('Reference 2 — PRODUCT PHOTO')
+    expect(out).not.toContain('SLOT')
+  })
+
+  it('keeps solid background in fresh-scene mode via detectPromptMode', () => {
+    expect(
+      detectPromptMode([{ type: 'background-color', color: '#ffffff' }, { type: 'photo' }]),
+    ).toBe('fresh-scene')
+  })
+
   it('includes template composite task and product fidelity blocks', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Ref 3 → center hero bowl',

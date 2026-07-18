@@ -39,7 +39,10 @@ import {
 import {
   DEFAULT_SAFE_ZONE_INSET_X_PX,
   DEFAULT_SAFE_ZONE_INSET_Y_PX,
+  DEFAULT_SOLID_BACKGROUND_COLOR,
+  DEFAULT_SOLID_BACKGROUND_ENABLED,
   MAX_ATTACHED_REFERENCE_PHOTOS,
+  normalizeSolidBackgroundColor,
 } from '../_components/post-creator-constants'
 import { PostCreatorContext } from './post-creator-context'
 import type { PostCreatorContextValue, PostCreatorMode } from './types'
@@ -115,6 +118,12 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   )
   const [safeZoneInsetXPx, setSafeZoneInsetXPxState] = useState(DEFAULT_SAFE_ZONE_INSET_X_PX)
   const [safeZoneInsetYPx, setSafeZoneInsetYPxState] = useState(DEFAULT_SAFE_ZONE_INSET_Y_PX)
+  const [solidBackgroundEnabled, setSolidBackgroundEnabledState] = useState(
+    DEFAULT_SOLID_BACKGROUND_ENABLED,
+  )
+  const [solidBackgroundColor, setSolidBackgroundColorState] = useState(
+    DEFAULT_SOLID_BACKGROUND_COLOR,
+  )
   const [previewSource, setPreviewSource] = useState<PostCreatorPreviewSource>('version')
   const [locationId, setLocationIdState] = useState<number | null>(null)
   const [styleId, setStyleIdState] = useState<number | null>(null)
@@ -446,6 +455,14 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     setSafeZoneInsetYPxState(Number.isFinite(px) && px >= 0 ? Math.floor(px) : 0)
   }, [])
 
+  const setSolidBackgroundEnabled = useCallback((enabled: boolean) => {
+    setSolidBackgroundEnabledState(enabled)
+  }, [])
+
+  const setSolidBackgroundColor = useCallback((color: string) => {
+    setSolidBackgroundColorState(normalizeSolidBackgroundColor(color))
+  }, [])
+
   const setLocationId = useCallback((next: number | null) => {
     setLocationIdState(next)
     setStyleIdState(null)
@@ -467,6 +484,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       referenceImages,
       previewMediaS3Key: activePreviewMediaS3Key,
       styleSelected: styleId != null,
+      solidBackgroundEnabled,
+      solidBackgroundColor,
     })
 
     if (tooManyReferences) {
@@ -578,6 +597,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     prompt,
     referenceImages,
     selectedPageId,
+    solidBackgroundColor,
+    solidBackgroundEnabled,
     styleId,
     syncPageState,
     tPrompt,
@@ -981,8 +1002,11 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       referenceImages,
       previewMediaS3Key,
       styleSelected: styleId != null,
+      solidBackgroundEnabled,
+      solidBackgroundColor,
     })
     const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
+    const solidBackgroundRef = references.find((reference) => reference.type === 'background-color')
 
     if (genMode === 'template-composite' && activeTemplate) {
       if (enabledPhotoCount === 0) {
@@ -1007,11 +1031,30 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     if (includesPrevious) {
       return tPrompt('generation.referenceSummaryPreviousOnly')
     }
+    if (solidBackgroundRef && enabledPhotoCount > 0) {
+      return tPrompt('generation.referenceSummarySolidBackgroundAndPhotos', {
+        color: solidBackgroundRef.color,
+        count: enabledPhotoCount,
+      })
+    }
+    if (solidBackgroundRef) {
+      return tPrompt('generation.referenceSummarySolidBackgroundOnly', {
+        color: solidBackgroundRef.color,
+      })
+    }
     if (enabledPhotoCount > 0) {
       return tPrompt('generation.referenceSummaryPhotosOnly', { count: enabledPhotoCount })
     }
     return tPrompt('generation.referenceSummaryTextOnly')
-  }, [activeTemplate, previewMediaS3Key, referenceImages, styleId, tPrompt])
+  }, [
+    activeTemplate,
+    previewMediaS3Key,
+    referenceImages,
+    solidBackgroundColor,
+    solidBackgroundEnabled,
+    styleId,
+    tPrompt,
+  ])
 
   const canRemoveEmptyPage = pages.length > 1 && !pageHasGeneratedImage(selectedPage, imageVersions)
   const canAddPage = canPersistPages && pages.length > 0 && pages.length < MAX_POST_PAGES
@@ -1035,6 +1078,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         imageQuality,
         safeZoneInsetXPx,
         safeZoneInsetYPx,
+        solidBackgroundEnabled,
+        solidBackgroundColor,
         previewSource,
         locationId,
         styleId,
@@ -1068,6 +1113,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         setImageQuality,
         setSafeZoneInsetXPx,
         setSafeZoneInsetYPx,
+        setSolidBackgroundEnabled,
+        setSolidBackgroundColor,
         setLocationId,
         setStyleId,
       },
@@ -1142,7 +1189,11 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setPromptValue,
       setSafeZoneInsetXPx,
       setSafeZoneInsetYPx,
+      setSolidBackgroundColor,
+      setSolidBackgroundEnabled,
       setStyleId,
+      solidBackgroundColor,
+      solidBackgroundEnabled,
       styleId,
       templateImage,
       toggleReferenceEnabled,

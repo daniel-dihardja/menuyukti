@@ -84,6 +84,21 @@ function snapModelDimensions(
   return snapToNearestLeonardoPair(modelId, width, height)
 }
 
+/**
+ * Fit an image to the exact format×quality canvas without stretching
+ * (centre-crop via `cover`). Used for init-image refs and final outputs.
+ */
+export async function normalizeToLeonardoCanvas(
+  buffer: Buffer,
+  width: number,
+  height: number,
+): Promise<Buffer> {
+  return sharp(buffer)
+    .resize(width, height, { fit: 'cover', position: 'centre' })
+    .webp({ quality: 85 })
+    .toBuffer()
+}
+
 export type CreateNanoBananaParams = NanoBananaFlowConfig & {
   /** From POST /init-image after S3 upload */
   uploadedImageId: string
@@ -561,7 +576,8 @@ async function downloadLeonardoResult(imageUrl: string, logContext: string): Pro
 }
 
 /**
- * Full pipeline: text prompt → v2 Nano Banana generation → poll → download → resize to target 4:5 → WebP.
+ * Full pipeline: text prompt → v2 Nano Banana generation → poll → download → resize to target → WebP.
+ * Output is always the requested size with aspect preserved (`cover`), never stretched (`fill`).
  */
 export async function runTextToImageGeneration(
   prompt: string,
@@ -569,32 +585,32 @@ export async function runTextToImageGeneration(
   height: number,
   model: string = TEXT_TO_IMAGE_MODEL,
 ): Promise<Buffer> {
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
   logInfo('runTextToImageGeneration: start', {
     model,
-    width,
-    height,
+    width: w,
+    height: h,
     promptPreview: truncateBody(prompt, 120),
   })
 
   const generationId = await createTextToImageGeneration({
     model,
     prompt,
-    width,
-    height,
+    width: w,
+    height: h,
   })
   const imageUrl = await pollGeneration(generationId)
   const raw = await downloadLeonardoResult(imageUrl, 'runTextToImageGeneration')
-  const out = await sharp(raw)
-    .resize(width, height, { fit: 'cover' })
-    .webp({ quality: 85 })
-    .toBuffer()
+  const out = await normalizeToLeonardoCanvas(raw, w, h)
 
-  logInfo('runTextToImageGeneration: done', { outputBytes: out.length })
+  logInfo('runTextToImageGeneration: done', { outputBytes: out.length, width: w, height: h })
   return out
 }
 
 /**
- * Text-to-image with optional reference photos — uploads init images, generates, resizes to target 4:5 → WebP.
+ * Text-to-image with optional reference photos — uploads init images, generates, resizes to target → WebP.
+ * Reference buffers and the final result are normalized to the snapped format×quality size with
+ * `cover` (no stretch) so iterative edits cannot drift aspect ratio.
  */
 export async function runTextToImageWithReferences(
   prompt: string,
@@ -604,20 +620,24 @@ export async function runTextToImageWithReferences(
   model: string = TEXT_TO_IMAGE_MODEL,
   referenceStrengths?: ImageReferenceStrength[],
 ): Promise<Buffer> {
+  const { width: w, height: h } = snapModelDimensions(model, width, height)
+
   if (referenceBuffers.length === 0) {
-    return runTextToImageGeneration(prompt, width, height, model)
+    return runTextToImageGeneration(prompt, w, h, model)
   }
 
   logInfo('runTextToImageWithReferences: start', {
     model,
-    width,
-    height,
+    width: w,
+    height: h,
     referenceCount: referenceBuffers.length,
     promptPreview: truncateBody(prompt, 120),
   })
 
+  // Lock every init image to the user-selected canvas so Leonardo is not pulled toward
+  // a previous result's (or photo's) native aspect ratio.
   const normalizedBuffers = await Promise.all(
-    referenceBuffers.map((buf) => sharp(buf).webp({ quality: 85 }).toBuffer()),
+    referenceBuffers.map((buf) => normalizeToLeonardoCanvas(buf, w, h)),
   )
 
   const flow: NanoBananaFlowConfig = { model, prompt }
@@ -628,8 +648,8 @@ export async function runTextToImageWithReferences(
     generationId = await createNanoBananaGeneration({
       ...flow,
       uploadedImageId: initImageId,
-      width,
-      height,
+      width: w,
+      height: h,
       imageReferenceStrength: referenceStrengths?.[0] ?? 'MID',
     })
   } else {
@@ -639,20 +659,17 @@ export async function runTextToImageWithReferences(
     generationId = await createNanoBananaCompositionGeneration({
       ...flow,
       uploadedImageIds,
-      width,
-      height,
+      width: w,
+      height: h,
       imageReferenceStrengths: referenceStrengths,
     })
   }
 
   const imageUrl = await pollGeneration(generationId)
   const raw = await downloadLeonardoResult(imageUrl, 'runTextToImageWithReferences')
-  const out = await sharp(raw)
-    .resize(width, height, { fit: 'fill' })
-    .webp({ quality: 85 })
-    .toBuffer()
+  const out = await normalizeToLeonardoCanvas(raw, w, h)
 
-  logInfo('runTextToImageWithReferences: done', { outputBytes: out.length })
+  logInfo('runTextToImageWithReferences: done', { outputBytes: out.length, width: w, height: h })
   return out
 }
 

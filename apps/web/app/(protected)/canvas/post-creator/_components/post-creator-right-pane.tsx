@@ -9,6 +9,7 @@ import { resolveLeonardoOutputDimensions } from '@/lib/posts/leonardo-post-dimen
 import { usePostCreator } from '../_context/use-post-creator'
 import { PostCreatorPromptPane } from './post-creator-prompt-pane'
 import { PostCreatorSafeZoneSettings } from './post-creator-safe-zone-settings'
+import { PostCreatorSolidBackgroundSettings } from './post-creator-solid-background-settings'
 
 export function PostCreatorRightPane() {
   const tTabs = useTranslations('postCreator.tabs')
@@ -66,6 +67,7 @@ export function PostCreatorRightPane() {
                 <dd className="font-medium">{tSettings('modelValue')}</dd>
               </div>
             </dl>
+            <PostCreatorSolidBackgroundSettings />
             <PostCreatorSafeZoneSettings />
           </div>
         </TabsContent>

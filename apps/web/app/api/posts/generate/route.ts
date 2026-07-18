@@ -39,7 +39,10 @@ import {
 } from '@/lib/posts/leonardo-post-models'
 import { resolveGenerationOutputDimensions } from '@/lib/posts/post-creator-utils'
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
+import { createSolidBackgroundBuffer } from '@/lib/posts/create-solid-background-buffer'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+
+const solidBackgroundHexSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Expected #rrggbb color')
 
 const generationReferenceSchema = z.discriminatedUnion('type', [
   z.object({
@@ -53,6 +56,10 @@ const generationReferenceSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('photo'),
     name: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal('background-color'),
+    color: solidBackgroundHexSchema,
   }),
 ])
 
@@ -186,9 +193,18 @@ export async function POST(req: Request) {
 
   const hasTemplate = references.some((reference) => reference.type === 'template')
   const hasPrevious = references.some((reference) => reference.type === 'previous-result')
+  const hasBackgroundColor = references.some((reference) => reference.type === 'background-color')
   if (hasTemplate && hasPrevious) {
     return NextResponse.json(
       { message: 'Template and previous result cannot be used together' },
+      { status: 400 },
+    )
+  }
+  if (hasBackgroundColor && (hasTemplate || hasPrevious)) {
+    return NextResponse.json(
+      {
+        message: 'Solid background canvas cannot be used with a template or previous result image',
+      },
       { status: 400 },
     )
   }
@@ -207,6 +223,7 @@ export async function POST(req: Request) {
   const referenceBuffers: Buffer[] = []
   const promptReferences: PromptReference[] = []
   let templateOutputDimensions: OutputDimensions | undefined
+  const deferredSolidBackgrounds: { color: string; bufferIndex: number }[] = []
 
   if (styleImageName) {
     if (!isSafePhotoFilename(styleImageName)) {
@@ -229,6 +246,16 @@ export async function POST(req: Request) {
   }
 
   for (const reference of references) {
+    if (reference.type === 'background-color') {
+      deferredSolidBackgrounds.push({
+        color: reference.color,
+        bufferIndex: referenceBuffers.length,
+      })
+      referenceBuffers.push(Buffer.alloc(0))
+      promptReferences.push({ type: 'background-color', color: reference.color })
+      continue
+    }
+
     if (reference.type === 'template') {
       const { name } = reference
       if (!isSafePhotoFilename(name)) {
@@ -303,6 +330,26 @@ export async function POST(req: Request) {
     templateDimensions: templateOutputDimensions,
   })
   const { width: outputWidth, height: outputHeight } = outputDimensions
+
+  for (const deferred of deferredSolidBackgrounds) {
+    try {
+      referenceBuffers[deferred.bufferIndex] = await createSolidBackgroundBuffer(
+        outputWidth,
+        outputHeight,
+        deferred.color,
+      )
+    } catch (err) {
+      console.error('[posts/generate] solid background synthesis failed', {
+        userIdPrefix: userId.slice(0, 8),
+        color: deferred.color,
+        message: err instanceof Error ? err.message : String(err),
+      })
+      return NextResponse.json(
+        { message: 'Failed to create solid background canvas' },
+        { status: 500 },
+      )
+    }
+  }
 
   let outBuffer: Buffer
   try {

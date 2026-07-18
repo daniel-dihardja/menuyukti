@@ -1,11 +1,15 @@
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
-import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+import {
+  MAX_GENERATION_REFERENCES,
+  normalizeSolidBackgroundColor,
+} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 
 export type GenerationReference =
   | { type: 'template'; name: string }
   | { type: 'previous-result'; filename: string }
   | { type: 'photo'; name: string }
+  | { type: 'background-color'; color: string }
 
 export type GenerationMode = 'template-composite' | 'filled-edit' | 'fresh-scene'
 
@@ -15,6 +19,8 @@ export type ResolveGenerationReferencesInput = {
   previewMediaS3Key: string | null | undefined
   /** When true, reserve one slot for a server-side style reference image. */
   styleSelected?: boolean
+  solidBackgroundEnabled?: boolean
+  solidBackgroundColor?: string
 }
 
 export type ResolveGenerationReferencesResult = {
@@ -81,6 +87,15 @@ export function resolveGenerationReferences(
     for (const image of photos) {
       references.push({ type: 'photo', name: image.name })
     }
+  }
+
+  const hasTemplateRef = references.some((reference) => reference.type === 'template')
+  const hasPreviousRef = references.some((reference) => reference.type === 'previous-result')
+  if (input.solidBackgroundEnabled && !hasTemplateRef && !hasPreviousRef) {
+    references.unshift({
+      type: 'background-color',
+      color: normalizeSolidBackgroundColor(input.solidBackgroundColor ?? ''),
+    })
   }
 
   return {

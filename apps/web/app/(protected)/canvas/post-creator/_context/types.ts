@@ -33,6 +33,8 @@ export type PostCreatorState = {
   imageQuality: PostImageQualityId
   safeZoneInsetXPx: number
   safeZoneInsetYPx: number
+  solidBackgroundEnabled: boolean
+  solidBackgroundColor: string
   previewSource: PostCreatorPreviewSource
   locationId: number | null
   styleId: number | null
@@ -67,6 +69,8 @@ export type PostCreatorActions = {
   setImageQuality: (quality: PostImageQualityId) => void
   setSafeZoneInsetXPx: (px: number) => void
   setSafeZoneInsetYPx: (px: number) => void
+  setSolidBackgroundEnabled: (enabled: boolean) => void
+  setSolidBackgroundColor: (color: string) => void
   setLocationId: (locationId: number | null) => void
   setStyleId: (styleId: number | null) => void
 }

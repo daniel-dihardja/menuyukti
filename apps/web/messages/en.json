@@ -779,7 +779,11 @@
       "safeZoneTitle": "Safe zone guide",
       "safeZoneHelper": "Preview margins only — they are not applied to the generated image. Toggle the guide in the preview footer.",
       "safeZoneHorizontal": "Horizontal gap (px)",
-      "safeZoneVertical": "Vertical gap (px)"
+      "safeZoneVertical": "Vertical gap (px)",
+      "solidBackgroundTitle": "Solid background canvas",
+      "solidBackgroundHelper": "When enabled and no layout or previous image is used, a flat color canvas at the current output size is sent as the first reference.",
+      "solidBackgroundToggle": "Use solid background",
+      "solidBackgroundColor": "Background color"
     },
     "history": {
       "emptyTitle": "No history here yet",
@@ -877,6 +881,8 @@
         "referenceSummaryPreviousOnly": "Next generation: edit the image in preview.",
         "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummaryPreviousAndPhotos": "Next generation: image in preview + {count, plural, one {# checked photo} other {# checked photos}}.",
+        "referenceSummarySolidBackgroundOnly": "Next generation: solid background canvas ({color}).",
+        "referenceSummarySolidBackgroundAndPhotos": "Next generation: solid background ({color}) + {count, plural, one {# checked photo} other {# checked photos}}.",
         "tooManyReferences": "Too many references selected. Use at most 1 template and 5 checked product photos (6 total)."
       },
       "tip": {

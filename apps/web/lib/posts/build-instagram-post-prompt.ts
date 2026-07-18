@@ -17,6 +17,7 @@ export type PromptReference =
   | { type: 'template' }
   | { type: 'previous-result' }
   | { type: 'photo' }
+  | { type: 'background-color'; color: string }
 
 export type OutputDimensions = {
   width: number
@@ -86,6 +87,10 @@ function buildFreshScenePhotoReferenceLine(index: number): string {
   return `- Reference ${index} — PRODUCT PHOTO: a real menu product photo. Preserve product identity — shape, plating, colors, portions, and key details. Place the product entirely inside the inner composition frame. Do not crop, clip, or partially hide the product at the frame boundary.`
 }
 
+function buildBackgroundColorReferenceLine(index: number, color: string): string {
+  return `- Reference ${index} — BACKGROUND CANVAS: a flat solid field in ${color}. Use it as the scene canvas and exact base background color. Place subjects and products on this field. Do not invent texture, gradients, patterns, or alternate hues unless creative direction asks. This is not a layout template — there are no slots or placeholders.`
+}
+
 function buildIndexedReferenceBlock(references: PromptReference[], mode: GenerationMode): string {
   if (references.length === 0) return ''
 
@@ -100,6 +105,9 @@ function buildIndexedReferenceBlock(references: PromptReference[], mode: Generat
     }
     if (reference.type === 'previous-result') {
       return buildPreviousResultReferenceLine(refNumber)
+    }
+    if (reference.type === 'background-color') {
+      return buildBackgroundColorReferenceLine(refNumber, reference.color)
     }
     productSlotIndex += 1
     if (mode === 'template-composite') {
