@@ -5,9 +5,15 @@
 export * from './queries/parse-helpers'
 export * from './queries/locations'
 export * from './queries/location-styles'
+export * from './queries/calendar-entries'
 export * from './queries/workflows'
 export * from './queries/analytics'
 export * from './queries/assets'
 export * from './queries/workspace'
 export * from './queries/posts'
-export * from './queries/scheduler-calendar'
+export {
+  SCHEDULER_CALENDAR_QUERY,
+  type CalendarDisplaySlot,
+  type SchedulerCalendarPayload,
+  type SchedulerCalendarData,
+} from './queries/scheduler-calendar'

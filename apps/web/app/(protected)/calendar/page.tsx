@@ -4,7 +4,10 @@ import type { Metadata } from 'next'
 import { auth } from '@clerk/nextjs/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
+import {
+  getCachedLocationsListData,
+  getCachedSchedulerCalendar,
+} from '@/lib/graphql/cached-queries'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
 import { CalendarClient } from './_components/calendar-client'
@@ -52,7 +55,17 @@ async function CalendarData({ requestedLocationId }: { requestedLocationId: numb
 
   const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
 
-  return <CalendarClient branches={branches} initialLocationId={initialLocationId} />
+  const calendar =
+    initialLocationId !== null ? await getCachedSchedulerCalendar(userId, initialLocationId) : null
+
+  return (
+    <CalendarClient
+      branches={branches}
+      initialLocationId={initialLocationId}
+      slots={calendar?.slots ?? []}
+      publicHolidays={calendar?.publicHolidays ?? []}
+    />
+  )
 }
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -6,7 +6,8 @@ import { useTranslations } from 'next-intl'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
+import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
+import type { CampaignWindowPublicHoliday } from '@/lib/graphql/node-schemas'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
@@ -25,11 +26,13 @@ export type SchedulerCalendarMonthGridProps = {
   windowStart: string
   windowEnd: string
   locale: string
-  slots?: SchedulerMilestoneData['slots']
-  publicHolidays?: SchedulerMilestoneData['publicHolidays']
+  slots?: SchedulerSlot[]
+  publicHolidays?: CampaignWindowPublicHoliday[]
   className?: string
   onDayClick?: (isoDate: string) => void
-  onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
+  onSlotClick?: (slot: SchedulerSlot) => void
+  /** Show a faint + affordance on empty in-window days when create is available. */
+  showCreateAffordance?: boolean
 }
 
 function formatDayNumber(isoDate: string, locale: string): string {
@@ -50,6 +53,7 @@ export function SchedulerCalendarMonthGrid({
   className,
   onDayClick,
   onSlotClick,
+  showCreateAffordance = false,
 }: SchedulerCalendarMonthGridProps) {
   const t = useTranslations('analytics.workflows.chat')
   const monthDays = useMemo(
@@ -120,7 +124,7 @@ export function SchedulerCalendarMonthGrid({
               aria-disabled={!day.inWindow}
               aria-label={dayNumber}
               className={cn(
-                'flex min-h-0 flex-col border-b border-r border-border/60 p-1.5 last:border-r-0',
+                'group/day flex min-h-0 flex-col border-b border-r border-border/60 p-1.5 last:border-r-0',
                 !day.inMonth && 'text-muted-foreground/70',
                 !day.inWindow && 'bg-muted/30 text-muted-foreground',
                 isWeekend && day.inWindow && 'bg-amber-50/80 dark:bg-amber-950/20',
@@ -156,6 +160,14 @@ export function SchedulerCalendarMonthGrid({
                       title={holidayName}
                     >
                       {t('milestoneSchedulerPreviewHolidayBadge')}
+                    </span>
+                  ) : null}
+                  {showCreateAffordance && clickable && daySlots.length === 0 ? (
+                    <span
+                      aria-hidden
+                      className="rounded-sm px-1 text-xs font-medium text-muted-foreground/50 opacity-0 transition-opacity group-hover/day:opacity-100"
+                    >
+                      +
                     </span>
                   ) : null}
                 </div>

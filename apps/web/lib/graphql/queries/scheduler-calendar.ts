@@ -1,4 +1,19 @@
-import type { CampaignWindowPublicHoliday, SchedulerSlot } from '../node-schemas'
+import type { SchedulerSlot as MilestoneSchedulerSlot } from '@/lib/graphql/node-schemas'
+import type { CalendarMediaRef } from './calendar-entries'
+
+export type { CalendarMediaRef }
+
+/** Slot shown on the workspace / scheduler calendar (workflow or manual). */
+export type CalendarDisplaySlot = {
+  kind?: MilestoneSchedulerSlot['kind'] | null
+  date: string
+  time: string
+  title: string
+  id?: string | null
+  description?: string | null
+  mediaRefs?: CalendarMediaRef[] | null
+  source?: 'manual' | 'workflow' | null
+}
 
 export const SCHEDULER_CALENDAR_QUERY = `
   query SchedulerCalendar($locationId: Int!) {
@@ -11,10 +26,17 @@ export const SCHEDULER_CALENDAR_QUERY = `
         date
       }
       slots {
+        id
         kind
         date
         time
         title
+        description
+        source
+        mediaRefs {
+          kind
+          name
+        }
       }
     }
   }
@@ -23,13 +45,12 @@ export const SCHEDULER_CALENDAR_QUERY = `
 export type SchedulerCalendarPayload = {
   windowStart: string | null
   windowEnd: string | null
-  publicHolidays: CampaignWindowPublicHoliday[]
-  slots: Array<{
-    kind?: SchedulerSlot['kind'] | null
+  publicHolidays: Array<{
+    name: string
+    description: string
     date: string
-    time: string
-    title: string
   }>
+  slots: CalendarDisplaySlot[]
 }
 
 export type SchedulerCalendarData = {

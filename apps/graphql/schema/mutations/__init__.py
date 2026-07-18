@@ -1,4 +1,5 @@
 from .create_image_ai_flow import CreateImageAiFlowMutation
+from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_location import CreateLocationMutation
 from .create_location_style import CreateLocationStyleMutation
 from .create_node import CreateNodeMutation
@@ -20,6 +21,7 @@ from .reorder_milestones import ReorderMilestonesMutation
 from .replace_pass_criteria import ReplacePassCriteriaMutation
 from .set_pass_criteria_statuses import SetPassCriteriaStatusesMutation
 from .set_pass_criterion_status import SetPassCriterionStatusMutation
+from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
@@ -33,6 +35,7 @@ from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
 __all__ = [
     "CreateImageAiFlowMutation",
+    "CreateCalendarEntryMutation",
     "CreateLocationMutation",
     "CreateLocationStyleMutation",
     "CreateNodeMutation",
@@ -54,6 +57,7 @@ __all__ = [
     "ReplacePassCriteriaMutation",
     "SetPassCriterionStatusMutation",
     "SetPassCriteriaStatusesMutation",
+    "UpdateCalendarEntryMutation",
     "UpdateImageAiFlowMutation",
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",

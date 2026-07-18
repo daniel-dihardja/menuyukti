@@ -26,10 +26,17 @@ query SchedulerCalendar($locationId: Int!) {
       date
     }
     slots {
+      id
       kind
       date
       time
       title
+      description
+      source
+      mediaRefs {
+        kind
+        name
+      }
     }
   }
 }
@@ -39,6 +46,9 @@ query SchedulerCalendar($locationId: Int!) {
 def _create_location(name: str) -> int:
     session = SessionLocal()
     try:
+        from graphql.data_sources.models.calendar_entry import CalendarEntry
+
+        session.query(CalendarEntry).delete()
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()

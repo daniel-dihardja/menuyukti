@@ -18,6 +18,7 @@ import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { MilestonePreviewListDetailShell } from '@/app/(protected)/workflow/_components/milestone-preview/milestone-preview-list-detail'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
+import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
 import {
   canGoToNextMonth,
   canGoToNextWeek,
@@ -55,7 +56,7 @@ export type SchedulerCalendarProps = {
   windowStart: string
   windowEnd: string
   locale: string
-  slots?: SchedulerMilestoneData['slots']
+  slots?: SchedulerSlot[]
   publicHolidays?: SchedulerMilestoneData['publicHolidays']
   className?: string
 }
@@ -75,7 +76,7 @@ function formatSchedulerDateDetailLabel(isoDate: string, locale: string): string
 
 type SchedulerCalendarDateDetailProps = {
   selectedDateIso: string
-  slots: SchedulerMilestoneData['slots']
+  slots: SchedulerSlot[]
 }
 
 function SchedulerCalendarDateDetail({ selectedDateIso, slots }: SchedulerCalendarDateDetailProps) {
@@ -107,9 +108,11 @@ function SchedulerCalendarDateDetail({ selectedDateIso, slots }: SchedulerCalend
               <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
                 {schedulerSlotDisplayTime(slot)}
               </span>
-              <Badge variant="outline" className={schedulerSlotClassName(slotKind)}>
-                {schedulerSlotTypeLabel(slotKind)}
-              </Badge>
+              {slotKind ? (
+                <Badge variant="outline" className={schedulerSlotClassName(slotKind)}>
+                  {schedulerSlotTypeLabel(slotKind)}
+                </Badge>
+              ) : null}
             </div>
             <p
               className={cn(

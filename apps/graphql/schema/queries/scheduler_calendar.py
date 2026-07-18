@@ -8,7 +8,10 @@ import strawberry
 
 from graphql.context import request_session_scope
 from graphql.data_sources import Node
+from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.mutations.create_calendar_entry import calendar_entry_to_slot_fields
+from graphql.schema.types.calendar_entry import CalendarMediaRefType
 
 
 @strawberry.type(description="A public holiday overlay for the calendar window.")
@@ -24,12 +27,16 @@ class SchedulerCalendarSlotType:
     time: str
     title: str
     kind: str | None = None
+    id: str | None = None
+    description: str | None = None
+    media_refs: list[CalendarMediaRefType] | None = None
+    source: str | None = None
 
 
 @strawberry.type(
     description=(
         "Location-scoped calendar: union of all scheduler milestone windows, "
-        "flattened slots, and deduped public holidays."
+        "flattened slots, manual calendar entries, and deduped public holidays."
     )
 )
 class SchedulerCalendarPayload:
@@ -84,7 +91,16 @@ def _parse_slot(raw: Any) -> SchedulerCalendarSlotType | None:
         return None
     kind_raw = raw.get("kind")
     kind = kind_raw.strip() if isinstance(kind_raw, str) and kind_raw.strip() else None
-    return SchedulerCalendarSlotType(date=date, time=time, title=title, kind=kind)
+    return SchedulerCalendarSlotType(
+        date=date,
+        time=time,
+        title=title,
+        kind=kind,
+        id=None,
+        description=None,
+        media_refs=[],
+        source="workflow",
+    )
 
 
 def _aggregate_scheduler_rows(rows: list[Node]) -> SchedulerCalendarPayload:
@@ -145,13 +161,45 @@ def _aggregate_scheduler_rows(rows: list[Node]) -> SchedulerCalendarPayload:
     )
 
 
+def _merge_manual_entries(
+    payload: SchedulerCalendarPayload,
+    entries: list[CalendarEntry],
+) -> SchedulerCalendarPayload:
+    if not entries:
+        return payload
+
+    slots = list(payload.slots)
+    entry_dates: list[str] = []
+    for row in entries:
+        fields = calendar_entry_to_slot_fields(row)
+        slots.append(SchedulerCalendarSlotType(**fields))
+        entry_dates.append(row.entry_date)
+
+    window_start = payload.window_start
+    window_end = payload.window_end
+    if entry_dates:
+        min_date = min(entry_dates)
+        max_date = max(entry_dates)
+        if window_start is None or min_date < window_start:
+            window_start = min_date
+        if window_end is None or max_date > window_end:
+            window_end = max_date
+
+    return SchedulerCalendarPayload(
+        window_start=window_start,
+        window_end=window_end,
+        public_holidays=payload.public_holidays,
+        slots=slots,
+    )
+
+
 @strawberry.type
 class SchedulerCalendarQuery:
     @strawberry.field(
         description=(
-            "Aggregate scheduler milestone slots for a location into one calendar window. "
+            "Aggregate scheduler milestone slots and manual calendar entries for a location. "
             "Returns an empty payload when the caller is unauthenticated, does not own the "
-            "location, or there are no scheduler milestones."
+            "location, or there are no scheduler milestones or manual entries."
         )
     )
     def scheduler_calendar(
@@ -173,4 +221,11 @@ class SchedulerCalendarQuery:
                 )
                 .all()
             )
-            return _aggregate_scheduler_rows(rows)
+            payload = _aggregate_scheduler_rows(rows)
+            entries = (
+                session.query(CalendarEntry)
+                .filter(CalendarEntry.location_id == location_id)
+                .order_by(CalendarEntry.entry_date, CalendarEntry.entry_time)
+                .all()
+            )
+            return _merge_manual_entries(payload, entries)

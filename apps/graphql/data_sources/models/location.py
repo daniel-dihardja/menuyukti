@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
+    from graphql.data_sources.models.calendar_entry import CalendarEntry
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -76,4 +77,10 @@ class Location(Base):
         back_populates="location",
         cascade="all, delete-orphan",
         order_by="LocationStyle.name",
+    )
+    calendar_entries: Mapped[list[CalendarEntry]] = relationship(
+        "CalendarEntry",
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="CalendarEntry.entry_date",
     )

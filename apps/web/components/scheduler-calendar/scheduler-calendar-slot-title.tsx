@@ -1,7 +1,5 @@
-import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
+import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
 import { schedulerSlotDisplayTitleParts } from '@/lib/milestones/scheduler-calendar'
-
-type SchedulerSlot = SchedulerMilestoneData['slots'][number]
 
 export function SchedulerSlotDisplayTitle({
   slot,
@@ -11,6 +9,10 @@ export function SchedulerSlotDisplayTitle({
   className?: string
 }) {
   const { typeLabel, name } = schedulerSlotDisplayTitleParts(slot)
+
+  if (!typeLabel) {
+    return <span className={className}>{name}</span>
+  }
 
   return (
     <span className={className}>

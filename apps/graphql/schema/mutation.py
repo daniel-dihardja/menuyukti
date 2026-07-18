@@ -1,6 +1,7 @@
 import strawberry
 
 from graphql.schema.mutations import (
+    CreateCalendarEntryMutation,
     CreateImageAiFlowMutation,
     CreateLocationMutation,
     CreateLocationStyleMutation,
@@ -23,6 +24,7 @@ from graphql.schema.mutations import (
     ReplacePassCriteriaMutation,
     SetPassCriteriaStatusesMutation,
     SetPassCriterionStatusMutation,
+    UpdateCalendarEntryMutation,
     UpdateImageAiFlowMutation,
     UpdateLocationManualBriefInputMutation,
     UpdateLocationMutation,
@@ -61,6 +63,7 @@ class Mutation(
     ReorderMilestonesMutation,
     CreateLocationMutation,
     CreateLocationStyleMutation,
+    CreateCalendarEntryMutation,
     CreateWorkspaceMutation,
     InviteWorkspaceMemberMutation,
     MilestoneAgentRunMutation,
@@ -72,6 +75,7 @@ class Mutation(
     DeleteAnalyticsRunMutation,
     DeleteImageAiFlowMutation,
     DeleteLocationStyleMutation,
+    UpdateCalendarEntryMutation,
     UpdateLocationMutation,
     UpdateLocationManualBriefInputMutation,
     UpdateLocationStyleMutation,
