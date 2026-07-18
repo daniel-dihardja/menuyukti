@@ -38,6 +38,7 @@
   "accountMenu": {
     "triggerAria": "Open account menu",
     "profile": "Profile",
+    "team": "Team",
     "accountSettings": "Account settings",
     "signOut": "Sign out"
   },
@@ -585,6 +586,7 @@
     "igReels": "IG Reels",
     "igStories": "IG Stories",
     "printShop": "Print shop",
+    "team": "Team",
     "agents": "Advisor",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",

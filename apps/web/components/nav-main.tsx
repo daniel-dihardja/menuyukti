@@ -12,6 +12,7 @@ import {
   Sparkles,
   SquarePen,
   Store,
+  Users,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -104,6 +105,13 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'printShop',
     href: routes.shop,
     icon: <Store className="w-4 h-4" />,
+    separatorBefore: true,
+  },
+  {
+    key: 'team',
+    labelKey: 'team',
+    href: routes.profileTeam,
+    icon: <Users className="w-4 h-4" />,
     separatorBefore: true,
   },
 ]
