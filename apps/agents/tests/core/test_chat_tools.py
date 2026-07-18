@@ -137,7 +137,7 @@ async def test_get_milestone_preset_data_json_success(monkeypatch: pytest.Monkey
     )
     assert "## Preset data (milestonePresetData)" in out
     assert "**Location Concept:**" in out
-    assert "Modern Indonesian comfort food" in out
+    assert "Italian trattoria with regional heritage for guests in Germany." in out
 
 
 @pytest.mark.asyncio
