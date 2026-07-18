@@ -1,8 +1,8 @@
 import sharp from 'sharp'
 
+import { snapToNearestLeonardoPair } from '@/lib/posts/leonardo-post-dimensions'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
-  snapLeonardoPostDimension,
   type LeonardoPostModelId,
 } from '@/lib/posts/leonardo-post-models'
 
@@ -81,10 +81,7 @@ function snapModelDimensions(
   height: number,
 ): { width: number; height: number } {
   const modelId = resolvePostModelId(model)
-  return {
-    width: snapLeonardoPostDimension(modelId, width, 'width'),
-    height: snapLeonardoPostDimension(modelId, height, 'height'),
-  }
+  return snapToNearestLeonardoPair(modelId, width, height)
 }
 
 export type CreateNanoBananaParams = NanoBananaFlowConfig & {

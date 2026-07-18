@@ -1,4 +1,5 @@
 import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
+import type { PostImageFormatId, PostImageQualityId } from '@/lib/posts/leonardo-post-dimensions'
 
 export type PostCreatorReferenceImage = {
   name: string
@@ -25,6 +26,8 @@ export type PostCreatorPage = {
   templateImage?: PostCreatorReferenceImage | null
   previewSource?: 'version' | 'template'
   generationModel?: LeonardoPostModelId
+  imageFormat?: PostImageFormatId
+  imageQuality?: PostImageQualityId
 }
 
 export type PostCreatorDeleteTarget = 'page' | 'version'

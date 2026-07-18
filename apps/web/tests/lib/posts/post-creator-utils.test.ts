@@ -1,39 +1,73 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  POST_IMAGE_HEIGHT,
-  POST_IMAGE_WIDTH,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
-import {
   resolveGenerationOutputDimensions,
   resolvePreviewSourceForPage,
 } from '@/lib/posts/post-creator-utils'
 
 describe('resolveGenerationOutputDimensions', () => {
-  it('uses previous-result size for filled-edit instead of default 4:5', () => {
+  it('resolves Feed Standard for Nano Banana 2 to documented 4:5 pair', () => {
     expect(
       resolveGenerationOutputDimensions({
-        mode: 'filled-edit',
-        previousResultDimensions: { width: 1080, height: 1080 },
+        model: 'nano-banana-2',
+        format: 'feed',
+        quality: 'standard',
       }),
-    ).toEqual({ width: 1080, height: 1080 })
+    ).toEqual({ width: 928, height: 1152 })
   })
 
-  it('prefers template size for template-composite', () => {
+  it('resolves Square High for Nano Banana 2', () => {
     expect(
       resolveGenerationOutputDimensions({
-        mode: 'template-composite',
-        templateDimensions: { width: 1248, height: 1664 },
-        previousResultDimensions: { width: 1080, height: 1080 },
+        model: 'nano-banana-2',
+        format: 'square',
+        quality: 'high',
       }),
-    ).toEqual({ width: 1248, height: 1664 })
+    ).toEqual({ width: 2048, height: 2048 })
   })
 
-  it('falls back to default portrait size when no references provide dimensions', () => {
-    expect(resolveGenerationOutputDimensions({ mode: 'fresh-scene' })).toEqual({
-      width: POST_IMAGE_WIDTH,
-      height: POST_IMAGE_HEIGHT,
+  it('snaps match-layout template dims to a ratio-preserving pair', () => {
+    const result = resolveGenerationOutputDimensions({
+      model: 'nano-banana-2',
+      format: 'match-layout',
+      quality: 'standard',
+      templateDimensions: { width: 1248, height: 1664 },
     })
+    // 1248/1664 = 0.75 → 3:4; nearest documented tall standard is 896×1200
+    expect(result.width / result.height).toBeCloseTo(3 / 4, 2)
+    expect(result.width).toBeGreaterThan(0)
+    expect(result.height).toBeGreaterThan(0)
+  })
+
+  it('clamps Flash Ultra to High when resolving', () => {
+    const ultra = resolveGenerationOutputDimensions({
+      model: 'gemini-2.5-flash-image',
+      format: 'square',
+      quality: 'ultra',
+    })
+    const high = resolveGenerationOutputDimensions({
+      model: 'gemini-2.5-flash-image',
+      format: 'square',
+      quality: 'high',
+    })
+    expect(ultra).toEqual(high)
+  })
+
+  it('defaults to Feed Standard when format/quality omitted', () => {
+    const result = resolveGenerationOutputDimensions({
+      model: 'nano-banana-2',
+    })
+    expect(result).toEqual({ width: 928, height: 1152 })
+  })
+
+  it('ignores previous-result size — explicit format owns the canvas', () => {
+    expect(
+      resolveGenerationOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'square',
+        quality: 'standard',
+      }),
+    ).toEqual({ width: 1024, height: 1024 })
   })
 })
 

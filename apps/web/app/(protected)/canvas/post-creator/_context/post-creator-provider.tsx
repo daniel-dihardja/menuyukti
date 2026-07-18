@@ -5,6 +5,15 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { toast } from 'sonner'
 
 import {
+  clampQualityForModel,
+  DEFAULT_POST_IMAGE_FORMAT,
+  DEFAULT_POST_IMAGE_QUALITY,
+  isPostImageFormatId,
+  isPostImageQualityId,
+  type PostImageFormatId,
+  type PostImageQualityId,
+} from '@/lib/posts/leonardo-post-dimensions'
+import {
   DEFAULT_LEONARDO_POST_MODEL,
   isLeonardoPostModelId,
   type LeonardoPostModelId,
@@ -96,6 +105,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const [generationModel, setGenerationModelState] = useState<LeonardoPostModelId>(
     DEFAULT_LEONARDO_POST_MODEL,
   )
+  const [imageFormat, setImageFormatState] = useState<PostImageFormatId>(DEFAULT_POST_IMAGE_FORMAT)
+  const [imageQuality, setImageQualityState] = useState<PostImageQualityId>(
+    DEFAULT_POST_IMAGE_QUALITY,
+  )
   const [previewSource, setPreviewSource] = useState<PostCreatorPreviewSource>('version')
   const [locationId, setLocationIdState] = useState<number | null>(null)
   const [styleId, setStyleIdState] = useState<number | null>(null)
@@ -134,6 +147,16 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         ? page.generationModel
         : DEFAULT_LEONARDO_POST_MODEL,
     )
+    setImageFormatState(
+      isPostImageFormatId(page?.imageFormat) ? page.imageFormat : DEFAULT_POST_IMAGE_FORMAT,
+    )
+    const modelForQuality = isLeonardoPostModelId(page?.generationModel)
+      ? page.generationModel
+      : DEFAULT_LEONARDO_POST_MODEL
+    const nextQuality = isPostImageQualityId(page?.imageQuality)
+      ? page.imageQuality
+      : DEFAULT_POST_IMAGE_QUALITY
+    setImageQualityState(clampQualityForModel(modelForQuality, nextQuality))
   }, [])
 
   const syncPageState = useCallback(
@@ -151,6 +174,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           | 'templateImage'
           | 'previewSource'
           | 'generationModel'
+          | 'imageFormat'
+          | 'imageQuality'
         >
       >,
     ) => {
@@ -227,6 +252,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                       referenceImages,
                       templateImage,
                       generationModel,
+                      imageFormat,
+                      imageQuality,
                       previewVersionIndex,
                       previewSource,
                     }
@@ -259,11 +286,25 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
             ? page.generationModel
             : DEFAULT_LEONARDO_POST_MODEL,
         )
+        setImageFormatState(
+          isPostImageFormatId(page?.imageFormat) ? page.imageFormat : DEFAULT_POST_IMAGE_FORMAT,
+        )
+        {
+          const modelForQuality = isLeonardoPostModelId(page?.generationModel)
+            ? page.generationModel
+            : DEFAULT_LEONARDO_POST_MODEL
+          const nextQuality = isPostImageQualityId(page?.imageQuality)
+            ? page.imageQuality
+            : DEFAULT_POST_IMAGE_QUALITY
+          setImageQualityState(clampQualityForModel(modelForQuality, nextQuality))
+        }
         return withSyncedCurrent
       })
     },
     [
       generationModel,
+      imageFormat,
+      imageQuality,
       previewSource,
       previewVersionIndex,
       prompt,
@@ -330,10 +371,12 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       }
       setTemplateImage(next)
       setPreviewSource('template')
+      setImageFormatState('match-layout')
       if (selectedPageId) {
         syncPageState(selectedPageId, {
           templateImage: next,
           previewSource: 'template',
+          imageFormat: 'match-layout',
         })
       }
     },
@@ -341,24 +384,52 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   )
 
   const clearTemplate = useCallback(() => {
+    const nextFormat = imageFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : imageFormat
     setTemplateImage(null)
     setPreviewSource('version')
+    setImageFormatState(nextFormat)
     if (selectedPageId) {
       syncPageState(selectedPageId, {
         templateImage: null,
         previewSource: 'version',
+        imageFormat: nextFormat,
       })
     }
-  }, [selectedPageId, syncPageState])
+  }, [imageFormat, selectedPageId, syncPageState])
 
   const setGenerationModel = useCallback(
     (model: LeonardoPostModelId) => {
       setGenerationModelState(model)
+      setImageQualityState((current) => {
+        const next = clampQualityForModel(model, current)
+        if (selectedPageId) {
+          syncPageState(selectedPageId, { generationModel: model, imageQuality: next })
+        }
+        return next
+      })
+    },
+    [selectedPageId, syncPageState],
+  )
+
+  const setImageFormat = useCallback(
+    (format: PostImageFormatId) => {
+      setImageFormatState(format)
       if (selectedPageId) {
-        syncPageState(selectedPageId, { generationModel: model })
+        syncPageState(selectedPageId, { imageFormat: format })
       }
     },
     [selectedPageId, syncPageState],
+  )
+
+  const setImageQuality = useCallback(
+    (quality: PostImageQualityId) => {
+      const next = clampQualityForModel(generationModel, quality)
+      setImageQualityState(next)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { imageQuality: next })
+      }
+    },
+    [generationModel, selectedPageId, syncPageState],
   )
 
   const setLocationId = useCallback((next: number | null) => {
@@ -397,8 +468,15 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         pageId?: string
         references?: typeof references
         model?: LeonardoPostModelId
+        format?: PostImageFormatId
+        quality?: PostImageQualityId
         styleId?: number
-      } = { prompt: trimmed, model: generationModel }
+      } = {
+        prompt: trimmed,
+        model: generationModel,
+        format: imageFormat,
+        quality: imageQuality,
+      }
 
       if (canPersistPages && postId && selectedPageId) {
         body.postId = postId
@@ -452,6 +530,9 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setPostImageVersionIndex(0)
       setTemplateImage(null)
       setPreviewSource('version')
+      setImageFormatState((current) =>
+        current === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : current,
+      )
 
       if (selectedPageId) {
         syncPageState(selectedPageId, {
@@ -462,6 +543,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           prompt: trimmed,
           templateImage: null,
           previewSource: 'version',
+          imageFormat: imageFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : imageFormat,
         })
       }
     } catch {
@@ -472,6 +554,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   }, [
     canPersistPages,
     generationModel,
+    imageFormat,
+    imageQuality,
     imageVersions,
     isGenerating,
     postId,
@@ -745,6 +829,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                     referenceImages,
                     templateImage,
                     generationModel,
+                    imageFormat,
+                    imageQuality,
                     previewVersionIndex,
                     previewSource,
                   }
@@ -793,6 +879,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       applySelectedPage,
       canPersistPages,
       generationModel,
+      imageFormat,
+      imageQuality,
       pages,
       postId,
       previewSource,
@@ -929,6 +1017,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         referenceImages,
         templateImage,
         generationModel,
+        imageFormat,
+        imageQuality,
         previewSource,
         locationId,
         styleId,
@@ -958,6 +1048,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         selectTemplate,
         clearTemplate,
         setGenerationModel,
+        setImageFormat,
+        setImageQuality,
         setLocationId,
         setStyleId,
       },
@@ -996,6 +1088,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       generationModel,
       generationReferenceSummary,
       hasPreviewableVersion,
+      imageFormat,
+      imageQuality,
       imageVersions,
       isAddingPage,
       isCommittingPostImage,
@@ -1022,6 +1116,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       selectedPage?.mediaS3Key,
       selectedPageId,
       setGenerationModel,
+      setImageFormat,
+      setImageQuality,
       setLocationId,
       setPromptValue,
       setStyleId,

@@ -4,6 +4,7 @@ import type {
   PostCreatorPage,
   PostCreatorReferenceImage,
 } from '@/lib/posts/post-creator-types'
+import type { PostImageFormatId, PostImageQualityId } from '@/lib/posts/leonardo-post-dimensions'
 import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorPreviewSource } from '@/lib/posts/post-creator-utils'
 
@@ -28,6 +29,8 @@ export type PostCreatorState = {
   referenceImages: PostCreatorReferenceImage[]
   templateImage: PostCreatorReferenceImage | null
   generationModel: LeonardoPostModelId
+  imageFormat: PostImageFormatId
+  imageQuality: PostImageQualityId
   previewSource: PostCreatorPreviewSource
   locationId: number | null
   styleId: number | null
@@ -58,6 +61,8 @@ export type PostCreatorActions = {
   selectTemplate: (design: { name: string; url: string }) => void
   clearTemplate: () => void
   setGenerationModel: (model: LeonardoPostModelId) => void
+  setImageFormat: (format: PostImageFormatId) => void
+  setImageQuality: (quality: PostImageQualityId) => void
   setLocationId: (locationId: number | null) => void
   setStyleId: (styleId: number | null) => void
 }

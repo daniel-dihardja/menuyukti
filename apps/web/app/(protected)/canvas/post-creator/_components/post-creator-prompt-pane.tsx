@@ -26,6 +26,7 @@ import {
 } from '@/lib/posts/leonardo-post-models'
 
 import { usePostCreator } from '../_context/use-post-creator'
+import { PostCreatorFormatControls } from './post-creator-format-controls'
 import { PostCreatorImagePicker } from './post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from './post-creator-reference-thumbnails'
 import { PostCreatorTemplatePicker } from './post-creator-template-picker'
@@ -47,6 +48,8 @@ export function PostCreatorPromptPane() {
     previewSource,
     locationId,
     styleId,
+    imageFormat,
+    imageQuality,
   } = state
   const {
     setPrompt,
@@ -57,6 +60,8 @@ export function PostCreatorPromptPane() {
     selectTemplate,
     clearTemplate,
     setGenerationModel,
+    setImageFormat,
+    setImageQuality,
     setLocationId,
     setStyleId,
   } = actions
@@ -248,6 +253,15 @@ export function PostCreatorPromptPane() {
             {t(`model.options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
           </FieldDescription>
         </Field>
+        <PostCreatorFormatControls
+          disabled={disabled}
+          generationModel={generationModel}
+          hasTemplate={templateImage != null}
+          imageFormat={imageFormat}
+          imageQuality={imageQuality}
+          onFormatChange={setImageFormat}
+          onQualityChange={setImageQuality}
+        />
         <Field className="gap-1.5">
           <FieldLabel htmlFor={promptId}>{t('label')}</FieldLabel>
           <PostCreatorImagePicker

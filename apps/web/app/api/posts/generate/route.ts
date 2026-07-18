@@ -28,6 +28,12 @@ import {
   type StylePackPrompt,
 } from '@/lib/posts/build-instagram-post-prompt'
 import {
+  DEFAULT_POST_IMAGE_FORMAT,
+  DEFAULT_POST_IMAGE_QUALITY,
+  POST_IMAGE_FORMAT_IDS,
+  POST_IMAGE_QUALITY_IDS,
+} from '@/lib/posts/leonardo-post-dimensions'
+import {
   DEFAULT_LEONARDO_POST_MODEL,
   LEONARDO_POST_MODEL_IDS,
 } from '@/lib/posts/leonardo-post-models'
@@ -56,6 +62,8 @@ const bodySchema = z.object({
   pageId: z.string().regex(/^\d+$/).optional(),
   references: z.array(generationReferenceSchema).max(MAX_GENERATION_REFERENCES).optional(),
   model: z.enum(LEONARDO_POST_MODEL_IDS).optional(),
+  format: z.enum(POST_IMAGE_FORMAT_IDS).optional(),
+  quality: z.enum(POST_IMAGE_QUALITY_IDS).optional(),
   styleId: z.number().int().positive().optional(),
 })
 
@@ -128,6 +136,8 @@ export async function POST(req: Request) {
     pageId,
     references = [],
     model = DEFAULT_LEONARDO_POST_MODEL,
+    format = DEFAULT_POST_IMAGE_FORMAT,
+    quality = DEFAULT_POST_IMAGE_QUALITY,
     styleId,
   } = parsed.data
   if ((postId && !pageId) || (!postId && pageId)) {
@@ -197,7 +207,6 @@ export async function POST(req: Request) {
   const referenceBuffers: Buffer[] = []
   const promptReferences: PromptReference[] = []
   let templateOutputDimensions: OutputDimensions | undefined
-  let previousResultOutputDimensions: OutputDimensions | undefined
 
   if (styleImageName) {
     if (!isSafePhotoFilename(styleImageName)) {
@@ -270,19 +279,6 @@ export async function POST(req: Request) {
 
       const buffer = await loadReferenceBuffer(key, filename, userId)
       if (buffer instanceof NextResponse) return buffer
-      try {
-        previousResultOutputDimensions = await readImageDimensions(buffer)
-      } catch (err) {
-        console.error('[posts/generate] previous result dimension read failed', {
-          userIdPrefix: userId.slice(0, 8),
-          filename,
-          message: err instanceof Error ? err.message : String(err),
-        })
-        return NextResponse.json(
-          { message: `Could not read previous result dimensions: ${filename}` },
-          { status: 400 },
-        )
-      }
       referenceBuffers.push(buffer)
       promptReferences.push({ type: 'previous-result' })
       continue
@@ -301,9 +297,10 @@ export async function POST(req: Request) {
   }
 
   const outputDimensions = resolveGenerationOutputDimensions({
-    mode,
+    model,
+    format,
+    quality,
     templateDimensions: templateOutputDimensions,
-    previousResultDimensions: previousResultOutputDimensions,
   })
   const { width: outputWidth, height: outputHeight } = outputDimensions
 
