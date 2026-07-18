@@ -12,15 +12,11 @@ import { Button } from '@workspace/ui/components/button'
 
 import {
   formatAspectCss,
-  formatShowsSafeZone,
   resolveLeonardoOutputDimensions,
 } from '@/lib/posts/leonardo-post-dimensions'
 
 import { usePostCreator } from '../_context/use-post-creator'
-import {
-  INSTAGRAM_GRID_THUMBNAIL_INSET_X,
-  INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
-} from './post-creator-constants'
+import { clampSafeZoneInsetPx, safeZoneInsetPercents } from './post-creator-constants'
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
 import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
 
@@ -47,12 +43,14 @@ export function PostCreatorPreviewPane() {
     imageFormat,
     imageQuality,
     generationModel,
+    safeZoneInsetXPx,
+    safeZoneInsetYPx,
   } = state
   const { previewVersion: onPreviewVersionIndex, commitPostImage, requestDelete } = actions
   const { canRemoveEmptyPage, canDelete } = meta
 
-  const gridSafeZoneToggleId = useId()
-  const [showGridSafeZone, setShowGridSafeZone] = useState(true)
+  const safeZoneToggleId = useId()
+  const [showSafeZone, setShowSafeZone] = useState(true)
 
   const resolved = resolveLeonardoOutputDimensions({
     model: generationModel,
@@ -62,8 +60,22 @@ export function PostCreatorPreviewPane() {
   const aspectCss = formatAspectCss(imageFormat)
   const formatName = tPrompt(`format.options.${imageFormat}.name`)
   const qualityName = tPrompt(`quality.options.${imageQuality}.name`)
-  const canShowSafeZone = formatShowsSafeZone(imageFormat)
-  const safeZoneVisible = canShowSafeZone && showGridSafeZone
+  const clampedInsetXPx = clampSafeZoneInsetPx(safeZoneInsetXPx, resolved.width)
+  const clampedInsetYPx = clampSafeZoneInsetPx(safeZoneInsetYPx, resolved.height)
+  const { insetXPercent, insetYPercent } = safeZoneInsetPercents(
+    clampedInsetXPx,
+    clampedInsetYPx,
+    resolved.width,
+    resolved.height,
+  )
+  const safeZoneOverlay = showSafeZone ? (
+    <PostCreatorSafeZoneOverlay
+      insetXPercent={insetXPercent}
+      insetYPercent={insetYPercent}
+      insetXPx={clampedInsetXPx}
+      insetYPx={clampedInsetYPx}
+    />
+  ) : null
 
   const previewFrameClassName = previewFrameBaseClassName
   const previewFrameStyle = { aspectRatio: aspectCss }
@@ -221,7 +233,7 @@ export function PostCreatorPreviewPane() {
                         </span>
                       </div>
                     ) : null}
-                    {safeZoneVisible ? <PostCreatorSafeZoneOverlay /> : null}
+                    {safeZoneOverlay}
                     {showRemoveButton ? (
                       <div className="absolute top-2 right-2 z-40">
                         <Button
@@ -322,7 +334,7 @@ export function PostCreatorPreviewPane() {
                 <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
                 <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
               </div>
-              {safeZoneVisible ? <PostCreatorSafeZoneOverlay /> : null}
+              {safeZoneOverlay}
             </Card>
           </div>
         )}
@@ -337,28 +349,23 @@ export function PostCreatorPreviewPane() {
             height: resolved.height,
           })}
         </p>
-        {canShowSafeZone ? (
-          <div className="flex items-center justify-center gap-2 sm:justify-end">
-            <Label
-              htmlFor={gridSafeZoneToggleId}
-              className="text-sm font-normal text-muted-foreground"
-            >
-              {t('gridSafeZoneToggle')}
-            </Label>
-            <Switch
-              id={gridSafeZoneToggleId}
-              checked={showGridSafeZone}
-              onCheckedChange={setShowGridSafeZone}
-              aria-describedby={`${gridSafeZoneToggleId}-description`}
-            />
-            <span id={`${gridSafeZoneToggleId}-description`} className="sr-only">
-              {t('gridSafeZoneDescription', {
-                insetX: INSTAGRAM_GRID_THUMBNAIL_INSET_X,
-                insetY: INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
-              })}
-            </span>
-          </div>
-        ) : null}
+        <div className="flex items-center justify-center gap-2 sm:justify-end">
+          <Label htmlFor={safeZoneToggleId} className="text-sm font-normal text-muted-foreground">
+            {t('safeZoneToggle')}
+          </Label>
+          <Switch
+            id={safeZoneToggleId}
+            checked={showSafeZone}
+            onCheckedChange={setShowSafeZone}
+            aria-describedby={`${safeZoneToggleId}-description`}
+          />
+          <span id={`${safeZoneToggleId}-description`} className="sr-only">
+            {t('safeZoneDescription', {
+              insetX: clampedInsetXPx,
+              insetY: clampedInsetYPx,
+            })}
+          </span>
+        </div>
       </div>
     </section>
   )

@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import {
   clampQualityForModel,
   formatAspectCss,
-  formatShowsSafeZone,
   isQualityAvailable,
   resolveLeonardoOutputDimensions,
   snapToNearestLeonardoPair,
@@ -164,16 +163,5 @@ describe('formatAspectCss', () => {
 
   it('uses template dims for match-layout when provided', () => {
     expect(formatAspectCss('match-layout', { width: 1200, height: 800 })).toBe('1200 / 800')
-  })
-})
-
-describe('formatShowsSafeZone', () => {
-  it('only enables safe zone for Feed and Tall', () => {
-    expect(formatShowsSafeZone('feed')).toBe(true)
-    expect(formatShowsSafeZone('tall')).toBe(true)
-    expect(formatShowsSafeZone('square')).toBe(false)
-    expect(formatShowsSafeZone('story')).toBe(false)
-    expect(formatShowsSafeZone('wide')).toBe(false)
-    expect(formatShowsSafeZone('match-layout')).toBe(false)
   })
 })

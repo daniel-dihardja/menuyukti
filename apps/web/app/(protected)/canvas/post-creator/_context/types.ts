@@ -31,6 +31,8 @@ export type PostCreatorState = {
   generationModel: LeonardoPostModelId
   imageFormat: PostImageFormatId
   imageQuality: PostImageQualityId
+  safeZoneInsetXPx: number
+  safeZoneInsetYPx: number
   previewSource: PostCreatorPreviewSource
   locationId: number | null
   styleId: number | null
@@ -63,6 +65,8 @@ export type PostCreatorActions = {
   setGenerationModel: (model: LeonardoPostModelId) => void
   setImageFormat: (format: PostImageFormatId) => void
   setImageQuality: (quality: PostImageQualityId) => void
+  setSafeZoneInsetXPx: (px: number) => void
+  setSafeZoneInsetYPx: (px: number) => void
   setLocationId: (locationId: number | null) => void
   setStyleId: (styleId: number | null) => void
 }

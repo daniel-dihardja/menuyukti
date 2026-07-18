@@ -236,8 +236,3 @@ export function resolveLeonardoOutputDimensions(input: {
   const target = targetDimensionsForFormatQuality(input.format, quality)
   return snapToNearestLeonardoPair(model, target.width, target.height)
 }
-
-/** Formats that show Instagram grid safe-zone overlays. */
-export function formatShowsSafeZone(format: PostImageFormatId): boolean {
-  return format === 'feed' || format === 'tall'
-}

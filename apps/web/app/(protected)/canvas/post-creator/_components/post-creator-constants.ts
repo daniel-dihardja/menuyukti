@@ -29,3 +29,35 @@ export const INSTAGRAM_GRID_THUMBNAIL_INSET_Y = (POST_IMAGE_HEIGHT - POST_IMAGE_
 
 export const INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT =
   (INSTAGRAM_GRID_THUMBNAIL_INSET_Y / POST_IMAGE_HEIGHT) * 100
+
+/** Default preview safe-zone horizontal inset (image pixels, each side). */
+export const DEFAULT_SAFE_ZONE_INSET_X_PX = 100
+
+/** Default preview safe-zone vertical inset (image pixels, each side). */
+export const DEFAULT_SAFE_ZONE_INSET_Y_PX = 100
+
+/** Max inset on one side so both sides leave at least 1px of content. */
+export function maxSafeZoneInsetPx(dimension: number): number {
+  if (!Number.isFinite(dimension) || dimension <= 1) return 0
+  return Math.floor((dimension - 1) / 2)
+}
+
+export function clampSafeZoneInsetPx(insetPx: number, dimension: number): number {
+  if (!Number.isFinite(insetPx) || insetPx < 0) return 0
+  return Math.min(Math.floor(insetPx), maxSafeZoneInsetPx(dimension))
+}
+
+/** Convert image-pixel insets to overlay percents for the current output size. */
+export function safeZoneInsetPercents(
+  insetXPx: number,
+  insetYPx: number,
+  width: number,
+  height: number,
+): { insetXPercent: number; insetYPercent: number } {
+  const clampedX = clampSafeZoneInsetPx(insetXPx, width)
+  const clampedY = clampSafeZoneInsetPx(insetYPx, height)
+  return {
+    insetXPercent: width > 0 ? (clampedX / width) * 100 : 0,
+    insetYPercent: height > 0 ? (clampedY / height) * 100 : 0,
+  }
+}

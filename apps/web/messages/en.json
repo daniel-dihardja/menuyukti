@@ -773,7 +773,11 @@
       "title": "Generation settings",
       "format": "Format",
       "model": "Model",
-      "modelValue": "Leonardo"
+      "modelValue": "Leonardo",
+      "safeZoneTitle": "Safe zone guide",
+      "safeZoneHelper": "Preview margins only — they are not applied to the generated image. Toggle the guide in the preview footer.",
+      "safeZoneHorizontal": "Horizontal gap (px)",
+      "safeZoneVertical": "Vertical gap (px)"
     },
     "history": {
       "emptyTitle": "No history here yet",
@@ -886,8 +890,8 @@
       "dimensionsLabel": "Output size",
       "dimensions": "{width} × {height}",
       "formatQualitySummary": "{format} · {quality} · {width} × {height}",
-      "gridSafeZoneToggle": "Grid thumbnail safe zone",
-      "gridSafeZoneDescription": "Shows where Instagram may crop portrait posts in profile grid thumbnails ({insetX}px from the left and right edges, {insetY}px from the top and bottom edges).",
+      "safeZoneToggle": "Safe zone guide",
+      "safeZoneDescription": "Shows preview margins of {insetX}px from the left and right edges and {insetY}px from the top and bottom edges so you can check that important content stays inside the safe area.",
       "previousVersion": "Previous generated image",
       "nextVersion": "Next generated image",
       "versionIndicator": "{current} of {total}",

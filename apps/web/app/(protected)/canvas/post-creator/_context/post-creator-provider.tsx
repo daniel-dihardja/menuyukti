@@ -36,7 +36,11 @@ import {
   type PostCreatorPreviewSource,
 } from '@/lib/posts/post-creator-utils'
 
-import { MAX_ATTACHED_REFERENCE_PHOTOS } from '../_components/post-creator-constants'
+import {
+  DEFAULT_SAFE_ZONE_INSET_X_PX,
+  DEFAULT_SAFE_ZONE_INSET_Y_PX,
+  MAX_ATTACHED_REFERENCE_PHOTOS,
+} from '../_components/post-creator-constants'
 import { PostCreatorContext } from './post-creator-context'
 import type { PostCreatorContextValue, PostCreatorMode } from './types'
 
@@ -109,6 +113,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const [imageQuality, setImageQualityState] = useState<PostImageQualityId>(
     DEFAULT_POST_IMAGE_QUALITY,
   )
+  const [safeZoneInsetXPx, setSafeZoneInsetXPxState] = useState(DEFAULT_SAFE_ZONE_INSET_X_PX)
+  const [safeZoneInsetYPx, setSafeZoneInsetYPxState] = useState(DEFAULT_SAFE_ZONE_INSET_Y_PX)
   const [previewSource, setPreviewSource] = useState<PostCreatorPreviewSource>('version')
   const [locationId, setLocationIdState] = useState<number | null>(null)
   const [styleId, setStyleIdState] = useState<number | null>(null)
@@ -431,6 +437,14 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     },
     [generationModel, selectedPageId, syncPageState],
   )
+
+  const setSafeZoneInsetXPx = useCallback((px: number) => {
+    setSafeZoneInsetXPxState(Number.isFinite(px) && px >= 0 ? Math.floor(px) : 0)
+  }, [])
+
+  const setSafeZoneInsetYPx = useCallback((px: number) => {
+    setSafeZoneInsetYPxState(Number.isFinite(px) && px >= 0 ? Math.floor(px) : 0)
+  }, [])
 
   const setLocationId = useCallback((next: number | null) => {
     setLocationIdState(next)
@@ -1019,6 +1033,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         generationModel,
         imageFormat,
         imageQuality,
+        safeZoneInsetXPx,
+        safeZoneInsetYPx,
         previewSource,
         locationId,
         styleId,
@@ -1050,6 +1066,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         setGenerationModel,
         setImageFormat,
         setImageQuality,
+        setSafeZoneInsetXPx,
+        setSafeZoneInsetYPx,
         setLocationId,
         setStyleId,
       },
@@ -1111,6 +1129,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       referenceImages,
       removeReference,
       requestDelete,
+      safeZoneInsetXPx,
+      safeZoneInsetYPx,
       selectPage,
       selectTemplate,
       selectedPage?.mediaS3Key,
@@ -1120,6 +1140,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setImageQuality,
       setLocationId,
       setPromptValue,
+      setSafeZoneInsetXPx,
+      setSafeZoneInsetYPx,
       setStyleId,
       styleId,
       templateImage,
