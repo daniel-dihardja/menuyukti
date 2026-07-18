@@ -16,16 +16,16 @@ import {
 import { Checkbox } from '@workspace/ui/components/checkbox'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@workspace/ui/components/select'
 import { Textarea } from '@workspace/ui/components/textarea'
 
 import { PostCreatorTemplatePicker } from '@/app/(protected)/canvas/post-creator/_components/post-creator-template-picker'
+import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
+import {
+  DEFAULT_VISION_GATEWAY_MODEL,
+  VISION_GATEWAY_MODEL_IDS,
+  isAllowedVisionGatewayModel,
+  type VisionGatewayModelId,
+} from '@/lib/chat/gateway-chat-models'
 import {
   createLocationStyle,
   deleteLocationStyle,
@@ -39,7 +39,6 @@ import {
   rulesFromStyleSpec,
   STYLE_SPEC_CONTROL_KEYS,
   type StyleSpec,
-  type StyleSpecControlKey,
 } from '@/lib/location-styles/style-spec'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
@@ -53,7 +52,6 @@ type FormState = {
   isDefault: boolean
   styleSpec: StyleSpec | null
   intent: string
-  kind: StyleSpec['kind']
 }
 
 const EMPTY_FORM: FormState = {
@@ -63,7 +61,6 @@ const EMPTY_FORM: FormState = {
   isDefault: false,
   styleSpec: null,
   intent: '',
-  kind: 'template',
 }
 
 function styleToForm(style: LocationStyle): FormState {
@@ -79,30 +76,69 @@ function styleToForm(style: LocationStyle): FormState {
     isDefault: style.isDefault,
     styleSpec,
     intent: '',
-    kind: styleSpec?.kind ?? 'template',
-  }
-}
-
-function updateSpecDefault(spec: StyleSpec, key: StyleSpecControlKey, value: string): StyleSpec {
-  return {
-    ...spec,
-    defaults: { ...spec.defaults, [key]: value },
-  }
-}
-
-function updateSpecBaseRules(spec: StyleSpec, rulesText: string): StyleSpec {
-  const baseRules = rulesText
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-  return {
-    ...spec,
-    baseRules: baseRules.length > 0 ? baseRules : spec.baseRules,
   }
 }
 
 type LocationStylesSectionProps = {
   locationId: number
+}
+
+function StyleSpecReadOnlyPanel({ styleSpec }: { styleSpec: StyleSpec }) {
+  const t = useTranslations('analytics.branches.styles')
+  const kindLabel = styleSpec.kind === 'template' ? t('kindTemplate') : t('kindMood')
+
+  return (
+    <div className="space-y-3 rounded-md border border-border/50 bg-muted/20 p-3">
+      <p className="text-sm font-medium">{t('specPanelTitle')}</p>
+
+      <div className="space-y-1">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          {t('kindLabel')}
+        </p>
+        <p className="text-sm">{kindLabel}</p>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          {t('baseRulesLabel')}
+        </p>
+        <ul className="list-disc space-y-1 pl-4 text-sm">
+          {styleSpec.baseRules.map((rule, index) => (
+            <li key={`${index}-${rule}`}>{rule}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+          {t('controlsSectionTitle')}
+        </p>
+        {STYLE_SPEC_CONTROL_KEYS.map((key) => {
+          const control = styleSpec.controls[key]
+          const defaultValue = styleSpec.defaults[key]
+          return (
+            <div key={key} className="space-y-1.5">
+              <p className="text-sm font-medium">{t(`controls.${key}`)}</p>
+              <p className="text-muted-foreground text-xs">
+                {t('controlDefault', { value: defaultValue })}
+              </p>
+              <ul className="space-y-2">
+                {control.values.map((value) => (
+                  <li key={value} className="text-sm">
+                    <span className="font-medium">{value}</span>
+                    <span className="text-muted-foreground"> — </span>
+                    <span className="text-muted-foreground">
+                      {control.instructions[value] ?? ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export function LocationStylesSection({ locationId }: LocationStylesSectionProps) {
@@ -111,7 +147,6 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
   const rulesId = useId()
   const defaultId = useId()
   const intentId = useId()
-  const kindId = useId()
 
   const [styles, setStyles] = useState<LocationStyle[]>([])
   const [loading, setLoading] = useState(true)
@@ -121,6 +156,7 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<FormMode>('manual')
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [draftModel, setDraftModel] = useState<VisionGatewayModelId>(DEFAULT_VISION_GATEWAY_MODEL)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -150,6 +186,7 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
     setEditingId(null)
     setFormMode('from-image')
     setForm(EMPTY_FORM)
+    setDraftModel(DEFAULT_VISION_GATEWAY_MODEL)
     setFormOpen(true)
   }
 
@@ -165,6 +202,7 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
     setEditingId(null)
     setFormMode('manual')
     setForm(EMPTY_FORM)
+    setDraftModel(DEFAULT_VISION_GATEWAY_MODEL)
   }
 
   const handleSelectImage = (item: MediaCatalogItem) => {
@@ -184,12 +222,12 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
       const draft = await draftLocationStyleFromImage({
         mediaName: form.referenceImage.name,
         intent: form.intent.trim() || undefined,
+        model: draftModel,
       })
       setForm((prev) => ({
         ...prev,
         name: draft.name,
         styleSpec: draft.styleSpec,
-        kind: draft.styleSpec.kind,
         rules: rulesFromStyleSpec(draft.styleSpec),
       }))
       toast.success(t('toast.draftReady'))
@@ -218,7 +256,7 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
 
     setSaving(true)
     try {
-      const styleSpec = form.styleSpec != null ? { ...form.styleSpec, kind: form.kind } : undefined
+      const styleSpec = form.styleSpec ?? undefined
       const rules = styleSpec ? rulesFromStyleSpec(styleSpec) : form.rules.trim()
 
       if (editingId != null) {
@@ -388,6 +426,18 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
                     maxLength={2000}
                   />
                 </Field>
+                <Field className="gap-1.5">
+                  <FieldLabel>{t('modelLabel')}</FieldLabel>
+                  <ChatGatewayModelSelect
+                    value={draftModel}
+                    onValueChange={(id) => {
+                      if (isAllowedVisionGatewayModel(id)) setDraftModel(id)
+                    }}
+                    modelIds={VISION_GATEWAY_MODEL_IDS}
+                    disabled={busy}
+                    className="max-w-full"
+                  />
+                </Field>
                 <Button
                   type="button"
                   onClick={() => void handleDraftFromImage()}
@@ -420,88 +470,7 @@ export function LocationStylesSection({ locationId }: LocationStylesSectionProps
                 </Field>
 
                 {showSpecFields && form.styleSpec ? (
-                  <>
-                    <Field className="gap-1.5">
-                      <FieldLabel htmlFor={kindId}>{t('kindLabel')}</FieldLabel>
-                      <Select
-                        value={form.kind}
-                        onValueChange={(value) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            kind: value as StyleSpec['kind'],
-                          }))
-                        }
-                        disabled={busy}
-                      >
-                        <SelectTrigger id={kindId}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="template">{t('kindTemplate')}</SelectItem>
-                          <SelectItem value="mood">{t('kindMood')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-
-                    <Field className="gap-1.5">
-                      <FieldLabel htmlFor={rulesId}>{t('baseRulesLabel')}</FieldLabel>
-                      <Textarea
-                        id={rulesId}
-                        value={form.styleSpec.baseRules.join('\n')}
-                        onChange={(e) =>
-                          setForm((prev) =>
-                            prev.styleSpec
-                              ? {
-                                  ...prev,
-                                  styleSpec: updateSpecBaseRules(prev.styleSpec, e.target.value),
-                                  rules: e.target.value,
-                                }
-                              : prev,
-                          )
-                        }
-                        placeholder={t('baseRulesPlaceholder')}
-                        disabled={busy}
-                        rows={5}
-                      />
-                    </Field>
-
-                    {STYLE_SPEC_CONTROL_KEYS.map((key) => {
-                      const control = form.styleSpec!.controls[key]
-                      return (
-                        <Field key={key} className="gap-1.5">
-                          <FieldLabel>{t(`controls.${key}`)}</FieldLabel>
-                          <Select
-                            value={form.styleSpec!.defaults[key]}
-                            onValueChange={(value) =>
-                              setForm((prev) =>
-                                prev.styleSpec
-                                  ? {
-                                      ...prev,
-                                      styleSpec: updateSpecDefault(prev.styleSpec, key, value),
-                                    }
-                                  : prev,
-                              )
-                            }
-                            disabled={busy}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {control.values.map((value) => (
-                                <SelectItem key={value} value={value}>
-                                  {value}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-muted-foreground text-xs">
-                            {control.instructions[form.styleSpec!.defaults[key]]}
-                          </p>
-                        </Field>
-                      )
-                    })}
-                  </>
+                  <StyleSpecReadOnlyPanel styleSpec={form.styleSpec} />
                 ) : (
                   <Field className="gap-1.5">
                     <FieldLabel htmlFor={rulesId}>{t('rulesLabel')}</FieldLabel>

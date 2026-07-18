@@ -21,6 +21,8 @@ type ChatGatewayModelSelectProps = {
   onValueChange: (id: ChatGatewayModelId) => void
   disabled?: boolean
   className?: string
+  /** Override the option list (e.g. vision-only subset). Defaults to full chat allowlist. */
+  modelIds?: readonly ChatGatewayModelId[]
 }
 
 export function ChatGatewayModelSelect({
@@ -28,14 +30,16 @@ export function ChatGatewayModelSelect({
   onValueChange,
   disabled,
   className,
+  modelIds = CHAT_GATEWAY_MODEL_IDS,
 }: ChatGatewayModelSelectProps) {
   const t = useTranslations('chatGatewayModels')
+  const allowed = new Set<string>(modelIds)
 
   return (
     <PromptInputSelect
       disabled={disabled}
       onValueChange={(v) => {
-        if (CHAT_GATEWAY_MODEL_IDS.includes(v as ChatGatewayModelId)) {
+        if (allowed.has(v)) {
           onValueChange(v as ChatGatewayModelId)
         }
       }}
@@ -48,7 +52,7 @@ export function ChatGatewayModelSelect({
         <PromptInputSelectValue placeholder={t('ariaLabel')} />
       </PromptInputSelectTrigger>
       <PromptInputSelectContent>
-        {CHAT_GATEWAY_MODEL_IDS.map((id) => (
+        {modelIds.map((id) => (
           <PromptInputSelectItem key={id} value={id}>
             {t(gatewayModelToMessageKey(id))}
           </PromptInputSelectItem>

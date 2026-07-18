@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api/client-fetch'
+import type { VisionGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type { LocationStyle } from '@/lib/graphql/queries/location-styles'
 import type { StyleSpec } from '@/lib/location-styles/style-spec'
 
@@ -78,6 +79,7 @@ export async function deleteLocationStyle(id: number): Promise<void> {
 export async function draftLocationStyleFromImage(input: {
   mediaName: string
   intent?: string
+  model: VisionGatewayModelId
 }): Promise<{ name: string; styleSpec: StyleSpec; mediaName: string }> {
   const result = await apiFetch<{ name: string; styleSpec: StyleSpec; mediaName: string }>(
     '/api/location-styles/draft-from-image',

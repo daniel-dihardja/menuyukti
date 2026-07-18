@@ -47,7 +47,10 @@ def client() -> TestClient:
 def test_draft_requires_user_header(client: TestClient) -> None:
     response = client.post(
         "/style-specs/draft-from-image",
-        json={"image_url": "data:image/png;base64,aaa"},
+        json={
+            "image_url": "data:image/png;base64,aaa",
+            "model": "openai/gpt-4o-mini",
+        },
     )
     assert response.status_code == 401
 
@@ -56,7 +59,35 @@ def test_draft_rejects_bad_image_url(client: TestClient) -> None:
     response = client.post(
         "/style-specs/draft-from-image",
         headers={"X-Menuyukti-User-Id": "user_1"},
-        json={"image_url": "ftp://example.com/x.png"},
+        json={
+            "image_url": "ftp://example.com/x.png",
+            "model": "openai/gpt-4o-mini",
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_draft_rejects_non_vision_model(client: TestClient) -> None:
+    response = client.post(
+        "/style-specs/draft-from-image",
+        headers={"X-Menuyukti-User-Id": "user_1"},
+        json={
+            "image_url": "data:image/png;base64,aaa",
+            "model": "xai/grok-3",
+        },
+    )
+    assert response.status_code == 400
+    assert "allowlisted" in response.json()["detail"].lower()
+
+
+def test_draft_rejects_unknown_model(client: TestClient) -> None:
+    response = client.post(
+        "/style-specs/draft-from-image",
+        headers={"X-Menuyukti-User-Id": "user_1"},
+        json={
+            "image_url": "data:image/png;base64,aaa",
+            "model": "openai/not-a-real-model",
+        },
     )
     assert response.status_code == 400
 
@@ -74,6 +105,7 @@ def test_draft_http_success(mock_draft: AsyncMock, client: TestClient) -> None:
         json={
             "image_url": "data:image/png;base64,aaa",
             "intent": "Warm oat template; headline optional",
+            "model": "openai/gpt-4o",
         },
     )
     assert response.status_code == 200
@@ -82,7 +114,11 @@ def test_draft_http_success(mock_draft: AsyncMock, client: TestClient) -> None:
     assert body["style_spec"]["schemaVersion"] == 1
     assert body["style_spec"]["kind"] == "template"
     assert "headline" in body["style_spec"]["controls"]
-    mock_draft.assert_awaited_once()
+    mock_draft.assert_awaited_once_with(
+        image_url="data:image/png;base64,aaa",
+        intent="Warm oat template; headline optional",
+        gateway_model_id="openai/gpt-4o",
+    )
 
 
 @pytest.mark.asyncio
@@ -98,12 +134,15 @@ async def test_draft_style_spec_from_image_unit(mock_structured: AsyncMock) -> N
     name, spec = await draft_style_spec_from_image(
         image_url="data:image/png;base64,aaa",
         intent="optional headline",
+        gateway_model_id="openai/gpt-4o-mini",
     )
     assert name == "Warm Oat"
     assert isinstance(spec, StyleSpec)
     assert spec.kind == "template"
     assert spec.controls.headline.instructions["none"] == "Do none."
     mock_structured.assert_awaited_once()
+    assert mock_structured.await_args is not None
+    assert mock_structured.await_args.kwargs.get("gateway_model_id") == "openai/gpt-4o-mini"
 
 
 def test_draft_output_converts_to_style_spec() -> None:

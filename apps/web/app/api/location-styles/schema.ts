@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { isAllowedVisionGatewayModel } from '@/lib/chat/gateway-chat-models'
 import { styleSpecSchema } from '@/lib/location-styles/style-spec'
 
 export const createLocationStyleBodySchema = z.object({
@@ -32,4 +33,9 @@ export const updateLocationStyleBodySchema = z
 export const draftFromImageBodySchema = z.object({
   mediaName: z.string().trim().min(1).max(512),
   intent: z.string().trim().max(2000).optional(),
+  model: z
+    .string()
+    .trim()
+    .min(1)
+    .refine(isAllowedVisionGatewayModel, { message: 'Model is not allowlisted for vision' }),
 })

@@ -46,6 +46,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           image_url: imageUrl,
           intent: body.intent,
+          model: body.model,
         }),
         signal: req.signal,
       })

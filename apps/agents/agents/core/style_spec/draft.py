@@ -14,7 +14,7 @@ from agents_app.agents.core.style_spec.prompts import (
     STYLE_SPEC_DRAFT_SYSTEM,
     style_spec_draft_user_text,
 )
-from agents_app.models.llm_config import get_llm_structured
+from agents_app.models.llm_config import chat_llm_for_gateway_model
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, ValidationError
 
@@ -24,12 +24,14 @@ _logger = logging.getLogger(__name__)
 async def _structured_ainvoke_function_calling[T: BaseModel](
     output_model: type[T],
     messages: list,
+    *,
+    gateway_model_id: str | None = None,
 ) -> T:
     """
     Use function_calling structured output — free-form dict schemas are rejected by
     OpenAI's strict json_schema method (see langchain-openai warning).
     """
-    llm = get_llm_structured()
+    llm = chat_llm_for_gateway_model(gateway_model_id, streaming=False)
     structured = llm.with_structured_output(output_model, method="function_calling")
     try:
         result = await ainvoke_with_retry(structured, messages)
@@ -56,6 +58,7 @@ async def draft_style_spec_from_image(
     *,
     image_url: str,
     intent: str | None = None,
+    gateway_model_id: str | None = None,
 ) -> tuple[str, StyleSpec]:
     """
     Analyze ``image_url`` (data URL or https) and return ``(suggested_name, StyleSpec)``.
@@ -70,7 +73,11 @@ async def draft_style_spec_from_image(
         ),
     ]
     try:
-        draft = await _structured_ainvoke_function_calling(StyleSpecDraftOutput, messages)
+        draft = await _structured_ainvoke_function_calling(
+            StyleSpecDraftOutput,
+            messages,
+            gateway_model_id=gateway_model_id,
+        )
     except LLMInvokeError:
         raise
     except Exception as exc:
