@@ -5,6 +5,15 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { toast } from 'sonner'
 
 import {
+  clampQualityForModel,
+  DEFAULT_POST_IMAGE_FORMAT,
+  DEFAULT_POST_IMAGE_QUALITY,
+  isPostImageFormatId,
+  isPostImageQualityId,
+  type PostImageFormatId,
+  type PostImageQualityId,
+} from '@/lib/posts/leonardo-post-dimensions'
+import {
   DEFAULT_LEONARDO_POST_MODEL,
   isLeonardoPostModelId,
   type LeonardoPostModelId,
@@ -27,7 +36,14 @@ import {
   type PostCreatorPreviewSource,
 } from '@/lib/posts/post-creator-utils'
 
-import { MAX_ATTACHED_REFERENCE_PHOTOS } from '../_components/post-creator-constants'
+import {
+  DEFAULT_SAFE_ZONE_INSET_X_PX,
+  DEFAULT_SAFE_ZONE_INSET_Y_PX,
+  DEFAULT_SOLID_BACKGROUND_COLOR,
+  DEFAULT_SOLID_BACKGROUND_ENABLED,
+  MAX_ATTACHED_REFERENCE_PHOTOS,
+  normalizeSolidBackgroundColor,
+} from '../_components/post-creator-constants'
 import { PostCreatorContext } from './post-creator-context'
 import type { PostCreatorContextValue, PostCreatorMode } from './types'
 
@@ -96,7 +112,21 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const [generationModel, setGenerationModelState] = useState<LeonardoPostModelId>(
     DEFAULT_LEONARDO_POST_MODEL,
   )
+  const [imageFormat, setImageFormatState] = useState<PostImageFormatId>(DEFAULT_POST_IMAGE_FORMAT)
+  const [imageQuality, setImageQualityState] = useState<PostImageQualityId>(
+    DEFAULT_POST_IMAGE_QUALITY,
+  )
+  const [safeZoneInsetXPx, setSafeZoneInsetXPxState] = useState(DEFAULT_SAFE_ZONE_INSET_X_PX)
+  const [safeZoneInsetYPx, setSafeZoneInsetYPxState] = useState(DEFAULT_SAFE_ZONE_INSET_Y_PX)
+  const [solidBackgroundEnabled, setSolidBackgroundEnabledState] = useState(
+    DEFAULT_SOLID_BACKGROUND_ENABLED,
+  )
+  const [solidBackgroundColor, setSolidBackgroundColorState] = useState(
+    DEFAULT_SOLID_BACKGROUND_COLOR,
+  )
   const [previewSource, setPreviewSource] = useState<PostCreatorPreviewSource>('version')
+  const [locationId, setLocationIdState] = useState<number | null>(null)
+  const [styleId, setStyleIdState] = useState<number | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
@@ -132,6 +162,16 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         ? page.generationModel
         : DEFAULT_LEONARDO_POST_MODEL,
     )
+    setImageFormatState(
+      isPostImageFormatId(page?.imageFormat) ? page.imageFormat : DEFAULT_POST_IMAGE_FORMAT,
+    )
+    const modelForQuality = isLeonardoPostModelId(page?.generationModel)
+      ? page.generationModel
+      : DEFAULT_LEONARDO_POST_MODEL
+    const nextQuality = isPostImageQualityId(page?.imageQuality)
+      ? page.imageQuality
+      : DEFAULT_POST_IMAGE_QUALITY
+    setImageQualityState(clampQualityForModel(modelForQuality, nextQuality))
   }, [])
 
   const syncPageState = useCallback(
@@ -149,6 +189,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           | 'templateImage'
           | 'previewSource'
           | 'generationModel'
+          | 'imageFormat'
+          | 'imageQuality'
         >
       >,
     ) => {
@@ -225,6 +267,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                       referenceImages,
                       templateImage,
                       generationModel,
+                      imageFormat,
+                      imageQuality,
                       previewVersionIndex,
                       previewSource,
                     }
@@ -257,11 +301,25 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
             ? page.generationModel
             : DEFAULT_LEONARDO_POST_MODEL,
         )
+        setImageFormatState(
+          isPostImageFormatId(page?.imageFormat) ? page.imageFormat : DEFAULT_POST_IMAGE_FORMAT,
+        )
+        {
+          const modelForQuality = isLeonardoPostModelId(page?.generationModel)
+            ? page.generationModel
+            : DEFAULT_LEONARDO_POST_MODEL
+          const nextQuality = isPostImageQualityId(page?.imageQuality)
+            ? page.imageQuality
+            : DEFAULT_POST_IMAGE_QUALITY
+          setImageQualityState(clampQualityForModel(modelForQuality, nextQuality))
+        }
         return withSyncedCurrent
       })
     },
     [
       generationModel,
+      imageFormat,
+      imageQuality,
       previewSource,
       previewVersionIndex,
       prompt,
@@ -328,10 +386,12 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       }
       setTemplateImage(next)
       setPreviewSource('template')
+      setImageFormatState('match-layout')
       if (selectedPageId) {
         syncPageState(selectedPageId, {
           templateImage: next,
           previewSource: 'template',
+          imageFormat: 'match-layout',
         })
       }
     },
@@ -339,25 +399,78 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   )
 
   const clearTemplate = useCallback(() => {
+    const nextFormat = imageFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : imageFormat
     setTemplateImage(null)
     setPreviewSource('version')
+    setImageFormatState(nextFormat)
     if (selectedPageId) {
       syncPageState(selectedPageId, {
         templateImage: null,
         previewSource: 'version',
+        imageFormat: nextFormat,
       })
     }
-  }, [selectedPageId, syncPageState])
+  }, [imageFormat, selectedPageId, syncPageState])
 
   const setGenerationModel = useCallback(
     (model: LeonardoPostModelId) => {
       setGenerationModelState(model)
+      setImageQualityState((current) => {
+        const next = clampQualityForModel(model, current)
+        if (selectedPageId) {
+          syncPageState(selectedPageId, { generationModel: model, imageQuality: next })
+        }
+        return next
+      })
+    },
+    [selectedPageId, syncPageState],
+  )
+
+  const setImageFormat = useCallback(
+    (format: PostImageFormatId) => {
+      setImageFormatState(format)
       if (selectedPageId) {
-        syncPageState(selectedPageId, { generationModel: model })
+        syncPageState(selectedPageId, { imageFormat: format })
       }
     },
     [selectedPageId, syncPageState],
   )
+
+  const setImageQuality = useCallback(
+    (quality: PostImageQualityId) => {
+      const next = clampQualityForModel(generationModel, quality)
+      setImageQualityState(next)
+      if (selectedPageId) {
+        syncPageState(selectedPageId, { imageQuality: next })
+      }
+    },
+    [generationModel, selectedPageId, syncPageState],
+  )
+
+  const setSafeZoneInsetXPx = useCallback((px: number) => {
+    setSafeZoneInsetXPxState(Number.isFinite(px) && px >= 0 ? Math.floor(px) : 0)
+  }, [])
+
+  const setSafeZoneInsetYPx = useCallback((px: number) => {
+    setSafeZoneInsetYPxState(Number.isFinite(px) && px >= 0 ? Math.floor(px) : 0)
+  }, [])
+
+  const setSolidBackgroundEnabled = useCallback((enabled: boolean) => {
+    setSolidBackgroundEnabledState(enabled)
+  }, [])
+
+  const setSolidBackgroundColor = useCallback((color: string) => {
+    setSolidBackgroundColorState(normalizeSolidBackgroundColor(color))
+  }, [])
+
+  const setLocationId = useCallback((next: number | null) => {
+    setLocationIdState(next)
+    setStyleIdState(null)
+  }, [])
+
+  const setStyleId = useCallback((next: number | null) => {
+    setStyleIdState(next)
+  }, [])
 
   const generate = useCallback(async () => {
     const trimmed = prompt.trim()
@@ -370,6 +483,9 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       templateImage: activeTemplate,
       referenceImages,
       previewMediaS3Key: activePreviewMediaS3Key,
+      styleSelected: styleId != null,
+      solidBackgroundEnabled,
+      solidBackgroundColor,
     })
 
     if (tooManyReferences) {
@@ -385,7 +501,15 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         pageId?: string
         references?: typeof references
         model?: LeonardoPostModelId
-      } = { prompt: trimmed, model: generationModel }
+        format?: PostImageFormatId
+        quality?: PostImageQualityId
+        styleId?: number
+      } = {
+        prompt: trimmed,
+        model: generationModel,
+        format: imageFormat,
+        quality: imageQuality,
+      }
 
       if (canPersistPages && postId && selectedPageId) {
         body.postId = postId
@@ -394,6 +518,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
 
       if (references.length > 0) {
         body.references = references
+      }
+
+      if (styleId != null) {
+        body.styleId = styleId
       }
 
       const res = await fetch('/api/posts/generate', {
@@ -435,6 +563,9 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setPostImageVersionIndex(0)
       setTemplateImage(null)
       setPreviewSource('version')
+      setImageFormatState((current) =>
+        current === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : current,
+      )
 
       if (selectedPageId) {
         syncPageState(selectedPageId, {
@@ -445,6 +576,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           prompt: trimmed,
           templateImage: null,
           previewSource: 'version',
+          imageFormat: imageFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : imageFormat,
         })
       }
     } catch {
@@ -455,6 +587,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   }, [
     canPersistPages,
     generationModel,
+    imageFormat,
+    imageQuality,
     imageVersions,
     isGenerating,
     postId,
@@ -463,6 +597,9 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     prompt,
     referenceImages,
     selectedPageId,
+    solidBackgroundColor,
+    solidBackgroundEnabled,
+    styleId,
     syncPageState,
     tPrompt,
     tToast,
@@ -727,6 +864,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                     referenceImages,
                     templateImage,
                     generationModel,
+                    imageFormat,
+                    imageQuality,
                     previewVersionIndex,
                     previewSource,
                   }
@@ -775,6 +914,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       applySelectedPage,
       canPersistPages,
       generationModel,
+      imageFormat,
+      imageQuality,
       pages,
       postId,
       previewSource,
@@ -860,8 +1001,12 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       templateImage: activeTemplate,
       referenceImages,
       previewMediaS3Key,
+      styleSelected: styleId != null,
+      solidBackgroundEnabled,
+      solidBackgroundColor,
     })
     const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
+    const solidBackgroundRef = references.find((reference) => reference.type === 'background-color')
 
     if (genMode === 'template-composite' && activeTemplate) {
       if (enabledPhotoCount === 0) {
@@ -886,11 +1031,30 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     if (includesPrevious) {
       return tPrompt('generation.referenceSummaryPreviousOnly')
     }
+    if (solidBackgroundRef && enabledPhotoCount > 0) {
+      return tPrompt('generation.referenceSummarySolidBackgroundAndPhotos', {
+        color: solidBackgroundRef.color,
+        count: enabledPhotoCount,
+      })
+    }
+    if (solidBackgroundRef) {
+      return tPrompt('generation.referenceSummarySolidBackgroundOnly', {
+        color: solidBackgroundRef.color,
+      })
+    }
     if (enabledPhotoCount > 0) {
       return tPrompt('generation.referenceSummaryPhotosOnly', { count: enabledPhotoCount })
     }
     return tPrompt('generation.referenceSummaryTextOnly')
-  }, [activeTemplate, previewMediaS3Key, referenceImages, tPrompt])
+  }, [
+    activeTemplate,
+    previewMediaS3Key,
+    referenceImages,
+    solidBackgroundColor,
+    solidBackgroundEnabled,
+    styleId,
+    tPrompt,
+  ])
 
   const canRemoveEmptyPage = pages.length > 1 && !pageHasGeneratedImage(selectedPage, imageVersions)
   const canAddPage = canPersistPages && pages.length > 0 && pages.length < MAX_POST_PAGES
@@ -910,7 +1074,15 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         referenceImages,
         templateImage,
         generationModel,
+        imageFormat,
+        imageQuality,
+        safeZoneInsetXPx,
+        safeZoneInsetYPx,
+        solidBackgroundEnabled,
+        solidBackgroundColor,
         previewSource,
+        locationId,
+        styleId,
         isGenerating,
         isCommittingPostImage,
         isDeletingVersion,
@@ -937,6 +1109,14 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         selectTemplate,
         clearTemplate,
         setGenerationModel,
+        setImageFormat,
+        setImageQuality,
+        setSafeZoneInsetXPx,
+        setSafeZoneInsetYPx,
+        setSolidBackgroundEnabled,
+        setSolidBackgroundColor,
+        setLocationId,
+        setStyleId,
       },
       meta: {
         mode,
@@ -973,6 +1153,8 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       generationModel,
       generationReferenceSummary,
       hasPreviewableVersion,
+      imageFormat,
+      imageQuality,
       imageVersions,
       isAddingPage,
       isCommittingPostImage,
@@ -980,6 +1162,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       isDuplicatingPage,
       isGenerating,
       isLoadingPost,
+      locationId,
       mode,
       pages,
       postId,
@@ -993,12 +1176,25 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       referenceImages,
       removeReference,
       requestDelete,
+      safeZoneInsetXPx,
+      safeZoneInsetYPx,
       selectPage,
       selectTemplate,
       selectedPage?.mediaS3Key,
       selectedPageId,
       setGenerationModel,
+      setImageFormat,
+      setImageQuality,
+      setLocationId,
       setPromptValue,
+      setSafeZoneInsetXPx,
+      setSafeZoneInsetYPx,
+      setSolidBackgroundColor,
+      setSolidBackgroundEnabled,
+      setStyleId,
+      solidBackgroundColor,
+      solidBackgroundEnabled,
+      styleId,
       templateImage,
       toggleReferenceEnabled,
     ],

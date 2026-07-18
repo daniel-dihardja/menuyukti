@@ -2,7 +2,6 @@ import strawberry
 
 from graphql.context import request_session_scope
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.queries.location_manual_brief_input import load_manual_brief_type
 from graphql.schema.types.location_manual_brief_input import LocationManualBriefInputType
 
 
@@ -29,6 +28,9 @@ class LocationType:
 
     @strawberry.field(description=("Owner-provided click-first brief hints. Not AI-generated."))
     def manual_brief_input(self, info: strawberry.Info) -> LocationManualBriefInputType | None:
+        # Lazy import: avoid types ↔ queries circular import at module load.
+        from graphql.schema.queries.location_manual_brief_input import load_manual_brief_type
+
         user_id = user_id_from_info(info)
         if not user_id:
             return None

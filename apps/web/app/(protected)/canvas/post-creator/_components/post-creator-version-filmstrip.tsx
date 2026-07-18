@@ -6,17 +6,15 @@ import { useEffect, useRef } from 'react'
 
 import { cn } from '@workspace/ui/lib/utils'
 
-import {
-  POST_IMAGE_ASPECT_RATIO,
-  POST_IMAGE_HEIGHT,
-  POST_IMAGE_WIDTH,
-} from './post-creator-constants'
 import type { PostCreatorImageVersion } from '@/lib/posts/post-creator-types'
 
 export type PostCreatorVersionFilmstripProps = {
   versions: PostCreatorImageVersion[]
   previewIndex: number
   postImageIndex: number
+  aspectRatio: string
+  outputWidth: number
+  outputHeight: number
   onPreviewIndex: (index: number) => void
   isCommitting?: boolean
 }
@@ -25,6 +23,9 @@ export function PostCreatorVersionFilmstrip({
   versions,
   previewIndex,
   postImageIndex,
+  aspectRatio,
+  outputWidth,
+  outputHeight,
   onPreviewIndex,
   isCommitting = false,
 }: PostCreatorVersionFilmstripProps) {
@@ -92,14 +93,14 @@ export function PostCreatorVersionFilmstrip({
                 : 'border-border/60 hover:border-border',
               isCommitting && 'opacity-70',
             )}
-            style={{ aspectRatio: POST_IMAGE_ASPECT_RATIO }}
+            style={{ aspectRatio }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
             <img
               src={version.imageUrl}
               alt=""
-              width={POST_IMAGE_WIDTH}
-              height={POST_IMAGE_HEIGHT}
+              width={outputWidth}
+              height={outputHeight}
               className="size-full object-cover"
             />
             {isPostImage ? (

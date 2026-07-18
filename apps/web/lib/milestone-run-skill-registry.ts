@@ -48,7 +48,7 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'culture_hooks',
     name: 'Culture hooks',
     description:
-      'Infer location concept and target audience from the Campaign Brief, then propose non-food intersection topics for culturally relevant Instagram posts, Stories, and Reels.',
+      'Infer heritage/origin places from the Campaign Brief and list non-food topics the local target audience would find interesting, for culturally relevant Instagram posts, Stories, and Reels.',
   },
   {
     id: 'ig_profile',

@@ -10,6 +10,7 @@ import {
   graphqlLocationsDataCacheTag,
   graphqlWorkflowsByLocationCacheTag,
   graphqlWorkflowCampaignTreeCacheTag,
+  graphqlSchedulerCalendarCacheTag,
 } from '@/lib/graphql/cache-tags'
 import {
   ANALYTICS_BUNDLE_HEATMAP_QUERY,
@@ -28,6 +29,7 @@ import {
   ORDER_METRICS_QUERY,
   PROMOTION_MENU_ITEMS_QUERY,
   PUBLIC_HOLIDAYS_QUERY,
+  SCHEDULER_CALENDAR_QUERY,
   WORKFLOW_CAMPAIGN_TREE_QUERY,
   parseNodesData,
   type AnalyticsBundleHeatmapData,
@@ -47,6 +49,7 @@ import {
   type OrderMetricsData,
   type PromotionMenuItemsData,
   type PublicHolidaysData,
+  type SchedulerCalendarData,
   type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
 
@@ -322,4 +325,21 @@ export async function getCachedPublicHolidays(
     userId,
     'PublicHolidays',
   )
+}
+
+/** Aggregated scheduler slots for the location Calendar page. */
+export async function getCachedSchedulerCalendar(
+  userId: string,
+  locationId: number,
+): Promise<SchedulerCalendarData['schedulerCalendar']> {
+  'use cache'
+  cacheTag(graphqlSchedulerCalendarCacheTag(userId, locationId))
+  cacheLife({ revalidate: 60 })
+  const data = await graphqlQuery<SchedulerCalendarData>(
+    SCHEDULER_CALENDAR_QUERY,
+    { locationId },
+    userId,
+    'SchedulerCalendar',
+  )
+  return data.schedulerCalendar
 }

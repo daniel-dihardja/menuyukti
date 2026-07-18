@@ -100,6 +100,25 @@ def _first_non_empty_str(values: object) -> str:
     return ""
 
 
+def _origin_culture_keyword(brief: dict[str, Any]) -> str:
+    """Derive heritage/origin culture label from campaign brief fields."""
+    main_category = str(brief.get("mainCategory") or "").strip()
+    if main_category:
+        return " ".join(main_category.split()[:4])
+
+    for key in ("messageHierarchy", "proofOrientedAngles", "contentPillars"):
+        candidate = _first_non_empty_str(brief.get(key))
+        if candidate:
+            return " ".join(candidate.split()[:4])
+
+    overall = brief.get("overallStrategy")
+    if isinstance(overall, dict):
+        focus = str(overall.get("strategyFocus") or overall.get("coreMessage") or "").strip()
+        if focus:
+            return " ".join(focus.split()[:4])
+    return ""
+
+
 def _culture_hooks_search_queries(brief: dict[str, Any]) -> list[str]:
     venue = brief.get("venueSnapshot")
     city = ""
@@ -108,24 +127,25 @@ def _culture_hooks_search_queries(brief: dict[str, Any]) -> list[str]:
         city = str(venue.get("city") or "").strip()
         country = str(venue.get("country") or "").strip()
 
-    concept_keyword = ""
-    overall = brief.get("overallStrategy")
-    if isinstance(overall, dict):
-        concept_keyword = str(
-            overall.get("strategyFocus") or overall.get("coreMessage") or ""
-        ).strip()
-    if not concept_keyword:
-        concept_keyword = _first_non_empty_str(brief.get("messageHierarchy"))
-
+    origin_keyword = _origin_culture_keyword(brief)
     location_bits = " ".join(part for part in (city, country) if part)
     queries: list[str] = []
-    if location_bits:
-        queries.append(f"lifestyle subcultures {location_bits} Instagram")
-    if concept_keyword and location_bits:
-        short_keyword = " ".join(concept_keyword.split()[:4])
-        queries.append(f"{short_keyword} culture {location_bits}")
+
+    if origin_keyword and country:
+        queries.append(
+            f"{origin_keyword} places landmarks culture popular with people in {country}"
+        )
+        if city:
+            queries.append(
+                f"{origin_keyword} travel culture Instagram {city} {country}"
+            )
+        else:
+            queries.append(f"{origin_keyword} travel culture Instagram {country}")
     elif location_bits:
+        # Fallback when origin culture cannot be inferred from the brief.
+        queries.append(f"lifestyle subcultures {location_bits} Instagram")
         queries.append(f"creative class interests {location_bits}")
+
     return queries[:2]
 
 
@@ -147,7 +167,10 @@ async def _run_web_searches(queries: list[str]) -> str:
 
     if not sections:
         return ""
-    return "## Local culture web research (optional)\n\n" + "\n\n".join(sections)
+    return (
+        "## Heritage and audience culture web research (optional)\n\n"
+        + "\n\n".join(sections)
+    )
 
 
 class CultureHookIntersectionDraft(BaseModel):

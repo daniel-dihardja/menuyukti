@@ -2,17 +2,20 @@
 
 import { useTranslations } from 'next-intl'
 
-import {
-  INSTAGRAM_GRID_THUMBNAIL_INSET_X,
-  INSTAGRAM_GRID_THUMBNAIL_INSET_X_PERCENT,
-  INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
-  INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT,
-} from './post-creator-constants'
+type PostCreatorSafeZoneOverlayProps = {
+  insetXPercent: number
+  insetYPercent: number
+  insetXPx: number
+  insetYPx: number
+}
 
-export function PostCreatorSafeZoneOverlay() {
+export function PostCreatorSafeZoneOverlay({
+  insetXPercent,
+  insetYPercent,
+  insetXPx,
+  insetYPx,
+}: PostCreatorSafeZoneOverlayProps) {
   const t = useTranslations('postCreator.preview')
-  const insetXPercent = INSTAGRAM_GRID_THUMBNAIL_INSET_X_PERCENT
-  const insetYPercent = INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
@@ -49,9 +52,9 @@ export function PostCreatorSafeZoneOverlay() {
         style={{ bottom: `${insetYPercent}%` }}
       />
       <span className="sr-only">
-        {t('gridSafeZoneDescription', {
-          insetX: INSTAGRAM_GRID_THUMBNAIL_INSET_X,
-          insetY: INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
+        {t('safeZoneDescription', {
+          insetX: insetXPx,
+          insetY: insetYPx,
         })}
       </span>
     </div>

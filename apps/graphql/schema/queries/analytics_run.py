@@ -15,7 +15,7 @@ from graphql.schema.auth import (
     user_id_from_info,
 )
 from graphql.schema.mappers.analytics_run import order_metrics_to_gql
-from graphql.schema.types import MenuItemCogsType
+from graphql.schema.types.menu_item_cogs import MenuItemCogsType
 from graphql.schema.types.order_metrics import AnalyticsRunOrderMetricsType
 from graphql.services.order_metrics import build_order_metrics
 

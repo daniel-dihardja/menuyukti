@@ -18,19 +18,31 @@ import {
 } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphql/queries/posts'
+import { LOCATION_STYLE_QUERY, type LocationStyleData } from '@/lib/graphql/queries/location-styles'
+import { parseStyleSpec } from '@/lib/location-styles/style-spec'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
   type OutputDimensions,
   type PromptReference,
+  type StylePackPrompt,
 } from '@/lib/posts/build-instagram-post-prompt'
+import {
+  DEFAULT_POST_IMAGE_FORMAT,
+  DEFAULT_POST_IMAGE_QUALITY,
+  POST_IMAGE_FORMAT_IDS,
+  POST_IMAGE_QUALITY_IDS,
+} from '@/lib/posts/leonardo-post-dimensions'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
   LEONARDO_POST_MODEL_IDS,
 } from '@/lib/posts/leonardo-post-models'
 import { resolveGenerationOutputDimensions } from '@/lib/posts/post-creator-utils'
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
+import { createSolidBackgroundBuffer } from '@/lib/posts/create-solid-background-buffer'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+
+const solidBackgroundHexSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Expected #rrggbb color')
 
 const generationReferenceSchema = z.discriminatedUnion('type', [
   z.object({
@@ -45,6 +57,10 @@ const generationReferenceSchema = z.discriminatedUnion('type', [
     type: z.literal('photo'),
     name: z.string().min(1),
   }),
+  z.object({
+    type: z.literal('background-color'),
+    color: solidBackgroundHexSchema,
+  }),
 ])
 
 const bodySchema = z.object({
@@ -53,6 +69,9 @@ const bodySchema = z.object({
   pageId: z.string().regex(/^\d+$/).optional(),
   references: z.array(generationReferenceSchema).max(MAX_GENERATION_REFERENCES).optional(),
   model: z.enum(LEONARDO_POST_MODEL_IDS).optional(),
+  format: z.enum(POST_IMAGE_FORMAT_IDS).optional(),
+  quality: z.enum(POST_IMAGE_QUALITY_IDS).optional(),
+  styleId: z.number().int().positive().optional(),
 })
 
 function truncateStack(stack: string, max = 4000): string {
@@ -124,6 +143,9 @@ export async function POST(req: Request) {
     pageId,
     references = [],
     model = DEFAULT_LEONARDO_POST_MODEL,
+    format = DEFAULT_POST_IMAGE_FORMAT,
+    quality = DEFAULT_POST_IMAGE_QUALITY,
+    styleId,
   } = parsed.data
   if ((postId && !pageId) || (!postId && pageId)) {
     return NextResponse.json(
@@ -132,11 +154,57 @@ export async function POST(req: Request) {
     )
   }
 
+  let stylePack: StylePackPrompt | undefined
+  let styleImageName: string | undefined
+  if (styleId != null) {
+    let styleData: LocationStyleData
+    try {
+      styleData = await graphqlQuery<LocationStyleData>(
+        LOCATION_STYLE_QUERY,
+        { id: styleId },
+        userId,
+      )
+    } catch (err) {
+      console.error('[posts/generate] locationStyle query failed', {
+        userIdPrefix: userId.slice(0, 8),
+        styleId,
+        message: err instanceof Error ? err.message : String(err),
+      })
+      return NextResponse.json({ message: 'Failed to load style pack' }, { status: 502 })
+    }
+    const style = styleData.locationStyle
+    if (!style) {
+      return NextResponse.json({ message: 'Style pack not found' }, { status: 404 })
+    }
+    stylePack = {
+      name: style.name,
+      rules: style.rules,
+      styleSpec: parseStyleSpec(style.styleSpec),
+    }
+    styleImageName = style.referenceImageName
+  }
+
+  if (references.length + (stylePack ? 1 : 0) > MAX_GENERATION_REFERENCES) {
+    return NextResponse.json(
+      { message: `Too many reference images (max ${MAX_GENERATION_REFERENCES})` },
+      { status: 400 },
+    )
+  }
+
   const hasTemplate = references.some((reference) => reference.type === 'template')
   const hasPrevious = references.some((reference) => reference.type === 'previous-result')
+  const hasBackgroundColor = references.some((reference) => reference.type === 'background-color')
   if (hasTemplate && hasPrevious) {
     return NextResponse.json(
       { message: 'Template and previous result cannot be used together' },
+      { status: 400 },
+    )
+  }
+  if (hasBackgroundColor && (hasTemplate || hasPrevious)) {
+    return NextResponse.json(
+      {
+        message: 'Solid background canvas cannot be used with a template or previous result image',
+      },
       { status: 400 },
     )
   }
@@ -155,9 +223,39 @@ export async function POST(req: Request) {
   const referenceBuffers: Buffer[] = []
   const promptReferences: PromptReference[] = []
   let templateOutputDimensions: OutputDimensions | undefined
-  let previousResultOutputDimensions: OutputDimensions | undefined
+  const deferredSolidBackgrounds: { color: string; bufferIndex: number }[] = []
+
+  if (styleImageName) {
+    if (!isSafePhotoFilename(styleImageName)) {
+      return NextResponse.json(
+        { message: `Invalid style reference image: ${styleImageName}` },
+        { status: 400 },
+      )
+    }
+    const styleKey = userPhotosObjectKey(userId, styleImageName)
+    if (!isObjectKeyForPhoto(styleKey, userId)) {
+      return NextResponse.json(
+        { message: `Invalid style reference image: ${styleImageName}` },
+        { status: 400 },
+      )
+    }
+    const styleBuffer = await loadReferenceBuffer(styleKey, styleImageName, userId)
+    if (styleBuffer instanceof NextResponse) return styleBuffer
+    referenceBuffers.push(styleBuffer)
+    promptReferences.push({ type: 'style' })
+  }
 
   for (const reference of references) {
+    if (reference.type === 'background-color') {
+      deferredSolidBackgrounds.push({
+        color: reference.color,
+        bufferIndex: referenceBuffers.length,
+      })
+      referenceBuffers.push(Buffer.alloc(0))
+      promptReferences.push({ type: 'background-color', color: reference.color })
+      continue
+    }
+
     if (reference.type === 'template') {
       const { name } = reference
       if (!isSafePhotoFilename(name)) {
@@ -208,19 +306,6 @@ export async function POST(req: Request) {
 
       const buffer = await loadReferenceBuffer(key, filename, userId)
       if (buffer instanceof NextResponse) return buffer
-      try {
-        previousResultOutputDimensions = await readImageDimensions(buffer)
-      } catch (err) {
-        console.error('[posts/generate] previous result dimension read failed', {
-          userIdPrefix: userId.slice(0, 8),
-          filename,
-          message: err instanceof Error ? err.message : String(err),
-        })
-        return NextResponse.json(
-          { message: `Could not read previous result dimensions: ${filename}` },
-          { status: 400 },
-        )
-      }
       referenceBuffers.push(buffer)
       promptReferences.push({ type: 'previous-result' })
       continue
@@ -239,11 +324,32 @@ export async function POST(req: Request) {
   }
 
   const outputDimensions = resolveGenerationOutputDimensions({
-    mode,
+    model,
+    format,
+    quality,
     templateDimensions: templateOutputDimensions,
-    previousResultDimensions: previousResultOutputDimensions,
   })
   const { width: outputWidth, height: outputHeight } = outputDimensions
+
+  for (const deferred of deferredSolidBackgrounds) {
+    try {
+      referenceBuffers[deferred.bufferIndex] = await createSolidBackgroundBuffer(
+        outputWidth,
+        outputHeight,
+        deferred.color,
+      )
+    } catch (err) {
+      console.error('[posts/generate] solid background synthesis failed', {
+        userIdPrefix: userId.slice(0, 8),
+        color: deferred.color,
+        message: err instanceof Error ? err.message : String(err),
+      })
+      return NextResponse.json(
+        { message: 'Failed to create solid background canvas' },
+        { status: 500 },
+      )
+    }
+  }
 
   let outBuffer: Buffer
   try {
@@ -252,6 +358,7 @@ export async function POST(req: Request) {
       mode,
       references: promptReferences,
       outputDimensions,
+      style: stylePack,
     })
 
     outBuffer = await runTextToImageWithReferences(

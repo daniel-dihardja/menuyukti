@@ -132,4 +132,134 @@ describe('resolveGenerationReferences', () => {
     expect(references).toHaveLength(7)
     expect(tooManyReferences).toBe(true)
   })
+
+  it('reserves a slot for style when styleSelected is true', () => {
+    const { references, tooManyReferences } = resolveGenerationReferences({
+      templateImage: template('layout.webp'),
+      referenceImages: [
+        photo('1.webp'),
+        photo('2.webp'),
+        photo('3.webp'),
+        photo('4.webp'),
+        photo('5.webp'),
+      ],
+      previewMediaS3Key: null,
+      styleSelected: true,
+    })
+
+    expect(references).toHaveLength(6)
+    expect(tooManyReferences).toBe(true)
+  })
+
+  it('allows max client refs when style is not selected', () => {
+    const { tooManyReferences } = resolveGenerationReferences({
+      templateImage: null,
+      referenceImages: [
+        photo('1.webp'),
+        photo('2.webp'),
+        photo('3.webp'),
+        photo('4.webp'),
+        photo('5.webp'),
+        photo('6.webp'),
+      ],
+      previewMediaS3Key: null,
+      styleSelected: false,
+    })
+
+    expect(tooManyReferences).toBe(false)
+  })
+
+  it('prepends solid background when enabled and no template or previous result', () => {
+    const { mode, references, tooManyReferences } = resolveGenerationReferences({
+      templateImage: null,
+      referenceImages: [photo('a.webp')],
+      previewMediaS3Key: null,
+      solidBackgroundEnabled: true,
+      solidBackgroundColor: '#F0F0F0',
+    })
+
+    expect(mode).toBe('fresh-scene')
+    expect(tooManyReferences).toBe(false)
+    expect(references).toEqual([
+      { type: 'background-color', color: '#f0f0f0' },
+      { type: 'photo', name: 'a.webp' },
+    ])
+  })
+
+  it('injects solid background alone when enabled with no photos', () => {
+    const { references } = resolveGenerationReferences({
+      templateImage: null,
+      referenceImages: [photo('a.webp', false)],
+      previewMediaS3Key: null,
+      solidBackgroundEnabled: true,
+      solidBackgroundColor: '#ffffff',
+    })
+
+    expect(references).toEqual([{ type: 'background-color', color: '#ffffff' }])
+  })
+
+  it('omits solid background when disabled', () => {
+    const { references } = resolveGenerationReferences({
+      templateImage: null,
+      referenceImages: [photo('a.webp')],
+      previewMediaS3Key: null,
+      solidBackgroundEnabled: false,
+      solidBackgroundColor: '#ffffff',
+    })
+
+    expect(references).toEqual([{ type: 'photo', name: 'a.webp' }])
+  })
+
+  it('omits solid background when a template is selected', () => {
+    const { references } = resolveGenerationReferences({
+      templateImage: template('layout.webp'),
+      referenceImages: [photo('a.webp')],
+      previewMediaS3Key: null,
+      solidBackgroundEnabled: true,
+      solidBackgroundColor: '#ffffff',
+    })
+
+    expect(references).toEqual([
+      { type: 'template', name: 'layout.webp' },
+      { type: 'photo', name: 'a.webp' },
+    ])
+  })
+
+  it('omits solid background when a previous result is attached', () => {
+    const { references } = resolveGenerationReferences({
+      templateImage: null,
+      referenceImages: [],
+      previewMediaS3Key: PREVIEW_KEY,
+      solidBackgroundEnabled: true,
+      solidBackgroundColor: '#ffffff',
+    })
+
+    expect(references).toEqual([
+      {
+        type: 'previous-result',
+        filename: '11111111-1111-1111-1111-111111111111.webp',
+      },
+    ])
+  })
+
+  it('counts solid background toward the generation limit with style reserved', () => {
+    const { references, tooManyReferences } = resolveGenerationReferences({
+      templateImage: null,
+      referenceImages: [
+        photo('1.webp'),
+        photo('2.webp'),
+        photo('3.webp'),
+        photo('4.webp'),
+        photo('5.webp'),
+      ],
+      previewMediaS3Key: null,
+      styleSelected: true,
+      solidBackgroundEnabled: true,
+      solidBackgroundColor: '#ffffff',
+    })
+
+    expect(references).toHaveLength(6)
+    expect(references[0]).toEqual({ type: 'background-color', color: '#ffffff' })
+    expect(tooManyReferences).toBe(true)
+  })
 })

@@ -9,10 +9,11 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { usePostCreator } from '../_context/use-post-creator'
 import {
-  POST_IMAGE_ASPECT_RATIO,
-  POST_IMAGE_HEIGHT,
-  POST_IMAGE_WIDTH,
-} from './post-creator-constants'
+  DEFAULT_POST_IMAGE_FORMAT,
+  formatAspectCss,
+  resolveLeonardoOutputDimensions,
+} from '@/lib/posts/leonardo-post-dimensions'
+import { DEFAULT_LEONARDO_POST_MODEL } from '@/lib/posts/leonardo-post-models'
 
 export type {
   PostCreatorImageVersion,
@@ -23,9 +24,20 @@ export type {
 export function PostCreatorThumbnailsPane() {
   const t = useTranslations('postCreator.thumbnails')
   const { state, actions, meta } = usePostCreator()
-  const { pages, selectedPageId, isAddingPage, isDuplicatingPage, isLoadingPost: isLoading } = state
+  const {
+    pages,
+    selectedPageId,
+    isAddingPage,
+    isDuplicatingPage,
+    isLoadingPost: isLoading,
+    imageFormat,
+    imageQuality,
+    generationModel,
+  } = state
   const { selectPage, addPage, duplicatePage } = actions
   const { canPersistPages, canAddPage, canDuplicatePage } = meta
+
+  const selectedAspect = formatAspectCss(imageFormat)
 
   if (isLoading) {
     return (
@@ -35,7 +47,7 @@ export function PostCreatorThumbnailsPane() {
       >
         <div
           className="w-full animate-pulse rounded-md border border-border/60 bg-muted/40"
-          style={{ aspectRatio: POST_IMAGE_ASPECT_RATIO }}
+          style={{ aspectRatio: selectedAspect }}
         />
       </section>
     )
@@ -60,6 +72,17 @@ export function PostCreatorThumbnailsPane() {
       {pages.map((page) => {
         const isSelected = page.id === selectedPageId
         const label = t('pageLabel', { number: page.sortOrder + 1 })
+        const pageFormat =
+          page.imageFormat ?? (isSelected ? imageFormat : DEFAULT_POST_IMAGE_FORMAT)
+        const pageQuality = page.imageQuality ?? (isSelected ? imageQuality : 'standard')
+        const pageModel =
+          page.generationModel ?? (isSelected ? generationModel : DEFAULT_LEONARDO_POST_MODEL)
+        const pageAspect = formatAspectCss(pageFormat)
+        const pageDims = resolveLeonardoOutputDimensions({
+          model: pageModel,
+          format: pageFormat,
+          quality: pageQuality,
+        })
 
         return (
           <button
@@ -74,15 +97,15 @@ export function PostCreatorThumbnailsPane() {
                 ? 'border-primary ring-2 ring-primary/30'
                 : 'border-border/60 hover:border-border',
             )}
-            style={{ aspectRatio: POST_IMAGE_ASPECT_RATIO }}
+            style={{ aspectRatio: pageAspect }}
           >
             {page.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
               <img
                 src={page.imageUrl}
                 alt=""
-                width={POST_IMAGE_WIDTH}
-                height={POST_IMAGE_HEIGHT}
+                width={pageDims.width}
+                height={pageDims.height}
                 className="size-full object-cover"
               />
             ) : (

@@ -1,5 +1,4 @@
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 
 export const SCHEDULER_GRID_HOUR_START = 8
 export const SCHEDULER_GRID_HOUR_END = 22
@@ -9,9 +8,19 @@ export const SCHEDULER_WEEKLY_LUNCH_POST_TIME = '10:00'
 export const SCHEDULER_REEL_LUNCH_OFFER_TIME = '11:00'
 export const SCHEDULER_HAPPY_HOLIDAY_STORY_TIME = '10:00'
 
-export type SchedulerSlot = SchedulerMilestoneData['slots'][number]
-
 export type SchedulerSlotKind = 'story' | 'post' | 'reel'
+
+/** Slot shape for calendar grids (workflow milestone slots and manual entries). */
+export type SchedulerSlot = {
+  kind?: SchedulerSlotKind | null
+  date: string
+  time: string
+  title: string
+  id?: string | null
+  description?: string | null
+  mediaRefs?: Array<{ kind: string; name: string }> | null
+  source?: string | null
+}
 
 const SCHEDULER_SLOT_CLASS = {
   story:
@@ -20,12 +29,15 @@ const SCHEDULER_SLOT_CLASS = {
   reel: 'border-orange-400 bg-orange-100 text-orange-950 dark:border-orange-600 dark:bg-orange-950/70 dark:text-orange-50',
 } as const
 
+const SCHEDULER_EVENT_SLOT_CLASS = 'border-border/80 bg-muted/50 text-foreground dark:bg-muted/30'
+
 const SCHEDULER_SLOT_TITLE_PREFIX = /^(post|reel|story):\s*/i
 const SCHEDULER_SLOT_FALLBACK_TIME: Record<SchedulerSlotKind, string> = {
   story: SCHEDULER_HAPPY_HOLIDAY_STORY_TIME,
   post: SCHEDULER_MONTHLY_PIN_POST_TIME,
   reel: SCHEDULER_REEL_LUNCH_OFFER_TIME,
 }
+const SCHEDULER_EVENT_FALLBACK_TIME = '10:00'
 
 function inferSchedulerSlotKindFromTitle(title: string): SchedulerSlotKind {
   const trimmed = title.trimStart()
@@ -38,14 +50,21 @@ function inferSchedulerSlotKindFromTitle(title: string): SchedulerSlotKind {
   return 'story'
 }
 
-export function schedulerSlotKind(slot: SchedulerSlot): SchedulerSlotKind {
+/** Instagram format for workflow slots; `null` for generic/manual calendar events. */
+export function schedulerSlotKind(slot: SchedulerSlot): SchedulerSlotKind | null {
   if (slot.kind) {
     return slot.kind
+  }
+  if (slot.source === 'manual') {
+    return null
   }
   return inferSchedulerSlotKindFromTitle(slot.title)
 }
 
-export function schedulerSlotClassName(kind: SchedulerSlotKind): string {
+export function schedulerSlotClassName(kind: SchedulerSlotKind | null): string {
+  if (!kind) {
+    return SCHEDULER_EVENT_SLOT_CLASS
+  }
   return SCHEDULER_SLOT_CLASS[kind]
 }
 
@@ -67,17 +86,24 @@ function schedulerSlotName(title: string): string {
 }
 
 export function schedulerSlotDisplayTitleParts(slot: SchedulerSlot): {
-  typeLabel: string
+  typeLabel: string | null
   name: string
 } {
+  const kind = schedulerSlotKind(slot)
+  if (!kind) {
+    return { typeLabel: null, name: slot.title.trim() }
+  }
   return {
-    typeLabel: schedulerSlotTypeLabel(schedulerSlotKind(slot)),
+    typeLabel: schedulerSlotTypeLabel(kind),
     name: schedulerSlotName(slot.title),
   }
 }
 
 export function schedulerSlotDisplayTitle(slot: SchedulerSlot): string {
   const { typeLabel, name } = schedulerSlotDisplayTitleParts(slot)
+  if (!typeLabel) {
+    return name
+  }
   return name ? `${typeLabel}: ${name}` : typeLabel
 }
 
@@ -86,7 +112,11 @@ export function schedulerSlotDisplayTime(slot: SchedulerSlot): string {
   if (trimmed) {
     return trimmed
   }
-  return SCHEDULER_SLOT_FALLBACK_TIME[schedulerSlotKind(slot)]
+  const kind = schedulerSlotKind(slot)
+  if (!kind) {
+    return SCHEDULER_EVENT_FALLBACK_TIME
+  }
+  return SCHEDULER_SLOT_FALLBACK_TIME[kind]
 }
 
 function schedulerTimeSortValue(time: string): number {
@@ -159,15 +189,18 @@ export function schedulerSlotsForDateDetail(
   slots: SchedulerSlot[],
   isoDate: string,
 ): SchedulerSlot[] {
-  return schedulerSlotsForDate(slots, isoDate).toSorted(
-    (left, right) =>
+  return schedulerSlotsForDate(slots, isoDate).toSorted((left, right) => {
+    const leftKind = schedulerSlotKind(left)
+    const rightKind = schedulerSlotKind(right)
+    const leftLabel = leftKind ? schedulerSlotTypeLabel(leftKind) : ''
+    const rightLabel = rightKind ? schedulerSlotTypeLabel(rightKind) : ''
+    return (
       schedulerTimeSortValue(schedulerSlotDisplayTime(left)) -
         schedulerTimeSortValue(schedulerSlotDisplayTime(right)) ||
-      schedulerSlotTypeLabel(schedulerSlotKind(left)).localeCompare(
-        schedulerSlotTypeLabel(schedulerSlotKind(right)),
-      ) ||
-      schedulerSlotDisplayTitle(left).localeCompare(schedulerSlotDisplayTitle(right)),
-  )
+      leftLabel.localeCompare(rightLabel) ||
+      schedulerSlotDisplayTitle(left).localeCompare(schedulerSlotDisplayTitle(right))
+    )
+  })
 }
 
 export function schedulerSlotsByDate(slots: SchedulerSlot[]): Map<string, SchedulerSlot[]> {

@@ -46,6 +46,26 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('Preserve product identity')
   })
 
+  it('includes solid background canvas reference line in fresh scene', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Flat lay with coffee',
+      mode: 'fresh-scene',
+      references: [{ type: 'background-color', color: '#ffffff' }, { type: 'photo' }],
+    })
+
+    expect(out).toContain('REFERENCE IMAGES (in upload order):')
+    expect(out).toContain('Reference 1 — BACKGROUND CANVAS: a flat solid field in #ffffff')
+    expect(out).toContain('This is not a layout template')
+    expect(out).toContain('Reference 2 — PRODUCT PHOTO')
+    expect(out).not.toContain('SLOT')
+  })
+
+  it('keeps solid background in fresh-scene mode via detectPromptMode', () => {
+    expect(
+      detectPromptMode([{ type: 'background-color', color: '#ffffff' }, { type: 'photo' }]),
+    ).toBe('fresh-scene')
+  })
+
   it('includes template composite task and product fidelity blocks', () => {
     const out = buildInstagramPostPrompt({
       userPrompt: 'Ref 3 → center hero bowl',
@@ -179,6 +199,83 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('PHOTOGRAPHY & LIGHTING')
     expect(out).toContain("Preserve the reference image's composition, camera angle, and lighting")
     expect(out).not.toContain('45–60° hero angle')
+  })
+
+  it('injects STYLE PACK block and style reference before creative direction', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'Pad thai bowl lunch offer',
+      mode: 'fresh-scene',
+      references: [{ type: 'style' }, { type: 'photo' }],
+      style: {
+        name: 'Warm editorial',
+        rules: 'Warm window light; soft shadows; no neon.',
+      },
+    })
+
+    expect(out).toContain('STYLE PACK — "Warm editorial":')
+    expect(out).toContain('Warm window light; soft shadows; no neon.')
+    expect(out).toContain('Reference 1 — STYLE REFERENCE')
+    expect(out).toContain('Do NOT copy its subject')
+    expect(out).toContain('Reference 2 — PRODUCT PHOTO')
+    expect(out.indexOf('STYLE PACK')).toBeLessThan(out.indexOf('CREATIVE DIRECTION'))
+    expect(out.endsWith('Pad thai bowl lunch offer')).toBe(true)
+  })
+
+  it('compiles Style Spec controls and strips bracket overrides from creative direction', () => {
+    const out = buildInstagramPostPrompt({
+      userPrompt: 'cold brew [headline=none]',
+      mode: 'fresh-scene',
+      style: {
+        name: 'Warm Oat',
+        rules: 'fallback rules',
+        styleSpec: {
+          schemaVersion: 1,
+          kind: 'template',
+          baseRules: ['Cream background; mustard accents.'],
+          controls: {
+            headline: {
+              type: 'enum',
+              values: ['auto', 'none'],
+              default: 'auto',
+              instructions: {
+                auto: 'Place a headline when provided.',
+                none: 'Leave the headline area empty.',
+              },
+            },
+            productName: {
+              type: 'enum',
+              values: ['auto', 'none'],
+              default: 'auto',
+              instructions: {
+                auto: 'Place product name when provided.',
+                none: 'Omit product name.',
+              },
+            },
+            backgroundIllustration: {
+              type: 'enum',
+              values: ['template_default', 'none'],
+              default: 'template_default',
+              instructions: {
+                template_default: 'Keep template line art.',
+                none: 'No background illustrations.',
+              },
+            },
+          },
+          defaults: {
+            headline: 'auto',
+            productName: 'auto',
+            backgroundIllustration: 'template_default',
+          },
+        },
+      },
+    })
+
+    expect(out).toContain('Cream background; mustard accents.')
+    expect(out).toContain('CONTROLS (resolved):')
+    expect(out).toContain('headline: none → Leave the headline area empty.')
+    expect(out).not.toContain('[headline=none]')
+    expect(out.endsWith('cold brew')).toBe(true)
+    expect(out).not.toContain('fallback rules')
   })
 })
 

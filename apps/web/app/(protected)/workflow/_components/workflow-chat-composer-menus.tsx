@@ -21,6 +21,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent,
   type ReactNode,
@@ -197,6 +198,7 @@ export function WorkflowChatComposerMenus({
 
   const [slashActiveIndex, setSlashActiveIndex] = useState(0)
   const [mentionActiveIndex, setMentionActiveIndex] = useState(0)
+  const commandListRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!slashMenuOpen) {
@@ -217,6 +219,27 @@ export function WorkflowChatComposerMenus({
     }
     setMentionActiveIndex((prev) => Math.min(prev, flatMentionEntries.length - 1))
   }, [flatMentionEntries.length, mentionMenuOpen])
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return
+    }
+    const list = commandListRef.current
+    if (!list) {
+      return
+    }
+    const active = list.querySelector<HTMLElement>('[data-workflow-chat-menu-active="true"]')
+    if (!active) {
+      return
+    }
+    const listRect = list.getBoundingClientRect()
+    const activeRect = active.getBoundingClientRect()
+    if (activeRect.bottom > listRect.bottom) {
+      list.scrollTop += activeRect.bottom - listRect.bottom
+    } else if (activeRect.top < listRect.top) {
+      list.scrollTop -= listRect.top - activeRect.top
+    }
+  }, [menuOpen, mentionActiveIndex, slashActiveIndex, slashMenuOpen, mentionMenuOpen])
 
   const selectMentionEntry = useCallback(
     (entry: MentionMenuEntry) => {
@@ -330,7 +353,7 @@ export function WorkflowChatComposerMenus({
           <PopoverTitle>{panelAriaLabel}</PopoverTitle>
         </PopoverHeader>
         <Command shouldFilter={false}>
-          <CommandList>
+          <CommandList ref={commandListRef}>
             {slashMenuOpen ? (
               <CommandGroup aria-label={slashAriaLabel}>
                 {filteredSlash.map((cmd, i) => (
@@ -340,6 +363,7 @@ export function WorkflowChatComposerMenus({
                       'flex w-full flex-col items-start gap-1',
                       i === slashActiveIndex && 'bg-accent text-accent-foreground',
                     )}
+                    data-workflow-chat-menu-active={i === slashActiveIndex ? 'true' : undefined}
                     onSelect={() => onSelectSlashCommand(`/${cmd.id}`)}
                     value={cmd.id}
                   >
@@ -368,6 +392,9 @@ export function WorkflowChatComposerMenus({
                                 activeIndex === mentionActiveIndex &&
                                   'bg-accent text-accent-foreground',
                               )}
+                              data-workflow-chat-menu-active={
+                                activeIndex === mentionActiveIndex ? 'true' : undefined
+                              }
                               onSelect={() => onSelectMention(m.id)}
                               value={m.title}
                             >
@@ -393,6 +420,9 @@ export function WorkflowChatComposerMenus({
                                 activeIndex === mentionActiveIndex &&
                                   'bg-accent text-accent-foreground',
                               )}
+                              data-workflow-chat-menu-active={
+                                activeIndex === mentionActiveIndex ? 'true' : undefined
+                              }
                               onSelect={() =>
                                 onSelectVisualizationMention(
                                   v.id as WorkflowVisualizationId,
@@ -432,6 +462,9 @@ export function WorkflowChatComposerMenus({
                                 activeIndex === mentionActiveIndex &&
                                   'bg-accent text-accent-foreground',
                               )}
+                              data-workflow-chat-menu-active={
+                                activeIndex === mentionActiveIndex ? 'true' : undefined
+                              }
                               onSelect={() => onSelectMediaMention(item)}
                               value={item.name}
                             >

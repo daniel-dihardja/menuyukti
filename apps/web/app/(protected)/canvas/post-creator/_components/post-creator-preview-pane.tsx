@@ -10,12 +10,16 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Switch } from '@workspace/ui/components/switch'
 import { Button } from '@workspace/ui/components/button'
 
+import {
+  formatAspectCss,
+  resolveLeonardoOutputDimensions,
+} from '@/lib/posts/leonardo-post-dimensions'
+
 import { usePostCreator } from '../_context/use-post-creator'
 import {
-  INSTAGRAM_GRID_THUMBNAIL_INSET_X,
-  INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
-  POST_IMAGE_HEIGHT,
-  POST_IMAGE_WIDTH,
+  clampSafeZoneInsetPx,
+  normalizeSolidBackgroundColor,
+  safeZoneInsetPercents,
 } from './post-creator-constants'
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
 import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
@@ -24,11 +28,12 @@ const previewContentMaxWidthClassName = 'w-full max-w-[min(100%,calc((100vh-12re
 
 const previewShellClassName = `flex min-h-0 min-w-0 flex-1 flex-col items-center gap-2 ${previewContentMaxWidthClassName}`
 
-const previewFrameClassName =
-  'relative aspect-[4/5] max-h-full max-w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
+const previewFrameBaseClassName =
+  'relative max-h-full max-w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
 
 export function PostCreatorPreviewPane() {
   const t = useTranslations('postCreator.preview')
+  const tPrompt = useTranslations('postCreator.prompt')
   const { state, actions, meta } = usePostCreator()
   const {
     imageVersions,
@@ -39,17 +44,47 @@ export function PostCreatorPreviewPane() {
     isGenerating: isLoading,
     isCommittingPostImage,
     isDeletingVersion,
+    imageFormat,
+    imageQuality,
+    generationModel,
+    safeZoneInsetXPx,
+    safeZoneInsetYPx,
+    solidBackgroundEnabled,
+    solidBackgroundColor,
   } = state
   const { previewVersion: onPreviewVersionIndex, commitPostImage, requestDelete } = actions
   const { canRemoveEmptyPage, canDelete } = meta
 
-  const gridSafeZoneToggleId = useId()
-  const [showGridSafeZone, setShowGridSafeZone] = useState(true)
+  const safeZoneToggleId = useId()
+  const [showSafeZone, setShowSafeZone] = useState(true)
 
-  const dimensions = t('dimensions', {
-    width: POST_IMAGE_WIDTH,
-    height: POST_IMAGE_HEIGHT,
+  const resolved = resolveLeonardoOutputDimensions({
+    model: generationModel,
+    format: imageFormat,
+    quality: imageQuality,
   })
+  const aspectCss = formatAspectCss(imageFormat)
+  const formatName = tPrompt(`format.options.${imageFormat}.name`)
+  const qualityName = tPrompt(`quality.options.${imageQuality}.name`)
+  const clampedInsetXPx = clampSafeZoneInsetPx(safeZoneInsetXPx, resolved.width)
+  const clampedInsetYPx = clampSafeZoneInsetPx(safeZoneInsetYPx, resolved.height)
+  const { insetXPercent, insetYPercent } = safeZoneInsetPercents(
+    clampedInsetXPx,
+    clampedInsetYPx,
+    resolved.width,
+    resolved.height,
+  )
+  const safeZoneOverlay = showSafeZone ? (
+    <PostCreatorSafeZoneOverlay
+      insetXPercent={insetXPercent}
+      insetYPercent={insetYPercent}
+      insetXPx={clampedInsetXPx}
+      insetYPx={clampedInsetYPx}
+    />
+  ) : null
+
+  const previewFrameClassName = previewFrameBaseClassName
+  const previewFrameStyle = { aspectRatio: aspectCss }
 
   const versions = imageVersions.length > 0 ? imageVersions : []
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
@@ -62,6 +97,7 @@ export function PostCreatorPreviewPane() {
       : (generatedImageUrl ?? templateImage?.url ?? null)
   const hasGeneratedImage = Boolean(generatedImageUrl)
   const hasImage = Boolean(previewImageUrl)
+  const showSolidBackgroundPreview = solidBackgroundEnabled && !hasImage && !showingTemplateOnly
   const showLoadingPlaceholder = isLoading && !hasImage
   const showVersionNav = versions.length > 1
   const canCommitPostImage =
@@ -145,7 +181,7 @@ export function PostCreatorPreviewPane() {
           <div
             className={`flex min-h-0 flex-1 items-center justify-center ${previewContentMaxWidthClassName}`}
           >
-            <Skeleton className={`w-full ${previewFrameClassName}`} />
+            <Skeleton className={`w-full ${previewFrameClassName}`} style={previewFrameStyle} />
           </div>
         ) : hasImage ? (
           <div
@@ -169,7 +205,7 @@ export function PostCreatorPreviewPane() {
               ) : null}
               <div className={previewShellClassName}>
                 <div className="flex min-h-0 flex-1 items-center justify-center">
-                  <div className={previewFrameClassName}>
+                  <div className={previewFrameClassName} style={previewFrameStyle}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- dynamic generated post URLs */}
                     <img
                       src={previewImageUrl!}
@@ -204,7 +240,7 @@ export function PostCreatorPreviewPane() {
                         </span>
                       </div>
                     ) : null}
-                    {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+                    {safeZoneOverlay}
                     {showRemoveButton ? (
                       <div className="absolute top-2 right-2 z-40">
                         <Button
@@ -267,6 +303,9 @@ export function PostCreatorPreviewPane() {
                   versions={versions}
                   previewIndex={previewSource === 'version' ? previewVersionIndex : -1}
                   postImageIndex={postImageVersionIndex}
+                  aspectRatio={aspectCss}
+                  outputWidth={resolved.width}
+                  outputHeight={resolved.height}
                   onPreviewIndex={previewVersionAt}
                   isCommitting={isCommittingPostImage || isLoading || isDeletingVersion}
                 />
@@ -278,7 +317,15 @@ export function PostCreatorPreviewPane() {
             className={`flex min-h-0 flex-1 items-center justify-center ${previewContentMaxWidthClassName}`}
           >
             <Card
-              className={`relative flex w-full flex-col items-center justify-center border-dashed bg-muted/20 p-6 text-center ${previewFrameClassName}`}
+              className={`relative flex w-full flex-col items-center justify-center border-dashed p-6 text-center ${previewFrameClassName} ${
+                showSolidBackgroundPreview ? 'border-border/40' : 'bg-muted/20'
+              }`}
+              style={{
+                ...previewFrameStyle,
+                ...(showSolidBackgroundPreview
+                  ? { backgroundColor: normalizeSolidBackgroundColor(solidBackgroundColor) }
+                  : null),
+              }}
             >
               {showRemoveButton ? (
                 <div className="absolute top-2 right-2 z-40">
@@ -294,14 +341,16 @@ export function PostCreatorPreviewPane() {
                   </Button>
                 </div>
               ) : null}
-              <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />
+              {showSolidBackgroundPreview ? null : (
+                <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
                 </div>
-                <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
-                <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
-              </div>
-              {showGridSafeZone ? <PostCreatorSafeZoneOverlay /> : null}
+              )}
+              {safeZoneOverlay}
             </Card>
           </div>
         )}
@@ -309,27 +358,27 @@ export function PostCreatorPreviewPane() {
 
       <div className="flex shrink-0 flex-col gap-3 pt-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-center text-sm text-muted-foreground sm:text-left">
-          <span className="font-medium text-foreground">{t('formatLabel')}</span>
-          {' · '}
-          {dimensions}
+          {t('formatQualitySummary', {
+            format: formatName,
+            quality: qualityName,
+            width: resolved.width,
+            height: resolved.height,
+          })}
         </p>
         <div className="flex items-center justify-center gap-2 sm:justify-end">
-          <Label
-            htmlFor={gridSafeZoneToggleId}
-            className="text-sm font-normal text-muted-foreground"
-          >
-            {t('gridSafeZoneToggle')}
+          <Label htmlFor={safeZoneToggleId} className="text-sm font-normal text-muted-foreground">
+            {t('safeZoneToggle')}
           </Label>
           <Switch
-            id={gridSafeZoneToggleId}
-            checked={showGridSafeZone}
-            onCheckedChange={setShowGridSafeZone}
-            aria-describedby={`${gridSafeZoneToggleId}-description`}
+            id={safeZoneToggleId}
+            checked={showSafeZone}
+            onCheckedChange={setShowSafeZone}
+            aria-describedby={`${safeZoneToggleId}-description`}
           />
-          <span id={`${gridSafeZoneToggleId}-description`} className="sr-only">
-            {t('gridSafeZoneDescription', {
-              insetX: INSTAGRAM_GRID_THUMBNAIL_INSET_X,
-              insetY: INSTAGRAM_GRID_THUMBNAIL_INSET_Y,
+          <span id={`${safeZoneToggleId}-description`} className="sr-only">
+            {t('safeZoneDescription', {
+              insetX: clampedInsetXPx,
+              insetY: clampedInsetYPx,
             })}
           </span>
         </div>

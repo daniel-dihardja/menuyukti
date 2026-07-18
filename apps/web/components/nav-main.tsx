@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  CalendarDays,
   ChevronRight,
   FileUp,
   Image,
@@ -11,6 +12,7 @@ import {
   Sparkles,
   SquarePen,
   Store,
+  Users,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -74,6 +76,12 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <SquarePen className="w-4 h-4" />,
   },
   {
+    key: 'calendar',
+    labelKey: 'calendar',
+    href: routes.calendar,
+    icon: <CalendarDays className="w-4 h-4" />,
+  },
+  {
     key: 'workflows',
     labelKey: 'workflows',
     href: routes.workflows.list,
@@ -97,6 +105,13 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'printShop',
     href: routes.shop,
     icon: <Store className="w-4 h-4" />,
+    separatorBefore: true,
+  },
+  {
+    key: 'team',
+    labelKey: 'team',
+    href: routes.profileTeam,
+    icon: <Users className="w-4 h-4" />,
     separatorBefore: true,
   },
 ]

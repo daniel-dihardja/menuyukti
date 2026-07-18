@@ -479,10 +479,11 @@ def _apply_patch_operation(
 async def get_workflow_overview(
     config: Annotated[RunnableConfig, InjectedToolArg()],
 ) -> str:
-    """List milestones in the current workflow: id, name, presetId, and short help summary.
+    """Refresh the workflow milestone list: id, name, presetId, and short help summary.
 
-    Call first when the user asks about another milestone, compares milestones, pipeline order,
-    or when the target milestone is ambiguous. Then fetch details with get_milestone_* tools."""
+    Prefer the Workflow milestone catalog already in the system message. Call this only when that
+    catalog is missing/unavailable, or the user implies the pipeline changed and you need a fresh
+    list. Then fetch details with get_milestone_* tools using ids from the result."""
     c = (config or {}).get("configurable") or {}
     workflow_id = c.get("workflow_id")
     location_id = c.get("location_id")
@@ -522,8 +523,8 @@ async def get_milestone_data(
 ) -> str:
     """Load a milestone row: goal, input, pass criteria, eval result, and preset/structured data.
 
-    Omit milestone_id for the UI-selected milestone; pass an id from get_workflow_overview
-    to read any milestone in the current workflow."""
+    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow catalog
+    (or get_workflow_overview) to read any milestone in the current workflow."""
     target_id, node, err = await _load_milestone_for_chat(config, milestone_id=milestone_id)
     if err is not None or node is None or target_id is None:
         return err or "Error: milestone not found."
@@ -535,7 +536,9 @@ async def get_milestone_input_json(
     milestone_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Load milestoneInput JSON for the selected milestone or a specific workflow milestone id."""
+    """Load milestoneInput JSON for the selected milestone or a specific workflow milestone id.
+
+    Prefer ids from the injected workflow catalog when loading a non-selected milestone."""
     target_id, node, err = await _load_milestone_for_chat(
         config,
         milestone_id=milestone_id,
@@ -552,7 +555,9 @@ async def get_milestone_preset_data_json(
     milestone_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Load milestonePresetData JSON for the selected milestone or a specific workflow milestone id."""
+    """Load milestonePresetData JSON for the selected milestone or a specific workflow milestone id.
+
+    Prefer ids from the injected workflow catalog when loading a non-selected milestone."""
     target_id, node, err = await _load_milestone_for_chat(
         config,
         milestone_id=milestone_id,
@@ -590,8 +595,9 @@ async def get_milestone_help(
 ) -> str:
     """Return Help-tab guidance (what it does + optional input) for a workflow milestone.
 
-    Omit milestone_id for the UI-selected milestone. Call when the user asks for milestone help
-    or sends exactly ``/help`` (selected milestone only)."""
+    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow catalog
+    when needed. Call when the user asks for milestone help or sends exactly ``/help``
+    (selected milestone only)."""
     target_id, node, err = await _load_milestone_for_chat(
         config,
         milestone_id=milestone_id,

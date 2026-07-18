@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  clampQualityForModel,
+  formatAspectCss,
+  isQualityAvailable,
+  resolveLeonardoOutputDimensions,
+  snapToNearestLeonardoPair,
+} from '@/lib/posts/leonardo-post-dimensions'
+import {
   DEFAULT_LEONARDO_POST_MODEL,
   getLeonardoPostModelMessageKey,
   isLeonardoPostModelId,
@@ -54,5 +61,107 @@ describe('snapLeonardoPostDimension', () => {
   it('uses width vs height lists for Nano Banana 2', () => {
     expect(snapLeonardoPostDimension('nano-banana-2', 670, 'width')).toBe(768)
     expect(snapLeonardoPostDimension('nano-banana-2', 670, 'height')).toBe(672)
+  })
+})
+
+describe('resolveLeonardoOutputDimensions', () => {
+  it('uses Nano Banana 2 documented pairs for each format at Standard', () => {
+    expect(
+      resolveLeonardoOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'feed',
+        quality: 'standard',
+      }),
+    ).toEqual({ width: 928, height: 1152 })
+    expect(
+      resolveLeonardoOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'tall',
+        quality: 'standard',
+      }),
+    ).toEqual({ width: 896, height: 1200 })
+    expect(
+      resolveLeonardoOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'square',
+        quality: 'standard',
+      }),
+    ).toEqual({ width: 1024, height: 1024 })
+    expect(
+      resolveLeonardoOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'story',
+        quality: 'standard',
+      }),
+    ).toEqual({ width: 768, height: 1376 })
+    expect(
+      resolveLeonardoOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'wide',
+        quality: 'standard',
+      }),
+    ).toEqual({ width: 1376, height: 768 })
+  })
+
+  it('uses High and Ultra tiers for Nano Banana 2 Feed', () => {
+    expect(
+      resolveLeonardoOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'feed',
+        quality: 'high',
+      }),
+    ).toEqual({ width: 1856, height: 2304 })
+    expect(
+      resolveLeonardoOutputDimensions({
+        model: 'nano-banana-2',
+        format: 'feed',
+        quality: 'ultra',
+      }),
+    ).toEqual({ width: 3712, height: 4608 })
+  })
+
+  it('clamps Ultra to High for Flash', () => {
+    expect(isQualityAvailable('gemini-2.5-flash-image', 'ultra')).toBe(false)
+    expect(clampQualityForModel('gemini-2.5-flash-image', 'ultra')).toBe('high')
+    const ultra = resolveLeonardoOutputDimensions({
+      model: 'gemini-2.5-flash-image',
+      format: 'square',
+      quality: 'ultra',
+    })
+    const high = resolveLeonardoOutputDimensions({
+      model: 'gemini-2.5-flash-image',
+      format: 'square',
+      quality: 'high',
+    })
+    expect(ultra).toEqual(high)
+    expect(ultra.width).toBeLessThanOrEqual(1344)
+    expect(ultra.height).toBeLessThanOrEqual(1344)
+  })
+})
+
+describe('snapToNearestLeonardoPair', () => {
+  it('preserves aspect ratio better than independent axis snaps', () => {
+    // 4:5 target that would mismatch if snapped independently on Nano Banana 2
+    const pair = snapToNearestLeonardoPair('nano-banana-2', 928, 1152)
+    expect(pair).toEqual({ width: 928, height: 1152 })
+  })
+
+  it('finds a close pair for arbitrary template dims', () => {
+    const pair = snapToNearestLeonardoPair('nano-banana-2', 1000, 1500)
+    expect(pair.width / pair.height).toBeCloseTo(2 / 3, 1)
+  })
+})
+
+describe('formatAspectCss', () => {
+  it('returns CSS ratios for explicit formats', () => {
+    expect(formatAspectCss('feed')).toBe('4 / 5')
+    expect(formatAspectCss('tall')).toBe('3 / 4')
+    expect(formatAspectCss('square')).toBe('1 / 1')
+    expect(formatAspectCss('story')).toBe('9 / 16')
+    expect(formatAspectCss('wide')).toBe('16 / 9')
+  })
+
+  it('uses template dims for match-layout when provided', () => {
+    expect(formatAspectCss('match-layout', { width: 1200, height: 800 })).toBe('1200 / 800')
   })
 })

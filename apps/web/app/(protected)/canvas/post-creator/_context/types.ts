@@ -4,6 +4,7 @@ import type {
   PostCreatorPage,
   PostCreatorReferenceImage,
 } from '@/lib/posts/post-creator-types'
+import type { PostImageFormatId, PostImageQualityId } from '@/lib/posts/leonardo-post-dimensions'
 import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorPreviewSource } from '@/lib/posts/post-creator-utils'
 
@@ -28,7 +29,15 @@ export type PostCreatorState = {
   referenceImages: PostCreatorReferenceImage[]
   templateImage: PostCreatorReferenceImage | null
   generationModel: LeonardoPostModelId
+  imageFormat: PostImageFormatId
+  imageQuality: PostImageQualityId
+  safeZoneInsetXPx: number
+  safeZoneInsetYPx: number
+  solidBackgroundEnabled: boolean
+  solidBackgroundColor: string
   previewSource: PostCreatorPreviewSource
+  locationId: number | null
+  styleId: number | null
   isGenerating: boolean
   isCommittingPostImage: boolean
   isDeletingVersion: boolean
@@ -56,6 +65,14 @@ export type PostCreatorActions = {
   selectTemplate: (design: { name: string; url: string }) => void
   clearTemplate: () => void
   setGenerationModel: (model: LeonardoPostModelId) => void
+  setImageFormat: (format: PostImageFormatId) => void
+  setImageQuality: (quality: PostImageQualityId) => void
+  setSafeZoneInsetXPx: (px: number) => void
+  setSafeZoneInsetYPx: (px: number) => void
+  setSolidBackgroundEnabled: (enabled: boolean) => void
+  setSolidBackgroundColor: (color: string) => void
+  setLocationId: (locationId: number | null) => void
+  setStyleId: (styleId: number | null) => void
 }
 
 export type PostCreatorMeta = {

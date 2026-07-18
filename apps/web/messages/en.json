@@ -38,6 +38,7 @@
   "accountMenu": {
     "triggerAria": "Open account menu",
     "profile": "Profile",
+    "team": "Team",
     "accountSettings": "Account settings",
     "signOut": "Sign out"
   },
@@ -576,6 +577,7 @@
     "branches": "Locations",
     "reports": "Reports",
     "workflows": "Workflow",
+    "calendar": "Calendar",
     "skills": "Skills & tools",
     "studio": "Studio",
     "posts": "IG Studio",
@@ -584,6 +586,7 @@
     "igReels": "IG Reels",
     "igStories": "IG Stories",
     "printShop": "Print shop",
+    "team": "Team",
     "agents": "Advisor",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
@@ -683,6 +686,60 @@
         }
       }
     },
+    "calendar": {
+      "title": "Calendar",
+      "description": "Your restaurant content schedule by month.",
+      "branchLabel": "Location",
+      "branchPlaceholder": "Select a location",
+      "branchDescription": "Entries will be scoped to this location when scheduling is connected.",
+      "selectBranch": "Select a location to view the schedule.",
+      "loading": "Loading schedule…",
+      "monthPrevious": "Previous month",
+      "monthNext": "Next month",
+      "today": "Today",
+      "empty": {
+        "title": "No schedule yet",
+        "description": "Scheduled posts will appear here once they are published to the calendar."
+      },
+      "noBranches": {
+        "title": "Create a location first",
+        "description": "Add a location before viewing the calendar schedule.",
+        "cta": "Add location"
+      },
+      "createEntry": {
+        "title": "New calendar entry",
+        "editTitle": "Edit calendar entry",
+        "description": "Schedule an event for {date}.",
+        "editDescription": "Update the event on {date}.",
+        "titleLabel": "Title",
+        "titlePlaceholder": "e.g. Team offsite",
+        "titleRequired": "Enter a title.",
+        "timeLabel": "Time",
+        "timeRequired": "Enter a valid time.",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Optional notes for this entry…",
+        "descriptionHint": "Visible to your team; not published automatically.",
+        "mediaLabel": "Media",
+        "mediaEmpty": "No media attached yet.",
+        "mediaAttach": "Attach media",
+        "mediaRemove": "Remove media",
+        "mediaPickerTitle": "Attach media",
+        "mediaPickerDescription": "Choose files from your media library.",
+        "mediaLibraryEmpty": "No files in your media library yet.",
+        "mediaConfirm": "Attach ({count})",
+        "cancel": "Cancel",
+        "save": "Save entry",
+        "saveChanges": "Save changes",
+        "successToast": "Calendar entry created",
+        "updateSuccessToast": "Calendar entry updated",
+        "errorToast": "Could not save calendar entry",
+        "workflowSlotReadonly": "Workflow schedule slots can’t be edited here.",
+        "discardTitle": "Discard entry?",
+        "discardDescription": "You have unsaved changes. Close without saving?",
+        "discardKeepEditing": "Keep editing",
+        "discardConfirm": "Discard"
+      }
+    },
     "printOrders": {
       "title": "Print fulfillment",
       "pageLoadingTitle": "Loading fulfillment…",
@@ -718,7 +775,15 @@
       "title": "Generation settings",
       "format": "Format",
       "model": "Model",
-      "modelValue": "Leonardo"
+      "modelValue": "Leonardo",
+      "safeZoneTitle": "Safe zone guide",
+      "safeZoneHelper": "Preview margins only — they are not applied to the generated image. Toggle the guide in the preview footer.",
+      "safeZoneHorizontal": "Horizontal gap (px)",
+      "safeZoneVertical": "Vertical gap (px)",
+      "solidBackgroundTitle": "Solid background canvas",
+      "solidBackgroundHelper": "When enabled and no layout or previous image is used, a flat color canvas at the current output size is sent as the first reference.",
+      "solidBackgroundToggle": "Use solid background",
+      "solidBackgroundColor": "Background color"
     },
     "history": {
       "emptyTitle": "No history here yet",
@@ -731,6 +796,21 @@
       "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder, Ref 3 → Ice Americano\n\nType @ to attach product photos in order.",
       "generate": "Generate image",
       "generating": "Generating…",
+      "location": {
+        "label": "Location",
+        "placeholder": "Select location",
+        "none": "No location",
+        "description": "Choose a location to apply one of its style packs."
+      },
+      "style": {
+        "label": "Style pack",
+        "placeholder": "Select style",
+        "none": "No style",
+        "defaultSuffix": "default",
+        "description": "Applied automatically to this generation — you don’t need to repeat style rules in the prompt.",
+        "needsLocation": "Select a location to choose a style pack.",
+        "loadError": "Failed to load style packs for this location."
+      },
       "template": {
         "label": "Layout template",
         "pick": "Choose template from Media",
@@ -757,6 +837,28 @@
           }
         }
       },
+      "format": {
+        "label": "Format",
+        "description": "Aspect ratio for this generation. Match layout follows the template size.",
+        "matchOverrideWarning": "Layout template is attached, but Format is not Match layout — output proportions may not match the template.",
+        "options": {
+          "feed": { "name": "Feed", "ratio": "4:5" },
+          "tall": { "name": "Tall", "ratio": "3:4" },
+          "square": { "name": "Square", "ratio": "1:1" },
+          "story": { "name": "Story", "ratio": "9:16" },
+          "wide": { "name": "Wide", "ratio": "16:9" },
+          "match-layout": { "name": "Match layout", "ratio": "Template" }
+        }
+      },
+      "quality": {
+        "label": "Quality",
+        "resolvedHint": "{width} × {height} · ~{cost}× cost for this model",
+        "options": {
+          "standard": { "name": "Standard" },
+          "high": { "name": "High" },
+          "ultra": { "name": "Ultra" }
+        }
+      },
       "picker": {
         "ariaLabel": "Reference photo picker",
         "empty": "No matching media. Upload one or add files in Media.",
@@ -779,6 +881,8 @@
         "referenceSummaryPreviousOnly": "Next generation: edit the image in preview.",
         "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummaryPreviousAndPhotos": "Next generation: image in preview + {count, plural, one {# checked photo} other {# checked photos}}.",
+        "referenceSummarySolidBackgroundOnly": "Next generation: solid background canvas ({color}).",
+        "referenceSummarySolidBackgroundAndPhotos": "Next generation: solid background ({color}) + {count, plural, one {# checked photo} other {# checked photos}}.",
         "tooManyReferences": "Too many references selected. Use at most 1 template and 5 checked product photos (6 total)."
       },
       "tip": {
@@ -790,11 +894,12 @@
       "ariaLabel": "Generated post image preview",
       "emptyTitle": "No post image yet",
       "emptyDescription": "Enter a prompt in the panel on the right and generate an image.",
-      "formatLabel": "Instagram Post (4:5)",
-      "dimensionsLabel": "Post size",
+      "formatLabel": "{format}",
+      "dimensionsLabel": "Output size",
       "dimensions": "{width} × {height}",
-      "gridSafeZoneToggle": "Grid thumbnail safe zone",
-      "gridSafeZoneDescription": "Shows where Instagram may crop portrait posts in profile grid thumbnails ({insetX}px from the left and right edges, {insetY}px from the top and bottom edges).",
+      "formatQualitySummary": "{format} · {quality} · {width} × {height}",
+      "safeZoneToggle": "Safe zone guide",
+      "safeZoneDescription": "Shows preview margins of {insetX}px from the left and right edges and {insetY}px from the top and bottom edges so you can check that important content stays inside the safe area.",
       "previousVersion": "Previous generated image",
       "nextVersion": "Next generated image",
       "versionIndicator": "{current} of {total}",
@@ -1245,7 +1350,7 @@
       "title": "Locations",
       "description": "Power analytics and Instagram campaigns for each venue. Configure basics here, then upload POS sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
-      "detailDescription": "Update location information and opening hours.",
+      "detailDescription": "Update location information, opening hours, and visual style packs.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -1380,6 +1485,66 @@
           "menuUrlPlaceholder": "https://yourvenue.com/menu",
           "googleMapsUrlLabel": "Google Maps / directions",
           "googleMapsUrlPlaceholder": "https://maps.google.com/?q=Your+Venue"
+        }
+      },
+      "styles": {
+        "title": "Style packs",
+        "description": "Define reusable visual styles with an example image and rules. Apply them when generating Instagram posts.",
+        "add": "Add style",
+        "createFromImage": "Create from image",
+        "createFromImageTitle": "New style from image",
+        "loading": "Loading styles…",
+        "empty": "No style packs yet. Add one to reuse a look across post generations.",
+        "defaultBadge": "Default",
+        "specBadge": "Style Spec",
+        "edit": "Edit style",
+        "delete": "Delete style",
+        "deleteConfirm": "Delete style \"{name}\"? This cannot be undone.",
+        "createTitle": "New style pack",
+        "editTitle": "Edit style pack",
+        "nameLabel": "Name",
+        "namePlaceholder": "Warm editorial lunch",
+        "rulesLabel": "Style rules",
+        "rulesPlaceholder": "Warm window light, soft shadows, natural food textures, muted earth tones. Avoid neon or cool blue casts.",
+        "baseRulesLabel": "Base rules",
+        "kindLabel": "Kind",
+        "kindTemplate": "Template (lock layout)",
+        "kindMood": "Mood (look only)",
+        "specPanelTitle": "Style Spec",
+        "controlsSectionTitle": "Controls",
+        "controlDefault": "Default: {value}",
+        "intentLabel": "Intent (optional)",
+        "intentPlaceholder": "Warm oat template; headline and product name optional; only cup is photo.",
+        "modelLabel": "Model",
+        "analyzeImage": "Analyze image",
+        "drafting": "Analyzing…",
+        "imageLabel": "Reference image",
+        "imagePick": "Choose from media",
+        "imagePickerAria": "Choose style reference image",
+        "imageEmpty": "No media yet. Upload photos in Media first.",
+        "imageRemove": "Remove reference image",
+        "imageFromMedia": "From media library",
+        "defaultLabel": "Use as default for this location",
+        "controls": {
+          "headline": "Headline",
+          "productName": "Product name",
+          "backgroundIllustration": "Background illustration"
+        },
+        "save": "Save style",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "toast": {
+          "loadError": "Failed to load style packs.",
+          "validation": "Name, rules, and a reference image are required.",
+          "imageRequired": "Choose a reference image first.",
+          "draftRequired": "Analyze the image before saving.",
+          "draftReady": "Style draft ready — review and save.",
+          "draftError": "Failed to analyze image.",
+          "created": "Style pack created.",
+          "updated": "Style pack updated.",
+          "deleted": "Style pack deleted.",
+          "saveError": "Failed to save style pack.",
+          "deleteError": "Failed to delete style pack."
         }
       }
     },
@@ -1596,11 +1761,14 @@
         "creatingMilestone": "Creating…",
         "milestonePreset": {
           "noneLabel": "Empty milestone",
-          "selectPlaceholder": "Milestones",
-          "selectAriaLabel": "Milestone template",
+          "noneSummary": "Start from a blank card and fill in the goal, input, and data yourself.",
+          "addAriaLabel": "Add milestone",
+          "dialogTitle": "Add a milestone",
+          "dialogDescription": "Choose a template to prefill the milestone, or start empty.",
           "dates": {
             "label": "Dates",
             "title": "Dates",
+            "summary": "Set the campaign date window and list public holidays for this location.",
             "goal": "Resolve the campaign date window and list public holidays between startDate and endDate for this location.",
             "criterionStartDate": "**startDate** is present in the data and matches the selected input window.",
             "criterionEndDate": "**endDate** is present in the data and matches the selected input window.",
@@ -1609,6 +1777,7 @@
           "promotion_candidates": {
             "label": "Promotion candidates",
             "title": "Promotion candidates",
+            "summary": "Surface star and puzzle menu items by category from promotion-engineering signals.",
             "inputLabel": "Promotion candidate notes",
             "inputDescription": "Optional orientation notes for storytelling emphasis. Checked menu categories above scope which POS sections appear in results; leave all selected to include every category. List menu item names to exclude (one per line) in the ignored-items field.",
             "inputPlaceholder": "e.g. prioritize family bundles and lunch heroes this month…",
@@ -1619,6 +1788,7 @@
           "menu_tagger": {
             "label": "Menu tagger",
             "title": "Menu tagger",
+            "summary": "Tag promotion candidates with a fixed taxonomy for culinary and reel-oriented dimensions.",
             "inputLabel": "Menu tagger notes",
             "inputDescription": "Optional guidance for ambiguous dishes. The run reads prior Promotion Candidates milestone data and assigns fixed taxonomy tags to each star and puzzle item.",
             "inputPlaceholder": "e.g. treat bubble tea as drink; map regional dish names to rice vs noodle…",
@@ -1630,6 +1800,7 @@
           "menu_clusterer": {
             "label": "Menu clusterer",
             "title": "Menu clusterer",
+            "summary": "Group tagged menu items into categorical and creative clusters plus top-five lists.",
             "targetGroupCountLabel": "Number of menu clusters",
             "targetGroupCountDescription": "Optional. Leave empty to derive from tagged menu size (4–12 clusters, ~4 items per cluster). Set a value between 4 and 12 for more granular groupings on large menus.",
             "targetGroupCountPlaceholder": "Auto",
@@ -1647,6 +1818,7 @@
           "scheduler": {
             "label": "Scheduler",
             "title": "Scheduler",
+            "summary": "Place feed posts, Stories, and Reels on the calendar within the campaign window.",
             "inputLabel": "Scheduler notes",
             "inputDescription": "Optional guidance for scheduling emphasis. This step reads the campaign window from **dates** and business strategy from **restaurant_campaign_brief**.",
             "inputPlaceholder": "e.g. prioritize weekday lunch reels and holiday stories on public holidays from dates…",
@@ -1659,17 +1831,19 @@
           "culture_hooks": {
             "label": "Culture hooks",
             "title": "Culture hooks",
+            "summary": "Find non-food heritage and place topics that resonate with the local audience.",
             "inputLabel": "Culture hooks notes",
-            "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
-            "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone…",
-            "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not food or drink). These intersections should inspire Instagram feed posts, Stories, and Reels that attract potential new customers.",
-            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example suitable for a feed post, Story, or Reel.",
+            "inputDescription": "Optional direction for tone and emphasis. The run uses prior Campaign Brief data to infer heritage/origin places and topics the local audience would find interesting (non-food, non-drink).",
+            "inputPlaceholder": "e.g. prioritize Italian coastal towns and family travel nostalgia…",
+            "goal": "Use Campaign Brief data to infer the restaurant's concept/origin geography and the venue's local target audience, then list 3–5 non-food, non-drink heritage/place topics (regions, landmarks, place-tied rituals) that the audience would find interesting or share affinity with. These topics should inspire Instagram feed posts, Stories, and Reels that attract potential new customers.",
+            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example suitable for a feed post, Story, or Reel. Prefer heritage/origin place topics when origin is inferable.",
             "criterionNonFood": "Intersections are **not food- or drink-centric** (no dishes, coffee, beverages, recipes, or flavor-led angles).",
-            "criterionAudienceConceptInferred": "Data clearly states **locationConcept** and **targetAudience**, both inferred from Campaign Brief context."
+            "criterionAudienceConceptInferred": "Data clearly states **locationConcept** (concept and inferred origin geography when available) and **targetAudience**, both inferred from Campaign Brief context."
           },
           "ig_profile": {
             "label": "IG Profile",
             "title": "IG Profile",
+            "summary": "Suggest Instagram usernames and bio variations from the campaign brief.",
             "inputLabel": "IG Profile notes",
             "inputDescription": "Optional direction for username style and bio emphasis. The run uses only prior Campaign Brief data to generate Instagram profile suggestions.",
             "inputPlaceholder": "e.g. prefer short handles; emphasize reservations and lunch service…",
@@ -1682,6 +1856,7 @@
           "ig_plan": {
             "label": "IG Plan",
             "title": "IG Plan",
+            "summary": "Build a weekly Instagram slot strategy from the brief and venue demand signals.",
             "inputLabel": "IG Plan notes",
             "inputDescription": "Optional guidance for weekly cadence or marketing emphasis. Requires a prior **Campaign Brief** milestone with saved data. The run also fetches venue slot demand signals and menu engineering portfolio distribution from the workflow-pinned analytics run.",
             "inputPlaceholder": "e.g. push afternoon traffic Wed–Fri; protect Friday dinner…",
@@ -1694,6 +1869,7 @@
           "ig_menu_picker": {
             "label": "IG Menu Picker",
             "title": "IG Menu Picker",
+            "summary": "Attach 1–3 menu items to each selected IG Plan slot with a short rationale.",
             "inputLabel": "IG Menu Picker notes",
             "inputDescription": "Select which IG Plan slots to process and add optional guidance for menu emphasis. The run uses the workflow-pinned sales report for slot menu candidates.",
             "inputPlaceholder": "e.g. favor vegetarian stars for weekday lunch slots…",
@@ -1705,6 +1881,7 @@
           "ig_format": {
             "label": "IG Format",
             "title": "IG Format",
+            "summary": "Assign reel, post, carousel, or story formats to menu-picker slots.",
             "inputLabel": "IG Format notes",
             "inputDescription": "Optional guidance for format emphasis. Menu picker entries are read-only — the run assigns a format to every prior slot with menu items.",
             "inputPlaceholder": "e.g. favor reels for aggressively_grow slots; use carousels for multi-dish discovery…",
@@ -1717,6 +1894,7 @@
           "ig_text": {
             "label": "IG Text",
             "title": "IG Text",
+            "summary": "Generate Instagram copy fields for each formatted slot from the campaign brief.",
             "inputLabel": "IG Text notes",
             "inputDescription": "Optional guidance for copy tone and emphasis. IG Format entries are read-only — the run generates text fields per slot using Campaign Brief orientation.",
             "inputPlaceholder": "e.g. keep headlines short in Bahasa Indonesia; playful tone for weekend slots…",
@@ -1730,6 +1908,7 @@
           "restaurant_campaign_brief": {
             "label": "Campaign brief",
             "title": "Campaign brief",
+            "summary": "Build a campaign brief with strategy, audience, messaging, and measurement guardrails.",
             "inputLabel": "Campaign brief notes",
             "inputDescription": "Optional context for generation (style, positioning, constraints). Example: during a soccer World Cup period, note campaign priorities or tone for match days. Included with location and analytics data when you run or generate the brief.",
             "inputPlaceholder": "e.g. Family-friendly trattoria tone; highlight lunch and vegetarian options…",

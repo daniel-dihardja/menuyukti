@@ -1,28 +1,35 @@
-import {
-  POST_IMAGE_HEIGHT,
-  POST_IMAGE_WIDTH,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
 import type { OutputDimensions } from '@/lib/posts/build-instagram-post-prompt'
-import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
+import {
+  DEFAULT_POST_IMAGE_FORMAT,
+  DEFAULT_POST_IMAGE_QUALITY,
+  resolveLeonardoOutputDimensions,
+  type PostImageFormatId,
+  type PostImageQualityId,
+} from '@/lib/posts/leonardo-post-dimensions'
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  type LeonardoPostModelId,
+} from '@/lib/posts/leonardo-post-models'
 
 import type { PostCreatorImageVersion, PostCreatorPage } from './post-creator-types'
 
 /**
- * Resolve Leonardo output size: template wins for composites; otherwise keep the
- * previous filled result's pixel size so square (or other) edits aren't forced into 4:5.
+ * Resolve Leonardo output size from format + quality.
+ * Match-layout uses template dims snapped to a valid model pair.
+ * Explicit format always owns the canvas (previous-result is reference-only).
  */
 export function resolveGenerationOutputDimensions(input: {
-  mode: GenerationMode
+  model?: LeonardoPostModelId
+  format?: PostImageFormatId
+  quality?: PostImageQualityId
   templateDimensions?: OutputDimensions
-  previousResultDimensions?: OutputDimensions
 }): OutputDimensions {
-  if (input.mode === 'template-composite' && input.templateDimensions) {
-    return input.templateDimensions
-  }
-  if (input.previousResultDimensions) {
-    return input.previousResultDimensions
-  }
-  return { width: POST_IMAGE_WIDTH, height: POST_IMAGE_HEIGHT }
+  return resolveLeonardoOutputDimensions({
+    model: input.model ?? DEFAULT_LEONARDO_POST_MODEL,
+    format: input.format ?? DEFAULT_POST_IMAGE_FORMAT,
+    quality: input.quality ?? DEFAULT_POST_IMAGE_QUALITY,
+    templateDimensions: input.templateDimensions,
+  })
 }
 
 export function resolvePageImageVersions(page: {

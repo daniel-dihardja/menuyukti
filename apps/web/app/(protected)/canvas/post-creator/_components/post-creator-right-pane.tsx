@@ -4,20 +4,29 @@ import { useTranslations } from 'next-intl'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
-import { POST_IMAGE_HEIGHT, POST_IMAGE_WIDTH } from './post-creator-constants'
+import { resolveLeonardoOutputDimensions } from '@/lib/posts/leonardo-post-dimensions'
+
+import { usePostCreator } from '../_context/use-post-creator'
 import { PostCreatorPromptPane } from './post-creator-prompt-pane'
+import { PostCreatorSafeZoneSettings } from './post-creator-safe-zone-settings'
+import { PostCreatorSolidBackgroundSettings } from './post-creator-solid-background-settings'
 
 export function PostCreatorRightPane() {
   const tTabs = useTranslations('postCreator.tabs')
   const tSettings = useTranslations('postCreator.settings')
   const tPreview = useTranslations('postCreator.preview')
+  const tPrompt = useTranslations('postCreator.prompt')
   const tPane = useTranslations('postCreator')
+  const { state } = usePostCreator()
+  const { imageFormat, imageQuality, generationModel } = state
 
-  const formatLabel = tPreview('formatLabel')
-  const dimensions = tPreview('dimensions', {
-    width: POST_IMAGE_WIDTH,
-    height: POST_IMAGE_HEIGHT,
+  const resolved = resolveLeonardoOutputDimensions({
+    model: generationModel,
+    format: imageFormat,
+    quality: imageQuality,
   })
+  const formatName = tPrompt(`format.options.${imageFormat}.name`)
+  const qualityName = tPrompt(`quality.options.${imageQuality}.name`)
 
   return (
     <section
@@ -45,7 +54,12 @@ export function PostCreatorRightPane() {
               <div className="flex flex-col gap-0.5">
                 <dt className="text-muted-foreground">{tSettings('format')}</dt>
                 <dd className="font-medium">
-                  {formatLabel} · {dimensions}
+                  {tPreview('formatQualitySummary', {
+                    format: formatName,
+                    quality: qualityName,
+                    width: resolved.width,
+                    height: resolved.height,
+                  })}
                 </dd>
               </div>
               <div className="flex flex-col gap-0.5">
@@ -53,6 +67,8 @@ export function PostCreatorRightPane() {
                 <dd className="font-medium">{tSettings('modelValue')}</dd>
               </div>
             </dl>
+            <PostCreatorSolidBackgroundSettings />
+            <PostCreatorSafeZoneSettings />
           </div>
         </TabsContent>
       </Tabs>

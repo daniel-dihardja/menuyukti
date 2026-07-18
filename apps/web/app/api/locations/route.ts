@@ -8,14 +8,38 @@ import { graphqlLocationsDataCacheTag, revalidateTagAfterMutation } from '@/lib/
 import {
   CREATE_LOCATION_MUTATION,
   CREATE_WORKSPACE_MUTATION,
+  LOCATIONS_LIST_QUERY,
   MY_WORKSPACE_QUERY,
   UPDATE_LOCATION_MUTATION,
   type CreateLocationData,
   type CreateWorkspaceData,
+  type LocationsListData,
   type MyWorkspaceData,
   type UpdateLocationData,
 } from '@/lib/graphql/queries'
 import { openingHoursWeekToMutationInput } from './schema'
+
+export async function GET() {
+  try {
+    await connection()
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated || !userId) {
+      return apiError('UNAUTHORIZED', 'Unauthorized', 401)
+    }
+
+    const data = await graphqlQuery<LocationsListData>(LOCATIONS_LIST_QUERY, { first: 100 }, userId)
+
+    return NextResponse.json({
+      locations: data.locations.map((loc) => ({
+        id: Number(loc.id),
+        name: loc.name,
+      })),
+    })
+  } catch (error) {
+    console.error(error)
+    return apiErrorFromUnknown(error, 'Failed to list locations')
+  }
+}
 
 export async function POST(req: Request) {
   try {

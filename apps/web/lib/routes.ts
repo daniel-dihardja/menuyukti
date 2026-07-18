@@ -7,6 +7,7 @@
 export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflow',
+  '/calendar',
   '/canvas',
   '/ig-studio',
   '/media',
@@ -66,6 +67,11 @@ export const routes = {
     reels: '/content/reels',
     igStories: '/content/igstories',
   },
+
+  /** Owner-facing schedule aggregated from scheduler milestones. */
+  calendar: '/calendar',
+  calendarWithLocation: (locationId: string | number) =>
+    `/calendar?locationId=${encodeURIComponent(String(locationId))}`,
 
   /** AI studio (brand library + generation). */
   canvas: '/canvas',

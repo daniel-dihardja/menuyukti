@@ -7,6 +7,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
+import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
@@ -24,10 +25,10 @@ export type SchedulerCalendarMonthListProps = {
   windowStart: string
   windowEnd: string
   locale: string
-  slots?: SchedulerMilestoneData['slots']
+  slots?: SchedulerSlot[]
   publicHolidays?: SchedulerMilestoneData['publicHolidays']
   className?: string
-  onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
+  onSlotClick?: (slot: SchedulerSlot) => void
 }
 
 function formatDayHeader(isoDate: string, locale: string): { weekday: string; day: string } {
