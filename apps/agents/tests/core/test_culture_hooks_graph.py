@@ -237,8 +237,8 @@ def _sample_campaign_brief() -> dict:
 def test_culture_hooks_search_queries_from_brief() -> None:
     queries = _culture_hooks_search_queries(_sample_campaign_brief())
     assert len(queries) == 2
-    assert "Italian places landmarks culture popular with people in Germany" == queries[0]
-    assert "Italian travel culture Instagram Munich Germany" == queries[1]
+    assert queries[0] == "Italian places landmarks culture popular with people in Germany"
+    assert queries[1] == "Italian travel culture Instagram Munich Germany"
 
 
 def test_culture_hooks_search_queries_fallback_without_origin() -> None:
@@ -258,8 +258,8 @@ def test_culture_hooks_search_queries_fallback_without_origin() -> None:
     }
     queries = _culture_hooks_search_queries(brief)
     assert len(queries) == 2
-    assert "lifestyle subcultures Amsterdam Netherlands Instagram" == queries[0]
-    assert "creative class interests Amsterdam Netherlands" == queries[1]
+    assert queries[0] == "lifestyle subcultures Amsterdam Netherlands Instagram"
+    assert queries[1] == "creative class interests Amsterdam Netherlands"
 
 
 @pytest.mark.asyncio
