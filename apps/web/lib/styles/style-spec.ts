@@ -1,94 +1,239 @@
 import { z } from 'zod'
 
-/** Fixed v1 control keys — LLM and overrides cannot invent others. */
-export const STYLE_SPEC_CONTROL_KEYS = [
-  'headline',
-  'productName',
-  'backgroundIllustration',
-] as const
+/** Property keys: camelCase identifiers. */
+export const STYLE_SPEC_PROPERTY_KEY_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]*$/
 
-export type StyleSpecControlKey = (typeof STYLE_SPEC_CONTROL_KEYS)[number]
+export const STYLE_SPEC_MAX_PROPERTIES = 30
 
-const controlParamSchema = z.object({
+const propertyParamSchema = z.object({
   type: z.literal('string'),
   requiredWhen: z.string().min(1).nullish(),
   description: z.string().nullish(),
 })
 
-export const styleControlDefSchema = z.object({
+const enumPropertyDefSchema = z.object({
   type: z.literal('enum'),
+  label: z.string().min(1).nullish(),
+  description: z.string().nullish(),
   values: z.array(z.string().min(1)).min(1),
   default: z.string().min(1),
-  description: z.string().nullish(),
-  params: z.record(z.string(), controlParamSchema).nullish(),
+  params: z.record(z.string(), propertyParamSchema).nullish(),
   instructions: z.record(z.string(), z.string().min(1)),
 })
 
-export type StyleControlDef = z.infer<typeof styleControlDefSchema>
+const booleanPropertyDefSchema = z.object({
+  type: z.literal('boolean'),
+  label: z.string().min(1).nullish(),
+  description: z.string().nullish(),
+  default: z.boolean(),
+  instructions: z.object({
+    true: z.string().min(1),
+    false: z.string().min(1),
+  }),
+})
 
-export const styleSpecSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    kind: z.enum(['template', 'mood']),
-    baseRules: z.array(z.string().min(1)).min(1).max(40),
-    controls: z.object({
-      headline: styleControlDefSchema,
-      productName: styleControlDefSchema,
-      backgroundIllustration: styleControlDefSchema,
-    }),
-    defaults: z.object({
-      headline: z.string().min(1),
-      productName: z.string().min(1),
-      backgroundIllustration: z.string().min(1),
-    }),
-  })
-  .superRefine((spec, ctx) => {
-    for (const key of STYLE_SPEC_CONTROL_KEYS) {
-      const control = spec.controls[key]
-      if (!control.values.includes(control.default)) {
+const numberPropertyDefSchema = z.object({
+  type: z.literal('number'),
+  label: z.string().min(1).nullish(),
+  description: z.string().nullish(),
+  default: z.number(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  instruction: z.string().min(1),
+})
+
+const textPropertyDefSchema = z.object({
+  type: z.literal('text'),
+  label: z.string().min(1).nullish(),
+  description: z.string().nullish(),
+  default: z.string(),
+  instruction: z.string().min(1),
+})
+
+export const propertyDefSchema = z.discriminatedUnion('type', [
+  enumPropertyDefSchema,
+  booleanPropertyDefSchema,
+  numberPropertyDefSchema,
+  textPropertyDefSchema,
+])
+
+export type PropertyDef = z.infer<typeof propertyDefSchema>
+export type EnumPropertyDef = z.infer<typeof enumPropertyDefSchema>
+
+const styleSpecV2BaseSchema = z.object({
+  schemaVersion: z.literal(2),
+  kind: z.enum(['template', 'mood']),
+  baseRules: z.array(z.string().min(1)).min(1).max(40),
+  properties: z.record(z.string(), propertyDefSchema),
+})
+
+function refineStyleSpecV2(
+  spec: z.infer<typeof styleSpecV2BaseSchema>,
+  ctx: z.RefinementCtx,
+): void {
+  const keys = Object.keys(spec.properties)
+  if (keys.length < 1) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'properties must contain at least one property',
+      path: ['properties'],
+    })
+  }
+  if (keys.length > STYLE_SPEC_MAX_PROPERTIES) {
+    ctx.addIssue({
+      code: 'custom',
+      message: `properties must have at most ${STYLE_SPEC_MAX_PROPERTIES} entries`,
+      path: ['properties'],
+    })
+  }
+
+  for (const key of keys) {
+    if (!STYLE_SPEC_PROPERTY_KEY_PATTERN.test(key)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Invalid property key ${JSON.stringify(key)}`,
+        path: ['properties', key],
+      })
+      continue
+    }
+
+    const prop = spec.properties[key]!
+    if (prop.type === 'enum') {
+      if (!prop.values.includes(prop.default)) {
         ctx.addIssue({
           code: 'custom',
-          message: `controls.${key}.default must be one of values`,
-          path: ['controls', key, 'default'],
+          message: `properties.${key}.default must be one of values`,
+          path: ['properties', key, 'default'],
         })
       }
-      const defaultValue = spec.defaults[key]
-      if (!control.values.includes(defaultValue)) {
-        ctx.addIssue({
-          code: 'custom',
-          message: `defaults.${key} must be one of controls.${key}.values`,
-          path: ['defaults', key],
-        })
-      }
-      for (const value of control.values) {
-        if (!control.instructions[value]?.trim()) {
+      for (const value of prop.values) {
+        if (!prop.instructions[value]?.trim()) {
           ctx.addIssue({
             code: 'custom',
-            message: `Missing instructions for ${key}=${value}`,
-            path: ['controls', key, 'instructions', value],
+            message: `Missing instruction for ${key}=${value}`,
+            path: ['properties', key, 'instructions', value],
           })
         }
       }
     }
-  })
+
+    if (prop.type === 'number') {
+      if (prop.min != null && prop.default < prop.min) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `properties.${key}.default must be >= min`,
+          path: ['properties', key, 'default'],
+        })
+      }
+      if (prop.max != null && prop.default > prop.max) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `properties.${key}.default must be <= max`,
+          path: ['properties', key, 'default'],
+        })
+      }
+      if (prop.min != null && prop.max != null && prop.min > prop.max) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `properties.${key}.min must be <= max`,
+          path: ['properties', key, 'min'],
+        })
+      }
+    }
+  }
+}
+
+export const styleSpecSchema = styleSpecV2BaseSchema.superRefine(refineStyleSpecV2)
 
 export type StyleSpec = z.infer<typeof styleSpecSchema>
 
-export type StyleControlOverride = {
-  value: string
-  text?: string
-  notes?: string
+// --- v1 (read-time migration only) ---
+
+const styleControlDefV1Schema = z.object({
+  type: z.literal('enum'),
+  values: z.array(z.string().min(1)).min(1),
+  default: z.string().min(1),
+  description: z.string().nullish(),
+  params: z.record(z.string(), propertyParamSchema).nullish(),
+  instructions: z.record(z.string(), z.string().min(1)),
+})
+
+const styleSpecV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  kind: z.enum(['template', 'mood']),
+  baseRules: z.array(z.string().min(1)).min(1).max(40),
+  controls: z.record(z.string(), styleControlDefV1Schema),
+  defaults: z.record(z.string(), z.string().min(1)),
+})
+
+export type StyleSpecV1 = z.infer<typeof styleSpecV1Schema>
+
+/** Migrate v1 controls/defaults to v2 properties (enum-only). */
+export function migrateStyleSpecV1ToV2(v1: StyleSpecV1): StyleSpec {
+  const properties: Record<string, EnumPropertyDef> = {}
+
+  for (const [key, control] of Object.entries(v1.controls)) {
+    if (!STYLE_SPEC_PROPERTY_KEY_PATTERN.test(key)) continue
+    const defaultValue =
+      v1.defaults[key] && control.values.includes(v1.defaults[key]!)
+        ? v1.defaults[key]!
+        : control.default
+
+    properties[key] = {
+      type: 'enum',
+      values: control.values,
+      default: defaultValue,
+      instructions: control.instructions,
+      ...(control.description ? { description: control.description } : {}),
+      ...(control.params ? { params: control.params } : {}),
+    }
+  }
+
+  const migrated: StyleSpec = {
+    schemaVersion: 2,
+    kind: v1.kind,
+    baseRules: v1.baseRules,
+    properties,
+  }
+
+  const parsed = styleSpecSchema.safeParse(migrated)
+  if (!parsed.success) {
+    throw new Error(`v1 migration produced invalid v2 spec: ${parsed.error.message}`)
+  }
+  return parsed.data
 }
 
-export type StyleControlOverrides = Partial<Record<StyleSpecControlKey, StyleControlOverride>>
+function coerceInputToV2Candidate(input: unknown): unknown {
+  if (!input || typeof input !== 'object') return input
+  const raw = input as Record<string, unknown>
+  const version = raw.schemaVersion === '1' ? 1 : raw.schemaVersion === '2' ? 2 : raw.schemaVersion
 
-export type ParseStyleControlOverridesResult = {
-  overrides: StyleControlOverrides
+  if (version === 1) {
+    const v1Parsed = styleSpecV1Schema.safeParse(input)
+    if (v1Parsed.success) {
+      return migrateStyleSpecV1ToV2(v1Parsed.data)
+    }
+  }
+
+  return input
+}
+
+// --- Overrides ---
+
+export type PropertyOverride = {
+  value: string
+  params?: Record<string, string>
+}
+
+export type PropertyOverrides = Partial<Record<string, PropertyOverride>>
+
+export type ParsePropertyOverridesResult = {
+  overrides: PropertyOverrides
   cleanedPrompt: string
 }
 
-const CONTROL_TAG_RE =
-  /\[(headline|productName|backgroundIllustration)\s*=\s*([^\s\]]+)((?:\s+\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s\]]+))*)\s*\]/gi
+const PROPERTY_TAG_RE =
+  /\[([a-zA-Z][a-zA-Z0-9_]*)\s*=\s*([^\s\]]+)((?:\s+\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s\]]+))*)\s*\]/gi
 
 const ATTR_RE = /(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s\]]+))/g
 
@@ -97,23 +242,22 @@ function parseAttrs(raw: string): Record<string, string> {
   let match: RegExpExecArray | null
   ATTR_RE.lastIndex = 0
   while ((match = ATTR_RE.exec(raw)) !== null) {
-    const key = match[1]!.toLowerCase()
-    out[key] = match[2] ?? match[3] ?? match[4] ?? ''
+    out[match[1]!] = match[2] ?? match[3] ?? match[4] ?? ''
   }
   return out
 }
 
-/** Parse `[headline=none]` / `[productName=custom text="COLD BREW"]` from creative direction. */
-export function parseStyleControlOverrides(prompt: string): ParseStyleControlOverridesResult {
-  const overrides: StyleControlOverrides = {}
+/** Parse `[headline=none]` / `[accentColor=terracotta text="x"]` from creative direction. */
+export function parsePropertyOverrides(prompt: string): ParsePropertyOverridesResult {
+  const overrides: PropertyOverrides = {}
   const cleanedPrompt = prompt
-    .replace(CONTROL_TAG_RE, (_full, keyRaw: string, valueRaw: string, attrsRaw: string) => {
-      const key = keyRaw as StyleSpecControlKey
+    .replace(PROPERTY_TAG_RE, (_full, keyRaw: string, valueRaw: string, attrsRaw: string) => {
+      const key = keyRaw.trim()
+      if (!STYLE_SPEC_PROPERTY_KEY_PATTERN.test(key)) return _full
       const attrs = parseAttrs(attrsRaw ?? '')
       overrides[key] = {
         value: valueRaw.trim(),
-        ...(attrs.text != null && attrs.text !== '' ? { text: attrs.text } : {}),
-        ...(attrs.notes != null && attrs.notes !== '' ? { notes: attrs.notes } : {}),
+        ...(Object.keys(attrs).length > 0 ? { params: attrs } : {}),
       }
       return ''
     })
@@ -124,6 +268,9 @@ export function parseStyleControlOverrides(prompt: string): ParseStyleControlOve
   return { overrides, cleanedPrompt }
 }
 
+/** @deprecated Use parsePropertyOverrides */
+export const parseStyleControlOverrides = parsePropertyOverrides
+
 function fillTemplate(template: string, params: Record<string, string | undefined>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_m, name: string) => {
     const value = params[name]
@@ -131,17 +278,83 @@ function fillTemplate(template: string, params: Record<string, string | undefine
   })
 }
 
+function parseBooleanValue(raw: string): boolean | null {
+  const lower = raw.trim().toLowerCase()
+  if (lower === 'true' || lower === '1' || lower === 'yes') return true
+  if (lower === 'false' || lower === '0' || lower === 'no') return false
+  return null
+}
+
+function clampNumber(value: number, prop: z.infer<typeof numberPropertyDefSchema>): number {
+  let result = value
+  if (prop.min != null) result = Math.max(result, prop.min)
+  if (prop.max != null) result = Math.min(result, prop.max)
+  return result
+}
+
 export type CompileStyleSpecResult = {
-  /** Full STYLE PACK body (without the STYLE PACK header line). */
   body: string
-  /** Flat rules text synced for DB preview / legacy fallback. */
   rulesFromBase: string
+}
+
+function resolveEnumProperty(
+  key: string,
+  prop: EnumPropertyDef,
+  override: PropertyOverride | undefined,
+): string | null {
+  const rawValue = override?.value ?? prop.default
+  const resolved = prop.values.includes(rawValue) ? rawValue : prop.default
+  const instruction = prop.instructions[resolved] ?? prop.instructions[prop.default]
+  if (!instruction?.trim()) return null
+
+  const params: Record<string, string | undefined> = { ...override?.params }
+  const filled = fillTemplate(instruction.trim(), params)
+  return `- ${key}: ${resolved} → ${filled}`
+}
+
+function resolveBooleanProperty(
+  key: string,
+  prop: z.infer<typeof booleanPropertyDefSchema>,
+  override: PropertyOverride | undefined,
+): string | null {
+  let resolved = prop.default
+  if (override?.value != null) {
+    const parsed = parseBooleanValue(override.value)
+    if (parsed != null) resolved = parsed
+  }
+  const instruction = resolved ? prop.instructions.true : prop.instructions.false
+  if (!instruction?.trim()) return null
+  return `- ${key}: ${resolved} → ${instruction.trim()}`
+}
+
+function resolveNumberProperty(
+  key: string,
+  prop: z.infer<typeof numberPropertyDefSchema>,
+  override: PropertyOverride | undefined,
+): string | null {
+  let resolved = prop.default
+  if (override?.value != null) {
+    const parsed = Number(override.value)
+    if (!Number.isNaN(parsed)) resolved = clampNumber(parsed, prop)
+  }
+  const filled = fillTemplate(prop.instruction.trim(), { value: String(resolved) })
+  return `- ${key}: ${resolved} → ${filled}`
+}
+
+function resolveTextProperty(
+  key: string,
+  prop: z.infer<typeof textPropertyDefSchema>,
+  override: PropertyOverride | undefined,
+): string | null {
+  const resolved = override?.value ?? prop.default
+  const filled = fillTemplate(prop.instruction.trim(), { value: resolved })
+  return `- ${key}: ${resolved} → ${filled}`
 }
 
 /** Compile a Style Spec + overrides into imperative prompt lines. */
 export function compileStyleSpec(
   spec: StyleSpec,
-  overrides: StyleControlOverrides = {},
+  overrides: PropertyOverrides = {},
 ): CompileStyleSpecResult {
   const lines: string[] = []
 
@@ -150,23 +363,29 @@ export function compileStyleSpec(
     if (trimmed) lines.push(`- ${trimmed}`)
   }
 
-  const controlLines: string[] = []
-  for (const key of STYLE_SPEC_CONTROL_KEYS) {
-    const control = spec.controls[key]
+  const propertyLines: string[] = []
+  for (const [key, prop] of Object.entries(spec.properties)) {
     const override = overrides[key]
-    const value = override?.value ?? spec.defaults[key]
-    const resolved = control.values.includes(value) ? value : spec.defaults[key]
-    const instruction = control.instructions[resolved] ?? control.instructions[control.default]
-    if (!instruction?.trim()) continue
-    const filled = fillTemplate(instruction.trim(), {
-      text: override?.text,
-      notes: override?.notes,
-    })
-    controlLines.push(`- ${key}: ${resolved} → ${filled}`)
+    let line: string | null = null
+    switch (prop.type) {
+      case 'enum':
+        line = resolveEnumProperty(key, prop, override)
+        break
+      case 'boolean':
+        line = resolveBooleanProperty(key, prop, override)
+        break
+      case 'number':
+        line = resolveNumberProperty(key, prop, override)
+        break
+      case 'text':
+        line = resolveTextProperty(key, prop, override)
+        break
+    }
+    if (line) propertyLines.push(line)
   }
 
-  if (controlLines.length > 0) {
-    lines.push('', 'CONTROLS (resolved):', ...controlLines)
+  if (propertyLines.length > 0) {
+    lines.push('', 'PROPERTIES (resolved):', ...propertyLines)
   }
 
   const body = lines.join('\n').trim()
@@ -180,159 +399,18 @@ export function compileStyleSpec(
 }
 
 export function parseStyleSpec(input: unknown): StyleSpec | null {
-  const parsed = styleSpecSchema.safeParse(normalizeAgentStyleSpec(input))
+  const parsed = styleSpecSchema.safeParse(coerceInputToV2Candidate(input))
   return parsed.success ? parsed.data : null
 }
 
 export function parseStyleSpecResult(
   input: unknown,
 ): { ok: true; data: StyleSpec } | { ok: false; issues: z.ZodIssue[] } {
-  const parsed = styleSpecSchema.safeParse(normalizeAgentStyleSpec(input))
+  const parsed = styleSpecSchema.safeParse(coerceInputToV2Candidate(input))
   if (parsed.success) {
     return { ok: true, data: parsed.data }
   }
   return { ok: false, issues: parsed.error.issues }
-}
-
-/** Drop JSON nulls so agent dumps with `exclude_none=False` still validate. */
-function stripNulls(value: unknown): unknown {
-  if (value === null) return undefined
-  if (Array.isArray(value)) return value.map(stripNulls)
-  if (value && typeof value === 'object') {
-    const out: Record<string, unknown> = {}
-    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
-      if (child === null) continue
-      out[key] = stripNulls(child)
-    }
-    return out
-  }
-  return value
-}
-
-function asInstructionMap(raw: unknown): Record<string, string> {
-  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    const out: Record<string, string> = {}
-    for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-      if (typeof value === 'string' && value.trim()) {
-        out[key] = value.trim()
-      }
-    }
-    return out
-  }
-  if (Array.isArray(raw)) {
-    const out: Record<string, string> = {}
-    for (const item of raw) {
-      if (!item || typeof item !== 'object') continue
-      const row = item as Record<string, unknown>
-      const key = typeof row.value === 'string' ? row.value.trim() : ''
-      const instruction =
-        typeof row.instruction === 'string'
-          ? row.instruction.trim()
-          : typeof row.text === 'string'
-            ? row.text.trim()
-            : ''
-      if (key && instruction) out[key] = instruction
-    }
-    return out
-  }
-  return {}
-}
-
-function normalizeControl(raw: unknown): unknown {
-  if (!raw || typeof raw !== 'object') return raw
-  const control = raw as Record<string, unknown>
-  const values = Array.isArray(control.values)
-    ? control.values.map((v) => String(v).trim()).filter(Boolean)
-    : []
-  const instructions = asInstructionMap(control.instructions)
-  for (const value of values) {
-    if (!instructions[value]?.trim()) {
-      instructions[value] = `Apply control mode ${value}.`
-    }
-  }
-  let defaultValue =
-    typeof control.default === 'string' && control.default.trim()
-      ? control.default.trim()
-      : (values[0] ?? 'auto')
-  if (values.length > 0 && !values.includes(defaultValue)) {
-    defaultValue = values[0]!
-  }
-  return {
-    type: 'enum',
-    values: values.length > 0 ? values : ['auto'],
-    default: defaultValue,
-    instructions,
-    ...(typeof control.description === 'string' ? { description: control.description } : {}),
-    ...(control.params && typeof control.params === 'object' ? { params: control.params } : {}),
-  }
-}
-
-/** Coerce common agent/LLM quirks into a Zod-valid Style Spec shape. */
-export function normalizeAgentStyleSpec(input: unknown): unknown {
-  const stripped = stripNulls(input)
-  if (!stripped || typeof stripped !== 'object') return stripped
-  const raw = stripped as Record<string, unknown>
-
-  const schemaVersion =
-    raw.schemaVersion === 1 || raw.schemaVersion === '1' || raw.schema_version === 1
-      ? 1
-      : raw.schemaVersion
-
-  const kind =
-    raw.kind === 'template' || raw.kind === 'mood'
-      ? raw.kind
-      : typeof raw.kind === 'string'
-        ? raw.kind
-        : undefined
-
-  const baseRules = Array.isArray(raw.baseRules)
-    ? raw.baseRules.map((r) => String(r).trim()).filter(Boolean)
-    : Array.isArray(raw.base_rules)
-      ? (raw.base_rules as unknown[]).map((r) => String(r).trim()).filter(Boolean)
-      : raw.baseRules
-
-  const controlsRaw =
-    raw.controls && typeof raw.controls === 'object'
-      ? (raw.controls as Record<string, unknown>)
-      : {}
-
-  const controls = {
-    headline: normalizeControl(controlsRaw.headline),
-    productName: normalizeControl(controlsRaw.productName ?? controlsRaw.product_name),
-    backgroundIllustration: normalizeControl(
-      controlsRaw.backgroundIllustration ?? controlsRaw.background_illustration,
-    ),
-  }
-
-  const defaultsRaw =
-    raw.defaults && typeof raw.defaults === 'object'
-      ? (raw.defaults as Record<string, unknown>)
-      : {}
-
-  const pickDefault = (key: StyleSpecControlKey, control: unknown): string => {
-    const fromDefaults = defaultsRaw[key]
-    if (typeof fromDefaults === 'string' && fromDefaults.trim()) return fromDefaults.trim()
-    if (control && typeof control === 'object') {
-      const d = (control as Record<string, unknown>).default
-      if (typeof d === 'string' && d.trim()) return d.trim()
-    }
-    return 'auto'
-  }
-
-  return {
-    schemaVersion,
-    kind,
-    baseRules,
-    controls,
-    defaults: {
-      headline: pickDefault('headline', controls.headline),
-      productName: pickDefault('productName', controls.productName),
-      backgroundIllustration: pickDefault(
-        'backgroundIllustration',
-        controls.backgroundIllustration,
-      ),
-    },
-  }
 }
 
 /** Sync `rules` column from Spec baseRules (cap 4000). */

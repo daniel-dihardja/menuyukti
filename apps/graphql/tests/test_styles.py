@@ -266,13 +266,13 @@ def test_get_one_denied_for_other_user(style_workspace_id: int):
 
 
 _SAMPLE_SPEC = {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "kind": "template",
     "baseRules": [
         "Cream background; black line art; mustard accents only.",
         "Only the product in the cup may be photorealistic.",
     ],
-    "controls": {
+    "properties": {
         "headline": {
             "type": "enum",
             "values": ["auto", "none"],
@@ -301,11 +301,6 @@ _SAMPLE_SPEC = {
             },
         },
     },
-    "defaults": {
-        "headline": "auto",
-        "productName": "auto",
-        "backgroundIllustration": "template_default",
-    },
 }
 
 
@@ -325,9 +320,37 @@ def test_create_with_style_spec_syncs_rules(style_workspace_id: int):
         "Cream background; black line art; mustard accents only.\n"
         "Only the product in the cup may be photorealistic."
     )
-    assert style["styleSpec"]["schemaVersion"] == 1
+    assert style["styleSpec"]["schemaVersion"] == 2
     assert style["styleSpec"]["kind"] == "template"
-    assert style["styleSpec"]["controls"]["headline"]["default"] == "auto"
+    assert style["styleSpec"]["properties"]["headline"]["default"] == "auto"
+
+
+def test_create_rejects_v1_style_spec(style_workspace_id: int):
+    v1_spec = {
+        "schemaVersion": 1,
+        "kind": "template",
+        "baseRules": ["One rule."],
+        "controls": {
+            "headline": {
+                "type": "enum",
+                "values": ["auto"],
+                "default": "auto",
+                "instructions": {"auto": "Place headline."},
+            },
+        },
+        "defaults": {"headline": "auto"},
+    }
+    result = _execute(
+        _CREATE,
+        {
+            "name": "Legacy",
+            "rules": "fallback",
+            "referenceImageName": "x.webp",
+            "styleSpec": v1_spec,
+        },
+    )
+    assert result.errors is not None
+    assert any("schemaVersion" in str(err) for err in result.errors)
 
 
 def test_create_rejects_invalid_style_spec(style_workspace_id: int):
@@ -337,7 +360,7 @@ def test_create_rejects_invalid_style_spec(style_workspace_id: int):
             "name": "Bad",
             "rules": "fallback",
             "referenceImageName": "x.webp",
-            "styleSpec": {"schemaVersion": 1, "kind": "template"},
+            "styleSpec": {"schemaVersion": 2, "kind": "template"},
         },
     )
     assert result.errors is not None

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -11,8 +12,9 @@ from graphql.data_sources.models.visual_style import VisualStyle
 _MAX_NAME_LEN = 128
 _MAX_RULES_LEN = 4000
 _MAX_IMAGE_NAME_LEN = 512
+_MAX_PROPERTIES = 30
 
-_CONTROL_KEYS = ("headline", "productName", "backgroundIllustration")
+_PROPERTY_KEY_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
 
 def validate_style_fields(
@@ -39,49 +41,160 @@ def validate_style_fields(
     return name_clean, rules_clean, image_clean
 
 
-def _require_control(raw: Any, key: str) -> dict[str, Any]:
+def _require_enum_property(raw: Any, key: str) -> dict[str, Any]:
     if not isinstance(raw, dict):
-        raise ValueError(f"styleSpec.controls.{key} must be an object")
+        raise ValueError(f"styleSpec.properties.{key} must be an object")
+    if raw.get("type") != "enum":
+        raise ValueError(f"styleSpec.properties.{key}.type must be 'enum'")
     values = raw.get("values")
     if (
         not isinstance(values, list)
         or not values
         or not all(isinstance(v, str) and v.strip() for v in values)
     ):
-        raise ValueError(f"styleSpec.controls.{key}.values must be a non-empty string list")
+        raise ValueError(f"styleSpec.properties.{key}.values must be a non-empty string list")
     default = raw.get("default")
     if not isinstance(default, str) or default not in values:
-        raise ValueError(f"styleSpec.controls.{key}.default must be one of values")
+        raise ValueError(f"styleSpec.properties.{key}.default must be one of values")
     instructions = raw.get("instructions")
     if not isinstance(instructions, dict):
-        raise ValueError(f"styleSpec.controls.{key}.instructions must be an object")
+        raise ValueError(f"styleSpec.properties.{key}.instructions must be an object")
     for value in values:
         text = instructions.get(value)
         if not isinstance(text, str) or not text.strip():
-            raise ValueError(f"styleSpec.controls.{key}.instructions missing for {value!r}")
-    control_type = raw.get("type", "enum")
-    if control_type != "enum":
-        raise ValueError(f"styleSpec.controls.{key}.type must be 'enum'")
-    return {
+            raise ValueError(f"styleSpec.properties.{key}.instructions missing for {value!r}")
+    out: dict[str, Any] = {
         "type": "enum",
         "values": [str(v).strip() for v in values],
         "default": str(default).strip(),
         "instructions": {
             str(k): str(v).strip() for k, v in instructions.items() if isinstance(v, str)
         },
-        **({"description": raw["description"]} if isinstance(raw.get("description"), str) else {}),
-        **({"params": raw["params"]} if isinstance(raw.get("params"), dict) else {}),
     }
+    if isinstance(raw.get("label"), str) and raw["label"].strip():
+        out["label"] = raw["label"].strip()
+    if isinstance(raw.get("description"), str) and raw["description"].strip():
+        out["description"] = raw["description"].strip()
+    if isinstance(raw.get("params"), dict):
+        out["params"] = raw["params"]
+    return out
+
+
+def _require_boolean_property(raw: Any, key: str) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raise ValueError(f"styleSpec.properties.{key} must be an object")
+    if raw.get("type") != "boolean":
+        raise ValueError(f"styleSpec.properties.{key}.type must be 'boolean'")
+    if not isinstance(raw.get("default"), bool):
+        raise ValueError(f"styleSpec.properties.{key}.default must be a boolean")
+    instructions = raw.get("instructions")
+    if not isinstance(instructions, dict):
+        raise ValueError(f"styleSpec.properties.{key}.instructions must be an object")
+    for branch in ("true", "false"):
+        text = instructions.get(branch)
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError(f"styleSpec.properties.{key}.instructions.{branch} is required")
+    out: dict[str, Any] = {
+        "type": "boolean",
+        "default": raw["default"],
+        "instructions": {
+            "true": str(instructions["true"]).strip(),
+            "false": str(instructions["false"]).strip(),
+        },
+    }
+    if isinstance(raw.get("label"), str) and raw["label"].strip():
+        out["label"] = raw["label"].strip()
+    if isinstance(raw.get("description"), str) and raw["description"].strip():
+        out["description"] = raw["description"].strip()
+    return out
+
+
+def _require_number_property(raw: Any, key: str) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raise ValueError(f"styleSpec.properties.{key} must be an object")
+    if raw.get("type") != "number":
+        raise ValueError(f"styleSpec.properties.{key}.type must be 'number'")
+    default = raw.get("default")
+    if not isinstance(default, (int, float)) or isinstance(default, bool):
+        raise ValueError(f"styleSpec.properties.{key}.default must be a number")
+    instruction = raw.get("instruction")
+    if not isinstance(instruction, str) or not instruction.strip():
+        raise ValueError(f"styleSpec.properties.{key}.instruction is required")
+    min_val = raw.get("min")
+    max_val = raw.get("max")
+    if min_val is not None and not isinstance(min_val, (int, float)):
+        raise ValueError(f"styleSpec.properties.{key}.min must be a number")
+    if max_val is not None and not isinstance(max_val, (int, float)):
+        raise ValueError(f"styleSpec.properties.{key}.max must be a number")
+    if min_val is not None and max_val is not None and min_val > max_val:
+        raise ValueError(f"styleSpec.properties.{key}.min must be <= max")
+    if min_val is not None and default < min_val:
+        raise ValueError(f"styleSpec.properties.{key}.default must be >= min")
+    if max_val is not None and default > max_val:
+        raise ValueError(f"styleSpec.properties.{key}.default must be <= max")
+    out: dict[str, Any] = {
+        "type": "number",
+        "default": default,
+        "instruction": instruction.strip(),
+    }
+    if min_val is not None:
+        out["min"] = min_val
+    if max_val is not None:
+        out["max"] = max_val
+    if isinstance(raw.get("label"), str) and raw["label"].strip():
+        out["label"] = raw["label"].strip()
+    if isinstance(raw.get("description"), str) and raw["description"].strip():
+        out["description"] = raw["description"].strip()
+    return out
+
+
+def _require_text_property(raw: Any, key: str) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raise ValueError(f"styleSpec.properties.{key} must be an object")
+    if raw.get("type") != "text":
+        raise ValueError(f"styleSpec.properties.{key}.type must be 'text'")
+    if not isinstance(raw.get("default"), str):
+        raise ValueError(f"styleSpec.properties.{key}.default must be a string")
+    instruction = raw.get("instruction")
+    if not isinstance(instruction, str) or not instruction.strip():
+        raise ValueError(f"styleSpec.properties.{key}.instruction is required")
+    out: dict[str, Any] = {
+        "type": "text",
+        "default": raw["default"],
+        "instruction": instruction.strip(),
+    }
+    if isinstance(raw.get("label"), str) and raw["label"].strip():
+        out["label"] = raw["label"].strip()
+    if isinstance(raw.get("description"), str) and raw["description"].strip():
+        out["description"] = raw["description"].strip()
+    return out
+
+
+def _require_property(raw: Any, key: str) -> dict[str, Any]:
+    if not isinstance(raw, dict):
+        raise ValueError(f"styleSpec.properties.{key} must be an object")
+    prop_type = raw.get("type")
+    if prop_type == "enum":
+        return _require_enum_property(raw, key)
+    if prop_type == "boolean":
+        return _require_boolean_property(raw, key)
+    if prop_type == "number":
+        return _require_number_property(raw, key)
+    if prop_type == "text":
+        return _require_text_property(raw, key)
+    raise ValueError(
+        f"styleSpec.properties.{key}.type must be one of: enum, boolean, number, text"
+    )
 
 
 def validate_style_spec(raw: Any) -> dict[str, Any]:
-    """Validate Style Spec v1; return a normalized dict for persistence."""
+    """Validate Style Spec v2; return a normalized dict for persistence."""
     if raw is None:
         raise ValueError("styleSpec is required when provided")
     if not isinstance(raw, dict):
         raise ValueError("styleSpec must be a JSON object")
-    if raw.get("schemaVersion") != 1:
-        raise ValueError("styleSpec.schemaVersion must be 1")
+    if raw.get("schemaVersion") != 2:
+        raise ValueError("styleSpec.schemaVersion must be 2")
     kind = raw.get("kind")
     if kind not in ("template", "mood"):
         raise ValueError("styleSpec.kind must be 'template' or 'mood'")
@@ -94,31 +207,23 @@ def validate_style_spec(raw: Any) -> dict[str, Any]:
     if len(cleaned_rules) > 40:
         raise ValueError("styleSpec.baseRules must have at most 40 items")
 
-    controls_raw = raw.get("controls")
-    if not isinstance(controls_raw, dict):
-        raise ValueError("styleSpec.controls must be an object")
-    controls: dict[str, Any] = {}
-    for key in _CONTROL_KEYS:
-        if key not in controls_raw:
-            raise ValueError(f"styleSpec.controls.{key} is required")
-        controls[key] = _require_control(controls_raw[key], key)
+    properties_raw = raw.get("properties")
+    if not isinstance(properties_raw, dict) or not properties_raw:
+        raise ValueError("styleSpec.properties must be a non-empty object")
+    if len(properties_raw) > _MAX_PROPERTIES:
+        raise ValueError(f"styleSpec.properties must have at most {_MAX_PROPERTIES} entries")
 
-    defaults_raw = raw.get("defaults")
-    if not isinstance(defaults_raw, dict):
-        raise ValueError("styleSpec.defaults must be an object")
-    defaults: dict[str, str] = {}
-    for key in _CONTROL_KEYS:
-        value = defaults_raw.get(key)
-        if not isinstance(value, str) or value not in controls[key]["values"]:
-            raise ValueError(f"styleSpec.defaults.{key} must be one of controls.{key}.values")
-        defaults[key] = value
+    properties: dict[str, Any] = {}
+    for key, prop_raw in properties_raw.items():
+        if not isinstance(key, str) or not _PROPERTY_KEY_RE.match(key):
+            raise ValueError(f"styleSpec.properties has invalid key {key!r}")
+        properties[key] = _require_property(prop_raw, key)
 
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "kind": kind,
         "baseRules": cleaned_rules,
-        "controls": controls,
-        "defaults": defaults,
+        "properties": properties,
     }
 
 

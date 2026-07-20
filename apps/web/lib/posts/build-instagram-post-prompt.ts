@@ -4,11 +4,7 @@ import {
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
 } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
-import {
-  compileStyleSpec,
-  parseStyleControlOverrides,
-  type StyleSpec,
-} from '@/lib/styles/style-spec'
+import { compileStyleSpec, parsePropertyOverrides, type StyleSpec } from '@/lib/styles/style-spec'
 
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 
@@ -158,7 +154,7 @@ function resolveStyleAndPrompt(
   }
 
   if (style.styleSpec) {
-    const { overrides, cleanedPrompt } = parseStyleControlOverrides(trimmed)
+    const { overrides, cleanedPrompt } = parsePropertyOverrides(trimmed)
     const { body } = compileStyleSpec(style.styleSpec, overrides)
     return {
       prompt: cleanedPrompt || trimmed,

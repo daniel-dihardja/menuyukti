@@ -155,10 +155,10 @@ describe('buildInstagramPostPrompt', () => {
         name: 'Warm Oat',
         rules: 'fallback rules',
         styleSpec: {
-          schemaVersion: 1,
+          schemaVersion: 2,
           kind: 'template',
           baseRules: ['Cream background; mustard accents.'],
-          controls: {
+          properties: {
             headline: {
               type: 'enum',
               values: ['auto', 'none'],
@@ -187,17 +187,12 @@ describe('buildInstagramPostPrompt', () => {
               },
             },
           },
-          defaults: {
-            headline: 'auto',
-            productName: 'auto',
-            backgroundIllustration: 'template_default',
-          },
         },
       },
     })
 
     expect(out).toContain('Cream background; mustard accents.')
-    expect(out).toContain('CONTROLS (resolved):')
+    expect(out).toContain('PROPERTIES (resolved):')
     expect(out).toContain('headline: none → Leave the headline area empty.')
     expect(out).not.toContain('[headline=none]')
     expect(out.endsWith('cold brew')).toBe(true)

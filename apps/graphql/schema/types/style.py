@@ -10,7 +10,7 @@ from strawberry.scalars import JSON
     description=(
         "Workspace-scoped visual style pack: textual rules plus one media-library "
         "reference image used when generating Instagram posts. Optional styleSpec "
-        "holds the structured Style Spec v1 used for compiled prompts."
+        "holds the structured Style Spec v2 used for compiled prompts."
     )
 )
 class StyleType:

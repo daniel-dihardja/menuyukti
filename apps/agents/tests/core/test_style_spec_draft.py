@@ -6,8 +6,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from agents_app.agents.core.style_spec.models import (
-    DraftControl,
+    DraftEnumProperty,
     DraftInstruction,
+    DraftPropertyEntryWithKey,
     StyleSpec,
     StyleSpecDraftOutput,
 )
@@ -15,9 +16,9 @@ from agents_app.server import app
 from fastapi.testclient import TestClient
 
 
-def _sample_control(*, values: list[str] | None = None) -> DraftControl:
+def _sample_enum(*, values: list[str] | None = None) -> DraftEnumProperty:
     vals = values or ["auto", "none"]
-    return DraftControl(
+    return DraftEnumProperty(
         values=vals,
         default=vals[0],
         instructions=[DraftInstruction(value=v, instruction=f"Do {v}.") for v in vals],
@@ -29,12 +30,14 @@ def _sample_draft() -> StyleSpecDraftOutput:
         name="Warm Oat",
         kind="template",
         baseRules=["Cream background.", "Black line art only for decorations."],
-        headline=_sample_control(),
-        productName=_sample_control(),
-        backgroundIllustration=_sample_control(values=["template_default", "minimal", "none"]),
-        defaultHeadline="auto",
-        defaultProductName="auto",
-        defaultBackgroundIllustration="template_default",
+        propertyEntries=[
+            DraftPropertyEntryWithKey(key="headline", property=_sample_enum()),
+            DraftPropertyEntryWithKey(key="productName", property=_sample_enum()),
+            DraftPropertyEntryWithKey(
+                key="backgroundIllustration",
+                property=_sample_enum(values=["template_default", "minimal", "none"]),
+            ),
+        ],
     )
 
 
@@ -111,9 +114,9 @@ def test_draft_http_success(mock_draft: AsyncMock, client: TestClient) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["name"] == "Warm Oat"
-    assert body["style_spec"]["schemaVersion"] == 1
+    assert body["style_spec"]["schemaVersion"] == 2
     assert body["style_spec"]["kind"] == "template"
-    assert "headline" in body["style_spec"]["controls"]
+    assert "headline" in body["style_spec"]["properties"]
     mock_draft.assert_awaited_once_with(
         image_url="data:image/png;base64,aaa",
         intent="Warm oat template; headline optional",
@@ -139,7 +142,11 @@ async def test_draft_style_spec_from_image_unit(mock_structured: AsyncMock) -> N
     assert name == "Warm Oat"
     assert isinstance(spec, StyleSpec)
     assert spec.kind == "template"
-    assert spec.controls.headline.instructions["none"] == "Do none."
+    assert spec.schemaVersion == 2
+    headline = spec.properties["headline"]
+    assert headline.type == "enum"
+    if headline.type == "enum":
+        assert headline.instructions["none"] == "Do none."
     mock_structured.assert_awaited_once()
     assert mock_structured.await_args is not None
     assert mock_structured.await_args.kwargs.get("gateway_model_id") == "openai/gpt-4o-mini"
@@ -147,9 +154,15 @@ async def test_draft_style_spec_from_image_unit(mock_structured: AsyncMock) -> N
 
 def test_draft_output_converts_to_style_spec() -> None:
     spec = _sample_draft().to_style_spec()
-    assert spec.defaults.headline == "auto"
-    assert spec.controls.backgroundIllustration.values == [
-        "template_default",
-        "minimal",
-        "none",
-    ]
+    assert spec.schemaVersion == 2
+    assert spec.properties["headline"].type == "enum"
+    if spec.properties["headline"].type == "enum":
+        assert spec.properties["headline"].default == "auto"
+    bg = spec.properties["backgroundIllustration"]
+    assert bg.type == "enum"
+    if bg.type == "enum":
+        assert bg.values == [
+            "template_default",
+            "minimal",
+            "none",
+        ]

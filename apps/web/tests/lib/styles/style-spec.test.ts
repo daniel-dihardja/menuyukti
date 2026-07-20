@@ -2,22 +2,25 @@ import { describe, expect, it } from 'vitest'
 
 import {
   compileStyleSpec,
-  parseStyleControlOverrides,
+  migrateStyleSpecV1ToV2,
+  parsePropertyOverrides,
   parseStyleSpec,
   rulesFromStyleSpec,
   type StyleSpec,
+  type StyleSpecV1,
 } from '@/lib/styles/style-spec'
 
-const WARM_OAT: StyleSpec = {
-  schemaVersion: 1,
+const WARM_OAT_V2: StyleSpec = {
+  schemaVersion: 2,
   kind: 'template',
   baseRules: [
     'Cream background; black line art; mustard accents only.',
     'Only the product in the cup may be photorealistic.',
   ],
-  controls: {
+  properties: {
     headline: {
       type: 'enum',
+      label: 'Headline',
       values: ['auto', 'custom', 'none'],
       default: 'auto',
       instructions: {
@@ -47,6 +50,38 @@ const WARM_OAT: StyleSpec = {
         custom: 'Follow: {{notes}}.',
       },
     },
+    includeLogo: {
+      type: 'boolean',
+      default: false,
+      instructions: {
+        true: 'Place a small venue logo bottom-right.',
+        false: 'No logo anywhere in the image.',
+      },
+    },
+    maxHeadlineWords: {
+      type: 'number',
+      default: 4,
+      min: 0,
+      max: 12,
+      instruction: 'Headline must be at most {{value}} words.',
+    },
+    layoutNotes: {
+      type: 'text',
+      default: '',
+      instruction: 'Layout constraint: {{value}}.',
+    },
+  },
+}
+
+const WARM_OAT_V1: StyleSpecV1 = {
+  schemaVersion: 1,
+  kind: 'template',
+  baseRules: WARM_OAT_V2.baseRules,
+  controls: {
+    headline: WARM_OAT_V2.properties.headline as StyleSpecV1['controls'][string],
+    productName: WARM_OAT_V2.properties.productName as StyleSpecV1['controls'][string],
+    backgroundIllustration: WARM_OAT_V2.properties
+      .backgroundIllustration as StyleSpecV1['controls'][string],
   },
   defaults: {
     headline: 'auto',
@@ -55,82 +90,63 @@ const WARM_OAT: StyleSpec = {
   },
 }
 
-describe('style-spec', () => {
-  it('parses a valid Style Spec', () => {
-    expect(parseStyleSpec(WARM_OAT)).toEqual(WARM_OAT)
+describe('style-spec v2', () => {
+  it('parses a valid Style Spec v2', () => {
+    expect(parseStyleSpec(WARM_OAT_V2)).toEqual(WARM_OAT_V2)
   })
 
-  it('accepts null optional fields and list-shaped instructions from agents', () => {
-    const agentish = {
-      schemaVersion: '1',
-      kind: 'template',
-      baseRules: ['Cream background.', '', 'Black line art.'],
-      controls: {
-        headline: {
-          values: ['auto', 'none'],
-          default: 'auto',
-          description: null,
-          params: null,
-          instructions: [
-            { value: 'auto', instruction: 'Place headline when provided.' },
-            { value: 'none', instruction: 'Omit headline.' },
-          ],
-        },
-        productName: {
-          type: 'enum',
-          values: ['auto', 'none'],
-          default: 'weird',
-          instructions: { auto: 'Place name.', none: 'Omit name.' },
-        },
-        backgroundIllustration: {
-          type: 'enum',
-          values: ['template_default', 'none'],
-          default: 'template_default',
-          instructions: {
-            template_default: 'Keep decorations.',
-            // missing none — normalizer fills it
-          },
-        },
-      },
-      defaults: {
-        headline: 'auto',
-        productName: 'auto',
-        backgroundIllustration: 'template_default',
-      },
-    }
-    const parsed = parseStyleSpec(agentish)
+  it('migrates v1 to v2 on read', () => {
+    const parsed = parseStyleSpec(WARM_OAT_V1)
     expect(parsed).not.toBeNull()
-    expect(parsed!.schemaVersion).toBe(1)
-    expect(parsed!.baseRules).toEqual(['Cream background.', 'Black line art.'])
-    expect(parsed!.controls.headline.instructions.none).toBe('Omit headline.')
-    expect(parsed!.controls.productName.default).toBe('auto')
-    expect(parsed!.controls.backgroundIllustration.instructions.none).toContain(
-      'Apply control mode none',
-    )
+    expect(parsed!.schemaVersion).toBe(2)
+    const headline = parsed!.properties.headline
+    expect(headline?.type).toBe('enum')
+    if (headline?.type === 'enum') {
+      expect(headline.default).toBe('auto')
+      expect(headline.values).toEqual(['auto', 'custom', 'none'])
+    }
+    expect(migrateStyleSpecV1ToV2(WARM_OAT_V1).properties.headline).toMatchObject({
+      type: 'enum',
+      default: 'auto',
+      values: ['auto', 'custom', 'none'],
+    })
   })
 
-  it('rejects unknown control inventing via missing fixed keys', () => {
+  it('rejects v2 with no properties', () => {
     expect(
-      parseStyleSpec({ ...WARM_OAT, controls: { headline: WARM_OAT.controls.headline } }),
+      parseStyleSpec({
+        schemaVersion: 2,
+        kind: 'template',
+        baseRules: ['One rule.'],
+        properties: {},
+      }),
     ).toBeNull()
   })
 
-  it('parses bracket overrides and strips them from the prompt', () => {
-    const { overrides, cleanedPrompt } = parseStyleControlOverrides(
-      'cold brew [headline=none] name Cold Brew [productName=custom text="COLD BREW"]',
-    )
-    expect(overrides.headline).toEqual({ value: 'none' })
-    expect(overrides.productName).toEqual({ value: 'custom', text: 'COLD BREW' })
-    expect(cleanedPrompt).toBe('cold brew name Cold Brew')
+  it('rejects raw v1 on write-style validation without full v1 shape', () => {
+    expect(parseStyleSpec({ schemaVersion: 1, kind: 'template' })).toBeNull()
   })
 
-  it('compiles defaults and applies overrides with template fill', () => {
-    const { body } = compileStyleSpec(WARM_OAT, {
+  it('parses bracket overrides for dynamic property keys', () => {
+    const { overrides, cleanedPrompt } = parsePropertyOverrides(
+      'cold brew [headline=none] [accentColor=terracotta] [productName=custom text="COLD BREW"]',
+    )
+    expect(overrides.headline).toEqual({ value: 'none' })
+    expect(overrides.accentColor).toEqual({ value: 'terracotta' })
+    expect(overrides.productName).toEqual({
+      value: 'custom',
+      params: { text: 'COLD BREW' },
+    })
+    expect(cleanedPrompt).toBe('cold brew')
+  })
+
+  it('compiles enum defaults and applies overrides with template fill', () => {
+    const { body } = compileStyleSpec(WARM_OAT_V2, {
       headline: { value: 'none' },
-      productName: { value: 'custom', text: 'COLD BREW' },
+      productName: { value: 'custom', params: { text: 'COLD BREW' } },
     })
     expect(body).toContain('Cream background')
-    expect(body).toContain('CONTROLS (resolved):')
+    expect(body).toContain('PROPERTIES (resolved):')
     expect(body).toContain('headline: none → Leave the top-left headline area empty.')
     expect(body).toContain(
       'productName: custom → Place this exact product name under the cup: COLD BREW.',
@@ -138,8 +154,19 @@ describe('style-spec', () => {
     expect(body).toContain('backgroundIllustration: template_default')
   })
 
+  it('compiles boolean, number, and text properties', () => {
+    const { body } = compileStyleSpec(WARM_OAT_V2, {
+      includeLogo: { value: 'true' },
+      maxHeadlineWords: { value: '6' },
+      layoutNotes: { value: 'Center the cup.' },
+    })
+    expect(body).toContain('includeLogo: true → Place a small venue logo bottom-right.')
+    expect(body).toContain('maxHeadlineWords: 6 → Headline must be at most 6 words.')
+    expect(body).toContain('layoutNotes: Center the cup. → Layout constraint: Center the cup.')
+  })
+
   it('syncs rulesFromBase from baseRules', () => {
-    expect(rulesFromStyleSpec(WARM_OAT)).toBe(
+    expect(rulesFromStyleSpec(WARM_OAT_V2)).toBe(
       'Cream background; black line art; mustard accents only.\nOnly the product in the cup may be photorealistic.',
     )
   })
