@@ -1,6 +1,6 @@
 import sharp from 'sharp'
 
-import { normalizeSolidBackgroundColor } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+import { normalizeSolidBackgroundColor } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
 
 /**
  * Synthesize a solid-color WebP canvas at the given pixel size for generation reference.

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { z } from 'zod'
 
-import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
 import {
   getPresignedGetUrl,
   getS3Bucket,

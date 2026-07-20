@@ -10,11 +10,7 @@ import { Card } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
 
-import {
-  ASSETS_GRID_SKELETON_COUNT,
-  formatBytes,
-  formatDimensions,
-} from '@/app/(protected)/canvas/_components/asset-item-types'
+import { formatBytes, formatDimensions, MEDIA_GRID_SKELETON_COUNT } from '@/lib/format-media'
 
 import {
   aspectRatioForDimensions,
@@ -394,7 +390,7 @@ export type ContentMediaGridProps = {
 
 /** Flat API wrapper; prefer `ContentMediaGridParts` for explicit composition. */
 export function ContentMediaGrid({
-  skeletonCount = ASSETS_GRID_SKELETON_COUNT,
+  skeletonCount = MEDIA_GRID_SKELETON_COUNT,
   defaultAspectRatio = DEFAULT_CONTENT_ASPECT_RATIO,
   tileMode = 'static',
   ...props

@@ -18,7 +18,7 @@ import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-import { PostCreatorTemplatePicker } from '@/app/(protected)/canvas/post-creator/_components/post-creator-template-picker'
+import { PostCreatorTemplatePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-template-picker'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import {
   DEFAULT_VISION_GATEWAY_MODEL,

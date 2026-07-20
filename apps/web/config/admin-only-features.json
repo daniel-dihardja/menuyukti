@@ -1,16 +1,10 @@
 {
   "features": [
     {
-      "id": "assets",
-      "description": "Brand asset library and uploads (/canvas, related APIs).",
-      "routePrefixes": ["/canvas"],
-      "navKeys": []
-    },
-    {
       "id": "studio",
-      "description": "AI asset studio (brand library + generation).",
-      "routePrefixes": ["/canvas", "/ig-studio"],
-      "navKeys": ["studio", "posts"]
+      "description": "IG Studio post drafts and Post Creator (admin).",
+      "routePrefixes": ["/ig-studio"],
+      "navKeys": ["posts"]
     },
     {
       "id": "printOrders",

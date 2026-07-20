@@ -27,10 +27,6 @@ export function graphqlAnalyticsRunCacheTag(userId: string, analyticsRunId: stri
   return `graphql-analytics-run-${userId}-${analyticsRunId}`
 }
 
-export function graphqlImageAiFlowsCacheTag(userId: string): string {
-  return `graphql-image-ai-flows-${userId}`
-}
-
 /**
  * Shared tag for expensive analytics computations (matrix, heatmaps) for one run.
  * Call `revalidateTag` from routes that change underlying order/COGS data when those exist.

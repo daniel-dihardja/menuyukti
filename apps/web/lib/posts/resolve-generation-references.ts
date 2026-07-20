@@ -2,7 +2,7 @@ import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import {
   MAX_GENERATION_REFERENCES,
   normalizeSolidBackgroundColor,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+} from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 
 export type GenerationReference =

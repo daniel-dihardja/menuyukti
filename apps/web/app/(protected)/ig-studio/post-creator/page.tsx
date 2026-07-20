@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: PageProps) {
       title={tPostCreator('title')}
       breadcrumbs={[
         { label: tSidebar('posts'), href: routes.igStudio },
-        { label: tPostCreator('title'), href: routes.canvasPostCreator },
+        { label: tPostCreator('title'), href: routes.igStudioPostCreator },
       ]}
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"

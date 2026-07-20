@@ -39,7 +39,7 @@ export function MainHeader() {
 
   const workflowsActive =
     pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
-  const studioActive = pathname === routes.canvas || pathname?.startsWith(`${routes.canvas}/`)
+  const igStudioActive = pathname === routes.igStudio || pathname?.startsWith(`${routes.igStudio}/`)
   const showMobileMainMenu = true
 
   const navLinkClass = (active: boolean) =>
@@ -80,7 +80,7 @@ export function MainHeader() {
               <Link href={routes.workflows.list} className={navLinkClass(workflowsActive)}>
                 {t('navWorkflows')}
               </Link>
-              <Link href={routes.canvas} className={navLinkClass(studioActive)}>
+              <Link href={routes.igStudio} className={navLinkClass(igStudioActive)}>
                 {t('navStudio')}
               </Link>
             </nav>
@@ -140,14 +140,14 @@ export function MainHeader() {
                           variant="ghost"
                           className={cn(
                             'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                            studioActive
+                            igStudioActive
                               ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
                               : 'text-muted-foreground hover:text-foreground',
                           )}
                         >
                           <Link
-                            href={routes.canvas}
-                            aria-current={studioActive ? 'page' : undefined}
+                            href={routes.igStudio}
+                            aria-current={igStudioActive ? 'page' : undefined}
                           >
                             {t('navStudio')}
                           </Link>

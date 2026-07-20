@@ -8,7 +8,6 @@ export * from './queries/location-styles'
 export * from './queries/calendar-entries'
 export * from './queries/workflows'
 export * from './queries/analytics'
-export * from './queries/assets'
 export * from './queries/workspace'
 export * from './queries/posts'
 export {

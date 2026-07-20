@@ -3,7 +3,7 @@ import {
   INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT,
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+} from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
 import {
   compileStyleSpec,
   parseStyleControlOverrides,
