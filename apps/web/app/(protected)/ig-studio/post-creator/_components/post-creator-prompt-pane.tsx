@@ -1,6 +1,8 @@
 'use client'
 
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2, Plus, Sparkles } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -17,13 +19,14 @@ import {
 } from '@workspace/ui/components/select'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-import { apiFetch } from '@/lib/api/client-fetch'
-import { listLocationStyles, type LocationStyle } from '@/lib/location-styles/client-api'
+import { mediaDownloadHref } from '@/lib/media/client-api'
 import {
   getLeonardoPostModelMessageKey,
   isLeonardoPostModelId,
   LEONARDO_POST_MODEL_IDS,
 } from '@/lib/posts/leonardo-post-models'
+import { routes } from '@/lib/routes'
+import { listStyles, type Style } from '@/lib/styles/client-api'
 
 import { usePostCreator } from '../_context/use-post-creator'
 import { PostCreatorFormatControls } from './post-creator-format-controls'
@@ -32,12 +35,10 @@ import { PostCreatorReferenceThumbnails } from './post-creator-reference-thumbna
 import { PostCreatorTemplatePicker } from './post-creator-template-picker'
 
 const STYLE_NONE = '__none__'
-const LOCATION_NONE = '__none__'
-
-type LocationOption = { id: number; name: string }
 
 export function PostCreatorPromptPane() {
   const t = useTranslations('postCreator.prompt')
+  const pathname = usePathname()
   const { state, actions, meta } = usePostCreator()
   const {
     prompt,
@@ -46,7 +47,6 @@ export function PostCreatorPromptPane() {
     referenceImages,
     generationModel,
     previewSource,
-    locationId,
     styleId,
     imageFormat,
     imageQuality,
@@ -62,7 +62,6 @@ export function PostCreatorPromptPane() {
     setGenerationModel,
     setImageFormat,
     setImageQuality,
-    setLocationId,
     setStyleId,
   } = actions
   const { generationReferenceSummary } = meta
@@ -70,7 +69,6 @@ export function PostCreatorPromptPane() {
   const promptId = useId()
   const templateFieldId = useId()
   const modelFieldId = useId()
-  const locationFieldId = useId()
   const styleFieldId = useId()
   const modelBlurbId = `${modelFieldId}-blurb`
   const disabled = isGenerating
@@ -81,46 +79,25 @@ export function PostCreatorPromptPane() {
   )
   const templateActiveForGeneration = previewSource === 'template' && templateImage != null
 
-  const [locations, setLocations] = useState<LocationOption[]>([])
-  const [styles, setStyles] = useState<LocationStyle[]>([])
+  const [styles, setStyles] = useState<Style[]>([])
   const [stylesLoading, setStylesLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    async function loadLocations() {
-      const result = await apiFetch<{ locations?: LocationOption[] }>(
-        '/api/locations',
-        { cache: 'no-store' },
-        'Failed to load locations',
-      )
-      if (cancelled) return
-      if (result.ok) {
-        setLocations(result.data.locations ?? [])
-      } else {
-        setLocations([])
-      }
-    }
-    void loadLocations()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    if (locationId == null) {
-      setStyles([])
-      return
-    }
-    let cancelled = false
     async function loadStyles() {
       setStylesLoading(true)
       try {
-        const list = await listLocationStyles(locationId!)
+        const list = await listStyles()
         if (cancelled) return
         setStyles(list)
-        const defaultStyle = list.find((style) => style.isDefault)
-        if (defaultStyle) {
-          setStyleId(defaultStyle.id)
+        const fromQuery = Number(new URLSearchParams(window.location.search).get('styleId'))
+        if (Number.isInteger(fromQuery) && fromQuery > 0 && list.some((s) => s.id === fromQuery)) {
+          setStyleId(fromQuery)
+        } else if (styleId == null) {
+          const defaultStyle = list.find((style) => style.isDefault)
+          if (defaultStyle) {
+            setStyleId(defaultStyle.id)
+          }
         }
       } catch {
         if (!cancelled) {
@@ -135,7 +112,11 @@ export function PostCreatorPromptPane() {
     return () => {
       cancelled = true
     }
-  }, [locationId, setStyleId, t])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount; apply default or ?styleId=
+  }, [setStyleId, t])
+
+  const selectedStyle = styles.find((style) => style.id === styleId) ?? null
+  const createStyleHref = `${routes.igStudioStyleNew}?returnTo=${encodeURIComponent(pathname || routes.igStudioPostCreator)}`
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden p-4 pt-0">
@@ -146,36 +127,6 @@ export function PostCreatorPromptPane() {
           if (canSubmit) void generate()
         }}
       >
-        <Field className="gap-1.5">
-          <FieldLabel htmlFor={locationFieldId}>{t('location.label')}</FieldLabel>
-          <Select
-            value={locationId != null ? String(locationId) : LOCATION_NONE}
-            onValueChange={(value) => {
-              if (value === LOCATION_NONE) {
-                setLocationId(null)
-                return
-              }
-              const next = Number(value)
-              if (Number.isInteger(next) && next > 0) {
-                setLocationId(next)
-              }
-            }}
-            disabled={disabled}
-          >
-            <SelectTrigger id={locationFieldId} className="w-full" aria-label={t('location.label')}>
-              <SelectValue placeholder={t('location.placeholder')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={LOCATION_NONE}>{t('location.none')}</SelectItem>
-              {locations.map((loc) => (
-                <SelectItem key={loc.id} value={String(loc.id)}>
-                  {loc.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FieldDescription>{t('location.description')}</FieldDescription>
-        </Field>
         <Field className="gap-1.5">
           <FieldLabel htmlFor={styleFieldId}>{t('style.label')}</FieldLabel>
           <Select
@@ -190,23 +141,58 @@ export function PostCreatorPromptPane() {
                 setStyleId(next)
               }
             }}
-            disabled={disabled || locationId == null || stylesLoading}
+            disabled={disabled || stylesLoading}
           >
             <SelectTrigger id={styleFieldId} className="w-full" aria-label={t('style.label')}>
-              <SelectValue placeholder={t('style.placeholder')} />
+              {selectedStyle ? (
+                <span className="flex min-w-0 items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                  <img
+                    src={mediaDownloadHref(selectedStyle.referenceImageName)}
+                    alt=""
+                    className="size-6 shrink-0 rounded object-cover"
+                  />
+                  <span className="truncate">
+                    {selectedStyle.isDefault
+                      ? `${selectedStyle.name} (${t('style.defaultSuffix')})`
+                      : selectedStyle.name}
+                  </span>
+                </span>
+              ) : (
+                <SelectValue placeholder={t('style.placeholder')} />
+              )}
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={STYLE_NONE}>{t('style.none')}</SelectItem>
               {styles.map((style) => (
                 <SelectItem key={style.id} value={String(style.id)}>
-                  {style.isDefault ? `${style.name} (${t('style.defaultSuffix')})` : style.name}
+                  <span className="flex items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                    <img
+                      src={mediaDownloadHref(style.referenceImageName)}
+                      alt=""
+                      className="size-6 shrink-0 rounded object-cover"
+                    />
+                    <span>
+                      {style.isDefault ? `${style.name} (${t('style.defaultSuffix')})` : style.name}
+                    </span>
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <FieldDescription>
-            {locationId == null ? t('style.needsLocation') : t('style.description')}
-          </FieldDescription>
+          <FieldDescription>{t('style.description')}</FieldDescription>
+          <div className="flex flex-wrap gap-2 pt-0.5">
+            <Button asChild type="button" variant="outline" size="sm" disabled={disabled}>
+              <Link href={createStyleHref}>
+                <Plus className="size-3.5" aria-hidden />
+                {t('style.create')}
+              </Link>
+            </Button>
+            <Button asChild type="button" variant="ghost" size="sm" disabled={disabled}>
+              <Link href={routes.igStudioStyles}>{t('style.manage')}</Link>
+            </Button>
+          </div>
         </Field>
         <Field className="gap-1.5">
           <FieldLabel htmlFor={templateFieldId}>{t('template.label')}</FieldLabel>

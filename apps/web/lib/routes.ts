@@ -76,6 +76,10 @@ export const routes = {
   igStudio: '/ig-studio',
   igStudioDetail: (id: string | number) => `/ig-studio/${encodeURIComponent(String(id))}`,
   igStudioPostCreator: '/ig-studio/post-creator',
+  igStudioStyles: '/ig-studio/styles',
+  igStudioStyleNew: '/ig-studio/styles/new',
+  igStudioStyleDetail: (id: string | number) =>
+    `/ig-studio/styles/${encodeURIComponent(String(id))}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
   agent: '/advisor',
   printOrders: '/print-orders',

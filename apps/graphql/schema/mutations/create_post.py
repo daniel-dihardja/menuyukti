@@ -6,25 +6,11 @@ import strawberry
 from sqlalchemy.orm import joinedload
 
 from graphql.context import request_session_scope
-from graphql.data_sources import InstagramPost, InstagramPostPage, Workspace, WorkspaceMembership
+from graphql.data_sources import InstagramPost, InstagramPostPage
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.posts import _post_to_gql
 from graphql.schema.types import PostType
-
-
-def _primary_workspace_id(session, user_id: str) -> int | None:
-    mem = (
-        session.query(WorkspaceMembership)
-        .filter(WorkspaceMembership.clerk_user_id == user_id)
-        .order_by(WorkspaceMembership.workspace_id)
-        .first()
-    )
-    if mem is None:
-        return None
-    ws = session.get(Workspace, mem.workspace_id)
-    if ws is None:
-        return None
-    return ws.id
+from graphql.services.workspace_scope import primary_workspace_id
 
 
 @strawberry.type
@@ -40,7 +26,7 @@ class CreatePostMutation:
             title_clean = None
 
         with request_session_scope(info) as session:
-            workspace_id = _primary_workspace_id(session, user_id)
+            workspace_id = primary_workspace_id(session, user_id)
             if workspace_id is None:
                 raise ValueError("No workspace found for createPost")
 

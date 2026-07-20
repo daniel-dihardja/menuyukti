@@ -1,4 +1,4 @@
-"""Helpers for location style pack writes (default exclusivity, validation)."""
+"""Helpers for visual style pack writes (default exclusivity, validation)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from graphql.data_sources.models.location_style import LocationStyle
+from graphql.data_sources.models.visual_style import VisualStyle
 
 _MAX_NAME_LEN = 128
 _MAX_RULES_LEN = 4000
@@ -129,13 +129,13 @@ def rules_from_style_spec(spec: dict[str, Any]) -> str:
     return rules[:_MAX_RULES_LEN]
 
 
-def clear_other_defaults(session: Session, location_id: int, keep_id: int | None = None) -> None:
-    """Ensure at most one is_default=True per location."""
-    q = session.query(LocationStyle).filter(
-        LocationStyle.location_id == location_id,
-        LocationStyle.is_default.is_(True),
+def clear_other_defaults(session: Session, workspace_id: int, keep_id: int | None = None) -> None:
+    """Ensure at most one is_default=True per workspace."""
+    q = session.query(VisualStyle).filter(
+        VisualStyle.workspace_id == workspace_id,
+        VisualStyle.is_default.is_(True),
     )
     if keep_id is not None:
-        q = q.filter(LocationStyle.id != keep_id)
+        q = q.filter(VisualStyle.id != keep_id)
     for row in q.all():
         row.is_default = False

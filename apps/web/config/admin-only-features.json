@@ -2,7 +2,7 @@
   "features": [
     {
       "id": "studio",
-      "description": "IG Studio post drafts and Post Creator (admin).",
+      "description": "IG Studio post drafts, style packs, and Post Creator (admin).",
       "routePrefixes": ["/ig-studio"],
       "navKeys": ["posts"]
     },

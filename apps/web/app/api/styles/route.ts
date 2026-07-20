@@ -3,37 +3,27 @@ import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  CREATE_LOCATION_STYLE_MUTATION,
-  LOCATION_STYLES_QUERY,
-  type CreateLocationStyleData,
-  type LocationStylesData,
-} from '@/lib/graphql/queries/location-styles'
+  CREATE_STYLE_MUTATION,
+  STYLES_QUERY,
+  type CreateStyleData,
+  type StylesData,
+} from '@/lib/graphql/queries/styles'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 import { assertUserPhotoExists, mapGraphqlStyleError } from './helpers'
-import { createLocationStyleBodySchema } from './schema'
+import { createStyleBodySchema } from './schema'
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
-    const locationIdParam = new URL(req.url).searchParams.get('locationId')
-    const locationId = locationIdParam ? Number(locationIdParam) : NaN
-    if (!Number.isInteger(locationId) || locationId <= 0) {
-      return NextResponse.json({ message: 'locationId is required' }, { status: 400 })
-    }
+    const data = await graphqlQuery<StylesData>(STYLES_QUERY, {}, userId)
 
-    const data = await graphqlQuery<LocationStylesData>(
-      LOCATION_STYLES_QUERY,
-      { locationId },
-      userId,
-    )
-
-    return NextResponse.json({ styles: data.locationStyles })
+    return NextResponse.json({ styles: data.styles })
   } catch (error) {
-    console.error('[location-styles] GET', error)
+    console.error('[styles] GET', error)
     const message = error instanceof Error ? error.message : 'Failed to list styles'
     const mapped = mapGraphqlStyleError(message)
     return NextResponse.json({ message: mapped.message }, { status: mapped.status })
@@ -47,15 +37,14 @@ export async function POST(req: Request) {
     const { userId } = authz
 
     const json = await req.json()
-    const body = createLocationStyleBodySchema.parse(json)
+    const body = createStyleBodySchema.parse(json)
 
     const photoError = await assertUserPhotoExists(userId, body.referenceImageName)
     if (photoError) return photoError
 
-    const data = await graphqlQuery<CreateLocationStyleData>(
-      CREATE_LOCATION_STYLE_MUTATION,
+    const data = await graphqlQuery<CreateStyleData>(
+      CREATE_STYLE_MUTATION,
       {
-        locationId: body.locationId,
         name: body.name,
         rules: body.rules,
         referenceImageName: body.referenceImageName,
@@ -65,12 +54,12 @@ export async function POST(req: Request) {
       userId,
     )
 
-    return NextResponse.json({ style: data.createLocationStyle }, { status: 201 })
+    return NextResponse.json({ style: data.createStyle }, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
     }
-    console.error('[location-styles] POST', error)
+    console.error('[styles] POST', error)
     const message = error instanceof Error ? error.message : 'Failed to create style'
     const mapped = mapGraphqlStyleError(message)
     return NextResponse.json({ message: mapped.message }, { status: mapped.status })

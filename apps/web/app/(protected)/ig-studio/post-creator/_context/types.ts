@@ -36,7 +36,6 @@ export type PostCreatorState = {
   solidBackgroundEnabled: boolean
   solidBackgroundColor: string
   previewSource: PostCreatorPreviewSource
-  locationId: number | null
   styleId: number | null
   isGenerating: boolean
   isCommittingPostImage: boolean
@@ -71,7 +70,6 @@ export type PostCreatorActions = {
   setSafeZoneInsetYPx: (px: number) => void
   setSolidBackgroundEnabled: (enabled: boolean) => void
   setSolidBackgroundColor: (color: string) => void
-  setLocationId: (locationId: number | null) => void
   setStyleId: (styleId: number | null) => void
 }
 

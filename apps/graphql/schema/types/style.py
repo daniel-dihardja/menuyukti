@@ -1,4 +1,4 @@
-"""GraphQL type for location visual style packs."""
+"""GraphQL type for workspace visual style packs."""
 
 from __future__ import annotations
 
@@ -8,14 +8,15 @@ from strawberry.scalars import JSON
 
 @strawberry.type(
     description=(
-        "Location-scoped visual style pack: textual rules plus one media-library "
+        "Workspace-scoped visual style pack: textual rules plus one media-library "
         "reference image used when generating Instagram posts. Optional styleSpec "
         "holds the structured Style Spec v1 used for compiled prompts."
     )
 )
-class LocationStyleType:
+class StyleType:
     id: int
-    location_id: int
+    workspace_id: int
+    created_by_clerk_user_id: str
     name: str
     rules: str
     reference_image_name: str

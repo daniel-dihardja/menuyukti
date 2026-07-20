@@ -1,4 +1,4 @@
-"""Location-scoped visual style packs for Instagram post generation."""
+"""Workspace-scoped visual style packs for Instagram post generation."""
 
 from __future__ import annotations
 
@@ -12,21 +12,22 @@ from sqlalchemy.types import JSON
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
-    from graphql.data_sources.models.location import Location
+    from graphql.data_sources.models.workspace import Workspace
 
 
-class LocationStyle(Base):
-    """Named style pack (rules + reference image) owned by a location."""
+class VisualStyle(Base):
+    """Named style pack (rules + reference image) owned by a workspace."""
 
-    __tablename__ = "location_style"
-    __table_args__ = (Index("ix_location_style_location_id", "location_id", unique=False),)
+    __tablename__ = "visual_style"
+    __table_args__ = (Index("ix_visual_style_workspace_id", "workspace_id", unique=False),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    location_id: Mapped[int] = mapped_column(
+    workspace_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("location.id", ondelete="CASCADE"),
+        ForeignKey("workspace.id", ondelete="CASCADE"),
         nullable=False,
     )
+    created_by_clerk_user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     rules: Mapped[str] = mapped_column(Text, nullable=False)
     reference_image_name: Mapped[str] = mapped_column(String(512), nullable=False)
@@ -52,7 +53,7 @@ class LocationStyle(Base):
         nullable=False,
     )
 
-    location: Mapped[Location] = relationship(
-        "Location",
-        back_populates="styles",
+    workspace: Mapped[Workspace] = relationship(
+        "Workspace",
+        back_populates="visual_styles",
     )

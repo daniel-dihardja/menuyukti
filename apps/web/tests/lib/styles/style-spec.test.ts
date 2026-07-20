@@ -6,7 +6,7 @@ import {
   parseStyleSpec,
   rulesFromStyleSpec,
   type StyleSpec,
-} from '@/lib/location-styles/style-spec'
+} from '@/lib/styles/style-spec'
 
 const WARM_OAT: StyleSpec = {
   schemaVersion: 1,

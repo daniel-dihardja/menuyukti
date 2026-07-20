@@ -2,10 +2,11 @@ import strawberry
 from sqlalchemy.orm import joinedload
 
 from graphql.context import request_session_scope
-from graphql.data_sources import InstagramPost, InstagramPostPage, WorkspaceMembership
+from graphql.data_sources import InstagramPost, InstagramPostPage
 from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.types import PostPageMediaVersionType, PostPageType, PostType
+from graphql.services.workspace_scope import workspace_ids_for_user
 
 
 def _media_version_to_gql(row) -> PostPageMediaVersionType:
@@ -50,15 +51,6 @@ def _post_to_gql(row: InstagramPost) -> PostType:
     )
 
 
-def _workspace_ids_for_user(session, user_id: str) -> list[int]:
-    return [
-        w[0]
-        for w in session.query(WorkspaceMembership.workspace_id)
-        .filter(WorkspaceMembership.clerk_user_id == user_id)
-        .all()
-    ]
-
-
 def _load_post_for_user(session, post_pk: int, user_id: str) -> InstagramPost | None:
     row = (
         session.query(InstagramPost)
@@ -90,7 +82,7 @@ class PostsQuery:
             maximum=MAX_LIST_FIRST,
         )
         with request_session_scope(info) as session:
-            workspace_ids = _workspace_ids_for_user(session, user_id)
+            workspace_ids = workspace_ids_for_user(session, user_id)
             if not workspace_ids:
                 return []
             rows = (

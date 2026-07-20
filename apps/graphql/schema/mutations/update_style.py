@@ -1,4 +1,4 @@
-"""Update a location visual style pack."""
+"""Update a workspace visual style pack."""
 
 from __future__ import annotations
 
@@ -8,11 +8,11 @@ import strawberry
 from strawberry.scalars import JSON
 
 from graphql.context import request_session_scope
-from graphql.data_sources.models.location_style import LocationStyle
-from graphql.schema.auth import require_location_owner, user_id_from_info
-from graphql.schema.queries.location_styles import _style_to_gql
-from graphql.schema.types.location_style import LocationStyleType
-from graphql.services.location_style import (
+from graphql.data_sources.models.visual_style import VisualStyle
+from graphql.schema.auth import is_workspace_member, user_id_from_info
+from graphql.schema.queries.styles import _style_to_gql
+from graphql.schema.types.style import StyleType
+from graphql.services.visual_style import (
     clear_other_defaults,
     rules_from_style_spec,
     validate_style_fields,
@@ -21,9 +21,9 @@ from graphql.services.location_style import (
 
 
 @strawberry.type
-class UpdateLocationStyleMutation:
-    @strawberry.mutation(description="Update a location visual style pack.")
-    def update_location_style(
+class UpdateStyleMutation:
+    @strawberry.mutation(description="Update a visual style pack in the caller's workspace.")
+    def update_style(
         self,
         info: strawberry.Info,
         id: int,
@@ -32,16 +32,17 @@ class UpdateLocationStyleMutation:
         reference_image_name: str | None = None,
         is_default: bool | None = None,
         style_spec: JSON | None = None,
-    ) -> LocationStyleType:
+    ) -> StyleType:
         user_id = user_id_from_info(info)
         if not user_id:
-            raise ValueError("Missing authenticated user for updateLocationStyle")
+            raise ValueError("Missing authenticated user for updateStyle")
 
         with request_session_scope(info) as session:
-            row = session.query(LocationStyle).filter(LocationStyle.id == id).first()
+            row = session.query(VisualStyle).filter(VisualStyle.id == id).first()
             if row is None:
-                raise ValueError("Location style not found")
-            require_location_owner(session, row.location_id, user_id)
+                raise ValueError("Style not found")
+            if not is_workspace_member(session, row.workspace_id, user_id):
+                raise PermissionError("Not allowed to update this style")
 
             next_name = name if name is not None else row.name
             next_image = (
@@ -71,7 +72,7 @@ class UpdateLocationStyleMutation:
 
             if is_default is not None:
                 if is_default:
-                    clear_other_defaults(session, row.location_id, keep_id=row.id)
+                    clear_other_defaults(session, row.workspace_id, keep_id=row.id)
                 row.is_default = is_default
 
             session.commit()

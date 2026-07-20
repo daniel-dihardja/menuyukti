@@ -18,8 +18,8 @@ import {
 } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { UPDATE_POST_PAGE_MUTATION, type UpdatePostPageData } from '@/lib/graphql/queries/posts'
-import { LOCATION_STYLE_QUERY, type LocationStyleData } from '@/lib/graphql/queries/location-styles'
-import { parseStyleSpec } from '@/lib/location-styles/style-spec'
+import { STYLE_QUERY, type StyleData } from '@/lib/graphql/queries/styles'
+import { parseStyleSpec } from '@/lib/styles/style-spec'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
@@ -157,22 +157,18 @@ export async function POST(req: Request) {
   let stylePack: StylePackPrompt | undefined
   let styleImageName: string | undefined
   if (styleId != null) {
-    let styleData: LocationStyleData
+    let styleData: StyleData
     try {
-      styleData = await graphqlQuery<LocationStyleData>(
-        LOCATION_STYLE_QUERY,
-        { id: styleId },
-        userId,
-      )
+      styleData = await graphqlQuery<StyleData>(STYLE_QUERY, { id: styleId }, userId)
     } catch (err) {
-      console.error('[posts/generate] locationStyle query failed', {
+      console.error('[posts/generate] style query failed', {
         userIdPrefix: userId.slice(0, 8),
         styleId,
         message: err instanceof Error ? err.message : String(err),
       })
       return NextResponse.json({ message: 'Failed to load style pack' }, { status: 502 })
     }
-    const style = styleData.locationStyle
+    const style = styleData.style
     if (!style) {
       return NextResponse.json({ message: 'Style pack not found' }, { status: 404 })
     }

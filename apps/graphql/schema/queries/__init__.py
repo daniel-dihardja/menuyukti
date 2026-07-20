@@ -6,7 +6,6 @@ from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .latest_analytics_run_signals import LatestAnalyticsRunWithSignalsQuery
 from .location_manual_brief_input import LocationManualBriefInputQuery
-from .location_styles import LocationStylesQuery
 from .locations import LocationsQuery
 from .menu_catalog import MenuCatalogQuery
 from .menu_combos import MenuCombosQuery
@@ -22,6 +21,7 @@ from .public_holidays import PublicHolidaysQuery
 from .revenue_trends import RevenueTrendsQuery
 from .scheduler_calendar import SchedulerCalendarQuery
 from .slot_menu_candidates import SlotMenuCandidatesQuery
+from .styles import StylesQuery
 from .weekly_demand_pattern import WeeklyDemandPatternQuery
 from .workflow_campaign_tree import WorkflowCampaignTreeQuery
 from .workspace import WorkspaceQuery
@@ -37,7 +37,7 @@ __all__ = [
     "InstagramSignalsQuery",
     "LocationsQuery",
     "LocationManualBriefInputQuery",
-    "LocationStylesQuery",
+    "StylesQuery",
     "MenuCatalogQuery",
     "MilestonePriorDataQuery",
     "MenuCombosQuery",

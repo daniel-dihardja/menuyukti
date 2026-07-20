@@ -1,19 +1,21 @@
-"""Tests for locationStyles / locationStyle queries and style CRUD mutations."""
+"""Tests for styles / style queries and style CRUD mutations."""
 
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
 
 import pytest
-from graphql.data_sources import Location, LocationStyle, SessionLocal
+from graphql.data_sources import SessionLocal, VisualStyle, Workspace, WorkspaceMembership
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
 _LIST_QUERY = """
-query LocationStyles($locationId: Int!) {
-  locationStyles(locationId: $locationId) {
+query Styles {
+  styles {
     id
-    locationId
+    workspaceId
+    createdByClerkUserId
     name
     rules
     referenceImageName
@@ -24,10 +26,11 @@ query LocationStyles($locationId: Int!) {
 """
 
 _ONE_QUERY = """
-query LocationStyle($id: Int!) {
-  locationStyle(id: $id) {
+query Style($id: Int!) {
+  style(id: $id) {
     id
-    locationId
+    workspaceId
+    createdByClerkUserId
     name
     rules
     referenceImageName
@@ -39,15 +42,13 @@ query LocationStyle($id: Int!) {
 
 _CREATE = """
 mutation CreateStyle(
-  $locationId: Int!
   $name: String!
   $rules: String!
   $referenceImageName: String!
   $isDefault: Boolean
   $styleSpec: JSON
 ) {
-  createLocationStyle(
-    locationId: $locationId
+  createStyle(
     name: $name
     rules: $rules
     referenceImageName: $referenceImageName
@@ -55,7 +56,8 @@ mutation CreateStyle(
     styleSpec: $styleSpec
   ) {
     id
-    locationId
+    workspaceId
+    createdByClerkUserId
     name
     rules
     referenceImageName
@@ -74,7 +76,7 @@ mutation UpdateStyle(
   $isDefault: Boolean
   $styleSpec: JSON
 ) {
-  updateLocationStyle(
+  updateStyle(
     id: $id
     name: $name
     rules: $rules
@@ -94,59 +96,77 @@ mutation UpdateStyle(
 
 _DELETE = """
 mutation DeleteStyle($id: Int!) {
-  deleteLocationStyle(id: $id)
+  deleteStyle(id: $id)
 }
 """
 
+OTHER_USER_ID = "clerk_other_style_user"
+
 
 @pytest.fixture
-def style_location_id():
+def style_workspace_id():
     session = SessionLocal()
     try:
-        loc = Location(name="Style Pack Test Loc", clerk_user_id=GRAPHQL_TEST_USER_ID)
-        session.add(loc)
+        session.query(VisualStyle).delete()
+        session.query(WorkspaceMembership).delete()
+        session.query(Workspace).delete()
         session.commit()
-        session.refresh(loc)
-        lid = loc.id
+
+        now = datetime.now(tz=UTC)
+        ws = Workspace(name="Style Pack workspace", owner_clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(ws)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id=GRAPHQL_TEST_USER_ID,
+                role="owner",
+                invited_at=now,
+                accepted_at=now,
+            )
+        )
+        session.commit()
+        session.refresh(ws)
+        wid = ws.id
     finally:
         session.close()
-    yield lid
+    yield wid
     session = SessionLocal()
     try:
-        session.query(LocationStyle).filter(LocationStyle.location_id == lid).delete()
-        session.query(Location).filter(Location.id == lid).delete()
+        session.query(VisualStyle).filter(VisualStyle.workspace_id == wid).delete()
+        session.query(WorkspaceMembership).filter(WorkspaceMembership.workspace_id == wid).delete()
+        session.query(Workspace).filter(Workspace.id == wid).delete()
         session.commit()
     finally:
         session.close()
 
 
-def _execute(query: str, variable_values: dict, context_value: dict | None = None):
+def _execute(query: str, variable_values: dict | None = None, context_value: dict | None = None):
     return asyncio.run(
         schema.execute(
             query,
-            variable_values=variable_values,
+            variable_values=variable_values or {},
             context_value=context_value if context_value is not None else graphql_auth_context(),
         )
     )
 
 
-def test_list_empty_for_owner(style_location_id: int):
-    result = _execute(_LIST_QUERY, {"locationId": style_location_id})
+def test_list_empty_for_member(style_workspace_id: int):
+    result = _execute(_LIST_QUERY)
     assert result.errors is None
-    assert result.data["locationStyles"] == []
+    assert result.data["styles"] == []
 
 
-def test_list_denied_without_auth(style_location_id: int):
-    result = _execute(_LIST_QUERY, {"locationId": style_location_id}, context_value={})
+def test_list_denied_without_auth(style_workspace_id: int):
+    result = _execute(_LIST_QUERY, context_value={})
     assert result.errors is None
-    assert result.data["locationStyles"] == []
+    assert result.data["styles"] == []
 
 
-def test_create_update_delete_and_default_exclusivity(style_location_id: int):
+def test_create_update_delete_and_default_exclusivity(style_workspace_id: int):
     created_a = _execute(
         _CREATE,
         {
-            "locationId": style_location_id,
             "name": "Warm editorial",
             "rules": "Warm window light; soft shadows.",
             "referenceImageName": "warm-ref.webp",
@@ -154,15 +174,16 @@ def test_create_update_delete_and_default_exclusivity(style_location_id: int):
         },
     )
     assert created_a.errors is None
-    style_a = created_a.data["createLocationStyle"]
+    style_a = created_a.data["createStyle"]
     assert style_a["isDefault"] is True
+    assert style_a["workspaceId"] == style_workspace_id
+    assert style_a["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert style_a["referenceImageName"] == "warm-ref.webp"
     id_a = style_a["id"]
 
     created_b = _execute(
         _CREATE,
         {
-            "locationId": style_location_id,
             "name": "Cool neon",
             "rules": "Cool cyan accents; high contrast.",
             "referenceImageName": "cool-ref.webp",
@@ -170,13 +191,13 @@ def test_create_update_delete_and_default_exclusivity(style_location_id: int):
         },
     )
     assert created_b.errors is None
-    style_b = created_b.data["createLocationStyle"]
+    style_b = created_b.data["createStyle"]
     assert style_b["isDefault"] is True
     id_b = style_b["id"]
 
-    listed = _execute(_LIST_QUERY, {"locationId": style_location_id})
+    listed = _execute(_LIST_QUERY)
     assert listed.errors is None
-    by_id = {row["id"]: row for row in listed.data["locationStyles"]}
+    by_id = {row["id"]: row for row in listed.data["styles"]}
     assert by_id[id_a]["isDefault"] is False
     assert by_id[id_b]["isDefault"] is True
 
@@ -189,32 +210,31 @@ def test_create_update_delete_and_default_exclusivity(style_location_id: int):
         },
     )
     assert updated.errors is None
-    assert updated.data["updateLocationStyle"]["name"] == "Warm editorial v2"
-    assert updated.data["updateLocationStyle"]["isDefault"] is True
+    assert updated.data["updateStyle"]["name"] == "Warm editorial v2"
+    assert updated.data["updateStyle"]["isDefault"] is True
 
-    listed2 = _execute(_LIST_QUERY, {"locationId": style_location_id})
-    by_id2 = {row["id"]: row for row in listed2.data["locationStyles"]}
+    listed2 = _execute(_LIST_QUERY)
+    by_id2 = {row["id"]: row for row in listed2.data["styles"]}
     assert by_id2[id_a]["isDefault"] is True
     assert by_id2[id_b]["isDefault"] is False
 
     one = _execute(_ONE_QUERY, {"id": id_a})
     assert one.errors is None
-    assert one.data["locationStyle"]["name"] == "Warm editorial v2"
+    assert one.data["style"]["name"] == "Warm editorial v2"
 
     deleted = _execute(_DELETE, {"id": id_b})
     assert deleted.errors is None
-    assert deleted.data["deleteLocationStyle"] is True
+    assert deleted.data["deleteStyle"] is True
 
-    listed3 = _execute(_LIST_QUERY, {"locationId": style_location_id})
-    assert len(listed3.data["locationStyles"]) == 1
-    assert listed3.data["locationStyles"][0]["id"] == id_a
+    listed3 = _execute(_LIST_QUERY)
+    assert len(listed3.data["styles"]) == 1
+    assert listed3.data["styles"][0]["id"] == id_a
 
 
-def test_create_requires_fields(style_location_id: int):
+def test_create_requires_fields(style_workspace_id: int):
     result = _execute(
         _CREATE,
         {
-            "locationId": style_location_id,
             "name": "  ",
             "rules": "rules",
             "referenceImageName": "a.webp",
@@ -224,26 +244,25 @@ def test_create_requires_fields(style_location_id: int):
     assert any("Name is required" in str(err) for err in result.errors)
 
 
-def test_get_one_denied_for_other_user(style_location_id: int):
+def test_get_one_denied_for_other_user(style_workspace_id: int):
     created = _execute(
         _CREATE,
         {
-            "locationId": style_location_id,
             "name": "Private",
             "rules": "rules",
             "referenceImageName": "p.webp",
         },
     )
     assert created.errors is None
-    style_id = created.data["createLocationStyle"]["id"]
+    style_id = created.data["createStyle"]["id"]
 
     denied = _execute(
         _ONE_QUERY,
         {"id": style_id},
-        context_value={"user_id": "someone_else"},
+        context_value={"user_id": OTHER_USER_ID},
     )
     assert denied.errors is None
-    assert denied.data["locationStyle"] is None
+    assert denied.data["style"] is None
 
 
 _SAMPLE_SPEC = {
@@ -290,11 +309,10 @@ _SAMPLE_SPEC = {
 }
 
 
-def test_create_with_style_spec_syncs_rules(style_location_id: int):
+def test_create_with_style_spec_syncs_rules(style_workspace_id: int):
     created = _execute(
         _CREATE,
         {
-            "locationId": style_location_id,
             "name": "Warm Oat",
             "rules": "ignored when styleSpec is set",
             "referenceImageName": "warm-oat.webp",
@@ -302,7 +320,7 @@ def test_create_with_style_spec_syncs_rules(style_location_id: int):
         },
     )
     assert created.errors is None
-    style = created.data["createLocationStyle"]
+    style = created.data["createStyle"]
     assert style["rules"] == (
         "Cream background; black line art; mustard accents only.\n"
         "Only the product in the cup may be photorealistic."
@@ -312,11 +330,10 @@ def test_create_with_style_spec_syncs_rules(style_location_id: int):
     assert style["styleSpec"]["controls"]["headline"]["default"] == "auto"
 
 
-def test_create_rejects_invalid_style_spec(style_location_id: int):
+def test_create_rejects_invalid_style_spec(style_workspace_id: int):
     result = _execute(
         _CREATE,
         {
-            "locationId": style_location_id,
             "name": "Bad",
             "rules": "fallback",
             "referenceImageName": "x.webp",

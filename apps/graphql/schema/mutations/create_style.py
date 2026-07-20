@@ -1,4 +1,4 @@
-"""Create a location visual style pack."""
+"""Create a workspace visual style pack."""
 
 from __future__ import annotations
 
@@ -8,34 +8,34 @@ import strawberry
 from strawberry.scalars import JSON
 
 from graphql.context import request_session_scope
-from graphql.data_sources.models.location_style import LocationStyle
-from graphql.schema.auth import require_location_owner, user_id_from_info
-from graphql.schema.queries.location_styles import _style_to_gql
-from graphql.schema.types.location_style import LocationStyleType
-from graphql.services.location_style import (
+from graphql.data_sources.models.visual_style import VisualStyle
+from graphql.schema.auth import user_id_from_info
+from graphql.schema.queries.styles import _style_to_gql
+from graphql.schema.types.style import StyleType
+from graphql.services.visual_style import (
     clear_other_defaults,
     rules_from_style_spec,
     validate_style_fields,
     validate_style_spec,
 )
+from graphql.services.workspace_scope import primary_workspace_id
 
 
 @strawberry.type
-class CreateLocationStyleMutation:
-    @strawberry.mutation(description="Create a named visual style pack for a location.")
-    def create_location_style(
+class CreateStyleMutation:
+    @strawberry.mutation(description="Create a named visual style pack in the caller's workspace.")
+    def create_style(
         self,
         info: strawberry.Info,
-        location_id: int,
         name: str,
         rules: str,
         reference_image_name: str,
         is_default: bool = False,
         style_spec: JSON | None = None,
-    ) -> LocationStyleType:
+    ) -> StyleType:
         user_id = user_id_from_info(info)
         if not user_id:
-            raise ValueError("Missing authenticated user for createLocationStyle")
+            raise ValueError("Missing authenticated user for createStyle")
 
         normalized_spec: dict[str, Any] | None = None
         if style_spec is not None:
@@ -49,11 +49,14 @@ class CreateLocationStyleMutation:
         )
 
         with request_session_scope(info) as session:
-            require_location_owner(session, location_id, user_id)
+            workspace_id = primary_workspace_id(session, user_id)
+            if workspace_id is None:
+                raise ValueError("No workspace found for createStyle")
             if is_default:
-                clear_other_defaults(session, location_id)
-            row = LocationStyle(
-                location_id=location_id,
+                clear_other_defaults(session, workspace_id)
+            row = VisualStyle(
+                workspace_id=workspace_id,
+                created_by_clerk_user_id=user_id,
                 name=name_clean,
                 rules=rules_clean,
                 reference_image_name=image_clean,

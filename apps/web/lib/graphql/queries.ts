@@ -4,7 +4,7 @@
 
 export * from './queries/parse-helpers'
 export * from './queries/locations'
-export * from './queries/location-styles'
+export * from './queries/styles'
 export * from './queries/calendar-entries'
 export * from './queries/workflows'
 export * from './queries/analytics'

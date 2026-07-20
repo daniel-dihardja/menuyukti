@@ -33,7 +33,7 @@ export async function assertUserPhotoExists(
       return NextResponse.json({ message: 'Reference image not found' }, { status: 400 })
     }
   } catch (err) {
-    console.error('[location-styles] reference image lookup failed', {
+    console.error('[styles] reference image lookup failed', {
       userIdPrefix: userId.slice(0, 8),
       filename,
       message: err instanceof Error ? err.message : String(err),

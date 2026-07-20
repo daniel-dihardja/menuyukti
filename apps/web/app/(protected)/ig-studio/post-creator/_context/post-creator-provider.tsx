@@ -131,7 +131,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     DEFAULT_SOLID_BACKGROUND_COLOR,
   )
   const [previewSource, setPreviewSource] = useState<PostCreatorPreviewSource>('version')
-  const [locationId, setLocationIdState] = useState<number | null>(null)
   const [styleId, setStyleIdState] = useState<number | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
@@ -517,11 +516,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
 
   const setSolidBackgroundColor = useCallback((color: string) => {
     setSolidBackgroundColorState(normalizeSolidBackgroundColor(color))
-  }, [])
-
-  const setLocationId = useCallback((next: number | null) => {
-    setLocationIdState(next)
-    setStyleIdState(null)
   }, [])
 
   const setStyleId = useCallback((next: number | null) => {
@@ -1142,7 +1136,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         solidBackgroundEnabled,
         solidBackgroundColor,
         previewSource,
-        locationId,
         styleId,
         isGenerating,
         isCommittingPostImage,
@@ -1176,7 +1169,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         setSafeZoneInsetYPx,
         setSolidBackgroundEnabled,
         setSolidBackgroundColor,
-        setLocationId,
         setStyleId,
       },
       meta: {
@@ -1223,7 +1215,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       isDuplicatingPage,
       isGenerating,
       isLoadingPost,
-      locationId,
       mode,
       pages,
       postId,
@@ -1246,7 +1237,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setGenerationModel,
       setImageFormat,
       setImageQuality,
-      setLocationId,
       setPromptValue,
       setSafeZoneInsetXPx,
       setSafeZoneInsetYPx,

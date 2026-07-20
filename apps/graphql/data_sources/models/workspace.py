@@ -12,6 +12,7 @@ from graphql.data_sources.database import Base
 if TYPE_CHECKING:
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.location import Location
+    from graphql.data_sources.models.visual_style import VisualStyle
 
 
 class Workspace(Base):
@@ -34,6 +35,11 @@ class Workspace(Base):
     memberships: Mapped[list[WorkspaceMembership]] = relationship(back_populates="workspace")
     locations: Mapped[list[Location]] = relationship(back_populates="workspace")
     instagram_posts: Mapped[list[InstagramPost]] = relationship(back_populates="workspace")
+    visual_styles: Mapped[list[VisualStyle]] = relationship(
+        back_populates="workspace",
+        cascade="all, delete-orphan",
+        order_by="VisualStyle.name",
+    )
 
 
 class WorkspaceMembership(Base):

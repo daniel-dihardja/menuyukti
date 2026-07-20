@@ -3,8 +3,8 @@ import { ZodError } from 'zod'
 
 import { ChatImageError, loadUserPhotoAsDataUrl } from '@/lib/chat/build-python-user-message'
 import { getPythonAgentsUrl } from '@/lib/config'
-import { parseStyleSpecResult } from '@/lib/location-styles/style-spec'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { parseStyleSpecResult } from '@/lib/styles/style-spec'
 
 import { assertUserPhotoExists } from '../helpers'
 import { draftFromImageBodySchema } from '../schema'
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
         .slice(0, 5)
         .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
         .join('; ')
-      console.error('[location-styles/draft-from-image] styleSpec validation failed', {
+      console.error('[styles/draft-from-image] styleSpec validation failed', {
         issues: specResult.issues,
         styleSpec: parsed.style_spec,
       })
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
     }
-    console.error('[location-styles/draft-from-image] POST', error)
+    console.error('[styles/draft-from-image] POST', error)
     const message = error instanceof Error ? error.message : 'Failed to draft style'
     return NextResponse.json({ message }, { status: 500 })
   }

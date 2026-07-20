@@ -1,10 +1,9 @@
 import { z } from 'zod'
 
 import { isAllowedVisionGatewayModel } from '@/lib/chat/gateway-chat-models'
-import { styleSpecSchema } from '@/lib/location-styles/style-spec'
+import { styleSpecSchema } from '@/lib/styles/style-spec'
 
-export const createLocationStyleBodySchema = z.object({
-  locationId: z.number().int().positive(),
+export const createStyleBodySchema = z.object({
   name: z.string().trim().min(1).max(128),
   rules: z.string().trim().min(1).max(4000),
   referenceImageName: z.string().trim().min(1).max(512),
@@ -12,7 +11,7 @@ export const createLocationStyleBodySchema = z.object({
   styleSpec: styleSpecSchema.optional(),
 })
 
-export const updateLocationStyleBodySchema = z
+export const updateStyleBodySchema = z
   .object({
     name: z.string().trim().min(1).max(128).optional(),
     rules: z.string().trim().min(1).max(4000).optional(),

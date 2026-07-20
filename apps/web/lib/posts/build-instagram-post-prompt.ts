@@ -8,7 +8,7 @@ import {
   compileStyleSpec,
   parseStyleControlOverrides,
   type StyleSpec,
-} from '@/lib/location-styles/style-spec'
+} from '@/lib/styles/style-spec'
 
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 

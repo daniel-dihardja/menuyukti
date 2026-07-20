@@ -1,13 +1,13 @@
 import { apiFetch } from '@/lib/api/client-fetch'
 import type { VisionGatewayModelId } from '@/lib/chat/gateway-chat-models'
-import type { LocationStyle } from '@/lib/graphql/queries/location-styles'
-import type { StyleSpec } from '@/lib/location-styles/style-spec'
+import type { Style } from '@/lib/graphql/queries/styles'
+import type { StyleSpec } from '@/lib/styles/style-spec'
 
-export type { LocationStyle }
+export type { Style }
 
-export async function listLocationStyles(locationId: number): Promise<LocationStyle[]> {
-  const result = await apiFetch<{ styles?: LocationStyle[] }>(
-    `/api/location-styles?locationId=${encodeURIComponent(String(locationId))}`,
+export async function listStyles(): Promise<Style[]> {
+  const result = await apiFetch<{ styles?: Style[] }>(
+    '/api/styles',
     { cache: 'no-store' },
     'Failed to load styles',
   )
@@ -17,16 +17,27 @@ export async function listLocationStyles(locationId: number): Promise<LocationSt
   return result.data.styles ?? []
 }
 
-export async function createLocationStyle(input: {
-  locationId: number
+export async function getStyle(id: number): Promise<Style> {
+  const result = await apiFetch<{ style: Style }>(
+    `/api/styles/${encodeURIComponent(String(id))}`,
+    { cache: 'no-store' },
+    'Failed to load style',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.style
+}
+
+export async function createStyle(input: {
   name: string
   rules: string
   referenceImageName: string
   isDefault?: boolean
   styleSpec?: StyleSpec
-}): Promise<LocationStyle> {
-  const result = await apiFetch<{ style: LocationStyle }>(
-    '/api/location-styles',
+}): Promise<Style> {
+  const result = await apiFetch<{ style: Style }>(
+    '/api/styles',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -40,7 +51,7 @@ export async function createLocationStyle(input: {
   return result.data.style
 }
 
-export async function updateLocationStyle(
+export async function updateStyle(
   id: number,
   input: {
     name?: string
@@ -49,9 +60,9 @@ export async function updateLocationStyle(
     isDefault?: boolean
     styleSpec?: StyleSpec
   },
-): Promise<LocationStyle> {
-  const result = await apiFetch<{ style: LocationStyle }>(
-    `/api/location-styles/${encodeURIComponent(String(id))}`,
+): Promise<Style> {
+  const result = await apiFetch<{ style: Style }>(
+    `/api/styles/${encodeURIComponent(String(id))}`,
     {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -65,9 +76,9 @@ export async function updateLocationStyle(
   return result.data.style
 }
 
-export async function deleteLocationStyle(id: number): Promise<void> {
+export async function deleteStyle(id: number): Promise<void> {
   const result = await apiFetch<{ ok: boolean }>(
-    `/api/location-styles/${encodeURIComponent(String(id))}`,
+    `/api/styles/${encodeURIComponent(String(id))}`,
     { method: 'DELETE' },
     'Failed to delete style',
   )
@@ -76,13 +87,13 @@ export async function deleteLocationStyle(id: number): Promise<void> {
   }
 }
 
-export async function draftLocationStyleFromImage(input: {
+export async function draftStyleFromImage(input: {
   mediaName: string
   intent?: string
   model: VisionGatewayModelId
 }): Promise<{ name: string; styleSpec: StyleSpec; mediaName: string }> {
   const result = await apiFetch<{ name: string; styleSpec: StyleSpec; mediaName: string }>(
-    '/api/location-styles/draft-from-image',
+    '/api/styles/draft-from-image',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
