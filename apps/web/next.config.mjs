@@ -32,6 +32,10 @@ const nextConfig = {
       { source: '/api/photos/:path*', destination: '/api/media/:path*', permanent: true },
       { source: '/posts', destination: '/ig-studio', permanent: true },
       { source: '/posts/:path*', destination: '/ig-studio/:path*', permanent: true },
+      { source: '/canvas/post-creator', destination: '/ig-studio/post-creator', permanent: true },
+      { source: '/canvas/post-creator/:path*', destination: '/ig-studio/post-creator/:path*', permanent: true },
+      { source: '/canvas', destination: '/ig-studio', permanent: true },
+      { source: '/canvas/:path*', destination: '/ig-studio', permanent: true },
     ]
   },
   async rewrites() {

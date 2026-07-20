@@ -5,7 +5,8 @@ import { memo } from 'react'
 import { Message, MessageContent } from '@workspace/ui/components/ai-elements/message'
 import { Spinner } from '@workspace/ui/components/spinner'
 
-import { getWorkflowMessageText } from './use-workflow-chat'
+import { shouldShowAssistantThinkingFallback } from '@/lib/chat/should-show-assistant-thinking-fallback'
+
 import { WorkflowChatMessageParts } from './workflow-chat-message-parts'
 
 export type WorkflowChatMessageRowProps = {
@@ -19,8 +20,7 @@ function WorkflowChatMessageRowInner({
   isActiveStream,
   thinkingLabel,
 }: WorkflowChatMessageRowProps) {
-  const msgText = isActiveStream ? getWorkflowMessageText(message) : ''
-  const showFallbackSpinner = isActiveStream && message.role === 'assistant' && msgText.length === 0
+  const showFallbackSpinner = shouldShowAssistantThinkingFallback(message, isActiveStream)
 
   return (
     <Message from={message.role}>

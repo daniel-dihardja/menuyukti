@@ -50,10 +50,30 @@ describe('chatRequestBodySchema', () => {
     }
   })
 
+  it('accepts referencedPostMediaNames with safe post filenames', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [{ role: 'user', parts: [{ type: 'text', text: 'Look' }] }],
+      agentThreadId: 'thread-1',
+      referencedPostMediaNames: [VALID_MEDIA],
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.referencedPostMediaNames).toEqual([VALID_MEDIA])
+    }
+  })
+
   it('rejects unsafe media filenames', () => {
     const parsed = chatRequestBodySchema.safeParse({
       messages: [],
       referencedMediaNames: ['../secret.png'],
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects unsafe post media filenames', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      referencedPostMediaNames: ['not-a-uuid.png'],
     })
     expect(parsed.success).toBe(false)
   })
@@ -75,6 +95,55 @@ describe('chatRequestBodySchema', () => {
     const parsed = chatRequestBodySchema.safeParse({
       messages: [],
       referencedMediaNames: validNames,
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects more than 4 post media names', () => {
+    const validNames = [
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee0.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee1.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee2.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee3.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee4.webp',
+    ]
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      referencedPostMediaNames: validNames,
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('accepts IG Studio post generation context', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [{ role: 'user', parts: [{ type: 'text', text: 'Generate' }] }],
+      agentThreadId: 'thread-1',
+      postId: '12',
+      pageId: '34',
+      generationModel: 'gemini-2.5-flash-image',
+      imageFormat: 'feed',
+      imageQuality: 'high',
+      styleId: 7,
+      generationReferences: [
+        { type: 'photo', name: VALID_MEDIA },
+        { type: 'background-color', color: '#ffffff' },
+      ],
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.postId).toBe('12')
+      expect(parsed.data.pageId).toBe('34')
+      expect(parsed.data.styleId).toBe(7)
+      expect(parsed.data.generationReferences).toHaveLength(2)
+    }
+  })
+
+  it('rejects invalid post generation ids', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      agentThreadId: 'thread-1',
+      postId: 'abc',
+      pageId: '34',
     })
     expect(parsed.success).toBe(false)
   })

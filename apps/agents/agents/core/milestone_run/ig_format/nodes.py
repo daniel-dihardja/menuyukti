@@ -23,6 +23,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_ig_menu_picker_row,
     ig_menu_picker_has_entries,
     ig_menu_picker_prior_error_message,
+    preferred_milestone_id_from_input,
 )
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field
@@ -150,8 +151,12 @@ async def fetch_and_prepare(state: IgFormatState, *, client: httpx.AsyncClient) 
     _trace(state, "execute_skill", skill_id="ig_format")
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    prior_row = extract_ig_menu_picker_row(prior_json)
-    prior_data = extract_ig_menu_picker_data(prior_json)
+    preferred = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceIgMenuPickerMilestoneId",
+    )
+    prior_row = extract_ig_menu_picker_row(prior_json, preferred_milestone_id=preferred)
+    prior_data = extract_ig_menu_picker_data(prior_json, preferred_milestone_id=preferred)
     if prior_data is None or not ig_menu_picker_has_entries(prior_data):
         raise ValueError(ig_menu_picker_prior_error_message(prior_json))
 

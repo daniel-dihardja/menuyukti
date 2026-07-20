@@ -13,6 +13,10 @@ import {
   type NodeDataRaw,
   type NodesDataRaw,
 } from '@/lib/graphql/queries'
+import {
+  assignDisplayCodeToNewMilestone,
+  ensureMilestoneDisplayCodes,
+} from '@/lib/milestones/ensure-milestone-display-codes'
 import { createMilestoneBodySchema, workflowIdParamSchema } from './schema'
 
 type RouteContext = {
@@ -40,7 +44,7 @@ export async function GET(_req: Request, context: RouteContext) {
   try {
     await connection()
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -68,7 +72,23 @@ export async function GET(_req: Request, context: RouteContext) {
       ),
     )
 
-    return NextResponse.json({ milestones: list.nodes })
+    const codeById = await ensureMilestoneDisplayCodes(userId, workflowId, list.nodes)
+    const milestones = list.nodes.map((node) => {
+      const displayCode = codeById.get(node.id)
+      if (!displayCode) {
+        return node
+      }
+      const baseData =
+        node.data != null && typeof node.data === 'object' && !Array.isArray(node.data)
+          ? { ...(node.data as Record<string, unknown>) }
+          : {}
+      return {
+        ...node,
+        data: { ...baseData, displayCode },
+      }
+    })
+
+    return NextResponse.json({ milestones })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to list milestones'
@@ -116,6 +136,18 @@ export async function POST(req: Request, context: RouteContext) {
 
     const name = input.data.name
 
+    const siblings = parseNodesData(
+      await graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        {
+          locationId: workflowRoot.locationId,
+          nodeType: 'milestone',
+          parentId: workflowId,
+        },
+        userId,
+      ),
+    )
+
     const data = parseCreateNodeData(
       await graphqlQuery<CreateNodeDataRaw>(
         CREATE_NODE_MUTATION,
@@ -134,9 +166,17 @@ export async function POST(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Failed to create milestone' }, { status: 500 })
     }
 
+    const { data: withCode } = await assignDisplayCodeToNewMilestone(
+      userId,
+      workflowId,
+      node.id,
+      node.data,
+      siblings.nodes,
+    )
+
     revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
-    return NextResponse.json(node, { status: 201 })
+    return NextResponse.json({ ...node, data: withCode }, { status: 201 })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to create milestone'

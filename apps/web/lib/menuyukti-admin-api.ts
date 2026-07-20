@@ -4,10 +4,12 @@ import { connection, NextResponse } from 'next/server'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
 
+export type MenuyuktiAdminApiAuth =
+  | { ok: true; userId: string }
+  | { ok: false; response: NextResponse }
+
 /** Use in Route Handlers for Studio / brand-asset APIs (admin-only). */
-export async function requireMenuyuktiAdminApi(): Promise<
-  { ok: true; userId: string } | { ok: false; response: NextResponse }
-> {
+export async function requireMenuyuktiAdminApi(): Promise<MenuyuktiAdminApiAuth> {
   await connection()
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
@@ -24,4 +26,23 @@ export async function requireMenuyuktiAdminApi(): Promise<
     }
   }
   return { ok: true, userId }
+}
+
+/**
+ * Clerk admin session, or service-to-service call with matching
+ * ``GRAPHQL_INTERNAL_API_KEY`` + ``X-User-Id`` (agents → web generate).
+ */
+export async function requireMenuyuktiAdminOrInternalApi(
+  req: Request,
+): Promise<MenuyuktiAdminApiAuth> {
+  const apiKey = process.env.GRAPHQL_INTERNAL_API_KEY?.trim()
+  const requestKey = req.headers.get('X-Internal-Api-Key')?.trim()
+  const userIdHeader = req.headers.get('X-User-Id')?.trim()
+
+  if (apiKey && requestKey && requestKey === apiKey && userIdHeader) {
+    await connection()
+    return { ok: true, userId: userIdHeader }
+  }
+
+  return requireMenuyuktiAdminApi()
 }

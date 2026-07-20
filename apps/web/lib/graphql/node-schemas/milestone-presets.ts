@@ -54,6 +54,17 @@ export const campaignBriefReflectionInputSchema = z.object({
 
 export type CampaignBriefReflectionInput = z.infer<typeof campaignBriefReflectionInputSchema>
 
+/** Optional explicit upstream milestone bindings (Input tab dependency selects). */
+const milestoneDependencyIdFieldsSchema = z.object({
+  sourceCampaignBriefMilestoneId: z.string().trim().min(1).optional(),
+  sourcePromotionCandidatesMilestoneId: z.string().trim().min(1).optional(),
+  sourceMenuTaggerMilestoneId: z.string().trim().min(1).optional(),
+  sourceIgPlanMilestoneId: z.string().trim().min(1).optional(),
+  sourceIgMenuPickerMilestoneId: z.string().trim().min(1).optional(),
+  sourceIgFormatMilestoneId: z.string().trim().min(1).optional(),
+  sourceDatesMilestoneId: z.string().trim().min(1).optional(),
+})
+
 export const campaignBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),
   reflection: campaignBriefReflectionInputSchema.optional(),
@@ -63,27 +74,35 @@ export type CampaignBriefMilestoneInputValue = z.infer<
   typeof campaignBriefMilestoneInputValueSchema
 >
 
-export const cultureHooksMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
+export const cultureHooksMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
 
-export const igProfileMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
+export const igProfileMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type IgProfileMilestoneInputValue = z.infer<typeof igProfileMilestoneInputValueSchema>
 
-export const igPlanMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
+export const igPlanMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type IgPlanMilestoneInputValue = z.infer<typeof igPlanMilestoneInputValueSchema>
 
-export const menuTaggerMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
+export const menuTaggerMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type MenuTaggerMilestoneInputValue = z.infer<typeof menuTaggerMilestoneInputValueSchema>
 
@@ -116,18 +135,22 @@ export const menuClustererTargetGroupCountSchema = menuClustererHookTargetGroupC
 
 export type MenuClustererTargetGroupCount = MenuClustererHookTargetGroupCount
 
-export const menuClustererMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-  targetGroupCount: menuClustererHookTargetGroupCountSchema.optional(),
-})
+export const menuClustererMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+    targetGroupCount: menuClustererHookTargetGroupCountSchema.optional(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type MenuClustererMilestoneInputValue = z.infer<
   typeof menuClustererMilestoneInputValueSchema
 >
 
-export const schedulerMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
+export const schedulerMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type SchedulerMilestoneInputValue = z.infer<typeof schedulerMilestoneInputValueSchema>
 
@@ -140,13 +163,15 @@ export const promotionCandidatesItemLimitSchema = z.union([
 export type PromotionCandidatesItemLimit = z.infer<typeof promotionCandidatesItemLimitSchema>
 
 /** Promotion candidates Input tab: optional notes plus POS menu category filter (empty = all). */
-export const promotionCandidatesMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-  selectedMenuCategories: z.array(z.string().trim().min(1)),
-  ignoredMenuItems: z.array(z.string().trim().min(1)).default([]),
-  starItemLimit: promotionCandidatesItemLimitSchema.default(5),
-  puzzleItemLimit: promotionCandidatesItemLimitSchema.default(10),
-})
+export const promotionCandidatesMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+    selectedMenuCategories: z.array(z.string().trim().min(1)),
+    ignoredMenuItems: z.array(z.string().trim().min(1)).default([]),
+    starItemLimit: promotionCandidatesItemLimitSchema.default(5),
+    puzzleItemLimit: promotionCandidatesItemLimitSchema.default(10),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type PromotionCandidatesMilestoneInputValue = z.infer<
   typeof promotionCandidatesMilestoneInputValueSchema
@@ -353,10 +378,12 @@ export const igPlanMilestoneDataSchema = z.object({
 
 export type IgPlanMilestoneData = z.infer<typeof igPlanMilestoneDataSchema>
 
-export const igMenuPickerMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-  selectedSlotKeys: z.array(z.string().trim().min(1)).default([]),
-})
+export const igMenuPickerMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+    selectedSlotKeys: z.array(z.string().trim().min(1)).default([]),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type IgMenuPickerMilestoneInputValue = z.infer<typeof igMenuPickerMilestoneInputValueSchema>
 
@@ -383,9 +410,11 @@ export const igMenuPickerMilestoneDataSchema = z.object({
 
 export type IgMenuPickerMilestoneData = z.infer<typeof igMenuPickerMilestoneDataSchema>
 
-export const igFormatMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
+export const igFormatMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type IgFormatMilestoneInputValue = z.infer<typeof igFormatMilestoneInputValueSchema>
 
@@ -417,9 +446,11 @@ export const igTextFieldSchema = z.object({
 
 export type IgTextField = z.infer<typeof igTextFieldSchema>
 
-export const igTextMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
+export const igTextMilestoneInputValueSchema = z
+  .object({
+    notes: z.string(),
+  })
+  .merge(milestoneDependencyIdFieldsSchema)
 
 export type IgTextMilestoneInputValue = z.infer<typeof igTextMilestoneInputValueSchema>
 

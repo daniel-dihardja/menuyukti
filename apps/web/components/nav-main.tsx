@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   MapPin,
   Megaphone,
-  Sparkles,
   SquarePen,
   Store,
   Users,
@@ -63,17 +62,11 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <Image className="w-4 h-4" />,
   },
   {
-    key: 'studio',
-    labelKey: 'studio',
-    href: routes.canvas,
-    icon: <Sparkles className="w-4 h-4" />,
-    separatorBefore: true,
-  },
-  {
     key: 'posts',
     labelKey: 'posts',
     href: routes.igStudio,
     icon: <SquarePen className="w-4 h-4" />,
+    separatorBefore: true,
   },
   {
     key: 'calendar',

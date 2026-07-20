@@ -123,6 +123,8 @@ export type MilestoneDataValue =
 export type TimelineMilestone = {
   id: string
   title: string
+  /** Workflow-scoped display code (`M-XXXX`); UI label only. */
+  displayCode?: string
   passCriteria: PassCriteriaRow[]
   /** Free-form goal text for the Goal tab (stored on the goal child node). */
   goal?: string

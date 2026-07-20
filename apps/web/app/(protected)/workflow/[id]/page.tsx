@@ -11,6 +11,7 @@ import { getCachedWorkflowCampaignTree } from '@/lib/graphql/cached-queries'
 import type { WorkflowNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { ensureMilestoneDisplayCodes } from '@/lib/milestones/ensure-milestone-display-codes'
 
 import { WorkflowWorkspace } from '../_components/workflow-workspace'
 import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
@@ -81,12 +82,20 @@ async function WorkflowDetailContent({
   }
   const analyticsRunId = parseWorkflowAnalyticsRunId(workflowNode.data)
 
-  const initialMilestones: TimelineMilestone[] = tree.milestones.map((bundle) => {
+  const milestoneNodes = tree.milestones.map((bundle) => {
     const m = parseNode(bundle.milestone)
     if (m.nodeType !== 'milestone') {
       throw new Error('Invariant: expected milestone node in workflow tree')
     }
-    return milestoneNodeToTimelineMilestone(m as MilestoneNode)
+    return m as MilestoneNode
+  })
+
+  const codeById = await ensureMilestoneDisplayCodes(userId, workflowId, milestoneNodes)
+
+  const initialMilestones: TimelineMilestone[] = milestoneNodes.map((m) => {
+    const mapped = milestoneNodeToTimelineMilestone(m)
+    const displayCode = codeById.get(m.id) ?? mapped.displayCode
+    return displayCode ? { ...mapped, displayCode } : mapped
   })
 
   return (

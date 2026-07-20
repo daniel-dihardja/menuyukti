@@ -48,10 +48,14 @@ export function MilestoneIgFormatInput({
   const t = useTranslations('analytics.workflows.chat')
   const { milestoneState } = useTimelineWorkspaceState()
 
-  const entries = useMemo(
-    () => resolveIgMenuPickerEntriesForFormat(milestoneState.milestones, milestoneId),
-    [milestoneId, milestoneState.milestones],
-  )
+  const entries = useMemo(() => {
+    const current = milestoneState.milestones.find((row) => row.id === milestoneId)
+    return resolveIgMenuPickerEntriesForFormat(
+      milestoneState.milestones,
+      milestoneId,
+      current?.milestoneInput,
+    )
+  }, [milestoneId, milestoneState.milestones])
 
   const weekdayOrder = [
     'monday',

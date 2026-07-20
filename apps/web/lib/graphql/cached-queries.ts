@@ -6,7 +6,6 @@ import {
   graphqlAnalyticsRunsByLocationCacheTag,
   graphqlAnalyticsRunCacheTag,
   graphqlAnalyticsRunComputationsCacheTag,
-  graphqlImageAiFlowsCacheTag,
   graphqlLocationsDataCacheTag,
   graphqlWorkflowsByLocationCacheTag,
   graphqlWorkflowCampaignTreeCacheTag,
@@ -16,7 +15,6 @@ import {
   ANALYTICS_BUNDLE_HEATMAP_QUERY,
   ANALYTICS_RUN_METADATA_QUERY,
   ANALYTICS_RUNS_BY_LOCATION_QUERY,
-  IMAGE_AI_FLOWS_QUERY,
   LOCATION_QUERY,
   LOCATION_ANALYTICS_SUMMARIES_QUERY,
   LOCATIONS_LIST_QUERY,
@@ -36,7 +34,6 @@ import {
   type AnalyticsRunsByLocationData,
   type AnyNode,
   type AnalyticsRunMetadataData,
-  type ImageAiFlowsData,
   type LocationsListData,
   type LocationsData,
   type MenuCombosData,
@@ -152,19 +149,6 @@ export async function getCachedLocation(userId: string, locationId: string): Pro
   cacheTag(graphqlLocationsDataCacheTag(userId))
   cacheLife({ revalidate: 60 })
   return graphqlQuery<LocationData>(LOCATION_QUERY, { id: locationId }, userId, 'Location')
-}
-
-/** Cached per user; Studio list of image AI flows. */
-export async function getCachedImageAiFlows(userId: string): Promise<ImageAiFlowsData> {
-  'use cache'
-  cacheTag(graphqlImageAiFlowsCacheTag(userId))
-  cacheLife({ revalidate: 60 })
-  return graphqlQuery<ImageAiFlowsData>(
-    IMAGE_AI_FLOWS_QUERY,
-    { includeInactive: true },
-    userId,
-    'ImageAiFlows',
-  )
 }
 
 /**

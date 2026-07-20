@@ -1,19 +1,19 @@
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_location import CreateLocationMutation
-from .create_location_style import CreateLocationStyleMutation
 from .create_node import CreateNodeMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
+from .create_style import CreateStyleMutation
 from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
-from .delete_location_style import DeleteLocationStyleMutation
 from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
+from .delete_style import DeleteStyleMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
 from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
@@ -25,11 +25,11 @@ from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
-from .update_location_style import UpdateLocationStyleMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .update_node import UpdateNodeMutation
 from .update_post import UpdatePostMutation
 from .update_post_page import UpdatePostPageMutation
+from .update_style import UpdateStyleMutation
 from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
@@ -37,7 +37,7 @@ __all__ = [
     "CreateImageAiFlowMutation",
     "CreateCalendarEntryMutation",
     "CreateLocationMutation",
-    "CreateLocationStyleMutation",
+    "CreateStyleMutation",
     "CreateNodeMutation",
     "CreatePostMutation",
     "CreatePostPageMutation",
@@ -45,7 +45,7 @@ __all__ = [
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteImageAiFlowMutation",
-    "DeleteLocationStyleMutation",
+    "DeleteStyleMutation",
     "DeleteNodeMutation",
     "DeletePostMutation",
     "DeletePostPageMutation",
@@ -61,7 +61,7 @@ __all__ = [
     "UpdateImageAiFlowMutation",
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
-    "UpdateLocationStyleMutation",
+    "UpdateStyleMutation",
     "UpdateNodeMutation",
     "UpdatePostMutation",
     "UpdatePostPageMutation",

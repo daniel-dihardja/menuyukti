@@ -6,7 +6,7 @@ import {
   DEFAULT_SAFE_ZONE_INSET_Y_PX,
   maxSafeZoneInsetPx,
   safeZoneInsetPercents,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+} from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
 
 describe('safeZoneInsetPercents', () => {
   it('converts default insets relative to output dimensions', () => {

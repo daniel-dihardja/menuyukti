@@ -85,4 +85,33 @@ describe('buildPythonUserMessage', () => {
     })
     expect(result).toEqual({ role: 'user', content: 'Hi' })
   })
+
+  it('rejects combined media and post references over the image limit', async () => {
+    const names = [
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee0.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee1.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee2.webp',
+    ]
+    await expect(
+      buildPythonUserMessage({
+        messages: userMessage([{ type: 'text', text: 'Hi' }]),
+        userId: 'user-1',
+        referencedMediaNames: names,
+        referencedPostMediaNames: [
+          'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee3.webp',
+          'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee4.webp',
+        ],
+      }),
+    ).rejects.toBeInstanceOf(ChatImageError)
+  })
+
+  it('rejects invalid post media filenames before S3', async () => {
+    await expect(
+      buildPythonUserMessage({
+        messages: userMessage([{ type: 'text', text: 'Hi' }]),
+        userId: 'user-1',
+        referencedPostMediaNames: ['../secret.webp'],
+      }),
+    ).rejects.toBeInstanceOf(ChatImageError)
+  })
 })

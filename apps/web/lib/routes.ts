@@ -8,7 +8,6 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflow',
   '/calendar',
-  '/canvas',
   '/ig-studio',
   '/media',
   '/content',
@@ -73,13 +72,14 @@ export const routes = {
   calendarWithLocation: (locationId: string | number) =>
     `/calendar?locationId=${encodeURIComponent(String(locationId))}`,
 
-  /** AI studio (brand library + generation). */
-  canvas: '/canvas',
-  canvasPostCreator: '/canvas/post-creator',
-  canvasSession: (id: string | number) => `/canvas/${id}`,
-  /** Standalone Instagram post drafts (admin). */
+  /** Standalone Instagram post drafts + Post Creator (admin). */
   igStudio: '/ig-studio',
   igStudioDetail: (id: string | number) => `/ig-studio/${encodeURIComponent(String(id))}`,
+  igStudioPostCreator: '/ig-studio/post-creator',
+  igStudioStyles: '/ig-studio/styles',
+  igStudioStyleNew: '/ig-studio/styles/new',
+  igStudioStyleDetail: (id: string | number) =>
+    `/ig-studio/styles/${encodeURIComponent(String(id))}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
   agent: '/advisor',
   printOrders: '/print-orders',

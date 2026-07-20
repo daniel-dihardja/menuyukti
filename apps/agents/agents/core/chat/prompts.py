@@ -33,10 +33,26 @@ SYSTEM_PROMPT = (
     "settings from the location page, call get_location_data rather than guessing or using web search."
 )
 
+IG_STUDIO_POST_IMAGE_PROMPT = (
+    "IG Studio Post Creator context is active for a saved post page. "
+    "When the user wants an Instagram post image generated, regenerated, or created from a brief, "
+    "compose a concrete image-generation prompt and call generate_instagram_post_image. "
+    "Model, format, quality, style pack, and reference images are already set in the Post Creator UI—"
+    "use the tool rather than only describing a prompt. After a successful generation, briefly "
+    "confirm what was created; the preview updates in the studio."
+)
 
-def build_system_prompt(*, workflow_catalog: str | None = None) -> str:
+
+def build_system_prompt(
+    *,
+    workflow_catalog: str | None = None,
+    ig_studio_post_image: bool = False,
+) -> str:
     """Return the system prompt for the chat graph, optionally with an injected catalog."""
+    parts = [SYSTEM_PROMPT]
+    if ig_studio_post_image:
+        parts.append(IG_STUDIO_POST_IMAGE_PROMPT)
     catalog = workflow_catalog.strip() if isinstance(workflow_catalog, str) else ""
-    if not catalog:
-        return SYSTEM_PROMPT
-    return f"{SYSTEM_PROMPT}\n\n## Workflow milestone catalog\n\n{catalog}"
+    if catalog:
+        parts.append(f"## Workflow milestone catalog\n\n{catalog}")
+    return "\n\n".join(parts)

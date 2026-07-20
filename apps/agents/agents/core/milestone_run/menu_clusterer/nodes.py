@@ -36,6 +36,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
     menu_tagger_prior_error_message,
+    preferred_milestone_id_from_input,
 )
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
@@ -249,13 +250,27 @@ async def fetch_and_prepare(
     _trace(state, "execute_skill", skill_id="menu_clusterer")
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
+    preferred_brief = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceCampaignBriefMilestoneId",
+    )
+    preferred_tagger = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceMenuTaggerMilestoneId",
+    )
+    campaign_brief_data = extract_restaurant_campaign_brief_data(
+        prior_json,
+        preferred_milestone_id=preferred_brief,
+    )
     if campaign_brief_data is None:
         raise ValueError(
             campaign_brief_prior_error_message(prior_json, milestone_id="menu_clusterer")
         )
 
-    menu_tagger_data = extract_menu_tagger_data(prior_json)
+    menu_tagger_data = extract_menu_tagger_data(
+        prior_json,
+        preferred_milestone_id=preferred_tagger,
+    )
     if menu_tagger_data is None:
         raise ValueError(menu_tagger_prior_error_message(prior_json, milestone_id="menu_clusterer"))
 
@@ -289,14 +304,20 @@ async def fetch_and_prepare(
             f"menu_tagger data; got {tagged_count}. Re-run menu_tagger or widen promotion candidates."
         )
 
-    campaign_brief_row = extract_restaurant_campaign_brief_row(prior_json)
+    campaign_brief_row = extract_restaurant_campaign_brief_row(
+        prior_json,
+        preferred_milestone_id=preferred_brief,
+    )
     source_campaign_brief_title = ""
     if isinstance(campaign_brief_row, dict):
         brief_title = campaign_brief_row.get("title")
         if isinstance(brief_title, str) and brief_title.strip():
             source_campaign_brief_title = brief_title.strip()
 
-    menu_tagger_row = extract_menu_tagger_row(prior_json)
+    menu_tagger_row = extract_menu_tagger_row(
+        prior_json,
+        preferred_milestone_id=preferred_tagger,
+    )
     source_title = ""
     if isinstance(menu_tagger_row, dict):
         title = menu_tagger_row.get("title")

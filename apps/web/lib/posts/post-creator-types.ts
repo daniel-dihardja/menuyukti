@@ -23,8 +23,6 @@ export type PostCreatorPage = {
   imageVersions?: PostCreatorImageVersion[]
   previewVersionIndex?: number
   referenceImages?: PostCreatorReferenceImage[]
-  templateImage?: PostCreatorReferenceImage | null
-  previewSource?: 'version' | 'template'
   generationModel?: LeonardoPostModelId
   imageFormat?: PostImageFormatId
   imageQuality?: PostImageQualityId

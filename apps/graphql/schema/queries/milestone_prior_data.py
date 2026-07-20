@@ -18,8 +18,8 @@ class MilestonePriorDataQuery:
     @strawberry.field(
         description=(
             "JSON array of prior milestones' preset payloads: each element is "
-            '`{"title": string, "presetId": string|null, "data": object|null}` for milestones strictly '
-            "before the given milestone in workflow display order. `presetId` is copied from the "
+            '`{"id": string, "title": string, "presetId": string|null, "data": object|null}` for milestones strictly '
+            "before the given milestone in workflow display order. `id` is the milestone node id. `presetId` is copied from the "
             "milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the "
             "`milestone_preset_data` column (flat preset JSON). Empty array when there "
             "are no prior milestones or the request is not authorized."
@@ -118,6 +118,8 @@ class MilestonePriorDataQuery:
                     md_row = milestonedata_by_parent.get(m.id)
                     if md_row is not None and isinstance(md_row.data, dict):
                         data_val = md_row.data
-                payload.append({"title": title, "presetId": preset_id, "data": data_val})
+                payload.append(
+                    {"id": str(m.id), "title": title, "presetId": preset_id, "data": data_val}
+                )
 
             return cast(JSON, payload)

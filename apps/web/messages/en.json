@@ -13,6 +13,19 @@
   "common": {
     "close": "Close"
   },
+  "chatTools": {
+    "searchWeb": {
+      "running": "Searching the web…",
+      "runningDetail": "Looking up current sources online",
+      "done": "Searched the web"
+    },
+    "generateInstagramPostImage": {
+      "running": "Generating post image…",
+      "runningDetail": "Composing prompt and running Leonardo",
+      "done": "Generated post image",
+      "error": "Image generation failed"
+    }
+  },
   "appShell": {
     "skipToContent": "Skip to content",
     "toggleSidebarAria": "Toggle sidebar",
@@ -22,7 +35,7 @@
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
-    "navStudio": "Studio",
+    "navStudio": "IG Studio",
     "navWorkflows": "Workflows",
     "navShop": "Print Shop",
     "landingNav": {
@@ -366,7 +379,7 @@
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
       "backWorkflows": "Workflow",
-      "backStudio": "Studio",
+      "backStudio": "IG Studio",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
@@ -579,7 +592,6 @@
     "workflows": "Workflow",
     "calendar": "Calendar",
     "skills": "Skills & tools",
-    "studio": "Studio",
     "posts": "IG Studio",
     "content": "Content",
     "media": "Media",
@@ -591,7 +603,6 @@
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
-    "assets": "Assets",
     "usage": "AI usage",
     "theme": {
       "label": "Theme",
@@ -768,8 +779,33 @@
     },
     "tabs": {
       "prompt": "Prompt",
+      "chat": "Chat",
       "settings": "Settings",
       "history": "History"
+    },
+    "chat": {
+      "emptyTitle": "Analyze this preview",
+      "emptyDescription": "Type @ to attach the large preview or a media library image, then ask about composition, styling, or what to change next. You can also ask the assistant to generate a new post image.",
+      "placeholder": "Ask about attached images or generate a new post… Type @ to attach preview or media",
+      "thinking": "Thinking…",
+      "errorTitle": "Something went wrong",
+      "errorDescription": "The request could not be completed. Please try again.",
+      "retry": "Retry",
+      "clearChatAriaLabel": "Clear chat",
+      "clearChatLabel": "Clear chat",
+      "clearChatTooltip": "Clear messages and start a fresh chat thread",
+      "previewChipLabel": "Current preview",
+      "previewChipAriaLabel": "Images attached for chat",
+      "sentWithAttachments": "Sent with attachments",
+      "mentionMenu": {
+        "ariaLabel": "Attach preview or media image",
+        "empty": "No matching preview or media to attach",
+        "previewGroup": "Preview",
+        "mediaGroup": "Media",
+        "mediaAriaLabel": "Attach image from Media library",
+        "mediaLoading": "Loading media…",
+        "mediaEmpty": "No media files yet. Upload images on the Media page."
+      }
     },
     "settings": {
       "title": "Generation settings",
@@ -781,7 +817,7 @@
       "safeZoneHorizontal": "Horizontal gap (px)",
       "safeZoneVertical": "Vertical gap (px)",
       "solidBackgroundTitle": "Solid background canvas",
-      "solidBackgroundHelper": "When enabled and no layout or previous image is used, a flat color canvas at the current output size is sent as the first reference.",
+      "solidBackgroundHelper": "When enabled and no previous image is used, a flat color canvas at the current output size is sent as the first reference.",
       "solidBackgroundToggle": "Use solid background",
       "solidBackgroundColor": "Background color"
     },
@@ -796,28 +832,15 @@
       "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder, Ref 3 → Ice Americano\n\nType @ to attach product photos in order.",
       "generate": "Generate image",
       "generating": "Generating…",
-      "location": {
-        "label": "Location",
-        "placeholder": "Select location",
-        "none": "No location",
-        "description": "Choose a location to apply one of its style packs."
-      },
       "style": {
         "label": "Style pack",
         "placeholder": "Select style",
         "none": "No style",
         "defaultSuffix": "default",
         "description": "Applied automatically to this generation — you don’t need to repeat style rules in the prompt.",
-        "needsLocation": "Select a location to choose a style pack.",
-        "loadError": "Failed to load style packs for this location."
-      },
-      "template": {
-        "label": "Layout template",
-        "pick": "Choose template from Media",
-        "pickerAriaLabel": "Layout template picker",
-        "empty": "No media yet. Upload a layout template in Media first.",
-        "remove": "Remove layout template",
-        "fromMedia": "From Media"
+        "create": "Create style",
+        "manage": "Manage styles",
+        "loadError": "Failed to load style packs."
       },
       "model": {
         "label": "Image model",
@@ -833,30 +856,49 @@
           },
           "pro": {
             "name": "Nano Banana Pro",
-            "blurb": "Highest instruction following for complex template fills. Slower and uses more tokens."
+            "blurb": "Highest instruction following for complex multi-reference edits. Slower and uses more tokens."
           }
         }
       },
       "format": {
         "label": "Format",
-        "description": "Aspect ratio for this generation. Match layout follows the template size.",
-        "matchOverrideWarning": "Layout template is attached, but Format is not Match layout — output proportions may not match the template.",
+        "description": "Aspect ratio for this generation.",
         "options": {
-          "feed": { "name": "Feed", "ratio": "4:5" },
-          "tall": { "name": "Tall", "ratio": "3:4" },
-          "square": { "name": "Square", "ratio": "1:1" },
-          "story": { "name": "Story", "ratio": "9:16" },
-          "wide": { "name": "Wide", "ratio": "16:9" },
-          "match-layout": { "name": "Match layout", "ratio": "Template" }
+          "feed": {
+            "name": "Feed",
+            "ratio": "4:5"
+          },
+          "tall": {
+            "name": "Tall",
+            "ratio": "3:4"
+          },
+          "square": {
+            "name": "Square",
+            "ratio": "1:1"
+          },
+          "story": {
+            "name": "Story",
+            "ratio": "9:16"
+          },
+          "wide": {
+            "name": "Wide",
+            "ratio": "16:9"
+          }
         }
       },
       "quality": {
         "label": "Quality",
         "resolvedHint": "{width} × {height} · ~{cost}× cost for this model",
         "options": {
-          "standard": { "name": "Standard" },
-          "high": { "name": "High" },
-          "ultra": { "name": "Ultra" }
+          "standard": {
+            "name": "Standard"
+          },
+          "high": {
+            "name": "High"
+          },
+          "ultra": {
+            "name": "Ultra"
+          }
         }
       },
       "picker": {
@@ -876,18 +918,16 @@
       "generation": {
         "referenceSummaryTextOnly": "Next generation: creative direction only (no references).",
         "referenceSummaryFilledEdit": "Next generation: edit the image in preview only.",
-        "referenceSummaryTemplateComposite": "Next generation: template “{template}” + {count, plural, one {# product} other {# products}} (Ref 2+).",
-        "referenceSummaryTemplateOnly": "Next generation: template “{template}” only (headline/style).",
         "referenceSummaryPreviousOnly": "Next generation: edit the image in preview.",
         "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummaryPreviousAndPhotos": "Next generation: image in preview + {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummarySolidBackgroundOnly": "Next generation: solid background canvas ({color}).",
         "referenceSummarySolidBackgroundAndPhotos": "Next generation: solid background ({color}) + {count, plural, one {# checked photo} other {# checked photos}}.",
-        "tooManyReferences": "Too many references selected. Use at most 1 template and 5 checked product photos (6 total)."
+        "tooManyReferences": "Too many references selected. Use at most 5 checked product photos (plus previous image or solid background when used)."
       },
       "tip": {
         "title": "Tip",
-        "description": "The image in the preview is used as the edit reference. Attach a layout template to start from a blank layout, or pick a generated version to edit that result. Optionally add product photos with @, then describe changes in creative direction."
+        "description": "The image in the preview is used as the edit reference. Pick a generated version to edit that result. Optionally add product photos with @, then describe changes in creative direction."
       }
     },
     "preview": {
@@ -912,7 +952,6 @@
       "useAsPostImageCommitting": "Setting post image…",
       "committingPostImage": "Setting post image…",
       "previewImageAlt": "Generated post preview",
-      "templatePreviewImageAlt": "Selected layout template preview",
       "generating": "Generating…",
       "deleteImage": "Delete image",
       "removePage": "Remove page",
@@ -931,10 +970,60 @@
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "imageSelectError": "Failed to update post image. Please try again.",
+      "saveSettingsError": "Failed to save post settings. Please try again.",
       "deleteImageError": "Failed to delete image. Please try again.",
       "deletePageError": "Failed to remove page. Please try again.",
       "addPageError": "Failed to add page. Please try again.",
       "maxPagesReached": "Instagram carousels support up to 10 images."
+    }
+  },
+  "igStudio": {
+    "subnav": {
+      "ariaLabel": "IG Studio sections",
+      "posts": "Posts",
+      "styles": "Styles"
+    },
+    "styles": {
+      "title": "Styles",
+      "description": "Reusable looks for post generation: Style Spec JSON plus one reference image from media.",
+      "createDescription": "Author Style Spec JSON, attach one reference image, and name the look.",
+      "add": "Create style",
+      "createTitle": "New style",
+      "editTitle": "Edit style",
+      "loading": "Loading styles…",
+      "notFound": "Style not found.",
+      "emptyTitle": "No styles yet",
+      "emptyDescription": "Create a style with Style Spec JSON and a reference image from your media library.",
+      "defaultBadge": "Default",
+      "edit": "Edit style",
+      "delete": "Delete style",
+      "deleteConfirm": "Delete style \"{name}\"? This cannot be undone.",
+      "specJsonLabel": "Style Spec JSON",
+      "specJsonAria": "Style Spec JSON editor",
+      "specJsonHint": "schemaVersion must be 2. Properties support enum, boolean, number, and text.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Warm editorial lunch",
+      "imageLabel": "Reference image",
+      "imagePick": "Choose from media",
+      "imagePickerAria": "Choose style reference image",
+      "imageEmpty": "No media yet. Upload photos in Media first.",
+      "imageRemove": "Remove reference image",
+      "imageFromMedia": "From media library",
+      "defaultLabel": "Make default for this workspace",
+      "save": "Save style",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "toast": {
+        "loadError": "Failed to load styles.",
+        "validation": "Name, Style Spec JSON, and a reference image are required.",
+        "invalidJson": "JSON is not valid.",
+        "invalidSpec": "Style Spec does not match schemaVersion 2.",
+        "created": "Style created.",
+        "updated": "Style updated.",
+        "deleted": "Style deleted.",
+        "saveError": "Failed to save style.",
+        "deleteError": "Failed to delete style."
+      }
     }
   },
   "posts": {
@@ -1082,138 +1171,6 @@
       "deleteError": "Couldn’t remove that story. Try again."
     }
   },
-  "assets": {
-    "title": "Brand assets",
-    "description": "Upload and organize images for workflows and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
-    "contentImage": {
-      "newButton": "New design",
-      "newButtonGenerating": "Generating design…",
-      "generatingHint": "Design generation is still running."
-    },
-    "tabs": {
-      "products": "Products",
-      "backgrounds": "Backgrounds",
-      "designs": "Designs"
-    },
-    "backgrounds": {
-      "empty": {
-        "title": "No backgrounds available",
-        "description": "Built-in backgrounds will appear here."
-      },
-      "loadError": "Couldn’t load backgrounds. Try again."
-    },
-    "designs": {
-      "empty": {
-        "title": "No designs yet",
-        "description": "Designs created for your campaigns will appear here."
-      },
-      "loadError": "Couldn’t load designs. Try again."
-    },
-    "flow": {
-      "category": {
-        "ai": "AI"
-      }
-    },
-    "upload": {
-      "title": "Upload images",
-      "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
-      "browse": "Browse files",
-      "uploading": "Processing…",
-      "success": "Image uploaded",
-      "error": "Upload failed",
-      "invalidType": "Please choose an image file.",
-      "flow": {
-        "label": "AI Flow",
-        "none": "No flow"
-      }
-    },
-    "grid": {
-      "loading": "Loading…",
-      "empty": {
-        "title": "No images yet",
-        "description": "Upload your first restaurant photo, logo, or workflow visual to keep everything in one place."
-      },
-      "generate": {
-        "flowLabel": "Generate with",
-        "flowPlaceholder": "Choose AI flow",
-        "customOption": "Custom",
-        "customPromptLabel": "Custom prompt",
-        "customPromptPlaceholder": "Describe how the generated image should look…",
-        "button": "Generate",
-        "generating": "Generating…"
-      },
-      "delete": "Remove",
-      "deleteConfirm": "Remove this image?",
-      "viewLarge": "View larger",
-      "download": "Download"
-    },
-    "toast": {
-      "uploaded": "Saved to your library",
-      "uploadError": "Couldn’t upload that file. Try again.",
-      "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
-      "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
-      "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
-      "generated": "Generated image saved to your library",
-      "customPromptRequired": "Enter a prompt when using Custom flow.",
-      "generateError": "Couldn’t generate a new image. Try again.",
-      "loadError": "Couldn’t load your library. Refresh the page.",
-      "flowsLoadError": "Couldn’t load AI flows. You can still upload without AI.",
-      "deleted": "Image removed",
-      "deleteError": "Couldn’t remove the image"
-    }
-  },
-  "imageFlows": {
-    "pageLoadingTitle": "Loading Studio…",
-    "pageDescription": "Define image AI flows used when uploading brand assets—prompts, models, and options are stored for your workspace.",
-    "sectionTitle": "Image AI flows",
-    "sectionDescription": "Create, edit, or remove flows. Inactive flows stay hidden from the upload picker but remain editable here.",
-    "addFlow": "Add flow",
-    "createTitle": "Create flow",
-    "editTitle": "Edit flow",
-    "save": "Save",
-    "create": "Create",
-    "cancel": "Cancel",
-    "loading": "Loading…",
-    "loadError": "Couldn’t load flows. Refresh and try again.",
-    "emptyTitle": "No flows yet",
-    "emptyDescription": "Add a flow to configure how images are processed when your team uploads assets.",
-    "displayName": "Display name",
-    "displayNamePlaceholder": "e.g. Prepare product for ads",
-    "slug": "Slug",
-    "slugPlaceholder": "e.g. remove-background",
-    "slugHint": "Lowercase letters, numbers, and hyphens only. Used as the stable key in the app.",
-    "prompt": "Prompt",
-    "promptPlaceholder": "Instructions for the image model…",
-    "model": "Model",
-    "modelPlaceholder": "e.g. gemini-2.5-flash-image",
-    "promptEnhance": "Prompt enhance",
-    "promptEnhancePlaceholder": "Optional (e.g. OFF)",
-    "imageReferenceStrength": "Image reference strength",
-    "imageReferenceStrengthPlaceholder": "Optional (e.g. MID)",
-    "styleIds": "Style IDs",
-    "styleIdsPlaceholder": "JSON array of style IDs, or leave empty…",
-    "styleIdsError": "Style IDs must be valid JSON: an array of strings or empty.",
-    "isActive": "Active",
-    "isActiveDescription": "Inactive flows are hidden from the asset upload flow picker.",
-    "sortOrder": "Sort order",
-    "sortOrderHint": "Lower numbers appear first in lists.",
-    "cardPromptPreview": "Prompt",
-    "cardModel": "Model",
-    "badgeActive": "Active",
-    "badgeInactive": "Inactive",
-    "actions": "Actions",
-    "edit": "Edit",
-    "delete": "Delete",
-    "deleteTitle": "Delete this flow?",
-    "deleteDescription": "This removes the flow from the database. Uploads can no longer use it.",
-    "deleteConfirm": "Delete flow",
-    "deleteCancel": "Cancel",
-    "toastCreated": "Flow created",
-    "toastUpdated": "Flow saved",
-    "toastDeleted": "Flow deleted",
-    "toastError": "Something went wrong. Try again.",
-    "saving": "Saving…"
-  },
   "agents": {
     "title": "Agents",
     "description": "Marketing agents that transform sales data into actionable insights.",
@@ -1350,7 +1307,7 @@
       "title": "Locations",
       "description": "Power analytics and Instagram campaigns for each venue. Configure basics here, then upload POS sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
-      "detailDescription": "Update location information, opening hours, and visual style packs.",
+      "detailDescription": "Update location information and opening hours.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -1485,66 +1442,6 @@
           "menuUrlPlaceholder": "https://yourvenue.com/menu",
           "googleMapsUrlLabel": "Google Maps / directions",
           "googleMapsUrlPlaceholder": "https://maps.google.com/?q=Your+Venue"
-        }
-      },
-      "styles": {
-        "title": "Style packs",
-        "description": "Define reusable visual styles with an example image and rules. Apply them when generating Instagram posts.",
-        "add": "Add style",
-        "createFromImage": "Create from image",
-        "createFromImageTitle": "New style from image",
-        "loading": "Loading styles…",
-        "empty": "No style packs yet. Add one to reuse a look across post generations.",
-        "defaultBadge": "Default",
-        "specBadge": "Style Spec",
-        "edit": "Edit style",
-        "delete": "Delete style",
-        "deleteConfirm": "Delete style \"{name}\"? This cannot be undone.",
-        "createTitle": "New style pack",
-        "editTitle": "Edit style pack",
-        "nameLabel": "Name",
-        "namePlaceholder": "Warm editorial lunch",
-        "rulesLabel": "Style rules",
-        "rulesPlaceholder": "Warm window light, soft shadows, natural food textures, muted earth tones. Avoid neon or cool blue casts.",
-        "baseRulesLabel": "Base rules",
-        "kindLabel": "Kind",
-        "kindTemplate": "Template (lock layout)",
-        "kindMood": "Mood (look only)",
-        "specPanelTitle": "Style Spec",
-        "controlsSectionTitle": "Controls",
-        "controlDefault": "Default: {value}",
-        "intentLabel": "Intent (optional)",
-        "intentPlaceholder": "Warm oat template; headline and product name optional; only cup is photo.",
-        "modelLabel": "Model",
-        "analyzeImage": "Analyze image",
-        "drafting": "Analyzing…",
-        "imageLabel": "Reference image",
-        "imagePick": "Choose from media",
-        "imagePickerAria": "Choose style reference image",
-        "imageEmpty": "No media yet. Upload photos in Media first.",
-        "imageRemove": "Remove reference image",
-        "imageFromMedia": "From media library",
-        "defaultLabel": "Use as default for this location",
-        "controls": {
-          "headline": "Headline",
-          "productName": "Product name",
-          "backgroundIllustration": "Background illustration"
-        },
-        "save": "Save style",
-        "saving": "Saving…",
-        "cancel": "Cancel",
-        "toast": {
-          "loadError": "Failed to load style packs.",
-          "validation": "Name, rules, and a reference image are required.",
-          "imageRequired": "Choose a reference image first.",
-          "draftRequired": "Analyze the image before saving.",
-          "draftReady": "Style draft ready — review and save.",
-          "draftError": "Failed to analyze image.",
-          "created": "Style pack created.",
-          "updated": "Style pack updated.",
-          "deleted": "Style pack deleted.",
-          "saveError": "Failed to save style pack.",
-          "deleteError": "Failed to delete style pack."
         }
       }
     },
@@ -2047,6 +1944,18 @@
         "milestoneGoalEmpty": "No goal defined.",
         "milestoneGoalPlaceholder": "Describe desired outcome…",
         "milestoneInputUnsupported": "No custom input is configured for this milestone preset.",
+        "milestoneDependencySelfIdLabel": "Milestone ID",
+        "milestoneDependencySelfIdDescription": "Workflow-friendly code for this milestone (M-XXXX). Use it when wiring dependencies from later steps.",
+        "milestoneDependencySelectDescription": "Choose which earlier milestone of this type to use as input.",
+        "milestoneDependencySelectPlaceholder": "Select a milestone",
+        "milestoneDependencySelectEmpty": "No earlier milestone of this type is available. Add one before this step in the timeline.",
+        "milestoneDependencyCampaignBriefLabel": "Campaign brief",
+        "milestoneDependencyPromotionCandidatesLabel": "Promotion candidates",
+        "milestoneDependencyMenuTaggerLabel": "Menu tagger",
+        "milestoneDependencyIgPlanLabel": "IG plan",
+        "milestoneDependencyIgMenuPickerLabel": "IG menu picker",
+        "milestoneDependencyIgFormatLabel": "IG format",
+        "milestoneDependencyDatesLabel": "Campaign dates",
         "milestoneDatesInputPickDate": "Pick a date",
         "milestoneDatesInputStartDateLabel": "Start date",
         "milestoneDatesInputStartDateDescription": "Campaign start date used for holiday lookup.",

@@ -110,7 +110,11 @@ def _placeholder_item(
     return item
 
 
-def _extract_main_category(prior_milestones_data: str) -> str:
+def _extract_main_category(
+    prior_milestones_data: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> str:
     text = prior_milestones_data.strip()
     if not text:
         return "(uncategorized)"
@@ -120,6 +124,20 @@ def _extract_main_category(prior_milestones_data: str) -> str:
         return "(uncategorized)"
     if not isinstance(payload, list):
         return "(uncategorized)"
+
+    preferred = (preferred_milestone_id or "").strip()
+    if preferred:
+        for row in payload:
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("id") or "").strip() != preferred:
+                continue
+            data = row.get("data")
+            if not isinstance(data, dict):
+                continue
+            value = str(data.get("mainCategory") or "").strip()
+            if value:
+                return value
 
     for row in payload:
         if not isinstance(row, dict):
@@ -523,7 +541,17 @@ async def fetch_and_prepare(
     filtered = _filter_promotion_candidates(promotion_candidates, selected)
     filtered = _filter_ignored_menu_items(filtered, ignored)
     owner_notes = _read_milestone_input_notes(milestone_input_dict)
-    main_category = _extract_main_category(str(state.get("prior_milestones_data") or ""))
+    preferred_brief_id = None
+    if milestone_input_dict is not None:
+        value = milestone_input_dict.get("value")
+        if isinstance(value, dict):
+            raw_id = value.get("sourceCampaignBriefMilestoneId")
+            if isinstance(raw_id, str) and raw_id.strip():
+                preferred_brief_id = raw_id.strip()
+    main_category = _extract_main_category(
+        str(state.get("prior_milestones_data") or ""),
+        preferred_milestone_id=preferred_brief_id,
+    )
     formatted = _build_output(
         main_category=main_category,
         promotion_candidates=filtered,

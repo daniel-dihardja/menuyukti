@@ -1,12 +1,14 @@
-"""Style Spec v1 models (Pydantic) for location visual style packs."""
+"""Style Spec v2 models (Pydantic) for workspace visual style packs."""
 
 from __future__ import annotations
 
-from typing import Any, Literal
+import re
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-STYLE_SPEC_CONTROL_KEYS = ("headline", "productName", "backgroundIllustration")
+PROPERTY_KEY_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
+MAX_PROPERTIES = 30
 
 
 class ControlParam(BaseModel):
@@ -15,11 +17,12 @@ class ControlParam(BaseModel):
     description: str | None = None
 
 
-class StyleControlDef(BaseModel):
+class EnumPropertyDef(BaseModel):
     type: Literal["enum"] = "enum"
+    label: str | None = None
+    description: str | None = None
     values: list[str] = Field(min_length=1)
     default: str
-    description: str | None = None
     params: dict[str, ControlParam] | None = None
     instructions: dict[str, str]
 
@@ -32,7 +35,7 @@ class StyleControlDef(BaseModel):
         return cleaned
 
     @model_validator(mode="after")
-    def _default_and_instructions(self) -> StyleControlDef:
+    def _default_and_instructions(self) -> EnumPropertyDef:
         if self.default not in self.values:
             raise ValueError("default must be one of values")
         for value in self.values:
@@ -42,61 +45,96 @@ class StyleControlDef(BaseModel):
         return self
 
 
-class StyleSpecControls(BaseModel):
-    headline: StyleControlDef
-    productName: StyleControlDef
-    backgroundIllustration: StyleControlDef
-
-
-class StyleSpecDefaults(BaseModel):
-    headline: str
-    productName: str
-    backgroundIllustration: str
-
-
-class StyleSpec(BaseModel):
-    schemaVersion: Literal[1] = 1
-    kind: Literal["template", "mood"]
-    baseRules: list[str] = Field(min_length=1, max_length=40)
-    controls: StyleSpecControls
-    defaults: StyleSpecDefaults
-
-    @field_validator("baseRules")
-    @classmethod
-    def _clean_rules(cls, rules: list[str]) -> list[str]:
-        cleaned = [r.strip() for r in rules if r and r.strip()]
-        if not cleaned:
-            raise ValueError("baseRules must not be empty")
-        return cleaned
+class BooleanPropertyDef(BaseModel):
+    type: Literal["boolean"] = "boolean"
+    label: str | None = None
+    description: str | None = None
+    default: bool
+    instructions: dict[str, str]
 
     @model_validator(mode="after")
-    def _defaults_in_values(self) -> StyleSpec:
-        for key in STYLE_SPEC_CONTROL_KEYS:
-            control: StyleControlDef = getattr(self.controls, key)
-            default_value: str = getattr(self.defaults, key)
-            if default_value not in control.values:
-                raise ValueError(f"defaults.{key} must be one of controls.{key}.values")
+    def _boolean_instructions(self) -> BooleanPropertyDef:
+        for key in ("true", "false"):
+            text = self.instructions.get(key)
+            if not text or not str(text).strip():
+                raise ValueError(f"Missing instructions for {key!r}")
         return self
 
 
-class DraftInstruction(BaseModel):
-    """One enum value → imperative instruction (list form for OpenAI structured output)."""
+class NumberPropertyDef(BaseModel):
+    type: Literal["number"] = "number"
+    label: str | None = None
+    description: str | None = None
+    default: float
+    min: float | None = None
+    max: float | None = None
+    instruction: str
 
-    value: str = Field(description="Control enum value this instruction applies to")
+    @model_validator(mode="after")
+    def _number_bounds(self) -> NumberPropertyDef:
+        if self.min is not None and self.max is not None and self.min > self.max:
+            raise ValueError("min must be <= max")
+        if self.min is not None and self.default < self.min:
+            raise ValueError("default must be >= min")
+        if self.max is not None and self.default > self.max:
+            raise ValueError("default must be <= max")
+        if not self.instruction.strip():
+            raise ValueError("instruction must not be empty")
+        return self
+
+
+class TextPropertyDef(BaseModel):
+    type: Literal["text"] = "text"
+    label: str | None = None
+    description: str | None = None
+    default: str
+    instruction: str
+
+    @model_validator(mode="after")
+    def _text_instruction(self) -> TextPropertyDef:
+        if not self.instruction.strip():
+            raise ValueError("instruction must not be empty")
+        return self
+
+
+PropertyDef = Annotated[
+    EnumPropertyDef | BooleanPropertyDef | NumberPropertyDef | TextPropertyDef,
+    Field(discriminator="type"),
+]
+
+
+class StyleSpec(BaseModel):
+    schemaVersion: Literal[2] = 2
+    properties: dict[str, PropertyDef]
+
+    @model_validator(mode="after")
+    def _validate_properties(self) -> StyleSpec:
+        if not self.properties:
+            raise ValueError("properties must not be empty")
+        if len(self.properties) > MAX_PROPERTIES:
+            raise ValueError(f"properties must have at most {MAX_PROPERTIES} entries")
+        for key in self.properties:
+            if not PROPERTY_KEY_RE.match(key):
+                raise ValueError(f"Invalid property key {key!r}")
+        return self
+
+
+# --- Agent draft adapter (list form for structured LLM output) ---
+
+
+class DraftInstruction(BaseModel):
+    value: str = Field(description="Enum value this instruction applies to")
     instruction: str = Field(description="Imperative instruction for the image generator")
 
 
-class DraftControl(BaseModel):
-    """LLM-friendly control definition without free-form dict keys."""
+class DraftEnumProperty(BaseModel):
+    type: Literal["enum"] = "enum"
+    label: str | None = None
+    values: list[str] = Field(min_length=1)
+    default: str
+    instructions: list[DraftInstruction] = Field(min_length=1)
 
-    values: list[str] = Field(min_length=1, description="Allowed enum values")
-    default: str = Field(description="Default value; must appear in values")
-    instructions: list[DraftInstruction] = Field(
-        min_length=1,
-        description="One entry per value in values",
-    )
-
-    def to_style_control_def(self) -> StyleControlDef:
+    def to_enum_property_def(self) -> EnumPropertyDef:
         values = [v.strip() for v in self.values if v and v.strip()]
         instr_map: dict[str, str] = {}
         for item in self.instructions:
@@ -106,68 +144,141 @@ class DraftControl(BaseModel):
                 instr_map[key] = text
         for value in values:
             if value not in instr_map:
-                instr_map[value] = f"Apply control mode {value}."
+                instr_map[value] = f"Apply mode {value}."
         default = self.default.strip() if self.default.strip() in values else values[0]
-        return StyleControlDef(
+        label = self.label.strip() if self.label and self.label.strip() else None
+        return EnumPropertyDef(
             type="enum",
             values=values,
             default=default,
             instructions=instr_map,
+            label=label,
         )
+
+
+class DraftBooleanProperty(BaseModel):
+    type: Literal["boolean"] = "boolean"
+    label: str | None = None
+    default: bool
+    instructionTrue: str = Field(description="Instruction when true")
+    instructionFalse: str = Field(description="Instruction when false")
+
+    def to_boolean_property_def(self) -> BooleanPropertyDef:
+        label = self.label.strip() if self.label and self.label.strip() else None
+        return BooleanPropertyDef(
+            type="boolean",
+            default=self.default,
+            instructions={
+                "true": self.instructionTrue.strip(),
+                "false": self.instructionFalse.strip(),
+            },
+            label=label,
+        )
+
+
+class DraftNumberProperty(BaseModel):
+    type: Literal["number"] = "number"
+    label: str | None = None
+    default: float
+    min: float | None = None
+    max: float | None = None
+    instruction: str
+
+    def to_number_property_def(self) -> NumberPropertyDef:
+        label = self.label.strip() if self.label and self.label.strip() else None
+        return NumberPropertyDef(
+            type="number",
+            default=self.default,
+            instruction=self.instruction.strip(),
+            min=self.min,
+            max=self.max,
+            label=label,
+        )
+
+
+class DraftTextProperty(BaseModel):
+    type: Literal["text"] = "text"
+    label: str | None = None
+    default: str = ""
+    instruction: str
+
+    def to_text_property_def(self) -> TextPropertyDef:
+        label = self.label.strip() if self.label and self.label.strip() else None
+        return TextPropertyDef(
+            type="text",
+            default=self.default,
+            instruction=self.instruction.strip(),
+            label=label,
+        )
+
+
+DraftPropertyEntry = Annotated[
+    DraftEnumProperty
+    | DraftBooleanProperty
+    | DraftNumberProperty
+    | DraftTextProperty,
+    Field(discriminator="type"),
+]
+
+
+class DraftPropertyEntryWithKey(BaseModel):
+    key: str = Field(description="Property identifier (camelCase)")
+    property: DraftPropertyEntry
 
 
 class StyleSpecDraftOutput(BaseModel):
-    """LLM structured output for create-from-image (OpenAI-schema-friendly)."""
+    """LLM structured output; normalized to canonical StyleSpec before persistence."""
 
     name: str = Field(description="Short suggested style pack name")
-    kind: Literal["template", "mood"]
-    baseRules: list[str] = Field(min_length=1, max_length=40)
-    headline: DraftControl
-    productName: DraftControl
-    backgroundIllustration: DraftControl
-    defaultHeadline: str = Field(description="Default for headline; must be in headline.values")
-    defaultProductName: str = Field(
-        description="Default for productName; must be in productName.values"
-    )
-    defaultBackgroundIllustration: str = Field(
-        description="Default for backgroundIllustration; must be in backgroundIllustration.values"
+    propertyEntries: list[DraftPropertyEntryWithKey] = Field(
+        min_length=1,
+        description="Style properties appropriate to the reference image",
     )
 
     def to_style_spec(self) -> StyleSpec:
-        controls = StyleSpecControls(
-            headline=self.headline.to_style_control_def(),
-            productName=self.productName.to_style_control_def(),
-            backgroundIllustration=self.backgroundIllustration.to_style_control_def(),
-        )
-        defaults = StyleSpecDefaults(
-            headline=self.defaultHeadline.strip() or controls.headline.default,
-            productName=self.defaultProductName.strip() or controls.productName.default,
-            backgroundIllustration=(
-                self.defaultBackgroundIllustration.strip()
-                or controls.backgroundIllustration.default
-            ),
-        )
-        # Coerce defaults into allowed values if the model drifts
-        if defaults.headline not in controls.headline.values:
-            defaults.headline = controls.headline.default
-        if defaults.productName not in controls.productName.values:
-            defaults.productName = controls.productName.default
-        if defaults.backgroundIllustration not in controls.backgroundIllustration.values:
-            defaults.backgroundIllustration = controls.backgroundIllustration.default
+        properties: dict[str, PropertyDef] = {}
+        for entry in self.propertyEntries:
+            key = entry.key.strip()
+            if not PROPERTY_KEY_RE.match(key):
+                continue
+            prop = entry.property
+            if isinstance(prop, DraftEnumProperty):
+                properties[key] = prop.to_enum_property_def()
+            elif isinstance(prop, DraftBooleanProperty):
+                properties[key] = prop.to_boolean_property_def()
+            elif isinstance(prop, DraftNumberProperty):
+                properties[key] = prop.to_number_property_def()
+            elif isinstance(prop, DraftTextProperty):
+                properties[key] = prop.to_text_property_def()
+        if not properties:
+            raise ValueError("propertyEntries produced no valid properties")
         return StyleSpec(
-            schemaVersion=1,
-            kind=self.kind,
-            baseRules=self.baseRules,
-            controls=controls,
-            defaults=defaults,
+            schemaVersion=2,
+            properties=properties,
         )
 
 
 def normalize_style_spec_dict(raw: dict[str, Any]) -> StyleSpec:
-    """Validate and coerce a dict into StyleSpec (drops unknown top-level keys via model)."""
+    """Validate and coerce a dict into StyleSpec v2."""
     return StyleSpec.model_validate(raw)
 
 
 def rules_from_style_spec(spec: StyleSpec, *, max_len: int = 4000) -> str:
-    text = "\n".join(r.strip() for r in spec.baseRules if r.strip())
+    """Sync rules text from compiled property defaults."""
+    lines: list[str] = ["PROPERTIES (resolved):"]
+    for key, prop in spec.properties.items():
+        if isinstance(prop, EnumPropertyDef):
+            instruction = prop.instructions.get(prop.default, "")
+            lines.append(f"- {key}: {prop.default} → {instruction.strip()}")
+        elif isinstance(prop, BooleanPropertyDef):
+            flag = "true" if prop.default else "false"
+            instruction = prop.instructions[flag]
+            lines.append(f"- {key}: {prop.default} → {instruction.strip()}")
+        elif isinstance(prop, NumberPropertyDef):
+            filled = prop.instruction.replace("{{value}}", str(prop.default))
+            lines.append(f"- {key}: {prop.default} → {filled.strip()}")
+        elif isinstance(prop, TextPropertyDef):
+            filled = prop.instruction.replace("{{value}}", prop.default)
+            lines.append(f"- {key}: {prop.default} → {filled.strip()}")
+    text = "\n".join(lines).strip()
     return text[:max_len]

@@ -1,6 +1,5 @@
 'use client'
 
-import type { UIMessage } from 'ai'
 import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/prompt-input'
 import {
   Conversation,
@@ -30,6 +29,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { ChatMessageParts } from '@/components/chat-message-parts'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import { shouldShowAssistantThinkingFallback } from '@/lib/chat/should-show-assistant-thinking-fallback'
 
 export function AgentChat() {
   const t = useTranslations('agentChat')
@@ -135,9 +135,10 @@ export function AgentChat() {
                   const isLast = msg === visibleMessages[visibleMessages.length - 1]
                   const isActiveStream =
                     isLast && (status === 'submitted' || status === 'streaming')
-                  const msgText = getMessageText(msg)
-                  const showFallbackSpinner =
-                    isActiveStream && msg.role === 'assistant' && msgText.length === 0
+                  const showFallbackSpinner = shouldShowAssistantThinkingFallback(
+                    msg,
+                    isActiveStream,
+                  )
 
                   return (
                     <Message from={msg.role} key={msg.id}>
@@ -209,14 +210,5 @@ export function AgentChat() {
         </div>
       </div>
     </div>
-  )
-}
-
-function getMessageText(message: UIMessage): string {
-  return (
-    message.parts
-      ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-      .map((p) => p.text)
-      .join('') ?? ''
   )
 }

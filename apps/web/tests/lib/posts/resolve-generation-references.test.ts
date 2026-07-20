@@ -10,30 +10,9 @@ function photo(name: string, enabled = true): PostCreatorReferenceImage {
   return { name, url: `https://example.com/${name}`, enabled }
 }
 
-function template(name: string): PostCreatorReferenceImage {
-  return { name, url: `https://example.com/media/${name}`, enabled: true }
-}
-
 describe('resolveGenerationReferences', () => {
-  it('returns template-composite mode with template first then photos', () => {
-    const { mode, references, tooManyReferences } = resolveGenerationReferences({
-      templateImage: template('layout.webp'),
-      referenceImages: [photo('a.webp'), photo('b.webp')],
-      previewMediaS3Key: null,
-    })
-
-    expect(mode).toBe('template-composite')
-    expect(tooManyReferences).toBe(false)
-    expect(references).toEqual([
-      { type: 'template', name: 'layout.webp' },
-      { type: 'photo', name: 'a.webp' },
-      { type: 'photo', name: 'b.webp' },
-    ])
-  })
-
   it('returns filled-edit mode when preview has a generated image and no photos', () => {
     const { mode, references } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [photo('a.webp', false)],
       previewMediaS3Key: PREVIEW_KEY,
     })
@@ -49,7 +28,6 @@ describe('resolveGenerationReferences', () => {
 
   it('returns fresh-scene with previous and photos when preview has a generated image', () => {
     const { mode, references } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [photo('a.webp'), photo('b.webp', false), photo('c.webp')],
       previewMediaS3Key: PREVIEW_KEY,
     })
@@ -67,7 +45,6 @@ describe('resolveGenerationReferences', () => {
 
   it('returns fresh-scene with photos only when preview has no generated image', () => {
     const { mode, references } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [photo('a.webp'), photo('b.webp', false), photo('c.webp')],
       previewMediaS3Key: null,
     })
@@ -79,34 +56,8 @@ describe('resolveGenerationReferences', () => {
     ])
   })
 
-  it('returns template-composite with template only when no product photos are attached', () => {
-    const { mode, references } = resolveGenerationReferences({
-      templateImage: template('layout.webp'),
-      referenceImages: [photo('a.webp', false)],
-      previewMediaS3Key: null,
-    })
-
-    expect(mode).toBe('template-composite')
-    expect(references).toEqual([{ type: 'template', name: 'layout.webp' }])
-  })
-
-  it('prefers template over preview media when both are provided by the caller', () => {
-    const { mode, references } = resolveGenerationReferences({
-      templateImage: template('layout.webp'),
-      referenceImages: [photo('a.webp')],
-      previewMediaS3Key: PREVIEW_KEY,
-    })
-
-    expect(mode).toBe('template-composite')
-    expect(references).toEqual([
-      { type: 'template', name: 'layout.webp' },
-      { type: 'photo', name: 'a.webp' },
-    ])
-  })
-
   it('returns empty when nothing is selected', () => {
     const { mode, references } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [photo('a.webp', false)],
       previewMediaS3Key: null,
     })
@@ -117,7 +68,6 @@ describe('resolveGenerationReferences', () => {
 
   it('flags too many references when over the generation limit', () => {
     const { references, tooManyReferences } = resolveGenerationReferences({
-      templateImage: template('layout.webp'),
       referenceImages: [
         photo('1.webp'),
         photo('2.webp'),
@@ -125,6 +75,7 @@ describe('resolveGenerationReferences', () => {
         photo('4.webp'),
         photo('5.webp'),
         photo('6.webp'),
+        photo('7.webp'),
       ],
       previewMediaS3Key: null,
     })
@@ -135,13 +86,13 @@ describe('resolveGenerationReferences', () => {
 
   it('reserves a slot for style when styleSelected is true', () => {
     const { references, tooManyReferences } = resolveGenerationReferences({
-      templateImage: template('layout.webp'),
       referenceImages: [
         photo('1.webp'),
         photo('2.webp'),
         photo('3.webp'),
         photo('4.webp'),
         photo('5.webp'),
+        photo('6.webp'),
       ],
       previewMediaS3Key: null,
       styleSelected: true,
@@ -153,7 +104,6 @@ describe('resolveGenerationReferences', () => {
 
   it('allows max client refs when style is not selected', () => {
     const { tooManyReferences } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [
         photo('1.webp'),
         photo('2.webp'),
@@ -169,9 +119,8 @@ describe('resolveGenerationReferences', () => {
     expect(tooManyReferences).toBe(false)
   })
 
-  it('prepends solid background when enabled and no template or previous result', () => {
+  it('prepends solid background when enabled and no previous result', () => {
     const { mode, references, tooManyReferences } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [photo('a.webp')],
       previewMediaS3Key: null,
       solidBackgroundEnabled: true,
@@ -188,7 +137,6 @@ describe('resolveGenerationReferences', () => {
 
   it('injects solid background alone when enabled with no photos', () => {
     const { references } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [photo('a.webp', false)],
       previewMediaS3Key: null,
       solidBackgroundEnabled: true,
@@ -200,7 +148,6 @@ describe('resolveGenerationReferences', () => {
 
   it('omits solid background when disabled', () => {
     const { references } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [photo('a.webp')],
       previewMediaS3Key: null,
       solidBackgroundEnabled: false,
@@ -210,24 +157,8 @@ describe('resolveGenerationReferences', () => {
     expect(references).toEqual([{ type: 'photo', name: 'a.webp' }])
   })
 
-  it('omits solid background when a template is selected', () => {
-    const { references } = resolveGenerationReferences({
-      templateImage: template('layout.webp'),
-      referenceImages: [photo('a.webp')],
-      previewMediaS3Key: null,
-      solidBackgroundEnabled: true,
-      solidBackgroundColor: '#ffffff',
-    })
-
-    expect(references).toEqual([
-      { type: 'template', name: 'layout.webp' },
-      { type: 'photo', name: 'a.webp' },
-    ])
-  })
-
   it('omits solid background when a previous result is attached', () => {
     const { references } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [],
       previewMediaS3Key: PREVIEW_KEY,
       solidBackgroundEnabled: true,
@@ -244,7 +175,6 @@ describe('resolveGenerationReferences', () => {
 
   it('counts solid background toward the generation limit with style reserved', () => {
     const { references, tooManyReferences } = resolveGenerationReferences({
-      templateImage: null,
       referenceImages: [
         photo('1.webp'),
         photo('2.webp'),

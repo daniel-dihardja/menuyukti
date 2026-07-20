@@ -26,6 +26,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_dates_row,
     extract_restaurant_campaign_brief_data,
     extract_restaurant_campaign_brief_row,
+    preferred_milestone_id_from_input,
 )
 from agents_app.agents.core.milestone_run.scheduler.prompts import (
     SCHEDULE_EXPLANATION_MAX_CHARS,
@@ -201,22 +202,36 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
     _trace(state, "execute_skill", skill_id="scheduler")
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    dates_data = extract_dates_data(prior_json)
+    preferred_dates = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceDatesMilestoneId",
+    )
+    preferred_brief = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceCampaignBriefMilestoneId",
+    )
+    dates_data = extract_dates_data(prior_json, preferred_milestone_id=preferred_dates)
     if dates_data is None:
         raise ValueError(dates_prior_error_message(prior_json, milestone_id="scheduler"))
 
-    campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
+    campaign_brief_data = extract_restaurant_campaign_brief_data(
+        prior_json,
+        preferred_milestone_id=preferred_brief,
+    )
     if campaign_brief_data is None:
         raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="scheduler"))
 
-    dates_row = extract_dates_row(prior_json)
+    dates_row = extract_dates_row(prior_json, preferred_milestone_id=preferred_dates)
     source_dates_title = ""
     if isinstance(dates_row, dict):
         title = dates_row.get("title")
         if isinstance(title, str) and title.strip():
             source_dates_title = title.strip()
 
-    campaign_brief_row = extract_restaurant_campaign_brief_row(prior_json)
+    campaign_brief_row = extract_restaurant_campaign_brief_row(
+        prior_json,
+        preferred_milestone_id=preferred_brief,
+    )
     source_campaign_brief_title = ""
     if isinstance(campaign_brief_row, dict):
         brief_title = campaign_brief_row.get("title")

@@ -158,6 +158,8 @@ def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
     assert rows[0]["title"] == "Earlier"
     assert rows[0].get("presetId") is None
     assert rows[0]["data"] == {"body": "# Body from earlier"}
+    assert str(rows[0].get("id") or "").strip() != ""
+    assert rows[0]["id"] == m1_id
 
 
 def test_prior_milestones_milestone_data_includes_preset_id_from_milestone_node():
@@ -257,6 +259,7 @@ def test_prior_milestones_milestone_data_includes_preset_id_from_milestone_node(
     assert isinstance(rows, list) and len(rows) == 1
     assert rows[0]["title"] == "campaign_brief step"
     assert rows[0]["presetId"] == "restaurant_campaign_brief"
+    assert rows[0]["id"] == m1_id
     assert rows[0]["data"] == {
         "venueSnapshot": {"venueName": "X", "city": "Y", "country": "Z", "currency": "EUR"}
     }

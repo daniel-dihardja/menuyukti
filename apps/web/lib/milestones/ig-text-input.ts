@@ -1,29 +1,25 @@
 import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/timeline/types'
 import { igFormatEntrySchema, type IgFormatEntry } from '@/lib/graphql/node-schemas'
+import {
+  resolveDependencyMilestone,
+  selectedDependencyIdFromInput,
+} from '@/lib/milestones/milestone-dependencies'
 
 export function findPriorIgFormatMilestone(
   milestones: TimelineMilestone[],
   currentMilestoneId: string,
+  selectedId?: string,
 ): TimelineMilestone | undefined {
-  const index = milestones.findIndex((milestone) => milestone.id === currentMilestoneId)
-  if (index < 0) {
-    return undefined
-  }
-
-  for (let i = index - 1; i >= 0; i -= 1) {
-    if (milestones[i]?.presetId === 'ig_format') {
-      return milestones[i]
-    }
-  }
-
-  return undefined
+  return resolveDependencyMilestone(milestones, currentMilestoneId, 'ig_format', selectedId)
 }
 
 export function resolveIgFormatEntriesForText(
   milestones: TimelineMilestone[],
   currentMilestoneId: string,
+  milestoneInput?: { value?: unknown },
 ): IgFormatEntry[] {
-  const priorFormat = findPriorIgFormatMilestone(milestones, currentMilestoneId)
+  const selectedId = selectedDependencyIdFromInput(milestoneInput, 'sourceIgFormatMilestoneId')
+  const priorFormat = findPriorIgFormatMilestone(milestones, currentMilestoneId, selectedId)
   if (!priorFormat?.data || typeof priorFormat.data !== 'object') {
     return []
   }

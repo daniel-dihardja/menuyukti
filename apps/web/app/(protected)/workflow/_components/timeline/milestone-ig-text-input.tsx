@@ -57,10 +57,14 @@ export function MilestoneIgTextInput({
   const t = useTranslations('analytics.workflows.chat')
   const { milestoneState } = useTimelineWorkspaceState()
 
-  const entries = useMemo(
-    () => resolveIgFormatEntriesForText(milestoneState.milestones, milestoneId),
-    [milestoneId, milestoneState.milestones],
-  )
+  const entries = useMemo(() => {
+    const current = milestoneState.milestones.find((row) => row.id === milestoneId)
+    return resolveIgFormatEntriesForText(
+      milestoneState.milestones,
+      milestoneId,
+      current?.milestoneInput,
+    )
+  }, [milestoneId, milestoneState.milestones])
 
   const weekdayOrder = [
     'monday',

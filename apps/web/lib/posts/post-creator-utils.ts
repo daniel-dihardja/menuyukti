@@ -15,20 +15,17 @@ import type { PostCreatorImageVersion, PostCreatorPage } from './post-creator-ty
 
 /**
  * Resolve Leonardo output size from format + quality.
- * Match-layout uses template dims snapped to a valid model pair.
  * Explicit format always owns the canvas (previous-result is reference-only).
  */
 export function resolveGenerationOutputDimensions(input: {
   model?: LeonardoPostModelId
   format?: PostImageFormatId
   quality?: PostImageQualityId
-  templateDimensions?: OutputDimensions
 }): OutputDimensions {
   return resolveLeonardoOutputDimensions({
     model: input.model ?? DEFAULT_LEONARDO_POST_MODEL,
     format: input.format ?? DEFAULT_POST_IMAGE_FORMAT,
     quality: input.quality ?? DEFAULT_POST_IMAGE_QUALITY,
-    templateDimensions: input.templateDimensions,
   })
 }
 
@@ -98,15 +95,4 @@ export function pageHasGeneratedImage(
     return true
   }
   return false
-}
-
-export type PostCreatorPreviewSource = 'version' | 'template'
-
-export function resolvePreviewSourceForPage(
-  page: Pick<PostCreatorPage, 'templateImage' | 'previewSource'> | undefined,
-): PostCreatorPreviewSource {
-  if (page?.previewSource === 'template' || page?.previewSource === 'version') {
-    return page.previewSource
-  }
-  return page?.templateImage ? 'template' : 'version'
 }

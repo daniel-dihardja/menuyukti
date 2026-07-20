@@ -46,6 +46,9 @@ query Post($id: ID!) {
       sortOrder
       mediaS3Key
       prompt
+      imageFormat
+      imageQuality
+      generationModel
       mediaVersions {
         id
         mediaS3Key
@@ -91,23 +94,57 @@ mutation UpdatePost($id: ID!, $title: String!) {
 """
 
 UPDATE_POST_PAGE = """
-mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
-  updatePostPage(id: $id, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+mutation UpdatePostPage(
+  $id: ID!
+  $mediaS3Key: String
+  $prompt: String
+  $imageFormat: String
+  $imageQuality: String
+  $generationModel: String
+) {
+  updatePostPage(
+    id: $id
+    mediaS3Key: $mediaS3Key
+    prompt: $prompt
+    imageFormat: $imageFormat
+    imageQuality: $imageQuality
+    generationModel: $generationModel
+  ) {
     id
     sortOrder
     mediaS3Key
     prompt
+    imageFormat
+    imageQuality
+    generationModel
   }
 }
 """
 
 CREATE_POST_PAGE = """
-mutation CreatePostPage($postId: ID!, $mediaS3Key: String, $prompt: String) {
-  createPostPage(postId: $postId, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+mutation CreatePostPage(
+  $postId: ID!
+  $mediaS3Key: String
+  $prompt: String
+  $imageFormat: String
+  $imageQuality: String
+  $generationModel: String
+) {
+  createPostPage(
+    postId: $postId
+    mediaS3Key: $mediaS3Key
+    prompt: $prompt
+    imageFormat: $imageFormat
+    imageQuality: $imageQuality
+    generationModel: $generationModel
+  ) {
     id
     sortOrder
     mediaS3Key
     prompt
+    imageFormat
+    imageQuality
+    generationModel
     mediaVersions {
       id
       mediaS3Key
@@ -278,6 +315,75 @@ def test_update_post_page_sets_media_and_prompt():
     updated = update_result.data["updatePostPage"]
     assert updated["mediaS3Key"] == VALID_MEDIA_KEY
     assert updated["prompt"] == "A sunny patio brunch"
+
+
+def test_update_post_page_sets_generation_settings():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "With format"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    post_id = create_result.data["createPost"]["id"]
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    update_result = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={
+                "id": page_id,
+                "imageFormat": "story",
+                "imageQuality": "high",
+                "generationModel": "nano-banana-2",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not update_result.errors, update_result.errors
+    updated = update_result.data["updatePostPage"]
+    assert updated["imageFormat"] == "story"
+    assert updated["imageQuality"] == "high"
+    assert updated["generationModel"] == "nano-banana-2"
+
+    load_result = asyncio.run(
+        schema.execute(
+            POST_QUERY,
+            variable_values={"id": post_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not load_result.errors, load_result.errors
+    page = load_result.data["post"]["pages"][0]
+    assert page["imageFormat"] == "story"
+    assert page["imageQuality"] == "high"
+    assert page["generationModel"] == "nano-banana-2"
+
+
+def test_update_post_page_rejects_invalid_generation_settings():
+    _seed_workspace()
+
+    create_result = asyncio.run(
+        schema.execute(
+            CREATE_POST,
+            variable_values={"title": "Bad format"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not create_result.errors, create_result.errors
+    page_id = create_result.data["createPost"]["pages"][0]["id"]
+
+    update_result = asyncio.run(
+        schema.execute(
+            UPDATE_POST_PAGE,
+            variable_values={"id": page_id, "imageFormat": "not-a-format"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert update_result.errors is not None
 
 
 def test_update_post_page_appends_media_versions():

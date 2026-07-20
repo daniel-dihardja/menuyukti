@@ -19,6 +19,7 @@ from agents_app.agents.core.milestone_run.llm_from_run_config import (
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_restaurant_campaign_brief_data,
+    preferred_milestone_id_from_input,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -205,7 +206,14 @@ async def fetch_and_prepare(
 async def research_local_culture(state: CultureHooksState) -> dict[str, Any]:
     """Optionally enrich context with Tavily web research for local culture signals."""
     prior_json = str(state.get("prior_milestones_data") or "")
-    brief = extract_restaurant_campaign_brief_data(prior_json)
+    preferred = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceCampaignBriefMilestoneId",
+    )
+    brief = extract_restaurant_campaign_brief_data(
+        prior_json,
+        preferred_milestone_id=preferred,
+    )
     if brief is None:
         return {}
 

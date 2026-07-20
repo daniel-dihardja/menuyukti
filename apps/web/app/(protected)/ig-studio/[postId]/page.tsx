@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { z } from 'zod'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { PersistedPostCreator } from '@/app/(protected)/canvas/post-creator/post-creator-dynamic'
+import { PersistedPostCreator } from '@/app/(protected)/ig-studio/post-creator/post-creator-dynamic'
 import { routes } from '@/lib/routes'
 
 const postIdParamSchema = z.string().regex(/^\d+$/, 'Invalid post id')

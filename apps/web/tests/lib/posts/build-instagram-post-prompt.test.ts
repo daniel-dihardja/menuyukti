@@ -5,7 +5,7 @@ import {
   INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT,
   POST_IMAGE_HEIGHT,
   POST_IMAGE_WIDTH,
-} from '@/app/(protected)/canvas/post-creator/_components/post-creator-constants'
+} from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
 import { buildInstagramPostPrompt, detectPromptMode } from '@/lib/posts/build-instagram-post-prompt'
 
 describe('buildInstagramPostPrompt', () => {
@@ -55,7 +55,7 @@ describe('buildInstagramPostPrompt', () => {
 
     expect(out).toContain('REFERENCE IMAGES (in upload order):')
     expect(out).toContain('Reference 1 — BACKGROUND CANVAS: a flat solid field in #ffffff')
-    expect(out).toContain('This is not a layout template')
+    expect(out).toContain('there are no slots or placeholders')
     expect(out).toContain('Reference 2 — PRODUCT PHOTO')
     expect(out).not.toContain('SLOT')
   })
@@ -64,61 +64,6 @@ describe('buildInstagramPostPrompt', () => {
     expect(
       detectPromptMode([{ type: 'background-color', color: '#ffffff' }, { type: 'photo' }]),
     ).toBe('fresh-scene')
-  })
-
-  it('includes template composite task and product fidelity blocks', () => {
-    const out = buildInstagramPostPrompt({
-      userPrompt: 'Ref 3 → center hero bowl',
-      mode: 'template-composite',
-      references: [{ type: 'template' }, { type: 'photo' }, { type: 'photo' }, { type: 'photo' }],
-    })
-
-    expect(out).toContain('Match the TEMPLATE reference dimensions exactly: 1080×1350 pixels')
-    expect(out).toContain('compositing real product photos into a fixed Instagram post TEMPLATE')
-    expect(out).toContain('SLOT FILL — IN-PAINT, NOT OVERLAY')
-    expect(out).toContain('FORBIDDEN:')
-    expect(out).toContain('TEXT FROM CREATIVE DIRECTION')
-    expect(out).toContain('PRODUCT IMAGE HERE')
-    expect(out).toContain('Reference 1 — TEMPLATE')
-    expect(out).toContain('Reference 2 — PRODUCT (Slot A)')
-    expect(out).toContain('Reference 3 — PRODUCT (Slot B)')
-    expect(out).toContain('Reference 4 — PRODUCT (Slot C)')
-    expect(out).toContain('PRODUCT FIDELITY (NON-NEGOTIABLE)')
-    expect(out).toContain('Do NOT stretch, squash, warp, morph')
-    expect(out).toContain('PRESERVE / REPLACE / REMOVE')
-    expect(out).toContain('COMPLETION CHECKLIST')
-    expect(out).toContain('Creative direction may override which product fills which placeholder')
-    expect(out).toContain('CREATIVE DIRECTION (headline, product names, slot mapping')
-    expect(out.endsWith('Ref 3 → center hero bowl')).toBe(true)
-  })
-
-  it('uses a style/headline prompt when only a template is provided', () => {
-    const out = buildInstagramPostPrompt({
-      userPrompt: 'Headline: Weekend specials',
-      mode: 'template-composite',
-      references: [{ type: 'template' }],
-    })
-
-    expect(out).toContain('editing a fixed Instagram post TEMPLATE for style and copy updates')
-    expect(out).toContain('master layout and visual style guide')
-    expect(out).toContain('Reference 1 — TEMPLATE')
-    expect(out).toContain('CREATIVE DIRECTION (headline, labels, style notes):')
-    expect(out).not.toContain('SLOT FILL — IN-PAINT, NOT OVERLAY')
-    expect(out).not.toContain('PRODUCT FIDELITY')
-    expect(out.endsWith('Headline: Weekend specials')).toBe(true)
-  })
-
-  it('uses template output dimensions in template-composite mode when provided', () => {
-    const out = buildInstagramPostPrompt({
-      userPrompt: 'Headline: Weekend specials',
-      mode: 'template-composite',
-      references: [{ type: 'template' }, { type: 'photo' }],
-      outputDimensions: { width: 1248, height: 1664 },
-    })
-
-    expect(out).toContain('Match the TEMPLATE reference dimensions exactly: 1248×1664 pixels')
-    expect(out).toContain('aspect ratio 3:4')
-    expect(out).not.toContain('1080×1350')
   })
 
   it('includes filled edit block for filled-edit mode', () => {
@@ -132,7 +77,6 @@ describe('buildInstagramPostPrompt', () => {
     expect(out).toContain('Reference 1 — FILLED RESULT')
     expect(out).toContain("Preserve the reference image's composition, camera angle, and lighting")
     expect(out).toContain('CREATIVE DIRECTION (apply only the requested edits):')
-    expect(out).not.toContain('TEMPLATE')
     expect(out).not.toContain('PRODUCT FIDELITY')
   })
 
@@ -159,24 +103,6 @@ describe('buildInstagramPostPrompt', () => {
     })
 
     expect(out).not.toContain('REFERENCE IMAGES (in upload order):')
-  })
-
-  it('places foundation sections before creative direction in template composite', () => {
-    const out = buildInstagramPostPrompt({
-      userPrompt: 'My creative brief',
-      mode: 'template-composite',
-      references: [{ type: 'template' }, { type: 'photo' }],
-    })
-
-    const taskIndex = out.indexOf('TASK:')
-    const slotFillIndex = out.indexOf('SLOT FILL')
-    const productFidelityIndex = out.indexOf('PRODUCT FIDELITY')
-    const creativeIndex = out.indexOf('CREATIVE DIRECTION')
-
-    expect(taskIndex).toBeGreaterThanOrEqual(0)
-    expect(slotFillIndex).toBeGreaterThan(taskIndex)
-    expect(productFidelityIndex).toBeGreaterThan(slotFillIndex)
-    expect(creativeIndex).toBeGreaterThan(productFidelityIndex)
   })
 
   it('includes full photography block for new scene generations', () => {
@@ -228,11 +154,9 @@ describe('buildInstagramPostPrompt', () => {
       style: {
         name: 'Warm Oat',
         rules: 'fallback rules',
-        styleSpec: {
-          schemaVersion: 1,
-          kind: 'template',
-          baseRules: ['Cream background; mustard accents.'],
-          controls: {
+        spec: {
+          schemaVersion: 2,
+          properties: {
             headline: {
               type: 'enum',
               values: ['auto', 'none'],
@@ -261,17 +185,11 @@ describe('buildInstagramPostPrompt', () => {
               },
             },
           },
-          defaults: {
-            headline: 'auto',
-            productName: 'auto',
-            backgroundIllustration: 'template_default',
-          },
         },
       },
     })
 
-    expect(out).toContain('Cream background; mustard accents.')
-    expect(out).toContain('CONTROLS (resolved):')
+    expect(out).toContain('PROPERTIES (resolved):')
     expect(out).toContain('headline: none → Leave the headline area empty.')
     expect(out).not.toContain('[headline=none]')
     expect(out.endsWith('cold brew')).toBe(true)
@@ -280,16 +198,6 @@ describe('buildInstagramPostPrompt', () => {
 })
 
 describe('detectPromptMode', () => {
-  it('detects template-composite when template and products are present', () => {
-    expect(detectPromptMode([{ type: 'template' }, { type: 'photo' }, { type: 'photo' }])).toBe(
-      'template-composite',
-    )
-  })
-
-  it('detects template-composite when only a template is present', () => {
-    expect(detectPromptMode([{ type: 'template' }])).toBe('template-composite')
-  })
-
   it('detects filled-edit when only previous result is present', () => {
     expect(detectPromptMode([{ type: 'previous-result' }])).toBe('filled-edit')
   })
@@ -297,5 +205,6 @@ describe('detectPromptMode', () => {
   it('detects fresh-scene otherwise', () => {
     expect(detectPromptMode([{ type: 'photo' }])).toBe('fresh-scene')
     expect(detectPromptMode([])).toBe('fresh-scene')
+    expect(detectPromptMode([{ type: 'previous-result' }, { type: 'photo' }])).toBe('fresh-scene')
   })
 })
