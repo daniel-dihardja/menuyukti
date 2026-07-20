@@ -10,6 +10,7 @@
 #   GRAPHQL_INTERNAL_API_KEY — optional shared secret; when set, web and agents send it as
 #       X-Internal-Api-Key to GraphQL (same value as apps/graphql INTERNAL_API_KEY).
 #   AGENTS_API_KEY — optional; when set, web must send it to the agents service for protected routes.
+#   WEB_APP_URL is set on agents to http://web:3000 (Docker DNS) for IG Studio image generation.
 #
 # The `web` service loads `.env` via `env_file`. Rebuild after changing build-time vars:
 #   docker compose build --no-cache web && docker compose up -d web
@@ -41,6 +42,7 @@ services:
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       GRAPHQL_INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
       AGENTS_API_KEY: ${AGENTS_API_KEY:-}
+      WEB_APP_URL: http://web:3000
     depends_on:
       - graphql
     ports:
