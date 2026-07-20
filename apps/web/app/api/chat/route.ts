@@ -40,6 +40,7 @@ interface PythonStreamChunk {
   error?: string
   status?: 'tool_start' | 'tool_end'
   tool?: string
+  output?: string
 }
 
 type StreamForwardContext = {
@@ -94,6 +95,7 @@ function forwardToolEnd(
   encoder: TextEncoder,
   ctx: StreamForwardContext,
   toolName: string,
+  output: string = '',
 ): void {
   const toolCallId = ctx.toolCallIds.get(toolName) ?? crypto.randomUUID()
   ctx.toolCallIds.delete(toolName)
@@ -102,7 +104,7 @@ function forwardToolEnd(
       sseLine({
         type: SSE_EVENT.TOOL_OUTPUT_AVAILABLE,
         toolCallId,
-        output: '',
+        output,
       }),
     ),
   )
@@ -151,7 +153,8 @@ async function parsePythonSSEAndForward(
             continue
           }
           if (data.status === 'tool_end' && typeof data.tool === 'string' && data.tool.length > 0) {
-            forwardToolEnd(controller, encoder, ctx, data.tool)
+            const output = typeof data.output === 'string' ? data.output : ''
+            forwardToolEnd(controller, encoder, ctx, data.tool, output)
             continue
           }
           if (typeof data.token === 'string' && data.token.length > 0) {
@@ -211,6 +214,13 @@ export async function POST(req: Request) {
     agentThreadId,
     workflowChatSessionId,
     model,
+    postId,
+    pageId,
+    generationModel,
+    imageFormat,
+    imageQuality,
+    styleId,
+    generationReferences,
   } = parsed.data
   const messages = rawMessages as UIMessage[]
 
@@ -326,6 +336,15 @@ export async function POST(req: Request) {
           ? { workflow_chat_session_id: workflowChatSessionId }
           : {}),
         ...(model !== undefined ? { model } : {}),
+        ...(postId !== undefined ? { post_id: postId } : {}),
+        ...(pageId !== undefined ? { page_id: pageId } : {}),
+        ...(generationModel !== undefined ? { generation_model: generationModel } : {}),
+        ...(imageFormat !== undefined ? { image_format: imageFormat } : {}),
+        ...(imageQuality !== undefined ? { image_quality: imageQuality } : {}),
+        ...(styleId !== undefined ? { style_id: styleId } : {}),
+        ...(generationReferences !== undefined
+          ? { generation_references: generationReferences }
+          : {}),
       }),
       signal: req.signal,
     })

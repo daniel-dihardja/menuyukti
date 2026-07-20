@@ -17,6 +17,7 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list()]
     assert "search_web" not in names
+    assert "generate_instagram_post_image" not in names
     assert "get_workflow_overview" in names
     assert "get_milestone_data" in names
     assert "get_milestone_preset_data_for_milestone" not in names
@@ -31,3 +32,10 @@ def test_chat_tools_list_includes_search_web_with_key(monkeypatch: pytest.Monkey
 
         names = [getattr(t, "name", "") for t in chat_tools_list()]
     assert "search_web" in names
+
+
+def test_chat_tools_list_includes_post_image_when_requested() -> None:
+    from agents_app.agents.core.chat.graph import chat_tools_list
+
+    names = [getattr(t, "name", "") for t in chat_tools_list(include_post_image=True)]
+    assert "generate_instagram_post_image" in names

@@ -470,6 +470,48 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     setStyleIdState(next)
   }, [])
 
+  const applyGeneratedImage = useCallback(
+    (data: {
+      url: string
+      name: string
+      mediaS3Key: string
+      createdAt: string
+      prompt?: string
+    }) => {
+      const nextVersion: PostCreatorImageVersion = {
+        id: data.name,
+        mediaS3Key: data.mediaS3Key,
+        imageUrl: data.url,
+        createdAt: data.createdAt,
+      }
+      const nextPrompt = data.prompt?.trim() ? data.prompt.trim() : prompt
+
+      setImageVersions((prev) => {
+        const nextVersions = [
+          nextVersion,
+          ...prev.filter((version) => version.mediaS3Key !== data.mediaS3Key),
+        ]
+        if (selectedPageId) {
+          syncPageState(selectedPageId, {
+            imageUrl: data.url,
+            mediaS3Key: data.mediaS3Key,
+            imageVersions: nextVersions,
+            previewVersionIndex: 0,
+            prompt: nextPrompt,
+            imageFormat,
+          })
+        }
+        return nextVersions
+      })
+      setPreviewVersionIndex(0)
+      setPostImageVersionIndex(0)
+      if (data.prompt?.trim()) {
+        setPrompt(data.prompt.trim())
+      }
+    },
+    [imageFormat, prompt, selectedPageId, syncPageState],
+  )
+
   const generate = useCallback(async () => {
     const trimmed = prompt.trim()
     if (!trimmed || isGenerating) return
@@ -543,36 +585,20 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         return
       }
 
-      const nextVersion: PostCreatorImageVersion = {
-        id: data.name,
+      applyGeneratedImage({
+        url: data.url,
+        name: data.name,
         mediaS3Key: data.mediaS3Key,
-        imageUrl: data.url,
         createdAt: data.createdAt,
-      }
-      const nextVersions = [
-        nextVersion,
-        ...imageVersions.filter((version) => version.mediaS3Key !== data.mediaS3Key),
-      ]
-      setImageVersions(nextVersions)
-      setPreviewVersionIndex(0)
-      setPostImageVersionIndex(0)
-
-      if (selectedPageId) {
-        syncPageState(selectedPageId, {
-          imageUrl: data.url,
-          mediaS3Key: data.mediaS3Key,
-          imageVersions: nextVersions,
-          previewVersionIndex: 0,
-          prompt: trimmed,
-          imageFormat,
-        })
-      }
+        prompt: trimmed,
+      })
     } catch {
       toast.error(tToast('generateError'))
     } finally {
       setIsGenerating(false)
     }
   }, [
+    applyGeneratedImage,
     canPersistPages,
     generationModel,
     imageFormat,
@@ -587,7 +613,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     solidBackgroundColor,
     solidBackgroundEnabled,
     styleId,
-    syncPageState,
     tPrompt,
     tToast,
   ])
@@ -1049,6 +1074,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         selectPage,
         setPrompt: setPromptValue,
         generate,
+        applyGeneratedImage,
         previewVersion,
         commitPostImage,
         requestDelete,
@@ -1087,6 +1113,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     [
       addPage,
       addReference,
+      applyGeneratedImage,
       canAddPage,
       canDelete,
       canDuplicatePage,

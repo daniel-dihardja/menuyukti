@@ -48,6 +48,13 @@ export type PostCreatorActions = {
   selectPage: (pageId: string) => void
   setPrompt: (value: string) => void
   generate: () => Promise<void>
+  applyGeneratedImage: (data: {
+    url: string
+    name: string
+    mediaS3Key: string
+    createdAt: string
+    prompt?: string
+  }) => void
   previewVersion: (index: number) => void
   commitPostImage: () => Promise<void>
   requestDelete: () => void

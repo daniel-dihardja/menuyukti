@@ -28,7 +28,7 @@ import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/al
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
+import { DefaultChatTransport, isToolUIPart } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -43,7 +43,11 @@ import {
   mediaTypeFromFilename,
 } from '@/lib/chat/workflow-chat-media-mention'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
+import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
+import type { PostImageFormatId, PostImageQualityId } from '@/lib/posts/leonardo-post-dimensions'
+import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
+import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
 
 import { usePostCreator } from '../_context/use-post-creator'
 import {
@@ -52,6 +56,7 @@ import {
 } from './post-creator-chat-preview-mention'
 
 const PREVIEW_ATTACHMENT_ID = 'post-creator-current-preview'
+const GENERATE_IMAGE_TOOL = 'generate_instagram_post_image'
 
 type PendingPreviewAttachment = {
   id: string
@@ -64,10 +69,99 @@ type PendingPreviewAttachment = {
   identity: string
 }
 
+type GenerationContextSnapshot = {
+  postId: string | null
+  selectedPageId: string | null
+  canPersistPages: boolean
+  generationModel: LeonardoPostModelId
+  imageFormat: PostImageFormatId
+  imageQuality: PostImageQualityId
+  styleId: number | null
+  referenceImages: PostCreatorReferenceImage[]
+  solidBackgroundEnabled: boolean
+  solidBackgroundColor: string
+  previewMediaS3Key: string | null | undefined
+}
+
+type GeneratedImageToolResult = {
+  url: string
+  name: string
+  mediaS3Key: string
+  createdAt: string
+  prompt?: string
+}
+
+function buildGenerationBodyFromRef(gen: GenerationContextSnapshot): Record<string, unknown> {
+  if (!(gen.canPersistPages && gen.postId && gen.selectedPageId)) {
+    return {}
+  }
+  const { references, tooManyReferences } = resolveGenerationReferences({
+    referenceImages: gen.referenceImages,
+    previewMediaS3Key: gen.previewMediaS3Key,
+    styleSelected: gen.styleId != null,
+    solidBackgroundEnabled: gen.solidBackgroundEnabled,
+    solidBackgroundColor: gen.solidBackgroundColor,
+  })
+  if (tooManyReferences) {
+    return {}
+  }
+  return {
+    postId: gen.postId,
+    pageId: gen.selectedPageId,
+    generationModel: gen.generationModel,
+    imageFormat: gen.imageFormat,
+    imageQuality: gen.imageQuality,
+    ...(gen.styleId != null ? { styleId: gen.styleId } : {}),
+    ...(references.length > 0 ? { generationReferences: references } : {}),
+  }
+}
+
+function parseGeneratedImageToolOutput(output: unknown): GeneratedImageToolResult | null {
+  const raw = typeof output === 'string' ? output : output != null ? JSON.stringify(output) : null
+  if (!raw || raw.startsWith('Error:')) return null
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    if (
+      typeof parsed.url !== 'string' ||
+      !parsed.url ||
+      typeof parsed.name !== 'string' ||
+      !parsed.name ||
+      typeof parsed.mediaS3Key !== 'string' ||
+      !parsed.mediaS3Key ||
+      typeof parsed.createdAt !== 'string' ||
+      !parsed.createdAt
+    ) {
+      return null
+    }
+    return {
+      url: parsed.url,
+      name: parsed.name,
+      mediaS3Key: parsed.mediaS3Key,
+      createdAt: parsed.createdAt,
+      ...(typeof parsed.prompt === 'string' ? { prompt: parsed.prompt } : {}),
+    }
+  } catch {
+    return null
+  }
+}
+
 export function PostCreatorChatPane() {
   const t = useTranslations('postCreator.chat')
-  const { meta } = usePostCreator()
-  const { postId, previewImageUrl, previewMediaS3Key } = meta
+  const { state, actions, meta } = usePostCreator()
+  const { postId, previewImageUrl, previewMediaS3Key, canPersistPages } = meta
+  const {
+    selectedPageId,
+    generationModel,
+    imageFormat,
+    imageQuality,
+    styleId,
+    referenceImages,
+    solidBackgroundEnabled,
+    solidBackgroundColor,
+    imageVersions,
+    previewVersionIndex,
+  } = state
+  const { applyGeneratedImage } = actions
 
   const [text, setText] = useState('')
   const [pendingAttachments, setPendingAttachments] = useState<PendingPreviewAttachment[]>([])
@@ -82,6 +176,34 @@ export function PostCreatorChatPane() {
   selectedChatModelRef.current = selectedChatModel
   const agentThreadIdRef = useRef(agentThreadId)
   agentThreadIdRef.current = agentThreadId
+  const appliedToolCallIdsRef = useRef(new Set<string>())
+
+  const generationContextRef = useRef<GenerationContextSnapshot>({
+    postId,
+    selectedPageId,
+    canPersistPages,
+    generationModel,
+    imageFormat,
+    imageQuality,
+    styleId,
+    referenceImages,
+    solidBackgroundEnabled,
+    solidBackgroundColor,
+    previewMediaS3Key: imageVersions[previewVersionIndex]?.mediaS3Key ?? previewMediaS3Key,
+  })
+  generationContextRef.current = {
+    postId,
+    selectedPageId,
+    canPersistPages,
+    generationModel,
+    imageFormat,
+    imageQuality,
+    styleId,
+    referenceImages,
+    solidBackgroundEnabled,
+    solidBackgroundColor,
+    previewMediaS3Key: imageVersions[previewVersionIndex]?.mediaS3Key ?? previewMediaS3Key,
+  }
 
   const chatId = postId ?? agentThreadId
 
@@ -151,9 +273,11 @@ export function PostCreatorChatPane() {
         api: '/api/chat',
         prepareSendMessagesRequest: ({ messages, body: mergedBody }) => {
           const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+          const genBody = buildGenerationBodyFromRef(generationContextRef.current)
           return {
             body: {
               ...mergedBody,
+              ...genBody,
               messages: lastUser ? [lastUser] : messages,
               agentThreadId: agentThreadIdRef.current,
               model: selectedChatModelRef.current,
@@ -170,6 +294,25 @@ export function PostCreatorChatPane() {
       transport,
       experimental_throttle: CHAT_STREAM_THROTTLE_MS,
     })
+
+  useEffect(() => {
+    for (const msg of messages) {
+      if (msg.role !== 'assistant' || !msg.parts) continue
+      for (const part of msg.parts) {
+        if (!isToolUIPart(part)) continue
+        const toolName =
+          part.type === 'dynamic-tool' ? part.toolName : part.type.split('-').slice(1).join('-')
+        if (toolName !== GENERATE_IMAGE_TOOL) continue
+        if (part.state !== 'output-available') continue
+        const toolCallId = 'toolCallId' in part ? String(part.toolCallId) : null
+        if (!toolCallId || appliedToolCallIdsRef.current.has(toolCallId)) continue
+        const parsed = parseGeneratedImageToolOutput('output' in part ? part.output : undefined)
+        if (!parsed) continue
+        appliedToolCallIdsRef.current.add(toolCallId)
+        applyGeneratedImage(parsed)
+      }
+    }
+  }, [applyGeneratedImage, messages])
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value)
@@ -247,6 +390,7 @@ export function PostCreatorChatPane() {
     const referencedPostMediaNames = pending.filter((a) => a.kind === 'post').map((a) => a.name)
     return {
       model: selectedChatModelRef.current,
+      ...buildGenerationBodyFromRef(generationContextRef.current),
       ...(referencedMediaNames.length > 0 ? { referencedMediaNames } : {}),
       ...(referencedPostMediaNames.length > 0 ? { referencedPostMediaNames } : {}),
     }

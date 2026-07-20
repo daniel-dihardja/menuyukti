@@ -2,6 +2,7 @@
  * Chat ReAct tools for the Skills catalog UI. Milestone **runs** use dedicated preset
  * subgraphs (GraphQL prefetch + structured LLM nodes), not this tool loop.
  * Keep in sync with `chat_tools_list()` in `apps/agents/agents/core/chat/graph.py`.
+ * `generate_instagram_post_image` is bound only when IG Studio postId/pageId are present.
  */
 
 export type ChatToolMeta = {
@@ -59,6 +60,12 @@ export const CHAT_TOOLS_REGISTRY: readonly ChatToolMeta[] = [
     name: 'Search web',
     description:
       'When TAVILY_API_KEY is set: Tavily-backed web search for current external facts. Omitted when the key is unset.',
+  },
+  {
+    id: 'generate_instagram_post_image',
+    name: 'Generate Instagram post image',
+    description:
+      'IG Studio Post Creator only: compose a Leonardo prompt and generate an image for the current post page (model/format/style/references from the UI). Bound when postId and pageId are present.',
   },
 ] as const
 

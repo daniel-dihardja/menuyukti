@@ -70,6 +70,13 @@ class ChatRequest(BaseModel):
         alias="model",
         description="Vercel AI Gateway id (provider/model); must be in the chat allowlist.",
     )
+    post_id: str | None = Field(default=None, min_length=1)
+    page_id: str | None = Field(default=None, min_length=1)
+    generation_model: str | None = Field(default=None, min_length=1, max_length=120)
+    image_format: str | None = Field(default=None, min_length=1, max_length=40)
+    image_quality: str | None = Field(default=None, min_length=1, max_length=40)
+    style_id: int | None = Field(default=None, ge=1)
+    generation_references: list[dict[str, Any]] | None = None
 
 
 def _sse_data_line(payload: object) -> str:
@@ -106,6 +113,13 @@ def _runnable_config(
     user_id: str | None,
     chat_gateway_model: str | None,
     workflow_catalog_markdown: str | None = None,
+    post_id: str | None = None,
+    page_id: str | None = None,
+    generation_model: str | None = None,
+    image_format: str | None = None,
+    image_quality: str | None = None,
+    style_id: int | None = None,
+    generation_references: list[dict[str, Any]] | None = None,
 ) -> RunnableConfig:
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
@@ -118,6 +132,20 @@ def _runnable_config(
         configurable["chat_gateway_model"] = chat_gateway_model
     if workflow_catalog_markdown is not None:
         configurable["workflow_catalog_markdown"] = workflow_catalog_markdown
+    if post_id is not None:
+        configurable["post_id"] = post_id
+    if page_id is not None:
+        configurable["page_id"] = page_id
+    if generation_model is not None:
+        configurable["generation_model"] = generation_model
+    if image_format is not None:
+        configurable["image_format"] = image_format
+    if image_quality is not None:
+        configurable["image_quality"] = image_quality
+    if style_id is not None:
+        configurable["style_id"] = style_id
+    if generation_references is not None:
+        configurable["generation_references"] = generation_references
     return RunnableConfig(configurable=configurable, recursion_limit=CHAT_RECURSION_LIMIT)
 
 
@@ -163,8 +191,20 @@ def _tool_name_from_call(tool_call: object) -> str | None:
     return name if isinstance(name, str) and name else None
 
 
-def _tool_events_from_update(update: object) -> Iterator[tuple[str, str]]:
-    """Yield (tool_start|tool_end, tool_name) pairs from a LangGraph updates chunk."""
+def _tool_message_output(msg: ToolMessage) -> str:
+    content = getattr(msg, "content", None)
+    if isinstance(content, str):
+        return content
+    if content is None:
+        return ""
+    try:
+        return json.dumps(content, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return str(content)
+
+
+def _tool_events_from_update(update: object) -> Iterator[tuple[str, str, str | None]]:
+    """Yield (tool_start|tool_end, tool_name, optional output) from a LangGraph updates chunk."""
     if not isinstance(update, dict):
         return
     for state_delta in update.values():
@@ -176,13 +216,11 @@ def _tool_events_from_update(update: object) -> Iterator[tuple[str, str]]:
                 for tool_call in msg.tool_calls or []:
                     name = _tool_name_from_call(tool_call)
                     if name:
-                        yield ("tool_start", name)
+                        yield ("tool_start", name, None)
             elif isinstance(msg, ToolMessage):
                 name = getattr(msg, "name", None)
-                if isinstance(name, str) and name:
-                    yield ("tool_end", name)
-                else:
-                    yield ("tool_end", "tool")
+                tool_name = name if isinstance(name, str) and name else "tool"
+                yield ("tool_end", tool_name, _tool_message_output(msg))
 
 
 def _is_assistant_stream_chunk(msg_chunk: object) -> bool:
@@ -212,8 +250,11 @@ async def _stream_chat_events(
                 if text:
                     yield _sse_data_line({"token": text})
             elif mode == "updates":
-                for status, tool_name in _tool_events_from_update(chunk):
-                    yield _sse_data_line({"status": status, "tool": tool_name})
+                for status, tool_name, output in _tool_events_from_update(chunk):
+                    payload: dict[str, Any] = {"status": status, "tool": tool_name}
+                    if status == "tool_end" and output is not None:
+                        payload["output"] = output
+                    yield _sse_data_line(payload)
     except asyncio.CancelledError:
         raise
     except Exception as exc:
@@ -265,6 +306,13 @@ async def chat_stream(
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
         workflow_catalog_markdown=workflow_catalog_markdown,
+        post_id=body.post_id,
+        page_id=body.page_id,
+        generation_model=body.generation_model,
+        image_format=body.image_format,
+        image_quality=body.image_quality,
+        style_id=body.style_id,
+        generation_references=body.generation_references,
     )
 
     async def event_stream():

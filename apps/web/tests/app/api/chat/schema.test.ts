@@ -113,4 +113,38 @@ describe('chatRequestBodySchema', () => {
     })
     expect(parsed.success).toBe(false)
   })
+
+  it('accepts IG Studio post generation context', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [{ role: 'user', parts: [{ type: 'text', text: 'Generate' }] }],
+      agentThreadId: 'thread-1',
+      postId: '12',
+      pageId: '34',
+      generationModel: 'gemini-2.5-flash-image',
+      imageFormat: 'feed',
+      imageQuality: 'high',
+      styleId: 7,
+      generationReferences: [
+        { type: 'photo', name: VALID_MEDIA },
+        { type: 'background-color', color: '#ffffff' },
+      ],
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.postId).toBe('12')
+      expect(parsed.data.pageId).toBe('34')
+      expect(parsed.data.styleId).toBe(7)
+      expect(parsed.data.generationReferences).toHaveLength(2)
+    }
+  })
+
+  it('rejects invalid post generation ids', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      agentThreadId: 'thread-1',
+      postId: 'abc',
+      pageId: '34',
+    })
+    expect(parsed.success).toBe(false)
+  })
 })

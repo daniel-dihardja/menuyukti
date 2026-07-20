@@ -38,7 +38,7 @@ import {
 import { resolveGenerationOutputDimensions } from '@/lib/posts/post-creator-utils'
 import type { GenerationMode } from '@/lib/posts/resolve-generation-references'
 import { createSolidBackgroundBuffer } from '@/lib/posts/create-solid-background-buffer'
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireMenuyuktiAdminOrInternalApi } from '@/lib/menuyukti-admin-api'
 
 const solidBackgroundHexSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Expected #rrggbb color')
 
@@ -107,7 +107,7 @@ async function loadReferenceBuffer(
 }
 
 export async function POST(req: Request) {
-  const authz = await requireMenuyuktiAdminApi()
+  const authz = await requireMenuyuktiAdminOrInternalApi(req)
   if (!authz.ok) return authz.response
   const { userId } = authz
 

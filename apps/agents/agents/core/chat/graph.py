@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from agents_app.agents.core.chat.generate_instagram_post_image import (
+    generate_instagram_post_image,
+)
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
     get_location_data,
@@ -26,8 +29,19 @@ from langgraph.prebuilt import create_react_agent
 CHAT_RECURSION_LIMIT = 20
 
 
-def chat_tools_list() -> list:
-    """Build chat ReAct tools (optional ``search_web`` when ``TAVILY_API_KEY`` is set)."""
+def _has_ig_studio_post_context(conf: dict[str, Any]) -> bool:
+    post_id = conf.get("post_id")
+    page_id = conf.get("page_id")
+    return bool(
+        isinstance(post_id, str)
+        and post_id.strip()
+        and isinstance(page_id, str)
+        and page_id.strip()
+    )
+
+
+def chat_tools_list(*, include_post_image: bool = False) -> list:
+    """Build chat ReAct tools (optional ``search_web`` / post image when enabled)."""
     tools: list = [
         get_workflow_overview,
         get_milestone_data,
@@ -40,6 +54,8 @@ def chat_tools_list() -> list:
     web = make_search_web_tool()
     if web is not None:
         tools.append(web)
+    if include_post_image:
+        tools.append(generate_instagram_post_image)
     return tools
 
 
@@ -50,27 +66,32 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     conf = cfg.get("configurable") or {}
     raw_catalog = conf.get("workflow_catalog_markdown")
     catalog = raw_catalog if isinstance(raw_catalog, str) else None
-    prompt_body = build_system_prompt(workflow_catalog=catalog)
+    prompt_body = build_system_prompt(
+        workflow_catalog=catalog,
+        ig_studio_post_image=_has_ig_studio_post_context(conf if isinstance(conf, dict) else {}),
+    )
     return [SystemMessage(content=prompt_body), *messages]
 
 
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
     """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
-    # Resolve tools at compile time so ``load_dotenv()`` in ``server.py`` has already run.
-    tools = chat_tools_list()
+    # ToolNode must include every tool the model may bind; binding is request-scoped below.
+    all_tools = chat_tools_list(include_post_image=True)
 
     def _select_chat_model(_state: dict[str, Any], _runtime: Any) -> Any:
         """Resolve LLM from RunnableConfig (set by HTTP router when client picks a model)."""
         cfg = get_config() or {}
         conf = cfg.get("configurable") or {}
-        raw = conf.get("chat_gateway_model")
+        conf_dict = conf if isinstance(conf, dict) else {}
+        raw = conf_dict.get("chat_gateway_model")
         gateway: str | None = raw.strip() if isinstance(raw, str) and raw.strip() else None
         llm = chat_llm_for_gateway_model(gateway, streaming=True)
-        return llm.bind_tools(tools)
+        bound_tools = chat_tools_list(include_post_image=_has_ig_studio_post_context(conf_dict))
+        return llm.bind_tools(bound_tools)
 
     return create_react_agent(  # type: ignore[type-var]
         _select_chat_model,
-        tools,
+        all_tools,
         prompt=_chat_prompt,
         checkpointer=checkpointer,
         name="menuyukti_chat",

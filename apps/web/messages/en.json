@@ -18,6 +18,12 @@
       "running": "Searching the web…",
       "runningDetail": "Looking up current sources online",
       "done": "Searched the web"
+    },
+    "generateInstagramPostImage": {
+      "running": "Generating post image…",
+      "runningDetail": "Composing prompt and running Leonardo",
+      "done": "Generated post image",
+      "error": "Image generation failed"
     }
   },
   "appShell": {
@@ -779,8 +785,8 @@
     },
     "chat": {
       "emptyTitle": "Analyze this preview",
-      "emptyDescription": "Type @ to attach the large preview or a media library image, then ask about composition, styling, or what to change next.",
-      "placeholder": "Ask about attached images… Type @ to attach preview or media",
+      "emptyDescription": "Type @ to attach the large preview or a media library image, then ask about composition, styling, or what to change next. You can also ask the assistant to generate a new post image.",
+      "placeholder": "Ask about attached images or generate a new post… Type @ to attach preview or media",
       "thinking": "Thinking…",
       "errorTitle": "Something went wrong",
       "errorDescription": "The request could not be completed. Please try again.",

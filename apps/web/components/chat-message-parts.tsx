@@ -58,9 +58,55 @@ function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolU
   )
 }
 
+function GenerateInstagramPostImageToolBlock({
+  part,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+}) {
+  const t = useTranslations('chatTools.generateInstagramPostImage')
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const output =
+    'output' in part && part.output != null
+      ? typeof part.output === 'string'
+        ? part.output
+        : JSON.stringify(part.output)
+      : ''
+  const toolReportedError = Boolean(output) && output.startsWith('Error:')
+  const isError =
+    part.state === 'output-error' || part.state === 'output-denied' || toolReportedError
+  const title = isInFlight ? t('running') : isError ? t('error') : t('done')
+
+  const header =
+    part.type === 'dynamic-tool' ? (
+      <ToolHeader state={part.state} title={title} toolName={part.toolName} type="dynamic-tool" />
+    ) : (
+      <ToolHeader state={part.state} title={title} type={part.type} />
+    )
+
+  return (
+    <Tool defaultOpen={isInFlight || isError}>
+      {header}
+      {isInFlight ? (
+        <ToolContent>
+          <Shimmer className="text-sm">{t('runningDetail')}</Shimmer>
+        </ToolContent>
+      ) : null}
+      {isError && output ? (
+        <ToolContent>
+          <p className="text-destructive text-sm">{output.replace(/^Error:\s*/, '')}</p>
+        </ToolContent>
+      ) : null}
+    </Tool>
+  )
+}
+
 function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
-  if (resolveToolName(part) === 'search_web') {
+  const toolName = resolveToolName(part)
+  if (toolName === 'search_web') {
     return <SearchWebToolBlock part={part} />
+  }
+  if (toolName === 'generate_instagram_post_image') {
+    return <GenerateInstagramPostImageToolBlock part={part} />
   }
 
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
