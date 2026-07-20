@@ -28,8 +28,6 @@ def _sample_enum(*, values: list[str] | None = None) -> DraftEnumProperty:
 def _sample_draft() -> StyleSpecDraftOutput:
     return StyleSpecDraftOutput(
         name="Warm Oat",
-        kind="template",
-        baseRules=["Cream background.", "Black line art only for decorations."],
         propertyEntries=[
             DraftPropertyEntryWithKey(key="headline", property=_sample_enum()),
             DraftPropertyEntryWithKey(key="productName", property=_sample_enum()),
@@ -115,7 +113,8 @@ def test_draft_http_success(mock_draft: AsyncMock, client: TestClient) -> None:
     body = response.json()
     assert body["name"] == "Warm Oat"
     assert body["style_spec"]["schemaVersion"] == 2
-    assert body["style_spec"]["kind"] == "template"
+    assert "kind" not in body["style_spec"]
+    assert "baseRules" not in body["style_spec"]
     assert "headline" in body["style_spec"]["properties"]
     mock_draft.assert_awaited_once_with(
         image_url="data:image/png;base64,aaa",
@@ -141,7 +140,6 @@ async def test_draft_style_spec_from_image_unit(mock_structured: AsyncMock) -> N
     )
     assert name == "Warm Oat"
     assert isinstance(spec, StyleSpec)
-    assert spec.kind == "template"
     assert spec.schemaVersion == 2
     headline = spec.properties["headline"]
     assert headline.type == "enum"

@@ -156,8 +156,6 @@ describe('buildInstagramPostPrompt', () => {
         rules: 'fallback rules',
         styleSpec: {
           schemaVersion: 2,
-          kind: 'template',
-          baseRules: ['Cream background; mustard accents.'],
           properties: {
             headline: {
               type: 'enum',
@@ -191,7 +189,6 @@ describe('buildInstagramPostPrompt', () => {
       },
     })
 
-    expect(out).toContain('Cream background; mustard accents.')
     expect(out).toContain('PROPERTIES (resolved):')
     expect(out).toContain('headline: none → Leave the headline area empty.')
     expect(out).not.toContain('[headline=none]')

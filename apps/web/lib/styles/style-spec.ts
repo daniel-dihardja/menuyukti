@@ -62,8 +62,6 @@ export type EnumPropertyDef = z.infer<typeof enumPropertyDefSchema>
 
 const styleSpecV2BaseSchema = z.object({
   schemaVersion: z.literal(2),
-  kind: z.enum(['template', 'mood']),
-  baseRules: z.array(z.string().min(1)).min(1).max(40),
   properties: z.record(z.string(), propertyDefSchema),
 })
 
@@ -160,15 +158,15 @@ const styleControlDefV1Schema = z.object({
 
 const styleSpecV1Schema = z.object({
   schemaVersion: z.literal(1),
-  kind: z.enum(['template', 'mood']),
-  baseRules: z.array(z.string().min(1)).min(1).max(40),
+  kind: z.enum(['template', 'mood']).optional(),
+  baseRules: z.array(z.string().min(1)).min(1).max(40).optional(),
   controls: z.record(z.string(), styleControlDefV1Schema),
   defaults: z.record(z.string(), z.string().min(1)),
 })
 
 export type StyleSpecV1 = z.infer<typeof styleSpecV1Schema>
 
-/** Migrate v1 controls/defaults to v2 properties (enum-only). */
+/** Migrate v1 controls/defaults to v2 properties (enum-only). Drops kind/baseRules. */
 export function migrateStyleSpecV1ToV2(v1: StyleSpecV1): StyleSpec {
   const properties: Record<string, EnumPropertyDef> = {}
 
@@ -191,8 +189,6 @@ export function migrateStyleSpecV1ToV2(v1: StyleSpecV1): StyleSpec {
 
   const migrated: StyleSpec = {
     schemaVersion: 2,
-    kind: v1.kind,
-    baseRules: v1.baseRules,
     properties,
   }
 
@@ -294,7 +290,6 @@ function clampNumber(value: number, prop: z.infer<typeof numberPropertyDefSchema
 
 export type CompileStyleSpecResult = {
   body: string
-  rulesFromBase: string
 }
 
 function resolveEnumProperty(
@@ -356,13 +351,6 @@ export function compileStyleSpec(
   spec: StyleSpec,
   overrides: PropertyOverrides = {},
 ): CompileStyleSpecResult {
-  const lines: string[] = []
-
-  for (const rule of spec.baseRules) {
-    const trimmed = rule.trim()
-    if (trimmed) lines.push(`- ${trimmed}`)
-  }
-
   const propertyLines: string[] = []
   for (const [key, prop] of Object.entries(spec.properties)) {
     const override = overrides[key]
@@ -384,18 +372,10 @@ export function compileStyleSpec(
     if (line) propertyLines.push(line)
   }
 
-  if (propertyLines.length > 0) {
-    lines.push('', 'PROPERTIES (resolved):', ...propertyLines)
-  }
+  const body =
+    propertyLines.length > 0 ? ['PROPERTIES (resolved):', ...propertyLines].join('\n').trim() : ''
 
-  const body = lines.join('\n').trim()
-  const rulesFromBase = spec.baseRules
-    .map((r) => r.trim())
-    .filter(Boolean)
-    .join('\n')
-    .slice(0, 4000)
-
-  return { body, rulesFromBase }
+  return { body }
 }
 
 export function parseStyleSpec(input: unknown): StyleSpec | null {
@@ -413,9 +393,9 @@ export function parseStyleSpecResult(
   return { ok: false, issues: parsed.error.issues }
 }
 
-/** Sync `rules` column from Spec baseRules (cap 4000). */
+/** Sync `rules` column from compiled property defaults (cap 4000). */
 export function rulesFromStyleSpec(spec: StyleSpec): string {
-  return compileStyleSpec(spec).rulesFromBase
+  return compileStyleSpec(spec).body.slice(0, 4000)
 }
 
 export function styleSpecParseError(input: unknown): string | null {

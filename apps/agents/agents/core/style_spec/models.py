@@ -105,17 +105,7 @@ PropertyDef = Annotated[
 
 class StyleSpec(BaseModel):
     schemaVersion: Literal[2] = 2
-    kind: Literal["template", "mood"]
-    baseRules: list[str] = Field(min_length=1, max_length=40)
     properties: dict[str, PropertyDef]
-
-    @field_validator("baseRules")
-    @classmethod
-    def _clean_rules(cls, rules: list[str]) -> list[str]:
-        cleaned = [r.strip() for r in rules if r and r.strip()]
-        if not cleaned:
-            raise ValueError("baseRules must not be empty")
-        return cleaned
 
     @model_validator(mode="after")
     def _validate_properties(self) -> StyleSpec:
@@ -240,8 +230,6 @@ class StyleSpecDraftOutput(BaseModel):
     """LLM structured output; normalized to canonical StyleSpec before persistence."""
 
     name: str = Field(description="Short suggested style pack name")
-    kind: Literal["template", "mood"]
-    baseRules: list[str] = Field(min_length=1, max_length=40)
     propertyEntries: list[DraftPropertyEntryWithKey] = Field(
         min_length=1,
         description="Style properties appropriate to the reference image",
@@ -266,8 +254,6 @@ class StyleSpecDraftOutput(BaseModel):
             raise ValueError("propertyEntries produced no valid properties")
         return StyleSpec(
             schemaVersion=2,
-            kind=self.kind,
-            baseRules=self.baseRules,
             properties=properties,
         )
 
@@ -278,5 +264,21 @@ def normalize_style_spec_dict(raw: dict[str, Any]) -> StyleSpec:
 
 
 def rules_from_style_spec(spec: StyleSpec, *, max_len: int = 4000) -> str:
-    text = "\n".join(r.strip() for r in spec.baseRules if r.strip())
+    """Sync rules text from compiled property defaults."""
+    lines: list[str] = ["PROPERTIES (resolved):"]
+    for key, prop in spec.properties.items():
+        if isinstance(prop, EnumPropertyDef):
+            instruction = prop.instructions.get(prop.default, "")
+            lines.append(f"- {key}: {prop.default} → {instruction.strip()}")
+        elif isinstance(prop, BooleanPropertyDef):
+            flag = "true" if prop.default else "false"
+            instruction = prop.instructions[flag]
+            lines.append(f"- {key}: {prop.default} → {instruction.strip()}")
+        elif isinstance(prop, NumberPropertyDef):
+            filled = prop.instruction.replace("{{value}}", str(prop.default))
+            lines.append(f"- {key}: {prop.default} → {filled.strip()}")
+        elif isinstance(prop, TextPropertyDef):
+            filled = prop.instruction.replace("{{value}}", prop.default)
+            lines.append(f"- {key}: {prop.default} → {filled.strip()}")
+    text = "\n".join(lines).strip()
     return text[:max_len]

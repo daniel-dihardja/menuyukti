@@ -12,11 +12,6 @@ import {
 
 const WARM_OAT_V2: StyleSpec = {
   schemaVersion: 2,
-  kind: 'template',
-  baseRules: [
-    'Cream background; black line art; mustard accents only.',
-    'Only the product in the cup may be photorealistic.',
-  ],
   properties: {
     headline: {
       type: 'enum',
@@ -76,7 +71,10 @@ const WARM_OAT_V2: StyleSpec = {
 const WARM_OAT_V1: StyleSpecV1 = {
   schemaVersion: 1,
   kind: 'template',
-  baseRules: WARM_OAT_V2.baseRules,
+  baseRules: [
+    'Cream background; black line art; mustard accents only.',
+    'Only the product in the cup may be photorealistic.',
+  ],
   controls: {
     headline: WARM_OAT_V2.properties.headline as StyleSpecV1['controls'][string],
     productName: WARM_OAT_V2.properties.productName as StyleSpecV1['controls'][string],
@@ -95,10 +93,23 @@ describe('style-spec v2', () => {
     expect(parseStyleSpec(WARM_OAT_V2)).toEqual(WARM_OAT_V2)
   })
 
+  it('strips legacy kind and baseRules from v2 input', () => {
+    const parsed = parseStyleSpec({
+      ...WARM_OAT_V2,
+      kind: 'template',
+      baseRules: ['legacy rule'],
+    })
+    expect(parsed).toEqual(WARM_OAT_V2)
+    expect(parsed).not.toHaveProperty('kind')
+    expect(parsed).not.toHaveProperty('baseRules')
+  })
+
   it('migrates v1 to v2 on read', () => {
     const parsed = parseStyleSpec(WARM_OAT_V1)
     expect(parsed).not.toBeNull()
     expect(parsed!.schemaVersion).toBe(2)
+    expect(parsed).not.toHaveProperty('kind')
+    expect(parsed).not.toHaveProperty('baseRules')
     const headline = parsed!.properties.headline
     expect(headline?.type).toBe('enum')
     if (headline?.type === 'enum') {
@@ -116,15 +127,13 @@ describe('style-spec v2', () => {
     expect(
       parseStyleSpec({
         schemaVersion: 2,
-        kind: 'template',
-        baseRules: ['One rule.'],
         properties: {},
       }),
     ).toBeNull()
   })
 
   it('rejects raw v1 on write-style validation without full v1 shape', () => {
-    expect(parseStyleSpec({ schemaVersion: 1, kind: 'template' })).toBeNull()
+    expect(parseStyleSpec({ schemaVersion: 1 })).toBeNull()
   })
 
   it('parses bracket overrides for dynamic property keys', () => {
@@ -145,7 +154,7 @@ describe('style-spec v2', () => {
       headline: { value: 'none' },
       productName: { value: 'custom', params: { text: 'COLD BREW' } },
     })
-    expect(body).toContain('Cream background')
+    expect(body).not.toContain('Cream background')
     expect(body).toContain('PROPERTIES (resolved):')
     expect(body).toContain('headline: none → Leave the top-left headline area empty.')
     expect(body).toContain(
@@ -165,9 +174,10 @@ describe('style-spec v2', () => {
     expect(body).toContain('layoutNotes: Center the cup. → Layout constraint: Center the cup.')
   })
 
-  it('syncs rulesFromBase from baseRules', () => {
-    expect(rulesFromStyleSpec(WARM_OAT_V2)).toBe(
-      'Cream background; black line art; mustard accents only.\nOnly the product in the cup may be photorealistic.',
-    )
+  it('syncs rules from compiled property defaults', () => {
+    const rules = rulesFromStyleSpec(WARM_OAT_V2)
+    expect(rules).toContain('PROPERTIES (resolved):')
+    expect(rules).toContain('headline: auto →')
+    expect(rules).not.toContain('Cream background')
   })
 })

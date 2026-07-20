@@ -195,17 +195,6 @@ def validate_style_spec(raw: Any) -> dict[str, Any]:
         raise ValueError("styleSpec must be a JSON object")
     if raw.get("schemaVersion") != 2:
         raise ValueError("styleSpec.schemaVersion must be 2")
-    kind = raw.get("kind")
-    if kind not in ("template", "mood"):
-        raise ValueError("styleSpec.kind must be 'template' or 'mood'")
-    base_rules = raw.get("baseRules")
-    if not isinstance(base_rules, list) or not base_rules:
-        raise ValueError("styleSpec.baseRules must be a non-empty list")
-    cleaned_rules = [str(r).strip() for r in base_rules if str(r).strip()]
-    if not cleaned_rules:
-        raise ValueError("styleSpec.baseRules must be a non-empty list")
-    if len(cleaned_rules) > 40:
-        raise ValueError("styleSpec.baseRules must have at most 40 items")
 
     properties_raw = raw.get("properties")
     if not isinstance(properties_raw, dict) or not properties_raw:
@@ -221,17 +210,52 @@ def validate_style_spec(raw: Any) -> dict[str, Any]:
 
     return {
         "schemaVersion": 2,
-        "kind": kind,
-        "baseRules": cleaned_rules,
         "properties": properties,
     }
 
 
 def rules_from_style_spec(spec: dict[str, Any]) -> str:
-    rules = "\n".join(str(r).strip() for r in spec.get("baseRules", []) if str(r).strip())
-    if not rules:
-        raise ValueError("styleSpec.baseRules produced empty rules")
-    return rules[:_MAX_RULES_LEN]
+    """Sync rules column from compiled property defaults."""
+    properties = spec.get("properties") or {}
+    if not isinstance(properties, dict) or not properties:
+        raise ValueError("styleSpec.properties produced empty rules")
+
+    lines: list[str] = ["PROPERTIES (resolved):"]
+    for key, prop in properties.items():
+        if not isinstance(prop, dict):
+            continue
+        prop_type = prop.get("type")
+        if prop_type == "enum":
+            default = str(prop.get("default", "")).strip()
+            instructions = prop.get("instructions") or {}
+            instruction = str(instructions.get(default, "")).strip()
+            if instruction:
+                lines.append(f"- {key}: {default} → {instruction}")
+        elif prop_type == "boolean":
+            default = bool(prop.get("default"))
+            flag = "true" if default else "false"
+            instructions = prop.get("instructions") or {}
+            instruction = str(instructions.get(flag, "")).strip()
+            if instruction:
+                lines.append(f"- {key}: {default} → {instruction}")
+        elif prop_type == "number":
+            default = prop.get("default")
+            instruction = str(prop.get("instruction", "")).strip().replace(
+                "{{value}}", str(default)
+            )
+            if instruction:
+                lines.append(f"- {key}: {default} → {instruction}")
+        elif prop_type == "text":
+            default = str(prop.get("default", ""))
+            instruction = str(prop.get("instruction", "")).strip().replace(
+                "{{value}}", default
+            )
+            if instruction:
+                lines.append(f"- {key}: {default} → {instruction}")
+
+    if len(lines) < 2:
+        raise ValueError("styleSpec.properties produced empty rules")
+    return "\n".join(lines)[:_MAX_RULES_LEN]
 
 
 def clear_other_defaults(session: Session, workspace_id: int, keep_id: int | None = None) -> None:

@@ -267,11 +267,6 @@ def test_get_one_denied_for_other_user(style_workspace_id: int):
 
 _SAMPLE_SPEC = {
     "schemaVersion": 2,
-    "kind": "template",
-    "baseRules": [
-        "Cream background; black line art; mustard accents only.",
-        "Only the product in the cup may be photorealistic.",
-    ],
     "properties": {
         "headline": {
             "type": "enum",
@@ -316,12 +311,11 @@ def test_create_with_style_spec_syncs_rules(style_workspace_id: int):
     )
     assert created.errors is None
     style = created.data["createStyle"]
-    assert style["rules"] == (
-        "Cream background; black line art; mustard accents only.\n"
-        "Only the product in the cup may be photorealistic."
-    )
+    assert "PROPERTIES (resolved):" in style["rules"]
+    assert "headline: auto →" in style["rules"]
     assert style["styleSpec"]["schemaVersion"] == 2
-    assert style["styleSpec"]["kind"] == "template"
+    assert "kind" not in style["styleSpec"]
+    assert "baseRules" not in style["styleSpec"]
     assert style["styleSpec"]["properties"]["headline"]["default"] == "auto"
 
 
@@ -360,8 +354,8 @@ def test_create_rejects_invalid_style_spec(style_workspace_id: int):
             "name": "Bad",
             "rules": "fallback",
             "referenceImageName": "x.webp",
-            "styleSpec": {"schemaVersion": 2, "kind": "template"},
+            "styleSpec": {"schemaVersion": 2},
         },
     )
     assert result.errors is not None
-    assert any("baseRules" in str(err) for err in result.errors)
+    assert any("properties" in str(err) for err in result.errors)

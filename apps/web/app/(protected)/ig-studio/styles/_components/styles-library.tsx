@@ -10,7 +10,6 @@ import { toast } from 'sonner'
 import { Button } from '@workspace/ui/components/button'
 
 import { deleteStyle, listStyles, type Style } from '@/lib/styles/client-api'
-import { parseStyleSpec } from '@/lib/styles/style-spec'
 import { mediaDownloadHref } from '@/lib/media/client-api'
 import { routes } from '@/lib/routes'
 
@@ -85,7 +84,6 @@ export function StylesLibrary() {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {styles.map((style) => {
-        const kind = parseStyleSpec(style.styleSpec)?.kind
         return (
           <li
             key={style.id}
@@ -109,8 +107,6 @@ export function StylesLibrary() {
                 <p className="truncate text-sm font-medium">{style.name}</p>
                 <div className="text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5 text-xs">
                   {style.isDefault ? <span>{t('defaultBadge')}</span> : null}
-                  {kind === 'template' ? <span>{t('kindTemplate')}</span> : null}
-                  {kind === 'mood' ? <span>{t('kindMood')}</span> : null}
                 </div>
               </div>
               <Button

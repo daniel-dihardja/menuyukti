@@ -1002,10 +1002,6 @@
       "namePlaceholder": "Warm editorial lunch",
       "rulesLabel": "Style rules",
       "rulesPlaceholder": "Warm window light, soft shadows, natural food textures, muted earth tones. Avoid neon or cool blue casts.",
-      "baseRulesLabel": "Base rules",
-      "kindLabel": "Kind",
-      "kindTemplate": "Template",
-      "kindMood": "Mood",
       "specPanelTitle": "Style Spec",
       "propertiesSectionTitle": "Properties",
       "propertyType": {
