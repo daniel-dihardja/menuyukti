@@ -110,6 +110,25 @@ export function isPostImageExplicitFormatId(value: unknown): value is PostImageE
   )
 }
 
+/** Width÷height for a format (e.g. story → `9/16`). Match-layout falls back to feed. */
+export function formatAspectNumber(
+  format: PostImageFormatId,
+  templateDimensions?: OutputDimensions,
+): number {
+  if (format === 'match-layout' && templateDimensions) {
+    const { width, height } = templateDimensions
+    if (width > 0 && height > 0) {
+      return width / height
+    }
+  }
+  if (format === 'match-layout') {
+    const { w, h } = FORMAT_RATIO.feed
+    return w / h
+  }
+  const { w, h } = FORMAT_RATIO[format]
+  return w / h
+}
+
 /** CSS aspect-ratio value for preview frames (`4 / 5`). Match-layout falls back to feed. */
 export function formatAspectCss(
   format: PostImageFormatId,

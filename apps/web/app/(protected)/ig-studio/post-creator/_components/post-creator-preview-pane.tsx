@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight, ImageIcon, Loader2, Trash2 } from 'lucide-re
 import { useTranslations } from 'next-intl'
 import { useCallback, useId, useState, type KeyboardEvent } from 'react'
 
-import { Card } from '@workspace/ui/components/card'
 import { Label } from '@workspace/ui/components/label'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Switch } from '@workspace/ui/components/switch'
@@ -12,6 +11,7 @@ import { Button } from '@workspace/ui/components/button'
 
 import {
   formatAspectCss,
+  formatAspectNumber,
   resolveLeonardoOutputDimensions,
 } from '@/lib/posts/leonardo-post-dimensions'
 
@@ -24,9 +24,8 @@ import {
 import { PostCreatorSafeZoneOverlay } from './post-creator-safe-zone-overlay'
 import { PostCreatorVersionFilmstrip } from './post-creator-version-filmstrip'
 
-const previewContentMaxWidthClassName = 'w-full max-w-[min(100%,calc((100vh-12rem)*0.8))]'
-
-const previewShellClassName = `flex min-h-0 min-w-0 flex-1 flex-col items-center gap-2 ${previewContentMaxWidthClassName}`
+/** Viewport-approx chrome so max-width can track format ratio (not hardcoded 4:5). */
+const PREVIEW_AVAILABLE_HEIGHT = '100vh - 12rem'
 
 const previewFrameBaseClassName =
   'relative max-h-full max-w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30'
@@ -64,6 +63,12 @@ export function PostCreatorPreviewPane() {
     quality: imageQuality,
   })
   const aspectCss = formatAspectCss(imageFormat)
+  const aspectNumber = formatAspectNumber(imageFormat)
+  const isPortraitFormat = aspectNumber < 1
+  const previewContentStyle = {
+    maxWidth: `min(100%, calc((${PREVIEW_AVAILABLE_HEIGHT}) * ${aspectNumber}))`,
+  }
+  const previewShellClassName = 'flex min-h-0 min-w-0 w-full flex-1 flex-col items-center gap-2'
   const formatName = tPrompt(`format.options.${imageFormat}.name`)
   const qualityName = tPrompt(`quality.options.${imageQuality}.name`)
   const clampedInsetXPx = clampSafeZoneInsetPx(safeZoneInsetXPx, resolved.width)
@@ -84,7 +89,10 @@ export function PostCreatorPreviewPane() {
   ) : null
 
   const previewFrameClassName = previewFrameBaseClassName
-  const previewFrameStyle = { aspectRatio: aspectCss }
+  const previewFrameStyle = {
+    aspectRatio: aspectCss,
+    ...(isPortraitFormat ? { height: '100%', width: 'auto' } : { width: '100%', height: 'auto' }),
+  }
 
   const versions = imageVersions.length > 0 ? imageVersions : []
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
@@ -179,13 +187,15 @@ export function PostCreatorPreviewPane() {
       <div className="flex min-h-0 flex-1 items-stretch justify-center overflow-hidden px-2 py-3">
         {showLoadingPlaceholder ? (
           <div
-            className={`flex min-h-0 flex-1 items-center justify-center ${previewContentMaxWidthClassName}`}
+            className="flex min-h-0 w-full flex-1 items-center justify-center"
+            style={previewContentStyle}
           >
-            <Skeleton className={`w-full ${previewFrameClassName}`} style={previewFrameStyle} />
+            <Skeleton className={previewFrameClassName} style={previewFrameStyle} />
           </div>
         ) : hasImage ? (
           <div
-            className={`flex min-h-0 flex-1 flex-col items-center gap-3 ${previewContentMaxWidthClassName}`}
+            className="flex min-h-0 w-full flex-1 flex-col items-center gap-3"
+            style={previewContentStyle}
             onKeyDown={handlePreviewKeyDown}
             tabIndex={showVersionNav ? 0 : undefined}
           >
@@ -314,10 +324,11 @@ export function PostCreatorPreviewPane() {
           </div>
         ) : (
           <div
-            className={`flex min-h-0 flex-1 items-center justify-center ${previewContentMaxWidthClassName}`}
+            className="flex min-h-0 w-full flex-1 items-center justify-center"
+            style={previewContentStyle}
           >
-            <Card
-              className={`relative flex w-full flex-col items-center justify-center border-dashed p-6 text-center ${previewFrameClassName} ${
+            <div
+              className={`border-dashed ${previewFrameClassName} ${
                 showSolidBackgroundPreview ? 'border-border/40' : 'bg-muted/20'
               }`}
               style={{
@@ -342,16 +353,16 @@ export function PostCreatorPreviewPane() {
                 </div>
               ) : null}
               {showSolidBackgroundPreview ? null : (
-                <div className="relative z-0 flex max-w-xs flex-col items-center gap-3">
+                <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                     <ImageIcon aria-hidden className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <h3 className="text-lg font-medium">{t('emptyTitle')}</h3>
-                  <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
+                  <p className="max-w-xs text-sm text-muted-foreground">{t('emptyDescription')}</p>
                 </div>
               )}
               {safeZoneOverlay}
-            </Card>
+            </div>
           </div>
         )}
       </div>

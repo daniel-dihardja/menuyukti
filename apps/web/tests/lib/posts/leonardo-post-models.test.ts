@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   clampQualityForModel,
   formatAspectCss,
+  formatAspectNumber,
   isQualityAvailable,
   resolveLeonardoOutputDimensions,
   snapToNearestLeonardoPair,
@@ -163,5 +164,19 @@ describe('formatAspectCss', () => {
 
   it('uses template dims for match-layout when provided', () => {
     expect(formatAspectCss('match-layout', { width: 1200, height: 800 })).toBe('1200 / 800')
+  })
+})
+
+describe('formatAspectNumber', () => {
+  it('returns width÷height for explicit formats', () => {
+    expect(formatAspectNumber('feed')).toBeCloseTo(4 / 5)
+    expect(formatAspectNumber('tall')).toBeCloseTo(3 / 4)
+    expect(formatAspectNumber('square')).toBe(1)
+    expect(formatAspectNumber('story')).toBeCloseTo(9 / 16)
+    expect(formatAspectNumber('wide')).toBeCloseTo(16 / 9)
+  })
+
+  it('uses template dims for match-layout when provided', () => {
+    expect(formatAspectNumber('match-layout', { width: 1200, height: 800 })).toBeCloseTo(1.5)
   })
 })
