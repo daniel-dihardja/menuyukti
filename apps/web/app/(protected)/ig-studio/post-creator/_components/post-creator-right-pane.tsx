@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 import { resolveLeonardoOutputDimensions } from '@/lib/posts/leonardo-post-dimensions'
 
 import { usePostCreator } from '../_context/use-post-creator'
+import { PostCreatorChatPane } from './post-creator-chat-pane'
 import { PostCreatorPromptPane } from './post-creator-prompt-pane'
 import { PostCreatorSafeZoneSettings } from './post-creator-safe-zone-settings'
 import { PostCreatorSolidBackgroundSettings } from './post-creator-solid-background-settings'
@@ -36,6 +37,7 @@ export function PostCreatorRightPane() {
       <Tabs defaultValue="prompt" className="flex h-full min-h-0 flex-col">
         <TabsList className="mx-4 mt-4 w-[calc(100%-2rem)] shrink-0 justify-start">
           <TabsTrigger value="prompt">{tTabs('prompt')}</TabsTrigger>
+          <TabsTrigger value="chat">{tTabs('chat')}</TabsTrigger>
           <TabsTrigger value="settings">{tTabs('settings')}</TabsTrigger>
         </TabsList>
         <TabsContent
@@ -43,6 +45,12 @@ export function PostCreatorRightPane() {
           className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden"
         >
           <PostCreatorPromptPane />
+        </TabsContent>
+        <TabsContent
+          value="chat"
+          className="mt-0 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden"
+        >
+          <PostCreatorChatPane />
         </TabsContent>
         <TabsContent
           value="settings"

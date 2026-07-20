@@ -766,8 +766,23 @@
     },
     "tabs": {
       "prompt": "Prompt",
+      "chat": "Chat",
       "settings": "Settings",
       "history": "History"
+    },
+    "chat": {
+      "emptyTitle": "Ask about this post",
+      "emptyDescription": "Get ideas for captions, composition, or creative direction. The advisor can see when a preview is selected in the panel.",
+      "placeholder": "Ask about the current preview…",
+      "thinking": "Thinking…",
+      "errorTitle": "Something went wrong",
+      "errorDescription": "The request could not be completed. Please try again.",
+      "retry": "Retry",
+      "clearChatAriaLabel": "Clear chat",
+      "clearChatLabel": "Clear chat",
+      "clearChatTooltip": "Clear messages and start a fresh chat thread",
+      "previewChipLabel": "Current preview",
+      "previewChipAriaLabel": "Current preview image referenced for chat"
     },
     "settings": {
       "title": "Generation settings",
