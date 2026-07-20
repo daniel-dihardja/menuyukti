@@ -772,8 +772,8 @@
     },
     "chat": {
       "emptyTitle": "Analyze this preview",
-      "emptyDescription": "Type @ to attach the large preview, then ask about composition, styling, or what to change next.",
-      "placeholder": "Ask about the attached preview… Type @ to attach it",
+      "emptyDescription": "Type @ to attach the large preview or a media library image, then ask about composition, styling, or what to change next.",
+      "placeholder": "Ask about attached images… Type @ to attach preview or media",
       "thinking": "Thinking…",
       "errorTitle": "Something went wrong",
       "errorDescription": "The request could not be completed. Please try again.",
@@ -782,11 +782,16 @@
       "clearChatLabel": "Clear chat",
       "clearChatTooltip": "Clear messages and start a fresh chat thread",
       "previewChipLabel": "Current preview",
-      "previewChipAriaLabel": "Current preview image attached for chat",
+      "previewChipAriaLabel": "Images attached for chat",
       "sentWithAttachments": "Sent with attachments",
       "mentionMenu": {
-        "ariaLabel": "Attach preview image",
-        "empty": "No preview to attach"
+        "ariaLabel": "Attach preview or media image",
+        "empty": "No matching preview or media to attach",
+        "previewGroup": "Preview",
+        "mediaGroup": "Media",
+        "mediaAriaLabel": "Attach image from Media library",
+        "mediaLoading": "Loading media…",
+        "mediaEmpty": "No media files yet. Upload images on the Media page."
       }
     },
     "settings": {

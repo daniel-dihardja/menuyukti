@@ -34,9 +34,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { ChatMessageParts } from '@/components/chat-message-parts'
+import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
-import { mediaTypeFromFilename } from '@/lib/chat/workflow-chat-media-mention'
+import {
+  formatMediaMentionLabel,
+  mediaTypeFromFilename,
+} from '@/lib/chat/workflow-chat-media-mention'
+import type { MediaCatalogItem } from '@/lib/media/client-api'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 
 import { usePostCreator } from '../_context/use-post-creator'
@@ -64,9 +69,9 @@ export function PostCreatorChatPane() {
   const { postId, previewImageUrl, previewMediaS3Key } = meta
 
   const [text, setText] = useState('')
-  const [pendingAttachment, setPendingAttachment] = useState<PendingPreviewAttachment | null>(null)
-  const pendingAttachmentRef = useRef<PendingPreviewAttachment | null>(null)
-  pendingAttachmentRef.current = pendingAttachment
+  const [pendingAttachments, setPendingAttachments] = useState<PendingPreviewAttachment[]>([])
+  const pendingAttachmentsRef = useRef<PendingPreviewAttachment[]>([])
+  pendingAttachmentsRef.current = pendingAttachments
 
   const [agentThreadId, setAgentThreadId] = useState(() => crypto.randomUUID())
   const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
@@ -96,14 +101,24 @@ export function PostCreatorChatPane() {
     ? `${previewCandidate.kind}:${previewCandidate.name}`
     : null
 
+  const excludeNames = useMemo(
+    () => new Set(pendingAttachments.filter((a) => a.kind === 'photo').map((a) => a.name)),
+    [pendingAttachments],
+  )
+
   useEffect(() => {
-    setPendingAttachment((prev) => {
-      if (!prev) return prev
+    setPendingAttachments((prev) => {
+      const previewIdx = prev.findIndex((a) => a.id === PREVIEW_ATTACHMENT_ID)
+      if (previewIdx < 0) return prev
+
       if (!previewCandidate || !previewIdentity) {
-        return null
+        return prev.filter((a) => a.id !== PREVIEW_ATTACHMENT_ID)
       }
-      if (prev.identity !== previewIdentity && prev.id === PREVIEW_ATTACHMENT_ID) {
-        return {
+
+      const existing = prev[previewIdx]!
+      if (existing.identity !== previewIdentity) {
+        const next = [...prev]
+        next[previewIdx] = {
           id: PREVIEW_ATTACHMENT_ID,
           kind: previewCandidate.kind,
           name: previewCandidate.name,
@@ -112,14 +127,19 @@ export function PostCreatorChatPane() {
           label: previewCandidate.label,
           identity: previewIdentity,
         }
+        return next
       }
-      if (prev.identity === previewIdentity) {
-        return {
-          ...prev,
+
+      if (existing.url !== previewCandidate.url || existing.label !== previewCandidate.label) {
+        const next = [...prev]
+        next[previewIdx] = {
+          ...existing,
           url: previewCandidate.url,
           label: previewCandidate.label,
         }
+        return next
       }
+
       return prev
     })
   }, [previewCandidate, previewIdentity])
@@ -159,7 +179,7 @@ export function PostCreatorChatPane() {
       if (status === 'streaming' || status === 'submitted') {
         return
       }
-      setPendingAttachment({
+      const nextAttachment: PendingPreviewAttachment = {
         id: PREVIEW_ATTACHMENT_ID,
         kind: candidate.kind,
         name: candidate.name,
@@ -167,39 +187,79 @@ export function PostCreatorChatPane() {
         mediaType: mediaTypeFromFilename(candidate.name),
         label: candidate.label,
         identity: `${candidate.kind}:${candidate.name}`,
+      }
+      setPendingAttachments((prev) => {
+        const withoutPreview = prev.filter((a) => a.id !== PREVIEW_ATTACHMENT_ID)
+        if (withoutPreview.length >= CHAT_MAX_IMAGES) {
+          return prev.some((a) => a.id === PREVIEW_ATTACHMENT_ID)
+            ? prev.map((a) => (a.id === PREVIEW_ATTACHMENT_ID ? nextAttachment : a))
+            : prev
+        }
+        const existingIdx = prev.findIndex((a) => a.id === PREVIEW_ATTACHMENT_ID)
+        if (existingIdx >= 0) {
+          const next = [...prev]
+          next[existingIdx] = nextAttachment
+          return next
+        }
+        return [...prev, nextAttachment]
       })
     },
     [status],
   )
 
-  const handleRemovePending = useCallback(() => {
-    setPendingAttachment(null)
+  const handleSelectMedia = useCallback(
+    (item: MediaCatalogItem) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      setPendingAttachments((prev) => {
+        if (prev.some((a) => a.kind === 'photo' && a.name === item.name)) {
+          return prev
+        }
+        if (prev.length >= CHAT_MAX_IMAGES) {
+          return prev
+        }
+        return [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            kind: 'photo',
+            name: item.name,
+            url: item.url,
+            mediaType: mediaTypeFromFilename(item.name),
+            label: formatMediaMentionLabel(item.name),
+            identity: `photo:${item.name}`,
+          },
+        ]
+      })
+    },
+    [status],
+  )
+
+  const handleRemovePending = useCallback((id: string) => {
+    setPendingAttachments((prev) => prev.filter((a) => a.id !== id))
   }, [])
 
   const buildSendBody = useCallback(() => {
-    const pending = pendingAttachmentRef.current
-    const referencedMediaNames = pending?.kind === 'photo' ? [pending.name] : undefined
-    const referencedPostMediaNames = pending?.kind === 'post' ? [pending.name] : undefined
+    const pending = pendingAttachmentsRef.current
+    const referencedMediaNames = pending.filter((a) => a.kind === 'photo').map((a) => a.name)
+    const referencedPostMediaNames = pending.filter((a) => a.kind === 'post').map((a) => a.name)
     return {
       model: selectedChatModelRef.current,
-      ...(referencedMediaNames ? { referencedMediaNames } : {}),
-      ...(referencedPostMediaNames ? { referencedPostMediaNames } : {}),
+      ...(referencedMediaNames.length > 0 ? { referencedMediaNames } : {}),
+      ...(referencedPostMediaNames.length > 0 ? { referencedPostMediaNames } : {}),
     }
   }, [])
 
   const handleSubmit = useCallback(
     async (message: PromptInputMessage) => {
-      const pending = pendingAttachmentRef.current
-      const mediaFiles: FileUIPart[] = pending
-        ? [
-            {
-              type: 'file' as const,
-              filename: pending.label,
-              mediaType: pending.mediaType,
-              url: pending.url,
-            },
-          ]
-        : []
+      const pending = pendingAttachmentsRef.current
+      const mediaFiles: FileUIPart[] = pending.slice(0, CHAT_MAX_IMAGES).map((a) => ({
+        type: 'file' as const,
+        filename: a.label,
+        mediaType: a.mediaType,
+        url: a.url,
+      }))
       const hasText = Boolean(message.text?.trim())
       const hasAttachments = mediaFiles.length > 0
 
@@ -210,7 +270,7 @@ export function PostCreatorChatPane() {
       const content = message.text?.trim() || t('sentWithAttachments')
       const body = buildSendBody()
       setText('')
-      setPendingAttachment(null)
+      setPendingAttachments([])
       await sendMessage(
         {
           text: content,
@@ -232,24 +292,25 @@ export function PostCreatorChatPane() {
     clearError()
     setMessages([])
     setText('')
-    setPendingAttachment(null)
+    setPendingAttachments([])
     setAgentThreadId(crypto.randomUUID())
   }, [stop, clearError, setMessages])
 
   const isChatBusy = status === 'streaming' || status === 'submitted'
-  const isSubmitDisabled = !text.trim() && !pendingAttachment && !isChatBusy
+  const isSubmitDisabled = !text.trim() && pendingAttachments.length === 0 && !isChatBusy
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
-  const pendingChip = useMemo(() => {
-    if (!pendingAttachment) return null
-    return {
-      id: pendingAttachment.id,
-      type: 'file' as const,
-      filename: pendingAttachment.label,
-      mediaType: pendingAttachment.mediaType,
-      url: pendingAttachment.url,
-    }
-  }, [pendingAttachment])
+  const pendingChips = useMemo(
+    () =>
+      pendingAttachments.map((a) => ({
+        id: a.id,
+        type: 'file' as const,
+        filename: a.label,
+        mediaType: a.mediaType,
+        url: a.url,
+      })),
+    [pendingAttachments],
+  )
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-4 pb-4">
@@ -327,23 +388,37 @@ export function PostCreatorChatPane() {
         <PostCreatorChatPreviewMention
           candidate={previewCandidate}
           disabled={isChatBusy}
+          excludeNames={excludeNames}
+          mediaAriaLabel={t('mentionMenu.mediaAriaLabel')}
+          mediaEmptyLabel={t('mentionMenu.mediaEmpty')}
+          mediaGroupLabel={t('mentionMenu.mediaGroup')}
+          mediaLoadingLabel={t('mentionMenu.mediaLoading')}
           mentionAriaLabel={t('mentionMenu.ariaLabel')}
           mentionEmptyLabel={t('mentionMenu.empty')}
+          onSelectMedia={handleSelectMedia}
           onSelectPreview={handleSelectPreview}
           onValueChange={setText}
+          previewGroupLabel={t('mentionMenu.previewGroup')}
           value={text}
         >
           <PromptInput onSubmit={handleSubmit}>
-            {pendingChip ? (
+            {pendingChips.length > 0 ? (
               <Attachments
                 aria-label={t('previewChipAriaLabel')}
                 className="ml-0 w-full justify-start px-3 pt-3"
                 variant="grid"
               >
-                <Attachment className="size-16" data={pendingChip} onRemove={handleRemovePending}>
-                  <AttachmentPreview />
-                  <AttachmentRemove />
-                </Attachment>
+                {pendingChips.map((chip) => (
+                  <Attachment
+                    className="size-16"
+                    data={chip}
+                    key={chip.id}
+                    onRemove={() => handleRemovePending(chip.id)}
+                  >
+                    <AttachmentPreview />
+                    <AttachmentRemove />
+                  </Attachment>
+                ))}
               </Attachments>
             ) : null}
             <PromptInputBody>
