@@ -212,6 +212,41 @@ def test_chat_stream_list_content_blocks(client: TestClient) -> None:
         assert "Hello" in text
 
 
+def test_chat_stream_omits_tool_message_tokens(client: TestClient) -> None:
+    """Tool results must not be forwarded as assistant text tokens."""
+    mock_graph = MagicMock()
+    tool_payload = '{"query": "fried banana fritters recipe", "results": []}'
+    _install_mock_astream(
+        mock_graph,
+        chunks=[
+            (
+                "messages",
+                (
+                    ToolMessage(
+                        content=tool_payload,
+                        tool_call_id="1",
+                        name="search_web",
+                    ),
+                    {},
+                ),
+            ),
+            ("messages", (AIMessageChunk(content="Here are some ideas."), {})),
+        ],
+    )
+    client.app.state.chat_graph = mock_graph
+
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={"messages": [{"role": "user", "content": "Find a recipe"}], "workflow_id": "10"},
+    ) as response:
+        assert response.status_code == 200
+        text = "".join(response.iter_text())
+        assert "fried banana fritters recipe" not in text
+        assert "Here are some ideas." in text
+
+
 def test_chat_stream_tool_status_sse(client: TestClient) -> None:
     mock_graph = MagicMock()
     _install_mock_astream(

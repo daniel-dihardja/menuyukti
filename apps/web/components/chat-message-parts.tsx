@@ -7,6 +7,7 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from '@workspace/ui/components/ai-elements/reasoning'
+import { Shimmer } from '@workspace/ui/components/ai-elements/shimmer'
 import {
   Tool,
   ToolContent,
@@ -16,6 +17,7 @@ import {
 } from '@workspace/ui/components/ai-elements/tool'
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { memo } from 'react'
 
 import {
@@ -25,7 +27,42 @@ import {
 } from '@/lib/chat/partition-message-parts'
 import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
 
+function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string {
+  if (part.type === 'dynamic-tool') {
+    return part.toolName
+  }
+  return part.type.split('-').slice(1).join('-')
+}
+
+function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
+  const t = useTranslations('chatTools.searchWeb')
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const title = isInFlight ? t('running') : t('done')
+
+  const header =
+    part.type === 'dynamic-tool' ? (
+      <ToolHeader state={part.state} title={title} toolName={part.toolName} type="dynamic-tool" />
+    ) : (
+      <ToolHeader state={part.state} title={title} type={part.type} />
+    )
+
+  return (
+    <Tool defaultOpen={isInFlight}>
+      {header}
+      {isInFlight ? (
+        <ToolContent>
+          <Shimmer className="text-sm">{t('runningDetail')}</Shimmer>
+        </ToolContent>
+      ) : null}
+    </Tool>
+  )
+}
+
 function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
+  if (resolveToolName(part) === 'search_web') {
+    return <SearchWebToolBlock part={part} />
+  }
+
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
   const header =
     part.type === 'dynamic-tool' ? (

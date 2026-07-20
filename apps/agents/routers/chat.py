@@ -14,7 +14,7 @@ from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, ConfigDict, Field
@@ -185,6 +185,11 @@ def _tool_events_from_update(update: object) -> Iterator[tuple[str, str]]:
                     yield ("tool_end", "tool")
 
 
+def _is_assistant_stream_chunk(msg_chunk: object) -> bool:
+    """Only assistant message chunks may be forwarded as user-visible tokens."""
+    return isinstance(msg_chunk, (AIMessage, AIMessageChunk))
+
+
 async def _stream_chat_events(
     graph: CompiledStateGraph,
     lc_messages: list[BaseMessage],
@@ -201,6 +206,8 @@ async def _stream_chat_events(
         ):
             if mode == "messages" and isinstance(chunk, tuple) and len(chunk) == 2:
                 msg_chunk, _metadata = chunk
+                if not _is_assistant_stream_chunk(msg_chunk):
+                    continue
                 text = _chunk_text(getattr(msg_chunk, "content", None))
                 if text:
                     yield _sse_data_line({"token": text})

@@ -13,6 +13,13 @@
   "common": {
     "close": "Close"
   },
+  "chatTools": {
+    "searchWeb": {
+      "running": "Searching the web…",
+      "runningDetail": "Looking up current sources online",
+      "done": "Searched the web"
+    }
+  },
   "appShell": {
     "skipToContent": "Skip to content",
     "toggleSidebarAria": "Toggle sidebar",

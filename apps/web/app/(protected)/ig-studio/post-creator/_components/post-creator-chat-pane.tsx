@@ -1,6 +1,6 @@
 'use client'
 
-import type { FileUIPart, UIMessage } from 'ai'
+import type { FileUIPart } from 'ai'
 import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/prompt-input'
 import {
   Attachment,
@@ -37,6 +37,7 @@ import { ChatMessageParts } from '@/components/chat-message-parts'
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import { shouldShowAssistantThinkingFallback } from '@/lib/chat/should-show-assistant-thinking-fallback'
 import {
   formatMediaMentionLabel,
   mediaTypeFromFilename,
@@ -344,9 +345,7 @@ export function PostCreatorChatPane() {
               {visibleMessages.map((msg) => {
                 const isLast = msg === visibleMessages[visibleMessages.length - 1]
                 const isActiveStream = isLast && (status === 'submitted' || status === 'streaming')
-                const msgText = getMessageText(msg)
-                const showFallbackSpinner =
-                  isActiveStream && msg.role === 'assistant' && msgText.length === 0
+                const showFallbackSpinner = shouldShowAssistantThinkingFallback(msg, isActiveStream)
 
                 return (
                   <Message from={msg.role} key={msg.id}>
@@ -453,14 +452,5 @@ export function PostCreatorChatPane() {
         </PostCreatorChatPreviewMention>
       </div>
     </div>
-  )
-}
-
-function getMessageText(message: UIMessage): string {
-  return (
-    message.parts
-      ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-      .map((p) => p.text)
-      .join('') ?? ''
   )
 }
