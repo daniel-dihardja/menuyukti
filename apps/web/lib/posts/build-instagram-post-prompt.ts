@@ -60,7 +60,7 @@ function buildStyleReferenceLine(index: number): string {
 }
 
 function buildFreshScenePhotoReferenceLine(index: number): string {
-  return `- Reference ${index} — PRODUCT PHOTO: a real menu product photo. Preserve product identity — shape, plating, colors, portions, and key details. Place the product entirely inside the inner composition frame. Do not crop, clip, or partially hide the product at the frame boundary.`
+  return `- Reference ${index} — PRODUCT PHOTO: a real menu product photo. Preserve product identity — shape, plating, colors, portions, and key details. Keep the full product clearly visible with breathing room from the image edges — do not crop or clip it.`
 }
 
 function buildPreviousResultReferenceLine(index: number): string {
@@ -113,12 +113,10 @@ function buildCompositionBlock(): string {
   const insetYPercent = formatInsetPercent(INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT)
 
   return `COMPOSITION (NON-NEGOTIABLE):
-- Imagine an invisible inner composition frame inset ~${insetXPercent}% from the left and right edges and ~${insetYPercent}% from the top and bottom. This frame is a cropping guide only — never draw, outline, or render it.
-- All hero subjects — food, drinks, plates, and products — must be fully inside this frame.
-- Background, texture, and atmosphere may extend into the outer margins; products must not.
-- Keep products centered horizontally within the frame with comfortable padding.
-- Leave intentional negative space; do not push products into the outer crop margins.
-- Do not add visible guides, boxes, rectangles, borders, frames, masks, white blocks, or overlay markings of any kind.`
+- Fill the entire canvas edge to edge as one continuous scene — background, texture, and atmosphere must reach every edge.
+- Keep all hero subjects — food, drinks, plates, and products — fully visible and clear of the edges by roughly ${insetXPercent}% left/right and ${insetYPercent}% top/bottom.
+- Center products horizontally with comfortable breathing room; leave intentional negative space.
+- Do not crop or clip products at the edges. No watermarks or UI chrome.`
 }
 
 function buildOutputBlock(mode: GenerationMode, dimensions?: OutputDimensions): string {

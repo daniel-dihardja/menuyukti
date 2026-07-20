@@ -19,18 +19,17 @@ describe('buildInstagramPostPrompt', () => {
     expect(out.endsWith('Warm kopitiam scene with kaya toast')).toBe(true)
   })
 
-  it('includes composition frame percentages derived from constants in fresh scene', () => {
+  it('includes composition safe-margin percentages derived from constants in fresh scene', () => {
     const out = buildInstagramPostPrompt({ userPrompt: 'Test scene', mode: 'fresh-scene' })
 
     expect(out).toContain(
-      `~${INSTAGRAM_GRID_THUMBNAIL_INSET_X_PERCENT.toFixed(1)}% from the left and right edges`,
+      `roughly ${INSTAGRAM_GRID_THUMBNAIL_INSET_X_PERCENT.toFixed(1)}% left/right`,
     )
-    expect(out).toContain(
-      `~${INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT.toFixed(1)}% from the top and bottom`,
-    )
+    expect(out).toContain(`${INSTAGRAM_GRID_THUMBNAIL_INSET_Y_PERCENT.toFixed(1)}% top/bottom`)
     expect(out).toContain(`${POST_IMAGE_WIDTH}×${POST_IMAGE_HEIGHT}`)
-    expect(out).toContain('never draw, outline, or render it')
-    expect(out).toContain('Do not add visible guides, boxes, rectangles')
+    expect(out).toContain('Fill the entire canvas edge to edge as one continuous scene')
+    expect(out).not.toContain('inner composition frame')
+    expect(out).not.toContain('boxes, rectangles')
   })
 
   it('includes indexed photo reference block when only photos are provided in fresh scene', () => {
