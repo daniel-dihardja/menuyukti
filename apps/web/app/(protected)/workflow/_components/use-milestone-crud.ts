@@ -93,6 +93,13 @@ export function useMilestoneCrud(
         }
         createdId = id
 
+        const displayCodeFromCreate =
+          body?.data != null && typeof body.data === 'object' && !Array.isArray(body.data)
+            ? (body.data as { displayCode?: unknown }).displayCode
+            : undefined
+        const displayCode =
+          typeof displayCodeFromCreate === 'string' ? displayCodeFromCreate : undefined
+
         const presetPassCriterias = ensurePassCriteriaIds(fields.passCriteria ?? [])
         const patchBody: Record<string, unknown> = {
           name: fields.name,
@@ -121,10 +128,20 @@ export function useMilestoneCrud(
         }
 
         const title = typeof patchJson?.name === 'string' ? patchJson.name : fields.name
+        const displayCodeFromPatch =
+          patchJson?.data != null &&
+          typeof patchJson.data === 'object' &&
+          !Array.isArray(patchJson.data)
+            ? (patchJson.data as { displayCode?: unknown }).displayCode
+            : undefined
+        const resolvedDisplayCode =
+          (typeof displayCodeFromPatch === 'string' ? displayCodeFromPatch : undefined) ??
+          displayCode
 
         const next: TimelineMilestone = {
           id,
           title,
+          ...(resolvedDisplayCode ? { displayCode: resolvedDisplayCode } : {}),
           goal: fields.goal?.trim() ? fields.goal : undefined,
           data: fields.milestoneData,
           presetId: fields.presetId,

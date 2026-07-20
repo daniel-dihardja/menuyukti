@@ -29,6 +29,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_ig_plan_data,
     extract_ig_plan_row,
     ig_plan_prior_error_message,
+    preferred_milestone_id_from_input,
 )
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field
@@ -276,8 +277,12 @@ async def fetch_and_prepare(
         )
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    prior_row = extract_ig_plan_row(prior_json)
-    prior_data = extract_ig_plan_data(prior_json)
+    preferred = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceIgPlanMilestoneId",
+    )
+    prior_row = extract_ig_plan_row(prior_json, preferred_milestone_id=preferred)
+    prior_data = extract_ig_plan_data(prior_json, preferred_milestone_id=preferred)
     if prior_data is None:
         raise ValueError(ig_plan_prior_error_message(prior_json))
 

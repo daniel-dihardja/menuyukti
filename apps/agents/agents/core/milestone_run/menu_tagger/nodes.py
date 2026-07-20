@@ -47,6 +47,7 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_promotion_candidates_data,
     extract_promotion_candidates_row,
+    preferred_milestone_id_from_input,
     promotion_candidates_prior_error_message,
 )
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -554,8 +555,18 @@ async def fetch_and_prepare(state: MenuTaggerState, *, client: httpx.AsyncClient
     _trace(state, "execute_skill", skill_id="menu_tagger")
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    promotion_row = extract_promotion_candidates_row(prior_json)
-    promotion_data = extract_promotion_candidates_data(prior_json)
+    preferred = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourcePromotionCandidatesMilestoneId",
+    )
+    promotion_row = extract_promotion_candidates_row(
+        prior_json,
+        preferred_milestone_id=preferred,
+    )
+    promotion_data = extract_promotion_candidates_data(
+        prior_json,
+        preferred_milestone_id=preferred,
+    )
     if promotion_data is None:
         raise ValueError(promotion_candidates_prior_error_message(prior_json))
 

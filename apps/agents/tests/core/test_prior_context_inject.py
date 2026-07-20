@@ -9,6 +9,8 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_menu_tagger_data,
     extract_promotion_candidates_data,
     extract_promotion_candidates_row,
+    extract_restaurant_campaign_brief_row,
+    preferred_milestone_id_from_input,
     promotion_candidates_prior_error_message,
 )
 
@@ -188,3 +190,58 @@ def test_extract_menu_tagger_data_prefers_last_populated_row() -> None:
     data = extract_menu_tagger_data(json.dumps(rows))
     assert data is not None
     assert data["items"][0]["name"] == "Burger"
+
+
+def test_extract_campaign_brief_row_prefers_selected_milestone_id() -> None:
+    brief_a = {
+        "venueSnapshot": {"venueName": "A"},
+        "contentPillars": [],
+        "audienceHypotheses": [],
+        "proofOrientedAngles": [],
+        "toneGuardrails": [],
+        "mainCategory": "Mains",
+    }
+    brief_b = {
+        "venueSnapshot": {"venueName": "B"},
+        "contentPillars": [],
+        "audienceHypotheses": [],
+        "proofOrientedAngles": [],
+        "toneGuardrails": [],
+        "mainCategory": "Drinks",
+    }
+    rows = [
+        {
+            "id": "10",
+            "title": "Brief A",
+            "presetId": "restaurant_campaign_brief",
+            "data": brief_a,
+        },
+        {
+            "id": "20",
+            "title": "Brief B",
+            "presetId": "restaurant_campaign_brief",
+            "data": brief_b,
+        },
+    ]
+    row = extract_restaurant_campaign_brief_row(
+        json.dumps(rows),
+        preferred_milestone_id="10",
+    )
+    assert row is not None
+    assert row["id"] == "10"
+    assert row["title"] == "Brief A"
+
+
+def test_preferred_milestone_id_from_input_reads_value_field() -> None:
+    assert (
+        preferred_milestone_id_from_input(
+            {
+                "type": "ig_plan",
+                "value": {"notes": "", "sourceCampaignBriefMilestoneId": "42"},
+            },
+            "sourceCampaignBriefMilestoneId",
+        )
+        == "42"
+    )
+    assert preferred_milestone_id_from_input({"type": "ig_plan", "value": {}}, "x") is None
+

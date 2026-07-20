@@ -6,6 +6,10 @@ import {
   type CampaignWindowPublicHoliday,
   type SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
+import {
+  resolveDependencyMilestone,
+  selectedDependencyIdFromInput,
+} from '@/lib/milestones/milestone-dependencies'
 
 const ISO_DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
 
@@ -102,19 +106,9 @@ function windowFromDatesInput(
 export function findPriorDatesMilestone(
   milestones: TimelineMilestone[],
   currentMilestoneId: string,
+  selectedId?: string,
 ): TimelineMilestone | undefined {
-  const index = milestones.findIndex((milestone) => milestone.id === currentMilestoneId)
-  if (index < 0) {
-    return undefined
-  }
-
-  for (let i = index - 1; i >= 0; i -= 1) {
-    if (milestones[i]?.presetId === 'dates') {
-      return milestones[i]
-    }
-  }
-
-  return undefined
+  return resolveDependencyMilestone(milestones, currentMilestoneId, 'dates', selectedId)
 }
 
 export type ResolveSchedulerWindowResult =
@@ -137,7 +131,11 @@ export function resolveSchedulerWindow({
     }
   }
 
-  const priorDates = findPriorDatesMilestone(milestones, milestone.id)
+  const selectedDatesId = selectedDependencyIdFromInput(
+    milestone.milestoneInput,
+    'sourceDatesMilestoneId',
+  )
+  const priorDates = findPriorDatesMilestone(milestones, milestone.id, selectedDatesId)
   if (!priorDates) {
     return { status: 'no_prior_dates' }
   }

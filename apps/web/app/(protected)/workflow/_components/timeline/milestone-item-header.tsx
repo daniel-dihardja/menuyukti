@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@workspace/ui/components/alert-dialog'
+import { Badge } from '@workspace/ui/components/badge'
 import { Button, buttonVariants } from '@workspace/ui/components/button'
 import { CardAction, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { CollapsibleTrigger } from '@workspace/ui/components/collapsible'
@@ -63,6 +64,11 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
                   <MilestoneIcon aria-hidden className="size-4 text-muted-foreground" />
                 )}
               </span>
+              {milestone.displayCode ? (
+                <Badge className="font-mono tracking-wide" variant="secondary">
+                  {milestone.displayCode}
+                </Badge>
+              ) : null}
               <span className="min-w-0 truncate">{milestone.title}</span>
             </span>
           </div>

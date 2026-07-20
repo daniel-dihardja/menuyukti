@@ -26,6 +26,7 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     campaign_brief_prior_error_message,
     extract_restaurant_campaign_brief_data,
+    preferred_milestone_id_from_input,
 )
 from langchain_core.messages import BaseMessage
 from langgraph.config import get_stream_writer
@@ -124,7 +125,14 @@ def _resolve_campaign_brief_data(state: IgPlanState) -> dict[str, Any]:
         return stored
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
+    preferred = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceCampaignBriefMilestoneId",
+    )
+    campaign_brief_data = extract_restaurant_campaign_brief_data(
+        prior_json,
+        preferred_milestone_id=preferred,
+    )
     if campaign_brief_data is None:
         raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan"))
     return campaign_brief_data
@@ -232,7 +240,14 @@ async def fetch_and_prepare(state: IgPlanState, *, client: httpx.AsyncClient) ->
     _trace(state, "execute_skill", skill_id="ig_plan")
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
+    preferred = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceCampaignBriefMilestoneId",
+    )
+    campaign_brief_data = extract_restaurant_campaign_brief_data(
+        prior_json,
+        preferred_milestone_id=preferred,
+    )
     if campaign_brief_data is None:
         raise ValueError(campaign_brief_prior_error_message(prior_json, milestone_id="ig_plan"))
 

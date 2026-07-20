@@ -61,15 +61,30 @@ export function MilestoneIgMenuPickerInput({
   const t = useTranslations('analytics.workflows.chat')
   const { milestoneState } = useTimelineWorkspaceState()
 
-  const priorIgPlan = useMemo(
-    () => findPriorIgPlanMilestone(milestoneState.milestones, milestoneId),
-    [milestoneId, milestoneState.milestones],
-  )
+  const priorIgPlan = useMemo(() => {
+    const current = milestoneState.milestones.find((row) => row.id === milestoneId)
+    return findPriorIgPlanMilestone(
+      milestoneState.milestones,
+      milestoneId,
+      current?.milestoneInput?.value &&
+        typeof current.milestoneInput.value === 'object' &&
+        !Array.isArray(current.milestoneInput.value)
+        ? String(
+            (current.milestoneInput.value as { sourceIgPlanMilestoneId?: unknown })
+              .sourceIgPlanMilestoneId ?? '',
+          ) || undefined
+        : undefined,
+    )
+  }, [milestoneId, milestoneState.milestones])
 
-  const entries = useMemo(
-    () => resolveIgPlanEntriesForMenuPicker(milestoneState.milestones, milestoneId),
-    [milestoneId, milestoneState.milestones],
-  )
+  const entries = useMemo(() => {
+    const current = milestoneState.milestones.find((row) => row.id === milestoneId)
+    return resolveIgPlanEntriesForMenuPicker(
+      milestoneState.milestones,
+      milestoneId,
+      current?.milestoneInput,
+    )
+  }, [milestoneId, milestoneState.milestones])
 
   const allSlotKeys = useMemo(() => entries.map((entry) => entry.slotKey), [entries])
 

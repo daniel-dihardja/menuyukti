@@ -4,6 +4,10 @@ import {
   igPlanEntrySchema,
   type IgPlanEntry,
 } from '@/lib/graphql/node-schemas'
+import {
+  resolveDependencyMilestone,
+  selectedDependencyIdFromInput,
+} from '@/lib/milestones/milestone-dependencies'
 
 export const IG_MENU_PICKER_NONE_SELECTED_SENTINEL = '__no_slots_selected__'
 
@@ -62,26 +66,18 @@ export function toggleIgMenuPickerSlotKey(
 export function findPriorIgPlanMilestone(
   milestones: TimelineMilestone[],
   currentMilestoneId: string,
+  selectedId?: string,
 ): TimelineMilestone | undefined {
-  const index = milestones.findIndex((milestone) => milestone.id === currentMilestoneId)
-  if (index < 0) {
-    return undefined
-  }
-
-  for (let i = index - 1; i >= 0; i -= 1) {
-    if (milestones[i]?.presetId === 'ig_plan') {
-      return milestones[i]
-    }
-  }
-
-  return undefined
+  return resolveDependencyMilestone(milestones, currentMilestoneId, 'ig_plan', selectedId)
 }
 
 export function resolveIgPlanEntriesForMenuPicker(
   milestones: TimelineMilestone[],
   currentMilestoneId: string,
+  milestoneInput?: { value?: unknown },
 ): IgPlanEntry[] {
-  const priorIgPlan = findPriorIgPlanMilestone(milestones, currentMilestoneId)
+  const selectedId = selectedDependencyIdFromInput(milestoneInput, 'sourceIgPlanMilestoneId')
+  const priorIgPlan = findPriorIgPlanMilestone(milestones, currentMilestoneId, selectedId)
   if (!priorIgPlan) {
     return []
   }

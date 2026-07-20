@@ -28,6 +28,7 @@ import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-des
 
 import { MilestonePromotionCandidatesInput } from './milestone-promotion-candidates-input'
 import { MilestoneCampaignBriefInput } from './milestone-campaign-brief-input'
+import { MilestoneDependencyChrome } from './milestone-dependency-selects'
 import { MilestoneFieldDescription } from './milestone-field-description'
 import { MilestoneMenuClustererInput } from './milestone-menu-clusterer-input'
 import { MilestoneIgMenuPickerInput } from './milestone-ig-menu-picker-input'
@@ -410,6 +411,7 @@ export function MilestoneItemTabs() {
           )}
         </TabsContent>
         <TabsContent value="input">
+          <MilestoneDependencyChrome disabled={isMilestoneRunning} milestone={milestone} />
           <MilestoneInputTabContent
             formatDateLabel={formatDateLabel}
             inputModel={inputModel}

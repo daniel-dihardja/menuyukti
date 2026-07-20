@@ -23,6 +23,55 @@ def _parse_prior_milestone_rows(prior_milestones_json: str) -> list[dict[str, An
     return [row for row in rows if isinstance(row, dict)]
 
 
+def preferred_milestone_id_from_input(
+    milestone_input: object | None,
+    field: str,
+) -> str | None:
+    """Read ``value.<field>`` from milestone_input when present."""
+    if not isinstance(milestone_input, dict):
+        return None
+    value = milestone_input.get("value")
+    if not isinstance(value, dict):
+        return None
+    raw = value.get(field)
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
+    return None
+
+
+def _normalize_row_id(row: dict[str, Any]) -> str | None:
+    raw = row.get("id")
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    return text or None
+
+
+def _matched_row_payload(row: dict[str, Any], *, preset_id: object, data: object) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "title": row.get("title"),
+        "presetId": preset_id,
+        "data": data,
+    }
+    row_id = _normalize_row_id(row)
+    if row_id is not None:
+        payload["id"] = row_id
+    return payload
+
+
+def _pick_row_by_preferred_id(
+    matched: list[dict[str, Any]],
+    preferred_milestone_id: str | None,
+) -> dict[str, Any] | None:
+    preferred = (preferred_milestone_id or "").strip()
+    if not preferred or not matched:
+        return None
+    for row in matched:
+        if _normalize_row_id(row) == preferred:
+            return row
+    return None
+
+
 def collect_matched_prior_rows(
     rows: list[dict[str, Any]],
     wanted: frozenset[str],
@@ -39,11 +88,7 @@ def collect_matched_prior_rows(
         pid = row.get("presetId")
         if isinstance(pid, str) and pid.strip() and pid.strip() in wanted:
             matched.append(
-                {
-                    "title": row.get("title"),
-                    "presetId": pid.strip(),
-                    "data": row.get("data"),
-                }
+                _matched_row_payload(row, preset_id=pid.strip(), data=row.get("data"))
             )
             if pid.strip() not in matched_ids:
                 matched_ids.append(pid.strip())
@@ -53,11 +98,7 @@ def collect_matched_prior_rows(
             data = row.get("data")
             if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
                 matched.append(
-                    {
-                        "title": row.get("title"),
-                        "presetId": row.get("presetId"),
-                        "data": data,
-                    }
+                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
                 )
                 matched_ids.append("restaurant_campaign_brief")
                 break
@@ -67,11 +108,7 @@ def collect_matched_prior_rows(
             data = row.get("data")
             if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
                 matched.append(
-                    {
-                        "title": row.get("title"),
-                        "presetId": row.get("presetId"),
-                        "data": data,
-                    }
+                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
                 )
                 matched_ids.append("promotion_candidates")
                 break
@@ -81,11 +118,7 @@ def collect_matched_prior_rows(
             data = row.get("data")
             if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
                 matched.append(
-                    {
-                        "title": row.get("title"),
-                        "presetId": row.get("presetId"),
-                        "data": data,
-                    }
+                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
                 )
                 matched_ids.append("menu_tagger")
                 break
@@ -95,11 +128,7 @@ def collect_matched_prior_rows(
             data = row.get("data")
             if isinstance(data, dict) and is_ig_plan_milestone_data(data):
                 matched.append(
-                    {
-                        "title": row.get("title"),
-                        "presetId": row.get("presetId"),
-                        "data": data,
-                    }
+                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
                 )
                 matched_ids.append("ig_plan")
                 break
@@ -107,9 +136,16 @@ def collect_matched_prior_rows(
     return matched, matched_ids
 
 
-def extract_restaurant_campaign_brief_data(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_restaurant_campaign_brief_data(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return campaign brief ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_restaurant_campaign_brief_row(prior_milestones_json)
+    row = extract_restaurant_campaign_brief_row(
+        prior_milestones_json,
+        preferred_milestone_id=preferred_milestone_id,
+    )
     if row is None:
         return None
     data = row.get("data")
@@ -118,10 +154,19 @@ def extract_restaurant_campaign_brief_data(prior_milestones_json: str) -> dict[s
     return None
 
 
-def extract_restaurant_campaign_brief_row(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_restaurant_campaign_brief_row(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the best matched prior campaign_brief row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"restaurant_campaign_brief"}))
+    preferred = _pick_row_by_preferred_id(matched, preferred_milestone_id)
+    if preferred is not None:
+        data = preferred.get("data")
+        if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
+            return preferred
     for row in reversed(matched):
         data = row.get("data")
         if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
@@ -194,31 +239,6 @@ def promotion_candidates_has_items(data: dict[str, Any]) -> bool:
     return False
 
 
-def _collect_promotion_candidates_data_candidates(
-    rows: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    matched, _ = collect_matched_prior_rows(rows, frozenset({"promotion_candidates"}))
-    candidates: list[dict[str, Any]] = []
-    seen_ids: set[int] = set()
-    for row in matched:
-        data = row.get("data")
-        if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
-            candidates.append(data)
-            seen_ids.add(id(data))
-
-    if candidates:
-        return candidates
-
-    for row in rows:
-        data = row.get("data")
-        if not isinstance(data, dict) or not is_promotion_candidates_milestone_data(data):
-            continue
-        if id(data) in seen_ids:
-            continue
-        candidates.append(data)
-    return candidates
-
-
 def is_menu_tagger_milestone_data(data: object) -> bool:
     if not isinstance(data, dict):
         return False
@@ -238,12 +258,19 @@ def menu_tagger_has_items(data: dict[str, Any]) -> bool:
     return False
 
 
-def extract_promotion_candidates_row(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_promotion_candidates_row(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the best matched prior promotion_candidates row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"promotion_candidates"}))
     if not matched:
         return None
+    preferred = _pick_row_by_preferred_id(matched, preferred_milestone_id)
+    if preferred is not None:
+        return preferred
     for row in reversed(matched):
         data = row.get("data")
         if isinstance(data, dict) and promotion_candidates_has_items(data):
@@ -251,16 +278,22 @@ def extract_promotion_candidates_row(prior_milestones_json: str) -> dict[str, An
     return matched[-1]
 
 
-def extract_promotion_candidates_data(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_promotion_candidates_data(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return promotion_candidates ``data`` dict from prior milestones JSON, or ``None``."""
-    rows = _parse_prior_milestone_rows(prior_milestones_json)
-    candidates = _collect_promotion_candidates_data_candidates(rows)
-    if not candidates:
+    row = extract_promotion_candidates_row(
+        prior_milestones_json,
+        preferred_milestone_id=preferred_milestone_id,
+    )
+    if row is None:
         return None
-    for data in reversed(candidates):
-        if promotion_candidates_has_items(data):
-            return data
-    return candidates[-1]
+    data = row.get("data")
+    if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
+        return data
+    return None
 
 
 def is_ig_plan_milestone_data(data: object) -> bool:
@@ -282,12 +315,19 @@ def ig_plan_has_entries(data: dict[str, Any]) -> bool:
     return False
 
 
-def extract_ig_plan_row(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_ig_plan_row(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the best matched prior ig_plan row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"ig_plan"}))
     if not matched:
         return None
+    preferred = _pick_row_by_preferred_id(matched, preferred_milestone_id)
+    if preferred is not None:
+        return preferred
     for row in reversed(matched):
         data = row.get("data")
         if isinstance(data, dict) and ig_plan_has_entries(data):
@@ -295,9 +335,16 @@ def extract_ig_plan_row(prior_milestones_json: str) -> dict[str, Any] | None:
     return matched[-1]
 
 
-def extract_ig_plan_data(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_ig_plan_data(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return ig_plan ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_ig_plan_row(prior_milestones_json)
+    row = extract_ig_plan_row(
+        prior_milestones_json,
+        preferred_milestone_id=preferred_milestone_id,
+    )
     if row is None:
         return None
     data = row.get("data")
@@ -350,12 +397,19 @@ def ig_menu_picker_has_entries(data: dict[str, Any]) -> bool:
     return False
 
 
-def extract_ig_menu_picker_row(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_ig_menu_picker_row(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the best matched prior ig_menu_picker row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"ig_menu_picker"}))
     if not matched:
         return None
+    preferred = _pick_row_by_preferred_id(matched, preferred_milestone_id)
+    if preferred is not None:
+        return preferred
     for row in reversed(matched):
         data = row.get("data")
         if isinstance(data, dict) and ig_menu_picker_has_entries(data):
@@ -363,9 +417,16 @@ def extract_ig_menu_picker_row(prior_milestones_json: str) -> dict[str, Any] | N
     return matched[-1]
 
 
-def extract_ig_menu_picker_data(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_ig_menu_picker_data(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return ig_menu_picker ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_ig_menu_picker_row(prior_milestones_json)
+    row = extract_ig_menu_picker_row(
+        prior_milestones_json,
+        preferred_milestone_id=preferred_milestone_id,
+    )
     if row is None:
         return None
     data = row.get("data")
@@ -396,12 +457,19 @@ def ig_format_has_entries(data: dict[str, Any]) -> bool:
     return False
 
 
-def extract_ig_format_row(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_ig_format_row(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the best matched prior ig_format row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"ig_format"}))
     if not matched:
         return None
+    preferred = _pick_row_by_preferred_id(matched, preferred_milestone_id)
+    if preferred is not None:
+        return preferred
     for row in reversed(matched):
         data = row.get("data")
         if isinstance(data, dict) and ig_format_has_entries(data):
@@ -409,9 +477,16 @@ def extract_ig_format_row(prior_milestones_json: str) -> dict[str, Any] | None:
     return matched[-1]
 
 
-def extract_ig_format_data(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_ig_format_data(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return ig_format ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_ig_format_row(prior_milestones_json)
+    row = extract_ig_format_row(
+        prior_milestones_json,
+        preferred_milestone_id=preferred_milestone_id,
+    )
     if row is None:
         return None
     data = row.get("data")
@@ -517,12 +592,19 @@ def promotion_candidates_prior_error_message(prior_milestones_json: str) -> str:
     )
 
 
-def extract_menu_tagger_row(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_menu_tagger_row(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the best matched prior menu_tagger row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"menu_tagger"}))
     if not matched:
         return None
+    preferred = _pick_row_by_preferred_id(matched, preferred_milestone_id)
+    if preferred is not None:
+        return preferred
     for row in reversed(matched):
         data = row.get("data")
         if isinstance(data, dict) and menu_tagger_has_items(data):
@@ -530,33 +612,22 @@ def extract_menu_tagger_row(prior_milestones_json: str) -> dict[str, Any] | None
     return matched[-1]
 
 
-def extract_menu_tagger_data(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_menu_tagger_data(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return menu_tagger ``data`` dict from prior milestones JSON, or ``None``."""
-    rows = _parse_prior_milestone_rows(prior_milestones_json)
-    matched, _ = collect_matched_prior_rows(rows, frozenset({"menu_tagger"}))
-    candidates: list[dict[str, Any]] = []
-    seen_ids: set[int] = set()
-    for row in matched:
-        data = row.get("data")
-        if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
-            candidates.append(data)
-            seen_ids.add(id(data))
-
-    if not candidates:
-        for row in rows:
-            data = row.get("data")
-            if not isinstance(data, dict) or not is_menu_tagger_milestone_data(data):
-                continue
-            if id(data) in seen_ids:
-                continue
-            candidates.append(data)
-
-    if not candidates:
+    row = extract_menu_tagger_row(
+        prior_milestones_json,
+        preferred_milestone_id=preferred_milestone_id,
+    )
+    if row is None:
         return None
-    for data in reversed(candidates):
-        if menu_tagger_has_items(data):
-            return data
-    return candidates[-1]
+    data = row.get("data")
+    if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
+        return data
+    return None
 
 
 def menu_tagger_prior_error_message(
@@ -673,12 +744,28 @@ def is_dates_milestone_data(data: object) -> bool:
     return bool(start_date and end_date and isinstance(public_holidays, list))
 
 
-def extract_dates_row(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_dates_row(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the best matched prior dates row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"dates"}))
+    preferred = _pick_row_by_preferred_id(matched, preferred_milestone_id)
+    if preferred is not None:
+        return preferred
     if matched:
         return matched[-1]
+
+    preferred_norm = (preferred_milestone_id or "").strip()
+    if preferred_norm:
+        for row in reversed(rows):
+            if _normalize_row_id(row) != preferred_norm:
+                continue
+            data = row.get("data")
+            if isinstance(data, dict) and is_dates_milestone_data(data):
+                return row
 
     for row in reversed(rows):
         data = row.get("data")
@@ -687,9 +774,16 @@ def extract_dates_row(prior_milestones_json: str) -> dict[str, Any] | None:
     return None
 
 
-def extract_dates_data(prior_milestones_json: str) -> dict[str, Any] | None:
+def extract_dates_data(
+    prior_milestones_json: str,
+    *,
+    preferred_milestone_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return dates ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_dates_row(prior_milestones_json)
+    row = extract_dates_row(
+        prior_milestones_json,
+        preferred_milestone_id=preferred_milestone_id,
+    )
     if row is None:
         return None
     data = row.get("data")

@@ -24,6 +24,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_restaurant_campaign_brief_row,
     ig_format_has_entries,
     ig_format_prior_error_message,
+    preferred_milestone_id_from_input,
 )
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field, field_validator
@@ -154,8 +155,12 @@ async def fetch_and_prepare(state: IgTextState, *, client: httpx.AsyncClient) ->
         )
 
     prior_json = str(state.get("prior_milestones_data") or "")
-    prior_row = extract_ig_format_row(prior_json)
-    prior_data = extract_ig_format_data(prior_json)
+    preferred_format = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceIgFormatMilestoneId",
+    )
+    prior_row = extract_ig_format_row(prior_json, preferred_milestone_id=preferred_format)
+    prior_data = extract_ig_format_data(prior_json, preferred_milestone_id=preferred_format)
     if prior_data is None or not ig_format_has_entries(prior_data):
         raise ValueError(ig_format_prior_error_message(prior_json, milestone_id="ig_text"))
 
@@ -173,7 +178,14 @@ async def fetch_and_prepare(state: IgTextState, *, client: httpx.AsyncClient) ->
         "entries": source_entries,
     }
 
-    brief_row = extract_restaurant_campaign_brief_row(prior_json)
+    preferred_brief = preferred_milestone_id_from_input(
+        state.get("milestone_input"),
+        "sourceCampaignBriefMilestoneId",
+    )
+    brief_row = extract_restaurant_campaign_brief_row(
+        prior_json,
+        preferred_milestone_id=preferred_brief,
+    )
     brief_title = ""
     if isinstance(brief_row, dict):
         brief_title = str(brief_row.get("title") or "").strip()

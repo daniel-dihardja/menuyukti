@@ -396,6 +396,19 @@ export async function PATCH(req: Request, context: RouteContext) {
           ? { ...(mn.data as Record<string, unknown>) }
           : {}),
       }
+      // Preserve existing displayCode; never clear it via accidental omit.
+      if (
+        typeof merged.displayCode !== 'string' ||
+        !/^M-[0-9A-HJKMNP-TV-Z]{4}$/.test(merged.displayCode)
+      ) {
+        const fromMn =
+          mn.data != null && typeof mn.data === 'object'
+            ? (mn.data as { displayCode?: unknown }).displayCode
+            : undefined
+        if (typeof fromMn === 'string' && /^M-[0-9A-HJKMNP-TV-Z]{4}$/.test(fromMn)) {
+          merged.displayCode = fromMn
+        }
+      }
       if (body.presetId !== undefined) {
         merged.presetId = body.presetId
       }

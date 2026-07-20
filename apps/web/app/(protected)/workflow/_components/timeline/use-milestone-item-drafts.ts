@@ -29,6 +29,7 @@ import {
   igFormatNotesFromMilestoneInput,
   igTextNotesFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
+import { withPreservedDependencyIds } from '@/lib/milestones/milestone-dependencies'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
@@ -359,6 +360,7 @@ export function useMilestoneItemDrafts(
 
   const buildMilestoneInputPayload = useCallback((): MilestoneInput | undefined => {
     const m = milestoneRef.current
+    const existingValue = m.milestoneInput?.value
     if (m.presetId === 'dates') {
       return {
         type: 'dates',
@@ -371,7 +373,10 @@ export function useMilestoneItemDrafts(
     if (m.presetId === 'promotion_candidates') {
       return {
         type: 'promotion_candidates',
-        value: normalizePromotionCandidatesInput(promotionCandidatesDraftRef.current),
+        value: withPreservedDependencyIds(
+          normalizePromotionCandidatesInput(promotionCandidatesDraftRef.current),
+          existingValue,
+        ),
       }
     }
     if (m.presetId === 'restaurant_campaign_brief') {
@@ -383,31 +388,46 @@ export function useMilestoneItemDrafts(
     if (m.presetId === 'menu_clusterer') {
       return {
         type: 'menu_clusterer',
-        value: normalizeMenuClustererInput(menuClustererDraftRef.current),
+        value: withPreservedDependencyIds(
+          normalizeMenuClustererInput(menuClustererDraftRef.current),
+          existingValue,
+        ),
       }
     }
     if (m.presetId === 'ig_menu_picker') {
       return {
         type: 'ig_menu_picker',
-        value: normalizeIgMenuPickerInput(igMenuPickerDraftRef.current),
+        value: withPreservedDependencyIds(
+          normalizeIgMenuPickerInput(igMenuPickerDraftRef.current),
+          existingValue,
+        ),
       }
     }
     if (m.presetId === 'ig_format') {
       return {
         type: 'ig_format',
-        value: { notes: optionalNotesDraftRef.current.trim() },
+        value: withPreservedDependencyIds(
+          { notes: optionalNotesDraftRef.current.trim() },
+          existingValue,
+        ),
       }
     }
     if (m.presetId === 'ig_text') {
       return {
         type: 'ig_text',
-        value: { notes: optionalNotesDraftRef.current.trim() },
+        value: withPreservedDependencyIds(
+          { notes: optionalNotesDraftRef.current.trim() },
+          existingValue,
+        ),
       }
     }
     if (m.presetId && milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
       return {
         type: m.presetId,
-        value: { notes: optionalNotesDraftRef.current.trim() },
+        value: withPreservedDependencyIds(
+          { notes: optionalNotesDraftRef.current.trim() },
+          existingValue,
+        ),
       }
     }
     return undefined
@@ -466,7 +486,7 @@ export function useMilestoneItemDrafts(
         }
         const ok = await onUpdate(m.id, {
           type: 'promotion_candidates',
-          value: normalizedDraft,
+          value: withPreservedDependencyIds(normalizedDraft, m.milestoneInput?.value),
         })
         if (!ok) {
           setPromotionCandidatesDraft(server)
@@ -522,7 +542,7 @@ export function useMilestoneItemDrafts(
         }
         const ok = await onUpdate(m.id, {
           type: 'menu_clusterer',
-          value: normalizedDraft,
+          value: withPreservedDependencyIds(normalizedDraft, m.milestoneInput?.value),
         })
         if (!ok) {
           setMenuClustererDraft(server)
@@ -554,7 +574,7 @@ export function useMilestoneItemDrafts(
         }
         const ok = await onUpdate(m.id, {
           type: 'ig_menu_picker',
-          value: normalizedDraft,
+          value: withPreservedDependencyIds(normalizedDraft, m.milestoneInput?.value),
         })
         if (!ok) {
           setIgMenuPickerDraft(server)
@@ -576,7 +596,7 @@ export function useMilestoneItemDrafts(
         }
         const ok = await onUpdate(m.id, {
           type: 'ig_format',
-          value: { notes: trimmedDraft },
+          value: withPreservedDependencyIds({ notes: trimmedDraft }, m.milestoneInput?.value),
         })
         if (!ok) {
           setOptionalNotesDraft(server)
@@ -597,7 +617,7 @@ export function useMilestoneItemDrafts(
         }
         const ok = await onUpdate(m.id, {
           type: 'ig_text',
-          value: { notes: trimmedDraft },
+          value: withPreservedDependencyIds({ notes: trimmedDraft }, m.milestoneInput?.value),
         })
         if (!ok) {
           setOptionalNotesDraft(server)
@@ -618,7 +638,7 @@ export function useMilestoneItemDrafts(
         }
         const ok = await onUpdate(m.id, {
           type: m.presetId,
-          value: { notes: trimmedDraft },
+          value: withPreservedDependencyIds({ notes: trimmedDraft }, m.milestoneInput?.value),
         })
         if (!ok) {
           setOptionalNotesDraft(server)

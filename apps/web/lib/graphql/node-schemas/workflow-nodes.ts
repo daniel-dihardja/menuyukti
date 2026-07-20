@@ -30,6 +30,11 @@ export const milestoneDataSchema = z
     /** Free-form milestone goal; persisted on the milestone node `data` JSON. */
     goal: z.string().optional(),
     presetId: milestonePresetIdSchema.optional(),
+    /** Workflow-scoped human-friendly code shown in the UI (`M-XXXX`). */
+    displayCode: z
+      .string()
+      .regex(/^M-[0-9A-HJKMNP-TV-Z]{4}$/, 'Invalid milestone display code')
+      .optional(),
     milestoneInput: milestoneInputSchema.optional(),
     passCriterias: z.array(passCriteriaSchema).optional(),
     /** Per-milestone LLM model for agent runs; stored on milestone node `data` JSON. */
