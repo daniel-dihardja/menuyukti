@@ -29,6 +29,9 @@ async function pageToApiResponse(
     sortOrder: number
     prompt: string | null
     mediaS3Key: string | null
+    imageFormat: string | null
+    imageQuality: string | null
+    generationModel: string | null
     mediaVersions: Array<{
       id: string
       mediaS3Key: string
@@ -66,6 +69,9 @@ async function pageToApiResponse(
     mediaS3Key: page.mediaS3Key,
     imageUrl,
     imageVersions,
+    imageFormat: page.imageFormat,
+    imageQuality: page.imageQuality,
+    generationModel: page.generationModel,
   }
 }
 
@@ -124,6 +130,21 @@ export async function POST(req: Request, context: RouteContext) {
 
     let mediaS3Key: string | undefined
     let prompt: string | undefined
+    let imageFormat: string | undefined
+    let imageQuality: string | undefined
+    let generationModel: string | undefined
+
+    if (sourcePage) {
+      if (sourcePage.imageFormat) {
+        imageFormat = sourcePage.imageFormat
+      }
+      if (sourcePage.imageQuality) {
+        imageQuality = sourcePage.imageQuality
+      }
+      if (sourcePage.generationModel) {
+        generationModel = sourcePage.generationModel
+      }
+    }
 
     if (sourcePage?.mediaS3Key && isObjectKeyForPost(sourcePage.mediaS3Key, authz.userId)) {
       try {
@@ -146,6 +167,9 @@ export async function POST(req: Request, context: RouteContext) {
         postId: postIdParsed.data,
         mediaS3Key,
         prompt,
+        imageFormat,
+        imageQuality,
+        generationModel,
       },
       authz.userId,
     )

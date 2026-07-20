@@ -11,7 +11,13 @@ from strawberry import UNSET
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramPostPage, InstagramPostPageMediaVersion
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.mutations.update_post_page import _validate_media_s3_key
+from graphql.schema.mutations.update_post_page import (
+    _ALLOWED_GENERATION_MODELS,
+    _ALLOWED_IMAGE_FORMATS,
+    _ALLOWED_IMAGE_QUALITIES,
+    _normalize_optional_setting,
+    _validate_media_s3_key,
+)
 from graphql.schema.queries.posts import _load_post_for_user, _post_page_to_gql
 from graphql.schema.types import PostPageType
 
@@ -27,6 +33,9 @@ class CreatePostPageMutation:
         post_id: strawberry.ID,
         media_s3_key: str | None = UNSET,
         prompt: str | None = UNSET,
+        image_format: str | None = UNSET,
+        image_quality: str | None = UNSET,
+        generation_model: str | None = UNSET,
     ) -> PostPageType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -90,6 +99,27 @@ class CreatePostPageMutation:
                 else:
                     prompt_clean = prompt.strip()
                     page_row.prompt = prompt_clean if prompt_clean else None
+
+            if image_format is not UNSET:
+                page_row.image_format = _normalize_optional_setting(
+                    image_format,
+                    allowed=_ALLOWED_IMAGE_FORMATS,
+                    field="image_format",
+                )
+
+            if image_quality is not UNSET:
+                page_row.image_quality = _normalize_optional_setting(
+                    image_quality,
+                    allowed=_ALLOWED_IMAGE_QUALITIES,
+                    field="image_quality",
+                )
+
+            if generation_model is not UNSET:
+                page_row.generation_model = _normalize_optional_setting(
+                    generation_model,
+                    allowed=_ALLOWED_GENERATION_MODELS,
+                    field="generation_model",
+                )
 
             post_row.updated_at = datetime.now(tz=UTC)
             session.add(post_row)

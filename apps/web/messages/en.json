@@ -953,6 +953,7 @@
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "imageSelectError": "Failed to update post image. Please try again.",
+      "saveSettingsError": "Failed to save post settings. Please try again.",
       "deleteImageError": "Failed to delete image. Please try again.",
       "deletePageError": "Failed to remove page. Please try again.",
       "addPageError": "Failed to add page. Please try again.",

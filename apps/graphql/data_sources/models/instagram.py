@@ -104,6 +104,9 @@ class InstagramPostPage(Base):
     )
     media_s3_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_format: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    image_quality: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    generation_model: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),

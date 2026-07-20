@@ -52,6 +52,9 @@ export const POST_QUERY = `
         sortOrder
         mediaS3Key
         prompt
+        imageFormat
+        imageQuality
+        generationModel
         mediaVersions {
           id
           mediaS3Key
@@ -83,6 +86,9 @@ export type PostData = {
       sortOrder: number
       mediaS3Key: string | null
       prompt: string | null
+      imageFormat: string | null
+      imageQuality: string | null
+      generationModel: string | null
       mediaVersions: PostPageMediaVersion[]
     }>
   } | null
@@ -149,12 +155,29 @@ export type UpdatePostData = {
 }
 
 export const UPDATE_POST_PAGE_MUTATION = `
-  mutation UpdatePostPage($id: ID!, $mediaS3Key: String, $prompt: String) {
-    updatePostPage(id: $id, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+  mutation UpdatePostPage(
+    $id: ID!
+    $mediaS3Key: String
+    $prompt: String
+    $imageFormat: String
+    $imageQuality: String
+    $generationModel: String
+  ) {
+    updatePostPage(
+      id: $id
+      mediaS3Key: $mediaS3Key
+      prompt: $prompt
+      imageFormat: $imageFormat
+      imageQuality: $imageQuality
+      generationModel: $generationModel
+    ) {
       id
       sortOrder
       mediaS3Key
       prompt
+      imageFormat
+      imageQuality
+      generationModel
     }
   }
 `
@@ -165,6 +188,9 @@ export type UpdatePostPageData = {
     sortOrder: number
     mediaS3Key: string | null
     prompt: string | null
+    imageFormat: string | null
+    imageQuality: string | null
+    generationModel: string | null
   }
 }
 
@@ -196,12 +222,29 @@ export const DELETE_POST_PAGE_MEDIA_VERSION_MUTATION = `
 `
 
 export const CREATE_POST_PAGE_MUTATION = `
-  mutation CreatePostPage($postId: ID!, $mediaS3Key: String, $prompt: String) {
-    createPostPage(postId: $postId, mediaS3Key: $mediaS3Key, prompt: $prompt) {
+  mutation CreatePostPage(
+    $postId: ID!
+    $mediaS3Key: String
+    $prompt: String
+    $imageFormat: String
+    $imageQuality: String
+    $generationModel: String
+  ) {
+    createPostPage(
+      postId: $postId
+      mediaS3Key: $mediaS3Key
+      prompt: $prompt
+      imageFormat: $imageFormat
+      imageQuality: $imageQuality
+      generationModel: $generationModel
+    ) {
       id
       sortOrder
       mediaS3Key
       prompt
+      imageFormat
+      imageQuality
+      generationModel
       mediaVersions {
         id
         mediaS3Key
@@ -218,6 +261,9 @@ export type CreatePostPageData = {
     sortOrder: number
     mediaS3Key: string | null
     prompt: string | null
+    imageFormat: string | null
+    imageQuality: string | null
+    generationModel: string | null
     mediaVersions: PostPageMediaVersion[]
   }
 }

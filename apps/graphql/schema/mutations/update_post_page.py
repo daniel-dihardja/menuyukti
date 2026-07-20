@@ -20,6 +20,12 @@ _SAFE_POST_FILENAME = re.compile(
     re.IGNORECASE,
 )
 
+_ALLOWED_IMAGE_FORMATS = frozenset({"feed", "tall", "square", "story", "wide", "match-layout"})
+_ALLOWED_IMAGE_QUALITIES = frozenset({"standard", "high", "ultra"})
+_ALLOWED_GENERATION_MODELS = frozenset(
+    {"gemini-2.5-flash-image", "nano-banana-2", "gemini-image-2"}
+)
+
 
 def _validate_media_s3_key(key: str, owner_clerk_user_id: str) -> None:
     expected_prefix = f"users/{owner_clerk_user_id}/posts/"
@@ -28,6 +34,19 @@ def _validate_media_s3_key(key: str, owner_clerk_user_id: str) -> None:
     filename = key[len(expected_prefix) :]
     if "/" in filename or not _SAFE_POST_FILENAME.match(filename):
         raise ValueError("Invalid media_s3_key for updatePostPage")
+
+
+def _normalize_optional_setting(
+    value: str | None, *, allowed: frozenset[str], field: str
+) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if cleaned == "":
+        return None
+    if cleaned not in allowed:
+        raise ValueError(f"Invalid {field} for updatePostPage")
+    return cleaned
 
 
 @strawberry.type
@@ -39,6 +58,9 @@ class UpdatePostPageMutation:
         id: strawberry.ID,
         media_s3_key: str | None = UNSET,
         prompt: str | None = UNSET,
+        image_format: str | None = UNSET,
+        image_quality: str | None = UNSET,
+        generation_model: str | None = UNSET,
     ) -> PostPageType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -112,6 +134,27 @@ class UpdatePostPageMutation:
                 else:
                     prompt_clean = prompt.strip()
                     page_row.prompt = prompt_clean if prompt_clean else None
+
+            if image_format is not UNSET:
+                page_row.image_format = _normalize_optional_setting(
+                    image_format,
+                    allowed=_ALLOWED_IMAGE_FORMATS,
+                    field="image_format",
+                )
+
+            if image_quality is not UNSET:
+                page_row.image_quality = _normalize_optional_setting(
+                    image_quality,
+                    allowed=_ALLOWED_IMAGE_QUALITIES,
+                    field="image_quality",
+                )
+
+            if generation_model is not UNSET:
+                page_row.generation_model = _normalize_optional_setting(
+                    generation_model,
+                    allowed=_ALLOWED_GENERATION_MODELS,
+                    field="generation_model",
+                )
 
             post_row.updated_at = datetime.now(tz=UTC)
             session.add(page_row)

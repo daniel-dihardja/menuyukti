@@ -72,6 +72,9 @@ type PostApiResponse = {
     mediaS3Key: string | null
     imageUrl: string | null
     imageVersions: PostCreatorImageVersion[]
+    imageFormat: string | null
+    imageQuality: string | null
+    generationModel: string | null
   }>
 }
 
@@ -88,6 +91,9 @@ type CreatePageResponse = {
   mediaS3Key: string | null
   imageUrl: string | null
   imageVersions: PostCreatorImageVersion[]
+  imageFormat: string | null
+  imageQuality: string | null
+  generationModel: string | null
 }
 
 type PostCreatorProviderProps = {
@@ -201,6 +207,35 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     [],
   )
 
+  const persistGenerationSettings = useCallback(
+    async (
+      pageId: string,
+      settings: {
+        imageFormat?: PostImageFormatId
+        imageQuality?: PostImageQualityId
+        generationModel?: LeonardoPostModelId
+      },
+    ) => {
+      if (!canPersistPages || !postId) {
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/posts/${postId}/pages/${pageId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(settings),
+        })
+        if (!res.ok) {
+          toast.error(tToast('saveSettingsError'))
+        }
+      } catch {
+        toast.error(tToast('saveSettingsError'))
+      }
+    },
+    [canPersistPages, postId, tToast],
+  )
+
   useEffect(() => {
     if (!canPersistPages || !postId) {
       setIsLoadingPost(false)
@@ -222,15 +257,28 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
 
         const loadedPages: PostCreatorPage[] = data.pages
           .toSorted((a, b) => a.sortOrder - b.sortOrder)
-          .map((page) => ({
-            id: page.id,
-            sortOrder: page.sortOrder,
-            prompt: page.prompt,
-            mediaS3Key: page.mediaS3Key,
-            imageUrl: page.imageUrl,
-            imageVersions: page.imageVersions,
-            referenceImages: [],
-          }))
+          .map((page) => {
+            const loadedFormat = isPostImageFormatId(page.imageFormat)
+              ? page.imageFormat
+              : undefined
+            // Templates are not restored from the server; coerce match-layout to default.
+            const imageFormat =
+              loadedFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : loadedFormat
+            return {
+              id: page.id,
+              sortOrder: page.sortOrder,
+              prompt: page.prompt,
+              mediaS3Key: page.mediaS3Key,
+              imageUrl: page.imageUrl,
+              imageVersions: page.imageVersions,
+              referenceImages: [],
+              generationModel: isLeonardoPostModelId(page.generationModel)
+                ? page.generationModel
+                : undefined,
+              imageFormat,
+              imageQuality: isPostImageQualityId(page.imageQuality) ? page.imageQuality : undefined,
+            }
+          })
 
         setPages(loadedPages)
         if (loadedPages.length > 0) {
@@ -393,9 +441,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           previewSource: 'template',
           imageFormat: 'match-layout',
         })
+        void persistGenerationSettings(selectedPageId, { imageFormat: 'match-layout' })
       }
     },
-    [selectedPageId, syncPageState],
+    [persistGenerationSettings, selectedPageId, syncPageState],
   )
 
   const clearTemplate = useCallback(() => {
@@ -409,8 +458,9 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         previewSource: 'version',
         imageFormat: nextFormat,
       })
+      void persistGenerationSettings(selectedPageId, { imageFormat: nextFormat })
     }
-  }, [imageFormat, selectedPageId, syncPageState])
+  }, [imageFormat, persistGenerationSettings, selectedPageId, syncPageState])
 
   const setGenerationModel = useCallback(
     (model: LeonardoPostModelId) => {
@@ -419,11 +469,15 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         const next = clampQualityForModel(model, current)
         if (selectedPageId) {
           syncPageState(selectedPageId, { generationModel: model, imageQuality: next })
+          void persistGenerationSettings(selectedPageId, {
+            generationModel: model,
+            imageQuality: next,
+          })
         }
         return next
       })
     },
-    [selectedPageId, syncPageState],
+    [persistGenerationSettings, selectedPageId, syncPageState],
   )
 
   const setImageFormat = useCallback(
@@ -431,9 +485,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setImageFormatState(format)
       if (selectedPageId) {
         syncPageState(selectedPageId, { imageFormat: format })
+        void persistGenerationSettings(selectedPageId, { imageFormat: format })
       }
     },
-    [selectedPageId, syncPageState],
+    [persistGenerationSettings, selectedPageId, syncPageState],
   )
 
   const setImageQuality = useCallback(
@@ -442,9 +497,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setImageQualityState(next)
       if (selectedPageId) {
         syncPageState(selectedPageId, { imageQuality: next })
+        void persistGenerationSettings(selectedPageId, { imageQuality: next })
       }
     },
-    [generationModel, selectedPageId, syncPageState],
+    [generationModel, persistGenerationSettings, selectedPageId, syncPageState],
   )
 
   const setSafeZoneInsetXPx = useCallback((px: number) => {
@@ -904,6 +960,11 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         imageUrl: data.imageUrl,
         imageVersions: data.imageVersions,
         referenceImages: [],
+        generationModel: isLeonardoPostModelId(data.generationModel)
+          ? data.generationModel
+          : undefined,
+        imageFormat: isPostImageFormatId(data.imageFormat) ? data.imageFormat : undefined,
+        imageQuality: isPostImageQualityId(data.imageQuality) ? data.imageQuality : undefined,
       }
 
       const nextPages = [...syncedPages, newPage].toSorted((a, b) => a.sortOrder - b.sortOrder)

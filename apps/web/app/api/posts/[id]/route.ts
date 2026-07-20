@@ -72,6 +72,9 @@ export async function GET(_req: Request, context: RouteContext) {
           imageVersions: imageVersions.filter(
             (version): version is NonNullable<typeof version> => version !== null,
           ),
+          imageFormat: page.imageFormat,
+          imageQuality: page.imageQuality,
+          generationModel: page.generationModel,
         }
       }),
     )

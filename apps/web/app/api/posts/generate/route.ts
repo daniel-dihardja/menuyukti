@@ -417,7 +417,14 @@ export async function POST(req: Request) {
     try {
       await graphqlQuery<UpdatePostPageData>(
         UPDATE_POST_PAGE_MUTATION,
-        { id: pageId, mediaS3Key: outputKey, prompt },
+        {
+          id: pageId,
+          mediaS3Key: outputKey,
+          prompt,
+          imageFormat: format === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : format,
+          imageQuality: quality,
+          generationModel: model,
+        },
         userId,
       )
     } catch (err) {

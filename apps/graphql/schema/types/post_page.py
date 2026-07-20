@@ -11,6 +11,9 @@ class PostPageType:
     sort_order: int
     media_s3_key: str | None
     prompt: str | None
+    image_format: str | None
+    image_quality: str | None
+    generation_model: str | None
     media_versions: list[PostPageMediaVersionType]
     created_at: datetime | None
     updated_at: datetime | None

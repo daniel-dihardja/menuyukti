@@ -11,13 +11,27 @@ import {
   type PostData,
   type UpdatePostPageData,
 } from '@/lib/graphql/queries/posts'
+import { POST_IMAGE_FORMAT_IDS, POST_IMAGE_QUALITY_IDS } from '@/lib/posts/leonardo-post-dimensions'
+import { LEONARDO_POST_MODEL_IDS } from '@/lib/posts/leonardo-post-models'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 const idParamSchema = z.string().trim().min(1).regex(/^\d+$/)
 
-const patchBodySchema = z.object({
-  mediaS3Key: z.string().trim().min(1),
-})
+const patchBodySchema = z
+  .object({
+    mediaS3Key: z.string().trim().min(1).optional(),
+    imageFormat: z.enum(POST_IMAGE_FORMAT_IDS).optional(),
+    imageQuality: z.enum(POST_IMAGE_QUALITY_IDS).optional(),
+    generationModel: z.enum(LEONARDO_POST_MODEL_IDS).optional(),
+  })
+  .refine(
+    (body) =>
+      body.mediaS3Key !== undefined ||
+      body.imageFormat !== undefined ||
+      body.imageQuality !== undefined ||
+      body.generationModel !== undefined,
+    { message: 'At least one field is required' },
+  )
 
 type RouteContext = {
   params: Promise<{ id: string; pageId: string }>
@@ -47,13 +61,10 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     const parsedBody = patchBodySchema.safeParse(body)
     if (!parsedBody.success) {
-      return NextResponse.json({ error: 'mediaS3Key is required' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { mediaS3Key } = parsedBody.data
-    if (!isObjectKeyForPost(mediaS3Key, authz.userId)) {
-      return NextResponse.json({ error: 'Invalid media key' }, { status: 400 })
-    }
+    const { mediaS3Key, imageFormat, imageQuality, generationModel } = parsedBody.data
 
     const postData = await graphqlQuery<PostData>(
       POST_QUERY,
@@ -71,22 +82,47 @@ export async function PATCH(req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Post page not found' }, { status: 404 })
     }
 
-    const isKnownVersion =
-      page.mediaS3Key === mediaS3Key ||
-      page.mediaVersions.some((version) => version.mediaS3Key === mediaS3Key)
-    if (!isKnownVersion) {
-      return NextResponse.json({ error: 'Media version not found for this page' }, { status: 400 })
+    if (mediaS3Key !== undefined) {
+      if (!isObjectKeyForPost(mediaS3Key, authz.userId)) {
+        return NextResponse.json({ error: 'Invalid media key' }, { status: 400 })
+      }
+
+      const isKnownVersion =
+        page.mediaS3Key === mediaS3Key ||
+        page.mediaVersions.some((version) => version.mediaS3Key === mediaS3Key)
+      if (!isKnownVersion) {
+        return NextResponse.json(
+          { error: 'Media version not found for this page' },
+          { status: 400 },
+        )
+      }
     }
 
-    await graphqlQuery<UpdatePostPageData>(
+    const updated = await graphqlQuery<UpdatePostPageData>(
       UPDATE_POST_PAGE_MUTATION,
-      { id: pageIdParsed.data, mediaS3Key },
+      {
+        id: pageIdParsed.data,
+        ...(mediaS3Key !== undefined ? { mediaS3Key } : {}),
+        ...(imageFormat !== undefined ? { imageFormat } : {}),
+        ...(imageQuality !== undefined ? { imageQuality } : {}),
+        ...(generationModel !== undefined ? { generationModel } : {}),
+      },
       authz.userId,
     )
 
-    const imageUrl = await getPresignedGetUrl(mediaS3Key)
+    const nextMediaS3Key = updated.updatePostPage.mediaS3Key
+    const imageUrl =
+      nextMediaS3Key && isObjectKeyForPost(nextMediaS3Key, authz.userId)
+        ? await getPresignedGetUrl(nextMediaS3Key)
+        : null
 
-    return NextResponse.json({ imageUrl, mediaS3Key })
+    return NextResponse.json({
+      imageUrl,
+      mediaS3Key: nextMediaS3Key,
+      imageFormat: updated.updatePostPage.imageFormat,
+      imageQuality: updated.updatePostPage.imageQuality,
+      generationModel: updated.updatePostPage.generationModel,
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to update post page image'
     if (message.includes('Not allowed')) {
@@ -94,6 +130,9 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
     if (message.includes('not found')) {
       return NextResponse.json({ error: message }, { status: 404 })
+    }
+    if (message.includes('Invalid')) {
+      return NextResponse.json({ error: message }, { status: 400 })
     }
     return NextResponse.json({ error: message }, { status: 500 })
   }
