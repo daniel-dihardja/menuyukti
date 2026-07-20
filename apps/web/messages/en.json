@@ -771,9 +771,9 @@
       "history": "History"
     },
     "chat": {
-      "emptyTitle": "Ask about this post",
-      "emptyDescription": "Get ideas for captions, composition, or creative direction. The advisor can see when a preview is selected in the panel.",
-      "placeholder": "Ask about the current preview…",
+      "emptyTitle": "Analyze this preview",
+      "emptyDescription": "Type @ to attach the large preview, then ask about composition, styling, or what to change next.",
+      "placeholder": "Ask about the attached preview… Type @ to attach it",
       "thinking": "Thinking…",
       "errorTitle": "Something went wrong",
       "errorDescription": "The request could not be completed. Please try again.",
@@ -782,7 +782,12 @@
       "clearChatLabel": "Clear chat",
       "clearChatTooltip": "Clear messages and start a fresh chat thread",
       "previewChipLabel": "Current preview",
-      "previewChipAriaLabel": "Current preview image referenced for chat"
+      "previewChipAriaLabel": "Current preview image attached for chat",
+      "sentWithAttachments": "Sent with attachments",
+      "mentionMenu": {
+        "ariaLabel": "Attach preview image",
+        "empty": "No preview to attach"
+      }
     },
     "settings": {
       "title": "Generation settings",

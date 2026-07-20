@@ -8,9 +8,11 @@ import { CHAT_MAX_IMAGES, CHAT_MAX_IMAGE_BYTES } from '@/lib/chat/chat-image-lim
 import {
   getS3Bucket,
   getS3Client,
+  isSafeAssetFilename,
   isSafePhotoFilename,
   photoContentTypeForFilename,
   userPhotosObjectKey,
+  userPostsObjectKey,
 } from '@/lib/assets/storage'
 
 export { CHAT_MAX_IMAGES, CHAT_MAX_IMAGE_BYTES }
@@ -143,6 +145,38 @@ async function loadMediaBytes(
   }
 }
 
+async function loadPostBytes(
+  userId: string,
+  name: string,
+): Promise<{ buffer: Buffer; mime: string }> {
+  if (!isSafeAssetFilename(name)) {
+    throw new ChatImageError(`Invalid post media filename: ${name}`)
+  }
+  const key = userPostsObjectKey(userId, name)
+  const s3 = getS3Client()
+  try {
+    const result = await s3.send(
+      new GetObjectCommand({
+        Bucket: getS3Bucket(),
+        Key: key,
+      }),
+    )
+    const bytes = await result.Body?.transformToByteArray()
+    if (!bytes || bytes.length === 0) {
+      throw new ChatImageError(`Post media not found: ${name}`, 404)
+    }
+    const mime =
+      (typeof result.ContentType === 'string' && result.ContentType.startsWith('image/')
+        ? result.ContentType.toLowerCase()
+        : null) ?? 'image/webp'
+    return { buffer: Buffer.from(bytes), mime }
+  } catch (err) {
+    if (err instanceof ChatImageError) throw err
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new ChatImageError(`Failed to load post media ${name}: ${detail}`, 502)
+  }
+}
+
 /** Load a user photo from S3 and return a normalized vision data URL. */
 export async function loadUserPhotoAsDataUrl(userId: string, name: string): Promise<string> {
   const { buffer, mime } = await loadMediaBytes(userId, name)
@@ -181,20 +215,24 @@ function lastUserMessageParts(messages: UIMessage[]): {
 
 /**
  * Build the single user message payload for apps/agents POST /chat.
- * Resolves Media library names from S3 and file parts from the UI message into data URLs.
+ * Resolves Media library / post media names from S3 and file parts from the UI message into data URLs.
  */
 export async function buildPythonUserMessage(args: {
   messages: UIMessage[]
   userId: string
   referencedMediaNames?: string[]
+  referencedPostMediaNames?: string[]
   referenceTextSections?: string[]
 }): Promise<PythonChatUserMessage> {
   const { text: rawText, fileDataUrls } = lastUserMessageParts(args.messages)
   const mediaNames = [
     ...new Set((args.referencedMediaNames ?? []).map((n) => n.trim()).filter(Boolean)),
   ]
+  const postMediaNames = [
+    ...new Set((args.referencedPostMediaNames ?? []).map((n) => n.trim()).filter(Boolean)),
+  ]
 
-  if (mediaNames.length > CHAT_MAX_IMAGES) {
+  if (mediaNames.length + postMediaNames.length > CHAT_MAX_IMAGES) {
     throw new ChatImageError(`At most ${CHAT_MAX_IMAGES} media files can be referenced per message`)
   }
 
@@ -213,6 +251,11 @@ export async function buildPythonUserMessage(args: {
 
   for (const name of mediaNames) {
     const { buffer, mime } = await loadMediaBytes(args.userId, name)
+    await pushNormalized(buffer, mime)
+  }
+
+  for (const name of postMediaNames) {
+    const { buffer, mime } = await loadPostBytes(args.userId, name)
     await pushNormalized(buffer, mime)
   }
 

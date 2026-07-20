@@ -206,6 +206,7 @@ export async function POST(req: Request) {
     presetReferenceMilestoneId,
     referencedVisualizationId,
     referencedMediaNames,
+    referencedPostMediaNames,
     analyticsRunId,
     agentThreadId,
     workflowChatSessionId,
@@ -296,6 +297,7 @@ export async function POST(req: Request) {
       messages,
       userId,
       referencedMediaNames,
+      referencedPostMediaNames,
       referenceTextSections: referenceSections,
     })
   } catch (err) {

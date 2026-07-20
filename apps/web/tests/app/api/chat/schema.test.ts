@@ -50,10 +50,30 @@ describe('chatRequestBodySchema', () => {
     }
   })
 
+  it('accepts referencedPostMediaNames with safe post filenames', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [{ role: 'user', parts: [{ type: 'text', text: 'Look' }] }],
+      agentThreadId: 'thread-1',
+      referencedPostMediaNames: [VALID_MEDIA],
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.referencedPostMediaNames).toEqual([VALID_MEDIA])
+    }
+  })
+
   it('rejects unsafe media filenames', () => {
     const parsed = chatRequestBodySchema.safeParse({
       messages: [],
       referencedMediaNames: ['../secret.png'],
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects unsafe post media filenames', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      referencedPostMediaNames: ['not-a-uuid.png'],
     })
     expect(parsed.success).toBe(false)
   })
@@ -75,6 +95,21 @@ describe('chatRequestBodySchema', () => {
     const parsed = chatRequestBodySchema.safeParse({
       messages: [],
       referencedMediaNames: validNames,
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects more than 4 post media names', () => {
+    const validNames = [
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee0.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee1.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee2.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee3.webp',
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee4.webp',
+    ]
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      referencedPostMediaNames: validNames,
     })
     expect(parsed.success).toBe(false)
   })

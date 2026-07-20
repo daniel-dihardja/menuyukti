@@ -1,10 +1,11 @@
 'use client'
 
-import type { UIMessage } from 'ai'
+import type { FileUIPart, UIMessage } from 'ai'
 import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/prompt-input'
 import {
   Attachment,
   AttachmentPreview,
+  AttachmentRemove,
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
 import {
@@ -29,23 +30,45 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { ChatMessageParts } from '@/components/chat-message-parts'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import { mediaTypeFromFilename } from '@/lib/chat/workflow-chat-media-mention'
+import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 
 import { usePostCreator } from '../_context/use-post-creator'
+import {
+  PostCreatorChatPreviewMention,
+  type PostCreatorPreviewMentionCandidate,
+} from './post-creator-chat-preview-mention'
 
 const PREVIEW_ATTACHMENT_ID = 'post-creator-current-preview'
 
+type PendingPreviewAttachment = {
+  id: string
+  kind: 'post' | 'photo'
+  name: string
+  url: string
+  mediaType: string
+  label: string
+  /** Stable identity for syncing when the large preview changes. */
+  identity: string
+}
+
 export function PostCreatorChatPane() {
   const t = useTranslations('postCreator.chat')
-  const { meta } = usePostCreator()
-  const { postId, previewImageUrl } = meta
+  const { state, meta } = usePostCreator()
+  const { postId, previewImageUrl, previewMediaS3Key } = meta
+  const { previewSource, templateImage } = state
 
   const [text, setText] = useState('')
+  const [pendingAttachment, setPendingAttachment] = useState<PendingPreviewAttachment | null>(null)
+  const pendingAttachmentRef = useRef<PendingPreviewAttachment | null>(null)
+  pendingAttachmentRef.current = pendingAttachment
+
   const [agentThreadId, setAgentThreadId] = useState(() => crypto.randomUUID())
   const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
     DEFAULT_CHAT_GATEWAY_MODEL,
@@ -56,6 +79,59 @@ export function PostCreatorChatPane() {
   agentThreadIdRef.current = agentThreadId
 
   const chatId = postId ?? agentThreadId
+
+  const previewCandidate = useMemo((): PostCreatorPreviewMentionCandidate | null => {
+    if (previewSource === 'template' && templateImage?.name && templateImage.url) {
+      return {
+        kind: 'photo',
+        name: templateImage.name,
+        url: templateImage.url,
+        label: t('previewChipLabel'),
+      }
+    }
+    const postName = parsePostMediaFilename(previewMediaS3Key)
+    if (postName && previewImageUrl) {
+      return {
+        kind: 'post',
+        name: postName,
+        url: previewImageUrl,
+        label: t('previewChipLabel'),
+      }
+    }
+    return null
+  }, [previewImageUrl, previewMediaS3Key, previewSource, t, templateImage])
+
+  const previewIdentity = previewCandidate
+    ? `${previewCandidate.kind}:${previewCandidate.name}`
+    : null
+
+  useEffect(() => {
+    setPendingAttachment((prev) => {
+      if (!prev) return prev
+      if (!previewCandidate || !previewIdentity) {
+        return null
+      }
+      if (prev.identity !== previewIdentity && prev.id === PREVIEW_ATTACHMENT_ID) {
+        return {
+          id: PREVIEW_ATTACHMENT_ID,
+          kind: previewCandidate.kind,
+          name: previewCandidate.name,
+          url: previewCandidate.url,
+          mediaType: mediaTypeFromFilename(previewCandidate.name),
+          label: previewCandidate.label,
+          identity: previewIdentity,
+        }
+      }
+      if (prev.identity === previewIdentity) {
+        return {
+          ...prev,
+          url: previewCandidate.url,
+          label: previewCandidate.label,
+        }
+      }
+      return prev
+    })
+  }, [previewCandidate, previewIdentity])
 
   const transport = useMemo(
     () =>
@@ -87,17 +163,72 @@ export function PostCreatorChatPane() {
     setText(event.target.value)
   }, [])
 
-  const handleSubmit = useCallback(
-    async (message: PromptInputMessage) => {
-      const hasText = Boolean(message.text?.trim())
-      if (!hasText) {
+  const handleSelectPreview = useCallback(
+    (candidate: PostCreatorPreviewMentionCandidate) => {
+      if (status === 'streaming' || status === 'submitted') {
         return
       }
-      const content = message.text?.trim() ?? ''
-      setText('')
-      await sendMessage({ text: content })
+      setPendingAttachment({
+        id: PREVIEW_ATTACHMENT_ID,
+        kind: candidate.kind,
+        name: candidate.name,
+        url: candidate.url,
+        mediaType: mediaTypeFromFilename(candidate.name),
+        label: candidate.label,
+        identity: `${candidate.kind}:${candidate.name}`,
+      })
     },
-    [sendMessage],
+    [status],
+  )
+
+  const handleRemovePending = useCallback(() => {
+    setPendingAttachment(null)
+  }, [])
+
+  const buildSendBody = useCallback(() => {
+    const pending = pendingAttachmentRef.current
+    const referencedMediaNames = pending?.kind === 'photo' ? [pending.name] : undefined
+    const referencedPostMediaNames = pending?.kind === 'post' ? [pending.name] : undefined
+    return {
+      model: selectedChatModelRef.current,
+      ...(referencedMediaNames ? { referencedMediaNames } : {}),
+      ...(referencedPostMediaNames ? { referencedPostMediaNames } : {}),
+    }
+  }, [])
+
+  const handleSubmit = useCallback(
+    async (message: PromptInputMessage) => {
+      const pending = pendingAttachmentRef.current
+      const mediaFiles: FileUIPart[] = pending
+        ? [
+            {
+              type: 'file' as const,
+              filename: pending.label,
+              mediaType: pending.mediaType,
+              url: pending.url,
+            },
+          ]
+        : []
+      const hasText = Boolean(message.text?.trim())
+      const hasAttachments = mediaFiles.length > 0
+
+      if (!(hasText || hasAttachments)) {
+        return
+      }
+
+      const content = message.text?.trim() || t('sentWithAttachments')
+      const body = buildSendBody()
+      setText('')
+      setPendingAttachment(null)
+      await sendMessage(
+        {
+          text: content,
+          ...(mediaFiles.length > 0 ? { files: mediaFiles } : {}),
+        },
+        { body },
+      )
+    },
+    [buildSendBody, sendMessage, t],
   )
 
   const handleRetry = useCallback(async () => {
@@ -110,25 +241,24 @@ export function PostCreatorChatPane() {
     clearError()
     setMessages([])
     setText('')
+    setPendingAttachment(null)
     setAgentThreadId(crypto.randomUUID())
   }, [stop, clearError, setMessages])
 
   const isChatBusy = status === 'streaming' || status === 'submitted'
-  const isSubmitDisabled = !text.trim() && !isChatBusy
+  const isSubmitDisabled = !text.trim() && !pendingAttachment && !isChatBusy
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
-  const previewAttachment = useMemo(() => {
-    if (!previewImageUrl) {
-      return null
-    }
+  const pendingChip = useMemo(() => {
+    if (!pendingAttachment) return null
     return {
-      id: PREVIEW_ATTACHMENT_ID,
+      id: pendingAttachment.id,
       type: 'file' as const,
-      filename: t('previewChipLabel'),
-      mediaType: 'image/png',
-      url: previewImageUrl,
+      filename: pendingAttachment.label,
+      mediaType: pendingAttachment.mediaType,
+      url: pendingAttachment.url,
     }
-  }, [previewImageUrl, t])
+  }, [pendingAttachment])
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden px-4 pb-4">
@@ -203,47 +333,58 @@ export function PostCreatorChatPane() {
         <ConversationScrollButton />
       </Conversation>
       <div className="shrink-0 pt-2">
-        <PromptInput onSubmit={handleSubmit}>
-          {previewAttachment ? (
-            <Attachments
-              aria-label={t('previewChipAriaLabel')}
-              className="ml-0 w-full justify-start px-3 pt-3"
-              variant="grid"
-            >
-              <Attachment className="size-16" data={previewAttachment}>
-                <AttachmentPreview />
-              </Attachment>
-            </Attachments>
-          ) : null}
-          <PromptInputBody>
-            <PromptInputTextarea
-              onChange={handleTextChange}
-              placeholder={t('placeholder')}
-              value={text}
-            />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputTools>
-              <ChatGatewayModelSelect
-                disabled={isChatBusy}
-                onValueChange={setSelectedChatModel}
-                value={selectedChatModel}
-              />
-              <PromptInputButton
-                aria-label={t('clearChatAriaLabel')}
-                className="h-9 shrink-0 px-3 py-2 font-medium text-muted-foreground"
-                onClick={handleClearChat}
-                size="sm"
-                tooltip={t('clearChatTooltip')}
-                type="button"
-                variant="ghost"
+        <PostCreatorChatPreviewMention
+          candidate={previewCandidate}
+          disabled={isChatBusy}
+          mentionAriaLabel={t('mentionMenu.ariaLabel')}
+          mentionEmptyLabel={t('mentionMenu.empty')}
+          onSelectPreview={handleSelectPreview}
+          onValueChange={setText}
+          value={text}
+        >
+          <PromptInput onSubmit={handleSubmit}>
+            {pendingChip ? (
+              <Attachments
+                aria-label={t('previewChipAriaLabel')}
+                className="ml-0 w-full justify-start px-3 pt-3"
+                variant="grid"
               >
-                {t('clearChatLabel')}
-              </PromptInputButton>
-            </PromptInputTools>
-            <PromptInputSubmit disabled={isSubmitDisabled} onStop={stop} status={status} />
-          </PromptInputFooter>
-        </PromptInput>
+                <Attachment className="size-16" data={pendingChip} onRemove={handleRemovePending}>
+                  <AttachmentPreview />
+                  <AttachmentRemove />
+                </Attachment>
+              </Attachments>
+            ) : null}
+            <PromptInputBody>
+              <PromptInputTextarea
+                onChange={handleTextChange}
+                placeholder={t('placeholder')}
+                value={text}
+              />
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputTools>
+                <ChatGatewayModelSelect
+                  disabled={isChatBusy}
+                  onValueChange={setSelectedChatModel}
+                  value={selectedChatModel}
+                />
+                <PromptInputButton
+                  aria-label={t('clearChatAriaLabel')}
+                  className="h-9 shrink-0 px-3 py-2 font-medium text-muted-foreground"
+                  onClick={handleClearChat}
+                  size="sm"
+                  tooltip={t('clearChatTooltip')}
+                  type="button"
+                  variant="ghost"
+                >
+                  {t('clearChatLabel')}
+                </PromptInputButton>
+              </PromptInputTools>
+              <PromptInputSubmit disabled={isSubmitDisabled} onStop={stop} status={status} />
+            </PromptInputFooter>
+          </PromptInput>
+        </PostCreatorChatPreviewMention>
       </div>
     </div>
   )
