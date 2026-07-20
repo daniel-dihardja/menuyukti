@@ -9,16 +9,14 @@ import {
   type LeonardoPostModelId,
 } from '@/lib/posts/leonardo-post-models'
 
-export const POST_IMAGE_FORMAT_IDS = [
-  'feed',
-  'tall',
-  'square',
-  'story',
-  'wide',
-  'match-layout',
-] as const
+export const POST_IMAGE_FORMAT_IDS = ['feed', 'tall', 'square', 'story', 'wide'] as const
 
 export type PostImageFormatId = (typeof POST_IMAGE_FORMAT_IDS)[number]
+
+/** @deprecated Use POST_IMAGE_FORMAT_IDS — kept as an alias for call sites that listed explicit formats. */
+export const POST_IMAGE_EXPLICIT_FORMAT_IDS = POST_IMAGE_FORMAT_IDS
+
+export type PostImageExplicitFormatId = PostImageFormatId
 
 export const POST_IMAGE_QUALITY_IDS = ['standard', 'high', 'ultra'] as const
 
@@ -27,21 +25,10 @@ export type PostImageQualityId = (typeof POST_IMAGE_QUALITY_IDS)[number]
 export const DEFAULT_POST_IMAGE_FORMAT: PostImageFormatId = 'feed'
 export const DEFAULT_POST_IMAGE_QUALITY: PostImageQualityId = 'standard'
 
-/** Explicit formats (excludes match-layout). */
-export const POST_IMAGE_EXPLICIT_FORMAT_IDS = [
-  'feed',
-  'tall',
-  'square',
-  'story',
-  'wide',
-] as const satisfies readonly Exclude<PostImageFormatId, 'match-layout'>[]
-
-export type PostImageExplicitFormatId = (typeof POST_IMAGE_EXPLICIT_FORMAT_IDS)[number]
-
 export type OutputDimensions = { width: number; height: number }
 
-/** Target aspect ratios for explicit formats (w:h). */
-const FORMAT_RATIO: Record<PostImageExplicitFormatId, { w: number; h: number }> = {
+/** Target aspect ratios for formats (w:h). */
+const FORMAT_RATIO: Record<PostImageFormatId, { w: number; h: number }> = {
   feed: { w: 4, h: 5 },
   tall: { w: 3, h: 4 },
   square: { w: 1, h: 1 },
@@ -54,7 +41,7 @@ const FORMAT_RATIO: Record<PostImageExplicitFormatId, { w: number; h: number }> 
  * @see https://docs.leonardo.ai/docs/nano-banana-2
  */
 const NANO_BANANA_2_PAIRS: Record<
-  PostImageExplicitFormatId,
+  PostImageFormatId,
   Record<PostImageQualityId, OutputDimensions>
 > = {
   square: {
@@ -104,46 +91,17 @@ export function isPostImageQualityId(value: unknown): value is PostImageQualityI
 }
 
 export function isPostImageExplicitFormatId(value: unknown): value is PostImageExplicitFormatId {
-  return (
-    typeof value === 'string' &&
-    (POST_IMAGE_EXPLICIT_FORMAT_IDS as readonly string[]).includes(value)
-  )
+  return isPostImageFormatId(value)
 }
 
-/** Width÷height for a format (e.g. story → `9/16`). Match-layout falls back to feed. */
-export function formatAspectNumber(
-  format: PostImageFormatId,
-  templateDimensions?: OutputDimensions,
-): number {
-  if (format === 'match-layout' && templateDimensions) {
-    const { width, height } = templateDimensions
-    if (width > 0 && height > 0) {
-      return width / height
-    }
-  }
-  if (format === 'match-layout') {
-    const { w, h } = FORMAT_RATIO.feed
-    return w / h
-  }
+/** Width÷height for a format (e.g. story → `9/16`). */
+export function formatAspectNumber(format: PostImageFormatId): number {
   const { w, h } = FORMAT_RATIO[format]
   return w / h
 }
 
-/** CSS aspect-ratio value for preview frames (`4 / 5`). Match-layout falls back to feed. */
-export function formatAspectCss(
-  format: PostImageFormatId,
-  templateDimensions?: OutputDimensions,
-): string {
-  if (format === 'match-layout' && templateDimensions) {
-    const { width, height } = templateDimensions
-    if (width > 0 && height > 0) {
-      return `${width} / ${height}`
-    }
-  }
-  if (format === 'match-layout') {
-    const { w, h } = FORMAT_RATIO.feed
-    return `${w} / ${h}`
-  }
+/** CSS aspect-ratio value for preview frames (`4 / 5`). */
+export function formatAspectCss(format: PostImageFormatId): string {
   const { w, h } = FORMAT_RATIO[format]
   return `${w} / ${h}`
 }
@@ -217,41 +175,26 @@ export function snapToNearestLeonardoPair(
 }
 
 /**
- * Target pixel size for an explicit format × quality before model-specific snapping.
+ * Target pixel size for a format × quality before model-specific snapping.
  * Uses Nano Banana 2 documented pairs as the canonical size ladder.
  */
 function targetDimensionsForFormatQuality(
-  format: PostImageExplicitFormatId,
+  format: PostImageFormatId,
   quality: PostImageQualityId,
 ): OutputDimensions {
   return NANO_BANANA_2_PAIRS[format][quality]
 }
 
 /**
- * Resolve Leonardo output dimensions for format + quality (+ optional template for match-layout).
+ * Resolve Leonardo output dimensions for format + quality.
  */
 export function resolveLeonardoOutputDimensions(input: {
   model: LeonardoPostModelId
   format: PostImageFormatId
   quality: PostImageQualityId
-  templateDimensions?: OutputDimensions
 }): OutputDimensions {
   const model = input.model || DEFAULT_LEONARDO_POST_MODEL
   const quality = clampQualityForModel(model, input.quality)
-
-  if (input.format === 'match-layout') {
-    if (input.templateDimensions) {
-      return snapToNearestLeonardoPair(
-        model,
-        input.templateDimensions.width,
-        input.templateDimensions.height,
-      )
-    }
-    // No template → feed standard
-    const target = targetDimensionsForFormatQuality('feed', quality)
-    return snapToNearestLeonardoPair(model, target.width, target.height)
-  }
-
   const target = targetDimensionsForFormatQuality(input.format, quality)
   return snapToNearestLeonardoPair(model, target.width, target.height)
 }

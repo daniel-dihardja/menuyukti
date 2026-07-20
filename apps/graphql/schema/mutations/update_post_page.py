@@ -20,7 +20,7 @@ _SAFE_POST_FILENAME = re.compile(
     re.IGNORECASE,
 )
 
-_ALLOWED_IMAGE_FORMATS = frozenset({"feed", "tall", "square", "story", "wide", "match-layout"})
+_ALLOWED_IMAGE_FORMATS = frozenset({"feed", "tall", "square", "story", "wide"})
 _ALLOWED_IMAGE_QUALITIES = frozenset({"standard", "high", "ultra"})
 _ALLOWED_GENERATION_MODELS = frozenset(
     {"gemini-2.5-flash-image", "nano-banana-2", "gemini-image-2"}

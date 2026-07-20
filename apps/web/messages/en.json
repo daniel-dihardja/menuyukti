@@ -799,7 +799,7 @@
       "safeZoneHorizontal": "Horizontal gap (px)",
       "safeZoneVertical": "Vertical gap (px)",
       "solidBackgroundTitle": "Solid background canvas",
-      "solidBackgroundHelper": "When enabled and no layout or previous image is used, a flat color canvas at the current output size is sent as the first reference.",
+      "solidBackgroundHelper": "When enabled and no previous image is used, a flat color canvas at the current output size is sent as the first reference.",
       "solidBackgroundToggle": "Use solid background",
       "solidBackgroundColor": "Background color"
     },
@@ -824,14 +824,6 @@
         "manage": "Manage styles",
         "loadError": "Failed to load style packs."
       },
-      "template": {
-        "label": "Layout template",
-        "pick": "Choose template from Media",
-        "pickerAriaLabel": "Layout template picker",
-        "empty": "No media yet. Upload a layout template in Media first.",
-        "remove": "Remove layout template",
-        "fromMedia": "From Media"
-      },
       "model": {
         "label": "Image model",
         "description": "Leonardo model used for this generation.",
@@ -846,14 +838,13 @@
           },
           "pro": {
             "name": "Nano Banana Pro",
-            "blurb": "Highest instruction following for complex template fills. Slower and uses more tokens."
+            "blurb": "Highest instruction following for complex multi-reference edits. Slower and uses more tokens."
           }
         }
       },
       "format": {
         "label": "Format",
-        "description": "Aspect ratio for this generation. Match layout follows the template size.",
-        "matchOverrideWarning": "Layout template is attached, but Format is not Match layout — output proportions may not match the template.",
+        "description": "Aspect ratio for this generation.",
         "options": {
           "feed": {
             "name": "Feed",
@@ -874,10 +865,6 @@
           "wide": {
             "name": "Wide",
             "ratio": "16:9"
-          },
-          "match-layout": {
-            "name": "Match layout",
-            "ratio": "Template"
           }
         }
       },
@@ -913,18 +900,16 @@
       "generation": {
         "referenceSummaryTextOnly": "Next generation: creative direction only (no references).",
         "referenceSummaryFilledEdit": "Next generation: edit the image in preview only.",
-        "referenceSummaryTemplateComposite": "Next generation: template “{template}” + {count, plural, one {# product} other {# products}} (Ref 2+).",
-        "referenceSummaryTemplateOnly": "Next generation: template “{template}” only (headline/style).",
         "referenceSummaryPreviousOnly": "Next generation: edit the image in preview.",
         "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummaryPreviousAndPhotos": "Next generation: image in preview + {count, plural, one {# checked photo} other {# checked photos}}.",
         "referenceSummarySolidBackgroundOnly": "Next generation: solid background canvas ({color}).",
         "referenceSummarySolidBackgroundAndPhotos": "Next generation: solid background ({color}) + {count, plural, one {# checked photo} other {# checked photos}}.",
-        "tooManyReferences": "Too many references selected. Use at most 1 template and 5 checked product photos (6 total)."
+        "tooManyReferences": "Too many references selected. Use at most 5 checked product photos (plus previous image or solid background when used)."
       },
       "tip": {
         "title": "Tip",
-        "description": "The image in the preview is used as the edit reference. Attach a layout template to start from a blank layout, or pick a generated version to edit that result. Optionally add product photos with @, then describe changes in creative direction."
+        "description": "The image in the preview is used as the edit reference. Pick a generated version to edit that result. Optionally add product photos with @, then describe changes in creative direction."
       }
     },
     "preview": {
@@ -949,7 +934,6 @@
       "useAsPostImageCommitting": "Setting post image…",
       "committingPostImage": "Setting post image…",
       "previewImageAlt": "Generated post preview",
-      "templatePreviewImageAlt": "Selected layout template preview",
       "generating": "Generating…",
       "deleteImage": "Delete image",
       "removePage": "Remove page",

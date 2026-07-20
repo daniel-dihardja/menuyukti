@@ -6,15 +6,13 @@ import {
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 
 export type GenerationReference =
-  | { type: 'template'; name: string }
   | { type: 'previous-result'; filename: string }
   | { type: 'photo'; name: string }
   | { type: 'background-color'; color: string }
 
-export type GenerationMode = 'template-composite' | 'filled-edit' | 'fresh-scene'
+export type GenerationMode = 'filled-edit' | 'fresh-scene'
 
 export type ResolveGenerationReferencesInput = {
-  templateImage: PostCreatorReferenceImage | null
   referenceImages: PostCreatorReferenceImage[]
   previewMediaS3Key: string | null | undefined
   /** When true, reserve one slot for a server-side style reference image. */
@@ -34,18 +32,12 @@ function enabledPhotos(referenceImages: PostCreatorReferenceImage[]): PostCreato
 }
 
 export function detectGenerationMode(input: {
-  templateImage: PostCreatorReferenceImage | null
   enabledPhotoCount: number
   previewMediaS3Key: string | null | undefined
 }): GenerationMode {
-  const hasTemplate = input.templateImage != null
   const hasProducts = input.enabledPhotoCount > 0
   const hasPrevious = parsePostMediaFilename(input.previewMediaS3Key) != null
 
-  // Template alone is enough (headline/style edits); products are optional fills.
-  if (hasTemplate) {
-    return 'template-composite'
-  }
   if (hasPrevious && !hasProducts) {
     return 'filled-edit'
   }
@@ -59,20 +51,13 @@ export function resolveGenerationReferences(
   const hasPrevious = parsePostMediaFilename(input.previewMediaS3Key) != null
 
   const mode = detectGenerationMode({
-    templateImage: input.templateImage,
     enabledPhotoCount: photos.length,
     previewMediaS3Key: input.previewMediaS3Key,
   })
 
   const references: GenerationReference[] = []
 
-  // Always attach the layout template when selected (products optional).
-  if (input.templateImage) {
-    references.push({ type: 'template', name: input.templateImage.name })
-    for (const image of photos) {
-      references.push({ type: 'photo', name: image.name })
-    }
-  } else if (mode === 'filled-edit') {
+  if (mode === 'filled-edit') {
     const filename = parsePostMediaFilename(input.previewMediaS3Key)
     if (filename) {
       references.push({ type: 'previous-result', filename })
@@ -89,9 +74,8 @@ export function resolveGenerationReferences(
     }
   }
 
-  const hasTemplateRef = references.some((reference) => reference.type === 'template')
   const hasPreviousRef = references.some((reference) => reference.type === 'previous-result')
-  if (input.solidBackgroundEnabled && !hasTemplateRef && !hasPreviousRef) {
+  if (input.solidBackgroundEnabled && !hasPreviousRef) {
     references.unshift({
       type: 'background-color',
       color: normalizeSolidBackgroundColor(input.solidBackgroundColor ?? ''),

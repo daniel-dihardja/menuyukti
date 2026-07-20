@@ -31,9 +31,7 @@ import {
   pageHasGeneratedImage,
   resolvePageImageVersions,
   resolvePostImageVersionIndex,
-  resolvePreviewSourceForPage,
   resolvePreviewVersionIndex,
-  type PostCreatorPreviewSource,
 } from '@/lib/posts/post-creator-utils'
 
 import {
@@ -114,7 +112,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const [previewVersionIndex, setPreviewVersionIndex] = useState(0)
   const [postImageVersionIndex, setPostImageVersionIndex] = useState(0)
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>([])
-  const [templateImage, setTemplateImage] = useState<PostCreatorReferenceImage | null>(null)
   const [generationModel, setGenerationModelState] = useState<LeonardoPostModelId>(
     DEFAULT_LEONARDO_POST_MODEL,
   )
@@ -130,7 +127,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
   const [solidBackgroundColor, setSolidBackgroundColorState] = useState(
     DEFAULT_SOLID_BACKGROUND_COLOR,
   )
-  const [previewSource, setPreviewSource] = useState<PostCreatorPreviewSource>('version')
   const [styleId, setStyleIdState] = useState<number | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCommittingPostImage, setIsCommittingPostImage] = useState(false)
@@ -160,8 +156,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     setPreviewVersionIndex(previewIndex)
     setPrompt(page?.prompt ?? '')
     setReferenceImages(page?.referenceImages ?? [])
-    setTemplateImage(page?.templateImage ?? null)
-    setPreviewSource(resolvePreviewSourceForPage(page))
     setGenerationModelState(
       isLeonardoPostModelId(page?.generationModel)
         ? page.generationModel
@@ -191,8 +185,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           | 'imageVersions'
           | 'previewVersionIndex'
           | 'referenceImages'
-          | 'templateImage'
-          | 'previewSource'
           | 'generationModel'
           | 'imageFormat'
           | 'imageQuality'
@@ -257,12 +249,11 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         const loadedPages: PostCreatorPage[] = data.pages
           .toSorted((a, b) => a.sortOrder - b.sortOrder)
           .map((page) => {
-            const loadedFormat = isPostImageFormatId(page.imageFormat)
-              ? page.imageFormat
-              : undefined
-            // Templates are not restored from the server; coerce match-layout to default.
-            const imageFormat =
-              loadedFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : loadedFormat
+            const loadedFormat = page.imageFormat
+            // Legacy rows may still store match-layout; coerce via format id guard.
+            const imageFormat = isPostImageFormatId(loadedFormat)
+              ? loadedFormat
+              : DEFAULT_POST_IMAGE_FORMAT
             return {
               id: page.id,
               sortOrder: page.sortOrder,
@@ -312,12 +303,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                       ...page,
                       prompt,
                       referenceImages,
-                      templateImage,
                       generationModel,
                       imageFormat,
                       imageQuality,
                       previewVersionIndex,
-                      previewSource,
                     }
                   : page,
               )
@@ -341,8 +330,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         setPreviewVersionIndex(previewIndex)
         setPrompt(page?.prompt ?? '')
         setReferenceImages(page?.referenceImages ?? [])
-        setTemplateImage(page?.templateImage ?? null)
-        setPreviewSource(resolvePreviewSourceForPage(page))
         setGenerationModelState(
           isLeonardoPostModelId(page?.generationModel)
             ? page.generationModel
@@ -367,12 +354,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       generationModel,
       imageFormat,
       imageQuality,
-      previewSource,
       previewVersionIndex,
       prompt,
       referenceImages,
       selectedPageId,
-      templateImage,
     ],
   )
 
@@ -423,43 +408,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     },
     [referenceImages, selectedPageId, syncPageState],
   )
-
-  const selectTemplate = useCallback(
-    (design: { name: string; url: string }) => {
-      const next: PostCreatorReferenceImage = {
-        name: design.name,
-        url: design.url,
-        enabled: true,
-      }
-      setTemplateImage(next)
-      setPreviewSource('template')
-      setImageFormatState('match-layout')
-      if (selectedPageId) {
-        syncPageState(selectedPageId, {
-          templateImage: next,
-          previewSource: 'template',
-          imageFormat: 'match-layout',
-        })
-        void persistGenerationSettings(selectedPageId, { imageFormat: 'match-layout' })
-      }
-    },
-    [persistGenerationSettings, selectedPageId, syncPageState],
-  )
-
-  const clearTemplate = useCallback(() => {
-    const nextFormat = imageFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : imageFormat
-    setTemplateImage(null)
-    setPreviewSource('version')
-    setImageFormatState(nextFormat)
-    if (selectedPageId) {
-      syncPageState(selectedPageId, {
-        templateImage: null,
-        previewSource: 'version',
-        imageFormat: nextFormat,
-      })
-      void persistGenerationSettings(selectedPageId, { imageFormat: nextFormat })
-    }
-  }, [imageFormat, persistGenerationSettings, selectedPageId, syncPageState])
 
   const setGenerationModel = useCallback(
     (model: LeonardoPostModelId) => {
@@ -527,12 +475,9 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     if (!trimmed || isGenerating) return
 
     const versionMediaS3Key = imageVersions[previewVersionIndex]?.mediaS3Key
-    const activeTemplate = previewSource === 'template' ? templateImage : null
-    const activePreviewMediaS3Key = previewSource === 'version' ? versionMediaS3Key : null
     const { references, tooManyReferences } = resolveGenerationReferences({
-      templateImage: activeTemplate,
       referenceImages,
-      previewMediaS3Key: activePreviewMediaS3Key,
+      previewMediaS3Key: versionMediaS3Key,
       styleSelected: styleId != null,
       solidBackgroundEnabled,
       solidBackgroundColor,
@@ -611,11 +556,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       setImageVersions(nextVersions)
       setPreviewVersionIndex(0)
       setPostImageVersionIndex(0)
-      setTemplateImage(null)
-      setPreviewSource('version')
-      setImageFormatState((current) =>
-        current === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : current,
-      )
 
       if (selectedPageId) {
         syncPageState(selectedPageId, {
@@ -624,9 +564,7 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
           imageVersions: nextVersions,
           previewVersionIndex: 0,
           prompt: trimmed,
-          templateImage: null,
-          previewSource: 'version',
-          imageFormat: imageFormat === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : imageFormat,
+          imageFormat,
         })
       }
     } catch {
@@ -642,7 +580,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     imageVersions,
     isGenerating,
     postId,
-    previewSource,
     previewVersionIndex,
     prompt,
     referenceImages,
@@ -653,7 +590,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     syncPageState,
     tPrompt,
     tToast,
-    templateImage,
   ])
 
   const previewVersion = useCallback(
@@ -661,29 +597,18 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       if (isCommittingPostImage) {
         return
       }
-      if (index === previewVersionIndex && previewSource === 'version' && !templateImage) {
+      if (index === previewVersionIndex) {
         return
       }
 
       setPreviewVersionIndex(index)
-      setTemplateImage(null)
-      setPreviewSource('version')
       if (selectedPageId) {
         syncPageState(selectedPageId, {
           previewVersionIndex: index,
-          templateImage: null,
-          previewSource: 'version',
         })
       }
     },
-    [
-      isCommittingPostImage,
-      previewSource,
-      previewVersionIndex,
-      selectedPageId,
-      syncPageState,
-      templateImage,
-    ],
+    [isCommittingPostImage, previewVersionIndex, selectedPageId, syncPageState],
   )
 
   const commitPostImage = useCallback(async () => {
@@ -848,8 +773,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         setImageVersions([])
         setPrompt('')
         setReferenceImages([])
-        setTemplateImage(null)
-        setPreviewSource('version')
       }
     } catch {
       toast.error(tToast('deletePageError'))
@@ -912,12 +835,10 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
                     ...page,
                     prompt,
                     referenceImages,
-                    templateImage,
                     generationModel,
                     imageFormat,
                     imageQuality,
                     previewVersionIndex,
-                    previewSource,
                   }
                 : page,
             )
@@ -973,13 +894,11 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       imageQuality,
       pages,
       postId,
-      previewSource,
       previewVersionIndex,
       prompt,
       referenceImages,
       selectedPageId,
       tToast,
-      templateImage,
     ],
   )
 
@@ -1040,20 +959,14 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
 
   const selectedPage = pages.find((page) => page.id === selectedPageId)
 
-  const versionImageUrl =
-    imageVersions[previewVersionIndex]?.imageUrl ?? selectedPage?.imageUrl ?? null
-  const versionMediaS3Key =
-    imageVersions[previewVersionIndex]?.mediaS3Key ?? selectedPage?.mediaS3Key ?? null
-
-  const activeTemplate = previewSource === 'template' ? templateImage : null
   const previewImageUrl =
-    previewSource === 'template' ? (templateImage?.url ?? null) : versionImageUrl
-  const previewMediaS3Key = previewSource === 'template' ? null : versionMediaS3Key
-  const hasPreviewableVersion = Boolean(parsePostMediaFilename(versionMediaS3Key))
+    imageVersions[previewVersionIndex]?.imageUrl ?? selectedPage?.imageUrl ?? null
+  const previewMediaS3Key =
+    imageVersions[previewVersionIndex]?.mediaS3Key ?? selectedPage?.mediaS3Key ?? null
+  const hasPreviewableVersion = Boolean(parsePostMediaFilename(previewMediaS3Key))
 
   const generationReferenceSummary = useMemo(() => {
     const { mode: genMode, references } = resolveGenerationReferences({
-      templateImage: activeTemplate,
       referenceImages,
       previewMediaS3Key,
       styleSelected: styleId != null,
@@ -1063,17 +976,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
     const solidBackgroundRef = references.find((reference) => reference.type === 'background-color')
 
-    if (genMode === 'template-composite' && activeTemplate) {
-      if (enabledPhotoCount === 0) {
-        return tPrompt('generation.referenceSummaryTemplateOnly', {
-          template: activeTemplate.name,
-        })
-      }
-      return tPrompt('generation.referenceSummaryTemplateComposite', {
-        count: enabledPhotoCount,
-        template: activeTemplate.name,
-      })
-    }
     if (genMode === 'filled-edit') {
       return tPrompt('generation.referenceSummaryFilledEdit')
     }
@@ -1102,7 +1004,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
     }
     return tPrompt('generation.referenceSummaryTextOnly')
   }, [
-    activeTemplate,
     previewMediaS3Key,
     referenceImages,
     solidBackgroundColor,
@@ -1127,7 +1028,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         previewVersionIndex,
         postImageVersionIndex,
         referenceImages,
-        templateImage,
         generationModel,
         imageFormat,
         imageQuality,
@@ -1135,7 +1035,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         safeZoneInsetYPx,
         solidBackgroundEnabled,
         solidBackgroundColor,
-        previewSource,
         styleId,
         isGenerating,
         isCommittingPostImage,
@@ -1160,8 +1059,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
         addReference,
         removeReference,
         toggleReferenceEnabled,
-        selectTemplate,
-        clearTemplate,
         setGenerationModel,
         setImageFormat,
         setImageQuality,
@@ -1195,7 +1092,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       canDuplicatePage,
       canPersistPages,
       canRemoveEmptyPage,
-      clearTemplate,
       closeDeleteDialog,
       commitPostImage,
       confirmDelete,
@@ -1221,7 +1117,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       postImageVersionIndex,
       previewImageUrl,
       previewMediaS3Key,
-      previewSource,
       previewVersion,
       previewVersionIndex,
       prompt,
@@ -1231,7 +1126,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       safeZoneInsetXPx,
       safeZoneInsetYPx,
       selectPage,
-      selectTemplate,
       selectedPage?.mediaS3Key,
       selectedPageId,
       setGenerationModel,
@@ -1246,7 +1140,6 @@ export function PostCreatorProvider({ mode, postId, children }: PostCreatorProvi
       solidBackgroundColor,
       solidBackgroundEnabled,
       styleId,
-      templateImage,
       toggleReferenceEnabled,
     ],
   )

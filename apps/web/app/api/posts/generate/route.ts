@@ -1,7 +1,6 @@
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { randomUUID } from 'crypto'
 import { NextResponse } from 'next/server'
-import sharp from 'sharp'
 import { z } from 'zod'
 
 import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
@@ -23,7 +22,6 @@ import { parseStyleSpec } from '@/lib/styles/style-spec'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
   buildInstagramPostPrompt,
-  type OutputDimensions,
   type PromptReference,
   type StylePackPrompt,
 } from '@/lib/posts/build-instagram-post-prompt'
@@ -45,10 +43,6 @@ import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 const solidBackgroundHexSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Expected #rrggbb color')
 
 const generationReferenceSchema = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('template'),
-    name: z.string().min(1),
-  }),
   z.object({
     type: z.literal('previous-result'),
     filename: z.string().min(1),
@@ -77,14 +71,6 @@ const bodySchema = z.object({
 function truncateStack(stack: string, max = 4000): string {
   if (stack.length <= max) return stack
   return `${stack.slice(0, max)}…(truncated)`
-}
-
-async function readImageDimensions(buffer: Buffer): Promise<OutputDimensions> {
-  const metadata = await sharp(buffer, { autoOrient: true }).metadata()
-  if (!metadata.width || !metadata.height) {
-    throw new Error('Could not read image dimensions')
-  }
-  return { width: metadata.width, height: metadata.height }
 }
 
 async function loadReferenceBuffer(
@@ -187,19 +173,12 @@ export async function POST(req: Request) {
     )
   }
 
-  const hasTemplate = references.some((reference) => reference.type === 'template')
   const hasPrevious = references.some((reference) => reference.type === 'previous-result')
   const hasBackgroundColor = references.some((reference) => reference.type === 'background-color')
-  if (hasTemplate && hasPrevious) {
-    return NextResponse.json(
-      { message: 'Template and previous result cannot be used together' },
-      { status: 400 },
-    )
-  }
-  if (hasBackgroundColor && (hasTemplate || hasPrevious)) {
+  if (hasBackgroundColor && hasPrevious) {
     return NextResponse.json(
       {
-        message: 'Solid background canvas cannot be used with a template or previous result image',
+        message: 'Solid background canvas cannot be used with a previous result image',
       },
       { status: 400 },
     )
@@ -208,9 +187,7 @@ export async function POST(req: Request) {
   const enabledPhotoCount = references.filter((reference) => reference.type === 'photo').length
 
   let mode: GenerationMode
-  if (hasTemplate) {
-    mode = 'template-composite'
-  } else if (hasPrevious && enabledPhotoCount === 0) {
+  if (hasPrevious && enabledPhotoCount === 0) {
     mode = 'filled-edit'
   } else {
     mode = 'fresh-scene'
@@ -218,7 +195,6 @@ export async function POST(req: Request) {
 
   const referenceBuffers: Buffer[] = []
   const promptReferences: PromptReference[] = []
-  let templateOutputDimensions: OutputDimensions | undefined
   const deferredSolidBackgrounds: { color: string; bufferIndex: number }[] = []
 
   if (styleImageName) {
@@ -249,37 +225,6 @@ export async function POST(req: Request) {
       })
       referenceBuffers.push(Buffer.alloc(0))
       promptReferences.push({ type: 'background-color', color: reference.color })
-      continue
-    }
-
-    if (reference.type === 'template') {
-      const { name } = reference
-      if (!isSafePhotoFilename(name)) {
-        return NextResponse.json({ message: `Invalid template image: ${name}` }, { status: 400 })
-      }
-
-      const key = userPhotosObjectKey(userId, name)
-      if (!isObjectKeyForPhoto(key, userId)) {
-        return NextResponse.json({ message: `Invalid template image: ${name}` }, { status: 400 })
-      }
-
-      const buffer = await loadReferenceBuffer(key, name, userId)
-      if (buffer instanceof NextResponse) return buffer
-      try {
-        templateOutputDimensions = await readImageDimensions(buffer)
-      } catch (err) {
-        console.error('[posts/generate] template dimension read failed', {
-          userIdPrefix: userId.slice(0, 8),
-          name,
-          message: err instanceof Error ? err.message : String(err),
-        })
-        return NextResponse.json(
-          { message: `Could not read template dimensions: ${name}` },
-          { status: 400 },
-        )
-      }
-      referenceBuffers.push(buffer)
-      promptReferences.push({ type: 'template' })
       continue
     }
 
@@ -323,7 +268,6 @@ export async function POST(req: Request) {
     model,
     format,
     quality,
-    templateDimensions: templateOutputDimensions,
   })
   const { width: outputWidth, height: outputHeight } = outputDimensions
 
@@ -363,7 +307,6 @@ export async function POST(req: Request) {
       outputHeight,
       referenceBuffers,
       model,
-      mode === 'template-composite' ? referenceBuffers.map(() => 'HIGH' as const) : undefined,
     )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Processing failed'
@@ -417,7 +360,7 @@ export async function POST(req: Request) {
           id: pageId,
           mediaS3Key: outputKey,
           prompt,
-          imageFormat: format === 'match-layout' ? DEFAULT_POST_IMAGE_FORMAT : format,
+          imageFormat: format,
           imageQuality: quality,
           generationModel: model,
         },

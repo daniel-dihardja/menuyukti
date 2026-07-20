@@ -26,7 +26,6 @@ type PostCreatorFormatControlsProps = {
   generationModel: LeonardoPostModelId
   imageFormat: PostImageFormatId
   imageQuality: PostImageQualityId
-  hasTemplate: boolean
   onFormatChange: (format: PostImageFormatId) => void
   onQualityChange: (quality: PostImageQualityId) => void
 }
@@ -40,8 +39,8 @@ const optionChipClassName = cn(
   'data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground data-[state=on]:ring-2 data-[state=on]:ring-ring/40',
 )
 
-function FormatPreviewFrame({ format }: { format: PostImageExplicitFormatId | 'match-layout' }) {
-  const aspect = formatAspectCss(format === 'match-layout' ? 'feed' : format)
+function FormatPreviewFrame({ format }: { format: PostImageExplicitFormatId }) {
+  const aspect = formatAspectCss(format)
   return (
     <span
       aria-hidden
@@ -56,7 +55,6 @@ export function PostCreatorFormatControls({
   generationModel,
   imageFormat,
   imageQuality,
-  hasTemplate,
   onFormatChange,
   onQualityChange,
 }: PostCreatorFormatControlsProps) {
@@ -71,11 +69,6 @@ export function PostCreatorFormatControls({
     quality: imageQuality,
   })
   const costMultiplier = POST_IMAGE_QUALITY_COST_MULTIPLIER[imageQuality]
-  const showMatchWarning = hasTemplate && imageFormat !== 'match-layout'
-
-  const formatOptions: PostImageFormatId[] = hasTemplate
-    ? ['match-layout', ...POST_IMAGE_EXPLICIT_FORMAT_IDS]
-    : [...POST_IMAGE_EXPLICIT_FORMAT_IDS]
 
   return (
     <div className="flex flex-col gap-3">
@@ -93,7 +86,7 @@ export function PostCreatorFormatControls({
           className="gap-1.5"
           aria-label={t('format.label')}
         >
-          {formatOptions.map((formatId) => {
+          {POST_IMAGE_EXPLICIT_FORMAT_IDS.map((formatId) => {
             const name = t(`format.options.${formatId}.name`)
             const ratio = t(`format.options.${formatId}.ratio`)
             return (
@@ -103,13 +96,10 @@ export function PostCreatorFormatControls({
                 className={cn(
                   optionChipClassName,
                   'min-h-0 flex-col gap-0.5 rounded-sm px-2 py-1.5 text-xs font-medium',
-                  formatId === 'match-layout' && 'min-w-[4.5rem]',
                 )}
                 aria-label={`${name} ${ratio}`}
               >
-                <FormatPreviewFrame
-                  format={formatId === 'match-layout' ? 'match-layout' : formatId}
-                />
+                <FormatPreviewFrame format={formatId} />
                 <span className="leading-tight">{name}</span>
                 <span className="text-[10px] leading-none opacity-70">{ratio}</span>
               </ToggleGroupItem>
@@ -117,11 +107,6 @@ export function PostCreatorFormatControls({
           })}
         </ToggleGroup>
         <FieldDescription>{t('format.description')}</FieldDescription>
-        {showMatchWarning ? (
-          <p className="text-amber-700 dark:text-amber-400 text-xs" role="status">
-            {t('format.matchOverrideWarning')}
-          </p>
-        ) : null}
       </Field>
 
       <Field className="gap-1.5">

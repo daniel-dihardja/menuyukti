@@ -21,12 +21,15 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { loadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 
-import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
+export type MediaCatalogPickerImage = {
+  name: string
+  url: string
+}
 
-export type PostCreatorTemplatePickerProps = {
-  templateImage: PostCreatorReferenceImage | null
-  onSelectTemplate: (item: MediaCatalogItem) => void
-  onClearTemplate: () => void
+export type MediaCatalogPickerProps = {
+  selectedImage: MediaCatalogPickerImage | null
+  onSelect: (item: MediaCatalogItem) => void
+  onClear: () => void
   disabled?: boolean
   pickLabel: string
   pickerAriaLabel: string
@@ -35,17 +38,17 @@ export type PostCreatorTemplatePickerProps = {
   fromMediaLabel: string
 }
 
-export function PostCreatorTemplatePicker({
-  templateImage,
-  onSelectTemplate,
-  onClearTemplate,
+export function MediaCatalogPicker({
+  selectedImage,
+  onSelect,
+  onClear,
   disabled = false,
   pickLabel,
   pickerAriaLabel,
   emptyLabel,
   removeLabel,
   fromMediaLabel,
-}: PostCreatorTemplatePickerProps) {
+}: MediaCatalogPickerProps) {
   const [open, setOpen] = useState(false)
   const [mediaItems, setMediaItems] = useState<MediaCatalogItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -76,21 +79,21 @@ export function PostCreatorTemplatePicker({
 
   const handleSelect = useCallback(
     (item: MediaCatalogItem) => {
-      onSelectTemplate(item)
+      onSelect(item)
       setOpen(false)
     },
-    [onSelectTemplate],
+    [onSelect],
   )
 
-  if (templateImage) {
+  if (selectedImage) {
     return (
       <div className="flex items-center gap-2 rounded-md border border-border/60 p-2">
         <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted/20">
           {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
-          <img src={templateImage.url} alt="" className="size-full object-cover" />
+          <img src={selectedImage.url} alt="" className="size-full object-cover" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{templateImage.name}</p>
+          <p className="truncate text-sm font-medium">{selectedImage.name}</p>
           <p className="text-muted-foreground text-xs">{fromMediaLabel}</p>
         </div>
         <Button
@@ -100,7 +103,7 @@ export function PostCreatorTemplatePicker({
           className="size-8 shrink-0"
           disabled={disabled}
           aria-label={removeLabel}
-          onClick={onClearTemplate}
+          onClick={onClear}
         >
           <X className="size-4" aria-hidden />
         </Button>

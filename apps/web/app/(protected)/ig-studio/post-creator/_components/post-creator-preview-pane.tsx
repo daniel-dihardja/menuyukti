@@ -38,8 +38,6 @@ export function PostCreatorPreviewPane() {
     imageVersions,
     previewVersionIndex,
     postImageVersionIndex,
-    templateImage,
-    previewSource,
     isGenerating: isLoading,
     isCommittingPostImage,
     isDeletingVersion,
@@ -96,16 +94,10 @@ export function PostCreatorPreviewPane() {
 
   const versions = imageVersions.length > 0 ? imageVersions : []
   const previewVersion = versions[previewVersionIndex] ?? versions[0]
-  const generatedImageUrl = previewSource === 'version' ? (previewVersion?.imageUrl ?? null) : null
-  const showingTemplateOnly =
-    previewSource === 'template' || (!generatedImageUrl && Boolean(templateImage?.url))
-  const previewImageUrl =
-    previewSource === 'template'
-      ? (templateImage?.url ?? null)
-      : (generatedImageUrl ?? templateImage?.url ?? null)
-  const hasGeneratedImage = Boolean(generatedImageUrl)
-  const hasImage = Boolean(previewImageUrl)
-  const showSolidBackgroundPreview = solidBackgroundEnabled && !hasImage && !showingTemplateOnly
+  const previewImageUrl = previewVersion?.imageUrl ?? null
+  const hasGeneratedImage = Boolean(previewImageUrl)
+  const hasImage = hasGeneratedImage
+  const showSolidBackgroundPreview = solidBackgroundEnabled && !hasImage
   const showLoadingPlaceholder = isLoading && !hasImage
   const showVersionNav = versions.length > 1
   const canCommitPostImage =
@@ -131,7 +123,7 @@ export function PostCreatorPreviewPane() {
     !isDeletingVersion
 
   const showRemoveButton = canDeleteVersion || canRemovePage
-  const previewImageAlt = showingTemplateOnly ? t('templatePreviewImageAlt') : t('previewImageAlt')
+  const previewImageAlt = t('previewImageAlt')
 
   const previewVersionAt = useCallback(
     (index: number) => {
@@ -311,7 +303,7 @@ export function PostCreatorPreviewPane() {
               <div className="w-full shrink-0">
                 <PostCreatorVersionFilmstrip
                   versions={versions}
-                  previewIndex={previewSource === 'version' ? previewVersionIndex : -1}
+                  previewIndex={previewVersionIndex}
                   postImageIndex={postImageVersionIndex}
                   aspectRatio={aspectCss}
                   outputWidth={resolved.width}

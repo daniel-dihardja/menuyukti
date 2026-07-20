@@ -32,7 +32,6 @@ import { usePostCreator } from '../_context/use-post-creator'
 import { PostCreatorFormatControls } from './post-creator-format-controls'
 import { PostCreatorImagePicker } from './post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from './post-creator-reference-thumbnails'
-import { PostCreatorTemplatePicker } from './post-creator-template-picker'
 
 const STYLE_NONE = '__none__'
 
@@ -43,10 +42,8 @@ export function PostCreatorPromptPane() {
   const {
     prompt,
     isGenerating,
-    templateImage,
     referenceImages,
     generationModel,
-    previewSource,
     styleId,
     imageFormat,
     imageQuality,
@@ -57,8 +54,6 @@ export function PostCreatorPromptPane() {
     addReference,
     removeReference,
     toggleReferenceEnabled,
-    selectTemplate,
-    clearTemplate,
     setGenerationModel,
     setImageFormat,
     setImageQuality,
@@ -67,7 +62,6 @@ export function PostCreatorPromptPane() {
   const { generationReferenceSummary } = meta
 
   const promptId = useId()
-  const templateFieldId = useId()
   const modelFieldId = useId()
   const styleFieldId = useId()
   const modelBlurbId = `${modelFieldId}-blurb`
@@ -77,7 +71,6 @@ export function PostCreatorPromptPane() {
     () => new Set(referenceImages.map((image) => image.name)),
     [referenceImages],
   )
-  const templateActiveForGeneration = previewSource === 'template' && templateImage != null
 
   const [styles, setStyles] = useState<Style[]>([])
   const [stylesLoading, setStylesLoading] = useState(false)
@@ -195,20 +188,6 @@ export function PostCreatorPromptPane() {
           </div>
         </Field>
         <Field className="gap-1.5">
-          <FieldLabel htmlFor={templateFieldId}>{t('template.label')}</FieldLabel>
-          <PostCreatorTemplatePicker
-            disabled={disabled}
-            emptyLabel={t('template.empty')}
-            fromMediaLabel={t('template.fromMedia')}
-            pickLabel={t('template.pick')}
-            pickerAriaLabel={t('template.pickerAriaLabel')}
-            removeLabel={t('template.remove')}
-            templateImage={templateImage}
-            onClearTemplate={clearTemplate}
-            onSelectTemplate={selectTemplate}
-          />
-        </Field>
-        <Field className="gap-1.5">
           <FieldLabel htmlFor={modelFieldId}>{t('model.label')}</FieldLabel>
           <Select
             value={generationModel}
@@ -242,7 +221,6 @@ export function PostCreatorPromptPane() {
         <PostCreatorFormatControls
           disabled={disabled}
           generationModel={generationModel}
-          hasTemplate={templateImage != null}
           imageFormat={imageFormat}
           imageQuality={imageQuality}
           onFormatChange={setImageFormat}
@@ -280,8 +258,7 @@ export function PostCreatorPromptPane() {
           includeLabel={t('references.include')}
           indexLabel={(index) => {
             const styleOffset = styleId != null ? 1 : 0
-            const templateOffset = templateActiveForGeneration ? 1 : 0
-            const refIndex = index + 1 + styleOffset + templateOffset
+            const refIndex = index + 1 + styleOffset
             return t('references.indexLabel', { index: refIndex })
           }}
           onRemove={removeReference}

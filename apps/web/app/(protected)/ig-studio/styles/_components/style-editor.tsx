@@ -12,8 +12,8 @@ import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-import { PostCreatorTemplatePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-template-picker'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
+import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import {
   DEFAULT_VISION_GATEWAY_MODEL,
   VISION_GATEWAY_MODEL_IDS,
@@ -217,10 +217,10 @@ export function StyleEditor(props: StyleEditorProps) {
 
       <Field className="gap-1.5">
         <FieldLabel>{t('imageLabel')}</FieldLabel>
-        <PostCreatorTemplatePicker
-          templateImage={form.referenceImage}
-          onSelectTemplate={handleSelectImage}
-          onClearTemplate={() => setForm((prev) => ({ ...prev, referenceImage: null }))}
+        <MediaCatalogPicker
+          selectedImage={form.referenceImage}
+          onSelect={handleSelectImage}
+          onClear={() => setForm((prev) => ({ ...prev, referenceImage: null }))}
           disabled={busy}
           pickLabel={t('imagePick')}
           pickerAriaLabel={t('imagePickerAria')}

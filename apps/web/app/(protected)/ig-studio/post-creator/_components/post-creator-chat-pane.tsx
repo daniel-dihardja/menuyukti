@@ -60,9 +60,8 @@ type PendingPreviewAttachment = {
 
 export function PostCreatorChatPane() {
   const t = useTranslations('postCreator.chat')
-  const { state, meta } = usePostCreator()
+  const { meta } = usePostCreator()
   const { postId, previewImageUrl, previewMediaS3Key } = meta
-  const { previewSource, templateImage } = state
 
   const [text, setText] = useState('')
   const [pendingAttachment, setPendingAttachment] = useState<PendingPreviewAttachment | null>(null)
@@ -81,14 +80,6 @@ export function PostCreatorChatPane() {
   const chatId = postId ?? agentThreadId
 
   const previewCandidate = useMemo((): PostCreatorPreviewMentionCandidate | null => {
-    if (previewSource === 'template' && templateImage?.name && templateImage.url) {
-      return {
-        kind: 'photo',
-        name: templateImage.name,
-        url: templateImage.url,
-        label: t('previewChipLabel'),
-      }
-    }
     const postName = parsePostMediaFilename(previewMediaS3Key)
     if (postName && previewImageUrl) {
       return {
@@ -99,7 +90,7 @@ export function PostCreatorChatPane() {
       }
     }
     return null
-  }, [previewImageUrl, previewMediaS3Key, previewSource, t, templateImage])
+  }, [previewImageUrl, previewMediaS3Key, t])
 
   const previewIdentity = previewCandidate
     ? `${previewCandidate.kind}:${previewCandidate.name}`

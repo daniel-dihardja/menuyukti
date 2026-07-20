@@ -6,7 +6,6 @@ import type {
 } from '@/lib/posts/post-creator-types'
 import type { PostImageFormatId, PostImageQualityId } from '@/lib/posts/leonardo-post-dimensions'
 import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
-import type { PostCreatorPreviewSource } from '@/lib/posts/post-creator-utils'
 
 export type {
   PostCreatorDeleteTarget,
@@ -27,7 +26,6 @@ export type PostCreatorState = {
   previewVersionIndex: number
   postImageVersionIndex: number
   referenceImages: PostCreatorReferenceImage[]
-  templateImage: PostCreatorReferenceImage | null
   generationModel: LeonardoPostModelId
   imageFormat: PostImageFormatId
   imageQuality: PostImageQualityId
@@ -35,7 +33,6 @@ export type PostCreatorState = {
   safeZoneInsetYPx: number
   solidBackgroundEnabled: boolean
   solidBackgroundColor: string
-  previewSource: PostCreatorPreviewSource
   styleId: number | null
   isGenerating: boolean
   isCommittingPostImage: boolean
@@ -61,8 +58,6 @@ export type PostCreatorActions = {
   addReference: (photo: PostCreatorReferenceImage) => void
   removeReference: (name: string) => void
   toggleReferenceEnabled: (name: string, enabled: boolean) => void
-  selectTemplate: (design: { name: string; url: string }) => void
-  clearTemplate: () => void
   setGenerationModel: (model: LeonardoPostModelId) => void
   setImageFormat: (format: PostImageFormatId) => void
   setImageQuality: (quality: PostImageQualityId) => void
