@@ -154,7 +154,7 @@ describe('buildInstagramPostPrompt', () => {
       style: {
         name: 'Warm Oat',
         rules: 'fallback rules',
-        styleSpec: {
+        spec: {
           schemaVersion: 2,
           properties: {
             headline: {

@@ -46,10 +46,9 @@ export async function POST(req: Request) {
       CREATE_STYLE_MUTATION,
       {
         name: body.name,
-        rules: body.rules,
         referenceImageName: body.referenceImageName,
+        spec: body.spec,
         isDefault: body.isDefault ?? false,
-        ...(body.styleSpec != null ? { styleSpec: body.styleSpec } : {}),
       },
       userId,
     )

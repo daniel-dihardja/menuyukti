@@ -5,27 +5,24 @@ import { styleSpecSchema } from '@/lib/styles/style-spec'
 
 export const createStyleBodySchema = z.object({
   name: z.string().trim().min(1).max(128),
-  rules: z.string().trim().min(1).max(4000),
   referenceImageName: z.string().trim().min(1).max(512),
+  spec: styleSpecSchema,
   isDefault: z.boolean().optional(),
-  styleSpec: styleSpecSchema.optional(),
 })
 
 export const updateStyleBodySchema = z
   .object({
     name: z.string().trim().min(1).max(128).optional(),
-    rules: z.string().trim().min(1).max(4000).optional(),
     referenceImageName: z.string().trim().min(1).max(512).optional(),
+    spec: styleSpecSchema.optional(),
     isDefault: z.boolean().optional(),
-    styleSpec: styleSpecSchema.optional(),
   })
   .refine(
     (body) =>
       body.name !== undefined ||
-      body.rules !== undefined ||
       body.referenceImageName !== undefined ||
-      body.isDefault !== undefined ||
-      body.styleSpec !== undefined,
+      body.spec !== undefined ||
+      body.isDefault !== undefined,
     { message: 'At least one field is required' },
   )
 

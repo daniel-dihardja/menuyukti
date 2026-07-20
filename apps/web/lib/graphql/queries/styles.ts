@@ -6,7 +6,7 @@ export type Style = {
   rules: string
   referenceImageName: string
   isDefault: boolean
-  styleSpec?: unknown | null
+  spec: unknown
 }
 
 const STYLE_FIELDS = `
@@ -17,7 +17,7 @@ const STYLE_FIELDS = `
   rules
   referenceImageName
   isDefault
-  styleSpec
+  spec
 `
 
 export const STYLES_QUERY = `
@@ -47,17 +47,15 @@ export type StyleData = {
 export const CREATE_STYLE_MUTATION = `
   mutation CreateStyle(
     $name: String!
-    $rules: String!
     $referenceImageName: String!
+    $spec: JSON!
     $isDefault: Boolean
-    $styleSpec: JSON
   ) {
     createStyle(
       name: $name
-      rules: $rules
       referenceImageName: $referenceImageName
+      spec: $spec
       isDefault: $isDefault
-      styleSpec: $styleSpec
     ) {
       ${STYLE_FIELDS}
     }
@@ -72,18 +70,16 @@ export const UPDATE_STYLE_MUTATION = `
   mutation UpdateStyle(
     $id: Int!
     $name: String
-    $rules: String
     $referenceImageName: String
+    $spec: JSON
     $isDefault: Boolean
-    $styleSpec: JSON
   ) {
     updateStyle(
       id: $id
       name: $name
-      rules: $rules
       referenceImageName: $referenceImageName
+      spec: $spec
       isDefault: $isDefault
-      styleSpec: $styleSpec
     ) {
       ${STYLE_FIELDS}
     }

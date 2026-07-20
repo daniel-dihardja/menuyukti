@@ -55,7 +55,8 @@ export function mapGraphqlStyleError(message: string): { status: number; message
     lower.includes('required') ||
     lower.includes('invalid') ||
     lower.includes('at most') ||
-    lower.includes('must be')
+    lower.includes('must be') ||
+    lower.includes('in use')
   ) {
     return { status: 400, message }
   }

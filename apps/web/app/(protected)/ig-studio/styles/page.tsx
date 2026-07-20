@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ImagePlus, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
@@ -37,20 +37,12 @@ export default async function StylesPage() {
       <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <PageHeading title={t('title')} description={t('description')} />
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.igStudioStyleNew}>
-                <ImagePlus className="size-4" aria-hidden />
-                {t('createFromImage')}
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href={routes.igStudioStyleNew}>
-                <Plus className="size-4" aria-hidden />
-                {t('add')}
-              </Link>
-            </Button>
-          </div>
+          <Button asChild size="sm" className="shrink-0">
+            <Link href={routes.igStudioStyleNew}>
+              <Plus className="size-4" aria-hidden />
+              {t('add')}
+            </Link>
+          </Button>
         </div>
         <Suspense fallback={<p className="text-muted-foreground text-sm">{t('loading')}</p>}>
           <StylesLibrary />

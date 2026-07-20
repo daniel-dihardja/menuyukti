@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import strawberry
 from strawberry.scalars import JSON
 
@@ -28,30 +26,27 @@ class CreateStyleMutation:
         self,
         info: strawberry.Info,
         name: str,
-        rules: str,
         reference_image_name: str,
+        spec: JSON,
         is_default: bool = False,
-        style_spec: JSON | None = None,
     ) -> StyleType:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for createStyle")
 
-        normalized_spec: dict[str, Any] | None = None
-        if style_spec is not None:
-            normalized_spec = validate_style_spec(style_spec)
-            rules = rules_from_style_spec(normalized_spec)
-
-        name_clean, rules_clean, image_clean = validate_style_fields(
-            name=name,
-            rules=rules,
-            reference_image_name=reference_image_name,
-        )
-
         with request_session_scope(info) as session:
             workspace_id = primary_workspace_id(session, user_id)
             if workspace_id is None:
                 raise ValueError("No workspace found for createStyle")
+
+            spec_clean = validate_style_spec(spec)
+            rules = rules_from_style_spec(spec_clean)
+            name_clean, rules_clean, image_clean = validate_style_fields(
+                name=name,
+                rules=rules,
+                reference_image_name=reference_image_name,
+            )
+
             if is_default:
                 clear_other_defaults(session, workspace_id)
             row = VisualStyle(
@@ -60,7 +55,7 @@ class CreateStyleMutation:
                 name=name_clean,
                 rules=rules_clean,
                 reference_image_name=image_clean,
-                style_spec=normalized_spec,
+                spec=spec_clean,
                 is_default=is_default,
             )
             session.add(row)

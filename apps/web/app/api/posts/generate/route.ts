@@ -161,7 +161,7 @@ export async function POST(req: Request) {
     stylePack = {
       name: style.name,
       rules: style.rules,
-      styleSpec: parseStyleSpec(style.styleSpec),
+      spec: parseStyleSpec(style.spec),
     }
     styleImageName = style.referenceImageName
   }

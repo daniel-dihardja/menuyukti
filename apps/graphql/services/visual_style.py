@@ -17,27 +17,37 @@ _MAX_PROPERTIES = 30
 _PROPERTY_KEY_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
 
+def validate_style_name(name: str) -> str:
+    name_clean = name.strip()
+    if not name_clean:
+        raise ValueError("Name is required")
+    if len(name_clean) > _MAX_NAME_LEN:
+        raise ValueError(f"Name must be at most {_MAX_NAME_LEN} characters")
+    return name_clean
+
+
+def validate_reference_image_name(reference_image_name: str) -> str:
+    image_clean = reference_image_name.strip()
+    if not image_clean:
+        raise ValueError("Reference image name is required")
+    if len(image_clean) > _MAX_IMAGE_NAME_LEN:
+        raise ValueError(f"Reference image name must be at most {_MAX_IMAGE_NAME_LEN} characters")
+    return image_clean
+
+
 def validate_style_fields(
     *,
     name: str,
     rules: str,
     reference_image_name: str,
 ) -> tuple[str, str, str]:
-    name_clean = name.strip()
+    name_clean = validate_style_name(name)
     rules_clean = rules.strip()
-    image_clean = reference_image_name.strip()
-    if not name_clean:
-        raise ValueError("Name is required")
-    if len(name_clean) > _MAX_NAME_LEN:
-        raise ValueError(f"Name must be at most {_MAX_NAME_LEN} characters")
+    image_clean = validate_reference_image_name(reference_image_name)
     if not rules_clean:
         raise ValueError("Rules are required")
     if len(rules_clean) > _MAX_RULES_LEN:
         raise ValueError(f"Rules must be at most {_MAX_RULES_LEN} characters")
-    if not image_clean:
-        raise ValueError("Reference image name is required")
-    if len(image_clean) > _MAX_IMAGE_NAME_LEN:
-        raise ValueError(f"Reference image name must be at most {_MAX_IMAGE_NAME_LEN} characters")
     return name_clean, rules_clean, image_clean
 
 

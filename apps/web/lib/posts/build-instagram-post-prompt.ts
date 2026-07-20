@@ -22,7 +22,7 @@ export type OutputDimensions = {
 export type StylePackPrompt = {
   name: string
   rules: string
-  styleSpec?: StyleSpec | null
+  spec?: StyleSpec | null
 }
 
 export type BuildInstagramPostPromptOptions = {
@@ -153,9 +153,9 @@ function resolveStyleAndPrompt(
     return { prompt: trimmed }
   }
 
-  if (style.styleSpec) {
+  if (style.spec) {
     const { overrides, cleanedPrompt } = parsePropertyOverrides(trimmed)
-    const { body } = compileStyleSpec(style.styleSpec, overrides)
+    const { body } = compileStyleSpec(style.spec, overrides)
     return {
       prompt: cleanedPrompt || trimmed,
       styleBlock: buildStylePackBlock(style, body),

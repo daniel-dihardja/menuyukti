@@ -31,10 +31,9 @@ export async function getStyle(id: number): Promise<Style> {
 
 export async function createStyle(input: {
   name: string
-  rules: string
   referenceImageName: string
+  spec: StyleSpec
   isDefault?: boolean
-  styleSpec?: StyleSpec
 }): Promise<Style> {
   const result = await apiFetch<{ style: Style }>(
     '/api/styles',
@@ -55,10 +54,9 @@ export async function updateStyle(
   id: number,
   input: {
     name?: string
-    rules?: string
     referenceImageName?: string
+    spec?: StyleSpec
     isDefault?: boolean
-    styleSpec?: StyleSpec
   },
 ): Promise<Style> {
   const result = await apiFetch<{ style: Style }>(

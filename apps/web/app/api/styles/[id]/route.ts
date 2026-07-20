@@ -66,12 +66,11 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     const variables: Record<string, unknown> = { id }
     if (body.name !== undefined) variables.name = body.name
-    if (body.rules !== undefined) variables.rules = body.rules
     if (body.referenceImageName !== undefined) {
       variables.referenceImageName = body.referenceImageName
     }
+    if (body.spec !== undefined) variables.spec = body.spec
     if (body.isDefault !== undefined) variables.isDefault = body.isDefault
-    if (body.styleSpec !== undefined) variables.styleSpec = body.styleSpec
 
     const data = await graphqlQuery<UpdateStyleData>(UPDATE_STYLE_MUTATION, variables, userId)
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { ImagePlus, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -63,20 +63,12 @@ export function StylesLibrary() {
           <p className="text-base font-semibold">{t('emptyTitle')}</p>
           <p className="text-muted-foreground max-w-md text-sm">{t('emptyDescription')}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild>
-            <Link href={`${routes.igStudioStyleNew}?path=from-image`}>
-              <ImagePlus className="size-4" aria-hidden />
-              {t('createFromImage')}
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={routes.igStudioStyleNew}>
-              <Plus className="size-4" aria-hidden />
-              {t('add')}
-            </Link>
-          </Button>
-        </div>
+        <Button asChild>
+          <Link href={routes.igStudioStyleNew}>
+            <Plus className="size-4" aria-hidden />
+            {t('add')}
+          </Link>
+        </Button>
       </div>
     )
   }

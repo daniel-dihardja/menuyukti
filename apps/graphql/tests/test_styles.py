@@ -1,4 +1,4 @@
-"""Tests for styles / style queries and style CRUD mutations."""
+"""Tests for styles queries and CRUD mutations."""
 
 from __future__ import annotations
 
@@ -6,9 +6,47 @@ import asyncio
 from datetime import UTC, datetime
 
 import pytest
-from graphql.data_sources import SessionLocal, VisualStyle, Workspace, WorkspaceMembership
+from graphql.data_sources import (
+    SessionLocal,
+    VisualStyle,
+    Workspace,
+    WorkspaceMembership,
+)
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+
+_SAMPLE_SPEC = {
+    "schemaVersion": 2,
+    "properties": {
+        "headline": {
+            "type": "enum",
+            "values": ["auto", "none"],
+            "default": "auto",
+            "instructions": {
+                "auto": "Place a short headline top-left when provided.",
+                "none": "Leave the headline area empty.",
+            },
+        },
+        "productName": {
+            "type": "enum",
+            "values": ["auto", "none"],
+            "default": "auto",
+            "instructions": {
+                "auto": "Place product name under the cup when provided.",
+                "none": "Omit product name.",
+            },
+        },
+        "backgroundIllustration": {
+            "type": "enum",
+            "values": ["template_default", "none"],
+            "default": "template_default",
+            "instructions": {
+                "template_default": "Keep template line-art decorations.",
+                "none": "No background illustrations.",
+            },
+        },
+    },
+}
 
 _LIST_QUERY = """
 query Styles {
@@ -20,7 +58,7 @@ query Styles {
     rules
     referenceImageName
     isDefault
-    styleSpec
+    spec
   }
 }
 """
@@ -35,7 +73,7 @@ query Style($id: Int!) {
     rules
     referenceImageName
     isDefault
-    styleSpec
+    spec
   }
 }
 """
@@ -43,17 +81,15 @@ query Style($id: Int!) {
 _CREATE = """
 mutation CreateStyle(
   $name: String!
-  $rules: String!
   $referenceImageName: String!
+  $spec: JSON!
   $isDefault: Boolean
-  $styleSpec: JSON
 ) {
   createStyle(
     name: $name
-    rules: $rules
     referenceImageName: $referenceImageName
+    spec: $spec
     isDefault: $isDefault
-    styleSpec: $styleSpec
   ) {
     id
     workspaceId
@@ -62,7 +98,7 @@ mutation CreateStyle(
     rules
     referenceImageName
     isDefault
-    styleSpec
+    spec
   }
 }
 """
@@ -71,25 +107,23 @@ _UPDATE = """
 mutation UpdateStyle(
   $id: Int!
   $name: String
-  $rules: String
   $referenceImageName: String
+  $spec: JSON
   $isDefault: Boolean
-  $styleSpec: JSON
 ) {
   updateStyle(
     id: $id
     name: $name
-    rules: $rules
     referenceImageName: $referenceImageName
+    spec: $spec
     isDefault: $isDefault
-    styleSpec: $styleSpec
   ) {
     id
     name
     rules
     referenceImageName
     isDefault
-    styleSpec
+    spec
   }
 }
 """
@@ -168,8 +202,8 @@ def test_create_update_delete_and_default_exclusivity(style_workspace_id: int):
         _CREATE,
         {
             "name": "Warm editorial",
-            "rules": "Warm window light; soft shadows.",
             "referenceImageName": "warm-ref.webp",
+            "spec": _SAMPLE_SPEC,
             "isDefault": True,
         },
     )
@@ -179,14 +213,16 @@ def test_create_update_delete_and_default_exclusivity(style_workspace_id: int):
     assert style_a["workspaceId"] == style_workspace_id
     assert style_a["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert style_a["referenceImageName"] == "warm-ref.webp"
+    assert style_a["spec"]["schemaVersion"] == 2
+    assert "PROPERTIES (resolved):" in style_a["rules"]
     id_a = style_a["id"]
 
     created_b = _execute(
         _CREATE,
         {
             "name": "Cool neon",
-            "rules": "Cool cyan accents; high contrast.",
             "referenceImageName": "cool-ref.webp",
+            "spec": _SAMPLE_SPEC,
             "isDefault": True,
         },
     )
@@ -221,6 +257,7 @@ def test_create_update_delete_and_default_exclusivity(style_workspace_id: int):
     one = _execute(_ONE_QUERY, {"id": id_a})
     assert one.errors is None
     assert one.data["style"]["name"] == "Warm editorial v2"
+    assert one.data["style"]["spec"]["schemaVersion"] == 2
 
     deleted = _execute(_DELETE, {"id": id_b})
     assert deleted.errors is None
@@ -236,12 +273,25 @@ def test_create_requires_fields(style_workspace_id: int):
         _CREATE,
         {
             "name": "  ",
-            "rules": "rules",
             "referenceImageName": "a.webp",
+            "spec": _SAMPLE_SPEC,
         },
     )
     assert result.errors is not None
     assert any("Name is required" in str(err) for err in result.errors)
+
+
+def test_create_rejects_invalid_spec(style_workspace_id: int):
+    result = _execute(
+        _CREATE,
+        {
+            "name": "Bad",
+            "referenceImageName": "a.webp",
+            "spec": {"schemaVersion": 2},
+        },
+    )
+    assert result.errors is not None
+    assert any("properties" in str(err) for err in result.errors)
 
 
 def test_get_one_denied_for_other_user(style_workspace_id: int):
@@ -249,8 +299,8 @@ def test_get_one_denied_for_other_user(style_workspace_id: int):
         _CREATE,
         {
             "name": "Private",
-            "rules": "rules",
             "referenceImageName": "p.webp",
+            "spec": _SAMPLE_SPEC,
         },
     )
     assert created.errors is None
@@ -265,58 +315,36 @@ def test_get_one_denied_for_other_user(style_workspace_id: int):
     assert denied.data["style"] is None
 
 
-_SAMPLE_SPEC = {
-    "schemaVersion": 2,
-    "properties": {
-        "headline": {
-            "type": "enum",
-            "values": ["auto", "none"],
-            "default": "auto",
-            "instructions": {
-                "auto": "Place a short headline top-left when provided.",
-                "none": "Leave the headline area empty.",
-            },
-        },
-        "productName": {
-            "type": "enum",
-            "values": ["auto", "none"],
-            "default": "auto",
-            "instructions": {
-                "auto": "Place product name under the cup when provided.",
-                "none": "Omit product name.",
-            },
-        },
-        "backgroundIllustration": {
-            "type": "enum",
-            "values": ["template_default", "none"],
-            "default": "template_default",
-            "instructions": {
-                "template_default": "Keep template line-art decorations.",
-                "none": "No background illustrations.",
-            },
-        },
-    },
-}
-
-
-def test_create_with_style_spec_syncs_rules(style_workspace_id: int):
+def test_update_style_spec_syncs_rules(style_workspace_id: int):
     created = _execute(
         _CREATE,
         {
-            "name": "Warm Oat",
-            "rules": "ignored when styleSpec is set",
-            "referenceImageName": "warm-oat.webp",
-            "styleSpec": _SAMPLE_SPEC,
+            "name": "Synced",
+            "referenceImageName": "sync.webp",
+            "spec": _SAMPLE_SPEC,
         },
     )
     assert created.errors is None
-    style = created.data["createStyle"]
-    assert "PROPERTIES (resolved):" in style["rules"]
-    assert "headline: auto →" in style["rules"]
-    assert style["styleSpec"]["schemaVersion"] == 2
-    assert "kind" not in style["styleSpec"]
-    assert "baseRules" not in style["styleSpec"]
-    assert style["styleSpec"]["properties"]["headline"]["default"] == "auto"
+    style_id = created.data["createStyle"]["id"]
+
+    next_spec = {
+        "schemaVersion": 2,
+        "properties": {
+            "tone": {
+                "type": "enum",
+                "values": ["warm", "cool"],
+                "default": "cool",
+                "instructions": {
+                    "warm": "Warm tones.",
+                    "cool": "Cool cyan accents.",
+                },
+            }
+        },
+    }
+    updated = _execute(_UPDATE, {"id": style_id, "spec": next_spec})
+    assert updated.errors is None
+    assert "tone: cool → Cool cyan accents." in updated.data["updateStyle"]["rules"]
+    assert updated.data["updateStyle"]["spec"]["properties"]["tone"]["default"] == "cool"
 
 
 def test_create_rejects_v1_style_spec(style_workspace_id: int):
@@ -338,24 +366,9 @@ def test_create_rejects_v1_style_spec(style_workspace_id: int):
         _CREATE,
         {
             "name": "Legacy",
-            "rules": "fallback",
-            "referenceImageName": "x.webp",
-            "styleSpec": v1_spec,
+            "referenceImageName": "legacy.webp",
+            "spec": v1_spec,
         },
     )
     assert result.errors is not None
     assert any("schemaVersion" in str(err) for err in result.errors)
-
-
-def test_create_rejects_invalid_style_spec(style_workspace_id: int):
-    result = _execute(
-        _CREATE,
-        {
-            "name": "Bad",
-            "rules": "fallback",
-            "referenceImageName": "x.webp",
-            "styleSpec": {"schemaVersion": 2},
-        },
-    )
-    assert result.errors is not None
-    assert any("properties" in str(err) for err in result.errors)

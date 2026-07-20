@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import strawberry
 from strawberry.scalars import JSON
 
@@ -28,10 +26,9 @@ class UpdateStyleMutation:
         info: strawberry.Info,
         id: int,
         name: str | None = None,
-        rules: str | None = None,
         reference_image_name: str | None = None,
+        spec: JSON | None = None,
         is_default: bool | None = None,
-        style_spec: JSON | None = None,
     ) -> StyleType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -51,13 +48,12 @@ class UpdateStyleMutation:
                 else row.reference_image_name
             )
 
-            normalized_spec: dict[str, Any] | None
-            if style_spec is not None:
-                normalized_spec = validate_style_spec(style_spec)
-                next_rules = rules_from_style_spec(normalized_spec)
+            if spec is not None:
+                spec_clean = validate_style_spec(spec)
+                row.spec = spec_clean
+                next_rules = rules_from_style_spec(spec_clean)
             else:
-                normalized_spec = row.style_spec
-                next_rules = rules if rules is not None else row.rules
+                next_rules = row.rules
 
             name_clean, rules_clean, image_clean = validate_style_fields(
                 name=next_name,
@@ -67,8 +63,6 @@ class UpdateStyleMutation:
             row.name = name_clean
             row.rules = rules_clean
             row.reference_image_name = image_clean
-            if style_spec is not None:
-                row.style_spec = normalized_spec
 
             if is_default is not None:
                 if is_default:
