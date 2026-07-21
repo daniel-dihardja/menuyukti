@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 
 import type { MilestonePresetId } from '@/lib/graphql/node-schemas'
 import { MILESTONE_PRESET_REGISTRY } from '@/lib/milestones/preset-definitions'
+import { normalizeDraftsData } from '@/lib/milestones/drafts'
 
 import type { TimelineMilestone } from '../timeline/types'
 
@@ -16,6 +17,7 @@ import { MilestoneIgPlanDataPreview } from './milestone-ig-plan-data-preview'
 import { MilestoneIgMenuPickerDataPreview } from './milestone-ig-menu-picker-data-preview'
 import { MilestoneIgFormatDataPreview } from './milestone-ig-format-data-preview'
 import { MilestoneIgTextDataPreview } from './milestone-ig-text-data-preview'
+import { MilestoneDraftsDataPreview } from './milestone-drafts-data-preview'
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestoneMenuClustererDataPreview } from './milestone-menu-clusterer-data-preview'
 import { MilestoneSchedulerDataPreview } from './milestone-scheduler-data-preview'
@@ -106,6 +108,13 @@ function renderParsedPreview(
           data={data as Parameters<typeof MilestoneIgTextDataPreview>[0]['data']}
         />
       )
+    case 'drafts':
+      return (
+        <MilestoneDraftsDataPreview
+          milestoneId={milestone.id}
+          data={data as Parameters<typeof MilestoneDraftsDataPreview>[0]['data']}
+        />
+      )
     case 'scheduler':
       return (
         <MilestoneSchedulerDataPreview
@@ -146,6 +155,10 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const def = MILESTONE_PRESET_REGISTRY[pid]
   const parsed = def.dataSchema.safeParse(data)
   if (!parsed.success) {
+    // Heal milestones corrupted by the earlier Zod-union strip of draft items.
+    if (pid === 'drafts') {
+      return renderParsedPreview(pid, normalizeDraftsData(data), milestone)
+    }
     return (
       <PreviewStateMessage
         title={t('milestonePreviewDataInvalidTitle')}

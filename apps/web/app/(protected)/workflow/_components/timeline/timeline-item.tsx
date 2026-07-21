@@ -39,6 +39,7 @@ function isKeyboardEventFromNestedInteractive(eventTarget: EventTarget | null): 
 
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { campaignBriefInputFromMilestoneInput } from '@/lib/milestones/campaign-brief-input'
+import { isManualWorkspacePreset } from '@/lib/milestones/preset-definitions'
 
 export type TimelineItemProps = {
   milestone: TimelineMilestone
@@ -272,7 +273,10 @@ function TimelineItemInner({ milestone, isFirst, isLast, isMobile = false }: Tim
                 onMilestoneRunChatModelChange: handleMilestoneRunChatModelChange,
                 savingRunChatModel,
                 actions: {
-                  run: isChatBusy ? undefined : handleRunMilestoneWithInputFlush,
+                  run:
+                    isChatBusy || isManualWorkspacePreset(milestone.presetId)
+                      ? undefined
+                      : handleRunMilestoneWithInputFlush,
                   stopRun: isMilestoneRunning ? onStopMilestoneRun : undefined,
                   deleteMilestone: onDeleteMilestone,
                 },

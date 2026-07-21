@@ -15,11 +15,12 @@ import {
   igMenuPickerMilestoneDataSchema,
   igFormatMilestoneDataSchema,
   igTextMilestoneDataSchema,
+  draftsMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   milestoneInputSchema,
-  milestonePresetIdSchema,
+  milestonePresetIdFieldSchema,
   passCriteriaSchema,
   promotionCandidatesMilestoneDataSchema,
 } from './milestone-presets'
@@ -29,7 +30,7 @@ export const milestoneDataSchema = z
     order: z.number().int().optional(),
     /** Free-form milestone goal; persisted on the milestone node `data` JSON. */
     goal: z.string().optional(),
-    presetId: milestonePresetIdSchema.optional(),
+    presetId: milestonePresetIdFieldSchema,
     /** Workflow-scoped human-friendly code shown in the UI (`M-XXXX`). */
     displayCode: z
       .string()
@@ -51,6 +52,8 @@ export type MilestoneData = z.infer<typeof milestoneDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
+  // Before all-default IG schemas (ig_plan/ig_text/…): those accept any object and strip `drafts`.
+  draftsMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,

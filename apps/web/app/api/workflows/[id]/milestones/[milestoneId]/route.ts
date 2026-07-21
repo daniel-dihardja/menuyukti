@@ -16,6 +16,7 @@ import {
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
 import { EMPTY_MENU_CLUSTERER_DATA } from '@/lib/milestones/menu-clusterer'
+import { normalizeDraftsData } from '@/lib/milestones/drafts'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import {
   DELETE_NODE_MUTATION,
@@ -244,6 +245,10 @@ export async function GET(_req: Request, context: RouteContext) {
           slots: [],
         }
       }
+    }
+
+    if (presetId === 'drafts') {
+      milestoneData = normalizeDraftsData(milestoneData ?? mpd)
     }
 
     const goal =
