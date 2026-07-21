@@ -5,24 +5,6 @@ from __future__ import annotations
 from typing import Any, NotRequired, TypedDict
 
 
-class IgPlanEntry(TypedDict):
-    day: str
-    slot: str
-    objective: str
-    pillar: str
-    mealPeriod: str
-    productRole: str
-    slotStrategy: str
-    slotKey: str
-
-
-class IgPlanOutput(TypedDict):
-    scheduleExplanation: str
-    entries: list[IgPlanEntry]
-    sourceAnalyticsRunId: str
-    reportingPeriod: str
-
-
 class IgPlanState(TypedDict):
     """State carried through IGPlan fetch, generation, and persistence."""
 
@@ -43,7 +25,8 @@ class IgPlanState(TypedDict):
     menu_engineering_matrix: NotRequired[dict[str, Any]]
     slot_menu_candidates: NotRequired[dict[str, Any]]
     generation_context_json: NotRequired[str]
-    generated_output: NotRequired[IgPlanOutput | None]
+    # Validated IgPlanMilestoneOutput.model_dump() after generation.
+    generated_output: NotRequired[dict[str, Any] | None]
     result_data: str
     raw_data: NotRequired[str]
     milestone_data: NotRequired[dict[str, Any] | list[Any] | None]

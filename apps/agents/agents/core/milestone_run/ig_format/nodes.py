@@ -13,7 +13,8 @@ from agents_app.agents.core.milestone_run.ig_format.prompts import (
     build_ig_format_messages,
     empty_format_retry_message,
 )
-from agents_app.agents.core.milestone_run.ig_format.state import IgFormatOutput, IgFormatState
+from agents_app.agents.core.milestone_run.ig_format.state import IgFormatState
+from agents_app.agents.core.milestone_run.ig_schedule import parse_ig_menu_picker_schedule
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
@@ -21,12 +22,11 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_ig_menu_picker_data,
     extract_ig_menu_picker_row,
-    ig_menu_picker_has_entries,
     ig_menu_picker_prior_error_message,
     preferred_milestone_id_from_input,
 )
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 IG_FORMAT_MAX_ATTEMPTS = 2
 VALID_FORMAT_TYPES = frozenset({"reel", "post", "post-carousel", "story"})
@@ -63,23 +63,7 @@ def _fmt_owner_notes(state: IgFormatState) -> str:
     return notes.strip()
 
 
-def _menu_picker_entries(prior_data: dict[str, Any]) -> list[dict[str, Any]]:
-    raw = prior_data.get("entries")
-    if not isinstance(raw, list):
-        return []
-    entries: list[dict[str, Any]] = []
-    for row in raw:
-        if not isinstance(row, dict):
-            continue
-        slot_key = str(row.get("slotKey") or "").strip()
-        menu_items = row.get("menuItems")
-        if not slot_key or not isinstance(menu_items, list) or not menu_items:
-            continue
-        entries.append(row)
-    return sort_ig_plan_entries(entries)
-
-
-def _normalize_generated_output(payload: Any) -> IgFormatOutput:
+def _normalize_generated_output(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("ig_format output validation failed")
     entries = payload.get("entries")
@@ -91,7 +75,7 @@ def _normalize_generated_output(payload: Any) -> IgFormatOutput:
     normalized, error = validate_skill_output("ig_format", payload)
     if error is not None or not isinstance(normalized, dict):
         raise ValueError(error or "ig_format output validation failed")
-    return normalized  # type: ignore[return-value]
+    return normalized
 
 
 class IgFormatEntryPickDraft(BaseModel):
@@ -156,11 +140,16 @@ async def fetch_and_prepare(state: IgFormatState, *, client: httpx.AsyncClient) 
         "sourceIgMenuPickerMilestoneId",
     )
     prior_row = extract_ig_menu_picker_row(prior_json, preferred_milestone_id=preferred)
-    prior_data = extract_ig_menu_picker_data(prior_json, preferred_milestone_id=preferred)
-    if prior_data is None or not ig_menu_picker_has_entries(prior_data):
+    prior_data_raw = extract_ig_menu_picker_data(prior_json, preferred_milestone_id=preferred)
+    if prior_data_raw is None:
         raise ValueError(ig_menu_picker_prior_error_message(prior_json))
+    try:
+        menu_schedule = parse_ig_menu_picker_schedule(prior_data_raw)
+    except ValidationError as exc:
+        raise ValueError(ig_menu_picker_prior_error_message(prior_json)) from exc
+    prior_data = menu_schedule.model_dump()
 
-    source_entries = _menu_picker_entries(prior_data)
+    source_entries = sort_ig_plan_entries([entry.model_dump() for entry in menu_schedule.entries])
     if not source_entries:
         raise ValueError("ig_format requires at least one IG Menu Picker entry with menuItems")
 

@@ -1,5 +1,5 @@
 import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/timeline/types'
-import { igMenuPickerEntrySchema, type IgMenuPickerEntry } from '@/lib/graphql/node-schemas'
+import { parseIgScheduleEntries, type IgMenuPickerEntry } from '@/lib/graphql/node-schemas'
 import {
   resolveDependencyMilestone,
   selectedDependencyIdFromInput,
@@ -23,20 +23,7 @@ export function resolveIgMenuPickerEntriesForFormat(
   if (!priorMenuPicker?.data || typeof priorMenuPicker.data !== 'object') {
     return []
   }
-  const rawEntries = (priorMenuPicker.data as { entries?: unknown }).entries
-  if (!Array.isArray(rawEntries)) {
-    return []
-  }
-  const entries: IgMenuPickerEntry[] = []
-  for (const raw of rawEntries) {
-    const row = igMenuPickerEntrySchema.safeParse(raw)
-    if (!row.success || !row.data.slotKey.trim()) {
-      continue
-    }
-    if (!row.data.menuItems?.length) {
-      continue
-    }
-    entries.push(row.data)
-  }
-  return entries
+  return (parseIgScheduleEntries(priorMenuPicker.data, 'menu') as IgMenuPickerEntry[]).filter(
+    (row) => row.slotKey.trim() && row.menuItems.length > 0,
+  )
 }
