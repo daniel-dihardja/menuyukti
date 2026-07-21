@@ -584,6 +584,162 @@ async def test_update_milestone_input_missing_operations_returns_guidance(
     persist_mock.assert_not_awaited()
 
 
+def _drafts_milestone_node(
+    *,
+    milestone_preset_data: dict | None = None,
+    preset_id: str = "drafts",
+) -> dict:
+    return {
+        "id": "42",
+        "nodeType": "milestone",
+        "locationId": 7,
+        "data": {"presetId": preset_id},
+        "milestonePresetData": milestone_preset_data,
+    }
+
+
+@pytest.mark.asyncio
+async def test_update_milestone_drafts_append_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _drafts_milestone_node(
+        milestone_preset_data={
+            "drafts": [{"id": "existing-1", "name": "Old", "body": "Existing body"}],
+        }
+    )
+    fetch_mock = AsyncMock(return_value=node)
+    persist_mock = AsyncMock(return_value={"id": "42"})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+    monkeypatch.setattr(chat_tools, "persist_milestone_preset_data", persist_mock)
+
+    out = await chat_tools.update_milestone_drafts.ainvoke(
+        {
+            "drafts": [
+                {"name": "Pantun 1", "body": "Kopi panas di pagi hari\nWorld Cup kenangan manis"},
+            ],
+            "mode": "append",
+        },
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "Saved 1 draft(s) with mode=append" in out
+    assert "2 total" in out
+    persist_mock.assert_awaited_once()
+    saved_payload = persist_mock.await_args.args[2]
+    assert len(saved_payload["drafts"]) == 2
+    assert saved_payload["drafts"][0]["id"] == "existing-1"
+    assert saved_payload["drafts"][1]["name"] == "Pantun 1"
+    assert saved_payload["drafts"][1]["id"]
+
+
+@pytest.mark.asyncio
+async def test_update_milestone_drafts_replace_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _drafts_milestone_node(
+        milestone_preset_data={
+            "drafts": [{"id": "existing-1", "name": "Old", "body": "Existing body"}],
+        }
+    )
+    fetch_mock = AsyncMock(return_value=node)
+    persist_mock = AsyncMock(return_value={"id": "42"})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+    monkeypatch.setattr(chat_tools, "persist_milestone_preset_data", persist_mock)
+
+    out = await chat_tools.update_milestone_drafts.ainvoke(
+        {
+            "drafts": [
+                {"name": "Only", "body": "Replacement body"},
+            ],
+            "mode": "replace",
+        },
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "Saved 1 draft(s) with mode=replace" in out
+    assert "1 total" in out
+    saved_payload = persist_mock.await_args.args[2]
+    assert len(saved_payload["drafts"]) == 1
+    assert saved_payload["drafts"][0]["body"] == "Replacement body"
+
+
+@pytest.mark.asyncio
+async def test_update_milestone_drafts_rejects_non_drafts_preset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    node = _drafts_milestone_node(preset_id="ig_text")
+    fetch_mock = AsyncMock(return_value=node)
+    persist_mock = AsyncMock(return_value={"id": "42"})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+    monkeypatch.setattr(chat_tools, "persist_milestone_preset_data", persist_mock)
+
+    out = await chat_tools.update_milestone_drafts.ainvoke(
+        {"drafts": [{"body": "Hello"}]},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "only works when the selected milestone preset is 'drafts'" in out
+    persist_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_milestone_drafts_requires_selection() -> None:
+    out = await chat_tools.update_milestone_drafts.ainvoke(
+        {"drafts": [{"body": "Hello"}]},
+        config={"configurable": {}},
+    )
+    assert "Milestone context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_update_milestone_drafts_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _drafts_milestone_node(milestone_preset_data={"drafts": []})
+    fetch_mock = AsyncMock(return_value=node)
+    persist_mock = AsyncMock(return_value={"id": "42"})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+    monkeypatch.setattr(chat_tools, "persist_milestone_preset_data", persist_mock)
+
+    out = await chat_tools.update_milestone_drafts.ainvoke(
+        {"drafts": [{"body": "Dry run body"}], "dry_run": True},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "dry_run=true" in out
+    persist_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_milestone_drafts_empty_list_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _drafts_milestone_node()
+    fetch_mock = AsyncMock(return_value=node)
+    persist_mock = AsyncMock(return_value={"id": "42"})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+    monkeypatch.setattr(chat_tools, "persist_milestone_preset_data", persist_mock)
+
+    out = await chat_tools.update_milestone_drafts.ainvoke(
+        {"drafts": []},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "at least one draft" in out
+    persist_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_milestone_drafts_oversized_list_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    node = _drafts_milestone_node()
+    fetch_mock = AsyncMock(return_value=node)
+    persist_mock = AsyncMock(return_value={"id": "42"})
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+    monkeypatch.setattr(chat_tools, "persist_milestone_preset_data", persist_mock)
+
+    out = await chat_tools.update_milestone_drafts.ainvoke(
+        {"drafts": [{"body": f"Body {i}"} for i in range(21)]},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "Too many drafts" in out
+    persist_mock.assert_not_awaited()
+
+
 def _location_page_payload() -> dict:
     return {
         "name": "Harbor Kitchen",

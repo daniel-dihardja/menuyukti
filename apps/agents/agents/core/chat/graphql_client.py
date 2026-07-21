@@ -6,6 +6,7 @@ from typing import Any
 
 import httpx
 from agents_app.agents.core.chat.http_context import get_chat_milestone_cache
+from agents_app.agents.core.milestone_data.graphql_client import upsert_milestonedata
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     NODE_BY_ID_QUERY,
@@ -124,3 +125,21 @@ async def update_milestone_input(
         msg = "updateNode returned invalid payload"
         raise RuntimeError(msg)
     return node
+
+
+async def update_milestone_preset_data(
+    milestone_id: str,
+    location_id: int,
+    payload: Any,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any]:
+    """Update ``milestonePresetData`` on a milestone node via ``upsert_milestonedata``."""
+    return await upsert_milestonedata(
+        milestone_id,
+        location_id,
+        payload,
+        user_id,
+        client=client,
+    )

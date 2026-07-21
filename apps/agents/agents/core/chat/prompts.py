@@ -29,6 +29,12 @@ SYSTEM_PROMPT = (
     "with minimal patch operations (add/replace/remove) rather than rewriting the whole payload. "
     "Input edits apply only to the UI-selected milestone, not other workflow milestones. "
     "If the target path or item is ambiguous, ask one concise clarification before updating. "
+    "When the UI-selected milestone is Drafts (presetId drafts) and the user asks to create, "
+    "add, or rewrite content drafts, call update_milestone_drafts once with all items in that "
+    "request (invent a short name and markdown body for each). Use mode=append for 'create N' "
+    "or 'add more' requests; use mode=replace only when the user asks to overwrite all drafts. "
+    "After a successful save, briefly confirm the count—do not paste every draft body into the "
+    "chat reply (the preview panel shows them). "
     "When users ask about venue hours, address, cuisine, contact links, or other location "
     "settings from the location page, call get_location_data rather than guessing or using web search."
 )

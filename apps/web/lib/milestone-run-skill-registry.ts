@@ -84,7 +84,7 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
     id: 'drafts',
     name: 'Drafts',
     description:
-      'Manual workspace for content drafts: create and refine markdown drafts in the preview panel (no LLM run).',
+      'Workspace for content drafts: create and refine markdown drafts in the preview panel or via chat (no dedicated LLM run).',
   },
   {
     id: 'scheduler',
