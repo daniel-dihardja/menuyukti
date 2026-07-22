@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   ArrowLeftIcon,
@@ -43,6 +43,13 @@ import type {
   InstagramItemMediaVersionDto,
 } from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  getLeonardoPostModelMessageKey,
+  isLeonardoPostModelId,
+  LEONARDO_POST_MODEL_IDS,
+  type LeonardoPostModelId,
+} from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
 
@@ -146,11 +153,17 @@ export function InstagramItemDetail({
   onGenerated,
 }: InstagramItemDetailProps) {
   const t = useTranslations('analytics.workflows.instagramItems')
+  const tModel = useTranslations('postCreator.prompt.model')
   const tPicker = useTranslations('postCreator.prompt.picker')
   const tRefs = useTranslations('postCreator.prompt.references')
+  const modelFieldId = useId()
+  const modelBlurbId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
     refsFromItem(item),
+  )
+  const [generationModel, setGenerationModel] = useState<LeonardoPostModelId>(
+    DEFAULT_LEONARDO_POST_MODEL,
   )
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
@@ -265,6 +278,7 @@ export function InstagramItemDetail({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
+          model: generationModel,
           referenceImages: persistedRefs,
           ...(references.length > 0 ? { references } : {}),
         }),
@@ -576,6 +590,37 @@ export function InstagramItemDetail({
             rows={3}
             value={values.caption}
           />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor={modelFieldId}>{tModel('label')}</Label>
+          <Select
+            disabled={busy}
+            onValueChange={(value) => {
+              if (isLeonardoPostModelId(value)) {
+                setGenerationModel(value)
+              }
+            }}
+            value={generationModel}
+          >
+            <SelectTrigger
+              aria-describedby={modelBlurbId}
+              aria-label={tModel('label')}
+              id={modelFieldId}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LEONARDO_POST_MODEL_IDS.map((modelId) => (
+                <SelectItem key={modelId} value={modelId}>
+                  {tModel(`options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-muted-foreground text-xs" id={modelBlurbId}>
+            {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
+          </p>
         </div>
 
         <div className="grid gap-1.5">
