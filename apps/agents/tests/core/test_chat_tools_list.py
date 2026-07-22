@@ -22,6 +22,7 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     assert "get_milestone" in names
     assert "update_milestone_input" in names
     assert "get_location_data" in names
+    assert "get_chart_data" in names
 
 
 def test_chat_tools_list_includes_search_web_with_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -49,6 +50,7 @@ def test_chat_tools_list_omits_workflow_tools_without_workflow() -> None:
     assert "get_milestone" not in names
     assert "update_milestone_input" not in names
     assert "get_location_data" in names
+    assert "get_chart_data" in names
 
 
 def test_chat_tools_list_omits_update_without_milestone() -> None:
@@ -67,6 +69,7 @@ def test_chat_tools_list_omits_location_without_location_id() -> None:
 
     names = [getattr(t, "name", "") for t in chat_tools_list(location_id=False)]
     assert "get_location_data" not in names
+    assert "get_chart_data" not in names
 
 
 def test_chat_tools_list_from_config_gates_by_context() -> None:
@@ -76,6 +79,7 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     agent_names = [getattr(t, "name", "") for t in agent_only]
     assert "get_milestone" not in agent_names
     assert "get_location_data" not in agent_names
+    assert "get_chart_data" not in agent_names
 
     wf = chat_tools_list_from_config(
         {"workflow_id": "100", "location_id": 7, "user_id": "u1"}
@@ -84,6 +88,7 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_milestone" in wf_names
     assert "update_milestone_input" not in wf_names
     assert "get_location_data" in wf_names
+    assert "get_chart_data" in wf_names
 
     selected = chat_tools_list_from_config(
         {

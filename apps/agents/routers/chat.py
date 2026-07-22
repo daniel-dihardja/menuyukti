@@ -72,6 +72,7 @@ class ChatRequest(BaseModel):
     workflow_id: str | None = None
     milestone_id: str | None = None
     location_id: int | None = Field(default=None, ge=1)
+    analytics_run_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str | None = Field(default=None, min_length=1)
     workflow_chat_session_id: str | None = Field(default=None, min_length=1)
     chat_model: str | None = Field(
@@ -163,6 +164,7 @@ def _runnable_config(
     user_id: str | None,
     chat_gateway_model: str | None,
     workflow_catalog_markdown: str | None = None,
+    analytics_run_id: int | None = None,
     post_id: str | None = None,
     page_id: str | None = None,
     generation_model: str | None = None,
@@ -182,6 +184,8 @@ def _runnable_config(
         configurable["chat_gateway_model"] = chat_gateway_model
     if workflow_catalog_markdown is not None:
         configurable["workflow_catalog_markdown"] = workflow_catalog_markdown
+    if analytics_run_id is not None:
+        configurable["analytics_run_id"] = analytics_run_id
     if post_id is not None:
         configurable["post_id"] = post_id
     if page_id is not None:
@@ -356,6 +360,7 @@ async def chat_stream(
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
         workflow_catalog_markdown=workflow_catalog_markdown,
+        analytics_run_id=body.analytics_run_id,
         post_id=body.post_id,
         page_id=body.page_id,
         generation_model=body.generation_model,

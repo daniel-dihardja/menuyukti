@@ -9,6 +9,7 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
 )
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
+    get_chart_data,
     get_location_data,
     get_milestone,
     get_workflow_overview,
@@ -74,6 +75,7 @@ def chat_tools_list(
             tools.append(update_milestone_input)
     if location_id:
         tools.append(get_location_data)
+        tools.append(get_chart_data)
     web = make_search_web_tool()
     if web is not None:
         tools.append(web)
@@ -102,6 +104,7 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     prompt_body = build_system_prompt(
         workflow_catalog=catalog,
         ig_studio_post_image=_has_ig_studio_post_context(conf if isinstance(conf, dict) else {}),
+        include_chart_catalog=_has_location_id(conf if isinstance(conf, dict) else {}),
     )
     return [SystemMessage(content=prompt_body), *messages]
 

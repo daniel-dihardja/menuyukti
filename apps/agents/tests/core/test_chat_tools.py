@@ -645,3 +645,37 @@ async def test_get_location_data_not_found(monkeypatch: pytest.MonkeyPatch) -> N
         config={"configurable": {"location_id": 7, "user_id": "u1"}},
     )
     assert out == "Location not found or access denied."
+
+
+@pytest.mark.asyncio
+async def test_get_chart_data_missing_location_context() -> None:
+    out = await chat_tools.get_chart_data.ainvoke(
+        {"chart_id": "venue_slot_strength_heatmap"},
+        config={"configurable": {"user_id": "u1"}},
+    )
+    assert "Location context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_get_chart_data_loads_markdown(monkeypatch: pytest.MonkeyPatch) -> None:
+    load_mock = AsyncMock(return_value="## Visualization data — Venue slot strength\n- ok")
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "load_chart_data_markdown", load_mock)
+
+    out = await chat_tools.get_chart_data.ainvoke(
+        {"chart_id": "venue_slot_strength_heatmap"},
+        config={
+            "configurable": {
+                "location_id": 7,
+                "user_id": "u1",
+                "analytics_run_id": 99,
+            }
+        },
+    )
+    assert "Venue slot strength" in out
+    load_mock.assert_awaited_once()
+    kwargs = load_mock.await_args.kwargs
+    assert kwargs["chart_id"] == "venue_slot_strength_heatmap"
+    assert kwargs["location_id"] == 7
+    assert kwargs["user_id"] == "u1"
+    assert kwargs["analytics_run_id"] == 99

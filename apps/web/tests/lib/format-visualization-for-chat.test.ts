@@ -76,6 +76,52 @@ describe('formatVisualizationDataMarkdownSection', () => {
     expect(out).not.toContain('Item 4')
   })
 
+  it('filters menu heatmaps to star, plow horse, and puzzle when matrix is present', () => {
+    const out = formatVisualizationDataMarkdownSection({
+      title: 'Menu item heatmap',
+      visualizationId: 'menu_item_heatmap',
+      payload: {
+        menuHeatmaps: [
+          {
+            menu: 'Steak',
+            menuCategory: 'Mains',
+            menuCategoryDetail: null,
+            reportingPeriod: 'week',
+            dailyHeatmap: [{ hour: 19, quantity: 5 }],
+            weeklyHeatmap: [{ day: 'fri', quantity: 20 }],
+          },
+          {
+            menu: 'Dog',
+            menuCategory: 'Mains',
+            menuCategoryDetail: null,
+            reportingPeriod: 'week',
+            dailyHeatmap: [{ hour: 12, quantity: 1 }],
+            weeklyHeatmap: [{ day: 'mon', quantity: 2 }],
+          },
+          {
+            menu: 'Soup',
+            menuCategory: 'Starters',
+            menuCategoryDetail: null,
+            reportingPeriod: 'week',
+            dailyHeatmap: [{ hour: 18, quantity: 3 }],
+            weeklyHeatmap: [{ day: 'sat', quantity: 8 }],
+          },
+        ],
+        matrixItems: [
+          { menu: 'Steak', category: 'star' },
+          { menu: 'Dog', category: 'low_end' },
+          { menu: 'Soup', category: 'puzzle' },
+        ],
+      },
+    })
+
+    expect(out).toContain('Filtered to star, plow horse, and puzzle')
+    expect(out).toContain('Steak')
+    expect(out).toContain('(Mains, star)')
+    expect(out).toContain('Soup')
+    expect(out).not.toContain('Dog')
+  })
+
   it('notes fallback run when usedFallbackRun is true', () => {
     const out = formatVisualizationDataMarkdownSection({
       title: 'Venue slot strength',

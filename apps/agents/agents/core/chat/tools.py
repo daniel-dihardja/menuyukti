@@ -6,6 +6,11 @@ import json
 from copy import deepcopy
 from typing import Annotated, Any, Literal
 
+from agents_app.agents.core.chat.chart_data import (
+    CHART_IDS,
+    is_chart_id,
+    load_chart_data_markdown,
+)
 from agents_app.agents.core.chat.graphql_client import (
     fetch_milestone_node,
     fetch_workflow_campaign_tree,
@@ -226,9 +231,7 @@ def _format_data_section(node: dict[str, Any], *, milestone_id: str | None = Non
     if milestone_id is not None:
         raw_name = node.get("name")
         display = (
-            raw_name.strip()
-            if isinstance(raw_name, str) and raw_name.strip()
-            else milestone_id
+            raw_name.strip() if isinstance(raw_name, str) and raw_name.strip() else milestone_id
         )
         title = f"Preset data — {display} (milestonePresetData)"
     return _format_json_shortcut_section(title, node.get("milestonePresetData"))
@@ -771,3 +774,41 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
     if not isinstance(raw_loc, dict):
         return "Location not found or access denied."
     return format_location_page_markdown(raw_loc)
+
+
+@tool
+async def get_chart_data(
+    chart_id: Literal[
+        "venue_slot_strength_heatmap",
+        "menu_item_heatmap",
+        "pair_lift_matrix_heatmap",
+    ],
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Load analytics data for a workflow visualization chart.
+
+    Prefer for Instagram-item planning: venue slot strength (location rhythm / when to
+    post), menu item heatmap (what dishes to feature), or pair lift / co-purchase
+    matrices. Pass a chart_id from the workflow chart catalog exactly — do not invent ids.
+    """
+    c = (config or {}).get("configurable") or {}
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    analytics_run_id = c.get("analytics_run_id")
+    if location_id is None or not user_id:
+        return (
+            "Location context is not available (missing location). "
+            "Open workflow chat for a campaign with a linked location."
+        )
+    if not is_chart_id(chart_id):
+        allowed = ", ".join(CHART_IDS)
+        return f"Unknown chart_id {chart_id!r}. Allowed values: {allowed}."
+
+    client = get_chat_http_client()
+    return await load_chart_data_markdown(
+        client,
+        chart_id=chart_id,
+        location_id=int(location_id),
+        user_id=str(user_id),
+        analytics_run_id=analytics_run_id,
+    )

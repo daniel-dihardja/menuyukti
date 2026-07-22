@@ -6,11 +6,25 @@ import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualizat
 /** Max menu items included in chat summaries (raw hourly arrays are omitted). */
 export const MENU_HEATMAP_CHAT_TOP_N = 25
 
+/** When matrix data exists, chat heatmaps keep only these BCG roles (excludes low_end). */
+export const HEATMAP_MATRIX_CHAT_CATEGORIES: ReadonlySet<string> = new Set([
+  'star',
+  'plow_horse',
+  'puzzle',
+])
+
+type HeatmapMatrixChatCategory = 'star' | 'plow_horse' | 'puzzle' | 'low_end'
+
 type MenuHeatmapItem = MenuHeatmapsData['menuHeatmaps'][number]
+
+type MatrixChatItem = {
+  menu?: string | null
+  category?: string | null
+}
 
 type MenuHeatmapChatPayload = {
   menuHeatmaps: MenuHeatmapItem[]
-  matrixItems?: unknown[] | null
+  matrixItems?: MatrixChatItem[] | null
   dailyStartHour?: number
   dailyEndHour?: number
   analyticsRunId?: string | null
@@ -99,8 +113,63 @@ function peakDailyHour(item: MenuHeatmapItem): { hour: number; quantity: number 
   )
 }
 
+function normalizeMatrixCategory(raw: string | null | undefined): HeatmapMatrixChatCategory | null {
+  if (raw == null) return null
+  const value = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+  if (value === 'star' || value === 'plow_horse' || value === 'puzzle' || value === 'low_end') {
+    return value
+  }
+  return null
+}
+
+export function buildMatrixCategoryByMenu(
+  matrixItems: MatrixChatItem[] | null | undefined,
+): Map<string, HeatmapMatrixChatCategory> {
+  const map = new Map<string, HeatmapMatrixChatCategory>()
+  if (!matrixItems || matrixItems.length === 0) return map
+  for (const item of matrixItems) {
+    const menu = item.menu?.trim()
+    if (!menu) continue
+    const category = normalizeMatrixCategory(item.category)
+    if (category == null) continue
+    map.set(menu, category)
+  }
+  return map
+}
+
+/** When matrix data exists, keep only star / plow_horse / puzzle heatmaps. */
+export function filterHeatmapsForChat(
+  menuHeatmaps: MenuHeatmapItem[],
+  matrixItems: MatrixChatItem[] | null | undefined,
+): {
+  items: MenuHeatmapItem[]
+  categoryByMenu: Map<string, HeatmapMatrixChatCategory>
+  applied: boolean
+} {
+  const categoryByMenu = buildMatrixCategoryByMenu(matrixItems)
+  if (categoryByMenu.size === 0) {
+    return { items: menuHeatmaps, categoryByMenu, applied: false }
+  }
+  const allowed = new Set(
+    [...categoryByMenu.entries()]
+      .filter(([, category]) => HEATMAP_MATRIX_CHAT_CATEGORIES.has(category))
+      .map(([menu]) => menu),
+  )
+  return {
+    items: menuHeatmaps.filter((item) => allowed.has(item.menu?.trim() ?? '')),
+    categoryByMenu,
+    applied: true,
+  }
+}
+
 function formatMenuHeatmapSummary(payload: MenuHeatmapChatPayload): string {
-  const items = payload.menuHeatmaps
+  const { items, categoryByMenu, applied } = filterHeatmapsForChat(
+    payload.menuHeatmaps,
+    payload.matrixItems,
+  )
   if (items.length === 0) {
     return '(no menu heatmap data)'
   }
@@ -114,16 +183,22 @@ function formatMenuHeatmapSummary(payload: MenuHeatmapChatPayload): string {
     const peakDay = peakWeeklyDay(item)
     const peakHour = peakDailyHour(item)
     const category = item.menuCategory?.trim() || 'Uncategorized'
+    const matrixCat = categoryByMenu.get(item.menu?.trim() ?? '')
+    const roleSuffix = matrixCat != null ? `, ${matrixCat}` : ''
     const peakDayLabel = peakDay != null ? `${peakDay.day} (${peakDay.quantity} units)` : 'unknown'
     const peakHourLabel =
       peakHour != null ? `hour ${peakHour.hour} (${peakHour.quantity} units)` : 'unknown'
-    return `- **${index + 1}. ${item.menu}** (${category}): weekly total ${total}, peak day ${peakDayLabel}, peak hour ${peakHourLabel}`
+    return `- **${index + 1}. ${item.menu}** (${category}${roleSuffix}): weekly total ${total}, peak day ${peakDayLabel}, peak hour ${peakHourLabel}`
   })
 
   if (omitted > 0) {
     lines.push(
       `- *(Showing top ${MENU_HEATMAP_CHAT_TOP_N} of ${sorted.length} menu items; hourly breakdown omitted.)*`,
     )
+  }
+
+  if (applied) {
+    lines.unshift('*(Filtered to star, plow horse, and puzzle menu-engineering items.)*')
   }
 
   if (payload.dailyStartHour != null && payload.dailyEndHour != null) {

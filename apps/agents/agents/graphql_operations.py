@@ -254,6 +254,48 @@ query AnalyticsRunsForLocation($locationId: Int!, $first: Int) {
 }
 """
 
+ORDER_METRICS_SLOT_DEMAND_QUERY = """
+query OrderMetricsSlotDemand($analyticsRunId: ID!) {
+  orderMetrics(analyticsRunId: $analyticsRunId) {
+    slotDemandProfile {
+      day
+      mealPeriod
+      mealPeriodLabel
+      mealPeriodHoursLabel
+      orderCount
+      trafficShare
+      demandIndex
+      relativeDemand
+    }
+  }
+}
+"""
+
+MENU_HEATMAPS_CHAT_QUERY = """
+query MenuHeatmapsForChat($id: ID!, $locationId: ID) {
+  menuHeatmaps(analyticsRunId: $id, locationId: $locationId) {
+    menu
+    menuCategory
+    menuCategoryDetail
+    reportingPeriod
+    dailyHeatmap { hour quantity }
+    weeklyHeatmap { day quantity }
+  }
+}
+"""
+
+MENU_COMBOS_LIFT_MATRIX_CHAT_QUERY = """
+query MenuCombosLiftMatrixForChat($id: ID!, $locationId: ID) {
+  menuCombos(analyticsRunId: $id, locationId: $locationId) {
+    focusMenus
+    matrixLift
+    totalOrders
+    multiItemOrderCount
+    scope
+  }
+}
+"""
+
 LATEST_ANALYTICS_RUN_WITH_SIGNALS_QUERY = """
 query LatestAnalyticsRunWithSignals($locationId: Int!) {
   latestAnalyticsRunWithSignals(locationId: $locationId) {
