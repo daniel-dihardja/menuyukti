@@ -14,6 +14,7 @@ __all__ = [
     "OrderFact",
     "MenuItemCogs",
     "InstagramItem",
+    "InstagramItemMediaVersion",
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",

@@ -11,6 +11,7 @@ from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_instagram_item import DeleteInstagramItemMutation
+from .delete_instagram_item_media_version import DeleteInstagramItemMediaVersionMutation
 from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
@@ -50,6 +51,7 @@ __all__ = [
     "DeleteAnalyticsRunMutation",
     "DeleteImageAiFlowMutation",
     "DeleteInstagramItemMutation",
+    "DeleteInstagramItemMediaVersionMutation",
     "DeleteStyleMutation",
     "DeleteNodeMutation",
     "DeletePostMutation",

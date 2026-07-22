@@ -8,7 +8,7 @@ from graphql.data_sources.models.instagram import (
     InstagramPostPage,
     InstagramPostPageMediaVersion,
 )
-from graphql.data_sources.models.instagram_item import InstagramItem
+from graphql.data_sources.models.instagram_item import InstagramItem, InstagramItemMediaVersion
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -22,6 +22,7 @@ __all__ = [
     "CalendarEntry",
     "ImageAiFlow",
     "InstagramItem",
+    "InstagramItemMediaVersion",
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",

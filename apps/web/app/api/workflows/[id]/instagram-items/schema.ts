@@ -42,6 +42,8 @@ export const patchInstagramItemBodySchema = z
     referenceImages: z.array(referenceImageSchema).max(5).optional(),
     status: instagramItemStatusSchema.optional(),
     schedule: scheduleSchema.optional(),
+    /** Commit an existing media version as the item image. */
+    mediaS3Key: z.string().trim().min(1).optional(),
   })
   .refine(
     (value) =>
@@ -52,6 +54,11 @@ export const patchInstagramItemBodySchema = z
       value.visualBrief !== undefined ||
       value.referenceImages !== undefined ||
       value.status !== undefined ||
-      value.schedule !== undefined,
+      value.schedule !== undefined ||
+      value.mediaS3Key !== undefined,
     { message: 'At least one field is required' },
   )
+
+export const deleteInstagramItemMediaVersionBodySchema = z.object({
+  mediaS3Key: z.string().trim().min(1),
+})

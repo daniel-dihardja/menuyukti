@@ -157,7 +157,7 @@ export async function POST(req: Request, context: RouteContext) {
       )
     }
 
-    const item = await withItemImageUrl(updated.updateInstagramItem)
+    const item = await withItemImageUrl(updated.updateInstagramItem, userId)
 
     return NextResponse.json({
       url: result.data.url,

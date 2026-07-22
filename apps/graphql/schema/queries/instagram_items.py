@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import strawberry
+from sqlalchemy.orm import joinedload
 
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramItem, Node
@@ -42,6 +43,7 @@ class InstagramItemsQuery:
                 return []
             rows = (
                 session.query(InstagramItem)
+                .options(joinedload(InstagramItem.media_versions))
                 .filter(InstagramItem.workflow_id == workflow_pk)
                 .order_by(
                     InstagramItem.schedule.asc().nulls_last(),
@@ -66,7 +68,11 @@ class InstagramItemsQuery:
             return None
 
         with request_session_scope(info) as session:
-            row = session.get(InstagramItem, item_pk)
+            row = session.get(
+                InstagramItem,
+                item_pk,
+                options=[joinedload(InstagramItem.media_versions)],
+            )
             if row is None:
                 return None
             if not is_location_owner(session, row.location_id, user_id):

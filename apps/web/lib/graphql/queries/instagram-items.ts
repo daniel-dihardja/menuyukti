@@ -3,6 +3,15 @@ export type InstagramItemReferenceImageDto = {
   enabled: boolean
 }
 
+export type InstagramItemMediaVersionDto = {
+  id: string
+  mediaS3Key: string
+  prompt: string | null
+  createdAt: string | null
+  /** Presigned GET URL from BFF; not a GraphQL field. */
+  imageUrl?: string | null
+}
+
 export const INSTAGRAM_ITEM_FIELDS = `
   id
   workflowId
@@ -17,6 +26,12 @@ export const INSTAGRAM_ITEM_FIELDS = `
   referenceImages {
     name
     enabled
+  }
+  mediaVersions {
+    id
+    mediaS3Key
+    prompt
+    createdAt
   }
   status
   schedule
@@ -36,6 +51,7 @@ export type InstagramItemDto = {
   mediaS3Key: string | null
   generationPrompt: string | null
   referenceImages: InstagramItemReferenceImageDto[]
+  mediaVersions: InstagramItemMediaVersionDto[]
   status: string
   schedule: string | null
   createdAt: string | null
@@ -142,4 +158,16 @@ export const DELETE_INSTAGRAM_ITEM_MUTATION = `
 
 export type DeleteInstagramItemData = {
   deleteInstagramItem: boolean
+}
+
+export const DELETE_INSTAGRAM_ITEM_MEDIA_VERSION_MUTATION = `
+  mutation DeleteInstagramItemMediaVersion($itemId: ID!, $mediaS3Key: String!) {
+    deleteInstagramItemMediaVersion(itemId: $itemId, mediaS3Key: $mediaS3Key) {
+      ${INSTAGRAM_ITEM_FIELDS}
+    }
+  }
+`
+
+export type DeleteInstagramItemMediaVersionData = {
+  deleteInstagramItemMediaVersion: InstagramItemDto
 }

@@ -60,7 +60,7 @@ export async function GET(_req: Request, context: RouteContext) {
       userId,
     )
 
-    const items = await withItemImageUrls(data.instagramItems)
+    const items = await withItemImageUrls(data.instagramItems, userId)
     return NextResponse.json({ items })
   } catch (error) {
     console.error(error)
@@ -123,7 +123,7 @@ export async function POST(req: Request, context: RouteContext) {
     )
 
     return NextResponse.json(
-      { item: await withItemImageUrl(data.createInstagramItem) },
+      { item: await withItemImageUrl(data.createInstagramItem, userId) },
       { status: 201 },
     )
   } catch (error) {

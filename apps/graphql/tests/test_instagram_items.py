@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import asyncio
 
-from graphql.data_sources import InstagramItem, Location, Node, SessionLocal
+from graphql.data_sources import (
+    InstagramItem,
+    InstagramItemMediaVersion,
+    Location,
+    Node,
+    SessionLocal,
+)
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
@@ -117,6 +123,12 @@ mutation UpdateInstagramItem(
       name
       enabled
     }
+    mediaVersions {
+      id
+      mediaS3Key
+      prompt
+      createdAt
+    }
     status
     schedule
   }
@@ -126,6 +138,9 @@ mutation UpdateInstagramItem(
 VALID_MEDIA_KEY = (
     f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 )
+VALID_MEDIA_KEY_2 = (
+    f"users/{GRAPHQL_TEST_USER_ID}/posts/bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+)
 VALID_PHOTO_NAME = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 
 DELETE_ITEM = """
@@ -134,10 +149,26 @@ mutation DeleteInstagramItem($id: ID!) {
 }
 """
 
+DELETE_ITEM_MEDIA_VERSION = """
+mutation DeleteInstagramItemMediaVersion($itemId: ID!, $mediaS3Key: String!) {
+  deleteInstagramItemMediaVersion(itemId: $itemId, mediaS3Key: $mediaS3Key) {
+    id
+    mediaS3Key
+    mediaVersions {
+      id
+      mediaS3Key
+      prompt
+      createdAt
+    }
+  }
+}
+"""
+
 
 def _cleanup() -> None:
     session = SessionLocal()
     try:
+        session.query(InstagramItemMediaVersion).delete()
         session.query(InstagramItem).delete()
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
@@ -451,6 +482,9 @@ def test_update_instagram_item_sets_media_and_prompt() -> None:
     body = updated.data["updateInstagramItem"]
     assert body["mediaS3Key"] == VALID_MEDIA_KEY
     assert body["generationPrompt"] == "Warm lunch bowl on wood table"
+    assert len(body["mediaVersions"]) == 1
+    assert body["mediaVersions"][0]["mediaS3Key"] == VALID_MEDIA_KEY
+    assert body["mediaVersions"][0]["prompt"] == "Warm lunch bowl on wood table"
 
     cleared = asyncio.run(
         schema.execute(
@@ -462,6 +496,210 @@ def test_update_instagram_item_sets_media_and_prompt() -> None:
     assert not cleared.errors, cleared.errors
     assert cleared.data["updateInstagramItem"]["mediaS3Key"] is None
     assert cleared.data["updateInstagramItem"]["generationPrompt"] is None
+    # Clearing the commit pointer leaves version history intact.
+    assert len(cleared.data["updateInstagramItem"]["mediaVersions"]) == 1
+
+
+def test_update_instagram_item_appends_media_versions() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "post", "title": "Versions"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    first = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "generationPrompt": "First prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not first.errors, first.errors
+
+    second = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": VALID_MEDIA_KEY_2,
+                "generationPrompt": "Second prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not second.errors, second.errors
+    body = second.data["updateInstagramItem"]
+    assert body["mediaS3Key"] == VALID_MEDIA_KEY_2
+    keys = [version["mediaS3Key"] for version in body["mediaVersions"]]
+    assert keys == [VALID_MEDIA_KEY_2, VALID_MEDIA_KEY]
+
+
+def test_update_instagram_item_skips_duplicate_media_version() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "post"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "generationPrompt": "Same image",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    repeat = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "generationPrompt": "Same image again",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not repeat.errors, repeat.errors
+
+    session = SessionLocal()
+    try:
+        count = (
+            session.query(InstagramItemMediaVersion)
+            .filter(InstagramItemMediaVersion.instagram_item_id == int(item_id))
+            .count()
+        )
+        assert count == 1
+    finally:
+        session.close()
+
+
+def test_update_instagram_item_reselects_existing_media_version() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "post"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "generationPrompt": "First prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": VALID_MEDIA_KEY_2,
+                "generationPrompt": "Second prompt",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    reselect = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "mediaS3Key": VALID_MEDIA_KEY},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not reselect.errors, reselect.errors
+    body = reselect.data["updateInstagramItem"]
+    assert body["mediaS3Key"] == VALID_MEDIA_KEY
+    assert len(body["mediaVersions"]) == 2
+
+    session = SessionLocal()
+    try:
+        count = (
+            session.query(InstagramItemMediaVersion)
+            .filter(InstagramItemMediaVersion.instagram_item_id == int(item_id))
+            .count()
+        )
+        assert count == 2
+    finally:
+        session.close()
+
+
+def test_delete_instagram_item_media_version_reassigns_pointer() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "story"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "mediaS3Key": VALID_MEDIA_KEY},
+            context_value=graphql_auth_context(),
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "mediaS3Key": VALID_MEDIA_KEY_2},
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    deleted = asyncio.run(
+        schema.execute(
+            DELETE_ITEM_MEDIA_VERSION,
+            variable_values={"itemId": item_id, "mediaS3Key": VALID_MEDIA_KEY_2},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not deleted.errors, deleted.errors
+    body = deleted.data["deleteInstagramItemMediaVersion"]
+    assert body["mediaS3Key"] == VALID_MEDIA_KEY
+    assert [v["mediaS3Key"] for v in body["mediaVersions"]] == [VALID_MEDIA_KEY]
+
+    cleared = asyncio.run(
+        schema.execute(
+            DELETE_ITEM_MEDIA_VERSION,
+            variable_values={"itemId": item_id, "mediaS3Key": VALID_MEDIA_KEY},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not cleared.errors, cleared.errors
+    cleared_body = cleared.data["deleteInstagramItemMediaVersion"]
+    assert cleared_body["mediaS3Key"] is None
+    assert cleared_body["mediaVersions"] == []
 
 
 def test_update_instagram_item_rejects_invalid_media_key() -> None:

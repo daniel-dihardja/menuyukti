@@ -5,7 +5,17 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func, text
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    desc,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -72,3 +82,37 @@ class InstagramItem(Base):
 
     workflow: Mapped[Node] = relationship(foreign_keys=[workflow_id])
     location: Mapped[Location] = relationship(foreign_keys=[location_id])
+    media_versions: Mapped[list[InstagramItemMediaVersion]] = relationship(
+        back_populates="instagram_item",
+        cascade="all, delete-orphan",
+        order_by=lambda: desc(InstagramItemMediaVersion.created_at),
+    )
+
+
+class InstagramItemMediaVersion(Base):
+    """A single generated image version for an Instagram item.
+
+    Each generation appends a row; the item's media_s3_key points at the committed version.
+    """
+
+    __tablename__ = "instagram_item_media_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    instagram_item_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("instagram_items.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    instagram_item: Mapped[InstagramItem] = relationship(back_populates="media_versions")
+    media_s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint(
+            "instagram_item_id",
+            "media_s3_key",
+            name="uq_instagram_item_media_version_item_key",
+        ),
+    )

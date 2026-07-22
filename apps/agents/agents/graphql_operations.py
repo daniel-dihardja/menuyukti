@@ -719,6 +719,12 @@ INSTAGRAM_ITEM_FIELDS = """
     name
     enabled
   }
+  mediaVersions {
+    id
+    mediaS3Key
+    prompt
+    createdAt
+  }
   status
   schedule
   createdAt

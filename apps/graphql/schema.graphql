@@ -270,6 +270,26 @@ type ImageAiFlowType {
   sortOrder: Int!
 }
 
+"""A single generated image version for an Instagram item."""
+type InstagramItemMediaVersionType {
+  id: ID!
+  mediaS3Key: String!
+  prompt: String
+  createdAt: DateTime
+}
+
+"""Input for an attached media-library generation reference."""
+input InstagramItemReferenceImageInput {
+  name: String!
+  enabled: Boolean! = true
+}
+
+"""Media-library photo attached as an image-generation reference."""
+type InstagramItemReferenceImageType {
+  name: String!
+  enabled: Boolean!
+}
+
 """A workflow-scoped Instagram story, post, or reel draft."""
 type InstagramItemType {
   id: ID!
@@ -283,22 +303,11 @@ type InstagramItemType {
   mediaS3Key: String
   generationPrompt: String
   referenceImages: [InstagramItemReferenceImageType!]!
+  mediaVersions: [InstagramItemMediaVersionType!]!
   status: String!
   schedule: DateTime
   createdAt: DateTime
   updatedAt: DateTime
-}
-
-"""Media-library photo attached as an image-generation reference."""
-type InstagramItemReferenceImageType {
-  name: String!
-  enabled: Boolean!
-}
-
-"""Input for an attached media-library generation reference."""
-input InstagramItemReferenceImageInput {
-  name: String!
-  enabled: Boolean! = true
 }
 
 """Tiered analytics payload for campaign_brief and growth agents."""
@@ -561,6 +570,7 @@ type Mutation {
   deletePostPage(pageId: ID!): Boolean!
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
   deleteInstagramItem(id: ID!): Boolean!
+  deleteInstagramItemMediaVersion(itemId: ID!, mediaS3Key: String!): InstagramItemType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!

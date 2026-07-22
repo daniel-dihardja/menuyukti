@@ -17,6 +17,14 @@ class InstagramItemReferenceImageInput:
     enabled: bool = True
 
 
+@strawberry.type(description="A single generated image version for an Instagram item.")
+class InstagramItemMediaVersionType:
+    id: strawberry.ID
+    media_s3_key: str
+    prompt: str | None
+    created_at: datetime | None
+
+
 @strawberry.type(description="A workflow-scoped Instagram story, post, or reel draft.")
 class InstagramItemType:
     id: strawberry.ID
@@ -30,6 +38,7 @@ class InstagramItemType:
     media_s3_key: str | None
     generation_prompt: str | None
     reference_images: list[InstagramItemReferenceImageType]
+    media_versions: list[InstagramItemMediaVersionType]
     status: str
     schedule: datetime | None
     created_at: datetime | None

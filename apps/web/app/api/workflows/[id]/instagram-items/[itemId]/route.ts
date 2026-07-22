@@ -69,7 +69,7 @@ export async function GET(_req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Instagram item not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ item: await withItemImageUrl(item) })
+    return NextResponse.json({ item: await withItemImageUrl(item, userId) })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to load Instagram item'
@@ -124,16 +124,29 @@ export async function PATCH(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Instagram item not found' }, { status: 404 })
     }
 
+    const { mediaS3Key, ...rest } = input.data
+    if (mediaS3Key !== undefined) {
+      const knownVersions = existing.instagramItem.mediaVersions ?? []
+      const isKnownVersion = knownVersions.some((version) => version.mediaS3Key === mediaS3Key)
+      if (!isKnownVersion && existing.instagramItem.mediaS3Key !== mediaS3Key) {
+        return NextResponse.json(
+          { message: 'mediaS3Key must match an existing media version for this item' },
+          { status: 400 },
+        )
+      }
+    }
+
     const data = await graphqlQuery<UpdateInstagramItemData>(
       UPDATE_INSTAGRAM_ITEM_MUTATION,
       {
         id: itemParsed.data,
-        ...input.data,
+        ...rest,
+        ...(mediaS3Key !== undefined ? { mediaS3Key } : {}),
       },
       userId,
     )
 
-    return NextResponse.json({ item: await withItemImageUrl(data.updateInstagramItem) })
+    return NextResponse.json({ item: await withItemImageUrl(data.updateInstagramItem, userId) })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to update Instagram item'

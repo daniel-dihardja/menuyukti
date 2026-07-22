@@ -1,10 +1,26 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowLeftIcon, SparklesIcon, XIcon } from 'lucide-react'
+import {
+  ArrowLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SparklesIcon,
+  Trash2Icon,
+  XIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
 import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
 import { Input } from '@workspace/ui/components/input'
@@ -22,7 +38,10 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-reference-thumbnails'
-import type { InstagramItemDto } from '@/lib/graphql/queries/instagram-items'
+import type {
+  InstagramItemDto,
+  InstagramItemMediaVersionDto,
+} from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
@@ -44,6 +63,8 @@ type InstagramItemDetailProps = {
   onGenerated: (item: InstagramItemDto) => void
 }
 
+type ItemImageVersion = InstagramItemMediaVersionDto & { imageUrl: string | null }
+
 function previewAspectClass(kind: InstagramItemKind): string {
   if (kind === 'post') return 'aspect-square'
   return 'aspect-[9/16]'
@@ -64,6 +85,57 @@ function persistableRefs(
   return images.map((image) => ({ name: image.name, enabled: image.enabled }))
 }
 
+function versionsFromItem(item: InstagramItemDto): ItemImageVersion[] {
+  const raw = Array.isArray(item.mediaVersions) ? item.mediaVersions : []
+  if (raw.length > 0) {
+    return raw.map((version) => ({
+      ...version,
+      imageUrl: version.imageUrl ?? null,
+    }))
+  }
+  if (item.imageUrl || item.mediaS3Key) {
+    return [
+      {
+        id: 'current',
+        mediaS3Key: item.mediaS3Key ?? '',
+        prompt: item.generationPrompt ?? null,
+        createdAt: item.updatedAt ?? item.createdAt ?? '',
+        imageUrl: item.imageUrl ?? null,
+      },
+    ]
+  }
+  return []
+}
+
+function resolveVersionIndex(
+  versions: ItemImageVersion[],
+  activeMediaS3Key: string | null | undefined,
+): number {
+  if (activeMediaS3Key) {
+    const byKey = versions.findIndex((version) => version.mediaS3Key === activeMediaS3Key)
+    if (byKey >= 0) {
+      return byKey
+    }
+  }
+  return 0
+}
+
+function syncFromItem(item: InstagramItemDto): {
+  versions: ItemImageVersion[]
+  previewIndex: number
+  committedIndex: number
+  mediaS3Key: string | null
+} {
+  const versions = versionsFromItem(item)
+  const committedIndex = resolveVersionIndex(versions, item.mediaS3Key)
+  return {
+    versions,
+    previewIndex: committedIndex,
+    committedIndex,
+    mediaS3Key: item.mediaS3Key ?? null,
+  }
+}
+
 export function InstagramItemDetail({
   item,
   workflowId,
@@ -82,14 +154,23 @@ export function InstagramItemDetail({
   )
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(item.imageUrl ?? null)
-  const [mediaS3Key, setMediaS3Key] = useState<string | null>(item.mediaS3Key ?? null)
+  const initialSync = syncFromItem(item)
+  const [imageVersions, setImageVersions] = useState<ItemImageVersion[]>(initialSync.versions)
+  const [previewVersionIndex, setPreviewVersionIndex] = useState(initialSync.previewIndex)
+  const [committedVersionIndex, setCommittedVersionIndex] = useState(initialSync.committedIndex)
+  const [mediaS3Key, setMediaS3Key] = useState<string | null>(initialSync.mediaS3Key)
+  const [isCommitting, setIsCommitting] = useState(false)
+  const [isDeletingVersion, setIsDeletingVersion] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     setValues(toFormValues(item))
     setReferenceImages(refsFromItem(item))
-    setPreviewUrl(item.imageUrl ?? null)
-    setMediaS3Key(item.mediaS3Key ?? null)
+    const next = syncFromItem(item)
+    setImageVersions(next.versions)
+    setPreviewVersionIndex(next.previewIndex)
+    setCommittedVersionIndex(next.committedIndex)
+    setMediaS3Key(next.mediaS3Key)
     setGenerateError(null)
   }, [item])
 
@@ -98,8 +179,16 @@ export function InstagramItemDetail({
     [referenceImages],
   )
 
-  const busy = saving || isGenerating
+  const busy = saving || isGenerating || isCommitting || isDeletingVersion
   const canGenerate = values.visualBrief.trim().length > 0 && !busy
+  const showVersionNav = imageVersions.length > 1
+  const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
+  const previewUrl = previewVersion?.imageUrl ?? null
+  const canCommit =
+    Boolean(previewVersion?.mediaS3Key) &&
+    showVersionNav &&
+    previewVersionIndex !== committedVersionIndex
+  const canDeleteVersion = Boolean(previewVersion?.mediaS3Key) && imageVersions.length > 0 && !busy
 
   function valuesWithRefs(): InstagramItemFormValues {
     return {
@@ -107,6 +196,49 @@ export function InstagramItemDetail({
       referenceImages: persistableRefs(referenceImages),
     }
   }
+
+  function applyItemUpdate(nextItem: InstagramItemDto) {
+    const next = syncFromItem(nextItem)
+    setImageVersions(next.versions)
+    setPreviewVersionIndex(next.previewIndex)
+    setCommittedVersionIndex(next.committedIndex)
+    setMediaS3Key(next.mediaS3Key)
+    setValues(toFormValues(nextItem))
+    setReferenceImages(refsFromItem(nextItem))
+    onGenerated(nextItem)
+  }
+
+  const previewVersionAt = useCallback(
+    (index: number) => {
+      if (busy || imageVersions.length === 0) return
+      setPreviewVersionIndex(index)
+    },
+    [busy, imageVersions.length],
+  )
+
+  const goPrev = useCallback(() => {
+    if (!showVersionNav || busy) return
+    previewVersionAt(previewVersionIndex === 0 ? imageVersions.length - 1 : previewVersionIndex - 1)
+  }, [busy, imageVersions.length, previewVersionAt, previewVersionIndex, showVersionNav])
+
+  const goNext = useCallback(() => {
+    if (!showVersionNav || busy) return
+    previewVersionAt(previewVersionIndex === imageVersions.length - 1 ? 0 : previewVersionIndex + 1)
+  }, [busy, imageVersions.length, previewVersionAt, previewVersionIndex, showVersionNav])
+
+  const handlePreviewKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (!showVersionNav) return
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        goPrev()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        goNext()
+      }
+    },
+    [goNext, goPrev, showVersionNav],
+  )
 
   async function handleGenerate() {
     const prompt = values.visualBrief.trim()
@@ -148,19 +280,83 @@ export function InstagramItemDetail({
         return
       }
       if (payload.item) {
-        setPreviewUrl(payload.item.imageUrl ?? payload.url ?? null)
-        setMediaS3Key(payload.item.mediaS3Key ?? payload.mediaS3Key ?? null)
-        setValues(toFormValues(payload.item))
-        setReferenceImages(refsFromItem(payload.item))
-        onGenerated(payload.item)
-      } else {
-        setPreviewUrl(payload.url ?? null)
+        applyItemUpdate(payload.item)
+      } else if (payload.url || payload.mediaS3Key) {
         setMediaS3Key(payload.mediaS3Key ?? null)
+        setImageVersions([
+          {
+            id: 'generated',
+            mediaS3Key: payload.mediaS3Key ?? '',
+            prompt,
+            createdAt: new Date().toISOString(),
+            imageUrl: payload.url ?? null,
+          },
+          ...imageVersions.filter((version) => version.mediaS3Key !== payload.mediaS3Key),
+        ])
+        setPreviewVersionIndex(0)
+        setCommittedVersionIndex(0)
       }
     } catch {
       setGenerateError(t('generate.error'))
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  async function handleCommitVersion() {
+    const version = imageVersions[previewVersionIndex]
+    if (!version?.mediaS3Key || !canCommit) return
+
+    setIsCommitting(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string
+        item?: InstagramItemDto
+      }
+      if (!res.ok || !payload.item) {
+        setGenerateError(payload.message || t('generate.commitError'))
+        return
+      }
+      applyItemUpdate(payload.item)
+    } catch {
+      setGenerateError(t('generate.commitError'))
+    } finally {
+      setIsCommitting(false)
+    }
+  }
+
+  async function handleDeleteVersion() {
+    const version = imageVersions[previewVersionIndex]
+    if (!version?.mediaS3Key) return
+
+    setIsDeletingVersion(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}/versions`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string
+        item?: InstagramItemDto
+      }
+      if (!res.ok || !payload.item) {
+        setGenerateError(payload.message || t('generate.deleteVersionError'))
+        return
+      }
+      setDeleteDialogOpen(false)
+      applyItemUpdate(payload.item)
+    } catch {
+      setGenerateError(t('generate.deleteVersionError'))
+    } finally {
+      setIsDeletingVersion(false)
     }
   }
 
@@ -192,20 +388,93 @@ export function InstagramItemDetail({
         <div className="grid gap-1.5">
           <Label>{t('generate.previewLabel')}</Label>
           <div
-            className={cn(
-              'mx-auto w-full max-w-[220px] overflow-hidden rounded-md border bg-muted/40',
-              previewAspectClass(values.kind),
-            )}
+            className="mx-auto flex w-full max-w-[280px] items-center gap-1"
+            onKeyDown={handlePreviewKeyDown}
+            role="group"
+            tabIndex={showVersionNav ? 0 : undefined}
           >
-            {previewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-              <img alt="" className="size-full object-cover" src={previewUrl} />
-            ) : (
-              <div className="flex size-full items-center justify-center px-3 text-center text-muted-foreground text-xs">
-                {t('generate.previewEmpty')}
+            {showVersionNav ? (
+              <Button
+                aria-label={t('generate.previousVersion')}
+                className="size-8 shrink-0"
+                disabled={busy}
+                onClick={goPrev}
+                size="icon"
+                type="button"
+                variant="outline"
+              >
+                <ChevronLeftIcon className="size-4" />
+              </Button>
+            ) : null}
+            <div className="relative min-w-0 flex-1">
+              <div
+                className={cn(
+                  'overflow-hidden rounded-md border bg-muted/40',
+                  previewAspectClass(values.kind),
+                )}
+              >
+                {previewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+                  <img alt="" className="size-full object-cover" src={previewUrl} />
+                ) : (
+                  <div className="flex size-full items-center justify-center px-3 text-center text-muted-foreground text-xs">
+                    {t('generate.previewEmpty')}
+                  </div>
+                )}
               </div>
-            )}
+              {canDeleteVersion ? (
+                <div className="absolute top-1.5 right-1.5 z-10">
+                  <Button
+                    aria-label={t('generate.deleteVersion')}
+                    className="size-7 shadow-sm"
+                    disabled={busy}
+                    onClick={() => setDeleteDialogOpen(true)}
+                    size="icon"
+                    type="button"
+                    variant="secondary"
+                  >
+                    <Trash2Icon className="size-3.5" />
+                  </Button>
+                </div>
+              ) : null}
+              {canCommit ? (
+                <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center p-2">
+                  <Button
+                    className="h-7 px-2 text-xs shadow-sm"
+                    disabled={busy}
+                    onClick={() => {
+                      void handleCommitVersion()
+                    }}
+                    size="sm"
+                    type="button"
+                  >
+                    {isCommitting ? t('generate.committing') : t('generate.useAsItemImage')}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+            {showVersionNav ? (
+              <Button
+                aria-label={t('generate.nextVersion')}
+                className="size-8 shrink-0"
+                disabled={busy}
+                onClick={goNext}
+                size="icon"
+                type="button"
+                variant="outline"
+              >
+                <ChevronRightIcon className="size-4" />
+              </Button>
+            ) : null}
           </div>
+          {showVersionNav ? (
+            <p aria-live="polite" className="text-center text-muted-foreground text-xs">
+              {t('generate.versionIndicator', {
+                current: previewVersionIndex + 1,
+                total: imageVersions.length,
+              })}
+            </p>
+          ) : null}
           <p className="text-muted-foreground text-xs">
             {values.kind === 'post' ? t('generate.formatHintPost') : t('generate.formatHintStory')}
           </p>
@@ -397,6 +666,39 @@ export function InstagramItemDetail({
           </Button>
         </div>
       </form>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!isDeletingVersion) setDeleteDialogOpen(open)
+        }}
+        open={deleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('generate.deleteVersionConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('generate.deleteVersionConfirmDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingVersion} type="button">
+              {t('generate.deleteVersionConfirmCancel')}
+            </AlertDialogCancel>
+            <Button
+              disabled={isDeletingVersion}
+              onClick={() => {
+                void handleDeleteVersion()
+              }}
+              type="button"
+              variant="destructive"
+            >
+              {isDeletingVersion
+                ? t('generate.deleteVersionDeleting')
+                : t('generate.deleteVersionConfirmAction')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

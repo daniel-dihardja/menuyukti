@@ -8,6 +8,7 @@ import strawberry
 from strawberry import UNSET
 
 from graphql.context import request_session_scope
+from graphql.data_sources import InstagramItemMediaVersion
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.instagram_items_common import (
     item_to_gql,
@@ -17,6 +18,7 @@ from graphql.schema.instagram_items_common import (
     normalize_reference_images,
     normalize_status,
     parse_positive_id,
+    reload_item_with_versions,
     validate_item_media_s3_key,
 )
 from graphql.schema.types.instagram_item import (
@@ -47,6 +49,9 @@ class UpdateInstagramItemMutation:
 
         ``schedule``, ``media_s3_key``, ``generation_prompt``, and ``reference_images``
         use UNSET so omit leaves unchanged; explicit null / empty list clears.
+
+        Setting ``media_s3_key`` to a new key appends a media version and commits it.
+        Setting it to an existing version key reselects (commits) without duplicating.
         """
         user_id = user_id_from_info(info)
         if not user_id:
@@ -67,6 +72,7 @@ class UpdateInstagramItemMutation:
                 row.hook = normalize_optional_text(hook)
             if visual_brief is not None:
                 row.visual_brief = normalize_optional_text(visual_brief)
+
             if media_s3_key is not UNSET:
                 if media_s3_key is None:
                     row.media_s3_key = None
@@ -76,7 +82,32 @@ class UpdateInstagramItemMutation:
                         row.media_s3_key = None
                     else:
                         validate_item_media_s3_key(key_clean, user_id)
-                        row.media_s3_key = key_clean
+                        if key_clean != row.media_s3_key:
+                            row.media_s3_key = key_clean
+                            existing_version = next(
+                                (
+                                    version
+                                    for version in row.media_versions
+                                    if version.media_s3_key == key_clean
+                                ),
+                                None,
+                            )
+                            if existing_version is None:
+                                if generation_prompt is not UNSET:
+                                    if generation_prompt is None:
+                                        version_prompt = None
+                                    else:
+                                        version_prompt = normalize_optional_text(generation_prompt)
+                                else:
+                                    version_prompt = row.generation_prompt
+
+                                row.media_versions.append(
+                                    InstagramItemMediaVersion(
+                                        media_s3_key=key_clean,
+                                        prompt=version_prompt,
+                                    )
+                                )
+
             if generation_prompt is not UNSET:
                 if generation_prompt is None:
                     row.generation_prompt = None
@@ -89,6 +120,6 @@ class UpdateInstagramItemMutation:
             if schedule is not UNSET:
                 row.schedule = schedule
 
+            session.add(row)
             session.commit()
-            session.refresh(row)
-            return item_to_gql(row)
+            return item_to_gql(reload_item_with_versions(session, item_pk))

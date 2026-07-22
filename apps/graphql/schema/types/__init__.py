@@ -1,5 +1,6 @@
 from .image_ai_flow import ImageAiFlowType
 from .instagram_item import (
+    InstagramItemMediaVersionType,
     InstagramItemReferenceImageInput,
     InstagramItemReferenceImageType,
     InstagramItemType,
@@ -16,6 +17,7 @@ from .workspace_membership import WorkspaceMembershipType
 
 __all__ = [
     "ImageAiFlowType",
+    "InstagramItemMediaVersionType",
     "InstagramItemReferenceImageInput",
     "InstagramItemReferenceImageType",
     "InstagramItemType",

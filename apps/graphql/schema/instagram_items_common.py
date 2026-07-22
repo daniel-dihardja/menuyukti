@@ -6,10 +6,13 @@ import re
 from typing import Any
 
 import strawberry
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from graphql.data_sources import InstagramItem, Node
 from graphql.schema.auth import is_location_owner
 from graphql.schema.types.instagram_item import (
+    InstagramItemMediaVersionType,
     InstagramItemReferenceImageInput,
     InstagramItemReferenceImageType,
     InstagramItemType,
@@ -53,7 +56,18 @@ def _reference_images_to_gql(
     return out
 
 
+def _media_version_to_gql(row) -> InstagramItemMediaVersionType:
+    return InstagramItemMediaVersionType(
+        id=strawberry.ID(str(row.id)),
+        media_s3_key=row.media_s3_key,
+        prompt=row.prompt,
+        created_at=row.created_at,
+    )
+
+
 def item_to_gql(row: InstagramItem) -> InstagramItemType:
+    versions = list(row.media_versions) if row.media_versions is not None else []
+    versions.sort(key=lambda version: (version.created_at, version.id), reverse=True)
     return InstagramItemType(
         id=strawberry.ID(str(row.id)),
         workflow_id=strawberry.ID(str(row.workflow_id)),
@@ -66,6 +80,7 @@ def item_to_gql(row: InstagramItem) -> InstagramItemType:
         media_s3_key=row.media_s3_key,
         generation_prompt=row.generation_prompt,
         reference_images=_reference_images_to_gql(row.reference_images),
+        media_versions=[_media_version_to_gql(version) for version in versions],
         status=row.status,
         schedule=row.schedule,
         created_at=row.created_at,
@@ -165,9 +180,27 @@ def load_workflow_for_owner(session, workflow_pk: int, user_id: str) -> Node:
 
 
 def load_item_for_owner(session, item_pk: int, user_id: str) -> InstagramItem:
-    row = session.get(InstagramItem, item_pk)
+    row = session.get(
+        InstagramItem,
+        item_pk,
+        options=[joinedload(InstagramItem.media_versions)],
+    )
     if row is None:
         raise ValueError("Instagram item not found")
     if not is_location_owner(session, row.location_id, user_id):
         raise PermissionError("Not allowed to access this Instagram item")
+    return row
+
+
+def reload_item_with_versions(session, item_pk: int) -> InstagramItem:
+    """Re-load item + versions, refreshing identity-map state after commit."""
+    stmt = (
+        select(InstagramItem)
+        .where(InstagramItem.id == item_pk)
+        .options(joinedload(InstagramItem.media_versions))
+        .execution_options(populate_existing=True)
+    )
+    row = session.scalars(stmt).unique().one_or_none()
+    if row is None:
+        raise ValueError("Instagram item not found")
     return row
