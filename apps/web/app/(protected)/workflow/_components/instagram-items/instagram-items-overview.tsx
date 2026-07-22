@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { PlusIcon, Trash2Icon } from 'lucide-react'
 
 import {
@@ -41,6 +41,7 @@ export function InstagramItemsOverview({
   onDelete,
 }: InstagramItemsOverviewProps) {
   const t = useTranslations('analytics.workflows.instagramItems')
+  const format = useFormatter()
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   const pendingItem =
@@ -108,9 +109,14 @@ export function InstagramItemsOverview({
                     {item.schedule ? (
                       <span className="text-muted-foreground text-xs">
                         {t('fields.schedule')}:{' '}
-                        {new Date(item.schedule).toLocaleString(undefined, {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
+                        {format.dateTime(new Date(item.schedule), {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
                         })}
                       </span>
                     ) : null}
