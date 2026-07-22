@@ -9,10 +9,14 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
 )
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
+    create_instagram_items,
+    delete_instagram_items,
     get_chart_data,
     get_location_data,
     get_milestone,
     get_workflow_overview,
+    list_instagram_items,
+    update_instagram_items,
     update_milestone_input,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
@@ -71,6 +75,10 @@ def chat_tools_list(
     if workflow_id:
         tools.append(get_workflow_overview)
         tools.append(get_milestone)
+        tools.append(list_instagram_items)
+        tools.append(create_instagram_items)
+        tools.append(update_instagram_items)
+        tools.append(delete_instagram_items)
         if milestone_id:
             tools.append(update_milestone_input)
     if location_id:

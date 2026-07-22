@@ -679,3 +679,152 @@ async def test_get_chart_data_loads_markdown(monkeypatch: pytest.MonkeyPatch) ->
     assert kwargs["location_id"] == 7
     assert kwargs["user_id"] == "u1"
     assert kwargs["analytics_run_id"] == 99
+
+
+def _ig_item(**overrides: object) -> dict:
+    base = {
+        "id": "1",
+        "workflowId": "100",
+        "locationId": 7,
+        "kind": "post",
+        "title": "Lunch",
+        "caption": None,
+        "hook": None,
+        "visualBrief": None,
+        "status": "draft",
+        "schedule": None,
+    }
+    base.update(overrides)
+    return base
+
+
+@pytest.mark.asyncio
+async def test_list_instagram_items_requires_workflow() -> None:
+    out = await chat_tools.list_instagram_items.ainvoke(
+        {},
+        config={"configurable": {"user_id": "u1"}},
+    )
+    assert "Workflow context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_list_instagram_items_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch_mock = AsyncMock(
+        return_value=[
+            _ig_item(id="10", title="A"),
+            _ig_item(id="11", kind="story", title="B"),
+        ]
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_items", fetch_mock)
+
+    out = await chat_tools.list_instagram_items.ainvoke(
+        {},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "2" in out
+    assert "id=10" in out
+    assert "id=11" in out
+    fetch_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_instagram_items_batch(monkeypatch: pytest.MonkeyPatch) -> None:
+    create_mock = AsyncMock(
+        side_effect=[
+            _ig_item(id="21", kind="post", title="One"),
+            _ig_item(id="22", kind="reel", title="Two"),
+        ]
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "persist_create_instagram_item", create_mock)
+
+    out = await chat_tools.create_instagram_items.ainvoke(
+        {
+            "items": [
+                {"kind": "post", "title": "One", "caption": "Hello"},
+                {"kind": "reel", "title": "Two"},
+            ]
+        },
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "Created 2" in out
+    assert "id=21" in out
+    assert "id=22" in out
+    assert create_mock.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_create_instagram_items_partial_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    create_mock = AsyncMock(
+        side_effect=[
+            _ig_item(id="31", title="Ok"),
+            RuntimeError("boom"),
+        ]
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "persist_create_instagram_item", create_mock)
+
+    out = await chat_tools.create_instagram_items.ainvoke(
+        {
+            "items": [
+                {"kind": "post", "title": "Ok"},
+                {"kind": "post", "title": "Fail"},
+            ]
+        },
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "Created 1" in out
+    assert "Failed 1" in out
+    assert "boom" in out
+    assert create_mock.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_create_instagram_items_rejects_empty_list() -> None:
+    out = await chat_tools.create_instagram_items.ainvoke(
+        {"items": []},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "Missing required field 'items'" in out
+
+
+@pytest.mark.asyncio
+async def test_update_instagram_items_batch(monkeypatch: pytest.MonkeyPatch) -> None:
+    update_mock = AsyncMock(
+        side_effect=[
+            _ig_item(id="41", caption="New"),
+            _ig_item(id="42", status="ready"),
+        ]
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "persist_update_instagram_item", update_mock)
+
+    out = await chat_tools.update_instagram_items.ainvoke(
+        {
+            "items": [
+                {"id": "41", "caption": "New"},
+                {"id": "42", "status": "ready"},
+            ]
+        },
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "Updated 2" in out
+    assert update_mock.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_delete_instagram_items_batch(monkeypatch: pytest.MonkeyPatch) -> None:
+    delete_mock = AsyncMock(side_effect=[True, False])
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "persist_delete_instagram_item", delete_mock)
+
+    out = await chat_tools.delete_instagram_items.ainvoke(
+        {"ids": ["51", "52"]},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "Deleted 1" in out
+    assert "Failed 1" in out
+    assert "id=51" in out
+    assert "id=52" in out
+    assert delete_mock.await_count == 2

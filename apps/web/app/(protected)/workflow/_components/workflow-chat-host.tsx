@@ -7,10 +7,11 @@ import { useWorkflowChat, type UseWorkflowChatOptions } from './use-workflow-cha
 
 export type WorkflowChatHostProps = Omit<
   UseWorkflowChatOptions,
-  'onHydrateAfterChat' | 'onPrefetchMilestoneReference'
+  'onHydrateAfterChat' | 'onPrefetchMilestoneReference' | 'onRefreshInstagramItems'
 > & {
   onHydrateAfterChat: (milestoneId: string) => void
   onPrefetchMilestoneReference?: (milestoneId: string) => void
+  onRefreshInstagramItems?: () => void
   onBusyChange: (isBusy: boolean) => void
   children: ReactNode
 }

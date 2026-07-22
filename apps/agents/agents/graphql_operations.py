@@ -703,3 +703,84 @@ mutation CompleteMilestoneAgentRun(
   )
 }
 """
+
+INSTAGRAM_ITEM_FIELDS = """
+  id
+  workflowId
+  locationId
+  kind
+  title
+  caption
+  hook
+  visualBrief
+  status
+  schedule
+  createdAt
+  updatedAt
+"""
+
+INSTAGRAM_ITEMS_QUERY = """
+query InstagramItems($workflowId: ID!) {
+  instagramItems(workflowId: $workflowId) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
+CREATE_INSTAGRAM_ITEM_MUTATION = """
+mutation CreateInstagramItem(
+  $workflowId: ID!
+  $kind: String!
+  $title: String
+  $caption: String
+  $hook: String
+  $visualBrief: String
+  $status: String
+  $schedule: DateTime
+) {
+  createInstagramItem(
+    workflowId: $workflowId
+    kind: $kind
+    title: $title
+    caption: $caption
+    hook: $hook
+    visualBrief: $visualBrief
+    status: $status
+    schedule: $schedule
+  ) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
+UPDATE_INSTAGRAM_ITEM_MUTATION = """
+mutation UpdateInstagramItem(
+  $id: ID!
+  $kind: String
+  $title: String
+  $caption: String
+  $hook: String
+  $visualBrief: String
+  $status: String
+  $schedule: DateTime
+) {
+  updateInstagramItem(
+    id: $id
+    kind: $kind
+    title: $title
+    caption: $caption
+    hook: $hook
+    visualBrief: $visualBrief
+    status: $status
+    schedule: $schedule
+  ) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
+DELETE_INSTAGRAM_ITEM_MUTATION = """
+mutation DeleteInstagramItem($id: ID!) {
+  deleteInstagramItem(id: $id)
+}
+"""

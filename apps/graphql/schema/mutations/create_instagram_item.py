@@ -14,6 +14,7 @@ from graphql.schema.instagram_items_common import (
     load_workflow_for_owner,
     normalize_kind,
     normalize_optional_text,
+    normalize_status,
     parse_positive_id,
 )
 from graphql.schema.types.instagram_item import InstagramItemType
@@ -28,6 +29,10 @@ class CreateInstagramItemMutation:
         workflow_id: strawberry.ID,
         kind: str,
         title: str | None = None,
+        caption: str | None = None,
+        hook: str | None = None,
+        visual_brief: str | None = None,
+        status: str | None = None,
         schedule: datetime | None = None,
     ) -> InstagramItemType:
         user_id = user_id_from_info(info)
@@ -37,6 +42,10 @@ class CreateInstagramItemMutation:
         workflow_pk = parse_positive_id(workflow_id, label="workflow id")
         kind_clean = normalize_kind(kind)
         title_clean = normalize_optional_text(title, max_len=256)
+        caption_clean = normalize_optional_text(caption)
+        hook_clean = normalize_optional_text(hook)
+        visual_brief_clean = normalize_optional_text(visual_brief)
+        status_clean = normalize_status(status) if status is not None else "draft"
 
         with request_session_scope(info) as session:
             workflow = load_workflow_for_owner(session, workflow_pk, user_id)
@@ -46,7 +55,10 @@ class CreateInstagramItemMutation:
                 location_id=workflow.location_id,
                 kind=kind_clean,
                 title=title_clean,
-                status="draft",
+                caption=caption_clean,
+                hook=hook_clean,
+                visual_brief=visual_brief_clean,
+                status=status_clean,
                 schedule=schedule,
                 created_by_clerk_user_id=user_id,
             )

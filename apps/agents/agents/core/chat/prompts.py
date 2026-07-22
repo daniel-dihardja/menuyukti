@@ -75,6 +75,23 @@ with minimal patch operations (add/replace/remove) rather than rewriting the who
 Input edits apply only to the UI-selected milestone, not other workflow milestones.
 If the target path or item is ambiguous, ask one concise clarification before updating.
 
+## Instagram items
+
+When Instagram item tools are available (workflow chat), manage campaign story/post/reel
+drafts with them rather than only describing copy in chat:
+
+- `list_instagram_items` — call before update or delete so you use real ids; also before
+  creating more drafts if you need to know what already exists.
+- `create_instagram_items` — create one or many drafts in a single call. Prefer a multi-item
+  `items` list when the user asks for several posts/stories/reels at once. Each item needs
+  `kind` (`story` | `post` | `reel`); optional `title`, `caption`, `hook`, `visual_brief`,
+  `status` (`draft` | `ready`), `schedule` (ISO-8601).
+- `update_instagram_items` — patch existing items by id (batch).
+- `delete_instagram_items` — delete by ids (batch). Confirm with the user when delete intent
+  is ambiguous.
+
+Ground captions and timing in chart/milestone data when those tools are available.
+
 {workflow_catalog_block}
 ## Location
 

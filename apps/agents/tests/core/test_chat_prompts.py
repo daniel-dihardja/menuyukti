@@ -22,6 +22,10 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "{ig_studio_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "get_milestone" in SYSTEM_PROMPT_TEMPLATE
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
+    assert "create_instagram_items" in SYSTEM_PROMPT_TEMPLATE
+    assert "list_instagram_items" in SYSTEM_PROMPT_TEMPLATE
+    assert "update_instagram_items" in SYSTEM_PROMPT_TEMPLATE
+    assert "delete_instagram_items" in SYSTEM_PROMPT_TEMPLATE
 
 
 def test_build_system_prompt_without_optional_blocks() -> None:

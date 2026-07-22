@@ -1,20 +1,27 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useTranslations } from 'next-intl'
 
 import { useTimelineWorkspaceState } from '../timeline-context'
 import { InstagramItemDetail } from './instagram-item-detail'
 import { InstagramItemsOverview } from './instagram-items-overview'
+import { useInstagramItemsRefresh } from './instagram-items-refresh-context'
 import { useInstagramItems, type InstagramItemFormValues } from './use-instagram-items'
 
 export function InstagramItemsArtifact() {
   const t = useTranslations('analytics.workflows.instagramItems')
   const { workflowId } = useTimelineWorkspaceState()
   const [selectedItemId, setSelectedItemId] = useQueryState('item', parseAsString)
-  const { items, loading, error, createItem, updateItem, deleteItem } =
+  const { version } = useInstagramItemsRefresh()
+  const { items, loading, error, refresh, createItem, updateItem, deleteItem } =
     useInstagramItems(workflowId)
+
+  useEffect(() => {
+    if (version === 0) return
+    void refresh()
+  }, [version, refresh])
 
   const [creating, setCreating] = useState(false)
   const [saving, setSaving] = useState(false)

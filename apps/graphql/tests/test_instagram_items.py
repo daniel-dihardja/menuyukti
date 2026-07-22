@@ -21,12 +21,20 @@ mutation CreateInstagramItem(
   $workflowId: ID!
   $kind: String!
   $title: String
+  $caption: String
+  $hook: String
+  $visualBrief: String
+  $status: String
   $schedule: DateTime
 ) {
   createInstagramItem(
     workflowId: $workflowId
     kind: $kind
     title: $title
+    caption: $caption
+    hook: $hook
+    visualBrief: $visualBrief
+    status: $status
     schedule: $schedule
   ) {
     id
@@ -271,6 +279,33 @@ def test_create_instagram_item_with_schedule() -> None:
     item = created.data["createInstagramItem"]
     assert item["schedule"] is not None
     assert "2026-08-01" in item["schedule"]
+
+
+def test_create_instagram_item_with_content_fields() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={
+                "workflowId": workflow_id,
+                "kind": "reel",
+                "title": "Friday special",
+                "caption": "Save the date",
+                "hook": "Open with sizzle",
+                "visualBrief": "Close-up of bowl",
+                "status": "ready",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item = created.data["createInstagramItem"]
+    assert item["kind"] == "reel"
+    assert item["title"] == "Friday special"
+    assert item["caption"] == "Save the date"
+    assert item["hook"] == "Open with sizzle"
+    assert item["visualBrief"] == "Close-up of bowl"
+    assert item["status"] == "ready"
 
 
 def test_create_instagram_item_requires_auth() -> None:

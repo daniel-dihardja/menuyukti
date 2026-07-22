@@ -13,6 +13,10 @@ const scheduleSchema = z.string().datetime({ offset: true }).nullable()
 export const createInstagramItemBodySchema = z.object({
   kind: instagramItemKindSchema.default('post'),
   title: z.string().max(256).optional(),
+  caption: z.string().optional(),
+  hook: z.string().optional(),
+  visualBrief: z.string().optional(),
+  status: instagramItemStatusSchema.optional(),
   schedule: scheduleSchema.optional(),
 })
 

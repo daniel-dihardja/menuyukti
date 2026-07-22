@@ -57,12 +57,20 @@ export const CREATE_INSTAGRAM_ITEM_MUTATION = `
     $workflowId: ID!
     $kind: String!
     $title: String
+    $caption: String
+    $hook: String
+    $visualBrief: String
+    $status: String
     $schedule: DateTime
   ) {
     createInstagramItem(
       workflowId: $workflowId
       kind: $kind
       title: $title
+      caption: $caption
+      hook: $hook
+      visualBrief: $visualBrief
+      status: $status
       schedule: $schedule
     ) {
       ${INSTAGRAM_ITEM_FIELDS}

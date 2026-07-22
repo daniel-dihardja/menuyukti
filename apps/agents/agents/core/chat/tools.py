@@ -19,6 +19,18 @@ from agents_app.agents.core.chat.graphql_client import (
     update_milestone_input as persist_milestone_input,
 )
 from agents_app.agents.core.chat.http_context import get_chat_http_client
+from agents_app.agents.core.chat.instagram_items_client import (
+    create_instagram_item as persist_create_instagram_item,
+)
+from agents_app.agents.core.chat.instagram_items_client import (
+    delete_instagram_item as persist_delete_instagram_item,
+)
+from agents_app.agents.core.chat.instagram_items_client import (
+    list_instagram_items as fetch_instagram_items,
+)
+from agents_app.agents.core.chat.instagram_items_client import (
+    update_instagram_item as persist_update_instagram_item,
+)
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
 from agents_app.agents.core.chat.workflow_overview import format_workflow_overview_markdown
@@ -44,6 +56,15 @@ _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
         "milestonePresetData",
         "milestoneResult",
     },
+)
+
+_VALID_IG_KINDS = frozenset({"story", "post", "reel"})
+_VALID_IG_STATUSES = frozenset({"draft", "ready"})
+_IG_CREATE_OPTIONAL_KEYS = frozenset(
+    {"title", "caption", "hook", "visual_brief", "status", "schedule"}
+)
+_IG_UPDATE_OPTIONAL_KEYS = frozenset(
+    {"kind", "title", "caption", "hook", "visual_brief", "status", "schedule"}
 )
 
 
@@ -812,3 +833,303 @@ async def get_chart_data(
         user_id=str(user_id),
         analytics_run_id=analytics_run_id,
     )
+
+
+def _workflow_chat_context(config: RunnableConfig | None) -> tuple[str, str] | str:
+    """Return ``(workflow_id, user_id)`` or an error message string."""
+    c = (config or {}).get("configurable") or {}
+    workflow_id = c.get("workflow_id")
+    user_id = c.get("user_id")
+    if not isinstance(workflow_id, str) or not workflow_id.strip():
+        return (
+            "Workflow context is not available (missing workflow_id). "
+            "Open campaign workflow chat to manage Instagram items."
+        )
+    if not isinstance(user_id, str) or not user_id.strip():
+        return "User context is not available."
+    return workflow_id.strip(), user_id.strip()
+
+
+def _format_ig_item_line(item: dict[str, Any]) -> str:
+    item_id = item.get("id", "?")
+    kind = item.get("kind") or "?"
+    title = item.get("title") or "(untitled)"
+    status = item.get("status") or "?"
+    schedule = item.get("schedule")
+    schedule_bit = f", schedule={schedule}" if schedule else ""
+    return f"- id={item_id} kind={kind} status={status} title={title!r}{schedule_bit}"
+
+
+def _normalize_ig_kind(raw: Any) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    cleaned = raw.strip().lower()
+    return cleaned if cleaned in _VALID_IG_KINDS else None
+
+
+def _normalize_ig_status(raw: Any) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    cleaned = raw.strip().lower()
+    return cleaned if cleaned in _VALID_IG_STATUSES else None
+
+
+def _optional_text(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, str):
+        msg = "must be a string"
+        raise ValueError(msg)
+    return raw
+
+
+def _optional_schedule(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, str) or not raw.strip():
+        msg = "schedule must be an ISO-8601 datetime string or null"
+        raise ValueError(msg)
+    return raw.strip()
+
+
+@tool
+async def list_instagram_items(
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """List Instagram draft items (story/post/reel) for the current campaign workflow.
+
+    Call before update or delete so you use real item ids. Also use to confirm what
+    already exists before creating more drafts.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    workflow_id, user_id = ctx
+    client = get_chat_http_client()
+    items = await fetch_instagram_items(workflow_id, user_id, client=client)
+    if not items:
+        return f"No Instagram items for workflow id={workflow_id}."
+    lines = [f"Instagram items for workflow id={workflow_id} ({len(items)}):"]
+    lines.extend(_format_ig_item_line(item) for item in items)
+    return "\n".join(lines)
+
+
+@tool
+async def create_instagram_items(
+    items: list[dict[str, Any]] | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Create one or more Instagram draft items for the current workflow (batch).
+
+    Each item object requires ``kind`` (``story`` | ``post`` | ``reel``). Optional fields:
+    ``title``, ``caption``, ``hook``, ``visual_brief``, ``status`` (``draft`` | ``ready``),
+    ``schedule`` (ISO-8601 datetime). Prefer a single call with multiple items when the
+    user asks for several drafts at once.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    workflow_id, user_id = ctx
+    if not isinstance(items, list) or len(items) == 0:
+        return (
+            "Missing required field 'items'. Provide a non-empty list, for example: "
+            "[{'kind':'post','title':'Friday special','caption':'...'}]."
+        )
+
+    client = get_chat_http_client()
+    successes: list[str] = []
+    errors: list[str] = []
+
+    for i, row in enumerate(items, start=1):
+        if not isinstance(row, dict):
+            errors.append(f"#{i}: item must be an object.")
+            continue
+        kind = _normalize_ig_kind(row.get("kind"))
+        if kind is None:
+            errors.append(
+                f"#{i}: kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}."
+            )
+            continue
+        unknown = set(row.keys()) - ({"kind"} | _IG_CREATE_OPTIONAL_KEYS)
+        if unknown:
+            errors.append(f"#{i}: unsupported fields: {', '.join(sorted(unknown))}.")
+            continue
+        try:
+            status_raw = row.get("status")
+            status = None
+            if status_raw is not None:
+                status = _normalize_ig_status(status_raw)
+                if status is None:
+                    raise ValueError(
+                        f"status must be one of: {', '.join(sorted(_VALID_IG_STATUSES))}"
+                    )
+            created = await persist_create_instagram_item(
+                workflow_id,
+                user_id,
+                kind=kind,
+                title=_optional_text(row.get("title")),
+                caption=_optional_text(row.get("caption")),
+                hook=_optional_text(row.get("hook")),
+                visual_brief=_optional_text(row.get("visual_brief")),
+                status=status,
+                schedule=_optional_schedule(row.get("schedule"))
+                if "schedule" in row
+                else None,
+                client=client,
+            )
+            successes.append(_format_ig_item_line(created))
+        except Exception as exc:  # noqa: BLE001 — report per-item failures in batch
+            errors.append(f"#{i}: {exc}")
+
+    parts: list[str] = []
+    if successes:
+        parts.append(f"Created {len(successes)} Instagram item(s):")
+        parts.extend(successes)
+    if errors:
+        parts.append(f"Failed {len(errors)} item(s):")
+        parts.extend(f"- {err}" for err in errors)
+    if not parts:
+        return "No Instagram items were created."
+    return "\n".join(parts)
+
+
+@tool
+async def update_instagram_items(
+    items: list[dict[str, Any]] | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Update one or more existing Instagram items (batch).
+
+    Each item requires ``id`` and at least one of: ``kind``, ``title``, ``caption``,
+    ``hook``, ``visual_brief``, ``status``, ``schedule`` (ISO-8601 or null to clear).
+    Call ``list_instagram_items`` first when ids are unknown.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    _workflow_id, user_id = ctx
+    if not isinstance(items, list) or len(items) == 0:
+        return (
+            "Missing required field 'items'. Provide a non-empty list, for example: "
+            "[{'id':'12','caption':'Updated copy'}]."
+        )
+
+    client = get_chat_http_client()
+    successes: list[str] = []
+    errors: list[str] = []
+
+    for i, row in enumerate(items, start=1):
+        if not isinstance(row, dict):
+            errors.append(f"#{i}: item must be an object.")
+            continue
+        raw_id = row.get("id")
+        if raw_id is None or (isinstance(raw_id, str) and not raw_id.strip()):
+            errors.append(f"#{i}: id is required.")
+            continue
+        item_id = str(raw_id).strip()
+        unknown = set(row.keys()) - ({"id"} | _IG_UPDATE_OPTIONAL_KEYS)
+        if unknown:
+            errors.append(f"#{i}: unsupported fields: {', '.join(sorted(unknown))}.")
+            continue
+
+        patch_keys = [k for k in _IG_UPDATE_OPTIONAL_KEYS if k in row]
+        if not patch_keys:
+            errors.append(f"#{i}: at least one field to update is required.")
+            continue
+
+        try:
+            kwargs: dict[str, Any] = {"client": client}
+            if "kind" in row:
+                kind = _normalize_ig_kind(row.get("kind"))
+                if kind is None:
+                    raise ValueError(
+                        f"kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}"
+                    )
+                kwargs["kind"] = kind
+            if "title" in row:
+                kwargs["title"] = _optional_text(row.get("title"))
+            if "caption" in row:
+                kwargs["caption"] = _optional_text(row.get("caption"))
+            if "hook" in row:
+                kwargs["hook"] = _optional_text(row.get("hook"))
+            if "visual_brief" in row:
+                kwargs["visual_brief"] = _optional_text(row.get("visual_brief"))
+            if "status" in row:
+                status = _normalize_ig_status(row.get("status"))
+                if status is None:
+                    raise ValueError(
+                        f"status must be one of: {', '.join(sorted(_VALID_IG_STATUSES))}"
+                    )
+                kwargs["status"] = status
+            if "schedule" in row:
+                sched = row.get("schedule")
+                if sched is None:
+                    kwargs["schedule"] = None
+                else:
+                    kwargs["schedule"] = _optional_schedule(sched)
+
+            updated = await persist_update_instagram_item(item_id, user_id, **kwargs)
+            successes.append(_format_ig_item_line(updated))
+        except Exception as exc:  # noqa: BLE001 — report per-item failures in batch
+            errors.append(f"#{i} id={item_id}: {exc}")
+
+    parts: list[str] = []
+    if successes:
+        parts.append(f"Updated {len(successes)} Instagram item(s):")
+        parts.extend(successes)
+    if errors:
+        parts.append(f"Failed {len(errors)} item(s):")
+        parts.extend(f"- {err}" for err in errors)
+    if not parts:
+        return "No Instagram items were updated."
+    return "\n".join(parts)
+
+
+@tool
+async def delete_instagram_items(
+    ids: list[str] | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Delete one or more Instagram items by id (batch).
+
+    Call ``list_instagram_items`` first when ids are unknown. Confirm with the user
+    when delete intent is ambiguous.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    _workflow_id, user_id = ctx
+    if not isinstance(ids, list) or len(ids) == 0:
+        return (
+            "Missing required field 'ids'. Provide a non-empty list of Instagram item ids, "
+            "for example: ['12','15']."
+        )
+
+    client = get_chat_http_client()
+    successes: list[str] = []
+    errors: list[str] = []
+
+    for i, raw_id in enumerate(ids, start=1):
+        if raw_id is None or (isinstance(raw_id, str) and not str(raw_id).strip()):
+            errors.append(f"#{i}: id is required.")
+            continue
+        item_id = str(raw_id).strip()
+        try:
+            ok = await persist_delete_instagram_item(item_id, user_id, client=client)
+            if ok:
+                successes.append(f"- deleted id={item_id}")
+            else:
+                errors.append(f"#{i} id={item_id}: delete returned false.")
+        except Exception as exc:  # noqa: BLE001 — report per-item failures in batch
+            errors.append(f"#{i} id={item_id}: {exc}")
+
+    parts: list[str] = []
+    if successes:
+        parts.append(f"Deleted {len(successes)} Instagram item(s):")
+        parts.extend(successes)
+    if errors:
+        parts.append(f"Failed {len(errors)} item(s):")
+        parts.extend(f"- {err}" for err in errors)
+    if not parts:
+        return "No Instagram items were deleted."
+    return "\n".join(parts)

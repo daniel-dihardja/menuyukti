@@ -24,23 +24,25 @@ import { PanelRight } from 'lucide-react'
 
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
-import type { TimelineMilestone } from './timeline-workspace'
-import type { MilestoneInput } from './timeline/types'
-import { TimelineWorkspace } from './timeline-workspace'
-import { WorkflowChatLayout } from './workflow-chat-layout'
-import { WorkflowChatHost } from './workflow-chat-host'
-import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
-import { WorkflowSidePanel } from './workflow-side-panel'
-import { WorkflowVisualizationsProvider } from './workflow-visualizations-context'
-
 import {
-  workflowMilestoneReducer,
-  createInitialWorkflowMilestoneUiState,
-} from './workflow-milestone-reducer'
+  InstagramItemsRefreshProvider,
+  useInstagramItemsRefresh,
+} from './instagram-items/instagram-items-refresh-context'
 import { TimelineProvider } from './timeline-context'
+import type { MilestoneInput } from './timeline/types'
+import { TimelineWorkspace, type TimelineMilestone } from './timeline-workspace'
+import { useMilestoneOperations } from './use-milestone-operations'
 import { useWorkflowPreviewVisibility } from './use-workflow-preview-visibility'
 import { useWorkflowTimelineProviderSlices } from './use-workflow-timeline-provider-value'
-import { useMilestoneOperations } from './use-milestone-operations'
+import { WorkflowChatHost } from './workflow-chat-host'
+import { WorkflowChatLayout } from './workflow-chat-layout'
+import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
+import {
+  createInitialWorkflowMilestoneUiState,
+  workflowMilestoneReducer,
+} from './workflow-milestone-reducer'
+import { WorkflowSidePanel } from './workflow-side-panel'
+import { WorkflowVisualizationsProvider } from './workflow-visualizations-context'
 import { WorkflowPreviewPanelSkeleton } from './workflow-workspace-skeleton'
 
 const WorkflowPreviewPanelBodyLazy = dynamic(
@@ -101,10 +103,29 @@ export function WorkflowChatPanel({
   locationId,
   analyticsRunId,
 }: WorkflowChatPanelProps) {
+  return (
+    <InstagramItemsRefreshProvider>
+      <WorkflowChatPanelInner
+        analyticsRunId={analyticsRunId}
+        initialMilestones={initialMilestones}
+        locationId={locationId}
+        workflowId={workflowId}
+      />
+    </InstagramItemsRefreshProvider>
+  )
+}
+
+function WorkflowChatPanelInner({
+  workflowId,
+  initialMilestones,
+  locationId,
+  analyticsRunId,
+}: WorkflowChatPanelProps) {
   const t = useTranslations('analytics.workflows.chat')
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
   const [chatBusy, setChatBusy] = useState(false)
   const [, startPreviewTransition] = useTransition()
+  const { refresh: onRefreshInstagramItems } = useInstagramItemsRefresh()
 
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
   const isDesktop = useDesktopLayout()
@@ -255,6 +276,7 @@ export function WorkflowChatPanel({
         onBusyChange={setChatBusy}
         onHydrateAfterChat={onHydrateAfterChat}
         onPrefetchMilestoneReference={onPrefetchMilestoneReference}
+        onRefreshInstagramItems={onRefreshInstagramItems}
         selectedMilestoneId={selectedMilestoneId}
         workflowId={workflowId}
       >
