@@ -2355,7 +2355,8 @@
         "panelDescription": "Create and edit Stories, posts, and Reels for this campaign. Select a milestone to switch back to milestone data.",
         "newButton": "New item",
         "loading": "Loading items…",
-        "empty": "No Instagram items yet. Create one to start drafting Stories, posts, or Reels.",
+        "emptyTitle": "No Instagram items yet",
+        "empty": "Create one to start drafting Stories, posts, or Reels for this campaign.",
         "untitled": "Untitled item",
         "notFound": "That Instagram item was not found. Pick another or create a new one.",
         "backAria": "Back to Instagram items",
@@ -2369,6 +2370,10 @@
         "deleteConfirmDescriptionNamed": "This permanently removes “{title}” from this campaign. This cannot be undone.",
         "deleteConfirmCancel": "Cancel",
         "deleteConfirmAction": "Delete",
+        "sections": {
+          "content": "Content",
+          "generate": "Generate"
+        },
         "fields": {
           "kind": "Format",
           "status": "Status",
@@ -2387,6 +2392,7 @@
           "tooManyReferences": "Too many references selected. Leave room for the style pack reference (at most 5 total including style).",
           "previewLabel": "Generated image",
           "previewEmpty": "No image yet. Write a visual brief and generate.",
+          "previewEmptyTitle": "No image yet",
           "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
           "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",
           "formatHintPost": "Output size: 1024×1024 (square post).",
@@ -2404,6 +2410,7 @@
           "previousVersion": "Previous generated image",
           "nextVersion": "Next generated image",
           "versionIndicator": "{current} of {total}",
+          "versionDotAria": "Show version {index} of {total}",
           "useAsItemImage": "Use as item image",
           "committing": "Setting item image…",
           "commitError": "Could not set this image as the item image. Please try again.",

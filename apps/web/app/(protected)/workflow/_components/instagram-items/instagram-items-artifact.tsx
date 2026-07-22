@@ -83,26 +83,28 @@ export function InstagramItemsArtifact() {
 
   if (selectedItem) {
     return (
-      <InstagramItemDetail
-        actionError={actionError}
-        item={selectedItem}
-        onBack={() => {
-          void setSelectedItemId(null)
-          setActionError(null)
-        }}
-        onGenerated={() => {
-          void refresh()
-        }}
-        onSave={handleSave}
-        saving={saving}
-        workflowId={workflowId}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <InstagramItemDetail
+          actionError={actionError}
+          item={selectedItem}
+          onBack={() => {
+            void setSelectedItemId(null)
+            setActionError(null)
+          }}
+          onGenerated={() => {
+            void refresh()
+          }}
+          onSave={handleSave}
+          saving={saving}
+          workflowId={workflowId}
+        />
+      </div>
     )
   }
 
   if (selectedItemId && !loading) {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
         <p className="text-muted-foreground text-sm">{t('notFound')}</p>
         <InstagramItemsOverview
           creating={creating}
@@ -124,20 +126,22 @@ export function InstagramItemsArtifact() {
   }
 
   return (
-    <InstagramItemsOverview
-      creating={creating}
-      deletingId={deletingId}
-      error={actionError ?? error}
-      items={items}
-      loading={loading}
-      onCreate={() => {
-        void handleCreate()
-      }}
-      onDelete={handleDeleteFromOverview}
-      onSelect={(itemId) => {
-        void setSelectedItemId(itemId)
-        setActionError(null)
-      }}
-    />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <InstagramItemsOverview
+        creating={creating}
+        deletingId={deletingId}
+        error={actionError ?? error}
+        items={items}
+        loading={loading}
+        onCreate={() => {
+          void handleCreate()
+        }}
+        onDelete={handleDeleteFromOverview}
+        onSelect={(itemId) => {
+          void setSelectedItemId(itemId)
+          setActionError(null)
+        }}
+      />
+    </div>
   )
 }

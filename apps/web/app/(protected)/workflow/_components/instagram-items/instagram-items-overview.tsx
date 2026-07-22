@@ -7,6 +7,7 @@ import {
   ImageIcon,
   PlusIcon,
   RectangleVerticalIcon,
+  SquarePenIcon,
   Trash2Icon,
 } from 'lucide-react'
 
@@ -19,9 +20,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
+import { cn } from '@workspace/ui/lib/utils'
 
 import type { InstagramItemDto } from '@/lib/graphql/queries/instagram-items'
 
@@ -37,10 +49,28 @@ type InstagramItemsOverviewProps = {
 }
 
 function KindPreviewIcon({ kind }: { kind: string }) {
-  const className = 'size-8 text-muted-foreground'
-  if (kind === 'story') return <RectangleVerticalIcon aria-hidden className={className} />
-  if (kind === 'reel') return <ClapperboardIcon aria-hidden className={className} />
-  return <ImageIcon aria-hidden className={className} />
+  if (kind === 'story') return <RectangleVerticalIcon aria-hidden />
+  if (kind === 'reel') return <ClapperboardIcon aria-hidden />
+  return <ImageIcon aria-hidden />
+}
+
+function OverviewSkeletonGrid() {
+  return (
+    <ul aria-hidden className="grid min-h-0 grid-cols-2 gap-3">
+      {Array.from({ length: 4 }, (_, index) => (
+        <li key={index} className="min-w-0">
+          <div className="flex flex-col overflow-hidden rounded-md border bg-background">
+            <Skeleton className="aspect-square w-full rounded-none" />
+            <div className="flex flex-col gap-2 p-2.5">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 export function InstagramItemsOverview({
@@ -60,43 +90,62 @@ export function InstagramItemsOverview({
   const pendingItem =
     pendingDeleteId !== null ? items.find((item) => item.id === pendingDeleteId) : undefined
   const isDeletingPending = pendingDeleteId !== null && deletingId === pendingDeleteId
+  const actionsDisabled = creating || loading || deletingId !== null
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 space-y-1">
+      <div className="flex shrink-0 items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-col gap-1">
           <h2 className="font-semibold text-xl tracking-tight" id="workflow-preview-panel-title">
             {t('title')}
           </h2>
           <p className="text-muted-foreground text-sm">{t('panelDescription')}</p>
         </div>
         <Button
-          className={creating ? 'inline-flex shrink-0 items-center gap-2' : 'shrink-0'}
-          disabled={creating || loading || deletingId !== null}
+          className="shrink-0"
+          disabled={actionsDisabled}
           onClick={onCreate}
           size="sm"
           type="button"
         >
-          {creating ? <Spinner className="size-3.5" /> : <PlusIcon className="size-3.5" />}
+          {creating ? <Spinner data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
           {t('newButton')}
         </Button>
       </div>
 
       {error ? (
-        <p className="text-destructive text-sm" role="alert">
-          {error}
-        </p>
+        <Alert className="shrink-0" variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-          <Spinner className="size-4" />
-          {t('loading')}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+          <span className="sr-only">{t('loading')}</span>
+          <OverviewSkeletonGrid />
         </div>
       ) : items.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t('empty')}</p>
+        <Empty className="min-h-0 flex-1 border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SquarePenIcon aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle>{t('emptyTitle')}</EmptyTitle>
+            <EmptyDescription>{t('empty')}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button disabled={creating} onClick={onCreate} size="sm" type="button">
+              {creating ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <PlusIcon data-icon="inline-start" />
+              )}
+              {t('newButton')}
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
-        <ul className="grid min-h-0 grid-cols-2 gap-3 overflow-y-auto">
+        <ul className="grid min-h-0 flex-1 grid-cols-2 content-start gap-3 overflow-y-auto">
           {items.map((item) => {
             const kindKey = `kind.${item.kind}` as 'kind.story' | 'kind.post' | 'kind.reel'
             const statusKey = `status.${item.status}` as 'status.draft' | 'status.ready'
@@ -108,26 +157,31 @@ export function InstagramItemsOverview({
               <li key={item.id} className="min-w-0">
                 <div className="relative flex h-full flex-col overflow-hidden rounded-md border bg-background">
                   <button
-                    className="flex min-w-0 flex-1 flex-col text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-60"
+                    className={cn(
+                      'flex min-w-0 flex-1 flex-col text-left transition-colors',
+                      'hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                      'disabled:pointer-events-none disabled:opacity-60',
+                    )}
                     disabled={deletingId !== null}
                     onClick={() => onSelect(item.id)}
                     type="button"
                   >
-                    <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-muted/50">
+                    <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-muted/50 text-muted-foreground [&_svg:not([class*='size-'])]:size-8">
                       {item.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-                        <img alt="" className="size-full object-cover" src={item.imageUrl} />
+                        <img alt={title} className="size-full object-cover" src={item.imageUrl} />
                       ) : (
                         <KindPreviewIcon kind={item.kind} />
                       )}
-                      <span className="sr-only">{kindLabel}</span>
+                      <Badge className="absolute bottom-1.5 left-1.5 shadow-sm" variant="secondary">
+                        {kindLabel}
+                      </Badge>
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-2.5">
                       <span className="line-clamp-2 font-medium text-sm leading-snug">{title}</span>
-                      <span className="flex flex-wrap gap-1">
-                        <Badge variant="secondary">{kindLabel}</Badge>
-                        <Badge variant="outline">{statusLabel}</Badge>
-                      </span>
+                      <Badge className="w-fit" variant="outline">
+                        {statusLabel}
+                      </Badge>
                       {item.schedule ? (
                         <span className="line-clamp-2 text-muted-foreground text-xs">
                           {format.dateTime(new Date(item.schedule), {
@@ -148,15 +202,11 @@ export function InstagramItemsOverview({
                     className="absolute top-1.5 right-1.5 size-7 bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
                     disabled={deletingId !== null}
                     onClick={() => setPendingDeleteId(item.id)}
-                    size="icon"
+                    size="icon-sm"
                     type="button"
                     variant="ghost"
                   >
-                    {tileDeleting ? (
-                      <Spinner className="size-3.5" />
-                    ) : (
-                      <Trash2Icon className="size-3.5 text-destructive" />
-                    )}
+                    {tileDeleting ? <Spinner /> : <Trash2Icon className="text-destructive" />}
                   </Button>
                 </div>
               </li>
@@ -189,7 +239,6 @@ export function InstagramItemsOverview({
               {t('deleteConfirmCancel')}
             </AlertDialogCancel>
             <Button
-              className={isDeletingPending ? 'inline-flex items-center gap-2' : undefined}
               disabled={isDeletingPending || pendingDeleteId === null}
               onClick={() => {
                 if (pendingDeleteId === null) return
@@ -201,7 +250,7 @@ export function InstagramItemsOverview({
               type="button"
               variant="destructive"
             >
-              {isDeletingPending ? <Spinner className="size-3.5" /> : null}
+              {isDeletingPending ? <Spinner data-icon="inline-start" /> : null}
               {t('deleteConfirmAction')}
             </Button>
           </AlertDialogFooter>

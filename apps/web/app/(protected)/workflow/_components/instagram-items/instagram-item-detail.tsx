@@ -1,18 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import {
-  ArrowLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  PlusIcon,
-  SparklesIcon,
-  Trash2Icon,
-  XIcon,
-} from 'lucide-react'
+import { ArrowLeftIcon, PlusIcon, SparklesIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -24,10 +16,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
-import { Button } from '@workspace/ui/components/button'
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+import { Button, buttonVariants } from '@workspace/ui/components/button'
 import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
 import {
   Select,
   SelectContent,
@@ -37,6 +36,7 @@ import {
 } from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
@@ -59,6 +59,7 @@ import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-refe
 import { routes } from '@/lib/routes'
 import { listStyles, type Style } from '@/lib/styles/client-api'
 
+import { InstagramItemPreview } from './instagram-item-preview'
 import {
   toFormValues,
   type InstagramItemFormValues,
@@ -67,6 +68,14 @@ import {
 } from './use-instagram-items'
 
 const STYLE_NONE = '__none__'
+
+const optionChipClassName = cn(
+  buttonVariants({ variant: 'secondary', size: 'sm' }),
+  'h-auto shadow-none hover:translate-y-0',
+  'border border-transparent',
+  'data-[state=off]:border-border data-[state=off]:bg-transparent data-[state=off]:text-foreground data-[state=off]:hover:bg-secondary/50',
+  'data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground data-[state=on]:ring-2 data-[state=on]:ring-ring/40',
+)
 
 type InstagramItemDetailProps = {
   item: InstagramItemDto
@@ -79,11 +88,6 @@ type InstagramItemDetailProps = {
 }
 
 type ItemImageVersion = InstagramItemMediaVersionDto & { imageUrl: string | null }
-
-function previewAspectClass(kind: InstagramItemKind): string {
-  if (kind === 'post') return 'aspect-square'
-  return 'aspect-[9/16]'
-}
 
 function refsFromItem(item: InstagramItemDto): PostCreatorReferenceImage[] {
   if (!Array.isArray(item.referenceImages)) return []
@@ -168,6 +172,8 @@ export function InstagramItemDetail({
   const modelFieldId = useId()
   const modelBlurbId = useId()
   const styleFieldId = useId()
+  const kindFieldId = useId()
+  const statusFieldId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
     refsFromItem(item),
@@ -231,14 +237,10 @@ export function InstagramItemDetail({
 
   const busy = saving || isGenerating || isCommitting || isDeletingVersion
   const canGenerate = values.visualBrief.trim().length > 0 && !busy
-  const showVersionNav = imageVersions.length > 1
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
-  const previewUrl = previewVersion?.imageUrl ?? null
-  const canCommit =
-    Boolean(previewVersion?.mediaS3Key) &&
-    showVersionNav &&
-    previewVersionIndex !== committedVersionIndex
   const canDeleteVersion = Boolean(previewVersion?.mediaS3Key) && imageVersions.length > 0 && !busy
+  const headerTitle = values.title.trim() ? values.title : t('untitled')
+  const footerError = actionError || generateError
 
   function valuesWithRefs(): InstagramItemFormValues {
     return {
@@ -258,36 +260,12 @@ export function InstagramItemDetail({
     onGenerated(nextItem)
   }
 
-  const previewVersionAt = useCallback(
+  const handlePreviewIndexChange = useCallback(
     (index: number) => {
       if (busy || imageVersions.length === 0) return
       setPreviewVersionIndex(index)
     },
     [busy, imageVersions.length],
-  )
-
-  const goPrev = useCallback(() => {
-    if (!showVersionNav || busy) return
-    previewVersionAt(previewVersionIndex === 0 ? imageVersions.length - 1 : previewVersionIndex - 1)
-  }, [busy, imageVersions.length, previewVersionAt, previewVersionIndex, showVersionNav])
-
-  const goNext = useCallback(() => {
-    if (!showVersionNav || busy) return
-    previewVersionAt(previewVersionIndex === imageVersions.length - 1 ? 0 : previewVersionIndex + 1)
-  }, [busy, imageVersions.length, previewVersionAt, previewVersionIndex, showVersionNav])
-
-  const handlePreviewKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
-      if (!showVersionNav) return
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault()
-        goPrev()
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault()
-        goNext()
-      }
-    },
-    [goNext, goPrev, showVersionNav],
   )
 
   async function handleGenerate() {
@@ -357,7 +335,7 @@ export function InstagramItemDetail({
 
   async function handleCommitVersion() {
     const version = imageVersions[previewVersionIndex]
-    if (!version?.mediaS3Key || !canCommit) return
+    if (!version?.mediaS3Key || previewVersionIndex === committedVersionIndex) return
 
     setIsCommitting(true)
     setGenerateError(null)
@@ -413,8 +391,8 @@ export function InstagramItemDetail({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex items-center gap-2">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center gap-2 pb-3">
         <Button
           aria-label={t('backAria')}
           disabled={busy}
@@ -423,401 +401,336 @@ export function InstagramItemDetail({
           type="button"
           variant="ghost"
         >
-          <ArrowLeftIcon className="size-4" />
+          <ArrowLeftIcon />
         </Button>
         <h2 className="min-w-0 flex-1 truncate font-semibold text-base tracking-tight">
-          {values.title.trim() ? values.title : t('untitled')}
+          {headerTitle}
         </h2>
       </div>
 
       <form
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={(event) => {
           event.preventDefault()
           void onSave(valuesWithRefs())
         }}
       >
-        <div className="grid gap-1.5">
-          <Label>{t('generate.previewLabel')}</Label>
-          <div
-            className="mx-auto flex w-full max-w-[280px] items-center gap-1"
-            onKeyDown={handlePreviewKeyDown}
-            role="group"
-            tabIndex={showVersionNav ? 0 : undefined}
-          >
-            {showVersionNav ? (
-              <Button
-                aria-label={t('generate.previousVersion')}
-                className="size-8 shrink-0"
+        <div className="min-h-0 flex-1 overflow-y-auto pr-0.5 pt-2">
+          <FieldGroup className="gap-5 pb-4">
+            <FieldSeparator className="mt-1">{t('sections.content')}</FieldSeparator>
+
+            <Field>
+              <FieldLabel htmlFor={kindFieldId}>{t('fields.kind')}</FieldLabel>
+              <ToggleGroup
+                aria-label={t('fields.kind')}
+                className="gap-1.5"
                 disabled={busy}
-                onClick={goPrev}
-                size="icon"
-                type="button"
-                variant="outline"
+                id={kindFieldId}
+                onValueChange={(value) => {
+                  if (!value) return
+                  setValues((prev) => ({ ...prev, kind: value as InstagramItemKind }))
+                }}
+                type="single"
+                value={values.kind}
               >
-                <ChevronLeftIcon className="size-4" />
-              </Button>
-            ) : null}
-            <div className="relative min-w-0 flex-1">
-              <div
-                className={cn(
-                  'overflow-hidden rounded-md border bg-muted/40',
-                  previewAspectClass(values.kind),
-                )}
+                {(['story', 'post', 'reel'] as const).map((kind) => (
+                  <ToggleGroupItem
+                    className={cn(optionChipClassName, 'min-h-8 flex-1 rounded-sm px-2 text-xs')}
+                    key={kind}
+                    value={kind}
+                  >
+                    {t(`kind.${kind}`)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor={statusFieldId}>{t('fields.status')}</FieldLabel>
+              <ToggleGroup
+                aria-label={t('fields.status')}
+                className="gap-1.5"
+                disabled={busy}
+                id={statusFieldId}
+                onValueChange={(value) => {
+                  if (!value) return
+                  setValues((prev) => ({ ...prev, status: value as InstagramItemStatus }))
+                }}
+                type="single"
+                value={values.status}
               >
-                {previewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-                  <img alt="" className="size-full object-cover" src={previewUrl} />
-                ) : (
-                  <div className="flex size-full items-center justify-center px-3 text-center text-muted-foreground text-xs">
-                    {t('generate.previewEmpty')}
-                  </div>
-                )}
-              </div>
-              {canDeleteVersion ? (
-                <div className="absolute top-1.5 right-1.5 z-10">
-                  <Button
-                    aria-label={t('generate.deleteVersion')}
-                    className="size-7 shadow-sm"
+                {(['draft', 'ready'] as const).map((status) => (
+                  <ToggleGroupItem
+                    className={cn(optionChipClassName, 'min-h-8 flex-1 rounded-sm px-2 text-xs')}
+                    key={status}
+                    value={status}
+                  >
+                    {t(`status.${status}`)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </Field>
+
+            <Field>
+              <FieldLabel>{t('fields.schedule')}</FieldLabel>
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <DateTimePicker
                     disabled={busy}
-                    onClick={() => setDeleteDialogOpen(true)}
+                    onChange={(schedule) => setValues((prev) => ({ ...prev, schedule }))}
+                    placeholder={t('fields.scheduleDatePlaceholder')}
+                    timeLabel={t('fields.scheduleTime')}
+                    value={values.schedule || undefined}
+                  />
+                </div>
+                {values.schedule ? (
+                  <Button
+                    aria-label={t('clearScheduleAria')}
+                    disabled={busy}
+                    onClick={() => setValues((prev) => ({ ...prev, schedule: '' }))}
                     size="icon"
                     type="button"
-                    variant="secondary"
+                    variant="ghost"
                   >
-                    <Trash2Icon className="size-3.5" />
+                    <XIcon />
                   </Button>
-                </div>
-              ) : null}
-              {canCommit ? (
-                <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center p-2">
-                  <Button
-                    className="h-7 px-2 text-xs shadow-sm"
-                    disabled={busy}
-                    onClick={() => {
-                      void handleCommitVersion()
-                    }}
-                    size="sm"
-                    type="button"
-                  >
-                    {isCommitting ? t('generate.committing') : t('generate.useAsItemImage')}
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-            {showVersionNav ? (
-              <Button
-                aria-label={t('generate.nextVersion')}
-                className="size-8 shrink-0"
+                ) : null}
+              </div>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="ig-item-title">{t('fields.title')}</FieldLabel>
+              <Input
                 disabled={busy}
-                onClick={goNext}
-                size="icon"
-                type="button"
-                variant="outline"
-              >
-                <ChevronRightIcon className="size-4" />
-              </Button>
-            ) : null}
-          </div>
-          {showVersionNav ? (
-            <p aria-live="polite" className="text-center text-muted-foreground text-xs">
-              {t('generate.versionIndicator', {
-                current: previewVersionIndex + 1,
-                total: imageVersions.length,
-              })}
-            </p>
-          ) : null}
-          <p className="text-muted-foreground text-xs">
-            {values.kind === 'post' ? t('generate.formatHintPost') : t('generate.formatHintStory')}
-          </p>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="ig-item-kind">{t('fields.kind')}</Label>
-          <Select
-            disabled={busy}
-            onValueChange={(value) =>
-              setValues((prev) => ({ ...prev, kind: value as InstagramItemKind }))
-            }
-            value={values.kind}
-          >
-            <SelectTrigger id="ig-item-kind">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="story">{t('kind.story')}</SelectItem>
-              <SelectItem value="post">{t('kind.post')}</SelectItem>
-              <SelectItem value="reel">{t('kind.reel')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="ig-item-status">{t('fields.status')}</Label>
-          <Select
-            disabled={busy}
-            onValueChange={(value) =>
-              setValues((prev) => ({ ...prev, status: value as InstagramItemStatus }))
-            }
-            value={values.status}
-          >
-            <SelectTrigger id="ig-item-status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">{t('status.draft')}</SelectItem>
-              <SelectItem value="ready">{t('status.ready')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label>{t('fields.schedule')}</Label>
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <DateTimePicker
-                disabled={busy}
-                onChange={(schedule) => setValues((prev) => ({ ...prev, schedule }))}
-                placeholder={t('fields.scheduleDatePlaceholder')}
-                timeLabel={t('fields.scheduleTime')}
-                value={values.schedule || undefined}
+                id="ig-item-title"
+                onChange={(event) => setValues((prev) => ({ ...prev, title: event.target.value }))}
+                value={values.title}
               />
-            </div>
-            {values.schedule ? (
-              <Button
-                aria-label={t('clearScheduleAria')}
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="ig-item-hook">{t('fields.hook')}</FieldLabel>
+              <Textarea
                 disabled={busy}
-                onClick={() => setValues((prev) => ({ ...prev, schedule: '' }))}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                <XIcon className="size-4" />
-              </Button>
-            ) : null}
-          </div>
-        </div>
+                id="ig-item-hook"
+                onChange={(event) => setValues((prev) => ({ ...prev, hook: event.target.value }))}
+                rows={2}
+                value={values.hook}
+              />
+            </Field>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="ig-item-title">{t('fields.title')}</Label>
-          <Input
-            disabled={busy}
-            id="ig-item-title"
-            onChange={(event) => setValues((prev) => ({ ...prev, title: event.target.value }))}
-            value={values.title}
-          />
-        </div>
+            <Field>
+              <FieldLabel htmlFor="ig-item-caption">{t('fields.caption')}</FieldLabel>
+              <Textarea
+                disabled={busy}
+                id="ig-item-caption"
+                onChange={(event) =>
+                  setValues((prev) => ({ ...prev, caption: event.target.value }))
+                }
+                rows={3}
+                value={values.caption}
+              />
+            </Field>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="ig-item-hook">{t('fields.hook')}</Label>
-          <Textarea
-            disabled={busy}
-            id="ig-item-hook"
-            onChange={(event) => setValues((prev) => ({ ...prev, hook: event.target.value }))}
-            rows={2}
-            value={values.hook}
-          />
-        </div>
+            <FieldSeparator>{t('sections.generate')}</FieldSeparator>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="ig-item-caption">{t('fields.caption')}</Label>
-          <Textarea
-            disabled={busy}
-            id="ig-item-caption"
-            onChange={(event) => setValues((prev) => ({ ...prev, caption: event.target.value }))}
-            rows={3}
-            value={values.caption}
-          />
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor={modelFieldId}>{tModel('label')}</Label>
-          <Select
-            disabled={busy}
-            onValueChange={(value) => {
-              if (isLeonardoPostModelId(value)) {
-                setGenerationModel(value)
-              }
-            }}
-            value={generationModel}
-          >
-            <SelectTrigger
-              aria-describedby={modelBlurbId}
-              aria-label={tModel('label')}
-              id={modelFieldId}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LEONARDO_POST_MODEL_IDS.map((modelId) => (
-                <SelectItem key={modelId} value={modelId}>
-                  {tModel(`options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-muted-foreground text-xs" id={modelBlurbId}>
-            {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
-          </p>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor={styleFieldId}>{t('generate.style.label')}</Label>
-          <Select
-            disabled={busy || stylesLoading}
-            onValueChange={(value) => {
-              if (value === STYLE_NONE) {
-                setValues((prev) => ({ ...prev, styleId: null }))
-                return
-              }
-              const next = Number(value)
-              if (Number.isInteger(next) && next > 0) {
-                setValues((prev) => ({ ...prev, styleId: next }))
-              }
-            }}
-            value={values.styleId != null ? String(values.styleId) : STYLE_NONE}
-          >
-            <SelectTrigger aria-label={t('generate.style.label')} id={styleFieldId}>
-              {selectedStyle ? (
-                <span className="flex min-w-0 items-center gap-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                  <img
-                    alt=""
-                    className="size-6 shrink-0 rounded object-cover"
-                    src={mediaDownloadHref(selectedStyle.referenceImageName)}
-                  />
-                  <span className="truncate">
-                    {selectedStyle.isDefault
-                      ? `${selectedStyle.name} (${t('generate.style.defaultSuffix')})`
-                      : selectedStyle.name}
-                  </span>
-                </span>
-              ) : (
-                <SelectValue placeholder={t('generate.style.placeholder')} />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={STYLE_NONE}>{t('generate.style.none')}</SelectItem>
-              {styles.map((style) => (
-                <SelectItem key={style.id} value={String(style.id)}>
-                  <span className="flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                    <img
-                      alt=""
-                      className="size-6 shrink-0 rounded object-cover"
-                      src={mediaDownloadHref(style.referenceImageName)}
-                    />
-                    <span>
-                      {style.isDefault
-                        ? `${style.name} (${t('generate.style.defaultSuffix')})`
-                        : style.name}
-                    </span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-muted-foreground text-xs">{t('generate.style.description')}</p>
-          {selectedStyle ? <StyleUsageGuide spec={selectedStyle.spec} /> : null}
-          <div className="flex flex-wrap gap-2 pt-0.5">
-            <Button asChild disabled={busy} size="sm" type="button" variant="outline">
-              <Link href={createStyleHref}>
-                <PlusIcon aria-hidden className="size-3.5" />
-                {t('generate.style.create')}
-              </Link>
-            </Button>
-            <Button asChild disabled={busy} size="sm" type="button" variant="ghost">
-              <Link href={routes.igStudioStyles}>{t('generate.style.manage')}</Link>
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="ig-item-visual-brief">{t('fields.visualBrief')}</Label>
-          <p className="text-muted-foreground text-xs">{t('generate.visualBriefHint')}</p>
-          <PostCreatorImagePicker
-            disabled={busy}
-            emptyLabel={tPicker('empty')}
-            maxReachedLabel={tPicker('maxReached')}
-            onAddReference={(photo) => {
-              setReferenceImages((prev) => {
-                if (prev.some((image) => image.name === photo.name)) return prev
-                return [...prev, photo]
-              })
-            }}
-            onUploadError={(message) => toast.error(message || tPicker('uploadError'))}
-            onValueChange={(next) => setValues((prev) => ({ ...prev, visualBrief: next }))}
-            pickerAriaLabel={tPicker('ariaLabel')}
-            selectedNames={selectedNames}
-            uploadLabel={tPicker('upload')}
-            uploadingLabel={tPicker('uploading')}
-            value={values.visualBrief}
-          >
-            <Textarea
-              disabled={busy}
-              id="ig-item-visual-brief"
-              onChange={(event) =>
-                setValues((prev) => ({ ...prev, visualBrief: event.target.value }))
-              }
-              placeholder={t('generate.visualBriefPlaceholder')}
-              rows={4}
-              value={values.visualBrief}
+            <InstagramItemPreview
+              busy={busy}
+              canDeleteVersion={canDeleteVersion}
+              committedIndex={committedVersionIndex}
+              isCommitting={isCommitting}
+              isGenerating={isGenerating}
+              kind={values.kind}
+              onCommit={() => {
+                void handleCommitVersion()
+              }}
+              onPreviewIndexChange={handlePreviewIndexChange}
+              onRequestDelete={() => setDeleteDialogOpen(true)}
+              previewIndex={previewVersionIndex}
+              versions={imageVersions}
             />
-          </PostCreatorImagePicker>
-          <PostCreatorReferenceThumbnails
-            ariaLabel={tRefs('ariaLabel')}
-            disabled={busy}
-            images={referenceImages}
-            includeLabel={tRefs('include')}
-            indexLabel={(index) => tRefs('indexLabel', { index })}
-            onRemove={(name) => {
-              setReferenceImages((prev) => prev.filter((image) => image.name !== name))
-            }}
-            onToggleEnabled={(name, enabled) => {
-              setReferenceImages((prev) =>
-                prev.map((image) => (image.name === name ? { ...image, enabled } : image)),
-              )
-            }}
-            removeLabel={tRefs('remove')}
-          />
+
+            <Field>
+              <FieldLabel htmlFor={modelFieldId}>{tModel('label')}</FieldLabel>
+              <Select
+                disabled={busy}
+                onValueChange={(value) => {
+                  if (isLeonardoPostModelId(value)) {
+                    setGenerationModel(value)
+                  }
+                }}
+                value={generationModel}
+              >
+                <SelectTrigger
+                  aria-describedby={modelBlurbId}
+                  aria-label={tModel('label')}
+                  id={modelFieldId}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEONARDO_POST_MODEL_IDS.map((modelId) => (
+                    <SelectItem key={modelId} value={modelId}>
+                      {tModel(`options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldDescription id={modelBlurbId}>
+                {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
+              </FieldDescription>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor={styleFieldId}>{t('generate.style.label')}</FieldLabel>
+              <Select
+                disabled={busy || stylesLoading}
+                onValueChange={(value) => {
+                  if (value === STYLE_NONE) {
+                    setValues((prev) => ({ ...prev, styleId: null }))
+                    return
+                  }
+                  const next = Number(value)
+                  if (Number.isInteger(next) && next > 0) {
+                    setValues((prev) => ({ ...prev, styleId: next }))
+                  }
+                }}
+                value={values.styleId != null ? String(values.styleId) : STYLE_NONE}
+              >
+                <SelectTrigger aria-label={t('generate.style.label')} id={styleFieldId}>
+                  {selectedStyle ? (
+                    <span className="flex min-w-0 items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                      <img
+                        alt=""
+                        className="size-6 shrink-0 rounded object-cover"
+                        src={mediaDownloadHref(selectedStyle.referenceImageName)}
+                      />
+                      <span className="truncate">
+                        {selectedStyle.isDefault
+                          ? `${selectedStyle.name} (${t('generate.style.defaultSuffix')})`
+                          : selectedStyle.name}
+                      </span>
+                    </span>
+                  ) : (
+                    <SelectValue placeholder={t('generate.style.placeholder')} />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={STYLE_NONE}>{t('generate.style.none')}</SelectItem>
+                  {styles.map((style) => (
+                    <SelectItem key={style.id} value={String(style.id)}>
+                      <span className="flex items-center gap-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                        <img
+                          alt=""
+                          className="size-6 shrink-0 rounded object-cover"
+                          src={mediaDownloadHref(style.referenceImageName)}
+                        />
+                        <span>
+                          {style.isDefault
+                            ? `${style.name} (${t('generate.style.defaultSuffix')})`
+                            : style.name}
+                        </span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldDescription>{t('generate.style.description')}</FieldDescription>
+              {selectedStyle ? <StyleUsageGuide spec={selectedStyle.spec} /> : null}
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                <Button asChild disabled={busy} size="sm" type="button" variant="outline">
+                  <Link href={createStyleHref}>
+                    <PlusIcon data-icon="inline-start" />
+                    {t('generate.style.create')}
+                  </Link>
+                </Button>
+                <Button asChild disabled={busy} size="sm" type="button" variant="ghost">
+                  <Link href={routes.igStudioStyles}>{t('generate.style.manage')}</Link>
+                </Button>
+              </div>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="ig-item-visual-brief">{t('fields.visualBrief')}</FieldLabel>
+              <FieldDescription>{t('generate.visualBriefHint')}</FieldDescription>
+              <PostCreatorImagePicker
+                disabled={busy}
+                emptyLabel={tPicker('empty')}
+                maxReachedLabel={tPicker('maxReached')}
+                onAddReference={(photo) => {
+                  setReferenceImages((prev) => {
+                    if (prev.some((image) => image.name === photo.name)) return prev
+                    return [...prev, photo]
+                  })
+                }}
+                onUploadError={(message) => toast.error(message || tPicker('uploadError'))}
+                onValueChange={(next) => setValues((prev) => ({ ...prev, visualBrief: next }))}
+                pickerAriaLabel={tPicker('ariaLabel')}
+                selectedNames={selectedNames}
+                uploadLabel={tPicker('upload')}
+                uploadingLabel={tPicker('uploading')}
+                value={values.visualBrief}
+              >
+                <Textarea
+                  disabled={busy}
+                  id="ig-item-visual-brief"
+                  onChange={(event) =>
+                    setValues((prev) => ({ ...prev, visualBrief: event.target.value }))
+                  }
+                  placeholder={t('generate.visualBriefPlaceholder')}
+                  rows={4}
+                  value={values.visualBrief}
+                />
+              </PostCreatorImagePicker>
+              <PostCreatorReferenceThumbnails
+                ariaLabel={tRefs('ariaLabel')}
+                disabled={busy}
+                images={referenceImages}
+                includeLabel={tRefs('include')}
+                indexLabel={(index) => tRefs('indexLabel', { index })}
+                onRemove={(name) => {
+                  setReferenceImages((prev) => prev.filter((image) => image.name !== name))
+                }}
+                onToggleEnabled={(name, enabled) => {
+                  setReferenceImages((prev) =>
+                    prev.map((image) => (image.name === name ? { ...image, enabled } : image)),
+                  )
+                }}
+                removeLabel={tRefs('remove')}
+              />
+            </Field>
+          </FieldGroup>
         </div>
 
-        {actionError ? (
-          <p className="text-destructive text-sm" role="alert">
-            {actionError}
-          </p>
-        ) : null}
-        {generateError ? (
-          <p className="text-destructive text-sm" role="alert">
-            {generateError}
-          </p>
-        ) : null}
-
-        <div className="mt-auto flex flex-wrap gap-2 pt-2">
-          <Button
-            className={saving ? 'inline-flex items-center gap-2' : undefined}
-            disabled={busy}
-            type="submit"
-          >
-            {saving ? <Spinner className="size-3.5" /> : null}
-            {t('saveButton')}
-          </Button>
-          <Button
-            className={isGenerating ? 'inline-flex items-center gap-2' : undefined}
-            disabled={!canGenerate}
-            onClick={() => {
-              void handleGenerate()
-            }}
-            type="button"
-            variant="secondary"
-          >
-            {isGenerating ? (
-              <Spinner className="size-3.5" />
-            ) : (
-              <SparklesIcon className="size-3.5" />
-            )}
-            {isGenerating ? t('generate.generating') : t('generate.button')}
-          </Button>
+        <div className="flex shrink-0 flex-col gap-2 border-t bg-background pt-3">
+          {footerError ? (
+            <Alert variant="destructive">
+              <AlertDescription>{footerError}</AlertDescription>
+            </Alert>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={busy} type="submit">
+              {saving ? <Spinner data-icon="inline-start" /> : null}
+              {t('saveButton')}
+            </Button>
+            <Button
+              disabled={!canGenerate}
+              onClick={() => {
+                void handleGenerate()
+              }}
+              type="button"
+              variant="secondary"
+            >
+              {isGenerating ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <SparklesIcon data-icon="inline-start" />
+              )}
+              {isGenerating ? t('generate.generating') : t('generate.button')}
+            </Button>
+          </div>
         </div>
       </form>
 
@@ -846,6 +759,7 @@ export function InstagramItemDetail({
               type="button"
               variant="destructive"
             >
+              {isDeletingVersion ? <Spinner data-icon="inline-start" /> : null}
               {isDeletingVersion
                 ? t('generate.deleteVersionDeleting')
                 : t('generate.deleteVersionConfirmAction')}
