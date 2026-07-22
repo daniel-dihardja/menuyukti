@@ -11,12 +11,12 @@ import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-des
 import { milestonePresetIconFor } from '@/lib/milestones/preset-definitions'
 
 import { MilestoneDataPreview } from './milestone-preview/milestone-data-preview'
+import { InstagramItemsArtifact } from './instagram-items/instagram-items-artifact'
 import { useTimelineWorkspaceState } from './timeline-context'
 
 const PREVIEW_TITLE_ID = 'workflow-preview-panel-title'
 
 export function WorkflowPreviewPanelBody() {
-  const tWorkspace = useTranslations('analytics.workflows.workspace')
   const tChat = useTranslations('analytics.workflows.chat')
   const {
     milestoneState: { milestones },
@@ -53,13 +53,17 @@ export function WorkflowPreviewPanelBody() {
           />
         </CardHeader>
       ) : null}
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden pt-0">
+      <CardContent
+        className={
+          showMilestonePreview
+            ? 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden pt-0'
+            : 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden pt-4'
+        }
+      >
         {showMilestonePreview ? (
           <MilestoneDataPreview milestone={selectedMilestone} />
         ) : (
-          <p className="text-muted-foreground text-sm">
-            {tWorkspace('previewNoMilestoneSelected')}
-          </p>
+          <InstagramItemsArtifact />
         )}
       </CardContent>
     </Card>

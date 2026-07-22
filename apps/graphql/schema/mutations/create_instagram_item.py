@@ -1,0 +1,52 @@
+"""Create a workflow-scoped Instagram item."""
+
+from __future__ import annotations
+
+import strawberry
+
+from graphql.context import request_session_scope
+from graphql.data_sources import InstagramItem
+from graphql.schema.auth import user_id_from_info
+from graphql.schema.instagram_items_common import (
+    item_to_gql,
+    load_workflow_for_owner,
+    normalize_kind,
+    normalize_optional_text,
+    parse_positive_id,
+)
+from graphql.schema.types.instagram_item import InstagramItemType
+
+
+@strawberry.type
+class CreateInstagramItemMutation:
+    @strawberry.mutation
+    def create_instagram_item(
+        self,
+        info: strawberry.Info,
+        workflow_id: strawberry.ID,
+        kind: str,
+        title: str | None = None,
+    ) -> InstagramItemType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for createInstagramItem")
+
+        workflow_pk = parse_positive_id(workflow_id, label="workflow id")
+        kind_clean = normalize_kind(kind)
+        title_clean = normalize_optional_text(title, max_len=256)
+
+        with request_session_scope(info) as session:
+            workflow = load_workflow_for_owner(session, workflow_pk, user_id)
+            assert workflow.location_id is not None
+            row = InstagramItem(
+                workflow_id=workflow.id,
+                location_id=workflow.location_id,
+                kind=kind_clean,
+                title=title_clean,
+                status="draft",
+                created_by_clerk_user_id=user_id,
+            )
+            session.add(row)
+            session.commit()
+            session.refresh(row)
+            return item_to_gql(row)

@@ -1,4 +1,5 @@
 from .image_ai_flow import ImageAiFlowType
+from .instagram_item import InstagramItemType
 from .location import LocationType, OpeningHourType
 from .menu_item_cogs import MenuItemCogsType
 from .node import NodeType
@@ -11,6 +12,7 @@ from .workspace_membership import WorkspaceMembershipType
 
 __all__ = [
     "ImageAiFlowType",
+    "InstagramItemType",
     "LocationType",
     "OpeningHourType",
     "MenuItemCogsType",

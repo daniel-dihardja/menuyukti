@@ -13,6 +13,7 @@ __all__ = [
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",
+    "InstagramItem",
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",
