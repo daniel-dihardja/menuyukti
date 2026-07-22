@@ -25,12 +25,6 @@ Use this when the user names a product feature, alias, or asks where something l
 - `apps/web/app/(protected)/workflow/_components/timeline/timeline-workspace-views.tsx` (`TimelineWorkspaceEmpty`)
 - `apps/web/app/(protected)/workflow/_components/timeline/milestone-preset-select.tsx`
 
-### Catalog UI (presets + chat tools)
-
-- `apps/web/app/(protected)/skills/page.tsx`
-- `apps/web/lib/milestone-run-skill-registry.ts` (`MILESTONE_PRESET_RUN_REGISTRY`)
-- `apps/web/lib/milestone-run-tools-registry.ts` (`CHAT_TOOLS_REGISTRY`)
-
 ### UI touchpoints (Instagram items)
 
 - `apps/web/app/(protected)/workflow/_components/workflow-preview-panel-body.tsx` (artifact when no milestone selected)

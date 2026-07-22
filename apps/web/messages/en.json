@@ -511,13 +511,6 @@
       "secondary": "Learn More"
     }
   },
-  "skillsPage": {
-    "title": "Presets & tools",
-    "description": "Overview of milestone presets (LangGraph subgraphs) and chat tools used by the agents service.",
-    "skillsHeading": "Milestone presets",
-    "toolsHeading": "Chat tools",
-    "toolsDescription": "Tools available in workflow and standalone agent chat. Milestone runs use dedicated preset graphs instead of this ReAct tool loop."
-  },
   "profile": {
     "title": "Profile",
     "breadcrumb": "Profile",
@@ -591,7 +584,6 @@
     "reports": "Reports",
     "workflows": "Workflow",
     "calendar": "Calendar",
-    "skills": "Skills & tools",
     "posts": "IG Studio",
     "content": "Content",
     "media": "Media",

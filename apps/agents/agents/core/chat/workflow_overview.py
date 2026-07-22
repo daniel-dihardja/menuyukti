@@ -49,8 +49,8 @@ def format_workflow_overview_markdown(
         lines.append(f"**{title}**" + (f" (id={wf_id})" if wf_id else ""))
     lines.append("")
     lines.append(
-        "Use milestone ids below with get_milestone_data, get_milestone_input_json, "
-        "get_milestone_preset_data_json, or get_milestone_help when fetching a specific step."
+        "Use milestone ids below with get_milestone "
+        "(fields: goal, input, data, help, criteria, eval, meta) when fetching a specific step."
     )
     lines.append("")
 

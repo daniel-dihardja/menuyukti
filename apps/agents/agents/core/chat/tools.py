@@ -150,32 +150,92 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
     return None
 
 
-def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
-    """Format milestone row fields returned by GraphQL (camelCase). No child nodes."""
-    lines: list[str] = []
-    lines.append("## Milestone")
-    lines.append(f"- **id**: {milestone_id}")
-    lines.append(f"- **name**: {node.get('name')!s}")
-    lines.append(f"- **nodeType**: {node.get('nodeType')!s}")
+MilestoneField = Literal["goal", "input", "data", "help", "criteria", "eval", "meta"]
+_DEFAULT_MILESTONE_FIELDS: tuple[MilestoneField, ...] = ("goal", "input", "data")
+_VALID_MILESTONE_FIELDS: frozenset[str] = frozenset(
+    {"goal", "input", "data", "help", "criteria", "eval", "meta"}
+)
+
+
+def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
+    raw_data = node.get("data")
+    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
+    raw_preset = milestone_node_data.get("presetId")
+    preset = raw_preset.strip() if isinstance(raw_preset, str) else ""
+    return preset or None
+
+
+def _normalize_milestone_fields(
+    fields: list[str] | None,
+) -> tuple[list[MilestoneField] | None, str | None]:
+    if fields is None or len(fields) == 0:
+        return list(_DEFAULT_MILESTONE_FIELDS), None
+    normalized: list[MilestoneField] = []
+    seen: set[str] = set()
+    for raw in fields:
+        key = str(raw).strip().lower()
+        if key not in _VALID_MILESTONE_FIELDS:
+            return None, (
+                f"Error: unsupported field {raw!r}. "
+                "Use goal, input, data, help, criteria, eval, and/or meta."
+            )
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(key)  # type: ignore[arg-type]
+    return normalized, None
+
+
+def _query_for_milestone_fields(fields: list[MilestoneField]) -> tuple[str, str]:
+    """Return ``(graphql_query, cache_key)`` for the requested projections."""
+    field_set = set(fields)
+    if field_set == {"input"}:
+        return MILESTONE_INPUT_QUERY, "input"
+    if field_set == {"data"}:
+        return MILESTONE_PRESET_DATA_QUERY, "preset"
+    if field_set == {"help"}:
+        return MILESTONE_HELP_QUERY, "help"
+    return NODE_BY_ID_QUERY, "full"
+
+
+def _format_meta_section(milestone_id: str, node: dict[str, Any]) -> str:
+    lines = [
+        "## Milestone",
+        f"- **id**: {milestone_id}",
+        f"- **name**: {node.get('name')!s}",
+        f"- **nodeType**: {node.get('nodeType')!s}",
+    ]
     loc = node.get("locationId")
     if loc is not None:
         lines.append(f"- **locationId**: {loc}")
+    return "\n".join(lines)
 
+
+def _format_goal_section(node: dict[str, Any]) -> str:
     goal = node.get("milestoneGoal")
-    lines.append("")
-    lines.append("## Goal")
-    lines.append(goal.strip() if isinstance(goal, str) and goal.strip() else "(not set)")
+    body = goal.strip() if isinstance(goal, str) and goal.strip() else "(not set)"
+    return f"## Goal\n{body}"
 
-    lines.append("")
-    lines.append("## Input (milestoneInput)")
-    inp = node.get("milestoneInput")
-    if inp is None:
-        lines.append("(not set)")
-    else:
-        lines.append(format_payload_for_chat(inp))
 
-    lines.append("")
-    lines.append("## Pass criteria")
+def _format_input_section(node: dict[str, Any]) -> str:
+    return _format_json_shortcut_section("Input (milestoneInput)", node.get("milestoneInput"))
+
+
+def _format_data_section(node: dict[str, Any], *, milestone_id: str | None = None) -> str:
+    title = "Preset data (milestonePresetData)"
+    if milestone_id is not None:
+        raw_name = node.get("name")
+        display = (
+            raw_name.strip()
+            if isinstance(raw_name, str) and raw_name.strip()
+            else milestone_id
+        )
+        title = f"Preset data — {display} (milestonePresetData)"
+    return _format_json_shortcut_section(title, node.get("milestonePresetData"))
+
+
+def _format_criteria_section(node: dict[str, Any]) -> str:
+    lines = ["## Pass criteria"]
     pc = node.get("passCriterias")
     if pc is None:
         lines.append("(not set)")
@@ -192,32 +252,71 @@ def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
                 lines.append(f"{i}. id={cid!s} | status={st!s} | requirement: {req!s}")
             else:
                 lines.append(f"{i}. {_format_json(row)}")
+    return "\n".join(lines)
 
-    lines.append("")
-    lines.append("## Eval result (milestoneResult)")
+
+def _format_eval_section(node: dict[str, Any]) -> str:
+    lines = ["## Eval result (milestoneResult)"]
     mr = node.get("milestoneResult")
     if mr is None:
         lines.append("(not set)")
     else:
         lines.append(_format_json(mr))
+    return "\n".join(lines)
 
-    lines.append("")
-    lines.append("## Preset / result data (milestonePresetData)")
-    mpd = node.get("milestonePresetData")
-    if mpd is None:
-        lines.append("(not set)")
-    else:
-        lines.append(format_payload_for_chat(mpd))
 
+def _format_help_section(milestone_id: str, node: dict[str, Any]) -> str:
+    name = node.get("name")
+    title = str(name) if name is not None else str(milestone_id)
+    goal = node.get("milestoneGoal")
+    goal_str = goal.strip() if isinstance(goal, str) else None
+    return format_milestone_help_markdown(
+        name=title,
+        preset_id=_preset_id_from_milestone_node(node),
+        milestone_goal=goal_str,
+    )
+
+
+def _format_meta_residual_section(node: dict[str, Any]) -> str:
     residual = _residual_milestone_data(node)
-    lines.append("")
-    lines.append("## Other milestone.data")
+    lines = ["## Other milestone.data"]
     if residual is None:
         lines.append("(none)")
     else:
         lines.append(_format_json(residual))
-
     return "\n".join(lines)
+
+
+def _format_milestone_fields(
+    milestone_id: str,
+    node: dict[str, Any],
+    fields: list[MilestoneField],
+    *,
+    explicit_milestone_id: bool,
+) -> str:
+    sections: list[str] = []
+    for field in fields:
+        if field == "meta":
+            sections.append(_format_meta_section(milestone_id, node))
+            sections.append(_format_meta_residual_section(node))
+        elif field == "goal":
+            sections.append(_format_goal_section(node))
+        elif field == "input":
+            sections.append(_format_input_section(node))
+        elif field == "data":
+            sections.append(
+                _format_data_section(
+                    node,
+                    milestone_id=milestone_id if explicit_milestone_id else None,
+                )
+            )
+        elif field == "criteria":
+            sections.append(_format_criteria_section(node))
+        elif field == "eval":
+            sections.append(_format_eval_section(node))
+        elif field == "help":
+            sections.append(_format_help_section(milestone_id, node))
+    return "\n\n".join(sections)
 
 
 def _milestone_context_from_config(
@@ -483,7 +582,7 @@ async def get_workflow_overview(
 
     Prefer the Workflow milestone catalog already in the system message. Call this only when that
     catalog is missing/unavailable, or the user implies the pipeline changed and you need a fresh
-    list. Then fetch details with get_milestone_* tools using ids from the result."""
+    list. Then fetch details with get_milestone using ids from the result."""
     c = (config or {}).get("configurable") or {}
     workflow_id = c.get("workflow_id")
     location_id = c.get("location_id")
@@ -517,103 +616,37 @@ async def get_workflow_overview(
 
 
 @tool
-async def get_milestone_data(
+async def get_milestone(
+    fields: list[str] | None = None,
     milestone_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Load a milestone row: goal, input, pass criteria, eval result, and preset/structured data.
+    """Load selected projections of a workflow milestone.
 
-    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow catalog
-    (or get_workflow_overview) to read any milestone in the current workflow."""
-    target_id, node, err = await _load_milestone_for_chat(config, milestone_id=milestone_id)
+    ``fields`` is a list of: goal, input, data, help, criteria, eval, meta.
+    Omit fields (or pass empty) for the default set: goal, input, data.
+    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow
+    catalog (or get_workflow_overview) to read any milestone in the current workflow."""
+    normalized, fields_err = _normalize_milestone_fields(fields)
+    if fields_err is not None or normalized is None:
+        return fields_err or "Error: invalid fields."
+
+    query, cache_key = _query_for_milestone_fields(normalized)
+    target_id, node, err = await _load_milestone_for_chat(
+        config,
+        milestone_id=milestone_id,
+        query=query,
+        cache_key=cache_key,
+    )
     if err is not None or node is None or target_id is None:
         return err or "Error: milestone not found."
-    return _format_milestone_snapshot(target_id, node)
 
-
-@tool
-async def get_milestone_input_json(
-    milestone_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Load milestoneInput JSON for the selected milestone or a specific workflow milestone id.
-
-    Prefer ids from the injected workflow catalog when loading a non-selected milestone."""
-    target_id, node, err = await _load_milestone_for_chat(
-        config,
-        milestone_id=milestone_id,
-        query=MILESTONE_INPUT_QUERY,
-        cache_key="input",
-    )
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
-    return _format_json_shortcut_section("Input (milestoneInput)", node.get("milestoneInput"))
-
-
-@tool
-async def get_milestone_preset_data_json(
-    milestone_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Load milestonePresetData JSON for the selected milestone or a specific workflow milestone id.
-
-    Prefer ids from the injected workflow catalog when loading a non-selected milestone."""
-    target_id, node, err = await _load_milestone_for_chat(
-        config,
-        milestone_id=milestone_id,
-        query=MILESTONE_PRESET_DATA_QUERY,
-        cache_key="preset",
-    )
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
-
-    title = "Preset data (milestonePresetData)"
-    if milestone_id is not None:
-        raw_name = node.get("name")
-        display = (
-            raw_name.strip()
-            if isinstance(raw_name, str) and raw_name.strip()
-            else (target_id or "")
-        )
-        title = f"Preset data — {display} (milestonePresetData)"
-
-    return _format_json_shortcut_section(title, node.get("milestonePresetData"))
-
-
-def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
-    raw_data = node.get("data")
-    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
-    raw_preset = milestone_node_data.get("presetId")
-    preset = raw_preset.strip() if isinstance(raw_preset, str) else ""
-    return preset or None
-
-
-@tool
-async def get_milestone_help(
-    milestone_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Return Help-tab guidance (what it does + optional input) for a workflow milestone.
-
-    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow catalog
-    when needed. Call when the user asks for milestone help or sends exactly ``/help``
-    (selected milestone only)."""
-    target_id, node, err = await _load_milestone_for_chat(
-        config,
-        milestone_id=milestone_id,
-        query=MILESTONE_HELP_QUERY,
-        cache_key="help",
-    )
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
-    name = node.get("name")
-    title = str(name) if name is not None else str(target_id or "")
-    goal = node.get("milestoneGoal")
-    goal_str = goal.strip() if isinstance(goal, str) else None
-    return format_milestone_help_markdown(
-        name=title,
-        preset_id=_preset_id_from_milestone_node(node),
-        milestone_goal=goal_str,
+    explicit = milestone_id is not None and str(milestone_id).strip() != ""
+    return _format_milestone_fields(
+        target_id,
+        node,
+        normalized,
+        explicit_milestone_id=explicit,
     )
 
 

@@ -96,17 +96,17 @@ Both flows ground the model in **GraphQL-backed product state**, but they packag
 
 ## Skill files (two meanings)
 
-| Kind                            | Location                                                                   | Role                                                                                                                                |
-| ------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Milestone presets (runtime)** | `apps/agents/agents/core/milestone_run/<preset_id>/` + `graph.py` registry | Dedicated LangGraph subgraph per `presetId`; not markdown skill files. Web catalog: `apps/web/lib/milestone-run-skill-registry.ts`. |
-| **Repository / Cursor skills**  | `.agents/skills/`                                                          | **Developer documentation** for humans and IDE agents (how to change GraphQL, web, agents, analytics). **Not executed at runtime.** |
+| Kind                            | Location                                                                   | Role                                                                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Milestone presets (runtime)** | `apps/agents/agents/core/milestone_run/<preset_id>/` + `graph.py` registry | Dedicated LangGraph subgraph per `presetId`; not markdown skill files. Keep web `MILESTONE_PRESET_IDS` / `preset-definitions.ts` aligned. |
+| **Repository / Cursor skills**  | `.agents/skills/`                                                          | **Developer documentation** for humans and IDE agents (how to change GraphQL, web, agents, analytics). **Not executed at runtime.**       |
 
 ## Tools
 
-| Surface              | Location                                       | Role                                                                                                         |
-| -------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Chat ReAct tools** | `apps/agents/agents/core/chat/tools.py`        | On-demand milestone reads/writes in conversation; catalog in `apps/web/lib/milestone-run-tools-registry.ts`. |
-| **Legacy run tools** | `apps/agents/agents/core/milestone_run/tools/` | Test-only helpers; production presets use nodes + GraphQL instead of a shared ReAct tool loop.               |
+| Surface              | Location                                       | Role                                                                                           |
+| -------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Chat ReAct tools** | `apps/agents/agents/core/chat/tools.py`        | On-demand milestone reads/writes in conversation (`get_milestone`, overview, input patches).   |
+| **Legacy run tools** | `apps/agents/agents/core/milestone_run/tools/` | Test-only helpers; production presets use nodes + GraphQL instead of a shared ReAct tool loop. |
 
 **Important:** `apps/agents` **does not import** `packages/menuyukti`. Analytics and signals reach preset nodes as **GraphQL JSON** produced after `reports/transform` and related resolvers.
 
@@ -117,7 +117,7 @@ Both flows ground the model in **GraphQL-backed product state**, but they packag
 - **Workflows UI:** Primary campaign experience under `apps/web/app/(protected)/workflow/`.
 - **BFF for milestone run:** The browser does not call the agents service directly with full auth context; Next.js **API routes** proxy/stream to **`POST /milestones/{id}/run`** on the agents service (see [.agents/skills/menuyukti-web/SKILL.md](.agents/skills/menuyukti-web/SKILL.md)).
 - **Chat UI:** Uses **Vercel AI SDK** and **AI Elements**–style components in `packages/ui` for conversational surfaces; long-running **milestone execution** remains on the **Python LangGraph** service.
-- **Preset catalog UI:** `/skills` lists milestone presets and chat tools from `milestone-run-skill-registry.ts` and `milestone-run-tools-registry.ts`. When adding a preset, keep web `MILESTONE_PRESET_IDS`, `preset-definitions.ts`, agents `register_preset_runner`, and the catalog registry aligned.
+- **New presets:** When adding a preset, keep web `MILESTONE_PRESET_IDS`, `preset-definitions.ts`, and agents `register_preset_runner` aligned.
 
 ## Packages (`packages/*`)
 

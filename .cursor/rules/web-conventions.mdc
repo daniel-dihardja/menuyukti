@@ -17,7 +17,7 @@ Use **route groups** to separate concerns:
 
 | Group | Path | Notes |
 |---|---|---|
-| `(protected)` | `/analytics/*`, `/workflow/*`, `/canvas/*`, `/content/*`, `/agent/*`, `/dashboard`, `/skills`, `/staff`, `/usage`, `/profile/*`, … | Shared layout: sidebar + context providers; `auth()` guard — see `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts` |
+| `(protected)` | `/analytics/*`, `/workflow/*`, `/canvas/*`, `/content/*`, `/agent/*`, `/dashboard`, `/staff`, `/usage`, `/profile/*`, … | Shared layout: sidebar + context providers; `auth()` guard — see `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts` |
 | `(standalone)` | `/login`, `/sign-up`, `/sso-callback` | No sidebar; Clerk-branded pages |
 | `app/api/` | `/api/**` | BFF route handlers — call `graphqlQuery` with Clerk user id |
 
