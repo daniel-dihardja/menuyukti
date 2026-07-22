@@ -17,8 +17,18 @@ mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $paren
 """
 
 CREATE_ITEM = """
-mutation CreateInstagramItem($workflowId: ID!, $kind: String!, $title: String) {
-  createInstagramItem(workflowId: $workflowId, kind: $kind, title: $title) {
+mutation CreateInstagramItem(
+  $workflowId: ID!
+  $kind: String!
+  $title: String
+  $schedule: DateTime
+) {
+  createInstagramItem(
+    workflowId: $workflowId
+    kind: $kind
+    title: $title
+    schedule: $schedule
+  ) {
     id
     workflowId
     locationId
@@ -28,6 +38,7 @@ mutation CreateInstagramItem($workflowId: ID!, $kind: String!, $title: String) {
     caption
     hook
     visualBrief
+    schedule
   }
 }
 """
@@ -39,6 +50,7 @@ query InstagramItems($workflowId: ID!) {
     kind
     title
     status
+    schedule
   }
 }
 """
@@ -53,6 +65,7 @@ query InstagramItem($id: ID!) {
     hook
     visualBrief
     status
+    schedule
   }
 }
 """
@@ -66,6 +79,7 @@ mutation UpdateInstagramItem(
   $hook: String
   $visualBrief: String
   $status: String
+  $schedule: DateTime
 ) {
   updateInstagramItem(
     id: $id
@@ -75,6 +89,7 @@ mutation UpdateInstagramItem(
     hook: $hook
     visualBrief: $visualBrief
     status: $status
+    schedule: $schedule
   ) {
     id
     kind
@@ -83,6 +98,7 @@ mutation UpdateInstagramItem(
     hook
     visualBrief
     status
+    schedule
   }
 }
 """
@@ -152,6 +168,7 @@ def test_create_list_update_delete_instagram_item() -> None:
     assert item["kind"] == "story"
     assert item["title"] == "Lunch special"
     assert item["status"] == "draft"
+    assert item["schedule"] is None
     assert item["workflowId"] == workflow_id
     assert item["locationId"] == location_id
     item_id = item["id"]
@@ -178,6 +195,7 @@ def test_create_list_update_delete_instagram_item() -> None:
                 "hook": "15s sizzle",
                 "visualBrief": "Overhead pour shot",
                 "status": "ready",
+                "schedule": "2026-07-22T18:30:00+00:00",
             },
             context_value=graphql_auth_context(),
         )
@@ -190,6 +208,8 @@ def test_create_list_update_delete_instagram_item() -> None:
     assert body["hook"] == "15s sizzle"
     assert body["visualBrief"] == "Overhead pour shot"
     assert body["status"] == "ready"
+    assert body["schedule"] is not None
+    assert "2026-07-22" in body["schedule"]
 
     fetched = asyncio.run(
         schema.execute(
@@ -200,6 +220,17 @@ def test_create_list_update_delete_instagram_item() -> None:
     )
     assert not fetched.errors, fetched.errors
     assert fetched.data["instagramItem"]["title"] == "Updated title"
+    assert fetched.data["instagramItem"]["schedule"] is not None
+
+    cleared = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "schedule": None},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not cleared.errors, cleared.errors
+    assert cleared.data["updateInstagramItem"]["schedule"] is None
 
     deleted = asyncio.run(
         schema.execute(
@@ -220,6 +251,26 @@ def test_create_list_update_delete_instagram_item() -> None:
     )
     assert not listed_after.errors, listed_after.errors
     assert listed_after.data["instagramItems"] == []
+
+
+def test_create_instagram_item_with_schedule() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={
+                "workflowId": workflow_id,
+                "kind": "post",
+                "title": "Scheduled post",
+                "schedule": "2026-08-01T12:00:00+00:00",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item = created.data["createInstagramItem"]
+    assert item["schedule"] is not None
+    assert "2026-08-01" in item["schedule"]
 
 
 def test_create_instagram_item_requires_auth() -> None:

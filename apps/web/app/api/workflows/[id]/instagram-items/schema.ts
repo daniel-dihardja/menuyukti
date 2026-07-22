@@ -8,9 +8,12 @@ export const instagramItemKindSchema = z.enum(['story', 'post', 'reel'])
 
 export const instagramItemStatusSchema = z.enum(['draft', 'ready'])
 
+const scheduleSchema = z.string().datetime({ offset: true }).nullable()
+
 export const createInstagramItemBodySchema = z.object({
   kind: instagramItemKindSchema.default('post'),
   title: z.string().max(256).optional(),
+  schedule: scheduleSchema.optional(),
 })
 
 export const patchInstagramItemBodySchema = z
@@ -21,6 +24,7 @@ export const patchInstagramItemBodySchema = z
     hook: z.string().optional(),
     visualBrief: z.string().optional(),
     status: instagramItemStatusSchema.optional(),
+    schedule: scheduleSchema.optional(),
   })
   .refine(
     (value) =>
@@ -29,6 +33,7 @@ export const patchInstagramItemBodySchema = z
       value.caption !== undefined ||
       value.hook !== undefined ||
       value.visualBrief !== undefined ||
-      value.status !== undefined,
+      value.status !== undefined ||
+      value.schedule !== undefined,
     { message: 'At least one field is required' },
   )

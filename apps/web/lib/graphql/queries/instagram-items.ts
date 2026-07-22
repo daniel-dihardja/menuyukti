@@ -8,6 +8,7 @@ export const INSTAGRAM_ITEM_FIELDS = `
   hook
   visualBrief
   status
+  schedule
   createdAt
   updatedAt
 `
@@ -22,6 +23,7 @@ export type InstagramItemDto = {
   hook: string | null
   visualBrief: string | null
   status: string
+  schedule: string | null
   createdAt: string | null
   updatedAt: string | null
 }
@@ -51,8 +53,18 @@ export type InstagramItemData = {
 }
 
 export const CREATE_INSTAGRAM_ITEM_MUTATION = `
-  mutation CreateInstagramItem($workflowId: ID!, $kind: String!, $title: String) {
-    createInstagramItem(workflowId: $workflowId, kind: $kind, title: $title) {
+  mutation CreateInstagramItem(
+    $workflowId: ID!
+    $kind: String!
+    $title: String
+    $schedule: DateTime
+  ) {
+    createInstagramItem(
+      workflowId: $workflowId
+      kind: $kind
+      title: $title
+      schedule: $schedule
+    ) {
       ${INSTAGRAM_ITEM_FIELDS}
     }
   }
@@ -71,6 +83,7 @@ export const UPDATE_INSTAGRAM_ITEM_MUTATION = `
     $hook: String
     $visualBrief: String
     $status: String
+    $schedule: DateTime
   ) {
     updateInstagramItem(
       id: $id
@@ -80,6 +93,7 @@ export const UPDATE_INSTAGRAM_ITEM_MUTATION = `
       hook: $hook
       visualBrief: $visualBrief
       status: $status
+      schedule: $schedule
     ) {
       ${INSTAGRAM_ITEM_FIELDS}
     }

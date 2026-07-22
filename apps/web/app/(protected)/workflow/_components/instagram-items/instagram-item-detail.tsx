@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowLeftIcon } from 'lucide-react'
+import { ArrowLeftIcon, XIcon } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
+import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
 import {
@@ -110,6 +111,33 @@ export function InstagramItemDetail({
               <SelectItem value="ready">{t('status.ready')}</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>{t('fields.schedule')}</Label>
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <DateTimePicker
+                disabled={saving}
+                onChange={(schedule) => setValues((prev) => ({ ...prev, schedule }))}
+                placeholder={t('fields.scheduleDatePlaceholder')}
+                timeLabel={t('fields.scheduleTime')}
+                value={values.schedule || undefined}
+              />
+            </div>
+            {values.schedule ? (
+              <Button
+                aria-label={t('clearScheduleAria')}
+                disabled={saving}
+                onClick={() => setValues((prev) => ({ ...prev, schedule: '' }))}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <XIcon className="size-4" />
+              </Button>
+            ) : null}
+          </div>
         </div>
 
         <div className="grid gap-1.5">

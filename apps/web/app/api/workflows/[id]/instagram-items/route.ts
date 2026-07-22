@@ -111,6 +111,7 @@ export async function POST(req: Request, context: RouteContext) {
         workflowId,
         kind: input.data.kind,
         ...(input.data.title !== undefined ? { title: input.data.title } : {}),
+        ...(input.data.schedule !== undefined ? { schedule: input.data.schedule } : {}),
       },
       userId,
     )

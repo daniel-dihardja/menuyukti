@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
@@ -38,6 +39,7 @@ class InstagramItem(Base):
     hook: Mapped[str | None] = mapped_column(Text, nullable=True)
     visual_brief: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="draft")
+    schedule: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by_clerk_user_id: Mapped[str | None] = mapped_column(
         String(128), nullable=True, index=True
     )

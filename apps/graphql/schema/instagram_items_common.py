@@ -23,6 +23,7 @@ def item_to_gql(row: InstagramItem) -> InstagramItemType:
         hook=row.hook,
         visual_brief=row.visual_brief,
         status=row.status,
+        schedule=row.schedule,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )

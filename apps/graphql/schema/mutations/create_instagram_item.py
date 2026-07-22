@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import strawberry
 
 from graphql.context import request_session_scope
@@ -26,6 +28,7 @@ class CreateInstagramItemMutation:
         workflow_id: strawberry.ID,
         kind: str,
         title: str | None = None,
+        schedule: datetime | None = None,
     ) -> InstagramItemType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -44,6 +47,7 @@ class CreateInstagramItemMutation:
                 kind=kind_clean,
                 title=title_clean,
                 status="draft",
+                schedule=schedule,
                 created_by_clerk_user_id=user_id,
             )
             session.add(row)

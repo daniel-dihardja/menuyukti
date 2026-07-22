@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import strawberry
+from strawberry import UNSET
 
 from graphql.context import request_session_scope
 from graphql.schema.auth import user_id_from_info
@@ -30,8 +33,12 @@ class UpdateInstagramItemMutation:
         hook: str | None = None,
         visual_brief: str | None = None,
         status: str | None = None,
+        schedule: datetime | None = UNSET,
     ) -> InstagramItemType:
-        """Patch provided fields. Empty strings clear nullable text fields."""
+        """Patch provided fields. Empty strings clear nullable text fields.
+
+        ``schedule`` uses UNSET so omit leaves unchanged and explicit null clears.
+        """
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for updateInstagramItem")
@@ -53,6 +60,8 @@ class UpdateInstagramItemMutation:
                 row.visual_brief = normalize_optional_text(visual_brief)
             if status is not None:
                 row.status = normalize_status(status)
+            if schedule is not UNSET:
+                row.schedule = schedule
 
             session.commit()
             session.refresh(row)

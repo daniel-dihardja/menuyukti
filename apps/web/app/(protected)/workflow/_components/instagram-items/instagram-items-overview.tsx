@@ -105,6 +105,15 @@ export function InstagramItemsOverview({
                       <Badge variant="secondary">{kindLabel}</Badge>
                       <Badge variant="outline">{statusLabel}</Badge>
                     </span>
+                    {item.schedule ? (
+                      <span className="text-muted-foreground text-xs">
+                        {t('fields.schedule')}:{' '}
+                        {new Date(item.schedule).toLocaleString(undefined, {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                      </span>
+                    ) : null}
                   </button>
                   <Button
                     aria-label={t('deleteRowAria', {

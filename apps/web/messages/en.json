@@ -2368,11 +2368,15 @@
         "fields": {
           "kind": "Format",
           "status": "Status",
+          "schedule": "Schedule",
+          "scheduleDatePlaceholder": "Pick date and time",
+          "scheduleTime": "Time",
           "title": "Title",
           "hook": "Hook",
           "caption": "Caption",
           "visualBrief": "Visual brief"
         },
+        "clearScheduleAria": "Clear schedule",
         "kind": {
           "story": "Story",
           "post": "Post",

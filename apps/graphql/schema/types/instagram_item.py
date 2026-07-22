@@ -16,5 +16,6 @@ class InstagramItemType:
     hook: str | None
     visual_brief: str | None
     status: str
+    schedule: datetime | None
     created_at: datetime | None
     updated_at: datetime | None
