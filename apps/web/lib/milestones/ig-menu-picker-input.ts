@@ -1,7 +1,7 @@
 import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/timeline/types'
 import {
   igPlanMilestoneDataSchema,
-  igPlanEntrySchema,
+  parseIgScheduleEntries,
   type IgPlanEntry,
 } from '@/lib/graphql/node-schemas'
 import {
@@ -85,12 +85,7 @@ export function resolveIgPlanEntriesForMenuPicker(
   if (!parsed.success) {
     return []
   }
-  const entries: IgPlanEntry[] = []
-  for (const raw of parsed.data.entries ?? []) {
-    const row = igPlanEntrySchema.safeParse(raw)
-    if (row.success && row.data.slotKey.trim()) {
-      entries.push(row.data)
-    }
-  }
-  return entries
+  return (parseIgScheduleEntries(parsed.data, 'plan') as IgPlanEntry[]).filter((row) =>
+    row.slotKey.trim(),
+  )
 }

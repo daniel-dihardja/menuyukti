@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import re
 from collections.abc import AsyncIterator, Iterator
 from typing import Annotated, Any, Literal
 
@@ -10,16 +11,25 @@ from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWL
 from agents_app.agents.core.chat.catalog import load_workflow_catalog_markdown
 from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.http_context import chat_http_client_var
+from agents_app.agents.core.chat.tools import get_milestone
 from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, ToolMessage
+from langchain_core.messages import (
+    AIMessage,
+    AIMessageChunk,
+    BaseMessage,
+    HumanMessage,
+    ToolMessage,
+)
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter()
+
+_SLASH_PRESET_RE = re.compile(r"^/preset\s+(\d+)$")
 
 
 class ChatTextContentBlock(BaseModel):
@@ -62,6 +72,7 @@ class ChatRequest(BaseModel):
     workflow_id: str | None = None
     milestone_id: str | None = None
     location_id: int | None = Field(default=None, ge=1)
+    analytics_run_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str | None = Field(default=None, min_length=1)
     workflow_chat_session_id: str | None = Field(default=None, min_length=1)
     chat_model: str | None = Field(
@@ -81,6 +92,46 @@ class ChatRequest(BaseModel):
 
 def _sse_data_line(payload: object) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+def parse_slash_get_milestone(content: object) -> dict[str, Any] | None:
+    """Map exact slash commands to ``get_milestone`` args; otherwise ``None``."""
+    if not isinstance(content, str):
+        return None
+    text = content.strip()
+    if text == "/input":
+        return {"fields": ["input"]}
+    if text == "/data":
+        return {"fields": ["data"]}
+    if text == "/help":
+        return {"fields": ["help"]}
+    match = _SLASH_PRESET_RE.fullmatch(text)
+    if match is not None:
+        return {"fields": ["data"], "milestone_id": match.group(1)}
+    return None
+
+
+async def _stream_slash_get_milestone(
+    *,
+    tool_args: dict[str, Any],
+    runnable_config: RunnableConfig,
+    http_client: httpx.AsyncClient,
+) -> AsyncIterator[str]:
+    """Invoke ``get_milestone`` without the LLM and emit chat SSE tool + token events."""
+    token = chat_http_client_var.set(http_client)
+    try:
+        yield _sse_data_line({"status": "tool_start", "tool": "get_milestone"})
+        output = await get_milestone.ainvoke(tool_args, config=runnable_config)
+        text = output if isinstance(output, str) else str(output)
+        yield _sse_data_line({"status": "tool_end", "tool": "get_milestone", "output": text})
+        if text:
+            yield _sse_data_line({"token": text})
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        yield _sse_data_line(structured_error_payload(exc))
+    finally:
+        chat_http_client_var.reset(token)
 
 
 def _resolve_thread_id(
@@ -113,6 +164,7 @@ def _runnable_config(
     user_id: str | None,
     chat_gateway_model: str | None,
     workflow_catalog_markdown: str | None = None,
+    analytics_run_id: int | None = None,
     post_id: str | None = None,
     page_id: str | None = None,
     generation_model: str | None = None,
@@ -132,6 +184,8 @@ def _runnable_config(
         configurable["chat_gateway_model"] = chat_gateway_model
     if workflow_catalog_markdown is not None:
         configurable["workflow_catalog_markdown"] = workflow_catalog_markdown
+    if analytics_run_id is not None:
+        configurable["analytics_run_id"] = analytics_run_id
     if post_id is not None:
         configurable["post_id"] = post_id
     if page_id is not None:
@@ -306,6 +360,7 @@ async def chat_stream(
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
         workflow_catalog_markdown=workflow_catalog_markdown,
+        analytics_run_id=body.analytics_run_id,
         post_id=body.post_id,
         page_id=body.page_id,
         generation_model=body.generation_model,
@@ -315,8 +370,20 @@ async def chat_stream(
         generation_references=body.generation_references,
     )
 
+    slash_args = parse_slash_get_milestone(
+        human.content if isinstance(human, HumanMessage) else None
+    )
+
     async def event_stream():
         try:
+            if slash_args is not None:
+                async for line in _stream_slash_get_milestone(
+                    tool_args=slash_args,
+                    runnable_config=cfg,
+                    http_client=client,
+                ):
+                    yield line
+                return
             async for line in _stream_chat_events(
                 graph,
                 [human],

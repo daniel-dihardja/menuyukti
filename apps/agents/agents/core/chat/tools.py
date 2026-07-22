@@ -6,6 +6,11 @@ import json
 from copy import deepcopy
 from typing import Annotated, Any, Literal
 
+from agents_app.agents.core.chat.chart_data import (
+    CHART_IDS,
+    is_chart_id,
+    load_chart_data_markdown,
+)
 from agents_app.agents.core.chat.graphql_client import (
     fetch_milestone_node,
     fetch_workflow_campaign_tree,
@@ -14,6 +19,18 @@ from agents_app.agents.core.chat.graphql_client import (
     update_milestone_input as persist_milestone_input,
 )
 from agents_app.agents.core.chat.http_context import get_chat_http_client
+from agents_app.agents.core.chat.instagram_items_client import (
+    create_instagram_item as persist_create_instagram_item,
+)
+from agents_app.agents.core.chat.instagram_items_client import (
+    delete_instagram_item as persist_delete_instagram_item,
+)
+from agents_app.agents.core.chat.instagram_items_client import (
+    list_instagram_items as fetch_instagram_items,
+)
+from agents_app.agents.core.chat.instagram_items_client import (
+    update_instagram_item as persist_update_instagram_item,
+)
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
 from agents_app.agents.core.chat.workflow_overview import format_workflow_overview_markdown
@@ -39,6 +56,15 @@ _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
         "milestonePresetData",
         "milestoneResult",
     },
+)
+
+_VALID_IG_KINDS = frozenset({"story", "post", "reel"})
+_VALID_IG_STATUSES = frozenset({"draft", "ready"})
+_IG_CREATE_OPTIONAL_KEYS = frozenset(
+    {"title", "caption", "hook", "visual_brief", "status", "schedule"}
+)
+_IG_UPDATE_OPTIONAL_KEYS = frozenset(
+    {"kind", "title", "caption", "hook", "visual_brief", "status", "schedule"}
 )
 
 
@@ -150,32 +176,90 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
     return None
 
 
-def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
-    """Format milestone row fields returned by GraphQL (camelCase). No child nodes."""
-    lines: list[str] = []
-    lines.append("## Milestone")
-    lines.append(f"- **id**: {milestone_id}")
-    lines.append(f"- **name**: {node.get('name')!s}")
-    lines.append(f"- **nodeType**: {node.get('nodeType')!s}")
+MilestoneField = Literal["goal", "input", "data", "help", "criteria", "eval", "meta"]
+_DEFAULT_MILESTONE_FIELDS: tuple[MilestoneField, ...] = ("goal", "input", "data")
+_VALID_MILESTONE_FIELDS: frozenset[str] = frozenset(
+    {"goal", "input", "data", "help", "criteria", "eval", "meta"}
+)
+
+
+def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
+    raw_data = node.get("data")
+    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
+    raw_preset = milestone_node_data.get("presetId")
+    preset = raw_preset.strip() if isinstance(raw_preset, str) else ""
+    return preset or None
+
+
+def _normalize_milestone_fields(
+    fields: list[str] | None,
+) -> tuple[list[MilestoneField] | None, str | None]:
+    if fields is None or len(fields) == 0:
+        return list(_DEFAULT_MILESTONE_FIELDS), None
+    normalized: list[MilestoneField] = []
+    seen: set[str] = set()
+    for raw in fields:
+        key = str(raw).strip().lower()
+        if key not in _VALID_MILESTONE_FIELDS:
+            return None, (
+                f"Error: unsupported field {raw!r}. "
+                "Use goal, input, data, help, criteria, eval, and/or meta."
+            )
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(key)  # type: ignore[arg-type]
+    return normalized, None
+
+
+def _query_for_milestone_fields(fields: list[MilestoneField]) -> tuple[str, str]:
+    """Return ``(graphql_query, cache_key)`` for the requested projections."""
+    field_set = set(fields)
+    if field_set == {"input"}:
+        return MILESTONE_INPUT_QUERY, "input"
+    if field_set == {"data"}:
+        return MILESTONE_PRESET_DATA_QUERY, "preset"
+    if field_set == {"help"}:
+        return MILESTONE_HELP_QUERY, "help"
+    return NODE_BY_ID_QUERY, "full"
+
+
+def _format_meta_section(milestone_id: str, node: dict[str, Any]) -> str:
+    lines = [
+        "## Milestone",
+        f"- **id**: {milestone_id}",
+        f"- **name**: {node.get('name')!s}",
+        f"- **nodeType**: {node.get('nodeType')!s}",
+    ]
     loc = node.get("locationId")
     if loc is not None:
         lines.append(f"- **locationId**: {loc}")
+    return "\n".join(lines)
 
+
+def _format_goal_section(node: dict[str, Any]) -> str:
     goal = node.get("milestoneGoal")
-    lines.append("")
-    lines.append("## Goal")
-    lines.append(goal.strip() if isinstance(goal, str) and goal.strip() else "(not set)")
+    body = goal.strip() if isinstance(goal, str) and goal.strip() else "(not set)"
+    return f"## Goal\n{body}"
 
-    lines.append("")
-    lines.append("## Input (milestoneInput)")
-    inp = node.get("milestoneInput")
-    if inp is None:
-        lines.append("(not set)")
-    else:
-        lines.append(format_payload_for_chat(inp))
 
-    lines.append("")
-    lines.append("## Pass criteria")
+def _format_input_section(node: dict[str, Any]) -> str:
+    return _format_json_shortcut_section("Input (milestoneInput)", node.get("milestoneInput"))
+
+
+def _format_data_section(node: dict[str, Any], *, milestone_id: str | None = None) -> str:
+    title = "Preset data (milestonePresetData)"
+    if milestone_id is not None:
+        raw_name = node.get("name")
+        display = (
+            raw_name.strip() if isinstance(raw_name, str) and raw_name.strip() else milestone_id
+        )
+        title = f"Preset data — {display} (milestonePresetData)"
+    return _format_json_shortcut_section(title, node.get("milestonePresetData"))
+
+
+def _format_criteria_section(node: dict[str, Any]) -> str:
+    lines = ["## Pass criteria"]
     pc = node.get("passCriterias")
     if pc is None:
         lines.append("(not set)")
@@ -192,32 +276,71 @@ def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
                 lines.append(f"{i}. id={cid!s} | status={st!s} | requirement: {req!s}")
             else:
                 lines.append(f"{i}. {_format_json(row)}")
+    return "\n".join(lines)
 
-    lines.append("")
-    lines.append("## Eval result (milestoneResult)")
+
+def _format_eval_section(node: dict[str, Any]) -> str:
+    lines = ["## Eval result (milestoneResult)"]
     mr = node.get("milestoneResult")
     if mr is None:
         lines.append("(not set)")
     else:
         lines.append(_format_json(mr))
+    return "\n".join(lines)
 
-    lines.append("")
-    lines.append("## Preset / result data (milestonePresetData)")
-    mpd = node.get("milestonePresetData")
-    if mpd is None:
-        lines.append("(not set)")
-    else:
-        lines.append(format_payload_for_chat(mpd))
 
+def _format_help_section(milestone_id: str, node: dict[str, Any]) -> str:
+    name = node.get("name")
+    title = str(name) if name is not None else str(milestone_id)
+    goal = node.get("milestoneGoal")
+    goal_str = goal.strip() if isinstance(goal, str) else None
+    return format_milestone_help_markdown(
+        name=title,
+        preset_id=_preset_id_from_milestone_node(node),
+        milestone_goal=goal_str,
+    )
+
+
+def _format_meta_residual_section(node: dict[str, Any]) -> str:
     residual = _residual_milestone_data(node)
-    lines.append("")
-    lines.append("## Other milestone.data")
+    lines = ["## Other milestone.data"]
     if residual is None:
         lines.append("(none)")
     else:
         lines.append(_format_json(residual))
-
     return "\n".join(lines)
+
+
+def _format_milestone_fields(
+    milestone_id: str,
+    node: dict[str, Any],
+    fields: list[MilestoneField],
+    *,
+    explicit_milestone_id: bool,
+) -> str:
+    sections: list[str] = []
+    for field in fields:
+        if field == "meta":
+            sections.append(_format_meta_section(milestone_id, node))
+            sections.append(_format_meta_residual_section(node))
+        elif field == "goal":
+            sections.append(_format_goal_section(node))
+        elif field == "input":
+            sections.append(_format_input_section(node))
+        elif field == "data":
+            sections.append(
+                _format_data_section(
+                    node,
+                    milestone_id=milestone_id if explicit_milestone_id else None,
+                )
+            )
+        elif field == "criteria":
+            sections.append(_format_criteria_section(node))
+        elif field == "eval":
+            sections.append(_format_eval_section(node))
+        elif field == "help":
+            sections.append(_format_help_section(milestone_id, node))
+    return "\n\n".join(sections)
 
 
 def _milestone_context_from_config(
@@ -483,7 +606,7 @@ async def get_workflow_overview(
 
     Prefer the Workflow milestone catalog already in the system message. Call this only when that
     catalog is missing/unavailable, or the user implies the pipeline changed and you need a fresh
-    list. Then fetch details with get_milestone_* tools using ids from the result."""
+    list. Then fetch details with get_milestone using ids from the result."""
     c = (config or {}).get("configurable") or {}
     workflow_id = c.get("workflow_id")
     location_id = c.get("location_id")
@@ -517,103 +640,37 @@ async def get_workflow_overview(
 
 
 @tool
-async def get_milestone_data(
+async def get_milestone(
+    fields: list[str] | None = None,
     milestone_id: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Load a milestone row: goal, input, pass criteria, eval result, and preset/structured data.
+    """Load selected projections of a workflow milestone.
 
-    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow catalog
-    (or get_workflow_overview) to read any milestone in the current workflow."""
-    target_id, node, err = await _load_milestone_for_chat(config, milestone_id=milestone_id)
+    ``fields`` is a list of: goal, input, data, help, criteria, eval, meta.
+    Omit fields (or pass empty) for the default set: goal, input, data.
+    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow
+    catalog (or get_workflow_overview) to read any milestone in the current workflow."""
+    normalized, fields_err = _normalize_milestone_fields(fields)
+    if fields_err is not None or normalized is None:
+        return fields_err or "Error: invalid fields."
+
+    query, cache_key = _query_for_milestone_fields(normalized)
+    target_id, node, err = await _load_milestone_for_chat(
+        config,
+        milestone_id=milestone_id,
+        query=query,
+        cache_key=cache_key,
+    )
     if err is not None or node is None or target_id is None:
         return err or "Error: milestone not found."
-    return _format_milestone_snapshot(target_id, node)
 
-
-@tool
-async def get_milestone_input_json(
-    milestone_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Load milestoneInput JSON for the selected milestone or a specific workflow milestone id.
-
-    Prefer ids from the injected workflow catalog when loading a non-selected milestone."""
-    target_id, node, err = await _load_milestone_for_chat(
-        config,
-        milestone_id=milestone_id,
-        query=MILESTONE_INPUT_QUERY,
-        cache_key="input",
-    )
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
-    return _format_json_shortcut_section("Input (milestoneInput)", node.get("milestoneInput"))
-
-
-@tool
-async def get_milestone_preset_data_json(
-    milestone_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Load milestonePresetData JSON for the selected milestone or a specific workflow milestone id.
-
-    Prefer ids from the injected workflow catalog when loading a non-selected milestone."""
-    target_id, node, err = await _load_milestone_for_chat(
-        config,
-        milestone_id=milestone_id,
-        query=MILESTONE_PRESET_DATA_QUERY,
-        cache_key="preset",
-    )
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
-
-    title = "Preset data (milestonePresetData)"
-    if milestone_id is not None:
-        raw_name = node.get("name")
-        display = (
-            raw_name.strip()
-            if isinstance(raw_name, str) and raw_name.strip()
-            else (target_id or "")
-        )
-        title = f"Preset data — {display} (milestonePresetData)"
-
-    return _format_json_shortcut_section(title, node.get("milestonePresetData"))
-
-
-def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
-    raw_data = node.get("data")
-    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
-    raw_preset = milestone_node_data.get("presetId")
-    preset = raw_preset.strip() if isinstance(raw_preset, str) else ""
-    return preset or None
-
-
-@tool
-async def get_milestone_help(
-    milestone_id: str | None = None,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Return Help-tab guidance (what it does + optional input) for a workflow milestone.
-
-    Omit milestone_id for the UI-selected milestone; pass an id from the injected workflow catalog
-    when needed. Call when the user asks for milestone help or sends exactly ``/help``
-    (selected milestone only)."""
-    target_id, node, err = await _load_milestone_for_chat(
-        config,
-        milestone_id=milestone_id,
-        query=MILESTONE_HELP_QUERY,
-        cache_key="help",
-    )
-    if err is not None or node is None:
-        return err or "Error: milestone not found."
-    name = node.get("name")
-    title = str(name) if name is not None else str(target_id or "")
-    goal = node.get("milestoneGoal")
-    goal_str = goal.strip() if isinstance(goal, str) else None
-    return format_milestone_help_markdown(
-        name=title,
-        preset_id=_preset_id_from_milestone_node(node),
-        milestone_goal=goal_str,
+    explicit = milestone_id is not None and str(milestone_id).strip() != ""
+    return _format_milestone_fields(
+        target_id,
+        node,
+        normalized,
+        explicit_milestone_id=explicit,
     )
 
 
@@ -738,3 +795,341 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
     if not isinstance(raw_loc, dict):
         return "Location not found or access denied."
     return format_location_page_markdown(raw_loc)
+
+
+@tool
+async def get_chart_data(
+    chart_id: Literal[
+        "venue_slot_strength_heatmap",
+        "menu_item_heatmap",
+        "pair_lift_matrix_heatmap",
+    ],
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Load analytics data for a workflow visualization chart.
+
+    Prefer for Instagram-item planning: venue slot strength (location rhythm / when to
+    post), menu item heatmap (what dishes to feature), or pair lift / co-purchase
+    matrices. Pass a chart_id from the workflow chart catalog exactly — do not invent ids.
+    """
+    c = (config or {}).get("configurable") or {}
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    analytics_run_id = c.get("analytics_run_id")
+    if location_id is None or not user_id:
+        return (
+            "Location context is not available (missing location). "
+            "Open workflow chat for a campaign with a linked location."
+        )
+    if not is_chart_id(chart_id):
+        allowed = ", ".join(CHART_IDS)
+        return f"Unknown chart_id {chart_id!r}. Allowed values: {allowed}."
+
+    client = get_chat_http_client()
+    return await load_chart_data_markdown(
+        client,
+        chart_id=chart_id,
+        location_id=int(location_id),
+        user_id=str(user_id),
+        analytics_run_id=analytics_run_id,
+    )
+
+
+def _workflow_chat_context(config: RunnableConfig | None) -> tuple[str, str] | str:
+    """Return ``(workflow_id, user_id)`` or an error message string."""
+    c = (config or {}).get("configurable") or {}
+    workflow_id = c.get("workflow_id")
+    user_id = c.get("user_id")
+    if not isinstance(workflow_id, str) or not workflow_id.strip():
+        return (
+            "Workflow context is not available (missing workflow_id). "
+            "Open campaign workflow chat to manage Instagram items."
+        )
+    if not isinstance(user_id, str) or not user_id.strip():
+        return "User context is not available."
+    return workflow_id.strip(), user_id.strip()
+
+
+def _format_ig_item_line(item: dict[str, Any]) -> str:
+    item_id = item.get("id", "?")
+    kind = item.get("kind") or "?"
+    title = item.get("title") or "(untitled)"
+    status = item.get("status") or "?"
+    schedule = item.get("schedule")
+    schedule_bit = f", schedule={schedule}" if schedule else ""
+    return f"- id={item_id} kind={kind} status={status} title={title!r}{schedule_bit}"
+
+
+def _normalize_ig_kind(raw: Any) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    cleaned = raw.strip().lower()
+    return cleaned if cleaned in _VALID_IG_KINDS else None
+
+
+def _normalize_ig_status(raw: Any) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    cleaned = raw.strip().lower()
+    return cleaned if cleaned in _VALID_IG_STATUSES else None
+
+
+def _optional_text(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, str):
+        msg = "must be a string"
+        raise ValueError(msg)
+    return raw
+
+
+def _optional_schedule(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, str) or not raw.strip():
+        msg = "schedule must be an ISO-8601 datetime string or null"
+        raise ValueError(msg)
+    return raw.strip()
+
+
+@tool
+async def list_instagram_items(
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """List Instagram draft items (story/post/reel) for the current campaign workflow.
+
+    Call before update or delete so you use real item ids. Also use to confirm what
+    already exists before creating more drafts.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    workflow_id, user_id = ctx
+    client = get_chat_http_client()
+    items = await fetch_instagram_items(workflow_id, user_id, client=client)
+    if not items:
+        return f"No Instagram items for workflow id={workflow_id}."
+    lines = [f"Instagram items for workflow id={workflow_id} ({len(items)}):"]
+    lines.extend(_format_ig_item_line(item) for item in items)
+    return "\n".join(lines)
+
+
+@tool
+async def create_instagram_items(
+    items: list[dict[str, Any]] | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Create one or more Instagram draft items for the current workflow (batch).
+
+    Each item object requires ``kind`` (``story`` | ``post`` | ``reel``). Optional fields:
+    ``title``, ``caption``, ``hook``, ``visual_brief``, ``status`` (``draft`` | ``ready``),
+    ``schedule`` (ISO-8601 datetime). Prefer a single call with multiple items when the
+    user asks for several drafts at once.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    workflow_id, user_id = ctx
+    if not isinstance(items, list) or len(items) == 0:
+        return (
+            "Missing required field 'items'. Provide a non-empty list, for example: "
+            "[{'kind':'post','title':'Friday special','caption':'...'}]."
+        )
+
+    client = get_chat_http_client()
+    successes: list[str] = []
+    errors: list[str] = []
+
+    for i, row in enumerate(items, start=1):
+        if not isinstance(row, dict):
+            errors.append(f"#{i}: item must be an object.")
+            continue
+        kind = _normalize_ig_kind(row.get("kind"))
+        if kind is None:
+            errors.append(
+                f"#{i}: kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}."
+            )
+            continue
+        unknown = set(row.keys()) - ({"kind"} | _IG_CREATE_OPTIONAL_KEYS)
+        if unknown:
+            errors.append(f"#{i}: unsupported fields: {', '.join(sorted(unknown))}.")
+            continue
+        try:
+            status_raw = row.get("status")
+            status = None
+            if status_raw is not None:
+                status = _normalize_ig_status(status_raw)
+                if status is None:
+                    raise ValueError(
+                        f"status must be one of: {', '.join(sorted(_VALID_IG_STATUSES))}"
+                    )
+            created = await persist_create_instagram_item(
+                workflow_id,
+                user_id,
+                kind=kind,
+                title=_optional_text(row.get("title")),
+                caption=_optional_text(row.get("caption")),
+                hook=_optional_text(row.get("hook")),
+                visual_brief=_optional_text(row.get("visual_brief")),
+                status=status,
+                schedule=_optional_schedule(row.get("schedule"))
+                if "schedule" in row
+                else None,
+                client=client,
+            )
+            successes.append(_format_ig_item_line(created))
+        except Exception as exc:  # noqa: BLE001 — report per-item failures in batch
+            errors.append(f"#{i}: {exc}")
+
+    parts: list[str] = []
+    if successes:
+        parts.append(f"Created {len(successes)} Instagram item(s):")
+        parts.extend(successes)
+    if errors:
+        parts.append(f"Failed {len(errors)} item(s):")
+        parts.extend(f"- {err}" for err in errors)
+    if not parts:
+        return "No Instagram items were created."
+    return "\n".join(parts)
+
+
+@tool
+async def update_instagram_items(
+    items: list[dict[str, Any]] | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Update one or more existing Instagram items (batch).
+
+    Each item requires ``id`` and at least one of: ``kind``, ``title``, ``caption``,
+    ``hook``, ``visual_brief``, ``status``, ``schedule`` (ISO-8601 or null to clear).
+    Call ``list_instagram_items`` first when ids are unknown.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    _workflow_id, user_id = ctx
+    if not isinstance(items, list) or len(items) == 0:
+        return (
+            "Missing required field 'items'. Provide a non-empty list, for example: "
+            "[{'id':'12','caption':'Updated copy'}]."
+        )
+
+    client = get_chat_http_client()
+    successes: list[str] = []
+    errors: list[str] = []
+
+    for i, row in enumerate(items, start=1):
+        if not isinstance(row, dict):
+            errors.append(f"#{i}: item must be an object.")
+            continue
+        raw_id = row.get("id")
+        if raw_id is None or (isinstance(raw_id, str) and not raw_id.strip()):
+            errors.append(f"#{i}: id is required.")
+            continue
+        item_id = str(raw_id).strip()
+        unknown = set(row.keys()) - ({"id"} | _IG_UPDATE_OPTIONAL_KEYS)
+        if unknown:
+            errors.append(f"#{i}: unsupported fields: {', '.join(sorted(unknown))}.")
+            continue
+
+        patch_keys = [k for k in _IG_UPDATE_OPTIONAL_KEYS if k in row]
+        if not patch_keys:
+            errors.append(f"#{i}: at least one field to update is required.")
+            continue
+
+        try:
+            kwargs: dict[str, Any] = {"client": client}
+            if "kind" in row:
+                kind = _normalize_ig_kind(row.get("kind"))
+                if kind is None:
+                    raise ValueError(
+                        f"kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}"
+                    )
+                kwargs["kind"] = kind
+            if "title" in row:
+                kwargs["title"] = _optional_text(row.get("title"))
+            if "caption" in row:
+                kwargs["caption"] = _optional_text(row.get("caption"))
+            if "hook" in row:
+                kwargs["hook"] = _optional_text(row.get("hook"))
+            if "visual_brief" in row:
+                kwargs["visual_brief"] = _optional_text(row.get("visual_brief"))
+            if "status" in row:
+                status = _normalize_ig_status(row.get("status"))
+                if status is None:
+                    raise ValueError(
+                        f"status must be one of: {', '.join(sorted(_VALID_IG_STATUSES))}"
+                    )
+                kwargs["status"] = status
+            if "schedule" in row:
+                sched = row.get("schedule")
+                if sched is None:
+                    kwargs["schedule"] = None
+                else:
+                    kwargs["schedule"] = _optional_schedule(sched)
+
+            updated = await persist_update_instagram_item(item_id, user_id, **kwargs)
+            successes.append(_format_ig_item_line(updated))
+        except Exception as exc:  # noqa: BLE001 — report per-item failures in batch
+            errors.append(f"#{i} id={item_id}: {exc}")
+
+    parts: list[str] = []
+    if successes:
+        parts.append(f"Updated {len(successes)} Instagram item(s):")
+        parts.extend(successes)
+    if errors:
+        parts.append(f"Failed {len(errors)} item(s):")
+        parts.extend(f"- {err}" for err in errors)
+    if not parts:
+        return "No Instagram items were updated."
+    return "\n".join(parts)
+
+
+@tool
+async def delete_instagram_items(
+    ids: list[str] | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Delete one or more Instagram items by id (batch).
+
+    Call ``list_instagram_items`` first when ids are unknown. Confirm with the user
+    when delete intent is ambiguous.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    _workflow_id, user_id = ctx
+    if not isinstance(ids, list) or len(ids) == 0:
+        return (
+            "Missing required field 'ids'. Provide a non-empty list of Instagram item ids, "
+            "for example: ['12','15']."
+        )
+
+    client = get_chat_http_client()
+    successes: list[str] = []
+    errors: list[str] = []
+
+    for i, raw_id in enumerate(ids, start=1):
+        if raw_id is None or (isinstance(raw_id, str) and not str(raw_id).strip()):
+            errors.append(f"#{i}: id is required.")
+            continue
+        item_id = str(raw_id).strip()
+        try:
+            ok = await persist_delete_instagram_item(item_id, user_id, client=client)
+            if ok:
+                successes.append(f"- deleted id={item_id}")
+            else:
+                errors.append(f"#{i} id={item_id}: delete returned false.")
+        except Exception as exc:  # noqa: BLE001 — report per-item failures in batch
+            errors.append(f"#{i} id={item_id}: {exc}")
+
+    parts: list[str] = []
+    if successes:
+        parts.append(f"Deleted {len(successes)} Instagram item(s):")
+        parts.extend(successes)
+    if errors:
+        parts.append(f"Failed {len(errors)} item(s):")
+        parts.extend(f"- {err}" for err in errors)
+    if not parts:
+        return "No Instagram items were deleted."
+    return "\n".join(parts)

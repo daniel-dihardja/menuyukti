@@ -259,7 +259,7 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                         "messages": [
                             AIMessage(
                                 content="",
-                                tool_calls=[{"name": "get_milestone_data", "id": "1", "args": {}}],
+                                tool_calls=[{"name": "get_milestone", "id": "1", "args": {}}],
                             ),
                         ],
                     },
@@ -270,7 +270,7 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                 {
                     "tools": {
                         "messages": [
-                            ToolMessage(content="ok", tool_call_id="1", name="get_milestone_data")
+                            ToolMessage(content="ok", tool_call_id="1", name="get_milestone")
                         ],
                     },
                 },
@@ -289,7 +289,7 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
         assert response.status_code == 200
         text = "".join(response.iter_text())
         assert "tool_start" in text or '"status": "tool_start"' in text
-        assert "get_milestone_data" in text
+        assert "get_milestone" in text
         assert "tool_end" in text or '"status": "tool_end"' in text
         assert "Done" in text
 

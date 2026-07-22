@@ -254,6 +254,48 @@ query AnalyticsRunsForLocation($locationId: Int!, $first: Int) {
 }
 """
 
+ORDER_METRICS_SLOT_DEMAND_QUERY = """
+query OrderMetricsSlotDemand($analyticsRunId: ID!) {
+  orderMetrics(analyticsRunId: $analyticsRunId) {
+    slotDemandProfile {
+      day
+      mealPeriod
+      mealPeriodLabel
+      mealPeriodHoursLabel
+      orderCount
+      trafficShare
+      demandIndex
+      relativeDemand
+    }
+  }
+}
+"""
+
+MENU_HEATMAPS_CHAT_QUERY = """
+query MenuHeatmapsForChat($id: ID!, $locationId: ID) {
+  menuHeatmaps(analyticsRunId: $id, locationId: $locationId) {
+    menu
+    menuCategory
+    menuCategoryDetail
+    reportingPeriod
+    dailyHeatmap { hour quantity }
+    weeklyHeatmap { day quantity }
+  }
+}
+"""
+
+MENU_COMBOS_LIFT_MATRIX_CHAT_QUERY = """
+query MenuCombosLiftMatrixForChat($id: ID!, $locationId: ID) {
+  menuCombos(analyticsRunId: $id, locationId: $locationId) {
+    focusMenus
+    matrixLift
+    totalOrders
+    multiItemOrderCount
+    scope
+  }
+}
+"""
+
 LATEST_ANALYTICS_RUN_WITH_SIGNALS_QUERY = """
 query LatestAnalyticsRunWithSignals($locationId: Int!) {
   latestAnalyticsRunWithSignals(locationId: $locationId) {
@@ -659,5 +701,104 @@ mutation CompleteMilestoneAgentRun(
     timeline: $timeline
     errorMessage: $errorMessage
   )
+}
+"""
+
+INSTAGRAM_ITEM_FIELDS = """
+  id
+  workflowId
+  locationId
+  kind
+  title
+  caption
+  hook
+  visualBrief
+  mediaS3Key
+  generationPrompt
+  referenceImages {
+    name
+    enabled
+  }
+  mediaVersions {
+    id
+    mediaS3Key
+    prompt
+    createdAt
+  }
+  status
+  schedule
+  createdAt
+  updatedAt
+"""
+
+INSTAGRAM_ITEMS_QUERY = """
+query InstagramItems($workflowId: ID!) {
+  instagramItems(workflowId: $workflowId) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
+CREATE_INSTAGRAM_ITEM_MUTATION = """
+mutation CreateInstagramItem(
+  $workflowId: ID!
+  $kind: String!
+  $title: String
+  $caption: String
+  $hook: String
+  $visualBrief: String
+  $status: String
+  $schedule: DateTime
+) {
+  createInstagramItem(
+    workflowId: $workflowId
+    kind: $kind
+    title: $title
+    caption: $caption
+    hook: $hook
+    visualBrief: $visualBrief
+    status: $status
+    schedule: $schedule
+  ) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
+UPDATE_INSTAGRAM_ITEM_MUTATION = """
+mutation UpdateInstagramItem(
+  $id: ID!
+  $kind: String
+  $title: String
+  $caption: String
+  $hook: String
+  $visualBrief: String
+  $mediaS3Key: String
+  $generationPrompt: String
+  $referenceImages: [InstagramItemReferenceImageInput!]
+  $status: String
+  $schedule: DateTime
+) {
+  updateInstagramItem(
+    id: $id
+    kind: $kind
+    title: $title
+    caption: $caption
+    hook: $hook
+    visualBrief: $visualBrief
+    mediaS3Key: $mediaS3Key
+    generationPrompt: $generationPrompt
+    referenceImages: $referenceImages
+    status: $status
+    schedule: $schedule
+  ) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
+DELETE_INSTAGRAM_ITEM_MUTATION = """
+mutation DeleteInstagramItem($id: ID!) {
+  deleteInstagramItem(id: $id)
 }
 """

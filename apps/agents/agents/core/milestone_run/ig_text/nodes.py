@@ -9,11 +9,12 @@ import httpx
 from agents_app.agents.core.llm_invoke import LLMInvokeError, emit_llm_error_step
 from agents_app.agents.core.milestone_eval.ig_plan_eval import sort_ig_plan_entries
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
+from agents_app.agents.core.milestone_run.ig_schedule import parse_ig_format_schedule
 from agents_app.agents.core.milestone_run.ig_text.prompts import (
     build_ig_text_messages,
     empty_text_retry_message,
 )
-from agents_app.agents.core.milestone_run.ig_text.state import IgTextOutput, IgTextState
+from agents_app.agents.core.milestone_run.ig_text.state import IgTextState
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
@@ -22,12 +23,11 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_ig_format_data,
     extract_ig_format_row,
     extract_restaurant_campaign_brief_row,
-    ig_format_has_entries,
     ig_format_prior_error_message,
     preferred_milestone_id_from_input,
 )
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 IG_TEXT_MAX_ATTEMPTS = 2
 
@@ -63,24 +63,7 @@ def _fmt_owner_notes(state: IgTextState) -> str:
     return notes.strip()
 
 
-def _ig_format_entries(prior_data: dict[str, Any]) -> list[dict[str, Any]]:
-    raw = prior_data.get("entries")
-    if not isinstance(raw, list):
-        return []
-    entries: list[dict[str, Any]] = []
-    for row in raw:
-        if not isinstance(row, dict):
-            continue
-        slot_key = str(row.get("slotKey") or "").strip()
-        menu_items = row.get("menuItems")
-        fmt_type = str(row.get("type") or "").strip()
-        if not slot_key or not fmt_type or not isinstance(menu_items, list) or not menu_items:
-            continue
-        entries.append(row)
-    return sort_ig_plan_entries(entries)
-
-
-def _normalize_generated_output(payload: Any) -> IgTextOutput:
+def _normalize_generated_output(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("ig_text output validation failed")
     entries = payload.get("entries")
@@ -92,7 +75,7 @@ def _normalize_generated_output(payload: Any) -> IgTextOutput:
     normalized, error = validate_skill_output("ig_text", payload)
     if error is not None or not isinstance(normalized, dict):
         raise ValueError(error or "ig_text output validation failed")
-    return normalized  # type: ignore[return-value]
+    return normalized
 
 
 class IgTextFieldDraft(BaseModel):
@@ -160,11 +143,16 @@ async def fetch_and_prepare(state: IgTextState, *, client: httpx.AsyncClient) ->
         "sourceIgFormatMilestoneId",
     )
     prior_row = extract_ig_format_row(prior_json, preferred_milestone_id=preferred_format)
-    prior_data = extract_ig_format_data(prior_json, preferred_milestone_id=preferred_format)
-    if prior_data is None or not ig_format_has_entries(prior_data):
+    prior_data_raw = extract_ig_format_data(prior_json, preferred_milestone_id=preferred_format)
+    if prior_data_raw is None:
         raise ValueError(ig_format_prior_error_message(prior_json, milestone_id="ig_text"))
+    try:
+        format_schedule = parse_ig_format_schedule(prior_data_raw)
+    except ValidationError as exc:
+        raise ValueError(ig_format_prior_error_message(prior_json, milestone_id="ig_text")) from exc
+    prior_data = format_schedule.model_dump()
 
-    source_entries = _ig_format_entries(prior_data)
+    source_entries = sort_ig_plan_entries([entry.model_dump() for entry in format_schedule.entries])
     if not source_entries:
         raise ValueError("ig_text requires at least one IG Format entry with menuItems and type")
 

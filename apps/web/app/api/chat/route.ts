@@ -331,6 +331,7 @@ export async function POST(req: Request) {
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
         ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),
+        ...(analyticsRunId !== undefined ? { analytics_run_id: Number(analyticsRunId) } : {}),
         ...(agentThreadId !== undefined ? { agent_thread_id: agentThreadId } : {}),
         ...(workflowChatSessionId !== undefined
           ? { workflow_chat_session_id: workflowChatSessionId }

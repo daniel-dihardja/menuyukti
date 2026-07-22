@@ -19,7 +19,7 @@ import {
   menuClustererMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   milestoneInputSchema,
-  milestonePresetIdSchema,
+  milestonePresetIdFieldSchema,
   passCriteriaSchema,
   promotionCandidatesMilestoneDataSchema,
 } from './milestone-presets'
@@ -29,7 +29,7 @@ export const milestoneDataSchema = z
     order: z.number().int().optional(),
     /** Free-form milestone goal; persisted on the milestone node `data` JSON. */
     goal: z.string().optional(),
-    presetId: milestonePresetIdSchema.optional(),
+    presetId: milestonePresetIdFieldSchema,
     /** Workflow-scoped human-friendly code shown in the UI (`M-XXXX`). */
     displayCode: z
       .string()

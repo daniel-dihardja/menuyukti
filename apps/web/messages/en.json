@@ -511,13 +511,6 @@
       "secondary": "Learn More"
     }
   },
-  "skillsPage": {
-    "title": "Presets & tools",
-    "description": "Overview of milestone presets (LangGraph subgraphs) and chat tools used by the agents service.",
-    "skillsHeading": "Milestone presets",
-    "toolsHeading": "Chat tools",
-    "toolsDescription": "Tools available in workflow and standalone agent chat. Milestone runs use dedicated preset graphs instead of this ReAct tool loop."
-  },
   "profile": {
     "title": "Profile",
     "breadcrumb": "Profile",
@@ -591,7 +584,6 @@
     "reports": "Reports",
     "workflows": "Workflow",
     "calendar": "Calendar",
-    "skills": "Skills & tools",
     "posts": "IG Studio",
     "content": "Content",
     "media": "Media",
@@ -840,7 +832,19 @@
         "description": "Applied automatically to this generation — you don’t need to repeat style rules in the prompt.",
         "create": "Create style",
         "manage": "Manage styles",
-        "loadError": "Failed to load style packs."
+        "loadError": "Failed to load style packs.",
+        "usage": {
+          "title": "How to use this style",
+          "intro": "Override properties in the brief with tags like [property=value]. Multi-word params use quotes.",
+          "copyExample": "Copy example",
+          "copied": "Example copied",
+          "copyFailed": "Could not copy example",
+          "valuesLabel": "Values",
+          "fallbackEnum": "Choose one of the listed values.",
+          "fallbackBoolean": "Toggle on or off.",
+          "fallbackNumber": "Set a numeric value.",
+          "fallbackText": "Set a short text token (no spaces in the main value)."
+        }
       },
       "model": {
         "label": "Image model",
@@ -2345,6 +2349,94 @@
         "goalSheetTitle": "Workflow goal",
         "goalSheetDescription": "Describe what this campaign should achieve in plain text. Changes save when you close this panel or choose Save.",
         "goalSaveError": "Could not save goal. Please try again."
+      },
+      "instagramItems": {
+        "title": "Instagram items",
+        "panelDescription": "Create and edit Stories, posts, and Reels for this campaign. Select a milestone to switch back to milestone data.",
+        "newButton": "New item",
+        "loading": "Loading items…",
+        "emptyTitle": "No Instagram items yet",
+        "empty": "Create one to start drafting Stories, posts, or Reels for this campaign.",
+        "untitled": "Untitled item",
+        "notFound": "That Instagram item was not found. Pick another or create a new one.",
+        "backAria": "Back to Instagram items",
+        "saveButton": "Save",
+        "deleteRowAria": "Delete {title}",
+        "createError": "Could not create Instagram item. Please try again.",
+        "saveError": "Could not save Instagram item. Please try again.",
+        "deleteError": "Could not delete Instagram item. Please try again.",
+        "deleteConfirmTitle": "Delete Instagram item?",
+        "deleteConfirmDescription": "This permanently removes the item from this campaign. This cannot be undone.",
+        "deleteConfirmDescriptionNamed": "This permanently removes “{title}” from this campaign. This cannot be undone.",
+        "deleteConfirmCancel": "Cancel",
+        "deleteConfirmAction": "Delete",
+        "sections": {
+          "content": "Content",
+          "generate": "Generate"
+        },
+        "fields": {
+          "kind": "Format",
+          "status": "Status",
+          "schedule": "Schedule",
+          "scheduleDatePlaceholder": "Pick date and time",
+          "scheduleTime": "Time",
+          "title": "Title",
+          "hook": "Hook",
+          "caption": "Caption",
+          "visualBrief": "Visual brief"
+        },
+        "generate": {
+          "button": "Generate image",
+          "generating": "Generating…",
+          "error": "Could not generate image. Please try again.",
+          "tooManyReferences": "Too many references selected. Leave room for the style pack reference (at most 5 total including style).",
+          "previewLabel": "Generated image",
+          "previewEmpty": "No image yet. Write a visual brief and generate.",
+          "previewEmptyTitle": "No image yet",
+          "expandPreview": "View larger image",
+          "closePreview": "Close image preview",
+          "useCurrentPreviewAsReference": "Use current preview as reference",
+          "useCurrentPreviewAsReferenceHint": "Next generate edits from the image currently shown above.",
+          "useCurrentPreviewAsReferenceUnavailable": "Generate an image first to use it as an edit reference.",
+          "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
+          "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",
+          "formatHintPost": "Output size: 1024×1024 (square post).",
+          "formatHintStory": "Output size: 768×1376 (story / reel).",
+          "style": {
+            "label": "Style pack",
+            "placeholder": "Select style",
+            "none": "No style",
+            "defaultSuffix": "default",
+            "description": "Applied automatically to this generation — you don’t need to repeat style rules in the brief.",
+            "create": "Create style",
+            "manage": "Manage styles",
+            "loadError": "Failed to load style packs."
+          },
+          "previousVersion": "Previous generated image",
+          "nextVersion": "Next generated image",
+          "versionIndicator": "{current} of {total}",
+          "versionDotAria": "Show version {index} of {total}",
+          "useAsItemImage": "Use as item image",
+          "committing": "Setting item image…",
+          "commitError": "Could not set this image as the item image. Please try again.",
+          "deleteVersion": "Delete generated image",
+          "deleteVersionConfirmTitle": "Delete this generated image?",
+          "deleteVersionConfirmDescription": "This removes the image from this item's version history. This cannot be undone.",
+          "deleteVersionConfirmCancel": "Cancel",
+          "deleteVersionConfirmAction": "Delete image",
+          "deleteVersionDeleting": "Deleting…",
+          "deleteVersionError": "Could not delete this image. Please try again."
+        },
+        "clearScheduleAria": "Clear schedule",
+        "kind": {
+          "story": "Story",
+          "post": "Post",
+          "reel": "Reel"
+        },
+        "status": {
+          "draft": "Draft",
+          "ready": "Ready"
+        }
       },
       "milestoneRun": {
         "runningLabel": "Milestone run in progress…",

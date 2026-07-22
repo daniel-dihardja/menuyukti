@@ -15,6 +15,8 @@ export type GenerationMode = 'filled-edit' | 'fresh-scene'
 export type ResolveGenerationReferencesInput = {
   referenceImages: PostCreatorReferenceImage[]
   previewMediaS3Key: string | null | undefined
+  /** When false, never attach previous-result even if previewMediaS3Key is set. Default true. */
+  includePreviousResult?: boolean
   /** When true, reserve one slot for a server-side style reference image. */
   styleSelected?: boolean
   solidBackgroundEnabled?: boolean
@@ -48,23 +50,25 @@ export function resolveGenerationReferences(
   input: ResolveGenerationReferencesInput,
 ): ResolveGenerationReferencesResult {
   const photos = enabledPhotos(input.referenceImages)
-  const hasPrevious = parsePostMediaFilename(input.previewMediaS3Key) != null
+  const includePreviousResult = input.includePreviousResult !== false
+  const effectivePreviewKey = includePreviousResult ? input.previewMediaS3Key : null
+  const hasPrevious = parsePostMediaFilename(effectivePreviewKey) != null
 
   const mode = detectGenerationMode({
     enabledPhotoCount: photos.length,
-    previewMediaS3Key: input.previewMediaS3Key,
+    previewMediaS3Key: effectivePreviewKey,
   })
 
   const references: GenerationReference[] = []
 
   if (mode === 'filled-edit') {
-    const filename = parsePostMediaFilename(input.previewMediaS3Key)
+    const filename = parsePostMediaFilename(effectivePreviewKey)
     if (filename) {
       references.push({ type: 'previous-result', filename })
     }
   } else {
     if (hasPrevious) {
-      const filename = parsePostMediaFilename(input.previewMediaS3Key)
+      const filename = parsePostMediaFilename(effectivePreviewKey)
       if (filename) {
         references.push({ type: 'previous-result', filename })
       }

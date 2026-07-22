@@ -14,7 +14,6 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/advisor',
   '/print-orders',
   '/dashboard',
-  '/skills',
   '/staff',
   '/usage',
   '/profile',
@@ -101,8 +100,6 @@ export const routes = {
       `/workflow?locationId=${encodeURIComponent(String(locationId))}`,
     detail: (id: string | number) => `/workflow/${id}`,
   },
-
-  skills: '/skills',
 
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,

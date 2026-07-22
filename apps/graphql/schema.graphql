@@ -64,6 +64,29 @@ type BestPostingWindowType {
   peakHour: Int
 }
 
+"""A manually created calendar entry for a location."""
+type CalendarEntryType {
+  id: Int!
+  locationId: Int!
+  title: String!
+  description: String!
+  date: String!
+  time: String!
+  mediaRefs: [CalendarMediaRefType!]!
+}
+
+"""Input for attaching a media-library file to an entry."""
+input CalendarMediaRefInput {
+  kind: String!
+  name: String!
+}
+
+"""Stable reference to a media-library file."""
+type CalendarMediaRefType {
+  kind: String!
+  name: String!
+}
+
 type CampaignBriefSignalCapabilitiesType {
   hasOrderId: Boolean!
   hasDatetime: Boolean!
@@ -245,6 +268,47 @@ type ImageAiFlowType {
   styleIds: JSON
   isActive: Boolean!
   sortOrder: Int!
+}
+
+"""A single generated image version for an Instagram item."""
+type InstagramItemMediaVersionType {
+  id: ID!
+  mediaS3Key: String!
+  prompt: String
+  createdAt: DateTime
+}
+
+"""Input for an attached media-library generation reference."""
+input InstagramItemReferenceImageInput {
+  name: String!
+  enabled: Boolean! = true
+}
+
+"""Media-library photo attached as an image-generation reference."""
+type InstagramItemReferenceImageType {
+  name: String!
+  enabled: Boolean!
+}
+
+"""A workflow-scoped Instagram story, post, or reel draft."""
+type InstagramItemType {
+  id: ID!
+  workflowId: ID!
+  locationId: Int!
+  kind: String!
+  title: String
+  caption: String
+  hook: String
+  visualBrief: String
+  mediaS3Key: String
+  generationPrompt: String
+  referenceImages: [InstagramItemReferenceImageType!]!
+  mediaVersions: [InstagramItemMediaVersionType!]!
+  styleId: Int
+  status: String!
+  schedule: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 
 """Tiered analytics payload for campaign_brief and growth agents."""
@@ -499,20 +563,30 @@ type Mutation {
   uploadSalesReport(file: Upload!, locationId: ID!, includeLineItems: Boolean! = false): ExcelUploadResult!
   createNode(locationId: Int!, nodeType: String!, name: String = null, parentId: ID = null, description: String = null, data: JSON = null): NodeType!
   createPost(title: String = null): PostType!
-  createPostPage(postId: ID!, mediaS3Key: String, prompt: String): PostPageType!
+  createPostPage(postId: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
+  createInstagramItem(workflowId: ID!, kind: String!, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, status: String = null, schedule: DateTime = null): InstagramItemType!
   createWorkflowFromPayload(locationId: Int!, payload: JSON!, analyticsRunId: Int = null): NodeType!
   deleteNode(id: ID!): Boolean!
   deletePost(id: ID!): Boolean!
   deletePostPage(pageId: ID!): Boolean!
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
+  deleteInstagramItem(id: ID!): Boolean!
+  deleteInstagramItemMediaVersion(itemId: ID!, mediaS3Key: String!): InstagramItemType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePost(id: ID!, title: String!): PostType!
-  updatePostPage(id: ID!, mediaS3Key: String, prompt: String): PostPageType!
+  updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
+  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, mediaS3Key: String, generationPrompt: String, referenceImages: [InstagramItemReferenceImageInput!], styleId: Int, status: String = null, schedule: DateTime): InstagramItemType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
   setPassCriteriaStatuses(milestoneId: ID!, locationId: Int!, updates: [PassCriterionStatusInput!]!): Boolean!
   reorderMilestones(workflowId: ID!, locationId: Int!, orders: [MilestoneOrderInput!]!): Boolean!
   createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String): LocationType!
+
+  """Create a named visual style pack in the caller's workspace."""
+  createStyle(name: String!, referenceImageName: String!, spec: JSON!, isDefault: Boolean! = false): StyleType!
+
+  """Create a manual calendar entry for a location."""
+  createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null): CalendarEntryType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   startMilestoneAgentRun(runId: String!, milestoneId: ID!, workflowId: ID = null, traceparent: String = null): Boolean!
@@ -524,12 +598,21 @@ type Mutation {
   updateImageAiFlow(slug: String!, newSlug: String, displayName: String, prompt: String, model: String, promptEnhance: String, imageReferenceStrength: String, styleIds: JSON, isActive: Boolean, sortOrder: Int): ImageAiFlowType!
   deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
   deleteImageAiFlow(slug: String!): Boolean!
+
+  """Delete a visual style pack by id."""
+  deleteStyle(id: Int!): Boolean!
+
+  """Update a manual calendar entry."""
+  updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!]): CalendarEntryType!
   updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
 
   """
   Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings.
   """
   updateLocationManualBriefInput(locationId: Int!, quickProfile: JSON!): LocationManualBriefInputType!
+
+  """Update a visual style pack in the caller's workspace."""
+  updateStyle(id: Int!, name: String = null, referenceImageName: String = null, spec: JSON = null, isDefault: Boolean = null): StyleType!
 }
 
 """
@@ -645,6 +728,9 @@ type PostPageType {
   sortOrder: Int!
   mediaS3Key: String
   prompt: String
+  imageFormat: String
+  imageQuality: String
+  generationModel: String
   mediaVersions: [PostPageMediaVersionType!]!
   createdAt: DateTime
   updatedAt: DateTime
@@ -751,6 +837,12 @@ type Query {
   """
   locationManualBriefInput(locationId: Int!): LocationManualBriefInputType
 
+  """List visual style packs in workspaces the current user belongs to."""
+  styles: [StyleType!]!
+
+  """Fetch one visual style pack by id. Null when missing or access denied."""
+  style(id: Int!): StyleType
+
   """
   List nodes for a location, optionally filtered by nodeType and/or parentId. Results are paginated with `first` (default and max 500). When parentId is omitted, use `afterId` (last-seen node id) for cursor pagination in primary-key-desc order (aligned with creation order for autoincrement ids).
   """
@@ -812,6 +904,11 @@ type Query {
   """
   slotMenuCandidates(analyticsRunId: ID!, locationId: ID = null, options: SlotMenuCandidatesOptionsInput = null): SlotMenuCandidatesType
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
+
+  """
+  Aggregate scheduler milestone slots and manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no scheduler milestones or manual entries.
+  """
+  schedulerCalendar(locationId: Int!): SchedulerCalendarPayload!
   operatingProfile(locationId: ID!, analyticsRunId: ID!): OperatingProfileType
 
   """Posts in workspaces the current user belongs to, newest first."""
@@ -819,6 +916,14 @@ type Query {
 
   """A single post in the caller's workspace, with pages."""
   post(id: ID!): PostType
+
+  """
+  Instagram items for a workflow the caller owns, earliest schedule first (unscheduled last).
+  """
+  instagramItems(workflowId: ID!): [InstagramItemType!]!
+
+  """A single Instagram item owned via its workflow location."""
+  instagramItem(id: ID!): InstagramItemType
 
   """
   Composite Instagram signals for an analytics run: content heroes, trending items, avoid list, category focus, best posting window, and period headline. Requires order facts; returns null if none.
@@ -872,6 +977,35 @@ type RevenueTrendsPayloadType {
   currentPeriodTotalRevenue: Float!
   previousPeriodTotalRevenue: Float!
   rows: [RevenueTrendRowGqlType!]!
+}
+
+"""A public holiday overlay for the calendar window."""
+type SchedulerCalendarHolidayType {
+  name: String!
+  description: String!
+  date: String!
+}
+
+"""
+Location-scoped calendar: union of all scheduler milestone windows, flattened slots, manual calendar entries, and deduped public holidays.
+"""
+type SchedulerCalendarPayload {
+  windowStart: String
+  windowEnd: String
+  publicHolidays: [SchedulerCalendarHolidayType!]!
+  slots: [SchedulerCalendarSlotType!]!
+}
+
+"""A scheduled content slot (feed post, Story, or Reel)."""
+type SchedulerCalendarSlotType {
+  date: String!
+  time: String!
+  title: String!
+  kind: String
+  id: String
+  description: String
+  mediaRefs: [CalendarMediaRefType!]
+  source: String
 }
 
 type SignalConfidenceType {
@@ -946,6 +1080,20 @@ type SlotMenuCandidatesType {
   matrixAvailable: Boolean!
   coverageNotes: [String!]!
   slots: [SlotMenuCandidatesCellType!]!
+}
+
+"""
+Workspace-scoped visual style pack: Style Spec v2 JSON plus one media-library reference image used when generating Instagram posts.
+"""
+type StyleType {
+  id: Int!
+  workspaceId: Int!
+  createdByClerkUserId: String!
+  name: String!
+  rules: String!
+  referenceImageName: String!
+  isDefault: Boolean!
+  spec: JSON!
 }
 
 """A menu item with rising revenue vs the prior period."""

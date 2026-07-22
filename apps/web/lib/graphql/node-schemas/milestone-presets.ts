@@ -43,6 +43,23 @@ export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 /** Ordered preset ids — single source for UI lists and guards. */
 export const MILESTONE_PRESET_IDS = milestonePresetIdSchema.options
 
+/** Map a stored preset id to a current `MilestonePresetId`. */
+export function normalizeMilestonePresetId(value: unknown): MilestonePresetId | undefined {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+  if ((MILESTONE_PRESET_IDS as readonly string[]).includes(value)) {
+    return value as MilestonePresetId
+  }
+  return undefined
+}
+
+/** Zod field that accepts current + legacy preset ids and normalizes to the current id. */
+export const milestonePresetIdFieldSchema = z.preprocess(
+  (value) => normalizeMilestonePresetId(value) ?? value,
+  milestonePresetIdSchema.optional(),
+)
+
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
  * Campaign dates live on the separate `dates` milestone, not here.
@@ -332,51 +349,36 @@ export const igProfileMilestoneDataSchema = z
 
 export type IgProfileMilestoneData = z.infer<typeof igProfileMilestoneDataSchema>
 
-export const igPlanWeekdaySchema = z.enum([
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-  'sunday',
-])
-
-export const igPlanPillarSchema = z.enum([
-  'hero',
-  'reminder',
-  'lifestyle',
-  'community',
-  'social_proof',
-  'educational',
-  'product_discovery',
-])
-
-export const igPlanProductRoleSchema = z.enum(['star', 'puzzle', 'plow_horse'])
-
-export const igPlanSlotStrategySchema = z.enum(['maintain', 'support', 'grow', 'aggressively_grow'])
-
-export const igPlanEntrySchema = z.object({
-  day: igPlanWeekdaySchema,
-  slot: z.string().regex(/^\d{2}:\d{2}$/),
-  objective: z.string().trim().min(1),
-  pillar: igPlanPillarSchema,
-  mealPeriod: z.string().trim().min(1),
-  productRole: igPlanProductRoleSchema,
-  slotStrategy: igPlanSlotStrategySchema,
-  slotKey: z.string().trim().min(1),
-})
-
-export type IgPlanEntry = z.infer<typeof igPlanEntrySchema>
-
-export const igPlanMilestoneDataSchema = z.object({
-  scheduleExplanation: z.string().default(''),
-  entries: z.array(igPlanEntrySchema).default([]),
-  sourceAnalyticsRunId: z.string().trim().default(''),
-  reportingPeriod: z.string().trim().default(''),
-})
-
-export type IgPlanMilestoneData = z.infer<typeof igPlanMilestoneDataSchema>
+export {
+  igPlanWeekdaySchema,
+  igPlanPillarSchema,
+  igPlanProductRoleSchema,
+  igPlanSlotStrategySchema,
+  igPlanEntrySchema,
+  igPlanMilestoneDataSchema,
+  igMenuPickerMenuItemSchema,
+  igMenuPickerEntrySchema,
+  igMenuPickerMilestoneDataSchema,
+  igFormatTypeSchema,
+  igFormatEntrySchema,
+  igFormatMilestoneDataSchema,
+  igTextFieldSchema,
+  igTextEntrySchema,
+  igTextMilestoneDataSchema,
+  parseIgScheduleEntries,
+  type IgScheduleStage,
+  type IgPlanEntry,
+  type IgPlanMilestoneData,
+  type IgMenuPickerMenuItem,
+  type IgMenuPickerEntry,
+  type IgMenuPickerMilestoneData,
+  type IgFormatType,
+  type IgFormatEntry,
+  type IgFormatMilestoneData,
+  type IgTextField,
+  type IgTextEntry,
+  type IgTextMilestoneData,
+} from './ig-schedule'
 
 export const igMenuPickerMilestoneInputValueSchema = z
   .object({
@@ -387,29 +389,6 @@ export const igMenuPickerMilestoneInputValueSchema = z
 
 export type IgMenuPickerMilestoneInputValue = z.infer<typeof igMenuPickerMilestoneInputValueSchema>
 
-export const igMenuPickerMenuItemSchema = z.object({
-  menu: z.string().trim().min(1),
-  rationale: z.string().trim().default(''),
-})
-
-export type IgMenuPickerMenuItem = z.infer<typeof igMenuPickerMenuItemSchema>
-
-export const igMenuPickerEntrySchema = igPlanEntrySchema.extend({
-  menuItems: z.array(igMenuPickerMenuItemSchema).min(1).max(3),
-})
-
-export type IgMenuPickerEntry = z.infer<typeof igMenuPickerEntrySchema>
-
-export const igMenuPickerMilestoneDataSchema = z.object({
-  scheduleExplanation: z.string().default(''),
-  entries: z.array(igMenuPickerEntrySchema).default([]),
-  sourceAnalyticsRunId: z.string().trim().default(''),
-  reportingPeriod: z.string().trim().default(''),
-  sourceIgPlanTitle: z.string().trim().optional(),
-})
-
-export type IgMenuPickerMilestoneData = z.infer<typeof igMenuPickerMilestoneDataSchema>
-
 export const igFormatMilestoneInputValueSchema = z
   .object({
     notes: z.string(),
@@ -418,34 +397,6 @@ export const igFormatMilestoneInputValueSchema = z
 
 export type IgFormatMilestoneInputValue = z.infer<typeof igFormatMilestoneInputValueSchema>
 
-export const igFormatTypeSchema = z.enum(['reel', 'post', 'post-carousel', 'story'])
-
-export type IgFormatType = z.infer<typeof igFormatTypeSchema>
-
-export const igFormatEntrySchema = igMenuPickerEntrySchema.extend({
-  type: igFormatTypeSchema,
-  formatRationale: z.string().trim().default(''),
-})
-
-export type IgFormatEntry = z.infer<typeof igFormatEntrySchema>
-
-export const igFormatMilestoneDataSchema = z.object({
-  scheduleExplanation: z.string().default(''),
-  entries: z.array(igFormatEntrySchema).default([]),
-  sourceAnalyticsRunId: z.string().trim().default(''),
-  reportingPeriod: z.string().trim().default(''),
-  sourceIgMenuPickerTitle: z.string().trim().optional(),
-})
-
-export type IgFormatMilestoneData = z.infer<typeof igFormatMilestoneDataSchema>
-
-export const igTextFieldSchema = z.object({
-  field: z.string().trim().min(1),
-  value: z.string().trim().min(1),
-})
-
-export type IgTextField = z.infer<typeof igTextFieldSchema>
-
 export const igTextMilestoneInputValueSchema = z
   .object({
     notes: z.string(),
@@ -453,23 +404,6 @@ export const igTextMilestoneInputValueSchema = z
   .merge(milestoneDependencyIdFieldsSchema)
 
 export type IgTextMilestoneInputValue = z.infer<typeof igTextMilestoneInputValueSchema>
-
-export const igTextEntrySchema = igFormatEntrySchema.extend({
-  texts: z.array(igTextFieldSchema).min(1),
-})
-
-export type IgTextEntry = z.infer<typeof igTextEntrySchema>
-
-export const igTextMilestoneDataSchema = z.object({
-  scheduleExplanation: z.string().default(''),
-  entries: z.array(igTextEntrySchema).default([]),
-  sourceAnalyticsRunId: z.string().trim().default(''),
-  reportingPeriod: z.string().trim().default(''),
-  sourceIgFormatTitle: z.string().trim().optional(),
-  sourceCampaignBriefTitle: z.string().trim().optional(),
-})
-
-export type IgTextMilestoneData = z.infer<typeof igTextMilestoneDataSchema>
 
 export const menuTaggerItemRoleSchema = z.enum(['star', 'puzzle'])
 

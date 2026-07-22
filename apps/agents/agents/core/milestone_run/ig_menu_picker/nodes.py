@@ -17,10 +17,8 @@ from agents_app.agents.core.milestone_run.ig_menu_picker.prompts import (
     empty_menu_picker_retry_message,
     format_ig_menu_picker_user_message,
 )
-from agents_app.agents.core.milestone_run.ig_menu_picker.state import (
-    IgMenuPickerOutput,
-    IgMenuPickerState,
-)
+from agents_app.agents.core.milestone_run.ig_menu_picker.state import IgMenuPickerState
+from agents_app.agents.core.milestone_run.ig_schedule import parse_ig_plan_schedule
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
@@ -32,7 +30,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     preferred_milestone_id_from_input,
 )
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 IG_MENU_PICKER_MAX_ATTEMPTS = 2
 IG_MENU_PICKER_NONE_SELECTED_SENTINEL = "__no_slots_selected__"
@@ -206,7 +204,7 @@ def _build_entry_contexts(
     return contexts
 
 
-def _normalize_generated_output(payload: Any) -> IgMenuPickerOutput:
+def _normalize_generated_output(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("ig_menu_picker output validation failed")
     entries = payload.get("entries")
@@ -218,7 +216,7 @@ def _normalize_generated_output(payload: Any) -> IgMenuPickerOutput:
     normalized, error = validate_skill_output("ig_menu_picker", payload)
     if error is not None or not isinstance(normalized, dict):
         raise ValueError(error or "ig_menu_picker output validation failed")
-    return normalized  # type: ignore[return-value]
+    return normalized
 
 
 class IgMenuPickerMenuItemDraft(BaseModel):
@@ -282,17 +280,18 @@ async def fetch_and_prepare(
         "sourceIgPlanMilestoneId",
     )
     prior_row = extract_ig_plan_row(prior_json, preferred_milestone_id=preferred)
-    prior_data = extract_ig_plan_data(prior_json, preferred_milestone_id=preferred)
-    if prior_data is None:
+    prior_data_raw = extract_ig_plan_data(prior_json, preferred_milestone_id=preferred)
+    if prior_data_raw is None:
         raise ValueError(ig_plan_prior_error_message(prior_json))
-
-    plan_entries_raw = prior_data.get("entries")
-    if not isinstance(plan_entries_raw, list):
-        raise ValueError(ig_plan_prior_error_message(prior_json))
+    try:
+        plan_schedule = parse_ig_plan_schedule(prior_data_raw)
+    except ValidationError as exc:
+        raise ValueError(ig_plan_prior_error_message(prior_json)) from exc
+    prior_data = plan_schedule.model_dump()
 
     selected_keys = _read_selected_slot_keys(state)
     selected_entries = _filter_plan_entries(
-        [row for row in plan_entries_raw if isinstance(row, dict)],
+        [entry.model_dump() for entry in plan_schedule.entries],
         selected_keys,
     )
     if not selected_entries:

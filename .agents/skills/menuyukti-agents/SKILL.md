@@ -61,7 +61,7 @@ These **`presetId`** values must stay aligned with web `MILESTONE_PRESET_IDS` an
 3. Add eval helpers in `milestone_eval/<preset>_eval.py` if deterministic criterion checks apply.
 4. Extend [`output_schema.py`](../../../apps/agents/agents/core/milestone_run/output_schema.py) for `validate_skill_output`.
 5. Use [`structured_ainvoke_from_run_config`](../../../apps/agents/agents/core/milestone_run/llm_from_run_config.py) for LLM structured output (retries built in).
-6. **Web** — add to `MILESTONE_PRESET_IDS`, [`preset-definitions.ts`](../../../apps/web/lib/milestones/preset-definitions.ts), preview components, and [`milestone-run-skill-registry.ts`](../../../apps/web/lib/milestone-run-skill-registry.ts).
+6. **Web** — add to `MILESTONE_PRESET_IDS`, [`preset-definitions.ts`](../../../apps/web/lib/milestones/preset-definitions.ts), and preview / timeline UI components.
 
 Legacy [`make_milestone_run_tools`](../../../apps/agents/agents/core/milestone_run/tools/__init__.py) remains for unit tests only; production runs do not use ReAct tool loops.
 

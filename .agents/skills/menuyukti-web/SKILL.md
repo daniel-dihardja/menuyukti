@@ -39,7 +39,7 @@ When improving an existing implementation (not only greenfield features), also r
 | Concern                 | Typical locations                                                                                                                                                                                                 |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App Router              | [`apps/web/app/`](../../../apps/web/app/)                                                                                                                                                                         |
-| Protected shell         | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/workflow`, `/analytics`, `/canvas`, `/content`, `/agent`, `/skills`, …                                                                    |
+| Protected shell         | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/workflow`, `/analytics`, `/canvas`, `/content`, `/advisor`, …                                                                             |
 | GraphQL client          | [`apps/web/lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts), [`queries/`](../../../apps/web/lib/graphql/queries/), [`node-schemas/`](../../../apps/web/lib/graphql/node-schemas/)                 |
 | Workflow UI             | [`apps/web/app/(protected)/workflow/`](<../../../apps/web/app/(protected)/workflow/>)                                                                                                                             |
 | Milestone presets (web) | [`apps/web/lib/milestones/preset-definitions.ts`](../../../apps/web/lib/milestones/preset-definitions.ts), [`node-schemas/milestone-presets.ts`](../../../apps/web/lib/graphql/node-schemas/milestone-presets.ts) |
@@ -53,16 +53,15 @@ Commands: [AGENTS.md](../../../AGENTS.md) § Web.
 
 Milestone **run** uses LangGraph **preset subgraphs** keyed by `milestone.data.presetId` ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). Milestone data (structured JSON) lives on **`milestonedata`** child nodes; the run BFF calls **`POST .../run`** with `location_id` and `workflow_id` only.
 
-**Chat** (workflow sidebar and `/agent`) uses a separate ReAct graph with milestone read/write tools — see [`milestone-run-tools-registry.ts`](../../../apps/web/lib/milestone-run-tools-registry.ts).
+**Chat** (workflow sidebar and `/advisor`) uses a separate ReAct graph with milestone read/write tools — see [`apps/agents/agents/core/chat/tools.py`](../../../apps/agents/agents/core/chat/tools.py) (`get_milestone`, overview, input patches).
 
 ### Checklist: new milestone preset (agents + web)
 
 1. **Agents preset** — add `apps/agents/agents/core/milestone_run/<preset_id>/` and `register_preset_runner` ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
 2. **GraphQL / Zod** — extend `MILESTONE_PRESET_IDS` and milestone data schemas in [`node-schemas/milestone-presets.ts`](../../../apps/web/lib/graphql/node-schemas/milestone-presets.ts).
 3. **Web preset catalog** — update [`preset-definitions.ts`](../../../apps/web/lib/milestones/preset-definitions.ts) (create fields, icons, empty data) and timeline UI (preset select, input tabs, preview components).
-4. **Skills catalog** — add row to [`milestone-run-skill-registry.ts`](../../../apps/web/lib/milestone-run-skill-registry.ts) (`MILESTONE_PRESET_RUN_REGISTRY`).
-5. **Eval** — criterion helpers in `milestone_eval/<preset>_eval.py` when needed.
-6. **GraphQL export/import** — keep milestone `data` JSON compatible when workflows round-trip ([`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)).
+4. **Eval** — criterion helpers in `milestone_eval/<preset>_eval.py` when needed.
+5. **GraphQL export/import** — keep milestone `data` JSON compatible when workflows round-trip ([`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)).
 
 ## GraphQL from the web
 

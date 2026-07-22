@@ -18,7 +18,7 @@ from agents_app.agents.core.milestone_run.ig_plan.prompts import (
     empty_plan_retry_message,
     format_ig_plan_user_message,
 )
-from agents_app.agents.core.milestone_run.ig_plan.state import IgPlanOutput, IgPlanState
+from agents_app.agents.core.milestone_run.ig_plan.state import IgPlanState
 from agents_app.agents.core.milestone_run.llm_from_run_config import (
     structured_ainvoke_from_run_config,
 )
@@ -189,7 +189,7 @@ def _build_eval_hints(
     }
 
 
-def _normalize_generated_output(payload: Any) -> IgPlanOutput:
+def _normalize_generated_output(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("ig_plan output validation failed")
     entries = payload.get("entries")
@@ -201,7 +201,7 @@ def _normalize_generated_output(payload: Any) -> IgPlanOutput:
     normalized, error = validate_skill_output("ig_plan", payload)
     if error is not None or not isinstance(normalized, dict):
         raise ValueError(error or "ig_plan output validation failed")
-    return normalized  # type: ignore[return-value]
+    return normalized
 
 
 class IgPlanEntryDraft(BaseModel):

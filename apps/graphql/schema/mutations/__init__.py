@@ -1,5 +1,6 @@
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
+from .create_instagram_item import CreateInstagramItemMutation
 from .create_location import CreateLocationMutation
 from .create_node import CreateNodeMutation
 from .create_post import CreatePostMutation
@@ -9,6 +10,8 @@ from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
+from .delete_instagram_item import DeleteInstagramItemMutation
+from .delete_instagram_item_media_version import DeleteInstagramItemMediaVersionMutation
 from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
@@ -23,6 +26,7 @@ from .set_pass_criteria_statuses import SetPassCriteriaStatusesMutation
 from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
+from .update_instagram_item import UpdateInstagramItemMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
@@ -35,6 +39,7 @@ from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
 __all__ = [
     "CreateImageAiFlowMutation",
+    "CreateInstagramItemMutation",
     "CreateCalendarEntryMutation",
     "CreateLocationMutation",
     "CreateStyleMutation",
@@ -45,6 +50,8 @@ __all__ = [
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteImageAiFlowMutation",
+    "DeleteInstagramItemMutation",
+    "DeleteInstagramItemMediaVersionMutation",
     "DeleteStyleMutation",
     "DeleteNodeMutation",
     "DeletePostMutation",
@@ -59,6 +66,7 @@ __all__ = [
     "SetPassCriteriaStatusesMutation",
     "UpdateCalendarEntryMutation",
     "UpdateImageAiFlowMutation",
+    "UpdateInstagramItemMutation",
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateStyleMutation",

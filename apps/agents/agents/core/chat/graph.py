@@ -1,4 +1,4 @@
-"""LangGraph chat graph: ReAct agent with get_milestone_data and short-term checkpoint memory."""
+"""LangGraph chat graph: ReAct agent with get_milestone and short-term checkpoint memory."""
 
 from __future__ import annotations
 
@@ -9,12 +9,14 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
 )
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
+    create_instagram_items,
+    delete_instagram_items,
+    get_chart_data,
     get_location_data,
-    get_milestone_data,
-    get_milestone_help,
-    get_milestone_input_json,
-    get_milestone_preset_data_json,
+    get_milestone,
     get_workflow_overview,
+    list_instagram_items,
+    update_instagram_items,
     update_milestone_input,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
@@ -40,23 +42,64 @@ def _has_ig_studio_post_context(conf: dict[str, Any]) -> bool:
     )
 
 
-def chat_tools_list(*, include_post_image: bool = False) -> list:
-    """Build chat ReAct tools (optional ``search_web`` / post image when enabled)."""
-    tools: list = [
-        get_workflow_overview,
-        get_milestone_data,
-        get_milestone_help,
-        get_milestone_input_json,
-        get_milestone_preset_data_json,
-        update_milestone_input,
-        get_location_data,
-    ]
+def _has_workflow_id(conf: dict[str, Any]) -> bool:
+    raw = conf.get("workflow_id")
+    return isinstance(raw, str) and bool(raw.strip())
+
+
+def _has_milestone_id(conf: dict[str, Any]) -> bool:
+    raw = conf.get("milestone_id")
+    if isinstance(raw, str):
+        return bool(raw.strip())
+    return raw is not None
+
+
+def _has_location_id(conf: dict[str, Any]) -> bool:
+    return conf.get("location_id") is not None
+
+
+def chat_tools_list(
+    *,
+    include_post_image: bool = False,
+    workflow_id: bool = True,
+    milestone_id: bool = True,
+    location_id: bool = True,
+) -> list:
+    """Build chat ReAct tools for the given request context.
+
+    When ``workflow_id`` / ``milestone_id`` / ``location_id`` are False, the corresponding
+    tools are omitted from the bound set (model cannot call them). The ToolNode still
+    registers the full union via ``chat_tools_list(include_post_image=True)``.
+    """
+    tools: list = []
+    if workflow_id:
+        tools.append(get_workflow_overview)
+        tools.append(get_milestone)
+        tools.append(list_instagram_items)
+        tools.append(create_instagram_items)
+        tools.append(update_instagram_items)
+        tools.append(delete_instagram_items)
+        if milestone_id:
+            tools.append(update_milestone_input)
+    if location_id:
+        tools.append(get_location_data)
+        tools.append(get_chart_data)
     web = make_search_web_tool()
     if web is not None:
         tools.append(web)
     if include_post_image:
         tools.append(generate_instagram_post_image)
     return tools
+
+
+def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
+    """Resolve request-scoped tools from RunnableConfig.configurable."""
+    return chat_tools_list(
+        include_post_image=_has_ig_studio_post_context(conf),
+        workflow_id=_has_workflow_id(conf),
+        milestone_id=_has_milestone_id(conf),
+        location_id=_has_location_id(conf),
+    )
 
 
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
@@ -69,6 +112,7 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     prompt_body = build_system_prompt(
         workflow_catalog=catalog,
         ig_studio_post_image=_has_ig_studio_post_context(conf if isinstance(conf, dict) else {}),
+        include_chart_catalog=_has_location_id(conf if isinstance(conf, dict) else {}),
     )
     return [SystemMessage(content=prompt_body), *messages]
 
@@ -76,7 +120,12 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
     """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
     # ToolNode must include every tool the model may bind; binding is request-scoped below.
-    all_tools = chat_tools_list(include_post_image=True)
+    all_tools = chat_tools_list(
+        include_post_image=True,
+        workflow_id=True,
+        milestone_id=True,
+        location_id=True,
+    )
 
     def _select_chat_model(_state: dict[str, Any], _runtime: Any) -> Any:
         """Resolve LLM from RunnableConfig (set by HTTP router when client picks a model)."""
@@ -86,7 +135,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
         raw = conf_dict.get("chat_gateway_model")
         gateway: str | None = raw.strip() if isinstance(raw, str) and raw.strip() else None
         llm = chat_llm_for_gateway_model(gateway, streaming=True)
-        bound_tools = chat_tools_list(include_post_image=_has_ig_studio_post_context(conf_dict))
+        bound_tools = chat_tools_list_from_config(conf_dict)
         return llm.bind_tools(bound_tools)
 
     return create_react_agent(  # type: ignore[type-var]
