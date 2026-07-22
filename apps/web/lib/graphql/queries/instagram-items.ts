@@ -1,3 +1,8 @@
+export type InstagramItemReferenceImageDto = {
+  name: string
+  enabled: boolean
+}
+
 export const INSTAGRAM_ITEM_FIELDS = `
   id
   workflowId
@@ -7,6 +12,12 @@ export const INSTAGRAM_ITEM_FIELDS = `
   caption
   hook
   visualBrief
+  mediaS3Key
+  generationPrompt
+  referenceImages {
+    name
+    enabled
+  }
   status
   schedule
   createdAt
@@ -22,10 +33,15 @@ export type InstagramItemDto = {
   caption: string | null
   hook: string | null
   visualBrief: string | null
+  mediaS3Key: string | null
+  generationPrompt: string | null
+  referenceImages: InstagramItemReferenceImageDto[]
   status: string
   schedule: string | null
   createdAt: string | null
   updatedAt: string | null
+  /** Presigned GET URL from BFF when mediaS3Key is set; not a GraphQL field. */
+  imageUrl?: string | null
 }
 
 export const INSTAGRAM_ITEMS_QUERY = `
@@ -90,6 +106,9 @@ export const UPDATE_INSTAGRAM_ITEM_MUTATION = `
     $caption: String
     $hook: String
     $visualBrief: String
+    $mediaS3Key: String
+    $generationPrompt: String
+    $referenceImages: [InstagramItemReferenceImageInput!]
     $status: String
     $schedule: DateTime
   ) {
@@ -100,6 +119,9 @@ export const UPDATE_INSTAGRAM_ITEM_MUTATION = `
       caption: $caption
       hook: $hook
       visualBrief: $visualBrief
+      mediaS3Key: $mediaS3Key
+      generationPrompt: $generationPrompt
+      referenceImages: $referenceImages
       status: $status
       schedule: $schedule
     ) {

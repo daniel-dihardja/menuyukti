@@ -11,6 +11,7 @@ import {
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 
 import { createInstagramItemBodySchema, workflowIdParamSchema } from './schema'
+import { withItemImageUrl, withItemImageUrls } from './with-image-url'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -59,7 +60,8 @@ export async function GET(_req: Request, context: RouteContext) {
       userId,
     )
 
-    return NextResponse.json({ items: data.instagramItems })
+    const items = await withItemImageUrls(data.instagramItems)
+    return NextResponse.json({ items })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to list Instagram items'
@@ -120,7 +122,10 @@ export async function POST(req: Request, context: RouteContext) {
       userId,
     )
 
-    return NextResponse.json({ item: data.createInstagramItem }, { status: 201 })
+    return NextResponse.json(
+      { item: await withItemImageUrl(data.createInstagramItem) },
+      { status: 201 },
+    )
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to create Instagram item'

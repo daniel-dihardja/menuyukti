@@ -94,6 +94,16 @@ export function isPostImageExplicitFormatId(value: unknown): value is PostImageE
   return isPostImageFormatId(value)
 }
 
+/**
+ * Map workflow Instagram item kind to Leonardo output format.
+ * story/reel → 9:16 story; post → 1:1 square.
+ */
+export function kindToPostImageFormat(kind: string): 'story' | 'square' {
+  const normalized = kind.trim().toLowerCase()
+  if (normalized === 'post') return 'square'
+  return 'story'
+}
+
 /** Width÷height for a format (e.g. story → `9/16`). */
 export function formatAspectNumber(format: PostImageFormatId): number {
   const { w, h } = FORMAT_RATIO[format]

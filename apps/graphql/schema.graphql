@@ -280,10 +280,25 @@ type InstagramItemType {
   caption: String
   hook: String
   visualBrief: String
+  mediaS3Key: String
+  generationPrompt: String
+  referenceImages: [InstagramItemReferenceImageType!]!
   status: String!
   schedule: DateTime
   createdAt: DateTime
   updatedAt: DateTime
+}
+
+"""Media-library photo attached as an image-generation reference."""
+type InstagramItemReferenceImageType {
+  name: String!
+  enabled: Boolean!
+}
+
+"""Input for an attached media-library generation reference."""
+input InstagramItemReferenceImageInput {
+  name: String!
+  enabled: Boolean! = true
 }
 
 """Tiered analytics payload for campaign_brief and growth agents."""
@@ -549,7 +564,7 @@ type Mutation {
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
-  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, status: String = null, schedule: DateTime): InstagramItemType!
+  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, mediaS3Key: String, generationPrompt: String, referenceImages: [InstagramItemReferenceImageInput!], status: String = null, schedule: DateTime): InstagramItemType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
   setPassCriteriaStatuses(milestoneId: ID!, locationId: Int!, updates: [PassCriterionStatusInput!]!): Boolean!

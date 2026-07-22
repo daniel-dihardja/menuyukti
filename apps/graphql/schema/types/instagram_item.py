@@ -5,6 +5,18 @@ from datetime import datetime
 import strawberry
 
 
+@strawberry.type(description="Media-library photo attached as an image-generation reference.")
+class InstagramItemReferenceImageType:
+    name: str
+    enabled: bool
+
+
+@strawberry.input(description="Input for an attached media-library generation reference.")
+class InstagramItemReferenceImageInput:
+    name: str
+    enabled: bool = True
+
+
 @strawberry.type(description="A workflow-scoped Instagram story, post, or reel draft.")
 class InstagramItemType:
     id: strawberry.ID
@@ -15,6 +27,9 @@ class InstagramItemType:
     caption: str | None
     hook: str | None
     visual_brief: str | None
+    media_s3_key: str | None
+    generation_prompt: str | None
+    reference_images: list[InstagramItemReferenceImageType]
     status: str
     schedule: datetime | None
     created_at: datetime | None

@@ -13,6 +13,7 @@ import {
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 
 import { itemIdParamSchema, patchInstagramItemBodySchema, workflowIdParamSchema } from '../schema'
+import { withItemImageUrl } from '../with-image-url'
 
 type RouteContext = {
   params: Promise<{ id: string; itemId: string }>
@@ -68,7 +69,7 @@ export async function GET(_req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Instagram item not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ item })
+    return NextResponse.json({ item: await withItemImageUrl(item) })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to load Instagram item'
@@ -132,7 +133,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       userId,
     )
 
-    return NextResponse.json({ item: data.updateInstagramItem })
+    return NextResponse.json({ item: await withItemImageUrl(data.updateInstagramItem) })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to update Instagram item'

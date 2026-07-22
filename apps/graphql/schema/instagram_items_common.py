@@ -2,14 +2,55 @@
 
 from __future__ import annotations
 
+import re
+from typing import Any
+
 import strawberry
 
 from graphql.data_sources import InstagramItem, Node
 from graphql.schema.auth import is_location_owner
-from graphql.schema.types.instagram_item import InstagramItemType
+from graphql.schema.types.instagram_item import (
+    InstagramItemReferenceImageInput,
+    InstagramItemReferenceImageType,
+    InstagramItemType,
+)
 
 VALID_KINDS = frozenset({"story", "post", "reel"})
 VALID_STATUSES = frozenset({"draft", "ready"})
+MAX_REFERENCE_IMAGES = 5
+
+_SAFE_POST_FILENAME = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$",
+    re.IGNORECASE,
+)
+
+_SAFE_PHOTO_FILENAME = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    r"\.(webp|jpg|jpeg|png|gif|avif|tif|tiff)$",
+    re.IGNORECASE,
+)
+
+
+def _reference_images_to_gql(
+    raw: list[dict[str, Any]] | None,
+) -> list[InstagramItemReferenceImageType]:
+    if not isinstance(raw, list):
+        return []
+    out: list[InstagramItemReferenceImageType] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("name")
+        if not isinstance(name, str) or not name.strip():
+            continue
+        enabled = item.get("enabled", True)
+        out.append(
+            InstagramItemReferenceImageType(
+                name=name.strip(),
+                enabled=bool(enabled),
+            )
+        )
+    return out
 
 
 def item_to_gql(row: InstagramItem) -> InstagramItemType:
@@ -22,11 +63,59 @@ def item_to_gql(row: InstagramItem) -> InstagramItemType:
         caption=row.caption,
         hook=row.hook,
         visual_brief=row.visual_brief,
+        media_s3_key=row.media_s3_key,
+        generation_prompt=row.generation_prompt,
+        reference_images=_reference_images_to_gql(row.reference_images),
         status=row.status,
         schedule=row.schedule,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
+
+
+def validate_item_media_s3_key(key: str, owner_clerk_user_id: str) -> None:
+    """Require ``users/{owner}/posts/<uuid>.webp`` keys (same prefix as IG Studio posts)."""
+    expected_prefix = f"users/{owner_clerk_user_id}/posts/"
+    if not key.startswith(expected_prefix) or key == expected_prefix:
+        raise ValueError("Invalid media_s3_key for updateInstagramItem")
+    filename = key[len(expected_prefix) :]
+    if "/" in filename or not _SAFE_POST_FILENAME.match(filename):
+        raise ValueError("Invalid media_s3_key for updateInstagramItem")
+
+
+def normalize_reference_images(
+    raw: list[InstagramItemReferenceImageInput] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    """Validate and normalize media-library reference attachments."""
+    if raw is None:
+        return []
+    if len(raw) > MAX_REFERENCE_IMAGES:
+        raise ValueError(f"At most {MAX_REFERENCE_IMAGES} reference images are allowed")
+
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in raw:
+        if isinstance(item, InstagramItemReferenceImageInput):
+            name = item.name.strip()
+            enabled = bool(item.enabled)
+        elif isinstance(item, dict):
+            name_raw = item.get("name")
+            if not isinstance(name_raw, str):
+                raise ValueError("referenceImages.name is required")
+            name = name_raw.strip()
+            enabled = bool(item.get("enabled", True))
+        else:
+            raise ValueError("Invalid referenceImages entry")
+
+        if not name:
+            raise ValueError("referenceImages.name cannot be empty")
+        if not _SAFE_PHOTO_FILENAME.match(name):
+            raise ValueError(f"Invalid reference image name: {name!r}")
+        if name in seen:
+            continue
+        seen.add(name)
+        out.append({"name": name, "enabled": enabled})
+    return out
 
 
 def parse_positive_id(raw: object, *, label: str) -> int:

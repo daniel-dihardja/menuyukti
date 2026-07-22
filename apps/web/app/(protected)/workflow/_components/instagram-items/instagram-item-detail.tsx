@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowLeftIcon, XIcon } from 'lucide-react'
+import { ArrowLeftIcon, SparklesIcon, XIcon } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Button } from '@workspace/ui/components/button'
 import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
@@ -17,8 +18,14 @@ import {
 } from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
+import { cn } from '@workspace/ui/lib/utils'
 
+import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
+import { PostCreatorReferenceThumbnails } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-reference-thumbnails'
 import type { InstagramItemDto } from '@/lib/graphql/queries/instagram-items'
+import { mediaDownloadHref } from '@/lib/media/client-api'
+import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
+import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
 
 import {
   toFormValues,
@@ -29,32 +36,140 @@ import {
 
 type InstagramItemDetailProps = {
   item: InstagramItemDto
+  workflowId: string
   saving: boolean
   actionError: string | null
   onBack: () => void
   onSave: (values: InstagramItemFormValues) => Promise<void>
+  onGenerated: (item: InstagramItemDto) => void
+}
+
+function previewAspectClass(kind: InstagramItemKind): string {
+  if (kind === 'post') return 'aspect-square'
+  return 'aspect-[9/16]'
+}
+
+function refsFromItem(item: InstagramItemDto): PostCreatorReferenceImage[] {
+  if (!Array.isArray(item.referenceImages)) return []
+  return item.referenceImages.map((ref) => ({
+    name: ref.name,
+    enabled: ref.enabled !== false,
+    url: mediaDownloadHref(ref.name),
+  }))
+}
+
+function persistableRefs(
+  images: PostCreatorReferenceImage[],
+): InstagramItemFormValues['referenceImages'] {
+  return images.map((image) => ({ name: image.name, enabled: image.enabled }))
 }
 
 export function InstagramItemDetail({
   item,
+  workflowId,
   saving,
   actionError,
   onBack,
   onSave,
+  onGenerated,
 }: InstagramItemDetailProps) {
   const t = useTranslations('analytics.workflows.instagramItems')
+  const tPicker = useTranslations('postCreator.prompt.picker')
+  const tRefs = useTranslations('postCreator.prompt.references')
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
+  const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
+    refsFromItem(item),
+  )
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(item.imageUrl ?? null)
+  const [mediaS3Key, setMediaS3Key] = useState<string | null>(item.mediaS3Key ?? null)
 
   useEffect(() => {
     setValues(toFormValues(item))
+    setReferenceImages(refsFromItem(item))
+    setPreviewUrl(item.imageUrl ?? null)
+    setMediaS3Key(item.mediaS3Key ?? null)
+    setGenerateError(null)
   }, [item])
+
+  const selectedNames = useMemo(
+    () => new Set(referenceImages.map((image) => image.name)),
+    [referenceImages],
+  )
+
+  const busy = saving || isGenerating
+  const canGenerate = values.visualBrief.trim().length > 0 && !busy
+
+  function valuesWithRefs(): InstagramItemFormValues {
+    return {
+      ...values,
+      referenceImages: persistableRefs(referenceImages),
+    }
+  }
+
+  async function handleGenerate() {
+    const prompt = values.visualBrief.trim()
+    if (!prompt) return
+
+    const persistedRefs = persistableRefs(referenceImages)
+    const { references, tooManyReferences } = resolveGenerationReferences({
+      referenceImages,
+      previewMediaS3Key: mediaS3Key,
+      styleSelected: false,
+      solidBackgroundEnabled: false,
+    })
+
+    if (tooManyReferences) {
+      setGenerateError(t('generate.tooManyReferences'))
+      return
+    }
+
+    setIsGenerating(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          referenceImages: persistedRefs,
+          ...(references.length > 0 ? { references } : {}),
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string
+        url?: string
+        mediaS3Key?: string
+        item?: InstagramItemDto
+      }
+      if (!res.ok) {
+        setGenerateError(payload.message || t('generate.error'))
+        return
+      }
+      if (payload.item) {
+        setPreviewUrl(payload.item.imageUrl ?? payload.url ?? null)
+        setMediaS3Key(payload.item.mediaS3Key ?? payload.mediaS3Key ?? null)
+        setValues(toFormValues(payload.item))
+        setReferenceImages(refsFromItem(payload.item))
+        onGenerated(payload.item)
+      } else {
+        setPreviewUrl(payload.url ?? null)
+        setMediaS3Key(payload.mediaS3Key ?? null)
+      }
+    } catch {
+      setGenerateError(t('generate.error'))
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex items-center gap-2">
         <Button
           aria-label={t('backAria')}
-          disabled={saving}
+          disabled={busy}
           onClick={onBack}
           size="icon"
           type="button"
@@ -71,13 +186,35 @@ export function InstagramItemDetail({
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto"
         onSubmit={(event) => {
           event.preventDefault()
-          void onSave(values)
+          void onSave(valuesWithRefs())
         }}
       >
         <div className="grid gap-1.5">
+          <Label>{t('generate.previewLabel')}</Label>
+          <div
+            className={cn(
+              'mx-auto w-full max-w-[220px] overflow-hidden rounded-md border bg-muted/40',
+              previewAspectClass(values.kind),
+            )}
+          >
+            {previewUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+              <img alt="" className="size-full object-cover" src={previewUrl} />
+            ) : (
+              <div className="flex size-full items-center justify-center px-3 text-center text-muted-foreground text-xs">
+                {t('generate.previewEmpty')}
+              </div>
+            )}
+          </div>
+          <p className="text-muted-foreground text-xs">
+            {values.kind === 'post' ? t('generate.formatHintPost') : t('generate.formatHintStory')}
+          </p>
+        </div>
+
+        <div className="grid gap-1.5">
           <Label htmlFor="ig-item-kind">{t('fields.kind')}</Label>
           <Select
-            disabled={saving}
+            disabled={busy}
             onValueChange={(value) =>
               setValues((prev) => ({ ...prev, kind: value as InstagramItemKind }))
             }
@@ -97,7 +234,7 @@ export function InstagramItemDetail({
         <div className="grid gap-1.5">
           <Label htmlFor="ig-item-status">{t('fields.status')}</Label>
           <Select
-            disabled={saving}
+            disabled={busy}
             onValueChange={(value) =>
               setValues((prev) => ({ ...prev, status: value as InstagramItemStatus }))
             }
@@ -118,7 +255,7 @@ export function InstagramItemDetail({
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <DateTimePicker
-                disabled={saving}
+                disabled={busy}
                 onChange={(schedule) => setValues((prev) => ({ ...prev, schedule }))}
                 placeholder={t('fields.scheduleDatePlaceholder')}
                 timeLabel={t('fields.scheduleTime')}
@@ -128,7 +265,7 @@ export function InstagramItemDetail({
             {values.schedule ? (
               <Button
                 aria-label={t('clearScheduleAria')}
-                disabled={saving}
+                disabled={busy}
                 onClick={() => setValues((prev) => ({ ...prev, schedule: '' }))}
                 size="icon"
                 type="button"
@@ -143,7 +280,7 @@ export function InstagramItemDetail({
         <div className="grid gap-1.5">
           <Label htmlFor="ig-item-title">{t('fields.title')}</Label>
           <Input
-            disabled={saving}
+            disabled={busy}
             id="ig-item-title"
             onChange={(event) => setValues((prev) => ({ ...prev, title: event.target.value }))}
             value={values.title}
@@ -153,7 +290,7 @@ export function InstagramItemDetail({
         <div className="grid gap-1.5">
           <Label htmlFor="ig-item-hook">{t('fields.hook')}</Label>
           <Textarea
-            disabled={saving}
+            disabled={busy}
             id="ig-item-hook"
             onChange={(event) => setValues((prev) => ({ ...prev, hook: event.target.value }))}
             rows={2}
@@ -164,7 +301,7 @@ export function InstagramItemDetail({
         <div className="grid gap-1.5">
           <Label htmlFor="ig-item-caption">{t('fields.caption')}</Label>
           <Textarea
-            disabled={saving}
+            disabled={busy}
             id="ig-item-caption"
             onChange={(event) => setValues((prev) => ({ ...prev, caption: event.target.value }))}
             rows={3}
@@ -174,14 +311,51 @@ export function InstagramItemDetail({
 
         <div className="grid gap-1.5">
           <Label htmlFor="ig-item-visual-brief">{t('fields.visualBrief')}</Label>
-          <Textarea
-            disabled={saving}
-            id="ig-item-visual-brief"
-            onChange={(event) =>
-              setValues((prev) => ({ ...prev, visualBrief: event.target.value }))
-            }
-            rows={3}
+          <p className="text-muted-foreground text-xs">{t('generate.visualBriefHint')}</p>
+          <PostCreatorImagePicker
+            disabled={busy}
+            emptyLabel={tPicker('empty')}
+            maxReachedLabel={tPicker('maxReached')}
+            onAddReference={(photo) => {
+              setReferenceImages((prev) => {
+                if (prev.some((image) => image.name === photo.name)) return prev
+                return [...prev, photo]
+              })
+            }}
+            onUploadError={(message) => toast.error(message || tPicker('uploadError'))}
+            onValueChange={(next) => setValues((prev) => ({ ...prev, visualBrief: next }))}
+            pickerAriaLabel={tPicker('ariaLabel')}
+            selectedNames={selectedNames}
+            uploadLabel={tPicker('upload')}
+            uploadingLabel={tPicker('uploading')}
             value={values.visualBrief}
+          >
+            <Textarea
+              disabled={busy}
+              id="ig-item-visual-brief"
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, visualBrief: event.target.value }))
+              }
+              placeholder={t('generate.visualBriefPlaceholder')}
+              rows={4}
+              value={values.visualBrief}
+            />
+          </PostCreatorImagePicker>
+          <PostCreatorReferenceThumbnails
+            ariaLabel={tRefs('ariaLabel')}
+            disabled={busy}
+            images={referenceImages}
+            includeLabel={tRefs('include')}
+            indexLabel={(index) => tRefs('indexLabel', { index })}
+            onRemove={(name) => {
+              setReferenceImages((prev) => prev.filter((image) => image.name !== name))
+            }}
+            onToggleEnabled={(name, enabled) => {
+              setReferenceImages((prev) =>
+                prev.map((image) => (image.name === name ? { ...image, enabled } : image)),
+              )
+            }}
+            removeLabel={tRefs('remove')}
           />
         </div>
 
@@ -190,15 +364,36 @@ export function InstagramItemDetail({
             {actionError}
           </p>
         ) : null}
+        {generateError ? (
+          <p className="text-destructive text-sm" role="alert">
+            {generateError}
+          </p>
+        ) : null}
 
         <div className="mt-auto flex flex-wrap gap-2 pt-2">
           <Button
             className={saving ? 'inline-flex items-center gap-2' : undefined}
-            disabled={saving}
+            disabled={busy}
             type="submit"
           >
             {saving ? <Spinner className="size-3.5" /> : null}
             {t('saveButton')}
+          </Button>
+          <Button
+            className={isGenerating ? 'inline-flex items-center gap-2' : undefined}
+            disabled={!canGenerate}
+            onClick={() => {
+              void handleGenerate()
+            }}
+            type="button"
+            variant="secondary"
+          >
+            {isGenerating ? (
+              <Spinner className="size-3.5" />
+            ) : (
+              <SparklesIcon className="size-3.5" />
+            )}
+            {isGenerating ? t('generate.generating') : t('generate.button')}
           </Button>
         </div>
       </form>

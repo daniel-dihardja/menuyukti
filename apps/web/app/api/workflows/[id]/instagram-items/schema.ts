@@ -10,6 +10,18 @@ export const instagramItemStatusSchema = z.enum(['draft', 'ready'])
 
 const scheduleSchema = z.string().datetime({ offset: true }).nullable()
 
+const photoFilenameSchema = z
+  .string()
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(webp|jpg|jpeg|png|gif|avif|tif|tiff)$/i,
+    'Invalid photo filename',
+  )
+
+export const referenceImageSchema = z.object({
+  name: photoFilenameSchema,
+  enabled: z.boolean().default(true),
+})
+
 export const createInstagramItemBodySchema = z.object({
   kind: instagramItemKindSchema.default('post'),
   title: z.string().max(256).optional(),
@@ -27,6 +39,7 @@ export const patchInstagramItemBodySchema = z
     caption: z.string().optional(),
     hook: z.string().optional(),
     visualBrief: z.string().optional(),
+    referenceImages: z.array(referenceImageSchema).max(5).optional(),
     status: instagramItemStatusSchema.optional(),
     schedule: scheduleSchema.optional(),
   })
@@ -37,6 +50,7 @@ export const patchInstagramItemBodySchema = z
       value.caption !== undefined ||
       value.hook !== undefined ||
       value.visualBrief !== undefined ||
+      value.referenceImages !== undefined ||
       value.status !== undefined ||
       value.schedule !== undefined,
     { message: 'At least one field is required' },

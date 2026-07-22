@@ -14,10 +14,15 @@ from graphql.schema.instagram_items_common import (
     load_item_for_owner,
     normalize_kind,
     normalize_optional_text,
+    normalize_reference_images,
     normalize_status,
     parse_positive_id,
+    validate_item_media_s3_key,
 )
-from graphql.schema.types.instagram_item import InstagramItemType
+from graphql.schema.types.instagram_item import (
+    InstagramItemReferenceImageInput,
+    InstagramItemType,
+)
 
 
 @strawberry.type
@@ -32,12 +37,16 @@ class UpdateInstagramItemMutation:
         caption: str | None = None,
         hook: str | None = None,
         visual_brief: str | None = None,
+        media_s3_key: str | None = UNSET,
+        generation_prompt: str | None = UNSET,
+        reference_images: list[InstagramItemReferenceImageInput] | None = UNSET,
         status: str | None = None,
         schedule: datetime | None = UNSET,
     ) -> InstagramItemType:
         """Patch provided fields. Empty strings clear nullable text fields.
 
-        ``schedule`` uses UNSET so omit leaves unchanged and explicit null clears.
+        ``schedule``, ``media_s3_key``, ``generation_prompt``, and ``reference_images``
+        use UNSET so omit leaves unchanged; explicit null / empty list clears.
         """
         user_id = user_id_from_info(info)
         if not user_id:
@@ -58,6 +67,23 @@ class UpdateInstagramItemMutation:
                 row.hook = normalize_optional_text(hook)
             if visual_brief is not None:
                 row.visual_brief = normalize_optional_text(visual_brief)
+            if media_s3_key is not UNSET:
+                if media_s3_key is None:
+                    row.media_s3_key = None
+                else:
+                    key_clean = media_s3_key.strip()
+                    if key_clean == "":
+                        row.media_s3_key = None
+                    else:
+                        validate_item_media_s3_key(key_clean, user_id)
+                        row.media_s3_key = key_clean
+            if generation_prompt is not UNSET:
+                if generation_prompt is None:
+                    row.generation_prompt = None
+                else:
+                    row.generation_prompt = normalize_optional_text(generation_prompt)
+            if reference_images is not UNSET:
+                row.reference_images = normalize_reference_images(reference_images)
             if status is not None:
                 row.status = normalize_status(status)
             if schedule is not UNSET:

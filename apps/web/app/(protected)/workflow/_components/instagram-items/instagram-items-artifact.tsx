@@ -90,8 +90,12 @@ export function InstagramItemsArtifact() {
           void setSelectedItemId(null)
           setActionError(null)
         }}
+        onGenerated={() => {
+          void refresh()
+        }}
         onSave={handleSave}
         saving={saving}
+        workflowId={workflowId}
       />
     )
   }

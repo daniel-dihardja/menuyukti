@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-import type { InstagramItemDto } from '@/lib/graphql/queries/instagram-items'
+import type {
+  InstagramItemDto,
+  InstagramItemReferenceImageDto,
+} from '@/lib/graphql/queries/instagram-items'
 
 export type InstagramItemKind = 'story' | 'post' | 'reel'
 export type InstagramItemStatus = 'draft' | 'ready'
@@ -13,6 +16,7 @@ export type InstagramItemFormValues = {
   caption: string
   hook: string
   visualBrief: string
+  referenceImages: InstagramItemReferenceImageDto[]
   status: InstagramItemStatus
   /** `datetime-local` value (`YYYY-MM-DDTHH:mm`); empty means unset. */
   schedule: string
@@ -61,6 +65,12 @@ export function toFormValues(item: InstagramItemDto): InstagramItemFormValues {
     caption: item.caption ?? '',
     hook: item.hook ?? '',
     visualBrief: item.visualBrief ?? '',
+    referenceImages: Array.isArray(item.referenceImages)
+      ? item.referenceImages.map((ref) => ({
+          name: ref.name,
+          enabled: ref.enabled !== false,
+        }))
+      : [],
     status: isStatus(item.status) ? item.status : 'draft',
     schedule: isoToDatetimeLocal(item.schedule),
   }
@@ -73,6 +83,7 @@ export function formValuesToPatchBody(values: InstagramItemFormValues) {
     caption: values.caption,
     hook: values.hook,
     visualBrief: values.visualBrief,
+    referenceImages: values.referenceImages,
     status: values.status,
     schedule: datetimeLocalToIso(values.schedule),
   }

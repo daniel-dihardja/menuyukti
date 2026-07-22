@@ -2346,7 +2346,7 @@
         "empty": "No Instagram items yet. Create one to start drafting Stories, posts, or Reels.",
         "untitled": "Untitled item",
         "notFound": "That Instagram item was not found. Pick another or create a new one.",
-        "backAria": "Back to Instagram items list",
+        "backAria": "Back to Instagram items",
         "saveButton": "Save",
         "deleteRowAria": "Delete {title}",
         "createError": "Could not create Instagram item. Please try again.",
@@ -2367,6 +2367,18 @@
           "hook": "Hook",
           "caption": "Caption",
           "visualBrief": "Visual brief"
+        },
+        "generate": {
+          "button": "Generate image",
+          "generating": "Generating…",
+          "error": "Could not generate image. Please try again.",
+          "tooManyReferences": "Too many references selected. Use at most 5 checked product photos.",
+          "previewLabel": "Generated image",
+          "previewEmpty": "No image yet. Write a visual brief and generate.",
+          "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
+          "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",
+          "formatHintPost": "Output size: 1024×1024 (square post).",
+          "formatHintStory": "Output size: 768×1376 (story / reel)."
         },
         "clearScheduleAria": "Clear schedule",
         "kind": {

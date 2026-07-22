@@ -86,6 +86,9 @@ mutation UpdateInstagramItem(
   $caption: String
   $hook: String
   $visualBrief: String
+  $mediaS3Key: String
+  $generationPrompt: String
+  $referenceImages: [InstagramItemReferenceImageInput!]
   $status: String
   $schedule: DateTime
 ) {
@@ -96,6 +99,9 @@ mutation UpdateInstagramItem(
     caption: $caption
     hook: $hook
     visualBrief: $visualBrief
+    mediaS3Key: $mediaS3Key
+    generationPrompt: $generationPrompt
+    referenceImages: $referenceImages
     status: $status
     schedule: $schedule
   ) {
@@ -105,11 +111,22 @@ mutation UpdateInstagramItem(
     caption
     hook
     visualBrief
+    mediaS3Key
+    generationPrompt
+    referenceImages {
+      name
+      enabled
+    }
     status
     schedule
   }
 }
 """
+
+VALID_MEDIA_KEY = (
+    f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+)
+VALID_PHOTO_NAME = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 
 DELETE_ITEM = """
 mutation DeleteInstagramItem($id: ID!) {
@@ -405,3 +422,143 @@ def test_instagram_items_ordered_by_schedule_ascending() -> None:
     assert not listed.errors, listed.errors
     titles = [row["title"] for row in listed.data["instagramItems"]]
     assert titles == ["Earlier", "Later", "No schedule"]
+
+
+def test_update_instagram_item_sets_media_and_prompt() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "post", "title": "Media"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    updated = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": VALID_MEDIA_KEY,
+                "generationPrompt": "Warm lunch bowl on wood table",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not updated.errors, updated.errors
+    body = updated.data["updateInstagramItem"]
+    assert body["mediaS3Key"] == VALID_MEDIA_KEY
+    assert body["generationPrompt"] == "Warm lunch bowl on wood table"
+
+    cleared = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "mediaS3Key": None, "generationPrompt": None},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not cleared.errors, cleared.errors
+    assert cleared.data["updateInstagramItem"]["mediaS3Key"] is None
+    assert cleared.data["updateInstagramItem"]["generationPrompt"] is None
+
+
+def test_update_instagram_item_rejects_invalid_media_key() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "story"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    result = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "mediaS3Key": "users/other-user/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "media_s3_key" in str(result.errors[0]).lower()
+
+
+def test_update_instagram_item_sets_reference_images_and_brief() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "post"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    updated = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "visualBrief": "Bowl on marble with Ref 1",
+                "referenceImages": [
+                    {"name": VALID_PHOTO_NAME, "enabled": True},
+                    {
+                        "name": "bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee.jpg",
+                        "enabled": False,
+                    },
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not updated.errors, updated.errors
+    body = updated.data["updateInstagramItem"]
+    assert body["visualBrief"] == "Bowl on marble with Ref 1"
+    assert body["referenceImages"] == [
+        {"name": VALID_PHOTO_NAME, "enabled": True},
+        {"name": "bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee.jpg", "enabled": False},
+    ]
+
+    cleared = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "referenceImages": []},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not cleared.errors, cleared.errors
+    assert cleared.data["updateInstagramItem"]["referenceImages"] == []
+
+
+def test_update_instagram_item_rejects_invalid_reference_image() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "story"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    result = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={
+                "id": item_id,
+                "referenceImages": [{"name": "not-a-uuid.png", "enabled": True}],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "reference image name" in str(result.errors[0]).lower()

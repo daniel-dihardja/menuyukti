@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
-import { PlusIcon, Trash2Icon } from 'lucide-react'
+import {
+  ClapperboardIcon,
+  ImageIcon,
+  PlusIcon,
+  RectangleVerticalIcon,
+  Trash2Icon,
+} from 'lucide-react'
 
 import {
   AlertDialog,
@@ -28,6 +34,13 @@ type InstagramItemsOverviewProps = {
   onCreate: () => void
   onSelect: (itemId: string) => void
   onDelete: (itemId: string) => Promise<void>
+}
+
+function KindPreviewIcon({ kind }: { kind: string }) {
+  const className = 'size-8 text-muted-foreground'
+  if (kind === 'story') return <RectangleVerticalIcon aria-hidden className={className} />
+  if (kind === 'reel') return <ClapperboardIcon aria-hidden className={className} />
+  return <ImageIcon aria-hidden className={className} />
 }
 
 export function InstagramItemsOverview({
@@ -83,59 +96,66 @@ export function InstagramItemsOverview({
       ) : items.length === 0 ? (
         <p className="text-muted-foreground text-sm">{t('empty')}</p>
       ) : (
-        <ul className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+        <ul className="grid min-h-0 grid-cols-2 gap-3 overflow-y-auto">
           {items.map((item) => {
             const kindKey = `kind.${item.kind}` as 'kind.story' | 'kind.post' | 'kind.reel'
             const statusKey = `status.${item.status}` as 'status.draft' | 'status.ready'
             const kindLabel = t.has(kindKey) ? t(kindKey) : item.kind
             const statusLabel = t.has(statusKey) ? t(statusKey) : item.status
-            const rowDeleting = deletingId === item.id
+            const title = item.title?.trim() ? item.title : t('untitled')
+            const tileDeleting = deletingId === item.id
             return (
-              <li key={item.id}>
-                <div className="flex items-stretch gap-1 rounded-md border bg-background">
+              <li key={item.id} className="min-w-0">
+                <div className="relative flex h-full flex-col overflow-hidden rounded-md border bg-background">
                   <button
-                    className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex min-w-0 flex-1 flex-col text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:pointer-events-none disabled:opacity-60"
                     disabled={deletingId !== null}
                     onClick={() => onSelect(item.id)}
                     type="button"
                   >
-                    <span className="truncate font-medium text-sm">
-                      {item.title?.trim() ? item.title : t('untitled')}
+                    <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-muted/50">
+                      {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+                        <img alt="" className="size-full object-cover" src={item.imageUrl} />
+                      ) : (
+                        <KindPreviewIcon kind={item.kind} />
+                      )}
+                      <span className="sr-only">{kindLabel}</span>
                     </span>
-                    <span className="flex flex-wrap gap-1.5">
-                      <Badge variant="secondary">{kindLabel}</Badge>
-                      <Badge variant="outline">{statusLabel}</Badge>
-                    </span>
-                    {item.schedule ? (
-                      <span className="text-muted-foreground text-xs">
-                        {t('fields.schedule')}:{' '}
-                        {format.dateTime(new Date(item.schedule), {
-                          weekday: 'long',
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false,
-                        })}
+                    <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-2.5">
+                      <span className="line-clamp-2 font-medium text-sm leading-snug">{title}</span>
+                      <span className="flex flex-wrap gap-1">
+                        <Badge variant="secondary">{kindLabel}</Badge>
+                        <Badge variant="outline">{statusLabel}</Badge>
                       </span>
-                    ) : null}
+                      {item.schedule ? (
+                        <span className="line-clamp-2 text-muted-foreground text-xs">
+                          {format.dateTime(new Date(item.schedule), {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })}
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                   <Button
-                    aria-label={t('deleteRowAria', {
-                      title: item.title?.trim() ? item.title : t('untitled'),
-                    })}
-                    className="m-1 shrink-0 self-center"
+                    aria-label={t('deleteRowAria', { title })}
+                    className="absolute top-1.5 right-1.5 size-7 bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
                     disabled={deletingId !== null}
                     onClick={() => setPendingDeleteId(item.id)}
                     size="icon"
                     type="button"
                     variant="ghost"
                   >
-                    {rowDeleting ? (
-                      <Spinner className="size-4" />
+                    {tileDeleting ? (
+                      <Spinner className="size-3.5" />
                     ) : (
-                      <Trash2Icon className="size-4 text-destructive" />
+                      <Trash2Icon className="size-3.5 text-destructive" />
                     )}
                   </Button>
                 </div>

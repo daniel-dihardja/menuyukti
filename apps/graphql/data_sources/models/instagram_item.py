@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import JSON
 
 from graphql.data_sources.database import Base
 
@@ -38,6 +40,14 @@ class InstagramItem(Base):
     caption: Mapped[str | None] = mapped_column(Text, nullable=True)
     hook: Mapped[str | None] = mapped_column(Text, nullable=True)
     visual_brief: Mapped[str | None] = mapped_column(Text, nullable=True)
+    media_s3_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    generation_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reference_images: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB().with_variant(JSON(), "sqlite"),
+        nullable=False,
+        default=list,
+        server_default=text("'[]'"),
+    )
     status: Mapped[str] = mapped_column(
         String(64),
         nullable=False,

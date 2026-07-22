@@ -172,3 +172,13 @@ describe('formatAspectNumber', () => {
     expect(formatAspectNumber('wide')).toBeCloseTo(16 / 9)
   })
 })
+
+describe('kindToPostImageFormat', () => {
+  it('maps post to square and story/reel to story', async () => {
+    const { kindToPostImageFormat } = await import('@/lib/posts/leonardo-post-dimensions')
+    expect(kindToPostImageFormat('post')).toBe('square')
+    expect(kindToPostImageFormat('story')).toBe('story')
+    expect(kindToPostImageFormat('reel')).toBe('story')
+    expect(kindToPostImageFormat('STORY')).toBe('story')
+  })
+})
