@@ -162,11 +162,7 @@ export function StyleEditor(props: StyleEditorProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 rounded-xl border border-border/60 p-4 sm:p-5">
-      <p className="text-sm font-medium">
-        {props.mode === 'edit' ? t('editTitle') : t('createTitle')}
-      </p>
-
+    <div className="w-full space-y-4">
       <Field className="gap-1.5">
         <FieldLabel htmlFor={nameId}>{t('nameLabel')}</FieldLabel>
         <Input

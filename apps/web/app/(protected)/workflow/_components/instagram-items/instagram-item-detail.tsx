@@ -148,7 +148,6 @@ function syncFromItem(item: InstagramItemDto): {
   versions: ItemImageVersion[]
   previewIndex: number
   committedIndex: number
-  mediaS3Key: string | null
 } {
   const versions = versionsFromItem(item)
   const committedIndex = resolveVersionIndex(versions, item.mediaS3Key)
@@ -156,7 +155,6 @@ function syncFromItem(item: InstagramItemDto): {
     versions,
     previewIndex: committedIndex,
     committedIndex,
-    mediaS3Key: item.mediaS3Key ?? null,
   }
 }
 
@@ -196,7 +194,6 @@ export function InstagramItemDetail({
   const [imageVersions, setImageVersions] = useState<ItemImageVersion[]>(initialSync.versions)
   const [previewVersionIndex, setPreviewVersionIndex] = useState(initialSync.previewIndex)
   const [committedVersionIndex, setCommittedVersionIndex] = useState(initialSync.committedIndex)
-  const [mediaS3Key, setMediaS3Key] = useState<string | null>(initialSync.mediaS3Key)
   const [isCommitting, setIsCommitting] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -208,7 +205,6 @@ export function InstagramItemDetail({
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
-    setMediaS3Key(next.mediaS3Key)
     setGenerateError(null)
   }, [item])
 
@@ -263,7 +259,6 @@ export function InstagramItemDetail({
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
-    setMediaS3Key(next.mediaS3Key)
     setValues(toFormValues(nextItem))
     setReferenceImages(refsFromItem(nextItem))
     onGenerated(nextItem)
@@ -322,7 +317,6 @@ export function InstagramItemDetail({
       if (payload.item) {
         applyItemUpdate(payload.item)
       } else if (payload.url || payload.mediaS3Key) {
-        setMediaS3Key(payload.mediaS3Key ?? null)
         setImageVersions([
           {
             id: 'generated',
