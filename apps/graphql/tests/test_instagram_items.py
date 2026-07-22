@@ -352,3 +352,56 @@ def test_create_instagram_item_rejects_invalid_kind() -> None:
     )
     assert result.errors
     assert "kind must be one of" in str(result.errors[0])
+
+
+def test_instagram_items_ordered_by_schedule_ascending() -> None:
+    _location_id, workflow_id = _create_workflow()
+    later = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={
+                "workflowId": workflow_id,
+                "kind": "post",
+                "title": "Later",
+                "schedule": "2026-08-10T12:00:00+00:00",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not later.errors, later.errors
+    unscheduled = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={
+                "workflowId": workflow_id,
+                "kind": "story",
+                "title": "No schedule",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not unscheduled.errors, unscheduled.errors
+    earlier = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={
+                "workflowId": workflow_id,
+                "kind": "reel",
+                "title": "Earlier",
+                "schedule": "2026-08-01T09:00:00+00:00",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not earlier.errors, earlier.errors
+
+    listed = asyncio.run(
+        schema.execute(
+            LIST_ITEMS,
+            variable_values={"workflowId": workflow_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not listed.errors, listed.errors
+    titles = [row["title"] for row in listed.data["instagramItems"]]
+    assert titles == ["Earlier", "Later", "No schedule"]

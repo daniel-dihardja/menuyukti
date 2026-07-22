@@ -13,7 +13,12 @@ from graphql.schema.types.instagram_item import InstagramItemType
 
 @strawberry.type
 class InstagramItemsQuery:
-    @strawberry.field(description="Instagram items for a workflow the caller owns, newest first.")
+    @strawberry.field(
+        description=(
+            "Instagram items for a workflow the caller owns, "
+            "earliest schedule first (unscheduled last)."
+        )
+    )
     def instagram_items(
         self,
         info: strawberry.Info,
@@ -38,7 +43,10 @@ class InstagramItemsQuery:
             rows = (
                 session.query(InstagramItem)
                 .filter(InstagramItem.workflow_id == workflow_pk)
-                .order_by(InstagramItem.updated_at.desc(), InstagramItem.id.desc())
+                .order_by(
+                    InstagramItem.schedule.asc().nulls_last(),
+                    InstagramItem.id.asc(),
+                )
                 .all()
             )
             return [item_to_gql(row) for row in rows]

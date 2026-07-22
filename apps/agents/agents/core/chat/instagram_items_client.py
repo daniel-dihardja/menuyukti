@@ -20,7 +20,7 @@ async def list_instagram_items(
     *,
     client: httpx.AsyncClient,
 ) -> list[dict[str, Any]]:
-    """Return Instagram items for a workflow (newest first)."""
+    """Return Instagram items for a workflow (earliest schedule first)."""
     data = await graphql_post(
         client,
         INSTAGRAM_ITEMS_QUERY,
