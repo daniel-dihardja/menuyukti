@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from graphql.data_sources.database import Base
@@ -38,7 +38,12 @@ class InstagramItem(Base):
     caption: Mapped[str | None] = mapped_column(Text, nullable=True)
     hook: Mapped[str | None] = mapped_column(Text, nullable=True)
     visual_brief: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(64), nullable=False, default="draft")
+    status: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default="draft",
+        server_default=text("'draft'"),
+    )
     schedule: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by_clerk_user_id: Mapped[str | None] = mapped_column(
         String(128), nullable=True, index=True

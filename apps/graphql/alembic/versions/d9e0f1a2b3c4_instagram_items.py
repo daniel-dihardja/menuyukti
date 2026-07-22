@@ -29,7 +29,12 @@ def upgrade() -> None:
         sa.Column("caption", sa.Text(), nullable=True),
         sa.Column("hook", sa.Text(), nullable=True),
         sa.Column("visual_brief", sa.Text(), nullable=True),
-        sa.Column("status", sa.String(length=64), nullable=False, server_default="draft"),
+        sa.Column(
+            "status",
+            sa.String(length=64),
+            nullable=False,
+            server_default=sa.text("'draft'"),
+        ),
         sa.Column("created_by_clerk_user_id", sa.String(length=128), nullable=True),
         sa.Column(
             "created_at",
