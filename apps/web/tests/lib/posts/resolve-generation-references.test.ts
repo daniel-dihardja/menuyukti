@@ -192,4 +192,26 @@ describe('resolveGenerationReferences', () => {
     expect(references[0]).toEqual({ type: 'background-color', color: '#ffffff' })
     expect(tooManyReferences).toBe(true)
   })
+
+  it('omits previous-result when includePreviousResult is false', () => {
+    const { mode, references } = resolveGenerationReferences({
+      referenceImages: [photo('a.webp', false)],
+      previewMediaS3Key: PREVIEW_KEY,
+      includePreviousResult: false,
+    })
+
+    expect(mode).toBe('fresh-scene')
+    expect(references).toEqual([])
+  })
+
+  it('omits previous-result but keeps photos when includePreviousResult is false', () => {
+    const { mode, references } = resolveGenerationReferences({
+      referenceImages: [photo('a.webp'), photo('b.webp', false)],
+      previewMediaS3Key: PREVIEW_KEY,
+      includePreviousResult: false,
+    })
+
+    expect(mode).toBe('fresh-scene')
+    expect(references).toEqual([{ type: 'photo', name: 'a.webp' }])
+  })
 })

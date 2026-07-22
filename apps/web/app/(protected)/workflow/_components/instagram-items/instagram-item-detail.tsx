@@ -18,9 +18,12 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button, buttonVariants } from '@workspace/ui/components/button'
+import { ButtonGroup } from '@workspace/ui/components/button-group'
+import { Checkbox } from '@workspace/ui/components/checkbox'
 import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
 import {
   Field,
+  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -34,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { Separator } from '@workspace/ui/components/separator'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
@@ -47,6 +51,7 @@ import type {
   InstagramItemMediaVersionDto,
 } from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
+import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
   getLeonardoPostModelMessageKey,
@@ -174,6 +179,7 @@ export function InstagramItemDetail({
   const styleFieldId = useId()
   const kindFieldId = useId()
   const statusFieldId = useId()
+  const useCurrentPreviewRefId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
     refsFromItem(item),
@@ -185,6 +191,7 @@ export function InstagramItemDetail({
   )
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
+  const [useCurrentPreviewAsReference, setUseCurrentPreviewAsReference] = useState(true)
   const initialSync = syncFromItem(item)
   const [imageVersions, setImageVersions] = useState<ItemImageVersion[]>(initialSync.versions)
   const [previewVersionIndex, setPreviewVersionIndex] = useState(initialSync.previewIndex)
@@ -238,6 +245,8 @@ export function InstagramItemDetail({
   const busy = saving || isGenerating || isCommitting || isDeletingVersion
   const canGenerate = values.visualBrief.trim().length > 0 && !busy
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
+  const visibleMediaS3Key = previewVersion?.mediaS3Key || null
+  const hasVisiblePreviousResult = parsePostMediaFilename(visibleMediaS3Key) != null
   const canDeleteVersion = Boolean(previewVersion?.mediaS3Key) && imageVersions.length > 0 && !busy
   const headerTitle = values.title.trim() ? values.title : t('untitled')
   const footerError = actionError || generateError
@@ -275,7 +284,8 @@ export function InstagramItemDetail({
     const persistedRefs = persistableRefs(referenceImages)
     const { references, tooManyReferences } = resolveGenerationReferences({
       referenceImages,
-      previewMediaS3Key: mediaS3Key,
+      previewMediaS3Key: visibleMediaS3Key,
+      includePreviousResult: useCurrentPreviewAsReference,
       styleSelected: values.styleId != null,
       solidBackgroundEnabled: false,
     })
@@ -704,14 +714,39 @@ export function InstagramItemDetail({
           </FieldGroup>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 border-t bg-background pt-3">
+        <div className="flex shrink-0 flex-col gap-3 bg-card pt-3 pb-1">
+          <Separator />
           {footerError ? (
             <Alert variant="destructive">
               <AlertDescription>{footerError}</AlertDescription>
             </Alert>
           ) : null}
-          <div className="flex flex-wrap gap-2">
-            <Button disabled={busy} type="submit">
+          <Field
+            className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5"
+            data-disabled={!hasVisiblePreviousResult || busy ? true : undefined}
+            orientation="horizontal"
+          >
+            <Checkbox
+              checked={useCurrentPreviewAsReference && hasVisiblePreviousResult}
+              disabled={!hasVisiblePreviousResult || busy}
+              id={useCurrentPreviewRefId}
+              onCheckedChange={(checked) => {
+                setUseCurrentPreviewAsReference(checked === true)
+              }}
+            />
+            <FieldContent className="gap-0.5">
+              <FieldLabel htmlFor={useCurrentPreviewRefId}>
+                {t('generate.useCurrentPreviewAsReference')}
+              </FieldLabel>
+              <FieldDescription>
+                {hasVisiblePreviousResult
+                  ? t('generate.useCurrentPreviewAsReferenceHint')
+                  : t('generate.useCurrentPreviewAsReferenceUnavailable')}
+              </FieldDescription>
+            </FieldContent>
+          </Field>
+          <ButtonGroup className="w-full [&>*]:flex-1">
+            <Button disabled={busy} type="submit" variant="outline">
               {saving ? <Spinner data-icon="inline-start" /> : null}
               {t('saveButton')}
             </Button>
@@ -721,7 +756,6 @@ export function InstagramItemDetail({
                 void handleGenerate()
               }}
               type="button"
-              variant="secondary"
             >
               {isGenerating ? (
                 <Spinner data-icon="inline-start" />
@@ -730,7 +764,7 @@ export function InstagramItemDetail({
               )}
               {isGenerating ? t('generate.generating') : t('generate.button')}
             </Button>
-          </div>
+          </ButtonGroup>
         </div>
       </form>
 

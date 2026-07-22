@@ -1,10 +1,18 @@
 'use client'
 
-import { useCallback, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useState, type KeyboardEvent } from 'react'
 import { useTranslations } from 'next-intl'
-import { ChevronLeftIcon, ChevronRightIcon, ImageIcon, Trash2Icon } from 'lucide-react'
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ImageIcon,
+  Maximize2Icon,
+  Trash2Icon,
+  XIcon,
+} from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
 import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
@@ -50,12 +58,25 @@ export function InstagramItemPreview({
   onRequestDelete,
 }: InstagramItemPreviewProps) {
   const t = useTranslations('analytics.workflows.instagramItems')
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxImageLoaded, setLightboxImageLoaded] = useState(false)
 
   const showVersionNav = versions.length > 1
   const previewVersion = versions[previewIndex] ?? versions[0]
   const previewUrl = previewVersion?.imageUrl ?? null
+  const canExpand = Boolean(previewUrl) && !isGenerating
   const canCommit =
     Boolean(previewVersion?.mediaS3Key) && showVersionNav && previewIndex !== committedIndex
+
+  useEffect(() => {
+    setLightboxImageLoaded(false)
+  }, [previewUrl, lightboxOpen])
+
+  useEffect(() => {
+    if (!previewUrl && lightboxOpen) {
+      setLightboxOpen(false)
+    }
+  }, [lightboxOpen, previewUrl])
 
   const goPrev = useCallback(() => {
     if (!showVersionNav || busy) return
@@ -80,6 +101,25 @@ export function InstagramItemPreview({
     },
     [goNext, goPrev, showVersionNav],
   )
+
+  const handleLightboxKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (!showVersionNav) return
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        goPrev()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        goNext()
+      }
+    },
+    [goNext, goPrev, showVersionNav],
+  )
+
+  function openLightbox() {
+    if (!canExpand) return
+    setLightboxOpen(true)
+  }
 
   return (
     <Field className="gap-1.5">
@@ -112,8 +152,19 @@ export function InstagramItemPreview({
             )}
           >
             {previewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-              <img alt="" className="size-full object-cover" src={previewUrl} />
+              <button
+                aria-label={t('generate.expandPreview')}
+                className={cn(
+                  'size-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                  isGenerating && 'pointer-events-none',
+                )}
+                disabled={!canExpand}
+                onClick={openLightbox}
+                type="button"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
+                <img alt="" className="size-full object-cover" src={previewUrl} />
+              </button>
             ) : (
               <div className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center">
                 <span className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground [&_svg]:size-5">
@@ -131,13 +182,34 @@ export function InstagramItemPreview({
               </div>
             ) : null}
           </div>
+          {canExpand ? (
+            <div className="absolute top-1.5 left-1.5">
+              <Button
+                aria-label={t('generate.expandPreview')}
+                className="shadow-sm"
+                disabled={busy}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  openLightbox()
+                }}
+                size="icon-xs"
+                type="button"
+                variant="secondary"
+              >
+                <Maximize2Icon />
+              </Button>
+            </div>
+          ) : null}
           {canDeleteVersion ? (
             <div className="absolute top-1.5 right-1.5">
               <Button
                 aria-label={t('generate.deleteVersion')}
                 className="shadow-sm"
                 disabled={busy}
-                onClick={onRequestDelete}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onRequestDelete()
+                }}
                 size="icon-xs"
                 type="button"
                 variant="secondary"
@@ -151,7 +223,10 @@ export function InstagramItemPreview({
               <Button
                 className="h-7 px-2 text-xs shadow-sm"
                 disabled={busy}
-                onClick={onCommit}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onCommit()
+                }}
                 size="sm"
                 type="button"
               >
@@ -213,6 +288,115 @@ export function InstagramItemPreview({
       <FieldDescription>
         {kind === 'post' ? t('generate.formatHintPost') : t('generate.formatHintStory')}
       </FieldDescription>
+
+      <Dialog
+        onOpenChange={(open) => {
+          setLightboxOpen(open)
+        }}
+        open={lightboxOpen && Boolean(previewUrl)}
+      >
+        {previewUrl ? (
+          <DialogContent
+            className="max-w-[min(96vw,72rem)] border-none bg-transparent p-0 shadow-none sm:max-w-[min(96vw,72rem)]"
+            onKeyDown={handleLightboxKeyDown}
+            showCloseButton={false}
+          >
+            <DialogTitle className="sr-only">
+              {showVersionNav
+                ? t('generate.versionIndicator', {
+                    current: previewIndex + 1,
+                    total: versions.length,
+                  })
+                : t('generate.previewLabel')}
+            </DialogTitle>
+            <div className="flex flex-col items-center gap-3">
+              <div className="group relative flex min-h-[12rem] w-full items-center justify-center">
+                <DialogClose
+                  aria-label={t('generate.closePreview')}
+                  className="absolute top-3 right-3 z-30 flex size-10 items-center justify-center rounded-full bg-black/70 text-white shadow-lg ring-offset-background transition-opacity hover:bg-black/85 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden"
+                  type="button"
+                >
+                  <XIcon aria-hidden />
+                </DialogClose>
+                {!lightboxImageLoaded ? (
+                  <div className="absolute inset-0 z-0 flex items-center justify-center">
+                    <Spinner className="size-10 text-muted-foreground" />
+                  </div>
+                ) : null}
+                {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
+                <img
+                  alt=""
+                  className={cn(
+                    'relative z-10 max-h-[calc(100dvh-5.5rem)] w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300 sm:max-h-[calc(90vh-5.5rem)]',
+                    lightboxImageLoaded ? 'opacity-100' : 'opacity-0',
+                  )}
+                  onLoad={() => setLightboxImageLoaded(true)}
+                  src={previewUrl}
+                />
+                {showVersionNav ? (
+                  <>
+                    <button
+                      aria-label={t('generate.previousVersion')}
+                      className="absolute inset-y-0 left-0 z-20 flex w-[18%] min-w-12 max-w-24 items-center justify-start bg-transparent pl-2 text-white outline-none transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                      disabled={busy}
+                      onClick={goPrev}
+                      type="button"
+                    >
+                      <span className="flex size-10 items-center justify-center rounded-full bg-black/55 shadow-md backdrop-blur-sm">
+                        <ChevronLeftIcon aria-hidden />
+                      </span>
+                    </button>
+                    <button
+                      aria-label={t('generate.nextVersion')}
+                      className="absolute inset-y-0 right-0 z-20 flex w-[18%] min-w-12 max-w-24 items-center justify-end bg-transparent pr-2 text-white outline-none transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                      disabled={busy}
+                      onClick={goNext}
+                      type="button"
+                    >
+                      <span className="flex size-10 items-center justify-center rounded-full bg-black/55 shadow-md backdrop-blur-sm">
+                        <ChevronRightIcon aria-hidden />
+                      </span>
+                    </button>
+                  </>
+                ) : null}
+              </div>
+              {showVersionNav ? (
+                <div className="flex flex-col items-center gap-2">
+                  <p aria-live="polite" className="text-center text-sm text-white drop-shadow-sm">
+                    {t('generate.versionIndicator', {
+                      current: previewIndex + 1,
+                      total: versions.length,
+                    })}
+                  </p>
+                  <div className="flex items-center justify-center gap-2" role="tablist">
+                    {versions.map((version, index) => {
+                      const selected = index === previewIndex
+                      return (
+                        <button
+                          aria-label={t('generate.versionDotAria', {
+                            index: index + 1,
+                            total: versions.length,
+                          })}
+                          aria-selected={selected}
+                          className={cn(
+                            'size-2 rounded-full transition-colors',
+                            selected ? 'bg-white' : 'bg-white/40 hover:bg-white/70',
+                          )}
+                          disabled={busy}
+                          key={version.id}
+                          onClick={() => onPreviewIndexChange(index)}
+                          role="tab"
+                          type="button"
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </DialogContent>
+        ) : null}
+      </Dialog>
     </Field>
   )
 }
