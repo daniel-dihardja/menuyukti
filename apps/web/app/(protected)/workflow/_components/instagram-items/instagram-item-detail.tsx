@@ -1,11 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEvent } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
   ArrowLeftIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  PlusIcon,
   SparklesIcon,
   Trash2Icon,
   XIcon,
@@ -38,6 +41,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-reference-thumbnails'
+import { StyleUsageGuide } from '@/components/styles/style-usage-guide'
 import type {
   InstagramItemDto,
   InstagramItemMediaVersionDto,
@@ -52,6 +56,8 @@ import {
 } from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
+import { routes } from '@/lib/routes'
+import { listStyles, type Style } from '@/lib/styles/client-api'
 
 import {
   toFormValues,
@@ -59,6 +65,8 @@ import {
   type InstagramItemKind,
   type InstagramItemStatus,
 } from './use-instagram-items'
+
+const STYLE_NONE = '__none__'
 
 type InstagramItemDetailProps = {
   item: InstagramItemDto
@@ -156,12 +164,16 @@ export function InstagramItemDetail({
   const tModel = useTranslations('postCreator.prompt.model')
   const tPicker = useTranslations('postCreator.prompt.picker')
   const tRefs = useTranslations('postCreator.prompt.references')
+  const pathname = usePathname()
   const modelFieldId = useId()
   const modelBlurbId = useId()
+  const styleFieldId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
     refsFromItem(item),
   )
+  const [styles, setStyles] = useState<Style[]>([])
+  const [stylesLoading, setStylesLoading] = useState(false)
   const [generationModel, setGenerationModel] = useState<LeonardoPostModelId>(
     DEFAULT_LEONARDO_POST_MODEL,
   )
@@ -186,6 +198,31 @@ export function InstagramItemDetail({
     setMediaS3Key(next.mediaS3Key)
     setGenerateError(null)
   }, [item])
+
+  useEffect(() => {
+    let cancelled = false
+    setStylesLoading(true)
+    void listStyles()
+      .then((list) => {
+        if (cancelled) return
+        setStyles(list)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStyles([])
+          toast.error(t('generate.style.loadError'))
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setStylesLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [t])
+
+  const selectedStyle = styles.find((style) => style.id === values.styleId) ?? null
+  const createStyleHref = `${routes.igStudioStyleNew}?returnTo=${encodeURIComponent(pathname || '')}`
 
   const selectedNames = useMemo(
     () => new Set(referenceImages.map((image) => image.name)),
@@ -261,7 +298,7 @@ export function InstagramItemDetail({
     const { references, tooManyReferences } = resolveGenerationReferences({
       referenceImages,
       previewMediaS3Key: mediaS3Key,
-      styleSelected: false,
+      styleSelected: values.styleId != null,
       solidBackgroundEnabled: false,
     })
 
@@ -281,6 +318,7 @@ export function InstagramItemDetail({
           model: generationModel,
           referenceImages: persistedRefs,
           ...(references.length > 0 ? { references } : {}),
+          styleId: values.styleId,
         }),
       })
       const payload = (await res.json().catch(() => ({}))) as {
@@ -621,6 +659,77 @@ export function InstagramItemDetail({
           <p className="text-muted-foreground text-xs" id={modelBlurbId}>
             {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
           </p>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor={styleFieldId}>{t('generate.style.label')}</Label>
+          <Select
+            disabled={busy || stylesLoading}
+            onValueChange={(value) => {
+              if (value === STYLE_NONE) {
+                setValues((prev) => ({ ...prev, styleId: null }))
+                return
+              }
+              const next = Number(value)
+              if (Number.isInteger(next) && next > 0) {
+                setValues((prev) => ({ ...prev, styleId: next }))
+              }
+            }}
+            value={values.styleId != null ? String(values.styleId) : STYLE_NONE}
+          >
+            <SelectTrigger aria-label={t('generate.style.label')} id={styleFieldId}>
+              {selectedStyle ? (
+                <span className="flex min-w-0 items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                  <img
+                    alt=""
+                    className="size-6 shrink-0 rounded object-cover"
+                    src={mediaDownloadHref(selectedStyle.referenceImageName)}
+                  />
+                  <span className="truncate">
+                    {selectedStyle.isDefault
+                      ? `${selectedStyle.name} (${t('generate.style.defaultSuffix')})`
+                      : selectedStyle.name}
+                  </span>
+                </span>
+              ) : (
+                <SelectValue placeholder={t('generate.style.placeholder')} />
+              )}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={STYLE_NONE}>{t('generate.style.none')}</SelectItem>
+              {styles.map((style) => (
+                <SelectItem key={style.id} value={String(style.id)}>
+                  <span className="flex items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                    <img
+                      alt=""
+                      className="size-6 shrink-0 rounded object-cover"
+                      src={mediaDownloadHref(style.referenceImageName)}
+                    />
+                    <span>
+                      {style.isDefault
+                        ? `${style.name} (${t('generate.style.defaultSuffix')})`
+                        : style.name}
+                    </span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-muted-foreground text-xs">{t('generate.style.description')}</p>
+          {selectedStyle ? <StyleUsageGuide spec={selectedStyle.spec} /> : null}
+          <div className="flex flex-wrap gap-2 pt-0.5">
+            <Button asChild disabled={busy} size="sm" type="button" variant="outline">
+              <Link href={createStyleHref}>
+                <PlusIcon aria-hidden className="size-3.5" />
+                {t('generate.style.create')}
+              </Link>
+            </Button>
+            <Button asChild disabled={busy} size="sm" type="button" variant="ghost">
+              <Link href={routes.igStudioStyles}>{t('generate.style.manage')}</Link>
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-1.5">

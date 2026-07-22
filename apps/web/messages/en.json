@@ -832,7 +832,19 @@
         "description": "Applied automatically to this generation — you don’t need to repeat style rules in the prompt.",
         "create": "Create style",
         "manage": "Manage styles",
-        "loadError": "Failed to load style packs."
+        "loadError": "Failed to load style packs.",
+        "usage": {
+          "title": "How to use this style",
+          "intro": "Override properties in the brief with tags like [property=value]. Multi-word params use quotes.",
+          "copyExample": "Copy example",
+          "copied": "Example copied",
+          "copyFailed": "Could not copy example",
+          "valuesLabel": "Values",
+          "fallbackEnum": "Choose one of the listed values.",
+          "fallbackBoolean": "Toggle on or off.",
+          "fallbackNumber": "Set a numeric value.",
+          "fallbackText": "Set a short text token (no spaces in the main value)."
+        }
       },
       "model": {
         "label": "Image model",
@@ -2372,13 +2384,23 @@
           "button": "Generate image",
           "generating": "Generating…",
           "error": "Could not generate image. Please try again.",
-          "tooManyReferences": "Too many references selected. Use at most 5 checked product photos.",
+          "tooManyReferences": "Too many references selected. Leave room for the style pack reference (at most 5 total including style).",
           "previewLabel": "Generated image",
           "previewEmpty": "No image yet. Write a visual brief and generate.",
           "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
           "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",
           "formatHintPost": "Output size: 1024×1024 (square post).",
           "formatHintStory": "Output size: 768×1376 (story / reel).",
+          "style": {
+            "label": "Style pack",
+            "placeholder": "Select style",
+            "none": "No style",
+            "defaultSuffix": "default",
+            "description": "Applied automatically to this generation — you don’t need to repeat style rules in the brief.",
+            "create": "Create style",
+            "manage": "Manage styles",
+            "loadError": "Failed to load style packs."
+          },
           "previousVersion": "Previous generated image",
           "nextVersion": "Next generated image",
           "versionIndicator": "{current} of {total}",

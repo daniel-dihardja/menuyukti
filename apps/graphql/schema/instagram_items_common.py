@@ -10,7 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from graphql.data_sources import InstagramItem, Node
-from graphql.schema.auth import is_location_owner
+from graphql.data_sources.models.visual_style import VisualStyle
+from graphql.schema.auth import is_location_owner, is_workspace_member
 from graphql.schema.types.instagram_item import (
     InstagramItemMediaVersionType,
     InstagramItemReferenceImageInput,
@@ -81,11 +82,22 @@ def item_to_gql(row: InstagramItem) -> InstagramItemType:
         generation_prompt=row.generation_prompt,
         reference_images=_reference_images_to_gql(row.reference_images),
         media_versions=[_media_version_to_gql(version) for version in versions],
+        style_id=row.style_id,
         status=row.status,
         schedule=row.schedule,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
+
+
+def resolve_style_id_for_user(session, style_id: int, user_id: str) -> int:
+    """Validate style exists and the user is a member of its workspace."""
+    row = session.get(VisualStyle, style_id)
+    if row is None:
+        raise ValueError("Style pack not found")
+    if not is_workspace_member(session, row.workspace_id, user_id):
+        raise PermissionError("Not allowed to use this style pack")
+    return row.id
 
 
 def validate_item_media_s3_key(key: str, owner_clerk_user_id: str) -> None:

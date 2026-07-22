@@ -33,6 +33,7 @@ export const INSTAGRAM_ITEM_FIELDS = `
     prompt
     createdAt
   }
+  styleId
   status
   schedule
   createdAt
@@ -52,6 +53,7 @@ export type InstagramItemDto = {
   generationPrompt: string | null
   referenceImages: InstagramItemReferenceImageDto[]
   mediaVersions: InstagramItemMediaVersionDto[]
+  styleId: number | null
   status: string
   schedule: string | null
   createdAt: string | null
@@ -125,6 +127,7 @@ export const UPDATE_INSTAGRAM_ITEM_MUTATION = `
     $mediaS3Key: String
     $generationPrompt: String
     $referenceImages: [InstagramItemReferenceImageInput!]
+    $styleId: Int
     $status: String
     $schedule: DateTime
   ) {
@@ -138,6 +141,7 @@ export const UPDATE_INSTAGRAM_ITEM_MUTATION = `
       mediaS3Key: $mediaS3Key
       generationPrompt: $generationPrompt
       referenceImages: $referenceImages
+      styleId: $styleId
       status: $status
       schedule: $schedule
     ) {

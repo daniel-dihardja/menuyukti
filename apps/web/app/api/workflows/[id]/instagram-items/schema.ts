@@ -40,6 +40,7 @@ export const patchInstagramItemBodySchema = z
     hook: z.string().optional(),
     visualBrief: z.string().optional(),
     referenceImages: z.array(referenceImageSchema).max(5).optional(),
+    styleId: z.number().int().positive().nullable().optional(),
     status: instagramItemStatusSchema.optional(),
     schedule: scheduleSchema.optional(),
     /** Commit an existing media version as the item image. */
@@ -53,6 +54,7 @@ export const patchInstagramItemBodySchema = z
       value.hook !== undefined ||
       value.visualBrief !== undefined ||
       value.referenceImages !== undefined ||
+      value.styleId !== undefined ||
       value.status !== undefined ||
       value.schedule !== undefined ||
       value.mediaS3Key !== undefined,

@@ -95,6 +95,7 @@ mutation UpdateInstagramItem(
   $mediaS3Key: String
   $generationPrompt: String
   $referenceImages: [InstagramItemReferenceImageInput!]
+  $styleId: Int
   $status: String
   $schedule: DateTime
 ) {
@@ -108,6 +109,7 @@ mutation UpdateInstagramItem(
     mediaS3Key: $mediaS3Key
     generationPrompt: $generationPrompt
     referenceImages: $referenceImages
+    styleId: $styleId
     status: $status
     schedule: $schedule
   ) {
@@ -129,6 +131,7 @@ mutation UpdateInstagramItem(
       prompt
       createdAt
     }
+    styleId
     status
     schedule
   }
@@ -800,3 +803,173 @@ def test_update_instagram_item_rejects_invalid_reference_image() -> None:
     )
     assert result.errors
     assert "reference image name" in str(result.errors[0]).lower()
+
+
+_SAMPLE_STYLE_SPEC = {
+    "schemaVersion": 2,
+    "properties": {
+        "headline": {
+            "type": "enum",
+            "values": ["auto", "none"],
+            "default": "auto",
+            "instructions": {
+                "auto": "Place a short headline when provided.",
+                "none": "Leave the headline area empty.",
+            },
+        },
+    },
+}
+
+
+def _ensure_style_for_user() -> int:
+    """Create a workspace + visual style owned by the test user; return style id."""
+    from datetime import UTC, datetime
+
+    from graphql.data_sources import VisualStyle, Workspace, WorkspaceMembership
+
+    session = SessionLocal()
+    try:
+        now = datetime.now(tz=UTC)
+        ws = Workspace(name="IG item style workspace", owner_clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(ws)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id=GRAPHQL_TEST_USER_ID,
+                role="owner",
+                invited_at=now,
+                accepted_at=now,
+            )
+        )
+        style = VisualStyle(
+            workspace_id=ws.id,
+            created_by_clerk_user_id=GRAPHQL_TEST_USER_ID,
+            name="IG item style",
+            rules="PROPERTIES (resolved):\n- headline: auto → Place a short headline when provided.",
+            reference_image_name=VALID_PHOTO_NAME,
+            spec=_SAMPLE_STYLE_SPEC,
+            is_default=False,
+        )
+        session.add(style)
+        session.commit()
+        session.refresh(style)
+        return style.id
+    finally:
+        session.close()
+
+
+def test_update_instagram_item_sets_and_clears_style_id() -> None:
+    _location_id, workflow_id = _create_workflow()
+    style_id = _ensure_style_for_user()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "story"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    updated = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "styleId": style_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not updated.errors, updated.errors
+    assert updated.data["updateInstagramItem"]["styleId"] == style_id
+
+    cleared = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "styleId": None},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not cleared.errors, cleared.errors
+    assert cleared.data["updateInstagramItem"]["styleId"] is None
+
+
+def test_update_instagram_item_rejects_unknown_style_id() -> None:
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "post"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    result = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "styleId": 999_999_999},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "style" in str(result.errors[0]).lower()
+
+
+def test_update_instagram_item_rejects_unauthorized_style() -> None:
+    from datetime import UTC, datetime
+
+    from graphql.data_sources import VisualStyle, Workspace, WorkspaceMembership
+
+    _location_id, workflow_id = _create_workflow()
+    created = asyncio.run(
+        schema.execute(
+            CREATE_ITEM,
+            variable_values={"workflowId": workflow_id, "kind": "post"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    item_id = created.data["createInstagramItem"]["id"]
+
+    session = SessionLocal()
+    try:
+        now = datetime.now(tz=UTC)
+        ws = Workspace(name="Other style workspace", owner_clerk_user_id="clerk_other_style_user")
+        session.add(ws)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id="clerk_other_style_user",
+                role="owner",
+                invited_at=now,
+                accepted_at=now,
+            )
+        )
+        style = VisualStyle(
+            workspace_id=ws.id,
+            created_by_clerk_user_id="clerk_other_style_user",
+            name="Forbidden style",
+            rules="PROPERTIES (resolved):",
+            reference_image_name=VALID_PHOTO_NAME,
+            spec=_SAMPLE_STYLE_SPEC,
+            is_default=False,
+        )
+        session.add(style)
+        session.commit()
+        session.refresh(style)
+        foreign_style_id = style.id
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            UPDATE_ITEM,
+            variable_values={"id": item_id, "styleId": foreign_style_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    err = str(result.errors[0]).lower()
+    assert "style" in err or "not allowed" in err or "permission" in err

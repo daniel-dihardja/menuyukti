@@ -39,6 +39,7 @@ class InstagramItemType:
     generation_prompt: str | None
     reference_images: list[InstagramItemReferenceImageType]
     media_versions: list[InstagramItemMediaVersionType]
+    style_id: int | None
     status: str
     schedule: datetime | None
     created_at: datetime | None

@@ -19,6 +19,7 @@ import {
 } from '@workspace/ui/components/select'
 import { Textarea } from '@workspace/ui/components/textarea'
 
+import { StyleUsageGuide } from '@/components/styles/style-usage-guide'
 import { mediaDownloadHref } from '@/lib/media/client-api'
 import {
   getLeonardoPostModelMessageKey,
@@ -175,6 +176,7 @@ export function PostCreatorPromptPane() {
             </SelectContent>
           </Select>
           <FieldDescription>{t('style.description')}</FieldDescription>
+          {selectedStyle ? <StyleUsageGuide spec={selectedStyle.spec} /> : null}
           <div className="flex flex-wrap gap-2 pt-0.5">
             <Button asChild type="button" variant="outline" size="sm" disabled={disabled}>
               <Link href={createStyleHref}>

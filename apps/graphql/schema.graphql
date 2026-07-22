@@ -304,6 +304,7 @@ type InstagramItemType {
   generationPrompt: String
   referenceImages: [InstagramItemReferenceImageType!]!
   mediaVersions: [InstagramItemMediaVersionType!]!
+  styleId: Int
   status: String!
   schedule: DateTime
   createdAt: DateTime
@@ -574,7 +575,7 @@ type Mutation {
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
-  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, mediaS3Key: String, generationPrompt: String, referenceImages: [InstagramItemReferenceImageInput!], status: String = null, schedule: DateTime): InstagramItemType!
+  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, mediaS3Key: String, generationPrompt: String, referenceImages: [InstagramItemReferenceImageInput!], styleId: Int, status: String = null, schedule: DateTime): InstagramItemType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
   setPassCriteriaStatuses(milestoneId: ID!, locationId: Int!, updates: [PassCriterionStatusInput!]!): Boolean!

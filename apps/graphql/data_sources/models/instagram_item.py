@@ -58,6 +58,12 @@ class InstagramItem(Base):
         default=list,
         server_default=text("'[]'"),
     )
+    style_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("visual_style.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     status: Mapped[str] = mapped_column(
         String(64),
         nullable=False,

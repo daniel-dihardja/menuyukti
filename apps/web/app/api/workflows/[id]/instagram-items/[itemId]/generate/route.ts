@@ -39,6 +39,8 @@ const bodySchema = z.object({
   referenceImages: z.array(referenceImageSchema).max(5).optional(),
   model: z.enum(LEONARDO_POST_MODEL_IDS).optional(),
   quality: z.enum(POST_IMAGE_QUALITY_IDS).optional(),
+  /** Omit = leave unchanged; null = clear; positive int = set. */
+  styleId: z.number().int().positive().nullable().optional(),
 })
 
 async function loadWorkflowRootOrThrow(workflowId: string, userId: string) {
@@ -109,6 +111,7 @@ export async function POST(req: Request, context: RouteContext) {
       referenceImages,
       model = DEFAULT_LEONARDO_POST_MODEL,
       quality = DEFAULT_POST_IMAGE_QUALITY,
+      styleId,
     } = parsed.data
     const format = kindToPostImageFormat(current.kind)
 
@@ -119,6 +122,7 @@ export async function POST(req: Request, context: RouteContext) {
       model,
       format,
       quality,
+      ...(styleId != null ? { styleId } : {}),
       logPrefix: '[instagram-items/generate]',
     })
 
@@ -142,6 +146,7 @@ export async function POST(req: Request, context: RouteContext) {
           mediaS3Key: result.data.mediaS3Key,
           generationPrompt: prompt,
           ...(referenceImages !== undefined ? { referenceImages } : {}),
+          ...(styleId !== undefined ? { styleId } : {}),
         },
         userId,
       )

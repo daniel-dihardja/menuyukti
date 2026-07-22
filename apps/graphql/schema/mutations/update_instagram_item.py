@@ -19,6 +19,7 @@ from graphql.schema.instagram_items_common import (
     normalize_status,
     parse_positive_id,
     reload_item_with_versions,
+    resolve_style_id_for_user,
     validate_item_media_s3_key,
 )
 from graphql.schema.types.instagram_item import (
@@ -42,13 +43,15 @@ class UpdateInstagramItemMutation:
         media_s3_key: str | None = UNSET,
         generation_prompt: str | None = UNSET,
         reference_images: list[InstagramItemReferenceImageInput] | None = UNSET,
+        style_id: int | None = UNSET,
         status: str | None = None,
         schedule: datetime | None = UNSET,
     ) -> InstagramItemType:
         """Patch provided fields. Empty strings clear nullable text fields.
 
-        ``schedule``, ``media_s3_key``, ``generation_prompt``, and ``reference_images``
-        use UNSET so omit leaves unchanged; explicit null / empty list clears.
+        ``schedule``, ``media_s3_key``, ``generation_prompt``, ``reference_images``,
+        and ``style_id`` use UNSET so omit leaves unchanged; explicit null / empty
+        list clears.
 
         Setting ``media_s3_key`` to a new key appends a media version and commits it.
         Setting it to an existing version key reselects (commits) without duplicating.
@@ -115,6 +118,11 @@ class UpdateInstagramItemMutation:
                     row.generation_prompt = normalize_optional_text(generation_prompt)
             if reference_images is not UNSET:
                 row.reference_images = normalize_reference_images(reference_images)
+            if style_id is not UNSET:
+                if style_id is None:
+                    row.style_id = None
+                else:
+                    row.style_id = resolve_style_id_for_user(session, int(style_id), user_id)
             if status is not None:
                 row.status = normalize_status(status)
             if schedule is not UNSET:

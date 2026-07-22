@@ -17,6 +17,7 @@ export type InstagramItemFormValues = {
   hook: string
   visualBrief: string
   referenceImages: InstagramItemReferenceImageDto[]
+  styleId: number | null
   status: InstagramItemStatus
   /** `datetime-local` value (`YYYY-MM-DDTHH:mm`); empty means unset. */
   schedule: string
@@ -71,6 +72,10 @@ export function toFormValues(item: InstagramItemDto): InstagramItemFormValues {
           enabled: ref.enabled !== false,
         }))
       : [],
+    styleId:
+      typeof item.styleId === 'number' && Number.isInteger(item.styleId) && item.styleId > 0
+        ? item.styleId
+        : null,
     status: isStatus(item.status) ? item.status : 'draft',
     schedule: isoToDatetimeLocal(item.schedule),
   }
@@ -84,6 +89,7 @@ export function formValuesToPatchBody(values: InstagramItemFormValues) {
     hook: values.hook,
     visualBrief: values.visualBrief,
     referenceImages: values.referenceImages,
+    styleId: values.styleId,
     status: values.status,
     schedule: datetimeLocalToIso(values.schedule),
   }
