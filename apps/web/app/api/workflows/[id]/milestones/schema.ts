@@ -13,7 +13,6 @@ import {
   igMenuPickerMilestoneDataSchema,
   igFormatMilestoneDataSchema,
   igTextMilestoneDataSchema,
-  draftsMilestoneDataSchema,
   igPlanMilestoneInputValueSchema,
   igMenuPickerMilestoneInputValueSchema,
   igFormatMilestoneInputValueSchema,
@@ -50,8 +49,6 @@ export const patchMilestoneSchema = z
     /** Milestone data (structured JSON); persisted on a child `milestonedata` node. */
     milestoneData: z
       .union([
-        // Before all-default IG schemas so `{ drafts }` is not stripped as ig_text/ig_plan.
-        draftsMilestoneDataSchema,
         datesMilestoneDataSchema,
         campaignBriefMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,

@@ -2,7 +2,6 @@ import {
   CalendarDays,
   CalendarRange,
   ClipboardList,
-  FilePen,
   GalleryVerticalEnd,
   Instagram,
   Lightbulb,
@@ -32,7 +31,6 @@ import {
   igMenuPickerMilestoneDataSchema,
   igFormatMilestoneDataSchema,
   igTextMilestoneDataSchema,
-  draftsMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
   schedulerMilestoneDataSchema,
@@ -59,11 +57,6 @@ export type MilestonePresetInputType =
 
 export function isMilestonePresetId(value: string): value is MilestonePresetId {
   return (MILESTONE_PRESET_IDS as readonly string[]).includes(value)
-}
-
-/** Presets that are curated in the preview panel and do not support LLM Run. */
-export function isManualWorkspacePreset(presetId: MilestonePresetId | undefined): boolean {
-  return presetId === 'drafts'
 }
 
 /** New pass criteria rows; `id` is generated client-side before save. */
@@ -163,10 +156,6 @@ const EMPTY_IG_TEXT_DATA: MilestonedataValue = {
   entries: [],
   sourceAnalyticsRunId: '',
   reportingPeriod: '',
-}
-
-const EMPTY_DRAFTS_DATA: MilestonedataValue = {
-  drafts: [],
 }
 
 const EMPTY_MENU_TAGGER_DATA: MilestonedataValue = {
@@ -532,24 +521,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_text.criterionCampaignBriefAlignment'),
-          status: 'open',
-        },
-      ],
-    }),
-  },
-  drafts: {
-    id: 'drafts',
-    icon: FilePen,
-    inputType: 'none',
-    dataSchema: draftsMilestoneDataSchema,
-    emptyData: EMPTY_DRAFTS_DATA,
-    getCreateFields: (t) => ({
-      name: t('milestonePreset.drafts.title'),
-      milestoneData: EMPTY_DRAFTS_DATA,
-      goal: t('milestonePreset.drafts.goal'),
-      passCriteria: [
-        {
-          requirement: t('milestonePreset.drafts.criterionAtLeastOneDraft'),
           status: 'open',
         },
       ],

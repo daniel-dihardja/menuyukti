@@ -15,7 +15,6 @@ from agents_app.agents.core.chat.tools import (
     get_milestone_input_json,
     get_milestone_preset_data_json,
     get_workflow_overview,
-    update_milestone_drafts,
     update_milestone_input,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
@@ -50,7 +49,6 @@ def chat_tools_list(*, include_post_image: bool = False) -> list:
         get_milestone_input_json,
         get_milestone_preset_data_json,
         update_milestone_input,
-        update_milestone_drafts,
         get_location_data,
     ]
     web = make_search_web_tool()

@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 from typing import Annotated, Any, Literal
-from uuid import uuid4
 
 from agents_app.agents.core.chat.graphql_client import (
     fetch_milestone_node,
@@ -13,9 +12,6 @@ from agents_app.agents.core.chat.graphql_client import (
 )
 from agents_app.agents.core.chat.graphql_client import (
     update_milestone_input as persist_milestone_input,
-)
-from agents_app.agents.core.chat.graphql_client import (
-    update_milestone_preset_data as persist_milestone_preset_data,
 )
 from agents_app.agents.core.chat.http_context import get_chat_http_client
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
@@ -44,8 +40,6 @@ _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
         "milestoneResult",
     },
 )
-
-_DRAFTS_MAX_PER_CALL = 20
 
 
 def _format_json(data: Any) -> str:
@@ -716,138 +710,6 @@ async def update_milestone_input(
     )
     return (
         f"Saved milestoneInput for milestone id={milestone_id} with {len(operations)} operation(s)."
-    )
-
-
-def _normalize_drafts_payload(raw: Any) -> list[dict[str, str]]:
-    """Coerce stored preset JSON into a list of draft dicts with id/name/body."""
-    if raw is None:
-        return []
-    if not isinstance(raw, dict):
-        return []
-    legacy_items = raw.get("drafts")
-    if not isinstance(legacy_items, list):
-        legacy_items = raw.get("stories")
-    if not isinstance(legacy_items, list):
-        return []
-    out: list[dict[str, str]] = []
-    for item in legacy_items:
-        if not isinstance(item, dict):
-            continue
-        raw_id = item.get("id")
-        draft_id = raw_id.strip() if isinstance(raw_id, str) and raw_id.strip() else str(uuid4())
-        raw_name = item.get("name")
-        name = raw_name if isinstance(raw_name, str) else ""
-        raw_body = item.get("body")
-        body = raw_body if isinstance(raw_body, str) else ""
-        out.append({"id": draft_id, "name": name, "body": body})
-    return out
-
-
-def _parse_incoming_drafts(drafts: Any) -> tuple[list[dict[str, str]] | None, str | None]:
-    """Validate and normalize tool-arg drafts into id/name/body rows."""
-    if not isinstance(drafts, list):
-        return None, "Missing or invalid 'drafts': provide a non-empty list of draft objects."
-    if len(drafts) == 0:
-        return None, "Missing required drafts: provide at least one draft with a non-empty body."
-    if len(drafts) > _DRAFTS_MAX_PER_CALL:
-        return (
-            None,
-            f"Too many drafts in one call (max {_DRAFTS_MAX_PER_CALL}). "
-            "Split into multiple update_milestone_drafts calls.",
-        )
-    parsed: list[dict[str, str]] = []
-    for i, row in enumerate(drafts, start=1):
-        if not isinstance(row, dict):
-            return None, f"Draft #{i} must be an object with at least a 'body' string."
-        raw_body = row.get("body")
-        if not isinstance(raw_body, str) or not raw_body.strip():
-            return None, f"Draft #{i} requires a non-empty string 'body'."
-        raw_id = row.get("id")
-        draft_id = (
-            raw_id.strip() if isinstance(raw_id, str) and raw_id.strip() else str(uuid4())
-        )
-        raw_name = row.get("name")
-        name = raw_name if isinstance(raw_name, str) else ""
-        parsed.append({"id": draft_id, "name": name, "body": raw_body})
-    return parsed, None
-
-
-@tool
-async def update_milestone_drafts(
-    drafts: list[dict[str, Any]] | None = None,
-    mode: Literal["append", "replace"] = "append",
-    dry_run: bool = False,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
-    """Create or replace markdown drafts on the UI-selected Drafts milestone.
-
-    Pass all new drafts in one call (1–20 items). Each item needs ``body`` (markdown);
-    optional ``name`` (list label) and ``id`` (generated when omitted).
-
-    ``mode``:
-    - ``append`` (default): add to existing drafts
-    - ``replace``: overwrite the full drafts list
-    """
-    c = (config or {}).get("configurable") or {}
-    milestone_id = c.get("milestone_id")
-    location_id = c.get("location_id")
-    user_id = c.get("user_id")
-    if not milestone_id or location_id is None or not user_id:
-        return (
-            "Milestone context is not available (no milestone selected or missing location). "
-            "Ask the user to select a Drafts milestone first."
-        )
-
-    normalized_mode = str(mode or "append").strip().lower()
-    if normalized_mode not in {"append", "replace"}:
-        return "Invalid mode: use 'append' or 'replace'."
-
-    incoming, parse_err = _parse_incoming_drafts(drafts)
-    if parse_err is not None or incoming is None:
-        return parse_err or "Invalid drafts payload."
-
-    client = get_chat_http_client()
-    node = await fetch_milestone_node(str(milestone_id), str(user_id), client=client)
-    if not node:
-        return "Error: milestone not found."
-    if str(node.get("nodeType") or "") != "milestone":
-        return "Error: node is not a milestone."
-    loc = node.get("locationId")
-    if loc is not None and int(loc) != int(location_id):
-        return "Error: milestone location does not match the campaign context."
-
-    raw_data = node.get("data")
-    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
-    raw_preset = milestone_node_data.get("presetId")
-    preset_id = raw_preset.strip() if isinstance(raw_preset, str) else ""
-    if preset_id != "drafts":
-        return (
-            "update_milestone_drafts only works when the selected milestone preset is 'drafts'. "
-            f"Current presetId={preset_id or 'unknown'!r}. Select a Drafts milestone first."
-        )
-
-    existing = _normalize_drafts_payload(node.get("milestonePresetData"))
-    next_drafts = incoming if normalized_mode == "replace" else [*existing, *incoming]
-
-    payload = {"drafts": next_drafts}
-    if dry_run:
-        return (
-            f"Validated {len(incoming)} draft(s) for mode={normalized_mode} "
-            f"(would result in {len(next_drafts)} total). "
-            "No data was saved because dry_run=true."
-        )
-
-    await persist_milestone_preset_data(
-        str(milestone_id),
-        int(location_id),
-        payload,
-        str(user_id),
-        client=client,
-    )
-    return (
-        f"Saved {len(incoming)} draft(s) with mode={normalized_mode} "
-        f"on milestone id={milestone_id} ({len(next_drafts)} total)."
     )
 
 

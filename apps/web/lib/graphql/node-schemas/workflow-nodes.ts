@@ -15,7 +15,6 @@ import {
   igMenuPickerMilestoneDataSchema,
   igFormatMilestoneDataSchema,
   igTextMilestoneDataSchema,
-  draftsMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   menuClustererMilestoneDataSchema,
   schedulerMilestoneDataSchema,
@@ -52,8 +51,6 @@ export type MilestoneData = z.infer<typeof milestoneDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
-  // Before all-default IG schemas (ig_plan/ig_text/…): those accept any object and strip `drafts`.
-  draftsMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,

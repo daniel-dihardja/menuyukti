@@ -66,10 +66,6 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "Instagram copy (headline, caption, and format-specific fields) as texts per slot while "
         "preserving plan strategy, dishes, and format assignments."
     ),
-    "drafts": (
-        "Keep a working board of content drafts. Create drafts manually in the preview or via "
-        "chat, write each as markdown, and refine until ready to produce."
-    ),
     "scheduler": (
         "Reads the campaign window from dates and business strategy from Campaign Brief, then "
         "places feed posts, Stories, and Reels on the calendar as title-only slots with explicit "

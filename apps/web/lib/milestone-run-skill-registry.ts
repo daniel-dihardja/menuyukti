@@ -81,12 +81,6 @@ export const MILESTONE_PRESET_RUN_REGISTRY: readonly MilestonePresetRunMeta[] = 
       'Read prior IG Format entries and Campaign Brief orientation, then generate Instagram copy as texts per slot while preserving plan strategy, dishes, and format assignments.',
   },
   {
-    id: 'drafts',
-    name: 'Drafts',
-    description:
-      'Workspace for content drafts: create and refine markdown drafts in the preview panel or via chat (no dedicated LLM run).',
-  },
-  {
     id: 'scheduler',
     name: 'Scheduler',
     description:

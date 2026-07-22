@@ -7,7 +7,6 @@ import {
 } from '@/lib/graphql/node-schemas'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import { parseMilestoneDisplayCode } from '@/lib/milestones/milestone-display-code'
-import { normalizeDraftsMilestoneTitle } from '@/lib/milestones/drafts'
 import {
   normalizeMilestonePresetData,
   MILESTONE_PRESET_REGISTRY,
@@ -160,7 +159,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
 
   return {
     id: node.id,
-    title: normalizeDraftsMilestoneTitle(node.name),
+    title: node.name,
     displayCode,
     goal,
     data: normalizedData,

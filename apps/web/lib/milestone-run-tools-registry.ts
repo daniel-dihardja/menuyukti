@@ -50,12 +50,6 @@ export const CHAT_TOOLS_REGISTRY: readonly ChatToolMeta[] = [
       'Apply JSON-pointer patch operations to the UI-selected milestone Input tab and persist through GraphQL.',
   },
   {
-    id: 'update_milestone_drafts',
-    name: 'Update milestone drafts',
-    description:
-      'Create or replace markdown drafts on the UI-selected Drafts milestone (append or replace, up to 20 items per call).',
-  },
-  {
     id: 'get_location_data',
     name: 'Get location data',
     description:

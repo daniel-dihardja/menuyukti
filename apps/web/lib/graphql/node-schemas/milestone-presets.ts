@@ -35,7 +35,6 @@ export const milestonePresetIdSchema = z.enum([
   'ig_menu_picker',
   'ig_format',
   'ig_text',
-  'drafts',
   'scheduler',
 ])
 
@@ -44,21 +43,13 @@ export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 /** Ordered preset ids — single source for UI lists and guards. */
 export const MILESTONE_PRESET_IDS = milestonePresetIdSchema.options
 
-/** Former preset ids remapped after renames (stored on older milestone nodes). */
-const LEGACY_MILESTONE_PRESET_IDS = {
-  ig_story_drafts: 'drafts',
-} as const satisfies Record<string, MilestonePresetId>
-
-/** Map a stored preset id (including legacy aliases) to a current `MilestonePresetId`. */
+/** Map a stored preset id to a current `MilestonePresetId`. */
 export function normalizeMilestonePresetId(value: unknown): MilestonePresetId | undefined {
   if (typeof value !== 'string') {
     return undefined
   }
   if ((MILESTONE_PRESET_IDS as readonly string[]).includes(value)) {
     return value as MilestonePresetId
-  }
-  if (value in LEGACY_MILESTONE_PRESET_IDS) {
-    return LEGACY_MILESTONE_PRESET_IDS[value as keyof typeof LEGACY_MILESTONE_PRESET_IDS]
   }
   return undefined
 }
@@ -413,26 +404,6 @@ export const igTextMilestoneInputValueSchema = z
   .merge(milestoneDependencyIdFieldsSchema)
 
 export type IgTextMilestoneInputValue = z.infer<typeof igTextMilestoneInputValueSchema>
-
-/** Manual content draft: one markdown body per item. */
-export const draftItemSchema = z.object({
-  id: z.string().trim().min(1),
-  /** Short label shown in the drafts overview list. */
-  name: z.string().default(''),
-  body: z.string(),
-})
-
-export type DraftItem = z.infer<typeof draftItemSchema>
-
-/**
- * `drafts` is required (no default) so Zod unions do not match empty `{}` here
- * before all-default schemas like `ig_text` / `ig_plan` strip unknown keys.
- */
-export const draftsMilestoneDataSchema = z.object({
-  drafts: z.array(draftItemSchema),
-})
-
-export type DraftsMilestoneData = z.infer<typeof draftsMilestoneDataSchema>
 
 export const menuTaggerItemRoleSchema = z.enum(['star', 'puzzle'])
 

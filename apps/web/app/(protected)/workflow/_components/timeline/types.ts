@@ -6,7 +6,6 @@ import type {
   MenuClustererMilestoneData,
   SchedulerMilestoneData,
   IgPlanMilestoneData,
-  DraftsMilestoneData,
 } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
 
@@ -119,7 +118,6 @@ export type MilestoneDataValue =
   | CultureHooksMilestoneData
   | IgProfileMilestoneData
   | IgPlanMilestoneData
-  | DraftsMilestoneData
   | SchedulerMilestoneData
 
 export type TimelineMilestone = {
