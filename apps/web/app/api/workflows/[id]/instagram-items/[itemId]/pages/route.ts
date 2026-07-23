@@ -93,26 +93,29 @@ export async function POST(req: Request, context: RouteContext) {
     }
 
     const sortedPages = item.pages.toSorted((a, b) => a.sortOrder - b.sortOrder)
-    const sourcePage = parsedBody.data.copyFromPageId
-      ? sortedPages.find((page) => page.id === parsedBody.data.copyFromPageId)
-      : sortedPages.at(-1)
+    const copyFromPageId = parsedBody.data.copyFromPageId
+    const sourcePage = copyFromPageId
+      ? sortedPages.find((page) => page.id === copyFromPageId)
+      : undefined
 
-    if (parsedBody.data.copyFromPageId && !sourcePage) {
+    if (copyFromPageId && !sourcePage) {
       return NextResponse.json({ message: 'Source page not found' }, { status: 404 })
     }
 
     let mediaS3Key: string | undefined
     let prompt: string | undefined
 
-    if (sourcePage?.mediaS3Key && isObjectKeyForPost(sourcePage.mediaS3Key, userId)) {
-      try {
-        mediaS3Key = await copyPostMediaKey(sourcePage.mediaS3Key, userId)
-      } catch (err) {
-        console.error('[instagram-items/pages/create] S3 copy failed', {
-          userIdPrefix: userId.slice(0, 8),
-          message: err instanceof Error ? err.message : String(err),
-        })
-        return NextResponse.json({ message: 'Failed to copy page image' }, { status: 502 })
+    if (sourcePage) {
+      if (sourcePage.mediaS3Key && isObjectKeyForPost(sourcePage.mediaS3Key, userId)) {
+        try {
+          mediaS3Key = await copyPostMediaKey(sourcePage.mediaS3Key, userId)
+        } catch (err) {
+          console.error('[instagram-items/pages/create] S3 copy failed', {
+            userIdPrefix: userId.slice(0, 8),
+            message: err instanceof Error ? err.message : String(err),
+          })
+          return NextResponse.json({ message: 'Failed to copy page image' }, { status: 502 })
+        }
       }
       if (sourcePage.prompt) {
         prompt = sourcePage.prompt

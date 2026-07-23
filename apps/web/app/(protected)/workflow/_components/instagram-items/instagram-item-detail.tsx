@@ -146,6 +146,14 @@ function resolveVersionIndex(
   return 0
 }
 
+function promptsFromPages(pages: InstagramItemPageDto[]): Record<string, string> {
+  const next: Record<string, string> = {}
+  for (const page of pages) {
+    next[page.id] = page.prompt ?? ''
+  }
+  return next
+}
+
 function syncFromItem(
   item: InstagramItemDto,
   preferredPageId?: string | null,
@@ -155,6 +163,7 @@ function syncFromItem(
   versions: ItemImageVersion[]
   previewIndex: number
   committedIndex: number
+  pagePromptsById: Record<string, string>
 } {
   const pages = sortedPages(item)
   const selectedPage =
@@ -169,6 +178,7 @@ function syncFromItem(
     versions,
     previewIndex: committedIndex,
     committedIndex,
+    pagePromptsById: promptsFromPages(pages),
   }
 }
 
@@ -207,6 +217,9 @@ export function InstagramItemDetail({
   const initialSync = syncFromItem(item)
   const [pages, setPages] = useState<InstagramItemPageDto[]>(initialSync.pages)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialSync.selectedPageId)
+  const [pagePromptsById, setPagePromptsById] = useState<Record<string, string>>(
+    initialSync.pagePromptsById,
+  )
   const [imageVersions, setImageVersions] = useState<ItemImageVersion[]>(initialSync.versions)
   const [previewVersionIndex, setPreviewVersionIndex] = useState(initialSync.previewIndex)
   const [committedVersionIndex, setCommittedVersionIndex] = useState(initialSync.committedIndex)
@@ -224,6 +237,7 @@ export function InstagramItemDetail({
     const next = syncFromItem(item, selectedPageId)
     setPages(next.pages)
     setSelectedPageId(next.selectedPageId)
+    setPagePromptsById(next.pagePromptsById)
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
@@ -263,6 +277,11 @@ export function InstagramItemDetail({
   )
 
   const selectedPage = pages.find((page) => page.id === selectedPageId) ?? pages[0]
+  const selectedPageIndex = Math.max(
+    0,
+    pages.findIndex((page) => page.id === (selectedPage?.id ?? selectedPageId)),
+  )
+  const pagePrompt = selectedPageId ? (pagePromptsById[selectedPageId] ?? '') : ''
   const busy =
     saving ||
     isGenerating ||
@@ -271,7 +290,7 @@ export function InstagramItemDetail({
     isAddingPage ||
     isDuplicatingPage ||
     isDeletingPage
-  const canGenerate = values.visualBrief.trim().length > 0 && !busy && Boolean(selectedPageId)
+  const canGenerate = pagePrompt.trim().length > 0 && !busy && Boolean(selectedPageId)
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
   const visibleMediaS3Key = previewVersion?.mediaS3Key || null
   const hasVisiblePreviousResult = parsePostMediaFilename(visibleMediaS3Key) != null
@@ -287,6 +306,11 @@ export function InstagramItemDetail({
   const headerTitle = values.title.trim() ? values.title : t('untitled')
   const footerError = actionError || generateError
 
+  function setSelectedPagePrompt(next: string) {
+    if (!selectedPageId) return
+    setPagePromptsById((prev) => ({ ...prev, [selectedPageId]: next }))
+  }
+
   function valuesWithRefs(): InstagramItemFormValues {
     return {
       ...values,
@@ -298,6 +322,7 @@ export function InstagramItemDetail({
     const next = syncFromItem(nextItem, preferredPageId ?? selectedPageId)
     setPages(next.pages)
     setSelectedPageId(next.selectedPageId)
+    setPagePromptsById(next.pagePromptsById)
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
@@ -327,7 +352,7 @@ export function InstagramItemDetail({
   )
 
   async function handleGenerate() {
-    const prompt = values.visualBrief.trim()
+    const prompt = pagePrompt.trim()
     if (!prompt || !selectedPageId) return
 
     const persistedRefs = persistableRefs(referenceImages)
@@ -600,6 +625,15 @@ export function InstagramItemDetail({
                 selectedPageId={selectedPageId}
               />
 
+              {pages.length > 0 ? (
+                <FieldSeparator>
+                  {t('pages.workspaceHeading', {
+                    current: selectedPageIndex + 1,
+                    total: pages.length,
+                  })}
+                </FieldSeparator>
+              ) : null}
+
               <InstagramItemPreview
                 busy={busy}
                 canDeleteVersion={canDeleteVersion}
@@ -620,10 +654,12 @@ export function InstagramItemDetail({
               />
 
               <Field>
-                <FieldLabel htmlFor="ig-item-visual-brief">{t('fields.visualBrief')}</FieldLabel>
-                <FieldDescription>{t('generate.visualBriefHint')}</FieldDescription>
+                <FieldLabel htmlFor="ig-item-visual-brief">
+                  {t('fields.pageVisualBrief')}
+                </FieldLabel>
+                <FieldDescription>{t('generate.pageVisualBriefHint')}</FieldDescription>
                 <PostCreatorImagePicker
-                  disabled={busy}
+                  disabled={busy || !selectedPageId}
                   emptyLabel={tPicker('empty')}
                   maxReachedLabel={tPicker('maxReached')}
                   onAddReference={(photo) => {
@@ -633,22 +669,20 @@ export function InstagramItemDetail({
                     })
                   }}
                   onUploadError={(message) => toast.error(message || tPicker('uploadError'))}
-                  onValueChange={(next) => setValues((prev) => ({ ...prev, visualBrief: next }))}
+                  onValueChange={setSelectedPagePrompt}
                   pickerAriaLabel={tPicker('ariaLabel')}
                   selectedNames={selectedNames}
                   uploadLabel={tPicker('upload')}
                   uploadingLabel={tPicker('uploading')}
-                  value={values.visualBrief}
+                  value={pagePrompt}
                 >
                   <Textarea
-                    disabled={busy}
+                    disabled={busy || !selectedPageId}
                     id="ig-item-visual-brief"
-                    onChange={(event) =>
-                      setValues((prev) => ({ ...prev, visualBrief: event.target.value }))
-                    }
+                    onChange={(event) => setSelectedPagePrompt(event.target.value)}
                     placeholder={t('generate.visualBriefPlaceholder')}
                     rows={4}
-                    value={values.visualBrief}
+                    value={pagePrompt}
                   />
                 </PostCreatorImagePicker>
                 <PostCreatorReferenceThumbnails

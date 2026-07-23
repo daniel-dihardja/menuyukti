@@ -2376,10 +2376,11 @@
         },
         "pages": {
           "label": "Pages",
-          "description": "Each page is a frame of this Story or post. Versions are tracked per page.",
+          "description": "Each page is a frame of this Story or post, with its own visual brief and image versions.",
           "selectAria": "Select page {index}",
           "actionsAria": "Page actions",
           "selectedIndicator": "Page {current} of {total}",
+          "workspaceHeading": "Page {current} of {total}",
           "add": "Add page",
           "duplicate": "Duplicate page",
           "delete": "Delete page",
@@ -2403,7 +2404,8 @@
           "title": "Title",
           "hook": "Hook",
           "caption": "Caption",
-          "visualBrief": "Visual brief"
+          "visualBrief": "Visual brief",
+          "pageVisualBrief": "Visual brief for this page"
         },
         "generate": {
           "button": "Generate image",
@@ -2419,6 +2421,7 @@
           "useCurrentPreviewAsReferenceHint": "Next generate edits from the image currently shown above.",
           "useCurrentPreviewAsReferenceUnavailable": "Generate an image first to use it as an edit reference.",
           "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
+          "pageVisualBriefHint": "Describe this page only. Type @ to attach product photos from Media as generation references.",
           "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",
           "formatHintPost": "Output size: 1024×1024 (square post).",
           "formatHintStory": "Output size: 768×1376 (story / reel).",
