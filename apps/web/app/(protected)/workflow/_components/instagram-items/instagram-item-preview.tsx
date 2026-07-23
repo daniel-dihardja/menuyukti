@@ -13,6 +13,13 @@ import {
 
 import { Button } from '@workspace/ui/components/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
 import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
@@ -166,15 +173,17 @@ export function InstagramItemPreview({
                 <img alt="" className="size-full object-cover" src={previewUrl} />
               </button>
             ) : (
-              <div className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground [&_svg]:size-5">
-                  <ImageIcon aria-hidden />
-                </span>
-                <span className="font-medium text-foreground text-xs">
-                  {t('generate.previewEmptyTitle')}
-                </span>
-                <span className="text-muted-foreground text-xs">{t('generate.previewEmpty')}</span>
-              </div>
+              <Empty className="size-full min-h-0 gap-2 rounded-none border-0 p-4 md:p-4">
+                <EmptyHeader className="gap-1.5">
+                  <EmptyMedia variant="icon">
+                    <ImageIcon aria-hidden />
+                  </EmptyMedia>
+                  <EmptyTitle className="text-sm">{t('generate.previewEmptyTitle')}</EmptyTitle>
+                  <EmptyDescription className="text-xs">
+                    {t('generate.previewEmpty')}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
             {isGenerating ? (
               <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
