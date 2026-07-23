@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ArrowLeftIcon, PlusIcon, SparklesIcon, XIcon } from 'lucide-react'
+import { ArrowLeftIcon, CopyIcon, PlusIcon, SparklesIcon, Trash2Icon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -48,7 +48,8 @@ import { PostCreatorReferenceThumbnails } from '@/app/(protected)/ig-studio/post
 import { StyleUsageGuide } from '@/components/styles/style-usage-guide'
 import type {
   InstagramItemDto,
-  InstagramItemMediaVersionDto,
+  InstagramItemPageDto,
+  InstagramItemPageMediaVersionDto,
 } from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
@@ -73,6 +74,7 @@ import {
 } from './use-instagram-items'
 
 const STYLE_NONE = '__none__'
+const MAX_ITEM_PAGES = 10
 
 const optionChipClassName = cn(
   buttonVariants({ variant: 'secondary', size: 'sm' }),
@@ -92,7 +94,7 @@ type InstagramItemDetailProps = {
   onGenerated: (item: InstagramItemDto) => void
 }
 
-type ItemImageVersion = InstagramItemMediaVersionDto & { imageUrl: string | null }
+type ItemImageVersion = InstagramItemPageMediaVersionDto & { imageUrl: string | null }
 
 function refsFromItem(item: InstagramItemDto): PostCreatorReferenceImage[] {
   if (!Array.isArray(item.referenceImages)) return []
@@ -109,22 +111,27 @@ function persistableRefs(
   return images.map((image) => ({ name: image.name, enabled: image.enabled }))
 }
 
-function versionsFromItem(item: InstagramItemDto): ItemImageVersion[] {
-  const raw = Array.isArray(item.mediaVersions) ? item.mediaVersions : []
+function sortedPages(item: InstagramItemDto): InstagramItemPageDto[] {
+  return [...(item.pages ?? [])].toSorted((a, b) => a.sortOrder - b.sortOrder)
+}
+
+function versionsFromPage(page: InstagramItemPageDto | undefined): ItemImageVersion[] {
+  if (!page) return []
+  const raw = Array.isArray(page.mediaVersions) ? page.mediaVersions : []
   if (raw.length > 0) {
     return raw.map((version) => ({
       ...version,
       imageUrl: version.imageUrl ?? null,
     }))
   }
-  if (item.imageUrl || item.mediaS3Key) {
+  if (page.imageUrl || page.mediaS3Key) {
     return [
       {
         id: 'current',
-        mediaS3Key: item.mediaS3Key ?? '',
-        prompt: item.generationPrompt ?? null,
-        createdAt: item.updatedAt ?? item.createdAt ?? '',
-        imageUrl: item.imageUrl ?? null,
+        mediaS3Key: page.mediaS3Key ?? '',
+        prompt: page.prompt ?? null,
+        createdAt: page.updatedAt ?? page.createdAt ?? '',
+        imageUrl: page.imageUrl ?? null,
       },
     ]
   }
@@ -144,14 +151,26 @@ function resolveVersionIndex(
   return 0
 }
 
-function syncFromItem(item: InstagramItemDto): {
+function syncFromItem(
+  item: InstagramItemDto,
+  preferredPageId?: string | null,
+): {
+  pages: InstagramItemPageDto[]
+  selectedPageId: string | null
   versions: ItemImageVersion[]
   previewIndex: number
   committedIndex: number
 } {
-  const versions = versionsFromItem(item)
-  const committedIndex = resolveVersionIndex(versions, item.mediaS3Key)
+  const pages = sortedPages(item)
+  const selectedPage =
+    (preferredPageId ? pages.find((page) => page.id === preferredPageId) : undefined) ??
+    pages[0] ??
+    null
+  const versions = versionsFromPage(selectedPage ?? undefined)
+  const committedIndex = resolveVersionIndex(versions, selectedPage?.mediaS3Key)
   return {
+    pages,
+    selectedPageId: selectedPage?.id ?? null,
     versions,
     previewIndex: committedIndex,
     committedIndex,
@@ -191,21 +210,31 @@ export function InstagramItemDetail({
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [useCurrentPreviewAsReference, setUseCurrentPreviewAsReference] = useState(true)
   const initialSync = syncFromItem(item)
+  const [pages, setPages] = useState<InstagramItemPageDto[]>(initialSync.pages)
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(initialSync.selectedPageId)
   const [imageVersions, setImageVersions] = useState<ItemImageVersion[]>(initialSync.versions)
   const [previewVersionIndex, setPreviewVersionIndex] = useState(initialSync.previewIndex)
   const [committedVersionIndex, setCommittedVersionIndex] = useState(initialSync.committedIndex)
   const [isCommitting, setIsCommitting] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
+  const [isAddingPage, setIsAddingPage] = useState(false)
+  const [isDuplicatingPage, setIsDuplicatingPage] = useState(false)
+  const [isDeletingPage, setIsDeletingPage] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<'version' | 'page'>('version')
 
   useEffect(() => {
     setValues(toFormValues(item))
     setReferenceImages(refsFromItem(item))
-    const next = syncFromItem(item)
+    const next = syncFromItem(item, selectedPageId)
+    setPages(next.pages)
+    setSelectedPageId(next.selectedPageId)
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
     setGenerateError(null)
+    // Only re-sync when the item identity/payload changes, not when local page selection changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: prefer sticky page id
   }, [item])
 
   useEffect(() => {
@@ -238,12 +267,28 @@ export function InstagramItemDetail({
     [referenceImages],
   )
 
-  const busy = saving || isGenerating || isCommitting || isDeletingVersion
-  const canGenerate = values.visualBrief.trim().length > 0 && !busy
+  const selectedPage = pages.find((page) => page.id === selectedPageId) ?? pages[0]
+  const busy =
+    saving ||
+    isGenerating ||
+    isCommitting ||
+    isDeletingVersion ||
+    isAddingPage ||
+    isDuplicatingPage ||
+    isDeletingPage
+  const canGenerate = values.visualBrief.trim().length > 0 && !busy && Boolean(selectedPageId)
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
   const visibleMediaS3Key = previewVersion?.mediaS3Key || null
   const hasVisiblePreviousResult = parsePostMediaFilename(visibleMediaS3Key) != null
   const canDeleteVersion = Boolean(previewVersion?.mediaS3Key) && imageVersions.length > 0 && !busy
+  const canAddPage = !busy && pages.length > 0 && pages.length < MAX_ITEM_PAGES
+  const canDuplicatePage = canAddPage && Boolean(selectedPageId)
+  const canDeletePage =
+    !busy &&
+    pages.length > 1 &&
+    Boolean(selectedPage) &&
+    !selectedPage?.mediaS3Key &&
+    (selectedPage?.mediaVersions?.length ?? 0) === 0
   const headerTitle = values.title.trim() ? values.title : t('untitled')
   const footerError = actionError || generateError
 
@@ -254,14 +299,28 @@ export function InstagramItemDetail({
     }
   }
 
-  function applyItemUpdate(nextItem: InstagramItemDto) {
-    const next = syncFromItem(nextItem)
+  function applyItemUpdate(nextItem: InstagramItemDto, preferredPageId?: string | null) {
+    const next = syncFromItem(nextItem, preferredPageId ?? selectedPageId)
+    setPages(next.pages)
+    setSelectedPageId(next.selectedPageId)
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
     setValues(toFormValues(nextItem))
     setReferenceImages(refsFromItem(nextItem))
     onGenerated(nextItem)
+  }
+
+  function selectPage(pageId: string) {
+    if (busy || pageId === selectedPageId) return
+    const page = pages.find((candidate) => candidate.id === pageId)
+    if (!page) return
+    const versions = versionsFromPage(page)
+    const committedIndex = resolveVersionIndex(versions, page.mediaS3Key)
+    setSelectedPageId(pageId)
+    setImageVersions(versions)
+    setPreviewVersionIndex(committedIndex)
+    setCommittedVersionIndex(committedIndex)
   }
 
   const handlePreviewIndexChange = useCallback(
@@ -274,7 +333,7 @@ export function InstagramItemDetail({
 
   async function handleGenerate() {
     const prompt = values.visualBrief.trim()
-    if (!prompt) return
+    if (!prompt || !selectedPageId) return
 
     const persistedRefs = persistableRefs(referenceImages)
     const { references, tooManyReferences } = resolveGenerationReferences({
@@ -297,6 +356,7 @@ export function InstagramItemDetail({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          pageId: selectedPageId,
           prompt,
           model: generationModel,
           referenceImages: persistedRefs,
@@ -315,7 +375,7 @@ export function InstagramItemDetail({
         return
       }
       if (payload.item) {
-        applyItemUpdate(payload.item)
+        applyItemUpdate(payload.item, selectedPageId)
       } else if (payload.url || payload.mediaS3Key) {
         setImageVersions([
           {
@@ -339,16 +399,21 @@ export function InstagramItemDetail({
 
   async function handleCommitVersion() {
     const version = imageVersions[previewVersionIndex]
-    if (!version?.mediaS3Key || previewVersionIndex === committedVersionIndex) return
+    if (!version?.mediaS3Key || !selectedPageId || previewVersionIndex === committedVersionIndex) {
+      return
+    }
 
     setIsCommitting(true)
     setGenerateError(null)
     try {
-      const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
-      })
+      const res = await fetch(
+        `/api/workflows/${workflowId}/instagram-items/${item.id}/pages/${selectedPageId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+        },
+      )
       const payload = (await res.json().catch(() => ({}))) as {
         message?: string
         item?: InstagramItemDto
@@ -357,7 +422,7 @@ export function InstagramItemDetail({
         setGenerateError(payload.message || t('generate.commitError'))
         return
       }
-      applyItemUpdate(payload.item)
+      applyItemUpdate(payload.item, selectedPageId)
     } catch {
       setGenerateError(t('generate.commitError'))
     } finally {
@@ -367,16 +432,19 @@ export function InstagramItemDetail({
 
   async function handleDeleteVersion() {
     const version = imageVersions[previewVersionIndex]
-    if (!version?.mediaS3Key) return
+    if (!version?.mediaS3Key || !selectedPageId) return
 
     setIsDeletingVersion(true)
     setGenerateError(null)
     try {
-      const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}/versions`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
-      })
+      const res = await fetch(
+        `/api/workflows/${workflowId}/instagram-items/${item.id}/pages/${selectedPageId}/versions`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+        },
+      )
       const payload = (await res.json().catch(() => ({}))) as {
         message?: string
         item?: InstagramItemDto
@@ -386,11 +454,91 @@ export function InstagramItemDetail({
         return
       }
       setDeleteDialogOpen(false)
-      applyItemUpdate(payload.item)
+      applyItemUpdate(payload.item, selectedPageId)
     } catch {
       setGenerateError(t('generate.deleteVersionError'))
     } finally {
       setIsDeletingVersion(false)
+    }
+  }
+
+  async function createPage(copyFromPageId?: string) {
+    const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}/pages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(copyFromPageId ? { copyFromPageId } : {}),
+    })
+    const payload = (await res.json().catch(() => ({}))) as {
+      message?: string
+      page?: InstagramItemPageDto
+      item?: InstagramItemDto
+    }
+    if (!res.ok || !payload.item) {
+      throw new Error(payload.message || t('pages.addError'))
+    }
+    applyItemUpdate(payload.item, payload.page?.id ?? selectedPageId)
+  }
+
+  async function handleAddPage() {
+    if (!canAddPage) {
+      if (pages.length >= MAX_ITEM_PAGES) {
+        setGenerateError(t('pages.maxReached'))
+      }
+      return
+    }
+    setIsAddingPage(true)
+    setGenerateError(null)
+    try {
+      await createPage()
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : t('pages.addError'))
+    } finally {
+      setIsAddingPage(false)
+    }
+  }
+
+  async function handleDuplicatePage() {
+    if (!canDuplicatePage || !selectedPageId) {
+      if (pages.length >= MAX_ITEM_PAGES) {
+        setGenerateError(t('pages.maxReached'))
+      }
+      return
+    }
+    setIsDuplicatingPage(true)
+    setGenerateError(null)
+    try {
+      await createPage(selectedPageId)
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : t('pages.duplicateError'))
+    } finally {
+      setIsDuplicatingPage(false)
+    }
+  }
+
+  async function handleDeletePage() {
+    if (!canDeletePage || !selectedPageId) return
+
+    setIsDeletingPage(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch(
+        `/api/workflows/${workflowId}/instagram-items/${item.id}/pages/${selectedPageId}`,
+        { method: 'DELETE' },
+      )
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string
+        item?: InstagramItemDto
+      }
+      if (!res.ok || !payload.item) {
+        setGenerateError(payload.message || t('pages.deleteError'))
+        return
+      }
+      setDeleteDialogOpen(false)
+      applyItemUpdate(payload.item)
+    } catch {
+      setGenerateError(t('pages.deleteError'))
+    } finally {
+      setIsDeletingPage(false)
     }
   }
 
@@ -538,6 +686,88 @@ export function InstagramItemDetail({
 
             <FieldSeparator>{t('sections.generate')}</FieldSeparator>
 
+            <Field>
+              <FieldLabel>{t('pages.label')}</FieldLabel>
+              <FieldDescription>{t('pages.description')}</FieldDescription>
+              <div className="flex flex-wrap items-center gap-2">
+                {pages.map((page, index) => {
+                  const selected = page.id === selectedPageId
+                  const thumb = page.imageUrl
+                  return (
+                    <button
+                      aria-label={t('pages.selectAria', { index: index + 1 })}
+                      aria-pressed={selected}
+                      className={cn(
+                        'relative size-14 overflow-hidden rounded-md border bg-muted/40 transition-colors',
+                        selected
+                          ? 'border-ring ring-2 ring-ring/40'
+                          : 'border-border hover:bg-muted/60',
+                        busy && 'pointer-events-none opacity-60',
+                      )}
+                      disabled={busy}
+                      key={page.id}
+                      onClick={() => selectPage(page.id)}
+                      type="button"
+                    >
+                      {thumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+                        <img alt="" className="size-full object-cover" src={thumb} />
+                      ) : (
+                        <span className="flex size-full items-center justify-center text-muted-foreground text-xs">
+                          {index + 1}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+                <Button
+                  disabled={!canAddPage}
+                  onClick={() => {
+                    void handleAddPage()
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  {isAddingPage ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <PlusIcon data-icon="inline-start" />
+                  )}
+                  {t('pages.add')}
+                </Button>
+                <Button
+                  disabled={!canDuplicatePage}
+                  onClick={() => {
+                    void handleDuplicatePage()
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  {isDuplicatingPage ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <CopyIcon data-icon="inline-start" />
+                  )}
+                  {t('pages.duplicate')}
+                </Button>
+                <Button
+                  disabled={!canDeletePage}
+                  onClick={() => {
+                    setDeleteTarget('page')
+                    setDeleteDialogOpen(true)
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Trash2Icon data-icon="inline-start" />
+                  {t('pages.delete')}
+                </Button>
+              </div>
+            </Field>
+
             <InstagramItemPreview
               busy={busy}
               canDeleteVersion={canDeleteVersion}
@@ -549,7 +779,10 @@ export function InstagramItemDetail({
                 void handleCommitVersion()
               }}
               onPreviewIndexChange={handlePreviewIndexChange}
-              onRequestDelete={() => setDeleteDialogOpen(true)}
+              onRequestDelete={() => {
+                setDeleteTarget('version')
+                setDeleteDialogOpen(true)
+              }}
               previewIndex={previewVersionIndex}
               versions={imageVersions}
             />
@@ -764,33 +997,49 @@ export function InstagramItemDetail({
 
       <AlertDialog
         onOpenChange={(open) => {
-          if (!isDeletingVersion) setDeleteDialogOpen(open)
+          if (!isDeletingVersion && !isDeletingPage) setDeleteDialogOpen(open)
         }}
         open={deleteDialogOpen}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('generate.deleteVersionConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {deleteTarget === 'page'
+                ? t('pages.deleteConfirmTitle')
+                : t('generate.deleteVersionConfirmTitle')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('generate.deleteVersionConfirmDescription')}
+              {deleteTarget === 'page'
+                ? t('pages.deleteConfirmDescription')
+                : t('generate.deleteVersionConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingVersion} type="button">
-              {t('generate.deleteVersionConfirmCancel')}
+            <AlertDialogCancel disabled={isDeletingVersion || isDeletingPage} type="button">
+              {deleteTarget === 'page'
+                ? t('pages.deleteConfirmCancel')
+                : t('generate.deleteVersionConfirmCancel')}
             </AlertDialogCancel>
             <Button
-              disabled={isDeletingVersion}
+              disabled={isDeletingVersion || isDeletingPage}
               onClick={() => {
-                void handleDeleteVersion()
+                if (deleteTarget === 'page') {
+                  void handleDeletePage()
+                } else {
+                  void handleDeleteVersion()
+                }
               }}
               type="button"
               variant="destructive"
             >
-              {isDeletingVersion ? <Spinner data-icon="inline-start" /> : null}
-              {isDeletingVersion
-                ? t('generate.deleteVersionDeleting')
-                : t('generate.deleteVersionConfirmAction')}
+              {isDeletingVersion || isDeletingPage ? <Spinner data-icon="inline-start" /> : null}
+              {deleteTarget === 'page'
+                ? isDeletingPage
+                  ? t('pages.deleteDeleting')
+                  : t('pages.deleteConfirmAction')
+                : isDeletingVersion
+                  ? t('generate.deleteVersionDeleting')
+                  : t('generate.deleteVersionConfirmAction')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

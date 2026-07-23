@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import strawberry
-from sqlalchemy.orm import joinedload
 
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramItem, Node
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.instagram_items_common import item_to_gql, parse_positive_id
+from graphql.schema.instagram_items_common import (
+    ITEM_PAGES_LOAD,
+    item_to_gql,
+    parse_positive_id,
+)
 from graphql.schema.types.instagram_item import InstagramItemType
 
 
@@ -43,7 +46,7 @@ class InstagramItemsQuery:
                 return []
             rows = (
                 session.query(InstagramItem)
-                .options(joinedload(InstagramItem.media_versions))
+                .options(ITEM_PAGES_LOAD)
                 .filter(InstagramItem.workflow_id == workflow_pk)
                 .order_by(
                     InstagramItem.schedule.asc().nulls_last(),
@@ -51,7 +54,15 @@ class InstagramItemsQuery:
                 )
                 .all()
             )
-            return [item_to_gql(row) for row in rows]
+            # joinedload of collections can duplicate parent rows; dedupe by id.
+            seen: set[int] = set()
+            unique_rows: list[InstagramItem] = []
+            for row in rows:
+                if row.id in seen:
+                    continue
+                seen.add(row.id)
+                unique_rows.append(row)
+            return [item_to_gql(row) for row in unique_rows]
 
     @strawberry.field(description="A single Instagram item owned via its workflow location.")
     def instagram_item(
@@ -71,7 +82,7 @@ class InstagramItemsQuery:
             row = session.get(
                 InstagramItem,
                 item_pk,
-                options=[joinedload(InstagramItem.media_versions)],
+                options=[ITEM_PAGES_LOAD],
             )
             if row is None:
                 return None

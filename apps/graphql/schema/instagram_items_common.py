@@ -9,11 +9,12 @@ import strawberry
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
-from graphql.data_sources import InstagramItem, Node
+from graphql.data_sources import InstagramItem, InstagramItemPage, Node
 from graphql.data_sources.models.visual_style import VisualStyle
 from graphql.schema.auth import is_location_owner, is_workspace_member
 from graphql.schema.types.instagram_item import (
-    InstagramItemMediaVersionType,
+    InstagramItemPageMediaVersionType,
+    InstagramItemPageType,
     InstagramItemReferenceImageInput,
     InstagramItemReferenceImageType,
     InstagramItemType,
@@ -22,6 +23,7 @@ from graphql.schema.types.instagram_item import (
 VALID_KINDS = frozenset({"story", "post", "reel"})
 VALID_STATUSES = frozenset({"draft", "ready"})
 MAX_REFERENCE_IMAGES = 5
+MAX_INSTAGRAM_ITEM_PAGES = 10
 
 _SAFE_POST_FILENAME = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$",
@@ -33,6 +35,8 @@ _SAFE_PHOTO_FILENAME = re.compile(
     r"\.(webp|jpg|jpeg|png|gif|avif|tif|tiff)$",
     re.IGNORECASE,
 )
+
+ITEM_PAGES_LOAD = joinedload(InstagramItem.pages).joinedload(InstagramItemPage.media_versions)
 
 
 def _reference_images_to_gql(
@@ -57,8 +61,8 @@ def _reference_images_to_gql(
     return out
 
 
-def _media_version_to_gql(row) -> InstagramItemMediaVersionType:
-    return InstagramItemMediaVersionType(
+def _media_version_to_gql(row) -> InstagramItemPageMediaVersionType:
+    return InstagramItemPageMediaVersionType(
         id=strawberry.ID(str(row.id)),
         media_s3_key=row.media_s3_key,
         prompt=row.prompt,
@@ -66,9 +70,23 @@ def _media_version_to_gql(row) -> InstagramItemMediaVersionType:
     )
 
 
-def item_to_gql(row: InstagramItem) -> InstagramItemType:
+def page_to_gql(row: InstagramItemPage) -> InstagramItemPageType:
     versions = list(row.media_versions) if row.media_versions is not None else []
     versions.sort(key=lambda version: (version.created_at, version.id), reverse=True)
+    return InstagramItemPageType(
+        id=strawberry.ID(str(row.id)),
+        sort_order=row.sort_order,
+        media_s3_key=row.media_s3_key,
+        prompt=row.prompt,
+        media_versions=[_media_version_to_gql(version) for version in versions],
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+def item_to_gql(row: InstagramItem) -> InstagramItemType:
+    pages = list(row.pages) if row.pages is not None else []
+    pages.sort(key=lambda page: (page.sort_order, page.id))
     return InstagramItemType(
         id=strawberry.ID(str(row.id)),
         workflow_id=strawberry.ID(str(row.workflow_id)),
@@ -78,10 +96,9 @@ def item_to_gql(row: InstagramItem) -> InstagramItemType:
         caption=row.caption,
         hook=row.hook,
         visual_brief=row.visual_brief,
-        media_s3_key=row.media_s3_key,
         generation_prompt=row.generation_prompt,
         reference_images=_reference_images_to_gql(row.reference_images),
-        media_versions=[_media_version_to_gql(version) for version in versions],
+        pages=[page_to_gql(page) for page in pages],
         style_id=row.style_id,
         status=row.status,
         schedule=row.schedule,
@@ -104,10 +121,10 @@ def validate_item_media_s3_key(key: str, owner_clerk_user_id: str) -> None:
     """Require ``users/{owner}/posts/<uuid>.webp`` keys (same prefix as IG Studio posts)."""
     expected_prefix = f"users/{owner_clerk_user_id}/posts/"
     if not key.startswith(expected_prefix) or key == expected_prefix:
-        raise ValueError("Invalid media_s3_key for updateInstagramItem")
+        raise ValueError("Invalid media_s3_key for Instagram item page")
     filename = key[len(expected_prefix) :]
     if "/" in filename or not _SAFE_POST_FILENAME.match(filename):
-        raise ValueError("Invalid media_s3_key for updateInstagramItem")
+        raise ValueError("Invalid media_s3_key for Instagram item page")
 
 
 def normalize_reference_images(
@@ -195,7 +212,7 @@ def load_item_for_owner(session, item_pk: int, user_id: str) -> InstagramItem:
     row = session.get(
         InstagramItem,
         item_pk,
-        options=[joinedload(InstagramItem.media_versions)],
+        options=[ITEM_PAGES_LOAD],
     )
     if row is None:
         raise ValueError("Instagram item not found")
@@ -204,15 +221,42 @@ def load_item_for_owner(session, item_pk: int, user_id: str) -> InstagramItem:
     return row
 
 
-def reload_item_with_versions(session, item_pk: int) -> InstagramItem:
-    """Re-load item + versions, refreshing identity-map state after commit."""
+def reload_item_with_pages(session, item_pk: int) -> InstagramItem:
+    """Re-load item + pages + versions, refreshing identity-map state after commit."""
     stmt = (
         select(InstagramItem)
         .where(InstagramItem.id == item_pk)
-        .options(joinedload(InstagramItem.media_versions))
+        .options(ITEM_PAGES_LOAD)
         .execution_options(populate_existing=True)
     )
     row = session.scalars(stmt).unique().one_or_none()
     if row is None:
         raise ValueError("Instagram item not found")
     return row
+
+
+def load_page_for_owner(session, page_pk: int, user_id: str) -> InstagramItemPage:
+    page_row = session.get(
+        InstagramItemPage,
+        page_pk,
+        options=[joinedload(InstagramItemPage.media_versions)],
+    )
+    if page_row is None:
+        raise ValueError("Instagram item page not found")
+    item_row = load_item_for_owner(session, page_row.instagram_item_id, user_id)
+    # Ensure page belongs to the authorized item (load_item_for_owner already checks ownership).
+    _ = item_row
+    return page_row
+
+
+def reload_page_with_versions(session, page_pk: int) -> InstagramItemPage:
+    stmt = (
+        select(InstagramItemPage)
+        .where(InstagramItemPage.id == page_pk)
+        .options(joinedload(InstagramItemPage.media_versions))
+        .execution_options(populate_existing=True)
+    )
+    page_row = session.scalars(stmt).unique().one_or_none()
+    if page_row is None:
+        raise ValueError("Instagram item page not found")
+    return page_row

@@ -7,8 +7,10 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import {
   INSTAGRAM_ITEM_QUERY,
   UPDATE_INSTAGRAM_ITEM_MUTATION,
+  UPDATE_INSTAGRAM_ITEM_PAGE_MUTATION,
   type InstagramItemData,
   type UpdateInstagramItemData,
+  type UpdateInstagramItemPageData,
 } from '@/lib/graphql/queries/instagram-items'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import {
@@ -25,7 +27,12 @@ import {
   runInstagramImageGeneration,
 } from '@/lib/posts/run-instagram-image-generation'
 
-import { itemIdParamSchema, referenceImageSchema, workflowIdParamSchema } from '../../schema'
+import {
+  itemIdParamSchema,
+  pageIdParamSchema,
+  referenceImageSchema,
+  workflowIdParamSchema,
+} from '../../schema'
 import { withItemImageUrl } from '../../with-image-url'
 
 type RouteContext = {
@@ -33,6 +40,7 @@ type RouteContext = {
 }
 
 const bodySchema = z.object({
+  pageId: pageIdParamSchema,
   prompt: z.string().trim().min(1).max(3000),
   references: z.array(generationReferenceSchema).max(MAX_GENERATION_REFERENCES).optional(),
   /** Full attached set to persist (enabled + disabled), not only generation refs. */
@@ -105,7 +113,13 @@ export async function POST(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Instagram item not found' }, { status: 404 })
     }
 
+    const page = current.pages.find((candidate) => candidate.id === parsed.data.pageId)
+    if (!page) {
+      return NextResponse.json({ message: 'Instagram item page not found' }, { status: 404 })
+    }
+
     const {
+      pageId,
       prompt,
       references = [],
       referenceImages,
@@ -136,33 +150,65 @@ export async function POST(req: Request, context: RouteContext) {
       )
     }
 
-    let updated: UpdateInstagramItemData
     try {
-      updated = await graphqlQuery<UpdateInstagramItemData>(
+      await graphqlQuery<UpdateInstagramItemPageData>(
+        UPDATE_INSTAGRAM_ITEM_PAGE_MUTATION,
+        {
+          id: pageId,
+          mediaS3Key: result.data.mediaS3Key,
+          prompt,
+        },
+        userId,
+      )
+    } catch (err) {
+      console.error('[instagram-items/generate] updateInstagramItemPage failed', {
+        userIdPrefix: userId.slice(0, 8),
+        itemId: itemParsed.data,
+        pageId,
+        message: err instanceof Error ? err.message : String(err),
+      })
+      return NextResponse.json(
+        { message: 'Failed to save image to Instagram item page' },
+        { status: 502 },
+      )
+    }
+
+    let updatedItem: UpdateInstagramItemData['updateInstagramItem']
+    try {
+      const updated = await graphqlQuery<UpdateInstagramItemData>(
         UPDATE_INSTAGRAM_ITEM_MUTATION,
         {
           id: itemParsed.data,
           visualBrief: prompt,
-          mediaS3Key: result.data.mediaS3Key,
           generationPrompt: prompt,
           ...(referenceImages !== undefined ? { referenceImages } : {}),
           ...(styleId !== undefined ? { styleId } : {}),
         },
         userId,
       )
+      updatedItem = updated.updateInstagramItem
     } catch (err) {
       console.error('[instagram-items/generate] updateInstagramItem failed', {
         userIdPrefix: userId.slice(0, 8),
         itemId: itemParsed.data,
         message: err instanceof Error ? err.message : String(err),
       })
-      return NextResponse.json(
-        { message: 'Failed to save image to Instagram item' },
-        { status: 502 },
+      // Page media was saved; reload item so the client still gets the new image.
+      const reloaded = await graphqlQuery<InstagramItemData>(
+        INSTAGRAM_ITEM_QUERY,
+        { id: itemParsed.data },
+        userId,
       )
+      if (!reloaded.instagramItem) {
+        return NextResponse.json(
+          { message: 'Failed to save Instagram item metadata' },
+          { status: 502 },
+        )
+      }
+      updatedItem = reloaded.instagramItem
     }
 
-    const item = await withItemImageUrl(updated.updateInstagramItem, userId)
+    const item = await withItemImageUrl(updatedItem, userId)
 
     return NextResponse.json({
       url: result.data.url,
@@ -170,6 +216,7 @@ export async function POST(req: Request, context: RouteContext) {
       mediaS3Key: result.data.mediaS3Key,
       size: result.data.size,
       createdAt: result.data.createdAt,
+      pageId,
       item,
     })
   } catch (error) {

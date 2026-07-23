@@ -270,12 +270,23 @@ type ImageAiFlowType {
   sortOrder: Int!
 }
 
-"""A single generated image version for an Instagram item."""
-type InstagramItemMediaVersionType {
+"""A single generated image version for an Instagram item page."""
+type InstagramItemPageMediaVersionType {
   id: ID!
   mediaS3Key: String!
   prompt: String
   createdAt: DateTime
+}
+
+"""A single page/frame within a workflow Instagram item."""
+type InstagramItemPageType {
+  id: ID!
+  sortOrder: Int!
+  mediaS3Key: String
+  prompt: String
+  mediaVersions: [InstagramItemPageMediaVersionType!]!
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 
 """Input for an attached media-library generation reference."""
@@ -300,10 +311,9 @@ type InstagramItemType {
   caption: String
   hook: String
   visualBrief: String
-  mediaS3Key: String
   generationPrompt: String
   referenceImages: [InstagramItemReferenceImageType!]!
-  mediaVersions: [InstagramItemMediaVersionType!]!
+  pages: [InstagramItemPageType!]!
   styleId: Int
   status: String!
   schedule: DateTime
@@ -565,17 +575,20 @@ type Mutation {
   createPost(title: String = null): PostType!
   createPostPage(postId: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
   createInstagramItem(workflowId: ID!, kind: String!, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, status: String = null, schedule: DateTime = null): InstagramItemType!
+  createInstagramItemPage(itemId: ID!, mediaS3Key: String, prompt: String): InstagramItemPageType!
   createWorkflowFromPayload(locationId: Int!, payload: JSON!, analyticsRunId: Int = null): NodeType!
   deleteNode(id: ID!): Boolean!
   deletePost(id: ID!): Boolean!
   deletePostPage(pageId: ID!): Boolean!
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
   deleteInstagramItem(id: ID!): Boolean!
-  deleteInstagramItemMediaVersion(itemId: ID!, mediaS3Key: String!): InstagramItemType!
+  deleteInstagramItemPage(pageId: ID!): Boolean!
+  deleteInstagramItemPageMediaVersion(pageId: ID!, mediaS3Key: String!): InstagramItemPageType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
-  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, mediaS3Key: String, generationPrompt: String, referenceImages: [InstagramItemReferenceImageInput!], styleId: Int, status: String = null, schedule: DateTime): InstagramItemType!
+  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, generationPrompt: String, referenceImages: [InstagramItemReferenceImageInput!], styleId: Int, status: String = null, schedule: DateTime): InstagramItemType!
+  updateInstagramItemPage(id: ID!, mediaS3Key: String, prompt: String): InstagramItemPageType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
   setPassCriteriaStatuses(milestoneId: ID!, locationId: Int!, updates: [PassCriterionStatusInput!]!): Boolean!

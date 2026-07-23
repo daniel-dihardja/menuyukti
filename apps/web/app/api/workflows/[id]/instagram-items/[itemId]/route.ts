@@ -124,24 +124,11 @@ export async function PATCH(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Instagram item not found' }, { status: 404 })
     }
 
-    const { mediaS3Key, ...rest } = input.data
-    if (mediaS3Key !== undefined) {
-      const knownVersions = existing.instagramItem.mediaVersions ?? []
-      const isKnownVersion = knownVersions.some((version) => version.mediaS3Key === mediaS3Key)
-      if (!isKnownVersion && existing.instagramItem.mediaS3Key !== mediaS3Key) {
-        return NextResponse.json(
-          { message: 'mediaS3Key must match an existing media version for this item' },
-          { status: 400 },
-        )
-      }
-    }
-
     const data = await graphqlQuery<UpdateInstagramItemData>(
       UPDATE_INSTAGRAM_ITEM_MUTATION,
       {
         id: itemParsed.data,
-        ...rest,
-        ...(mediaS3Key !== undefined ? { mediaS3Key } : {}),
+        ...input.data,
       },
       userId,
     )

@@ -176,6 +176,11 @@ export function InstagramItemsOverview({
                       <Badge className="absolute bottom-1.5 left-1.5 shadow-sm" variant="secondary">
                         {kindLabel}
                       </Badge>
+                      {(item.pages?.length ?? 0) > 1 ? (
+                        <Badge className="absolute top-1.5 right-1.5 shadow-sm" variant="outline">
+                          {t('pages.countBadge', { count: item.pages.length })}
+                        </Badge>
+                      ) : null}
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-2.5">
                       <span className="line-clamp-2 font-medium text-sm leading-snug">{title}</span>

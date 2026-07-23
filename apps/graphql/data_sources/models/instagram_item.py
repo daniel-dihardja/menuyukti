@@ -50,7 +50,6 @@ class InstagramItem(Base):
     caption: Mapped[str | None] = mapped_column(Text, nullable=True)
     hook: Mapped[str | None] = mapped_column(Text, nullable=True)
     visual_brief: Mapped[str | None] = mapped_column(Text, nullable=True)
-    media_s3_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     generation_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
     reference_images: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONB().with_variant(JSON(), "sqlite"),
@@ -88,20 +87,21 @@ class InstagramItem(Base):
 
     workflow: Mapped[Node] = relationship(foreign_keys=[workflow_id])
     location: Mapped[Location] = relationship(foreign_keys=[location_id])
-    media_versions: Mapped[list[InstagramItemMediaVersion]] = relationship(
+    pages: Mapped[list[InstagramItemPage]] = relationship(
         back_populates="instagram_item",
         cascade="all, delete-orphan",
-        order_by=lambda: desc(InstagramItemMediaVersion.created_at),
+        order_by="InstagramItemPage.sort_order",
     )
 
 
-class InstagramItemMediaVersion(Base):
-    """A single generated image version for an Instagram item.
+class InstagramItemPage(Base):
+    """A single page/frame within a workflow Instagram item (story/post carousel).
 
-    Each generation appends a row; the item's media_s3_key points at the committed version.
+    Each item starts with one default page (sort_order=0). Generated media is stored
+    as a durable S3 object key on the page row.
     """
 
-    __tablename__ = "instagram_item_media_versions"
+    __tablename__ = "instagram_item_pages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     instagram_item_id: Mapped[int] = mapped_column(
@@ -110,15 +110,61 @@ class InstagramItemMediaVersion(Base):
         nullable=False,
         index=True,
     )
-    instagram_item: Mapped[InstagramItem] = relationship(back_populates="media_versions")
+    instagram_item: Mapped[InstagramItem] = relationship(back_populates="pages")
+    sort_order: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default=text("0"),
+        nullable=False,
+    )
+    media_s3_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[object] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    media_versions: Mapped[list[InstagramItemPageMediaVersion]] = relationship(
+        back_populates="item_page",
+        cascade="all, delete-orphan",
+        order_by=lambda: desc(InstagramItemPageMediaVersion.created_at),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "instagram_item_id",
+            "sort_order",
+            name="uq_instagram_item_page_item_sort_order",
+        ),
+    )
+
+
+class InstagramItemPageMediaVersion(Base):
+    """A single generated image version for an Instagram item page.
+
+    Each generation appends a row; the page's media_s3_key points at the committed version.
+    """
+
+    __tablename__ = "instagram_item_page_media_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    instagram_item_page_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("instagram_item_pages.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    item_page: Mapped[InstagramItemPage] = relationship(back_populates="media_versions")
     media_s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
     prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
         UniqueConstraint(
-            "instagram_item_id",
+            "instagram_item_page_id",
             "media_s3_key",
-            name="uq_instagram_item_media_version_item_key",
+            name="uq_instagram_item_page_media_version_page_key",
         ),
     )

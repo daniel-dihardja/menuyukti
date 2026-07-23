@@ -713,17 +713,22 @@ INSTAGRAM_ITEM_FIELDS = """
   caption
   hook
   visualBrief
-  mediaS3Key
   generationPrompt
   referenceImages {
     name
     enabled
   }
-  mediaVersions {
+  pages {
     id
+    sortOrder
     mediaS3Key
     prompt
-    createdAt
+    mediaVersions {
+      id
+      mediaS3Key
+      prompt
+      createdAt
+    }
   }
   status
   schedule
@@ -773,7 +778,6 @@ mutation UpdateInstagramItem(
   $caption: String
   $hook: String
   $visualBrief: String
-  $mediaS3Key: String
   $generationPrompt: String
   $referenceImages: [InstagramItemReferenceImageInput!]
   $status: String
@@ -786,7 +790,6 @@ mutation UpdateInstagramItem(
     caption: $caption
     hook: $hook
     visualBrief: $visualBrief
-    mediaS3Key: $mediaS3Key
     generationPrompt: $generationPrompt
     referenceImages: $referenceImages
     status: $status
