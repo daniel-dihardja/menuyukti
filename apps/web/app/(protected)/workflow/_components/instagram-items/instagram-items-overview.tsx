@@ -177,7 +177,7 @@ export function InstagramItemsOverview({
                         {kindLabel}
                       </Badge>
                       {(item.pages?.length ?? 0) > 1 ? (
-                        <Badge className="absolute top-1.5 right-1.5 shadow-sm" variant="outline">
+                        <Badge className="absolute top-1.5 left-1.5 shadow-sm" variant="outline">
                           {t('pages.countBadge', { count: item.pages.length })}
                         </Badge>
                       ) : null}
