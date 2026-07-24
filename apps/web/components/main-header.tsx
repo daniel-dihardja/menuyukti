@@ -28,6 +28,9 @@ export function MainHeader() {
   const t = useTranslations('mainHeader')
   const closeLabel = useCloseLabel()
   const isLanding = pathname === '/'
+  const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
+  /** Product links are for signed-in app areas; hide on marketing + auth screens. */
+  const showProductNav = !isLanding && !isLogin
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   React.useEffect(() => {
@@ -40,7 +43,8 @@ export function MainHeader() {
   const workflowsActive =
     pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
   const igStudioActive = pathname === routes.igStudio || pathname?.startsWith(`${routes.igStudio}/`)
-  const showMobileMainMenu = true
+  /** Only show the sheet when there are product links to list. */
+  const showMobileMainMenu = showProductNav
 
   const navLinkClass = (active: boolean) =>
     cn(
@@ -72,7 +76,7 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          {!isLanding ? (
+          {showProductNav ? (
             <nav
               className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
               aria-label={t('navAria')}
@@ -110,10 +114,12 @@ export function MainHeader() {
                   <SheetHeader className="flex flex-col gap-1 px-4 text-left">
                     <SheetTitle>{t('mobileMenuTitle')}</SheetTitle>
                     <SheetDescription>
-                      {isLanding ? t('landingNav.mobileDescription') : t('mobileMenuDescription')}
+                      {showProductNav
+                        ? t('mobileMenuDescription')
+                        : t('landingNav.mobileDescription')}
                     </SheetDescription>
                   </SheetHeader>
-                  {!isLanding ? (
+                  {showProductNav ? (
                     <nav aria-label={t('navAria')} className="flex flex-col gap-2 px-4 pt-4">
                       <SheetClose asChild>
                         <Button
@@ -174,11 +180,13 @@ export function MainHeader() {
             </div>
           ) : null}
           <Show when="signed-out">
-            <span className={cn(showMobileMainMenu && 'hidden sm:inline-flex')}>
-              <Button asChild size="sm" variant="default">
-                <Link href={routes.login}>{t('mobileMenuSignIn')}</Link>
-              </Button>
-            </span>
+            {showProductNav ? (
+              <span className={cn(showMobileMainMenu && 'hidden sm:inline-flex')}>
+                <Button asChild size="sm" variant="default">
+                  <Link href={routes.login}>{t('mobileMenuSignIn')}</Link>
+                </Button>
+              </span>
+            ) : null}
           </Show>
           <Show when="signed-in">
             <AccountMenu />
