@@ -24,6 +24,25 @@
       "runningDetail": "Composing prompt and running Leonardo",
       "done": "Generated post image",
       "error": "Image generation failed"
+    },
+    "getChartData": {
+      "runningGeneric": "Reading your sales charts…",
+      "doneGeneric": "Reviewed sales charts",
+      "error": "Couldn’t load chart data",
+      "charts": {
+        "venue_slot_strength_heatmap": {
+          "running": "Checking venue rhythm, peak slots, and posting frequency…",
+          "done": "Reviewed venue slot strength"
+        },
+        "menu_item_heatmap": {
+          "running": "Checking which menu items sell best and when…",
+          "done": "Reviewed menu heatmap"
+        },
+        "pair_lift_matrix_heatmap": {
+          "running": "Checking menu combos and pair-lift opportunities…",
+          "done": "Reviewed pair lift matrix"
+        }
+      }
     }
   },
   "appShell": {
@@ -1603,10 +1622,11 @@
       "chat": {
         "pageLoadingTitle": "Loading workflow…",
         "pageTitle": "Workflow #{id}",
-        "emptyTitle": "Draft Instagram content",
-        "emptyDescription": "Ask the assistant to plan Stories, posts, or Reels from your venue slot strength, menu heatmap, and pair lift charts—or to create and update Instagram items for this campaign.",
-        "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
-        "thinking": "Thinking…",
+        "emptyTitle": "Plan your Instagram week",
+        "emptyDescription": "Get a day-by-day plan with formats and menu items, grounded in your venue’s sales data.",
+        "waitHint": "Usually takes about 30 seconds.",
+        "placeholder": "Ask for a weekly Instagram plan…",
+        "thinking": "Planning…",
         "errorTitle": "Something went wrong",
         "errorDescription": "The request could not be completed. Please try again.",
         "retry": "Retry",
@@ -1618,13 +1638,20 @@
         "attachImageAriaLabel": "Attach image",
         "attachImageTooltip": "Attach an image from your device",
         "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
-        "mobileChatOpenLabel": "Assistant & visualizations",
-        "mobileChatOpenAriaLabel": "Open assistant and visualizations",
-        "mobileChatSheetTitle": "Assistant & visualizations",
-        "mobileChatSheetDescription": "Draft Instagram content with the assistant, or add charts from your linked sales report.",
-        "mobileChatCloseAriaLabel": "Close assistant",
-        "mobileChatEmptyHint": "Ask to create Stories, posts, or Reels from your charts.",
-        "mobileChatContinueHint": "Continue conversation",
+        "quickPrompts": {
+          "weeklyPlan": {
+            "label": "Weekly Instagram plan",
+            "prompt": "Create a weekly Instagram plan for this venue. For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+          },
+          "featureTopDishes": {
+            "label": "Feature top dishes",
+            "prompt": "Suggest this week’s Instagram posts featuring our strongest menu items. Include day, format, dish names, and a short caption angle for each."
+          },
+          "storiesAndReels": {
+            "label": "Stories & Reels mix",
+            "prompt": "Draft a weekly mix of Instagram Stories and Reels with specific menu items for each slot and a brief creative direction."
+          }
+        },
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {

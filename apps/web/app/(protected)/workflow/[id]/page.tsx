@@ -133,7 +133,7 @@ export default async function Page({ params }: PageProps) {
         { label: fallbackTitle },
       ]}
       contentWidth="full"
-      mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
+      mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col gap-0 overflow-hidden px-0 py-0"
     >
       <Suspense fallback={<WorkflowDetailSkeleton />}>
         <WorkflowDetailContent workflowId={workflowId} userId={authUserId} />
