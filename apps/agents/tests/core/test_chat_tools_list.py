@@ -149,9 +149,8 @@ def test_chat_tools_list_from_config_binds_post_image_for_ig_studio() -> None:
 
 
 def test_compile_chat_graph_uses_tool_node_with_handle_tool_errors() -> None:
-    from langgraph.prebuilt.tool_node import ToolNode
-
     from agents_app.agents.core.chat.graph import compile_chat_graph
+    from langgraph.prebuilt.tool_node import ToolNode
 
     graph = compile_chat_graph(checkpointer=None)
     tools_node = graph.nodes.get("tools")
