@@ -245,6 +245,14 @@ def _tool_name_from_call(tool_call: object) -> str | None:
     return name if isinstance(name, str) and name else None
 
 
+def _tool_call_id_from_call(tool_call: object) -> str | None:
+    if isinstance(tool_call, dict):
+        raw = tool_call.get("id")
+        return raw.strip() if isinstance(raw, str) and raw.strip() else None
+    raw = getattr(tool_call, "id", None)
+    return raw.strip() if isinstance(raw, str) and raw.strip() else None
+
+
 def _tool_message_output(msg: ToolMessage) -> str:
     content = getattr(msg, "content", None)
     if isinstance(content, str):
@@ -257,8 +265,10 @@ def _tool_message_output(msg: ToolMessage) -> str:
         return str(content)
 
 
-def _tool_events_from_update(update: object) -> Iterator[tuple[str, str, str | None]]:
-    """Yield (tool_start|tool_end, tool_name, optional output) from a LangGraph updates chunk."""
+def _tool_events_from_update(
+    update: object,
+) -> Iterator[tuple[str, str, str | None, str | None]]:
+    """Yield (tool_start|tool_end, tool_name, optional output, optional tool_call_id)."""
     if not isinstance(update, dict):
         return
     for state_delta in update.values():
@@ -270,11 +280,15 @@ def _tool_events_from_update(update: object) -> Iterator[tuple[str, str, str | N
                 for tool_call in msg.tool_calls or []:
                     name = _tool_name_from_call(tool_call)
                     if name:
-                        yield ("tool_start", name, None)
+                        yield ("tool_start", name, None, _tool_call_id_from_call(tool_call))
             elif isinstance(msg, ToolMessage):
                 name = getattr(msg, "name", None)
                 tool_name = name if isinstance(name, str) and name else "tool"
-                yield ("tool_end", tool_name, _tool_message_output(msg))
+                raw_id = getattr(msg, "tool_call_id", None)
+                tool_call_id = (
+                    raw_id.strip() if isinstance(raw_id, str) and raw_id.strip() else None
+                )
+                yield ("tool_end", tool_name, _tool_message_output(msg), tool_call_id)
 
 
 def _is_assistant_stream_chunk(msg_chunk: object) -> bool:
@@ -304,8 +318,10 @@ async def _stream_chat_events(
                 if text:
                     yield _sse_data_line({"token": text})
             elif mode == "updates":
-                for status, tool_name, output in _tool_events_from_update(chunk):
+                for status, tool_name, output, tool_call_id in _tool_events_from_update(chunk):
                     payload: dict[str, Any] = {"status": status, "tool": tool_name}
+                    if tool_call_id:
+                        payload["tool_call_id"] = tool_call_id
                     if status == "tool_end" and output is not None:
                         payload["output"] = output
                     yield _sse_data_line(payload)

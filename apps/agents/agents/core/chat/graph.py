@@ -26,7 +26,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.config import get_config
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt import ToolNode, create_react_agent
 
 # Max tool/model turns per request (ReAct loop budget).
 CHAT_RECURSION_LIMIT = 20
@@ -122,12 +122,15 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
     """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
     # ToolNode must include every tool the model may bind; binding is request-scoped below.
+    # handle_tool_errors=True: turn unexpected tool exceptions into ToolMessages so the
+    # checkpoint is not left with dangling tool_calls (which breaks the next chat turn).
     all_tools = chat_tools_list(
         include_post_image=True,
         workflow_id=True,
         milestone_id=True,
         location_id=True,
     )
+    tool_node = ToolNode(all_tools, handle_tool_errors=True)
 
     def _select_chat_model(_state: dict[str, Any], _runtime: Any) -> Any:
         """Resolve LLM from RunnableConfig (set by HTTP router when client picks a model)."""
@@ -142,7 +145,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
 
     return create_react_agent(  # type: ignore[type-var]
         _select_chat_model,
-        all_tools,
+        tool_node,
         prompt=_chat_prompt,
         checkpointer=checkpointer,
         name="menuyukti_chat",

@@ -29,6 +29,11 @@ export function WorkflowChatMessageList() {
             <AlertTitle>{t('errorTitle')}</AlertTitle>
             <AlertDescription className="flex flex-col gap-3">
               <p>{t('errorDescription')}</p>
+              {error?.message ? (
+                <p className="font-mono text-muted-foreground text-xs break-words">
+                  {error.message}
+                </p>
+              ) : null}
               <Button
                 className="w-fit"
                 onClick={() => void handleRetry()}

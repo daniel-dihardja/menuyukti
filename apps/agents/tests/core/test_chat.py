@@ -291,7 +291,77 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
         assert "tool_start" in text or '"status": "tool_start"' in text
         assert "get_milestone" in text
         assert "tool_end" in text or '"status": "tool_end"' in text
+        assert '"tool_call_id": "1"' in text
         assert "Done" in text
+
+
+def test_chat_stream_emits_distinct_tool_call_ids_for_parallel_same_tool(
+    client: TestClient,
+) -> None:
+    """Parallel get_chart_data calls must not collapse to one tool_call_id."""
+    mock_graph = MagicMock()
+    _install_mock_astream(
+        mock_graph,
+        chunks=[
+            (
+                "updates",
+                {
+                    "agent": {
+                        "messages": [
+                            AIMessage(
+                                content="",
+                                tool_calls=[
+                                    {
+                                        "name": "get_chart_data",
+                                        "id": "call_venue",
+                                        "args": {"chart_id": "venue_slot_strength_heatmap"},
+                                    },
+                                    {
+                                        "name": "get_chart_data",
+                                        "id": "call_menu",
+                                        "args": {"chart_id": "menu_item_heatmap"},
+                                    },
+                                ],
+                            ),
+                        ],
+                    },
+                },
+            ),
+            (
+                "updates",
+                {
+                    "tools": {
+                        "messages": [
+                            ToolMessage(
+                                content="venue ok",
+                                tool_call_id="call_venue",
+                                name="get_chart_data",
+                            ),
+                            ToolMessage(
+                                content="menu ok",
+                                tool_call_id="call_menu",
+                                name="get_chart_data",
+                            ),
+                        ],
+                    },
+                },
+            ),
+            ("messages", (AIMessageChunk(content="Planned"), {})),
+        ],
+    )
+    client.app.state.chat_graph = mock_graph
+
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={"messages": [{"role": "user", "content": "Plan posts"}], "workflow_id": "10"},
+    ) as response:
+        assert response.status_code == 200
+        text = "".join(response.iter_text())
+        assert text.count('"tool_call_id": "call_venue"') >= 2
+        assert text.count('"tool_call_id": "call_menu"') >= 2
+        assert "Planned" in text
 
 
 def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:

@@ -831,13 +831,16 @@ async def get_chart_data(
         return f"Unknown chart_id {chart_id!r}. Allowed values: {allowed}."
 
     client = get_chat_http_client()
-    return await load_chart_data_markdown(
-        client,
-        chart_id=chart_id,
-        location_id=int(location_id),
-        user_id=str(user_id),
-        analytics_run_id=analytics_run_id,
-    )
+    try:
+        return await load_chart_data_markdown(
+            client,
+            chart_id=chart_id,
+            location_id=int(location_id),
+            user_id=str(user_id),
+            analytics_run_id=analytics_run_id,
+        )
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error loading chart data for {chart_id}: {exc}"
 
 
 def _workflow_chat_context(config: RunnableConfig | None) -> tuple[str, str] | str:
@@ -946,7 +949,10 @@ async def list_instagram_items(
         return ctx
     workflow_id, user_id = ctx
     client = get_chat_http_client()
-    items = await fetch_instagram_items(workflow_id, user_id, client=client)
+    try:
+        items = await fetch_instagram_items(workflow_id, user_id, client=client)
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error listing Instagram items: {exc}"
     if not items:
         return f"No Instagram items for workflow id={workflow_id}."
     lines = [f"Instagram items for workflow id={workflow_id} ({len(items)}):"]
@@ -972,7 +978,10 @@ async def get_instagram_item(
     if not cleaned:
         return "Missing required field 'item_id'."
     client = get_chat_http_client()
-    item = await fetch_instagram_item(cleaned, user_id, client=client)
+    try:
+        item = await fetch_instagram_item(cleaned, user_id, client=client)
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error loading Instagram item id={cleaned}: {exc}"
     if item is None:
         return f"Instagram item id={cleaned} not found or access denied."
     return _format_ig_item_detail(item)

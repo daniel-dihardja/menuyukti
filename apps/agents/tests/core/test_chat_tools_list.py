@@ -121,3 +121,22 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_instagram_item" in selected_names
     assert "create_instagram_items" in selected_names
     assert "delete_instagram_items" in selected_names
+
+
+def test_compile_chat_graph_uses_tool_node_with_handle_tool_errors() -> None:
+    from langgraph.prebuilt.tool_node import ToolNode
+
+    from agents_app.agents.core.chat.graph import compile_chat_graph
+
+    graph = compile_chat_graph(checkpointer=None)
+    tools_node = graph.nodes.get("tools")
+    assert tools_node is not None
+    # RunnableCallable / PregelNode wraps ToolNode; unwrap to the node instance.
+    bound = getattr(tools_node, "bound", tools_node)
+    node = getattr(bound, "afunc", None) or getattr(bound, "func", None) or bound
+    tool_node = node.__self__ if hasattr(node, "__self__") else node
+    if not isinstance(tool_node, ToolNode):
+        # LangGraph may nest differently by version — inspect known attributes.
+        tool_node = getattr(tools_node, "tools_by_name", None) and tools_node
+    assert isinstance(tool_node, ToolNode)
+    assert tool_node._handle_tool_errors is True
