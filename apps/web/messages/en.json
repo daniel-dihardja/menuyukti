@@ -55,7 +55,7 @@
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
     "navStudio": "IG Studio",
-    "navWorkflows": "Workflows",
+    "navWorkflows": "Chat",
     "navShop": "Print Shop",
     "landingNav": {
       "services": "Services",
@@ -64,7 +64,7 @@
     },
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Workflows for agentic campaign planning and Studio for AI brand visuals.",
+    "mobileMenuDescription": "Chat for agentic campaign planning and Studio for AI brand visuals.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -396,13 +396,13 @@
       "tagline": "Print-on-demand with a kitchen-and-bar soul — part of your Menuyukti workspace.",
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
-      "backWorkflows": "Workflow",
+      "backWorkflows": "Chat",
       "backStudio": "IG Studio",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, workflow, or studio."
+      "workspaceMenuDescription": "Go to your dashboard, chat, or studio."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
@@ -600,7 +600,7 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
-    "workflows": "Workflow",
+    "workflows": "Chat",
     "calendar": "Calendar",
     "posts": "IG Studio",
     "content": "Content",
@@ -1545,7 +1545,7 @@
       }
     },
     "workflows": {
-      "title": "Workflows",
+      "title": "Chat",
       "description": "Choose a location, create a workflow, then plan milestones, chat with the assistant, and run evaluations.",
       "sectionTitle": "Workflows for this location",
       "selectBranchTitle": "Choose a location",
@@ -1603,7 +1603,7 @@
         "renameError": "Could not save the name. Please try again."
       },
       "detail": {
-        "breadcrumb": "View Workflow"
+        "breadcrumb": "View Chat"
       },
       "chat": {
         "pageLoadingTitle": "Loading workflow…",
