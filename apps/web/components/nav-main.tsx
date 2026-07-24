@@ -47,6 +47,9 @@ type NavItem = {
   separatorBefore?: boolean
 }
 
+/** Keys currently shown in the sidenav. Other `NAV_WORKSPACE` entries stay defined but hidden. */
+const VISIBLE_WORKSPACE_NAV_KEYS = new Set(['workflows', 'reports', 'branches'])
+
 /** Day-to-day marketing work: overview, workflow, performance, locations. */
 const NAV_WORKSPACE: NavItem[] = [
   {
@@ -85,7 +88,6 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'reports',
     icon: <FileUp className="w-4 h-4" />,
     href: routes.analytics.sales,
-    separatorBefore: true,
   },
   {
     key: 'branches',
@@ -235,8 +237,14 @@ export function NavMain() {
     return pathname.startsWith(url)
   }
 
-  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
-  const visibleAdminItems = visibleNavItemsForRole(NAV_ADMIN, showAdminNav)
+  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav).filter((item) =>
+    VISIBLE_WORKSPACE_NAV_KEYS.has(item.key),
+  )
+  /** Flip to true to show admin nav (Usage) again. */
+  const showAdminNavSection = false
+  const visibleAdminItems = showAdminNavSection
+    ? visibleNavItemsForRole(NAV_ADMIN, showAdminNav)
+    : []
 
   return (
     <>
