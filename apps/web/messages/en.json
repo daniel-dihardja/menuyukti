@@ -100,13 +100,13 @@
     "mistral_mistral_large_3": "Mistral Large 3"
   },
   "metadata": {
-    "title": "Menuyukti — Agentic Restaurant Marketing | Chat, Reports & Locations",
-    "description": "Turn restaurant sales data into Chat campaigns, clear reports, and location insights—built for restaurants, cafés, and bars.",
+    "title": "Menuyukti — Instagram marketing for restaurants, from your sales data",
+    "description": "A smart partner for restaurant Instagram marketing—plans from your real sales data, so you don’t carry the work alone.",
     "ogLocale": "en_US",
-    "ogImageAlt": "Menuyukti — Agentic Restaurant Marketing | Chat, Reports & Locations",
-    "ogImageBadge": "Agentic restaurant marketing · Data to campaigns",
-    "ogImageHeadline": "Restaurant marketing built on your sales data",
-    "ogImageTagline": "Chat campaigns, sales reports, and location insights—powered by AI for hospitality operators."
+    "ogImageAlt": "Menuyukti — Instagram marketing for restaurants, from your sales data",
+    "ogImageBadge": "Sales data · Instagram · In your corner",
+    "ogImageHeadline": "Someone in your corner for Instagram",
+    "ogImageTagline": "Restaurant Instagram plans grounded in what actually sells."
   },
   "login": {
     "title": "Menuyukti",
@@ -201,8 +201,8 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "We read between the bites.",
-      "subtitle": "Restaurant sales data turned into Chat campaigns, location reports, and growth opportunities hidden in every order.",
+      "headline": "Your smart friend for restaurant Instagram.",
+      "subtitle": "Menuyukti takes the campaign work off your plate—planning from your real sales data, so you always know what to post and why.",
       "badge": "Built on Data. Inspired by Food.",
       "ctaSecondary": "Sign in"
     },

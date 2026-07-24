@@ -17,7 +17,7 @@ import {
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
-import { EraserIcon, PaperclipIcon } from 'lucide-react'
+import { EraserIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 
@@ -65,27 +65,6 @@ function WorkflowChatAttachmentStrip() {
         </Attachment>
       ))}
     </Attachments>
-  )
-}
-
-function WorkflowChatAttachButton({ disabled }: { disabled: boolean }) {
-  const t = useTranslations('analytics.workflows.chat')
-  const attachments = usePromptInputAttachments()
-  const { pendingMediaAttachments } = useWorkflowChatComposerState()
-  const atLimit = attachments.files.length + pendingMediaAttachments.length >= CHAT_MAX_IMAGES
-
-  return (
-    <PromptInputButton
-      aria-label={t('attachImageAriaLabel')}
-      className="size-11 touch-manipulation sm:size-8"
-      disabled={disabled || atLimit}
-      onClick={() => attachments.openFileDialog()}
-      tooltip={atLimit ? t('attachImageMaxReachedTooltip') : t('attachImageTooltip')}
-      type="button"
-      variant="ghost"
-    >
-      <PaperclipIcon />
-    </PromptInputButton>
   )
 }
 
@@ -187,7 +166,6 @@ export function WorkflowChatComposer() {
         </WorkflowChatComposerMenus>
         <PromptInputFooter className="flex-wrap gap-2">
           <PromptInputTools className="min-w-0 flex-1 flex-wrap">
-            <WorkflowChatAttachButton disabled={isChatBusy} />
             <ChatGatewayModelSelect
               className="max-w-[min(100%,9.5rem)] sm:max-w-[min(100%,11rem)]"
               disabled={isChatBusy}
