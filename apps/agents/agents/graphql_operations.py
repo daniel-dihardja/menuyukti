@@ -744,6 +744,14 @@ query InstagramItems($workflowId: ID!) {
 }
 """
 
+INSTAGRAM_ITEM_QUERY = """
+query InstagramItem($id: ID!) {
+  instagramItem(id: $id) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
 CREATE_INSTAGRAM_ITEM_MUTATION = """
 mutation CreateInstagramItem(
   $workflowId: ID!

@@ -36,7 +36,7 @@ def test_chat_prompt_without_catalog_config() -> None:
     assert "## Workflow milestone catalog" not in messages[0].content
     assert "## Workflow chart catalog" not in messages[0].content
     assert "source of truth" in messages[0].content
-    assert "create Instagram items" in messages[0].content
+    assert "Instagram content assistant" in messages[0].content
 
 
 def test_chat_prompt_injects_chart_catalog_when_location_present() -> None:

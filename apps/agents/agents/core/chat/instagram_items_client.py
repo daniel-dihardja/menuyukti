@@ -9,6 +9,7 @@ from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     CREATE_INSTAGRAM_ITEM_MUTATION,
     DELETE_INSTAGRAM_ITEM_MUTATION,
+    INSTAGRAM_ITEM_QUERY,
     INSTAGRAM_ITEMS_QUERY,
     UPDATE_INSTAGRAM_ITEM_MUTATION,
 )
@@ -31,6 +32,25 @@ async def list_instagram_items(
     if not isinstance(raw, list):
         return []
     return [row for row in raw if isinstance(row, dict)]
+
+
+async def fetch_instagram_item(
+    item_id: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Return one Instagram item by id, or None if missing / inaccessible."""
+    data = await graphql_post(
+        client,
+        INSTAGRAM_ITEM_QUERY,
+        {"id": item_id},
+        user_id,
+    )
+    raw = data.get("instagramItem")
+    if not isinstance(raw, dict):
+        return None
+    return raw
 
 
 async def create_instagram_item(

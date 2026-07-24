@@ -729,6 +729,57 @@ async def test_list_instagram_items_success(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 @pytest.mark.asyncio
+async def test_get_instagram_item_requires_workflow() -> None:
+    out = await chat_tools.get_instagram_item.ainvoke(
+        {"item_id": "10"},
+        config={"configurable": {"user_id": "u1"}},
+    )
+    assert "Workflow context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_get_instagram_item_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch_mock = AsyncMock(
+        return_value=_ig_item(
+            id="10",
+            title="Friday special",
+            caption="Try our burger",
+            hook="Lunch rush",
+            visualBrief="Hero plate, warm light",
+            schedule="2026-07-25T12:00:00Z",
+            pages=[{"id": "p1", "sortOrder": 0, "mediaS3Key": "s3://x"}],
+        )
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_item", fetch_mock)
+
+    out = await chat_tools.get_instagram_item.ainvoke(
+        {"item_id": "10"},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "id=10" in out
+    assert "Friday special" in out
+    assert "Try our burger" in out
+    assert "Lunch rush" in out
+    assert "Hero plate" in out
+    assert "id=p1" in out
+    assert "has_media=True" in out
+    fetch_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_instagram_item_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_item", AsyncMock(return_value=None))
+
+    out = await chat_tools.get_instagram_item.ainvoke(
+        {"item_id": "999"},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "not found" in out
+
+
+@pytest.mark.asyncio
 async def test_create_instagram_items_batch(monkeypatch: pytest.MonkeyPatch) -> None:
     create_mock = AsyncMock(
         side_effect=[

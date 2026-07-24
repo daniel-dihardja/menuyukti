@@ -12,6 +12,7 @@ from agents_app.agents.core.chat.tools import (
     create_instagram_items,
     delete_instagram_items,
     get_chart_data,
+    get_instagram_item,
     get_location_data,
     get_milestone,
     get_workflow_overview,
@@ -76,6 +77,7 @@ def chat_tools_list(
         tools.append(get_workflow_overview)
         tools.append(get_milestone)
         tools.append(list_instagram_items)
+        tools.append(get_instagram_item)
         tools.append(create_instagram_items)
         tools.append(update_instagram_items)
         tools.append(delete_instagram_items)
