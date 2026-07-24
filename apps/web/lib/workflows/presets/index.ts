@@ -1,6 +1,7 @@
 /**
  * Built-in workflow import payloads (`workflowImportPayload` from
- * `apps/graphql/workflow_export_schema.json`). Shown first in the import dialog.
+ * `apps/graphql/workflow_export_schema.json`). Catalog for optional
+ * `templatePayload` on create; overview create starts blank.
  */
 export type WorkflowImportPresetId = string
 
@@ -11,17 +12,7 @@ export type WorkflowImportPreset = {
 
 export const WORKFLOW_IMPORT_PRESETS: readonly WorkflowImportPreset[] = []
 
-/** Strategy picker labels without import payloads (creation still uses an empty workflow). */
-export const WORKFLOW_STRATEGY_OPTIONS = [
-  { id: 'local-pulse', labelKey: 'localPulseStrategy' },
-] as const
-
-export type WorkflowStrategyId = (typeof WORKFLOW_STRATEGY_OPTIONS)[number]['id']
-
 export const PRESET_KEY_PREFIX = 'preset:' as const
-
-/** "Blank workflow" option in overview + new-workflow dialog preset pickers. */
-export const BLANK_PRESET_SELECTION_KEY = 'blank' as const
 
 export function workflowTitleFromPresetPayload(
   payload: WorkflowImportPreset['payload'],

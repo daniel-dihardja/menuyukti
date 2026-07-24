@@ -5,11 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAnalytics } from '../../analytics/use-analytics'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import {
-  BLANK_PRESET_SELECTION_KEY,
-  WORKFLOW_IMPORT_PRESETS,
-  parsePresetIdFromSelectionKey,
-} from '@/lib/workflows/presets'
 import { routes } from '@/lib/routes'
 import { apiFetch } from '@/lib/api/client-fetch'
 import { CreateWorkflowPanel } from './create-workflow-panel'
@@ -49,10 +44,8 @@ export function WorkflowsClient({
   const tNew = useTranslations('analytics.workflows.newWorkflowDialog')
   const router = useRouter()
   const { locationId, setLocationId } = useAnalytics()
-  const [presetKey, setPresetKey] = useState<string>(BLANK_PRESET_SELECTION_KEY)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [importError, setImportError] = useState<string | null>(null)
   const [analyticsRunId, setAnalyticsRunId] = useState<number | null>(() => {
     const first = initialAnalyticsRuns[0]
     return first ? first.id : null
@@ -114,23 +107,13 @@ export function WorkflowsClient({
     }
     setCreating(true)
     setCreateError(null)
-    setImportError(null)
 
     const body: {
       locationId: number
       analyticsRunId?: number
-      templatePayload?: unknown
     } = { locationId }
     if (analyticsRunId !== null) {
       body.analyticsRunId = analyticsRunId
-    }
-
-    const presetId = parsePresetIdFromSelectionKey(presetKey)
-    if (presetId !== null) {
-      const preset = WORKFLOW_IMPORT_PRESETS.find((p) => p.id === presetId)
-      if (preset?.payload != null) {
-        body.templatePayload = preset.payload
-      }
     }
 
     try {
@@ -149,15 +132,11 @@ export function WorkflowsClient({
       router.push(routes.workflows.detail(createResult.data.id))
     } catch (err) {
       const message = err instanceof Error ? err.message : tNew('createFailed')
-      if (presetId !== null) {
-        setImportError(message)
-      } else {
-        setCreateError(message)
-      }
+      setCreateError(message)
     } finally {
       setCreating(false)
     }
-  }, [analyticsRunId, locationId, presetKey, router, tNew])
+  }, [analyticsRunId, locationId, router, tNew])
 
   return (
     <div className="flex flex-col gap-8">
@@ -169,12 +148,9 @@ export function WorkflowsClient({
         createError={createError}
         creating={creating}
         hasSelectedLocation={locationId !== null}
-        importError={importError}
         loadingRuns={loadingRuns}
         onAnalyticsRunIdChange={setAnalyticsRunId}
         onCreate={handleCreateWorkflow}
-        onPresetKeyChange={setPresetKey}
-        presetKey={presetKey}
         runsError={null}
       />
 
