@@ -12,19 +12,19 @@ import {
 import { WorkflowMobileChatSheet } from './workflow-mobile-chat-sheet'
 
 export type WorkflowChatLayoutProps = {
-  previewPanelRef: NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
-  timelinePane: ReactNode
-  previewPane: ReactNode
+  artifactPanelRef: NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
   chatPane: ReactNode
+  artifactPane: ReactNode
+  visualizationsPane: ReactNode
   mobileChatOpen: boolean
   onMobileChatOpenChange: (open: boolean) => void
 }
 
 export function WorkflowChatLayout({
-  previewPanelRef,
-  timelinePane,
-  previewPane,
+  artifactPanelRef,
   chatPane,
+  artifactPane,
+  visualizationsPane,
   mobileChatOpen,
   onMobileChatOpenChange,
 }: WorkflowChatLayoutProps) {
@@ -33,7 +33,7 @@ export function WorkflowChatLayout({
   if (!isDesktop) {
     return (
       <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-        <div className="min-h-0 flex-1 overflow-hidden">{timelinePane}</div>
+        <div className="min-h-0 flex-1 overflow-hidden p-2">{artifactPane}</div>
         <WorkflowMobileChatSheet onOpenChange={onMobileChatOpenChange} open={mobileChatOpen}>
           {chatPane}
         </WorkflowMobileChatSheet>
@@ -45,27 +45,27 @@ export function WorkflowChatLayout({
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden">
-          <ResizablePanel defaultSize={38} minSize={28}>
+          <ResizablePanel defaultSize={36} minSize={24}>
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
-              {timelinePane}
+              {chatPane}
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel
             className="min-w-0"
             collapsible
-            defaultSize={34}
+            defaultSize={36}
             minSize={22}
-            panelRef={previewPanelRef}
+            panelRef={artifactPanelRef}
           >
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background p-2">
-              {previewPane}
+              {artifactPane}
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={28} minSize={20}>
+          <ResizablePanel defaultSize={28} minSize={18}>
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
-              {chatPane}
+              {visualizationsPane}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

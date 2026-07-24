@@ -2300,14 +2300,10 @@
           "generateError": "Couldn't generate the image. Try again."
         }
       },
-      "sidePanel": {
-        "chatTab": "Chat",
-        "visualizationsTab": "Visualizations"
-      },
       "visualizations": {
         "panelTitle": "Charts",
         "emptyTitle": "No charts yet",
-        "emptyDescription": "Add a chart from the catalog to explore analytics alongside your workflow.",
+        "emptyDescription": "Add a chart from the catalog to explore sales analytics alongside your plan.",
         "addButton": "Add visualization",
         "addMenuAriaLabel": "Add visualization",
         "removeAriaLabel": "Remove {title}",

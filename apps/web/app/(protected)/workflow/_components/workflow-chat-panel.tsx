@@ -30,18 +30,19 @@ import {
 } from './instagram-items/instagram-items-refresh-context'
 import { TimelineProvider } from './timeline-context'
 import type { MilestoneInput } from './timeline/types'
-import { TimelineWorkspace, type TimelineMilestone } from './timeline-workspace'
+import type { TimelineMilestone } from './timeline-workspace'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { useWorkflowPreviewVisibility } from './use-workflow-preview-visibility'
 import { useWorkflowTimelineProviderSlices } from './use-workflow-timeline-provider-value'
 import { WorkflowChatHost } from './workflow-chat-host'
 import { WorkflowChatLayout } from './workflow-chat-layout'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
+import { WorkflowChatPane } from './workflow-chat-pane'
 import {
   createInitialWorkflowMilestoneUiState,
   workflowMilestoneReducer,
 } from './workflow-milestone-reducer'
-import { WorkflowSidePanel } from './workflow-side-panel'
+import { WorkflowVisualizationsPane } from './workflow-visualizations-pane'
 import { WorkflowVisualizationsProvider } from './workflow-visualizations-context'
 import { WorkflowPreviewPanelSkeleton } from './workflow-workspace-skeleton'
 
@@ -129,7 +130,7 @@ function WorkflowChatPanelInner({
 
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
   const isDesktop = useDesktopLayout()
-  const previewPanelRef = usePanelRef()
+  const artifactPanelRef = usePanelRef()
 
   const [milestoneUi, dispatch] = useReducer(
     workflowMilestoneReducer,
@@ -227,7 +228,7 @@ function WorkflowChatPanelInner({
   )
 
   useLayoutEffect(() => {
-    const panel = previewPanelRef.current
+    const panel = artifactPanelRef.current
     if (!panel || !isDesktop) {
       return
     }
@@ -236,7 +237,7 @@ function WorkflowChatPanelInner({
     } else {
       panel.collapse()
     }
-  }, [previewOpen, isDesktop, previewPanelRef])
+  }, [previewOpen, isDesktop, artifactPanelRef])
 
   useEffect(() => {
     if (!isDesktop) {
@@ -283,16 +284,23 @@ function WorkflowChatPanelInner({
         <WorkflowVisualizationsProvider workflowId={workflowId}>
           <WorkflowChatMentionProvider milestoneTitles={milestoneTitles}>
             <WorkflowChatLayout
-              chatPane={<WorkflowSidePanel />}
+              artifactPane={<WorkflowPreviewPanelBodyLazy />}
+              artifactPanelRef={artifactPanelRef}
+              chatPane={
+                <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+                  {isDesktop ? (
+                    <div className="flex shrink-0 items-center justify-end border-b px-2 py-2">
+                      <WorkflowPreviewToggleButton />
+                    </div>
+                  ) : null}
+                  <div className="flex min-h-0 flex-1 flex-col divide-y overflow-hidden">
+                    <WorkflowChatPane />
+                  </div>
+                </div>
+              }
               mobileChatOpen={mobileChatOpen}
               onMobileChatOpenChange={setMobileChatOpen}
-              previewPane={<WorkflowPreviewPanelBodyLazy />}
-              previewPanelRef={previewPanelRef}
-              timelinePane={
-                <TimelineWorkspace
-                  timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
-                />
-              }
+              visualizationsPane={<WorkflowVisualizationsPane />}
             />
           </WorkflowChatMentionProvider>
         </WorkflowVisualizationsProvider>

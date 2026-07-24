@@ -98,17 +98,32 @@ export function WorkflowPreviewPanelSkeleton({ className }: { className?: string
   )
 }
 
-function WorkflowSidePanelSkeleton({ className }: { className?: string }) {
+function WorkflowChatColumnSkeleton({ className }: { className?: string }) {
   return (
     <div
       aria-hidden
       className={cn('flex h-full min-h-0 min-w-0 flex-col overflow-hidden', className)}
     >
-      <div className="flex shrink-0 gap-2 border-b px-2 pt-2">
-        <Skeleton className="h-8 w-14 rounded-md" />
-        <Skeleton className="h-8 w-24 rounded-md" />
+      <div className="flex shrink-0 justify-end border-b px-2 py-2">
+        <Skeleton className="size-9 rounded-md" />
       </div>
       <WorkflowChatPanelSkeleton className="min-h-0 flex-1" />
+    </div>
+  )
+}
+
+function WorkflowVisualizationsColumnSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn('flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-hidden p-4', className)}
+    >
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-8 w-28 rounded-md" />
+      </div>
+      <Skeleton className="h-40 w-full rounded-lg" />
+      <Skeleton className="h-40 w-full rounded-lg" />
     </div>
   )
 }
@@ -142,9 +157,11 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       aria-live="polite"
       className={cn('flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden', className)}
     >
-      {/* Mobile: timeline + sticky assistant bar */}
+      {/* Mobile: artifact + sticky assistant bar */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:hidden">
-        <WorkflowTimelineSkeleton className="min-h-0 flex-1" />
+        <div className="min-h-0 flex-1 overflow-hidden p-2">
+          <WorkflowPreviewPanelSkeleton className="h-full" />
+        </div>
         <div
           aria-hidden
           className="shrink-0 border-t bg-background px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
@@ -153,18 +170,18 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
         </div>
       </div>
 
-      {/* Desktop: three-panel workspace */}
+      {/* Desktop: chat | artifact | visualizations */}
       <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
-          <div className="grid h-full min-h-0 flex-1 grid-cols-[38fr_34fr_28fr] gap-0 overflow-hidden">
+          <div className="grid h-full min-h-0 flex-1 grid-cols-[36fr_36fr_28fr] gap-0 overflow-hidden">
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-background">
-              <WorkflowTimelineSkeleton />
+              <WorkflowChatColumnSkeleton />
             </div>
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-background p-3">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-background p-2">
               <WorkflowPreviewPanelSkeleton className="flex-1" />
             </div>
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-l">
-              <WorkflowSidePanelSkeleton />
+              <WorkflowVisualizationsColumnSkeleton />
             </div>
           </div>
         </div>
