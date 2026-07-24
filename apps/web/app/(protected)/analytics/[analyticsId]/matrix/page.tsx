@@ -170,14 +170,6 @@ export default async function Page({ params }: PageProps) {
             <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={routes.analytics.heatmap(analyticsId)}>{tMatrix('links.heatmap')}</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={routes.analytics.menuCombos(analyticsId)}>
-              {tMatrix('links.menuCombos')}
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
             <Link href={routes.analytics.cogs(analyticsId)}>{tMatrix('links.cogs')}</Link>
           </Button>
           <CreateWorkflowFromReportButton analyticsId={analyticsId} />

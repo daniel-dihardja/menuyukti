@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   Table,
   TableBody,
@@ -9,18 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@workspace/ui/components/alert-dialog'
-import { Button } from '@workspace/ui/components/button'
-import { Spinner } from '@workspace/ui/components/spinner'
-import { BarChart3, Coins, Flame, Link2, List, Radio, Sparkles, Table2, Trash2 } from 'lucide-react'
+import { Coins, Table2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routes } from '@/lib/routes'
 import {
@@ -30,24 +19,15 @@ import {
 
 interface SalesTableProps {
   uploads: Array<{ id: number; name: string }>
-  onDelete: (analyticsId: number) => Promise<{ ok: true } | { ok: false }>
   onCogs: (analyticsId: number) => void
-  deleting?: boolean
 }
 
 function buildActionItems(
   row: { id: number; name: string },
   t: ReturnType<typeof useTranslations<'analytics.sales.table'>>,
   onCogs: (analyticsId: number) => void,
-  onRequestDelete: (row: { id: number; name: string }) => void,
 ): ResponsiveActionMenuItem[] {
   return [
-    {
-      id: 'menu-items',
-      label: t('menuItems'),
-      icon: List,
-      href: routes.analytics.menuItems(row.id),
-    },
     {
       id: 'matrix',
       label: t('matrix'),
@@ -55,77 +35,17 @@ function buildActionItems(
       href: routes.analytics.matrix(row.id),
     },
     {
-      id: 'heatmap',
-      label: t('heatmap'),
-      icon: Flame,
-      href: routes.analytics.heatmap(row.id),
-    },
-    {
-      id: 'menu-combos',
-      label: t('menuCombos'),
-      icon: Link2,
-      href: routes.analytics.menuCombos(row.id),
-    },
-    {
-      id: 'order-metrics',
-      label: t('orderMetrics'),
-      icon: BarChart3,
-      href: routes.analytics.orderMetrics(row.id),
-    },
-    {
-      id: 'campaign-signals',
-      label: t('campaignSignals'),
-      icon: Radio,
-      href: routes.analytics.campaignSignals(row.id),
-    },
-    {
       id: 'cogs',
       label: t('cogs'),
       icon: Coins,
-      separatorBefore: true,
       onSelect: () => onCogs(row.id),
-    },
-    {
-      id: 'ask-ai',
-      label: t('askAi'),
-      icon: Sparkles,
-      href: routes.workflows.list,
-      separatorBefore: true,
-    },
-    {
-      id: 'delete',
-      label: t('delete'),
-      icon: Trash2,
-      destructive: true,
-      separatorBefore: true,
-      onSelect: () => onRequestDelete(row),
     },
   ]
 }
 
-export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: SalesTableProps) {
+export function SalesTable({ uploads, onCogs }: SalesTableProps) {
   const t = useTranslations('analytics.sales.table')
-  const tDelete = useTranslations('analytics.sales.delete')
   const tMobile = useTranslations('analytics.sales.table.mobile')
-
-  const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-
-  const onRequestDelete = useCallback((row: { id: number; name: string }) => {
-    setDeleteError(null)
-    setPendingDelete(row)
-  }, [])
-
-  const confirmDelete = useCallback(async () => {
-    if (!pendingDelete) return
-    setDeleteError(null)
-    const result = await onDelete(pendingDelete.id)
-    if (result.ok) {
-      setPendingDelete(null)
-      return
-    }
-    setDeleteError(tDelete('error'))
-  }, [onDelete, pendingDelete, tDelete])
 
   const actionMenuProps = useMemo(
     () => ({
@@ -151,7 +71,7 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
             </div>
             <ResponsiveActionMenu
               {...actionMenuProps}
-              items={buildActionItems(row, t, onCogs, onRequestDelete)}
+              items={buildActionItems(row, t, onCogs)}
               sheetId={`sales-report-actions-${row.id}`}
               sheetTitle={row.name}
             />
@@ -179,7 +99,7 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
                 <TableCell className="text-right">
                   <ResponsiveActionMenu
                     {...actionMenuProps}
-                    items={buildActionItems(row, t, onCogs, onRequestDelete)}
+                    items={buildActionItems(row, t, onCogs)}
                     sheetId={`sales-report-actions-desktop-${row.id}`}
                     sheetTitle={row.name}
                   />
@@ -189,49 +109,6 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
           </TableBody>
         </Table>
       </div>
-
-      <AlertDialog
-        onOpenChange={(open) => {
-          if (open) return
-          if (deleting) return
-          setPendingDelete(null)
-          setDeleteError(null)
-        }}
-        open={pendingDelete !== null}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{tDelete('title')}</AlertDialogTitle>
-            <AlertDialogDescription>{tDelete('description')}</AlertDialogDescription>
-            {deleteError ? (
-              <p className="text-destructive text-sm" role="alert">
-                {deleteError}
-              </p>
-            ) : null}
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting} type="button">
-              {tDelete('cancel')}
-            </AlertDialogCancel>
-            <Button
-              className={deleting ? 'inline-flex items-center gap-2' : undefined}
-              disabled={deleting}
-              onClick={() => void confirmDelete()}
-              type="button"
-              variant="destructive"
-            >
-              {deleting ? (
-                <>
-                  <Spinner />
-                  {tDelete('confirm')}
-                </>
-              ) : (
-                tDelete('confirm')
-              )}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   )
 }

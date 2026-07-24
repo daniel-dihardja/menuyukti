@@ -48,7 +48,7 @@ type NavItem = {
 }
 
 /** Keys currently shown in the sidenav. Other `NAV_WORKSPACE` entries stay defined but hidden. */
-const VISIBLE_WORKSPACE_NAV_KEYS = new Set(['workflows', 'reports', 'branches'])
+const VISIBLE_WORKSPACE_NAV_KEYS = new Set(['workflows', 'reports', 'branches', 'team'])
 
 /** Day-to-day marketing work: overview, workflow, performance, locations. */
 const NAV_WORKSPACE: NavItem[] = [
