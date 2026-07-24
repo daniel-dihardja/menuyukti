@@ -8,7 +8,6 @@ from typing import Annotated, Any, Literal
 
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
-from agents_app.agents.core.chat.catalog import load_workflow_catalog_markdown
 from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.http_context import chat_http_client_var
 from agents_app.agents.core.chat.tools import get_milestone
@@ -163,7 +162,6 @@ def _runnable_config(
     location_id: int | None,
     user_id: str | None,
     chat_gateway_model: str | None,
-    workflow_catalog_markdown: str | None = None,
     analytics_run_id: int | None = None,
     post_id: str | None = None,
     page_id: str | None = None,
@@ -182,8 +180,6 @@ def _runnable_config(
     }
     if chat_gateway_model is not None:
         configurable["chat_gateway_model"] = chat_gateway_model
-    if workflow_catalog_markdown is not None:
-        configurable["workflow_catalog_markdown"] = workflow_catalog_markdown
     if analytics_run_id is not None:
         configurable["analytics_run_id"] = analytics_run_id
     if post_id is not None:
@@ -358,16 +354,6 @@ async def chat_stream(
     )
     gateway_model = _resolved_chat_gateway_model(body.chat_model)
 
-    workflow_catalog_markdown: str | None = None
-    if body.workflow_id and x_menuyukti_user_id:
-        workflow_catalog_markdown = await load_workflow_catalog_markdown(
-            workflow_id=body.workflow_id,
-            user_id=x_menuyukti_user_id,
-            location_id=body.location_id,
-            selected_milestone_id=body.milestone_id,
-            client=client,
-        )
-
     cfg = _runnable_config(
         thread_id=thread_id,
         workflow_id=body.workflow_id,
@@ -375,7 +361,6 @@ async def chat_stream(
         location_id=body.location_id,
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
-        workflow_catalog_markdown=workflow_catalog_markdown,
         analytics_run_id=body.analytics_run_id,
         post_id=body.post_id,
         page_id=body.page_id,
