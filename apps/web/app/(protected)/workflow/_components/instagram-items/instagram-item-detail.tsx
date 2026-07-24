@@ -42,7 +42,6 @@ import {
 import { Separator } from '@workspace/ui/components/separator'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
-import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
 import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
@@ -822,54 +821,58 @@ export function InstagramItemDetail({
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor={kindFieldId}>{t('fields.kind')}</FieldLabel>
-                  <ToggleGroup
-                    aria-label={t('fields.kind')}
-                    className="w-full"
+                  <Select
                     disabled={busy}
-                    id={kindFieldId}
                     onValueChange={(value) => {
-                      if (!value) return
                       setValues((prev) => ({ ...prev, kind: value as InstagramItemKind }))
                     }}
-                    type="single"
                     value={values.kind}
                   >
-                    {(['story', 'post', 'reel'] as const).map((kind) => (
-                      <ToggleGroupItem
-                        className="min-h-8 flex-1 px-2 text-xs"
-                        key={kind}
-                        value={kind}
-                      >
-                        {t(`kind.${kind}`)}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
+                    <SelectTrigger
+                      aria-label={t('fields.kind')}
+                      className="w-full"
+                      id={kindFieldId}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {(['story', 'post', 'reel'] as const).map((kind) => (
+                          <SelectItem key={kind} value={kind}>
+                            {t(`kind.${kind}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </Field>
 
                 <Field>
                   <FieldLabel htmlFor={statusFieldId}>{t('fields.status')}</FieldLabel>
-                  <ToggleGroup
-                    aria-label={t('fields.status')}
-                    className="w-full"
+                  <Select
                     disabled={busy}
-                    id={statusFieldId}
                     onValueChange={(value) => {
-                      if (!value) return
                       setValues((prev) => ({ ...prev, status: value as InstagramItemStatus }))
                     }}
-                    type="single"
                     value={values.status}
                   >
-                    {(['draft', 'ready'] as const).map((status) => (
-                      <ToggleGroupItem
-                        className="min-h-8 flex-1 px-2 text-xs"
-                        key={status}
-                        value={status}
-                      >
-                        {t(`status.${status}`)}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
+                    <SelectTrigger
+                      aria-label={t('fields.status')}
+                      className="w-full"
+                      id={statusFieldId}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {(['draft', 'ready'] as const).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {t(`status.${status}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
 
