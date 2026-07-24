@@ -7,6 +7,8 @@ import { formatVisualizationDataMarkdownSection } from '@/lib/chat/format-visual
 import { loadReferencedMilestonePresetForChat } from '@/lib/chat/referenced-milestone-for-chat'
 import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
 import { getPythonAgentsUrl } from '@/lib/config'
+import { pushPendingToolCallId, resolveToolEndCallId } from '@/lib/chat/pending-tool-call-ids'
+import { pythonStreamErrorText } from '@/lib/chat/python-stream-error'
 import { chatRequestBodySchema } from './schema'
 
 // Streaming can run for a while (LLM + network).
@@ -37,16 +39,23 @@ const SSE_DONE = '[DONE]' as const
 /** SSE lines from `apps/agents` POST /chat. */
 interface PythonStreamChunk {
   token?: string
-  error?: string
+  error?: string | boolean
+  message?: string
   status?: 'tool_start' | 'tool_end'
   tool?: string
+  /** LangChain tool call id — required when the same tool runs multiple times in one turn. */
+  tool_call_id?: string
   output?: string
 }
 
 type StreamForwardContext = {
   textPartId: string
   textStarted: boolean
-  toolCallIds: Map<string, string>
+  /**
+   * Pending tool-call ids keyed by tool name (FIFO). Used when agents omit tool_call_id
+   * (legacy / slash shortcuts). Prefer explicit tool_call_id from the agents SSE when present.
+   */
+  pendingToolCallIdsByName: Map<string, string[]>
 }
 
 function ensureTextStarted(
@@ -66,9 +75,13 @@ function forwardToolStart(
   encoder: TextEncoder,
   ctx: StreamForwardContext,
   toolName: string,
+  toolCallIdFromAgents?: string,
 ): void {
-  const toolCallId = crypto.randomUUID()
-  ctx.toolCallIds.set(toolName, toolCallId)
+  const toolCallId =
+    typeof toolCallIdFromAgents === 'string' && toolCallIdFromAgents.trim()
+      ? toolCallIdFromAgents.trim()
+      : crypto.randomUUID()
+  pushPendingToolCallId(ctx.pendingToolCallIdsByName, toolName, toolCallId)
   controller.enqueue(
     encoder.encode(
       sseLine({
@@ -96,9 +109,14 @@ function forwardToolEnd(
   ctx: StreamForwardContext,
   toolName: string,
   output: string = '',
+  toolCallIdFromAgents?: string,
 ): void {
-  const toolCallId = ctx.toolCallIds.get(toolName) ?? crypto.randomUUID()
-  ctx.toolCallIds.delete(toolName)
+  const toolCallId = resolveToolEndCallId(
+    ctx.pendingToolCallIdsByName,
+    toolName,
+    toolCallIdFromAgents,
+    crypto.randomUUID(),
+  )
   controller.enqueue(
     encoder.encode(
       sseLine({
@@ -140,7 +158,9 @@ async function parsePythonSSEAndForward(
           const data = JSON.parse(payload) as PythonStreamChunk
           if (data.error) {
             controller.enqueue(
-              encoder.encode(sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })),
+              encoder.encode(
+                sseLine({ type: SSE_EVENT.ERROR, errorText: pythonStreamErrorText(data) }),
+              ),
             )
             return
           }
@@ -149,12 +169,12 @@ async function parsePythonSSEAndForward(
             typeof data.tool === 'string' &&
             data.tool.length > 0
           ) {
-            forwardToolStart(controller, encoder, ctx, data.tool)
+            forwardToolStart(controller, encoder, ctx, data.tool, data.tool_call_id)
             continue
           }
           if (data.status === 'tool_end' && typeof data.tool === 'string' && data.tool.length > 0) {
             const output = typeof data.output === 'string' ? data.output : ''
-            forwardToolEnd(controller, encoder, ctx, data.tool, output)
+            forwardToolEnd(controller, encoder, ctx, data.tool, output, data.tool_call_id)
             continue
           }
           if (typeof data.token === 'string' && data.token.length > 0) {
@@ -371,7 +391,7 @@ export async function POST(req: Request) {
   const streamCtx: StreamForwardContext = {
     textPartId,
     textStarted: false,
-    toolCallIds: new Map(),
+    pendingToolCallIdsByName: new Map(),
   }
 
   const stream = new ReadableStream({

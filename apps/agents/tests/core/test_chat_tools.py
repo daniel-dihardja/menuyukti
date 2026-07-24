@@ -681,6 +681,22 @@ async def test_get_chart_data_loads_markdown(monkeypatch: pytest.MonkeyPatch) ->
     assert kwargs["analytics_run_id"] == 99
 
 
+@pytest.mark.asyncio
+async def test_get_chart_data_soft_fails_on_load_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    load_mock = AsyncMock(side_effect=RuntimeError("graphql boom"))
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "load_chart_data_markdown", load_mock)
+
+    out = await chat_tools.get_chart_data.ainvoke(
+        {"chart_id": "venue_slot_strength_heatmap"},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert out.startswith("Error loading chart data for venue_slot_strength_heatmap:")
+    assert "graphql boom" in out
+
+
 def _ig_item(**overrides: object) -> dict:
     base = {
         "id": "1",
@@ -726,6 +742,103 @@ async def test_list_instagram_items_success(monkeypatch: pytest.MonkeyPatch) -> 
     assert "id=10" in out
     assert "id=11" in out
     fetch_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_instagram_items_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch_mock = AsyncMock(return_value=[])
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_items", fetch_mock)
+
+    out = await chat_tools.list_instagram_items.ainvoke(
+        {},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "No Instagram items" in out
+    assert "100" in out
+
+
+@pytest.mark.asyncio
+async def test_list_instagram_items_soft_fails_on_fetch_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetch_mock = AsyncMock(side_effect=RuntimeError("upstream down"))
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_items", fetch_mock)
+
+    out = await chat_tools.list_instagram_items.ainvoke(
+        {},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert out.startswith("Error listing Instagram items:")
+    assert "upstream down" in out
+
+
+@pytest.mark.asyncio
+async def test_get_instagram_item_requires_workflow() -> None:
+    out = await chat_tools.get_instagram_item.ainvoke(
+        {"item_id": "10"},
+        config={"configurable": {"user_id": "u1"}},
+    )
+    assert "Workflow context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_get_instagram_item_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetch_mock = AsyncMock(
+        return_value=_ig_item(
+            id="10",
+            title="Friday special",
+            caption="Try our burger",
+            hook="Lunch rush",
+            visualBrief="Hero plate, warm light",
+            schedule="2026-07-25T12:00:00Z",
+            pages=[{"id": "p1", "sortOrder": 0, "mediaS3Key": "s3://x"}],
+        )
+    )
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_item", fetch_mock)
+
+    out = await chat_tools.get_instagram_item.ainvoke(
+        {"item_id": "10"},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "id=10" in out
+    assert "Friday special" in out
+    assert "Try our burger" in out
+    assert "Lunch rush" in out
+    assert "Hero plate" in out
+    assert "id=p1" in out
+    assert "has_media=True" in out
+    fetch_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_instagram_item_soft_fails_on_fetch_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetch_mock = AsyncMock(side_effect=RuntimeError("graphql boom"))
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_item", fetch_mock)
+
+    out = await chat_tools.get_instagram_item.ainvoke(
+        {"item_id": "10"},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert out.startswith("Error loading Instagram item id=10:")
+    assert "graphql boom" in out
+
+
+@pytest.mark.asyncio
+async def test_get_instagram_item_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_instagram_item", AsyncMock(return_value=None))
+
+    out = await chat_tools.get_instagram_item.ainvoke(
+        {"item_id": "999"},
+        config={"configurable": {"workflow_id": "100", "user_id": "u1"}},
+    )
+    assert "not found" in out
 
 
 @pytest.mark.asyncio

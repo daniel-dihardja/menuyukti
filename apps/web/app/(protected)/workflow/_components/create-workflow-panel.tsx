@@ -26,13 +26,6 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
 
 import { LocationSelect } from '../../analytics/sales/location-select'
-import {
-  BLANK_PRESET_SELECTION_KEY,
-  WORKFLOW_IMPORT_PRESETS,
-  WORKFLOW_STRATEGY_OPTIONS,
-  presetSelectionKey,
-  workflowTitleFromPresetPayload,
-} from '@/lib/workflows/presets'
 
 type Branch = {
   id: number
@@ -72,99 +65,64 @@ function CreateWorkflowLocationSection({ branches }: LocationSectionProps) {
   )
 }
 
-type DataAndTemplateSectionProps = {
+type DataSectionProps = {
   analyticsRuns: AnalyticsRunItem[]
   loadingRuns: boolean
   runsError: string | null
   analyticsRunId: number | null
   onAnalyticsRunIdChange: (id: number | null) => void
-  presetKey: string
-  onPresetKeyChange: (key: string) => void
 }
 
-function CreateWorkflowDataAndTemplateSection({
+function CreateWorkflowDataSection({
   analyticsRuns,
   loadingRuns,
   runsError,
   analyticsRunId,
   onAnalyticsRunIdChange,
-  presetKey,
-  onPresetKeyChange,
-}: DataAndTemplateSectionProps) {
+}: DataSectionProps) {
   const t = useTranslations('analytics.workflows')
   const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
-  const tNew = useTranslations('analytics.workflows.newWorkflowDialog')
-  const tChat = useTranslations('analytics.workflows.chat')
 
   return (
     <>
       <Separator className="bg-border/80" />
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-        <div className="flex min-w-0 flex-col gap-2">
-          <SectionLabel>{tPanel('sectionData')}</SectionLabel>
-          {loadingRuns ? (
-            <Skeleton className="h-10 w-full" />
-          ) : runsError ? (
-            <p className="text-destructive text-sm leading-snug" role="status">
-              {runsError}
-            </p>
-          ) : analyticsRuns.length === 0 ? (
-            <p
-              className="rounded-md border border-dashed bg-muted/30 px-3 py-2.5 text-muted-foreground text-sm leading-snug"
-              id="workflow-analytics-run-empty"
-            >
-              {t('analyticsRunNone')}
-            </p>
-          ) : (
-            <Select
-              onValueChange={(val) => onAnalyticsRunIdChange(val ? Number(val) : null)}
-              value={analyticsRunId !== null ? String(analyticsRunId) : undefined}
-            >
-              <SelectTrigger
-                aria-label={t('analyticsRunLabel')}
-                className="h-10 w-full min-w-0"
-                id="workflow-analytics-run-select"
-              >
-                <SelectValue placeholder={t('analyticsRunPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {analyticsRuns.map((run) => (
-                  <SelectItem key={run.id} value={String(run.id)}>
-                    {run.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-2 sm:col-span-2 lg:col-span-1">
-          <SectionLabel>{tPanel('sectionTemplate')}</SectionLabel>
-          <Select onValueChange={onPresetKeyChange} value={presetKey}>
+      <div className="flex min-w-0 max-w-md flex-col gap-2">
+        <SectionLabel>{tPanel('sectionData')}</SectionLabel>
+        {loadingRuns ? (
+          <Skeleton className="h-10 w-full" />
+        ) : runsError ? (
+          <p className="text-destructive text-sm leading-snug" role="status">
+            {runsError}
+          </p>
+        ) : analyticsRuns.length === 0 ? (
+          <p
+            className="rounded-md border border-dashed bg-muted/30 px-3 py-2.5 text-muted-foreground text-sm leading-snug"
+            id="workflow-analytics-run-empty"
+          >
+            {t('analyticsRunNone')}
+          </p>
+        ) : (
+          <Select
+            onValueChange={(val) => onAnalyticsRunIdChange(val ? Number(val) : null)}
+            value={analyticsRunId !== null ? String(analyticsRunId) : undefined}
+          >
             <SelectTrigger
-              aria-label={t('templateLabel')}
+              aria-label={t('analyticsRunLabel')}
               className="h-10 w-full min-w-0"
-              id="workflow-preset-select"
+              id="workflow-analytics-run-select"
             >
-              <SelectValue placeholder={t('templateLabel')} />
+              <SelectValue placeholder={t('analyticsRunPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={BLANK_PRESET_SELECTION_KEY}>{tNew('noPreset')}</SelectItem>
-              {WORKFLOW_STRATEGY_OPTIONS.map((strategy) => (
-                <SelectItem key={strategy.id} value={presetSelectionKey(strategy.id)}>
-                  {tNew(strategy.labelKey)}
-                </SelectItem>
-              ))}
-              {WORKFLOW_IMPORT_PRESETS.map((preset) => (
-                <SelectItem key={preset.id} value={presetSelectionKey(preset.id)}>
-                  {workflowTitleFromPresetPayload(preset.payload) ??
-                    tChat('importDialogFallbackName')}
+              {analyticsRuns.map((run) => (
+                <SelectItem key={run.id} value={String(run.id)}>
+                  {run.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
+        )}
       </div>
     </>
   )
@@ -174,7 +132,6 @@ type FooterSectionProps = {
   canCreate: boolean
   creating: boolean
   createError: string | null
-  importError: string | null
   onCreate: () => void | Promise<void>
 }
 
@@ -182,7 +139,6 @@ function CreateWorkflowFooterSection({
   canCreate,
   creating,
   createError,
-  importError,
   onCreate,
 }: FooterSectionProps) {
   const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
@@ -222,11 +178,6 @@ function CreateWorkflowFooterSection({
             <AlertDescription>{createError}</AlertDescription>
           </Alert>
         ) : null}
-        {importError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{importError}</AlertDescription>
-          </Alert>
-        ) : null}
       </div>
     </>
   )
@@ -239,13 +190,10 @@ export type CreateWorkflowPanelProps = {
   runsError: string | null
   analyticsRunId: number | null
   onAnalyticsRunIdChange: (id: number | null) => void
-  presetKey: string
-  onPresetKeyChange: (key: string) => void
   onCreate: () => void | Promise<void>
   canCreate: boolean
   creating: boolean
   createError: string | null
-  importError: string | null
   hasSelectedLocation: boolean
 }
 
@@ -256,13 +204,10 @@ export function CreateWorkflowPanel({
   runsError,
   analyticsRunId,
   onAnalyticsRunIdChange,
-  presetKey,
-  onPresetKeyChange,
   onCreate,
   canCreate,
   creating,
   createError,
-  importError,
   hasSelectedLocation,
 }: CreateWorkflowPanelProps) {
   const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
@@ -283,20 +228,17 @@ export function CreateWorkflowPanel({
 
           {hasSelectedLocation ? (
             <>
-              <CreateWorkflowDataAndTemplateSection
+              <CreateWorkflowDataSection
                 analyticsRunId={analyticsRunId}
                 analyticsRuns={analyticsRuns}
                 loadingRuns={loadingRuns}
                 onAnalyticsRunIdChange={onAnalyticsRunIdChange}
-                onPresetKeyChange={onPresetKeyChange}
-                presetKey={presetKey}
                 runsError={runsError}
               />
               <CreateWorkflowFooterSection
                 canCreate={canCreate}
                 createError={createError}
                 creating={creating}
-                importError={importError}
                 onCreate={onCreate}
               />
             </>

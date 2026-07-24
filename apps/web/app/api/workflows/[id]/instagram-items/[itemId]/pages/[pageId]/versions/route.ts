@@ -4,22 +4,23 @@ import { auth } from '@clerk/nextjs/server'
 import { deletePostMediaKeys, isObjectKeyForPost } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  DELETE_INSTAGRAM_ITEM_MEDIA_VERSION_MUTATION,
+  DELETE_INSTAGRAM_ITEM_PAGE_MEDIA_VERSION_MUTATION,
   INSTAGRAM_ITEM_QUERY,
-  type DeleteInstagramItemMediaVersionData,
+  type DeleteInstagramItemPageMediaVersionData,
   type InstagramItemData,
 } from '@/lib/graphql/queries/instagram-items'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 
 import {
-  deleteInstagramItemMediaVersionBodySchema,
+  deleteInstagramItemPageMediaVersionBodySchema,
   itemIdParamSchema,
+  pageIdParamSchema,
   workflowIdParamSchema,
-} from '../../schema'
-import { withItemImageUrl } from '../../with-image-url'
+} from '../../../../schema'
+import { withItemImageUrl, withPageImageUrl } from '../../../../with-image-url'
 
 type RouteContext = {
-  params: Promise<{ id: string; itemId: string }>
+  params: Promise<{ id: string; itemId: string; pageId: string }>
 }
 
 async function loadWorkflowRootOrThrow(workflowId: string, userId: string) {
@@ -47,14 +48,12 @@ export async function DELETE(req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id: rawWorkflowId, itemId: rawItemId } = await context.params
+    const { id: rawWorkflowId, itemId: rawItemId, pageId: rawPageId } = await context.params
     const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
     const itemParsed = itemIdParamSchema.safeParse(rawItemId)
-    if (!workflowParsed.success) {
-      return NextResponse.json({ message: 'Invalid workflow id' }, { status: 400 })
-    }
-    if (!itemParsed.success) {
-      return NextResponse.json({ message: 'Invalid Instagram item id' }, { status: 400 })
+    const pageParsed = pageIdParamSchema.safeParse(rawPageId)
+    if (!workflowParsed.success || !itemParsed.success || !pageParsed.success) {
+      return NextResponse.json({ message: 'Invalid workflow, item, or page id' }, { status: 400 })
     }
 
     const workflowRoot = await loadWorkflowRootOrThrow(workflowParsed.data, userId)
@@ -69,7 +68,7 @@ export async function DELETE(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 })
     }
 
-    const parsedBody = deleteInstagramItemMediaVersionBodySchema.safeParse(body)
+    const parsedBody = deleteInstagramItemPageMediaVersionBodySchema.safeParse(body)
     if (!parsedBody.success) {
       return NextResponse.json({ message: 'mediaS3Key is required' }, { status: 400 })
     }
@@ -89,46 +88,57 @@ export async function DELETE(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Instagram item not found' }, { status: 404 })
     }
 
-    const isKnownVersion = (item.mediaVersions ?? []).some(
-      (version) => version.mediaS3Key === mediaS3Key,
-    )
+    const page = item.pages.find((candidate) => candidate.id === pageParsed.data)
+    if (!page) {
+      return NextResponse.json({ message: 'Instagram item page not found' }, { status: 404 })
+    }
+
+    const isKnownVersion = page.mediaVersions.some((version) => version.mediaS3Key === mediaS3Key)
     if (!isKnownVersion) {
       return NextResponse.json(
-        { message: 'Media version not found for this Instagram item' },
+        { message: 'Media version not found for this page' },
         { status: 400 },
       )
     }
 
-    const mutationData = await graphqlQuery<DeleteInstagramItemMediaVersionData>(
-      DELETE_INSTAGRAM_ITEM_MEDIA_VERSION_MUTATION,
-      { itemId: itemParsed.data, mediaS3Key },
+    const mutationData = await graphqlQuery<DeleteInstagramItemPageMediaVersionData>(
+      DELETE_INSTAGRAM_ITEM_PAGE_MEDIA_VERSION_MUTATION,
+      { pageId: pageParsed.data, mediaS3Key },
       userId,
     )
 
     try {
       await deletePostMediaKeys([mediaS3Key])
     } catch (err) {
-      console.error('[instagram-items/versions/delete] S3 DeleteObject failed', {
+      console.error('[instagram-items/pages/versions/delete] S3 DeleteObject failed', {
         userIdPrefix: userId.slice(0, 8),
-        itemId: itemParsed.data,
         message: err instanceof Error ? err.message : String(err),
       })
       return NextResponse.json({ message: 'Failed to delete image from storage' }, { status: 502 })
     }
 
+    const refreshed = await graphqlQuery<InstagramItemData>(
+      INSTAGRAM_ITEM_QUERY,
+      { id: itemParsed.data },
+      userId,
+    )
+
     return NextResponse.json({
-      item: await withItemImageUrl(mutationData.deleteInstagramItemMediaVersion, userId),
+      page: await withPageImageUrl(mutationData.deleteInstagramItemPageMediaVersion, userId),
+      item: refreshed.instagramItem
+        ? await withItemImageUrl(refreshed.instagramItem, userId)
+        : null,
     })
   } catch (error) {
-    console.error(error)
     const message =
-      error instanceof Error ? error.message : 'Failed to delete Instagram item media version'
+      error instanceof Error ? error.message : 'Failed to delete Instagram item page media version'
     if (message.includes('Not allowed')) {
       return NextResponse.json({ message }, { status: 403 })
     }
     if (message.includes('not found')) {
       return NextResponse.json({ message }, { status: 404 })
     }
+    console.error(error)
     return NextResponse.json({ message }, { status: 500 })
   }
 }

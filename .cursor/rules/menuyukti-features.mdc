@@ -8,6 +8,6 @@ alwaysApply: false
 
 # Menuyukti feature glossary (pointer)
 
-**Workflow presets** are built-in workflow **import** payloads: JSON under `apps/web/lib/workflows/presets/`, registered in `apps/web/lib/workflows/presets/index.ts` as `WORKFLOW_IMPORT_PRESETS` (shape matches `workflowImportPayload` from `apps/graphql/workflow_export_schema.json`). They appear in the import dialog and new-workflow preset pickers.
+**Workflow presets** are built-in workflow **import** payloads: JSON under `apps/web/lib/workflows/presets/`, registered in `apps/web/lib/workflows/presets/index.ts` as `WORKFLOW_IMPORT_PRESETS` (shape matches `workflowImportPayload` from `apps/graphql/workflow_export_schema.json`). Overview create starts blank; optional `templatePayload` remains on the create BFF.
 
 For aliases, preset IDs, key symbols, and UI touchpoints, read the canonical table in [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md). Add new features there; keep this rule as a short pointer only.

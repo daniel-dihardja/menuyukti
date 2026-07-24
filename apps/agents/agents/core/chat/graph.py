@@ -1,4 +1,4 @@
-"""LangGraph chat graph: ReAct agent with get_milestone and short-term checkpoint memory."""
+"""LangGraph chat graph: ReAct advisor with chart/location tools and short-term checkpoint memory."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from agents_app.agents.core.chat.tools import (
     create_instagram_items,
     delete_instagram_items,
     get_chart_data,
+    get_instagram_item,
     get_location_data,
     get_milestone,
     get_workflow_overview,
@@ -25,7 +26,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.config import get_config
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt import ToolNode, create_react_agent
 
 # Max tool/model turns per request (ReAct loop budget).
 CHAT_RECURSION_LIMIT = 20
@@ -40,18 +41,6 @@ def _has_ig_studio_post_context(conf: dict[str, Any]) -> bool:
         and isinstance(page_id, str)
         and page_id.strip()
     )
-
-
-def _has_workflow_id(conf: dict[str, Any]) -> bool:
-    raw = conf.get("workflow_id")
-    return isinstance(raw, str) and bool(raw.strip())
-
-
-def _has_milestone_id(conf: dict[str, Any]) -> bool:
-    raw = conf.get("milestone_id")
-    if isinstance(raw, str):
-        return bool(raw.strip())
-    return raw is not None
 
 
 def _has_location_id(conf: dict[str, Any]) -> bool:
@@ -69,13 +58,18 @@ def chat_tools_list(
 
     When ``workflow_id`` / ``milestone_id`` / ``location_id`` are False, the corresponding
     tools are omitted from the bound set (model cannot call them). The ToolNode still
-    registers the full union via ``chat_tools_list(include_post_image=True)``.
+    registers the full union via ``chat_tools_list(include_post_image=True)`` so stale
+    checkpoint tool calls remain executable.
+
+    Request-scoped binding (``chat_tools_list_from_config``) never enables workflow
+    milestone or Instagram-item tools — workflow chat is an advisor over charts/location.
     """
     tools: list = []
     if workflow_id:
         tools.append(get_workflow_overview)
         tools.append(get_milestone)
         tools.append(list_instagram_items)
+        tools.append(get_instagram_item)
         tools.append(create_instagram_items)
         tools.append(update_instagram_items)
         tools.append(delete_instagram_items)
@@ -93,39 +87,44 @@ def chat_tools_list(
 
 
 def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
-    """Resolve request-scoped tools from RunnableConfig.configurable."""
+    """Resolve request-scoped tools from RunnableConfig.configurable.
+
+    Milestone and Instagram-item tools are never bound to the model (advisor chat).
+    They remain registered on the ToolNode for stale checkpoint compatibility.
+    """
     return chat_tools_list(
         include_post_image=_has_ig_studio_post_context(conf),
-        workflow_id=_has_workflow_id(conf),
-        milestone_id=_has_milestone_id(conf),
+        workflow_id=False,
+        milestone_id=False,
         location_id=_has_location_id(conf),
     )
 
 
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
-    """Prepend the chat system prompt (with optional injected workflow catalog)."""
+    """Prepend the chat system prompt (charts / location / optional IG Studio)."""
     messages = state.get("messages") or []
     cfg = get_config() or {}
     conf = cfg.get("configurable") or {}
-    raw_catalog = conf.get("workflow_catalog_markdown")
-    catalog = raw_catalog if isinstance(raw_catalog, str) else None
+    conf_dict = conf if isinstance(conf, dict) else {}
     prompt_body = build_system_prompt(
-        workflow_catalog=catalog,
-        ig_studio_post_image=_has_ig_studio_post_context(conf if isinstance(conf, dict) else {}),
-        include_chart_catalog=_has_location_id(conf if isinstance(conf, dict) else {}),
+        ig_studio_post_image=_has_ig_studio_post_context(conf_dict),
+        include_chart_catalog=_has_location_id(conf_dict),
     )
     return [SystemMessage(content=prompt_body), *messages]
 
 
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
-    """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
-    # ToolNode must include every tool the model may bind; binding is request-scoped below.
+    """Compile the shared chat agent (single graph for all requests; context via config)."""
+    # ToolNode must include every tool that may appear in checkpoint history; binding is
+    # request-scoped below. handle_tool_errors=True: turn unexpected tool exceptions into
+    # ToolMessages so the checkpoint is not left with dangling tool_calls.
     all_tools = chat_tools_list(
         include_post_image=True,
         workflow_id=True,
         milestone_id=True,
         location_id=True,
     )
+    tool_node = ToolNode(all_tools, handle_tool_errors=True)
 
     def _select_chat_model(_state: dict[str, Any], _runtime: Any) -> Any:
         """Resolve LLM from RunnableConfig (set by HTTP router when client picks a model)."""
@@ -140,7 +139,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
 
     return create_react_agent(  # type: ignore[type-var]
         _select_chat_model,
-        all_tools,
+        tool_node,
         prompt=_chat_prompt,
         checkpointer=checkpointer,
         name="menuyukti_chat",

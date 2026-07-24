@@ -26,6 +26,9 @@ from agents_app.agents.core.chat.instagram_items_client import (
     delete_instagram_item as persist_delete_instagram_item,
 )
 from agents_app.agents.core.chat.instagram_items_client import (
+    fetch_instagram_item,
+)
+from agents_app.agents.core.chat.instagram_items_client import (
     list_instagram_items as fetch_instagram_items,
 )
 from agents_app.agents.core.chat.instagram_items_client import (
@@ -806,11 +809,13 @@ async def get_chart_data(
     ],
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Load analytics data for a workflow visualization chart.
+    """Load analytics data for a workflow visualization chart (main Instagram planning sources).
 
-    Prefer for Instagram-item planning: venue slot strength (location rhythm / when to
-    post), menu item heatmap (what dishes to feature), or pair lift / co-purchase
-    matrices. Pass a chart_id from the workflow chart catalog exactly — do not invent ids.
+    - ``venue_slot_strength_heatmap``: posting frequency and best timing (``schedule``).
+    - ``menu_item_heatmap``: which menus to feature, with timing context.
+    - ``pair_lift_matrix_heatmap``: interesting menu combos / co-purchase pairings.
+
+    Pass a chart_id from the workflow chart catalog exactly — do not invent ids.
     """
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
@@ -826,13 +831,16 @@ async def get_chart_data(
         return f"Unknown chart_id {chart_id!r}. Allowed values: {allowed}."
 
     client = get_chat_http_client()
-    return await load_chart_data_markdown(
-        client,
-        chart_id=chart_id,
-        location_id=int(location_id),
-        user_id=str(user_id),
-        analytics_run_id=analytics_run_id,
-    )
+    try:
+        return await load_chart_data_markdown(
+            client,
+            chart_id=chart_id,
+            location_id=int(location_id),
+            user_id=str(user_id),
+            analytics_run_id=analytics_run_id,
+        )
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error loading chart data for {chart_id}: {exc}"
 
 
 def _workflow_chat_context(config: RunnableConfig | None) -> tuple[str, str] | str:
@@ -858,6 +866,40 @@ def _format_ig_item_line(item: dict[str, Any]) -> str:
     schedule = item.get("schedule")
     schedule_bit = f", schedule={schedule}" if schedule else ""
     return f"- id={item_id} kind={kind} status={status} title={title!r}{schedule_bit}"
+
+
+def _format_ig_item_detail(item: dict[str, Any]) -> str:
+    """Readable markdown for one Instagram item (edit-ready; no media version dumps)."""
+    lines = [
+        f"# Instagram item id={item.get('id', '?')}",
+        f"- **kind**: {item.get('kind') or '?'}",
+        f"- **status**: {item.get('status') or '?'}",
+        f"- **title**: {item.get('title') or '(untitled)'}",
+    ]
+    schedule = item.get("schedule")
+    if schedule:
+        lines.append(f"- **schedule**: {schedule}")
+    caption = item.get("caption")
+    if isinstance(caption, str) and caption.strip():
+        lines.extend(["", "## Caption", caption.strip()])
+    hook = item.get("hook")
+    if isinstance(hook, str) and hook.strip():
+        lines.extend(["", "## Hook", hook.strip()])
+    visual_brief = item.get("visualBrief")
+    if isinstance(visual_brief, str) and visual_brief.strip():
+        lines.extend(["", "## Visual brief", visual_brief.strip()])
+    pages = item.get("pages")
+    if isinstance(pages, list) and pages:
+        lines.extend(["", "## Pages"])
+        for page in pages:
+            if not isinstance(page, dict):
+                continue
+            page_id = page.get("id", "?")
+            sort_order = page.get("sortOrder")
+            order_bit = f" sortOrder={sort_order}" if sort_order is not None else ""
+            has_media = bool(page.get("mediaS3Key"))
+            lines.append(f"- id={page_id}{order_bit} has_media={has_media}")
+    return "\n".join(lines)
 
 
 def _normalize_ig_kind(raw: Any) -> str | None:
@@ -899,19 +941,50 @@ async def list_instagram_items(
     """List Instagram draft items (story/post/reel) for the current campaign workflow.
 
     Call before update or delete so you use real item ids. Also use to confirm what
-    already exists before creating more drafts.
+    already exists before creating more drafts. For full caption/hook/visual brief, call
+    ``get_instagram_item`` on a specific id.
     """
     ctx = _workflow_chat_context(config)
     if isinstance(ctx, str):
         return ctx
     workflow_id, user_id = ctx
     client = get_chat_http_client()
-    items = await fetch_instagram_items(workflow_id, user_id, client=client)
+    try:
+        items = await fetch_instagram_items(workflow_id, user_id, client=client)
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error listing Instagram items: {exc}"
     if not items:
         return f"No Instagram items for workflow id={workflow_id}."
     lines = [f"Instagram items for workflow id={workflow_id} ({len(items)}):"]
     lines.extend(_format_ig_item_line(item) for item in items)
     return "\n".join(lines)
+
+
+@tool
+async def get_instagram_item(
+    item_id: str,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """Load full fields for one Instagram item (caption, hook, visual brief, schedule, pages).
+
+    Call before updating an existing draft when you need current copy or page ids.
+    Prefer ``list_instagram_items`` first when the id is unknown.
+    """
+    ctx = _workflow_chat_context(config)
+    if isinstance(ctx, str):
+        return ctx
+    _workflow_id, user_id = ctx
+    cleaned = item_id.strip() if isinstance(item_id, str) else ""
+    if not cleaned:
+        return "Missing required field 'item_id'."
+    client = get_chat_http_client()
+    try:
+        item = await fetch_instagram_item(cleaned, user_id, client=client)
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error loading Instagram item id={cleaned}: {exc}"
+    if item is None:
+        return f"Instagram item id={cleaned} not found or access denied."
+    return _format_ig_item_detail(item)
 
 
 @tool
@@ -921,10 +994,12 @@ async def create_instagram_items(
 ) -> str:
     """Create one or more Instagram draft items for the current workflow (batch).
 
-    Each item object requires ``kind`` (``story`` | ``post`` | ``reel``). Optional fields:
-    ``title``, ``caption``, ``hook``, ``visual_brief``, ``status`` (``draft`` | ``ready``),
-    ``schedule`` (ISO-8601 datetime). Prefer a single call with multiple items when the
-    user asks for several drafts at once.
+    Prefer this tool (not chat-only advice) when the user asks to create Stories, posts,
+    or Reels. Each item object requires ``kind`` (``story`` | ``post`` | ``reel``).
+    Optional fields: ``title``, ``caption``, ``hook``, ``visual_brief``,
+    ``status`` (``draft`` | ``ready``), ``schedule`` (ISO-8601 datetime). Prefer a single
+    call with multiple items when the user asks for several drafts at once. Ground timing
+    and menus in ``get_chart_data`` when available.
     """
     ctx = _workflow_chat_context(config)
     if isinstance(ctx, str):
@@ -1000,9 +1075,10 @@ async def update_instagram_items(
 ) -> str:
     """Update one or more existing Instagram items (batch).
 
-    Each item requires ``id`` and at least one of: ``kind``, ``title``, ``caption``,
-    ``hook``, ``visual_brief``, ``status``, ``schedule`` (ISO-8601 or null to clear).
-    Call ``list_instagram_items`` first when ids are unknown.
+    Prefer this tool when the user asks to edit drafts. Each item requires ``id`` and at
+    least one of: ``kind``, ``title``, ``caption``, ``hook``, ``visual_brief``, ``status``,
+    ``schedule`` (ISO-8601 or null to clear). Call ``list_instagram_items`` when ids are
+    unknown; call ``get_instagram_item`` when you need current full fields before patching.
     """
     ctx = _workflow_chat_context(config)
     if isinstance(ctx, str):
@@ -1092,8 +1168,8 @@ async def delete_instagram_items(
 ) -> str:
     """Delete one or more Instagram items by id (batch).
 
-    Call ``list_instagram_items`` first when ids are unknown. Confirm with the user
-    when delete intent is ambiguous.
+    Prefer this tool when the user asks to remove drafts. Call ``list_instagram_items``
+    first when ids are unknown. Confirm with the user when delete intent is ambiguous.
     """
     ctx = _workflow_chat_context(config)
     if isinstance(ctx, str):

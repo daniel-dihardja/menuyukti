@@ -4,6 +4,8 @@ export const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow
 
 export const itemIdParamSchema = z.string().regex(/^\d+$/, 'Invalid Instagram item id')
 
+export const pageIdParamSchema = z.string().regex(/^\d+$/, 'Invalid Instagram item page id')
+
 export const instagramItemKindSchema = z.enum(['story', 'post', 'reel'])
 
 export const instagramItemStatusSchema = z.enum(['draft', 'ready'])
@@ -43,8 +45,6 @@ export const patchInstagramItemBodySchema = z
     styleId: z.number().int().positive().nullable().optional(),
     status: instagramItemStatusSchema.optional(),
     schedule: scheduleSchema.optional(),
-    /** Commit an existing media version as the item image. */
-    mediaS3Key: z.string().trim().min(1).optional(),
   })
   .refine(
     (value) =>
@@ -56,11 +56,25 @@ export const patchInstagramItemBodySchema = z
       value.referenceImages !== undefined ||
       value.styleId !== undefined ||
       value.status !== undefined ||
-      value.schedule !== undefined ||
-      value.mediaS3Key !== undefined,
+      value.schedule !== undefined,
     { message: 'At least one field is required' },
   )
 
-export const deleteInstagramItemMediaVersionBodySchema = z.object({
+export const createInstagramItemPageBodySchema = z.object({
+  copyFromPageId: z.string().regex(/^\d+$/).optional(),
+})
+
+export const patchInstagramItemPageBodySchema = z
+  .object({
+    mediaS3Key: z.string().trim().min(1).optional(),
+    prompt: z.string().optional(),
+  })
+  .refine((value) => value.mediaS3Key !== undefined || value.prompt !== undefined, {
+    message: 'At least one field is required',
+  })
+
+export const deleteInstagramItemPageMediaVersionBodySchema = z.object({
   mediaS3Key: z.string().trim().min(1),
 })
+
+export const MAX_INSTAGRAM_ITEM_PAGES = 10

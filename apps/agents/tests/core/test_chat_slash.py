@@ -41,10 +41,6 @@ def test_chat_stream_slash_input_bypasses_graph(client: TestClient, monkeypatch:
     tool_mock = MagicMock()
     tool_mock.ainvoke = AsyncMock(return_value="## Input (milestoneInput)\n(not set)")
     monkeypatch.setattr("agents_app.routers.chat.get_milestone", tool_mock)
-    monkeypatch.setattr(
-        "agents_app.routers.chat.load_workflow_catalog_markdown",
-        AsyncMock(return_value="catalog"),
-    )
 
     with client.stream(
         "POST",

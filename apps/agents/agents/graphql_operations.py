@@ -713,17 +713,22 @@ INSTAGRAM_ITEM_FIELDS = """
   caption
   hook
   visualBrief
-  mediaS3Key
   generationPrompt
   referenceImages {
     name
     enabled
   }
-  mediaVersions {
+  pages {
     id
+    sortOrder
     mediaS3Key
     prompt
-    createdAt
+    mediaVersions {
+      id
+      mediaS3Key
+      prompt
+      createdAt
+    }
   }
   status
   schedule
@@ -734,6 +739,14 @@ INSTAGRAM_ITEM_FIELDS = """
 INSTAGRAM_ITEMS_QUERY = """
 query InstagramItems($workflowId: ID!) {
   instagramItems(workflowId: $workflowId) {
+""" + INSTAGRAM_ITEM_FIELDS + """
+  }
+}
+"""
+
+INSTAGRAM_ITEM_QUERY = """
+query InstagramItem($id: ID!) {
+  instagramItem(id: $id) {
 """ + INSTAGRAM_ITEM_FIELDS + """
   }
 }
@@ -773,7 +786,6 @@ mutation UpdateInstagramItem(
   $caption: String
   $hook: String
   $visualBrief: String
-  $mediaS3Key: String
   $generationPrompt: String
   $referenceImages: [InstagramItemReferenceImageInput!]
   $status: String
@@ -786,7 +798,6 @@ mutation UpdateInstagramItem(
     caption: $caption
     hook: $hook
     visualBrief: $visualBrief
-    mediaS3Key: $mediaS3Key
     generationPrompt: $generationPrompt
     referenceImages: $referenceImages
     status: $status

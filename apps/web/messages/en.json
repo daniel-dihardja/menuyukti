@@ -24,6 +24,25 @@
       "runningDetail": "Composing prompt and running Leonardo",
       "done": "Generated post image",
       "error": "Image generation failed"
+    },
+    "getChartData": {
+      "runningGeneric": "Reading your sales charts…",
+      "doneGeneric": "Reviewed sales charts",
+      "error": "Couldn’t load chart data",
+      "charts": {
+        "venue_slot_strength_heatmap": {
+          "running": "Checking venue rhythm, peak slots, and posting frequency…",
+          "done": "Reviewed venue slot strength"
+        },
+        "menu_item_heatmap": {
+          "running": "Checking which menu items sell best and when…",
+          "done": "Reviewed menu heatmap"
+        },
+        "pair_lift_matrix_heatmap": {
+          "running": "Checking menu combos and pair-lift opportunities…",
+          "done": "Reviewed pair lift matrix"
+        }
+      }
     }
   },
   "appShell": {
@@ -36,23 +55,22 @@
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
     "navStudio": "IG Studio",
-    "navWorkflows": "Workflows",
+    "navWorkflows": "Chat",
     "navShop": "Print Shop",
     "landingNav": {
       "services": "Services",
       "why": "Why Menuyukti",
-      "mobileDescription": "A restaurant marketing agency with enterprise engineering and AI—strategy, content, and campaigns built exclusively for hospitality."
+      "mobileDescription": "Agentic restaurant marketing—Chat campaigns, sales reports, and location insights built exclusively for hospitality."
     },
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Workflows for agentic campaign planning and Studio for AI brand visuals.",
+    "mobileMenuDescription": "Chat for agentic campaign planning and Studio for AI brand visuals.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
     "triggerAria": "Open account menu",
     "profile": "Profile",
     "team": "Team",
-    "accountSettings": "Account settings",
     "signOut": "Sign out"
   },
   "agentChat": {
@@ -82,13 +100,13 @@
     "mistral_mistral_large_3": "Mistral Large 3"
   },
   "metadata": {
-    "title": "Menuyukti — Restaurant Marketing Agency | AI Strategy & Content",
-    "description": "A restaurant marketing agency built on enterprise engineering and proprietary AI. Strategy, content creation, social media, marketing analysis, and technical consulting for restaurants, cafés, and bars.",
+    "title": "Menuyukti — Agentic Restaurant Marketing | Chat, Reports & Locations",
+    "description": "Turn restaurant sales data into Chat campaigns, clear reports, and location insights—built for restaurants, cafés, and bars.",
     "ogLocale": "en_US",
-    "ogImageAlt": "Menuyukti — Restaurant Marketing Agency | AI Strategy & Content",
-    "ogImageBadge": "Restaurant marketing agency · Strategy & content",
-    "ogImageHeadline": "A restaurant marketing agency built on AI and engineering",
-    "ogImageTagline": "Data-informed strategy and social content—delivered by agency marketers powered by in-house AI and engineering."
+    "ogImageAlt": "Menuyukti — Agentic Restaurant Marketing | Chat, Reports & Locations",
+    "ogImageBadge": "Agentic restaurant marketing · Data to campaigns",
+    "ogImageHeadline": "Restaurant marketing built on your sales data",
+    "ogImageTagline": "Chat campaigns, sales reports, and location insights—powered by AI for hospitality operators."
   },
   "login": {
     "title": "Menuyukti",
@@ -96,7 +114,7 @@
     "accessNote": "Sign-in is for existing customers and early partners only. Public access is opening soon.",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
-    "signUpDescription": "Create an account for Studio, Workflows, analytics-driven planning, and the print shop when you want ready-made artwork.",
+    "signUpDescription": "Create an account for Chat campaigns, sales Reports, Locations, and Team—restaurant marketing grounded in your order data.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
     "passwordLabel": "Password",
@@ -184,161 +202,160 @@
     "skipToContent": "Skip to content",
     "hero": {
       "headline": "We read between the bites.",
-      "subtitle": "Restaurant data turned into marketing campaigns, content ideas, and growth opportunities hidden in every order.",
+      "subtitle": "Restaurant sales data turned into Chat campaigns, location reports, and growth opportunities hidden in every order.",
       "badge": "Built on Data. Inspired by Food.",
       "ctaSecondary": "Sign in"
     },
     "why": {
       "title": "Why Menuyukti exists",
-      "subtitle": "Restaurant owners juggle operations, staff, reputation, social media, and growth—all at once. Marketing deserves the same attention as the kitchen—strategy, content, and campaigns built exclusively for restaurants, cafés, and bars.",
+      "subtitle": "Restaurant owners juggle operations, staff, reputation, and growth—all at once. Marketing deserves the same attention as the kitchen—campaigns, reports, and location insights built exclusively for restaurants, cafés, and bars.",
       "item1Title": "Too much on every owner's plate",
-      "item1Description": "Running a restaurant means managing suppliers, guest experience, online reputation, promotions, and social media simultaneously—marketing rarely gets the attention it deserves.",
+      "item1Description": "Running a restaurant means managing suppliers, guest experience, promotions, and growth simultaneously—marketing rarely gets the attention it deserves.",
       "item2Title": "Restaurant marketing has its own rhythm",
-      "item2Description": "Hospitality marketing blends local competition, foot traffic, menu storytelling, and steady social presence. Menuyukti pairs hospitality marketing expertise with technical infrastructure and AI—so restaurant-specific strategy and content can be planned and produced in one place.",
+      "item2Description": "Hospitality marketing blends local competition, foot traffic, menu storytelling, and when guests actually buy. Menuyukti turns your sales data into Chat campaigns and clear reports—so restaurant-specific plans start from what’s already selling.",
       "item3Title": "Restaurant-only focus",
-      "item3Description": "A single-industry focus means deeper expertise, better processes, and marketing strategies designed for how restaurants, cafés, and bars actually operate."
+      "item3Description": "A single-industry focus means deeper expertise, better processes, and marketing tools designed for how restaurants, cafés, and bars actually operate."
     },
     "foundation": {
       "title": "Built on a unique foundation",
-      "subtitle": "Menuyukti is built on enterprise engineering, proprietary AI, and restaurant marketing expertise—bringing hospitality strategy and content together in one integrated workflow.",
+      "subtitle": "Menuyukti is built on enterprise engineering and proprietary AI—bringing Chat campaigns, sales reports, and location insights together in one workspace.",
       "item1Title": "Enterprise-grade engineering",
       "item1Description": "More than a decade building platforms for banking, industrial companies, and the public sector—enterprise-grade software engineering behind how your marketing runs.",
       "item2Title": "Proprietary AI platform",
-      "item2Description": "An internal AI platform built for restaurant marketing: analysis, strategy, content generation, campaign planning, and growth opportunity discovery in one workflow—supporting agency marketers alongside their expertise.",
-      "item3Title": "Agency marketing expertise",
-      "item3Description": "Restaurant marketing professionals who operate the platform daily—understanding hospitality, local competition, and what it takes to turn strategy into posts, captions, and campaigns."
+      "item2Description": "An AI platform built for restaurant marketing: sales analysis, campaign planning in Chat, and growth opportunity discovery grounded in your orders—not generic social tools.",
+      "item3Title": "Built for operators and teams",
+      "item3Description": "Owners, marketers, and partners work in one workspace—invite your Team, share locations, and keep campaigns and reports aligned across the floor."
     },
     "differentiators": {
       "title": "What makes Menuyukti different",
       "items": [
         {
           "value": "Integrated",
-          "label": "Strategy briefs, social posts, and campaigns from one agency workflow—strategy and content under the same roof."
+          "label": "Chat campaigns, Reports, and Locations in one workspace—planning and performance under the same roof."
         },
         {
           "value": "Consistent",
-          "label": "AI-supported workflows enforce an agency quality bar across every campaign and channel."
+          "label": "AI-supported Chat workflows keep campaign planning grounded in the same sales signals every time."
         },
         {
           "value": "Data-driven",
-          "label": "Strategy and content grounded in your sales and analytics."
+          "label": "Campaigns and reports grounded in your sales and location analytics."
         },
         {
           "value": "Focused",
-          "label": "A restaurant-only marketing agency—every plan built for cafés, bars, and dining rooms."
+          "label": "Restaurant-only marketing software—every plan built for cafés, bars, and dining rooms."
         },
         {
           "value": "Evolving",
-          "label": "Agency clients benefit as the in-house platform evolves—new capabilities without added complexity."
+          "label": "Your workspace benefits as the platform evolves—new capabilities without added complexity."
         }
       ]
     },
     "services": {
-      "title": "Our services",
-      "subtitle": "Full-service restaurant marketing—from strategy and AI-assisted content to analysis, social management, and technical consulting.",
+      "title": "What’s in the workspace",
+      "subtitle": "The Menuyukti app today—Chat for campaigns, Reports and Locations for sales insight, and Team for who can access it.",
       "items": {
         "analysis": {
-          "title": "Marketing analysis",
-          "description": "Identify growth opportunities by analyzing your digital presence, customer engagement, competition, and marketing performance.",
+          "title": "Reports",
+          "description": "Turn sales data into clear reports—see what’s selling, when demand peaks, and where growth opportunities hide in every order.",
           "bullets": [
-            "Digital presence audits",
-            "Competitive analysis",
-            "Marketing performance reviews",
+            "Sales performance reports",
+            "Menu and demand patterns",
+            "Peak-slot insights",
             "Growth opportunity identification",
-            "Strategic recommendations"
+            "Data-backed recommendations"
           ]
         },
         "content": {
-          "title": "Content creation",
-          "description": "Posts, captions, reels, and promos that keep customers engaged—produced with AI acceleration, without the weekly scramble.",
+          "title": "Chat",
+          "description": "Plan marketing campaigns with an AI chat grounded in your restaurant data—from briefs to next steps, without starting from a blank page.",
           "bullets": [
-            "Social media posts",
-            "Promotional campaigns",
-            "Seasonal content",
-            "Menu highlights",
-            "Event promotions",
-            "Brand storytelling"
+            "Campaign planning in Chat",
+            "Data-informed briefs",
+            "Promotion ideas from sales signals",
+            "Menu-led storytelling angles",
+            "Iterate with your team in one thread"
           ]
         },
         "social": {
-          "title": "Social media management",
-          "description": "Restaurants live and die by visibility. Maintain a strong presence with strategic planning and execution.",
+          "title": "Locations",
+          "description": "Manage venues and compare performance across locations—so multi-site teams see the same picture.",
           "bullets": [
-            "Content calendars",
-            "Campaign planning",
-            "Audience engagement strategies",
-            "Platform optimization",
-            "Performance monitoring"
+            "Location directory",
+            "Per-venue sales context",
+            "Compare branches side by side",
+            "Keep campaigns tied to the right site",
+            "Share access with your Team"
           ]
         },
         "strategy": {
-          "title": "Marketing strategy",
-          "description": "Long-term strategies for customer acquisition and retention—feeding content calendars, campaigns, and promotions with a clear plan.",
+          "title": "Campaign strategy",
+          "description": "Longer-horizon marketing plans that start from sales reality—feeding Chat campaigns and Reports with a clear direction.",
           "bullets": [
-            "Customer growth strategies",
-            "Brand positioning",
+            "Guest growth angles from demand data",
             "Promotional planning",
-            "Loyalty initiatives",
-            "Local marketing campaigns"
+            "Location-aware campaigns",
+            "Prioritize what already sells",
+            "Align Team on the same plan"
           ]
         },
         "technical": {
-          "title": "Technical consulting",
-          "description": "Modernize fragmented systems and outdated technology—websites, reservations, loyalty apps, and custom restaurant software.",
+          "title": "Team",
+          "description": "Invite people to your workspace and manage who can work with Chat, Reports, and Locations.",
           "bullets": [
-            "Modern restaurant websites",
-            "Online reservation integrations",
-            "Menu management solutions",
-            "Loyalty and ordering applications",
-            "Performance optimization"
+            "Invite workspace members",
+            "Owner and member roles",
+            "Shared access to campaigns and reports",
+            "Keep operators and marketers aligned",
+            "One workspace per restaurant group"
           ]
         }
       }
     },
     "platform": {
-      "title": "The AI platform behind the agency",
-      "subtitle": "Every engagement runs on in-house technology—agency expertise backed by proprietary software for restaurant marketing.",
+      "title": "The AI platform behind the workspace",
+      "subtitle": "Every session runs on in-house technology—Chat, Reports, and Locations backed by proprietary software for restaurant marketing.",
       "bullets": {
         "analysis": {
-          "title": "Marketing analysis at scale",
-          "description": "Continuous analysis of digital presence, engagement patterns, and competitive landscape to surface growth opportunities."
+          "title": "Reports that surface opportunity",
+          "description": "Sales analysis that highlights demand patterns, menu strength, and growth opportunities from your orders."
         },
         "content": {
-          "title": "Agency content at scale",
-          "description": "Agency marketers deliver posts, campaigns, and promotional content with AI-assisted workflows—maintaining creative control and brand quality."
+          "title": "Chat campaigns at the speed of service",
+          "description": "Plan and refine campaigns in Chat with AI that stays grounded in your restaurant context—you stay in control of what ships."
         },
         "campaigns": {
-          "title": "Smarter campaign planning",
-          "description": "Data-informed campaign calendars and social strategy aligned to when your guests actually engage."
+          "title": "Smarter planning by location",
+          "description": "Tie campaign work to the right Locations and the Reports that show when guests actually buy."
         }
       }
     },
     "vision": {
-      "title": "A technical marketing agency built for restaurants",
-      "description": "Menuyukti is a restaurant marketing agency—strategy and content for operators who want work they can publish, not just plans in a deck. Proprietary AI supports consistent strategy and content across campaigns."
+      "title": "Agentic restaurant marketing built for operators",
+      "description": "Menuyukti turns sales data into Chat campaigns and clear Reports—so restaurants, cafés, and bars act on what’s already selling, across every Location, with the Team who runs the floor."
     },
     "faq": {
       "title": "Common questions",
       "q1": "Who is Menuyukti for?",
-      "a1": "Restaurant owners, operators, and marketers at restaurants, cafés, and bars who want hospitality-native strategy and content.",
-      "q2": "How is Menuyukti different from a typical marketing agency?",
-      "a2": "Menuyukti is a restaurant-only agency with in-house enterprise engineering and proprietary AI. Strategy and content creation live under one roof—supported by technology built for hospitality marketing.",
+      "a1": "Restaurant owners, operators, and marketers at restaurants, cafés, and bars who want campaigns and reports grounded in their sales data.",
+      "q2": "How is Menuyukti different from a typical marketing tool?",
+      "a2": "Menuyukti is restaurant-only software with proprietary AI. Chat, Reports, Locations, and Team live in one workspace—built for hospitality marketing, not generic social posting.",
       "q3": "What does “AI-assisted” mean in practice?",
-      "a3": "The internal platform supports analysis, strategy briefs, content drafts, captions, and campaign calendars. Agency marketers review, refine, and approve everything—AI adds productivity and consistency; human expertise shapes the strategy.",
-      "q4": "What services do you offer?",
-      "a4": "Marketing analysis, AI-assisted content creation, social media management, marketing strategy, and technical consulting—including websites, reservations, loyalty apps, and custom restaurant software.",
+      "a3": "Chat helps plan campaigns from your sales context; Reports surface patterns and opportunities in your orders. You review and decide—AI speeds the work; your judgment shapes the strategy.",
+      "q4": "What can I do in the app today?",
+      "a4": "Use Chat for campaign planning, Reports for sales insight, Locations to manage venues, and Team to invite people to your workspace.",
       "q5": "How do we get started?",
       "a5": "Menuyukti is preparing for launch. If you already have platform access, sign in from the header or the buttons on this page.",
       "q6": "I already use the Menuyukti platform. Where do I sign in?",
-      "a6": "Existing platform users can sign in from the header to access Workflows, Studio, and analytics tools.",
+      "a6": "Existing platform users can sign in from the header to access Chat, Reports, Locations, and Team.",
       "q7": "How does Menuyukti compare on cost?",
-      "a7": "Menuyukti focuses exclusively on restaurants and runs on a proprietary AI platform built for hospitality marketing. The model pairs specialized agency expertise with in-house technology rather than scaling only through headcount. Packages are designed for restaurant economics; pricing details will be shared when onboarding opens for new clients.",
+      "a7": "Menuyukti focuses exclusively on restaurants and runs on a proprietary AI platform built for hospitality marketing. Packages are designed for restaurant economics; pricing details will be shared when onboarding opens for new clients.",
       "q8": "Who can sign in today?",
       "a8": "The platform is currently available to existing customers and early partners only. A broader public launch is in preparation—check back soon for when sign-up opens more widely."
     },
     "cta": {
-      "title": "Ready for a restaurant marketing agency that delivers strategy and content?",
-      "description": "Discover how agency expertise, proprietary AI, and enterprise engineering can help you attract more customers.",
+      "title": "Ready for restaurant marketing that starts from your sales data?",
+      "description": "Discover how Chat, Reports, and Locations can help you turn every order into the next campaign.",
       "secondary": "Sign in"
     },
     "footer": {
@@ -378,13 +395,13 @@
       "tagline": "Print-on-demand with a kitchen-and-bar soul — part of your Menuyukti workspace.",
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
-      "backWorkflows": "Workflow",
+      "backWorkflows": "Chat",
       "backStudio": "IG Studio",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, workflow, or studio."
+      "workspaceMenuDescription": "Go to your dashboard, chat, or studio."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
@@ -582,7 +599,7 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
-    "workflows": "Workflow",
+    "workflows": "Chat",
     "calendar": "Calendar",
     "posts": "IG Studio",
     "content": "Content",
@@ -1527,7 +1544,7 @@
       }
     },
     "workflows": {
-      "title": "Workflows",
+      "title": "Chat",
       "description": "Choose a location, create a workflow, then plan milestones, chat with the assistant, and run evaluations.",
       "sectionTitle": "Workflows for this location",
       "selectBranchTitle": "Choose a location",
@@ -1552,29 +1569,16 @@
       "analyticsRunPlaceholder": "Select a run",
       "analyticsRunLoading": "Loading runs…",
       "analyticsRunNone": "No analytics runs found",
-      "templateLabel": "Strategies",
       "createWorkflowPanel": {
         "title": "New workflow",
-        "description": "Choose a location, link the sales report that powers milestone data, then pick a template or start blank.",
+        "description": "Choose a location and link the sales report that powers milestone data.",
         "sectionLocation": "Location",
         "sectionData": "Sales report",
-        "sectionTemplate": "Strategies",
-        "footerHint": "Creates the workflow with your location, linked sales report, and template. You can change milestones afterward.",
+        "footerHint": "Creates a blank workflow with your location and linked sales report. You can add milestones afterward.",
         "ctaPrimary": "Create workflow"
       },
       "newWorkflowDialog": {
-        "title": "Confirm and create",
-        "description": "Review your choices, then create the workflow. You can change milestones afterward.",
-        "contextTitle": "Your selections",
-        "contextBranch": "Location",
-        "contextRun": "Sales report",
-        "contextTemplate": "Template",
-        "noPreset": "None",
-        "noPresetDescription": "Start with an empty milestone board.",
-        "localPulseStrategy": "Local Pulse",
-        "create": "Create Workflow",
         "creating": "Creating…",
-        "cancel": "Cancel",
         "createFailed": "Could not create the workflow. Please try again."
       },
       "selectBranch": "Please select a location to view workflows.",
@@ -1598,15 +1602,16 @@
         "renameError": "Could not save the name. Please try again."
       },
       "detail": {
-        "breadcrumb": "View Workflow"
+        "breadcrumb": "View Chat"
       },
       "chat": {
         "pageLoadingTitle": "Loading workflow…",
         "pageTitle": "Workflow #{id}",
-        "emptyTitle": "No messages yet",
-        "emptyDescription": "Start a conversation to see messages here.",
-        "placeholder": "What would you like to know?",
-        "thinking": "Thinking…",
+        "emptyTitle": "Plan your Instagram week",
+        "emptyDescription": "Get a day-by-day plan with formats and menu items, grounded in your venue’s sales data.",
+        "waitHint": "Usually takes about 30 seconds.",
+        "placeholder": "Ask for a weekly Instagram plan…",
+        "thinking": "Planning…",
         "errorTitle": "Something went wrong",
         "errorDescription": "The request could not be completed. Please try again.",
         "retry": "Retry",
@@ -1618,13 +1623,20 @@
         "attachImageAriaLabel": "Attach image",
         "attachImageTooltip": "Attach an image from your device",
         "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
-        "mobileChatOpenLabel": "Assistant & visualizations",
-        "mobileChatOpenAriaLabel": "Open assistant and visualizations",
-        "mobileChatSheetTitle": "Assistant & visualizations",
-        "mobileChatSheetDescription": "Chat with the workflow assistant or add charts from your linked sales report.",
-        "mobileChatCloseAriaLabel": "Close assistant",
-        "mobileChatEmptyHint": "Ask about milestones, data, or next steps.",
-        "mobileChatContinueHint": "Continue conversation",
+        "quickPrompts": {
+          "weeklyPlan": {
+            "label": "Weekly Instagram plan",
+            "prompt": "Create a weekly Instagram plan for this venue. For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+          },
+          "featureTopDishes": {
+            "label": "Feature top dishes",
+            "prompt": "Suggest this week’s Instagram posts featuring our strongest menu items. Include day, format, dish names, and a short caption angle for each."
+          },
+          "storiesAndReels": {
+            "label": "Stories & Reels mix",
+            "prompt": "Draft a weekly mix of Instagram Stories and Reels with specific menu items for each slot and a brief creative direction."
+          }
+        },
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {
@@ -2300,14 +2312,10 @@
           "generateError": "Couldn't generate the image. Try again."
         }
       },
-      "sidePanel": {
-        "chatTab": "Chat",
-        "visualizationsTab": "Visualizations"
-      },
       "visualizations": {
         "panelTitle": "Charts",
         "emptyTitle": "No charts yet",
-        "emptyDescription": "Add a chart from the catalog to explore analytics alongside your workflow.",
+        "emptyDescription": "Add a chart from the catalog to explore sales analytics alongside your plan.",
         "addButton": "Add visualization",
         "addMenuAriaLabel": "Add visualization",
         "removeAriaLabel": "Remove {title}",
@@ -2374,6 +2382,27 @@
           "content": "Content",
           "generate": "Generate"
         },
+        "pages": {
+          "label": "Pages",
+          "description": "Each page is a frame of this Story or post, with its own visual brief and image versions.",
+          "selectAria": "Select page {index}",
+          "actionsAria": "Page actions",
+          "selectedIndicator": "Page {current} of {total}",
+          "workspaceHeading": "Page {current} of {total}",
+          "add": "Add page",
+          "duplicate": "Duplicate page",
+          "delete": "Delete page",
+          "addError": "Could not add a page. Please try again.",
+          "duplicateError": "Could not duplicate this page. Please try again.",
+          "deleteError": "Could not delete this page. Please try again.",
+          "maxReached": "Items support up to 10 pages.",
+          "countBadge": "{count, plural, one {# page} other {# pages}}",
+          "deleteConfirmTitle": "Delete this empty page?",
+          "deleteConfirmDescription": "This removes the page from the item. Only empty pages without generated images can be deleted.",
+          "deleteConfirmCancel": "Cancel",
+          "deleteConfirmAction": "Delete page",
+          "deleteDeleting": "Deleting…"
+        },
         "fields": {
           "kind": "Format",
           "status": "Status",
@@ -2383,7 +2412,8 @@
           "title": "Title",
           "hook": "Hook",
           "caption": "Caption",
-          "visualBrief": "Visual brief"
+          "visualBrief": "Visual brief",
+          "pageVisualBrief": "Visual brief for this page"
         },
         "generate": {
           "button": "Generate image",
@@ -2399,6 +2429,7 @@
           "useCurrentPreviewAsReferenceHint": "Next generate edits from the image currently shown above.",
           "useCurrentPreviewAsReferenceUnavailable": "Generate an image first to use it as an edit reference.",
           "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
+          "pageVisualBriefHint": "Describe this page only. Type @ to attach product photos from Media as generation references.",
           "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",
           "formatHintPost": "Output size: 1024×1024 (square post).",
           "formatHintStory": "Output size: 768×1376 (story / reel).",
@@ -2416,12 +2447,12 @@
           "nextVersion": "Next generated image",
           "versionIndicator": "{current} of {total}",
           "versionDotAria": "Show version {index} of {total}",
-          "useAsItemImage": "Use as item image",
-          "committing": "Setting item image…",
-          "commitError": "Could not set this image as the item image. Please try again.",
+          "useAsItemImage": "Use as page image",
+          "committing": "Setting page image…",
+          "commitError": "Could not set this image as the page image. Please try again.",
           "deleteVersion": "Delete generated image",
           "deleteVersionConfirmTitle": "Delete this generated image?",
-          "deleteVersionConfirmDescription": "This removes the image from this item's version history. This cannot be undone.",
+          "deleteVersionConfirmDescription": "This removes the image from this page's version history. This cannot be undone.",
           "deleteVersionConfirmCancel": "Cancel",
           "deleteVersionConfirmAction": "Delete image",
           "deleteVersionDeleting": "Deleting…",

@@ -7,7 +7,7 @@ from datetime import datetime
 import strawberry
 
 from graphql.context import request_session_scope
-from graphql.data_sources import InstagramItem
+from graphql.data_sources import InstagramItem, InstagramItemPage
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.instagram_items_common import (
     item_to_gql,
@@ -16,6 +16,7 @@ from graphql.schema.instagram_items_common import (
     normalize_optional_text,
     normalize_status,
     parse_positive_id,
+    reload_item_with_pages,
 )
 from graphql.schema.types.instagram_item import InstagramItemType
 
@@ -63,6 +64,7 @@ class CreateInstagramItemMutation:
                 created_by_clerk_user_id=user_id,
             )
             session.add(row)
+            session.flush()
+            session.add(InstagramItemPage(instagram_item_id=row.id, sort_order=0))
             session.commit()
-            session.refresh(row)
-            return item_to_gql(row)
+            return item_to_gql(reload_item_with_pages(session, row.id))

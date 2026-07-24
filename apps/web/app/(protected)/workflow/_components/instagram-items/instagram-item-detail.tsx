@@ -17,7 +17,8 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
-import { Button, buttonVariants } from '@workspace/ui/components/button'
+import { Badge } from '@workspace/ui/components/badge'
+import { Button } from '@workspace/ui/components/button'
 import { ButtonGroup } from '@workspace/ui/components/button-group'
 import { Checkbox } from '@workspace/ui/components/checkbox'
 import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
@@ -33,6 +34,7 @@ import { Input } from '@workspace/ui/components/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -40,15 +42,15 @@ import {
 import { Separator } from '@workspace/ui/components/separator'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
-import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
-import { cn } from '@workspace/ui/lib/utils'
+import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
 import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-reference-thumbnails'
 import { StyleUsageGuide } from '@/components/styles/style-usage-guide'
 import type {
   InstagramItemDto,
-  InstagramItemMediaVersionDto,
+  InstagramItemPageDto,
+  InstagramItemPageMediaVersionDto,
 } from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
@@ -64,6 +66,7 @@ import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-refe
 import { routes } from '@/lib/routes'
 import { listStyles, type Style } from '@/lib/styles/client-api'
 
+import { InstagramItemPagesStrip } from './instagram-item-pages-strip'
 import { InstagramItemPreview } from './instagram-item-preview'
 import {
   toFormValues,
@@ -73,14 +76,7 @@ import {
 } from './use-instagram-items'
 
 const STYLE_NONE = '__none__'
-
-const optionChipClassName = cn(
-  buttonVariants({ variant: 'secondary', size: 'sm' }),
-  'h-auto shadow-none hover:translate-y-0',
-  'border border-transparent',
-  'data-[state=off]:border-border data-[state=off]:bg-transparent data-[state=off]:text-foreground data-[state=off]:hover:bg-secondary/50',
-  'data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground data-[state=on]:ring-2 data-[state=on]:ring-ring/40',
-)
+const MAX_ITEM_PAGES = 10
 
 type InstagramItemDetailProps = {
   item: InstagramItemDto
@@ -92,7 +88,7 @@ type InstagramItemDetailProps = {
   onGenerated: (item: InstagramItemDto) => void
 }
 
-type ItemImageVersion = InstagramItemMediaVersionDto & { imageUrl: string | null }
+type ItemImageVersion = InstagramItemPageMediaVersionDto & { imageUrl: string | null }
 
 function refsFromItem(item: InstagramItemDto): PostCreatorReferenceImage[] {
   if (!Array.isArray(item.referenceImages)) return []
@@ -109,22 +105,27 @@ function persistableRefs(
   return images.map((image) => ({ name: image.name, enabled: image.enabled }))
 }
 
-function versionsFromItem(item: InstagramItemDto): ItemImageVersion[] {
-  const raw = Array.isArray(item.mediaVersions) ? item.mediaVersions : []
+function sortedPages(item: InstagramItemDto): InstagramItemPageDto[] {
+  return [...(item.pages ?? [])].toSorted((a, b) => a.sortOrder - b.sortOrder)
+}
+
+function versionsFromPage(page: InstagramItemPageDto | undefined): ItemImageVersion[] {
+  if (!page) return []
+  const raw = Array.isArray(page.mediaVersions) ? page.mediaVersions : []
   if (raw.length > 0) {
     return raw.map((version) => ({
       ...version,
       imageUrl: version.imageUrl ?? null,
     }))
   }
-  if (item.imageUrl || item.mediaS3Key) {
+  if (page.imageUrl || page.mediaS3Key) {
     return [
       {
         id: 'current',
-        mediaS3Key: item.mediaS3Key ?? '',
-        prompt: item.generationPrompt ?? null,
-        createdAt: item.updatedAt ?? item.createdAt ?? '',
-        imageUrl: item.imageUrl ?? null,
+        mediaS3Key: page.mediaS3Key ?? '',
+        prompt: page.prompt ?? null,
+        createdAt: page.updatedAt ?? page.createdAt ?? '',
+        imageUrl: page.imageUrl ?? null,
       },
     ]
   }
@@ -144,17 +145,39 @@ function resolveVersionIndex(
   return 0
 }
 
-function syncFromItem(item: InstagramItemDto): {
+function promptsFromPages(pages: InstagramItemPageDto[]): Record<string, string> {
+  const next: Record<string, string> = {}
+  for (const page of pages) {
+    next[page.id] = page.prompt ?? ''
+  }
+  return next
+}
+
+function syncFromItem(
+  item: InstagramItemDto,
+  preferredPageId?: string | null,
+): {
+  pages: InstagramItemPageDto[]
+  selectedPageId: string | null
   versions: ItemImageVersion[]
   previewIndex: number
   committedIndex: number
+  pagePromptsById: Record<string, string>
 } {
-  const versions = versionsFromItem(item)
-  const committedIndex = resolveVersionIndex(versions, item.mediaS3Key)
+  const pages = sortedPages(item)
+  const selectedPage =
+    (preferredPageId ? pages.find((page) => page.id === preferredPageId) : undefined) ??
+    pages[0] ??
+    null
+  const versions = versionsFromPage(selectedPage ?? undefined)
+  const committedIndex = resolveVersionIndex(versions, selectedPage?.mediaS3Key)
   return {
+    pages,
+    selectedPageId: selectedPage?.id ?? null,
     versions,
     previewIndex: committedIndex,
     committedIndex,
+    pagePromptsById: promptsFromPages(pages),
   }
 }
 
@@ -191,21 +214,35 @@ export function InstagramItemDetail({
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [useCurrentPreviewAsReference, setUseCurrentPreviewAsReference] = useState(true)
   const initialSync = syncFromItem(item)
+  const [pages, setPages] = useState<InstagramItemPageDto[]>(initialSync.pages)
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(initialSync.selectedPageId)
+  const [pagePromptsById, setPagePromptsById] = useState<Record<string, string>>(
+    initialSync.pagePromptsById,
+  )
   const [imageVersions, setImageVersions] = useState<ItemImageVersion[]>(initialSync.versions)
   const [previewVersionIndex, setPreviewVersionIndex] = useState(initialSync.previewIndex)
   const [committedVersionIndex, setCommittedVersionIndex] = useState(initialSync.committedIndex)
   const [isCommitting, setIsCommitting] = useState(false)
   const [isDeletingVersion, setIsDeletingVersion] = useState(false)
+  const [isAddingPage, setIsAddingPage] = useState(false)
+  const [isDuplicatingPage, setIsDuplicatingPage] = useState(false)
+  const [isDeletingPage, setIsDeletingPage] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<'version' | 'page'>('version')
 
   useEffect(() => {
     setValues(toFormValues(item))
     setReferenceImages(refsFromItem(item))
-    const next = syncFromItem(item)
+    const next = syncFromItem(item, selectedPageId)
+    setPages(next.pages)
+    setSelectedPageId(next.selectedPageId)
+    setPagePromptsById(next.pagePromptsById)
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
     setGenerateError(null)
+    // Only re-sync when the item identity/payload changes, not when local page selection changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: prefer sticky page id
   }, [item])
 
   useEffect(() => {
@@ -238,14 +275,40 @@ export function InstagramItemDetail({
     [referenceImages],
   )
 
-  const busy = saving || isGenerating || isCommitting || isDeletingVersion
-  const canGenerate = values.visualBrief.trim().length > 0 && !busy
+  const selectedPage = pages.find((page) => page.id === selectedPageId) ?? pages[0]
+  const selectedPageIndex = Math.max(
+    0,
+    pages.findIndex((page) => page.id === (selectedPage?.id ?? selectedPageId)),
+  )
+  const pagePrompt = selectedPageId ? (pagePromptsById[selectedPageId] ?? '') : ''
+  const busy =
+    saving ||
+    isGenerating ||
+    isCommitting ||
+    isDeletingVersion ||
+    isAddingPage ||
+    isDuplicatingPage ||
+    isDeletingPage
+  const canGenerate = pagePrompt.trim().length > 0 && !busy && Boolean(selectedPageId)
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
   const visibleMediaS3Key = previewVersion?.mediaS3Key || null
   const hasVisiblePreviousResult = parsePostMediaFilename(visibleMediaS3Key) != null
   const canDeleteVersion = Boolean(previewVersion?.mediaS3Key) && imageVersions.length > 0 && !busy
+  const canAddPage = !busy && pages.length > 0 && pages.length < MAX_ITEM_PAGES
+  const canDuplicatePage = canAddPage && Boolean(selectedPageId)
+  const canDeletePage =
+    !busy &&
+    pages.length > 1 &&
+    Boolean(selectedPage) &&
+    !selectedPage?.mediaS3Key &&
+    (selectedPage?.mediaVersions?.length ?? 0) === 0
   const headerTitle = values.title.trim() ? values.title : t('untitled')
   const footerError = actionError || generateError
+
+  function setSelectedPagePrompt(next: string) {
+    if (!selectedPageId) return
+    setPagePromptsById((prev) => ({ ...prev, [selectedPageId]: next }))
+  }
 
   function valuesWithRefs(): InstagramItemFormValues {
     return {
@@ -254,14 +317,29 @@ export function InstagramItemDetail({
     }
   }
 
-  function applyItemUpdate(nextItem: InstagramItemDto) {
-    const next = syncFromItem(nextItem)
+  function applyItemUpdate(nextItem: InstagramItemDto, preferredPageId?: string | null) {
+    const next = syncFromItem(nextItem, preferredPageId ?? selectedPageId)
+    setPages(next.pages)
+    setSelectedPageId(next.selectedPageId)
+    setPagePromptsById(next.pagePromptsById)
     setImageVersions(next.versions)
     setPreviewVersionIndex(next.previewIndex)
     setCommittedVersionIndex(next.committedIndex)
     setValues(toFormValues(nextItem))
     setReferenceImages(refsFromItem(nextItem))
     onGenerated(nextItem)
+  }
+
+  function selectPage(pageId: string) {
+    if (busy || pageId === selectedPageId) return
+    const page = pages.find((candidate) => candidate.id === pageId)
+    if (!page) return
+    const versions = versionsFromPage(page)
+    const committedIndex = resolveVersionIndex(versions, page.mediaS3Key)
+    setSelectedPageId(pageId)
+    setImageVersions(versions)
+    setPreviewVersionIndex(committedIndex)
+    setCommittedVersionIndex(committedIndex)
   }
 
   const handlePreviewIndexChange = useCallback(
@@ -273,8 +351,8 @@ export function InstagramItemDetail({
   )
 
   async function handleGenerate() {
-    const prompt = values.visualBrief.trim()
-    if (!prompt) return
+    const prompt = pagePrompt.trim()
+    if (!prompt || !selectedPageId) return
 
     const persistedRefs = persistableRefs(referenceImages)
     const { references, tooManyReferences } = resolveGenerationReferences({
@@ -297,6 +375,7 @@ export function InstagramItemDetail({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          pageId: selectedPageId,
           prompt,
           model: generationModel,
           referenceImages: persistedRefs,
@@ -315,7 +394,7 @@ export function InstagramItemDetail({
         return
       }
       if (payload.item) {
-        applyItemUpdate(payload.item)
+        applyItemUpdate(payload.item, selectedPageId)
       } else if (payload.url || payload.mediaS3Key) {
         setImageVersions([
           {
@@ -339,16 +418,21 @@ export function InstagramItemDetail({
 
   async function handleCommitVersion() {
     const version = imageVersions[previewVersionIndex]
-    if (!version?.mediaS3Key || previewVersionIndex === committedVersionIndex) return
+    if (!version?.mediaS3Key || !selectedPageId || previewVersionIndex === committedVersionIndex) {
+      return
+    }
 
     setIsCommitting(true)
     setGenerateError(null)
     try {
-      const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
-      })
+      const res = await fetch(
+        `/api/workflows/${workflowId}/instagram-items/${item.id}/pages/${selectedPageId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+        },
+      )
       const payload = (await res.json().catch(() => ({}))) as {
         message?: string
         item?: InstagramItemDto
@@ -357,7 +441,7 @@ export function InstagramItemDetail({
         setGenerateError(payload.message || t('generate.commitError'))
         return
       }
-      applyItemUpdate(payload.item)
+      applyItemUpdate(payload.item, selectedPageId)
     } catch {
       setGenerateError(t('generate.commitError'))
     } finally {
@@ -367,16 +451,19 @@ export function InstagramItemDetail({
 
   async function handleDeleteVersion() {
     const version = imageVersions[previewVersionIndex]
-    if (!version?.mediaS3Key) return
+    if (!version?.mediaS3Key || !selectedPageId) return
 
     setIsDeletingVersion(true)
     setGenerateError(null)
     try {
-      const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}/versions`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
-      })
+      const res = await fetch(
+        `/api/workflows/${workflowId}/instagram-items/${item.id}/pages/${selectedPageId}/versions`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mediaS3Key: version.mediaS3Key }),
+        },
+      )
       const payload = (await res.json().catch(() => ({}))) as {
         message?: string
         item?: InstagramItemDto
@@ -386,7 +473,7 @@ export function InstagramItemDetail({
         return
       }
       setDeleteDialogOpen(false)
-      applyItemUpdate(payload.item)
+      applyItemUpdate(payload.item, selectedPageId)
     } catch {
       setGenerateError(t('generate.deleteVersionError'))
     } finally {
@@ -394,256 +481,330 @@ export function InstagramItemDetail({
     }
   }
 
+  async function createPage(copyFromPageId?: string) {
+    const res = await fetch(`/api/workflows/${workflowId}/instagram-items/${item.id}/pages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(copyFromPageId ? { copyFromPageId } : {}),
+    })
+    const payload = (await res.json().catch(() => ({}))) as {
+      message?: string
+      page?: InstagramItemPageDto
+      item?: InstagramItemDto
+    }
+    if (!res.ok || !payload.item) {
+      throw new Error(payload.message || t('pages.addError'))
+    }
+    applyItemUpdate(payload.item, payload.page?.id ?? selectedPageId)
+  }
+
+  async function handleAddPage() {
+    if (!canAddPage) {
+      if (pages.length >= MAX_ITEM_PAGES) {
+        setGenerateError(t('pages.maxReached'))
+      }
+      return
+    }
+    setIsAddingPage(true)
+    setGenerateError(null)
+    try {
+      await createPage()
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : t('pages.addError'))
+    } finally {
+      setIsAddingPage(false)
+    }
+  }
+
+  async function handleDuplicatePage() {
+    if (!canDuplicatePage || !selectedPageId) {
+      if (pages.length >= MAX_ITEM_PAGES) {
+        setGenerateError(t('pages.maxReached'))
+      }
+      return
+    }
+    setIsDuplicatingPage(true)
+    setGenerateError(null)
+    try {
+      await createPage(selectedPageId)
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : t('pages.duplicateError'))
+    } finally {
+      setIsDuplicatingPage(false)
+    }
+  }
+
+  async function handleDeletePage() {
+    if (!canDeletePage || !selectedPageId) return
+
+    setIsDeletingPage(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch(
+        `/api/workflows/${workflowId}/instagram-items/${item.id}/pages/${selectedPageId}`,
+        { method: 'DELETE' },
+      )
+      const payload = (await res.json().catch(() => ({}))) as {
+        message?: string
+        item?: InstagramItemDto
+      }
+      if (!res.ok || !payload.item) {
+        setGenerateError(payload.message || t('pages.deleteError'))
+        return
+      }
+      setDeleteDialogOpen(false)
+      applyItemUpdate(payload.item)
+    } catch {
+      setGenerateError(t('pages.deleteError'))
+    } finally {
+      setIsDeletingPage(false)
+    }
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center gap-2 pb-3">
-        <Button
-          aria-label={t('backAria')}
-          disabled={busy}
-          onClick={onBack}
-          size="icon"
-          type="button"
-          variant="ghost"
+    <TooltipProvider>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex shrink-0 items-start gap-2 pb-3">
+          <Button
+            aria-label={t('backAria')}
+            className="mt-0.5"
+            disabled={busy}
+            onClick={onBack}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <ArrowLeftIcon />
+          </Button>
+          <div className="min-w-0 flex flex-1 flex-col gap-1.5">
+            <h2 className="truncate font-semibold text-base tracking-tight">{headerTitle}</h2>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="secondary">{t(`kind.${values.kind}`)}</Badge>
+              <Badge variant={values.status === 'ready' ? 'default' : 'outline'}>
+                {t(`status.${values.status}`)}
+              </Badge>
+              {pages.length > 0 ? (
+                <Badge variant="outline">{t('pages.countBadge', { count: pages.length })}</Badge>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void onSave(valuesWithRefs())
+          }}
         >
-          <ArrowLeftIcon />
-        </Button>
-        <h2 className="min-w-0 flex-1 truncate font-semibold text-base tracking-tight">
-          {headerTitle}
-        </h2>
-      </div>
+          <div className="min-h-0 flex-1 overflow-y-auto pr-0.5 pt-2">
+            <FieldGroup className="gap-5 pb-4">
+              <FieldSeparator className="mt-1">{t('sections.generate')}</FieldSeparator>
 
-      <form
-        className="flex min-h-0 flex-1 flex-col"
-        onSubmit={(event) => {
-          event.preventDefault()
-          void onSave(valuesWithRefs())
-        }}
-      >
-        <div className="min-h-0 flex-1 overflow-y-auto pr-0.5 pt-2">
-          <FieldGroup className="gap-5 pb-4">
-            <FieldSeparator className="mt-1">{t('sections.content')}</FieldSeparator>
-
-            <Field>
-              <FieldLabel htmlFor={kindFieldId}>{t('fields.kind')}</FieldLabel>
-              <ToggleGroup
-                aria-label={t('fields.kind')}
-                className="gap-1.5"
-                disabled={busy}
-                id={kindFieldId}
-                onValueChange={(value) => {
-                  if (!value) return
-                  setValues((prev) => ({ ...prev, kind: value as InstagramItemKind }))
+              <InstagramItemPagesStrip
+                busy={busy}
+                canAddPage={canAddPage}
+                canDeletePage={canDeletePage}
+                canDuplicatePage={canDuplicatePage}
+                isAddingPage={isAddingPage}
+                isDuplicatingPage={isDuplicatingPage}
+                kind={values.kind}
+                onAddPage={() => {
+                  void handleAddPage()
                 }}
-                type="single"
-                value={values.kind}
-              >
-                {(['story', 'post', 'reel'] as const).map((kind) => (
-                  <ToggleGroupItem
-                    className={cn(optionChipClassName, 'min-h-8 flex-1 rounded-sm px-2 text-xs')}
-                    key={kind}
-                    value={kind}
-                  >
-                    {t(`kind.${kind}`)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor={statusFieldId}>{t('fields.status')}</FieldLabel>
-              <ToggleGroup
-                aria-label={t('fields.status')}
-                className="gap-1.5"
-                disabled={busy}
-                id={statusFieldId}
-                onValueChange={(value) => {
-                  if (!value) return
-                  setValues((prev) => ({ ...prev, status: value as InstagramItemStatus }))
+                onDuplicatePage={() => {
+                  void handleDuplicatePage()
                 }}
-                type="single"
-                value={values.status}
-              >
-                {(['draft', 'ready'] as const).map((status) => (
-                  <ToggleGroupItem
-                    className={cn(optionChipClassName, 'min-h-8 flex-1 rounded-sm px-2 text-xs')}
-                    key={status}
-                    value={status}
-                  >
-                    {t(`status.${status}`)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </Field>
-
-            <Field>
-              <FieldLabel>{t('fields.schedule')}</FieldLabel>
-              <div className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <DateTimePicker
-                    disabled={busy}
-                    onChange={(schedule) => setValues((prev) => ({ ...prev, schedule }))}
-                    placeholder={t('fields.scheduleDatePlaceholder')}
-                    timeLabel={t('fields.scheduleTime')}
-                    value={values.schedule || undefined}
-                  />
-                </div>
-                {values.schedule ? (
-                  <Button
-                    aria-label={t('clearScheduleAria')}
-                    disabled={busy}
-                    onClick={() => setValues((prev) => ({ ...prev, schedule: '' }))}
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <XIcon />
-                  </Button>
-                ) : null}
-              </div>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="ig-item-title">{t('fields.title')}</FieldLabel>
-              <Input
-                disabled={busy}
-                id="ig-item-title"
-                onChange={(event) => setValues((prev) => ({ ...prev, title: event.target.value }))}
-                value={values.title}
-              />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="ig-item-hook">{t('fields.hook')}</FieldLabel>
-              <Textarea
-                disabled={busy}
-                id="ig-item-hook"
-                onChange={(event) => setValues((prev) => ({ ...prev, hook: event.target.value }))}
-                rows={2}
-                value={values.hook}
-              />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="ig-item-caption">{t('fields.caption')}</FieldLabel>
-              <Textarea
-                disabled={busy}
-                id="ig-item-caption"
-                onChange={(event) =>
-                  setValues((prev) => ({ ...prev, caption: event.target.value }))
-                }
-                rows={3}
-                value={values.caption}
-              />
-            </Field>
-
-            <FieldSeparator>{t('sections.generate')}</FieldSeparator>
-
-            <InstagramItemPreview
-              busy={busy}
-              canDeleteVersion={canDeleteVersion}
-              committedIndex={committedVersionIndex}
-              isCommitting={isCommitting}
-              isGenerating={isGenerating}
-              kind={values.kind}
-              onCommit={() => {
-                void handleCommitVersion()
-              }}
-              onPreviewIndexChange={handlePreviewIndexChange}
-              onRequestDelete={() => setDeleteDialogOpen(true)}
-              previewIndex={previewVersionIndex}
-              versions={imageVersions}
-            />
-
-            <Field>
-              <FieldLabel htmlFor={modelFieldId}>{tModel('label')}</FieldLabel>
-              <Select
-                disabled={busy}
-                onValueChange={(value) => {
-                  if (isLeonardoPostModelId(value)) {
-                    setGenerationModel(value)
-                  }
+                onRequestDeletePage={() => {
+                  setDeleteTarget('page')
+                  setDeleteDialogOpen(true)
                 }}
-                value={generationModel}
-              >
-                <SelectTrigger
-                  aria-describedby={modelBlurbId}
-                  aria-label={tModel('label')}
-                  id={modelFieldId}
+                onSelectPage={selectPage}
+                pages={pages}
+                selectedPageId={selectedPageId}
+              />
+
+              {pages.length > 0 ? (
+                <FieldSeparator>
+                  {t('pages.workspaceHeading', {
+                    current: selectedPageIndex + 1,
+                    total: pages.length,
+                  })}
+                </FieldSeparator>
+              ) : null}
+
+              <InstagramItemPreview
+                busy={busy}
+                canDeleteVersion={canDeleteVersion}
+                committedIndex={committedVersionIndex}
+                isCommitting={isCommitting}
+                isGenerating={isGenerating}
+                kind={values.kind}
+                onCommit={() => {
+                  void handleCommitVersion()
+                }}
+                onPreviewIndexChange={handlePreviewIndexChange}
+                onRequestDelete={() => {
+                  setDeleteTarget('version')
+                  setDeleteDialogOpen(true)
+                }}
+                previewIndex={previewVersionIndex}
+                versions={imageVersions}
+              />
+
+              <Field>
+                <FieldLabel htmlFor="ig-item-visual-brief">
+                  {t('fields.pageVisualBrief')}
+                </FieldLabel>
+                <FieldDescription>{t('generate.pageVisualBriefHint')}</FieldDescription>
+                <PostCreatorImagePicker
+                  disabled={busy || !selectedPageId}
+                  emptyLabel={tPicker('empty')}
+                  maxReachedLabel={tPicker('maxReached')}
+                  onAddReference={(photo) => {
+                    setReferenceImages((prev) => {
+                      if (prev.some((image) => image.name === photo.name)) return prev
+                      return [...prev, photo]
+                    })
+                  }}
+                  onUploadError={(message) => toast.error(message || tPicker('uploadError'))}
+                  onValueChange={setSelectedPagePrompt}
+                  pickerAriaLabel={tPicker('ariaLabel')}
+                  selectedNames={selectedNames}
+                  uploadLabel={tPicker('upload')}
+                  uploadingLabel={tPicker('uploading')}
+                  value={pagePrompt}
                 >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEONARDO_POST_MODEL_IDS.map((modelId) => (
-                    <SelectItem key={modelId} value={modelId}>
-                      {tModel(`options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldDescription id={modelBlurbId}>
-                {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
-              </FieldDescription>
-            </Field>
+                  <Textarea
+                    disabled={busy || !selectedPageId}
+                    id="ig-item-visual-brief"
+                    onChange={(event) => setSelectedPagePrompt(event.target.value)}
+                    placeholder={t('generate.visualBriefPlaceholder')}
+                    rows={4}
+                    value={pagePrompt}
+                  />
+                </PostCreatorImagePicker>
+                <PostCreatorReferenceThumbnails
+                  ariaLabel={tRefs('ariaLabel')}
+                  disabled={busy}
+                  images={referenceImages}
+                  includeLabel={tRefs('include')}
+                  indexLabel={(index) => tRefs('indexLabel', { index })}
+                  onRemove={(name) => {
+                    setReferenceImages((prev) => prev.filter((image) => image.name !== name))
+                  }}
+                  onToggleEnabled={(name, enabled) => {
+                    setReferenceImages((prev) =>
+                      prev.map((image) => (image.name === name ? { ...image, enabled } : image)),
+                    )
+                  }}
+                  removeLabel={tRefs('remove')}
+                />
+              </Field>
 
-            <Field>
-              <FieldLabel htmlFor={styleFieldId}>{t('generate.style.label')}</FieldLabel>
-              <Select
-                disabled={busy || stylesLoading}
-                onValueChange={(value) => {
-                  if (value === STYLE_NONE) {
-                    setValues((prev) => ({ ...prev, styleId: null }))
-                    return
-                  }
-                  const next = Number(value)
-                  if (Number.isInteger(next) && next > 0) {
-                    setValues((prev) => ({ ...prev, styleId: next }))
-                  }
-                }}
-                value={values.styleId != null ? String(values.styleId) : STYLE_NONE}
-              >
-                <SelectTrigger aria-label={t('generate.style.label')} id={styleFieldId}>
-                  {selectedStyle ? (
-                    <span className="flex min-w-0 items-center gap-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                      <img
-                        alt=""
-                        className="size-6 shrink-0 rounded object-cover"
-                        src={mediaDownloadHref(selectedStyle.referenceImageName)}
-                      />
-                      <span className="truncate">
-                        {selectedStyle.isDefault
-                          ? `${selectedStyle.name} (${t('generate.style.defaultSuffix')})`
-                          : selectedStyle.name}
-                      </span>
-                    </span>
-                  ) : (
-                    <SelectValue placeholder={t('generate.style.placeholder')} />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={STYLE_NONE}>{t('generate.style.none')}</SelectItem>
-                  {styles.map((style) => (
-                    <SelectItem key={style.id} value={String(style.id)}>
-                      <span className="flex items-center gap-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                        <img
-                          alt=""
-                          className="size-6 shrink-0 rounded object-cover"
-                          src={mediaDownloadHref(style.referenceImageName)}
-                        />
-                        <span>
-                          {style.isDefault
-                            ? `${style.name} (${t('generate.style.defaultSuffix')})`
-                            : style.name}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor={modelFieldId}>{tModel('label')}</FieldLabel>
+                  <Select
+                    disabled={busy}
+                    onValueChange={(value) => {
+                      if (isLeonardoPostModelId(value)) {
+                        setGenerationModel(value)
+                      }
+                    }}
+                    value={generationModel}
+                  >
+                    <SelectTrigger
+                      aria-describedby={modelBlurbId}
+                      aria-label={tModel('label')}
+                      className="w-full"
+                      id={modelFieldId}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {LEONARDO_POST_MODEL_IDS.map((modelId) => (
+                          <SelectItem key={modelId} value={modelId}>
+                            {tModel(`options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldDescription id={modelBlurbId}>
+                    {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
+                  </FieldDescription>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor={styleFieldId}>{t('generate.style.label')}</FieldLabel>
+                  <Select
+                    disabled={busy || stylesLoading}
+                    onValueChange={(value) => {
+                      if (value === STYLE_NONE) {
+                        setValues((prev) => ({ ...prev, styleId: null }))
+                        return
+                      }
+                      const next = Number(value)
+                      if (Number.isInteger(next) && next > 0) {
+                        setValues((prev) => ({ ...prev, styleId: next }))
+                      }
+                    }}
+                    value={values.styleId != null ? String(values.styleId) : STYLE_NONE}
+                  >
+                    <SelectTrigger
+                      aria-label={t('generate.style.label')}
+                      className="w-full"
+                      id={styleFieldId}
+                    >
+                      {selectedStyle ? (
+                        <span className="flex min-w-0 items-center gap-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                          <img
+                            alt=""
+                            className="size-6 shrink-0 rounded object-cover"
+                            src={mediaDownloadHref(selectedStyle.referenceImageName)}
+                          />
+                          <span className="truncate">
+                            {selectedStyle.isDefault
+                              ? `${selectedStyle.name} (${t('generate.style.defaultSuffix')})`
+                              : selectedStyle.name}
+                          </span>
                         </span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldDescription>{t('generate.style.description')}</FieldDescription>
+                      ) : (
+                        <SelectValue placeholder={t('generate.style.placeholder')} />
+                      )}
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={STYLE_NONE}>{t('generate.style.none')}</SelectItem>
+                        {styles.map((style) => (
+                          <SelectItem key={style.id} value={String(style.id)}>
+                            <span className="flex items-center gap-2">
+                              {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
+                              <img
+                                alt=""
+                                className="size-6 shrink-0 rounded object-cover"
+                                src={mediaDownloadHref(style.referenceImageName)}
+                              />
+                              <span>
+                                {style.isDefault
+                                  ? `${style.name} (${t('generate.style.defaultSuffix')})`
+                                  : style.name}
+                              </span>
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldDescription>{t('generate.style.description')}</FieldDescription>
+                </Field>
+              </div>
+
               {selectedStyle ? <StyleUsageGuide spec={selectedStyle.spec} /> : null}
-              <div className="flex flex-wrap gap-2 pt-0.5">
+              <div className="flex flex-wrap gap-2">
                 <Button asChild disabled={busy} size="sm" type="button" variant="outline">
                   <Link href={createStyleHref}>
                     <PlusIcon data-icon="inline-start" />
@@ -654,147 +815,236 @@ export function InstagramItemDetail({
                   <Link href={routes.igStudioStyles}>{t('generate.style.manage')}</Link>
                 </Button>
               </div>
-            </Field>
 
-            <Field>
-              <FieldLabel htmlFor="ig-item-visual-brief">{t('fields.visualBrief')}</FieldLabel>
-              <FieldDescription>{t('generate.visualBriefHint')}</FieldDescription>
-              <PostCreatorImagePicker
-                disabled={busy}
-                emptyLabel={tPicker('empty')}
-                maxReachedLabel={tPicker('maxReached')}
-                onAddReference={(photo) => {
-                  setReferenceImages((prev) => {
-                    if (prev.some((image) => image.name === photo.name)) return prev
-                    return [...prev, photo]
-                  })
-                }}
-                onUploadError={(message) => toast.error(message || tPicker('uploadError'))}
-                onValueChange={(next) => setValues((prev) => ({ ...prev, visualBrief: next }))}
-                pickerAriaLabel={tPicker('ariaLabel')}
-                selectedNames={selectedNames}
-                uploadLabel={tPicker('upload')}
-                uploadingLabel={tPicker('uploading')}
-                value={values.visualBrief}
-              >
+              <FieldSeparator>{t('sections.content')}</FieldSeparator>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor={kindFieldId}>{t('fields.kind')}</FieldLabel>
+                  <Select
+                    disabled={busy}
+                    onValueChange={(value) => {
+                      setValues((prev) => ({ ...prev, kind: value as InstagramItemKind }))
+                    }}
+                    value={values.kind}
+                  >
+                    <SelectTrigger
+                      aria-label={t('fields.kind')}
+                      className="w-full"
+                      id={kindFieldId}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {(['story', 'post', 'reel'] as const).map((kind) => (
+                          <SelectItem key={kind} value={kind}>
+                            {t(`kind.${kind}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor={statusFieldId}>{t('fields.status')}</FieldLabel>
+                  <Select
+                    disabled={busy}
+                    onValueChange={(value) => {
+                      setValues((prev) => ({ ...prev, status: value as InstagramItemStatus }))
+                    }}
+                    value={values.status}
+                  >
+                    <SelectTrigger
+                      aria-label={t('fields.status')}
+                      className="w-full"
+                      id={statusFieldId}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {(['draft', 'ready'] as const).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {t(`status.${status}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+
+              <Field>
+                <FieldLabel>{t('fields.schedule')}</FieldLabel>
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <DateTimePicker
+                      disabled={busy}
+                      onChange={(schedule) => setValues((prev) => ({ ...prev, schedule }))}
+                      placeholder={t('fields.scheduleDatePlaceholder')}
+                      timeLabel={t('fields.scheduleTime')}
+                      value={values.schedule || undefined}
+                    />
+                  </div>
+                  {values.schedule ? (
+                    <Button
+                      aria-label={t('clearScheduleAria')}
+                      disabled={busy}
+                      onClick={() => setValues((prev) => ({ ...prev, schedule: '' }))}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <XIcon />
+                    </Button>
+                  ) : null}
+                </div>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="ig-item-title">{t('fields.title')}</FieldLabel>
+                <Input
+                  disabled={busy}
+                  id="ig-item-title"
+                  onChange={(event) =>
+                    setValues((prev) => ({ ...prev, title: event.target.value }))
+                  }
+                  value={values.title}
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="ig-item-hook">{t('fields.hook')}</FieldLabel>
                 <Textarea
                   disabled={busy}
-                  id="ig-item-visual-brief"
-                  onChange={(event) =>
-                    setValues((prev) => ({ ...prev, visualBrief: event.target.value }))
-                  }
-                  placeholder={t('generate.visualBriefPlaceholder')}
-                  rows={4}
-                  value={values.visualBrief}
+                  id="ig-item-hook"
+                  onChange={(event) => setValues((prev) => ({ ...prev, hook: event.target.value }))}
+                  rows={2}
+                  value={values.hook}
                 />
-              </PostCreatorImagePicker>
-              <PostCreatorReferenceThumbnails
-                ariaLabel={tRefs('ariaLabel')}
-                disabled={busy}
-                images={referenceImages}
-                includeLabel={tRefs('include')}
-                indexLabel={(index) => tRefs('indexLabel', { index })}
-                onRemove={(name) => {
-                  setReferenceImages((prev) => prev.filter((image) => image.name !== name))
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="ig-item-caption">{t('fields.caption')}</FieldLabel>
+                <Textarea
+                  disabled={busy}
+                  id="ig-item-caption"
+                  onChange={(event) =>
+                    setValues((prev) => ({ ...prev, caption: event.target.value }))
+                  }
+                  rows={3}
+                  value={values.caption}
+                />
+              </Field>
+            </FieldGroup>
+          </div>
+
+          <div className="flex shrink-0 flex-col gap-3 bg-card pt-3 pb-1">
+            <Separator />
+            {footerError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{footerError}</AlertDescription>
+              </Alert>
+            ) : null}
+            <Field
+              className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5"
+              data-disabled={!hasVisiblePreviousResult || busy ? true : undefined}
+              orientation="horizontal"
+            >
+              <Checkbox
+                checked={useCurrentPreviewAsReference && hasVisiblePreviousResult}
+                disabled={!hasVisiblePreviousResult || busy}
+                id={useCurrentPreviewRefId}
+                onCheckedChange={(checked) => {
+                  setUseCurrentPreviewAsReference(checked === true)
                 }}
-                onToggleEnabled={(name, enabled) => {
-                  setReferenceImages((prev) =>
-                    prev.map((image) => (image.name === name ? { ...image, enabled } : image)),
-                  )
-                }}
-                removeLabel={tRefs('remove')}
               />
+              <FieldContent className="gap-0.5">
+                <FieldLabel htmlFor={useCurrentPreviewRefId}>
+                  {t('generate.useCurrentPreviewAsReference')}
+                </FieldLabel>
+                <FieldDescription>
+                  {hasVisiblePreviousResult
+                    ? t('generate.useCurrentPreviewAsReferenceHint')
+                    : t('generate.useCurrentPreviewAsReferenceUnavailable')}
+                </FieldDescription>
+              </FieldContent>
             </Field>
-          </FieldGroup>
-        </div>
+            <ButtonGroup className="w-full [&>*]:flex-1">
+              <Button disabled={busy} type="submit" variant="outline">
+                {saving ? <Spinner data-icon="inline-start" /> : null}
+                {t('saveButton')}
+              </Button>
+              <Button
+                disabled={!canGenerate}
+                onClick={() => {
+                  void handleGenerate()
+                }}
+                type="button"
+              >
+                {isGenerating ? (
+                  <Spinner data-icon="inline-start" />
+                ) : (
+                  <SparklesIcon data-icon="inline-start" />
+                )}
+                {isGenerating ? t('generate.generating') : t('generate.button')}
+              </Button>
+            </ButtonGroup>
+          </div>
+        </form>
 
-        <div className="flex shrink-0 flex-col gap-3 bg-card pt-3 pb-1">
-          <Separator />
-          {footerError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{footerError}</AlertDescription>
-            </Alert>
-          ) : null}
-          <Field
-            className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5"
-            data-disabled={!hasVisiblePreviousResult || busy ? true : undefined}
-            orientation="horizontal"
-          >
-            <Checkbox
-              checked={useCurrentPreviewAsReference && hasVisiblePreviousResult}
-              disabled={!hasVisiblePreviousResult || busy}
-              id={useCurrentPreviewRefId}
-              onCheckedChange={(checked) => {
-                setUseCurrentPreviewAsReference(checked === true)
-              }}
-            />
-            <FieldContent className="gap-0.5">
-              <FieldLabel htmlFor={useCurrentPreviewRefId}>
-                {t('generate.useCurrentPreviewAsReference')}
-              </FieldLabel>
-              <FieldDescription>
-                {hasVisiblePreviousResult
-                  ? t('generate.useCurrentPreviewAsReferenceHint')
-                  : t('generate.useCurrentPreviewAsReferenceUnavailable')}
-              </FieldDescription>
-            </FieldContent>
-          </Field>
-          <ButtonGroup className="w-full [&>*]:flex-1">
-            <Button disabled={busy} type="submit" variant="outline">
-              {saving ? <Spinner data-icon="inline-start" /> : null}
-              {t('saveButton')}
-            </Button>
-            <Button
-              disabled={!canGenerate}
-              onClick={() => {
-                void handleGenerate()
-              }}
-              type="button"
-            >
-              {isGenerating ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
-                <SparklesIcon data-icon="inline-start" />
-              )}
-              {isGenerating ? t('generate.generating') : t('generate.button')}
-            </Button>
-          </ButtonGroup>
-        </div>
-      </form>
-
-      <AlertDialog
-        onOpenChange={(open) => {
-          if (!isDeletingVersion) setDeleteDialogOpen(open)
-        }}
-        open={deleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('generate.deleteVersionConfirmTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('generate.deleteVersionConfirmDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingVersion} type="button">
-              {t('generate.deleteVersionConfirmCancel')}
-            </AlertDialogCancel>
-            <Button
-              disabled={isDeletingVersion}
-              onClick={() => {
-                void handleDeleteVersion()
-              }}
-              type="button"
-              variant="destructive"
-            >
-              {isDeletingVersion ? <Spinner data-icon="inline-start" /> : null}
-              {isDeletingVersion
-                ? t('generate.deleteVersionDeleting')
-                : t('generate.deleteVersionConfirmAction')}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        <AlertDialog
+          onOpenChange={(open) => {
+            if (!isDeletingVersion && !isDeletingPage) setDeleteDialogOpen(open)
+          }}
+          open={deleteDialogOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {deleteTarget === 'page'
+                  ? t('pages.deleteConfirmTitle')
+                  : t('generate.deleteVersionConfirmTitle')}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteTarget === 'page'
+                  ? t('pages.deleteConfirmDescription')
+                  : t('generate.deleteVersionConfirmDescription')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingVersion || isDeletingPage} type="button">
+                {deleteTarget === 'page'
+                  ? t('pages.deleteConfirmCancel')
+                  : t('generate.deleteVersionConfirmCancel')}
+              </AlertDialogCancel>
+              <Button
+                disabled={isDeletingVersion || isDeletingPage}
+                onClick={() => {
+                  if (deleteTarget === 'page') {
+                    void handleDeletePage()
+                  } else {
+                    void handleDeleteVersion()
+                  }
+                }}
+                type="button"
+                variant="destructive"
+              >
+                {isDeletingVersion || isDeletingPage ? <Spinner data-icon="inline-start" /> : null}
+                {deleteTarget === 'page'
+                  ? isDeletingPage
+                    ? t('pages.deleteDeleting')
+                    : t('pages.deleteConfirmAction')
+                  : isDeletingVersion
+                    ? t('generate.deleteVersionDeleting')
+                    : t('generate.deleteVersionConfirmAction')}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </TooltipProvider>
   )
 }

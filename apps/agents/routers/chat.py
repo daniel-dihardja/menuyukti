@@ -8,7 +8,6 @@ from typing import Annotated, Any, Literal
 
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
-from agents_app.agents.core.chat.catalog import load_workflow_catalog_markdown
 from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.http_context import chat_http_client_var
 from agents_app.agents.core.chat.tools import get_milestone
@@ -163,7 +162,6 @@ def _runnable_config(
     location_id: int | None,
     user_id: str | None,
     chat_gateway_model: str | None,
-    workflow_catalog_markdown: str | None = None,
     analytics_run_id: int | None = None,
     post_id: str | None = None,
     page_id: str | None = None,
@@ -182,8 +180,6 @@ def _runnable_config(
     }
     if chat_gateway_model is not None:
         configurable["chat_gateway_model"] = chat_gateway_model
-    if workflow_catalog_markdown is not None:
-        configurable["workflow_catalog_markdown"] = workflow_catalog_markdown
     if analytics_run_id is not None:
         configurable["analytics_run_id"] = analytics_run_id
     if post_id is not None:
@@ -245,6 +241,14 @@ def _tool_name_from_call(tool_call: object) -> str | None:
     return name if isinstance(name, str) and name else None
 
 
+def _tool_call_id_from_call(tool_call: object) -> str | None:
+    if isinstance(tool_call, dict):
+        raw = tool_call.get("id")
+        return raw.strip() if isinstance(raw, str) and raw.strip() else None
+    raw = getattr(tool_call, "id", None)
+    return raw.strip() if isinstance(raw, str) and raw.strip() else None
+
+
 def _tool_message_output(msg: ToolMessage) -> str:
     content = getattr(msg, "content", None)
     if isinstance(content, str):
@@ -257,8 +261,10 @@ def _tool_message_output(msg: ToolMessage) -> str:
         return str(content)
 
 
-def _tool_events_from_update(update: object) -> Iterator[tuple[str, str, str | None]]:
-    """Yield (tool_start|tool_end, tool_name, optional output) from a LangGraph updates chunk."""
+def _tool_events_from_update(
+    update: object,
+) -> Iterator[tuple[str, str, str | None, str | None]]:
+    """Yield (tool_start|tool_end, tool_name, optional output, optional tool_call_id)."""
     if not isinstance(update, dict):
         return
     for state_delta in update.values():
@@ -270,11 +276,15 @@ def _tool_events_from_update(update: object) -> Iterator[tuple[str, str, str | N
                 for tool_call in msg.tool_calls or []:
                     name = _tool_name_from_call(tool_call)
                     if name:
-                        yield ("tool_start", name, None)
+                        yield ("tool_start", name, None, _tool_call_id_from_call(tool_call))
             elif isinstance(msg, ToolMessage):
                 name = getattr(msg, "name", None)
                 tool_name = name if isinstance(name, str) and name else "tool"
-                yield ("tool_end", tool_name, _tool_message_output(msg))
+                raw_id = getattr(msg, "tool_call_id", None)
+                tool_call_id = (
+                    raw_id.strip() if isinstance(raw_id, str) and raw_id.strip() else None
+                )
+                yield ("tool_end", tool_name, _tool_message_output(msg), tool_call_id)
 
 
 def _is_assistant_stream_chunk(msg_chunk: object) -> bool:
@@ -304,8 +314,10 @@ async def _stream_chat_events(
                 if text:
                     yield _sse_data_line({"token": text})
             elif mode == "updates":
-                for status, tool_name, output in _tool_events_from_update(chunk):
+                for status, tool_name, output, tool_call_id in _tool_events_from_update(chunk):
                     payload: dict[str, Any] = {"status": status, "tool": tool_name}
+                    if tool_call_id:
+                        payload["tool_call_id"] = tool_call_id
                     if status == "tool_end" and output is not None:
                         payload["output"] = output
                     yield _sse_data_line(payload)
@@ -342,16 +354,6 @@ async def chat_stream(
     )
     gateway_model = _resolved_chat_gateway_model(body.chat_model)
 
-    workflow_catalog_markdown: str | None = None
-    if body.workflow_id and x_menuyukti_user_id:
-        workflow_catalog_markdown = await load_workflow_catalog_markdown(
-            workflow_id=body.workflow_id,
-            user_id=x_menuyukti_user_id,
-            location_id=body.location_id,
-            selected_milestone_id=body.milestone_id,
-            client=client,
-        )
-
     cfg = _runnable_config(
         thread_id=thread_id,
         workflow_id=body.workflow_id,
@@ -359,7 +361,6 @@ async def chat_stream(
         location_id=body.location_id,
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
-        workflow_catalog_markdown=workflow_catalog_markdown,
         analytics_run_id=body.analytics_run_id,
         post_id=body.post_id,
         page_id=body.page_id,
