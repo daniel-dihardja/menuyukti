@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { MainHeader } from '@/components/main-header'
 import { isProtectedAppShellPath } from '@/lib/routes'
 
-const HIDE_HEADER_PREFIXES = ['/sign-up', '/sso-callback', '/privacy', '/terms']
+const HIDE_HEADER_PREFIXES = ['/sso-callback', '/privacy', '/terms']
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

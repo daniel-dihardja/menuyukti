@@ -29,8 +29,10 @@ export function MainHeader() {
   const closeLabel = useCloseLabel()
   const isLanding = pathname === '/'
   const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
+  const isSignUp =
+    pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   /** Product links are for signed-in app areas; hide on marketing + auth screens. */
-  const showProductNav = !isLanding && !isLogin
+  const showProductNav = !isLanding && !isLogin && !isSignUp
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   React.useEffect(() => {

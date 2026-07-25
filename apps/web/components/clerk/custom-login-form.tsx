@@ -275,7 +275,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
               ) : null}
             </Field>
             <Field>
-              <Button type="submit" className="w-full text-base py-3" disabled={isSigningIn}>
+              <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
                 {isSigningIn ? t('signingIn') : t('verify')}
               </Button>
             </Field>
@@ -353,7 +353,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
               ) : null}
             </Field>
             <Field>
-              <Button type="submit" className="w-full text-base py-3" disabled={isSigningIn}>
+              <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
                 {isSigningIn ? t('signingIn') : t('verify')}
               </Button>
             </Field>
@@ -432,7 +432,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
           </Field>
 
           <Field>
-            <Button type="submit" className="w-full text-base py-3" disabled={isSigningIn}>
+            <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
               {isSigningIn ? t('signingIn') : t('loginButton')}
             </Button>
           </Field>
