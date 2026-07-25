@@ -201,20 +201,20 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Your smart friend for restaurant Instagram.",
-      "subtitle": "Menuyukti takes the campaign work off your plate—planning from your real sales data, so you always know what to post and why.",
-      "badge": "Built on Data. Inspired by Food.",
+      "headline": "Social strategy built for offline business.",
+      "subtitle": "A restaurant sells in the dining room, not a cart — so your Instagram shouldn't be managed like an online store. Menuyukti's AI picks what to post, when, and which dish, straight from your sales data, so the repetitive posting decisions are handled for you.",
+      "badge": "Offline business. Online feed.",
       "ctaSecondary": "Sign in"
     },
     "why": {
       "title": "Why Menuyukti exists",
-      "subtitle": "Restaurant owners juggle operations, staff, reputation, and growth—all at once. Marketing deserves the same attention as the kitchen—campaigns, reports, and location insights built exclusively for restaurants, cafés, and bars.",
-      "item1Title": "Too much on every owner's plate",
-      "item1Description": "Running a restaurant means managing suppliers, guest experience, promotions, and growth simultaneously—marketing rarely gets the attention it deserves.",
-      "item2Title": "Restaurant marketing has its own rhythm",
-      "item2Description": "Hospitality marketing blends local competition, foot traffic, menu storytelling, and when guests actually buy. Menuyukti turns your sales data into Chat campaigns and clear reports—so restaurant-specific plans start from what’s already selling.",
-      "item3Title": "Restaurant-only focus",
-      "item3Description": "A single-industry focus means deeper expertise, better processes, and marketing tools designed for how restaurants, cafés, and bars actually operate."
+      "subtitle": "Restaurants sell in the dining room—not a checkout cart. Instagram still expects a constant stream of posts. Menuyukti’s AI takes the repetitive decisions off your plate so you can stay on food.",
+      "item1Title": "Offline businesses need a different playbook",
+      "item1Description": "Online brands optimize for clicks and carts. Restaurants optimize for foot traffic, tables, and reputation—so generic social playbooks miss how hospitality actually grows.",
+      "item2Title": "Instagram never stops asking for posts",
+      "item2Description": "Today’s feed rewards cadence: what to say, when to post, and which dish to feature—again and again. That cognitive load competes with the kitchen and the floor.",
+      "item3Title": "AI for the repetitive decisions",
+      "item3Description": "Menuyukti uses your sales data to choose the right time, topic, and menu item—so Instagram stays full while your team stays focused on food."
     },
     "foundation": {
       "title": "Built on a unique foundation",

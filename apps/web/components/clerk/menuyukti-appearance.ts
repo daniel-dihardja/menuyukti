@@ -15,7 +15,7 @@ export const menuyuktiClerkAppearance = {
     headerSubtitle: 'hidden',
     socialButtonsBlockButton: 'border border-border bg-background text-foreground hover:bg-muted',
     formButtonPrimary:
-      'bg-primary text-primary-foreground hover:bg-[var(--color-accent-hover)] shadow-none rounded-none',
+      'min-h-11 w-full bg-primary text-base text-primary-foreground hover:bg-[var(--color-accent-hover)] shadow-none rounded-none',
     formFieldInput: 'border border-input bg-background text-base py-2 rounded-[var(--radius)]',
     footerActionLink: 'text-[var(--color-accent-hover)] font-medium',
     identityPreviewText: 'text-foreground',
