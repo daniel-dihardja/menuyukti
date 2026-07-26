@@ -2442,7 +2442,9 @@
         },
         "pages": {
           "label": "Pages",
-          "description": "Each page is a frame of this Story or post, with its own visual brief and image versions.",
+          "description": "Each page is a frame of this Story or post, with its own content and image.",
+          "tabLabel": "Page {index}",
+          "empty": "This item has no pages yet. Add a page to continue.",
           "selectAria": "Select page {index}",
           "actionsAria": "Page actions",
           "selectedIndicator": "Page {current} of {total}",
@@ -2471,7 +2473,10 @@
           "hook": "Hook",
           "caption": "Caption",
           "visualBrief": "Visual brief",
-          "pageVisualBrief": "Visual brief for this page"
+          "pageVisualBrief": "Visual brief for this page",
+          "pageContent": "Content",
+          "pageContentHint": "Describe what should appear on this page. Used when generating the image.",
+          "pageContentPlaceholder": "Describe the scene, layout, and on-image text."
         },
         "generate": {
           "button": "Generate image",
