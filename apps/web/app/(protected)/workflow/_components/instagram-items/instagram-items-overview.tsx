@@ -56,7 +56,7 @@ function KindPreviewIcon({ kind }: { kind: string }) {
 
 function OverviewSkeletonGrid() {
   return (
-    <ul aria-hidden className="grid min-h-0 grid-cols-2 gap-3">
+    <ul aria-hidden className="grid min-h-0 grid-cols-3 gap-3">
       {Array.from({ length: 4 }, (_, index) => (
         <li key={index} className="min-w-0">
           <div className="flex flex-col overflow-hidden rounded-md border bg-background">
@@ -145,7 +145,7 @@ export function InstagramItemsOverview({
           </EmptyContent>
         </Empty>
       ) : (
-        <ul className="grid min-h-0 flex-1 grid-cols-2 content-start gap-3 overflow-y-auto">
+        <ul className="grid min-h-0 flex-1 grid-cols-3 content-start gap-3 overflow-y-auto">
           {items.map((item) => {
             const kindKey = `kind.${item.kind}` as 'kind.story' | 'kind.post' | 'kind.reel'
             const statusKey = `status.${item.status}` as 'status.draft' | 'status.ready'
