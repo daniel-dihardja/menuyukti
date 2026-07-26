@@ -4,8 +4,7 @@ import { CreateLocationForm } from './create-location-form'
 import { routes } from '@/lib/routes'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
-import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
-import { LOCATION_DETAIL_SECTION_CLASS } from '../location-next-steps'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from '@/lib/app-layout'
 
 export default async function Page() {
   const t = await getTranslations('analytics.branches')

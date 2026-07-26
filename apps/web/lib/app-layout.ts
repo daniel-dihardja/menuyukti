@@ -13,3 +13,7 @@ export const ANALYTICS_REPORT_SHELL_MAIN_CLASS =
 
 /** Analytics report section: flat on canvas (no white card panel on desktop). */
 export const ANALYTICS_REPORT_SECTION_CLASS = 'bg-transparent p-4 lg:p-6' as const
+
+/** Location create/detail form column. */
+export const LOCATION_DETAIL_SECTION_CLASS =
+  `flex flex-col gap-4 ${ANALYTICS_REPORT_SECTION_CLASS}` as const

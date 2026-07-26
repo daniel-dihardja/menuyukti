@@ -1380,7 +1380,6 @@
       "title": "Locations",
       "description": "Power analytics and Instagram campaigns for each venue. Configure basics here, then upload POS sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
-      "detailDescription": "Update location information and opening hours.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -1408,16 +1407,9 @@
         "salesHint": "Then upload a POS sales report to start analytics.",
         "salesCta": "Go to Sales Reports"
       },
-      "nextSteps": {
-        "title": "Next steps",
-        "uploadSales": "Upload sales report",
-        "viewAnalytics": "View latest analytics",
-        "openWorkflow": "Open workflow"
-      },
       "create": "Create New Location",
       "form": {
         "createTitle": "Create Location",
-        "editTitle": "Edit Location",
         "nameLabel": "Location name",
         "namePlaceholder": "Berlin Mitte",
         "streetLabel": "Street address",
@@ -1488,7 +1480,6 @@
         },
         "manualBrief": {
           "resetHints": "Clear all brief hints",
-          "intro": "Add stable location details for AI and keep your profile/contact links up to date.",
           "sections": {
             "profile": {
               "title": "Profile & contact links",
