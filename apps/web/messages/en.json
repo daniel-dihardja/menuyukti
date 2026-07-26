@@ -598,9 +598,7 @@
     "passwordMismatch": "New password and confirmation do not match.",
     "passwordSameAsCurrent": "New password must be different from your current password.",
     "passwordOAuthOnly": "Your account does not use a password for sign-in, or you have not set one yet. You can add or manage a password in account settings.",
-    "passwordOpenAccountSettings": "Open account settings",
-    "teamLinkTitle": "Team",
-    "teamLinkDescription": "Invite people to your workspace and manage members."
+    "passwordOpenAccountSettings": "Open account settings"
   },
   "workspaceTeam": {
     "title": "Team",
