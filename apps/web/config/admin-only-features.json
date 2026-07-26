@@ -4,25 +4,61 @@
       "id": "studio",
       "description": "IG Studio post drafts, style packs, and Post Creator (admin).",
       "routePrefixes": ["/ig-studio"],
-      "navKeys": ["posts"]
+      "navKeys": ["posts"],
+      "actionMenuKeys": []
     },
     {
       "id": "printOrders",
       "description": "Internal print-on-demand fulfillment queue (admin)—distinct from the public /shop catalog.",
       "routePrefixes": ["/print-orders"],
-      "navKeys": []
+      "navKeys": [],
+      "actionMenuKeys": []
     },
     {
       "id": "staff",
       "description": "Menuyukti staff console.",
       "routePrefixes": ["/staff"],
-      "navKeys": []
+      "navKeys": [],
+      "actionMenuKeys": []
     },
     {
       "id": "aiGatewayUsage",
       "description": "Vercel AI Gateway usage and credits (admin).",
       "routePrefixes": ["/usage"],
-      "navKeys": ["usage"]
+      "navKeys": ["usage"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "analyticsHeatmap",
+      "description": "Menu sales heatmap report from the sales actions menu (admin).",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["heatmap"],
+      "analyticsReportSegments": ["heatmap"]
+    },
+    {
+      "id": "analyticsMenuCombos",
+      "description": "Menu combos report from the sales actions menu (admin).",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["menu-combos"],
+      "analyticsReportSegments": ["menu-combos"]
+    },
+    {
+      "id": "analyticsOrderMetrics",
+      "description": "Order metrics report from the sales actions menu (admin).",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["order-metrics"],
+      "analyticsReportSegments": ["order-metrics"]
+    },
+    {
+      "id": "analyticsCampaignSignals",
+      "description": "Campaign signals report from the sales actions menu (admin).",
+      "routePrefixes": [],
+      "navKeys": [],
+      "actionMenuKeys": ["campaign-signals"],
+      "analyticsReportSegments": ["campaign-signals"]
     }
   ]
 }

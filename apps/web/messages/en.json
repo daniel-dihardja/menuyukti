@@ -1540,7 +1540,7 @@
         "index": "#",
         "fileName": "File Name",
         "action": "Actions",
-        "askAi": "Workflow Planner",
+        "askAi": "Chat",
         "cogs": "COGS",
         "report": "Report",
         "delete": "Delete",

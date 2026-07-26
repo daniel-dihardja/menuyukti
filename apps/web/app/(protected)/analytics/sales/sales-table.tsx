@@ -22,7 +22,10 @@ import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { BarChart3, Coins, Flame, Link2, List, Radio, Sparkles, Table2, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { isActionMenuItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
+import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
 import {
   ResponsiveActionMenu,
   type ResponsiveActionMenuItem,
@@ -40,13 +43,20 @@ function buildActionItems(
   t: ReturnType<typeof useTranslations<'analytics.sales.table'>>,
   onCogs: (analyticsId: number) => void,
   onRequestDelete: (row: { id: number; name: string }) => void,
+  showAdminActions: boolean,
 ): ResponsiveActionMenuItem[] {
-  return [
+  const items: ResponsiveActionMenuItem[] = [
     {
       id: 'menu-items',
       label: t('menuItems'),
       icon: List,
       href: routes.analytics.menuItems(row.id),
+    },
+    {
+      id: 'cogs',
+      label: t('cogs'),
+      icon: Coins,
+      onSelect: () => onCogs(row.id),
     },
     {
       id: 'matrix',
@@ -79,13 +89,6 @@ function buildActionItems(
       href: routes.analytics.campaignSignals(row.id),
     },
     {
-      id: 'cogs',
-      label: t('cogs'),
-      icon: Coins,
-      separatorBefore: true,
-      onSelect: () => onCogs(row.id),
-    },
-    {
       id: 'ask-ai',
       label: t('askAi'),
       icon: Sparkles,
@@ -101,12 +104,17 @@ function buildActionItems(
       onSelect: () => onRequestDelete(row),
     },
   ]
+
+  if (showAdminActions) return items
+  return items.filter((item) => !isActionMenuItemHiddenFromNonAdmin(item.id))
 }
 
 export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: SalesTableProps) {
   const t = useTranslations('analytics.sales.table')
   const tDelete = useTranslations('analytics.sales.delete')
   const tMobile = useTranslations('analytics.sales.table.mobile')
+  const { role, isLoaded } = useMenuyuktiRole()
+  const showAdminActions = isLoaded && isMenuyuktiAdmin(role)
 
   const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -151,7 +159,7 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
             </div>
             <ResponsiveActionMenu
               {...actionMenuProps}
-              items={buildActionItems(row, t, onCogs, onRequestDelete)}
+              items={buildActionItems(row, t, onCogs, onRequestDelete, showAdminActions)}
               sheetId={`sales-report-actions-${row.id}`}
               sheetTitle={row.name}
             />
@@ -179,7 +187,7 @@ export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: Sale
                 <TableCell className="text-right">
                   <ResponsiveActionMenu
                     {...actionMenuProps}
-                    items={buildActionItems(row, t, onCogs, onRequestDelete)}
+                    items={buildActionItems(row, t, onCogs, onRequestDelete, showAdminActions)}
                     sheetId={`sales-report-actions-desktop-${row.id}`}
                     sheetTitle={row.name}
                   />

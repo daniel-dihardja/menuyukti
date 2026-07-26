@@ -6,6 +6,8 @@ type AdminOnlyFeatureManifest = {
     description: string
     routePrefixes: string[]
     navKeys: string[]
+    actionMenuKeys?: string[]
+    analyticsReportSegments?: string[]
   }>
 }
 
@@ -41,11 +43,36 @@ for (const f of features) {
 /** Sidebar `NavItem.key` values that are only shown to platform admins. */
 export const adminOnlyNavKeys: ReadonlySet<string> = navKeySet
 
+const actionMenuKeySet = new Set<string>()
+for (const f of features) {
+  for (const k of f.actionMenuKeys ?? []) {
+    actionMenuKeySet.add(k)
+  }
+}
+
+/** Sales (and similar) action-menu item `id`s that are only shown to platform admins. */
+export const adminOnlyActionMenuKeys: ReadonlySet<string> = actionMenuKeySet
+
+const analyticsReportSegmentSet = new Set<string>()
+for (const f of features) {
+  for (const s of f.analyticsReportSegments ?? []) {
+    analyticsReportSegmentSet.add(s)
+  }
+}
+
 export function pathnameRequiresAdmin(pathname: string): boolean {
   const path = normalizePathname(pathname)
-  return adminOnlyRoutePrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
+  if (adminOnlyRoutePrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
+    return true
+  }
+  const analyticsMatch = path.match(/^\/analytics\/[^/]+\/([^/]+)/)
+  return analyticsMatch != null && analyticsReportSegmentSet.has(analyticsMatch[1]!)
 }
 
 export function isNavItemHiddenFromNonAdmin(navKey: string): boolean {
   return adminOnlyNavKeys.has(navKey)
+}
+
+export function isActionMenuItemHiddenFromNonAdmin(actionId: string): boolean {
+  return adminOnlyActionMenuKeys.has(actionId)
 }
