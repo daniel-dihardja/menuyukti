@@ -32,7 +32,6 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
 
@@ -224,7 +223,7 @@ export function CalendarEntryDialog({
         }}
       >
         <DialogContent
-          className="flex max-h-[min(92vh,40rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
+          className="flex max-h-[min(92vh,40rem)] min-h-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
           closeLabel={closeLabel}
           onEscapeKeyDown={(event) => {
             if (pending || deleting) {
@@ -243,7 +242,7 @@ export function CalendarEntryDialog({
             }
           }}
         >
-          <DialogHeader className="gap-1 border-b border-border/80 px-6 py-4">
+          <DialogHeader className="shrink-0 gap-1 border-b border-border/80 bg-background px-6 py-4 pr-12">
             <DialogTitle>{isEdit ? t('editTitle') : t('title')}</DialogTitle>
             <DialogDescription>
               {isEdit
@@ -252,7 +251,7 @@ export function CalendarEntryDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="min-h-0 flex-1 px-6">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
             <form
               className="py-4"
               onSubmit={(event) => {
@@ -332,25 +331,27 @@ export function CalendarEntryDialog({
                 />
               </FieldGroup>
             </form>
-          </ScrollArea>
+          </div>
 
-          <DialogFooter className="border-t border-border/80 px-6 py-4 sm:justify-between">
+          <DialogFooter className="relative z-10 shrink-0 flex-col gap-2 border-t border-border/80 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             {isEdit ? (
               <Button
                 type="button"
                 variant="destructive"
+                className="w-full sm:w-auto"
                 disabled={pending || deleting}
                 onClick={() => setDeleteOpen(true)}
               >
                 {t('delete')}
               </Button>
             ) : (
-              <span />
+              <span className="hidden sm:block" aria-hidden />
             )}
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
+                className="w-full sm:w-auto"
                 disabled={pending || deleting}
                 onClick={requestClose}
               >
@@ -358,6 +359,7 @@ export function CalendarEntryDialog({
               </Button>
               <Button
                 type="button"
+                className="w-full sm:w-auto"
                 disabled={
                   pending || deleting || title.trim().length === 0 || !/^\d{2}:\d{2}$/.test(time)
                 }
