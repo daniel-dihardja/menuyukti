@@ -29,16 +29,27 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
 
   const { locationId, setLocationId } = useAnalytics()
 
+  // URL → context only when the URL param changes (avoids fighting user selection mid-navigation).
   useEffect(() => {
     if (initialLocationId !== null) {
       setLocationId(initialLocationId)
+    }
+  }, [initialLocationId, setLocationId])
+
+  // No URL: keep a valid stored selection, or auto-select the only branch.
+  useEffect(() => {
+    if (initialLocationId !== null) return
+    if (locationId !== null) {
+      if (branches.length > 0 && !branches.some((b) => b.id === locationId)) {
+        setLocationId(null)
+      }
       return
     }
     if (branches.length !== 1) return
     const [onlyBranch] = branches
     if (!onlyBranch) return
     setLocationId(onlyBranch.id)
-  }, [initialLocationId, branches, setLocationId])
+  }, [initialLocationId, locationId, branches, setLocationId])
 
   useEffect(() => {
     if (locationId === null) return

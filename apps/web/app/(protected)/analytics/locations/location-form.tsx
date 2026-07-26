@@ -55,7 +55,6 @@ export function LocationForm({
   initialManualQuickProfile,
 }: LocationFormProps) {
   const t = useTranslations('analytics.branches.form')
-  const tm = useTranslations('analytics.branches.form.manualBrief')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -307,14 +306,12 @@ export function LocationForm({
         onSubmit={onSubmit}
       >
         <div className="flex flex-col gap-4 sm:gap-6">
-          <div className="space-y-1">
-            <h2 className="text-base font-semibold tracking-tight">
-              {mode === 'create' ? t('createTitle') : t('editTitle')}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {mode === 'create' ? t('openingHoursDescription') : tm('intro')}
-            </p>
-          </div>
+          {mode === 'create' ? (
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold tracking-tight">{t('createTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('openingHoursDescription')}</p>
+            </div>
+          ) : null}
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4 w-full justify-start">

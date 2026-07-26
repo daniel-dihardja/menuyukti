@@ -13,7 +13,6 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('posts')).toBe(false)
     expect(isNavKeyEnabled('calendar')).toBe(true)
     expect(isNavKeyEnabled('printShop')).toBe(false)
-    expect(isNavKeyEnabled('usage')).toBe(false)
     expect(isNavKeyEnabled('workflows')).toBe(true)
     expect(isNavKeyEnabled('reports')).toBe(true)
     expect(isNavKeyEnabled('branches')).toBe(true)
@@ -37,6 +36,9 @@ describe('feature-flags', () => {
   it('leaves unlisted paths enabled', () => {
     expect(isPathnameFeatureEnabled('/privacy')).toBe(true)
     expect(isPathnameFeatureEnabled('/login')).toBe(true)
+    // Admin-gated via admin-only-features.json, not feature-flags.
+    expect(isPathnameFeatureEnabled('/usage')).toBe(true)
+    expect(isNavKeyEnabled('usage')).toBe(true)
   })
 
   it('returns /workflow as default authenticated path', () => {
