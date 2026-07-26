@@ -125,6 +125,37 @@ function GenerateInstagramPostImageToolBlock({
   )
 }
 
+function CompactToolStatus({
+  isInFlight,
+  isError,
+  message,
+}: {
+  isInFlight: boolean
+  isError: boolean
+  message: string
+}) {
+  return (
+    <div
+      aria-live="polite"
+      className="flex items-center gap-2 text-muted-foreground text-sm"
+      role="status"
+    >
+      {isInFlight ? (
+        <Spinner className="size-3.5 shrink-0" />
+      ) : isError ? (
+        <XIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
+      ) : (
+        <CheckIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+      )}
+      {isInFlight ? (
+        <Shimmer className="text-sm">{message}</Shimmer>
+      ) : (
+        <span className={isError ? 'text-destructive' : undefined}>{message}</span>
+      )}
+    </div>
+  )
+}
+
 function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
   const t = useTranslations('chatTools.getChartData')
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
@@ -150,26 +181,41 @@ function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicTo
     message = isInFlight ? t('runningGeneric') : t('doneGeneric')
   }
 
-  return (
-    <div
-      aria-live="polite"
-      className="flex items-center gap-2 text-muted-foreground text-sm"
-      role="status"
-    >
-      {isInFlight ? (
-        <Spinner className="size-3.5 shrink-0" />
-      ) : isError ? (
-        <XIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
-      ) : (
-        <CheckIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
-      )}
-      {isInFlight ? (
-        <Shimmer className="text-sm">{message}</Shimmer>
-      ) : (
-        <span className={isError ? 'text-destructive' : undefined}>{message}</span>
-      )}
-    </div>
-  )
+  return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
+}
+
+const COMPACT_TOOL_I18N = {
+  list_instagram_items: 'listInstagramItems',
+  get_instagram_item: 'getInstagramItem',
+  create_instagram_items: 'createInstagramItems',
+  update_instagram_items: 'updateInstagramItems',
+  delete_instagram_items: 'deleteInstagramItems',
+  get_workflow_overview: 'getWorkflowOverview',
+  get_milestone: 'getMilestone',
+  update_milestone_input: 'updateMilestoneInput',
+  get_location_data: 'getLocationData',
+} as const
+
+type CompactToolName = keyof typeof COMPACT_TOOL_I18N
+
+function isCompactToolName(toolName: string): toolName is CompactToolName {
+  return toolName in COMPACT_TOOL_I18N
+}
+
+function CompactNamedToolBlock({
+  part,
+  toolName,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+  toolName: CompactToolName
+}) {
+  const t = useTranslations('chatTools')
+  const key = COMPACT_TOOL_I18N[toolName]
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const isError = toolOutputLooksLikeError(part)
+  const message = isError ? t(`${key}.error`) : isInFlight ? t(`${key}.running`) : t(`${key}.done`)
+
+  return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
 }
 
 function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
@@ -182,6 +228,9 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
   }
   if (toolName === 'get_chart_data') {
     return <GetChartDataToolBlock part={part} />
+  }
+  if (isCompactToolName(toolName)) {
+    return <CompactNamedToolBlock part={part} toolName={toolName} />
   }
 
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'

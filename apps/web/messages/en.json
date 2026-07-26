@@ -43,6 +43,51 @@
           "done": "Reviewed pair lift matrix"
         }
       }
+    },
+    "listInstagramItems": {
+      "running": "Listing Instagram drafts…",
+      "done": "Listed Instagram drafts",
+      "error": "Couldn’t list Instagram drafts"
+    },
+    "getInstagramItem": {
+      "running": "Loading Instagram draft…",
+      "done": "Loaded Instagram draft",
+      "error": "Couldn’t load Instagram draft"
+    },
+    "createInstagramItems": {
+      "running": "Creating Instagram drafts…",
+      "done": "Created Instagram drafts",
+      "error": "Couldn’t create Instagram drafts"
+    },
+    "updateInstagramItems": {
+      "running": "Updating Instagram drafts…",
+      "done": "Updated Instagram drafts",
+      "error": "Couldn’t update Instagram drafts"
+    },
+    "deleteInstagramItems": {
+      "running": "Deleting Instagram drafts…",
+      "done": "Deleted Instagram drafts",
+      "error": "Couldn’t delete Instagram drafts"
+    },
+    "getWorkflowOverview": {
+      "running": "Refreshing workflow overview…",
+      "done": "Reviewed workflow overview",
+      "error": "Couldn’t load workflow overview"
+    },
+    "getMilestone": {
+      "running": "Loading milestone…",
+      "done": "Loaded milestone",
+      "error": "Couldn’t load milestone"
+    },
+    "updateMilestoneInput": {
+      "running": "Updating milestone input…",
+      "done": "Updated milestone input",
+      "error": "Couldn’t update milestone input"
+    },
+    "getLocationData": {
+      "running": "Loading location context…",
+      "done": "Loaded location context",
+      "error": "Couldn’t load location context"
     }
   },
   "appShell": {
