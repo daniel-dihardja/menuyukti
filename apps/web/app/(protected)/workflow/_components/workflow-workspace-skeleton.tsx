@@ -142,9 +142,11 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       aria-live="polite"
       className={cn('flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden', className)}
     >
-      {/* Mobile: timeline + sticky assistant bar */}
+      {/* Mobile: preview + sticky assistant bar (milestones column hidden) */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:hidden">
-        <WorkflowTimelineSkeleton className="min-h-0 flex-1" />
+        <div className="min-h-0 flex-1 overflow-hidden p-2">
+          <WorkflowPreviewPanelSkeleton className="h-full" />
+        </div>
         <div
           aria-hidden
           className="shrink-0 border-t bg-background px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
@@ -153,13 +155,10 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
         </div>
       </div>
 
-      {/* Desktop: three-panel workspace */}
+      {/* Desktop: preview + chat (milestones column hidden) */}
       <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
-          <div className="grid h-full min-h-0 flex-1 grid-cols-[38fr_34fr_28fr] gap-0 overflow-hidden">
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r bg-background">
-              <WorkflowTimelineSkeleton />
-            </div>
+          <div className="grid h-full min-h-0 flex-1 grid-cols-[55fr_45fr] gap-0 overflow-hidden">
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-background p-3">
               <WorkflowPreviewPanelSkeleton className="flex-1" />
             </div>

@@ -1,13 +1,6 @@
 'use client'
 
 import { usePanelRef } from '@workspace/ui/components/resizable'
-import { Button } from '@workspace/ui/components/button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@workspace/ui/components/tooltip'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import {
@@ -20,7 +13,6 @@ import {
   useTransition,
 } from 'react'
 import { parseAsString, useQueryState } from 'nuqs'
-import { PanelRight } from 'lucide-react'
 
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -30,7 +22,7 @@ import {
 } from './instagram-items/instagram-items-refresh-context'
 import { TimelineProvider } from './timeline-context'
 import type { MilestoneInput } from './timeline/types'
-import { TimelineWorkspace, type TimelineMilestone } from './timeline-workspace'
+import type { TimelineMilestone } from './timeline-workspace'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { useWorkflowPreviewVisibility } from './use-workflow-preview-visibility'
 import { useWorkflowTimelineProviderSlices } from './use-workflow-timeline-provider-value'
@@ -52,43 +44,6 @@ const WorkflowPreviewPanelBodyLazy = dynamic(
     loading: () => <WorkflowPreviewPanelSkeleton className="h-full w-full" />,
   },
 )
-
-function WorkflowPreviewToggleButton() {
-  const tWorkspace = useTranslations('analytics.workflows.workspace')
-  const [isPreviewTransitionPending, startPreviewTransition] = useTransition()
-  const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
-
-  const handlePreviewToggle = useCallback(() => {
-    startPreviewTransition(() => {
-      setPreviewOpen((v) => !v)
-    })
-  }, [setPreviewOpen])
-
-  return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-busy={isPreviewTransitionPending}
-            aria-label={tWorkspace('previewToggleAriaLabel')}
-            aria-pressed={previewOpen}
-            className="shrink-0"
-            onClick={handlePreviewToggle}
-            size="icon"
-            type="button"
-            variant="outline"
-          >
-            <PanelRight aria-hidden />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs text-balance" side="bottom">
-          <p>{tWorkspace('previewToggleTooltip')}</p>
-          <p className="mt-1 text-muted-foreground">{tWorkspace('previewToggleShortcut')}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  )
-}
 
 export type WorkflowChatPanelProps = {
   workflowId: string
@@ -288,11 +243,6 @@ function WorkflowChatPanelInner({
               onMobileChatOpenChange={setMobileChatOpen}
               previewPane={<WorkflowPreviewPanelBodyLazy />}
               previewPanelRef={previewPanelRef}
-              timelinePane={
-                <TimelineWorkspace
-                  timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
-                />
-              }
             />
           </WorkflowChatMentionProvider>
         </WorkflowVisualizationsProvider>
