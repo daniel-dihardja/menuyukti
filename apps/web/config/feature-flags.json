@@ -8,8 +8,7 @@
     "reports": true,
     "branches": true,
     "printShop": false,
-    "team": true,
-    "usage": false
+    "team": true
   },
   "routes": {
     "/dashboard": true,
@@ -22,8 +21,7 @@
     "/print-orders": false,
     "/profile": true,
     "/advisor": true,
-    "/staff": true,
-    "/usage": false
+    "/staff": true
   },
   "defaultAuthenticatedPath": "/workflow"
 }
