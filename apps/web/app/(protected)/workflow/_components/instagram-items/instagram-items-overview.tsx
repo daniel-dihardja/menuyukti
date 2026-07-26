@@ -45,7 +45,7 @@ type InstagramItemsOverviewProps = {
 
 function OverviewSkeletonGrid() {
   return (
-    <ul aria-hidden className="mx-auto grid w-1/2 min-w-0 grid-cols-3 gap-3">
+    <ul aria-hidden className="mx-auto grid w-full max-w-[56rem] min-w-0 grid-cols-4 gap-3">
       {Array.from({ length: 4 }, (_, index) => (
         <li key={index} className="min-w-0">
           <div className="flex flex-col overflow-hidden border bg-background">
@@ -134,7 +134,7 @@ export function InstagramItemsOverview({
           </EmptyContent>
         </Empty>
       ) : (
-        <ul className="mx-auto grid w-1/2 min-h-0 min-w-0 flex-1 grid-cols-3 content-start gap-3 overflow-y-auto pt-3">
+        <ul className="mx-auto grid w-full max-w-[56rem] min-h-0 min-w-0 flex-1 grid-cols-4 content-start gap-3 overflow-y-auto pt-3">
           {items.map((item) => {
             const kindKey = `kind.${item.kind}` as 'kind.story' | 'kind.post' | 'kind.reel'
             const statusKey = `status.${item.status}` as 'status.draft' | 'status.ready'

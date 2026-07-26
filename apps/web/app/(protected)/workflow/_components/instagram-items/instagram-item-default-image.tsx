@@ -21,7 +21,7 @@ function KindIcon({ kind }: { kind?: string }) {
 
 /**
  * Placeholder media tile when an Instagram item / page has no generated image.
- * Uses the design-system primary color so empties stay on-brand.
+ * Uses a darkened page background so multi-item grids stay calm.
  */
 export function InstagramItemDefaultImage({
   kind,
@@ -33,7 +33,8 @@ export function InstagramItemDefaultImage({
     <span
       aria-hidden={label ? undefined : true}
       className={cn(
-        'flex size-full flex-col items-center justify-center gap-1 bg-primary text-primary-foreground',
+        'flex size-full flex-col items-center justify-center gap-1 text-muted-foreground',
+        'bg-[color-mix(in_srgb,var(--background)_78%,var(--foreground)_22%)]',
         "[&_svg:not([class*='size-'])]:size-8",
         className,
       )}
