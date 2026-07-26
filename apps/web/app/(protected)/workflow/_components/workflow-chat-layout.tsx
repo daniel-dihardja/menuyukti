@@ -9,7 +9,7 @@ import {
   ResizablePanelGroup,
 } from '@workspace/ui/components/resizable'
 
-import { WorkflowMobileChatSheet } from './workflow-mobile-chat-sheet'
+import { WorkflowMobileArtifactSheet } from './workflow-mobile-artifact-sheet'
 
 export type WorkflowChatLayoutProps = {
   previewPanelRef: NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
@@ -17,26 +17,37 @@ export type WorkflowChatLayoutProps = {
   timelinePane?: ReactNode
   previewPane: ReactNode
   chatPane: ReactNode
-  mobileChatOpen: boolean
-  onMobileChatOpenChange: (open: boolean) => void
+  mobileArtifactOpen: boolean
+  onMobileArtifactOpenChange: (open: boolean) => void
+  /** Optional mobile artifact sheet title (e.g. selected milestone). */
+  mobileArtifactTitle?: string | null
+  /** Optional mobile artifact bar hint. */
+  mobileArtifactHint?: string | null
 }
 
 export function WorkflowChatLayout({
   previewPanelRef,
   previewPane,
   chatPane,
-  mobileChatOpen,
-  onMobileChatOpenChange,
+  mobileArtifactOpen,
+  onMobileArtifactOpenChange,
+  mobileArtifactTitle,
+  mobileArtifactHint,
 }: WorkflowChatLayoutProps) {
   const isDesktop = useDesktopLayout()
 
   if (!isDesktop) {
     return (
       <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-        <div className="min-h-0 flex-1 overflow-hidden p-2">{previewPane}</div>
-        <WorkflowMobileChatSheet onOpenChange={onMobileChatOpenChange} open={mobileChatOpen}>
-          {chatPane}
-        </WorkflowMobileChatSheet>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
+        <WorkflowMobileArtifactSheet
+          hint={mobileArtifactHint}
+          onOpenChange={onMobileArtifactOpenChange}
+          open={mobileArtifactOpen}
+          title={mobileArtifactTitle}
+        >
+          {previewPane}
+        </WorkflowMobileArtifactSheet>
       </div>
     )
   }

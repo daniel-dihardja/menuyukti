@@ -1684,13 +1684,11 @@
         "attachImageAriaLabel": "Attach image",
         "attachImageTooltip": "Attach an image from your device",
         "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
-        "mobileChatOpenLabel": "Assistant & visualizations",
-        "mobileChatOpenAriaLabel": "Open assistant and visualizations",
-        "mobileChatSheetTitle": "Assistant & visualizations",
-        "mobileChatSheetDescription": "Draft Instagram content with the assistant, or add charts from your linked sales report.",
-        "mobileChatCloseAriaLabel": "Close assistant",
-        "mobileChatEmptyHint": "Ask to create Stories, posts, or Reels from your charts.",
-        "mobileChatContinueHint": "Continue conversation",
+        "mobileArtifactOpenLabel": "Preview",
+        "mobileArtifactOpenAriaLabel": "Open preview",
+        "mobileArtifactSheetTitle": "Preview",
+        "mobileArtifactSheetDescription": "View milestone results and generated Instagram content.",
+        "mobileArtifactEmptyHint": "View generated content",
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {

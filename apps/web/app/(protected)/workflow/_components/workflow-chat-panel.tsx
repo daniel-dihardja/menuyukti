@@ -77,10 +77,11 @@ function WorkflowChatPanelInner({
   analyticsRunId,
 }: WorkflowChatPanelProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const [mobileChatOpen, setMobileChatOpen] = useState(false)
+  const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
   const [chatBusy, setChatBusy] = useState(false)
   const [, startPreviewTransition] = useTransition()
-  const { refresh: onRefreshInstagramItems } = useInstagramItemsRefresh()
+  const { refresh: onRefreshInstagramItems, version: instagramItemsRefreshVersion } =
+    useInstagramItemsRefresh()
 
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
   const isDesktop = useDesktopLayout()
@@ -218,6 +219,24 @@ function WorkflowChatPanelInner({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [isDesktop, setPreviewOpen])
 
+  useEffect(() => {
+    if (!isDesktop && instagramItemsRefreshVersion > 0) {
+      setMobileArtifactOpen(true)
+    }
+  }, [instagramItemsRefreshVersion, isDesktop])
+
+  useEffect(() => {
+    if (!isDesktop && selectedMilestoneId !== null) {
+      setMobileArtifactOpen(true)
+    }
+  }, [selectedMilestoneId, isDesktop])
+
+  const selectedMilestoneTitle =
+    selectedMilestoneId !== null
+      ? (milestoneTitles.find((m) => m.id === selectedMilestoneId)?.title ?? null)
+      : null
+  const mobileArtifactHint = selectedMilestoneTitle ?? t('mobileArtifactEmptyHint')
+
   return (
     <TimelineProvider
       actions={timelineSlices.actions}
@@ -239,8 +258,10 @@ function WorkflowChatPanelInner({
           <WorkflowChatMentionProvider milestoneTitles={milestoneTitles}>
             <WorkflowChatLayout
               chatPane={<WorkflowSidePanel />}
-              mobileChatOpen={mobileChatOpen}
-              onMobileChatOpenChange={setMobileChatOpen}
+              mobileArtifactHint={mobileArtifactHint}
+              mobileArtifactOpen={mobileArtifactOpen}
+              mobileArtifactTitle={selectedMilestoneTitle}
+              onMobileArtifactOpenChange={setMobileArtifactOpen}
               previewPane={<WorkflowPreviewPanelBodyLazy />}
               previewPanelRef={previewPanelRef}
             />
