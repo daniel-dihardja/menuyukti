@@ -78,6 +78,7 @@ def test_build_system_prompt_with_leonardo_image_generation() -> None:
     assert LEONARDO_IMAGE_BLOCK.strip() in out
     assert "generate_instagram_post_image" in out
     assert "Sales or analytics data is not required" in out
+    assert "Leonardo reference images" in out
     assert "Do not paste the image URL" in out
     assert "IG Studio Post Creator" not in out
 

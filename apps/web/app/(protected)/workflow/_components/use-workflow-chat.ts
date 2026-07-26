@@ -11,6 +11,7 @@ import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { appendWorkflowChatMention } from '@/lib/chat/append-workflow-chat-mention'
+import { mediaNamesToPhotoGenerationReferences } from '@/lib/chat/media-names-to-generation-references'
 import {
   clearWorkflowChatMentionTrigger,
   mediaTypeFromFilename,
@@ -177,7 +178,12 @@ export function useWorkflowChat({
       model: selectedChatModelRef.current,
       ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
       ...(vizRef !== null ? { referencedVisualizationId: vizRef } : {}),
-      ...(mediaNames.length > 0 ? { referencedMediaNames: mediaNames } : {}),
+      ...(mediaNames.length > 0
+        ? {
+            referencedMediaNames: mediaNames,
+            generationReferences: mediaNamesToPhotoGenerationReferences(mediaNames),
+          }
+        : {}),
     }
   }, [])
 
