@@ -22,13 +22,6 @@ import {
 import { routes } from '@/lib/routes'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
@@ -313,81 +306,81 @@ export function LocationForm({
         className="flex flex-col gap-4 pb-24 sm:gap-6 sm:pb-0"
         onSubmit={onSubmit}
       >
-        <Card className="gap-4 py-4 sm:gap-6 sm:rounded-xl sm:py-6">
-          <CardHeader className="px-4 sm:px-6">
-            <CardTitle>{mode === 'create' ? t('createTitle') : t('editTitle')}</CardTitle>
-            <CardDescription>
+        <div className="flex flex-col gap-4 sm:gap-6">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold tracking-tight">
+              {mode === 'create' ? t('createTitle') : t('editTitle')}
+            </h2>
+            <p className="text-sm text-muted-foreground">
               {mode === 'create' ? t('openingHoursDescription') : tm('intro')}
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent className="px-4 sm:px-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-4 w-full justify-start">
-                <TabsTrigger value="basics">{t('tabs.basics')}</TabsTrigger>
-                <TabsTrigger value="hours">{t('tabs.hours')}</TabsTrigger>
-                {mode === 'edit' ? (
-                  <TabsTrigger value="marketing">{t('tabs.marketing')}</TabsTrigger>
-                ) : null}
-              </TabsList>
-
-              <LocationBasicsSection
-                loading={loading}
-                name={name}
-                street={street}
-                city={city}
-                countryId={countryId}
-                currency={currency}
-                hasManualCurrencyOverride={hasManualCurrencyOverride}
-                showCurrencyAutoHint={showCurrencyAutoHint}
-                onNameChange={setName}
-                onStreetChange={setStreet}
-                onCityChange={setCity}
-                onCountryChange={(nextCountryId) => {
-                  setCountryId(nextCountryId)
-                  if (!hasManualCurrencyOverride && nextCountryId) {
-                    setCurrency(countryIdToCurrency[nextCountryId] ?? '')
-                  }
-                }}
-                onCurrencyChange={(nextCurrency, hasManualOverride) => {
-                  setCurrency(nextCurrency)
-                  setHasManualCurrencyOverride(hasManualOverride)
-                }}
-                onDirty={markDirty}
-              />
-
-              <LocationHoursSection
-                loading={loading}
-                openingHours={openingHours}
-                onSetRowClosed={setRowClosed}
-                onUpdateOpeningHour={updateOpeningHour}
-                onPresetWeekdaysOnly={presetWeekdaysOnly}
-                onPresetCopyMondayToWeekdays={presetCopyMondayToWeekdays}
-                onPresetAllClosed={presetAllClosed}
-              />
-
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4 w-full justify-start">
+              <TabsTrigger value="basics">{t('tabs.basics')}</TabsTrigger>
+              <TabsTrigger value="hours">{t('tabs.hours')}</TabsTrigger>
               {mode === 'edit' ? (
-                <LocationBriefSection
-                  loading={loading}
-                  hints={hints}
-                  profileFilledCount={profileFilledCount}
-                  profileProgress={profileProgress}
-                  onHintFieldChange={setHintField}
-                  onResetHints={() => {
-                    markDirty()
-                    setHints(defaultBriefHintsState())
-                  }}
-                />
+                <TabsTrigger value="marketing">{t('tabs.marketing')}</TabsTrigger>
               ) : null}
-            </Tabs>
+            </TabsList>
 
-            {error ? (
-              <Alert variant="destructive" className="mt-4" role="alert" aria-live="assertive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+            <LocationBasicsSection
+              loading={loading}
+              name={name}
+              street={street}
+              city={city}
+              countryId={countryId}
+              currency={currency}
+              hasManualCurrencyOverride={hasManualCurrencyOverride}
+              showCurrencyAutoHint={showCurrencyAutoHint}
+              onNameChange={setName}
+              onStreetChange={setStreet}
+              onCityChange={setCity}
+              onCountryChange={(nextCountryId) => {
+                setCountryId(nextCountryId)
+                if (!hasManualCurrencyOverride && nextCountryId) {
+                  setCurrency(countryIdToCurrency[nextCountryId] ?? '')
+                }
+              }}
+              onCurrencyChange={(nextCurrency, hasManualOverride) => {
+                setCurrency(nextCurrency)
+                setHasManualCurrencyOverride(hasManualOverride)
+              }}
+              onDirty={markDirty}
+            />
+
+            <LocationHoursSection
+              loading={loading}
+              openingHours={openingHours}
+              onSetRowClosed={setRowClosed}
+              onUpdateOpeningHour={updateOpeningHour}
+              onPresetWeekdaysOnly={presetWeekdaysOnly}
+              onPresetCopyMondayToWeekdays={presetCopyMondayToWeekdays}
+              onPresetAllClosed={presetAllClosed}
+            />
+
+            {mode === 'edit' ? (
+              <LocationBriefSection
+                loading={loading}
+                hints={hints}
+                profileFilledCount={profileFilledCount}
+                profileProgress={profileProgress}
+                onHintFieldChange={setHintField}
+                onResetHints={() => {
+                  markDirty()
+                  setHints(defaultBriefHintsState())
+                }}
+              />
             ) : null}
-          </CardContent>
-        </Card>
+          </Tabs>
+
+          {error ? (
+            <Alert variant="destructive" role="alert" aria-live="assertive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
 
         <div className="hidden justify-end sm:flex">
           <Button type="submit" disabled={loading} className="min-w-[140px]">

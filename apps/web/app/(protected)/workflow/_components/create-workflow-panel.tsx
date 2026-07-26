@@ -50,7 +50,6 @@ function CreateWorkflowLocationSection({ branches }: LocationSectionProps) {
   return (
     <LocationSelect
       branches={branches}
-      className="w-full max-w-none"
       id="workflow-location-select"
       label={tPanel('sectionLocation')}
       placeholder={branches.length > 1 ? t('branchPlaceholder') : t('branchLabel')}

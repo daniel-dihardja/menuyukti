@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 
 import { DashboardPwaGuide } from './_components/dashboard-pwa-guide'
 
@@ -22,17 +21,15 @@ export default async function Page() {
       title={t('title')}
       breadcrumbs={[{ label: t('title') }]}
     >
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-5 sm:max-w-2xl sm:gap-6">
-        <Card className="gap-3 py-5 shadow-none sm:gap-4 sm:py-6">
-          <CardHeader className="px-4 sm:px-6">
-            <CardTitle className="text-pretty text-xl tracking-tight sm:text-2xl">
-              {t('headline')}
-            </CardTitle>
-            <CardDescription className="text-pretty text-base leading-relaxed sm:text-sm">
-              {t('lead')}
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="mx-auto flex w-full max-w-lg flex-col gap-8 sm:max-w-2xl sm:gap-10">
+        <div className="space-y-2">
+          <h1 className="text-pretty text-xl font-semibold tracking-tight sm:text-2xl">
+            {t('headline')}
+          </h1>
+          <p className="text-pretty text-base leading-relaxed text-muted-foreground sm:text-sm">
+            {t('lead')}
+          </p>
+        </div>
 
         <DashboardPwaGuide />
       </div>

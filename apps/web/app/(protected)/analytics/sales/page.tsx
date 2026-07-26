@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { routes } from '@/lib/routes'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Card } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
 import {
@@ -107,7 +106,7 @@ async function SalesPageData({ requestedLocationId }: { requestedLocationId: num
 
   if (!hasBranches) {
     return (
-      <Card className="space-y-4 p-8 text-center">
+      <section className="flex flex-col items-center gap-4 py-8 text-center">
         <h2 className="text-lg font-medium">{t('noBranches.title')}</h2>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">
           {t('noBranches.description')}
@@ -115,7 +114,7 @@ async function SalesPageData({ requestedLocationId }: { requestedLocationId: num
         <Button asChild size="lg">
           <Link href={routes.analytics.branchesCreate}>{t('noBranches.cta')}</Link>
         </Button>
-      </Card>
+      </section>
     )
   }
 

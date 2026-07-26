@@ -12,9 +12,16 @@ export default async function DashboardLoading() {
       title={t('title')}
       breadcrumbs={[{ label: t('title') }]}
     >
-      <div className="mx-auto flex w-full max-w-lg flex-col gap-5 sm:max-w-2xl sm:gap-6">
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-48 w-full rounded-xl" />
+      <div className="mx-auto flex w-full max-w-lg flex-col gap-8 sm:max-w-2xl sm:gap-10">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-64 max-w-full sm:h-8" />
+          <Skeleton className="h-4 w-full max-w-md" />
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
       </div>
     </AnalyticsPageShell>
   )

@@ -6,13 +6,6 @@ import { useTranslations } from 'next-intl'
 
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 
@@ -72,39 +65,39 @@ export function DashboardPwaGuide() {
         })}
       </ToggleGroup>
 
-      <Card className="gap-0 py-0 shadow-none">
-        <CardHeader className="flex flex-row items-start gap-3 border-b px-4 py-4 sm:px-6">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-row items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
             <PlatformIcon aria-hidden className="text-foreground" />
           </div>
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-base">{t(`platforms.${platform}.label`)}</CardTitle>
-            <CardDescription className="text-pretty">
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className="text-base font-semibold tracking-tight">
+              {t(`platforms.${platform}.label`)}
+            </h3>
+            <p className="text-pretty text-sm text-muted-foreground">
               {t(`platforms.${platform}.browser`)}
-            </CardDescription>
+            </p>
           </div>
-        </CardHeader>
-        <CardContent className="px-4 py-2 sm:px-6">
-          <ol className="flex flex-col">
-            {STEP_KEYS.map((stepKey, index) => (
-              <li key={stepKey}>
-                <div className="flex items-start gap-3 py-3.5 sm:py-3">
-                  <Badge
-                    className="size-7 shrink-0 justify-center rounded-full p-0 tabular-nums"
-                    variant="secondary"
-                  >
-                    {index + 1}
-                  </Badge>
-                  <p className="min-w-0 pt-0.5 text-sm leading-relaxed">
-                    {t(`platforms.${platform}.steps.${stepKey}`)}
-                  </p>
-                </div>
-                {index < STEP_KEYS.length - 1 ? <Separator /> : null}
-              </li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
+        </div>
+        <ol className="flex flex-col">
+          {STEP_KEYS.map((stepKey, index) => (
+            <li key={stepKey}>
+              <div className="flex items-start gap-3 py-3.5 sm:py-3">
+                <Badge
+                  className="size-7 shrink-0 justify-center rounded-full p-0 tabular-nums"
+                  variant="secondary"
+                >
+                  {index + 1}
+                </Badge>
+                <p className="min-w-0 pt-0.5 text-sm leading-relaxed">
+                  {t(`platforms.${platform}.steps.${stepKey}`)}
+                </p>
+              </div>
+              {index < STEP_KEYS.length - 1 ? <Separator /> : null}
+            </li>
+          ))}
+        </ol>
+      </div>
 
       <Alert className="border-muted/60 bg-muted/40">
         <Smartphone aria-hidden />
