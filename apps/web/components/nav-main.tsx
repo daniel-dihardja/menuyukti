@@ -256,14 +256,8 @@ export function NavMain() {
     return pathname.startsWith(url)
   }
 
-  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav).filter((item) =>
-    VISIBLE_WORKSPACE_NAV_KEYS.has(item.key),
-  )
-  /** Flip to true to show admin nav (Usage) again. */
-  const showAdminNavSection = false
-  const visibleAdminItems = showAdminNavSection
-    ? visibleNavItemsForRole(NAV_ADMIN, showAdminNav)
-    : []
+  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
+  const visibleAdminItems = visibleNavItemsForRole(NAV_ADMIN, showAdminNav)
 
   return (
     <>

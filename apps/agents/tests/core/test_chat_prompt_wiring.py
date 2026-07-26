@@ -1,4 +1,4 @@
-"""Tests for chat graph prompt wiring."""
+"""Tests for chat graph prompt wiring with injected catalog."""
 
 from unittest.mock import patch
 
@@ -6,7 +6,7 @@ from agents_app.agents.core.chat.graph import _chat_prompt
 from langchain_core.messages import HumanMessage
 
 
-def test_chat_prompt_ignores_catalog_from_config() -> None:
+def test_chat_prompt_injects_catalog_from_config() -> None:
     with patch(
         "agents_app.agents.core.chat.graph.get_config",
         return_value={
@@ -20,13 +20,13 @@ def test_chat_prompt_ignores_catalog_from_config() -> None:
 
     assert len(messages) == 2
     assert messages[0].type == "system"
-    assert "## Workflow milestone catalog" not in messages[0].content
-    assert "# Workflow overview" not in messages[0].content
+    assert "## Workflow milestone catalog" in messages[0].content
+    assert "# Workflow overview" in messages[0].content
     assert "## Workflow chart catalog" in messages[0].content
     assert messages[1].content == "hi"
 
 
-def test_chat_prompt_without_location_config() -> None:
+def test_chat_prompt_without_catalog_config() -> None:
     with patch(
         "agents_app.agents.core.chat.graph.get_config",
         return_value={"configurable": {}},
@@ -35,7 +35,8 @@ def test_chat_prompt_without_location_config() -> None:
 
     assert "## Workflow milestone catalog" not in messages[0].content
     assert "## Workflow chart catalog" not in messages[0].content
-    assert "Instagram content advisor" in messages[0].content
+    assert "source of truth" in messages[0].content
+    assert "Instagram content assistant" in messages[0].content
 
 
 def test_chat_prompt_injects_chart_catalog_when_location_present() -> None:

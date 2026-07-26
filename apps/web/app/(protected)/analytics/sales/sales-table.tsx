@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -9,7 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
-import { Coins, Table2 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
+import { Button } from '@workspace/ui/components/button'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { BarChart3, Coins, Flame, Link2, List, Radio, Sparkles, Table2, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { isActionMenuItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
@@ -22,7 +33,9 @@ import {
 
 interface SalesTableProps {
   uploads: Array<{ id: number; name: string }>
+  onDelete: (analyticsId: number) => Promise<{ ok: true } | { ok: false }>
   onCogs: (analyticsId: number) => void
+  deleting?: boolean
 }
 
 function buildActionItems(
@@ -96,11 +109,31 @@ function buildActionItems(
   return items.filter((item) => !isActionMenuItemHiddenFromNonAdmin(item.id))
 }
 
-export function SalesTable({ uploads, onCogs }: SalesTableProps) {
+export function SalesTable({ uploads, onDelete, onCogs, deleting = false }: SalesTableProps) {
   const t = useTranslations('analytics.sales.table')
+  const tDelete = useTranslations('analytics.sales.delete')
   const tMobile = useTranslations('analytics.sales.table.mobile')
   const { role, isLoaded } = useMenuyuktiRole()
   const showAdminActions = isLoaded && isMenuyuktiAdmin(role)
+
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const onRequestDelete = useCallback((row: { id: number; name: string }) => {
+    setDeleteError(null)
+    setPendingDelete(row)
+  }, [])
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return
+    setDeleteError(null)
+    const result = await onDelete(pendingDelete.id)
+    if (result.ok) {
+      setPendingDelete(null)
+      return
+    }
+    setDeleteError(tDelete('error'))
+  }, [onDelete, pendingDelete, tDelete])
 
   const actionMenuProps = useMemo(
     () => ({
@@ -164,6 +197,49 @@ export function SalesTable({ uploads, onCogs }: SalesTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (open) return
+          if (deleting) return
+          setPendingDelete(null)
+          setDeleteError(null)
+        }}
+        open={pendingDelete !== null}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tDelete('title')}</AlertDialogTitle>
+            <AlertDialogDescription>{tDelete('description')}</AlertDialogDescription>
+            {deleteError ? (
+              <p className="text-destructive text-sm" role="alert">
+                {deleteError}
+              </p>
+            ) : null}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting} type="button">
+              {tDelete('cancel')}
+            </AlertDialogCancel>
+            <Button
+              className={deleting ? 'inline-flex items-center gap-2' : undefined}
+              disabled={deleting}
+              onClick={() => void confirmDelete()}
+              type="button"
+              variant="destructive"
+            >
+              {deleting ? (
+                <>
+                  <Spinner />
+                  {tDelete('confirm')}
+                </>
+              ) : (
+                tDelete('confirm')
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

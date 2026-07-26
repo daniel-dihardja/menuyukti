@@ -70,7 +70,8 @@ export function stripDuplicateGeneratedImageMarkdown(
       if (urlMatchesAny(trimmed, known)) return false
       // Angle-bracket autolink form
       const angle = trimmed.match(/^<(https?:\/\/[^>]+)>$/)
-      if (angle && urlMatchesAny(angle[1], known)) return false
+      const angleUrl = angle?.[1]
+      if (angleUrl && urlMatchesAny(angleUrl, known)) return false
       return true
     })
     .join('\n')
