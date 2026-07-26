@@ -1,5 +1,5 @@
 import { MenuyuktiSignUp } from '@/components/clerk/menuyukti-sign-up'
-import { routes } from '@/lib/routes'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { auth } from '@clerk/nextjs/server'
@@ -11,7 +11,7 @@ import { redirect } from 'next/navigation'
 export default async function SignUpPage() {
   const { isAuthenticated, sessionStatus } = await auth()
   if (isAuthenticated && sessionStatus !== 'pending') {
-    redirect(routes.dashboard)
+    redirect(getDefaultAuthenticatedPath())
   }
 
   const t = await getTranslations('login')

@@ -2,6 +2,7 @@
  * URL prefixes for the signed-in app shell (sidebar + inset + `AnalyticsPageShell`).
  * Primary nav and account live in `AppSidebar` / inset; `MainHeader` is hidden on these paths
  * (`AppChrome` uses `isProtectedAppShellPath`). Keep in sync with `middleware.ts` protected routes.
+ * Feature visibility (nav + route allowlist): `config/feature-flags.json`.
  * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
  */
 export const PROTECTED_APP_SHELL_PREFIXES = [

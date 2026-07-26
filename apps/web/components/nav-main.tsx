@@ -33,6 +33,7 @@ import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
 import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
+import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
 import { Fragment, type ReactNode } from 'react'
@@ -43,7 +44,7 @@ type NavItem = {
   href?: string
   icon?: ReactNode
   children?: NavItem[]
-  /** Render a divider immediately above this row (e.g. before Print shop). */
+  /** Render a divider immediately above this row. */
   separatorBefore?: boolean
 }
 
@@ -217,8 +218,11 @@ function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
   })
 }
 
+/** Feature flag first, then admin-only role gate. */
 function visibleNavItemsForRole(items: NavItem[], showAdminNav: boolean): NavItem[] {
-  return items.filter((item) => !isNavItemHiddenFromNonAdmin(item.key) || showAdminNav)
+  return items.filter(
+    (item) => isNavKeyEnabled(item.key) && (!isNavItemHiddenFromNonAdmin(item.key) || showAdminNav),
+  )
 }
 
 export function NavMain() {

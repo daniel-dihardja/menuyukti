@@ -1,6 +1,7 @@
 'use client'
 
 import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
@@ -15,6 +16,7 @@ export function SsoCallbackView() {
   const { signUp } = useSignUp()
   const router = useRouter()
   const hasRun = useRef(false)
+  const homePath = getDefaultAuthenticatedPath()
 
   const navigateToSignIn = () => {
     router.push(routes.login)
@@ -37,7 +39,7 @@ export function SsoCallbackView() {
             if (session?.currentTask) {
               return
             }
-            const url = decorateUrl(routes.dashboard)
+            const url = decorateUrl(homePath)
             if (url.startsWith('http')) {
               window.location.href = url
             } else {
@@ -57,7 +59,7 @@ export function SsoCallbackView() {
               if (session?.currentTask) {
                 return
               }
-              const url = decorateUrl(routes.dashboard)
+              const url = decorateUrl(homePath)
               if (url.startsWith('http')) {
                 window.location.href = url
               } else {
@@ -87,7 +89,7 @@ export function SsoCallbackView() {
               if (session?.currentTask) {
                 return
               }
-              const url = decorateUrl(routes.dashboard)
+              const url = decorateUrl(homePath)
               if (url.startsWith('http')) {
                 window.location.href = url
               } else {
@@ -107,7 +109,7 @@ export function SsoCallbackView() {
             if (session?.currentTask) {
               return
             }
-            const url = decorateUrl(routes.dashboard)
+            const url = decorateUrl(homePath)
             if (url.startsWith('http')) {
               window.location.href = url
             } else {
@@ -132,7 +134,7 @@ export function SsoCallbackView() {
               if (session?.currentTask) {
                 return
               }
-              const url = decorateUrl(routes.dashboard)
+              const url = decorateUrl(homePath)
               if (url.startsWith('http')) {
                 window.location.href = url
               } else {
@@ -145,7 +147,7 @@ export function SsoCallbackView() {
     })()
     // navigateToSignIn / navigateToSignUp are stable wrappers; including them retriggers on unrelated Clerk updates.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run once when Clerk + router are ready
-  }, [clerk, clerk.loaded, router, signIn, signUp])
+  }, [clerk, clerk.loaded, homePath, router, signIn, signUp])
 
   return (
     <div className="flex min-h-svh items-center justify-center p-6">
