@@ -343,3 +343,65 @@ def test_update_calendar_entry():
         "workflowId": "1",
         "itemId": "2",
     }
+
+
+DELETE_CALENDAR_ENTRY = """
+mutation DeleteCalendarEntry($id: Int!) {
+  deleteCalendarEntry(id: $id) {
+    id
+    locationId
+    title
+  }
+}
+"""
+
+
+def test_delete_calendar_entry():
+    location_id = _create_location("Calendar Entry Delete")
+    created = asyncio.run(
+        schema.execute(
+            CREATE_CALENDAR_ENTRY,
+            variable_values={
+                "locationId": location_id,
+                "title": "To remove",
+                "date": "2026-11-01",
+                "time": "11:00",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not created.errors, created.errors
+    entry_id = created.data["createCalendarEntry"]["id"]
+
+    deleted = asyncio.run(
+        schema.execute(
+            DELETE_CALENDAR_ENTRY,
+            variable_values={"id": entry_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not deleted.errors, deleted.errors
+    assert deleted.data["deleteCalendarEntry"]["id"] == entry_id
+    assert deleted.data["deleteCalendarEntry"]["locationId"] == location_id
+
+    calendar = asyncio.run(
+        schema.execute(
+            SCHEDULER_CALENDAR_QUERY,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not calendar.errors, calendar.errors
+    assert calendar.data["schedulerCalendar"]["slots"] == []
+
+
+def test_delete_calendar_entry_not_found():
+    result = asyncio.run(
+        schema.execute(
+            DELETE_CALENDAR_ENTRY,
+            variable_values={"id": 999_999},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "not found" in str(result.errors[0]).lower()

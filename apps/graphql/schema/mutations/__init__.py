@@ -10,6 +10,7 @@ from .create_style import CreateStyleMutation
 from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
+from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_instagram_item import DeleteInstagramItemMutation
 from .delete_instagram_item_page import DeleteInstagramItemPageMutation
@@ -55,6 +56,7 @@ __all__ = [
     "CreateWorkflowFromPayloadMutation",
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
+    "DeleteCalendarEntryMutation",
     "DeleteImageAiFlowMutation",
     "DeleteInstagramItemMutation",
     "DeleteInstagramItemPageMutation",

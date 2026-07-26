@@ -56,3 +56,17 @@ export async function updateCalendarEntry(
   }
   return result.data.entry
 }
+
+export async function deleteCalendarEntry(id: number): Promise<CalendarEntry> {
+  const result = await apiFetch<{ entry: CalendarEntry }>(
+    `/api/calendar-entries/${encodeURIComponent(String(id))}`,
+    {
+      method: 'DELETE',
+    },
+    'Failed to delete calendar entry',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.entry
+}

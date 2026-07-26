@@ -5,7 +5,9 @@ import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
+  DELETE_CALENDAR_ENTRY_MUTATION,
   UPDATE_CALENDAR_ENTRY_MUTATION,
+  type DeleteCalendarEntryData,
   type UpdateCalendarEntryData,
 } from '@/lib/graphql/queries/calendar-entries'
 import {
@@ -60,6 +62,43 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
     console.error('[calendar-entries] PATCH', error)
     const message = error instanceof Error ? error.message : 'Failed to update calendar entry'
+    if (message.toLowerCase().includes('not found')) {
+      return NextResponse.json({ message }, { status: 404 })
+    }
+    if (message.toLowerCase().includes('not allowed') || message.toLowerCase().includes('owner')) {
+      return NextResponse.json({ message }, { status: 403 })
+    }
+    return NextResponse.json({ message }, { status: 500 })
+  }
+}
+
+export async function DELETE(_req: Request, context: RouteContext) {
+  try {
+    await connection()
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated || !userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: idParam } = await context.params
+    const id = Number(idParam)
+    if (!Number.isInteger(id) || id < 1) {
+      return NextResponse.json({ message: 'Invalid entry id' }, { status: 400 })
+    }
+
+    const data = await graphqlQuery<DeleteCalendarEntryData>(
+      DELETE_CALENDAR_ENTRY_MUTATION,
+      { id },
+      userId,
+    )
+
+    const locationId = data.deleteCalendarEntry.locationId
+    revalidateTag(graphqlSchedulerCalendarCacheTag(userId, locationId), revalidateTagAfterMutation)
+
+    return NextResponse.json({ entry: data.deleteCalendarEntry })
+  } catch (error) {
+    console.error('[calendar-entries] DELETE', error)
+    const message = error instanceof Error ? error.message : 'Failed to delete calendar entry'
     if (message.toLowerCase().includes('not found')) {
       return NextResponse.json({ message }, { status: 404 })
     }

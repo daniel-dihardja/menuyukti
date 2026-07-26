@@ -73,6 +73,7 @@ type CalendarEntryType {
   date: String!
   time: String!
   mediaRefs: [CalendarMediaRefType!]!
+  sourceRef: CalendarSourceRefType
 }
 
 """Input for attaching a media-library file to an entry."""
@@ -85,6 +86,20 @@ input CalendarMediaRefInput {
 type CalendarMediaRefType {
   kind: String!
   name: String!
+}
+
+"""Input for linking a calendar entry to a product entity."""
+input CalendarSourceRefInput {
+  type: String!
+  workflowId: String!
+  itemId: String!
+}
+
+"""Optional link from a calendar entry back to a product entity."""
+type CalendarSourceRefType {
+  type: String!
+  workflowId: String!
+  itemId: String!
 }
 
 type CampaignBriefSignalCapabilitiesType {
@@ -599,7 +614,7 @@ type Mutation {
   createStyle(name: String!, referenceImageName: String!, spec: JSON!, isDefault: Boolean! = false): StyleType!
 
   """Create a manual calendar entry for a location."""
-  createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null): CalendarEntryType!
+  createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null, sourceRef: CalendarSourceRefInput = null): CalendarEntryType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   startMilestoneAgentRun(runId: String!, milestoneId: ID!, workflowId: ID = null, traceparent: String = null): Boolean!
@@ -610,13 +625,16 @@ type Mutation {
   createImageAiFlow(slug: String!, displayName: String!, prompt: String!, model: String!, promptEnhance: String = null, imageReferenceStrength: String = null, styleIds: JSON = null, isActive: Boolean! = true, sortOrder: Int! = 0): ImageAiFlowType!
   updateImageAiFlow(slug: String!, newSlug: String, displayName: String, prompt: String, model: String, promptEnhance: String, imageReferenceStrength: String, styleIds: JSON, isActive: Boolean, sortOrder: Int): ImageAiFlowType!
   deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
+
+  """Delete a manual calendar entry."""
+  deleteCalendarEntry(id: Int!): CalendarEntryType!
   deleteImageAiFlow(slug: String!): Boolean!
 
   """Delete a visual style pack by id."""
   deleteStyle(id: Int!): Boolean!
 
   """Update a manual calendar entry."""
-  updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!]): CalendarEntryType!
+  updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!], sourceRef: CalendarSourceRefInput): CalendarEntryType!
   updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
 
   """
@@ -1019,6 +1037,7 @@ type SchedulerCalendarSlotType {
   description: String
   mediaRefs: [CalendarMediaRefType!]
   source: String
+  sourceRef: CalendarSourceRefType
 }
 
 type SignalConfidenceType {

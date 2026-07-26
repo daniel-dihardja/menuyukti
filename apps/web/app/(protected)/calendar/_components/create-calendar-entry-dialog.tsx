@@ -38,6 +38,7 @@ import { Textarea } from '@workspace/ui/components/textarea'
 
 import {
   createCalendarEntry,
+  deleteCalendarEntry,
   updateCalendarEntry,
   type CalendarMediaRef,
   type CalendarSourceRef,
@@ -106,9 +107,11 @@ export function CalendarEntryDialog({
   const [time, setTime] = useState(initial.time)
   const [mediaRefs, setMediaRefs] = useState<CalendarMediaRef[]>(initial.mediaRefs)
   const [pending, setPending] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [titleError, setTitleError] = useState(false)
   const [timeError, setTimeError] = useState(false)
   const [discardOpen, setDiscardOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const dateLabel = formatEntryDateLabel(dateIso, locale)
   const isDirty =
@@ -126,9 +129,11 @@ export function CalendarEntryDialog({
     setTime(initial.time)
     setMediaRefs(initial.mediaRefs)
     setPending(false)
+    setDeleting(false)
     setTitleError(false)
     setTimeError(false)
     setDiscardOpen(false)
+    setDeleteOpen(false)
   }, [
     open,
     initial.id,
@@ -140,7 +145,7 @@ export function CalendarEntryDialog({
   ])
 
   const requestClose = () => {
-    if (pending) return
+    if (pending || deleting) return
     if (isDirty) {
       setDiscardOpen(true)
       return
@@ -155,7 +160,7 @@ export function CalendarEntryDialog({
     const timeInvalid = !/^\d{2}:\d{2}$/.test(timeClean)
     setTitleError(titleInvalid)
     setTimeError(timeInvalid)
-    if (titleInvalid || timeInvalid || pending) return
+    if (titleInvalid || timeInvalid || pending || deleting) return
 
     setPending(true)
     try {
@@ -190,6 +195,22 @@ export function CalendarEntryDialog({
     }
   }
 
+  const handleDelete = async () => {
+    if (!isEdit || initial.id == null || pending || deleting) return
+    setDeleting(true)
+    try {
+      await deleteCalendarEntry(initial.id)
+      toast.success(t('deleteSuccessToast'))
+      setDeleteOpen(false)
+      onOpenChange(false)
+      onSaved?.()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('deleteErrorToast'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <>
       <Dialog
@@ -206,7 +227,7 @@ export function CalendarEntryDialog({
           className="flex max-h-[min(92vh,40rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
           closeLabel={closeLabel}
           onEscapeKeyDown={(event) => {
-            if (pending) {
+            if (pending || deleting) {
               event.preventDefault()
               return
             }
@@ -216,9 +237,9 @@ export function CalendarEntryDialog({
             }
           }}
           onPointerDownOutside={(event) => {
-            if (pending || isDirty) {
+            if (pending || deleting || isDirty) {
               event.preventDefault()
-              if (isDirty && !pending) setDiscardOpen(true)
+              if (isDirty && !pending && !deleting) setDiscardOpen(true)
             }
           }}
         >
@@ -262,7 +283,7 @@ export function CalendarEntryDialog({
                     id={titleId}
                     autoFocus
                     value={title}
-                    disabled={pending}
+                    disabled={pending || deleting}
                     aria-invalid={titleError || undefined}
                     placeholder={t('titlePlaceholder')}
                     onChange={(event) => {
@@ -279,7 +300,7 @@ export function CalendarEntryDialog({
                     id={timeId}
                     type="time"
                     value={time}
-                    disabled={pending}
+                    disabled={pending || deleting}
                     aria-invalid={timeError || undefined}
                     onChange={(event) => {
                       setTime(event.target.value)
@@ -295,7 +316,7 @@ export function CalendarEntryDialog({
                     id={descriptionId}
                     rows={4}
                     value={description}
-                    disabled={pending}
+                    disabled={pending || deleting}
                     placeholder={t('descriptionPlaceholder')}
                     onChange={(event) => {
                       setDescription(event.target.value)
@@ -307,26 +328,47 @@ export function CalendarEntryDialog({
                 <CalendarMediaRefPicker
                   value={mediaRefs}
                   onChange={setMediaRefs}
-                  disabled={pending}
+                  disabled={pending || deleting}
                 />
               </FieldGroup>
             </form>
           </ScrollArea>
 
-          <DialogFooter className="border-t border-border/80 px-6 py-4">
-            <Button type="button" variant="outline" disabled={pending} onClick={requestClose}>
-              {t('cancel')}
-            </Button>
-            <Button
-              type="button"
-              disabled={pending || title.trim().length === 0 || !/^\d{2}:\d{2}$/.test(time)}
-              onClick={() => {
-                void handleSubmit()
-              }}
-            >
-              {pending ? <Spinner data-icon="inline-start" /> : null}
-              {isEdit ? t('saveChanges') : t('save')}
-            </Button>
+          <DialogFooter className="border-t border-border/80 px-6 py-4 sm:justify-between">
+            {isEdit ? (
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={pending || deleting}
+                onClick={() => setDeleteOpen(true)}
+              >
+                {t('delete')}
+              </Button>
+            ) : (
+              <span />
+            )}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending || deleting}
+                onClick={requestClose}
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                type="button"
+                disabled={
+                  pending || deleting || title.trim().length === 0 || !/^\d{2}:\d{2}$/.test(time)
+                }
+                onClick={() => {
+                  void handleSubmit()
+                }}
+              >
+                {pending ? <Spinner data-icon="inline-start" /> : null}
+                {isEdit ? t('saveChanges') : t('save')}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -347,6 +389,36 @@ export function CalendarEntryDialog({
             >
               {t('discardConfirm')}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(next) => {
+          if (deleting) return
+          setDeleteOpen(next)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteConfirmDescription')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t('deleteConfirmCancel')}</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleting}
+              className={deleting ? 'inline-flex items-center gap-2' : undefined}
+              onClick={() => {
+                void handleDelete()
+              }}
+            >
+              {deleting ? <Spinner /> : null}
+              {t('deleteConfirmAction')}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

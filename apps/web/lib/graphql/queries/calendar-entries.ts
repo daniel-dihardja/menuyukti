@@ -93,3 +93,15 @@ export const UPDATE_CALENDAR_ENTRY_MUTATION = `
 export type UpdateCalendarEntryData = {
   updateCalendarEntry: CalendarEntry
 }
+
+export const DELETE_CALENDAR_ENTRY_MUTATION = `
+  mutation DeleteCalendarEntry($id: Int!) {
+    deleteCalendarEntry(id: $id) {
+      ${ENTRY_FIELDS}
+    }
+  }
+`
+
+export type DeleteCalendarEntryData = {
+  deleteCalendarEntry: CalendarEntry
+}
