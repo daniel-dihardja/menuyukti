@@ -6,12 +6,23 @@ import { useTranslations } from 'next-intl'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
+
 import { WorkflowChatPane } from './workflow-chat-pane'
 import { WorkflowVisualizationsPane } from './workflow-visualizations-pane'
 
 export type WorkflowSidePanelTab = 'chat' | 'visualizations'
 
-export function WorkflowSidePanel() {
+function WorkflowChatOnly() {
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
+      <WorkflowChatPane />
+    </div>
+  )
+}
+
+function WorkflowSidePanelAdminTabs() {
   const t = useTranslations('analytics.workflows.sidePanel')
   const [activeTab, setActiveTab] = useState<WorkflowSidePanelTab>('chat')
 
@@ -50,4 +61,15 @@ export function WorkflowSidePanel() {
       </TabsContent>
     </Tabs>
   )
+}
+
+export function WorkflowSidePanel() {
+  const { role, isLoaded } = useMenuyuktiRole()
+  const showAdminTabs = isLoaded && isMenuyuktiAdmin(role)
+
+  if (!showAdminTabs) {
+    return <WorkflowChatOnly />
+  }
+
+  return <WorkflowSidePanelAdminTabs />
 }
