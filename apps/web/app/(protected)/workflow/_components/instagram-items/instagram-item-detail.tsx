@@ -17,11 +17,9 @@ import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { ButtonGroup } from '@workspace/ui/components/button-group'
-import { Checkbox } from '@workspace/ui/components/checkbox'
 import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -53,7 +51,6 @@ import type {
   InstagramItemPageMediaVersionDto,
 } from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
-import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
 import { DEFAULT_LEONARDO_POST_MODEL } from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
@@ -183,14 +180,12 @@ export function InstagramItemDetail({
   const t = useTranslations('analytics.workflows.instagramItems')
   const kindFieldId = useId()
   const statusFieldId = useId()
-  const useCurrentPreviewRefId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
     refsFromItem(item),
   )
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
-  const [useCurrentPreviewAsReference, setUseCurrentPreviewAsReference] = useState(true)
   const initialSync = syncFromItem(item)
   const [pages, setPages] = useState<InstagramItemPageDto[]>(initialSync.pages)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialSync.selectedPageId)
@@ -236,7 +231,6 @@ export function InstagramItemDetail({
   const canGenerate = pagePrompt.trim().length > 0 && !busy && Boolean(selectedPageId)
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
   const visibleMediaS3Key = previewVersion?.mediaS3Key || null
-  const hasVisiblePreviousResult = parsePostMediaFilename(visibleMediaS3Key) != null
   const canDeleteVersion = Boolean(previewVersion?.mediaS3Key) && imageVersions.length > 0 && !busy
   const canAddPage = !busy && pages.length > 0 && pages.length < MAX_ITEM_PAGES
   const canDuplicatePage = canAddPage && Boolean(selectedPageId)
@@ -247,7 +241,7 @@ export function InstagramItemDetail({
     !selectedPage?.mediaS3Key &&
     (selectedPage?.mediaVersions?.length ?? 0) === 0
   const headerTitle = values.title.trim() ? values.title : t('untitled')
-  const footerError = actionError || generateError
+  const footerError = actionError
 
   function valuesWithRefs(): InstagramItemFormValues {
     return {
@@ -297,7 +291,6 @@ export function InstagramItemDetail({
     const { references, tooManyReferences } = resolveGenerationReferences({
       referenceImages,
       previewMediaS3Key: visibleMediaS3Key,
-      includePreviousResult: useCurrentPreviewAsReference,
       styleSelected: false,
       solidBackgroundEnabled: false,
     })
@@ -771,6 +764,31 @@ export function InstagramItemDetail({
                           value={pagePromptsById[page.id] ?? ''}
                         />
                       </Field>
+
+                      {generateError ? (
+                        <Alert variant="destructive">
+                          <AlertDescription>{generateError}</AlertDescription>
+                        </Alert>
+                      ) : null}
+
+                      <div className="flex justify-end">
+                        <Button
+                          disabled={!canGenerate}
+                          onClick={() => {
+                            void handleGenerate()
+                          }}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          {isGenerating ? (
+                            <Spinner data-icon="inline-start" />
+                          ) : (
+                            <SparklesIcon data-icon="inline-start" />
+                          )}
+                          {isGenerating ? t('generate.generating') : t('generate.button')}
+                        </Button>
+                      </div>
                     </TabsContent>
                   ))}
                 </Tabs>
@@ -789,50 +807,10 @@ export function InstagramItemDetail({
                 <AlertDescription>{footerError}</AlertDescription>
               </Alert>
             ) : null}
-            <Field
-              className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5"
-              data-disabled={!hasVisiblePreviousResult || busy ? true : undefined}
-              orientation="horizontal"
-            >
-              <Checkbox
-                checked={useCurrentPreviewAsReference && hasVisiblePreviousResult}
-                disabled={!hasVisiblePreviousResult || busy}
-                id={useCurrentPreviewRefId}
-                onCheckedChange={(checked) => {
-                  setUseCurrentPreviewAsReference(checked === true)
-                }}
-              />
-              <FieldContent className="gap-0.5">
-                <FieldLabel htmlFor={useCurrentPreviewRefId}>
-                  {t('generate.useCurrentPreviewAsReference')}
-                </FieldLabel>
-                <FieldDescription>
-                  {hasVisiblePreviousResult
-                    ? t('generate.useCurrentPreviewAsReferenceHint')
-                    : t('generate.useCurrentPreviewAsReferenceUnavailable')}
-                </FieldDescription>
-              </FieldContent>
-            </Field>
-            <ButtonGroup className="w-full [&>*]:flex-1">
-              <Button disabled={busy} type="submit" variant="outline">
-                {saving ? <Spinner data-icon="inline-start" /> : null}
-                {t('saveButton')}
-              </Button>
-              <Button
-                disabled={!canGenerate}
-                onClick={() => {
-                  void handleGenerate()
-                }}
-                type="button"
-              >
-                {isGenerating ? (
-                  <Spinner data-icon="inline-start" />
-                ) : (
-                  <SparklesIcon data-icon="inline-start" />
-                )}
-                {isGenerating ? t('generate.generating') : t('generate.button')}
-              </Button>
-            </ButtonGroup>
+            <Button className="w-full" disabled={busy} type="submit">
+              {saving ? <Spinner data-icon="inline-start" /> : null}
+              {t('saveButton')}
+            </Button>
           </div>
         </form>
 
