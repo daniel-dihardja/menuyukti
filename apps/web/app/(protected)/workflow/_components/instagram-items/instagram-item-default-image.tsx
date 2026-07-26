@@ -1,22 +1,13 @@
 'use client'
 
-import { ClapperboardIcon, ImageIcon, RectangleVerticalIcon } from 'lucide-react'
-
 import { cn } from '@workspace/ui/lib/utils'
 
-import type { InstagramItemKind } from './use-instagram-items'
-
 type InstagramItemDefaultImageProps = {
-  kind?: InstagramItemKind | string
+  /** Unused; accepted so existing call sites keep working. */
+  kind?: string
   className?: string
   iconClassName?: string
   label?: string
-}
-
-function KindIcon({ kind }: { kind?: string }) {
-  if (kind === 'story') return <RectangleVerticalIcon aria-hidden />
-  if (kind === 'reel') return <ClapperboardIcon aria-hidden />
-  return <ImageIcon aria-hidden />
 }
 
 /**
@@ -24,7 +15,6 @@ function KindIcon({ kind }: { kind?: string }) {
  * Uses a darkened page background so multi-item grids stay calm.
  */
 export function InstagramItemDefaultImage({
-  kind,
   className,
   iconClassName,
   label,
@@ -35,14 +25,19 @@ export function InstagramItemDefaultImage({
       className={cn(
         'flex size-full flex-col items-center justify-center gap-1 text-muted-foreground',
         'bg-[color-mix(in_srgb,var(--background)_78%,var(--foreground)_22%)]',
-        "[&_svg:not([class*='size-'])]:size-8",
         className,
       )}
     >
-      <KindIcon kind={kind} />
-      {label ? (
-        <span className={cn('font-medium text-xs leading-none', iconClassName)}>{label}</span>
-      ) : null}
+      <span
+        aria-hidden
+        className={cn(
+          'select-none font-semibold text-2xl leading-none tracking-tight',
+          iconClassName,
+        )}
+      >
+        M
+      </span>
+      {label ? <span className="font-medium text-xs leading-none">{label}</span> : null}
     </span>
   )
 }

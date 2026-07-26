@@ -43,9 +43,12 @@ type InstagramItemsOverviewProps = {
   onDelete: (itemId: string) => Promise<void>
 }
 
+const OVERVIEW_GRID_CLASS =
+  'mx-auto grid w-full max-w-[56rem] min-w-0 grid-cols-2 gap-3 lg:grid-cols-4'
+
 function OverviewSkeletonGrid() {
   return (
-    <ul aria-hidden className="mx-auto grid w-full max-w-[56rem] min-w-0 grid-cols-4 gap-3">
+    <ul aria-hidden className={OVERVIEW_GRID_CLASS}>
       {Array.from({ length: 4 }, (_, index) => (
         <li key={index} className="min-w-0">
           <div className="flex flex-col overflow-hidden border bg-background">
@@ -83,15 +86,15 @@ export function InstagramItemsOverview({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex shrink-0 items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex shrink-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-2">
+        <div className="flex w-full min-w-0 flex-col gap-1 lg:flex-1">
           <h2 className="font-semibold text-xl tracking-tight" id="workflow-preview-panel-title">
             {t('title')}
           </h2>
           <p className="text-muted-foreground text-sm">{t('panelDescription')}</p>
         </div>
         <Button
-          className="shrink-0"
+          className="w-full shrink-0 lg:w-auto"
           disabled={actionsDisabled}
           onClick={onCreate}
           size="sm"
@@ -134,7 +137,9 @@ export function InstagramItemsOverview({
           </EmptyContent>
         </Empty>
       ) : (
-        <ul className="mx-auto grid w-full max-w-[56rem] min-h-0 min-w-0 flex-1 grid-cols-4 content-start gap-3 overflow-y-auto pt-3">
+        <ul
+          className={cn(OVERVIEW_GRID_CLASS, 'min-h-0 flex-1 content-start overflow-y-auto pt-3')}
+        >
           {items.map((item) => {
             const kindKey = `kind.${item.kind}` as 'kind.story' | 'kind.post' | 'kind.reel'
             const statusKey = `status.${item.status}` as 'status.draft' | 'status.ready'

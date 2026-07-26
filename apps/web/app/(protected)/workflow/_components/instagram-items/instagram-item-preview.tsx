@@ -160,7 +160,8 @@ export function InstagramItemPreview({
               </button>
             ) : (
               <InstagramItemDefaultImage
-                className="gap-2 p-4 text-center [&_svg:not([class*='size-'])]:size-10"
+                className="gap-2 p-4 text-center"
+                iconClassName="text-3xl"
                 kind={kind}
                 label={t('generate.previewEmptyTitle')}
               />
