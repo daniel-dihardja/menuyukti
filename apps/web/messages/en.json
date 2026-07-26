@@ -1600,8 +1600,8 @@
     },
     "workflows": {
       "title": "Workflows",
-      "description": "Choose a location, create a workflow, then plan milestones, chat with the assistant, and run evaluations.",
-      "sectionTitle": "Workflows for this location",
+      "description": "Create a campaign workflow for a location, then open it to plan milestones and content.",
+      "sectionTitle": "Existing workflows",
       "selectBranchTitle": "Choose a location",
       "selectBranchDescription": "Please select a location to view workflows.",
       "errors": {
@@ -1625,11 +1625,10 @@
       "analyticsRunLoading": "Loading runs…",
       "analyticsRunNone": "No analytics runs found",
       "createWorkflowPanel": {
-        "title": "New workflow",
-        "description": "Choose a location and link the sales report that powers milestone data.",
+        "title": "Create workflow",
         "sectionLocation": "Location",
         "sectionData": "Sales report",
-        "footerHint": "Creates the workflow with your location and linked sales report. You can add milestones afterward.",
+        "footerHint": "Milestones can be added after you create the workflow.",
         "ctaPrimary": "Create workflow"
       },
       "newWorkflowDialog": {
