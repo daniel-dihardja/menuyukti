@@ -29,6 +29,11 @@ export function MainHeader() {
   const t = useTranslations('mainHeader')
   const closeLabel = useCloseLabel()
   const isLanding = pathname === '/'
+  const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
+  const isSignUp =
+    pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
+  /** Product links are for signed-in app areas; hide on marketing + auth screens. */
+  const showProductNav = !isLanding && !isLogin && !isSignUp
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   React.useEffect(() => {
@@ -118,7 +123,9 @@ export function MainHeader() {
                   <SheetHeader className="flex flex-col gap-1 px-4 text-left">
                     <SheetTitle>{t('mobileMenuTitle')}</SheetTitle>
                     <SheetDescription>
-                      {isLanding ? t('landingNav.mobileDescription') : t('mobileMenuDescription')}
+                      {showProductNav
+                        ? t('mobileMenuDescription')
+                        : t('landingNav.mobileDescription')}
                     </SheetDescription>
                   </SheetHeader>
                   {!isLanding && showProductNavLinks ? (
@@ -186,11 +193,13 @@ export function MainHeader() {
             </div>
           ) : null}
           <Show when="signed-out">
-            <span className={cn(showMobileMainMenu && 'hidden sm:inline-flex')}>
-              <Button asChild size="sm" variant="default">
-                <Link href={routes.login}>{t('mobileMenuSignIn')}</Link>
-              </Button>
-            </span>
+            {showProductNav ? (
+              <span className={cn(showMobileMainMenu && 'hidden sm:inline-flex')}>
+                <Button asChild size="sm" variant="default">
+                  <Link href={routes.login}>{t('mobileMenuSignIn')}</Link>
+                </Button>
+              </span>
+            ) : null}
           </Show>
           <Show when="signed-in">
             <AccountMenu />

@@ -86,6 +86,7 @@ function WorkflowChatComposerSubmit() {
   return (
     <PromptInputSubmit
       aria-label={isChatBusy ? t('stopChatAriaLabel') : t('submitChatAriaLabel')}
+      className="size-11 touch-manipulation sm:size-8"
       disabled={disabled}
       onStop={stop}
       status={status}
@@ -133,13 +134,13 @@ export function WorkflowChatComposer() {
     handleSelectMention,
     handleSelectVisualizationMention,
     handleSelectMediaMention,
-    handleClearChat,
   } = useWorkflowChatActions()
 
   return (
     <div className="shrink-0 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
       <PromptInput
         accept="image/jpeg,image/png,image/webp,image/gif"
+        className="shadow-sm"
         globalDrop
         maxFiles={CHAT_MAX_IMAGES}
         multiple
@@ -160,6 +161,8 @@ export function WorkflowChatComposer() {
         >
           <PromptInputBody>
             <PromptInputTextarea
+              className="min-h-12 sm:min-h-16"
+              enterKeyHint="send"
               placeholder={t('placeholder')}
               value={text}
               onChange={handleTextChange}
@@ -170,21 +173,12 @@ export function WorkflowChatComposer() {
           <PromptInputTools>
             <WorkflowMobilePreviewOpenButton />
             <ChatGatewayModelSelect
+              className="max-w-[min(100%,9.5rem)] sm:max-w-[min(100%,11rem)]"
               disabled={isChatBusy}
               onValueChange={setSelectedChatModel}
               value={selectedChatModel}
             />
-            <PromptInputButton
-              aria-label={t('clearChatAriaLabel')}
-              className="h-9 shrink-0 px-3 py-2 font-medium text-muted-foreground"
-              onClick={handleClearChat}
-              size="sm"
-              tooltip={t('clearChatTooltip')}
-              type="button"
-              variant="ghost"
-            >
-              {t('clearChatLabel')}
-            </PromptInputButton>
+            <WorkflowChatClearButton disabled={isChatBusy} />
           </PromptInputTools>
           <WorkflowChatComposerSubmit />
         </PromptInputFooter>

@@ -121,6 +121,9 @@ function WorkflowChatPanelSkeleton({ className }: { className?: string }) {
           <Skeleton className="size-9 rounded-md" />
         </div>
       </div>
+      <div className="shrink-0 border-t px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4 sm:pt-3 sm:pb-4">
+        <Skeleton className="h-28 w-full rounded-md" />
+      </div>
     </div>
   )
 }
@@ -130,7 +133,10 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
     <div
       aria-busy="true"
       aria-live="polite"
-      className={cn('flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden', className)}
+      className={cn(
+        'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background',
+        className,
+      )}
     >
       {/* Mobile: chat main (milestones column hidden) */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:hidden">

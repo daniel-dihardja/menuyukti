@@ -3,18 +3,9 @@
 import { usePanelRef } from '@workspace/ui/components/resizable'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useReducer,
-  useState,
-  useTransition,
-} from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import { parseAsString, useQueryState } from 'nuqs'
 
-import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import {
   InstagramItemsRefreshProvider,
@@ -24,16 +15,15 @@ import { TimelineProvider } from './timeline-context'
 import type { MilestoneInput } from './timeline/types'
 import type { TimelineMilestone } from './timeline-workspace'
 import { useMilestoneOperations } from './use-milestone-operations'
-import { useWorkflowPreviewVisibility } from './use-workflow-preview-visibility'
 import { useWorkflowTimelineProviderSlices } from './use-workflow-timeline-provider-value'
 import { WorkflowChatHost } from './workflow-chat-host'
 import { WorkflowChatLayout } from './workflow-chat-layout'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
+import { WorkflowChatPane } from './workflow-chat-pane'
 import {
   createInitialWorkflowMilestoneUiState,
   workflowMilestoneReducer,
 } from './workflow-milestone-reducer'
-import { WorkflowSidePanel } from './workflow-side-panel'
 import { WorkflowVisualizationsProvider } from './workflow-visualizations-context'
 import { WorkflowPreviewPanelSkeleton } from './workflow-workspace-skeleton'
 
@@ -82,10 +72,6 @@ function WorkflowChatPanelInner({
   const [, startPreviewTransition] = useTransition()
   const { refresh: onRefreshInstagramItems, version: instagramItemsRefreshVersion } =
     useInstagramItemsRefresh()
-
-  const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
-  const isDesktop = useDesktopLayout()
-  const previewPanelRef = usePanelRef()
 
   const [milestoneUi, dispatch] = useReducer(
     workflowMilestoneReducer,

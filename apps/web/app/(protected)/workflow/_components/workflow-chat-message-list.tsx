@@ -68,20 +68,20 @@ export function WorkflowChatMessageList() {
   const { handleRetry } = useWorkflowChatActions()
 
   return (
-    <Conversation aria-live="polite" resize={isChatBusy ? 'instant' : 'smooth'}>
-      <ConversationContent>
+    <Conversation aria-live="polite" className="min-h-0" resize={isChatBusy ? 'instant' : 'smooth'}>
+      <ConversationContent className="gap-5 px-3 py-3 sm:gap-8 sm:p-4">
         {error ? (
           <Alert aria-live="polite" className="items-start" variant="destructive">
             <AlertTitle>{t('errorTitle')}</AlertTitle>
             <AlertDescription className="flex flex-col gap-3">
               <p>{t('errorDescription')}</p>
               {error?.message ? (
-                <p className="font-mono text-muted-foreground text-xs break-words">
+                <p className="break-words font-mono text-muted-foreground text-xs">
                   {error.message}
                 </p>
               ) : null}
               <Button
-                className="w-fit"
+                className="h-11 w-full touch-manipulation sm:h-8 sm:w-fit"
                 onClick={() => void handleRetry()}
                 size="sm"
                 type="button"
@@ -124,7 +124,7 @@ export function WorkflowChatMessageList() {
           </>
         )}
       </ConversationContent>
-      <ConversationScrollButton />
+      <ConversationScrollButton className="bottom-[max(1rem,env(safe-area-inset-bottom))]" />
     </Conversation>
   )
 }

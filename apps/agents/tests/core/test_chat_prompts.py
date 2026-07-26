@@ -10,8 +10,8 @@ from agents_app.agents.core.chat.prompts import (
 
 
 def test_system_prompt_template_has_complete_structure() -> None:
-    assert "Instagram content assistant" in SYSTEM_PROMPT_TEMPLATE
-    assert "acting through Instagram item tools" in SYSTEM_PROMPT_TEMPLATE
+    assert "Instagram content advisor" in SYSTEM_PROMPT_TEMPLATE
+    assert "plan Instagram content and schedule" in SYSTEM_PROMPT_TEMPLATE
     assert "venue_slot_strength_heatmap" in SYSTEM_PROMPT_TEMPLATE
     assert "posting frequency" in SYSTEM_PROMPT_TEMPLATE
     assert "menu_item_heatmap" in SYSTEM_PROMPT_TEMPLATE
@@ -23,19 +23,16 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "{workflow_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{leonardo_image_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{ig_studio_block}" in SYSTEM_PROMPT_TEMPLATE
-    assert "get_milestone" in SYSTEM_PROMPT_TEMPLATE
-    assert "secondary" in SYSTEM_PROMPT_TEMPLATE.lower()
+    assert "{workflow_catalog_block}" not in SYSTEM_PROMPT_TEMPLATE
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
-    assert "get_instagram_item" in SYSTEM_PROMPT_TEMPLATE
-    assert "create_instagram_items" in SYSTEM_PROMPT_TEMPLATE
-    assert "list_instagram_items" in SYSTEM_PROMPT_TEMPLATE
-    assert "update_instagram_items" in SYSTEM_PROMPT_TEMPLATE
-    assert "delete_instagram_items" in SYSTEM_PROMPT_TEMPLATE
+    assert "create_instagram_items" not in SYSTEM_PROMPT_TEMPLATE
+    assert "get_milestone" not in SYSTEM_PROMPT_TEMPLATE
+    assert "list_instagram_items" not in SYSTEM_PROMPT_TEMPLATE
 
 
 def test_build_system_prompt_without_optional_blocks() -> None:
     out = build_system_prompt()
-    assert "Instagram content assistant" in out
+    assert "Instagram content advisor" in out
     assert "posting frequency" in out
     assert "## Workflow chart catalog" not in out
     assert "## Workflow milestone catalog" not in out
@@ -45,22 +42,11 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "get_workflow_overview" in out
     assert "only if the catalog is missing" in out
     assert "get_chart_data" in out
-    assert "get_instagram_item" in out
-    assert "Milestones are secondary" in out
+    assert "get_location_data" in out
     assert "{chart_catalog_block}" not in out
     assert "{workflow_catalog_block}" not in out
     assert "{leonardo_image_block}" not in out
     assert "{ig_studio_block}" not in out
-
-
-def test_build_system_prompt_with_milestone_catalog() -> None:
-    catalog = "# Workflow overview\n\n## 1. Campaign Brief\n- **id**: 42\n"
-    out = build_system_prompt(workflow_catalog=catalog)
-    assert "Instagram content assistant" in out
-    assert "## Workflow milestone catalog" in out
-    assert "# Workflow overview" in out
-    assert "**id**: 42" in out
-    assert "## Workflow chart catalog" not in out
 
 
 def test_build_system_prompt_with_chart_catalog() -> None:

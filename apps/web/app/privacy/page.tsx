@@ -19,8 +19,9 @@ export default async function PrivacyPage() {
   const tLogin = await getTranslations('login')
 
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <div className="mx-auto max-w-2xl px-6 py-12">
+    <div className="relative min-h-svh bg-background text-foreground">
+      <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
+      <div className="relative mx-auto max-w-2xl px-6 py-12">
         <Button variant="ghost" className="mb-8 -ml-2 gap-2 text-muted-foreground" asChild>
           <Link href="/">
             <ArrowLeft className="size-4" aria-hidden />

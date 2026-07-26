@@ -14,22 +14,21 @@ export default async function LoginPage() {
   const t = await getTranslations('login')
 
   return (
-    <div className="flex min-h-[calc(100svh-3.5rem)] w-full flex-col items-center justify-center bg-background p-6">
-      <div className="w-full max-w-[min(100%,28rem)]">
-        <Card className="shadow-none">
-          <CardHeader className="space-y-3 pb-2">
-            <CardTitle className="text-3xl tracking-tight text-foreground md:text-4xl">
-              {t('title')}
-            </CardTitle>
-            <p className="text-lg leading-snug text-foreground/90 md:text-xl">{t('slogan')}</p>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <MenuyuktiSignIn />
-            <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground">
-              {t('accessNote')}
-            </p>
-          </CardContent>
-        </Card>
+    <div className="relative flex min-h-[calc(100svh-3.5rem)] w-full flex-col items-center justify-center bg-background p-6">
+      <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
+      <div className="relative mx-auto w-full max-w-md space-y-8">
+        <header className="space-y-3 text-center sm:text-left">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
+            {t('title')}
+          </h1>
+          <p className="landing-hero-subtitle text-lg md:text-xl">{t('slogan')}</p>
+        </header>
+        <div>
+          <MenuyuktiSignIn />
+          <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground">
+            {t('accessNote')}
+          </p>
+        </div>
       </div>
     </div>
   )

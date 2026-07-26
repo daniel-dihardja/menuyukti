@@ -48,7 +48,7 @@ export default async function LandingPage() {
             </p>
 
             <div className="mt-6 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center md:mt-7">
-              <Button size="lg" className="min-h-11 w-full sm:w-auto" asChild>
+              <Button size="lg" className="w-full sm:w-auto" asChild>
                 <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
               </Button>
             </div>
