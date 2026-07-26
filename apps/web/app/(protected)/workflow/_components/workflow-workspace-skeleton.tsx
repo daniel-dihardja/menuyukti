@@ -158,12 +158,12 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       {/* Desktop: preview + chat (milestones column hidden) */}
       <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
-          <div className="grid h-full min-h-0 flex-1 grid-cols-[55fr_45fr] gap-0 overflow-hidden">
+          <div className="grid h-full min-h-0 flex-1 grid-cols-[1fr_2fr] gap-0 overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r">
+              <WorkflowSidePanelSkeleton />
+            </div>
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-background p-3">
               <WorkflowPreviewPanelSkeleton className="flex-1" />
-            </div>
-            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-l">
-              <WorkflowSidePanelSkeleton />
             </div>
           </div>
         </div>

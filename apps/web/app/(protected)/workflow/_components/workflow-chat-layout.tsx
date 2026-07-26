@@ -45,21 +45,21 @@ export function WorkflowChatLayout({
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden">
+          <ResizablePanel defaultSize={33} minSize={22}>
+            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+              {chatPane}
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
           <ResizablePanel
             className="min-w-0"
             collapsible
-            defaultSize={55}
-            minSize={30}
+            defaultSize={67}
+            minSize={40}
             panelRef={previewPanelRef}
           >
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background p-2">
               {previewPane}
-            </div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={45} minSize={25}>
-            <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
-              {chatPane}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
