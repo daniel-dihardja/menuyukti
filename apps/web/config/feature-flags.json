@@ -1,9 +1,9 @@
 {
   "nav": {
     "dashboard": false,
-    "media": false,
+    "media": true,
     "posts": false,
-    "calendar": false,
+    "calendar": true,
     "workflows": true,
     "reports": true,
     "branches": true,
@@ -13,9 +13,9 @@
   },
   "routes": {
     "/dashboard": true,
-    "/media": false,
+    "/media": true,
     "/ig-studio": false,
-    "/calendar": false,
+    "/calendar": true,
     "/workflow": true,
     "/analytics": true,
     "/shop": false,

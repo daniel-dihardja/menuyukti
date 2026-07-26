@@ -44,69 +44,83 @@ type NavItem = {
   href?: string
   icon?: ReactNode
   children?: NavItem[]
-  /** Render a divider immediately above this row. */
-  separatorBefore?: boolean
+  /**
+   * Logical sidebar section. A divider is rendered between consecutive visible
+   * items that belong to different groups (so disabled flags don’t leave
+   * orphan single-item sections from hard-coded separators).
+   * Optional for admin items that live in their own SidebarGroup.
+   */
+  group?: 'overview' | 'create' | 'analytics' | 'commerce' | 'account'
 }
 
-/** Day-to-day marketing work: overview, workflow, performance, locations. */
+/**
+ * Sidebar order follows daily product flow:
+ * overview → create/plan → measure → commerce → account.
+ * Chat leads create (default authenticated home is `/workflow`).
+ */
 const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'dashboard',
     labelKey: 'dashboard',
     href: routes.dashboard,
     icon: <LayoutDashboard className="w-4 h-4" />,
-  },
-  {
-    key: 'media',
-    labelKey: 'media',
-    href: routes.media,
-    icon: <Image className="w-4 h-4" />,
-  },
-  {
-    key: 'posts',
-    labelKey: 'posts',
-    href: routes.igStudio,
-    icon: <SquarePen className="w-4 h-4" />,
-    separatorBefore: true,
-  },
-  {
-    key: 'calendar',
-    labelKey: 'calendar',
-    href: routes.calendar,
-    icon: <CalendarDays className="w-4 h-4" />,
+    group: 'overview',
   },
   {
     key: 'workflows',
     labelKey: 'workflows',
     href: routes.workflows.list,
     icon: <Megaphone className="w-4 h-4" />,
+    group: 'create',
+  },
+  {
+    key: 'posts',
+    labelKey: 'posts',
+    href: routes.igStudio,
+    icon: <SquarePen className="w-4 h-4" />,
+    group: 'create',
+  },
+  {
+    key: 'media',
+    labelKey: 'media',
+    href: routes.media,
+    icon: <Image className="w-4 h-4" />,
+    group: 'create',
+  },
+  {
+    key: 'calendar',
+    labelKey: 'calendar',
+    href: routes.calendar,
+    icon: <CalendarDays className="w-4 h-4" />,
+    group: 'create',
   },
   {
     key: 'reports',
     labelKey: 'reports',
     icon: <FileUp className="w-4 h-4" />,
     href: routes.analytics.sales,
-    separatorBefore: true,
+    group: 'analytics',
   },
   {
     key: 'branches',
     labelKey: 'branches',
     href: routes.analytics.branches,
     icon: <MapPin className="w-4 h-4" />,
+    group: 'analytics',
   },
   {
     key: 'printShop',
     labelKey: 'printShop',
     href: routes.shop,
     icon: <Store className="w-4 h-4" />,
-    separatorBefore: true,
+    group: 'commerce',
   },
   {
     key: 'team',
     labelKey: 'team',
     href: routes.profileTeam,
     icon: <Users className="w-4 h-4" />,
-    separatorBefore: true,
+    group: 'account',
   },
 ]
 
@@ -127,9 +141,12 @@ type NavMenuItemsProps = {
 }
 
 function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
-  return items.map((item) => {
+  return items.map((item, index) => {
     const active = isActive(item.href) || item.children?.some((c) => isActive(c.href))
-    const separatorRow = item.separatorBefore ? (
+    const prev = index > 0 ? items[index - 1] : null
+    const showSeparator =
+      prev != null && prev.group != null && item.group != null && prev.group !== item.group
+    const separatorRow = showSeparator ? (
       <SidebarMenuItem key={`${item.key}__sep`} className="list-none p-0" aria-hidden>
         <SidebarSeparator className="my-1" />
       </SidebarMenuItem>

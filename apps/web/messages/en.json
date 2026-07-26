@@ -36,7 +36,7 @@
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
     "navStudio": "IG Studio",
-    "navWorkflows": "Workflows",
+    "navWorkflows": "Chat",
     "navShop": "Print Shop",
     "landingNav": {
       "services": "Services",
@@ -582,7 +582,7 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
-    "workflows": "Workflow",
+    "workflows": "Chat",
     "calendar": "Calendar",
     "posts": "IG Studio",
     "content": "Content",

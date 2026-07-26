@@ -11,6 +11,8 @@ import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
+  SCHEDULER_HOLIDAY_BADGE_CLASS,
+  SCHEDULER_WEEKEND_DAY_CLASS,
   schedulerSlotClassName,
   schedulerSlotDisplayTime,
   schedulerSlotDisplayTitle,
@@ -101,7 +103,7 @@ export function SchedulerCalendarMonthList({
               className={cn(
                 'flex min-w-0 items-start gap-3 px-3 py-2.5',
                 !day.inWindow && 'bg-muted/30 text-muted-foreground',
-                isWeekend && day.inWindow && 'bg-amber-50/80 dark:bg-amber-950/20',
+                isWeekend && day.inWindow && SCHEDULER_WEEKEND_DAY_CLASS,
                 day.isToday && day.inWindow && 'bg-primary/10 text-primary',
               )}
             >
@@ -117,7 +119,7 @@ export function SchedulerCalendarMonthList({
                   <div className="mb-1 flex flex-wrap items-center gap-1">
                     {isPublicHoliday ? (
                       <span
-                        className="rounded-sm border border-rose-300/80 bg-rose-100/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-900 dark:border-rose-700/70 dark:bg-rose-900/40 dark:text-rose-100"
+                        className={cn(SCHEDULER_HOLIDAY_BADGE_CLASS, 'px-1.5 py-0.5 text-[10px]')}
                         title={holidayName}
                       >
                         {t('milestoneSchedulerPreviewHolidayBadge')}
