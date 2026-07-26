@@ -95,6 +95,7 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_milestone" not in agent_names
     assert "get_location_data" not in agent_names
     assert "get_chart_data" not in agent_names
+    assert "generate_instagram_post_image" not in agent_names
 
     wf = chat_tools_list_from_config(
         {"workflow_id": "100", "location_id": 7, "user_id": "u1"}
@@ -107,6 +108,14 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "update_milestone_input" not in wf_names
     assert "get_location_data" in wf_names
     assert "get_chart_data" in wf_names
+    assert "generate_instagram_post_image" in wf_names
+
+    ig_studio = chat_tools_list_from_config(
+        {"user_id": "u1", "post_id": "10", "page_id": "20"}
+    )
+    ig_names = [getattr(t, "name", "") for t in ig_studio]
+    assert "generate_instagram_post_image" in ig_names
+    assert "get_milestone" not in ig_names
 
     selected = chat_tools_list_from_config(
         {
@@ -121,12 +130,12 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_instagram_item" in selected_names
     assert "create_instagram_items" in selected_names
     assert "delete_instagram_items" in selected_names
+    assert "generate_instagram_post_image" in selected_names
 
 
 def test_compile_chat_graph_uses_tool_node_with_handle_tool_errors() -> None:
-    from langgraph.prebuilt.tool_node import ToolNode
-
     from agents_app.agents.core.chat.graph import compile_chat_graph
+    from langgraph.prebuilt.tool_node import ToolNode
 
     graph = compile_chat_graph(checkpointer=None)
     tools_node = graph.nodes.get("tools")

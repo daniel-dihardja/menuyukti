@@ -23,12 +23,12 @@ def _config(**kwargs: Any) -> dict[str, Any]:
 
 
 @pytest.mark.asyncio
-async def test_missing_post_context(tool_under_test: Any) -> None:
+async def test_missing_user_id(tool_under_test: Any) -> None:
     out = await tool_under_test.ainvoke(
         {"prompt": "A sunny brunch plate"},
-        config=_config(user_id="user-1"),
+        config=_config(),
     )
-    assert "post context is missing" in out
+    assert "user context is missing" in out
 
 
 @pytest.mark.asyncio
@@ -38,6 +38,50 @@ async def test_empty_prompt(tool_under_test: Any) -> None:
         config=_config(user_id="user-1", post_id="1", page_id="2"),
     )
     assert "non-empty" in out
+
+
+@pytest.mark.asyncio
+async def test_success_without_post_page(tool_under_test: Any, monkeypatch: Any) -> None:
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps(
+        {
+            "url": "https://example.com/img.webp",
+            "name": "abc.webp",
+            "mediaS3Key": "users/u/posts/abc.webp",
+            "createdAt": "2026-01-01T00:00:00.000Z",
+        }
+    )
+    mock_response.json.return_value = {
+        "url": "https://example.com/img.webp",
+        "name": "abc.webp",
+        "mediaS3Key": "users/u/posts/abc.webp",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+    }
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        out = await tool_under_test.ainvoke(
+            {"prompt": "Bright sun in a clear sky", "format": "story"},
+            config=_config(user_id="user-1"),
+        )
+
+    payload = json.loads(out)
+    assert payload["url"] == "https://example.com/img.webp"
+    assert payload["prompt"] == "Bright sun in a clear sky"
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert "postId" not in body
+    assert "pageId" not in body
+    assert body["format"] == "story"
+    assert body["prompt"] == "Bright sun in a clear sky"
 
 
 @pytest.mark.asyncio
@@ -97,6 +141,43 @@ async def test_success_calls_web_generate(tool_under_test: Any, monkeypatch: Any
     assert body["model"] == "gemini-2.5-flash-image"
     assert body["styleId"] == 3
     assert body["references"] == [{"type": "photo", "name": "a.webp"}]
+
+
+@pytest.mark.asyncio
+async def test_tool_args_override_configurable(tool_under_test: Any, monkeypatch: Any) -> None:
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps({"url": "https://example.com/img.webp"})
+    mock_response.json.return_value = {"url": "https://example.com/img.webp"}
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        await tool_under_test.ainvoke(
+            {
+                "prompt": "A plate",
+                "format": "square",
+                "model": "nano-banana-2",
+                "quality": "ultra",
+            },
+            config=_config(
+                user_id="user-1",
+                image_format="feed",
+                generation_model="gemini-2.5-flash-image",
+                image_quality="standard",
+            ),
+        )
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert body["format"] == "square"
+    assert body["model"] == "nano-banana-2"
+    assert body["quality"] == "ultra"
 
 
 @pytest.mark.asyncio

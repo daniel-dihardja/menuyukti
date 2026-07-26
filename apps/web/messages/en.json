@@ -21,9 +21,10 @@
     },
     "generateInstagramPostImage": {
       "running": "Generating post image…",
-      "runningDetail": "Composing prompt and running Leonardo",
+      "runningDetail": "Creating your image…",
       "done": "Generated post image",
-      "error": "Image generation failed"
+      "error": "Image generation failed",
+      "imageAlt": "Generated image"
     },
     "getChartData": {
       "runningGeneric": "Reading your sales charts…",

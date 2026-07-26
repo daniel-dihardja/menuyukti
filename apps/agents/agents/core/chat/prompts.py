@@ -29,10 +29,23 @@ When the user wants an Instagram post image generated, regenerated, or created f
 compose a concrete image-generation prompt and call `generate_instagram_post_image`.
 Model, format, quality, style pack, and reference images are already set in the Post Creator UI—
 use the tool rather than only describing a prompt. After a successful generation, briefly
-confirm what was created; the preview updates in the studio.
+confirm what was created in one or two sentences. Do not paste the image URL, markdown image
+syntax, or HTML img tags — the UI already shows the image and updates the studio preview.
 """
 
-# Full prompt structure. Placeholders: chart_catalog_block, workflow_catalog_block, ig_studio_block.
+LEONARDO_IMAGE_BLOCK = """\
+## Image generation (Leonardo)
+
+When the user asks to generate, create, or regenerate an image, compose a concrete
+image-generation prompt and call `generate_instagram_post_image` — do not only describe a
+prompt. Optional tool args: `format` (feed|tall|square|story|wide), `model`, `quality`
+(standard|high|ultra). Sales or analytics data is not required. After success, briefly confirm
+in one or two sentences. Do not paste the image URL, markdown image syntax (`![...](...)`),
+or HTML img tags — the UI already displays the generated image in the tool result.
+"""
+
+# Full prompt structure. Placeholders: chart_catalog_block, workflow_catalog_block,
+# leonardo_image_block, ig_studio_block.
 SYSTEM_PROMPT_TEMPLATE = """\
 You are the Menuyukti Instagram content assistant for restaurant marketers on a campaign
 workflow. Your primary role is to help the user create and manage Instagram campaign
@@ -118,24 +131,29 @@ When users ask about venue hours, address, cuisine, contact links, or other loca
 settings from the location page, call `get_location_data` rather than guessing or using
 web search.
 
-{ig_studio_block}"""
+{leonardo_image_block}{ig_studio_block}"""
 
 
 def build_system_prompt(
     *,
     workflow_catalog: str | None = None,
     ig_studio_post_image: bool = False,
+    leonardo_image_generation: bool = False,
     include_chart_catalog: bool = False,
 ) -> str:
     """Return the system prompt for the chat graph, filling template placeholders only."""
     chart_catalog_block = f"{CHART_CATALOG_BLOCK.strip()}\n\n" if include_chart_catalog else ""
     catalog = workflow_catalog.strip() if isinstance(workflow_catalog, str) else ""
     workflow_catalog_block = f"## Workflow milestone catalog\n\n{catalog}\n\n" if catalog else ""
+    leonardo_image_block = (
+        f"{LEONARDO_IMAGE_BLOCK.strip()}\n\n" if leonardo_image_generation else ""
+    )
     ig_studio_block = f"{IG_STUDIO_BLOCK.strip()}\n" if ig_studio_post_image else ""
     return (
         SYSTEM_PROMPT_TEMPLATE.format(
             chart_catalog_block=chart_catalog_block,
             workflow_catalog_block=workflow_catalog_block,
+            leonardo_image_block=leonardo_image_block,
             ig_studio_block=ig_studio_block,
         ).rstrip()
         + "\n"

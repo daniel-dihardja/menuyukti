@@ -28,6 +28,10 @@ import {
   partitionMessageParts,
 } from '@/lib/chat/partition-message-parts'
 import {
+  parseGeneratedImageUrlFromToolOutput,
+  stripDuplicateGeneratedImageMarkdown,
+} from '@/lib/chat/strip-duplicate-generated-image-markdown'
+import {
   isWorkflowVisualizationId,
   type WorkflowVisualizationId,
 } from '@/lib/workflow/workflow-visualization-ids'
@@ -83,46 +87,23 @@ function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolU
   )
 }
 
-function GenerateInstagramPostImageToolBlock({
-  part,
-}: {
-  part: ToolUIPart<UITools> | DynamicToolUIPart
-}) {
-  const t = useTranslations('chatTools.generateInstagramPostImage')
-  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
-  const output =
-    'output' in part && part.output != null
-      ? typeof part.output === 'string'
-        ? part.output
-        : JSON.stringify(part.output)
-      : ''
-  const toolReportedError = Boolean(output) && output.startsWith('Error:')
-  const isError =
-    part.state === 'output-error' || part.state === 'output-denied' || toolReportedError
-  const title = isInFlight ? t('running') : isError ? t('error') : t('done')
+function parseGeneratedImageToolOutput(output: unknown): { url: string } | null {
+  const url = parseGeneratedImageUrlFromToolOutput(output)
+  return url ? { url } : null
+}
 
-  const header =
-    part.type === 'dynamic-tool' ? (
-      <ToolHeader state={part.state} title={title} toolName={part.toolName} type="dynamic-tool" />
-    ) : (
-      <ToolHeader state={part.state} title={title} type={part.type} />
-    )
-
-  return (
-    <Tool defaultOpen={isInFlight || isError}>
-      {header}
-      {isInFlight ? (
-        <ToolContent>
-          <Shimmer className="text-sm">{t('runningDetail')}</Shimmer>
-        </ToolContent>
-      ) : null}
-      {isError && output ? (
-        <ToolContent>
-          <p className="text-destructive text-sm">{output.replace(/^Error:\s*/, '')}</p>
-        </ToolContent>
-      ) : null}
-    </Tool>
-  )
+function collectGeneratedImageUrlsFromParts(parts: UIMessage['parts'] | undefined): string[] {
+  if (!parts?.length) return []
+  const urls: string[] = []
+  for (const part of parts) {
+    if (!isToolUIPart(part)) continue
+    const toolName = resolveToolName(part)
+    if (toolName !== 'generate_instagram_post_image') continue
+    if (!('output' in part) || part.output == null) continue
+    const url = parseGeneratedImageUrlFromToolOutput(part.output)
+    if (url) urls.push(url)
+  }
+  return urls
 }
 
 function CompactToolStatus({
@@ -152,6 +133,35 @@ function CompactToolStatus({
       ) : (
         <span className={isError ? 'text-destructive' : undefined}>{message}</span>
       )}
+    </div>
+  )
+}
+
+function GenerateInstagramPostImageToolBlock({
+  part,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+}) {
+  const t = useTranslations('chatTools.generateInstagramPostImage')
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const isError = toolOutputLooksLikeError(part)
+  const generated =
+    !isInFlight && !isError
+      ? parseGeneratedImageToolOutput('output' in part ? part.output : undefined)
+      : null
+  const message = isError ? t('error') : isInFlight ? t('runningDetail') : t('done')
+
+  return (
+    <div className="flex flex-col gap-2">
+      <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
+      {generated ? (
+        // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+        <img
+          alt={t('imageAlt')}
+          className="max-h-80 max-w-full rounded-md border border-border object-contain"
+          src={generated.url}
+        />
+      ) : null}
     </div>
   )
 }
@@ -285,6 +295,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   const { reasoningParts, otherParts } = partitionMessageParts(parts)
   const reasoningText = joinReasoningText(reasoningParts)
   const reasoningStreaming = isReasoningStreaming(reasoningParts, isStreaming)
+  const generatedImageUrls = collectGeneratedImageUrlsFromParts(parts)
 
   return (
     <>
@@ -296,6 +307,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
       ) : null}
       {otherParts.map((part, index) => (
         <MessagePartRenderer
+          generatedImageUrls={generatedImageUrls}
           key={`${message.id}-${index}`}
           mentionTitles={mentionTitles}
           part={part}
@@ -319,13 +331,22 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   part,
   role,
   mentionTitles,
+  generatedImageUrls = [],
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
   mentionTitles?: string[]
+  /** URLs from generate_instagram_post_image tool results in this message. */
+  generatedImageUrls?: readonly string[]
 }) {
   if (part.type === 'text') {
-    const text = part.text
+    const text =
+      role === 'assistant' && generatedImageUrls.length > 0
+        ? stripDuplicateGeneratedImageMarkdown(part.text, generatedImageUrls)
+        : part.text
+    if (!text) {
+      return null
+    }
     if (role === 'assistant') {
       return <AssistantTextPart text={text} />
     }

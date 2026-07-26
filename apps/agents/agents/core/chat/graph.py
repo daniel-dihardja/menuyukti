@@ -94,10 +94,15 @@ def chat_tools_list(
     return tools
 
 
+def _has_leonardo_image_generation(conf: dict[str, Any]) -> bool:
+    """Leonardo generate tool: workflow chat or IG Studio Post Creator page context."""
+    return _has_ig_studio_post_context(conf) or _has_workflow_id(conf)
+
+
 def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
     """Resolve request-scoped tools from RunnableConfig.configurable."""
     return chat_tools_list(
-        include_post_image=_has_ig_studio_post_context(conf),
+        include_post_image=_has_leonardo_image_generation(conf),
         workflow_id=_has_workflow_id(conf),
         milestone_id=_has_milestone_id(conf),
         location_id=_has_location_id(conf),
@@ -109,12 +114,14 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     messages = state.get("messages") or []
     cfg = get_config() or {}
     conf = cfg.get("configurable") or {}
-    raw_catalog = conf.get("workflow_catalog_markdown")
+    conf_dict = conf if isinstance(conf, dict) else {}
+    raw_catalog = conf_dict.get("workflow_catalog_markdown")
     catalog = raw_catalog if isinstance(raw_catalog, str) else None
     prompt_body = build_system_prompt(
         workflow_catalog=catalog,
-        ig_studio_post_image=_has_ig_studio_post_context(conf if isinstance(conf, dict) else {}),
-        include_chart_catalog=_has_location_id(conf if isinstance(conf, dict) else {}),
+        ig_studio_post_image=_has_ig_studio_post_context(conf_dict),
+        leonardo_image_generation=_has_leonardo_image_generation(conf_dict),
+        include_chart_catalog=_has_location_id(conf_dict),
     )
     return [SystemMessage(content=prompt_body), *messages]
 
