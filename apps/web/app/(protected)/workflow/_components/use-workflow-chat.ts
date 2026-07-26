@@ -11,20 +11,26 @@ import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { appendWorkflowChatMention } from '@/lib/chat/append-workflow-chat-mention'
-import { mediaNamesToPhotoGenerationReferences } from '@/lib/chat/media-names-to-generation-references'
+import {
+  mediaNamesToPhotoGenerationReferences,
+  postNamesToPreviousResultGenerationReferences,
+} from '@/lib/chat/media-names-to-generation-references'
 import {
   clearWorkflowChatMentionTrigger,
   mediaTypeFromFilename,
 } from '@/lib/chat/workflow-chat-media-mention'
+import {
+  collectNewGeneratedImageToolResults,
+  findLatestGeneratedImageFromMessages,
+  readAutoAttachGeneratedPreference,
+  upsertAutoAttachedGeneratedImage,
+  writeAutoAttachGeneratedPreference,
+  type PendingMediaAttachment,
+} from '@/lib/chat/workflow-chat-auto-attach'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
-export type PendingMediaAttachment = {
-  id: string
-  name: string
-  url: string
-  mediaType: string
-}
+export type { PendingMediaAttachment } from '@/lib/chat/workflow-chat-auto-attach'
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
 
@@ -67,6 +73,7 @@ export function useWorkflowChat({
   const [pendingMediaAttachments, setPendingMediaAttachments] = useState<PendingMediaAttachment[]>(
     [],
   )
+  const [autoAttachGenerated, setAutoAttachGeneratedState] = useState(false)
 
   const chatApiContextRef = useRef({
     workflowId,
@@ -84,12 +91,19 @@ export function useWorkflowChat({
   const pendingReferencedVisualizationIdRef = useRef<WorkflowVisualizationId | null>(null)
   const pendingMediaAttachmentsRef = useRef<PendingMediaAttachment[]>([])
   pendingMediaAttachmentsRef.current = pendingMediaAttachments
+  const appliedGeneratedToolCallIdsRef = useRef(new Set<string>())
+  const autoAttachGeneratedRef = useRef(autoAttachGenerated)
+  autoAttachGeneratedRef.current = autoAttachGenerated
   chatApiContextRef.current = {
     workflowId,
     locationId,
     analyticsRunId,
     milestoneId: selectedMilestoneId,
   }
+
+  useEffect(() => {
+    setAutoAttachGeneratedState(readAutoAttachGeneratedPreference())
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -168,22 +182,59 @@ export function useWorkflowChat({
     chatWasBusy.current = busy
   }, [status, error, selectedMilestoneId, onHydrateAfterChat, onRefreshInstagramItems])
 
+  useEffect(() => {
+    if (!autoAttachGenerated) {
+      return
+    }
+    const newlyFound = collectNewGeneratedImageToolResults(
+      messages,
+      appliedGeneratedToolCallIdsRef.current,
+    )
+    if (newlyFound.length === 0) {
+      return
+    }
+    for (const { toolCallId } of newlyFound) {
+      appliedGeneratedToolCallIdsRef.current.add(toolCallId)
+    }
+    const latest = newlyFound[newlyFound.length - 1]!.image
+    setPendingMediaAttachments((prev) => upsertAutoAttachedGeneratedImage(prev, latest))
+  }, [messages, autoAttachGenerated])
+
+  const setAutoAttachGenerated = useCallback(
+    (enabled: boolean) => {
+      setAutoAttachGeneratedState(enabled)
+      writeAutoAttachGeneratedPreference(enabled)
+      autoAttachGeneratedRef.current = enabled
+      if (!enabled) {
+        return
+      }
+      const latest = findLatestGeneratedImageFromMessages(messages)
+      if (latest) {
+        setPendingMediaAttachments((prev) => upsertAutoAttachedGeneratedImage(prev, latest))
+      }
+    },
+    [messages],
+  )
+
   const buildSendBody = useCallback(() => {
     const presetRef = pendingPresetReferenceMilestoneIdRef.current
     const vizRef = pendingReferencedVisualizationIdRef.current
-    const mediaNames = pendingMediaAttachmentsRef.current.map((m) => m.name)
+    const pending = pendingMediaAttachmentsRef.current
+    const photoNames = pending.filter((m) => m.kind === 'photo').map((m) => m.name)
+    const postNames = pending.filter((m) => m.kind === 'post').map((m) => m.name)
+    const generationReferences = [
+      ...mediaNamesToPhotoGenerationReferences(photoNames),
+      ...postNamesToPreviousResultGenerationReferences(postNames),
+    ]
     pendingPresetReferenceMilestoneIdRef.current = null
     pendingReferencedVisualizationIdRef.current = null
     return {
       model: selectedChatModelRef.current,
       ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
       ...(vizRef !== null ? { referencedVisualizationId: vizRef } : {}),
-      ...(mediaNames.length > 0
-        ? {
-            referencedMediaNames: mediaNames,
-            generationReferences: mediaNamesToPhotoGenerationReferences(mediaNames),
-          }
-        : {}),
+      ...(photoNames.length > 0 ? { referencedMediaNames: photoNames } : {}),
+      ...(postNames.length > 0 ? { referencedPostMediaNames: postNames } : {}),
+      ...(generationReferences.length > 0 ? { generationReferences } : {}),
     }
   }, [])
 
@@ -197,7 +248,7 @@ export function useWorkflowChat({
         return
       }
       setPendingMediaAttachments((prev) => {
-        if (prev.some((m) => m.name === item.name)) {
+        if (prev.some((m) => m.kind === 'photo' && m.name === item.name)) {
           return prev
         }
         if (prev.length >= CHAT_MAX_IMAGES) {
@@ -208,6 +259,7 @@ export function useWorkflowChat({
           ...prev,
           {
             id: crypto.randomUUID(),
+            kind: 'photo',
             name: item.name,
             url: item.url,
             mediaType,
@@ -215,6 +267,16 @@ export function useWorkflowChat({
         ]
       })
       setText((current) => clearWorkflowChatMentionTrigger(current))
+    },
+    [status],
+  )
+
+  const handleAttachGeneratedImage = useCallback(
+    (image: { url: string; name: string; mediaS3Key: string }) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      setPendingMediaAttachments((prev) => upsertAutoAttachedGeneratedImage(prev, image))
     },
     [status],
   )
@@ -302,6 +364,7 @@ export function useWorkflowChat({
     setMessages([])
     setText('')
     setPendingMediaAttachments([])
+    appliedGeneratedToolCallIdsRef.current = new Set()
     pendingPresetReferenceMilestoneIdRef.current = null
     pendingReferencedVisualizationIdRef.current = null
     const sid = crypto.randomUUID()
@@ -334,32 +397,44 @@ export function useWorkflowChat({
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
+      autoAttachGenerated,
     }),
-    [text, selectedChatModel, isSubmitDisabled, slashCommands, pendingMediaAttachments],
+    [
+      text,
+      selectedChatModel,
+      isSubmitDisabled,
+      slashCommands,
+      pendingMediaAttachments,
+      autoAttachGenerated,
+    ],
   )
 
   const actions = useMemo(
     () => ({
       setText,
       setSelectedChatModel,
+      setAutoAttachGenerated,
       handleTextChange,
       handleSubmit,
       handleSelectSlashCommand,
       handleSelectMention,
       handleSelectVisualizationMention,
       handleSelectMediaMention,
+      handleAttachGeneratedImage,
       handleRemovePendingMedia,
       handleRetry,
       handleClearChat,
       stop,
     }),
     [
+      setAutoAttachGenerated,
       handleTextChange,
       handleSubmit,
       handleSelectSlashCommand,
       handleSelectMention,
       handleSelectVisualizationMention,
       handleSelectMediaMention,
+      handleAttachGeneratedImage,
       handleRemovePendingMedia,
       handleRetry,
       handleClearChat,

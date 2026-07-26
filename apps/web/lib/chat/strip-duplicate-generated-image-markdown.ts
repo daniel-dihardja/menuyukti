@@ -80,8 +80,15 @@ export function stripDuplicateGeneratedImageMarkdown(
   return next.replace(/\n{3,}/g, '\n\n').trim()
 }
 
+import { parseGeneratedImageToolResult } from '@/lib/chat/parse-generated-image-tool-output'
+
 /** Parse `url` from generate_instagram_post_image tool output JSON (or stringified JSON). */
 export function parseGeneratedImageUrlFromToolOutput(output: unknown): string | null {
+  const full = parseGeneratedImageToolResult(output)
+  if (full) {
+    return full.url
+  }
+  // URL-only payloads (legacy / display): accept url without name/mediaS3Key.
   const raw = typeof output === 'string' ? output : output != null ? JSON.stringify(output) : ''
   if (!raw || raw.startsWith('Error')) {
     return null

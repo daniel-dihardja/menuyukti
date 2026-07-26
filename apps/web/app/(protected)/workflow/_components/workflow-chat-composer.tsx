@@ -16,6 +16,14 @@ import {
   AttachmentRemove,
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
+import { Checkbox } from '@workspace/ui/components/checkbox'
+import { Label } from '@workspace/ui/components/label'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { PanelsTopLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -118,6 +126,38 @@ function WorkflowMobilePreviewOpenButton() {
   )
 }
 
+function WorkflowChatAutoAttachCheckbox() {
+  const t = useTranslations('analytics.workflows.chat')
+  const { autoAttachGenerated } = useWorkflowChatComposerState()
+  const { isChatBusy } = useWorkflowChatMessages()
+  const { setAutoAttachGenerated } = useWorkflowChatActions()
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex h-9 shrink-0 items-center gap-2 px-1">
+            <Checkbox
+              aria-label={t('autoAttachGeneratedAriaLabel')}
+              checked={autoAttachGenerated}
+              disabled={isChatBusy}
+              id="workflow-chat-auto-attach-generated"
+              onCheckedChange={(checked) => setAutoAttachGenerated(checked === true)}
+            />
+            <Label
+              className="cursor-pointer font-medium text-muted-foreground text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+              htmlFor="workflow-chat-auto-attach-generated"
+            >
+              {t('autoAttachGeneratedLabel')}
+            </Label>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{t('autoAttachGeneratedTooltip')}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
 export function WorkflowChatComposer() {
   const t = useTranslations('analytics.workflows.chat')
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
@@ -169,6 +209,7 @@ export function WorkflowChatComposer() {
         <PromptInputFooter>
           <PromptInputTools>
             <WorkflowMobilePreviewOpenButton />
+            <WorkflowChatAutoAttachCheckbox />
             <ChatGatewayModelSelect
               disabled={isChatBusy}
               onValueChange={setSelectedChatModel}

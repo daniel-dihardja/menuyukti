@@ -24,7 +24,10 @@
       "runningDetail": "Creating your image…",
       "done": "Generated post image",
       "error": "Image generation failed",
-      "imageAlt": "Generated image"
+      "imageAlt": "Generated image",
+      "actionsMenuAriaLabel": "Generated image actions",
+      "attachAsReference": "Use as reference",
+      "attachedAsReference": "Attached"
     },
     "getChartData": {
       "runningGeneric": "Reading your sales charts…",
@@ -1674,6 +1677,9 @@
         "clearChatAriaLabel": "Clear chat",
         "clearChatLabel": "Clear chat",
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
+        "autoAttachGeneratedLabel": "Auto-attach",
+        "autoAttachGeneratedAriaLabel": "Auto-attach the latest generated image as a reference",
+        "autoAttachGeneratedTooltip": "Attach each new generated image as a reference for the next message",
         "stopChatAriaLabel": "Stop generating",
         "submitChatAriaLabel": "Send message",
         "attachImageAriaLabel": "Attach image",

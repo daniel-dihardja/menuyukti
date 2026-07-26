@@ -16,8 +16,15 @@ import {
   ToolOutput,
 } from '@workspace/ui/components/ai-elements/tool'
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
+import { Button } from '@workspace/ui/components/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@workspace/ui/components/dropdown-menu'
 import { Spinner } from '@workspace/ui/components/spinner'
-import { CheckIcon, XIcon } from 'lucide-react'
+import { CheckIcon, MoreHorizontal, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { memo } from 'react'
@@ -27,6 +34,10 @@ import {
   joinReasoningText,
   partitionMessageParts,
 } from '@/lib/chat/partition-message-parts'
+import {
+  parseGeneratedImageToolResult,
+  type GeneratedImageToolResult,
+} from '@/lib/chat/parse-generated-image-tool-output'
 import {
   parseGeneratedImageUrlFromToolOutput,
   stripDuplicateGeneratedImageMarkdown,
@@ -87,10 +98,7 @@ function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolU
   )
 }
 
-function parseGeneratedImageToolOutput(output: unknown): { url: string } | null {
-  const url = parseGeneratedImageUrlFromToolOutput(output)
-  return url ? { url } : null
-}
+export type AttachGeneratedImageHandler = (image: GeneratedImageToolResult) => void
 
 function collectGeneratedImageUrlsFromParts(parts: UIMessage['parts'] | undefined): string[] {
   if (!parts?.length) return []
@@ -139,28 +147,66 @@ function CompactToolStatus({
 
 function GenerateInstagramPostImageToolBlock({
   part,
+  onAttachGeneratedImage,
+  attachedGeneratedImageName,
+  generatedImageActionsDisabled = false,
 }: {
   part: ToolUIPart<UITools> | DynamicToolUIPart
+  onAttachGeneratedImage?: AttachGeneratedImageHandler
+  attachedGeneratedImageName?: string | null
+  generatedImageActionsDisabled?: boolean
 }) {
   const t = useTranslations('chatTools.generateInstagramPostImage')
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
   const isError = toolOutputLooksLikeError(part)
-  const generated =
-    !isInFlight && !isError
-      ? parseGeneratedImageToolOutput('output' in part ? part.output : undefined)
-      : null
+  const output = 'output' in part ? part.output : undefined
+  const generatedFull = !isInFlight && !isError ? parseGeneratedImageToolResult(output) : null
+  const imageUrl =
+    generatedFull?.url ??
+    (!isInFlight && !isError ? parseGeneratedImageUrlFromToolOutput(output) : null)
   const message = isError ? t('error') : isInFlight ? t('runningDetail') : t('done')
+  const isAttached =
+    generatedFull != null &&
+    attachedGeneratedImageName != null &&
+    attachedGeneratedImageName === generatedFull.name
+  const showActions = Boolean(onAttachGeneratedImage && generatedFull)
 
   return (
     <div className="flex flex-col gap-2">
       <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
-      {generated ? (
-        // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-        <img
-          alt={t('imageAlt')}
-          className="max-h-80 max-w-full rounded-md border border-border object-contain"
-          src={generated.url}
-        />
+      {imageUrl ? (
+        <div className="relative inline-block max-w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
+          <img
+            alt={t('imageAlt')}
+            className="max-h-80 max-w-full rounded-md border border-border object-contain"
+            src={imageUrl}
+          />
+          {showActions && generatedFull ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label={t('actionsMenuAriaLabel')}
+                  className="absolute top-2 right-2 size-8 rounded-full bg-background/90 shadow-sm backdrop-blur-sm"
+                  disabled={generatedImageActionsDisabled}
+                  size="icon"
+                  type="button"
+                  variant="secondary"
+                >
+                  <MoreHorizontal aria-hidden className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={generatedImageActionsDisabled || isAttached}
+                  onSelect={() => onAttachGeneratedImage?.(generatedFull)}
+                >
+                  {isAttached ? t('attachedAsReference') : t('attachAsReference')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
       ) : null}
     </div>
   )
@@ -228,13 +274,30 @@ function CompactNamedToolBlock({
   return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
 }
 
-function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
+function ToolPartBlock({
+  part,
+  onAttachGeneratedImage,
+  attachedGeneratedImageName,
+  generatedImageActionsDisabled,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+  onAttachGeneratedImage?: AttachGeneratedImageHandler
+  attachedGeneratedImageName?: string | null
+  generatedImageActionsDisabled?: boolean
+}) {
   const toolName = resolveToolName(part)
   if (toolName === 'search_web') {
     return <SearchWebToolBlock part={part} />
   }
   if (toolName === 'generate_instagram_post_image') {
-    return <GenerateInstagramPostImageToolBlock part={part} />
+    return (
+      <GenerateInstagramPostImageToolBlock
+        attachedGeneratedImageName={attachedGeneratedImageName}
+        generatedImageActionsDisabled={generatedImageActionsDisabled}
+        onAttachGeneratedImage={onAttachGeneratedImage}
+        part={part}
+      />
+    )
   }
   if (toolName === 'get_chart_data') {
     return <GetChartDataToolBlock part={part} />
@@ -274,6 +337,9 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   role,
   mentionTitles,
   isStreaming = false,
+  onAttachGeneratedImage,
+  attachedGeneratedImageName,
+  generatedImageActionsDisabled = false,
 }: {
   message: UIMessage
   role: UIMessage['role']
@@ -281,6 +347,12 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   mentionTitles?: string[]
   /** When true, assistant text uses incremental Streamdown rendering. */
   isStreaming?: boolean
+  /** When set, generated images show a ⋯ menu with “Use as reference”. */
+  onAttachGeneratedImage?: AttachGeneratedImageHandler
+  /** Filename of the currently attached generated (post) ref chip, if any. */
+  attachedGeneratedImageName?: string | null
+  /** Disable image actions while the chat turn is in flight. */
+  generatedImageActionsDisabled?: boolean
 }) {
   const parts = message.parts
 
@@ -307,9 +379,12 @@ export const ChatMessageParts = memo(function ChatMessageParts({
       ) : null}
       {otherParts.map((part, index) => (
         <MessagePartRenderer
+          attachedGeneratedImageName={attachedGeneratedImageName}
+          generatedImageActionsDisabled={generatedImageActionsDisabled}
           generatedImageUrls={generatedImageUrls}
           key={`${message.id}-${index}`}
           mentionTitles={mentionTitles}
+          onAttachGeneratedImage={onAttachGeneratedImage}
           part={part}
           role={role}
         />
@@ -332,12 +407,18 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   role,
   mentionTitles,
   generatedImageUrls = [],
+  onAttachGeneratedImage,
+  attachedGeneratedImageName,
+  generatedImageActionsDisabled,
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
   mentionTitles?: string[]
   /** URLs from generate_instagram_post_image tool results in this message. */
   generatedImageUrls?: readonly string[]
+  onAttachGeneratedImage?: AttachGeneratedImageHandler
+  attachedGeneratedImageName?: string | null
+  generatedImageActionsDisabled?: boolean
 }) {
   if (part.type === 'text') {
     const text =
@@ -354,7 +435,14 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   }
 
   if (isToolUIPart(part)) {
-    return <ToolPartBlock part={part} />
+    return (
+      <ToolPartBlock
+        attachedGeneratedImageName={attachedGeneratedImageName}
+        generatedImageActionsDisabled={generatedImageActionsDisabled}
+        onAttachGeneratedImage={onAttachGeneratedImage}
+        part={part}
+      />
+    )
   }
 
   if (part.type === 'source-url') {
