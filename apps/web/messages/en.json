@@ -1592,6 +1592,21 @@
         "pageTitle": "Workflow #{id}",
         "emptyTitle": "Draft Instagram content",
         "emptyDescription": "Ask the assistant to plan Stories, posts, or Reels from your venue slot strength, menu heatmap, and pair lift charts—or to create and update Instagram items for this campaign.",
+        "waitHint": "Usually takes about 30 seconds.",
+        "quickPrompts": {
+          "weeklyPlan": {
+            "label": "Weekly Instagram plan",
+            "prompt": "Create a weekly Instagram plan for this venue. For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+          },
+          "featureTopDishes": {
+            "label": "Feature top dishes",
+            "prompt": "Suggest this week’s Instagram posts featuring our strongest menu items. Include day, format, dish names, and a short caption angle for each."
+          },
+          "storiesAndReels": {
+            "label": "Stories & Reels mix",
+            "prompt": "Draft a weekly mix of Instagram Stories and Reels with specific menu items for each slot and a brief creative direction."
+          }
+        },
         "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
         "thinking": "Thinking…",
         "errorTitle": "Something went wrong",
