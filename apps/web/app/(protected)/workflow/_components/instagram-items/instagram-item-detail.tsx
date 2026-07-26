@@ -1,10 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ArrowLeftIcon, PlusIcon, SparklesIcon, XIcon } from 'lucide-react'
+import { ArrowLeftIcon, SparklesIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -46,7 +44,6 @@ import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
 import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
 import { PostCreatorReferenceThumbnails } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-reference-thumbnails'
-import { StyleUsageGuide } from '@/components/styles/style-usage-guide'
 import type {
   InstagramItemDto,
   InstagramItemPageDto,
@@ -54,17 +51,9 @@ import type {
 } from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
 import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
-import {
-  DEFAULT_LEONARDO_POST_MODEL,
-  getLeonardoPostModelMessageKey,
-  isLeonardoPostModelId,
-  LEONARDO_POST_MODEL_IDS,
-  type LeonardoPostModelId,
-} from '@/lib/posts/leonardo-post-models'
+import { DEFAULT_LEONARDO_POST_MODEL } from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
-import { routes } from '@/lib/routes'
-import { listStyles, type Style } from '@/lib/styles/client-api'
 
 import { InstagramItemPagesStrip } from './instagram-item-pages-strip'
 import { InstagramItemPreview } from './instagram-item-preview'
@@ -75,7 +64,6 @@ import {
   type InstagramItemStatus,
 } from './use-instagram-items'
 
-const STYLE_NONE = '__none__'
 const MAX_ITEM_PAGES = 10
 
 type InstagramItemDetailProps = {
@@ -191,24 +179,14 @@ export function InstagramItemDetail({
   onGenerated,
 }: InstagramItemDetailProps) {
   const t = useTranslations('analytics.workflows.instagramItems')
-  const tModel = useTranslations('postCreator.prompt.model')
   const tPicker = useTranslations('postCreator.prompt.picker')
   const tRefs = useTranslations('postCreator.prompt.references')
-  const pathname = usePathname()
-  const modelFieldId = useId()
-  const modelBlurbId = useId()
-  const styleFieldId = useId()
   const kindFieldId = useId()
   const statusFieldId = useId()
   const useCurrentPreviewRefId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
     refsFromItem(item),
-  )
-  const [styles, setStyles] = useState<Style[]>([])
-  const [stylesLoading, setStylesLoading] = useState(false)
-  const [generationModel, setGenerationModel] = useState<LeonardoPostModelId>(
-    DEFAULT_LEONARDO_POST_MODEL,
   )
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
@@ -244,31 +222,6 @@ export function InstagramItemDetail({
     // Only re-sync when the item identity/payload changes, not when local page selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: prefer sticky page id
   }, [item])
-
-  useEffect(() => {
-    let cancelled = false
-    setStylesLoading(true)
-    void listStyles()
-      .then((list) => {
-        if (cancelled) return
-        setStyles(list)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setStyles([])
-          toast.error(t('generate.style.loadError'))
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setStylesLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [t])
-
-  const selectedStyle = styles.find((style) => style.id === values.styleId) ?? null
-  const createStyleHref = `${routes.igStudioStyleNew}?returnTo=${encodeURIComponent(pathname || '')}`
 
   const selectedNames = useMemo(
     () => new Set(referenceImages.map((image) => image.name)),
@@ -359,7 +312,7 @@ export function InstagramItemDetail({
       referenceImages,
       previewMediaS3Key: visibleMediaS3Key,
       includePreviousResult: useCurrentPreviewAsReference,
-      styleSelected: values.styleId != null,
+      styleSelected: false,
       solidBackgroundEnabled: false,
     })
 
@@ -377,10 +330,9 @@ export function InstagramItemDetail({
         body: JSON.stringify({
           pageId: selectedPageId,
           prompt,
-          model: generationModel,
+          model: DEFAULT_LEONARDO_POST_MODEL,
           referenceImages: persistedRefs,
           ...(references.length > 0 ? { references } : {}),
-          styleId: values.styleId,
         }),
       })
       const payload = (await res.json().catch(() => ({}))) as {
@@ -701,120 +653,6 @@ export function InstagramItemDetail({
                   removeLabel={tRefs('remove')}
                 />
               </Field>
-
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor={modelFieldId}>{tModel('label')}</FieldLabel>
-                  <Select
-                    disabled={busy}
-                    onValueChange={(value) => {
-                      if (isLeonardoPostModelId(value)) {
-                        setGenerationModel(value)
-                      }
-                    }}
-                    value={generationModel}
-                  >
-                    <SelectTrigger
-                      aria-describedby={modelBlurbId}
-                      aria-label={tModel('label')}
-                      className="w-full"
-                      id={modelFieldId}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {LEONARDO_POST_MODEL_IDS.map((modelId) => (
-                          <SelectItem key={modelId} value={modelId}>
-                            {tModel(`options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription id={modelBlurbId}>
-                    {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
-                  </FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor={styleFieldId}>{t('generate.style.label')}</FieldLabel>
-                  <Select
-                    disabled={busy || stylesLoading}
-                    onValueChange={(value) => {
-                      if (value === STYLE_NONE) {
-                        setValues((prev) => ({ ...prev, styleId: null }))
-                        return
-                      }
-                      const next = Number(value)
-                      if (Number.isInteger(next) && next > 0) {
-                        setValues((prev) => ({ ...prev, styleId: next }))
-                      }
-                    }}
-                    value={values.styleId != null ? String(values.styleId) : STYLE_NONE}
-                  >
-                    <SelectTrigger
-                      aria-label={t('generate.style.label')}
-                      className="w-full"
-                      id={styleFieldId}
-                    >
-                      {selectedStyle ? (
-                        <span className="flex min-w-0 items-center gap-2">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                          <img
-                            alt=""
-                            className="size-6 shrink-0 rounded object-cover"
-                            src={mediaDownloadHref(selectedStyle.referenceImageName)}
-                          />
-                          <span className="truncate">
-                            {selectedStyle.isDefault
-                              ? `${selectedStyle.name} (${t('generate.style.defaultSuffix')})`
-                              : selectedStyle.name}
-                          </span>
-                        </span>
-                      ) : (
-                        <SelectValue placeholder={t('generate.style.placeholder')} />
-                      )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value={STYLE_NONE}>{t('generate.style.none')}</SelectItem>
-                        {styles.map((style) => (
-                          <SelectItem key={style.id} value={String(style.id)}>
-                            <span className="flex items-center gap-2">
-                              {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                              <img
-                                alt=""
-                                className="size-6 shrink-0 rounded object-cover"
-                                src={mediaDownloadHref(style.referenceImageName)}
-                              />
-                              <span>
-                                {style.isDefault
-                                  ? `${style.name} (${t('generate.style.defaultSuffix')})`
-                                  : style.name}
-                              </span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription>{t('generate.style.description')}</FieldDescription>
-                </Field>
-              </div>
-
-              {selectedStyle ? <StyleUsageGuide spec={selectedStyle.spec} /> : null}
-              <div className="flex flex-wrap gap-2">
-                <Button asChild disabled={busy} size="sm" type="button" variant="outline">
-                  <Link href={createStyleHref}>
-                    <PlusIcon data-icon="inline-start" />
-                    {t('generate.style.create')}
-                  </Link>
-                </Button>
-                <Button asChild disabled={busy} size="sm" type="button" variant="ghost">
-                  <Link href={routes.igStudioStyles}>{t('generate.style.manage')}</Link>
-                </Button>
-              </div>
 
               <FieldSeparator>{t('sections.content')}</FieldSeparator>
 
