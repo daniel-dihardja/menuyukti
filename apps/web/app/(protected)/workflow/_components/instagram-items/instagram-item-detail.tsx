@@ -224,10 +224,6 @@ export function InstagramItemDetail({
   }, [item])
 
   const selectedPage = pages.find((page) => page.id === selectedPageId) ?? pages[0]
-  const selectedPageIndex = Math.max(
-    0,
-    pages.findIndex((page) => page.id === (selectedPage?.id ?? selectedPageId)),
-  )
   const pagePrompt = selectedPageId ? (pagePromptsById[selectedPageId] ?? '') : ''
   const busy =
     saving ||
@@ -657,94 +653,86 @@ export function InstagramItemDetail({
 
               {pages.length > 0 && selectedPageId ? (
                 <Tabs
-                  className="gap-4"
+                  className="gap-6"
                   onValueChange={(pageId) => {
                     selectPage(pageId)
                   }}
                   value={selectedPageId}
                 >
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <TabsList
-                        className="min-w-0 flex-1 justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
-                        variant="line"
-                      >
-                        {pages.map((page, index) => (
-                          <TabsTrigger
-                            className="shrink-0"
-                            disabled={busy}
-                            key={page.id}
-                            value={page.id}
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <TabsList
+                      className="w-fit max-w-full min-w-0 shrink justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+                      variant="line"
+                    >
+                      {pages.map((page, index) => (
+                        <TabsTrigger
+                          className="flex-none shrink-0 px-3"
+                          disabled={busy}
+                          key={page.id}
+                          value={page.id}
+                        >
+                          {t('pages.tabLabel', { index: index + 1 })}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    <ButtonGroup aria-label={t('pages.actionsAria')} className="shrink-0">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            aria-label={t('pages.add')}
+                            disabled={!canAddPage}
+                            onClick={() => {
+                              void handleAddPage()
+                            }}
+                            size="icon-sm"
+                            type="button"
+                            variant="outline"
                           >
-                            {t('pages.tabLabel', { index: index + 1 })}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                      <ButtonGroup aria-label={t('pages.actionsAria')} className="shrink-0">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label={t('pages.add')}
-                              disabled={!canAddPage}
-                              onClick={() => {
-                                void handleAddPage()
-                              }}
-                              size="icon-sm"
-                              type="button"
-                              variant="outline"
-                            >
-                              {isAddingPage ? <Spinner /> : <PlusIcon />}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom">{t('pages.add')}</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label={t('pages.duplicate')}
-                              disabled={!canDuplicatePage}
-                              onClick={() => {
-                                void handleDuplicatePage()
-                              }}
-                              size="icon-sm"
-                              type="button"
-                              variant="outline"
-                            >
-                              {isDuplicatingPage ? <Spinner /> : <CopyIcon />}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom">{t('pages.duplicate')}</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              aria-label={t('pages.delete')}
-                              disabled={!canDeletePage}
-                              onClick={() => {
-                                setDeleteTarget('page')
-                                setDeleteDialogOpen(true)
-                              }}
-                              size="icon-sm"
-                              type="button"
-                              variant="outline"
-                            >
-                              <Trash2Icon />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom">{t('pages.delete')}</TooltipContent>
-                        </Tooltip>
-                      </ButtonGroup>
-                    </div>
-                    <FieldDescription>
-                      {t('pages.selectedIndicator', {
-                        current: selectedPageIndex + 1,
-                        total: pages.length,
-                      })}
-                    </FieldDescription>
+                            {isAddingPage ? <Spinner /> : <PlusIcon />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('pages.add')}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            aria-label={t('pages.duplicate')}
+                            disabled={!canDuplicatePage}
+                            onClick={() => {
+                              void handleDuplicatePage()
+                            }}
+                            size="icon-sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            {isDuplicatingPage ? <Spinner /> : <CopyIcon />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('pages.duplicate')}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            aria-label={t('pages.delete')}
+                            disabled={!canDeletePage}
+                            onClick={() => {
+                              setDeleteTarget('page')
+                              setDeleteDialogOpen(true)
+                            }}
+                            size="icon-sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            <Trash2Icon />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('pages.delete')}</TooltipContent>
+                      </Tooltip>
+                    </ButtonGroup>
                   </div>
 
                   {pages.map((page) => (
-                    <TabsContent className="flex flex-col gap-5" key={page.id} value={page.id}>
+                    <TabsContent className="flex flex-col gap-5 pt-2" key={page.id} value={page.id}>
                       <InstagramItemPreview
                         busy={busy}
                         canDeleteVersion={canDeleteVersion}
@@ -794,7 +782,7 @@ export function InstagramItemDetail({
             </FieldGroup>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 bg-card pt-3 pb-1">
+          <div className="flex shrink-0 flex-col gap-3 pt-3 pb-1">
             <Separator />
             {footerError ? (
               <Alert variant="destructive">

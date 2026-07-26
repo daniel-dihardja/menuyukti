@@ -45,7 +45,7 @@ type InstagramItemsOverviewProps = {
 
 function OverviewSkeletonGrid() {
   return (
-    <ul aria-hidden className="grid min-h-0 grid-cols-3 gap-3">
+    <ul aria-hidden className="mx-auto grid w-1/2 min-w-0 grid-cols-3 gap-3">
       {Array.from({ length: 4 }, (_, index) => (
         <li key={index} className="min-w-0">
           <div className="flex flex-col overflow-hidden rounded-md border bg-background">
@@ -109,7 +109,7 @@ export function InstagramItemsOverview({
       ) : null}
 
       {loading ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pt-3">
           <span className="sr-only">{t('loading')}</span>
           <OverviewSkeletonGrid />
         </div>
@@ -134,7 +134,7 @@ export function InstagramItemsOverview({
           </EmptyContent>
         </Empty>
       ) : (
-        <ul className="grid min-h-0 flex-1 grid-cols-3 content-start gap-3 overflow-y-auto">
+        <ul className="mx-auto grid w-1/2 min-h-0 min-w-0 flex-1 grid-cols-3 content-start gap-3 overflow-y-auto pt-3">
           {items.map((item) => {
             const kindKey = `kind.${item.kind}` as 'kind.story' | 'kind.post' | 'kind.reel'
             const statusKey = `status.${item.status}` as 'status.draft' | 'status.ready'
@@ -162,9 +162,6 @@ export function InstagramItemsOverview({
                       ) : (
                         <InstagramItemDefaultImage kind={item.kind} />
                       )}
-                      <Badge className="absolute bottom-1.5 left-1.5 shadow-sm" variant="secondary">
-                        {kindLabel}
-                      </Badge>
                       {(item.pages?.length ?? 0) > 1 ? (
                         <Badge className="absolute top-1.5 left-1.5 shadow-sm" variant="outline">
                           {t('pages.countBadge', { count: item.pages.length })}
@@ -173,9 +170,10 @@ export function InstagramItemsOverview({
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-2.5">
                       <span className="line-clamp-2 font-medium text-sm leading-snug">{title}</span>
-                      <Badge className="w-fit" variant="outline">
-                        {statusLabel}
-                      </Badge>
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="secondary">{kindLabel}</Badge>
+                        <Badge variant="outline">{statusLabel}</Badge>
+                      </span>
                       {item.schedule ? (
                         <span className="line-clamp-2 text-muted-foreground text-xs">
                           {format.dateTime(new Date(item.schedule), {

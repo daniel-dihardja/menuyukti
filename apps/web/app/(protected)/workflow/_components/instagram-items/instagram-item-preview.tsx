@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon, Maximize2Icon, Trash2Icon, XIcon } f
 
 import { Button } from '@workspace/ui/components/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
-import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldDescription } from '@workspace/ui/components/field'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -117,7 +117,6 @@ export function InstagramItemPreview({
 
   return (
     <Field className="gap-1.5">
-      <FieldLabel>{t('generate.previewLabel')}</FieldLabel>
       <div
         className="mx-auto flex w-full max-w-[280px] items-center gap-1"
         onKeyDown={handlePreviewKeyDown}
