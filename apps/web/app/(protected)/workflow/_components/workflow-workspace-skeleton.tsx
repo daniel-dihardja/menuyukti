@@ -74,13 +74,7 @@ export function WorkflowTimelineSkeleton({ className }: { className?: string }) 
 
 export function WorkflowPreviewPanelSkeleton({ className }: { className?: string }) {
   return (
-    <div
-      aria-hidden
-      className={cn(
-        'flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-dashed bg-card',
-        className,
-      )}
-    >
+    <div aria-hidden className={cn('flex h-full min-h-0 flex-col overflow-hidden', className)}>
       <div className="flex shrink-0 flex-col gap-2 border-b px-4 py-4">
         <div className="flex items-center gap-2">
           <Skeleton className="size-5 shrink-0 rounded-sm" />

@@ -35,7 +35,7 @@ export function WorkflowPreviewPanelBody() {
     : null
 
   return (
-    <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
+    <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden border-0 bg-transparent py-0 shadow-none hover:border-transparent">
       {showMilestonePreview ? (
         <CardHeader className="shrink-0">
           <CardTitle
