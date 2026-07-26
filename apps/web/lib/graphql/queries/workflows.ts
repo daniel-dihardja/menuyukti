@@ -49,18 +49,6 @@ export type UpdateNodeData = {
   updateNode: AnyNode
 }
 
-export const CREATE_WORKFLOW_FROM_PAYLOAD_MUTATION = `
-  mutation CreateWorkflowFromPayload($locationId: Int!, $payload: JSON!, $analyticsRunId: Int) {
-    createWorkflowFromPayload(
-      locationId: $locationId
-      payload: $payload
-      analyticsRunId: $analyticsRunId
-    ) {
-${NODE_SELECTION_FIELDS}
-    }
-  }
-`
-
 export const NODES_QUERY = `
   query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int, $afterId: ID) {
     nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first, afterId: $afterId) {

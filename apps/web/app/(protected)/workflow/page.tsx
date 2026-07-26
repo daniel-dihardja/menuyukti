@@ -26,10 +26,7 @@ function WorkflowsListSkeleton() {
         </CardHeader>
         <div className="flex flex-col gap-6 px-5 py-6 sm:px-6">
           <Skeleton className="h-10 w-full max-w-md" />
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full sm:col-span-2 lg:col-span-1" />
-          </div>
+          <Skeleton className="h-10 w-full max-w-md" />
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
             <Skeleton className="h-12 w-full max-w-md" />
             <Skeleton className="h-11 w-44 shrink-0" />
