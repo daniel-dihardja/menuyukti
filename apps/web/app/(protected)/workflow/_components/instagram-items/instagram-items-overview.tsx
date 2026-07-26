@@ -2,14 +2,7 @@
 
 import { useState } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
-import {
-  ClapperboardIcon,
-  ImageIcon,
-  PlusIcon,
-  RectangleVerticalIcon,
-  SquarePenIcon,
-  Trash2Icon,
-} from 'lucide-react'
+import { PlusIcon, SquarePenIcon, Trash2Icon } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -37,6 +30,8 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import type { InstagramItemDto } from '@/lib/graphql/queries/instagram-items'
 
+import { InstagramItemDefaultImage } from './instagram-item-default-image'
+
 type InstagramItemsOverviewProps = {
   items: InstagramItemDto[]
   loading: boolean
@@ -46,12 +41,6 @@ type InstagramItemsOverviewProps = {
   onCreate: () => void
   onSelect: (itemId: string) => void
   onDelete: (itemId: string) => Promise<void>
-}
-
-function KindPreviewIcon({ kind }: { kind: string }) {
-  if (kind === 'story') return <RectangleVerticalIcon aria-hidden />
-  if (kind === 'reel') return <ClapperboardIcon aria-hidden />
-  return <ImageIcon aria-hidden />
 }
 
 function OverviewSkeletonGrid() {
@@ -166,12 +155,12 @@ export function InstagramItemsOverview({
                     onClick={() => onSelect(item.id)}
                     type="button"
                   >
-                    <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-muted/50 text-muted-foreground [&_svg:not([class*='size-'])]:size-8">
+                    <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden">
                       {item.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
                         <img alt={title} className="size-full object-cover" src={item.imageUrl} />
                       ) : (
-                        <KindPreviewIcon kind={item.kind} />
+                        <InstagramItemDefaultImage kind={item.kind} />
                       )}
                       <Badge className="absolute bottom-1.5 left-1.5 shadow-sm" variant="secondary">
                         {kindLabel}
@@ -204,7 +193,7 @@ export function InstagramItemsOverview({
                   </button>
                   <Button
                     aria-label={t('deleteRowAria', { title })}
-                    className="absolute top-1.5 right-1.5 size-7 bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
+                    className="absolute right-1.5 bottom-1.5 size-7 bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
                     disabled={deletingId !== null}
                     onClick={() => setPendingDeleteId(item.id)}
                     size="icon-sm"

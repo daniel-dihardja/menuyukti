@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { CopyIcon, ImageIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import { CopyIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
@@ -14,6 +14,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import type { InstagramItemPageDto } from '@/lib/graphql/queries/instagram-items'
 
+import { InstagramItemDefaultImage } from './instagram-item-default-image'
 import type { InstagramItemKind } from './use-instagram-items'
 
 type InstagramItemPagesStripProps = {
@@ -107,10 +108,10 @@ export function InstagramItemPagesStrip({
                     // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
                     <img alt="" className="size-full object-cover" src={thumb} />
                   ) : (
-                    <span className="flex size-full flex-col items-center justify-center gap-1 text-muted-foreground">
-                      <ImageIcon aria-hidden />
-                      <span className="font-medium text-xs leading-none">{index + 1}</span>
-                    </span>
+                    <InstagramItemDefaultImage
+                      className="[&_svg:not([class*='size-'])]:size-4"
+                      kind={kind}
+                    />
                   )}
                   <Badge
                     className="absolute top-1 left-1 min-w-5 justify-center px-1"
