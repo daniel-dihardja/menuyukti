@@ -114,7 +114,7 @@ function WorkflowChatPanelSkeleton({ className }: { className?: string }) {
         <Skeleton className="ml-auto h-12 w-3/5 max-w-xs rounded-lg" />
         <Skeleton className="h-16 w-4/5 max-w-sm rounded-lg" />
       </div>
-      <div className="flex shrink-0 flex-col gap-3 p-4">
+      <div className="flex shrink-0 flex-col gap-3 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4">
         <Skeleton className="h-20 w-full rounded-lg" />
         <div className="flex items-center justify-between gap-2">
           <Skeleton className="h-9 w-32" />
@@ -132,16 +132,10 @@ export function WorkflowWorkspaceSkeleton({ className }: { className?: string })
       aria-live="polite"
       className={cn('flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden', className)}
     >
-      {/* Mobile: preview + sticky assistant bar (milestones column hidden) */}
+      {/* Mobile: chat main (milestones column hidden) */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:hidden">
-        <div className="min-h-0 flex-1 overflow-hidden p-2">
-          <WorkflowPreviewPanelSkeleton className="h-full" />
-        </div>
-        <div
-          aria-hidden
-          className="shrink-0 border-t bg-background px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-        >
-          <Skeleton className="h-11 w-full rounded-lg" />
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <WorkflowSidePanelSkeleton />
         </div>
       </div>
 

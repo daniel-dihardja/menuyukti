@@ -813,8 +813,9 @@ export function InstagramItemDetail({
                         </Alert>
                       ) : null}
 
-                      <div className="flex justify-end">
+                      <div className="flex sm:justify-end">
                         <Button
+                          className="w-full sm:w-auto"
                           disabled={!canGenerate}
                           onClick={() => {
                             void handleGenerate()

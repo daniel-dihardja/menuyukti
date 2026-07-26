@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { WorkflowWorkspaceSkeleton } from '../_components/workflow-workspace-skeleton'
 
@@ -14,7 +16,10 @@ export default async function WorkflowDetailLoading() {
       title={title}
       breadcrumbs={[{ label: tWorkflows('title'), href: routes.workflows.list }, { label: title }]}
       contentWidth="full"
-      mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
+      mainClassName={cn(
+        ANALYTICS_REPORT_SHELL_MAIN_CLASS,
+        'flex min-h-0 min-h-[24rem] w-full flex-1 flex-col',
+      )}
     >
       <WorkflowWorkspaceSkeleton className="min-h-0 flex-1" />
     </AnalyticsPageShell>

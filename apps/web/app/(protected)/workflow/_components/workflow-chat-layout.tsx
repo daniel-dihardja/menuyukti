@@ -9,6 +9,7 @@ import {
   ResizablePanelGroup,
 } from '@workspace/ui/components/resizable'
 
+import { WorkflowMobileArtifactProvider } from './workflow-mobile-artifact-context'
 import { WorkflowMobileArtifactSheet } from './workflow-mobile-artifact-sheet'
 
 export type WorkflowChatLayoutProps = {
@@ -21,7 +22,7 @@ export type WorkflowChatLayoutProps = {
   onMobileArtifactOpenChange: (open: boolean) => void
   /** Optional mobile artifact sheet title (e.g. selected milestone). */
   mobileArtifactTitle?: string | null
-  /** Optional mobile artifact bar hint. */
+  /** Optional mobile artifact open-button hint / tooltip. */
   mobileArtifactHint?: string | null
 }
 
@@ -38,17 +39,21 @@ export function WorkflowChatLayout({
 
   if (!isDesktop) {
     return (
-      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
-        <WorkflowMobileArtifactSheet
-          hint={mobileArtifactHint}
-          onOpenChange={onMobileArtifactOpenChange}
-          open={mobileArtifactOpen}
-          title={mobileArtifactTitle}
-        >
-          {previewPane}
-        </WorkflowMobileArtifactSheet>
-      </div>
+      <WorkflowMobileArtifactProvider
+        hint={mobileArtifactHint}
+        openArtifact={() => onMobileArtifactOpenChange(true)}
+      >
+        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
+          <WorkflowMobileArtifactSheet
+            onOpenChange={onMobileArtifactOpenChange}
+            open={mobileArtifactOpen}
+            title={mobileArtifactTitle}
+          >
+            {previewPane}
+          </WorkflowMobileArtifactSheet>
+        </div>
+      </WorkflowMobileArtifactProvider>
     )
   }
 

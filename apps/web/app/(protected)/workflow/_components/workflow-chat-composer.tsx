@@ -17,7 +17,7 @@ import {
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
-import { PaperclipIcon } from 'lucide-react'
+import { PanelsTopLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 
@@ -28,6 +28,7 @@ import {
   useWorkflowChatMessages,
 } from './workflow-chat-context'
 import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
+import { useWorkflowMobileArtifact } from './workflow-mobile-artifact-context'
 
 function WorkflowChatAttachmentStrip() {
   const attachments = usePromptInputAttachments()
@@ -68,27 +69,6 @@ function WorkflowChatAttachmentStrip() {
   )
 }
 
-function WorkflowChatAttachButton({ disabled }: { disabled: boolean }) {
-  const t = useTranslations('analytics.workflows.chat')
-  const attachments = usePromptInputAttachments()
-  const { pendingMediaAttachments } = useWorkflowChatComposerState()
-  const atLimit = attachments.files.length + pendingMediaAttachments.length >= CHAT_MAX_IMAGES
-
-  return (
-    <PromptInputButton
-      aria-label={t('attachImageAriaLabel')}
-      disabled={disabled || atLimit}
-      onClick={() => attachments.openFileDialog()}
-      size="sm"
-      tooltip={atLimit ? t('attachImageMaxReachedTooltip') : t('attachImageTooltip')}
-      type="button"
-      variant="ghost"
-    >
-      <PaperclipIcon className="size-4" />
-    </PromptInputButton>
-  )
-}
-
 function WorkflowChatComposerSubmit() {
   const t = useTranslations('analytics.workflows.chat')
   const { text, pendingMediaAttachments } = useWorkflowChatComposerState()
@@ -113,6 +93,31 @@ function WorkflowChatComposerSubmit() {
   )
 }
 
+function WorkflowMobilePreviewOpenButton() {
+  const t = useTranslations('analytics.workflows.chat')
+  const mobileArtifact = useWorkflowMobileArtifact()
+
+  if (!mobileArtifact) {
+    return null
+  }
+
+  return (
+    <PromptInputButton
+      aria-controls="workflow-mobile-artifact"
+      aria-label={t('mobileArtifactOpenAriaLabel')}
+      className="h-9 shrink-0 gap-1.5 px-2.5 font-medium text-muted-foreground"
+      onClick={mobileArtifact.openArtifact}
+      size="sm"
+      tooltip={mobileArtifact.hint ?? t('mobileArtifactEmptyHint')}
+      type="button"
+      variant="ghost"
+    >
+      <PanelsTopLeft className="size-4" />
+      <span className="text-sm">{t('mobileArtifactOpenLabel')}</span>
+    </PromptInputButton>
+  )
+}
+
 export function WorkflowChatComposer() {
   const t = useTranslations('analytics.workflows.chat')
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
@@ -132,7 +137,7 @@ export function WorkflowChatComposer() {
   } = useWorkflowChatActions()
 
   return (
-    <div className="shrink-0 p-4">
+    <div className="shrink-0 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
       <PromptInput
         accept="image/jpeg,image/png,image/webp,image/gif"
         globalDrop
@@ -163,7 +168,7 @@ export function WorkflowChatComposer() {
         </WorkflowChatComposerMenus>
         <PromptInputFooter>
           <PromptInputTools>
-            <WorkflowChatAttachButton disabled={isChatBusy} />
+            <WorkflowMobilePreviewOpenButton />
             <ChatGatewayModelSelect
               disabled={isChatBusy}
               onValueChange={setSelectedChatModel}
