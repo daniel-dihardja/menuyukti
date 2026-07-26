@@ -1,6 +1,5 @@
 import { MenuyuktiSignIn } from '@/components/clerk/menuyukti-sign-in'
 import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'

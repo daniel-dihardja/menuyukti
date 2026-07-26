@@ -1,7 +1,5 @@
 import { MenuyuktiSignUp } from '@/components/clerk/menuyukti-sign-up'
 import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
-import { Button } from '@workspace/ui/components/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
