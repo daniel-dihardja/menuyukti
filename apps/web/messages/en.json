@@ -24,6 +24,25 @@
       "runningDetail": "Composing prompt and running Leonardo",
       "done": "Generated post image",
       "error": "Image generation failed"
+    },
+    "getChartData": {
+      "runningGeneric": "Reading your sales charts…",
+      "doneGeneric": "Reviewed sales charts",
+      "error": "Couldn’t load chart data",
+      "charts": {
+        "venue_slot_strength_heatmap": {
+          "running": "Checking venue rhythm, peak slots, and posting frequency…",
+          "done": "Reviewed venue slot strength"
+        },
+        "menu_item_heatmap": {
+          "running": "Checking which menu items sell best and when…",
+          "done": "Reviewed menu heatmap"
+        },
+        "pair_lift_matrix_heatmap": {
+          "running": "Checking menu combos and pair-lift opportunities…",
+          "done": "Reviewed pair lift matrix"
+        }
+      }
     }
   },
   "appShell": {

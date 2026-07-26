@@ -16,6 +16,8 @@ import {
   ToolOutput,
 } from '@workspace/ui/components/ai-elements/tool'
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { CheckIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { memo } from 'react'
@@ -25,6 +27,10 @@ import {
   joinReasoningText,
   partitionMessageParts,
 } from '@/lib/chat/partition-message-parts'
+import {
+  isWorkflowVisualizationId,
+  type WorkflowVisualizationId,
+} from '@/lib/workflow/workflow-visualization-ids'
 import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
 
 function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string {
@@ -32,6 +38,25 @@ function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string 
     return part.toolName
   }
   return part.type.split('-').slice(1).join('-')
+}
+
+function resolveChartIdFromToolInput(input: unknown): WorkflowVisualizationId | null {
+  if (!input || typeof input !== 'object' || !('chart_id' in input)) {
+    return null
+  }
+  const chartId = (input as { chart_id?: unknown }).chart_id
+  return typeof chartId === 'string' && isWorkflowVisualizationId(chartId) ? chartId : null
+}
+
+function toolOutputLooksLikeError(part: ToolUIPart<UITools> | DynamicToolUIPart): boolean {
+  if (part.state === 'output-error' || part.state === 'output-denied') {
+    return true
+  }
+  if (!('output' in part) || part.output == null) {
+    return false
+  }
+  const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
+  return output.startsWith('Error')
 }
 
 function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
@@ -100,6 +125,53 @@ function GenerateInstagramPostImageToolBlock({
   )
 }
 
+function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
+  const t = useTranslations('chatTools.getChartData')
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const isError = toolOutputLooksLikeError(part)
+  const chartId = resolveChartIdFromToolInput('input' in part ? part.input : undefined)
+
+  let message: string
+  if (isError) {
+    message = t('error')
+  } else if (chartId === 'venue_slot_strength_heatmap') {
+    message = isInFlight
+      ? t('charts.venue_slot_strength_heatmap.running')
+      : t('charts.venue_slot_strength_heatmap.done')
+  } else if (chartId === 'menu_item_heatmap') {
+    message = isInFlight
+      ? t('charts.menu_item_heatmap.running')
+      : t('charts.menu_item_heatmap.done')
+  } else if (chartId === 'pair_lift_matrix_heatmap') {
+    message = isInFlight
+      ? t('charts.pair_lift_matrix_heatmap.running')
+      : t('charts.pair_lift_matrix_heatmap.done')
+  } else {
+    message = isInFlight ? t('runningGeneric') : t('doneGeneric')
+  }
+
+  return (
+    <div
+      aria-live="polite"
+      className="flex items-center gap-2 text-muted-foreground text-sm"
+      role="status"
+    >
+      {isInFlight ? (
+        <Spinner className="size-3.5 shrink-0" />
+      ) : isError ? (
+        <XIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
+      ) : (
+        <CheckIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+      )}
+      {isInFlight ? (
+        <Shimmer className="text-sm">{message}</Shimmer>
+      ) : (
+        <span className={isError ? 'text-destructive' : undefined}>{message}</span>
+      )}
+    </div>
+  )
+}
+
 function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
   const toolName = resolveToolName(part)
   if (toolName === 'search_web') {
@@ -107,6 +179,9 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
   }
   if (toolName === 'generate_instagram_post_image') {
     return <GenerateInstagramPostImageToolBlock part={part} />
+  }
+  if (toolName === 'get_chart_data') {
+    return <GetChartDataToolBlock part={part} />
   }
 
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
