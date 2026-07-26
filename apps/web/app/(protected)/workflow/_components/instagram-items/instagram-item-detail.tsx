@@ -1,11 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useId, useMemo, useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowLeftIcon, PlusIcon, SparklesIcon, XIcon } from 'lucide-react'
-import { toast } from 'sonner'
+import { ArrowLeftIcon, CopyIcon, PlusIcon, SparklesIcon, Trash2Icon, XIcon } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -20,11 +17,9 @@ import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { ButtonGroup } from '@workspace/ui/components/button-group'
-import { Checkbox } from '@workspace/ui/components/checkbox'
 import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -41,32 +36,29 @@ import {
 } from '@workspace/ui/components/select'
 import { Separator } from '@workspace/ui/components/separator'
 import { Spinner } from '@workspace/ui/components/spinner'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
-import { TooltipProvider } from '@workspace/ui/components/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip'
 
-import { PostCreatorImagePicker } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-image-picker'
-import { PostCreatorReferenceThumbnails } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-reference-thumbnails'
-import { StyleUsageGuide } from '@/components/styles/style-usage-guide'
+import { toast } from 'sonner'
+
+import { createCalendarEntry } from '@/lib/calendar/client-api'
 import type {
   InstagramItemDto,
   InstagramItemPageDto,
   InstagramItemPageMediaVersionDto,
 } from '@/lib/graphql/queries/instagram-items'
 import { mediaDownloadHref } from '@/lib/media/client-api'
-import { parsePostMediaFilename } from '@/lib/posts/parse-post-media-filename'
-import {
-  DEFAULT_LEONARDO_POST_MODEL,
-  getLeonardoPostModelMessageKey,
-  isLeonardoPostModelId,
-  LEONARDO_POST_MODEL_IDS,
-  type LeonardoPostModelId,
-} from '@/lib/posts/leonardo-post-models'
+import { DEFAULT_LEONARDO_POST_MODEL } from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
-import { routes } from '@/lib/routes'
-import { listStyles, type Style } from '@/lib/styles/client-api'
 
-import { InstagramItemPagesStrip } from './instagram-item-pages-strip'
+import { useTimelineWorkspaceState } from '../timeline-context'
 import { InstagramItemPreview } from './instagram-item-preview'
 import {
   toFormValues,
@@ -75,7 +67,6 @@ import {
   type InstagramItemStatus,
 } from './use-instagram-items'
 
-const STYLE_NONE = '__none__'
 const MAX_ITEM_PAGES = 10
 
 type InstagramItemDetailProps = {
@@ -191,28 +182,15 @@ export function InstagramItemDetail({
   onGenerated,
 }: InstagramItemDetailProps) {
   const t = useTranslations('analytics.workflows.instagramItems')
-  const tModel = useTranslations('postCreator.prompt.model')
-  const tPicker = useTranslations('postCreator.prompt.picker')
-  const tRefs = useTranslations('postCreator.prompt.references')
-  const pathname = usePathname()
-  const modelFieldId = useId()
-  const modelBlurbId = useId()
-  const styleFieldId = useId()
+  const { locationId } = useTimelineWorkspaceState()
   const kindFieldId = useId()
   const statusFieldId = useId()
-  const useCurrentPreviewRefId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
   const [referenceImages, setReferenceImages] = useState<PostCreatorReferenceImage[]>(() =>
     refsFromItem(item),
   )
-  const [styles, setStyles] = useState<Style[]>([])
-  const [stylesLoading, setStylesLoading] = useState(false)
-  const [generationModel, setGenerationModel] = useState<LeonardoPostModelId>(
-    DEFAULT_LEONARDO_POST_MODEL,
-  )
   const [isGenerating, setIsGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
-  const [useCurrentPreviewAsReference, setUseCurrentPreviewAsReference] = useState(true)
   const initialSync = syncFromItem(item)
   const [pages, setPages] = useState<InstagramItemPageDto[]>(initialSync.pages)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialSync.selectedPageId)
@@ -227,6 +205,7 @@ export function InstagramItemDetail({
   const [isAddingPage, setIsAddingPage] = useState(false)
   const [isDuplicatingPage, setIsDuplicatingPage] = useState(false)
   const [isDeletingPage, setIsDeletingPage] = useState(false)
+  const [isAddingToCalendar, setIsAddingToCalendar] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<'version' | 'page'>('version')
 
@@ -245,41 +224,7 @@ export function InstagramItemDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: prefer sticky page id
   }, [item])
 
-  useEffect(() => {
-    let cancelled = false
-    setStylesLoading(true)
-    void listStyles()
-      .then((list) => {
-        if (cancelled) return
-        setStyles(list)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setStyles([])
-          toast.error(t('generate.style.loadError'))
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setStylesLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [t])
-
-  const selectedStyle = styles.find((style) => style.id === values.styleId) ?? null
-  const createStyleHref = `${routes.igStudioStyleNew}?returnTo=${encodeURIComponent(pathname || '')}`
-
-  const selectedNames = useMemo(
-    () => new Set(referenceImages.map((image) => image.name)),
-    [referenceImages],
-  )
-
   const selectedPage = pages.find((page) => page.id === selectedPageId) ?? pages[0]
-  const selectedPageIndex = Math.max(
-    0,
-    pages.findIndex((page) => page.id === (selectedPage?.id ?? selectedPageId)),
-  )
   const pagePrompt = selectedPageId ? (pagePromptsById[selectedPageId] ?? '') : ''
   const busy =
     saving ||
@@ -288,11 +233,16 @@ export function InstagramItemDetail({
     isDeletingVersion ||
     isAddingPage ||
     isDuplicatingPage ||
-    isDeletingPage
+    isDeletingPage ||
+    isAddingToCalendar
+  const canAddToCalendar =
+    !busy &&
+    Boolean(locationId) &&
+    values.title.trim().length > 0 &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(values.schedule.trim())
   const canGenerate = pagePrompt.trim().length > 0 && !busy && Boolean(selectedPageId)
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
   const visibleMediaS3Key = previewVersion?.mediaS3Key || null
-  const hasVisiblePreviousResult = parsePostMediaFilename(visibleMediaS3Key) != null
   const canDeleteVersion = Boolean(previewVersion?.mediaS3Key) && imageVersions.length > 0 && !busy
   const canAddPage = !busy && pages.length > 0 && pages.length < MAX_ITEM_PAGES
   const canDuplicatePage = canAddPage && Boolean(selectedPageId)
@@ -303,17 +253,42 @@ export function InstagramItemDetail({
     !selectedPage?.mediaS3Key &&
     (selectedPage?.mediaVersions?.length ?? 0) === 0
   const headerTitle = values.title.trim() ? values.title : t('untitled')
-  const footerError = actionError || generateError
-
-  function setSelectedPagePrompt(next: string) {
-    if (!selectedPageId) return
-    setPagePromptsById((prev) => ({ ...prev, [selectedPageId]: next }))
-  }
+  const footerError = actionError
 
   function valuesWithRefs(): InstagramItemFormValues {
     return {
       ...values,
       referenceImages: persistableRefs(referenceImages),
+    }
+  }
+
+  async function handleAddToCalendar() {
+    const schedule = values.schedule.trim()
+    const title = values.title.trim()
+    const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/.exec(schedule)
+    if (!locationId || !title || !match) {
+      toast.error(t('addToCalendarNeedSchedule'))
+      return
+    }
+    setIsAddingToCalendar(true)
+    try {
+      await createCalendarEntry({
+        locationId,
+        title,
+        date: match[1]!,
+        time: match[2]!,
+        description: '',
+        sourceRef: {
+          type: 'instagram_item',
+          workflowId: String(workflowId),
+          itemId: String(item.id),
+        },
+      })
+      toast.success(t('addToCalendarSuccess'))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('addToCalendarError'))
+    } finally {
+      setIsAddingToCalendar(false)
     }
   }
 
@@ -358,8 +333,7 @@ export function InstagramItemDetail({
     const { references, tooManyReferences } = resolveGenerationReferences({
       referenceImages,
       previewMediaS3Key: visibleMediaS3Key,
-      includePreviousResult: useCurrentPreviewAsReference,
-      styleSelected: values.styleId != null,
+      styleSelected: false,
       solidBackgroundEnabled: false,
     })
 
@@ -377,10 +351,9 @@ export function InstagramItemDetail({
         body: JSON.stringify({
           pageId: selectedPageId,
           prompt,
-          model: generationModel,
+          model: DEFAULT_LEONARDO_POST_MODEL,
           referenceImages: persistedRefs,
           ...(references.length > 0 ? { references } : {}),
-          styleId: values.styleId,
         }),
       })
       const payload = (await res.json().catch(() => ({}))) as {
@@ -599,224 +572,7 @@ export function InstagramItemDetail({
         >
           <div className="min-h-0 flex-1 overflow-y-auto pr-0.5 pt-2">
             <FieldGroup className="gap-5 pb-4">
-              <FieldSeparator className="mt-1">{t('sections.generate')}</FieldSeparator>
-
-              <InstagramItemPagesStrip
-                busy={busy}
-                canAddPage={canAddPage}
-                canDeletePage={canDeletePage}
-                canDuplicatePage={canDuplicatePage}
-                isAddingPage={isAddingPage}
-                isDuplicatingPage={isDuplicatingPage}
-                kind={values.kind}
-                onAddPage={() => {
-                  void handleAddPage()
-                }}
-                onDuplicatePage={() => {
-                  void handleDuplicatePage()
-                }}
-                onRequestDeletePage={() => {
-                  setDeleteTarget('page')
-                  setDeleteDialogOpen(true)
-                }}
-                onSelectPage={selectPage}
-                pages={pages}
-                selectedPageId={selectedPageId}
-              />
-
-              {pages.length > 0 ? (
-                <FieldSeparator>
-                  {t('pages.workspaceHeading', {
-                    current: selectedPageIndex + 1,
-                    total: pages.length,
-                  })}
-                </FieldSeparator>
-              ) : null}
-
-              <InstagramItemPreview
-                busy={busy}
-                canDeleteVersion={canDeleteVersion}
-                committedIndex={committedVersionIndex}
-                isCommitting={isCommitting}
-                isGenerating={isGenerating}
-                kind={values.kind}
-                onCommit={() => {
-                  void handleCommitVersion()
-                }}
-                onPreviewIndexChange={handlePreviewIndexChange}
-                onRequestDelete={() => {
-                  setDeleteTarget('version')
-                  setDeleteDialogOpen(true)
-                }}
-                previewIndex={previewVersionIndex}
-                versions={imageVersions}
-              />
-
-              <Field>
-                <FieldLabel htmlFor="ig-item-visual-brief">
-                  {t('fields.pageVisualBrief')}
-                </FieldLabel>
-                <FieldDescription>{t('generate.pageVisualBriefHint')}</FieldDescription>
-                <PostCreatorImagePicker
-                  disabled={busy || !selectedPageId}
-                  emptyLabel={tPicker('empty')}
-                  maxReachedLabel={tPicker('maxReached')}
-                  onAddReference={(photo) => {
-                    setReferenceImages((prev) => {
-                      if (prev.some((image) => image.name === photo.name)) return prev
-                      return [...prev, photo]
-                    })
-                  }}
-                  onUploadError={(message) => toast.error(message || tPicker('uploadError'))}
-                  onValueChange={setSelectedPagePrompt}
-                  pickerAriaLabel={tPicker('ariaLabel')}
-                  selectedNames={selectedNames}
-                  uploadLabel={tPicker('upload')}
-                  uploadingLabel={tPicker('uploading')}
-                  value={pagePrompt}
-                >
-                  <Textarea
-                    disabled={busy || !selectedPageId}
-                    id="ig-item-visual-brief"
-                    onChange={(event) => setSelectedPagePrompt(event.target.value)}
-                    placeholder={t('generate.visualBriefPlaceholder')}
-                    rows={4}
-                    value={pagePrompt}
-                  />
-                </PostCreatorImagePicker>
-                <PostCreatorReferenceThumbnails
-                  ariaLabel={tRefs('ariaLabel')}
-                  disabled={busy}
-                  images={referenceImages}
-                  includeLabel={tRefs('include')}
-                  indexLabel={(index) => tRefs('indexLabel', { index })}
-                  onRemove={(name) => {
-                    setReferenceImages((prev) => prev.filter((image) => image.name !== name))
-                  }}
-                  onToggleEnabled={(name, enabled) => {
-                    setReferenceImages((prev) =>
-                      prev.map((image) => (image.name === name ? { ...image, enabled } : image)),
-                    )
-                  }}
-                  removeLabel={tRefs('remove')}
-                />
-              </Field>
-
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor={modelFieldId}>{tModel('label')}</FieldLabel>
-                  <Select
-                    disabled={busy}
-                    onValueChange={(value) => {
-                      if (isLeonardoPostModelId(value)) {
-                        setGenerationModel(value)
-                      }
-                    }}
-                    value={generationModel}
-                  >
-                    <SelectTrigger
-                      aria-describedby={modelBlurbId}
-                      aria-label={tModel('label')}
-                      className="w-full"
-                      id={modelFieldId}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {LEONARDO_POST_MODEL_IDS.map((modelId) => (
-                          <SelectItem key={modelId} value={modelId}>
-                            {tModel(`options.${getLeonardoPostModelMessageKey(modelId)}.name`)}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription id={modelBlurbId}>
-                    {tModel(`options.${getLeonardoPostModelMessageKey(generationModel)}.blurb`)}
-                  </FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor={styleFieldId}>{t('generate.style.label')}</FieldLabel>
-                  <Select
-                    disabled={busy || stylesLoading}
-                    onValueChange={(value) => {
-                      if (value === STYLE_NONE) {
-                        setValues((prev) => ({ ...prev, styleId: null }))
-                        return
-                      }
-                      const next = Number(value)
-                      if (Number.isInteger(next) && next > 0) {
-                        setValues((prev) => ({ ...prev, styleId: next }))
-                      }
-                    }}
-                    value={values.styleId != null ? String(values.styleId) : STYLE_NONE}
-                  >
-                    <SelectTrigger
-                      aria-label={t('generate.style.label')}
-                      className="w-full"
-                      id={styleFieldId}
-                    >
-                      {selectedStyle ? (
-                        <span className="flex min-w-0 items-center gap-2">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                          <img
-                            alt=""
-                            className="size-6 shrink-0 rounded object-cover"
-                            src={mediaDownloadHref(selectedStyle.referenceImageName)}
-                          />
-                          <span className="truncate">
-                            {selectedStyle.isDefault
-                              ? `${selectedStyle.name} (${t('generate.style.defaultSuffix')})`
-                              : selectedStyle.name}
-                          </span>
-                        </span>
-                      ) : (
-                        <SelectValue placeholder={t('generate.style.placeholder')} />
-                      )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value={STYLE_NONE}>{t('generate.style.none')}</SelectItem>
-                        {styles.map((style) => (
-                          <SelectItem key={style.id} value={String(style.id)}>
-                            <span className="flex items-center gap-2">
-                              {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
-                              <img
-                                alt=""
-                                className="size-6 shrink-0 rounded object-cover"
-                                src={mediaDownloadHref(style.referenceImageName)}
-                              />
-                              <span>
-                                {style.isDefault
-                                  ? `${style.name} (${t('generate.style.defaultSuffix')})`
-                                  : style.name}
-                              </span>
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription>{t('generate.style.description')}</FieldDescription>
-                </Field>
-              </div>
-
-              {selectedStyle ? <StyleUsageGuide spec={selectedStyle.spec} /> : null}
-              <div className="flex flex-wrap gap-2">
-                <Button asChild disabled={busy} size="sm" type="button" variant="outline">
-                  <Link href={createStyleHref}>
-                    <PlusIcon data-icon="inline-start" />
-                    {t('generate.style.create')}
-                  </Link>
-                </Button>
-                <Button asChild disabled={busy} size="sm" type="button" variant="ghost">
-                  <Link href={routes.igStudioStyles}>{t('generate.style.manage')}</Link>
-                </Button>
-              </div>
-
-              <FieldSeparator>{t('sections.content')}</FieldSeparator>
+              <FieldSeparator className="mt-1">{t('sections.content')}</FieldSeparator>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Field>
@@ -916,17 +672,6 @@ export function InstagramItemDetail({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="ig-item-hook">{t('fields.hook')}</FieldLabel>
-                <Textarea
-                  disabled={busy}
-                  id="ig-item-hook"
-                  onChange={(event) => setValues((prev) => ({ ...prev, hook: event.target.value }))}
-                  rows={2}
-                  value={values.hook}
-                />
-              </Field>
-
-              <Field>
                 <FieldLabel htmlFor="ig-item-caption">{t('fields.caption')}</FieldLabel>
                 <Textarea
                   disabled={busy}
@@ -938,60 +683,191 @@ export function InstagramItemDetail({
                   value={values.caption}
                 />
               </Field>
+
+              <FieldSeparator>{t('pages.label')}</FieldSeparator>
+
+              {pages.length > 0 && selectedPageId ? (
+                <Tabs
+                  className="gap-6"
+                  onValueChange={(pageId) => {
+                    selectPage(pageId)
+                  }}
+                  value={selectedPageId}
+                >
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <TabsList
+                      className="w-fit max-w-full min-w-0 shrink justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+                      variant="line"
+                    >
+                      {pages.map((page, index) => (
+                        <TabsTrigger
+                          className="flex-none shrink-0 px-3"
+                          disabled={busy}
+                          key={page.id}
+                          value={page.id}
+                        >
+                          {t('pages.tabLabel', { index: index + 1 })}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    <ButtonGroup aria-label={t('pages.actionsAria')} className="shrink-0">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            aria-label={t('pages.add')}
+                            disabled={!canAddPage}
+                            onClick={() => {
+                              void handleAddPage()
+                            }}
+                            size="icon-sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            {isAddingPage ? <Spinner /> : <PlusIcon />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('pages.add')}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            aria-label={t('pages.duplicate')}
+                            disabled={!canDuplicatePage}
+                            onClick={() => {
+                              void handleDuplicatePage()
+                            }}
+                            size="icon-sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            {isDuplicatingPage ? <Spinner /> : <CopyIcon />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('pages.duplicate')}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            aria-label={t('pages.delete')}
+                            disabled={!canDeletePage}
+                            onClick={() => {
+                              setDeleteTarget('page')
+                              setDeleteDialogOpen(true)
+                            }}
+                            size="icon-sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            <Trash2Icon />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">{t('pages.delete')}</TooltipContent>
+                      </Tooltip>
+                    </ButtonGroup>
+                  </div>
+
+                  {pages.map((page) => (
+                    <TabsContent className="flex flex-col gap-5 pt-2" key={page.id} value={page.id}>
+                      <InstagramItemPreview
+                        busy={busy}
+                        canDeleteVersion={canDeleteVersion}
+                        committedIndex={committedVersionIndex}
+                        isCommitting={isCommitting}
+                        isGenerating={isGenerating}
+                        kind={values.kind}
+                        onCommit={() => {
+                          void handleCommitVersion()
+                        }}
+                        onPreviewIndexChange={handlePreviewIndexChange}
+                        onRequestDelete={() => {
+                          setDeleteTarget('version')
+                          setDeleteDialogOpen(true)
+                        }}
+                        previewIndex={previewVersionIndex}
+                        versions={imageVersions}
+                      />
+
+                      <Field>
+                        <FieldLabel htmlFor={`ig-item-page-content-${page.id}`}>
+                          {t('fields.pageContent')}
+                        </FieldLabel>
+                        <FieldDescription>{t('fields.pageContentHint')}</FieldDescription>
+                        <Textarea
+                          disabled={busy}
+                          id={`ig-item-page-content-${page.id}`}
+                          onChange={(event) => {
+                            setPagePromptsById((prev) => ({
+                              ...prev,
+                              [page.id]: event.target.value,
+                            }))
+                          }}
+                          placeholder={t('fields.pageContentPlaceholder')}
+                          rows={4}
+                          value={pagePromptsById[page.id] ?? ''}
+                        />
+                      </Field>
+
+                      {generateError ? (
+                        <Alert variant="destructive">
+                          <AlertDescription>{generateError}</AlertDescription>
+                        </Alert>
+                      ) : null}
+
+                      <div className="flex sm:justify-end">
+                        <Button
+                          className="w-full sm:w-auto"
+                          disabled={!canGenerate}
+                          onClick={() => {
+                            void handleGenerate()
+                          }}
+                          size="sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          {isGenerating ? (
+                            <Spinner data-icon="inline-start" />
+                          ) : (
+                            <SparklesIcon data-icon="inline-start" />
+                          )}
+                          {isGenerating ? t('generate.generating') : t('generate.button')}
+                        </Button>
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              ) : (
+                <Alert>
+                  <AlertDescription>{t('pages.empty')}</AlertDescription>
+                </Alert>
+              )}
             </FieldGroup>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 bg-card pt-3 pb-1">
+          <div className="flex shrink-0 flex-col gap-3 pt-3 pb-1">
             <Separator />
             {footerError ? (
               <Alert variant="destructive">
                 <AlertDescription>{footerError}</AlertDescription>
               </Alert>
             ) : null}
-            <Field
-              className="rounded-md border border-border/60 bg-muted/30 px-3 py-2.5"
-              data-disabled={!hasVisiblePreviousResult || busy ? true : undefined}
-              orientation="horizontal"
-            >
-              <Checkbox
-                checked={useCurrentPreviewAsReference && hasVisiblePreviousResult}
-                disabled={!hasVisiblePreviousResult || busy}
-                id={useCurrentPreviewRefId}
-                onCheckedChange={(checked) => {
-                  setUseCurrentPreviewAsReference(checked === true)
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                className="sm:flex-1"
+                disabled={!canAddToCalendar}
+                onClick={() => {
+                  void handleAddToCalendar()
                 }}
-              />
-              <FieldContent className="gap-0.5">
-                <FieldLabel htmlFor={useCurrentPreviewRefId}>
-                  {t('generate.useCurrentPreviewAsReference')}
-                </FieldLabel>
-                <FieldDescription>
-                  {hasVisiblePreviousResult
-                    ? t('generate.useCurrentPreviewAsReferenceHint')
-                    : t('generate.useCurrentPreviewAsReferenceUnavailable')}
-                </FieldDescription>
-              </FieldContent>
-            </Field>
-            <ButtonGroup className="w-full [&>*]:flex-1">
-              <Button disabled={busy} type="submit" variant="outline">
+                type="button"
+                variant="outline"
+              >
+                {isAddingToCalendar ? <Spinner data-icon="inline-start" /> : null}
+                {t('addToCalendar')}
+              </Button>
+              <Button className="sm:flex-1" disabled={busy} type="submit">
                 {saving ? <Spinner data-icon="inline-start" /> : null}
                 {t('saveButton')}
               </Button>
-              <Button
-                disabled={!canGenerate}
-                onClick={() => {
-                  void handleGenerate()
-                }}
-                type="button"
-              >
-                {isGenerating ? (
-                  <Spinner data-icon="inline-start" />
-                ) : (
-                  <SparklesIcon data-icon="inline-start" />
-                )}
-                {isGenerating ? t('generate.generating') : t('generate.button')}
-              </Button>
-            </ButtonGroup>
+            </div>
           </div>
         </form>
 

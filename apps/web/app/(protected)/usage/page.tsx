@@ -7,13 +7,6 @@ import { PageHeading } from '@/components/page-heading'
 import { loadAiGatewayUsage } from '@/lib/ai-gateway/usage'
 import { requireMenuyuktiAdmin } from '@/lib/menuyukti-role-server'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   Table,
@@ -36,11 +29,11 @@ function UsageDataSkeleton() {
   return (
     <div className="flex flex-col gap-6">
       <Skeleton className="h-4 w-64" />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Skeleton className="h-24 w-full rounded-lg" />
-        <Skeleton className="h-24 w-full rounded-lg" />
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
       </div>
-      <Skeleton className="h-64 w-full rounded-lg" />
+      <Skeleton className="h-64 w-full" />
     </div>
   )
 }
@@ -69,19 +62,19 @@ async function UsageDataContent() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium tracking-tight">{t('credits.sectionTitle')}</h2>
         {data.credits.ok ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>{t('credits.balanceLabel')}</CardDescription>
-                <CardTitle className="text-2xl tabular-nums">{data.credits.balance}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>{t('credits.totalUsedLabel')}</CardDescription>
-                <CardTitle className="text-2xl tabular-nums">{data.credits.totalUsed}</CardTitle>
-              </CardHeader>
-            </Card>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">{t('credits.balanceLabel')}</p>
+              <p className="text-2xl font-semibold tabular-nums tracking-tight">
+                {data.credits.balance}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">{t('credits.totalUsedLabel')}</p>
+              <p className="text-2xl font-semibold tabular-nums tracking-tight">
+                {data.credits.totalUsed}
+              </p>
+            </div>
           </div>
         ) : data.credits.code !== 'missing_key' ? (
           <Alert variant="destructive">
@@ -120,40 +113,36 @@ async function UsageDataContent() {
         ) : data.report.rows.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t('report.empty')}</p>
         ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('report.columnModel')}</TableHead>
-                    <TableHead className="text-right">{t('report.columnRequests')}</TableHead>
-                    <TableHead className="text-right">{t('report.columnInputTokens')}</TableHead>
-                    <TableHead className="text-right">{t('report.columnOutputTokens')}</TableHead>
-                    <TableHead className="text-right">{t('report.columnCost')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.report.rows.map((row) => (
-                    <TableRow key={row.model}>
-                      <TableCell className="font-medium">{row.model}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {intFmt.format(row.requestCount)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {intFmt.format(row.inputTokens)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {intFmt.format(row.outputTokens)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {usdFmt.format(row.totalCostUsd)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('report.columnModel')}</TableHead>
+                <TableHead className="text-right">{t('report.columnRequests')}</TableHead>
+                <TableHead className="text-right">{t('report.columnInputTokens')}</TableHead>
+                <TableHead className="text-right">{t('report.columnOutputTokens')}</TableHead>
+                <TableHead className="text-right">{t('report.columnCost')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.report.rows.map((row) => (
+                <TableRow key={row.model}>
+                  <TableCell className="font-medium">{row.model}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {intFmt.format(row.requestCount)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {intFmt.format(row.inputTokens)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {intFmt.format(row.outputTokens)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {usdFmt.format(row.totalCostUsd)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </section>
     </>

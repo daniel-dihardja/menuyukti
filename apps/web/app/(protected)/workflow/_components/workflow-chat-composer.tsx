@@ -17,7 +17,7 @@ import {
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
-import { EraserIcon } from 'lucide-react'
+import { PanelsTopLeft } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 
@@ -28,6 +28,7 @@ import {
   useWorkflowChatMessages,
 } from './workflow-chat-context'
 import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
+import { useWorkflowMobileArtifact } from './workflow-mobile-artifact-context'
 
 function WorkflowChatAttachmentStrip() {
   const attachments = usePromptInputAttachments()
@@ -85,7 +86,6 @@ function WorkflowChatComposerSubmit() {
   return (
     <PromptInputSubmit
       aria-label={isChatBusy ? t('stopChatAriaLabel') : t('submitChatAriaLabel')}
-      className="size-11 touch-manipulation sm:size-8"
       disabled={disabled}
       onStop={stop}
       status={status}
@@ -93,23 +93,27 @@ function WorkflowChatComposerSubmit() {
   )
 }
 
-function WorkflowChatClearButton({ disabled }: { disabled: boolean }) {
+function WorkflowMobilePreviewOpenButton() {
   const t = useTranslations('analytics.workflows.chat')
-  const { handleClearChat } = useWorkflowChatActions()
+  const mobileArtifact = useWorkflowMobileArtifact()
+
+  if (!mobileArtifact) {
+    return null
+  }
 
   return (
     <PromptInputButton
-      aria-label={t('clearChatAriaLabel')}
-      className="size-11 shrink-0 touch-manipulation text-muted-foreground sm:h-8 sm:w-auto sm:px-2.5 sm:font-medium"
-      disabled={disabled}
-      onClick={handleClearChat}
+      aria-controls="workflow-mobile-artifact"
+      aria-label={t('mobileArtifactOpenAriaLabel')}
+      className="h-9 shrink-0 gap-1.5 px-2.5 font-medium text-muted-foreground"
+      onClick={mobileArtifact.openArtifact}
       size="sm"
-      tooltip={t('clearChatTooltip')}
+      tooltip={mobileArtifact.hint ?? t('mobileArtifactEmptyHint')}
       type="button"
       variant="ghost"
     >
-      <EraserIcon className="sm:hidden" />
-      <span className="hidden sm:inline">{t('clearChatLabel')}</span>
+      <PanelsTopLeft className="size-4" />
+      <span className="text-sm">{t('mobileArtifactOpenLabel')}</span>
     </PromptInputButton>
   )
 }
@@ -129,13 +133,13 @@ export function WorkflowChatComposer() {
     handleSelectMention,
     handleSelectVisualizationMention,
     handleSelectMediaMention,
+    handleClearChat,
   } = useWorkflowChatActions()
 
   return (
-    <div className="shrink-0 border-t bg-background px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4 sm:pt-3 sm:pb-4">
+    <div className="shrink-0 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
       <PromptInput
         accept="image/jpeg,image/png,image/webp,image/gif"
-        className="shadow-sm"
         globalDrop
         maxFiles={CHAT_MAX_IMAGES}
         multiple
@@ -156,23 +160,31 @@ export function WorkflowChatComposer() {
         >
           <PromptInputBody>
             <PromptInputTextarea
-              className="min-h-12 sm:min-h-16"
-              enterKeyHint="send"
               placeholder={t('placeholder')}
               value={text}
               onChange={handleTextChange}
             />
           </PromptInputBody>
         </WorkflowChatComposerMenus>
-        <PromptInputFooter className="flex-wrap gap-2">
-          <PromptInputTools className="min-w-0 flex-1 flex-wrap">
+        <PromptInputFooter>
+          <PromptInputTools>
+            <WorkflowMobilePreviewOpenButton />
             <ChatGatewayModelSelect
-              className="max-w-[min(100%,9.5rem)] sm:max-w-[min(100%,11rem)]"
               disabled={isChatBusy}
               onValueChange={setSelectedChatModel}
               value={selectedChatModel}
             />
-            <WorkflowChatClearButton disabled={isChatBusy} />
+            <PromptInputButton
+              aria-label={t('clearChatAriaLabel')}
+              className="h-9 shrink-0 px-3 py-2 font-medium text-muted-foreground"
+              onClick={handleClearChat}
+              size="sm"
+              tooltip={t('clearChatTooltip')}
+              type="button"
+              variant="ghost"
+            >
+              {t('clearChatLabel')}
+            </PromptInputButton>
           </PromptInputTools>
           <WorkflowChatComposerSubmit />
         </PromptInputFooter>

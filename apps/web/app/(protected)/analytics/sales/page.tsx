@@ -4,13 +4,6 @@ import Link from 'next/link'
 import { routes } from '@/lib/routes'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
 import {
@@ -20,6 +13,8 @@ import {
 import { AnalyticsSalesClient } from './analytics-sales-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
+import { cn } from '@workspace/ui/lib/utils'
 
 function PosUploadInfoSection({ t }: { t: Awaited<ReturnType<typeof getTranslations>> }) {
   const reportRequirements = [
@@ -36,28 +31,26 @@ function PosUploadInfoSection({ t }: { t: Awaited<ReturnType<typeof getTranslati
   ]
 
   return (
-    <section aria-labelledby="upload-info-heading">
-      <Card>
-        <CardHeader className="flex flex-col gap-1 pb-3">
-          <CardTitle id="upload-info-heading" className="text-sm">
-            {t('uploadInfo.title')}
-          </CardTitle>
-          <CardDescription className="text-xs">{t('uploadInfo.description')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2 pt-0">
-          {reportRequirements.map((item) => (
-            <div
-              key={item.key}
-              className="bg-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2"
-            >
-              <span className="text-xs font-medium">{item.pos}</span>
-              <Badge variant="secondary" className="font-mono text-xs">
-                {item.report}
-              </Badge>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+    <section aria-labelledby="upload-info-heading" className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
+        <h2 id="upload-info-heading" className="text-sm font-semibold">
+          {t('uploadInfo.title')}
+        </h2>
+        <p className="text-xs text-muted-foreground">{t('uploadInfo.description')}</p>
+      </div>
+      <div className="flex flex-col gap-2">
+        {reportRequirements.map((item) => (
+          <div
+            key={item.key}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2"
+          >
+            <span className="text-xs font-medium">{item.pos}</span>
+            <Badge variant="secondary" className="font-mono text-xs">
+              {item.report}
+            </Badge>
+          </div>
+        ))}
+      </div>
     </section>
   )
 }
@@ -113,7 +106,7 @@ async function SalesPageData({ requestedLocationId }: { requestedLocationId: num
 
   if (!hasBranches) {
     return (
-      <Card className="space-y-4 p-8 text-center">
+      <section className="flex flex-col items-center gap-4 py-8 text-center">
         <h2 className="text-lg font-medium">{t('noBranches.title')}</h2>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">
           {t('noBranches.description')}
@@ -121,7 +114,7 @@ async function SalesPageData({ requestedLocationId }: { requestedLocationId: num
         <Button asChild size="lg">
           <Link href={routes.analytics.branchesCreate}>{t('noBranches.cta')}</Link>
         </Button>
-      </Card>
+      </section>
     )
   }
 
@@ -152,12 +145,18 @@ export default async function Page({
   const requestedLocationId = parseRequestedLocationId(locationIdParam)
 
   return (
-    <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <PageHeading title={t('title')} description={t('description')} />
-      <PosUploadInfoSection t={t} />
-      <Suspense fallback={<SalesPageSkeleton />}>
-        <SalesPageData requestedLocationId={requestedLocationId} />
-      </Suspense>
+    <AnalyticsPageShell
+      title={t('title')}
+      breadcrumbs={[{ label: t('title') }]}
+      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
+    >
+      <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>
+        <PageHeading title={t('title')} description={t('description')} />
+        <PosUploadInfoSection t={t} />
+        <Suspense fallback={<SalesPageSkeleton />}>
+          <SalesPageData requestedLocationId={requestedLocationId} />
+        </Suspense>
+      </section>
     </AnalyticsPageShell>
   )
 }

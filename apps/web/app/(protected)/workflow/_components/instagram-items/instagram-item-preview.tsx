@@ -2,28 +2,15 @@
 
 import { useCallback, useEffect, useState, type KeyboardEvent } from 'react'
 import { useTranslations } from 'next-intl'
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ImageIcon,
-  Maximize2Icon,
-  Trash2Icon,
-  XIcon,
-} from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, Maximize2Icon, Trash2Icon, XIcon } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@workspace/ui/components/empty'
-import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldDescription } from '@workspace/ui/components/field'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { InstagramItemDefaultImage } from './instagram-item-default-image'
 import type { InstagramItemKind } from './use-instagram-items'
 
 export type InstagramItemPreviewVersion = {
@@ -130,7 +117,6 @@ export function InstagramItemPreview({
 
   return (
     <Field className="gap-1.5">
-      <FieldLabel>{t('generate.previewLabel')}</FieldLabel>
       <div
         className="mx-auto flex w-full max-w-[280px] items-center gap-1"
         onKeyDown={handlePreviewKeyDown}
@@ -153,9 +139,9 @@ export function InstagramItemPreview({
         <div className="relative min-w-0 flex-1">
           <div
             className={cn(
-              'relative overflow-hidden rounded-lg border border-border/60 bg-muted/30',
+              'relative overflow-hidden border border-border/60',
               previewAspectClass(kind),
-              !previewUrl && 'border-dashed',
+              previewUrl ? 'bg-muted/30' : 'border-transparent',
             )}
           >
             {previewUrl ? (
@@ -173,17 +159,12 @@ export function InstagramItemPreview({
                 <img alt="" className="size-full object-cover" src={previewUrl} />
               </button>
             ) : (
-              <Empty className="size-full min-h-0 gap-2 rounded-none border-0 p-4 md:p-4">
-                <EmptyHeader className="gap-1.5">
-                  <EmptyMedia variant="icon">
-                    <ImageIcon aria-hidden />
-                  </EmptyMedia>
-                  <EmptyTitle className="text-sm">{t('generate.previewEmptyTitle')}</EmptyTitle>
-                  <EmptyDescription className="text-xs">
-                    {t('generate.previewEmpty')}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              <InstagramItemDefaultImage
+                className="gap-2 p-4 text-center"
+                iconClassName="text-3xl"
+                kind={kind}
+                label={t('generate.previewEmptyTitle')}
+              />
             )}
             {isGenerating ? (
               <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">

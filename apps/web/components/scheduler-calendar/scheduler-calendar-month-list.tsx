@@ -11,6 +11,8 @@ import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
+  SCHEDULER_HOLIDAY_BADGE_CLASS,
+  SCHEDULER_WEEKEND_DAY_CLASS,
   schedulerSlotClassName,
   schedulerSlotDisplayTime,
   schedulerSlotDisplayTitle,
@@ -28,7 +30,10 @@ export type SchedulerCalendarMonthListProps = {
   slots?: SchedulerSlot[]
   publicHolidays?: SchedulerMilestoneData['publicHolidays']
   className?: string
+  onDayClick?: (isoDate: string) => void
   onSlotClick?: (slot: SchedulerSlot) => void
+  /** Show a create affordance on empty in-window days when create is available. */
+  showCreateAffordance?: boolean
 }
 
 function formatDayHeader(isoDate: string, locale: string): { weekday: string; day: string } {
@@ -54,7 +59,9 @@ export function SchedulerCalendarMonthList({
   slots = [],
   publicHolidays = [],
   className,
+  onDayClick,
   onSlotClick,
+  showCreateAffordance = false,
 }: SchedulerCalendarMonthListProps) {
   const t = useTranslations('analytics.workflows.chat')
   const monthDays = useMemo(
@@ -92,18 +99,39 @@ export function SchedulerCalendarMonthList({
           const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
           const holidayName = holidayByDate.get(day.isoDate)
           const isPublicHoliday = holidayName !== undefined
+          const clickable = Boolean(day.inWindow && onDayClick)
 
           return (
             <li
               key={day.isoDate}
               role="listitem"
               aria-disabled={!day.inWindow}
+              tabIndex={clickable ? 0 : undefined}
               className={cn(
                 'flex min-w-0 items-start gap-3 px-3 py-2.5',
                 !day.inWindow && 'bg-muted/30 text-muted-foreground',
-                isWeekend && day.inWindow && 'bg-amber-50/80 dark:bg-amber-950/20',
+                isWeekend && day.inWindow && SCHEDULER_WEEKEND_DAY_CLASS,
                 day.isToday && day.inWindow && 'bg-primary/10 text-primary',
+                clickable &&
+                  'cursor-pointer hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
               )}
+              onClick={
+                clickable
+                  ? () => {
+                      onDayClick?.(day.isoDate)
+                    }
+                  : undefined
+              }
+              onKeyDown={
+                clickable
+                  ? (event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        onDayClick?.(day.isoDate)
+                      }
+                    }
+                  : undefined
+              }
             >
               <div className="flex w-12 shrink-0 flex-col items-center">
                 <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -117,7 +145,7 @@ export function SchedulerCalendarMonthList({
                   <div className="mb-1 flex flex-wrap items-center gap-1">
                     {isPublicHoliday ? (
                       <span
-                        className="rounded-sm border border-rose-300/80 bg-rose-100/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-900 dark:border-rose-700/70 dark:bg-rose-900/40 dark:text-rose-100"
+                        className={cn(SCHEDULER_HOLIDAY_BADGE_CLASS, 'px-1.5 py-0.5 text-[10px]')}
                         title={holidayName}
                       >
                         {t('milestoneSchedulerPreviewHolidayBadge')}
@@ -139,11 +167,15 @@ export function SchedulerCalendarMonthList({
                       title={schedulerSlotDisplayTitle(slot)}
                       onClick={
                         onSlotClick
-                          ? () => {
+                          ? (event) => {
+                              event.stopPropagation()
                               onSlotClick(slot)
                             }
                           : undefined
                       }
+                      onKeyDown={(event) => {
+                        event.stopPropagation()
+                      }}
                     >
                       <span className="mb-0.5 text-[10px] font-semibold opacity-80">
                         {schedulerSlotDisplayTime(slot)}
@@ -151,6 +183,10 @@ export function SchedulerCalendarMonthList({
                       <SchedulerSlotDisplayTitle slot={slot} className="w-full" />
                     </button>
                   ))
+                ) : showCreateAffordance && clickable ? (
+                  <span className="text-xs font-medium text-muted-foreground/70" aria-hidden>
+                    +
+                  </span>
                 ) : (
                   <span className="text-xs text-muted-foreground/60" aria-hidden>
                     —

@@ -24,12 +24,21 @@ export type SchedulerSlot = {
 
 const SCHEDULER_SLOT_CLASS = {
   story:
-    'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
-  post: 'border-sky-300/80 bg-sky-50/90 text-foreground dark:border-sky-500/50 dark:bg-sky-950/40',
-  reel: 'border-orange-400 bg-orange-100 text-orange-950 dark:border-orange-600 dark:bg-orange-950/70 dark:text-orange-50',
+    'border-chart-4/45 bg-chart-4/20 text-foreground dark:border-chart-4/50 dark:bg-chart-4/25',
+  post: 'border-chart-2/45 bg-chart-2/20 text-foreground dark:border-chart-2/50 dark:bg-chart-2/25',
+  reel: 'border-chart-3/50 bg-chart-3/25 text-foreground dark:border-chart-3/55 dark:bg-chart-3/30',
 } as const
 
-const SCHEDULER_EVENT_SLOT_CLASS = 'border-border/80 bg-muted/50 text-foreground dark:bg-muted/30'
+const SCHEDULER_EVENT_SLOT_CLASS = 'border-border/80 bg-muted/60 text-foreground dark:bg-muted/40'
+
+/** Weekend column/day wash — brand orange, not Tailwind amber. */
+export const SCHEDULER_WEEKEND_HEADER_CLASS =
+  'bg-chart-3/25 text-foreground dark:bg-chart-3/30 dark:text-foreground'
+export const SCHEDULER_WEEKEND_DAY_CLASS = 'bg-chart-3/10 dark:bg-chart-3/15'
+
+/** Public holiday badge — semantic destructive soft, not Tailwind rose. */
+export const SCHEDULER_HOLIDAY_BADGE_CLASS =
+  'rounded-sm border border-destructive/30 bg-destructive/10 font-semibold uppercase tracking-wide text-destructive dark:border-destructive/40 dark:bg-destructive/15 dark:text-destructive'
 
 const SCHEDULER_SLOT_TITLE_PREFIX = /^(post|reel|story):\s*/i
 const SCHEDULER_SLOT_FALLBACK_TIME: Record<SchedulerSlotKind, string> = {

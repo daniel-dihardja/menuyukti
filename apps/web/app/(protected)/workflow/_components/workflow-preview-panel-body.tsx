@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { MarkdownMessage } from '@/components/markdown-message'
 import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-description'
@@ -35,9 +36,9 @@ export function WorkflowPreviewPanelBody() {
     : null
 
   return (
-    <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
+    <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden border-0 bg-transparent py-0 shadow-none hover:border-transparent">
       {showMilestonePreview ? (
-        <CardHeader className="shrink-0">
+        <CardHeader className="shrink-0 px-4 lg:px-6">
           <CardTitle
             className="flex items-center gap-2 text-balance font-semibold text-xl tracking-tight"
             id={PREVIEW_TITLE_ID}
@@ -54,11 +55,12 @@ export function WorkflowPreviewPanelBody() {
         </CardHeader>
       ) : null}
       <CardContent
-        className={
+        className={cn(
+          'px-4 lg:px-6',
           showMilestonePreview
             ? 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden pt-0'
-            : 'flex min-h-0 flex-1 flex-col gap-3 overflow-hidden overflow-x-hidden pt-4'
-        }
+            : 'flex min-h-0 flex-1 flex-col gap-3 overflow-hidden overflow-x-hidden pt-4',
+        )}
       >
         {showMilestonePreview ? (
           <MilestoneDataPreview milestone={selectedMilestone} />

@@ -22,6 +22,9 @@ coverage
 # Turbo
 .turbo
 
+# Local git worktrees
+.worktrees/
+
 # Vercel
 .vercel
 

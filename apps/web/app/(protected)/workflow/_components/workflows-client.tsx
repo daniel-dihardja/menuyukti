@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAnalytics } from '../../analytics/use-analytics'
-import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { routes } from '@/lib/routes'
 import { apiFetch } from '@/lib/api/client-fetch'
 import { CreateWorkflowPanel } from './create-workflow-panel'
@@ -155,7 +154,9 @@ export function WorkflowsClient({
       />
 
       {locationId === null ? null : loadingWorkflows ? (
-        <div className="border rounded-md p-8 text-left text-muted-foreground">{t('loading')}</div>
+        <div className="rounded-md border border-dashed p-8 text-left text-muted-foreground">
+          {t('loading')}
+        </div>
       ) : hasWorkflows ? (
         <WorkflowsTable
           workflows={workflows}
@@ -163,14 +164,12 @@ export function WorkflowsClient({
           onWorkflowRenamed={handleWorkflowRenamed}
         />
       ) : (
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle className="text-balance">{t('noWorkflows.title')}</CardTitle>
-            <CardDescription className="text-pretty">
-              {t('noWorkflows.description')}
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="flex flex-col gap-1 rounded-md border border-dashed px-4 py-6">
+          <h2 className="text-balance font-medium">{t('noWorkflows.title')}</h2>
+          <p className="text-pretty text-muted-foreground text-sm">
+            {t('noWorkflows.description')}
+          </p>
+        </div>
       )}
     </div>
   )

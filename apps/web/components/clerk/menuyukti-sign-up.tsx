@@ -1,6 +1,7 @@
 'use client'
 
 import { SignUp } from '@clerk/nextjs'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { menuyuktiClerkAppearance } from './menuyukti-appearance'
 
@@ -10,7 +11,7 @@ export function MenuyuktiSignUp() {
       path="/sign-up"
       routing="path"
       signInUrl={routes.login}
-      forceRedirectUrl={routes.dashboard}
+      forceRedirectUrl={getDefaultAuthenticatedPath()}
       appearance={menuyuktiClerkAppearance}
     />
   )

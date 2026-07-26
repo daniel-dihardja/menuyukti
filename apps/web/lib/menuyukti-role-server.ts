@@ -7,6 +7,7 @@ import {
   isMenuyuktiAdmin,
   type MenuyuktiRole,
 } from '@/lib/menuyukti-role'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 
 /**
@@ -33,6 +34,6 @@ export async function requireMenuyuktiAdmin(): Promise<void> {
   }
   const role = await resolveMenuyuktiRole()
   if (!isMenuyuktiAdmin(role)) {
-    redirect(routes.dashboard)
+    redirect(getDefaultAuthenticatedPath())
   }
 }

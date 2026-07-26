@@ -1,6 +1,5 @@
 import Image from 'next/image'
 
-import { Card, CardHeader } from '@workspace/ui/components/card'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { isNextImageRemoteHost, withProfileImageParams } from '@/lib/clerk-profile-image'
@@ -44,43 +43,41 @@ export function ProfileOverviewCard({
   const canOptimize = resolvedSrc ? hostnameAllowsNextImage(resolvedSrc) : false
 
   return (
-    <Card className="max-w-md">
-      <CardHeader className="flex flex-row items-center gap-4 space-y-0">
-        <div
-          className={cn(
-            'relative flex size-16 shrink-0 overflow-hidden rounded-full bg-muted text-lg font-medium text-muted-foreground',
-            'items-center justify-center select-none',
-          )}
-        >
-          {resolvedSrc && canOptimize ? (
-            <Image
-              src={resolvedSrc}
-              alt={avatarAlt}
-              width={AVATAR_PX}
-              height={AVATAR_PX}
-              priority
-              sizes="64px"
-              className="size-full object-cover"
-            />
-          ) : resolvedSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element -- host not in next/image remotePatterns
-            <img
-              src={resolvedSrc}
-              alt={avatarAlt}
-              width={AVATAR_PX}
-              height={AVATAR_PX}
-              className="size-full object-cover"
-              fetchPriority="high"
-            />
-          ) : (
-            <span className="text-lg font-medium text-foreground">{initials}</span>
-          )}
-        </div>
-        <div className="min-w-0 flex-1 space-y-1">
-          <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">{name}</h2>
-          <p className="truncate text-sm text-muted-foreground">{email}</p>
-        </div>
-      </CardHeader>
-    </Card>
+    <div className="flex max-w-md flex-row items-center gap-4">
+      <div
+        className={cn(
+          'relative flex size-16 shrink-0 overflow-hidden rounded-full bg-muted text-lg font-medium text-muted-foreground',
+          'items-center justify-center select-none',
+        )}
+      >
+        {resolvedSrc && canOptimize ? (
+          <Image
+            src={resolvedSrc}
+            alt={avatarAlt}
+            width={AVATAR_PX}
+            height={AVATAR_PX}
+            priority
+            sizes="64px"
+            className="size-full object-cover"
+          />
+        ) : resolvedSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element -- host not in next/image remotePatterns
+          <img
+            src={resolvedSrc}
+            alt={avatarAlt}
+            width={AVATAR_PX}
+            height={AVATAR_PX}
+            className="size-full object-cover"
+            fetchPriority="high"
+          />
+        ) : (
+          <span className="text-lg font-medium text-foreground">{initials}</span>
+        )}
+      </div>
+      <div className="min-w-0 flex-1 space-y-1">
+        <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">{name}</h2>
+        <p className="truncate text-sm text-muted-foreground">{email}</p>
+      </div>
+    </div>
   )
 }

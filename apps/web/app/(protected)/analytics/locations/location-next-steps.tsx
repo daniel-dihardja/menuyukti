@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { cn } from '@workspace/ui/lib/utils'
 
 type LocationNextStepsProps = {
@@ -23,11 +22,9 @@ export function LocationNextSteps({
   labels,
 }: LocationNextStepsProps) {
   return (
-    <Card className="gap-0 py-0">
-      <CardHeader className="px-4 pb-2 pt-4 sm:px-6">
-        <CardTitle className="text-sm font-medium">{labels.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex gap-2 overflow-x-auto px-4 pb-4 sm:px-6">
+    <section className="flex flex-col gap-3">
+      <h2 className="text-sm font-medium">{labels.title}</h2>
+      <div className="flex gap-2 overflow-x-auto">
         <Button asChild className="shrink-0 touch-manipulation" size="sm">
           <Link href={routes.analytics.salesWithLocation(locationId)}>{labels.uploadSales}</Link>
         </Button>
@@ -39,8 +36,8 @@ export function LocationNextSteps({
         <Button asChild className="shrink-0 touch-manipulation" size="sm" variant="outline">
           <Link href={routes.workflows.list}>{labels.openWorkflow}</Link>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }
 

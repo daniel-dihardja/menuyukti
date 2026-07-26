@@ -2,14 +2,7 @@
 
 import { useState } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
-import {
-  ClapperboardIcon,
-  ImageIcon,
-  PlusIcon,
-  RectangleVerticalIcon,
-  SquarePenIcon,
-  Trash2Icon,
-} from 'lucide-react'
+import { PlusIcon, SquarePenIcon, Trash2Icon } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -37,6 +30,8 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import type { InstagramItemDto } from '@/lib/graphql/queries/instagram-items'
 
+import { InstagramItemDefaultImage } from './instagram-item-default-image'
+
 type InstagramItemsOverviewProps = {
   items: InstagramItemDto[]
   loading: boolean
@@ -48,18 +43,15 @@ type InstagramItemsOverviewProps = {
   onDelete: (itemId: string) => Promise<void>
 }
 
-function KindPreviewIcon({ kind }: { kind: string }) {
-  if (kind === 'story') return <RectangleVerticalIcon aria-hidden />
-  if (kind === 'reel') return <ClapperboardIcon aria-hidden />
-  return <ImageIcon aria-hidden />
-}
+const OVERVIEW_GRID_CLASS =
+  'mx-auto grid w-full max-w-[56rem] min-w-0 grid-cols-2 gap-3 lg:grid-cols-4'
 
 function OverviewSkeletonGrid() {
   return (
-    <ul aria-hidden className="grid min-h-0 grid-cols-2 gap-3">
+    <ul aria-hidden className={OVERVIEW_GRID_CLASS}>
       {Array.from({ length: 4 }, (_, index) => (
         <li key={index} className="min-w-0">
-          <div className="flex flex-col overflow-hidden rounded-md border bg-background">
+          <div className="flex flex-col overflow-hidden border bg-background">
             <Skeleton className="aspect-square w-full rounded-none" />
             <div className="flex flex-col gap-2 p-2.5">
               <Skeleton className="h-4 w-3/4" />
@@ -94,15 +86,15 @@ export function InstagramItemsOverview({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex shrink-0 items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex shrink-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-2">
+        <div className="flex w-full min-w-0 flex-col gap-1 lg:flex-1">
           <h2 className="font-semibold text-xl tracking-tight" id="workflow-preview-panel-title">
             {t('title')}
           </h2>
           <p className="text-muted-foreground text-sm">{t('panelDescription')}</p>
         </div>
         <Button
-          className="shrink-0"
+          className="w-full shrink-0 lg:w-auto"
           disabled={actionsDisabled}
           onClick={onCreate}
           size="sm"
@@ -120,7 +112,7 @@ export function InstagramItemsOverview({
       ) : null}
 
       {loading ? (
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pt-3">
           <span className="sr-only">{t('loading')}</span>
           <OverviewSkeletonGrid />
         </div>
@@ -145,7 +137,9 @@ export function InstagramItemsOverview({
           </EmptyContent>
         </Empty>
       ) : (
-        <ul className="grid min-h-0 flex-1 grid-cols-2 content-start gap-3 overflow-y-auto">
+        <ul
+          className={cn(OVERVIEW_GRID_CLASS, 'min-h-0 flex-1 content-start overflow-y-auto pt-3')}
+        >
           {items.map((item) => {
             const kindKey = `kind.${item.kind}` as 'kind.story' | 'kind.post' | 'kind.reel'
             const statusKey = `status.${item.status}` as 'status.draft' | 'status.ready'
@@ -155,7 +149,7 @@ export function InstagramItemsOverview({
             const tileDeleting = deletingId === item.id
             return (
               <li key={item.id} className="min-w-0">
-                <div className="relative flex h-full flex-col overflow-hidden rounded-md border bg-background">
+                <div className="relative flex h-full flex-col overflow-hidden border bg-background">
                   <button
                     className={cn(
                       'flex min-w-0 flex-1 flex-col text-left transition-colors',
@@ -166,16 +160,13 @@ export function InstagramItemsOverview({
                     onClick={() => onSelect(item.id)}
                     type="button"
                   >
-                    <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-muted/50 text-muted-foreground [&_svg:not([class*='size-'])]:size-8">
+                    <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden">
                       {item.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
                         <img alt={title} className="size-full object-cover" src={item.imageUrl} />
                       ) : (
-                        <KindPreviewIcon kind={item.kind} />
+                        <InstagramItemDefaultImage kind={item.kind} />
                       )}
-                      <Badge className="absolute bottom-1.5 left-1.5 shadow-sm" variant="secondary">
-                        {kindLabel}
-                      </Badge>
                       {(item.pages?.length ?? 0) > 1 ? (
                         <Badge className="absolute top-1.5 left-1.5 shadow-sm" variant="outline">
                           {t('pages.countBadge', { count: item.pages.length })}
@@ -184,9 +175,10 @@ export function InstagramItemsOverview({
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-1.5 p-2.5">
                       <span className="line-clamp-2 font-medium text-sm leading-snug">{title}</span>
-                      <Badge className="w-fit" variant="outline">
-                        {statusLabel}
-                      </Badge>
+                      <span className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="secondary">{kindLabel}</Badge>
+                        <Badge variant="outline">{statusLabel}</Badge>
+                      </span>
                       {item.schedule ? (
                         <span className="line-clamp-2 text-muted-foreground text-xs">
                           {format.dateTime(new Date(item.schedule), {
@@ -204,7 +196,7 @@ export function InstagramItemsOverview({
                   </button>
                   <Button
                     aria-label={t('deleteRowAria', { title })}
-                    className="absolute top-1.5 right-1.5 size-7 bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
+                    className="absolute right-1.5 bottom-1.5 size-7 bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
                     disabled={deletingId !== null}
                     onClick={() => setPendingDeleteId(item.id)}
                     size="icon-sm"

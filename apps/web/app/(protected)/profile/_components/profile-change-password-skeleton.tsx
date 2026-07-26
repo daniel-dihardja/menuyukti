@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
 export type ProfileChangePasswordSkeletonProps = {
@@ -8,25 +7,26 @@ export type ProfileChangePasswordSkeletonProps = {
 
 export function ProfileChangePasswordSkeleton({ variant }: ProfileChangePasswordSkeletonProps) {
   return (
-    <Card className="max-w-md">
-      <CardHeader>
-        <Skeleton className="h-6 w-48" />
-        {variant === 'compact' ? <Skeleton className="mt-2 h-4 w-full max-w-sm" /> : null}
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <div className="max-w-md space-y-4">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-48" />
+        {variant === 'compact' ? <Skeleton className="h-4 w-full max-w-sm" /> : null}
+      </div>
+      <div className="space-y-3">
         {variant === 'form' ? (
           <>
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-9 w-32" />
           </>
         ) : (
           <>
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-4 w-full max-w-sm" />
+            <Skeleton className="h-9 w-40" />
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

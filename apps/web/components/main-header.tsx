@@ -20,6 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@workspace/ui/components/sheet'
+import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -42,11 +43,13 @@ export function MainHeader() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  const showWorkflowsNav = isNavKeyEnabled('workflows')
+  const showStudioNav = isNavKeyEnabled('posts')
   const workflowsActive =
     pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
   const igStudioActive = pathname === routes.igStudio || pathname?.startsWith(`${routes.igStudio}/`)
-  /** Only show the sheet when there are product links to list. */
-  const showMobileMainMenu = showProductNav
+  const showProductNavLinks = showWorkflowsNav || showStudioNav
+  const showMobileMainMenu = true
 
   const navLinkClass = (active: boolean) =>
     cn(
@@ -78,17 +81,21 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          {showProductNav ? (
+          {!isLanding && showProductNavLinks ? (
             <nav
               className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
               aria-label={t('navAria')}
             >
-              <Link href={routes.workflows.list} className={navLinkClass(workflowsActive)}>
-                {t('navWorkflows')}
-              </Link>
-              <Link href={routes.igStudio} className={navLinkClass(igStudioActive)}>
-                {t('navStudio')}
-              </Link>
+              {showWorkflowsNav ? (
+                <Link href={routes.workflows.list} className={navLinkClass(workflowsActive)}>
+                  {t('navWorkflows')}
+                </Link>
+              ) : null}
+              {showStudioNav ? (
+                <Link href={routes.igStudio} className={navLinkClass(igStudioActive)}>
+                  {t('navStudio')}
+                </Link>
+              ) : null}
             </nav>
           ) : null}
         </div>
@@ -121,46 +128,50 @@ export function MainHeader() {
                         : t('landingNav.mobileDescription')}
                     </SheetDescription>
                   </SheetHeader>
-                  {showProductNav ? (
+                  {!isLanding && showProductNavLinks ? (
                     <nav aria-label={t('navAria')} className="flex flex-col gap-2 px-4 pt-4">
-                      <SheetClose asChild>
-                        <Button
-                          asChild
-                          variant="ghost"
-                          className={cn(
-                            'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                            workflowsActive
-                              ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
-                              : 'text-muted-foreground hover:text-foreground',
-                          )}
-                        >
-                          <Link
-                            href={routes.workflows.list}
-                            aria-current={workflowsActive ? 'page' : undefined}
+                      {showWorkflowsNav ? (
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className={cn(
+                              'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
+                              workflowsActive
+                                ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
                           >
-                            {t('navWorkflows')}
-                          </Link>
-                        </Button>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Button
-                          asChild
-                          variant="ghost"
-                          className={cn(
-                            'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                            igStudioActive
-                              ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
-                              : 'text-muted-foreground hover:text-foreground',
-                          )}
-                        >
-                          <Link
-                            href={routes.igStudio}
-                            aria-current={igStudioActive ? 'page' : undefined}
+                            <Link
+                              href={routes.workflows.list}
+                              aria-current={workflowsActive ? 'page' : undefined}
+                            >
+                              {t('navWorkflows')}
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                      ) : null}
+                      {showStudioNav ? (
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className={cn(
+                              'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
+                              igStudioActive
+                                ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
                           >
-                            {t('navStudio')}
-                          </Link>
-                        </Button>
-                      </SheetClose>
+                            <Link
+                              href={routes.igStudio}
+                              aria-current={igStudioActive ? 'page' : undefined}
+                            >
+                              {t('navStudio')}
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                      ) : null}
                     </nav>
                   ) : null}
                   <Show when="signed-out">

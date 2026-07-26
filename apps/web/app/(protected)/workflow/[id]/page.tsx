@@ -10,7 +10,9 @@ import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import { getCachedWorkflowCampaignTree } from '@/lib/graphql/cached-queries'
 import type { WorkflowNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { cn } from '@workspace/ui/lib/utils'
 import { ensureMilestoneDisplayCodes } from '@/lib/milestones/ensure-milestone-display-codes'
 
 import { WorkflowWorkspace } from '../_components/workflow-workspace'
@@ -133,7 +135,10 @@ export default async function Page({ params }: PageProps) {
         { label: fallbackTitle },
       ]}
       contentWidth="full"
-      mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col gap-0 overflow-hidden px-0 py-0"
+      mainClassName={cn(
+        ANALYTICS_REPORT_SHELL_MAIN_CLASS,
+        'flex min-h-0 min-h-[24rem] w-full flex-1 flex-col',
+      )}
     >
       <Suspense fallback={<WorkflowDetailSkeleton />}>
         <WorkflowDetailContent workflowId={workflowId} userId={authUserId} />

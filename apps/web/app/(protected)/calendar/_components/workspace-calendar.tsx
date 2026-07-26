@@ -10,7 +10,9 @@ import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { SchedulerCalendarMonthGrid } from '@/components/scheduler-calendar/scheduler-calendar-month-grid'
-import type { CalendarMediaRef } from '@/lib/calendar/client-api'
+import { SchedulerCalendarMonthList } from '@/components/scheduler-calendar/scheduler-calendar-month-list'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
+import type { CalendarMediaRef, CalendarSourceRef } from '@/lib/calendar/client-api'
 import type { CalendarDisplaySlot } from '@/lib/graphql/queries/scheduler-calendar'
 import type { CampaignWindowPublicHoliday } from '@/lib/graphql/node-schemas'
 import {
@@ -66,6 +68,7 @@ function createDraftValues(dateIso: string): CalendarEntryDialogValues {
     dateIso,
     time: defaultTime(),
     mediaRefs: [],
+    sourceRef: null,
   }
 }
 
@@ -80,6 +83,7 @@ function slotToEditValues(
         time: string
         mediaRefs?: Array<{ kind: string; name: string }> | null
         source?: string | null
+        sourceRef?: CalendarSourceRef | null
       },
 ): CalendarEntryDialogValues | null {
   if (slot.source !== 'manual' || !slot.id) {
@@ -96,6 +100,17 @@ function slotToEditValues(
     }
   }
 
+  const sourceRef =
+    slot.sourceRef?.type === 'instagram_item' &&
+    slot.sourceRef.workflowId.trim() &&
+    slot.sourceRef.itemId.trim()
+      ? {
+          type: 'instagram_item' as const,
+          workflowId: slot.sourceRef.workflowId,
+          itemId: slot.sourceRef.itemId,
+        }
+      : null
+
   return {
     id,
     title: slot.title,
@@ -103,6 +118,7 @@ function slotToEditValues(
     dateIso: slot.date,
     time: slot.time,
     mediaRefs,
+    sourceRef,
   }
 }
 
@@ -116,6 +132,7 @@ export function WorkspaceCalendar({
   const t = useTranslations('platform.calendar')
   const tEntry = useTranslations('platform.calendar.createEntry')
   const router = useRouter()
+  const isDesktop = useDesktopLayout()
   const [monthStartIso, setMonthStartIso] = useState(currentMonthStartIso)
   const [dialogInitial, setDialogInitial] = useState<CalendarEntryDialogValues | null>(null)
 
@@ -126,6 +143,31 @@ export function WorkspaceCalendar({
   )
 
   const canCreate = locationId !== null
+
+  const handleDayClick = (isoDate: string) => {
+    const day = parseIsoDateOnly(isoDate)
+    if (!day) {
+      return
+    }
+    const dayMonthStart = isoDateOnlyFromDate(startOfMonth(day))
+    if (dayMonthStart !== monthStartIso) {
+      setMonthStartIso(dayMonthStart)
+    }
+    if (canCreate) {
+      setDialogInitial(createDraftValues(isoDate))
+    }
+  }
+
+  const handleSlotClick = (slot: Parameters<typeof slotToEditValues>[0]) => {
+    const values = slotToEditValues(slot)
+    if (!values) {
+      toast.message(tEntry('workflowSlotReadonly'))
+      return
+    }
+    if (canCreate) {
+      setDialogInitial(values)
+    }
+  }
 
   return (
     <div className={cn('flex min-h-0 w-full min-w-0 flex-1 flex-col', className)}>
@@ -172,39 +214,33 @@ export function WorkspaceCalendar({
         </Button>
       </div>
 
-      <SchedulerCalendarMonthGrid
-        className="min-h-0 flex-1"
-        monthStartIso={monthStartIso}
-        windowStart={windowStart}
-        windowEnd={windowEnd}
-        locale={locale}
-        slots={slots}
-        publicHolidays={publicHolidays}
-        showCreateAffordance={canCreate}
-        onDayClick={(isoDate) => {
-          const day = parseIsoDateOnly(isoDate)
-          if (!day) {
-            return
-          }
-          const dayMonthStart = isoDateOnlyFromDate(startOfMonth(day))
-          if (dayMonthStart !== monthStartIso) {
-            setMonthStartIso(dayMonthStart)
-          }
-          if (canCreate) {
-            setDialogInitial(createDraftValues(isoDate))
-          }
-        }}
-        onSlotClick={(slot) => {
-          const values = slotToEditValues(slot)
-          if (!values) {
-            toast.message(tEntry('workflowSlotReadonly'))
-            return
-          }
-          if (canCreate) {
-            setDialogInitial(values)
-          }
-        }}
-      />
+      {isDesktop ? (
+        <SchedulerCalendarMonthGrid
+          className="min-h-0 flex-1"
+          monthStartIso={monthStartIso}
+          windowStart={windowStart}
+          windowEnd={windowEnd}
+          locale={locale}
+          slots={slots}
+          publicHolidays={publicHolidays}
+          showCreateAffordance={canCreate}
+          onDayClick={handleDayClick}
+          onSlotClick={handleSlotClick}
+        />
+      ) : (
+        <SchedulerCalendarMonthList
+          className="min-h-0 flex-1"
+          monthStartIso={monthStartIso}
+          windowStart={windowStart}
+          windowEnd={windowEnd}
+          locale={locale}
+          slots={slots}
+          publicHolidays={publicHolidays}
+          showCreateAffordance={canCreate}
+          onDayClick={handleDayClick}
+          onSlotClick={handleSlotClick}
+        />
+      )}
 
       {locationId !== null && dialogInitial !== null ? (
         <CalendarEntryDialog

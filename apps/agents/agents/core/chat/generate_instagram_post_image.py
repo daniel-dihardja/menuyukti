@@ -14,6 +14,17 @@ GENERATE_PATH = "/api/posts/generate"
 # Leonardo poll can take up to ~2 minutes; leave headroom for S3 + GraphQL.
 GENERATE_TIMEOUT_S = 180.0
 
+# Keep in sync with apps/web/lib/posts/leonardo-post-models.ts / leonardo-post-dimensions.ts
+LEONARDO_POST_MODEL_IDS = frozenset(
+    {
+        "gemini-2.5-flash-image",
+        "nano-banana-2",
+        "gemini-image-2",
+    }
+)
+POST_IMAGE_FORMAT_IDS = frozenset({"feed", "tall", "square", "story", "wide"})
+POST_IMAGE_QUALITY_IDS = frozenset({"standard", "high", "ultra"})
+
 
 def _web_app_url() -> str | None:
     raw = os.environ.get("WEB_APP_URL", "").strip()
@@ -32,17 +43,44 @@ def _configurable(config: RunnableConfig | None) -> dict[str, Any]:
     return raw if isinstance(raw, dict) else {}
 
 
+def _optional_str(value: Any) -> str | None:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _resolve_setting(
+    tool_arg: Any,
+    *,
+    config_key: str,
+    allowed: frozenset[str],
+    configurable: dict[str, Any],
+) -> str | None:
+    """Prefer tool arg, then configurable; omit invalid values so the BFF applies defaults."""
+    for candidate in (_optional_str(tool_arg), _optional_str(configurable.get(config_key))):
+        if candidate is not None and candidate in allowed:
+            return candidate
+    return None
+
+
 @tool
 async def generate_instagram_post_image(
     prompt: str,
+    format: str | None = None,
+    model: str | None = None,
+    quality: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Generate an Instagram post image with Leonardo using the composed prompt.
+    """Generate an image with Leonardo using a composed prompt.
 
-    Use this when the user asks to generate, create, or regenerate a post image in IG Studio.
-    Compose a clear image-generation prompt from the conversation (subject, layout, text on image,
-    mood). Model, format, quality, style, and reference images come from the Post Creator UI —
-    do not ask the user to restate those settings unless they want to change them in the UI first.
+    Use when the user asks to generate, create, or regenerate an image (workflow chat or
+    IG Studio Post Creator). Compose a clear image-generation prompt from the conversation
+    (subject, layout, text on image, mood). Optional ``format`` (feed|tall|square|story|wide),
+    ``model``, and ``quality`` (standard|high|ultra) override UI/context defaults when set.
+    In Post Creator, model/format/quality/style/references often come from the UI — do not ask
+    the user to restate those unless they want to change them first. After success, briefly
+    confirm; the image appears in chat (and updates the Post Creator preview when a saved
+    post page is in context).
     """
     trimmed = prompt.strip() if isinstance(prompt, str) else ""
     if not trimmed:
@@ -52,16 +90,11 @@ async def generate_instagram_post_image(
 
     c = _configurable(config)
     user_id = c.get("user_id")
-    post_id = c.get("post_id")
-    page_id = c.get("page_id")
+    post_id = _optional_str(c.get("post_id"))
+    page_id = _optional_str(c.get("page_id"))
 
     if not user_id:
         return "Error: user context is missing. Cannot generate an image."
-    if not post_id or not page_id:
-        return (
-            "Error: IG Studio post context is missing (post_id / page_id). "
-            "Open a saved post in Post Creator to generate images from chat."
-        )
 
     base = _web_app_url()
     api_key = _internal_api_key()
@@ -70,20 +103,29 @@ async def generate_instagram_post_image(
     if not api_key:
         return "Error: GRAPHQL_INTERNAL_API_KEY is not configured on the agents service."
 
-    body: dict[str, Any] = {
-        "prompt": trimmed,
-        "postId": str(post_id),
-        "pageId": str(page_id),
-    }
-    model = c.get("generation_model")
-    if isinstance(model, str) and model.strip():
-        body["model"] = model.strip()
-    image_format = c.get("image_format")
-    if isinstance(image_format, str) and image_format.strip():
-        body["format"] = image_format.strip()
-    image_quality = c.get("image_quality")
-    if isinstance(image_quality, str) and image_quality.strip():
-        body["quality"] = image_quality.strip()
+    body: dict[str, Any] = {"prompt": trimmed}
+    if post_id and page_id:
+        body["postId"] = post_id
+        body["pageId"] = page_id
+
+    resolved_model = _resolve_setting(
+        model, config_key="generation_model", allowed=LEONARDO_POST_MODEL_IDS, configurable=c
+    )
+    if resolved_model is not None:
+        body["model"] = resolved_model
+
+    resolved_format = _resolve_setting(
+        format, config_key="image_format", allowed=POST_IMAGE_FORMAT_IDS, configurable=c
+    )
+    if resolved_format is not None:
+        body["format"] = resolved_format
+
+    resolved_quality = _resolve_setting(
+        quality, config_key="image_quality", allowed=POST_IMAGE_QUALITY_IDS, configurable=c
+    )
+    if resolved_quality is not None:
+        body["quality"] = resolved_quality
+
     style_id = c.get("style_id")
     if isinstance(style_id, int) and style_id > 0:
         body["styleId"] = style_id

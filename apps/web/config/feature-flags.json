@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "dashboard": false,
+    "media": true,
+    "posts": false,
+    "calendar": true,
+    "workflows": true,
+    "reports": true,
+    "branches": true,
+    "printShop": false,
+    "team": true,
+    "usage": false
+  },
+  "routes": {
+    "/dashboard": true,
+    "/media": true,
+    "/ig-studio": false,
+    "/calendar": true,
+    "/workflow": true,
+    "/analytics": true,
+    "/shop": false,
+    "/print-orders": false,
+    "/profile": true,
+    "/advisor": true,
+    "/staff": true,
+    "/usage": false
+  },
+  "defaultAuthenticatedPath": "/workflow"
+}

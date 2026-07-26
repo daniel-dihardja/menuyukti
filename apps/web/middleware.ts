@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
+import { getDefaultAuthenticatedPath, isPathnameFeatureEnabled } from '@/lib/feature-flags'
 import { shouldRedirectPendingSession } from '@/lib/middleware-pending-session'
 import { routes } from '@/lib/routes'
 
@@ -27,19 +28,31 @@ const isProtectedRoute = createRouteMatcher([
 // https://clerk.com/docs/references/nextjs/clerk-middleware#dynamic-keys
 export default clerkMiddleware(async (auth, req) => {
   const { sessionStatus, userId } = await auth()
+  const pathname = req.nextUrl.pathname
+  const homePath = getDefaultAuthenticatedPath()
+
   // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
-  if (shouldRedirectPendingSession(req.nextUrl.pathname, sessionStatus)) {
+  if (shouldRedirectPendingSession(pathname, sessionStatus)) {
     return NextResponse.redirect(new URL(routes.login, req.url))
   }
 
   if (!isProtectedRoute(req)) {
-    if (req.nextUrl.pathname === '/' && userId) {
-      return NextResponse.redirect(new URL(routes.dashboard, req.url))
+    if (pathname === '/' && userId) {
+      return NextResponse.redirect(new URL(homePath, req.url))
+    }
+    // Public surfaces (e.g. /shop) can still be feature-disabled.
+    if (userId && !isPathnameFeatureEnabled(pathname) && pathname !== homePath) {
+      return NextResponse.redirect(new URL(homePath, req.url))
     }
     return
   }
+
   const signInUrl = new URL(routes.login, req.url).href
   await auth.protect({ unauthenticatedUrl: signInUrl })
+
+  if (!isPathnameFeatureEnabled(pathname) && pathname !== homePath) {
+    return NextResponse.redirect(new URL(homePath, req.url))
+  }
 })
 
 export const config = {

@@ -6,13 +6,6 @@ import { routes } from '@/lib/routes'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
 import { Package } from 'lucide-react'
 
 import { ShopPrintOrdersPreview } from '@/components/shop/shop-print-orders-preview'
@@ -24,20 +17,18 @@ export default async function Page() {
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
       <PageHeading title={t('title')} description={t('description')} />
-      <Card className="border-dashed">
-        <CardHeader className="flex flex-col items-center gap-2 text-center">
-          <div className="flex size-12 items-center justify-center rounded-md border bg-muted">
-            <Package className="size-6" aria-hidden />
-          </div>
-          <CardTitle>{t('emptyTitle')}</CardTitle>
-          <CardDescription className="max-w-md">{t('emptyDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center pb-2">
-          <Button asChild variant="secondary">
-            <Link href={routes.shop}>{t('browseShop')}</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <section className="flex flex-col items-center gap-4 py-8 text-center">
+        <div className="flex size-12 items-center justify-center rounded-md border bg-muted">
+          <Package className="size-6" aria-hidden />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold tracking-tight">{t('emptyTitle')}</h2>
+          <p className="max-w-md text-sm text-muted-foreground">{t('emptyDescription')}</p>
+        </div>
+        <Button asChild variant="secondary">
+          <Link href={routes.shop}>{t('browseShop')}</Link>
+        </Button>
+      </section>
       <ShopPrintOrdersPreview />
     </AnalyticsPageShell>
   )

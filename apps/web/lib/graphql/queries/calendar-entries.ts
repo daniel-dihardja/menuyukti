@@ -3,6 +3,12 @@ export type CalendarMediaRef = {
   name: string
 }
 
+export type CalendarSourceRef = {
+  type: 'instagram_item'
+  workflowId: string
+  itemId: string
+}
+
 export type CalendarEntry = {
   id: number
   locationId: number
@@ -11,6 +17,7 @@ export type CalendarEntry = {
   date: string
   time: string
   mediaRefs: CalendarMediaRef[]
+  sourceRef: CalendarSourceRef | null
 }
 
 const ENTRY_FIELDS = `
@@ -24,6 +31,11 @@ const ENTRY_FIELDS = `
     kind
     name
   }
+  sourceRef {
+    type
+    workflowId
+    itemId
+  }
 `
 
 export const CREATE_CALENDAR_ENTRY_MUTATION = `
@@ -34,6 +46,7 @@ export const CREATE_CALENDAR_ENTRY_MUTATION = `
     $time: String!
     $description: String
     $mediaRefs: [CalendarMediaRefInput!]
+    $sourceRef: CalendarSourceRefInput
   ) {
     createCalendarEntry(
       locationId: $locationId
@@ -42,6 +55,7 @@ export const CREATE_CALENDAR_ENTRY_MUTATION = `
       time: $time
       description: $description
       mediaRefs: $mediaRefs
+      sourceRef: $sourceRef
     ) {
       ${ENTRY_FIELDS}
     }
@@ -60,6 +74,7 @@ export const UPDATE_CALENDAR_ENTRY_MUTATION = `
     $time: String
     $description: String
     $mediaRefs: [CalendarMediaRefInput!]
+    $sourceRef: CalendarSourceRefInput
   ) {
     updateCalendarEntry(
       id: $id
@@ -68,6 +83,7 @@ export const UPDATE_CALENDAR_ENTRY_MUTATION = `
       time: $time
       description: $description
       mediaRefs: $mediaRefs
+      sourceRef: $sourceRef
     ) {
       ${ENTRY_FIELDS}
     }
@@ -76,4 +92,16 @@ export const UPDATE_CALENDAR_ENTRY_MUTATION = `
 
 export type UpdateCalendarEntryData = {
   updateCalendarEntry: CalendarEntry
+}
+
+export const DELETE_CALENDAR_ENTRY_MUTATION = `
+  mutation DeleteCalendarEntry($id: Int!) {
+    deleteCalendarEntry(id: $id) {
+      ${ENTRY_FIELDS}
+    }
+  }
+`
+
+export type DeleteCalendarEntryData = {
+  deleteCalendarEntry: CalendarEntry
 }

@@ -11,6 +11,9 @@ import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import {
   SCHEDULER_GRID_HOUR_END,
   SCHEDULER_GRID_HOUR_START,
+  SCHEDULER_HOLIDAY_BADGE_CLASS,
+  SCHEDULER_WEEKEND_DAY_CLASS,
+  SCHEDULER_WEEKEND_HEADER_CLASS,
   buildSchedulerWeek,
   formatSchedulerWeekRange,
   schedulerHourIndexFromTime,
@@ -133,7 +136,7 @@ export function SchedulerCalendarWeekGrid({
               className={cn(
                 'sticky top-0 z-20 border-b border-r border-border/60 bg-muted/40 px-1 py-2 text-center last:border-r-0',
                 !day.inWindow && 'text-muted-foreground',
-                isWeekend && day.inWindow && 'bg-amber-100/70 dark:bg-amber-950/35',
+                isWeekend && day.inWindow && SCHEDULER_WEEKEND_HEADER_CLASS,
                 day.isToday && day.inWindow && 'bg-primary/10 text-primary',
               )}
             >
@@ -142,7 +145,7 @@ export function SchedulerCalendarWeekGrid({
               <div className="mt-1 flex items-center justify-center gap-1">
                 {isPublicHoliday ? (
                   <span
-                    className="rounded-sm border border-rose-300/80 bg-rose-100/90 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-900 dark:border-rose-700/70 dark:bg-rose-900/40 dark:text-rose-100"
+                    className={cn(SCHEDULER_HOLIDAY_BADGE_CLASS, 'px-1 py-0.5 text-[9px]')}
                     title={holidayName}
                   >
                     {t('milestoneSchedulerPreviewHolidayBadge')}
@@ -216,9 +219,7 @@ function SchedulerHourRow({
             className={cn(
               'relative border-b border-r border-border/60 p-0.5 last:border-r-0',
               !day.inWindow && 'bg-muted/30',
-              isWeekendIsoDate(day.isoDate) &&
-                day.inWindow &&
-                'bg-amber-50/80 dark:bg-amber-950/20',
+              isWeekendIsoDate(day.isoDate) && day.inWindow && SCHEDULER_WEEKEND_DAY_CLASS,
             )}
             style={{ gridRow: rowIndex, gridColumn: dayIndex + 2 }}
           >

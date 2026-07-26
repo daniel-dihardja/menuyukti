@@ -21,9 +21,10 @@
     },
     "generateInstagramPostImage": {
       "running": "Generating post image…",
-      "runningDetail": "Composing prompt and running Leonardo",
+      "runningDetail": "Creating your image…",
       "done": "Generated post image",
-      "error": "Image generation failed"
+      "error": "Image generation failed",
+      "imageAlt": "Generated image"
     },
     "getChartData": {
       "runningGeneric": "Reading your sales charts…",
@@ -43,6 +44,51 @@
           "done": "Reviewed pair lift matrix"
         }
       }
+    },
+    "listInstagramItems": {
+      "running": "Listing Instagram drafts…",
+      "done": "Listed Instagram drafts",
+      "error": "Couldn’t list Instagram drafts"
+    },
+    "getInstagramItem": {
+      "running": "Loading Instagram draft…",
+      "done": "Loaded Instagram draft",
+      "error": "Couldn’t load Instagram draft"
+    },
+    "createInstagramItems": {
+      "running": "Creating Instagram drafts…",
+      "done": "Created Instagram drafts",
+      "error": "Couldn’t create Instagram drafts"
+    },
+    "updateInstagramItems": {
+      "running": "Updating Instagram drafts…",
+      "done": "Updated Instagram drafts",
+      "error": "Couldn’t update Instagram drafts"
+    },
+    "deleteInstagramItems": {
+      "running": "Deleting Instagram drafts…",
+      "done": "Deleted Instagram drafts",
+      "error": "Couldn’t delete Instagram drafts"
+    },
+    "getWorkflowOverview": {
+      "running": "Refreshing workflow overview…",
+      "done": "Reviewed workflow overview",
+      "error": "Couldn’t load workflow overview"
+    },
+    "getMilestone": {
+      "running": "Loading milestone…",
+      "done": "Loaded milestone",
+      "error": "Couldn’t load milestone"
+    },
+    "updateMilestoneInput": {
+      "running": "Updating milestone input…",
+      "done": "Updated milestone input",
+      "error": "Couldn’t update milestone input"
+    },
+    "getLocationData": {
+      "running": "Loading location context…",
+      "done": "Loaded location context",
+      "error": "Couldn’t load location context"
     }
   },
   "appShell": {
@@ -201,9 +247,9 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Social strategy built for offline business.",
-      "subtitle": "A restaurant sells in the dining room, not a cart — so your Instagram shouldn't be managed like an online store. Menuyukti picks what to post, when, and which dish, based on what’s already selling, so the repetitive posting decisions are handled for you.",
-      "badge": "Offline business. Online feed.",
+      "headline": "We read between the bites.",
+      "subtitle": "Restaurant data turned into marketing campaigns, content ideas, and growth opportunities hidden in every order.",
+      "badge": "Built on data. Inspired by food.",
       "ctaSecondary": "Sign in"
     },
     "why": {
@@ -551,9 +597,7 @@
     "passwordMismatch": "New password and confirmation do not match.",
     "passwordSameAsCurrent": "New password must be different from your current password.",
     "passwordOAuthOnly": "Your account does not use a password for sign-in, or you have not set one yet. You can add or manage a password in account settings.",
-    "passwordOpenAccountSettings": "Open account settings",
-    "teamLinkTitle": "Team",
-    "teamLinkDescription": "Invite people to your workspace and manage members."
+    "passwordOpenAccountSettings": "Open account settings"
   },
   "workspaceTeam": {
     "title": "Team",
@@ -750,10 +794,18 @@
         "cancel": "Cancel",
         "save": "Save entry",
         "saveChanges": "Save changes",
+        "delete": "Delete",
+        "deleteConfirmTitle": "Delete this calendar entry?",
+        "deleteConfirmDescription": "This permanently removes the entry from the schedule. You can’t undo this action.",
+        "deleteConfirmCancel": "Cancel",
+        "deleteConfirmAction": "Delete entry",
+        "deleteSuccessToast": "Calendar entry deleted",
+        "deleteErrorToast": "Could not delete calendar entry",
         "successToast": "Calendar entry created",
         "updateSuccessToast": "Calendar entry updated",
         "errorToast": "Could not save calendar entry",
         "workflowSlotReadonly": "Workflow schedule slots can’t be edited here.",
+        "openInstagramItem": "Open Instagram item",
         "discardTitle": "Discard entry?",
         "discardDescription": "You have unsaved changes. Close without saving?",
         "discardKeepEditing": "Keep editing",
@@ -1493,7 +1545,7 @@
         "index": "#",
         "fileName": "File Name",
         "action": "Actions",
-        "askAi": "Workflow Planner",
+        "askAi": "Chat",
         "cogs": "COGS",
         "report": "Report",
         "delete": "Delete",
@@ -1544,9 +1596,9 @@
       }
     },
     "workflows": {
-      "title": "Chat",
-      "description": "Choose a location, create a workflow, then plan milestones, chat with the assistant, and run evaluations.",
-      "sectionTitle": "Workflows for this location",
+      "title": "Workflows",
+      "description": "Create a campaign workflow for a location, then open it to plan milestones and content.",
+      "sectionTitle": "Existing workflows",
       "selectBranchTitle": "Choose a location",
       "selectBranchDescription": "Please select a location to view workflows.",
       "errors": {
@@ -1570,11 +1622,10 @@
       "analyticsRunLoading": "Loading runs…",
       "analyticsRunNone": "No analytics runs found",
       "createWorkflowPanel": {
-        "title": "New workflow",
-        "description": "Choose a location and link the sales report that powers milestone data.",
+        "title": "Create workflow",
         "sectionLocation": "Location",
         "sectionData": "Sales report",
-        "footerHint": "Creates a blank workflow with your location and linked sales report. You can add milestones afterward.",
+        "footerHint": "Milestones can be added after you create the workflow.",
         "ctaPrimary": "Create workflow"
       },
       "newWorkflowDialog": {
@@ -1607,22 +1658,9 @@
       "chat": {
         "pageLoadingTitle": "Loading workflow…",
         "pageTitle": "Workflow #{id}",
-        "emptyTitle": "Plan your Instagram week",
-        "emptyDescription": "Get a day-by-day plan with formats and menu items, grounded in your venue’s sales data.",
+        "emptyTitle": "Draft Instagram content",
+        "emptyDescription": "Ask the assistant to plan Stories, posts, or Reels from your venue slot strength, menu heatmap, and pair lift charts—or to create and update Instagram items for this campaign.",
         "waitHint": "Usually takes about 30 seconds.",
-        "placeholder": "Ask for a weekly Instagram plan…",
-        "thinking": "Planning…",
-        "errorTitle": "Something went wrong",
-        "errorDescription": "The request could not be completed. Please try again.",
-        "retry": "Retry",
-        "clearChatAriaLabel": "Clear chat",
-        "clearChatLabel": "Clear chat",
-        "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
-        "stopChatAriaLabel": "Stop generating",
-        "submitChatAriaLabel": "Send message",
-        "attachImageAriaLabel": "Attach image",
-        "attachImageTooltip": "Attach an image from your device",
-        "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
         "quickPrompts": {
           "weeklyPlan": {
             "label": "Weekly Instagram plan",
@@ -1637,6 +1675,24 @@
             "prompt": "Draft a weekly mix of Instagram Stories and Reels with specific menu items for each slot and a brief creative direction."
           }
         },
+        "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
+        "thinking": "Thinking…",
+        "errorTitle": "Something went wrong",
+        "errorDescription": "The request could not be completed. Please try again.",
+        "retry": "Retry",
+        "clearChatAriaLabel": "Clear chat",
+        "clearChatLabel": "Clear chat",
+        "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
+        "stopChatAriaLabel": "Stop generating",
+        "submitChatAriaLabel": "Send message",
+        "attachImageAriaLabel": "Attach image",
+        "attachImageTooltip": "Attach an image from your device",
+        "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
+        "mobileArtifactOpenLabel": "Preview",
+        "mobileArtifactOpenAriaLabel": "Open preview",
+        "mobileArtifactSheetTitle": "Preview",
+        "mobileArtifactSheetDescription": "View milestone results and generated Instagram content.",
+        "mobileArtifactEmptyHint": "View generated content",
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {
@@ -2369,6 +2425,10 @@
         "notFound": "That Instagram item was not found. Pick another or create a new one.",
         "backAria": "Back to Instagram items",
         "saveButton": "Save",
+        "addToCalendar": "Add to calendar",
+        "addToCalendarSuccess": "Added to calendar",
+        "addToCalendarError": "Could not add to calendar. Please try again.",
+        "addToCalendarNeedSchedule": "Set a title and schedule before adding to the calendar.",
         "deleteRowAria": "Delete {title}",
         "createError": "Could not create Instagram item. Please try again.",
         "saveError": "Could not save Instagram item. Please try again.",
@@ -2384,7 +2444,9 @@
         },
         "pages": {
           "label": "Pages",
-          "description": "Each page is a frame of this Story or post, with its own visual brief and image versions.",
+          "description": "Each page is a frame of this Story or post, with its own content and image.",
+          "tabLabel": "Page {index}",
+          "empty": "This item has no pages yet. Add a page to continue.",
           "selectAria": "Select page {index}",
           "actionsAria": "Page actions",
           "selectedIndicator": "Page {current} of {total}",
@@ -2413,7 +2475,10 @@
           "hook": "Hook",
           "caption": "Caption",
           "visualBrief": "Visual brief",
-          "pageVisualBrief": "Visual brief for this page"
+          "pageVisualBrief": "Visual brief for this page",
+          "pageContent": "Content",
+          "pageContentHint": "Describe what should appear on this page. Used when generating the image.",
+          "pageContentPlaceholder": "Describe the scene, layout, and on-image text."
         },
         "generate": {
           "button": "Generate image",
@@ -2425,9 +2490,6 @@
           "previewEmptyTitle": "No image yet",
           "expandPreview": "View larger image",
           "closePreview": "Close image preview",
-          "useCurrentPreviewAsReference": "Use current preview as reference",
-          "useCurrentPreviewAsReferenceHint": "Next generate edits from the image currently shown above.",
-          "useCurrentPreviewAsReferenceUnavailable": "Generate an image first to use it as an edit reference.",
           "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
           "pageVisualBriefHint": "Describe this page only. Type @ to attach product photos from Media as generation references.",
           "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",

@@ -45,7 +45,7 @@ When improving an existing implementation (not only greenfield features), also r
 | Milestone presets (web) | [`apps/web/lib/milestones/preset-definitions.ts`](../../../apps/web/lib/milestones/preset-definitions.ts), [`node-schemas/milestone-presets.ts`](../../../apps/web/lib/graphql/node-schemas/milestone-presets.ts) |
 | API routes (BFF)        | [`apps/web/app/api/`](../../../apps/web/app/api/) — e.g. `/api/workflows/.../milestones/.../run`                                                                                                                  |
 
-Named product features and aliases (e.g. workflow import presets): see [`.agents/menuyukti-features.md`](../../menuyukti-features.md).
+Named product features and aliases (e.g. milestone presets): see [`.agents/menuyukti-features.md`](../../menuyukti-features.md).
 
 Commands: [AGENTS.md](../../../AGENTS.md) § Web.
 

@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
-import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Input } from '@workspace/ui/components/input'
 import {
   DropdownMenu,
@@ -48,25 +47,25 @@ interface WorkflowsTableProps {
 
 export function WorkflowsTableSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-56" />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex gap-4 border-b pb-2">
-          <Skeleton className="h-4 w-8 shrink-0" />
-          <Skeleton className="h-4 min-w-0 flex-1" />
-          <Skeleton className="h-4 w-10 shrink-0" />
-        </div>
-        {Array.from({ length: 5 }, (_, i) => (
-          <div className="flex gap-4" key={`skeleton-row-${i}`}>
+    <section className="flex flex-col gap-3">
+      <Skeleton className="h-5 w-56" />
+      <div className="-mx-4 w-[calc(100%+2rem)] border-x-0 border-y lg:mx-0 lg:w-full lg:rounded-md lg:border">
+        <div className="flex flex-col gap-3 px-4 py-3">
+          <div className="flex gap-4 border-b pb-2">
             <Skeleton className="h-4 w-8 shrink-0" />
             <Skeleton className="h-4 min-w-0 flex-1" />
             <Skeleton className="h-4 w-10 shrink-0" />
           </div>
-        ))}
-      </CardContent>
-    </Card>
+          {Array.from({ length: 5 }, (_, i) => (
+            <div className="flex gap-4" key={`skeleton-row-${i}`}>
+              <Skeleton className="h-4 w-8 shrink-0" />
+              <Skeleton className="h-4 min-w-0 flex-1" />
+              <Skeleton className="h-4 w-10 shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -192,123 +191,121 @@ export function WorkflowsTable({
   }, [onWorkflowDeleted, pendingDelete, tTable])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('sectionTitle')}</CardTitle>
-      </CardHeader>
-      <CardContent className="px-0">
-        <div className="w-full overflow-x-auto">
-          <Table className="w-full min-w-[20rem]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">{tTable('index')}</TableHead>
-                <TableHead>{tTable('name')}</TableHead>
-                <TableHead className="w-[80px] text-right">{tTable('action')}</TableHead>
-              </TableRow>
-            </TableHeader>
+    <section aria-labelledby="workflows-list-heading" className="flex flex-col gap-3">
+      <h2 id="workflows-list-heading" className="text-sm font-semibold">
+        {t('sectionTitle')}
+      </h2>
+      <div className="-mx-4 w-[calc(100%+2rem)] overflow-x-auto border-x-0 border-y lg:mx-0 lg:w-full lg:rounded-md lg:border">
+        <Table className="w-full min-w-[20rem]">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px]">{tTable('index')}</TableHead>
+              <TableHead>{tTable('name')}</TableHead>
+              <TableHead className="w-[80px] text-right">{tTable('action')}</TableHead>
+            </TableRow>
+          </TableHeader>
 
-            <TableBody>
-              {workflows.map((row, index) => (
-                <TableRow key={row.id}>
-                  <TableCell className="tabular-nums text-muted-foreground">{index + 1}</TableCell>
-                  <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
-                    {editingId === row.id ? (
-                      <div ref={editContainerRef} className="flex flex-col gap-1">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <Input
-                            aria-invalid={renameError ? true : undefined}
-                            aria-label={tTable('name')}
-                            name="workflowName"
-                            className="min-w-0 flex-1"
-                            disabled={saving}
-                            onChange={(e) => setDraftName(e.target.value)}
-                            onKeyDown={onDraftKeyDown}
-                            value={draftName}
-                          />
-                          <Button
-                            aria-label={tTable('saveNameAria')}
-                            disabled={saving || draftName.trim().length === 0}
-                            onClick={() => void saveEdit()}
-                            size="icon-sm"
-                            type="button"
-                            variant="secondary"
-                          >
-                            {saving ? <Spinner /> : <Check aria-hidden />}
-                          </Button>
-                        </div>
-                        {renameError ? (
-                          <p className="text-destructive text-sm" role="alert">
-                            {renameError}
-                          </p>
-                        ) : null}
+          <TableBody>
+            {workflows.map((row, index) => (
+              <TableRow key={row.id}>
+                <TableCell className="tabular-nums text-muted-foreground">{index + 1}</TableCell>
+                <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
+                  {editingId === row.id ? (
+                    <div ref={editContainerRef} className="flex flex-col gap-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <Input
+                          aria-invalid={renameError ? true : undefined}
+                          aria-label={tTable('name')}
+                          name="workflowName"
+                          className="min-w-0 flex-1"
+                          disabled={saving}
+                          onChange={(e) => setDraftName(e.target.value)}
+                          onKeyDown={onDraftKeyDown}
+                          value={draftName}
+                        />
+                        <Button
+                          aria-label={tTable('saveNameAria')}
+                          disabled={saving || draftName.trim().length === 0}
+                          onClick={() => void saveEdit()}
+                          size="icon-sm"
+                          type="button"
+                          variant="secondary"
+                        >
+                          {saving ? <Spinner /> : <Check aria-hidden />}
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="flex min-w-0 items-center gap-1">
+                      {renameError ? (
+                        <p className="text-destructive text-sm" role="alert">
+                          {renameError}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="flex min-w-0 items-center gap-1">
+                      <Link
+                        className="min-w-0 flex-1 truncate font-medium text-foreground underline-offset-4 hover:underline"
+                        href={routes.workflows.detail(row.id)}
+                        title={row.name}
+                      >
+                        {row.name}
+                      </Link>
+                      <Button
+                        aria-label={tTable('editNameAria')}
+                        className="shrink-0"
+                        onClick={() => startEdit(row)}
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Pencil aria-hidden />
+                      </Button>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        aria-label={tTable('actionsForRow', { name: row.name })}
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <MoreHorizontal aria-hidden />
+                      </Button>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
                         <Link
-                          className="min-w-0 flex-1 truncate font-medium text-foreground underline-offset-4 hover:underline"
+                          className="flex items-center gap-2"
                           href={routes.workflows.detail(row.id)}
-                          title={row.name}
                         >
-                          {row.name}
+                          <Eye aria-hidden />
+                          {tTable('view')}
                         </Link>
-                        <Button
-                          aria-label={tTable('editNameAria')}
-                          className="shrink-0"
-                          onClick={() => startEdit(row)}
-                          size="icon-sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <Pencil aria-hidden />
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-label={tTable('actionsForRow', { name: row.name })}
-                          size="icon-sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal aria-hidden />
-                        </Button>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link
-                            className="flex items-center gap-2"
-                            href={routes.workflows.detail(row.id)}
-                          >
-                            <Eye aria-hidden />
-                            {tTable('view')}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          disabled={deleting && pendingDelete?.id === row.id}
-                          onSelect={(e) => {
-                            e.preventDefault()
-                            setDeleteError(null)
-                            setPendingDelete(row)
-                          }}
-                        >
-                          <Trash2 aria-hidden className="size-4" />
-                          {tTable('delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        disabled={deleting && pendingDelete?.id === row.id}
+                        onSelect={(e) => {
+                          e.preventDefault()
+                          setDeleteError(null)
+                          setPendingDelete(row)
+                        }}
+                      >
+                        <Trash2 aria-hidden className="size-4" />
+                        {tTable('delete')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <AlertDialog
         onOpenChange={(open) => {
@@ -352,6 +349,6 @@ export function WorkflowsTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </section>
   )
 }

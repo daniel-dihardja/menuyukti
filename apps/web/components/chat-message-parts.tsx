@@ -28,6 +28,10 @@ import {
   partitionMessageParts,
 } from '@/lib/chat/partition-message-parts'
 import {
+  parseGeneratedImageUrlFromToolOutput,
+  stripDuplicateGeneratedImageMarkdown,
+} from '@/lib/chat/strip-duplicate-generated-image-markdown'
+import {
   isWorkflowVisualizationId,
   type WorkflowVisualizationId,
 } from '@/lib/workflow/workflow-visualization-ids'
@@ -83,6 +87,56 @@ function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolU
   )
 }
 
+function parseGeneratedImageToolOutput(output: unknown): { url: string } | null {
+  const url = parseGeneratedImageUrlFromToolOutput(output)
+  return url ? { url } : null
+}
+
+function collectGeneratedImageUrlsFromParts(parts: UIMessage['parts'] | undefined): string[] {
+  if (!parts?.length) return []
+  const urls: string[] = []
+  for (const part of parts) {
+    if (!isToolUIPart(part)) continue
+    const toolName = resolveToolName(part)
+    if (toolName !== 'generate_instagram_post_image') continue
+    if (!('output' in part) || part.output == null) continue
+    const url = parseGeneratedImageUrlFromToolOutput(part.output)
+    if (url) urls.push(url)
+  }
+  return urls
+}
+
+function CompactToolStatus({
+  isInFlight,
+  isError,
+  message,
+}: {
+  isInFlight: boolean
+  isError: boolean
+  message: string
+}) {
+  return (
+    <div
+      aria-live="polite"
+      className="flex items-center gap-2 text-muted-foreground text-sm"
+      role="status"
+    >
+      {isInFlight ? (
+        <Spinner className="size-3.5 shrink-0" />
+      ) : isError ? (
+        <XIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
+      ) : (
+        <CheckIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+      )}
+      {isInFlight ? (
+        <Shimmer className="text-sm">{message}</Shimmer>
+      ) : (
+        <span className={isError ? 'text-destructive' : undefined}>{message}</span>
+      )}
+    </div>
+  )
+}
+
 function GenerateInstagramPostImageToolBlock({
   part,
 }: {
@@ -90,38 +144,25 @@ function GenerateInstagramPostImageToolBlock({
 }) {
   const t = useTranslations('chatTools.generateInstagramPostImage')
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
-  const output =
-    'output' in part && part.output != null
-      ? typeof part.output === 'string'
-        ? part.output
-        : JSON.stringify(part.output)
-      : ''
-  const toolReportedError = Boolean(output) && output.startsWith('Error:')
-  const isError =
-    part.state === 'output-error' || part.state === 'output-denied' || toolReportedError
-  const title = isInFlight ? t('running') : isError ? t('error') : t('done')
-
-  const header =
-    part.type === 'dynamic-tool' ? (
-      <ToolHeader state={part.state} title={title} toolName={part.toolName} type="dynamic-tool" />
-    ) : (
-      <ToolHeader state={part.state} title={title} type={part.type} />
-    )
+  const isError = toolOutputLooksLikeError(part)
+  const generated =
+    !isInFlight && !isError
+      ? parseGeneratedImageToolOutput('output' in part ? part.output : undefined)
+      : null
+  const message = isError ? t('error') : isInFlight ? t('runningDetail') : t('done')
 
   return (
-    <Tool defaultOpen={isInFlight || isError}>
-      {header}
-      {isInFlight ? (
-        <ToolContent>
-          <Shimmer className="text-sm">{t('runningDetail')}</Shimmer>
-        </ToolContent>
+    <div className="flex flex-col gap-2">
+      <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
+      {generated ? (
+        // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+        <img
+          alt={t('imageAlt')}
+          className="max-h-80 max-w-full rounded-md border border-border object-contain"
+          src={generated.url}
+        />
       ) : null}
-      {isError && output ? (
-        <ToolContent>
-          <p className="text-destructive text-sm">{output.replace(/^Error:\s*/, '')}</p>
-        </ToolContent>
-      ) : null}
-    </Tool>
+    </div>
   )
 }
 
@@ -150,26 +191,41 @@ function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicTo
     message = isInFlight ? t('runningGeneric') : t('doneGeneric')
   }
 
-  return (
-    <div
-      aria-live="polite"
-      className="flex items-center gap-2 text-muted-foreground text-sm"
-      role="status"
-    >
-      {isInFlight ? (
-        <Spinner className="size-3.5 shrink-0" />
-      ) : isError ? (
-        <XIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
-      ) : (
-        <CheckIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
-      )}
-      {isInFlight ? (
-        <Shimmer className="text-sm">{message}</Shimmer>
-      ) : (
-        <span className={isError ? 'text-destructive' : undefined}>{message}</span>
-      )}
-    </div>
-  )
+  return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
+}
+
+const COMPACT_TOOL_I18N = {
+  list_instagram_items: 'listInstagramItems',
+  get_instagram_item: 'getInstagramItem',
+  create_instagram_items: 'createInstagramItems',
+  update_instagram_items: 'updateInstagramItems',
+  delete_instagram_items: 'deleteInstagramItems',
+  get_workflow_overview: 'getWorkflowOverview',
+  get_milestone: 'getMilestone',
+  update_milestone_input: 'updateMilestoneInput',
+  get_location_data: 'getLocationData',
+} as const
+
+type CompactToolName = keyof typeof COMPACT_TOOL_I18N
+
+function isCompactToolName(toolName: string): toolName is CompactToolName {
+  return toolName in COMPACT_TOOL_I18N
+}
+
+function CompactNamedToolBlock({
+  part,
+  toolName,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+  toolName: CompactToolName
+}) {
+  const t = useTranslations('chatTools')
+  const key = COMPACT_TOOL_I18N[toolName]
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const isError = toolOutputLooksLikeError(part)
+  const message = isError ? t(`${key}.error`) : isInFlight ? t(`${key}.running`) : t(`${key}.done`)
+
+  return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
 }
 
 function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
@@ -182,6 +238,9 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
   }
   if (toolName === 'get_chart_data') {
     return <GetChartDataToolBlock part={part} />
+  }
+  if (isCompactToolName(toolName)) {
+    return <CompactNamedToolBlock part={part} toolName={toolName} />
   }
 
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
@@ -236,6 +295,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   const { reasoningParts, otherParts } = partitionMessageParts(parts)
   const reasoningText = joinReasoningText(reasoningParts)
   const reasoningStreaming = isReasoningStreaming(reasoningParts, isStreaming)
+  const generatedImageUrls = collectGeneratedImageUrlsFromParts(parts)
 
   return (
     <>
@@ -247,6 +307,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
       ) : null}
       {otherParts.map((part, index) => (
         <MessagePartRenderer
+          generatedImageUrls={generatedImageUrls}
           key={`${message.id}-${index}`}
           mentionTitles={mentionTitles}
           part={part}
@@ -270,13 +331,22 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   part,
   role,
   mentionTitles,
+  generatedImageUrls = [],
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
   mentionTitles?: string[]
+  /** URLs from generate_instagram_post_image tool results in this message. */
+  generatedImageUrls?: readonly string[]
 }) {
   if (part.type === 'text') {
-    const text = part.text
+    const text =
+      role === 'assistant' && generatedImageUrls.length > 0
+        ? stripDuplicateGeneratedImageMarkdown(part.text, generatedImageUrls)
+        : part.text
+    if (!text) {
+      return null
+    }
     if (role === 'assistant') {
       return <AssistantTextPart text={text} />
     }

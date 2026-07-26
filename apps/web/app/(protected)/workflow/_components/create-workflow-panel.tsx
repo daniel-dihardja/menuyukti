@@ -7,13 +7,6 @@ import { useTranslations } from 'next-intl'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -57,7 +50,6 @@ function CreateWorkflowLocationSection({ branches }: LocationSectionProps) {
   return (
     <LocationSelect
       branches={branches}
-      className="w-full max-w-none"
       id="workflow-location-select"
       label={tPanel('sectionLocation')}
       placeholder={branches.length > 1 ? t('branchPlaceholder') : t('branchLabel')}
@@ -97,7 +89,7 @@ function CreateWorkflowDataSection({
           </p>
         ) : analyticsRuns.length === 0 ? (
           <p
-            className="rounded-md border border-dashed bg-muted/30 px-3 py-2.5 text-muted-foreground text-sm leading-snug"
+            className="rounded-md border border-dashed px-3 py-2.5 text-muted-foreground text-sm leading-snug"
             id="workflow-analytics-run-empty"
           >
             {t('analyticsRunNone')}
@@ -213,38 +205,28 @@ export function CreateWorkflowPanel({
   const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
 
   return (
-    <Card className="overflow-hidden bg-card shadow-none">
-      <CardHeader className="border-border/60 border-b bg-muted/20 px-5 py-5 sm:px-6">
-        <CardTitle className="text-balance font-semibold text-xl tracking-tight">
-          {tPanel('title')}
-        </CardTitle>
-        <CardDescription className="text-pretty text-base leading-relaxed">
-          {tPanel('description')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6 px-5 py-6 sm:px-6">
-        <FieldGroup className="gap-6">
-          <CreateWorkflowLocationSection branches={branches} />
+    <section aria-label={tPanel('title')} className="flex flex-col gap-6">
+      <FieldGroup className="gap-6">
+        <CreateWorkflowLocationSection branches={branches} />
 
-          {hasSelectedLocation ? (
-            <>
-              <CreateWorkflowDataSection
-                analyticsRunId={analyticsRunId}
-                analyticsRuns={analyticsRuns}
-                loadingRuns={loadingRuns}
-                onAnalyticsRunIdChange={onAnalyticsRunIdChange}
-                runsError={runsError}
-              />
-              <CreateWorkflowFooterSection
-                canCreate={canCreate}
-                createError={createError}
-                creating={creating}
-                onCreate={onCreate}
-              />
-            </>
-          ) : null}
-        </FieldGroup>
-      </CardContent>
-    </Card>
+        {hasSelectedLocation ? (
+          <>
+            <CreateWorkflowDataSection
+              analyticsRunId={analyticsRunId}
+              analyticsRuns={analyticsRuns}
+              loadingRuns={loadingRuns}
+              onAnalyticsRunIdChange={onAnalyticsRunIdChange}
+              runsError={runsError}
+            />
+            <CreateWorkflowFooterSection
+              canCreate={canCreate}
+              createError={createError}
+              creating={creating}
+              onCreate={onCreate}
+            />
+          </>
+        ) : null}
+      </FieldGroup>
+    </section>
   )
 }

@@ -11,7 +11,7 @@ from graphql.data_sources import Node
 from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.mutations.create_calendar_entry import calendar_entry_to_slot_fields
-from graphql.schema.types.calendar_entry import CalendarMediaRefType
+from graphql.schema.types.calendar_entry import CalendarMediaRefType, CalendarSourceRefType
 
 
 @strawberry.type(description="A public holiday overlay for the calendar window.")
@@ -31,6 +31,7 @@ class SchedulerCalendarSlotType:
     description: str | None = None
     media_refs: list[CalendarMediaRefType] | None = None
     source: str | None = None
+    source_ref: CalendarSourceRefType | None = None
 
 
 @strawberry.type(
@@ -100,6 +101,7 @@ def _parse_slot(raw: Any) -> SchedulerCalendarSlotType | None:
         description=None,
         media_refs=[],
         source="workflow",
+        source_ref=None,
     )
 
 

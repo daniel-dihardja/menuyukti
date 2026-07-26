@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { revalidateTag } from 'next/cache'
 import { ZodError } from 'zod'
 
@@ -11,15 +12,16 @@ import {
   graphqlSchedulerCalendarCacheTag,
   revalidateTagAfterMutation,
 } from '@/lib/graphql/cache-tags'
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 import { createCalendarEntryBodySchema } from './schema'
 
 export async function POST(req: Request) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
-    if (!authz.ok) return authz.response
-    const { userId } = authz
+    await connection()
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated || !userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const json = await req.json()
     const body = createCalendarEntryBodySchema.parse(json)
@@ -33,6 +35,7 @@ export async function POST(req: Request) {
         time: body.time,
         description: body.description ?? '',
         mediaRefs: body.mediaRefs ?? [],
+        ...(body.sourceRef !== undefined ? { sourceRef: body.sourceRef } : {}),
       },
       userId,
     )

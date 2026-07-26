@@ -13,13 +13,6 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import {
@@ -142,99 +135,93 @@ export function WorkspaceTeamClient({ initialData }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {!data.isOwner ? (
         <p className="text-sm text-muted-foreground">{t('ownerOnlyNotice')}</p>
       ) : null}
 
       {data.isOwner ? (
-        <Card className="max-w-xl">
-          <CardHeader>
-            <CardTitle>{t('inviteTitle')}</CardTitle>
-            <CardDescription>{t('inviteDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleInvite}>
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="workspace-invite-email">{t('inviteEmailLabel')}</FieldLabel>
-                  <Input
-                    id="workspace-invite-email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder={t('inviteEmailPlaceholder')}
-                    required
-                    disabled={inviting}
-                  />
-                </Field>
-                {inviteError ? <p className="text-sm text-destructive">{inviteError}</p> : null}
-                {inviteSuccess ? (
-                  <p className="text-sm text-muted-foreground">{inviteSuccess}</p>
-                ) : null}
-                <Button type="submit" disabled={inviting || email.trim().length === 0}>
-                  {inviting ? t('inviteSubmitting') : t('inviteSubmit')}
-                </Button>
-              </FieldGroup>
-            </form>
-          </CardContent>
-        </Card>
+        <section className="max-w-xl space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold tracking-tight">{t('inviteTitle')}</h2>
+            <p className="text-sm text-muted-foreground">{t('inviteDescription')}</p>
+          </div>
+          <form onSubmit={handleInvite}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="workspace-invite-email">{t('inviteEmailLabel')}</FieldLabel>
+                <Input
+                  id="workspace-invite-email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder={t('inviteEmailPlaceholder')}
+                  required
+                  disabled={inviting}
+                />
+              </Field>
+              {inviteError ? <p className="text-sm text-destructive">{inviteError}</p> : null}
+              {inviteSuccess ? (
+                <p className="text-sm text-muted-foreground">{inviteSuccess}</p>
+              ) : null}
+              <Button type="submit" disabled={inviting || email.trim().length === 0}>
+                {inviting ? t('inviteSubmitting') : t('inviteSubmit')}
+              </Button>
+            </FieldGroup>
+          </form>
+        </section>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('membersTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.members.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t('membersEmpty')}</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('tableName')}</TableHead>
-                  <TableHead>{t('tableEmail')}</TableHead>
-                  <TableHead>{t('tableRole')}</TableHead>
-                  <TableHead>{t('tableInvited')}</TableHead>
+      <section className="space-y-4">
+        <h2 className="text-base font-semibold tracking-tight">{t('membersTitle')}</h2>
+        {data.members.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('membersEmpty')}</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('tableName')}</TableHead>
+                <TableHead>{t('tableEmail')}</TableHead>
+                <TableHead>{t('tableRole')}</TableHead>
+                <TableHead>{t('tableInvited')}</TableHead>
+                {data.isOwner ? (
+                  <TableHead className="w-[120px]">{t('tableActions')}</TableHead>
+                ) : null}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.members.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell>{member.name ?? t('unknownName')}</TableCell>
+                  <TableCell>{member.email ?? t('noEmail')}</TableCell>
+                  <TableCell>
+                    {member.role === 'owner' ? t('roleOwner') : t('roleMember')}
+                  </TableCell>
+                  <TableCell>{formatInvitedAt(member.invitedAt)}</TableCell>
                   {data.isOwner ? (
-                    <TableHead className="w-[120px]">{t('tableActions')}</TableHead>
+                    <TableCell>
+                      {member.role !== 'owner' ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={removingId === member.clerkUserId}
+                          onClick={() => setMemberToRemove(member)}
+                        >
+                          {removingId === member.clerkUserId
+                            ? t('removeMemberSubmitting')
+                            : t('removeMember')}
+                        </Button>
+                      ) : null}
+                    </TableCell>
                   ) : null}
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>{member.name ?? t('unknownName')}</TableCell>
-                    <TableCell>{member.email ?? t('noEmail')}</TableCell>
-                    <TableCell>
-                      {member.role === 'owner' ? t('roleOwner') : t('roleMember')}
-                    </TableCell>
-                    <TableCell>{formatInvitedAt(member.invitedAt)}</TableCell>
-                    {data.isOwner ? (
-                      <TableCell>
-                        {member.role !== 'owner' ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={removingId === member.clerkUserId}
-                            onClick={() => setMemberToRemove(member)}
-                          >
-                            {removingId === member.clerkUserId
-                              ? t('removeMemberSubmitting')
-                              : t('removeMember')}
-                          </Button>
-                        ) : null}
-                      </TableCell>
-                    ) : null}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </section>
 
       <AlertDialog
         open={memberToRemove != null}

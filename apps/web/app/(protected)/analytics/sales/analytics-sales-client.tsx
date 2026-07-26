@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 
 import { LocationSelect } from './location-select'
 import { SalesTable } from './sales-table'
+import { useDeleteAnalytics } from './use-delete-analytics'
 import UploadExcelClient from './upload-xcel-client'
 import { useUploadAnalytics } from './use-upload-analytics'
 import { routes } from '@/lib/routes'
@@ -50,6 +51,10 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
   const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, () =>
     router.refresh(),
   )
+  const { deleteAnalytics, deleting } = useDeleteAnalytics({
+    locationId,
+    onSuccess: () => router.refresh(),
+  })
 
   const uploads = initialAnalytics
   const hasUploads = uploads.length > 0
@@ -88,6 +93,8 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
       ) : (
         <SalesTable
           uploads={uploads}
+          deleting={deleting}
+          onDelete={deleteAnalytics}
           onCogs={(analyticsId) => {
             router.push(routes.analytics.cogs(String(analyticsId)))
           }}

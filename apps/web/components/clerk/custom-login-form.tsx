@@ -4,7 +4,7 @@ import { useSignIn } from '@clerk/nextjs'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { routes } from '@/lib/routes'
+import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { cn } from '@workspace/ui/lib/utils'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -47,7 +47,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         if (session?.currentTask) {
           return
         }
-        const url = decorateUrl(routes.dashboard)
+        const url = decorateUrl(getDefaultAuthenticatedPath())
         if (url.startsWith('http')) {
           window.location.href = url
         } else {
