@@ -1,6 +1,16 @@
 'use client'
 
-import { createContext, type ReactNode, use, useEffect, useMemo, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+
+import { readLastLocationId, writeLastLocationId } from '@/lib/last-location'
 
 type AnalyticsState = {
   locationId: number | null
@@ -26,15 +36,34 @@ export function AnalyticsProvider({
   initialLocationId = null,
   initialAnalyticsId = null,
 }: AnalyticsProviderProps) {
-  const [locationId, setLocationId] = useState<number | null>(initialLocationId)
+  const [locationId, setLocationIdState] = useState<number | null>(initialLocationId)
   const [analyticsId, setAnalyticsId] = useState<number | null>(initialAnalyticsId)
+  const [hydratedFromStorage, setHydratedFromStorage] = useState(false)
+
+  useEffect(() => {
+    if (hydratedFromStorage) return
+    setHydratedFromStorage(true)
+    if (initialLocationId !== null) {
+      writeLastLocationId(initialLocationId)
+      return
+    }
+    setLocationIdState((current) => {
+      if (current !== null) return current
+      return readLastLocationId()
+    })
+  }, [hydratedFromStorage, initialLocationId])
+
+  const setLocationId = useCallback((next: number | null) => {
+    setLocationIdState(next)
+    writeLastLocationId(next)
+  }, [])
 
   useEffect(() => {
     setAnalyticsId(null)
   }, [locationId])
 
   const state = useMemo(() => ({ locationId, analyticsId }), [analyticsId, locationId])
-  const actions = useMemo(() => ({ setLocationId, setAnalyticsId }), [])
+  const actions = useMemo(() => ({ setLocationId, setAnalyticsId }), [setLocationId])
 
   return (
     <AnalyticsActionsContext value={actions}>

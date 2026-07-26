@@ -4,6 +4,7 @@ import { ProtectedSkipLink } from '@/components/protected-skip-link'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { routes } from '@/lib/routes'
+import { AnalyticsProvider } from './analytics/analytics-provider'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = await auth()
@@ -16,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <AppSidebar />
       <SidebarInset className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <ProtectedSkipLink />
-        {children}
+        <AnalyticsProvider>{children}</AnalyticsProvider>
       </SidebarInset>
     </SidebarProvider>
   )
