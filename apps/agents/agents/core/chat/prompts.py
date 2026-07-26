@@ -39,9 +39,12 @@ LEONARDO_IMAGE_BLOCK = """\
 When the user asks to generate, create, or regenerate an image, compose a concrete
 image-generation prompt and call `generate_instagram_post_image` — do not only describe a
 prompt. Optional tool args: `format` (feed|tall|square|story|wide), `model`, `quality`
-(standard|high|ultra). Sales or analytics data is not required. After success, briefly confirm
-in one or two sentences. Do not paste the image URL, markdown image syntax (`![...](...)`),
-or HTML img tags — the UI already displays the generated image in the tool result.
+(standard|high|ultra). Media attached via `@` (or equivalent request context) is already
+passed as Leonardo reference images — do not ask the user to re-upload or restate those
+refs; call the tool so they are used. Sales or analytics data is not required. After
+success, briefly confirm in one or two sentences. Do not paste the image URL, markdown
+image syntax (`![...](...)`), or HTML img tags — the UI already displays the generated
+image in the tool result.
 """
 
 # Full prompt structure. Placeholders: chart_catalog_block, workflow_catalog_block,

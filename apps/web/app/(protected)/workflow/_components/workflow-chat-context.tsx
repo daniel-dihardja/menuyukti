@@ -25,6 +25,7 @@ export type WorkflowChatComposerState = {
   isSubmitDisabled: boolean
   slashCommands: WorkflowChatSlashCommand[]
   pendingMediaAttachments: PendingMediaAttachment[]
+  autoAttachGenerated: boolean
 }
 
 /** @deprecated Prefer useWorkflowChatMessages + useWorkflowChatComposerState */
@@ -36,6 +37,7 @@ export type WorkflowChatState = WorkflowChatMessagesState &
 export type WorkflowChatActions = {
   setText: (value: string) => void
   setSelectedChatModel: (model: ChatGatewayModelId) => void
+  setAutoAttachGenerated: (enabled: boolean) => void
   handleTextChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (message: PromptInputMessage) => Promise<void>
   handleSelectSlashCommand: (command: string) => Promise<void>
@@ -45,6 +47,7 @@ export type WorkflowChatActions = {
     title: string,
   ) => void
   handleSelectMediaMention: (item: MediaCatalogItem) => void
+  handleAttachGeneratedImage: (image: { url: string; name: string; mediaS3Key: string }) => void
   handleRemovePendingMedia: (id: string) => void
   handleRetry: () => Promise<void>
   handleClearChat: () => void
