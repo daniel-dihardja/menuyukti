@@ -2368,6 +2368,10 @@
           "generateError": "Couldn't generate the image. Try again."
         }
       },
+      "sidePanel": {
+        "chatTab": "Chat",
+        "visualizationsTab": "Visualizations"
+      },
       "visualizations": {
         "panelTitle": "Charts",
         "emptyTitle": "No charts yet",
