@@ -45,6 +45,9 @@ import {
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip'
 
+import { toast } from 'sonner'
+
+import { createCalendarEntry } from '@/lib/calendar/client-api'
 import type {
   InstagramItemDto,
   InstagramItemPageDto,
@@ -55,6 +58,7 @@ import { DEFAULT_LEONARDO_POST_MODEL } from '@/lib/posts/leonardo-post-models'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import { resolveGenerationReferences } from '@/lib/posts/resolve-generation-references'
 
+import { useTimelineWorkspaceState } from '../timeline-context'
 import { InstagramItemPreview } from './instagram-item-preview'
 import {
   toFormValues,
@@ -178,6 +182,7 @@ export function InstagramItemDetail({
   onGenerated,
 }: InstagramItemDetailProps) {
   const t = useTranslations('analytics.workflows.instagramItems')
+  const { locationId } = useTimelineWorkspaceState()
   const kindFieldId = useId()
   const statusFieldId = useId()
   const [values, setValues] = useState<InstagramItemFormValues>(() => toFormValues(item))
@@ -200,6 +205,7 @@ export function InstagramItemDetail({
   const [isAddingPage, setIsAddingPage] = useState(false)
   const [isDuplicatingPage, setIsDuplicatingPage] = useState(false)
   const [isDeletingPage, setIsDeletingPage] = useState(false)
+  const [isAddingToCalendar, setIsAddingToCalendar] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<'version' | 'page'>('version')
 
@@ -227,7 +233,13 @@ export function InstagramItemDetail({
     isDeletingVersion ||
     isAddingPage ||
     isDuplicatingPage ||
-    isDeletingPage
+    isDeletingPage ||
+    isAddingToCalendar
+  const canAddToCalendar =
+    !busy &&
+    Boolean(locationId) &&
+    values.title.trim().length > 0 &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(values.schedule.trim())
   const canGenerate = pagePrompt.trim().length > 0 && !busy && Boolean(selectedPageId)
   const previewVersion = imageVersions[previewVersionIndex] ?? imageVersions[0]
   const visibleMediaS3Key = previewVersion?.mediaS3Key || null
@@ -247,6 +259,36 @@ export function InstagramItemDetail({
     return {
       ...values,
       referenceImages: persistableRefs(referenceImages),
+    }
+  }
+
+  async function handleAddToCalendar() {
+    const schedule = values.schedule.trim()
+    const title = values.title.trim()
+    const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/.exec(schedule)
+    if (!locationId || !title || !match) {
+      toast.error(t('addToCalendarNeedSchedule'))
+      return
+    }
+    setIsAddingToCalendar(true)
+    try {
+      await createCalendarEntry({
+        locationId,
+        title,
+        date: match[1]!,
+        time: match[2]!,
+        description: '',
+        sourceRef: {
+          type: 'instagram_item',
+          workflowId: String(workflowId),
+          itemId: String(item.id),
+        },
+      })
+      toast.success(t('addToCalendarSuccess'))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('addToCalendarError'))
+    } finally {
+      setIsAddingToCalendar(false)
     }
   }
 
@@ -807,10 +849,24 @@ export function InstagramItemDetail({
                 <AlertDescription>{footerError}</AlertDescription>
               </Alert>
             ) : null}
-            <Button className="w-full" disabled={busy} type="submit">
-              {saving ? <Spinner data-icon="inline-start" /> : null}
-              {t('saveButton')}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                className="sm:flex-1"
+                disabled={!canAddToCalendar}
+                onClick={() => {
+                  void handleAddToCalendar()
+                }}
+                type="button"
+                variant="outline"
+              >
+                {isAddingToCalendar ? <Spinner data-icon="inline-start" /> : null}
+                {t('addToCalendar')}
+              </Button>
+              <Button className="sm:flex-1" disabled={busy} type="submit">
+                {saving ? <Spinner data-icon="inline-start" /> : null}
+                {t('saveButton')}
+              </Button>
+            </div>
           </div>
         </form>
 

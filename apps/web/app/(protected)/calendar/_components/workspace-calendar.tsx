@@ -10,7 +10,7 @@ import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { SchedulerCalendarMonthGrid } from '@/components/scheduler-calendar/scheduler-calendar-month-grid'
-import type { CalendarMediaRef } from '@/lib/calendar/client-api'
+import type { CalendarMediaRef, CalendarSourceRef } from '@/lib/calendar/client-api'
 import type { CalendarDisplaySlot } from '@/lib/graphql/queries/scheduler-calendar'
 import type { CampaignWindowPublicHoliday } from '@/lib/graphql/node-schemas'
 import {
@@ -66,6 +66,7 @@ function createDraftValues(dateIso: string): CalendarEntryDialogValues {
     dateIso,
     time: defaultTime(),
     mediaRefs: [],
+    sourceRef: null,
   }
 }
 
@@ -80,6 +81,7 @@ function slotToEditValues(
         time: string
         mediaRefs?: Array<{ kind: string; name: string }> | null
         source?: string | null
+        sourceRef?: CalendarSourceRef | null
       },
 ): CalendarEntryDialogValues | null {
   if (slot.source !== 'manual' || !slot.id) {
@@ -96,6 +98,17 @@ function slotToEditValues(
     }
   }
 
+  const sourceRef =
+    slot.sourceRef?.type === 'instagram_item' &&
+    slot.sourceRef.workflowId.trim() &&
+    slot.sourceRef.itemId.trim()
+      ? {
+          type: 'instagram_item' as const,
+          workflowId: slot.sourceRef.workflowId,
+          itemId: slot.sourceRef.itemId,
+        }
+      : null
+
   return {
     id,
     title: slot.title,
@@ -103,6 +116,7 @@ function slotToEditValues(
     dateIso: slot.date,
     time: slot.time,
     mediaRefs,
+    sourceRef,
   }
 }
 

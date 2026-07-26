@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { revalidateTag } from 'next/cache'
 import { ZodError } from 'zod'
 
@@ -11,7 +12,6 @@ import {
   graphqlSchedulerCalendarCacheTag,
   revalidateTagAfterMutation,
 } from '@/lib/graphql/cache-tags'
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 import { updateCalendarEntryBodySchema } from '../schema'
 
@@ -21,9 +21,11 @@ type RouteContext = {
 
 export async function PATCH(req: Request, context: RouteContext) {
   try {
-    const authz = await requireMenuyuktiAdminApi()
-    if (!authz.ok) return authz.response
-    const { userId } = authz
+    await connection()
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated || !userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { id: idParam } = await context.params
     const id = Number(idParam)
@@ -43,6 +45,7 @@ export async function PATCH(req: Request, context: RouteContext) {
         ...(body.time !== undefined ? { time: body.time } : {}),
         ...(body.description !== undefined ? { description: body.description } : {}),
         ...(body.mediaRefs !== undefined ? { mediaRefs: body.mediaRefs } : {}),
+        ...(body.sourceRef !== undefined ? { sourceRef: body.sourceRef } : {}),
       },
       userId,
     )

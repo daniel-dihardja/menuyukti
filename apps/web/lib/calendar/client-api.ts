@@ -1,7 +1,11 @@
 import { apiFetch } from '@/lib/api/client-fetch'
-import type { CalendarEntry, CalendarMediaRef } from '@/lib/graphql/queries/calendar-entries'
+import type {
+  CalendarEntry,
+  CalendarMediaRef,
+  CalendarSourceRef,
+} from '@/lib/graphql/queries/calendar-entries'
 
-export type { CalendarEntry, CalendarMediaRef }
+export type { CalendarEntry, CalendarMediaRef, CalendarSourceRef }
 
 export async function createCalendarEntry(input: {
   locationId: number
@@ -10,6 +14,7 @@ export async function createCalendarEntry(input: {
   date: string
   time: string
   mediaRefs?: CalendarMediaRef[]
+  sourceRef?: CalendarSourceRef
 }): Promise<CalendarEntry> {
   const result = await apiFetch<{ entry: CalendarEntry }>(
     '/api/calendar-entries',
@@ -34,6 +39,7 @@ export async function updateCalendarEntry(
     date?: string
     time?: string
     mediaRefs?: CalendarMediaRef[]
+    sourceRef?: CalendarSourceRef
   },
 ): Promise<CalendarEntry> {
   const result = await apiFetch<{ entry: CalendarEntry }>(
