@@ -139,7 +139,7 @@ export function InstagramItemPreview({
         <div className="relative min-w-0 flex-1">
           <div
             className={cn(
-              'relative overflow-hidden rounded-lg border border-border/60',
+              'relative overflow-hidden border border-border/60',
               previewAspectClass(kind),
               previewUrl ? 'bg-muted/30' : 'border-transparent',
             )}

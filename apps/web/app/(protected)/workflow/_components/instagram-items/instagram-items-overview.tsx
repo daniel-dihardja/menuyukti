@@ -48,7 +48,7 @@ function OverviewSkeletonGrid() {
     <ul aria-hidden className="mx-auto grid w-1/2 min-w-0 grid-cols-3 gap-3">
       {Array.from({ length: 4 }, (_, index) => (
         <li key={index} className="min-w-0">
-          <div className="flex flex-col overflow-hidden rounded-md border bg-background">
+          <div className="flex flex-col overflow-hidden border bg-background">
             <Skeleton className="aspect-square w-full rounded-none" />
             <div className="flex flex-col gap-2 p-2.5">
               <Skeleton className="h-4 w-3/4" />
@@ -144,7 +144,7 @@ export function InstagramItemsOverview({
             const tileDeleting = deletingId === item.id
             return (
               <li key={item.id} className="min-w-0">
-                <div className="relative flex h-full flex-col overflow-hidden rounded-md border bg-background">
+                <div className="relative flex h-full flex-col overflow-hidden border bg-background">
                   <button
                     className={cn(
                       'flex min-w-0 flex-1 flex-col text-left transition-colors',
