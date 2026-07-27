@@ -2,7 +2,7 @@ import strawberry
 
 from graphql.context import request_session_scope
 from graphql.data_sources import WorkspaceMembership
-from graphql.schema.auth import is_workspace_owner_role, user_id_from_info
+from graphql.schema.auth import user_can_manage_workspace_members, user_id_from_info
 
 
 @strawberry.type
@@ -19,7 +19,7 @@ class RemoveWorkspaceMemberMutation:
             raise ValueError("Missing authenticated user for removeWorkspaceMember")
         wid = int(workspace_id)
         with request_session_scope(info) as session:
-            if not is_workspace_owner_role(session, wid, user_id):
+            if not user_can_manage_workspace_members(session, wid, user_id):
                 raise PermissionError("Access denied")
             if clerk_user_id == user_id:
                 raise ValueError("Cannot remove yourself as workspace owner")

@@ -5,6 +5,7 @@ from graphql.data_sources import Workspace, WorkspaceMembership
 from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.types import WorkspaceMembershipType, WorkspaceType
+from graphql.services.workspace_scope import primary_membership_for_user
 
 
 def _workspace_to_gql(row: Workspace) -> WorkspaceType:
@@ -31,17 +32,12 @@ def _membership_to_gql(row: WorkspaceMembership) -> WorkspaceMembershipType:
 class WorkspaceQuery:
     @strawberry.field
     def my_workspace(self, info: strawberry.Info) -> WorkspaceType | None:
-        """First workspace where the current user is a member (owner or member)."""
+        """Primary workspace for the current user (most recently accepted membership)."""
         user_id = user_id_from_info(info)
         if not user_id:
             return None
         with request_session_scope(info) as session:
-            mem = (
-                session.query(WorkspaceMembership)
-                .filter(WorkspaceMembership.clerk_user_id == user_id)
-                .order_by(WorkspaceMembership.workspace_id)
-                .first()
-            )
+            mem = primary_membership_for_user(session, user_id)
             if mem is None:
                 return None
             ws = session.get(Workspace, mem.workspace_id)

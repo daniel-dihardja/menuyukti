@@ -1,4 +1,17 @@
-"""Data access authorization (workspace and location ownership)."""
+"""Data access authorization (workspace and location ownership).
+
+Team / workspace permission contract (v1)
+----------------------------------------
+- **member** (and **owner** membership): full access to workspace-scoped data —
+  locations, analytics, workflows, Instagram items, posts, styles, and media.
+  ``is_location_owner`` treats any workspace member as authorized for that location.
+- **owner** role only: invite and remove teammates
+  (``user_can_manage_workspace_members``).
+
+Later restriction (viewer/editor, per-location ACL) should extend
+``user_can_access_workspace`` / capability helpers here rather than scattering
+role checks across resolvers.
+"""
 
 from __future__ import annotations
 
@@ -48,6 +61,18 @@ def is_workspace_owner_role(session: Session, workspace_id: int, user_id: str) -
         .first()
     )
     return row is not None
+
+
+def user_can_access_workspace(session: Session, workspace_id: int, user_id: str) -> bool:
+    """True if the user may access workspace-scoped data (v1: any membership)."""
+    return is_workspace_member(session, workspace_id, user_id)
+
+
+def user_can_manage_workspace_members(
+    session: Session, workspace_id: int, user_id: str
+) -> bool:
+    """True if the user may invite/remove teammates (v1: owner role only)."""
+    return is_workspace_owner_role(session, workspace_id, user_id)
 
 
 def is_location_owner(

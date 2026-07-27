@@ -6,6 +6,7 @@ import { formatPresetDataMarkdownSection } from '@/lib/chat/format-payload-for-c
 import { formatVisualizationDataMarkdownSection } from '@/lib/chat/format-visualization-for-chat'
 import { loadReferencedMilestonePresetForChat } from '@/lib/chat/referenced-milestone-for-chat'
 import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
+import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { pushPendingToolCallId, resolveToolEndCallId } from '@/lib/chat/pending-tool-call-ids'
 import { pythonStreamErrorText } from '@/lib/chat/python-stream-error'
@@ -342,10 +343,7 @@ export async function POST(req: Request) {
   try {
     agentRes = await fetch(`${baseUrl}/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Menuyukti-User-Id': userId,
-      },
+      headers: buildAgentsHeaders(userId),
       body: JSON.stringify({
         messages: [pythonMessage],
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
