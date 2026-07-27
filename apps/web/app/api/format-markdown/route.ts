@@ -2,6 +2,7 @@ import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
+import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
 export const maxDuration = 120
 
@@ -17,7 +18,7 @@ function jsonError(message: string, status: number) {
 export async function POST(req: Request) {
   await connection()
   const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !userId) {
     return jsonError('Unauthorized', 401)
   }
 
@@ -43,10 +44,7 @@ export async function POST(req: Request) {
   try {
     agentRes = await fetch(`${baseUrl}/format-markdown`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Menuyukti-User-Id': userId,
-      },
+      headers: buildAgentsHeaders(userId),
       body: JSON.stringify({ content, preset }),
       signal: req.signal,
     })

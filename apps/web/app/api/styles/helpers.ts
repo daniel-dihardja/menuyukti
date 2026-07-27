@@ -1,15 +1,10 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 
-import {
-  getS3Bucket,
-  getS3Client,
-  isObjectKeyForPhoto,
-  isSafePhotoFilename,
-  userPhotosObjectKey,
-} from '@/lib/assets/storage'
+import { getS3Bucket, getS3Client, isSafePhotoFilename } from '@/lib/assets/storage'
+import { requireWorkspaceMediaAccess, resolveObjectKey } from '@/lib/assets/workspace-media-access'
 
-/** Ensure the reference image exists in the caller's media library. */
+/** Ensure the reference image exists in the workspace media library (incl. legacy owner keys). */
 export async function assertUserPhotoExists(
   userId: string,
   filename: string,
@@ -17,9 +12,15 @@ export async function assertUserPhotoExists(
   if (!isSafePhotoFilename(filename)) {
     return NextResponse.json({ message: 'Invalid reference image name' }, { status: 400 })
   }
-  const key = userPhotosObjectKey(userId, filename)
-  if (!isObjectKeyForPhoto(key, userId)) {
-    return NextResponse.json({ message: 'Invalid reference image name' }, { status: 400 })
+
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+  if (!mediaAccess.ok) {
+    return mediaAccess.response
+  }
+
+  const key = await resolveObjectKey(mediaAccess.access, 'photos', filename)
+  if (!key) {
+    return NextResponse.json({ message: 'Reference image not found' }, { status: 400 })
   }
 
   try {

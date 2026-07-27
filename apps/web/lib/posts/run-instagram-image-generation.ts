@@ -12,13 +12,15 @@ import {
   getPresignedGetUrl,
   getS3Bucket,
   getS3Client,
-  isObjectKeyForPhoto,
-  isObjectKeyForPost,
   isSafeAssetFilename,
   isSafePhotoFilename,
-  userPostsObjectKey,
-  userPhotosObjectKey,
 } from '@/lib/assets/storage'
+import {
+  requireWorkspaceMediaAccess,
+  resolveObjectKey,
+  writeObjectKey,
+  type WorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { STYLE_QUERY, type StyleData } from '@/lib/graphql/queries/styles'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
@@ -139,6 +141,18 @@ export async function runInstagramImageGeneration(
   const quality = input.quality ?? DEFAULT_POST_IMAGE_QUALITY
   const styleId = input.styleId
 
+  const mediaAccessResult = await requireWorkspaceMediaAccess(userId, 'write')
+  if (!mediaAccessResult.ok) {
+    return {
+      ok: false,
+      error: {
+        status: mediaAccessResult.response.status,
+        message: 'Workspace not found',
+      },
+    }
+  }
+  const access: WorkspaceMediaAccess = mediaAccessResult.access
+
   let stylePack: StylePackPrompt | undefined
   let styleImageName: string | undefined
   if (styleId != null) {
@@ -207,8 +221,8 @@ export async function runInstagramImageGeneration(
         error: { status: 400, message: `Invalid style reference image: ${styleImageName}` },
       }
     }
-    const styleKey = userPhotosObjectKey(userId, styleImageName)
-    if (!isObjectKeyForPhoto(styleKey, userId)) {
+    const styleKey = await resolveObjectKey(access, 'photos', styleImageName)
+    if (!styleKey) {
       return {
         ok: false,
         error: { status: 400, message: `Invalid style reference image: ${styleImageName}` },
@@ -242,8 +256,8 @@ export async function runInstagramImageGeneration(
         }
       }
 
-      const key = userPostsObjectKey(userId, filename)
-      if (!isObjectKeyForPost(key, userId)) {
+      const key = await resolveObjectKey(access, 'posts', filename)
+      if (!key) {
         return {
           ok: false,
           error: { status: 400, message: `Invalid previous result image: ${filename}` },
@@ -267,7 +281,13 @@ export async function runInstagramImageGeneration(
       }
     }
 
-    const key = userPhotosObjectKey(userId, name)
+    const key = await resolveObjectKey(access, 'photos', name)
+    if (!key) {
+      return {
+        ok: false,
+        error: { status: 400, message: `Invalid reference image: ${name}` },
+      }
+    }
     const buffer = await loadReferenceBuffer(key, name, userId, logPrefix)
     if (!Buffer.isBuffer(buffer)) {
       return { ok: false, error: buffer }
@@ -342,7 +362,7 @@ export async function runInstagramImageGeneration(
 
   const id = randomUUID()
   const filename = `${id}.webp`
-  const outputKey = userPostsObjectKey(userId, filename)
+  const outputKey = writeObjectKey(access, 'posts', filename)
   const createdAt = new Date().toISOString()
 
   const s3 = getS3Client()

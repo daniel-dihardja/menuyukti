@@ -1,7 +1,11 @@
 import { NextResponse, connection } from 'next/server'
 import { z } from 'zod'
 
-import { getPresignedGetUrl, isObjectKeyForPost } from '@/lib/assets/storage'
+import { getPresignedGetUrl } from '@/lib/assets/storage'
+import {
+  isPostKeyAllowedForAccess,
+  requireWorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_POST_PAGE_MUTATION,
@@ -44,6 +48,8 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (!authz.ok) {
       return authz.response
     }
+    const mediaAccess = await requireWorkspaceMediaAccess(authz.userId, 'write')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawPostId, pageId: rawPageId } = await context.params
     const postIdParsed = idParamSchema.safeParse(rawPostId)
@@ -83,7 +89,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     if (mediaS3Key !== undefined) {
-      if (!isObjectKeyForPost(mediaS3Key, authz.userId)) {
+      if (!isPostKeyAllowedForAccess(mediaAccess.access, mediaS3Key)) {
         return NextResponse.json({ error: 'Invalid media key' }, { status: 400 })
       }
 
@@ -112,7 +118,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     const nextMediaS3Key = updated.updatePostPage.mediaS3Key
     const imageUrl =
-      nextMediaS3Key && isObjectKeyForPost(nextMediaS3Key, authz.userId)
+      nextMediaS3Key && isPostKeyAllowedForAccess(mediaAccess.access, nextMediaS3Key)
         ? await getPresignedGetUrl(nextMediaS3Key)
         : null
 
@@ -145,6 +151,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
     if (!authz.ok) {
       return authz.response
     }
+    const mediaAccess = await requireWorkspaceMediaAccess(authz.userId, 'delete')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawPostId, pageId: rawPageId } = await context.params
     const postIdParsed = idParamSchema.safeParse(rawPostId)

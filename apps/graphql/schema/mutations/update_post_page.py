@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from datetime import UTC, datetime
 
 import strawberry
@@ -12,13 +11,9 @@ from strawberry import UNSET
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramPostPage, InstagramPostPageMediaVersion
 from graphql.schema.auth import user_id_from_info
+from graphql.schema.media_s3_keys import validate_workspace_post_media_s3_key
 from graphql.schema.queries.posts import _load_post_for_user, _post_page_to_gql
 from graphql.schema.types import PostPageType
-
-_SAFE_POST_FILENAME = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$",
-    re.IGNORECASE,
-)
 
 _ALLOWED_IMAGE_FORMATS = frozenset({"feed", "tall", "square", "story", "wide"})
 _ALLOWED_IMAGE_QUALITIES = frozenset({"standard", "high", "ultra"})
@@ -27,15 +22,28 @@ _ALLOWED_GENERATION_MODELS = frozenset(
 )
 
 
-def _validate_media_s3_key(key: str, owner_clerk_user_id: str) -> None:
-    expected_prefix = f"users/{owner_clerk_user_id}/posts/"
-    if not key.startswith(expected_prefix) or key == expected_prefix:
-        raise ValueError("Invalid media_s3_key for updatePostPage")
-    filename = key[len(expected_prefix) :]
-    if "/" in filename or not _SAFE_POST_FILENAME.match(filename):
-        raise ValueError("Invalid media_s3_key for updatePostPage")
+def _validate_media_s3_key(
+    key: str,
+    *,
+    workspace_id: int | None,
+    owner_clerk_user_id: str,
+) -> None:
+    validate_workspace_post_media_s3_key(
+        key,
+        workspace_id=workspace_id,
+        owner_clerk_user_id=owner_clerk_user_id,
+        error_message="Invalid media_s3_key for updatePostPage",
+    )
 
 
+def _post_media_scope(session, post_row) -> tuple[int | None, str]:
+    from graphql.schema.media_s3_keys import resolve_workspace_media_scope_for_post
+
+    return resolve_workspace_media_scope_for_post(
+        session,
+        post_row.workspace_id,
+        post_row.created_by_clerk_user_id,
+    )
 def _normalize_optional_setting(
     value: str | None, *, allowed: frozenset[str], field: str
 ) -> str | None:
@@ -86,9 +94,7 @@ class UpdatePostPageMutation:
             if post_row is None:
                 raise PermissionError("Not allowed to update this post page")
 
-            owner_id = post_row.created_by_clerk_user_id
-            if owner_id is None:
-                raise PermissionError("Not allowed to update this post page")
+            workspace_id, owner_id = _post_media_scope(session, post_row)
 
             if media_s3_key is not UNSET:
                 if media_s3_key is None:
@@ -98,7 +104,11 @@ class UpdatePostPageMutation:
                     if key_clean == "":
                         page_row.media_s3_key = None
                     else:
-                        _validate_media_s3_key(key_clean, owner_id)
+                        _validate_media_s3_key(
+                            key_clean,
+                            workspace_id=workspace_id,
+                            owner_clerk_user_id=owner_id,
+                        )
                         if key_clean != page_row.media_s3_key:
                             page_row.media_s3_key = key_clean
                             existing_version = next(

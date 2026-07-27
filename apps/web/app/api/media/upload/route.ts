@@ -9,8 +9,8 @@ import {
   getS3Bucket,
   getS3Client,
   photoExtensionForMime,
-  userPhotosObjectKey,
 } from '@/lib/assets/storage'
+import { requireWorkspaceMediaAccess, writeObjectKey } from '@/lib/assets/workspace-media-access'
 
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
@@ -25,6 +25,9 @@ export async function POST(req: Request) {
   const authz = await requireAuthenticatedApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
+
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'write')
+  if (!mediaAccess.ok) return mediaAccess.response
 
   let formData: FormData
   try {
@@ -65,7 +68,7 @@ export async function POST(req: Request) {
 
   const id = randomUUID()
   const filename = `${id}.${extension}`
-  const key = userPhotosObjectKey(userId, filename)
+  const key = writeObjectKey(mediaAccess.access, 'photos', filename)
   const s3 = getS3Client()
   const bucket = getS3Bucket()
 

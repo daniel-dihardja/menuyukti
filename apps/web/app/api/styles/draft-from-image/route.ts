@@ -2,6 +2,7 @@ import { NextResponse, connection } from 'next/server'
 import { ZodError } from 'zod'
 
 import { ChatImageError, loadUserPhotoAsDataUrl } from '@/lib/chat/build-python-user-message'
+import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { parseStyleSpecResult } from '@/lib/styles/style-spec'
@@ -39,10 +40,7 @@ export async function POST(req: Request) {
     try {
       agentRes = await fetch(`${baseUrl}/style-specs/draft-from-image`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Menuyukti-User-Id': userId,
-        },
+        headers: buildAgentsHeaders(userId),
         body: JSON.stringify({
           image_url: imageUrl,
           intent: body.intent,

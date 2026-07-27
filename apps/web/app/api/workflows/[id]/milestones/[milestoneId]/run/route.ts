@@ -2,6 +2,7 @@ import { NextResponse, after, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
+import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { isAllowedChatGatewayModel } from '@/lib/chat/gateway-chat-models'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -159,11 +160,7 @@ export async function POST(req: Request, context: RouteContext) {
   try {
     agentRes = await fetch(`${baseUrl}/milestones/${milestoneId}/run`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Menuyukti-User-Id': userId,
-        ...(traceparent ? { traceparent } : {}),
-      },
+      headers: buildAgentsHeaders(userId, traceparent ? { traceparent } : undefined),
       body: JSON.stringify({
         location_id: locationId,
         workflow_id: workflowId,

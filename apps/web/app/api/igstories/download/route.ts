@@ -8,13 +8,16 @@ import {
   getS3Client,
   igStoryContentTypeForFilename,
   isSafeIgStoryFilename,
-  userIgStoriesObjectKey,
 } from '@/lib/assets/storage'
+import { requireWorkspaceMediaAccess, resolveObjectKey } from '@/lib/assets/workspace-media-access'
 
 export async function GET(req: Request) {
   const authz = await requireAuthenticatedApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
+
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+  if (!mediaAccess.ok) return mediaAccess.response
 
   const url = new URL(req.url)
   const name = url.searchParams.get('name')?.trim() ?? ''
@@ -27,7 +30,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: 'Invalid filename' }, { status: 400 })
   }
 
-  const key = userIgStoriesObjectKey(userId, name)
+  const key = await resolveObjectKey(mediaAccess.access, 'igstories', name)
+  if (!key) {
+    return NextResponse.json({ message: 'Not found' }, { status: 404 })
+  }
+
   const s3 = getS3Client()
   const bucket = getS3Bucket()
 

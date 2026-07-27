@@ -1,7 +1,12 @@
 import { NextResponse, connection } from 'next/server'
 import { z } from 'zod'
 
-import { copyPostMediaKey, getPresignedGetUrl, isObjectKeyForPost } from '@/lib/assets/storage'
+import { copyPostMediaKey, getPresignedGetUrl } from '@/lib/assets/storage'
+import {
+  isPostKeyAllowedForAccess,
+  requireWorkspaceMediaAccess,
+  type WorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   CREATE_POST_PAGE_MUTATION,
@@ -38,17 +43,17 @@ async function pageToApiResponse(
       createdAt: string | null
     }>
   },
-  userId: string,
+  access: WorkspaceMediaAccess,
 ) {
   let imageUrl: string | null = null
-  if (page.mediaS3Key && isObjectKeyForPost(page.mediaS3Key, userId)) {
+  if (page.mediaS3Key && isPostKeyAllowedForAccess(access, page.mediaS3Key)) {
     imageUrl = await getPresignedGetUrl(page.mediaS3Key)
   }
 
   const imageVersions = (
     await Promise.all(
       page.mediaVersions.map(async (version) => {
-        if (!isObjectKeyForPost(version.mediaS3Key, userId)) {
+        if (!isPostKeyAllowedForAccess(access, version.mediaS3Key)) {
           return null
         }
         const versionImageUrl = await getPresignedGetUrl(version.mediaS3Key)
@@ -82,6 +87,8 @@ export async function POST(req: Request, context: RouteContext) {
     if (!authz.ok) {
       return authz.response
     }
+    const mediaAccess = await requireWorkspaceMediaAccess(authz.userId, 'write')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawPostId } = await context.params
     const postIdParsed = idParamSchema.safeParse(rawPostId)
@@ -146,9 +153,16 @@ export async function POST(req: Request, context: RouteContext) {
       }
     }
 
-    if (sourcePage?.mediaS3Key && isObjectKeyForPost(sourcePage.mediaS3Key, authz.userId)) {
+    if (
+      sourcePage?.mediaS3Key &&
+      isPostKeyAllowedForAccess(mediaAccess.access, sourcePage.mediaS3Key)
+    ) {
       try {
-        mediaS3Key = await copyPostMediaKey(sourcePage.mediaS3Key, authz.userId)
+        mediaS3Key = await copyPostMediaKey(
+          sourcePage.mediaS3Key,
+          mediaAccess.access.workspaceId,
+          (k) => isPostKeyAllowedForAccess(mediaAccess.access, k),
+        )
       } catch (err) {
         console.error('[posts/pages/create] S3 copy failed', {
           userIdPrefix: authz.userId.slice(0, 8),
@@ -174,7 +188,7 @@ export async function POST(req: Request, context: RouteContext) {
       authz.userId,
     )
 
-    const createdPage = await pageToApiResponse(mutationData.createPostPage, authz.userId)
+    const createdPage = await pageToApiResponse(mutationData.createPostPage, mediaAccess.access)
 
     return NextResponse.json(createdPage, { status: 201 })
   } catch (error) {

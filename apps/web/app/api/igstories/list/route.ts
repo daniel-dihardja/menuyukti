@@ -1,25 +1,23 @@
-import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import {
   getIgStoryMediaType,
   getPresignedGetUrl,
-  getS3Bucket,
-  getS3Client,
-  isObjectKeyForIgStory,
   isSafeIgStoryFilename,
-  userIgStoriesPrefix,
 } from '@/lib/assets/storage'
+import {
+  listWorkspaceMediaObjects,
+  requireWorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 
 export async function GET() {
   const authz = await requireAuthenticatedApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 
-  const bucket = getS3Bucket()
-  const s3 = getS3Client()
-  const prefix = userIgStoriesPrefix(userId)
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+  if (!mediaAccess.ok) return mediaAccess.response
 
   type Row = {
     name: string
@@ -29,40 +27,35 @@ export async function GET() {
     mediaType: 'image' | 'video'
   }
 
-  const rows: Row[] = []
-  let continuationToken: string | undefined
-
   try {
-    do {
-      const listed = await s3.send(
-        new ListObjectsV2Command({
-          Bucket: bucket,
-          Prefix: prefix,
-          ContinuationToken: continuationToken,
-        }),
-      )
+    const objects = await listWorkspaceMediaObjects(
+      mediaAccess.access,
+      'igstories',
+      isSafeIgStoryFilename,
+    )
+    const rows: Row[] = []
+    for (const obj of objects) {
+      const mediaType = getIgStoryMediaType(obj.name)
+      if (!mediaType) continue
+      rows.push({
+        name: obj.name,
+        url: await getPresignedGetUrl(obj.key),
+        size: obj.size,
+        createdAt: obj.createdAt,
+        mediaType,
+      })
+    }
 
-      for (const obj of listed.Contents ?? []) {
-        const key = obj.Key
-        if (!key || !obj.LastModified) continue
-        if (!isObjectKeyForIgStory(key, userId)) continue
-        const name = key.slice(prefix.length)
-        if (!isSafeIgStoryFilename(name)) continue
-        const mediaType = getIgStoryMediaType(name)
-        if (!mediaType) continue
+    const sortedRows = rows.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
 
-        const url = await getPresignedGetUrl(key)
-        rows.push({
-          name,
-          url,
-          size: obj.Size ?? 0,
-          createdAt: obj.LastModified.toISOString(),
-          mediaType,
-        })
-      }
-
-      continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined
-    } while (continuationToken)
+    return NextResponse.json(
+      { items: sortedRows },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',
+        },
+      },
+    )
   } catch (err) {
     console.error('[igstories/list] S3 list failed', {
       userIdPrefix: userId.slice(0, 8),
@@ -70,15 +63,4 @@ export async function GET() {
     })
     return NextResponse.json({ message: 'Failed to list IG stories' }, { status: 502 })
   }
-
-  const sortedRows = rows.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
-
-  return NextResponse.json(
-    { items: sortedRows },
-    {
-      headers: {
-        'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',
-      },
-    },
-  )
 }

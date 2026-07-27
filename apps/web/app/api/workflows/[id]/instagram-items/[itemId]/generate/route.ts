@@ -27,6 +27,8 @@ import {
   runInstagramImageGeneration,
 } from '@/lib/posts/run-instagram-image-generation'
 
+import { requireWorkspaceMediaAccess } from '@/lib/assets/workspace-media-access'
+
 import {
   itemIdParamSchema,
   pageIdParamSchema,
@@ -75,6 +77,9 @@ export async function POST(req: Request, context: RouteContext) {
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'write')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawWorkflowId, itemId: rawItemId } = await context.params
     const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
@@ -208,7 +213,7 @@ export async function POST(req: Request, context: RouteContext) {
       updatedItem = reloaded.instagramItem
     }
 
-    const item = await withItemImageUrl(updatedItem, userId)
+    const item = await withItemImageUrl(updatedItem, mediaAccess.access)
 
     return NextResponse.json({
       url: result.data.url,

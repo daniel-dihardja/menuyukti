@@ -16,6 +16,9 @@ from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.postgres import PostgresSaver
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 load_dotenv()
 
@@ -33,6 +36,26 @@ def _configure_agents_app_logging() -> None:
 
 
 _configure_agents_app_logging()
+
+
+def _expected_internal_api_key() -> str:
+    """Shared secret with GraphQL / web BFF (``INTERNAL_API_KEY`` or ``GRAPHQL_INTERNAL_API_KEY``)."""
+    return (
+        os.environ.get("INTERNAL_API_KEY", "").strip()
+        or os.environ.get("GRAPHQL_INTERNAL_API_KEY", "").strip()
+    )
+
+
+class InternalApiKeyMiddleware(BaseHTTPMiddleware):
+    """When an internal API key is set, require ``X-Internal-Api-Key`` (except ``GET /health``)."""
+
+    async def dispatch(self, request: Request, call_next: Any) -> Response:
+        if request.url.path == "/health" and request.method == "GET":
+            return await call_next(request)
+        expected = _expected_internal_api_key()
+        if expected and request.headers.get("X-Internal-Api-Key", "") != expected:
+            return Response(status_code=403)
+        return await call_next(request)
 
 
 @asynccontextmanager
@@ -64,6 +87,7 @@ app = FastAPI(
     description="LangChain / LangGraph agent HTTP API",
     lifespan=lifespan,
 )
+app.add_middleware(InternalApiKeyMiddleware)
 app.include_router(chat_router, tags=["chat"])
 app.include_router(format_markdown_router, tags=["core", "format-markdown"])
 app.include_router(milestone_run_router, tags=["milestones"])

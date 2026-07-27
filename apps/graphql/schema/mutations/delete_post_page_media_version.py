@@ -10,7 +10,7 @@ from sqlalchemy.orm import joinedload
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramPostPage, InstagramPostPageMediaVersion
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.mutations.update_post_page import _validate_media_s3_key
+from graphql.schema.mutations.update_post_page import _post_media_scope, _validate_media_s3_key
 from graphql.schema.queries.posts import _load_post_for_user, _post_page_to_gql
 from graphql.schema.types import PostPageType
 
@@ -61,11 +61,12 @@ class DeletePostPageMediaVersionMutation:
             if post_row is None:
                 raise PermissionError("Not allowed to delete this post page media version")
 
-            owner_id = post_row.created_by_clerk_user_id
-            if owner_id is None:
-                raise PermissionError("Not allowed to delete this post page media version")
-
-            _validate_media_s3_key(key_clean, owner_id)
+            workspace_id, owner_id = _post_media_scope(session, post_row)
+            _validate_media_s3_key(
+                key_clean,
+                workspace_id=workspace_id,
+                owner_clerk_user_id=owner_id,
+            )
 
             version_row = next(
                 (

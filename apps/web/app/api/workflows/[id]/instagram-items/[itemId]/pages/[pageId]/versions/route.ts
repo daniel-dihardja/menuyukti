@@ -1,7 +1,7 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
-import { deletePostMediaKeys, isObjectKeyForPost } from '@/lib/assets/storage'
+import { deletePostMediaKeys } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_INSTAGRAM_ITEM_PAGE_MEDIA_VERSION_MUTATION,
@@ -10,6 +10,11 @@ import {
   type InstagramItemData,
 } from '@/lib/graphql/queries/instagram-items'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
+
+import {
+  isPostKeyAllowedForAccess,
+  requireWorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 
 import {
   deleteInstagramItemPageMediaVersionBodySchema,
@@ -48,6 +53,9 @@ export async function DELETE(req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'delete')
+    if (!mediaAccess.ok) return mediaAccess.response
+
     const { id: rawWorkflowId, itemId: rawItemId, pageId: rawPageId } = await context.params
     const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
     const itemParsed = itemIdParamSchema.safeParse(rawItemId)
@@ -74,7 +82,7 @@ export async function DELETE(req: Request, context: RouteContext) {
     }
 
     const { mediaS3Key } = parsedBody.data
-    if (!isObjectKeyForPost(mediaS3Key, userId)) {
+    if (!isPostKeyAllowedForAccess(mediaAccess.access, mediaS3Key)) {
       return NextResponse.json({ message: 'Invalid media key' }, { status: 400 })
     }
 
@@ -124,9 +132,12 @@ export async function DELETE(req: Request, context: RouteContext) {
     )
 
     return NextResponse.json({
-      page: await withPageImageUrl(mutationData.deleteInstagramItemPageMediaVersion, userId),
+      page: await withPageImageUrl(
+        mutationData.deleteInstagramItemPageMediaVersion,
+        mediaAccess.access,
+      ),
       item: refreshed.instagramItem
-        ? await withItemImageUrl(refreshed.instagramItem, userId)
+        ? await withItemImageUrl(refreshed.instagramItem, mediaAccess.access)
         : null,
     })
   } catch (error) {

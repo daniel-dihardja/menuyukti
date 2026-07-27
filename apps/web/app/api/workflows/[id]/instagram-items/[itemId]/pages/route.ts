@@ -1,7 +1,7 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
-import { copyPostMediaKey, isObjectKeyForPost } from '@/lib/assets/storage'
+import { copyPostMediaKey } from '@/lib/assets/storage'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   CREATE_INSTAGRAM_ITEM_PAGE_MUTATION,
@@ -10,6 +10,11 @@ import {
   type InstagramItemData,
 } from '@/lib/graphql/queries/instagram-items'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
+
+import {
+  isPostKeyAllowedForAccess,
+  requireWorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 
 import {
   MAX_INSTAGRAM_ITEM_PAGES,
@@ -47,6 +52,9 @@ export async function POST(req: Request, context: RouteContext) {
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'write')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawWorkflowId, itemId: rawItemId } = await context.params
     const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
@@ -106,9 +114,16 @@ export async function POST(req: Request, context: RouteContext) {
     let prompt: string | undefined
 
     if (sourcePage) {
-      if (sourcePage.mediaS3Key && isObjectKeyForPost(sourcePage.mediaS3Key, userId)) {
+      if (
+        sourcePage.mediaS3Key &&
+        isPostKeyAllowedForAccess(mediaAccess.access, sourcePage.mediaS3Key)
+      ) {
         try {
-          mediaS3Key = await copyPostMediaKey(sourcePage.mediaS3Key, userId)
+          mediaS3Key = await copyPostMediaKey(
+            sourcePage.mediaS3Key,
+            mediaAccess.access.workspaceId,
+            (k) => isPostKeyAllowedForAccess(mediaAccess.access, k),
+          )
         } catch (err) {
           console.error('[instagram-items/pages/create] S3 copy failed', {
             userIdPrefix: userId.slice(0, 8),
@@ -132,7 +147,10 @@ export async function POST(req: Request, context: RouteContext) {
       userId,
     )
 
-    const createdPage = await withPageImageUrl(mutationData.createInstagramItemPage, userId)
+    const createdPage = await withPageImageUrl(
+      mutationData.createInstagramItemPage,
+      mediaAccess.access,
+    )
     const refreshed = await graphqlQuery<InstagramItemData>(
       INSTAGRAM_ITEM_QUERY,
       { id: itemParsed.data },
@@ -143,7 +161,7 @@ export async function POST(req: Request, context: RouteContext) {
       {
         page: createdPage,
         item: refreshed.instagramItem
-          ? await withItemImageUrl(refreshed.instagramItem, userId)
+          ? await withItemImageUrl(refreshed.instagramItem, mediaAccess.access)
           : null,
       },
       { status: 201 },
