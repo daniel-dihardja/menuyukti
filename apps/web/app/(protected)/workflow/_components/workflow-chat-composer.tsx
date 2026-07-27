@@ -16,16 +16,9 @@ import {
   AttachmentRemove,
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
-import { Checkbox } from '@workspace/ui/components/checkbox'
-import { Label } from '@workspace/ui/components/label'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@workspace/ui/components/tooltip'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
-import { PanelsTopLeft } from 'lucide-react'
+import { cn } from '@workspace/ui/lib/utils'
+import { ImagePlus, PanelsTopLeft, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 
@@ -113,48 +106,39 @@ function WorkflowMobilePreviewOpenButton() {
     <PromptInputButton
       aria-controls="workflow-mobile-artifact"
       aria-label={t('mobileArtifactOpenAriaLabel')}
-      className="h-9 shrink-0 gap-1.5 px-2.5 font-medium text-muted-foreground"
+      className="shrink-0 text-muted-foreground"
       onClick={mobileArtifact.openArtifact}
-      size="sm"
       tooltip={mobileArtifact.hint ?? t('mobileArtifactEmptyHint')}
       type="button"
       variant="ghost"
     >
       <PanelsTopLeft className="size-4" />
-      <span className="text-sm">{t('mobileArtifactOpenLabel')}</span>
     </PromptInputButton>
   )
 }
 
-function WorkflowChatAutoAttachCheckbox() {
+function WorkflowChatAutoAttachToggle() {
   const t = useTranslations('analytics.workflows.chat')
   const { autoAttachGenerated } = useWorkflowChatComposerState()
   const { isChatBusy } = useWorkflowChatMessages()
   const { setAutoAttachGenerated } = useWorkflowChatActions()
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex h-9 shrink-0 items-center gap-2 px-1">
-            <Checkbox
-              aria-label={t('autoAttachGeneratedAriaLabel')}
-              checked={autoAttachGenerated}
-              disabled={isChatBusy}
-              id="workflow-chat-auto-attach-generated"
-              onCheckedChange={(checked) => setAutoAttachGenerated(checked === true)}
-            />
-            <Label
-              className="cursor-pointer font-medium text-muted-foreground text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
-              htmlFor="workflow-chat-auto-attach-generated"
-            >
-              {t('autoAttachGeneratedLabel')}
-            </Label>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>{t('autoAttachGeneratedTooltip')}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <PromptInputButton
+      aria-label={t('autoAttachGeneratedAriaLabel')}
+      aria-pressed={autoAttachGenerated}
+      className={cn(
+        'shrink-0 text-muted-foreground',
+        autoAttachGenerated && 'bg-accent text-accent-foreground',
+      )}
+      disabled={isChatBusy}
+      onClick={() => setAutoAttachGenerated(!autoAttachGenerated)}
+      tooltip={t('autoAttachGeneratedTooltip')}
+      type="button"
+      variant="ghost"
+    >
+      <ImagePlus className="size-4" />
+    </PromptInputButton>
   )
 }
 
@@ -209,22 +193,22 @@ export function WorkflowChatComposer() {
         <PromptInputFooter>
           <PromptInputTools>
             <WorkflowMobilePreviewOpenButton />
-            <WorkflowChatAutoAttachCheckbox />
+            <WorkflowChatAutoAttachToggle />
             <ChatGatewayModelSelect
+              className="max-w-[min(100%,7.5rem)] lg:max-w-[min(100%,11rem)]"
               disabled={isChatBusy}
               onValueChange={setSelectedChatModel}
               value={selectedChatModel}
             />
             <PromptInputButton
               aria-label={t('clearChatAriaLabel')}
-              className="h-9 shrink-0 px-3 py-2 font-medium text-muted-foreground"
+              className="shrink-0 text-muted-foreground"
               onClick={handleClearChat}
-              size="sm"
               tooltip={t('clearChatTooltip')}
               type="button"
               variant="ghost"
             >
-              {t('clearChatLabel')}
+              <Trash2 className="size-4" />
             </PromptInputButton>
           </PromptInputTools>
           <WorkflowChatComposerSubmit />
