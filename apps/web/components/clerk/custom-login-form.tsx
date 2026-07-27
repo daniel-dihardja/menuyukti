@@ -247,7 +247,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         <p className="text-sm text-muted-foreground" role="status">
           {mfaHint}
         </p>
-        <form onSubmit={handleSecondFactorSubmit} className="space-y-4" autoComplete="off">
+        <form onSubmit={handleSecondFactorSubmit} className="space-y-4">
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="verification-code">{t('verificationCodeLabel')}</FieldLabel>
@@ -258,14 +258,13 @@ export function CustomLoginForm({ className }: { className?: string }) {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                autoCorrect="off"
+                autoCapitalize="off"
                 spellCheck={false}
+                enterKeyHint="done"
                 placeholder={t('verificationCodePlaceholder')}
                 required
-                readOnly
-                onFocus={(e) => {
-                  e.currentTarget.readOnly = false
-                }}
-                disabled={!signIn || isSigningIn}
+                disabled={busy}
                 className="text-base py-2"
               />
               {errors?.fields?.code?.message ? (
@@ -325,7 +324,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
   if (step === 'client_trust') {
     return (
       <div className={cn('space-y-6', className)}>
-        <form onSubmit={handleVerifyTrust} className="space-y-4" autoComplete="off">
+        <form onSubmit={handleVerifyTrust} className="space-y-4">
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="verification-code">{t('verificationCodeLabel')}</FieldLabel>
@@ -336,14 +335,13 @@ export function CustomLoginForm({ className }: { className?: string }) {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                autoCorrect="off"
+                autoCapitalize="off"
                 spellCheck={false}
+                enterKeyHint="done"
                 placeholder={t('verificationCodePlaceholder')}
                 required
-                readOnly
-                onFocus={(e) => {
-                  e.currentTarget.readOnly = false
-                }}
-                disabled={!signIn || isSigningIn}
+                disabled={busy}
                 className="text-base py-2"
               />
               {errors?.fields?.code?.message ? (
