@@ -16,6 +16,7 @@ from graphql.schema.mutations.update_post_page import (
     _ALLOWED_IMAGE_FORMATS,
     _ALLOWED_IMAGE_QUALITIES,
     _normalize_optional_setting,
+    _post_media_scope,
     _validate_media_s3_key,
 )
 from graphql.schema.queries.posts import _load_post_for_user, _post_page_to_gql
@@ -53,9 +54,7 @@ class CreatePostPageMutation:
             if post_row is None:
                 raise PermissionError("Not allowed to create a page for this post")
 
-            owner_id = post_row.created_by_clerk_user_id
-            if owner_id is None:
-                raise PermissionError("Not allowed to create a page for this post")
+            workspace_id, owner_id = _post_media_scope(session, post_row)
 
             existing_pages = list(post_row.pages) if post_row.pages else []
             if len(existing_pages) >= MAX_POST_PAGES:
@@ -72,7 +71,11 @@ class CreatePostPageMutation:
             if media_s3_key is not UNSET and media_s3_key is not None:
                 key_clean = media_s3_key.strip()
                 if key_clean != "":
-                    _validate_media_s3_key(key_clean, owner_id)
+                    _validate_media_s3_key(
+                        key_clean,
+                        workspace_id=workspace_id,
+                        owner_clerk_user_id=owner_id,
+                    )
                     page_row.media_s3_key = key_clean
 
                     version_prompt: str | None

@@ -1,7 +1,11 @@
 import { NextResponse, connection } from 'next/server'
 import { z } from 'zod'
 
-import { deletePostMediaKeys, getPresignedGetUrl, isObjectKeyForPost } from '@/lib/assets/storage'
+import { deletePostMediaKeys, getPresignedGetUrl } from '@/lib/assets/storage'
+import {
+  isPostKeyAllowedForAccess,
+  requireWorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_POST_PAGE_MEDIA_VERSION_MUTATION,
@@ -28,6 +32,8 @@ export async function DELETE(req: Request, context: RouteContext) {
     if (!authz.ok) {
       return authz.response
     }
+    const mediaAccess = await requireWorkspaceMediaAccess(authz.userId, 'delete')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawPostId, pageId: rawPageId } = await context.params
     const postIdParsed = idParamSchema.safeParse(rawPostId)
@@ -49,7 +55,7 @@ export async function DELETE(req: Request, context: RouteContext) {
     }
 
     const { mediaS3Key } = parsedBody.data
-    if (!isObjectKeyForPost(mediaS3Key, authz.userId)) {
+    if (!isPostKeyAllowedForAccess(mediaAccess.access, mediaS3Key)) {
       return NextResponse.json({ error: 'Invalid media key' }, { status: 400 })
     }
 
@@ -96,14 +102,17 @@ export async function DELETE(req: Request, context: RouteContext) {
     }
 
     let imageUrl: string | null = null
-    if (updatedPage.mediaS3Key && isObjectKeyForPost(updatedPage.mediaS3Key, authz.userId)) {
+    if (
+      updatedPage.mediaS3Key &&
+      isPostKeyAllowedForAccess(mediaAccess.access, updatedPage.mediaS3Key)
+    ) {
       imageUrl = await getPresignedGetUrl(updatedPage.mediaS3Key)
     }
 
     const imageVersions = (
       await Promise.all(
         updatedPage.mediaVersions.map(async (version) => {
-          if (!isObjectKeyForPost(version.mediaS3Key, authz.userId)) {
+          if (!isPostKeyAllowedForAccess(mediaAccess.access, version.mediaS3Key)) {
             return null
           }
           const versionImageUrl = await getPresignedGetUrl(version.mediaS3Key)

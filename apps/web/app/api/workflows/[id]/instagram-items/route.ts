@@ -10,6 +10,8 @@ import {
 } from '@/lib/graphql/queries/instagram-items'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 
+import { requireWorkspaceMediaAccess } from '@/lib/assets/workspace-media-access'
+
 import { createInstagramItemBodySchema, workflowIdParamSchema } from './schema'
 import { withItemImageUrl, withItemImageUrls } from './with-image-url'
 
@@ -42,6 +44,9 @@ export async function GET(_req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+    if (!mediaAccess.ok) return mediaAccess.response
+
     const { id: rawId } = await context.params
     const parsed = workflowIdParamSchema.safeParse(rawId)
     if (!parsed.success) {
@@ -60,7 +65,7 @@ export async function GET(_req: Request, context: RouteContext) {
       userId,
     )
 
-    const items = await withItemImageUrls(data.instagramItems, userId)
+    const items = await withItemImageUrls(data.instagramItems, mediaAccess.access)
     return NextResponse.json({ items })
   } catch (error) {
     console.error(error)
@@ -76,6 +81,9 @@ export async function POST(req: Request, context: RouteContext) {
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'write')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawId } = await context.params
     const parsed = workflowIdParamSchema.safeParse(rawId)
@@ -123,7 +131,7 @@ export async function POST(req: Request, context: RouteContext) {
     )
 
     return NextResponse.json(
-      { item: await withItemImageUrl(data.createInstagramItem, userId) },
+      { item: await withItemImageUrl(data.createInstagramItem, mediaAccess.access) },
       { status: 201 },
     )
   } catch (error) {

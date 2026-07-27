@@ -4,12 +4,8 @@ import { randomUUID } from 'crypto'
 
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { prepareUploadImage } from '@/lib/assets/prepare-upload-image'
-import {
-  getPresignedGetUrl,
-  getS3Bucket,
-  getS3Client,
-  userReelsObjectKey,
-} from '@/lib/assets/storage'
+import { getPresignedGetUrl, getS3Bucket, getS3Client } from '@/lib/assets/storage'
+import { requireWorkspaceMediaAccess, writeObjectKey } from '@/lib/assets/workspace-media-access'
 
 export const maxDuration = 120
 
@@ -36,6 +32,9 @@ export async function POST(req: Request) {
   const authz = await requireAuthenticatedApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
+
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'write')
+  if (!mediaAccess.ok) return mediaAccess.response
 
   let formData: FormData
   try {
@@ -85,7 +84,7 @@ export async function POST(req: Request) {
     }
 
     const filename = `${id}.webp`
-    const key = userReelsObjectKey(userId, filename)
+    const key = writeObjectKey(mediaAccess.access, 'reels', filename)
 
     try {
       await s3.send(
@@ -116,7 +115,7 @@ export async function POST(req: Request) {
 
   const ext = VIDEO_EXT_BY_MIME[mime]
   const filename = `${id}.${ext}`
-  const key = userReelsObjectKey(userId, filename)
+  const key = writeObjectKey(mediaAccess.access, 'reels', filename)
   const videoBuffer = Buffer.from(await file.arrayBuffer())
 
   try {

@@ -41,8 +41,15 @@ export function getS3Client(): S3Client {
 /** Top-level segment for per-user asset keys: `users/<userId>/<filename>`. */
 const ASSET_USERS_PREFIX = 'users'
 
+/** Top-level segment for workspace asset keys: `workspaces/<workspaceId>/…`. */
+const ASSET_WORKSPACES_PREFIX = 'workspaces'
+
 export function userPrefix(userId: string): string {
   return `${ASSET_USERS_PREFIX}/${userId}/`
+}
+
+export function workspacePrefix(workspaceId: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/`
 }
 
 export function userObjectKey(userId: string, filename: string): string {
@@ -134,6 +141,22 @@ export function isObjectKeyForPhoto(key: string, userId: string): boolean {
   return isSafePhotoFilename(filename)
 }
 
+/** S3 prefix: `workspaces/<workspaceId>/photos/`. */
+export function workspacePhotosPrefix(workspaceId: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_PHOTOS_SUBDIR}/`
+}
+
+export function workspacePhotosObjectKey(workspaceId: string, filename: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_PHOTOS_SUBDIR}/${filename}`
+}
+
+export function isObjectKeyForWorkspacePhoto(key: string, workspaceId: string): boolean {
+  const prefix = workspacePhotosPrefix(workspaceId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafePhotoFilename(filename)
+}
+
 /** S3 prefix: `users/<userId>/posts/`. */
 export function userPostsPrefix(userId: string): string {
   return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_POSTS_SUBDIR}/`
@@ -150,19 +173,53 @@ export function isObjectKeyForPost(key: string, userId: string): boolean {
   return isSafeAssetFilename(filename)
 }
 
-/** Parse and validate `users/{userId}/posts/{filename}` keys. */
-export function parsePostObjectKey(key: string): { userId: string; filename: string } | null {
+/** S3 prefix: `workspaces/<workspaceId>/posts/`. */
+export function workspacePostsPrefix(workspaceId: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_POSTS_SUBDIR}/`
+}
+
+export function workspacePostsObjectKey(workspaceId: string, filename: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_POSTS_SUBDIR}/${filename}`
+}
+
+export function isObjectKeyForWorkspacePost(key: string, workspaceId: string): boolean {
+  const prefix = workspacePostsPrefix(workspaceId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeAssetFilename(filename)
+}
+
+/** Parse and validate user or workspace posts keys. */
+export function parsePostObjectKey(
+  key: string,
+):
+  | { scope: 'user'; userId: string; filename: string }
+  | { scope: 'workspace'; workspaceId: string; filename: string }
+  | null {
   const postsMarker = `/${ASSET_POSTS_SUBDIR}/`
+  if (!key.includes(postsMarker)) return null
+
   const usersPrefix = `${ASSET_USERS_PREFIX}/`
-  if (!key.startsWith(usersPrefix) || !key.includes(postsMarker)) return null
+  if (key.startsWith(usersPrefix)) {
+    const userIdEnd = key.indexOf(postsMarker)
+    const userId = key.slice(usersPrefix.length, userIdEnd)
+    if (!userId || userId.includes('/')) return null
+    if (!isObjectKeyForPost(key, userId)) return null
+    const filename = key.slice(userIdEnd + postsMarker.length)
+    return { scope: 'user', userId, filename }
+  }
 
-  const userIdEnd = key.indexOf(postsMarker)
-  const userId = key.slice(usersPrefix.length, userIdEnd)
-  if (!userId || userId.includes('/')) return null
-  if (!isObjectKeyForPost(key, userId)) return null
+  const workspacesPrefix = `${ASSET_WORKSPACES_PREFIX}/`
+  if (key.startsWith(workspacesPrefix)) {
+    const workspaceIdEnd = key.indexOf(postsMarker)
+    const workspaceId = key.slice(workspacesPrefix.length, workspaceIdEnd)
+    if (!workspaceId || workspaceId.includes('/')) return null
+    if (!isObjectKeyForWorkspacePost(key, workspaceId)) return null
+    const filename = key.slice(workspaceIdEnd + postsMarker.length)
+    return { scope: 'workspace', workspaceId, filename }
+  }
 
-  const filename = key.slice(userIdEnd + postsMarker.length)
-  return { userId, filename }
+  return null
 }
 
 /** Delete validated post media objects from S3 (no-op for invalid or missing keys). */
@@ -228,6 +285,22 @@ export function isObjectKeyForReel(key: string, userId: string): boolean {
   return isSafeReelFilename(filename)
 }
 
+/** S3 prefix: `workspaces/<workspaceId>/reels/`. */
+export function workspaceReelsPrefix(workspaceId: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_REELS_SUBDIR}/`
+}
+
+export function workspaceReelsObjectKey(workspaceId: string, filename: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_REELS_SUBDIR}/${filename}`
+}
+
+export function isObjectKeyForWorkspaceReel(key: string, workspaceId: string): boolean {
+  const prefix = workspaceReelsPrefix(workspaceId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeReelFilename(filename)
+}
+
 export function reelContentTypeForFilename(filename: string): string | null {
   if (!isSafeReelFilename(filename)) return null
   const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()
@@ -279,6 +352,22 @@ export function isObjectKeyForIgStory(key: string, userId: string): boolean {
   return isSafeIgStoryFilename(filename)
 }
 
+/** S3 prefix: `workspaces/<workspaceId>/igstories/`. */
+export function workspaceIgStoriesPrefix(workspaceId: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_IG_STORIES_SUBDIR}/`
+}
+
+export function workspaceIgStoriesObjectKey(workspaceId: string, filename: string): string {
+  return `${ASSET_WORKSPACES_PREFIX}/${workspaceId}/${ASSET_IG_STORIES_SUBDIR}/${filename}`
+}
+
+export function isObjectKeyForWorkspaceIgStory(key: string, workspaceId: string): boolean {
+  const prefix = workspaceIgStoriesPrefix(workspaceId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeIgStoryFilename(filename)
+}
+
 export function igStoryContentTypeForFilename(filename: string): string | null {
   if (!isSafeIgStoryFilename(filename)) return null
   const ext = filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()
@@ -296,14 +385,72 @@ export function igStoryContentTypeForFilename(filename: string): string | null {
   }
 }
 
-/** Copy a post media object to a new UUID-based key for the same user. */
-export async function copyPostMediaKey(sourceKey: string, userId: string): Promise<string> {
-  if (!isObjectKeyForPost(sourceKey, userId)) {
+/**
+ * Copy a post media object to a new UUID-based key under the workspace posts prefix.
+ * `isSourceAllowed` must confirm the caller may read `sourceKey`.
+ */
+export async function copyPostMediaKey(
+  sourceKey: string,
+  workspaceId: string,
+  isSourceAllowed: (key: string) => boolean,
+): Promise<string> {
+  if (!isSourceAllowed(sourceKey) || parsePostObjectKey(sourceKey) === null) {
     throw new Error('Invalid source post media key')
   }
 
   const filename = `${randomUUID()}.webp`
-  const destinationKey = userPostsObjectKey(userId, filename)
+  const destinationKey = workspacePostsObjectKey(workspaceId, filename)
+  const s3 = getS3Client()
+  const bucket = getS3Bucket()
+
+  try {
+    await s3.send(
+      new CopyObjectCommand({
+        Bucket: bucket,
+        CopySource: `${bucket}/${sourceKey}`,
+        Key: destinationKey,
+        ContentType: 'image/webp',
+      }),
+    )
+    return destinationKey
+  } catch {
+    const result = await s3.send(
+      new GetObjectCommand({
+        Bucket: bucket,
+        Key: sourceKey,
+      }),
+    )
+    const bytes = await result.Body?.transformToByteArray()
+    if (!bytes) {
+      throw new Error('Source post media not found')
+    }
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: destinationKey,
+        Body: Buffer.from(bytes),
+        ContentType: 'image/webp',
+      }),
+    )
+    return destinationKey
+  }
+}
+
+/** Copy a posts object to the same filename under the workspace posts prefix. */
+export async function copyPostMediaKeyToWorkspace(
+  sourceKey: string,
+  workspaceId: string,
+): Promise<string> {
+  const parsed = parsePostObjectKey(sourceKey)
+  if (!parsed) {
+    throw new Error('Invalid source post media key')
+  }
+  if (parsed.scope === 'workspace' && parsed.workspaceId === workspaceId) {
+    return sourceKey
+  }
+
+  const destinationKey = workspacePostsObjectKey(workspaceId, parsed.filename)
   const s3 = getS3Client()
   const bucket = getS3Bucket()
 

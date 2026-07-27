@@ -11,6 +11,7 @@ from graphql.context import request_session_scope
 from graphql.data_sources import InstagramItemPageMediaVersion
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.instagram_items_common import (
+    item_workspace_media_scope,
     load_item_for_owner,
     load_page_for_owner,
     normalize_optional_text,
@@ -55,7 +56,12 @@ class UpdateInstagramItemPageMutation:
                     if key_clean == "":
                         page_row.media_s3_key = None
                     else:
-                        validate_item_media_s3_key(key_clean, user_id)
+                        workspace_id, owner_id = item_workspace_media_scope(session, item_row)
+                        validate_item_media_s3_key(
+                            key_clean,
+                            workspace_id=workspace_id,
+                            owner_clerk_user_id=owner_id,
+                        )
                         if key_clean != page_row.media_s3_key:
                             page_row.media_s3_key = key_clean
                             existing_version = next(

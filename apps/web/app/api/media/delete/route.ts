@@ -1,14 +1,12 @@
-import { DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { isSafePhotoFilename } from '@/lib/assets/storage'
 import {
-  getS3Bucket,
-  getS3Client,
-  isSafePhotoFilename,
-  userPhotosObjectKey,
-} from '@/lib/assets/storage'
+  deleteMediaFilename,
+  requireWorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 
 const bodySchema = z.object({
   name: z.string().min(1),
@@ -18,6 +16,9 @@ export async function DELETE(req: Request) {
   const authz = await requireAuthenticatedApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
+
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'delete')
+  if (!mediaAccess.ok) return mediaAccess.response
 
   let json: unknown
   try {
@@ -36,17 +37,8 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: 'Invalid filename' }, { status: 400 })
   }
 
-  const key = userPhotosObjectKey(userId, name)
-  const s3 = getS3Client()
-  const bucket = getS3Bucket()
-
   try {
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: bucket,
-        Key: key,
-      }),
-    )
+    await deleteMediaFilename(mediaAccess.access, 'photos', name)
   } catch (err) {
     console.error('[media/delete] S3 DeleteObject failed', {
       userIdPrefix: userId.slice(0, 8),

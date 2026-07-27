@@ -11,9 +11,8 @@ import {
   isSafeAssetFilename,
   isSafePhotoFilename,
   photoContentTypeForFilename,
-  userPhotosObjectKey,
-  userPostsObjectKey,
 } from '@/lib/assets/storage'
+import { requireWorkspaceMediaAccess, resolveObjectKey } from '@/lib/assets/workspace-media-access'
 
 export { CHAT_MAX_IMAGES, CHAT_MAX_IMAGE_BYTES }
 /** Longest edge after optional downscale before re-encoding for the LLM. */
@@ -120,7 +119,14 @@ async function loadMediaBytes(
   if (!isSafePhotoFilename(name)) {
     throw new ChatImageError(`Invalid media filename: ${name}`)
   }
-  const key = userPhotosObjectKey(userId, name)
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+  if (!mediaAccess.ok) {
+    throw new ChatImageError('Workspace not found', 404)
+  }
+  const key = await resolveObjectKey(mediaAccess.access, 'photos', name)
+  if (!key) {
+    throw new ChatImageError(`Media not found: ${name}`, 404)
+  }
   const s3 = getS3Client()
   try {
     const result = await s3.send(
@@ -152,7 +158,14 @@ async function loadPostBytes(
   if (!isSafeAssetFilename(name)) {
     throw new ChatImageError(`Invalid post media filename: ${name}`)
   }
-  const key = userPostsObjectKey(userId, name)
+  const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+  if (!mediaAccess.ok) {
+    throw new ChatImageError('Workspace not found', 404)
+  }
+  const key = await resolveObjectKey(mediaAccess.access, 'posts', name)
+  if (!key) {
+    throw new ChatImageError(`Post media not found: ${name}`, 404)
+  }
   const s3 = getS3Client()
   try {
     const result = await s3.send(

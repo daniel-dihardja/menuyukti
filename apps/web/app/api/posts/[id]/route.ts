@@ -1,15 +1,26 @@
 import { NextResponse, connection } from 'next/server'
 import { z } from 'zod'
 
-import { deletePostMediaKeys, getPresignedGetUrl, isObjectKeyForPost } from '@/lib/assets/storage'
+import {
+  copyPostMediaKeyToWorkspace,
+  deletePostMediaKeys,
+  getPresignedGetUrl,
+} from '@/lib/assets/storage'
+import {
+  isLegacyOwnerPostKey,
+  isPostKeyAllowedForAccess,
+  requireWorkspaceMediaAccess,
+} from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_POST_MUTATION,
   POST_QUERY,
   UPDATE_POST_MUTATION,
+  UPDATE_POST_PAGE_MUTATION,
   type DeletePostData,
   type PostData,
   type UpdatePostData,
+  type UpdatePostPageData,
 } from '@/lib/graphql/queries/posts'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { patchPostSchema } from './schema'
@@ -27,6 +38,8 @@ export async function GET(_req: Request, context: RouteContext) {
     if (!authz.ok) {
       return authz.response
     }
+    const mediaAccess = await requireWorkspaceMediaAccess(authz.userId, 'read')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawId } = await context.params
     const idParsed = idParamSchema.safeParse(rawId)
@@ -44,19 +57,60 @@ export async function GET(_req: Request, context: RouteContext) {
     const pages = await Promise.all(
       post.pages.map(async (page) => {
         let imageUrl: string | null = null
-        if (page.mediaS3Key && isObjectKeyForPost(page.mediaS3Key, authz.userId)) {
-          imageUrl = await getPresignedGetUrl(page.mediaS3Key)
+        let mediaS3Key = page.mediaS3Key
+        if (mediaS3Key && isPostKeyAllowedForAccess(mediaAccess.access, mediaS3Key)) {
+          if (isLegacyOwnerPostKey(mediaAccess.access, mediaS3Key)) {
+            try {
+              const migratedKey = await copyPostMediaKeyToWorkspace(
+                mediaS3Key,
+                mediaAccess.access.workspaceId,
+              )
+              if (migratedKey !== mediaS3Key) {
+                try {
+                  await graphqlQuery<UpdatePostPageData>(
+                    UPDATE_POST_PAGE_MUTATION,
+                    { id: page.id, mediaS3Key: migratedKey },
+                    authz.userId,
+                  )
+                  mediaS3Key = migratedKey
+                } catch (err) {
+                  console.error('[posts] failed to persist migrated media key', {
+                    pageId: page.id,
+                    message: err instanceof Error ? err.message : String(err),
+                  })
+                  mediaS3Key = migratedKey
+                }
+              }
+            } catch (err) {
+              console.error('[posts] failed to migrate legacy media key', {
+                pageId: page.id,
+                message: err instanceof Error ? err.message : String(err),
+              })
+            }
+          }
+          imageUrl = await getPresignedGetUrl(mediaS3Key)
         }
 
         const imageVersions = await Promise.all(
           page.mediaVersions.map(async (version) => {
-            if (!isObjectKeyForPost(version.mediaS3Key, authz.userId)) {
+            if (!isPostKeyAllowedForAccess(mediaAccess.access, version.mediaS3Key)) {
               return null
             }
-            const versionImageUrl = await getPresignedGetUrl(version.mediaS3Key)
+            let versionKey = version.mediaS3Key
+            if (isLegacyOwnerPostKey(mediaAccess.access, versionKey)) {
+              try {
+                versionKey = await copyPostMediaKeyToWorkspace(
+                  versionKey,
+                  mediaAccess.access.workspaceId,
+                )
+              } catch {
+                // keep original key for presign
+              }
+            }
+            const versionImageUrl = await getPresignedGetUrl(versionKey)
             return {
               id: version.id,
-              mediaS3Key: version.mediaS3Key,
+              mediaS3Key: versionKey,
               imageUrl: versionImageUrl,
               createdAt: version.createdAt,
             }
@@ -67,7 +121,7 @@ export async function GET(_req: Request, context: RouteContext) {
           id: page.id,
           sortOrder: page.sortOrder,
           prompt: page.prompt,
-          mediaS3Key: page.mediaS3Key,
+          mediaS3Key,
           imageUrl,
           imageVersions: imageVersions.filter(
             (version): version is NonNullable<typeof version> => version !== null,
@@ -101,6 +155,8 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (!authz.ok) {
       return authz.response
     }
+    const mediaAccess = await requireWorkspaceMediaAccess(authz.userId, 'write')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawId } = await context.params
     const idParsed = idParamSchema.safeParse(rawId)
@@ -146,6 +202,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
     if (!authz.ok) {
       return authz.response
     }
+    const mediaAccess = await requireWorkspaceMediaAccess(authz.userId, 'delete')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawId } = await context.params
     const idParsed = idParamSchema.safeParse(rawId)

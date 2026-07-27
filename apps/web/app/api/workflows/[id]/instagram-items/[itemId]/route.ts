@@ -6,14 +6,18 @@ import {
   DELETE_INSTAGRAM_ITEM_MUTATION,
   INSTAGRAM_ITEM_QUERY,
   UPDATE_INSTAGRAM_ITEM_MUTATION,
+  UPDATE_INSTAGRAM_ITEM_PAGE_MUTATION,
   type DeleteInstagramItemData,
   type InstagramItemData,
   type UpdateInstagramItemData,
+  type UpdateInstagramItemPageData,
 } from '@/lib/graphql/queries/instagram-items'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 
+import { requireWorkspaceMediaAccess } from '@/lib/assets/workspace-media-access'
+
 import { itemIdParamSchema, patchInstagramItemBodySchema, workflowIdParamSchema } from '../schema'
-import { withItemImageUrl } from '../with-image-url'
+import { persistMigratedPageMediaKeys, withItemImageUrl } from '../with-image-url'
 
 type RouteContext = {
   params: Promise<{ id: string; itemId: string }>
@@ -44,6 +48,9 @@ export async function GET(_req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+    if (!mediaAccess.ok) return mediaAccess.response
+
     const { id: rawWorkflowId, itemId: rawItemId } = await context.params
     const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
     const itemParsed = itemIdParamSchema.safeParse(rawItemId)
@@ -69,7 +76,16 @@ export async function GET(_req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Instagram item not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ item: await withItemImageUrl(item, userId) })
+    const migrated = await withItemImageUrl(item, mediaAccess.access)
+    await persistMigratedPageMediaKeys(item.pages, migrated.pages, async (pageId, mediaS3Key) => {
+      await graphqlQuery<UpdateInstagramItemPageData>(
+        UPDATE_INSTAGRAM_ITEM_PAGE_MUTATION,
+        { id: pageId, mediaS3Key },
+        userId,
+      )
+    })
+
+    return NextResponse.json({ item: migrated })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to load Instagram item'
@@ -84,6 +100,9 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'write')
+    if (!mediaAccess.ok) return mediaAccess.response
 
     const { id: rawWorkflowId, itemId: rawItemId } = await context.params
     const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
@@ -133,7 +152,9 @@ export async function PATCH(req: Request, context: RouteContext) {
       userId,
     )
 
-    return NextResponse.json({ item: await withItemImageUrl(data.updateInstagramItem, userId) })
+    return NextResponse.json({
+      item: await withItemImageUrl(data.updateInstagramItem, mediaAccess.access),
+    })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to update Instagram item'

@@ -25,11 +25,6 @@ VALID_STATUSES = frozenset({"draft", "ready"})
 MAX_REFERENCE_IMAGES = 5
 MAX_INSTAGRAM_ITEM_PAGES = 10
 
-_SAFE_POST_FILENAME = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$",
-    re.IGNORECASE,
-)
-
 _SAFE_PHOTO_FILENAME = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     r"\.(webp|jpg|jpeg|png|gif|avif|tif|tiff)$",
@@ -117,16 +112,28 @@ def resolve_style_id_for_user(session, style_id: int, user_id: str) -> int:
     return row.id
 
 
-def validate_item_media_s3_key(key: str, owner_clerk_user_id: str) -> None:
-    """Require ``users/{owner}/posts/<uuid>.webp`` keys (same prefix as IG Studio posts)."""
-    expected_prefix = f"users/{owner_clerk_user_id}/posts/"
-    if not key.startswith(expected_prefix) or key == expected_prefix:
-        raise ValueError("Invalid media_s3_key for Instagram item page")
-    filename = key[len(expected_prefix) :]
-    if "/" in filename or not _SAFE_POST_FILENAME.match(filename):
-        raise ValueError("Invalid media_s3_key for Instagram item page")
+def validate_item_media_s3_key(
+    key: str,
+    *,
+    workspace_id: int | None,
+    owner_clerk_user_id: str,
+) -> None:
+    """Require workspace or legacy owner posts keys for Instagram item pages."""
+    from graphql.schema.media_s3_keys import validate_workspace_post_media_s3_key
+
+    validate_workspace_post_media_s3_key(
+        key,
+        workspace_id=workspace_id,
+        owner_clerk_user_id=owner_clerk_user_id,
+        error_message="Invalid media_s3_key for Instagram item page",
+    )
 
 
+def item_workspace_media_scope(session, item_row: InstagramItem) -> tuple[int | None, str]:
+    """Resolve workspace id + owner for an Instagram item's location."""
+    from graphql.schema.media_s3_keys import resolve_workspace_media_scope_for_location
+
+    return resolve_workspace_media_scope_for_location(session, item_row.location_id)
 def normalize_reference_images(
     raw: list[InstagramItemReferenceImageInput] | list[dict[str, Any]] | None,
 ) -> list[dict[str, Any]]:

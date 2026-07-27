@@ -12,6 +12,7 @@ from graphql.data_sources import InstagramItemPage, InstagramItemPageMediaVersio
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.instagram_items_common import (
     MAX_INSTAGRAM_ITEM_PAGES,
+    item_workspace_media_scope,
     load_item_for_owner,
     normalize_optional_text,
     page_to_gql,
@@ -58,7 +59,12 @@ class CreateInstagramItemPageMutation:
             if media_s3_key is not UNSET and media_s3_key is not None:
                 key_clean = media_s3_key.strip()
                 if key_clean != "":
-                    validate_item_media_s3_key(key_clean, user_id)
+                    workspace_id, owner_id = item_workspace_media_scope(session, item_row)
+                    validate_item_media_s3_key(
+                        key_clean,
+                        workspace_id=workspace_id,
+                        owner_clerk_user_id=owner_id,
+                    )
                     page_row.media_s3_key = key_clean
 
                     if prompt is not UNSET:
