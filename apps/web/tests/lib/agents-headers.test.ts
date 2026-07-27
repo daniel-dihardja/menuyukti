@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 
+/** `process.env.NODE_ENV` is typed read-only; tests need to override it. */
+const env = process.env as Record<string, string | undefined>
+
 describe('buildAgentsHeaders', () => {
   const originalKey = process.env.GRAPHQL_INTERNAL_API_KEY
   const originalNodeEnv = process.env.NODE_ENV
@@ -12,12 +15,12 @@ describe('buildAgentsHeaders', () => {
     } else {
       process.env.GRAPHQL_INTERNAL_API_KEY = originalKey
     }
-    process.env.NODE_ENV = originalNodeEnv
+    env.NODE_ENV = originalNodeEnv
   })
 
   it('includes user id and content-type', () => {
     delete process.env.GRAPHQL_INTERNAL_API_KEY
-    process.env.NODE_ENV = 'development'
+    env.NODE_ENV = 'development'
     const headers = buildAgentsHeaders('user_123')
     expect(headers['X-Menuyukti-User-Id']).toBe('user_123')
     expect(headers['Content-Type']).toBe('application/json')
@@ -26,7 +29,7 @@ describe('buildAgentsHeaders', () => {
 
   it('adds X-Internal-Api-Key when GRAPHQL_INTERNAL_API_KEY is set', () => {
     process.env.GRAPHQL_INTERNAL_API_KEY = 'secret-key'
-    process.env.NODE_ENV = 'development'
+    env.NODE_ENV = 'development'
     const headers = buildAgentsHeaders('user_123', { traceparent: 'tp' })
     expect(headers['X-Internal-Api-Key']).toBe('secret-key')
     expect(headers.traceparent).toBe('tp')
@@ -34,7 +37,7 @@ describe('buildAgentsHeaders', () => {
 
   it('throws in production when key is missing', () => {
     delete process.env.GRAPHQL_INTERNAL_API_KEY
-    process.env.NODE_ENV = 'production'
+    env.NODE_ENV = 'production'
     expect(() => buildAgentsHeaders('user_123')).toThrow(
       'GRAPHQL_INTERNAL_API_KEY must be set in production',
     )
