@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from uuid import UUID
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -159,7 +160,9 @@ def test_enroll_creates_customer_and_device(enroll_workspace: int):
             .one()
         )
         assert token_row.used_at is not None
-        device = session.query(CrmDevice).filter(CrmDevice.id == body["deviceId"]).one()
+        device = (
+            session.query(CrmDevice).filter(CrmDevice.id == UUID(body["deviceId"])).one()
+        )
         assert device.public_key == public_key
         assert device.refresh_token_hash == hash_opaque_token(refresh_token)
         assert device.refresh_token_hash != refresh_token

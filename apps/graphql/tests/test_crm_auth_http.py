@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -187,7 +188,11 @@ def test_challenge_verify_issues_access_jwt(auth_workspace: int):
             .all()
         )
         assert {e.event_type for e in events} >= {"enroll", "challenge", "verify_ok"}
-        device = session.query(CrmDevice).filter(CrmDevice.id == enrolled["deviceId"]).one()
+        device = (
+            session.query(CrmDevice)
+            .filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"]))
+            .one()
+        )
         assert device.last_seen_at is not None
     finally:
         session.close()
@@ -263,7 +268,11 @@ def test_revoke_with_bearer_access_token(auth_workspace: int):
 
     session = SessionLocal()
     try:
-        device = session.query(CrmDevice).filter(CrmDevice.id == enrolled["deviceId"]).one()
+        device = (
+            session.query(CrmDevice)
+            .filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"]))
+            .one()
+        )
         assert device.revoked_at is not None
         assert device.refresh_token_hash is None
     finally:
@@ -299,7 +308,7 @@ def test_consumed_and_expired_challenge_rejected(auth_workspace: int):
     try:
         row = (
             session.query(CrmAuthChallenge)
-            .filter(CrmAuthChallenge.id == ch2["challengeId"])
+            .filter(CrmAuthChallenge.id == uuid.UUID(ch2["challengeId"]))
             .one()
         )
         row.expires_at = datetime.now(tz=UTC) - timedelta(seconds=1)
@@ -349,7 +358,11 @@ def test_bad_signature_fails_and_audits(auth_workspace: int):
         )
         assert any(e.detail == "bad_signature" for e in fails)
         # Refresh hash must not equal the raw token
-        device = session.query(CrmDevice).filter(CrmDevice.id == enrolled["deviceId"]).one()
+        device = (
+            session.query(CrmDevice)
+            .filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"]))
+            .one()
+        )
         assert device.refresh_token_hash == hash_opaque_token(enrolled["refreshToken"])
         assert device.refresh_token_hash != enrolled["refreshToken"]
     finally:

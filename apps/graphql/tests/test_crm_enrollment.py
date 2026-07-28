@@ -10,6 +10,8 @@ import pytest
 from graphql.crm_auth.tokens import hash_enrollment_token
 from graphql.data_sources import (
     CrmApp,
+    CrmAuditEvent,
+    CrmAuthChallenge,
     CrmCustomer,
     CrmDevice,
     CrmEnrollmentToken,
@@ -63,6 +65,8 @@ OTHER_USER_ID = "clerk_other_crm_enroll_user"
 def crm_enroll_workspace_id():
     session = SessionLocal()
     try:
+        session.query(CrmAuditEvent).delete()
+        session.query(CrmAuthChallenge).delete()
         session.query(CrmDevice).delete()
         session.query(CrmCustomer).delete()
         session.query(CrmEnrollmentToken).delete()
@@ -92,6 +96,8 @@ def crm_enroll_workspace_id():
     yield wid
     session = SessionLocal()
     try:
+        session.query(CrmAuditEvent).delete()
+        session.query(CrmAuthChallenge).delete()
         session.query(CrmDevice).delete()
         session.query(CrmCustomer).delete()
         session.query(CrmEnrollmentToken).delete()
