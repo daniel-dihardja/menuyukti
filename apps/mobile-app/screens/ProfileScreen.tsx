@@ -22,7 +22,7 @@ function validateProfile(profile: CustomerProfile): string | null {
 export function ProfileScreen() {
   const brand = useBrand()
   const { session, profile, saveProfile, resetSession } = useSession()
-  const { colors, radius, typography, fonts, spacing } = brand
+  const { colors, typography, fonts, spacing } = brand
 
   const [draft, setDraft] = useState<CustomerProfile>(profile)
   const [error, setError] = useState<string | null>(null)
@@ -110,39 +110,6 @@ export function ProfileScreen() {
           </Text>
         ) : null}
         <Button title="Save profile" onPress={handleSave} />
-      </View>
-
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderRadius: radius.md,
-          padding: spacing.lg,
-          gap: spacing.md,
-          borderWidth: 1,
-          borderColor: colors.border,
-        }}
-      >
-        <Text
-          style={{
-            ...typography.caption,
-            fontFamily: fonts.sansMedium,
-            color: colors.inkFaint,
-            textTransform: 'uppercase',
-            letterSpacing: 0.8,
-          }}
-        >
-          Local profile
-        </Text>
-        <Text
-          style={{
-            ...typography.body,
-            fontFamily: fonts.sans,
-            color: colors.inkMuted,
-          }}
-        >
-          Name and phone are stored on this device only. Your account is identified by the customer
-          ID from enrollment. Reset enrollment clears your session and device key.
-        </Text>
       </View>
 
       <View style={{ gap: spacing.sm }}>

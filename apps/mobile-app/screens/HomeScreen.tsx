@@ -1,14 +1,20 @@
 import { Text, View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 
-import { OfferCard } from '../components/OfferCard'
+import { Button } from '../components/Button'
 import { Screen } from '../components/Screen'
-import { SectionHeader } from '../components/SectionHeader'
-import { mockRestaurant } from '../data/mockRestaurant'
+import type { MainTabParamList } from '../navigation/MainTabs'
 import { useBrand } from '../theme/BrandContext'
+import { useSession } from '../theme/SessionContext'
 
 export function HomeScreen() {
-  const { colors, typography, fonts, spacing } = useBrand()
-  const restaurant = mockRestaurant
+  const { name, colors, radius, typography, fonts, spacing, shadow } = useBrand()
+  const { profile } = useSession()
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>()
+
+  const firstName = profile.givenName.trim()
+  const greeting = firstName ? `Welcome back, ${firstName}` : 'Welcome'
 
   return (
     <Screen scroll contentStyle={{ paddingTop: spacing.md, gap: spacing.lg }}>
@@ -22,7 +28,7 @@ export function HomeScreen() {
             letterSpacing: 0.8,
           }}
         >
-          {restaurant.displayName}
+          {name}
         </Text>
         <Text
           style={{
@@ -31,7 +37,7 @@ export function HomeScreen() {
             color: colors.ink,
           }}
         >
-          {restaurant.greeting}
+          {greeting}
         </Text>
         <Text
           style={{
@@ -40,19 +46,48 @@ export function HomeScreen() {
             color: colors.inkMuted,
           }}
         >
-          Fresh deals curated for your next visit.
+          You’re enrolled. Cashback from qualifying visits shows up in your balance.
         </Text>
       </View>
 
-      <View style={{ marginHorizontal: -spacing.lg }}>
-        <OfferCard offer={restaurant.featuredOffer} />
-      </View>
-
-      <View style={{ gap: spacing.sm }}>
-        <SectionHeader title="Active offers" subtitle="Show these in-store when you order." />
-        {restaurant.offers.map((offer) => (
-          <OfferCard key={offer.id} offer={offer} />
-        ))}
+      <View
+        style={[
+          shadow.warmSm,
+          {
+            backgroundColor: colors.card,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            gap: spacing.md,
+          },
+        ]}
+      >
+        <View style={{ gap: spacing.xs }}>
+          <Text
+            style={{
+              ...typography.bodyMedium,
+              fontFamily: fonts.sansSemiBold,
+              color: colors.ink,
+            }}
+          >
+            Cashback
+          </Text>
+          <Text
+            style={{
+              ...typography.caption,
+              fontFamily: fonts.sans,
+              color: colors.inkMuted,
+            }}
+          >
+            Check your balance and history anytime on the Cashback tab.
+          </Text>
+        </View>
+        <Button
+          title="View cashback"
+          variant="secondary"
+          onPress={() => navigation.navigate('Rewards')}
+        />
       </View>
     </Screen>
   )
