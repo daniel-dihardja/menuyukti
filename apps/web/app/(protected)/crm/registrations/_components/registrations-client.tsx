@@ -251,7 +251,7 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('columns.phone')}</TableHead>
+                <TableHead>{t('columns.uuid')}</TableHead>
                 <TableHead>{t('columns.enrolledAt')}</TableHead>
                 <TableHead className="text-right">{t('columns.devices')}</TableHead>
                 <TableHead className="w-[1%] text-right">
@@ -262,7 +262,7 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
             <TableBody>
               {customers.map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.phoneMasked}</TableCell>
+                  <TableCell className="font-mono text-xs font-medium">{row.id}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(row.createdAt).toLocaleString()}
                   </TableCell>
@@ -366,9 +366,7 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete
-                ? t('deleteConfirmDescription', { phone: pendingDelete.phoneMasked })
-                : null}
+              {pendingDelete ? t('deleteConfirmDescription', { uuid: pendingDelete.id }) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

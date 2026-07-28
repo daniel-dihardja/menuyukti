@@ -802,7 +802,7 @@
         "noApps": "Create an app before managing customer registrations.",
         "noAppsCta": "Go to Apps",
         "columns": {
-          "phone": "Phone",
+          "uuid": "UUID",
           "enrolledAt": "Enrolled",
           "devices": "Devices",
           "actions": "Actions"
@@ -816,7 +816,7 @@
         "regenerate": "Generate new code",
         "delete": "Delete",
         "deleteConfirmTitle": "Delete this registration?",
-        "deleteConfirmDescription": "This permanently removes {phone} and their enrolled devices. This cannot be undone.",
+        "deleteConfirmDescription": "This permanently removes {uuid} and their enrolled devices. This cannot be undone.",
         "deleteConfirmCancel": "Cancel",
         "deleteConfirmAction": "Delete registration",
         "deleting": "Deleting…",
