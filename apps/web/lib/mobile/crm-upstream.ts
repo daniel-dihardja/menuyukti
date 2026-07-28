@@ -28,31 +28,41 @@ export type PostCrmUpstreamOptions = {
   logLabel?: string
 }
 
-/**
- * Forward a JSON POST to the private GraphQL CRM REST surface (no internal API key).
- */
-export async function postCrmUpstream(options: PostCrmUpstreamOptions): Promise<CrmUpstreamResult> {
-  const {
-    path,
-    body,
-    headers = {},
-    unreachableMessage = 'Could not reach CRM auth service',
-    logLabel = 'mobile/crm',
-  } = options
+export type GetCrmUpstreamOptions = {
+  /** Path under the GraphQL origin, e.g. `/crm/v1/me/cashback`. */
+  path: string
+  /** Extra request headers (e.g. Authorization). */
+  headers?: Record<string, string>
+  /** Fallback message when upstream is unreachable. */
+  unreachableMessage?: string
+  /** Log label for failed upstream fetch. */
+  logLabel?: string
+}
 
+async function crmUpstreamFetch(
+  method: 'GET' | 'POST',
+  options: {
+    path: string
+    headers?: Record<string, string>
+    body?: Record<string, unknown>
+    unreachableMessage: string
+    logLabel: string
+  },
+): Promise<CrmUpstreamResult> {
+  const { path, headers = {}, body, unreachableMessage, logLabel } = options
   const url = `${graphqlServiceOrigin()}${path.startsWith('/') ? path : `/${path}`}`
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS)
 
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method,
       headers: {
-        'Content-Type': 'application/json',
+        ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
         ...headers,
       },
       signal: controller.signal,
-      body: JSON.stringify(body),
+      ...(method === 'POST' && body !== undefined ? { body: JSON.stringify(body) } : {}),
     })
 
     const json = (await response.json().catch(() => ({}))) as Record<string, unknown>
@@ -76,4 +86,44 @@ export async function postCrmUpstream(options: PostCrmUpstreamOptions): Promise<
   } finally {
     clearTimeout(timer)
   }
+}
+
+/**
+ * Forward a JSON POST to the private GraphQL CRM REST surface (no internal API key).
+ */
+export async function postCrmUpstream(options: PostCrmUpstreamOptions): Promise<CrmUpstreamResult> {
+  const {
+    path,
+    body,
+    headers = {},
+    unreachableMessage = 'Could not reach CRM auth service',
+    logLabel = 'mobile/crm',
+  } = options
+
+  return crmUpstreamFetch('POST', {
+    path,
+    headers,
+    body,
+    unreachableMessage,
+    logLabel,
+  })
+}
+
+/**
+ * Forward a GET to the private GraphQL CRM REST surface (no internal API key).
+ */
+export async function getCrmUpstream(options: GetCrmUpstreamOptions): Promise<CrmUpstreamResult> {
+  const {
+    path,
+    headers = {},
+    unreachableMessage = 'Could not reach CRM auth service',
+    logLabel = 'mobile/crm',
+  } = options
+
+  return crmUpstreamFetch('GET', {
+    path,
+    headers,
+    unreachableMessage,
+    logLabel,
+  })
 }

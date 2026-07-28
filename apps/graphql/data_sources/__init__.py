@@ -12,6 +12,7 @@ __all__ = [
     "CrmApp",
     "CrmAuditEvent",
     "CrmAuthChallenge",
+    "CrmCashbackEntry",
     "CrmCustomer",
     "CrmDevice",
     "CrmEnrollmentToken",

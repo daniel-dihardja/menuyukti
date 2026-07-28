@@ -45,7 +45,7 @@ export function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Rewards" component={RewardsScreen} />
+      <Tab.Screen name="Rewards" component={RewardsScreen} options={{ title: 'Cashback' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   )

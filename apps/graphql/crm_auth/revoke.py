@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import json
-import uuid
 from datetime import UTC, datetime
 
-import jwt
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from graphql.crm_auth.audit import record_audit_event
-from graphql.crm_auth.http_util import clear_refresh_token, error_response
-from graphql.crm_auth.jwt_access import decode_access_token
+from graphql.crm_auth.http_util import (
+    AccessClaims,
+    bearer_token_from_request,
+    clear_refresh_token,
+    decode_access_claims,
+    error_response,
+)
 from graphql.crm_auth.tokens import hash_opaque_token
 from graphql.data_sources.database import SessionLocal
 from graphql.data_sources.models.crm_customer import CrmCustomer
@@ -30,10 +33,7 @@ async def revoke_endpoint(request: Request) -> Response:
         return error_response(400, "Invalid JSON body")
 
     raw_refresh = body.get("refreshToken")
-    auth_header = request.headers.get("Authorization", "")
-    bearer_token: str | None = None
-    if auth_header.lower().startswith("bearer "):
-        bearer_token = auth_header[7:].strip() or None
+    bearer_token = bearer_token_from_request(request)
 
     has_refresh = isinstance(raw_refresh, str) and bool(raw_refresh.strip())
     if not has_refresh and not bearer_token:
@@ -47,26 +47,17 @@ async def revoke_endpoint(request: Request) -> Response:
         if has_refresh:
             token_hash = hash_opaque_token(raw_refresh.strip())  # type: ignore[union-attr]
             device = (
-                session.query(CrmDevice)
-                .filter(CrmDevice.refresh_token_hash == token_hash)
-                .first()
+                session.query(CrmDevice).filter(CrmDevice.refresh_token_hash == token_hash).first()
             )
             if device is None:
                 return error_response(401, "Invalid refresh token")
         else:
             assert bearer_token is not None
-            try:
-                claims = decode_access_token(bearer_token)
-            except jwt.PyJWTError:
-                return error_response(401, "Invalid access token")
-            did = claims.get("did")
-            if not isinstance(did, str):
-                return error_response(401, "Invalid access token")
-            try:
-                device_uuid = uuid.UUID(did)
-            except ValueError:
-                return error_response(401, "Invalid access token")
-            device = session.query(CrmDevice).filter(CrmDevice.id == device_uuid).first()
+            claims_or_error = decode_access_claims(bearer_token)
+            if isinstance(claims_or_error, JSONResponse):
+                return claims_or_error
+            claims: AccessClaims = claims_or_error
+            device = session.query(CrmDevice).filter(CrmDevice.id == claims.did).first()
             if device is None:
                 return error_response(404, "Device not found")
 

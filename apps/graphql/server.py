@@ -14,6 +14,7 @@ from graphql import GraphQLError
 from .context import init_request_context
 from .crm_auth.challenge import challenge_endpoint
 from .crm_auth.enroll import enroll_endpoint
+from .crm_auth.me_cashback import me_cashback_endpoint
 from .crm_auth.refresh import refresh_endpoint
 from .crm_auth.revoke import revoke_endpoint
 from .crm_auth.verify import verify_endpoint
@@ -99,6 +100,7 @@ _starlette_app = Starlette(
         Route("/crm/v1/auth/verify", verify_endpoint, methods=["POST"]),
         Route("/crm/v1/auth/refresh", refresh_endpoint, methods=["POST"]),
         Route("/crm/v1/auth/revoke", revoke_endpoint, methods=["POST"]),
+        Route("/crm/v1/me/cashback", me_cashback_endpoint, methods=["GET"]),
         Mount("/", app=_graphql_app),
     ]
 )

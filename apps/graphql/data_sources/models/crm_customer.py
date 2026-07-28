@@ -12,6 +12,7 @@ from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
     from graphql.data_sources.models.crm_app import CrmApp
+    from graphql.data_sources.models.crm_cashback_entry import CrmCashbackEntry
     from graphql.data_sources.models.crm_device import CrmDevice
 
 
@@ -58,6 +59,11 @@ class CrmCustomer(Base):
     crm_app: Mapped[CrmApp] = relationship("CrmApp", back_populates="customers")
     devices: Mapped[list[CrmDevice]] = relationship(
         "CrmDevice",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+    )
+    cashback_entries: Mapped[list[CrmCashbackEntry]] = relationship(
+        "CrmCashbackEntry",
         back_populates="customer",
         cascade="all, delete-orphan",
     )

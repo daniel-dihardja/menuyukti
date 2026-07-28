@@ -29,7 +29,7 @@ export function withMobileCors(response: NextResponse, request: Request): NextRe
   const origin = resolveMobileCorsOrigin(request.headers.get('Origin'))
   if (origin) {
     response.headers.set('Access-Control-Allow-Origin', origin)
-    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.set('Vary', 'Origin')
   }
