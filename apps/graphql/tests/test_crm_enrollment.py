@@ -38,6 +38,8 @@ query CrmCustomers($appId: Int!) {
     phoneMasked
     createdAt
     deviceCount
+    lastSeenAt
+    status
   }
 }
 """
@@ -212,6 +214,7 @@ def test_customers_after_manual_insert(crm_enroll_workspace_id: int):
     assert rows[0]["id"] == customer_id
     assert rows[0]["phoneMasked"] == "+49***67"
     assert rows[0]["deviceCount"] == 1
+    assert rows[0]["status"] == "ACTIVE"
 
 
 def test_delete_customer_cascades_devices(crm_enroll_workspace_id: int):

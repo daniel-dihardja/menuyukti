@@ -1,8 +1,25 @@
+/** GraphQL `CrmCustomerStatus` enum names. */
+export type CrmCustomerStatus = 'ACTIVE' | 'REVOKED' | 'NONE'
+
+export type CrmDevice = {
+  id: string
+  platform: string
+  label: string | null
+  createdAt: string
+  lastSeenAt: string | null
+  revokedAt: string | null
+}
+
 export type CrmCustomer = {
   id: string
   phoneMasked: string
+  givenName: string | null
+  familyName: string | null
   createdAt: string
   deviceCount: number
+  lastSeenAt: string | null
+  status: CrmCustomerStatus
+  devices?: CrmDevice[]
 }
 
 export type CrmEnrollmentToken = {
@@ -11,23 +28,51 @@ export type CrmEnrollmentToken = {
   enrollUrl: string
 }
 
-const CRM_CUSTOMER_FIELDS = `
+const CRM_CUSTOMER_LIST_FIELDS = `
   id
   phoneMasked
+  givenName
+  familyName
   createdAt
   deviceCount
+  lastSeenAt
+  status
+`
+
+const CRM_DEVICE_FIELDS = `
+  id
+  platform
+  label
+  createdAt
+  lastSeenAt
+  revokedAt
 `
 
 export const CRM_CUSTOMERS_QUERY = `
-  query CrmCustomers($appId: Int!) {
-    crmCustomers(appId: $appId) {
-      ${CRM_CUSTOMER_FIELDS}
+  query CrmCustomers($appId: Int!, $search: String) {
+    crmCustomers(appId: $appId, search: $search) {
+      ${CRM_CUSTOMER_LIST_FIELDS}
     }
   }
 `
 
 export type CrmCustomersData = {
   crmCustomers: CrmCustomer[]
+}
+
+export const CRM_CUSTOMER_QUERY = `
+  query CrmCustomer($id: UUID!) {
+    crmCustomer(id: $id) {
+      ${CRM_CUSTOMER_LIST_FIELDS}
+      devices {
+        ${CRM_DEVICE_FIELDS}
+      }
+    }
+  }
+`
+
+export type CrmCustomerData = {
+  crmCustomer: CrmCustomer | null
 }
 
 export const CREATE_CRM_ENROLLMENT_TOKEN_MUTATION = `
@@ -52,4 +97,16 @@ export const DELETE_CRM_CUSTOMER_MUTATION = `
 
 export type DeleteCrmCustomerData = {
   deleteCrmCustomer: boolean
+}
+
+export const REVOKE_CRM_DEVICE_MUTATION = `
+  mutation RevokeCrmDevice($deviceId: UUID!) {
+    revokeCrmDevice(deviceId: $deviceId) {
+      ${CRM_DEVICE_FIELDS}
+    }
+  }
+`
+
+export type RevokeCrmDeviceData = {
+  revokeCrmDevice: CrmDevice
 }

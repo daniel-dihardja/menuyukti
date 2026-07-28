@@ -31,6 +31,7 @@ from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .reorder_milestones import ReorderMilestonesMutation
 from .replace_pass_criteria import ReplacePassCriteriaMutation
+from .revoke_crm_device import RevokeCrmDeviceMutation
 from .set_pass_criteria_statuses import SetPassCriteriaStatusesMutation
 from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
@@ -65,6 +66,7 @@ __all__ = [
     "DeleteCalendarEntryMutation",
     "DeleteCrmAppMutation",
     "DeleteCrmCustomerMutation",
+    "RevokeCrmDeviceMutation",
     "DeleteImageAiFlowMutation",
     "DeleteInstagramItemMutation",
     "DeleteInstagramItemPageMutation",

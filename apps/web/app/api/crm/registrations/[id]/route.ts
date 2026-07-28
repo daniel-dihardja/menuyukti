@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
+  CRM_CUSTOMER_QUERY,
   DELETE_CRM_CUSTOMER_MUTATION,
+  type CrmCustomerData,
   type DeleteCrmCustomerData,
 } from '@/lib/graphql/queries/crm-registrations'
 
@@ -11,6 +13,29 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 
 type RouteContext = {
   params: Promise<{ id: string }>
+}
+
+export async function GET(_req: Request, context: RouteContext) {
+  try {
+    const authz = await requireAuthenticatedApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
+
+    const { id } = await context.params
+    if (!UUID_RE.test(id)) {
+      return NextResponse.json({ message: 'Invalid id' }, { status: 400 })
+    }
+
+    const data = await graphqlQuery<CrmCustomerData>(CRM_CUSTOMER_QUERY, { id }, userId)
+    if (!data.crmCustomer) {
+      return NextResponse.json({ message: 'CRM customer not found' }, { status: 404 })
+    }
+    return NextResponse.json({ customer: data.crmCustomer })
+  } catch (error) {
+    console.error('[crm/registrations] GET detail', error)
+    const message = error instanceof Error ? error.message : 'Failed to load registration'
+    return NextResponse.json({ message }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: Request, context: RouteContext) {

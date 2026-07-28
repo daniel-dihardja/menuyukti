@@ -7,6 +7,7 @@ import uuid
 import strawberry
 
 from graphql.context import request_session_scope
+from graphql.crm_auth.audit import record_audit_event
 from graphql.data_sources.models.crm_app import CrmApp
 from graphql.data_sources.models.crm_customer import CrmCustomer
 from graphql.schema.auth import is_workspace_member, user_id_from_info
@@ -31,6 +32,13 @@ class DeleteCrmCustomerMutation:
                 raise ValueError("CRM app not found")
             if not is_workspace_member(session, app.workspace_id, user_id):
                 raise PermissionError("Not allowed to delete this CRM customer")
+            record_audit_event(
+                session,
+                event_type="customer_delete",
+                crm_app_id=app.id,
+                customer_id=customer.id,
+                detail=f"by:{user_id}",
+            )
             session.delete(customer)
             session.commit()
             return True

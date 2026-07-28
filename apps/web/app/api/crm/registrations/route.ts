@@ -17,7 +17,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'appId is required' }, { status: 400 })
     }
 
-    const data = await graphqlQuery<CrmCustomersData>(CRM_CUSTOMERS_QUERY, { appId }, userId)
+    const search = searchParams.get('search')?.trim() || undefined
+    const data = await graphqlQuery<CrmCustomersData>(
+      CRM_CUSTOMERS_QUERY,
+      { appId, ...(search ? { search } : {}) },
+      userId,
+    )
 
     return NextResponse.json({ customers: data.crmCustomers })
   } catch (error) {

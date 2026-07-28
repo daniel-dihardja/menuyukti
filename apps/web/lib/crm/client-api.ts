@@ -1,8 +1,12 @@
 import { apiFetch } from '@/lib/api/client-fetch'
 import type { CrmApp } from '@/lib/graphql/queries/crm-apps'
-import type { CrmCustomer, CrmEnrollmentToken } from '@/lib/graphql/queries/crm-registrations'
+import type {
+  CrmCustomer,
+  CrmDevice,
+  CrmEnrollmentToken,
+} from '@/lib/graphql/queries/crm-registrations'
 
-export type { CrmApp, CrmCustomer, CrmEnrollmentToken }
+export type { CrmApp, CrmCustomer, CrmDevice, CrmEnrollmentToken }
 
 export async function listCrmApps(): Promise<CrmApp[]> {
   const result = await apiFetch<{ apps?: CrmApp[] }>(
@@ -43,9 +47,11 @@ export async function deleteCrmApp(id: number): Promise<void> {
   }
 }
 
-export async function listCrmCustomers(appId: number): Promise<CrmCustomer[]> {
+export async function listCrmCustomers(appId: number, search?: string): Promise<CrmCustomer[]> {
+  const params = new URLSearchParams({ appId: String(appId) })
+  if (search?.trim()) params.set('search', search.trim())
   const result = await apiFetch<{ customers?: CrmCustomer[] }>(
-    `/api/crm/registrations?appId=${encodeURIComponent(String(appId))}`,
+    `/api/crm/registrations?${params.toString()}`,
     { cache: 'no-store' },
     'Failed to load registrations',
   )
@@ -53,6 +59,18 @@ export async function listCrmCustomers(appId: number): Promise<CrmCustomer[]> {
     throw new Error(result.error)
   }
   return result.data.customers ?? []
+}
+
+export async function getCrmCustomer(id: string): Promise<CrmCustomer | null> {
+  const result = await apiFetch<{ customer: CrmCustomer | null }>(
+    `/api/crm/registrations/${encodeURIComponent(id)}`,
+    { cache: 'no-store' },
+    'Failed to load registration',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.customer
 }
 
 export async function createCrmEnrollmentToken(appId: number): Promise<CrmEnrollmentToken> {
@@ -80,4 +98,16 @@ export async function deleteCrmCustomer(id: string): Promise<void> {
   if (!result.ok) {
     throw new Error(result.error)
   }
+}
+
+export async function revokeCrmDevice(deviceId: string): Promise<CrmDevice> {
+  const result = await apiFetch<{ device: CrmDevice }>(
+    `/api/crm/registrations/devices/${encodeURIComponent(deviceId)}/revoke`,
+    { method: 'POST' },
+    'Failed to revoke device',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.device
 }
