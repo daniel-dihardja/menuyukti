@@ -4,7 +4,8 @@ import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
+import { graphqlQuery } from '@/lib/graphql/client'
+import { CRM_APPS_QUERY, type CrmAppsData } from '@/lib/graphql/queries/crm-apps'
 import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
@@ -19,41 +20,38 @@ function RegistrationsSkeleton() {
   )
 }
 
-function parseRequestedLocationId(raw: string | undefined): number | null {
+function parseRequestedAppId(raw: string | undefined): number | null {
   if (!raw) return null
   const parsed = Number(raw)
   if (!Number.isInteger(parsed) || parsed < 1) return null
   return parsed
 }
 
-function resolveInitialLocationId(
-  branches: Array<{ id: number }>,
-  requestedLocationId: number | null,
+function resolveInitialAppId(
+  apps: Array<{ id: number }>,
+  requestedAppId: number | null,
 ): number | null {
-  if (
-    requestedLocationId !== null &&
-    branches.some((branch) => branch.id === requestedLocationId)
-  ) {
-    return requestedLocationId
+  if (requestedAppId !== null && apps.some((app) => app.id === requestedAppId)) {
+    return requestedAppId
   }
-  return branches.length === 1 ? (branches[0]?.id ?? null) : null
+  return apps.length === 1 ? (apps[0]?.id ?? null) : null
 }
 
-async function RegistrationsData({ requestedLocationId }: { requestedLocationId: number | null }) {
+async function RegistrationsData({ requestedAppId }: { requestedAppId: number | null }) {
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocationsListData(userId)
-  const branches = data.locations.map((loc) => ({
-    id: Number(loc.id),
-    name: loc.name,
+  const data = await graphqlQuery<CrmAppsData>(CRM_APPS_QUERY, {}, userId)
+  const apps = data.crmApps.map((app) => ({
+    id: app.id,
+    title: app.title,
   }))
 
-  const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
+  const initialAppId = resolveInitialAppId(apps, requestedAppId)
 
-  return <RegistrationsClient branches={branches} initialLocationId={initialLocationId} />
+  return <RegistrationsClient apps={apps} initialAppId={initialAppId} />
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -66,12 +64,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function CrmRegistrationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ locationId?: string }>
+  searchParams: Promise<{ appId?: string }>
 }) {
   const t = await getTranslations('platform.crm')
   const tRegistrations = await getTranslations('platform.crm.registrations')
-  const { locationId: locationIdParam } = await searchParams
-  const requestedLocationId = parseRequestedLocationId(locationIdParam)
+  const { appId: appIdParam } = await searchParams
+  const requestedAppId = parseRequestedAppId(appIdParam)
 
   return (
     <AnalyticsPageShell
@@ -86,7 +84,7 @@ export default async function CrmRegistrationsPage({
         <p className="text-sm text-muted-foreground">{tRegistrations('description')}</p>
         <div className="pt-4">
           <Suspense fallback={<RegistrationsSkeleton />}>
-            <RegistrationsData requestedLocationId={requestedLocationId} />
+            <RegistrationsData requestedAppId={requestedAppId} />
           </Suspense>
         </div>
       </div>

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
+    from graphql.data_sources.models.crm_app import CrmApp
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.location import Location
     from graphql.data_sources.models.visual_style import VisualStyle
@@ -39,6 +40,11 @@ class Workspace(Base):
         back_populates="workspace",
         cascade="all, delete-orphan",
         order_by="VisualStyle.name",
+    )
+    crm_apps: Mapped[list[CrmApp]] = relationship(
+        back_populates="workspace",
+        cascade="all, delete-orphan",
+        order_by="CrmApp.title",
     )
 
 

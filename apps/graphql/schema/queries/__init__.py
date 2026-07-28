@@ -1,6 +1,7 @@
 from .analytics_bundle import AnalyticsBundleQuery
 from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
+from .crm_apps import CrmAppsQuery
 from .ig_plan_inputs import IgPlanInputsQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_items import InstagramItemsQuery
@@ -33,6 +34,7 @@ __all__ = [
     "LatestAnalyticsRunWithSignalsQuery",
     "WorkflowCampaignTreeQuery",
     "CategoryMixQuery",
+    "CrmAppsQuery",
     "IgPlanInputsQuery",
     "ImageAiFlowsQuery",
     "InstagramItemsQuery",

@@ -2,6 +2,7 @@
 
 from graphql.data_sources.models.analytics import AnalyticsRun, MenuItemCogs, OrderFact
 from graphql.data_sources.models.calendar_entry import CalendarEntry
+from graphql.data_sources.models.crm_app import CrmApp
 from graphql.data_sources.models.image_ai_flow import ImageAiFlow
 from graphql.data_sources.models.instagram import (
     InstagramPost,
@@ -24,6 +25,7 @@ from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
 __all__ = [
     "AnalyticsRun",
     "CalendarEntry",
+    "CrmApp",
     "ImageAiFlow",
     "InstagramItem",
     "InstagramItemPage",

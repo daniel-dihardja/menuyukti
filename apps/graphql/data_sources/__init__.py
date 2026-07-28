@@ -9,6 +9,7 @@ __all__ = [
     "LocationOpeningHour",
     "LocationManualBriefInput",
     "VisualStyle",
+    "CrmApp",
     "CalendarEntry",
     "AnalyticsRun",
     "OrderFact",

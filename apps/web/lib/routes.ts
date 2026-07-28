@@ -75,9 +75,10 @@ export const routes = {
 
   /** Restaurant CRM (customer registrations, programs). */
   crm: '/crm',
+  crmApps: '/crm/apps',
   crmRegistrations: '/crm/registrations',
-  crmRegistrationsWithLocation: (locationId: string | number) =>
-    `/crm/registrations?locationId=${encodeURIComponent(String(locationId))}`,
+  crmRegistrationsWithApp: (appId: string | number) =>
+    `/crm/registrations?appId=${encodeURIComponent(String(appId))}`,
 
   /** Standalone Instagram post drafts + Post Creator (admin). */
   igStudio: '/ig-studio',

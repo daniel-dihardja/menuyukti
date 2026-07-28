@@ -655,6 +655,7 @@
     "igStories": "IG Stories",
     "printShop": "Print shop",
     "crm": "CRM",
+    "crmApps": "Apps",
     "crmRegistrations": "Registrations",
     "team": "Team",
     "agents": "Advisor",
@@ -758,19 +759,48 @@
     "crm": {
       "title": "CRM",
       "breadcrumb": "CRM",
+      "apps": {
+        "title": "Apps",
+        "description": "Loyalty apps that own customer registrations for this workspace.",
+        "breadcrumb": "Apps",
+        "loading": "Loading apps…",
+        "add": "Create app",
+        "emptyTitle": "No apps yet",
+        "emptyDescription": "Create an app to start enrolling customers for marketing programs.",
+        "titleLabel": "App title",
+        "titlePlaceholder": "e.g. Acme Loyalty",
+        "create": "Create",
+        "creating": "Creating…",
+        "cancel": "Cancel",
+        "toast": {
+          "created": "App created",
+          "createError": "Could not create app",
+          "deleted": "App deleted",
+          "deleteError": "Could not delete app",
+          "loadError": "Could not load apps"
+        },
+        "delete": "Delete",
+        "deleteConfirmTitle": "Delete this app?",
+        "deleteConfirmDescription": "This permanently removes “{title}”. This cannot be undone.",
+        "deleteConfirmCancel": "Cancel",
+        "deleteConfirmAction": "Delete app",
+        "deleting": "Deleting…",
+        "appIdLabel": "App ID"
+      },
       "registrations": {
         "title": "Registrations",
-        "description": "Customers enrolled at this location for marketing programs.",
+        "description": "Customers enrolled in the selected app for marketing programs.",
         "breadcrumb": "Registrations",
-        "branchLabel": "Location",
-        "branchPlaceholder": "Select a location",
-        "branchDescription": "Registrations are scoped to the selected location.",
-        "selectBranch": "Select a location to view registered customers.",
+        "appLabel": "App",
+        "appPlaceholder": "Select an app",
+        "appDescription": "Registrations are scoped to the selected app.",
+        "selectApp": "Select an app to view registered customers.",
         "emptyTitle": "No registrations yet",
         "emptyDescription": "Enroll customers by generating a one-time QR code they can scan in the restaurant.",
         "enrollQr": "Generate enrollment QR",
         "enrollQrSoon": "Enrollment QR codes will be available in a later release.",
-        "noLocations": "Add a location before managing customer registrations."
+        "noApps": "Create an app before managing customer registrations.",
+        "noAppsCta": "Go to Apps"
       }
     },
     "calendar": {

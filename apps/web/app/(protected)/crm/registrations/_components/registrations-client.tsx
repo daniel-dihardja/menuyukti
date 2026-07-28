@@ -1,73 +1,79 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { QrCode } from 'lucide-react'
 
-import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
-import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 
-type Branch = {
+import { AppSelect } from './app-select'
+
+type AppOption = {
   id: number
-  name: string
+  title: string
 }
 
 type Props = {
-  branches: Branch[]
-  initialLocationId: number | null
+  apps: AppOption[]
+  initialAppId: number | null
 }
 
-export function RegistrationsClient({ branches, initialLocationId }: Props) {
+export function RegistrationsClient({ apps, initialAppId }: Props) {
   const t = useTranslations('platform.crm.registrations')
   const router = useRouter()
-  const { locationId, setLocationId } = useAnalytics()
+  const [appId, setAppId] = useState<number | null>(initialAppId)
 
-  // URL → context only when the URL param changes (avoids fighting user selection mid-navigation).
   useEffect(() => {
-    if (initialLocationId !== null) {
-      setLocationId(initialLocationId)
-    }
-  }, [initialLocationId, setLocationId])
+    setAppId(initialAppId)
+  }, [initialAppId])
 
-  // No URL: keep a valid stored selection, or auto-select the only branch.
   useEffect(() => {
-    if (initialLocationId !== null) return
-    if (locationId !== null) {
-      if (branches.length > 0 && !branches.some((b) => b.id === locationId)) {
-        setLocationId(null)
+    if (initialAppId !== null) return
+    if (appId !== null) {
+      if (apps.length > 0 && !apps.some((a) => a.id === appId)) {
+        setAppId(null)
       }
       return
     }
-    if (branches.length !== 1) return
-    const [onlyBranch] = branches
-    if (!onlyBranch) return
-    setLocationId(onlyBranch.id)
-  }, [initialLocationId, locationId, branches, setLocationId])
+    if (apps.length !== 1) return
+    const [onlyApp] = apps
+    if (!onlyApp) return
+    setAppId(onlyApp.id)
+  }, [initialAppId, appId, apps])
 
   useEffect(() => {
-    if (locationId === null) return
-    if (locationId === initialLocationId) return
-    router.replace(routes.crmRegistrationsWithLocation(locationId))
-  }, [locationId, initialLocationId, router])
+    if (appId === null) return
+    if (appId === initialAppId) return
+    router.replace(routes.crmRegistrationsWithApp(appId))
+  }, [appId, initialAppId, router])
 
-  const activeLocationId = locationId ?? initialLocationId
+  const activeAppId = appId ?? initialAppId
 
-  if (branches.length === 0) {
-    return <p className="text-sm text-muted-foreground">{t('noLocations')}</p>
+  if (apps.length === 0) {
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p className="text-sm text-muted-foreground">{t('noApps')}</p>
+        <Button asChild variant="outline" size="sm">
+          <Link href={routes.crmApps}>{t('noAppsCta')}</Link>
+        </Button>
+      </div>
+    )
   }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <LocationSelect
-          branches={branches}
-          id="crm-registrations-location-select"
-          label={t('branchLabel')}
-          placeholder={branches.length > 1 ? t('branchPlaceholder') : undefined}
-          description={t('branchDescription')}
+        <AppSelect
+          apps={apps}
+          value={activeAppId}
+          onValueChange={setAppId}
+          id="crm-registrations-app-select"
+          label={t('appLabel')}
+          placeholder={apps.length > 1 ? t('appPlaceholder') : undefined}
+          description={t('appDescription')}
           className="w-full max-w-none sm:max-w-xs"
         />
         <Button type="button" disabled title={t('enrollQrSoon')} className="shrink-0 gap-2">
@@ -76,8 +82,8 @@ export function RegistrationsClient({ branches, initialLocationId }: Props) {
         </Button>
       </div>
 
-      {activeLocationId === null ? (
-        <p className="text-sm text-muted-foreground">{t('selectBranch')}</p>
+      {activeAppId === null ? (
+        <p className="text-sm text-muted-foreground">{t('selectApp')}</p>
       ) : (
         <div
           className="flex flex-col items-start gap-2 rounded-lg border border-dashed border-border px-6 py-12"

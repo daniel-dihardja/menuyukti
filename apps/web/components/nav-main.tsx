@@ -117,6 +117,11 @@ const NAV_WORKSPACE: NavItem[] = [
     group: 'crm',
     children: [
       {
+        key: 'crmApps',
+        labelKey: 'crmApps',
+        href: routes.crmApps,
+      },
+      {
         key: 'crmRegistrations',
         labelKey: 'crmRegistrations',
         href: routes.crmRegistrations,

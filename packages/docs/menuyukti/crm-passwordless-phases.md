@@ -15,50 +15,53 @@ Implementation plan for restaurant CRM in Menuyukti: marketing programs (cashbac
 - No passwords for customers; phone numbers are identifiers only (not credentials).
 - Customer ID = immutable UUID; auth is per **device**, not per customer.
 - Private keys never leave the device; backend stores public keys only.
-- Enrollment tokens: single-use, short TTL (2–5 min), bound to a restaurant/location.
+- Enrollment tokens: single-use, short TTL (2–5 min), bound to a **CRM app** (workspace-scoped loyalty tenant).
 - Access JWT ~15 min; refresh token ~30 days (store hashes server-side).
 - Persistence stays in **`apps/graphql`** (Python / Postgres). Prefer FastAPI routes on that app for challenge/response rather than a separate Node service unless hard isolation is required later.
 - Staff continue to use Clerk; customer JWT auth is a separate trust domain.
 
 ---
 
-## Phase 0 — Product shell (CRM nav + Registrations)
+## Phase 0 — Product shell (CRM nav + Apps + Registrations)
 
 Give the feature a home before crypto work.
 
 1. **Routes** (`apps/web/lib/routes.ts`)
-   - Add `/crm` and `/crm/registrations` to `PROTECTED_APP_SHELL_PREFIXES`
-   - Add `routes.crm` / `routes.crmRegistrations`
+   - Add `/crm`, `/crm/apps`, and `/crm/registrations` to `PROTECTED_APP_SHELL_PREFIXES`
+   - Add `routes.crm` / `routes.crmApps` / `routes.crmRegistrations` / `crmRegistrationsWithApp`
 2. **Middleware** — keep `middleware.ts` matchers aligned with those prefixes
 3. **Feature flags** (`apps/web/config/feature-flags.json`)
    - `nav.crm`, `routes["/crm"]` (enable when ready)
 4. **Sidenav** (`apps/web/components/nav-main.tsx`)
-   - Collapsible **CRM** with child **Registrations** → `/crm/registrations`
+   - Collapsible **CRM** with children **Apps** → `/crm/apps` and **Registrations** → `/crm/registrations`
    - Use existing `children` / collapsible pattern; place in commerce or a dedicated CRM group
 5. **i18n** (`apps/web/messages/en.json`)
    - Sidebar + page copy under a `crm` namespace (no hardcoded strings)
-6. **Pages**
+6. **Domain shell**
+   - `crm_app` table + GraphQL `crmApps` / `createCrmApp` (workspace-scoped; public `appId` UUID)
+7. **Pages**
    - `app/(protected)/crm/page.tsx` — redirect to registrations (or future programs hub)
+   - `app/(protected)/crm/apps/page.tsx` — list + create CRM apps
    - `app/(protected)/crm/registrations/page.tsx` — empty list + enrollment QR placeholder
-   - Scope by **location** (same pattern as calendar/workflow `locationId`)
+   - Scope registrations by **app** (`?appId=`), not location
 
-**Done when:** staff see CRM → Registrations and an empty, location-scoped page.
+**Done when:** staff see CRM → Apps / Registrations; can create an app; registrations page is app-scoped.
 
 ---
 
 ## Phase 1 — Domain model (GraphQL / Postgres)
 
-Add Alembic models in `apps/graphql` (only persistence layer).
+Add Alembic models in `apps/graphql` (only persistence layer). `crm_app` already exists from Phase 0.
 
-| Table                  | Purpose                                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `crm_customer`         | UUID id, workspace/location, `phone_e164` (unique per tenant), optional display name, timestamps, soft-delete |
-| `crm_device`           | customer FK, public key, platform, label, refresh token hash, last seen, revoked_at                           |
-| `crm_enrollment_token` | token hash, location, created_by Clerk user, expires_at, used_at, optional customer bind                      |
-| `crm_auth_challenge`   | device (or pending), nonce, expires_at, consumed_at                                                           |
-| `crm_audit_event`      | enrollment / auth / revoke / rate-limit audit trail                                                           |
+| Table                  | Purpose                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `crm_customer`         | UUID id, **crm_app** FK, `phone_e164` (unique per app), optional display name, timestamps, soft-delete |
+| `crm_device`           | customer FK, public key, platform, label, refresh token hash, last seen, revoked_at                    |
+| `crm_enrollment_token` | token hash, **crm_app** FK, created_by Clerk user, expires_at, used_at, optional customer bind         |
+| `crm_auth_challenge`   | device (or pending), nonce, expires_at, consumed_at                                                    |
+| `crm_audit_event`      | enrollment / auth / revoke / rate-limit audit trail                                                    |
 
-Rules: hash enrollment and refresh tokens; store public keys only; index location+phone, token hash, device→customer.
+Rules: hash enrollment and refresh tokens; store public keys only; index app+phone, token hash, device→customer. Optional later: nullable `location_id` on enrollment/audit as **where they enrolled** metadata only — customers remain app-owned.
 
 Wire ORM under `data_sources/models/`, register exports, migrate with Alembic.
 
@@ -68,23 +71,23 @@ Wire ORM under `data_sources/models/`, register exports, migrate with Alembic.
 
 ## Phase 2 — Staff GraphQL: list + enroll QR
 
-Clerk-authenticated GraphQL (`user_id_from_info`, location/workspace ownership).
+Clerk-authenticated GraphQL (`user_id_from_info`, workspace ownership via app).
 
 **Queries**
 
-- `crmCustomers(locationId, search?, cursor?)` — Registrations table
+- `crmCustomers(appId, search?, cursor?)` — Registrations table
 - `crmCustomer(id)` — detail (devices, last seen, revoked)
 
 **Mutations**
 
-- `createCrmEnrollmentToken(locationId)` — returns raw token **once** + `expiresAt` (+ optional deep-link URL)
+- `createCrmEnrollmentToken(appId)` — returns raw token **once** + `expiresAt` (+ optional deep-link URL)
 - `revokeCrmDevice(deviceId)`
 - Later: update customer, unlink phone, etc.
 
 **Web**
 
 - Registrations table: masked phone, enrolled at, device count, last seen, status
-- “Enroll customer” → mint token → QR (e.g. `menuyukti://enroll?token=…&location=…` or HTTPS universal link)
+- “Enroll customer” → mint token → QR (e.g. `menuyukti://enroll?token=…&app=<appId UUID>` or HTTPS universal link)
 - UI countdown for TTL; regenerate when expired
 
 **Security:** owner/member only; rate-limit token creation; audit create/use/revoke.
@@ -105,7 +108,7 @@ Separate from Clerk. Prefer REST on `apps/graphql` (or a thin sibling) — Graph
 | Refresh   | `POST /crm/v1/auth/refresh`   | Refresh hash → new access JWT                                                                        |
 | Optional  | `POST /crm/v1/auth/revoke`    | Self-revoke current device                                                                           |
 
-Crypto: Ed25519 preferred (or P-256 if Expo constraints require it). JWT claims: `sub` = customer UUID, `did` = device id, tenant/location, `exp`. Rate-limit all auth endpoints.
+Crypto: Ed25519 preferred (or P-256 if Expo constraints require it). JWT claims: `sub` = customer UUID, `did` = device id, tenant/`app_id` (public UUID), `exp`. Rate-limit all auth endpoints.
 
 **Done when:** enroll with a staff-minted token and obtain access via signed challenge (e.g. curl/integration tests).
 
@@ -134,8 +137,8 @@ Crypto: Ed25519 preferred (or P-256 if Expo constraints require it). JWT claims:
 
 ## Build checklist
 
-1. Nav + empty Registrations page (Phase 0)
-2. DB models + migration (Phase 1)
+1. Nav + Apps + empty Registrations page (Phase 0) — app-scoped
+2. DB models + migration for customers/devices/tokens (Phase 1)
 3. `crmCustomers` query + table UI (Phase 2a)
 4. `createCrmEnrollmentToken` + QR dialog (Phase 2b)
 5. Enroll REST + tests (Phase 3a)
@@ -156,5 +159,6 @@ Crypto: Ed25519 preferred (or P-256 if Expo constraints require it). JWT claims:
 ## Defer
 
 - Cashback / points ledger until registrations + auth are solid
-- Cross-tenant identity (start location- or workspace-scoped)
+- Cross-tenant identity (start **app**- or workspace-scoped)
+- App ↔ Location many-to-many; optional enrollment `location_id` metadata only
 - A separate Node/Express auth stack — same security model, but Python + existing Postgres fits this monorepo better

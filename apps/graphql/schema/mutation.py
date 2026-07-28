@@ -2,6 +2,7 @@ import strawberry
 
 from graphql.schema.mutations import (
     CreateCalendarEntryMutation,
+    CreateCrmAppMutation,
     CreateImageAiFlowMutation,
     CreateInstagramItemMutation,
     CreateInstagramItemPageMutation,
@@ -14,6 +15,7 @@ from graphql.schema.mutations import (
     CreateWorkspaceMutation,
     DeleteAnalyticsRunMutation,
     DeleteCalendarEntryMutation,
+    DeleteCrmAppMutation,
     DeleteImageAiFlowMutation,
     DeleteInstagramItemMutation,
     DeleteInstagramItemPageMediaVersionMutation,
@@ -78,6 +80,7 @@ class Mutation(
     ReorderMilestonesMutation,
     CreateLocationMutation,
     CreateStyleMutation,
+    CreateCrmAppMutation,
     CreateCalendarEntryMutation,
     CreateWorkspaceMutation,
     InviteWorkspaceMemberMutation,
@@ -89,6 +92,7 @@ class Mutation(
     UpdateImageAiFlowMutation,
     DeleteAnalyticsRunMutation,
     DeleteCalendarEntryMutation,
+    DeleteCrmAppMutation,
     DeleteImageAiFlowMutation,
     DeleteStyleMutation,
     UpdateCalendarEntryMutation,

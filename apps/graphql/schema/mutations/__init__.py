@@ -1,4 +1,5 @@
 from .create_calendar_entry import CreateCalendarEntryMutation
+from .create_crm_app import CreateCrmAppMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_instagram_item import CreateInstagramItemMutation
 from .create_instagram_item_page import CreateInstagramItemPageMutation
@@ -11,6 +12,7 @@ from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
+from .delete_crm_app import DeleteCrmAppMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_instagram_item import DeleteInstagramItemMutation
 from .delete_instagram_item_page import DeleteInstagramItemPageMutation
@@ -48,6 +50,7 @@ __all__ = [
     "CreateInstagramItemMutation",
     "CreateInstagramItemPageMutation",
     "CreateCalendarEntryMutation",
+    "CreateCrmAppMutation",
     "CreateLocationMutation",
     "CreateStyleMutation",
     "CreateNodeMutation",
@@ -57,6 +60,7 @@ __all__ = [
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteCalendarEntryMutation",
+    "DeleteCrmAppMutation",
     "DeleteImageAiFlowMutation",
     "DeleteInstagramItemMutation",
     "DeleteInstagramItemPageMutation",
