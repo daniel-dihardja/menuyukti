@@ -174,7 +174,7 @@ export function RewardsScreen() {
                     style={{
                       ...typography.label,
                       fontFamily: fonts.sansMedium,
-                      color: colors.accentHover,
+                      color: entry.amount < 0 ? colors.destructive : colors.accentHover,
                     }}
                   >
                     {formatIdr(entry.amount)}

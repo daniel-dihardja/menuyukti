@@ -9,6 +9,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 
 import {
+  awardCrmCashback,
   createCrmEnrollmentToken,
   deleteCrmCustomer,
   getCrmCustomer,
@@ -30,6 +31,8 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
+import { Input } from '@workspace/ui/components/input'
 import {
   Dialog,
   DialogContent,
@@ -100,6 +103,9 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
   const [detailLoading, setDetailLoading] = useState(false)
   const [pendingRevoke, setPendingRevoke] = useState<CrmDevice | null>(null)
   const [isRevoking, setIsRevoking] = useState(false)
+  const [awardAmount, setAwardAmount] = useState('')
+  const [awardLabel, setAwardLabel] = useState('')
+  const [isAwarding, setIsAwarding] = useState(false)
   const [isMinting, startMintTransition] = useTransition()
   const [isRefreshing, startRefreshTransition] = useTransition()
 
@@ -174,6 +180,8 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
   const openDetail = (customerId: string) => {
     setDetailLoading(true)
     setDetailCustomer(null)
+    setAwardAmount('')
+    setAwardLabel('')
     void (async () => {
       try {
         const customer = await getCrmCustomer(customerId)
@@ -192,10 +200,43 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
   }
 
   const closeDetail = () => {
-    if (isRevoking) return
+    if (isRevoking || isAwarding) return
     setDetailCustomer(null)
     setDetailLoading(false)
     setPendingRevoke(null)
+    setAwardAmount('')
+    setAwardLabel('')
+  }
+
+  const handleAwardCashback = () => {
+    if (!detailCustomer || isAwarding) return
+    const trimmed = awardAmount.trim()
+    if (!/^-?\d+$/.test(trimmed)) {
+      toast.error(t('toast.awardError'))
+      return
+    }
+    const amount = Number(trimmed)
+    if (!Number.isInteger(amount) || amount === 0) {
+      toast.error(t('toast.awardError'))
+      return
+    }
+    const label = awardLabel.trim()
+    setIsAwarding(true)
+    void (async () => {
+      try {
+        await awardCrmCashback(detailCustomer.id, {
+          amount,
+          ...(label ? { label } : {}),
+        })
+        setAwardAmount('')
+        setAwardLabel('')
+        toast.success(t('toast.awarded'))
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t('toast.awardError'))
+      } finally {
+        setIsAwarding(false)
+      }
+    })()
   }
 
   const handleCopy = async () => {
@@ -504,6 +545,56 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
                     </dd>
                   </div>
                 </dl>
+
+                <div className="space-y-3 border-t border-border pt-5">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium">{t('awardCashbackTitle')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('awardCashbackDescription')}</p>
+                  </div>
+                  <Field className="space-y-2">
+                    <FieldLabel htmlFor="crm-award-amount">{t('awardAmountLabel')}</FieldLabel>
+                    <Input
+                      id="crm-award-amount"
+                      inputMode="numeric"
+                      value={awardAmount}
+                      onChange={(e) => setAwardAmount(e.target.value)}
+                      placeholder={t('awardAmountPlaceholder')}
+                      disabled={isAwarding}
+                    />
+                    <FieldDescription>{t('awardAmountHelp')}</FieldDescription>
+                  </Field>
+                  <Field className="space-y-2">
+                    <FieldLabel htmlFor="crm-award-label">{t('awardLabelLabel')}</FieldLabel>
+                    <Input
+                      id="crm-award-label"
+                      value={awardLabel}
+                      onChange={(e) => setAwardLabel(e.target.value)}
+                      placeholder={t('awardLabelPlaceholder')}
+                      maxLength={256}
+                      disabled={isAwarding}
+                    />
+                    <FieldDescription>{t('awardLabelHelp')}</FieldDescription>
+                  </Field>
+                  <Button
+                    type="button"
+                    disabled={
+                      isAwarding ||
+                      !/^-?\d+$/.test(awardAmount.trim()) ||
+                      Number(awardAmount.trim()) === 0
+                    }
+                    onClick={handleAwardCashback}
+                    className="gap-2"
+                  >
+                    {isAwarding ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
+                        {t('awardSubmitting')}
+                      </>
+                    ) : (
+                      t('awardSubmit')
+                    )}
+                  </Button>
+                </div>
 
                 <div className="space-y-3">
                   <h3 className="text-sm font-medium">{t('detailDevices')}</h3>

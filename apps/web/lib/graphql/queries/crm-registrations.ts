@@ -110,3 +110,27 @@ export const REVOKE_CRM_DEVICE_MUTATION = `
 export type RevokeCrmDeviceData = {
   revokeCrmDevice: CrmDevice
 }
+
+export type CrmCashbackEntry = {
+  id: string
+  customerId: string
+  amount: number
+  label: string | null
+  createdAt: string
+}
+
+export const AWARD_CRM_CASHBACK_MUTATION = `
+  mutation AwardCrmCashback($customerId: UUID!, $amount: Int!, $label: String) {
+    awardCrmCashback(customerId: $customerId, amount: $amount, label: $label) {
+      id
+      customerId
+      amount
+      label
+      createdAt
+    }
+  }
+`
+
+export type AwardCrmCashbackData = {
+  awardCrmCashback: CrmCashbackEntry
+}

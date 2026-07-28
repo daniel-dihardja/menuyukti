@@ -1,3 +1,4 @@
+from .award_crm_cashback import AwardCrmCashbackMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
 from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
@@ -50,6 +51,7 @@ from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
 __all__ = [
+    "AwardCrmCashbackMutation",
     "CreateImageAiFlowMutation",
     "CreateInstagramItemMutation",
     "CreateInstagramItemPageMutation",

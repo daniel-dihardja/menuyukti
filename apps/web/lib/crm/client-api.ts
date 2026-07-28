@@ -1,12 +1,13 @@
 import { apiFetch } from '@/lib/api/client-fetch'
 import type { CrmApp } from '@/lib/graphql/queries/crm-apps'
 import type {
+  CrmCashbackEntry,
   CrmCustomer,
   CrmDevice,
   CrmEnrollmentToken,
 } from '@/lib/graphql/queries/crm-registrations'
 
-export type { CrmApp, CrmCustomer, CrmDevice, CrmEnrollmentToken }
+export type { CrmApp, CrmCashbackEntry, CrmCustomer, CrmDevice, CrmEnrollmentToken }
 
 export async function listCrmApps(): Promise<CrmApp[]> {
   const result = await apiFetch<{ apps?: CrmApp[] }>(
@@ -145,4 +146,23 @@ export async function revokeCrmDevice(deviceId: string): Promise<CrmDevice> {
     throw new Error(result.error)
   }
   return result.data.device
+}
+
+export async function awardCrmCashback(
+  customerId: string,
+  input: { amount: number; label?: string },
+): Promise<CrmCashbackEntry> {
+  const result = await apiFetch<{ entry: CrmCashbackEntry }>(
+    `/api/crm/registrations/${encodeURIComponent(customerId)}/cashback`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+    'Failed to award cashback',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.entry
 }

@@ -852,6 +852,16 @@
         "detailNameEmpty": "—",
         "detailDevices": "Devices",
         "detailDevicesEmpty": "No devices enrolled.",
+        "awardCashbackTitle": "Adjust cashback",
+        "awardCashbackDescription": "Enter a positive amount to credit, or a negative amount (e.g. -15000) when the customer spends cashback with a payment.",
+        "awardAmountLabel": "Amount (IDR)",
+        "awardAmountPlaceholder": "e.g. 15000 or -15000",
+        "awardAmountHelp": "Use a minus sign to subtract from the balance.",
+        "awardLabelLabel": "Label",
+        "awardLabelPlaceholder": "e.g. Visit bonus or Redeemed at till",
+        "awardLabelHelp": "Optional note shown in the customer’s cashback history.",
+        "awardSubmit": "Save adjustment",
+        "awardSubmitting": "Saving…",
         "devicePlatform": "Platform",
         "deviceLabel": "Label",
         "deviceLastSeen": "Last seen",
@@ -878,7 +888,9 @@
           "deleted": "Registration deleted",
           "deleteError": "Could not delete registration",
           "revoked": "Device revoked",
-          "revokeError": "Could not revoke device"
+          "revokeError": "Could not revoke device",
+          "awarded": "Cashback updated",
+          "awardError": "Could not update cashback"
         }
       }
     },
