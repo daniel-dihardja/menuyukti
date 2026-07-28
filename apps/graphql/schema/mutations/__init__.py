@@ -1,5 +1,6 @@
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
+from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_instagram_item import CreateInstagramItemMutation
 from .create_instagram_item_page import CreateInstagramItemPageMutation
@@ -51,6 +52,7 @@ __all__ = [
     "CreateInstagramItemPageMutation",
     "CreateCalendarEntryMutation",
     "CreateCrmAppMutation",
+    "CreateCrmEnrollmentTokenMutation",
     "CreateLocationMutation",
     "CreateStyleMutation",
     "CreateNodeMutation",

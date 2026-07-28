@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { CRM_APPS_QUERY, type CrmAppsData } from '@/lib/graphql/queries/crm-apps'
+import { CRM_CUSTOMERS_QUERY, type CrmCustomersData } from '@/lib/graphql/queries/crm-registrations'
 import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
@@ -46,12 +47,29 @@ async function RegistrationsData({ requestedAppId }: { requestedAppId: number | 
   const data = await graphqlQuery<CrmAppsData>(CRM_APPS_QUERY, {}, userId)
   const apps = data.crmApps.map((app) => ({
     id: app.id,
+    appId: app.appId,
     title: app.title,
   }))
 
   const initialAppId = resolveInitialAppId(apps, requestedAppId)
 
-  return <RegistrationsClient apps={apps} initialAppId={initialAppId} />
+  let initialCustomers: CrmCustomersData['crmCustomers'] = []
+  if (initialAppId !== null) {
+    const customersData = await graphqlQuery<CrmCustomersData>(
+      CRM_CUSTOMERS_QUERY,
+      { appId: initialAppId },
+      userId,
+    )
+    initialCustomers = customersData.crmCustomers
+  }
+
+  return (
+    <RegistrationsClient
+      apps={apps}
+      initialAppId={initialAppId}
+      initialCustomers={initialCustomers}
+    />
+  )
 }
 
 export async function generateMetadata(): Promise<Metadata> {

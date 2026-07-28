@@ -11,6 +11,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
+    from graphql.data_sources.models.crm_customer import CrmCustomer
+    from graphql.data_sources.models.crm_enrollment_token import CrmEnrollmentToken
     from graphql.data_sources.models.workspace import Workspace
 
 
@@ -18,7 +20,7 @@ class CrmApp(Base):
     """
     Loyalty / customer-registration app owned by a workspace.
 
-    Customers and enrollment tokens (Phase 1+) hang off this entity, not Location.
+    Customers and enrollment tokens hang off this entity, not Location.
     ``app_id`` is the public UUID used in QR / deep links / mobile JWT claims.
     """
 
@@ -56,4 +58,14 @@ class CrmApp(Base):
     workspace: Mapped[Workspace] = relationship(
         "Workspace",
         back_populates="crm_apps",
+    )
+    customers: Mapped[list[CrmCustomer]] = relationship(
+        "CrmCustomer",
+        back_populates="crm_app",
+        cascade="all, delete-orphan",
+    )
+    enrollment_tokens: Mapped[list[CrmEnrollmentToken]] = relationship(
+        "CrmEnrollmentToken",
+        back_populates="crm_app",
+        cascade="all, delete-orphan",
     )

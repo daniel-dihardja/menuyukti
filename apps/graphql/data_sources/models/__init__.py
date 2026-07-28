@@ -3,6 +3,9 @@
 from graphql.data_sources.models.analytics import AnalyticsRun, MenuItemCogs, OrderFact
 from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.data_sources.models.crm_app import CrmApp
+from graphql.data_sources.models.crm_customer import CrmCustomer
+from graphql.data_sources.models.crm_device import CrmDevice
+from graphql.data_sources.models.crm_enrollment_token import CrmEnrollmentToken
 from graphql.data_sources.models.image_ai_flow import ImageAiFlow
 from graphql.data_sources.models.instagram import (
     InstagramPost,
@@ -26,6 +29,9 @@ __all__ = [
     "AnalyticsRun",
     "CalendarEntry",
     "CrmApp",
+    "CrmCustomer",
+    "CrmDevice",
+    "CrmEnrollmentToken",
     "ImageAiFlow",
     "InstagramItem",
     "InstagramItemPage",

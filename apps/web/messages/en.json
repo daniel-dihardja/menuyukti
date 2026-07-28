@@ -798,9 +798,27 @@
         "emptyTitle": "No registrations yet",
         "emptyDescription": "Enroll customers by generating a one-time QR code they can scan in the restaurant.",
         "enrollQr": "Generate enrollment QR",
-        "enrollQrSoon": "Enrollment QR codes will be available in a later release.",
+        "refresh": "Refresh",
         "noApps": "Create an app before managing customer registrations.",
-        "noAppsCta": "Go to Apps"
+        "noAppsCta": "Go to Apps",
+        "columns": {
+          "phone": "Phone",
+          "enrolledAt": "Enrolled",
+          "devices": "Devices"
+        },
+        "dialogTitle": "Enrollment QR",
+        "dialogDescription": "Customer scans this code (or pastes the link) in the mobile app within 5 minutes.",
+        "dialogClose": "Close",
+        "expiresIn": "Expires in {time}",
+        "expired": "This code has expired. Generate a new one.",
+        "copyLink": "Copy link",
+        "regenerate": "Generate new code",
+        "toast": {
+          "enrollError": "Could not create enrollment QR",
+          "loadError": "Could not load registrations",
+          "copied": "Enrollment link copied",
+          "copyError": "Could not copy link"
+        }
       }
     },
     "calendar": {

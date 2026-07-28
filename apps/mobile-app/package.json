@@ -15,10 +15,15 @@
     "format-check": "prettier --check \"**/*.{ts,tsx,md,json}\" --ignore-path ../../.prettierignore"
   },
   "dependencies": {
+    "@babel/runtime": "^7.29.2",
+    "@noble/ed25519": "^3.1.0",
     "expo": "~57.0.8",
+    "expo-secure-store": "^57.0.1",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
-    "react-native": "0.86.0"
+    "react-dom": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-web": "^0.21.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

@@ -1,34 +1,78 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { QrCode } from 'lucide-react'
+import { Check, Copy, Loader2, QrCode, RefreshCw } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import { toast } from 'sonner'
 
+import {
+  createCrmEnrollmentToken,
+  listCrmCustomers,
+  type CrmCustomer,
+  type CrmEnrollmentToken,
+} from '@/lib/crm/client-api'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@workspace/ui/components/dialog'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@workspace/ui/components/table'
 
 import { AppSelect } from './app-select'
 
 type AppOption = {
   id: number
+  appId: string
   title: string
 }
 
 type Props = {
   apps: AppOption[]
   initialAppId: number | null
+  initialCustomers: CrmCustomer[]
 }
 
-export function RegistrationsClient({ apps, initialAppId }: Props) {
+function formatCountdown(msRemaining: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(msRemaining / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Props) {
   const t = useTranslations('platform.crm.registrations')
   const router = useRouter()
   const [appId, setAppId] = useState<number | null>(initialAppId)
+  const [customers, setCustomers] = useState(initialCustomers)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [enrollment, setEnrollment] = useState<CrmEnrollmentToken | null>(null)
+  const [msRemaining, setMsRemaining] = useState(0)
+  const [copied, setCopied] = useState(false)
+  const [isMinting, startMintTransition] = useTransition()
+  const [isRefreshing, startRefreshTransition] = useTransition()
 
   useEffect(() => {
     setAppId(initialAppId)
   }, [initialAppId])
+
+  useEffect(() => {
+    setCustomers(initialCustomers)
+  }, [initialCustomers])
 
   useEffect(() => {
     if (initialAppId !== null) return
@@ -50,7 +94,55 @@ export function RegistrationsClient({ apps, initialAppId }: Props) {
     router.replace(routes.crmRegistrationsWithApp(appId))
   }, [appId, initialAppId, router])
 
+  useEffect(() => {
+    if (!enrollment) {
+      setMsRemaining(0)
+      return
+    }
+    const expiresAt = new Date(enrollment.expiresAt).getTime()
+    const tick = () => setMsRemaining(expiresAt - Date.now())
+    tick()
+    const id = window.setInterval(tick, 1000)
+    return () => window.clearInterval(id)
+  }, [enrollment])
+
   const activeAppId = appId ?? initialAppId
+  const expired = enrollment !== null && msRemaining <= 0
+
+  const mintToken = (selectedAppId: number) => {
+    startMintTransition(async () => {
+      try {
+        const next = await createCrmEnrollmentToken(selectedAppId)
+        setEnrollment(next)
+        setCopied(false)
+        setDialogOpen(true)
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t('toast.enrollError'))
+      }
+    })
+  }
+
+  const refreshCustomers = (selectedAppId: number) => {
+    startRefreshTransition(async () => {
+      try {
+        const rows = await listCrmCustomers(selectedAppId)
+        setCustomers(rows)
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t('toast.loadError'))
+      }
+    })
+  }
+
+  const handleCopy = async () => {
+    if (!enrollment) return
+    try {
+      await navigator.clipboard.writeText(enrollment.enrollUrl)
+      setCopied(true)
+      toast.success(t('toast.copied'))
+    } catch {
+      toast.error(t('toast.copyError'))
+    }
+  }
 
   if (apps.length === 0) {
     return (
@@ -76,15 +168,46 @@ export function RegistrationsClient({ apps, initialAppId }: Props) {
           description={t('appDescription')}
           className="w-full max-w-none sm:max-w-xs"
         />
-        <Button type="button" disabled title={t('enrollQrSoon')} className="shrink-0 gap-2">
-          <QrCode className="size-4" aria-hidden />
-          {t('enrollQr')}
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            disabled={activeAppId === null || isRefreshing}
+            onClick={() => {
+              if (activeAppId === null) return
+              refreshCustomers(activeAppId)
+            }}
+          >
+            {isRefreshing ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <RefreshCw className="size-4" aria-hidden />
+            )}
+            {t('refresh')}
+          </Button>
+          <Button
+            type="button"
+            className="gap-2"
+            disabled={activeAppId === null || isMinting}
+            onClick={() => {
+              if (activeAppId === null) return
+              mintToken(activeAppId)
+            }}
+          >
+            {isMinting ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <QrCode className="size-4" aria-hidden />
+            )}
+            {t('enrollQr')}
+          </Button>
+        </div>
       </div>
 
       {activeAppId === null ? (
         <p className="text-sm text-muted-foreground">{t('selectApp')}</p>
-      ) : (
+      ) : customers.length === 0 ? (
         <div
           className="flex flex-col items-start gap-2 rounded-lg border border-dashed border-border px-6 py-12"
           role="status"
@@ -92,7 +215,96 @@ export function RegistrationsClient({ apps, initialAppId }: Props) {
           <p className="text-base font-medium tracking-tight">{t('emptyTitle')}</p>
           <p className="max-w-md text-sm text-muted-foreground">{t('emptyDescription')}</p>
         </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('columns.phone')}</TableHead>
+                <TableHead>{t('columns.enrolledAt')}</TableHead>
+                <TableHead className="text-right">{t('columns.devices')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {customers.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell className="font-medium">{row.phoneMasked}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(row.createdAt).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{row.deviceCount}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
+
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open)
+          if (!open && activeAppId !== null) {
+            refreshCustomers(activeAppId)
+            router.refresh()
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" closeLabel={t('dialogClose')}>
+          <DialogHeader>
+            <DialogTitle>{t('dialogTitle')}</DialogTitle>
+            <DialogDescription>{t('dialogDescription')}</DialogDescription>
+          </DialogHeader>
+
+          {enrollment ? (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <div className="rounded-lg bg-white p-3">
+                <QRCodeSVG value={enrollment.enrollUrl} size={200} level="M" />
+              </div>
+              <p
+                className={`text-sm tabular-nums ${expired ? 'text-destructive' : 'text-muted-foreground'}`}
+              >
+                {expired ? t('expired') : t('expiresIn', { time: formatCountdown(msRemaining) })}
+              </p>
+              <p className="w-full break-all rounded-md bg-muted px-3 py-2 font-mono text-xs">
+                {enrollment.enrollUrl}
+              </p>
+            </div>
+          ) : null}
+
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={() => void handleCopy()}
+            >
+              {copied ? (
+                <Check className="size-4" aria-hidden />
+              ) : (
+                <Copy className="size-4" aria-hidden />
+              )}
+              {t('copyLink')}
+            </Button>
+            {(expired || enrollment) && activeAppId !== null ? (
+              <Button
+                type="button"
+                variant={expired ? 'default' : 'secondary'}
+                className="gap-2"
+                disabled={isMinting}
+                onClick={() => mintToken(activeAppId)}
+              >
+                {isMinting ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <RefreshCw className="size-4" aria-hidden />
+                )}
+                {t('regenerate')}
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
