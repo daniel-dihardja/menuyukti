@@ -1,8 +1,7 @@
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
 
-import { Button } from '../components/Button'
 import { Screen } from '../components/Screen'
 import type { MainTabParamList } from '../navigation/MainTabs'
 import { useBrand } from '../theme/BrandContext'
@@ -59,7 +58,7 @@ export function HomeScreen() {
             borderColor: colors.border,
             borderRadius: radius.md,
             padding: spacing.md,
-            gap: spacing.md,
+            gap: spacing.sm,
           },
         ]}
       >
@@ -83,11 +82,24 @@ export function HomeScreen() {
             Check your balance and history anytime on the Cashback tab.
           </Text>
         </View>
-        <Button
-          title="View cashback"
-          variant="secondary"
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="View cashback"
           onPress={() => navigation.navigate('Rewards')}
-        />
+          hitSlop={8}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignSelf: 'flex-start' })}
+        >
+          <Text
+            style={{
+              ...typography.caption,
+              fontFamily: fonts.sansMedium,
+              color: colors.inkFaint,
+              textDecorationLine: 'underline',
+            }}
+          >
+            View cashback
+          </Text>
+        </Pressable>
       </View>
     </Screen>
   )
