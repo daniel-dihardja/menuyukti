@@ -22,6 +22,8 @@ export function TextField({ label, error, style, ...rest }: TextFieldProps) {
         {label}
       </Text>
       <TextInput
+        accessibilityLabel={label}
+        accessibilityHint={error ?? undefined}
         placeholderTextColor={colors.inkFaint}
         style={[
           styles.input,
@@ -39,6 +41,7 @@ export function TextField({ label, error, style, ...rest }: TextFieldProps) {
       />
       {error ? (
         <Text
+          accessibilityLiveRegion="polite"
           style={{
             ...typography.caption,
             fontFamily: fonts.sans,

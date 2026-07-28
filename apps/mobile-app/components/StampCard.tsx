@@ -58,6 +58,7 @@ export function StampCard({ collected, total, title }: StampCardProps) {
 
   return (
     <View
+      accessibilityLabel={`${title}: ${collected} of ${total} stamps collected`}
       style={{
         backgroundColor: colors.card,
         borderWidth: 1,
@@ -76,7 +77,11 @@ export function StampCard({ collected, total, title }: StampCardProps) {
       >
         {title}
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+      <View
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}
+      >
         {stamps.map((filled, index) => (
           <View
             key={index}

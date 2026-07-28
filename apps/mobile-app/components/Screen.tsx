@@ -36,6 +36,7 @@ export function Screen({
         { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
         contentStyle,
       ]}
+      contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >

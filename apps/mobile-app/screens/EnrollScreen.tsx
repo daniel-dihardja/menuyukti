@@ -1,27 +1,46 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Platform, Text, View } from 'react-native'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 
 import { Button } from '../components/Button'
 import { Screen } from '../components/Screen'
 import { TextField } from '../components/TextField'
 import { enrollDevice, parseEnrollInput } from '../lib/enroll'
 import { ensureDeviceKeypair } from '../lib/keys'
+import type { RootStackParamList } from '../navigation/RootNavigator'
 import { useBrand } from '../theme/BrandContext'
 import { useSession, type Session } from '../theme/SessionContext'
 
+type Props = NativeStackScreenProps<RootStackParamList, 'Enroll'>
+
 type PendingSuccess = Session
 
-export function EnrollScreen() {
+function initialInputFromParams(params: Props['route']['params']): string {
+  const token = params?.token?.trim()
+  const app = params?.app?.trim()
+  if (token && app) {
+    return `menuyukti://enroll?token=${encodeURIComponent(token)}&app=${encodeURIComponent(app)}`
+  }
+  if (token) return token
+  return ''
+}
+
+export function EnrollScreen({ route }: Props) {
   const brand = useBrand()
   const { setSession } = useSession()
   const { colors, typography, fonts, spacing } = brand
 
   const [publicKeyHex, setPublicKeyHex] = useState<string | null>(null)
   const [keysError, setKeysError] = useState<string | null>(null)
-  const [enrollInput, setEnrollInput] = useState('')
+  const [enrollInput, setEnrollInput] = useState(() => initialInputFromParams(route.params))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingSuccess, setPendingSuccess] = useState<PendingSuccess | null>(null)
+
+  useEffect(() => {
+    const fromLink = initialInputFromParams(route.params)
+    if (fromLink) setEnrollInput(fromLink)
+  }, [route.params])
 
   useEffect(() => {
     let cancelled = false
@@ -63,7 +82,7 @@ export function EnrollScreen() {
         publicKey: publicKeyHex,
         platform: Platform.OS,
       })
-      setPendingSuccess(result)
+      setPendingSuccess({ ...result, appId })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Enrollment failed')
     } finally {
@@ -106,7 +125,7 @@ export function EnrollScreen() {
             Profile.
           </Text>
         </View>
-        <Button title="Get Started" onPress={() => setSession(pendingSuccess)} />
+        <Button title="Get Started" onPress={() => void setSession(pendingSuccess)} />
       </Screen>
     )
   }

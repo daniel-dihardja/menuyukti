@@ -42,12 +42,15 @@ export function ProfileScreen() {
       return
     }
     setError(null)
-    saveProfile({
+    void saveProfile({
       givenName: draft.givenName.trim(),
       familyName: draft.familyName.trim(),
       phoneE164: draft.phoneE164.trim().replace(/\s/g, ''),
-    })
-    setSavedFlash(true)
+    }).then(() => setSavedFlash(true))
+  }
+
+  const handleReset = () => {
+    void resetSession()
   }
 
   return (
@@ -103,7 +106,7 @@ export function ProfileScreen() {
         ) : null}
         {savedFlash ? (
           <Text style={{ ...typography.caption, fontFamily: fonts.sans, color: colors.success }}>
-            Profile saved on this device
+            Profile saved securely on this device
           </Text>
         ) : null}
         <Button title="Save profile" onPress={handleSave} />
@@ -128,7 +131,7 @@ export function ProfileScreen() {
             letterSpacing: 0.8,
           }}
         >
-          Demo mode
+          Local profile
         </Text>
         <Text
           style={{
@@ -137,8 +140,8 @@ export function ProfileScreen() {
             color: colors.inkMuted,
           }}
         >
-          Profile details stay on this device for now. Your account is identified by the customer ID
-          from enrollment.
+          Name and phone are stored on this device only. Your account is identified by the customer
+          ID from enrollment. Reset enrollment clears your session and device key.
         </Text>
       </View>
 
@@ -185,7 +188,7 @@ export function ProfileScreen() {
         </Text>
       </View>
 
-      <Button title="Reset enrollment" variant="secondary" onPress={resetSession} />
+      <Button title="Reset enrollment" variant="secondary" onPress={handleReset} />
     </Screen>
   )
 }

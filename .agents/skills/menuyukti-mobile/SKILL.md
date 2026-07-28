@@ -58,9 +58,10 @@ Commands: [AGENTS.md](../../../AGENTS.md) § Mobile.
 
 ## Session and navigation
 
-1. **`SessionProvider`** holds `session` (`customerId`, `deviceId`) and optional profile fields.
-2. **`RootNavigator`**: no session → `EnrollScreen`; with session → `MainTabs` (Home / Rewards / Profile).
-3. Enroll flow: parse token or `menuyukti://enroll?...` deep link → `ensureDeviceKeypair()` → `enrollDevice()` → `setSession`.
+1. **`SessionProvider`** hydrates `session` (`customerId`, `deviceId`, optional `appId`) and profile from SecureStore; exposes `isHydrated` so the navigator does not flash enroll.
+2. **`RootNavigator`**: native stack with `Enroll` | `Main` (tabs), gated by hydrated session. Deep links use scheme `menuyukti` (`menuyukti://enroll?token=…&app=…`).
+3. Enroll flow: parse token / deep link → `ensureDeviceKeypair()` → `enrollDevice()` → persist session → tabs.
+4. **`resetSession`** clears SecureStore session, profile, and device key.
 
 Brand theming uses **`BrandProvider`** + Warm Editorial tokens in `theme/tokens.ts` (aligned with web/UI brand colors). Override via `brand` prop for white-label builds.
 
