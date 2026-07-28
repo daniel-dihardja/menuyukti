@@ -49,6 +49,8 @@ async function RegistrationsData({ requestedAppId }: { requestedAppId: number | 
     id: app.id,
     appId: app.appId,
     title: app.title,
+    cashbackThresholdAmount: app.cashbackThresholdAmount,
+    cashbackPercent: app.cashbackPercent,
   }))
 
   const initialAppId = resolveInitialAppId(apps, requestedAppId)

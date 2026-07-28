@@ -63,7 +63,11 @@ type AppOption = {
   id: number
   appId: string
   title: string
+  cashbackThresholdAmount: number
+  cashbackPercent: number
 }
+
+type CashbackMode = 'award' | 'redeem'
 
 type Props = {
   apps: AppOption[]
@@ -88,6 +92,22 @@ function customerDisplayName(row: CrmCustomer): string {
   return parts.join(' ')
 }
 
+function formatIdr(amount: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
+function parsePositiveInt(raw: string): number | null {
+  const trimmed = raw.trim()
+  if (!/^\d+$/.test(trimmed)) return null
+  const value = Number(trimmed)
+  if (!Number.isInteger(value) || value <= 0) return null
+  return value
+}
+
 export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Props) {
   const t = useTranslations('platform.crm.registrations')
   const router = useRouter()
@@ -103,6 +123,7 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
   const [detailLoading, setDetailLoading] = useState(false)
   const [pendingRevoke, setPendingRevoke] = useState<CrmDevice | null>(null)
   const [isRevoking, setIsRevoking] = useState(false)
+  const [awardMode, setAwardMode] = useState<CashbackMode>('award')
   const [awardAmount, setAwardAmount] = useState('')
   const [awardLabel, setAwardLabel] = useState('')
   const [isAwarding, setIsAwarding] = useState(false)
@@ -204,30 +225,38 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
     setDetailCustomer(null)
     setDetailLoading(false)
     setPendingRevoke(null)
+    setAwardMode('award')
     setAwardAmount('')
     setAwardLabel('')
   }
 
+  const activeApp = apps.find((app) => app.id === activeAppId) ?? null
+  const parsedAwardAmount = parsePositiveInt(awardAmount)
+  const awardPreviewCredit =
+    awardMode === 'award' &&
+    activeApp !== null &&
+    parsedAwardAmount !== null &&
+    parsedAwardAmount >= activeApp.cashbackThresholdAmount
+      ? Math.floor((parsedAwardAmount * activeApp.cashbackPercent) / 100)
+      : null
+
   const handleAwardCashback = () => {
-    if (!detailCustomer || isAwarding) return
-    const trimmed = awardAmount.trim()
-    if (!/^-?\d+$/.test(trimmed)) {
-      toast.error(t('toast.awardError'))
-      return
-    }
-    const amount = Number(trimmed)
-    if (!Number.isInteger(amount) || amount === 0) {
-      toast.error(t('toast.awardError'))
-      return
-    }
+    if (!detailCustomer || isAwarding || parsedAwardAmount === null) return
     const label = awardLabel.trim()
     setIsAwarding(true)
     void (async () => {
       try {
-        await awardCrmCashback(detailCustomer.id, {
-          amount,
-          ...(label ? { label } : {}),
-        })
+        if (awardMode === 'award') {
+          await awardCrmCashback(detailCustomer.id, {
+            paymentAmount: parsedAwardAmount,
+            ...(label ? { label } : {}),
+          })
+        } else {
+          await awardCrmCashback(detailCustomer.id, {
+            redeemAmount: parsedAwardAmount,
+            ...(label ? { label } : {}),
+          })
+        }
         setAwardAmount('')
         setAwardLabel('')
         toast.success(t('toast.awarded'))
@@ -550,18 +579,74 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
                   <div className="space-y-1">
                     <h3 className="text-sm font-medium">{t('awardCashbackTitle')}</h3>
                     <p className="text-sm text-muted-foreground">{t('awardCashbackDescription')}</p>
+                    {activeApp ? (
+                      <p className="text-sm text-muted-foreground">
+                        {t('awardRuleSummary', {
+                          percent: activeApp.cashbackPercent,
+                          threshold: formatIdr(activeApp.cashbackThresholdAmount),
+                        })}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={awardMode === 'award' ? 'default' : 'outline'}
+                      disabled={isAwarding}
+                      onClick={() => {
+                        setAwardMode('award')
+                        setAwardAmount('')
+                      }}
+                    >
+                      {t('awardModeAward')}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={awardMode === 'redeem' ? 'default' : 'outline'}
+                      disabled={isAwarding}
+                      onClick={() => {
+                        setAwardMode('redeem')
+                        setAwardAmount('')
+                      }}
+                    >
+                      {t('awardModeRedeem')}
+                    </Button>
                   </div>
                   <Field className="space-y-2">
-                    <FieldLabel htmlFor="crm-award-amount">{t('awardAmountLabel')}</FieldLabel>
+                    <FieldLabel htmlFor="crm-award-amount">
+                      {awardMode === 'award' ? t('awardPaymentLabel') : t('awardRedeemLabel')}
+                    </FieldLabel>
                     <Input
                       id="crm-award-amount"
                       inputMode="numeric"
                       value={awardAmount}
                       onChange={(e) => setAwardAmount(e.target.value)}
-                      placeholder={t('awardAmountPlaceholder')}
+                      placeholder={
+                        awardMode === 'award'
+                          ? t('awardPaymentPlaceholder')
+                          : t('awardRedeemPlaceholder')
+                      }
                       disabled={isAwarding}
                     />
-                    <FieldDescription>{t('awardAmountHelp')}</FieldDescription>
+                    <FieldDescription>
+                      {awardMode === 'award' ? t('awardPaymentHelp') : t('awardRedeemHelp')}
+                    </FieldDescription>
+                    {awardMode === 'award' && activeApp && parsedAwardAmount !== null ? (
+                      <p className="text-sm text-muted-foreground">
+                        {parsedAwardAmount < activeApp.cashbackThresholdAmount
+                          ? t('awardPreviewBelowThreshold', {
+                              threshold: formatIdr(activeApp.cashbackThresholdAmount),
+                            })
+                          : awardPreviewCredit !== null && awardPreviewCredit > 0
+                            ? t('awardPreview', {
+                                amount: formatIdr(awardPreviewCredit),
+                                percent: activeApp.cashbackPercent,
+                              })
+                            : t('awardPreviewZero')}
+                      </p>
+                    ) : null}
                   </Field>
                   <Field className="space-y-2">
                     <FieldLabel htmlFor="crm-award-label">{t('awardLabelLabel')}</FieldLabel>
@@ -577,11 +662,7 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
                   </Field>
                   <Button
                     type="button"
-                    disabled={
-                      isAwarding ||
-                      !/^-?\d+$/.test(awardAmount.trim()) ||
-                      Number(awardAmount.trim()) === 0
-                    }
+                    disabled={isAwarding || parsedAwardAmount === null}
                     onClick={handleAwardCashback}
                     className="gap-2"
                   >
@@ -590,8 +671,10 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
                         <Loader2 className="size-4 animate-spin" aria-hidden />
                         {t('awardSubmitting')}
                       </>
+                    ) : awardMode === 'award' ? (
+                      t('awardSubmitAward')
                     ) : (
-                      t('awardSubmit')
+                      t('awardSubmitRedeem')
                     )}
                   </Button>
                 </div>

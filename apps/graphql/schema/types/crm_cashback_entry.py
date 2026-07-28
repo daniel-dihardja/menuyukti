@@ -13,5 +13,7 @@ class CrmCashbackEntryType:
     id: uuid.UUID
     customer_id: uuid.UUID
     amount: int
+    payment_amount: int | None
+    cashback_percent: int | None
     label: str | None
     created_at: datetime

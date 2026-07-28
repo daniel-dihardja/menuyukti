@@ -150,7 +150,7 @@ export async function revokeCrmDevice(deviceId: string): Promise<CrmDevice> {
 
 export async function awardCrmCashback(
   customerId: string,
-  input: { amount: number; label?: string },
+  input: { paymentAmount: number; label?: string } | { redeemAmount: number; label?: string },
 ): Promise<CrmCashbackEntry> {
   const result = await apiFetch<{ entry: CrmCashbackEntry }>(
     `/api/crm/registrations/${encodeURIComponent(customerId)}/cashback`,

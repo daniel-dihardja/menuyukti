@@ -3,6 +3,8 @@ import { crmFetch } from './crmClient'
 export type CashbackEntry = {
   id: string
   amount: number
+  paymentAmount: number | null
+  cashbackPercent: number | null
   label: string | null
   createdAt: string
 }
@@ -22,6 +24,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function parseOptionalInt(value: unknown): number | null {
+  if (value === null || value === undefined) return null
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  return value
+}
+
 function parseEntry(value: unknown): CashbackEntry | null {
   if (!isRecord(value)) return null
   if (typeof value.id !== 'string' || !value.id) return null
@@ -33,9 +41,24 @@ function parseEntry(value: unknown): CashbackEntry | null {
       : typeof value.label === 'string'
         ? value.label
         : null
+  const paymentAmount = parseOptionalInt(value.paymentAmount)
+  const cashbackPercent = parseOptionalInt(value.cashbackPercent)
+  // Reject non-null non-numbers for snapshot fields
+  if (value.paymentAmount !== null && value.paymentAmount !== undefined && paymentAmount === null) {
+    return null
+  }
+  if (
+    value.cashbackPercent !== null &&
+    value.cashbackPercent !== undefined &&
+    cashbackPercent === null
+  ) {
+    return null
+  }
   return {
     id: value.id,
     amount: value.amount,
+    paymentAmount,
+    cashbackPercent,
     label,
     createdAt: value.createdAt,
   }

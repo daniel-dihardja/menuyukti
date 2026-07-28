@@ -148,60 +148,79 @@ export function RewardsScreen() {
                   : 'Recent cashback credits.'
               }
             />
-            {overview.entries.map((entry) => (
-              <View
-                key={entry.id}
-                style={[
-                  shadow.warmSm,
-                  {
-                    backgroundColor: colors.card,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: radius.md,
-                    padding: spacing.md,
-                    gap: spacing.xs,
-                  },
-                ]}
-              >
+            {overview.entries.map((entry) => {
+              const title = entry.label?.trim() || (entry.amount < 0 ? 'Redeemed' : 'Cashback')
+              const awardDetail =
+                entry.amount > 0 && entry.paymentAmount !== null && entry.cashbackPercent !== null
+                  ? `From ${formatIdr(entry.paymentAmount)} · ${entry.cashbackPercent}%`
+                  : null
+
+              return (
                 <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    gap: spacing.sm,
-                  }}
+                  key={entry.id}
+                  style={[
+                    shadow.warmSm,
+                    {
+                      backgroundColor: colors.card,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: radius.md,
+                      padding: spacing.md,
+                      gap: spacing.xs,
+                    },
+                  ]}
                 >
-                  <Text
+                  <View
                     style={{
-                      ...typography.bodyMedium,
-                      fontFamily: fonts.sansSemiBold,
-                      color: colors.ink,
-                      flex: 1,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      gap: spacing.sm,
                     }}
                   >
-                    {entry.label?.trim() || 'Cashback'}
-                  </Text>
+                    <Text
+                      style={{
+                        ...typography.bodyMedium,
+                        fontFamily: fonts.sansSemiBold,
+                        color: colors.ink,
+                        flex: 1,
+                      }}
+                    >
+                      {title}
+                    </Text>
+                    <Text
+                      style={{
+                        ...typography.label,
+                        fontFamily: fonts.sansMedium,
+                        color: entry.amount < 0 ? colors.destructive : colors.accentHover,
+                      }}
+                    >
+                      {formatIdr(entry.amount)}
+                    </Text>
+                  </View>
+                  {awardDetail ? (
+                    <Text
+                      style={{
+                        ...typography.caption,
+                        fontFamily: fonts.sans,
+                        color: colors.inkMuted,
+                      }}
+                    >
+                      {awardDetail}
+                    </Text>
+                  ) : null}
                   <Text
                     style={{
-                      ...typography.label,
-                      fontFamily: fonts.sansMedium,
-                      color: entry.amount < 0 ? colors.destructive : colors.accentHover,
+                      ...typography.caption,
+                      fontFamily: fonts.sans,
+                      color: colors.inkMuted,
                     }}
                   >
-                    {formatIdr(entry.amount)}
+                    {formatDate(entry.createdAt)}
                   </Text>
                 </View>
-                <Text
-                  style={{
-                    ...typography.caption,
-                    fontFamily: fonts.sans,
-                    color: colors.inkMuted,
-                  }}
-                >
-                  {formatDate(entry.createdAt)}
-                </Text>
-              </View>
-            ))}
+              )
+            })}
           </View>
         </>
       ) : null}

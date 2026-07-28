@@ -115,16 +115,30 @@ export type CrmCashbackEntry = {
   id: string
   customerId: string
   amount: number
+  paymentAmount: number | null
+  cashbackPercent: number | null
   label: string | null
   createdAt: string
 }
 
 export const AWARD_CRM_CASHBACK_MUTATION = `
-  mutation AwardCrmCashback($customerId: UUID!, $amount: Int!, $label: String) {
-    awardCrmCashback(customerId: $customerId, amount: $amount, label: $label) {
+  mutation AwardCrmCashback(
+    $customerId: UUID!
+    $paymentAmount: Int
+    $redeemAmount: Int
+    $label: String
+  ) {
+    awardCrmCashback(
+      customerId: $customerId
+      paymentAmount: $paymentAmount
+      redeemAmount: $redeemAmount
+      label: $label
+    ) {
       id
       customerId
       amount
+      paymentAmount
+      cashbackPercent
       label
       createdAt
     }

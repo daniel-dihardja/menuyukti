@@ -74,6 +74,8 @@ async def me_cashback_endpoint(request: Request) -> Response:
                     {
                         "id": str(entry.id),
                         "amount": entry.amount,
+                        "paymentAmount": entry.payment_amount,
+                        "cashbackPercent": entry.cashback_percent,
                         "label": entry.label,
                         "createdAt": _iso(entry.created_at),
                     }

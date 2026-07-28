@@ -229,6 +229,8 @@ def test_me_cashback_returns_config_and_balance(cashback_workspace: int):
             CrmCashbackEntry(
                 customer_id=uuid.UUID(enrolled["customerId"]),
                 amount=15_000,
+                payment_amount=75_000,
+                cashback_percent=20,
                 label="Welcome bonus",
             )
         )
@@ -236,6 +238,8 @@ def test_me_cashback_returns_config_and_balance(cashback_workspace: int):
             CrmCashbackEntry(
                 customer_id=uuid.UUID(enrolled["customerId"]),
                 amount=5_000,
+                payment_amount=25_000,
+                cashback_percent=20,
                 label="Visit",
             )
         )
@@ -256,6 +260,8 @@ def test_me_cashback_returns_config_and_balance(cashback_workspace: int):
     amounts = {row["amount"] for row in body["entries"]}
     assert amounts == {15_000, 5_000}
     assert all("id" in row and "createdAt" in row for row in body["entries"])
+    assert all(row["paymentAmount"] is not None for row in body["entries"])
+    assert all(row["cashbackPercent"] == 20 for row in body["entries"])
 
 
 def test_me_cashback_rejects_revoked_device(cashback_workspace: int):

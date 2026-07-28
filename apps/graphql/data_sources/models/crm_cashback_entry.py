@@ -18,8 +18,11 @@ class CrmCashbackEntry(Base):
     """
     Ledger row for a customer's cashback balance.
 
-    ``amount`` is integer IDR; positive credits, negative debits (future).
+    ``amount`` is integer IDR; positive credits, negative debits.
     Balance is the sum of amounts for the customer.
+
+    Award rows snapshot ``payment_amount`` (bill total) and ``cashback_percent``
+    applied at award time. Redeem rows leave those null.
     """
 
     __tablename__ = "crm_cashback_entry"
@@ -36,6 +39,8 @@ class CrmCashbackEntry(Base):
         nullable=False,
     )
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    payment_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cashback_percent: Mapped[int | None] = mapped_column(Integer, nullable=True)
     label: Mapped[str | None] = mapped_column(String(256), nullable=True)
     created_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),

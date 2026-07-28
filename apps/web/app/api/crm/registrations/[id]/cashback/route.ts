@@ -25,7 +25,12 @@ function mapAwardError(message: string): { message: string; status: number } {
     return { message, status: 403 }
   }
   if (
-    lower.includes('amount must be') ||
+    lower.includes('paymentamount') ||
+    lower.includes('redeemamount') ||
+    lower.includes('exactly one of') ||
+    lower.includes('below the cashback threshold') ||
+    lower.includes('computed cashback credit') ||
+    lower.includes('insufficient cashback balance') ||
     lower.includes('label must be at most') ||
     lower.includes('missing authenticated')
   ) {
@@ -53,7 +58,8 @@ export async function POST(req: Request, context: RouteContext) {
       AWARD_CRM_CASHBACK_MUTATION,
       {
         customerId: id,
-        amount: body.amount,
+        paymentAmount: body.paymentAmount ?? null,
+        redeemAmount: body.redeemAmount ?? null,
         label,
       },
       userId,
