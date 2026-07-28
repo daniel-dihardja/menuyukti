@@ -1,9 +1,15 @@
 import * as ed from '@noble/ed25519'
+import { sha512 } from '@noble/hashes/sha2.js'
 
 import { bytesToHex, hexToBytes } from './hex'
+import './polyfillCrypto'
 import { deleteSecureItem, getSecureItem, setSecureItem } from './secureStorage'
 
 export { bytesToHex, hexToBytes }
+
+// React Native has no crypto.subtle — use noble-hashes (see @noble/ed25519 README).
+ed.hashes.sha512 = sha512
+ed.hashes.sha512Async = (m: Uint8Array) => Promise.resolve(sha512(m))
 
 const PRIVATE_KEY_STORAGE_KEY = 'crm_device_ed25519_sk'
 
@@ -28,12 +34,12 @@ export async function ensureDeviceKeypair(): Promise<DeviceKeypair> {
   const existing = await readPrivateKeyHex()
   if (existing) {
     const secretKey = hexToBytes(existing)
-    const publicKey = await ed.getPublicKeyAsync(secretKey)
+    const publicKey = ed.getPublicKey(secretKey)
     return { publicKeyHex: bytesToHex(publicKey) }
   }
 
   const secretKey = ed.utils.randomSecretKey()
-  const publicKey = await ed.getPublicKeyAsync(secretKey)
+  const publicKey = ed.getPublicKey(secretKey)
   await writePrivateKeyHex(bytesToHex(secretKey))
   return { publicKeyHex: bytesToHex(publicKey) }
 }
