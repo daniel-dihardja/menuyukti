@@ -38,6 +38,7 @@ flowchart LR
 | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph milestone run (preset subgraphs + eval), streaming chat.  |
 | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                     |
 | [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, GraphQL from the browser/BFF, milestone UI.          |
+| [`menuyukti-mobile`](../menuyukti-mobile/SKILL.md)       | `apps/mobile-app`: Expo, CRM enroll, React Navigation, brand/session, mobile HTTP clients.  |
 | [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration. |
 
 ## Cross-app flow: milestone run
