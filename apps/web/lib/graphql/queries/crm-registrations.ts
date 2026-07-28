@@ -10,6 +10,16 @@ export type CrmDevice = {
   revokedAt: string | null
 }
 
+export type CrmCashbackEntry = {
+  id: string
+  customerId: string
+  amount: number
+  paymentAmount: number | null
+  cashbackPercent: number | null
+  label: string | null
+  createdAt: string
+}
+
 export type CrmCustomer = {
   id: string
   appId: number
@@ -21,6 +31,8 @@ export type CrmCustomer = {
   lastSeenAt: string | null
   status: CrmCustomerStatus
   devices?: CrmDevice[]
+  cashbackBalance?: number
+  cashbackEntries?: CrmCashbackEntry[]
 }
 
 export type CrmEnrollmentToken = {
@@ -50,6 +62,16 @@ const CRM_DEVICE_FIELDS = `
   revokedAt
 `
 
+const CRM_CASHBACK_ENTRY_FIELDS = `
+  id
+  customerId
+  amount
+  paymentAmount
+  cashbackPercent
+  label
+  createdAt
+`
+
 export const CRM_CUSTOMERS_QUERY = `
   query CrmCustomers($appId: Int!, $search: String) {
     crmCustomers(appId: $appId, search: $search) {
@@ -66,6 +88,10 @@ export const CRM_CUSTOMER_QUERY = `
   query CrmCustomer($id: UUID!) {
     crmCustomer(id: $id) {
       ${CRM_CUSTOMER_LIST_FIELDS}
+      cashbackBalance
+      cashbackEntries {
+        ${CRM_CASHBACK_ENTRY_FIELDS}
+      }
       devices {
         ${CRM_DEVICE_FIELDS}
       }
@@ -111,16 +137,6 @@ export const REVOKE_CRM_DEVICE_MUTATION = `
 
 export type RevokeCrmDeviceData = {
   revokeCrmDevice: CrmDevice
-}
-
-export type CrmCashbackEntry = {
-  id: string
-  customerId: string
-  amount: number
-  paymentAmount: number | null
-  cashbackPercent: number | null
-  label: string | null
-  createdAt: string
 }
 
 export const AWARD_CRM_CASHBACK_MUTATION = `

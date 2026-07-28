@@ -55,6 +55,8 @@ describe('GET /api/crm/registrations/[id]', () => {
         deviceCount: 1,
         lastSeenAt: null,
         status: 'ACTIVE',
+        cashbackBalance: 0,
+        cashbackEntries: [],
         devices: [],
       },
     })

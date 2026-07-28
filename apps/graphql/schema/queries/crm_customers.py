@@ -12,7 +12,7 @@ from graphql.data_sources.models.crm_app import CrmApp
 from graphql.data_sources.models.crm_customer import CrmCustomer
 from graphql.data_sources.models.crm_device import CrmDevice
 from graphql.schema.auth import is_workspace_member, user_id_from_info
-from graphql.schema.crm_customer_map import customer_to_gql
+from graphql.schema.crm_customer_map import customer_to_gql, load_customer_cashback
 from graphql.schema.types.crm_customer import CrmCustomerType
 
 
@@ -97,4 +97,12 @@ class CrmCustomersQuery:
                 .order_by(CrmDevice.created_at.desc())
                 .all()
             )
-            return customer_to_gql(customer, devices=devices, include_devices=True)
+            balance, entries = load_customer_cashback(session, customer.id)
+            return customer_to_gql(
+                customer,
+                devices=devices,
+                include_devices=True,
+                cashback_balance=balance,
+                cashback_entries=entries,
+                include_cashback=True,
+            )

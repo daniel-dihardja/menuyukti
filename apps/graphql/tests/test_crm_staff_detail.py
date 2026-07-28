@@ -59,6 +59,16 @@ query CrmCustomer($id: UUID!) {
     status
     deviceCount
     lastSeenAt
+    cashbackBalance
+    cashbackEntries {
+      id
+      customerId
+      amount
+      paymentAmount
+      cashbackPercent
+      label
+      createdAt
+    }
     devices {
       id
       platform
@@ -234,11 +244,60 @@ def test_crm_customer_detail_returns_devices(crm_staff_workspace_id: int):
     assert detail is not None
     assert detail["id"] == customer_id
     assert detail["status"] == "ACTIVE"
+    assert detail["cashbackBalance"] == 0
+    assert detail["cashbackEntries"] == []
     assert len(detail["devices"]) == 1
     assert detail["devices"][0]["id"] == device_id
     assert detail["devices"][0]["platform"] == "ios"
     assert detail["devices"][0]["label"] == "iPhone"
     assert detail["devices"][0]["revokedAt"] is None
+
+
+def test_crm_customer_detail_returns_cashback_history(crm_staff_workspace_id: int):
+    from graphql.data_sources import CrmCashbackEntry
+
+    app = _create_app()
+    customer_id, _, _ = _seed_customer_with_device(app["id"])
+    now = datetime.now(tz=UTC)
+
+    session = SessionLocal()
+    try:
+        session.add(
+            CrmCashbackEntry(
+                customer_id=UUID(customer_id),
+                amount=10_000,
+                payment_amount=100_000,
+                cashback_percent=10,
+                label="Visit",
+                created_at=now - timedelta(hours=1),
+            )
+        )
+        session.add(
+            CrmCashbackEntry(
+                customer_id=UUID(customer_id),
+                amount=-4_000,
+                payment_amount=None,
+                cashback_percent=None,
+                label="Redeemed at till",
+                created_at=now,
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    result = _execute(_CUSTOMER, {"id": customer_id})
+    assert result.errors is None
+    detail = result.data["crmCustomer"]
+    assert detail["cashbackBalance"] == 6_000
+    assert len(detail["cashbackEntries"]) == 2
+    # Newest first
+    assert detail["cashbackEntries"][0]["amount"] == -4_000
+    assert detail["cashbackEntries"][0]["label"] == "Redeemed at till"
+    assert detail["cashbackEntries"][0]["paymentAmount"] is None
+    assert detail["cashbackEntries"][1]["amount"] == 10_000
+    assert detail["cashbackEntries"][1]["paymentAmount"] == 100_000
+    assert detail["cashbackEntries"][1]["cashbackPercent"] == 10
 
 
 def test_crm_customer_null_for_non_member(crm_staff_workspace_id: int):

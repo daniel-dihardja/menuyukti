@@ -8,6 +8,7 @@ from enum import Enum
 
 import strawberry
 
+from graphql.schema.types.crm_cashback_entry import CrmCashbackEntryType
 from graphql.schema.types.crm_device import CrmDeviceType
 
 
@@ -32,4 +33,12 @@ class CrmCustomerType:
     devices: list[CrmDeviceType] = strawberry.field(
         default_factory=list,
         description="Enrolled devices (populated on crmCustomer detail).",
+    )
+    cashback_balance: int = strawberry.field(
+        default=0,
+        description="Sum of cashback ledger amounts in IDR (populated on crmCustomer detail).",
+    )
+    cashback_entries: list[CrmCashbackEntryType] = strawberry.field(
+        default_factory=list,
+        description="Recent cashback ledger entries (populated on crmCustomer detail).",
     )

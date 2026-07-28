@@ -109,9 +109,12 @@ export function RegistrationDetailClient({ initialCustomer, cashbackRules }: Pro
             ...(label ? { label } : {}),
           })
         }
+        const refreshed = await getCrmCustomer(customer.id)
+        if (refreshed) setCustomer(refreshed)
         setAwardAmount('')
         setAwardLabel('')
         toast.success(t('toast.awarded'))
+        router.refresh()
       } catch (err) {
         toast.error(err instanceof Error ? err.message : t('toast.awardError'))
       } finally {
@@ -275,6 +278,54 @@ export function RegistrationDetailClient({ initialCustomer, cashbackRules }: Pro
             t('awardSubmitRedeem')
           )}
         </Button>
+
+        <div className="space-y-3 border-t border-border pt-5">
+          <div>
+            <p className="text-sm text-muted-foreground">{t('cashbackBalanceLabel')}</p>
+            <p className="text-lg font-semibold tabular-nums tracking-tight">
+              {formatIdr(customer.cashbackBalance ?? 0)}
+            </p>
+          </div>
+          <h4 className="text-sm font-medium">{t('cashbackHistoryTitle')}</h4>
+          {(customer.cashbackEntries ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('cashbackHistoryEmpty')}</p>
+          ) : (
+            <ul className="space-y-3">
+              {(customer.cashbackEntries ?? []).map((entry) => {
+                const title =
+                  entry.label?.trim() ||
+                  (entry.amount < 0 ? t('cashbackHistoryRedeem') : t('cashbackHistoryAward'))
+                const awardDetail =
+                  entry.amount > 0 && entry.paymentAmount !== null && entry.cashbackPercent !== null
+                    ? t('cashbackHistoryAwardDetail', {
+                        payment: formatIdr(entry.paymentAmount),
+                        percent: entry.cashbackPercent,
+                      })
+                    : null
+                return (
+                  <li key={entry.id} className="rounded-lg border border-border px-3 py-3 text-sm">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="min-w-0 flex-1 font-medium">{title}</span>
+                      <span
+                        className={`shrink-0 tabular-nums ${
+                          entry.amount < 0 ? 'text-destructive' : 'text-foreground'
+                        }`}
+                      >
+                        {formatIdr(entry.amount)}
+                      </span>
+                    </div>
+                    {awardDetail ? (
+                      <p className="mt-1 text-xs text-muted-foreground">{awardDetail}</p>
+                    ) : null}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatWhen(entry.createdAt, t('neverSeen'))}
+                    </p>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3">

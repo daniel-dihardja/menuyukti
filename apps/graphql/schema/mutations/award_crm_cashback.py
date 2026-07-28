@@ -13,19 +13,8 @@ from graphql.data_sources.models.crm_app import CrmApp
 from graphql.data_sources.models.crm_cashback_entry import CrmCashbackEntry
 from graphql.data_sources.models.crm_customer import CrmCustomer
 from graphql.schema.auth import is_workspace_member, user_id_from_info
+from graphql.schema.crm_customer_map import cashback_entry_to_gql
 from graphql.schema.types.crm_cashback_entry import CrmCashbackEntryType
-
-
-def _entry_to_gql(row: CrmCashbackEntry) -> CrmCashbackEntryType:
-    return CrmCashbackEntryType(
-        id=row.id,
-        customer_id=row.customer_id,
-        amount=row.amount,
-        payment_amount=row.payment_amount,
-        cashback_percent=row.cashback_percent,
-        label=row.label,
-        created_at=row.created_at,  # type: ignore[arg-type]
-    )
 
 
 def _clean_label(label: str | None) -> str | None:
@@ -134,4 +123,4 @@ class AwardCrmCashbackMutation:
             )
             session.commit()
             session.refresh(entry)
-            return _entry_to_gql(entry)
+            return cashback_entry_to_gql(entry)
