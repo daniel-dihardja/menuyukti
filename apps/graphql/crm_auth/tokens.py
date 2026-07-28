@@ -21,8 +21,10 @@ def normalize_phone_e164(phone: str) -> str:
     return cleaned
 
 
-def mask_phone_e164(phone: str) -> str:
+def mask_phone_e164(phone: str | None) -> str:
     """Mask middle digits for staff UI (keep country code prefix and last 2)."""
+    if not phone:
+        return "—"
     if len(phone) <= 4:
         return "****"
     return f"{phone[:3]}***{phone[-2:]}"

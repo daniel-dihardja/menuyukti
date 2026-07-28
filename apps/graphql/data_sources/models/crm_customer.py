@@ -19,7 +19,8 @@ class CrmCustomer(Base):
     """
     End customer enrolled under a CRM app.
 
-    Phone is an identifier only (not a credential). Auth is per device.
+    Identity is the customer UUID. Phone and names are optional profile
+    fields collected after enrollment. Auth is per device.
     """
 
     __tablename__ = "crm_customer"
@@ -38,7 +39,9 @@ class CrmCustomer(Base):
         ForeignKey("crm_app.id", ondelete="CASCADE"),
         nullable=False,
     )
-    phone_e164: Mapped[str] = mapped_column(String(32), nullable=False)
+    phone_e164: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    given_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    family_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     display_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
     created_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),

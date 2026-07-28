@@ -195,6 +195,37 @@ def test_enroll_rejects_invalid_phone(enroll_workspace: int):
     assert response.status_code == 400
 
 
+def test_enroll_without_phone(enroll_workspace: int):
+    created = _gql(_CREATE_APP, {"title": "No Phone App"})
+    assert created.errors is None
+    app_row = created.data["createCrmApp"]
+    token_result = _gql(_CREATE_TOKEN, {"appId": app_row["id"]})
+    assert token_result.errors is None
+    raw_token = token_result.data["createCrmEnrollmentToken"]["token"]
+
+    client = TestClient(app)
+    response = client.post(
+        "/crm/v1/enroll",
+        json={
+            "token": raw_token,
+            "appId": app_row["appId"],
+            "publicKey": "ed25519-public-key-no-phone",
+            "platform": "ios",
+        },
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["customerId"]
+    assert body["deviceId"]
+
+    listed = _gql(_CUSTOMERS, {"appId": app_row["id"]})
+    assert listed.errors is None
+    customers = listed.data["crmCustomers"]
+    assert len(customers) == 1
+    assert customers[0]["phoneMasked"] == "—"
+    assert customers[0]["deviceCount"] == 1
+
+
 def test_enroll_cors_preflight(enroll_workspace: int):
     client = TestClient(app)
     response = client.options(

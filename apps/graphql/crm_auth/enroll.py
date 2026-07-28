@@ -22,7 +22,11 @@ def _error(status: int, message: str) -> JSONResponse:
 
 
 async def enroll_endpoint(request: Request) -> Response:
-    """Validate enrollment token and register customer device."""
+    """Validate enrollment token and register customer device.
+
+    Phone is optional — customers are created by UUID at enroll time.
+    When phone is provided, an existing customer with that phone is reused.
+    """
     try:
         body = await request.json()
     except json.JSONDecodeError:
@@ -40,8 +44,6 @@ async def enroll_endpoint(request: Request) -> Response:
         return _error(400, "token is required")
     if not isinstance(app_id_raw, str) or not app_id_raw.strip():
         return _error(400, "appId is required")
-    if not isinstance(phone_raw, str) or not phone_raw.strip():
-        return _error(400, "phoneE164 is required")
     if not isinstance(public_key, str) or not public_key.strip():
         return _error(400, "publicKey is required")
     if not isinstance(platform, str) or not platform.strip():
@@ -51,15 +53,19 @@ async def enroll_endpoint(request: Request) -> Response:
     if len(public_key.strip()) > 4096:
         return _error(400, "publicKey is too long")
 
+    phone: str | None = None
+    if phone_raw is not None and phone_raw != "":
+        if not isinstance(phone_raw, str):
+            return _error(400, "phoneE164 must be a string")
+        try:
+            phone = normalize_phone_e164(phone_raw)
+        except ValueError as exc:
+            return _error(400, str(exc))
+
     try:
         app_uuid = uuid.UUID(app_id_raw.strip())
     except ValueError:
         return _error(400, "appId must be a valid UUID")
-
-    try:
-        phone = normalize_phone_e164(phone_raw)
-    except ValueError as exc:
-        return _error(400, str(exc))
 
     token_hash = hash_enrollment_token(raw_token.strip())
     now = datetime.now(tz=UTC)
@@ -88,14 +94,16 @@ async def enroll_endpoint(request: Request) -> Response:
         if expires_at <= now:  # type: ignore[operator]
             return _error(401, "Enrollment token expired")
 
-        customer = (
-            session.query(CrmCustomer)
-            .filter(
-                CrmCustomer.crm_app_id == app.id,
-                CrmCustomer.phone_e164 == phone,
+        customer: CrmCustomer | None = None
+        if phone is not None:
+            customer = (
+                session.query(CrmCustomer)
+                .filter(
+                    CrmCustomer.crm_app_id == app.id,
+                    CrmCustomer.phone_e164 == phone,
+                )
+                .first()
             )
-            .first()
-        )
         if customer is None:
             customer = CrmCustomer(crm_app_id=app.id, phone_e164=phone)
             session.add(customer)

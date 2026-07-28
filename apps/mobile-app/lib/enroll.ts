@@ -1,7 +1,6 @@
 export type EnrollInput = {
   token: string
   appId: string
-  phoneE164: string
   publicKey: string
   platform: string
 }
@@ -53,7 +52,6 @@ export async function enrollDevice(input: EnrollInput): Promise<EnrollResult> {
     body: JSON.stringify({
       token: input.token,
       appId: input.appId,
-      phoneE164: input.phoneE164,
       publicKey: input.publicKey,
       platform: input.platform,
     }),
