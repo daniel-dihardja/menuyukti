@@ -821,7 +821,7 @@
         "noApps": "Create an app before managing customer registrations.",
         "noAppsCta": "Go to Apps",
         "columns": {
-          "phone": "Phone",
+          "id": "ID",
           "enrolledAt": "Enrolled",
           "devices": "Devices",
           "lastSeen": "Last seen",
@@ -834,6 +834,7 @@
           "NONE": "No devices"
         },
         "neverSeen": "Never",
+        "actionsForRow": "Actions for {name}",
         "view": "View",
         "dialogTitle": "Enrollment QR",
         "dialogDescription": "Customer scans this code (or pastes the link) in the mobile app within 5 minutes.",

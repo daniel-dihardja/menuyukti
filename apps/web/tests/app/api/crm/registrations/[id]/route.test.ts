@@ -47,6 +47,7 @@ describe('GET /api/crm/registrations/[id]', () => {
     vi.mocked(graphqlQuery).mockResolvedValue({
       crmCustomer: {
         id: CUSTOMER_ID,
+        appId: 1,
         phoneMasked: '+49***67',
         givenName: 'Ada',
         familyName: null,

@@ -4,19 +4,15 @@ import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Check, Copy, Eye, Loader2, QrCode, RefreshCw, Trash2 } from 'lucide-react'
+import { Check, Copy, Eye, Loader2, MoreHorizontal, QrCode, RefreshCw, Trash2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 
 import {
-  awardCrmCashback,
   createCrmEnrollmentToken,
   deleteCrmCustomer,
-  getCrmCustomer,
   listCrmCustomers,
-  revokeCrmDevice,
   type CrmCustomer,
-  type CrmDevice,
   type CrmEnrollmentToken,
 } from '@/lib/crm/client-api'
 import { routes } from '@/lib/routes'
@@ -31,8 +27,6 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
-import { Input } from '@workspace/ui/components/input'
 import {
   Dialog,
   DialogContent,
@@ -42,12 +36,12 @@ import {
   DialogTitle,
 } from '@workspace/ui/components/dialog'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@workspace/ui/components/sheet'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@workspace/ui/components/dropdown-menu'
 import {
   Table,
   TableBody,
@@ -67,8 +61,6 @@ type AppOption = {
   cashbackPercent: number
 }
 
-type CashbackMode = 'award' | 'redeem'
-
 type Props = {
   apps: AppOption[]
   initialAppId: number | null
@@ -87,25 +79,8 @@ function formatWhen(value: string | null | undefined, fallback: string): string 
   return new Date(value).toLocaleString()
 }
 
-function customerDisplayName(row: CrmCustomer): string {
-  const parts = [row.givenName, row.familyName].filter(Boolean)
-  return parts.join(' ')
-}
-
-function formatIdr(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-function parsePositiveInt(raw: string): number | null {
-  const trimmed = raw.trim()
-  if (!/^\d+$/.test(trimmed)) return null
-  const value = Number(trimmed)
-  if (!Number.isInteger(value) || value <= 0) return null
-  return value
+function shortCustomerId(id: string): string {
+  return id.slice(0, 8)
 }
 
 export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Props) {
@@ -119,14 +94,6 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
   const [copied, setCopied] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<CrmCustomer | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [detailCustomer, setDetailCustomer] = useState<CrmCustomer | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
-  const [pendingRevoke, setPendingRevoke] = useState<CrmDevice | null>(null)
-  const [isRevoking, setIsRevoking] = useState(false)
-  const [awardMode, setAwardMode] = useState<CashbackMode>('award')
-  const [awardAmount, setAwardAmount] = useState('')
-  const [awardLabel, setAwardLabel] = useState('')
-  const [isAwarding, setIsAwarding] = useState(false)
   const [isMinting, startMintTransition] = useTransition()
   const [isRefreshing, startRefreshTransition] = useTransition()
 
@@ -172,7 +139,6 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
 
   const activeAppId = appId ?? initialAppId
   const expired = enrollment !== null && msRemaining <= 0
-  const detailOpen = detailCustomer !== null || detailLoading
 
   const mintToken = (selectedAppId: number) => {
     startMintTransition(async () => {
@@ -198,76 +164,6 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
     })
   }
 
-  const openDetail = (customerId: string) => {
-    setDetailLoading(true)
-    setDetailCustomer(null)
-    setAwardAmount('')
-    setAwardLabel('')
-    void (async () => {
-      try {
-        const customer = await getCrmCustomer(customerId)
-        if (!customer) {
-          toast.error(t('toast.detailError'))
-          setDetailLoading(false)
-          return
-        }
-        setDetailCustomer(customer)
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : t('toast.detailError'))
-      } finally {
-        setDetailLoading(false)
-      }
-    })()
-  }
-
-  const closeDetail = () => {
-    if (isRevoking || isAwarding) return
-    setDetailCustomer(null)
-    setDetailLoading(false)
-    setPendingRevoke(null)
-    setAwardMode('award')
-    setAwardAmount('')
-    setAwardLabel('')
-  }
-
-  const activeApp = apps.find((app) => app.id === activeAppId) ?? null
-  const parsedAwardAmount = parsePositiveInt(awardAmount)
-  const awardPreviewCredit =
-    awardMode === 'award' &&
-    activeApp !== null &&
-    parsedAwardAmount !== null &&
-    parsedAwardAmount >= activeApp.cashbackThresholdAmount
-      ? Math.floor((parsedAwardAmount * activeApp.cashbackPercent) / 100)
-      : null
-
-  const handleAwardCashback = () => {
-    if (!detailCustomer || isAwarding || parsedAwardAmount === null) return
-    const label = awardLabel.trim()
-    setIsAwarding(true)
-    void (async () => {
-      try {
-        if (awardMode === 'award') {
-          await awardCrmCashback(detailCustomer.id, {
-            paymentAmount: parsedAwardAmount,
-            ...(label ? { label } : {}),
-          })
-        } else {
-          await awardCrmCashback(detailCustomer.id, {
-            redeemAmount: parsedAwardAmount,
-            ...(label ? { label } : {}),
-          })
-        }
-        setAwardAmount('')
-        setAwardLabel('')
-        toast.success(t('toast.awarded'))
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : t('toast.awardError'))
-      } finally {
-        setIsAwarding(false)
-      }
-    })()
-  }
-
   const handleCopy = async () => {
     if (!enrollment) return
     try {
@@ -287,9 +183,6 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
       try {
         await deleteCrmCustomer(customer.id)
         setCustomers((prev) => prev.filter((row) => row.id !== customer.id))
-        if (detailCustomer?.id === customer.id) {
-          setDetailCustomer(null)
-        }
         setPendingDelete(null)
         toast.success(t('toast.deleted'))
         router.refresh()
@@ -297,31 +190,6 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
         toast.error(err instanceof Error ? err.message : t('toast.deleteError'))
       } finally {
         setIsDeleting(false)
-      }
-    })()
-  }
-
-  const confirmRevoke = () => {
-    if (pendingRevoke === null || isRevoking || detailCustomer === null) return
-    const device = pendingRevoke
-    const customerId = detailCustomer.id
-    setIsRevoking(true)
-    void (async () => {
-      try {
-        await revokeCrmDevice(device.id)
-        const refreshed = await getCrmCustomer(customerId)
-        if (refreshed) setDetailCustomer(refreshed)
-        if (activeAppId !== null) {
-          const rows = await listCrmCustomers(activeAppId)
-          setCustomers(rows)
-        }
-        setPendingRevoke(null)
-        toast.success(t('toast.revoked'))
-        router.refresh()
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : t('toast.revokeError'))
-      } finally {
-        setIsRevoking(false)
       }
     })()
   }
@@ -402,7 +270,7 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('columns.phone')}</TableHead>
+                <TableHead>{t('columns.id')}</TableHead>
                 <TableHead>{t('columns.enrolledAt')}</TableHead>
                 <TableHead className="text-right">{t('columns.devices')}</TableHead>
                 <TableHead>{t('columns.lastSeen')}</TableHead>
@@ -413,54 +281,67 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="cursor-pointer"
-                  onClick={() => openDetail(row.id)}
-                >
-                  <TableCell className="font-medium tabular-nums">{row.phoneMasked}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(row.createdAt).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{row.deviceCount}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatWhen(row.lastSeenAt, t('neverSeen'))}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={row.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                      {t(`status.${row.status}`)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => openDetail(row.id)}
-                        aria-label={t('view')}
-                      >
-                        <Eye className="size-4" aria-hidden />
-                        {t('view')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="gap-2 text-destructive hover:text-destructive"
-                        disabled={isDeleting}
-                        onClick={() => setPendingDelete(row)}
-                        aria-label={t('delete')}
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                        {t('delete')}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {customers.map((row) => {
+                const detailHref = routes.crmRegistrationsDetail(row.id)
+                const idPreview = shortCustomerId(row.id)
+                return (
+                  <TableRow
+                    key={row.id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(detailHref)}
+                  >
+                    <TableCell className="font-mono text-sm tabular-nums" title={row.id}>
+                      {idPreview}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(row.createdAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{row.deviceCount}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatWhen(row.lastSeenAt, t('neverSeen'))}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={row.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                        {t(`status.${row.status}`)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-label={t('actionsForRow', { name: idPreview })}
+                            size="icon-sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal aria-hidden />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link className="flex items-center gap-2" href={detailHref}>
+                              <Eye aria-hidden />
+                              {t('view')}
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            disabled={isDeleting && pendingDelete?.id === row.id}
+                            onSelect={(e) => {
+                              e.preventDefault()
+                              setPendingDelete(row)
+                            }}
+                          >
+                            <Trash2 aria-hidden className="size-4" />
+                            {t('delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>
@@ -532,221 +413,6 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
         </DialogContent>
       </Dialog>
 
-      <Sheet
-        open={detailOpen}
-        onOpenChange={(open) => {
-          if (!open) closeDetail()
-        }}
-      >
-        <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-lg">
-          <SheetHeader className="border-b border-border px-6 py-5 pr-12">
-            <SheetTitle>{t('detailTitle')}</SheetTitle>
-            <SheetDescription>{t('detailDescription')}</SheetDescription>
-          </SheetHeader>
-
-          <div className="flex flex-1 flex-col gap-6 px-6 py-5">
-            {detailLoading || !detailCustomer ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                {t('detailLoading')}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-6">
-                <dl className="grid gap-3 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">{t('detailPhone')}</dt>
-                    <dd className="font-medium tabular-nums">{detailCustomer.phoneMasked}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">{t('detailName')}</dt>
-                    <dd>{customerDisplayName(detailCustomer) || t('detailNameEmpty')}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">{t('detailId')}</dt>
-                    <dd className="break-all font-mono text-xs">{detailCustomer.id}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">{t('columns.status')}</dt>
-                    <dd className="pt-1">
-                      <Badge variant={detailCustomer.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                        {t(`status.${detailCustomer.status}`)}
-                      </Badge>
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="space-y-3 border-t border-border pt-5">
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium">{t('awardCashbackTitle')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('awardCashbackDescription')}</p>
-                    {activeApp ? (
-                      <p className="text-sm text-muted-foreground">
-                        {t('awardRuleSummary', {
-                          percent: activeApp.cashbackPercent,
-                          threshold: formatIdr(activeApp.cashbackThresholdAmount),
-                        })}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={awardMode === 'award' ? 'default' : 'outline'}
-                      disabled={isAwarding}
-                      onClick={() => {
-                        setAwardMode('award')
-                        setAwardAmount('')
-                      }}
-                    >
-                      {t('awardModeAward')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={awardMode === 'redeem' ? 'default' : 'outline'}
-                      disabled={isAwarding}
-                      onClick={() => {
-                        setAwardMode('redeem')
-                        setAwardAmount('')
-                      }}
-                    >
-                      {t('awardModeRedeem')}
-                    </Button>
-                  </div>
-                  <Field className="space-y-2">
-                    <FieldLabel htmlFor="crm-award-amount">
-                      {awardMode === 'award' ? t('awardPaymentLabel') : t('awardRedeemLabel')}
-                    </FieldLabel>
-                    <Input
-                      id="crm-award-amount"
-                      inputMode="numeric"
-                      value={awardAmount}
-                      onChange={(e) => setAwardAmount(e.target.value)}
-                      placeholder={
-                        awardMode === 'award'
-                          ? t('awardPaymentPlaceholder')
-                          : t('awardRedeemPlaceholder')
-                      }
-                      disabled={isAwarding}
-                    />
-                    <FieldDescription>
-                      {awardMode === 'award' ? t('awardPaymentHelp') : t('awardRedeemHelp')}
-                    </FieldDescription>
-                    {awardMode === 'award' && activeApp && parsedAwardAmount !== null ? (
-                      <p className="text-sm text-muted-foreground">
-                        {parsedAwardAmount < activeApp.cashbackThresholdAmount
-                          ? t('awardPreviewBelowThreshold', {
-                              threshold: formatIdr(activeApp.cashbackThresholdAmount),
-                            })
-                          : awardPreviewCredit !== null && awardPreviewCredit > 0
-                            ? t('awardPreview', {
-                                amount: formatIdr(awardPreviewCredit),
-                                percent: activeApp.cashbackPercent,
-                              })
-                            : t('awardPreviewZero')}
-                      </p>
-                    ) : null}
-                  </Field>
-                  <Field className="space-y-2">
-                    <FieldLabel htmlFor="crm-award-label">{t('awardLabelLabel')}</FieldLabel>
-                    <Input
-                      id="crm-award-label"
-                      value={awardLabel}
-                      onChange={(e) => setAwardLabel(e.target.value)}
-                      placeholder={t('awardLabelPlaceholder')}
-                      maxLength={256}
-                      disabled={isAwarding}
-                    />
-                    <FieldDescription>{t('awardLabelHelp')}</FieldDescription>
-                  </Field>
-                  <Button
-                    type="button"
-                    disabled={isAwarding || parsedAwardAmount === null}
-                    onClick={handleAwardCashback}
-                    className="gap-2"
-                  >
-                    {isAwarding ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" aria-hidden />
-                        {t('awardSubmitting')}
-                      </>
-                    ) : awardMode === 'award' ? (
-                      t('awardSubmitAward')
-                    ) : (
-                      t('awardSubmitRedeem')
-                    )}
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium">{t('detailDevices')}</h3>
-                  {(detailCustomer.devices ?? []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t('detailDevicesEmpty')}</p>
-                  ) : (
-                    <ul className="space-y-3">
-                      {(detailCustomer.devices ?? []).map((device) => {
-                        const revoked = device.revokedAt !== null
-                        return (
-                          <li
-                            key={device.id}
-                            className="rounded-lg border border-border px-3 py-3 text-sm"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0 space-y-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="font-medium capitalize">{device.platform}</span>
-                                  {revoked ? (
-                                    <Badge variant="secondary">{t('deviceRevokedBadge')}</Badge>
-                                  ) : null}
-                                </div>
-                                {device.label ? (
-                                  <p className="text-muted-foreground">{device.label}</p>
-                                ) : null}
-                                <p className="text-xs text-muted-foreground">
-                                  {t('deviceLastSeen')}:{' '}
-                                  {formatWhen(device.lastSeenAt, t('neverSeen'))}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {t('deviceCreated')}:{' '}
-                                  {formatWhen(device.createdAt, t('neverSeen'))}
-                                </p>
-                              </div>
-                              {!revoked ? (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isRevoking}
-                                  onClick={() => setPendingRevoke(device)}
-                                >
-                                  {t('deviceRevoke')}
-                                </Button>
-                              ) : null}
-                            </div>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  )}
-                </div>
-
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="gap-2 self-start"
-                  disabled={isDeleting}
-                  onClick={() => setPendingDelete(detailCustomer)}
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                  {t('delete')}
-                </Button>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-
       <AlertDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {
@@ -782,43 +448,6 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
                 </>
               ) : (
                 t('deleteConfirmAction')
-              )}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={pendingRevoke !== null}
-        onOpenChange={(open) => {
-          if (!open && !isRevoking) {
-            setPendingRevoke(null)
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('deviceRevokeConfirmTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('deviceRevokeConfirmDescription')}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isRevoking} type="button">
-              {t('deviceRevokeConfirmCancel')}
-            </AlertDialogCancel>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={isRevoking || pendingRevoke === null}
-              onClick={confirmRevoke}
-              className="gap-2"
-            >
-              {isRevoking ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                  {t('deviceRevoking')}
-                </>
-              ) : (
-                t('deviceRevokeConfirmAction')
               )}
             </Button>
           </AlertDialogFooter>

@@ -80,6 +80,7 @@ export const routes = {
   crmRegistrations: '/crm/registrations',
   crmRegistrationsWithApp: (appId: string | number) =>
     `/crm/registrations?appId=${encodeURIComponent(String(appId))}`,
+  crmRegistrationsDetail: (id: string) => `/crm/registrations/${encodeURIComponent(id)}`,
 
   /** Standalone Instagram post drafts + Post Creator (admin). */
   igStudio: '/ig-studio',

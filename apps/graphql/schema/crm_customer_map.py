@@ -46,6 +46,7 @@ def customer_to_gql(
     device_list = devices if devices is not None else list(row.devices or [])
     return CrmCustomerType(
         id=row.id,
+        app_id=row.crm_app_id,
         phone_masked=mask_phone_e164(row.phone_e164),
         given_name=row.given_name,
         family_name=row.family_name,

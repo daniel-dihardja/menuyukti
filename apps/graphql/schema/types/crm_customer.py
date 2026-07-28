@@ -21,6 +21,7 @@ class CrmCustomerStatus(Enum):
 @strawberry.type(description="Customer enrolled in a CRM app.")
 class CrmCustomerType:
     id: uuid.UUID
+    app_id: int = strawberry.field(description="Internal CRM app id (crm_app.id).")
     phone_masked: str
     given_name: str | None
     family_name: str | None

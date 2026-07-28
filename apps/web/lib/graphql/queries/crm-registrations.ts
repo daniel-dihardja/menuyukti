@@ -12,6 +12,7 @@ export type CrmDevice = {
 
 export type CrmCustomer = {
   id: string
+  appId: number
   phoneMasked: string
   givenName: string | null
   familyName: string | null
@@ -30,6 +31,7 @@ export type CrmEnrollmentToken = {
 
 const CRM_CUSTOMER_LIST_FIELDS = `
   id
+  appId
   phoneMasked
   givenName
   familyName
