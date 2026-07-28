@@ -42,10 +42,16 @@ export function parseEnrollInput(raw: string): ParsedEnrollPayload {
   return { token: trimmed, appId: null, isDeepLink: false }
 }
 
+/** Public Next.js BFF base (no trailing slash). Local default: web app on :3000. */
 export function crmApiBaseUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_CRM_API_URL?.trim()
   if (fromEnv) return fromEnv.replace(/\/$/, '')
-  return 'http://localhost:8000'
+  return 'http://localhost:3000'
+}
+
+/** Mobile enroll path on the Next.js BFF (proxies to private GraphQL). */
+export function crmEnrollUrl(): string {
+  return `${crmApiBaseUrl()}/api/mobile/crm/v1/enroll`
 }
 
 function enrollErrorMessage(err: unknown, status?: number): string {
@@ -54,7 +60,7 @@ function enrollErrorMessage(err: unknown, status?: number): string {
       return 'Enrollment timed out. Check your connection and try again.'
     }
     if (err.message === 'Network request failed' || err.message.includes('Failed to fetch')) {
-      return 'Could not reach the server. Check EXPO_PUBLIC_CRM_API_URL and your network.'
+      return 'Could not reach the server. Check EXPO_PUBLIC_CRM_API_URL (Next.js BFF) and your network.'
     }
     return err.message
   }
@@ -67,7 +73,7 @@ export async function enrollDevice(input: EnrollInput): Promise<EnrollResult> {
   const timer = setTimeout(() => controller.abort(), ENROLL_TIMEOUT_MS)
 
   try {
-    const response = await fetch(`${crmApiBaseUrl()}/crm/v1/enroll`, {
+    const response = await fetch(crmEnrollUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
