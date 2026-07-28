@@ -3,7 +3,15 @@ import { sha512 } from '@noble/hashes/sha2.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getAccessToken, setAccessToken } from '../lib/accessToken'
+import {
+  accessTokenExpiresAt,
+  challengeAndVerify,
+  ensureAccessToken,
+  refreshAccessToken,
+} from '../lib/crmAuth'
+import { crmFetch } from '../lib/crmClient'
 import { bytesToHex } from '../lib/hex'
+import { clearAuthTokens, saveRefreshToken } from '../lib/tokenStorage'
 
 ed.hashes.sha512 = sha512
 ed.hashes.sha512Async = (m: Uint8Array) => Promise.resolve(sha512(m))
@@ -33,15 +41,6 @@ vi.mock('../lib/secureStorage', () => ({
 vi.mock('../lib/keys', () => ({
   signChallengeNonce: signChallengeNonceMock,
 }))
-
-import {
-  accessTokenExpiresAt,
-  challengeAndVerify,
-  ensureAccessToken,
-  refreshAccessToken,
-} from '../lib/crmAuth'
-import { crmFetch } from '../lib/crmClient'
-import { clearAuthTokens, saveRefreshToken } from '../lib/tokenStorage'
 
 function makeJwt(expSecFromNow: number): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')
