@@ -772,9 +772,13 @@
         "create": "Create",
         "creating": "Creating…",
         "cancel": "Cancel",
+        "save": "Save changes",
+        "saving": "Saving…",
         "toast": {
           "created": "App created",
           "createError": "Could not create app",
+          "updated": "App updated",
+          "updateError": "Could not update app",
           "deleted": "App deleted",
           "deleteError": "Could not delete app",
           "loadError": "Could not load apps"
@@ -785,7 +789,14 @@
         "deleteConfirmCancel": "Cancel",
         "deleteConfirmAction": "Delete app",
         "deleting": "Deleting…",
-        "appIdLabel": "App ID"
+        "appIdLabel": "App ID",
+        "appIdHelp": "Public identifier used in enrollment links and the mobile app. It cannot be changed.",
+        "detail": {
+          "title": "App details",
+          "description": "Update the app title used across CRM registrations.",
+          "notFound": "App not found",
+          "breadcrumb": "Details"
+        }
       },
       "registrations": {
         "title": "Registrations",

@@ -36,6 +36,34 @@ export async function createCrmApp(input: { title: string }): Promise<CrmApp> {
   return result.data.app
 }
 
+export async function getCrmApp(id: number): Promise<CrmApp> {
+  const result = await apiFetch<{ app: CrmApp }>(
+    `/api/crm/apps/${encodeURIComponent(String(id))}`,
+    { cache: 'no-store' },
+    'Failed to load app',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.app
+}
+
+export async function updateCrmApp(id: number, input: { title: string }): Promise<CrmApp> {
+  const result = await apiFetch<{ app: CrmApp }>(
+    `/api/crm/apps/${encodeURIComponent(String(id))}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+    'Failed to update app',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.app
+}
+
 export async function deleteCrmApp(id: number): Promise<void> {
   const result = await apiFetch<{ ok: boolean }>(
     `/api/crm/apps/${encodeURIComponent(String(id))}`,

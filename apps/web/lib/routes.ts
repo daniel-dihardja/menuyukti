@@ -76,6 +76,7 @@ export const routes = {
   /** Restaurant CRM (customer registrations, programs). */
   crm: '/crm',
   crmApps: '/crm/apps',
+  crmAppsDetail: (id: string | number) => `/crm/apps/${encodeURIComponent(String(id))}`,
   crmRegistrations: '/crm/registrations',
   crmRegistrationsWithApp: (appId: string | number) =>
     `/crm/registrations?appId=${encodeURIComponent(String(appId))}`,

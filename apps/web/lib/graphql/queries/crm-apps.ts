@@ -54,6 +54,18 @@ export type CreateCrmAppData = {
   createCrmApp: CrmApp
 }
 
+export const UPDATE_CRM_APP_MUTATION = `
+  mutation UpdateCrmApp($id: Int!, $title: String!) {
+    updateCrmApp(id: $id, title: $title) {
+      ${CRM_APP_FIELDS}
+    }
+  }
+`
+
+export type UpdateCrmAppData = {
+  updateCrmApp: CrmApp
+}
+
 export const DELETE_CRM_APP_MUTATION = `
   mutation DeleteCrmApp($id: Int!) {
     deleteCrmApp(id: $id)

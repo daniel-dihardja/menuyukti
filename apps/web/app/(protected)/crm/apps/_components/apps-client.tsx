@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { createCrmApp, deleteCrmApp, type CrmApp } from '@/lib/crm/client-api'
+import { routes } from '@/lib/routes'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -150,11 +152,19 @@ export function AppsClient({ initialApps }: Props) {
               className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0 space-y-1">
-                <p className="text-sm font-medium tracking-tight">{app.title}</p>
-                <p className="font-mono text-xs text-muted-foreground">
+                <Link
+                  href={routes.crmAppsDetail(app.id)}
+                  className="block truncate text-sm font-medium tracking-tight underline-offset-4 hover:underline"
+                >
+                  {app.title}
+                </Link>
+                <Link
+                  href={routes.crmAppsDetail(app.id)}
+                  className="block truncate font-mono text-xs text-muted-foreground underline-offset-4 hover:underline"
+                >
                   <span className="sr-only">{t('appIdLabel')}: </span>
                   {app.appId}
-                </p>
+                </Link>
               </div>
               <Button
                 type="button"

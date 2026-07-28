@@ -35,6 +35,7 @@ from .revoke_crm_device import RevokeCrmDeviceMutation
 from .set_pass_criteria_statuses import SetPassCriteriaStatusesMutation
 from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
+from .update_crm_app import UpdateCrmAppMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_instagram_item import UpdateInstagramItemMutation
 from .update_instagram_item_page import UpdateInstagramItemPageMutation
@@ -84,6 +85,7 @@ __all__ = [
     "SetPassCriterionStatusMutation",
     "SetPassCriteriaStatusesMutation",
     "UpdateCalendarEntryMutation",
+    "UpdateCrmAppMutation",
     "UpdateImageAiFlowMutation",
     "UpdateInstagramItemMutation",
     "UpdateInstagramItemPageMutation",

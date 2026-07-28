@@ -1,4 +1,4 @@
-"""Tests for CRM app queries and create mutation."""
+"""Tests for CRM app queries and create/update/delete mutations."""
 
 from __future__ import annotations
 
@@ -43,6 +43,18 @@ query CrmApp($id: Int!) {
 _CREATE = """
 mutation CreateCrmApp($title: String!) {
   createCrmApp(title: $title) {
+    id
+    appId
+    title
+    workspaceId
+    createdByClerkUserId
+  }
+}
+"""
+
+_UPDATE = """
+mutation UpdateCrmApp($id: Int!, $title: String!) {
+  updateCrmApp(id: $id, title: $title) {
     id
     appId
     title
@@ -139,6 +151,54 @@ def test_create_and_list(crm_app_workspace_id: int):
     one = _execute(_ONE_QUERY, {"id": app["id"]})
     assert one.errors is None
     assert one.data["crmApp"]["title"] == "Acme Loyalty"
+
+
+def test_update_app(crm_app_workspace_id: int):
+    created = _execute(_CREATE, {"title": "Original Title"})
+    assert created.errors is None
+    app = created.data["createCrmApp"]
+    app_id = app["id"]
+    public_app_id = app["appId"]
+
+    updated = _execute(_UPDATE, {"id": app_id, "title": "  Renamed App  "})
+    assert updated.errors is None
+    row = updated.data["updateCrmApp"]
+    assert row["id"] == app_id
+    assert row["title"] == "Renamed App"
+    assert row["appId"] == public_app_id
+    assert row["workspaceId"] == crm_app_workspace_id
+
+    one = _execute(_ONE_QUERY, {"id": app_id})
+    assert one.errors is None
+    assert one.data["crmApp"]["title"] == "Renamed App"
+
+
+def test_update_rejects_blank_title(crm_app_workspace_id: int):
+    created = _execute(_CREATE, {"title": "Keep Me"})
+    assert created.errors is None
+    app_id = created.data["createCrmApp"]["id"]
+
+    result = _execute(_UPDATE, {"id": app_id, "title": "   "})
+    assert result.errors is not None
+    assert "title is required" in str(result.errors[0])
+
+
+def test_non_member_cannot_update(crm_app_workspace_id: int):
+    created = _execute(_CREATE, {"title": "Protected App"})
+    assert created.errors is None
+    app_id = created.data["createCrmApp"]["id"]
+
+    denied = _execute(
+        _UPDATE,
+        {"id": app_id, "title": "Hijacked"},
+        context_value={"user_id": OTHER_USER_ID},
+    )
+    assert denied.errors is not None
+    assert "Not allowed" in str(denied.errors[0])
+
+    one = _execute(_ONE_QUERY, {"id": app_id})
+    assert one.errors is None
+    assert one.data["crmApp"]["title"] == "Protected App"
 
 
 def test_delete_app(crm_app_workspace_id: int):
