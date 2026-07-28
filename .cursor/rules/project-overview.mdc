@@ -15,6 +15,7 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing autom
 |-----|------|------|
 | **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
 | **Web** | `apps/web` | Next.js user-facing app: chat, artifacts, CRUD for product entities. Calls GraphQL. |
+| **Mobile** | `apps/mobile-app` | Expo (React Native) client. Calls GraphQL over HTTP; does not open DB connections. |
 | **LangGraph agents** | `apps/agents` | Python FastAPI service: LangChain / LangGraph graphs, streaming chat (OpenAI), LCEL-friendly composition. Can call into platform APIs as features grow. |
 
 ## Agentic patterns in use
@@ -26,6 +27,7 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing autom
 ## Layering and boundaries
 
 - **`apps/graphql`:** Strawberry schema, SQLAlchemy persistence, analytics — the database and migrations live here; other apps call GraphQL over HTTP.
+- **`apps/web` / `apps/mobile-app`:** Clients of GraphQL only — no direct DB access.
 - **`apps/agents`:** FastAPI routers validate DTOs and delegate to compiled graphs / runnables; keep prompts, model config, and graph topology in separate modules — not monolithic route handlers. Agents use `httpx` to call GraphQL; they do not open DB connections.
 
 ## Further reading
