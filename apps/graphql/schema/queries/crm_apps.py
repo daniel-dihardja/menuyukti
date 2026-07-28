@@ -16,6 +16,8 @@ def _crm_app_to_gql(row: CrmApp) -> CrmAppType:
         id=row.id,
         app_id=row.app_id,
         title=row.title,
+        cashback_threshold_amount=row.cashback_threshold_amount,
+        cashback_percent=row.cashback_percent,
         workspace_id=row.workspace_id,
         created_by_clerk_user_id=row.created_by_clerk_user_id,
         created_at=row.created_at,  # type: ignore[arg-type]

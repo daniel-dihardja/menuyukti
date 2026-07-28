@@ -18,6 +18,8 @@ class CrmAppType:
     id: int
     app_id: uuid.UUID
     title: str
+    cashback_threshold_amount: int
+    cashback_percent: int
     workspace_id: int
     created_by_clerk_user_id: str
     created_at: datetime

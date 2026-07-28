@@ -37,6 +37,9 @@ function mapCrmAppError(message: string): { message: string; status: number } {
   if (lower.includes('title is required') || lower.includes('at most 256')) {
     return { message, status: 400 }
   }
+  if (lower.includes('cashbackthresholdamount') || lower.includes('cashbackpercent')) {
+    return { message, status: 400 }
+  }
   return { message, status: 500 }
 }
 
@@ -82,7 +85,12 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     const data = await graphqlQuery<UpdateCrmAppData>(
       UPDATE_CRM_APP_MUTATION,
-      { id, title: body.title },
+      {
+        id,
+        title: body.title,
+        cashbackThresholdAmount: body.cashbackThresholdAmount,
+        cashbackPercent: body.cashbackPercent,
+      },
       userId,
     )
 

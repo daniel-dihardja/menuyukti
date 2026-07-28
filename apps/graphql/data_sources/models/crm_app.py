@@ -38,6 +38,18 @@ class CrmApp(Base):
         default=uuid.uuid4,
     )
     title: Mapped[str] = mapped_column(String(256), nullable=False)
+    cashback_threshold_amount: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+    cashback_percent: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
     workspace_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("workspace.id", ondelete="CASCADE"),

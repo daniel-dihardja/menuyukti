@@ -2,6 +2,8 @@ export type CrmApp = {
   id: number
   appId: string
   title: string
+  cashbackThresholdAmount: number
+  cashbackPercent: number
   workspaceId: number
   createdByClerkUserId: string
   createdAt: string
@@ -12,6 +14,8 @@ const CRM_APP_FIELDS = `
   id
   appId
   title
+  cashbackThresholdAmount
+  cashbackPercent
   workspaceId
   createdByClerkUserId
   createdAt
@@ -55,8 +59,18 @@ export type CreateCrmAppData = {
 }
 
 export const UPDATE_CRM_APP_MUTATION = `
-  mutation UpdateCrmApp($id: Int!, $title: String!) {
-    updateCrmApp(id: $id, title: $title) {
+  mutation UpdateCrmApp(
+    $id: Int!
+    $title: String!
+    $cashbackThresholdAmount: Int
+    $cashbackPercent: Int
+  ) {
+    updateCrmApp(
+      id: $id
+      title: $title
+      cashbackThresholdAmount: $cashbackThresholdAmount
+      cashbackPercent: $cashbackPercent
+    ) {
       ${CRM_APP_FIELDS}
     }
   }

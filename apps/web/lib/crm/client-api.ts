@@ -48,7 +48,14 @@ export async function getCrmApp(id: number): Promise<CrmApp> {
   return result.data.app
 }
 
-export async function updateCrmApp(id: number, input: { title: string }): Promise<CrmApp> {
+export async function updateCrmApp(
+  id: number,
+  input: {
+    title: string
+    cashbackThresholdAmount: number
+    cashbackPercent: number
+  },
+): Promise<CrmApp> {
   const result = await apiFetch<{ app: CrmApp }>(
     `/api/crm/apps/${encodeURIComponent(String(id))}`,
     {

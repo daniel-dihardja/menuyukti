@@ -22,6 +22,8 @@ query CrmApps {
     id
     appId
     title
+    cashbackThresholdAmount
+    cashbackPercent
     workspaceId
     createdByClerkUserId
   }
@@ -34,6 +36,8 @@ query CrmApp($id: Int!) {
     id
     appId
     title
+    cashbackThresholdAmount
+    cashbackPercent
     workspaceId
     createdByClerkUserId
   }
@@ -46,6 +50,8 @@ mutation CreateCrmApp($title: String!) {
     id
     appId
     title
+    cashbackThresholdAmount
+    cashbackPercent
     workspaceId
     createdByClerkUserId
   }
@@ -53,11 +59,23 @@ mutation CreateCrmApp($title: String!) {
 """
 
 _UPDATE = """
-mutation UpdateCrmApp($id: Int!, $title: String!) {
-  updateCrmApp(id: $id, title: $title) {
+mutation UpdateCrmApp(
+  $id: Int!
+  $title: String!
+  $cashbackThresholdAmount: Int
+  $cashbackPercent: Int
+) {
+  updateCrmApp(
+    id: $id
+    title: $title
+    cashbackThresholdAmount: $cashbackThresholdAmount
+    cashbackPercent: $cashbackPercent
+  ) {
     id
     appId
     title
+    cashbackThresholdAmount
+    cashbackPercent
     workspaceId
     createdByClerkUserId
   }
@@ -140,6 +158,8 @@ def test_create_and_list(crm_app_workspace_id: int):
     assert app["title"] == "Acme Loyalty"
     assert app["workspaceId"] == crm_app_workspace_id
     assert app["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert app["cashbackThresholdAmount"] == 0
+    assert app["cashbackPercent"] == 0
     assert UUID(app["appId"])
 
     listed = _execute(_LIST_QUERY)
@@ -147,10 +167,14 @@ def test_create_and_list(crm_app_workspace_id: int):
     assert len(listed.data["crmApps"]) == 1
     assert listed.data["crmApps"][0]["id"] == app["id"]
     assert listed.data["crmApps"][0]["appId"] == app["appId"]
+    assert listed.data["crmApps"][0]["cashbackThresholdAmount"] == 0
+    assert listed.data["crmApps"][0]["cashbackPercent"] == 0
 
     one = _execute(_ONE_QUERY, {"id": app["id"]})
     assert one.errors is None
     assert one.data["crmApp"]["title"] == "Acme Loyalty"
+    assert one.data["crmApp"]["cashbackThresholdAmount"] == 0
+    assert one.data["crmApp"]["cashbackPercent"] == 0
 
 
 def test_update_app(crm_app_workspace_id: int):
@@ -167,10 +191,70 @@ def test_update_app(crm_app_workspace_id: int):
     assert row["title"] == "Renamed App"
     assert row["appId"] == public_app_id
     assert row["workspaceId"] == crm_app_workspace_id
+    assert row["cashbackThresholdAmount"] == 0
+    assert row["cashbackPercent"] == 0
 
     one = _execute(_ONE_QUERY, {"id": app_id})
     assert one.errors is None
     assert one.data["crmApp"]["title"] == "Renamed App"
+
+
+def test_update_cashback_config(crm_app_workspace_id: int):
+    created = _execute(_CREATE, {"title": "Cashback App"})
+    assert created.errors is None
+    app_id = created.data["createCrmApp"]["id"]
+
+    updated = _execute(
+        _UPDATE,
+        {
+            "id": app_id,
+            "title": "Cashback App",
+            "cashbackThresholdAmount": 100_000,
+            "cashbackPercent": 20,
+        },
+    )
+    assert updated.errors is None
+    row = updated.data["updateCrmApp"]
+    assert row["cashbackThresholdAmount"] == 100_000
+    assert row["cashbackPercent"] == 20
+
+    one = _execute(_ONE_QUERY, {"id": app_id})
+    assert one.errors is None
+    assert one.data["crmApp"]["cashbackThresholdAmount"] == 100_000
+    assert one.data["crmApp"]["cashbackPercent"] == 20
+
+
+def test_update_rejects_negative_threshold(crm_app_workspace_id: int):
+    created = _execute(_CREATE, {"title": "Keep Me"})
+    assert created.errors is None
+    app_id = created.data["createCrmApp"]["id"]
+
+    result = _execute(
+        _UPDATE,
+        {"id": app_id, "title": "Keep Me", "cashbackThresholdAmount": -1},
+    )
+    assert result.errors is not None
+    assert "cashbackThresholdAmount must be >= 0" in str(result.errors[0])
+
+
+def test_update_rejects_percent_out_of_range(crm_app_workspace_id: int):
+    created = _execute(_CREATE, {"title": "Keep Me"})
+    assert created.errors is None
+    app_id = created.data["createCrmApp"]["id"]
+
+    too_high = _execute(
+        _UPDATE,
+        {"id": app_id, "title": "Keep Me", "cashbackPercent": 101},
+    )
+    assert too_high.errors is not None
+    assert "cashbackPercent must be between 0 and 100" in str(too_high.errors[0])
+
+    too_low = _execute(
+        _UPDATE,
+        {"id": app_id, "title": "Keep Me", "cashbackPercent": -1},
+    )
+    assert too_low.errors is not None
+    assert "cashbackPercent must be between 0 and 100" in str(too_low.errors[0])
 
 
 def test_update_rejects_blank_title(crm_app_workspace_id: int):

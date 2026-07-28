@@ -791,9 +791,17 @@
         "deleting": "Deleting…",
         "appIdLabel": "App ID",
         "appIdHelp": "Public identifier used in enrollment links and the mobile app. It cannot be changed.",
+        "cashbackSectionTitle": "Cashback",
+        "cashbackSectionHelp": "When a payment meets the threshold, this percentage is recorded as cashback.",
+        "cashbackThresholdLabel": "Payment threshold (IDR)",
+        "cashbackThresholdPlaceholder": "e.g. 100000",
+        "cashbackThresholdHelp": "Minimum payment amount in Indonesian Rupiah before cashback applies. Use 0 to disable by amount.",
+        "cashbackPercentLabel": "Cashback percent",
+        "cashbackPercentPlaceholder": "e.g. 20",
+        "cashbackPercentHelp": "Whole-number percent from 0 to 100. Example: 20 means 20% of the payment.",
         "detail": {
           "title": "App details",
-          "description": "Update the app title used across CRM registrations.",
+          "description": "Update the app title and cashback rule used across CRM registrations.",
           "notFound": "App not found",
           "breadcrumb": "Details"
         }
