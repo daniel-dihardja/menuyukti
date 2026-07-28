@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 
 import { Button } from '../components/Button'
@@ -22,35 +22,46 @@ function formatDate(iso: string): string {
 export function RewardsScreen() {
   const { colors, radius, typography, fonts, spacing, shadow } = useBrand()
   const { session } = useSession()
-  const [overview, setOverview] = useState<CashbackOverview | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
   const deviceId = session?.deviceId
 
-  const load = useCallback(async () => {
-    if (!deviceId) {
-      setOverview(null)
-      setError('Sign in again to view cashback.')
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setError(null)
-    try {
-      const next = await fetchCashbackOverview(deviceId)
-      setOverview(next)
-    } catch (err) {
-      setOverview(null)
-      setError(err instanceof Error ? err.message : 'Could not load cashback.')
-    } finally {
-      setLoading(false)
-    }
-  }, [deviceId])
+  const [overview, setOverview] = useState<CashbackOverview | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(() => Boolean(session?.deviceId))
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
-    void load()
-  }, [load])
+    if (!deviceId) return
+
+    let cancelled = false
+
+    void fetchCashbackOverview(deviceId)
+      .then((next) => {
+        if (cancelled) return
+        setOverview(next)
+        setError(null)
+        setLoading(false)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setOverview(null)
+        setError(err instanceof Error ? err.message : 'Could not load cashback.')
+        setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [deviceId, reloadKey])
+
+  const signedOutError = deviceId ? null : 'Sign in again to view cashback.'
+  const displayError = signedOutError ?? error
+  const showLoading = Boolean(deviceId) && loading
+
+  const handleRetry = () => {
+    setLoading(true)
+    setError(null)
+    setReloadKey((key) => key + 1)
+  }
 
   const configLine =
     overview && overview.config.percent > 0
@@ -64,11 +75,11 @@ export function RewardsScreen() {
         subtitle={configLine ?? 'Cashback from your visits appears here.'}
       />
 
-      {loading ? (
+      {showLoading ? (
         <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>
           <ActivityIndicator color={colors.accentHover} />
         </View>
-      ) : error ? (
+      ) : displayError ? (
         <View
           style={[
             shadow.warmSm,
@@ -89,9 +100,9 @@ export function RewardsScreen() {
               color: colors.inkMuted,
             }}
           >
-            {error}
+            {displayError}
           </Text>
-          <Button title="Try again" variant="secondary" onPress={() => void load()} />
+          {deviceId ? <Button title="Try again" variant="secondary" onPress={handleRetry} /> : null}
         </View>
       ) : overview ? (
         <>
