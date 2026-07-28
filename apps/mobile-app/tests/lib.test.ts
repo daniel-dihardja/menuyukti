@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { parseEnrollInput } from '../lib/enroll'
+import { crmApiBaseUrl, crmEnrollUrl, enrollDevice, parseEnrollInput } from '../lib/enroll'
 import { bytesToHex, hexToBytes } from '../lib/hex'
 import {
   parseStoredProfile,
@@ -42,6 +42,97 @@ describe('parseEnrollInput', () => {
       appId: null,
       isDeepLink: true,
     })
+  })
+})
+
+describe('crm BFF URLs', () => {
+  const prev = process.env.EXPO_PUBLIC_CRM_API_URL
+
+  afterEach(() => {
+    if (prev === undefined) delete process.env.EXPO_PUBLIC_CRM_API_URL
+    else process.env.EXPO_PUBLIC_CRM_API_URL = prev
+  })
+
+  it('defaults to local Next.js origin', () => {
+    delete process.env.EXPO_PUBLIC_CRM_API_URL
+    expect(crmApiBaseUrl()).toBe('http://localhost:3000')
+    expect(crmEnrollUrl()).toBe('http://localhost:3000/api/mobile/crm/v1/enroll')
+  })
+
+  it('strips trailing slash from env base URL', () => {
+    process.env.EXPO_PUBLIC_CRM_API_URL = 'https://app.example.com/'
+    expect(crmApiBaseUrl()).toBe('https://app.example.com')
+    expect(crmEnrollUrl()).toBe('https://app.example.com/api/mobile/crm/v1/enroll')
+  })
+})
+
+describe('enrollDevice', () => {
+  beforeEach(() => {
+    process.env.EXPO_PUBLIC_CRM_API_URL = 'http://localhost:3000'
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('posts to the Next.js enroll BFF and returns ids', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ customerId: 'c1', deviceId: 'd1' }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    const result = await enrollDevice({
+      token: 'tok',
+      appId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      publicKey: 'pk',
+      platform: 'ios',
+    })
+
+    expect(result).toEqual({ customerId: 'c1', deviceId: 'd1' })
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:3000/api/mobile/crm/v1/enroll',
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('surfaces upstream error messages', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Invalid enrollment token' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    await expect(
+      enrollDevice({
+        token: 'bad',
+        appId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        publicKey: 'pk',
+        platform: 'ios',
+      }),
+    ).rejects.toThrow('Invalid enrollment token')
+  })
+
+  it('rejects incomplete success payloads', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ customerId: 'c1' }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    await expect(
+      enrollDevice({
+        token: 'tok',
+        appId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        publicKey: 'pk',
+        platform: 'ios',
+      }),
+    ).rejects.toThrow(/missing customerId or deviceId/)
   })
 })
 

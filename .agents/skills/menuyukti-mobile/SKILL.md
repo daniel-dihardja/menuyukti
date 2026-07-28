@@ -9,7 +9,7 @@ description: >-
 
 # Menuyukti: `apps/mobile-app`
 
-**Expo** (React Native) customer app: enroll via CRM token, then Home / Rewards / Profile. **Product data** goes through **GraphQL HTTP** (no direct DB). CRM enroll uses a dedicated REST path on the GraphQL service (`/crm/v1/enroll`).
+**Expo** (React Native) customer app: enroll via CRM token, then Home / Rewards / Profile. **Product data** goes through the **Next.js mobile BFF** (proxies private GraphQL). CRM enroll: `POST /api/mobile/crm/v1/enroll` on the web app.
 
 For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md).
 
@@ -67,8 +67,9 @@ Brand theming uses **`BrandProvider`** + Warm Editorial tokens in `theme/tokens.
 
 ## Networking
 
-- CRM enroll base URL: `EXPO_PUBLIC_CRM_API_URL` or default `http://localhost:8000` (`lib/enroll.ts`).
-- Future GraphQL reads/writes: same GraphQL HTTP surface as web/agents; keep client code under `lib/` and follow [`expo-data-fetching`](../expo-data-fetching/SKILL.md).
+- Public BFF base: `EXPO_PUBLIC_CRM_API_URL` (default `http://localhost:3000`); enroll posts to `/api/mobile/crm/v1/enroll` (`lib/enroll.ts`).
+- Quality: `pnpm lint` (ESLint / `eslint-config-expo`), `pnpm check-types`, `pnpm test`, `pnpm check:expo` (`expo-doctor`), `pnpm format-check`.
+- Future product reads: Next.js mobile BFF → private GraphQL; keep client code under `lib/` and follow [`expo-data-fetching`](../expo-data-fetching/SKILL.md).
 
 ## Related
 

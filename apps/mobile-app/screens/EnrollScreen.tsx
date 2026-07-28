@@ -25,6 +25,10 @@ function initialInputFromParams(params: Props['route']['params']): string {
   return ''
 }
 
+function paramsFingerprint(params: Props['route']['params']): string {
+  return `${params?.token ?? ''}\0${params?.app ?? ''}`
+}
+
 export function EnrollScreen({ route }: Props) {
   const brand = useBrand()
   const { setSession } = useSession()
@@ -33,14 +37,18 @@ export function EnrollScreen({ route }: Props) {
   const [publicKeyHex, setPublicKeyHex] = useState<string | null>(null)
   const [keysError, setKeysError] = useState<string | null>(null)
   const [enrollInput, setEnrollInput] = useState(() => initialInputFromParams(route.params))
+  const [paramsFp, setParamsFp] = useState(() => paramsFingerprint(route.params))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pendingSuccess, setPendingSuccess] = useState<PendingSuccess | null>(null)
 
-  useEffect(() => {
+  // Reset enroll field when deep-link params change (React "adjust state during render").
+  const nextParamsFp = paramsFingerprint(route.params)
+  if (nextParamsFp !== paramsFp) {
+    setParamsFp(nextParamsFp)
     const fromLink = initialInputFromParams(route.params)
     if (fromLink) setEnrollInput(fromLink)
-  }, [route.params])
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -103,7 +111,7 @@ export function EnrollScreen({ route }: Props) {
               letterSpacing: 0.8,
             }}
           >
-            You're in
+            {"You're in"}
           </Text>
           <Text
             style={{

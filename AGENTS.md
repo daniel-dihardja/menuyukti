@@ -73,7 +73,7 @@ cd apps/mobile-app && pnpm dev
 
 - Expo / React Native shell. From repo root: `pnpm --filter mobile-app dev`
 - Platform targets: `pnpm ios` / `pnpm android` / `pnpm web` from `apps/mobile-app`
-- Typecheck: `pnpm check-types` — Lint: `pnpm lint` (currently `tsc --noEmit`)
+- Typecheck: `pnpm check-types` — Lint: `pnpm lint` (ESLint / `eslint-config-expo`) — Tests: `pnpm test` — Expo health: `pnpm check:expo`
 
 ### All services
 
