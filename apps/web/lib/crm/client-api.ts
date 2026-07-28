@@ -70,3 +70,14 @@ export async function createCrmEnrollmentToken(appId: number): Promise<CrmEnroll
   }
   return result.data.enrollment
 }
+
+export async function deleteCrmCustomer(id: string): Promise<void> {
+  const result = await apiFetch<{ ok: boolean }>(
+    `/api/crm/registrations/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+    'Failed to delete registration',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+}

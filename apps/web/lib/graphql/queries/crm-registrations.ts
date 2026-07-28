@@ -43,3 +43,13 @@ export const CREATE_CRM_ENROLLMENT_TOKEN_MUTATION = `
 export type CreateCrmEnrollmentTokenData = {
   createCrmEnrollmentToken: CrmEnrollmentToken
 }
+
+export const DELETE_CRM_CUSTOMER_MUTATION = `
+  mutation DeleteCrmCustomer($id: UUID!) {
+    deleteCrmCustomer(id: $id)
+  }
+`
+
+export type DeleteCrmCustomerData = {
+  deleteCrmCustomer: boolean
+}

@@ -22,7 +22,6 @@ export default function App() {
   const [publicKeyHex, setPublicKeyHex] = useState<string | null>(null)
   const [keysError, setKeysError] = useState<string | null>(null)
   const [enrollInput, setEnrollInput] = useState('')
-  const [appIdManual, setAppIdManual] = useState('')
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,7 +45,6 @@ export default function App() {
   }, [])
 
   const parsed = parseEnrollInput(enrollInput)
-  const needsManualAppId = !parsed.isDeepLink || !parsed.appId
 
   const handleSubmit = async () => {
     setError(null)
@@ -55,13 +53,9 @@ export default function App() {
       return
     }
     const token = parsed.token.trim()
-    const appId = (parsed.appId ?? appIdManual).trim()
-    if (!token) {
-      setError('Paste the enrollment link or token')
-      return
-    }
-    if (!appId) {
-      setError('App UUID is required')
+    const appId = parsed.appId?.trim() ?? ''
+    if (!token || !appId) {
+      setError('Paste the full enrollment link from the QR code')
       return
     }
     if (!phone.trim()) {
@@ -112,7 +106,7 @@ export default function App() {
         </Text>
       )}
 
-      <Text style={styles.label}>Enrollment link or token</Text>
+      <Text style={styles.label}>Enrollment link</Text>
       <TextInput
         style={[styles.input, styles.multiline]}
         value={enrollInput}
@@ -122,20 +116,6 @@ export default function App() {
         autoCorrect={false}
         multiline
       />
-
-      {needsManualAppId ? (
-        <>
-          <Text style={styles.label}>App UUID</Text>
-          <TextInput
-            style={styles.input}
-            value={appIdManual}
-            onChangeText={setAppIdManual}
-            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </>
-      ) : null}
 
       <Text style={styles.label}>Phone (E.164)</Text>
       <TextInput

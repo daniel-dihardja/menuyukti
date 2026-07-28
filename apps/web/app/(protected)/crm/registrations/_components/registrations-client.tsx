@@ -4,17 +4,27 @@ import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Check, Copy, Loader2, QrCode, RefreshCw } from 'lucide-react'
+import { Check, Copy, Loader2, QrCode, RefreshCw, Trash2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 
 import {
   createCrmEnrollmentToken,
+  deleteCrmCustomer,
   listCrmCustomers,
   type CrmCustomer,
   type CrmEnrollmentToken,
 } from '@/lib/crm/client-api'
 import { routes } from '@/lib/routes'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
 import {
   Dialog,
@@ -63,6 +73,8 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
   const [enrollment, setEnrollment] = useState<CrmEnrollmentToken | null>(null)
   const [msRemaining, setMsRemaining] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<CrmCustomer | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [isMinting, startMintTransition] = useTransition()
   const [isRefreshing, startRefreshTransition] = useTransition()
 
@@ -144,6 +156,25 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
     }
   }
 
+  const confirmDelete = () => {
+    if (pendingDelete === null || isDeleting) return
+    const customer = pendingDelete
+    setIsDeleting(true)
+    void (async () => {
+      try {
+        await deleteCrmCustomer(customer.id)
+        setCustomers((prev) => prev.filter((row) => row.id !== customer.id))
+        setPendingDelete(null)
+        toast.success(t('toast.deleted'))
+        router.refresh()
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t('toast.deleteError'))
+      } finally {
+        setIsDeleting(false)
+      }
+    })()
+  }
+
   if (apps.length === 0) {
     return (
       <div className="flex flex-col items-start gap-3">
@@ -223,6 +254,9 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
                 <TableHead>{t('columns.phone')}</TableHead>
                 <TableHead>{t('columns.enrolledAt')}</TableHead>
                 <TableHead className="text-right">{t('columns.devices')}</TableHead>
+                <TableHead className="w-[1%] text-right">
+                  <span className="sr-only">{t('columns.actions')}</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -233,6 +267,20 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
                     {new Date(row.createdAt).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{row.deviceCount}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-destructive hover:text-destructive"
+                      disabled={isDeleting}
+                      onClick={() => setPendingDelete(row)}
+                      aria-label={t('delete')}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                      {t('delete')}
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -305,6 +353,47 @@ export function RegistrationsClient({ apps, initialAppId, initialCustomers }: Pr
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setPendingDelete(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete
+                ? t('deleteConfirmDescription', { phone: pendingDelete.phoneMasked })
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} type="button">
+              {t('deleteConfirmCancel')}
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeleting || pendingDelete === null}
+              onClick={confirmDelete}
+              className="gap-2"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                  {t('deleting')}
+                </>
+              ) : (
+                t('deleteConfirmAction')
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

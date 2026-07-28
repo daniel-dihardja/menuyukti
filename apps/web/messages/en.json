@@ -804,7 +804,8 @@
         "columns": {
           "phone": "Phone",
           "enrolledAt": "Enrolled",
-          "devices": "Devices"
+          "devices": "Devices",
+          "actions": "Actions"
         },
         "dialogTitle": "Enrollment QR",
         "dialogDescription": "Customer scans this code (or pastes the link) in the mobile app within 5 minutes.",
@@ -813,11 +814,19 @@
         "expired": "This code has expired. Generate a new one.",
         "copyLink": "Copy link",
         "regenerate": "Generate new code",
+        "delete": "Delete",
+        "deleteConfirmTitle": "Delete this registration?",
+        "deleteConfirmDescription": "This permanently removes {phone} and their enrolled devices. This cannot be undone.",
+        "deleteConfirmCancel": "Cancel",
+        "deleteConfirmAction": "Delete registration",
+        "deleting": "Deleting…",
         "toast": {
           "enrollError": "Could not create enrollment QR",
           "loadError": "Could not load registrations",
           "copied": "Enrollment link copied",
-          "copyError": "Could not copy link"
+          "copyError": "Could not copy link",
+          "deleted": "Registration deleted",
+          "deleteError": "Could not delete registration"
         }
       }
     },

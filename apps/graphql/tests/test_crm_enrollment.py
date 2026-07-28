@@ -50,6 +50,12 @@ mutation CreateCrmEnrollmentToken($appId: Int!) {
 }
 """
 
+_DELETE_CUSTOMER = """
+mutation DeleteCrmCustomer($id: UUID!) {
+  deleteCrmCustomer(id: $id)
+}
+"""
+
 OTHER_USER_ID = "clerk_other_crm_enroll_user"
 
 
@@ -200,3 +206,73 @@ def test_customers_after_manual_insert(crm_enroll_workspace_id: int):
     assert rows[0]["id"] == customer_id
     assert rows[0]["phoneMasked"] == "+49***67"
     assert rows[0]["deviceCount"] == 1
+
+
+def test_delete_customer_cascades_devices(crm_enroll_workspace_id: int):
+    app = _create_app()
+    session = SessionLocal()
+    try:
+        customer = CrmCustomer(crm_app_id=app["id"], phone_e164="+491709999999")
+        session.add(customer)
+        session.flush()
+        session.add(
+            CrmDevice(
+                customer_id=customer.id,
+                public_key="delete-me-key",
+                platform="android",
+            )
+        )
+        session.commit()
+        customer_id = str(customer.id)
+    finally:
+        session.close()
+
+    deleted = _execute(_DELETE_CUSTOMER, {"id": customer_id})
+    assert deleted.errors is None
+    assert deleted.data["deleteCrmCustomer"] is True
+
+    listed = _execute(_CUSTOMERS, {"appId": app["id"]})
+    assert listed.errors is None
+    assert listed.data["crmCustomers"] == []
+
+    session = SessionLocal()
+    try:
+        assert session.query(CrmCustomer).filter(CrmCustomer.id == UUID(customer_id)).first() is None
+        assert session.query(CrmDevice).filter(CrmDevice.public_key == "delete-me-key").first() is None
+    finally:
+        session.close()
+
+
+def test_non_member_cannot_delete_customer(crm_enroll_workspace_id: int):
+    app = _create_app()
+    session = SessionLocal()
+    try:
+        customer = CrmCustomer(crm_app_id=app["id"], phone_e164="+491708888888")
+        session.add(customer)
+        session.commit()
+        customer_id = str(customer.id)
+    finally:
+        session.close()
+
+    denied = _execute(
+        _DELETE_CUSTOMER,
+        {"id": customer_id},
+        context_value={"user_id": OTHER_USER_ID},
+    )
+    assert denied.errors is not None
+    assert "Not allowed" in str(denied.errors[0])
+
+    session = SessionLocal()
+    try:
+        assert (
+            session.query(CrmCustomer).filter(CrmCustomer.id == UUID(customer_id)).first() is not None
+        )
+    finally:
+        session.close()
+
+
+def test_delete_customer_not_found(crm_enroll_workspace_id: int):
+    missing_id = "00000000-0000-4000-8000-000000000001"
+    result = _execute(_DELETE_CUSTOMER, {"id": missing_id})
+    assert result.errors is not None
+    assert "not found" in str(result.errors[0]).lower()
