@@ -77,9 +77,9 @@ describe('enrollDevice', () => {
     vi.restoreAllMocks()
   })
 
-  it('posts to the Next.js enroll BFF and returns ids', async () => {
+  it('posts to the Next.js enroll BFF and returns ids plus refreshToken', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      new Response(JSON.stringify({ customerId: 'c1', deviceId: 'd1' }), {
+      new Response(JSON.stringify({ customerId: 'c1', deviceId: 'd1', refreshToken: 'rt-1' }), {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
       }),
@@ -92,7 +92,7 @@ describe('enrollDevice', () => {
       platform: 'ios',
     })
 
-    expect(result).toEqual({ customerId: 'c1', deviceId: 'd1' })
+    expect(result).toEqual({ customerId: 'c1', deviceId: 'd1', refreshToken: 'rt-1' })
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:3000/api/mobile/crm/v1/enroll',
       expect.objectContaining({ method: 'POST' }),
@@ -119,7 +119,7 @@ describe('enrollDevice', () => {
 
   it('rejects incomplete success payloads', async () => {
     vi.mocked(fetch).mockResolvedValue(
-      new Response(JSON.stringify({ customerId: 'c1' }), {
+      new Response(JSON.stringify({ customerId: 'c1', deviceId: 'd1' }), {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
       }),
@@ -132,7 +132,7 @@ describe('enrollDevice', () => {
         publicKey: 'pk',
         platform: 'ios',
       }),
-    ).rejects.toThrow(/missing customerId or deviceId/)
+    ).rejects.toThrow(/missing customerId, deviceId, or refreshToken/)
   })
 })
 

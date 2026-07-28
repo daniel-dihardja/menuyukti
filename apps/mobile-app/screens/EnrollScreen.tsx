@@ -5,8 +5,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { Button } from '../components/Button'
 import { Screen } from '../components/Screen'
 import { TextField } from '../components/TextField'
+import { challengeAndVerify } from '../lib/crmAuth'
 import { enrollDevice, parseEnrollInput } from '../lib/enroll'
 import { ensureDeviceKeypair } from '../lib/keys'
+import { saveRefreshToken } from '../lib/tokenStorage'
 import type { RootStackParamList } from '../navigation/RootNavigator'
 import { useBrand } from '../theme/BrandContext'
 import { useSession, type Session } from '../theme/SessionContext'
@@ -90,7 +92,13 @@ export function EnrollScreen({ route }: Props) {
         publicKey: publicKeyHex,
         platform: Platform.OS,
       })
-      setPendingSuccess({ ...result, appId })
+      await saveRefreshToken(result.refreshToken)
+      await challengeAndVerify(result.deviceId)
+      setPendingSuccess({
+        customerId: result.customerId,
+        deviceId: result.deviceId,
+        appId,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Enrollment failed')
     } finally {

@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import { mobileEnrollBodySchema } from '@/app/api/mobile/crm/v1/enroll/schema'
 
+const VALID_PUBLIC_KEY = 'a'.repeat(64)
+
 const validBody = {
   token: 'enroll-token-abc',
   appId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
-  publicKey: 'abcd1234',
+  publicKey: VALID_PUBLIC_KEY,
   platform: 'ios',
 }
 
@@ -47,10 +49,18 @@ describe('mobileEnrollBodySchema', () => {
     expect(parsed.success).toBe(false)
   })
 
-  it('rejects publicKey longer than 4096 chars', () => {
+  it('rejects non-hex publicKey', () => {
     const parsed = mobileEnrollBodySchema.safeParse({
       ...validBody,
-      publicKey: 'x'.repeat(4097),
+      publicKey: 'not-a-hex-key',
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects publicKey with wrong length', () => {
+    const parsed = mobileEnrollBodySchema.safeParse({
+      ...validBody,
+      publicKey: 'ab'.repeat(20),
     })
     expect(parsed.success).toBe(false)
   })

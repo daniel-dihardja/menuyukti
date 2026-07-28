@@ -5,7 +5,7 @@ import { OPTIONS, POST } from '@/app/api/mobile/crm/v1/enroll/route'
 const validBody = {
   token: 'enroll-token-abc',
   appId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
-  publicKey: 'abcd1234',
+  publicKey: 'a'.repeat(64),
   platform: 'ios',
 }
 

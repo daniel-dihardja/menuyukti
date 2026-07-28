@@ -9,6 +9,7 @@ export type EnrollInput = {
 export type EnrollResult = {
   customerId: string
   deviceId: string
+  refreshToken: string
 }
 
 export type ParsedEnrollPayload = {
@@ -90,15 +91,20 @@ export async function enrollDevice(input: EnrollInput): Promise<EnrollResult> {
       message?: string
       customerId?: string
       deviceId?: string
+      refreshToken?: string
     }
 
     if (!response.ok) {
       throw new Error(body.message ?? enrollErrorMessage(null, response.status))
     }
-    if (!body.customerId || !body.deviceId) {
-      throw new Error('Enroll response missing customerId or deviceId')
+    if (!body.customerId || !body.deviceId || !body.refreshToken) {
+      throw new Error('Enroll response missing customerId, deviceId, or refreshToken')
     }
-    return { customerId: body.customerId, deviceId: body.deviceId }
+    return {
+      customerId: body.customerId,
+      deviceId: body.deviceId,
+      refreshToken: body.refreshToken,
+    }
   } catch (err) {
     if (err instanceof Error && err.message.startsWith('Enroll')) throw err
     if (err instanceof Error && err.message.includes('missing customerId')) throw err

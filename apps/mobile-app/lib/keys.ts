@@ -4,6 +4,7 @@ import { sha512 } from '@noble/hashes/sha2.js'
 import { bytesToHex, hexToBytes } from './hex'
 import './polyfillCrypto'
 import { deleteSecureItem, getSecureItem, setSecureItem } from './secureStorage'
+import { signNonceWithPrivateKeyHex } from './signNonce'
 
 export { bytesToHex, hexToBytes }
 
@@ -42,6 +43,18 @@ export async function ensureDeviceKeypair(): Promise<DeviceKeypair> {
   const publicKey = ed.getPublicKey(secretKey)
   await writePrivateKeyHex(bytesToHex(secretKey))
   return { publicKeyHex: bytesToHex(publicKey) }
+}
+
+/**
+ * Sign a challenge nonce (UTF-8) with the device private key.
+ * Returns a hex-encoded Ed25519 signature (128 hex chars).
+ */
+export async function signChallengeNonce(nonce: string): Promise<string> {
+  const privateKeyHex = await readPrivateKeyHex()
+  if (!privateKeyHex) {
+    throw new Error('Device private key is not available')
+  }
+  return signNonceWithPrivateKeyHex(nonce, privateKeyHex)
 }
 
 /** Remove the device private key (e.g. on reset enrollment). */

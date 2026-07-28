@@ -8,7 +8,9 @@ import {
   type ReactNode,
 } from 'react'
 
+import { revokeDevice } from '../lib/crmAuth'
 import { clearDeviceKeypair } from '../lib/keys'
+import { clearAuthTokens } from '../lib/tokenStorage'
 import {
   clearProfile as clearStoredProfile,
   clearSession as clearStoredSession,
@@ -37,7 +39,7 @@ type SessionContextValue = {
   setSession: (session: Session | null) => Promise<void>
   profile: CustomerProfile
   saveProfile: (profile: CustomerProfile) => Promise<void>
-  /** Clears session, profile, and device key so the next enroll is fresh. */
+  /** Clears session, profile, auth tokens, and device key so the next enroll is fresh. */
   resetSession: () => Promise<void>
 }
 
@@ -80,6 +82,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const resetSession = useCallback(async () => {
+    try {
+      await revokeDevice()
+    } catch {
+      await clearAuthTokens()
+    }
     setSessionState(null)
     setProfileState(emptyProfile)
     await Promise.all([clearStoredSession(), clearStoredProfile(), clearDeviceKeypair()])
