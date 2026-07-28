@@ -13,6 +13,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/media',
   '/content',
   '/advisor',
+  '/crm',
   '/print-orders',
   '/dashboard',
   '/staff',
@@ -71,6 +72,12 @@ export const routes = {
   calendar: '/calendar',
   calendarWithLocation: (locationId: string | number) =>
     `/calendar?locationId=${encodeURIComponent(String(locationId))}`,
+
+  /** Restaurant CRM (customer registrations, programs). */
+  crm: '/crm',
+  crmRegistrations: '/crm/registrations',
+  crmRegistrationsWithLocation: (locationId: string | number) =>
+    `/crm/registrations?locationId=${encodeURIComponent(String(locationId))}`,
 
   /** Standalone Instagram post drafts + Post Creator (admin). */
   igStudio: '/ig-studio',

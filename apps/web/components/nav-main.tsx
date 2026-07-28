@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   ChevronRight,
+  Contact,
   FileUp,
   Image,
   LayoutDashboard,
@@ -50,12 +51,12 @@ type NavItem = {
    * orphan single-item sections from hard-coded separators).
    * Optional for admin items that live in their own SidebarGroup.
    */
-  group?: 'overview' | 'create' | 'analytics' | 'commerce' | 'account'
+  group?: 'overview' | 'create' | 'analytics' | 'crm' | 'commerce' | 'account'
 }
 
 /**
  * Sidebar order follows daily product flow:
- * overview → create/plan → measure → commerce → account.
+ * overview → create/plan → measure → crm → commerce → account.
  * Chat leads create (default authenticated home is `/workflow`).
  */
 const NAV_WORKSPACE: NavItem[] = [
@@ -107,6 +108,20 @@ const NAV_WORKSPACE: NavItem[] = [
     href: routes.analytics.branches,
     icon: <MapPin className="w-4 h-4" />,
     group: 'analytics',
+  },
+  {
+    key: 'crm',
+    labelKey: 'crm',
+    href: routes.crm,
+    icon: <Contact className="w-4 h-4" />,
+    group: 'crm',
+    children: [
+      {
+        key: 'crmRegistrations',
+        labelKey: 'crmRegistrations',
+        href: routes.crmRegistrations,
+      },
+    ],
   },
   {
     key: 'printShop',
@@ -252,6 +267,9 @@ export function NavMain() {
     if (!url) return false
     if (url === routes.shop) {
       return pathname === routes.shop || pathname.startsWith(`${routes.shop}/`)
+    }
+    if (url === routes.crm) {
+      return pathname === routes.crm || pathname.startsWith(`${routes.crm}/`)
     }
     return pathname.startsWith(url)
   }

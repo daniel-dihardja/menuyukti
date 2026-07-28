@@ -654,6 +654,8 @@
     "igReels": "IG Reels",
     "igStories": "IG Stories",
     "printShop": "Print shop",
+    "crm": "CRM",
+    "crmRegistrations": "Registrations",
     "team": "Team",
     "agents": "Advisor",
     "cogs": "COGS",
@@ -751,6 +753,24 @@
             }
           }
         }
+      }
+    },
+    "crm": {
+      "title": "CRM",
+      "breadcrumb": "CRM",
+      "registrations": {
+        "title": "Registrations",
+        "description": "Customers enrolled at this location for marketing programs.",
+        "breadcrumb": "Registrations",
+        "branchLabel": "Location",
+        "branchPlaceholder": "Select a location",
+        "branchDescription": "Registrations are scoped to the selected location.",
+        "selectBranch": "Select a location to view registered customers.",
+        "emptyTitle": "No registrations yet",
+        "emptyDescription": "Enroll customers by generating a one-time QR code they can scan in the restaurant.",
+        "enrollQr": "Generate enrollment QR",
+        "enrollQrSoon": "Enrollment QR codes will be available in a later release.",
+        "noLocations": "Add a location before managing customer registrations."
       }
     },
     "calendar": {
