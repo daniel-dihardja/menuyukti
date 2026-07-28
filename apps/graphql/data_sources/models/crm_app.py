@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
+    from graphql.data_sources.models.crm_audit_event import CrmAuditEvent
     from graphql.data_sources.models.crm_customer import CrmCustomer
     from graphql.data_sources.models.crm_enrollment_token import CrmEnrollmentToken
     from graphql.data_sources.models.workspace import Workspace
@@ -68,4 +69,8 @@ class CrmApp(Base):
         "CrmEnrollmentToken",
         back_populates="crm_app",
         cascade="all, delete-orphan",
+    )
+    audit_events: Mapped[list[CrmAuditEvent]] = relationship(
+        "CrmAuditEvent",
+        back_populates="crm_app",
     )

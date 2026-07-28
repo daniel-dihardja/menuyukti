@@ -6,9 +6,12 @@ import asyncio
 from datetime import UTC, datetime
 
 import pytest
-from graphql.crm_auth.tokens import hash_enrollment_token
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from graphql.crm_auth.tokens import hash_enrollment_token, hash_opaque_token
 from graphql.data_sources import (
     CrmApp,
+    CrmAuditEvent,
+    CrmAuthChallenge,
     CrmCustomer,
     CrmDevice,
     CrmEnrollmentToken,
@@ -50,10 +53,16 @@ query CrmCustomers($appId: Int!) {
 """
 
 
+def _public_key_hex() -> str:
+    return Ed25519PrivateKey.generate().public_key().public_bytes_raw().hex()
+
+
 @pytest.fixture
 def enroll_workspace():
     session = SessionLocal()
     try:
+        session.query(CrmAuditEvent).delete()
+        session.query(CrmAuthChallenge).delete()
         session.query(CrmDevice).delete()
         session.query(CrmCustomer).delete()
         session.query(CrmEnrollmentToken).delete()
@@ -83,6 +92,8 @@ def enroll_workspace():
     yield wid
     session = SessionLocal()
     try:
+        session.query(CrmAuditEvent).delete()
+        session.query(CrmAuthChallenge).delete()
         session.query(CrmDevice).delete()
         session.query(CrmCustomer).delete()
         session.query(CrmEnrollmentToken).delete()
@@ -113,6 +124,7 @@ def test_enroll_creates_customer_and_device(enroll_workspace: int):
     assert token_result.errors is None
     raw_token = token_result.data["createCrmEnrollmentToken"]["token"]
 
+    public_key = _public_key_hex()
     client = TestClient(app)
     response = client.post(
         "/crm/v1/enroll",
@@ -120,7 +132,7 @@ def test_enroll_creates_customer_and_device(enroll_workspace: int):
             "token": raw_token,
             "appId": app_row["appId"],
             "phoneE164": "+491701112233",
-            "publicKey": "ed25519-public-key-demo",
+            "publicKey": public_key,
             "platform": "ios",
         },
     )
@@ -128,6 +140,8 @@ def test_enroll_creates_customer_and_device(enroll_workspace: int):
     body = response.json()
     assert body["customerId"]
     assert body["deviceId"]
+    assert body["refreshToken"]
+    refresh_token = body["refreshToken"]
 
     listed = _gql(_CUSTOMERS, {"appId": app_row["id"]})
     assert listed.errors is None
@@ -145,8 +159,39 @@ def test_enroll_creates_customer_and_device(enroll_workspace: int):
             .one()
         )
         assert token_row.used_at is not None
+        device = session.query(CrmDevice).filter(CrmDevice.id == body["deviceId"]).one()
+        assert device.public_key == public_key
+        assert device.refresh_token_hash == hash_opaque_token(refresh_token)
+        assert device.refresh_token_hash != refresh_token
+        assert device.refresh_expires_at is not None
+        audit = (
+            session.query(CrmAuditEvent)
+            .filter(CrmAuditEvent.event_type == "enroll", CrmAuditEvent.device_id == device.id)
+            .one()
+        )
+        assert audit.customer_id is not None
     finally:
         session.close()
+
+
+def test_enroll_rejects_invalid_public_key(enroll_workspace: int):
+    created = _gql(_CREATE_APP, {"title": "Bad Key App"})
+    app_row = created.data["createCrmApp"]
+    token_result = _gql(_CREATE_TOKEN, {"appId": app_row["id"]})
+    raw_token = token_result.data["createCrmEnrollmentToken"]["token"]
+
+    client = TestClient(app)
+    response = client.post(
+        "/crm/v1/enroll",
+        json={
+            "token": raw_token,
+            "appId": app_row["appId"],
+            "publicKey": "not-a-hex-key",
+            "platform": "ios",
+        },
+    )
+    assert response.status_code == 400
+    assert "publicKey" in response.json()["message"]
 
 
 def test_enroll_rejects_reused_token(enroll_workspace: int):
@@ -160,7 +205,7 @@ def test_enroll_rejects_reused_token(enroll_workspace: int):
         "token": raw_token,
         "appId": app_row["appId"],
         "phoneE164": "+491709998877",
-        "publicKey": "key-1",
+        "publicKey": _public_key_hex(),
         "platform": "android",
     }
     client = TestClient(app)
@@ -169,7 +214,7 @@ def test_enroll_rejects_reused_token(enroll_workspace: int):
 
     second = client.post(
         "/crm/v1/enroll",
-        json={**payload, "phoneE164": "+491709998866", "publicKey": "key-2"},
+        json={**payload, "phoneE164": "+491709998866", "publicKey": _public_key_hex()},
     )
     assert second.status_code == 401
     assert "already used" in second.json()["message"]
@@ -188,7 +233,7 @@ def test_enroll_rejects_invalid_phone(enroll_workspace: int):
             "token": raw_token,
             "appId": app_row["appId"],
             "phoneE164": "not-a-phone",
-            "publicKey": "key",
+            "publicKey": _public_key_hex(),
             "platform": "ios",
         },
     )
@@ -209,7 +254,7 @@ def test_enroll_without_phone(enroll_workspace: int):
         json={
             "token": raw_token,
             "appId": app_row["appId"],
-            "publicKey": "ed25519-public-key-no-phone",
+            "publicKey": _public_key_hex(),
             "platform": "ios",
         },
     )
@@ -217,6 +262,7 @@ def test_enroll_without_phone(enroll_workspace: int):
     body = response.json()
     assert body["customerId"]
     assert body["deviceId"]
+    assert body["refreshToken"]
 
     listed = _gql(_CUSTOMERS, {"appId": app_row["id"]})
     assert listed.errors is None
@@ -243,9 +289,6 @@ def test_enroll_cors_preflight(enroll_workspace: int):
 
 def test_enroll_skips_internal_api_key(enroll_workspace: int, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("INTERNAL_API_KEY", "secret-key")
-    # Re-import middleware env is read at module load; exercise path skip by posting without key
-    # against the already-constructed app which reads INTERNAL_API_KEY at request time from
-    # graphql.server.INTERNAL_API_KEY — patch that module attribute.
     import graphql.server as server_mod
 
     monkeypatch.setattr(server_mod, "INTERNAL_API_KEY", "secret-key")
@@ -262,7 +305,7 @@ def test_enroll_skips_internal_api_key(enroll_workspace: int, monkeypatch: pytes
             "token": raw_token,
             "appId": app_row["appId"],
             "phoneE164": "+12025550123",
-            "publicKey": "pk",
+            "publicKey": _public_key_hex(),
             "platform": "ios",
         },
     )

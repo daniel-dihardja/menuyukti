@@ -10,6 +10,8 @@ __all__ = [
     "LocationManualBriefInput",
     "VisualStyle",
     "CrmApp",
+    "CrmAuditEvent",
+    "CrmAuthChallenge",
     "CrmCustomer",
     "CrmDevice",
     "CrmEnrollmentToken",

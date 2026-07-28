@@ -3,6 +3,8 @@
 from graphql.data_sources.models.analytics import AnalyticsRun, MenuItemCogs, OrderFact
 from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.data_sources.models.crm_app import CrmApp
+from graphql.data_sources.models.crm_audit_event import CrmAuditEvent
+from graphql.data_sources.models.crm_auth_challenge import CrmAuthChallenge
 from graphql.data_sources.models.crm_customer import CrmCustomer
 from graphql.data_sources.models.crm_device import CrmDevice
 from graphql.data_sources.models.crm_enrollment_token import CrmEnrollmentToken
@@ -29,6 +31,8 @@ __all__ = [
     "AnalyticsRun",
     "CalendarEntry",
     "CrmApp",
+    "CrmAuditEvent",
+    "CrmAuthChallenge",
     "CrmCustomer",
     "CrmDevice",
     "CrmEnrollmentToken",
