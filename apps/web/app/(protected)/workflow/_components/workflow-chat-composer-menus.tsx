@@ -468,13 +468,13 @@ export function WorkflowChatComposerMenus({
                               onSelect={() => onSelectMediaMention(item)}
                               value={item.name}
                             >
-                              {/* eslint-disable-next-line @next/next/no-img-element -- tiny mention preview */}
+                              {/* eslint-disable-next-line @next/next/no-img-element -- mention preview */}
                               <img
                                 alt=""
-                                className="size-8 shrink-0 rounded object-cover"
-                                height={32}
+                                className="size-16 shrink-0 rounded object-cover"
+                                height={64}
                                 src={item.url}
-                                width={32}
+                                width={64}
                               />
                               <span className="min-w-0 truncate font-medium">{label}</span>
                             </CommandItem>

@@ -260,11 +260,13 @@ export function PostCreatorChatPreviewMention({
                         // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
                         <img
                           alt=""
-                          className="size-8 shrink-0 rounded object-cover"
+                          className="size-16 shrink-0 rounded object-cover"
+                          height={64}
                           src={candidate.url}
+                          width={64}
                         />
                       ) : (
-                        <ImageIcon className="size-8 shrink-0 text-muted-foreground" aria-hidden />
+                        <ImageIcon className="size-16 shrink-0 text-muted-foreground" aria-hidden />
                       )}
                       <span className="truncate text-sm">{candidate.label}</span>
                     </CommandItem>
@@ -300,14 +302,14 @@ export function PostCreatorChatPreviewMention({
                             // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
                             <img
                               alt=""
-                              className="size-8 shrink-0 rounded object-cover"
-                              height={32}
+                              className="size-16 shrink-0 rounded object-cover"
+                              height={64}
                               src={item.url}
-                              width={32}
+                              width={64}
                             />
                           ) : (
                             <ImageIcon
-                              className="size-8 shrink-0 text-muted-foreground"
+                              className="size-16 shrink-0 text-muted-foreground"
                               aria-hidden
                             />
                           )}
