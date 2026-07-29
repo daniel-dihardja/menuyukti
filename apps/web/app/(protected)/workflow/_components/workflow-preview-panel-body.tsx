@@ -13,12 +13,15 @@ import { milestonePresetIconFor } from '@/lib/milestones/preset-definitions'
 
 import { MilestoneDataPreview } from './milestone-preview/milestone-data-preview'
 import { InstagramItemsArtifact } from './instagram-items/instagram-items-artifact'
+import { StoryImageArtifactPlaceholder } from './story-image-artifact-placeholder'
 import { useTimelineWorkspaceState } from './timeline-context'
+import { useWorkflowChatComposerState } from './workflow-chat-context'
 
 const PREVIEW_TITLE_ID = 'workflow-preview-panel-title'
 
 export function WorkflowPreviewPanelBody() {
   const tChat = useTranslations('analytics.workflows.chat')
+  const { chatMode } = useWorkflowChatComposerState()
   const {
     milestoneState: { milestones },
   } = useTimelineWorkspaceState()
@@ -26,7 +29,8 @@ export function WorkflowPreviewPanelBody() {
 
   const selectedMilestone =
     selectedId !== null ? milestones.find((m) => m.id === selectedId) : undefined
-  const showMilestonePreview = selectedMilestone !== undefined
+  const showStoryArtifact = chatMode === 'story_image_assistant'
+  const showMilestonePreview = !showStoryArtifact && selectedMilestone !== undefined
   const milestoneDescription = useMemo(
     () => (selectedMilestone ? getMilestoneHelpDescription(selectedMilestone, tChat) : ''),
     [selectedMilestone, tChat],
@@ -34,6 +38,16 @@ export function WorkflowPreviewPanelBody() {
   const MilestoneIcon = selectedMilestone
     ? milestonePresetIconFor(selectedMilestone.presetId)
     : null
+
+  if (showStoryArtifact) {
+    return (
+      <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden border-0 bg-transparent py-0 shadow-none hover:border-transparent">
+        <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-3 lg:p-4">
+          <StoryImageArtifactPlaceholder />
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden border-0 bg-transparent py-0 shadow-none hover:border-transparent">

@@ -1902,6 +1902,10 @@
           "exit": "Exit",
           "exitAriaLabel": "Exit story image assistant and return to general chat"
         },
+        "storyArtifact": {
+          "ariaLabel": "Instagram Story image preview",
+          "placeholderLabel": "No story image yet"
+        },
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "story": {
