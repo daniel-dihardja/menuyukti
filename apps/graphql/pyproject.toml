@@ -14,10 +14,13 @@ dependencies = [
     "openpyxl>=3.1.2",
     "pytest>=9.0.0",
     "menuyukti",
+    "pyjwt>=2.13.0",
+    "cryptography>=49.0.0",
 ]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.0",
     "jsonschema>=4.23.0",
     "mypy>=1.13.0",
     "ruff>=0.9.0",
@@ -30,6 +33,7 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = [
     "graphql",
+    "graphql.crm_auth",
     "graphql.schema",
     "graphql.resolvers",
     "graphql.data_sources",
@@ -40,6 +44,7 @@ packages = [
 
 [tool.setuptools.package-dir]
 "graphql" = "."
+"graphql.crm_auth" = "crm_auth"
 "graphql.schema" = "schema"
 "graphql.resolvers" = "resolvers"
 "graphql.data_sources" = "data_sources"

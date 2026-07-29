@@ -12,19 +12,22 @@ This skill is for **Cursor/agents** navigating the repo. **Runtime milestone exe
 
 ## Service map
 
-| Area                 | Path           | Role                                                                                                                                                      |
-| -------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Web**              | `apps/web`     | Next.js UI: chat, campaigns, CRUD. **Reads/writes go through GraphQL** (not direct DB). Workflow roots use GraphQL **`nodeType` `workflow`**.             |
-| **GraphQL API**      | `apps/graphql` | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                 |
-| **LangGraph agents** | `apps/agents`  | FastAPI, LangChain / LangGraph. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                                       |
-| **Shared packages**  | `packages/*`   | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), optional legacy workspace packages per root config. |
+| Area                 | Path              | Role                                                                                                                                                      |
+| -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Web**              | `apps/web`        | Next.js UI: chat, campaigns, CRUD. **Reads/writes go through GraphQL** (not direct DB). Workflow roots use GraphQL **`nodeType` `workflow`**.             |
+| **Mobile**           | `apps/mobile-app` | Expo (React Native) client. **Reads/writes go through GraphQL** (not direct DB).                                                                          |
+| **GraphQL API**      | `apps/graphql`    | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                 |
+| **LangGraph agents** | `apps/agents`     | FastAPI, LangChain / LangGraph. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                                       |
+| **Shared packages**  | `packages/*`      | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), optional legacy workspace packages per root config. |
 
 ```mermaid
 flowchart LR
   web["apps/web"]
+  mobile["apps/mobile-app"]
   gql["apps/graphql"]
   ag["apps/agents"]
   web -->|"GraphQL HTTP"| gql
+  mobile -->|"GraphQL HTTP"| gql
   ag -->|"GraphQL HTTP"| gql
 ```
 
@@ -35,6 +38,7 @@ flowchart LR
 | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph milestone run (preset subgraphs + eval), streaming chat.  |
 | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                     |
 | [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, GraphQL from the browser/BFF, milestone UI.          |
+| [`menuyukti-mobile`](../menuyukti-mobile/SKILL.md)       | `apps/mobile-app`: Expo, CRM enroll, React Navigation, brand/session, mobile HTTP clients.  |
 | [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration. |
 
 ## Cross-app flow: milestone run
@@ -44,7 +48,7 @@ The web BFF streams **`POST .../milestones/{id}/run`** to agents; the LangGraph 
 ## Database ownership
 
 - **Schema, migrations, and SQLAlchemy** live **only** in **`apps/graphql`**.
-- **`apps/web`** and **`apps/agents`** must **not** add DB drivers, connection strings for app data, or migration scripts for product data.
+- **`apps/web`**, **`apps/mobile-app`**, and **`apps/agents`** must **not** add DB drivers, connection strings for app data, or migration scripts for product data.
 - Turbo may expose `db:*` scripts when the GraphQL package defines them; **ownership** stays in GraphQL — see [AGENTS.md](../../../AGENTS.md) and `apps/graphql` README / Makefile.
 
 ## pnpm versus uv

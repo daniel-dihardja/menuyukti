@@ -4,17 +4,20 @@ This file helps AI coding agents (Cursor, Claude Code, Codex, etc.) run the righ
 
 ## Repository layout
 
-| Area             | Path           | Stack                                                                   |
-| ---------------- | -------------- | ----------------------------------------------------------------------- |
-| Web              | `apps/web`     | Next.js, React, TypeScript, Clerk, Vitest, next-intl (data via GraphQL) |
-| GraphQL API      | `apps/graphql` | Python, Strawberry, uv, Ruff, pytest                                    |
-| LangGraph agents | `apps/agents`  | Python, FastAPI, LangChain / LangGraph, OpenAI, uv, Ruff, pytest        |
+| Area             | Path              | Stack                                                                   |
+| ---------------- | ----------------- | ----------------------------------------------------------------------- |
+| Web              | `apps/web`        | Next.js, React, TypeScript, Clerk, Vitest, next-intl (data via GraphQL) |
+| Mobile           | `apps/mobile-app` | Expo (React Native), TypeScript                                         |
+| GraphQL API      | `apps/graphql`    | Python, Strawberry, uv, Ruff, pytest                                    |
+| LangGraph agents | `apps/agents`     | Python, FastAPI, LangChain / LangGraph, OpenAI, uv, Ruff, pytest        |
 
 **pnpm workspaces:** `apps/*`, `packages/*`. **Python (uv):** root `pyproject.toml` + `apps/graphql`, `apps/agents`, `packages/menuyukti`.
 
 Persistent Cursor guidance lives in **`.cursor/rules/*.mdc`**.
 
-Menuyukti-specific agent workflows live under **`.agents/skills/menuyukti-*/`**: [`menuyukti-repo-orientation`](.agents/skills/menuyukti-repo-orientation/SKILL.md) (monorepo map and cross-app flows), [`menuyukti-agents`](.agents/skills/menuyukti-agents/SKILL.md) (`apps/agents`, LangGraph milestone run), [`menuyukti-graphql`](.agents/skills/menuyukti-graphql/SKILL.md) (`apps/graphql`, schema, Alembic), [`menuyukti-web`](.agents/skills/menuyukti-web/SKILL.md) (`apps/web`, milestones, next-intl), [`menuyukti-analytics`](.agents/skills/menuyukti-analytics/SKILL.md) (`packages/menuyukti` pipelines and Instagram signals).
+Menuyukti-specific agent workflows live under **`.agents/skills/menuyukti-*/`**: [`menuyukti-repo-orientation`](.agents/skills/menuyukti-repo-orientation/SKILL.md) (monorepo map and cross-app flows), [`menuyukti-agents`](.agents/skills/menuyukti-agents/SKILL.md) (`apps/agents`, LangGraph milestone run), [`menuyukti-graphql`](.agents/skills/menuyukti-graphql/SKILL.md) (`apps/graphql`, schema, Alembic), [`menuyukti-web`](.agents/skills/menuyukti-web/SKILL.md) (`apps/web`, milestones, next-intl), [`menuyukti-mobile`](.agents/skills/menuyukti-mobile/SKILL.md) (`apps/mobile-app`, Expo CRM enroll / navigation), [`menuyukti-analytics`](.agents/skills/menuyukti-analytics/SKILL.md) (`packages/menuyukti` pipelines and Instagram signals).
+
+Mobile companion skills (Expo / RN) live alongside them: `expo-native-ui`, `expo-data-fetching`, `expo-upgrade`, `expo-examples`, `expo-dev-client`, `eas-app-stores`, `eas-workflows`, `react-native-best-practices`, `react-navigation` — see [`menuyukti-mobile`](.agents/skills/menuyukti-mobile/SKILL.md).
 
 ## Feature glossary
 
@@ -61,6 +64,16 @@ make dev       # FastAPI + uvicorn reload, port 8001
 
 - Streaming chat: `POST /chat` (SSE) — Health: `GET /health` — Tests: `make test` — Lint/format: `make lint` / `make format` — Types: `make typecheck` (mypy)
 - Set `AI_GATEWAY_API_KEY` in `.env` for LLM calls (see `.env.example` and `apps/agents/.env.example`).
+
+### Mobile (`apps/mobile-app`)
+
+```bash
+cd apps/mobile-app && pnpm dev
+```
+
+- Expo / React Native shell. From repo root: `pnpm --filter mobile-app dev`
+- Platform targets: `pnpm ios` / `pnpm android` / `pnpm web` from `apps/mobile-app`
+- Typecheck: `pnpm check-types` — Lint: `pnpm lint` (ESLint / `eslint-config-expo`) — Tests: `pnpm test` — Expo health: `pnpm check:expo`
 
 ### All services
 

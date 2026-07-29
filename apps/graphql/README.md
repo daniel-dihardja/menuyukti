@@ -5,7 +5,9 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 ## Security and query limits
 
-**Trust model.** The API is intended for **server-to-server** use from the Next.js app (or other trusted callers). When `INTERNAL_API_KEY` is set in the environment, [`server.py`](./server.py) requires matching header `X-Internal-Api-Key` on every request. The authenticated Clerk user is passed as **`X-User-Id`**; the GraphQL layer **trusts** that value after the internal key gate. Do not expose this endpoint directly to browsers without a gateway that validates callers. Rotate `INTERNAL_API_KEY` if it may have leaked.
+**Trust model.** The API is intended for **server-to-server** use from the Next.js app (or other trusted callers). When `INTERNAL_API_KEY` is set in the environment, [`server.py`](./server.py) requires matching header `X-Internal-Api-Key` on every request **except** CRM customer routes under `/crm/v1/` (passwordless enroll + device auth). The authenticated Clerk user is passed as **`X-User-Id`**; the GraphQL layer **trusts** that value after the internal key gate. Do not expose this endpoint directly to browsers without a gateway that validates callers. Rotate `INTERNAL_API_KEY` if it may have leaked.
+
+**CRM customer JWT.** Device access tokens are HS256 JWTs signed with **`CRM_JWT_SECRET`** (required, at least 32 characters). Set it in `apps/graphql/.env` for local runs. Claims: `sub` (customer UUID), `did` (device UUID), `app_id` (public CRM app UUID), `exp` (~15 minutes). Refresh tokens are opaque secrets stored as SHA-256 hashes on `crm_device`.
 
 **Query protections.** The schema enables depth, alias count, token count, and maximum field-selection limits (see [`limits.py`](./limits.py) and [`schema/__init__.py`](./schema/__init__.py)). Oversized documents fail validation before execution.
 

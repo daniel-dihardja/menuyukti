@@ -7,7 +7,7 @@ import {
 } from '@/lib/feature-flags'
 
 describe('feature-flags', () => {
-  it('reports release-aligned nav surface (workflows/reports/branches/team/media/calendar on)', () => {
+  it('reports release-aligned nav surface (workflows/reports/branches/crm/team/media/calendar on)', () => {
     expect(isNavKeyEnabled('dashboard')).toBe(false)
     expect(isNavKeyEnabled('media')).toBe(true)
     expect(isNavKeyEnabled('posts')).toBe(false)
@@ -16,6 +16,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('workflows')).toBe(true)
     expect(isNavKeyEnabled('reports')).toBe(true)
     expect(isNavKeyEnabled('branches')).toBe(true)
+    expect(isNavKeyEnabled('crm')).toBe(true)
     expect(isNavKeyEnabled('team')).toBe(true)
   })
 
@@ -27,6 +28,8 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/ig-studio')).toBe(false)
     expect(isPathnameFeatureEnabled('/ig-studio/styles')).toBe(false)
     expect(isPathnameFeatureEnabled('/calendar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/crm')).toBe(true)
+    expect(isPathnameFeatureEnabled('/crm/registrations')).toBe(true)
     expect(isPathnameFeatureEnabled('/media')).toBe(true)
     expect(isPathnameFeatureEnabled('/shop')).toBe(false)
     expect(isPathnameFeatureEnabled('/workflow/abc')).toBe(true)

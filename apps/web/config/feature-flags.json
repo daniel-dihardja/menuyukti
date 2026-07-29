@@ -7,6 +7,7 @@
     "workflows": true,
     "reports": true,
     "branches": true,
+    "crm": true,
     "printShop": false,
     "team": true
   },
@@ -17,6 +18,7 @@
     "/calendar": true,
     "/workflow": true,
     "/analytics": true,
+    "/crm": true,
     "/shop": false,
     "/print-orders": false,
     "/profile": true,

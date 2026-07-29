@@ -10,6 +10,7 @@ from pathlib import Path
 # Must set before any import of graphql.data_sources (engine is created at import time)
 TEST_DB = Path(__file__).resolve().parent.parent / "test.db"
 os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{TEST_DB}"
+os.environ.setdefault("CRM_JWT_SECRET", "test-crm-jwt-secret-at-least-32-chars!!")
 
 import pytest
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID

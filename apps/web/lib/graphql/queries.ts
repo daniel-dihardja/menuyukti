@@ -5,6 +5,7 @@
 export * from './queries/parse-helpers'
 export * from './queries/locations'
 export * from './queries/styles'
+export * from './queries/crm-apps'
 export * from './queries/calendar-entries'
 export * from './queries/workflows'
 export * from './queries/analytics'

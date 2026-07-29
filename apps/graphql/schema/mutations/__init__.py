@@ -1,4 +1,7 @@
+from .award_crm_cashback import AwardCrmCashbackMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
+from .create_crm_app import CreateCrmAppMutation
+from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_instagram_item import CreateInstagramItemMutation
 from .create_instagram_item_page import CreateInstagramItemPageMutation
@@ -11,6 +14,8 @@ from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
+from .delete_crm_app import DeleteCrmAppMutation
+from .delete_crm_customer import DeleteCrmCustomerMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_instagram_item import DeleteInstagramItemMutation
 from .delete_instagram_item_page import DeleteInstagramItemPageMutation
@@ -27,9 +32,11 @@ from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .reorder_milestones import ReorderMilestonesMutation
 from .replace_pass_criteria import ReplacePassCriteriaMutation
+from .revoke_crm_device import RevokeCrmDeviceMutation
 from .set_pass_criteria_statuses import SetPassCriteriaStatusesMutation
 from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
+from .update_crm_app import UpdateCrmAppMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_instagram_item import UpdateInstagramItemMutation
 from .update_instagram_item_page import UpdateInstagramItemPageMutation
@@ -44,10 +51,13 @@ from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
 __all__ = [
+    "AwardCrmCashbackMutation",
     "CreateImageAiFlowMutation",
     "CreateInstagramItemMutation",
     "CreateInstagramItemPageMutation",
     "CreateCalendarEntryMutation",
+    "CreateCrmAppMutation",
+    "CreateCrmEnrollmentTokenMutation",
     "CreateLocationMutation",
     "CreateStyleMutation",
     "CreateNodeMutation",
@@ -57,6 +67,9 @@ __all__ = [
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteCalendarEntryMutation",
+    "DeleteCrmAppMutation",
+    "DeleteCrmCustomerMutation",
+    "RevokeCrmDeviceMutation",
     "DeleteImageAiFlowMutation",
     "DeleteInstagramItemMutation",
     "DeleteInstagramItemPageMutation",
@@ -74,6 +87,7 @@ __all__ = [
     "SetPassCriterionStatusMutation",
     "SetPassCriteriaStatusesMutation",
     "UpdateCalendarEntryMutation",
+    "UpdateCrmAppMutation",
     "UpdateImageAiFlowMutation",
     "UpdateInstagramItemMutation",
     "UpdateInstagramItemPageMutation",

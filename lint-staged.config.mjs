@@ -29,4 +29,9 @@ export default {
     const args = stripPrefix(filenames, 'packages/ui').join(' ')
     return `cd packages/ui && eslint --max-warnings 0 --fix ${args}`
   },
+  'apps/mobile-app/**/*.{ts,tsx}': (filenames) => {
+    if (filenames.length === 0) return []
+    const args = stripPrefix(filenames, 'apps/mobile-app').join(' ')
+    return `cd apps/mobile-app && eslint --max-warnings 0 --fix ${args}`
+  },
 }

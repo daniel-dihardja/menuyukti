@@ -34,6 +34,11 @@ out/
 build
 dist
 
+# Expo
+**/.expo/
+apps/mobile-app/ios/
+apps/mobile-app/android/
+
 # IMG.LY cutout model chunks (copied on postinstall — see apps/web/scripts/copy-cutout-models.mjs)
 apps/web/public/cutout-models/*
 !apps/web/public/cutout-models/.gitkeep
