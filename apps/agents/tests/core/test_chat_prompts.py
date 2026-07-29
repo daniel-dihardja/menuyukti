@@ -1,10 +1,12 @@
 """Tests for workflow chat system prompt template assembly."""
 
+from agents_app.agents.core.chat.graph import chat_tools_list_from_config
 from agents_app.agents.core.chat.prompts import (
     CHART_CATALOG_BLOCK,
     IG_STUDIO_BLOCK,
     LEONARDO_IMAGE_BLOCK,
     MEDIA_LIBRARY_BLOCK,
+    STORY_IMAGE_ASSISTANT_PROMPT,
     SYSTEM_PROMPT_TEMPLATE,
     build_system_prompt,
 )
@@ -100,3 +102,45 @@ def test_build_system_prompt_ignores_blank_catalog() -> None:
     base = build_system_prompt()
     assert build_system_prompt(workflow_catalog="   ") == base
     assert build_system_prompt(workflow_catalog="") == base
+
+
+def test_build_system_prompt_story_image_assistant_mode() -> None:
+    out = build_system_prompt(chat_mode="story_image_assistant")
+    assert out == STORY_IMAGE_ASSISTANT_PROMPT.rstrip() + "\n"
+    assert "768×1376" in out
+    assert "direction gathering" in out
+    assert "describe the wished look" in out
+    assert "reference image" in out
+    assert "product" in out.lower()
+    assert "on-image text" in out
+    assert "skip" in out.lower() or "declines" in out
+    assert "Phase 3" in out
+    assert "generate and refine" in out
+    assert "generate_instagram_post_image" in out
+    assert "Canva" in out
+    assert "Operating loop for planning or content requests" not in out
+    assert "acting through Instagram item tools" not in out
+    assert "get_chart_data" not in out
+
+
+def test_build_system_prompt_general_chat_mode_unchanged() -> None:
+    base = build_system_prompt()
+    assert build_system_prompt(chat_mode=None) == base
+    assert build_system_prompt(chat_mode="general") == base
+
+
+def test_story_image_assistant_tools_include_generate() -> None:
+    tools = chat_tools_list_from_config(
+        {
+            "chat_mode": "story_image_assistant",
+            "workflow_id": "wf-1",
+            "milestone_id": "ms-1",
+            "location_id": 1,
+        }
+    )
+    names = {getattr(t, "name", None) or getattr(t, "__name__", None) for t in tools}
+    assert names == {"list_media_collections", "list_media", "generate_instagram_post_image"}
+    assert "list_instagram_items" not in names
+    assert "create_instagram_items" not in names
+    assert "get_milestone" not in names
+    assert "get_chart_data" not in names

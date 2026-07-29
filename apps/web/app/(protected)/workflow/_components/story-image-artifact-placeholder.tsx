@@ -4,8 +4,13 @@ import { useTranslations } from 'next-intl'
 
 import { InstagramItemDefaultImage } from './instagram-items/instagram-item-default-image'
 
-export function StoryImageArtifactPlaceholder() {
+type StoryImageArtifactProps = {
+  imageUrl?: string | null
+}
+
+export function StoryImageArtifact({ imageUrl }: StoryImageArtifactProps) {
   const t = useTranslations('analytics.workflows.chat.storyArtifact')
+  const hasImage = typeof imageUrl === 'string' && imageUrl.length > 0
 
   return (
     <section
@@ -21,14 +26,24 @@ export function StoryImageArtifactPlaceholder() {
             height: 'min(100cqh, calc(100cqw * 16 / 9))',
           }}
         >
-          <InstagramItemDefaultImage
-            className="gap-3 p-8 text-center"
-            iconClassName="text-5xl"
-            kind="story"
-            label={t('placeholderLabel')}
-          />
+          {hasImage ? (
+            // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+            <img alt={t('ariaLabel')} className="size-full object-cover" src={imageUrl} />
+          ) : (
+            <InstagramItemDefaultImage
+              className="gap-3 p-8 text-center"
+              iconClassName="text-5xl"
+              kind="story"
+              label={t('placeholderLabel')}
+            />
+          )}
         </div>
       </div>
     </section>
   )
+}
+
+/** @deprecated Prefer StoryImageArtifact */
+export function StoryImageArtifactPlaceholder() {
+  return <StoryImageArtifact />
 }

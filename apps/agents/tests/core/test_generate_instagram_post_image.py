@@ -181,6 +181,37 @@ async def test_tool_args_override_configurable(tool_under_test: Any, monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_story_chat_mode_forces_format_story(
+    tool_under_test: Any, monkeypatch: Any
+) -> None:
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps({"url": "https://example.com/img.webp"})
+    mock_response.json.return_value = {"url": "https://example.com/img.webp"}
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        await tool_under_test.ainvoke(
+            {"prompt": "Ice matcha story", "format": "feed"},
+            config=_config(
+                user_id="user-1",
+                chat_mode="story_image_assistant",
+                image_format="square",
+            ),
+        )
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert body["format"] == "story"
+
+
+@pytest.mark.asyncio
 async def test_http_error(tool_under_test: Any, monkeypatch: Any) -> None:
     monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")

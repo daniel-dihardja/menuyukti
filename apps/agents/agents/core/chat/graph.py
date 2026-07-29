@@ -61,19 +61,31 @@ def _has_location_id(conf: dict[str, Any]) -> bool:
     return conf.get("location_id") is not None
 
 
+def _is_story_image_assistant_mode(conf: dict[str, Any]) -> bool:
+    return conf.get("chat_mode") == "story_image_assistant"
+
+
 def chat_tools_list(
     *,
     include_post_image: bool = False,
     workflow_id: bool = True,
     milestone_id: bool = True,
     location_id: bool = True,
+    story_image_assistant: bool = False,
 ) -> list:
     """Build chat ReAct tools for the given request context.
 
     When ``workflow_id`` / ``milestone_id`` / ``location_id`` are False, the corresponding
     tools are omitted from the bound set (model cannot call them). The ToolNode still
     registers the full union via ``chat_tools_list(include_post_image=True)``.
+
+    In ``story_image_assistant`` mode only media-library tools and
+    ``generate_instagram_post_image`` are bound (Story gather + generate/refine;
+    no campaign tooling).
     """
+    if story_image_assistant:
+        return [list_media_collections, list_media, generate_instagram_post_image]
+
     tools: list = []
     tools.append(list_media_collections)
     tools.append(list_media)
@@ -105,6 +117,8 @@ def _has_leonardo_image_generation(conf: dict[str, Any]) -> bool:
 
 def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
     """Resolve request-scoped tools from RunnableConfig.configurable."""
+    if _is_story_image_assistant_mode(conf):
+        return chat_tools_list(story_image_assistant=True)
     return chat_tools_list(
         include_post_image=_has_leonardo_image_generation(conf),
         workflow_id=_has_workflow_id(conf),
@@ -119,6 +133,8 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     cfg = get_config() or {}
     conf = cfg.get("configurable") or {}
     conf_dict = conf if isinstance(conf, dict) else {}
+    raw_mode = conf_dict.get("chat_mode")
+    chat_mode = raw_mode if isinstance(raw_mode, str) else None
     raw_catalog = conf_dict.get("workflow_catalog_markdown")
     catalog = raw_catalog if isinstance(raw_catalog, str) else None
     prompt_body = build_system_prompt(
@@ -126,6 +142,7 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
         ig_studio_post_image=_has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=_has_leonardo_image_generation(conf_dict),
         include_chart_catalog=_has_location_id(conf_dict),
+        chat_mode=chat_mode,
     )
     return [SystemMessage(content=prompt_body), *messages]
 

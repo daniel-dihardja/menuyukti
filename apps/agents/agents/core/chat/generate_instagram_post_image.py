@@ -117,7 +117,9 @@ async def generate_instagram_post_image(
     resolved_format = _resolve_setting(
         format, config_key="image_format", allowed=POST_IMAGE_FORMAT_IDS, configurable=c
     )
-    if resolved_format is not None:
+    if c.get("chat_mode") == "story_image_assistant":
+        body["format"] = "story"
+    elif resolved_format is not None:
         body["format"] = resolved_format
 
     resolved_quality = _resolve_setting(

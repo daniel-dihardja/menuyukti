@@ -76,7 +76,10 @@ class ChatRequest(BaseModel):
     workflow_chat_session_id: str | None = Field(default=None, min_length=1)
     chat_mode: Literal["general", "story_image_assistant"] | None = Field(
         default=None,
-        description="Opt-in chat mode; stored on configurable for future prompt/tool branching.",
+        description=(
+            "Opt-in chat mode; branches system prompt and tools "
+            "(story_image_assistant = Story direction gathering)."
+        ),
     )
     chat_model: str | None = Field(
         default=None,
