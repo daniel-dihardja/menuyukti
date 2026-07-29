@@ -18,6 +18,8 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     names = [getattr(t, "name", "") for t in chat_tools_list()]
     assert "search_web" not in names
     assert "generate_instagram_post_image" not in names
+    assert "list_media_collections" in names
+    assert "list_media" in names
     assert "get_workflow_overview" in names
     assert "get_milestone" in names
     assert "list_instagram_items" in names
@@ -59,6 +61,8 @@ def test_chat_tools_list_omits_workflow_tools_without_workflow() -> None:
     assert "update_instagram_items" not in names
     assert "delete_instagram_items" not in names
     assert "update_milestone_input" not in names
+    assert "list_media_collections" in names
+    assert "list_media" in names
     assert "get_location_data" in names
     assert "get_chart_data" in names
 
@@ -66,10 +70,7 @@ def test_chat_tools_list_omits_workflow_tools_without_workflow() -> None:
 def test_chat_tools_list_omits_update_without_milestone() -> None:
     from agents_app.agents.core.chat.graph import chat_tools_list
 
-    names = [
-        getattr(t, "name", "")
-        for t in chat_tools_list(workflow_id=True, milestone_id=False)
-    ]
+    names = [getattr(t, "name", "") for t in chat_tools_list(workflow_id=True, milestone_id=False)]
     assert "get_milestone" in names
     assert "list_instagram_items" in names
     assert "get_instagram_item" in names
@@ -96,10 +97,10 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_location_data" not in agent_names
     assert "get_chart_data" not in agent_names
     assert "generate_instagram_post_image" not in agent_names
+    assert "list_media_collections" in agent_names
+    assert "list_media" in agent_names
 
-    wf = chat_tools_list_from_config(
-        {"workflow_id": "100", "location_id": 7, "user_id": "u1"}
-    )
+    wf = chat_tools_list_from_config({"workflow_id": "100", "location_id": 7, "user_id": "u1"})
     wf_names = [getattr(t, "name", "") for t in wf]
     assert "get_milestone" in wf_names
     assert "list_instagram_items" in wf_names
@@ -110,9 +111,7 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_chart_data" in wf_names
     assert "generate_instagram_post_image" in wf_names
 
-    ig_studio = chat_tools_list_from_config(
-        {"user_id": "u1", "post_id": "10", "page_id": "20"}
-    )
+    ig_studio = chat_tools_list_from_config({"user_id": "u1", "post_id": "10", "page_id": "20"})
     ig_names = [getattr(t, "name", "") for t in ig_studio]
     assert "generate_instagram_post_image" in ig_names
     assert "get_milestone" not in ig_names

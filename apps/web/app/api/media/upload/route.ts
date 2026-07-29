@@ -11,6 +11,11 @@ import {
   photoExtensionForMime,
 } from '@/lib/assets/storage'
 import { requireWorkspaceMediaAccess, writeObjectKey } from '@/lib/assets/workspace-media-access'
+import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  ENSURE_MEDIA_ASSET_MUTATION,
+  type EnsureMediaAssetData,
+} from '@/lib/graphql/queries/media-collections'
 
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
@@ -87,6 +92,16 @@ export async function POST(req: Request) {
       message: err instanceof Error ? err.message : String(err),
     })
     return NextResponse.json({ message: 'Storage upload failed' }, { status: 502 })
+  }
+
+  try {
+    await graphqlQuery<EnsureMediaAssetData>(ENSURE_MEDIA_ASSET_MUTATION, { filename }, userId)
+  } catch (err) {
+    console.error('[media/upload] ensureMediaAsset failed', {
+      userIdPrefix: userId.slice(0, 8),
+      message: err instanceof Error ? err.message : String(err),
+    })
+    // Object is already in S3; catalog can be repaired via backfill.
   }
 
   const url = await getPresignedGetUrl(key)

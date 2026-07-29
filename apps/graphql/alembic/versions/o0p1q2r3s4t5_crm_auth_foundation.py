@@ -19,7 +19,9 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column("crm_device", sa.Column("refresh_token_hash", sa.String(length=64), nullable=True))
+    op.add_column(
+        "crm_device", sa.Column("refresh_token_hash", sa.String(length=64), nullable=True)
+    )
     op.add_column(
         "crm_device",
         sa.Column("refresh_expires_at", sa.DateTime(timezone=True), nullable=True),

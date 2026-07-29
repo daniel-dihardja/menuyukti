@@ -34,9 +34,7 @@ async def refresh_endpoint(request: Request) -> Response:
     now = datetime.now(tz=UTC)
     session = SessionLocal()
     try:
-        device = (
-            session.query(CrmDevice).filter(CrmDevice.refresh_token_hash == token_hash).first()
-        )
+        device = session.query(CrmDevice).filter(CrmDevice.refresh_token_hash == token_hash).first()
         if device is None:
             record_audit_event(session, event_type="refresh_fail", detail="invalid_token")
             session.commit()

@@ -7,6 +7,11 @@ import {
   deleteMediaFilename,
   requireWorkspaceMediaAccess,
 } from '@/lib/assets/workspace-media-access'
+import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  DELETE_MEDIA_ASSET_MUTATION,
+  type DeleteMediaAssetData,
+} from '@/lib/graphql/queries/media-collections'
 
 const bodySchema = z.object({
   name: z.string().min(1),
@@ -45,6 +50,19 @@ export async function DELETE(req: Request) {
       message: err instanceof Error ? err.message : String(err),
     })
     return NextResponse.json({ message: 'Delete failed' }, { status: 502 })
+  }
+
+  try {
+    await graphqlQuery<DeleteMediaAssetData>(
+      DELETE_MEDIA_ASSET_MUTATION,
+      { filename: name },
+      userId,
+    )
+  } catch (err) {
+    console.error('[media/delete] deleteMediaAsset failed', {
+      userIdPrefix: userId.slice(0, 8),
+      message: err instanceof Error ? err.message : String(err),
+    })
   }
 
   return NextResponse.json({ success: true })

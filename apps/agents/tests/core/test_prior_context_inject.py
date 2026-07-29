@@ -244,4 +244,3 @@ def test_preferred_milestone_id_from_input_reads_value_field() -> None:
         == "42"
     )
     assert preferred_milestone_id_from_input({"type": "ig_plan", "value": {}}, "x") is None
-

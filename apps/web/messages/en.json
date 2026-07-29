@@ -1305,7 +1305,33 @@
   },
   "media": {
     "title": "Media",
-    "description": "Upload restaurant and campaign photos and videos in their original format and resolution.",
+    "description": "Upload restaurant and campaign photos in their original format. Files stay in one library; use collections to group them (for example style references) without duplicating uploads.",
+    "collections": {
+      "help": "Create a collection to group related photos (for example “Style references”). Select a photo in the grid, then add or remove it from a collection. The same photo can belong to more than one collection.",
+      "selectHint": "Select a photo to add it to a collection. Use the expand control to view it larger.",
+      "filterAll": "All",
+      "create": "New collection",
+      "createTitle": "Create collection",
+      "rename": "Rename",
+      "renameTitle": "Rename collection",
+      "delete": "Delete",
+      "deleteTitle": "Delete collection",
+      "deleteConfirm": "Delete “{name}”? Photos stay in your library; only the grouping is removed.",
+      "namePlaceholder": "Collection name",
+      "cancel": "Cancel",
+      "save": "Save",
+      "organizeRegion": "Organize selected photo",
+      "selectedTitle": "Selected photo",
+      "selectedPhotoFallback": "Photo",
+      "clearSelection": "Clear selection",
+      "createFirstHint": "Create a collection first, then add this photo.",
+      "addPlaceholder": "Choose collection",
+      "addToCollection": "Add to collection",
+      "removeFromCollection": "Remove from collection",
+      "removeFromNamed": "Remove from {name}",
+      "emptyCollectionTitle": "No photos in this collection",
+      "emptyCollectionDescription": "Switch to All, select a photo, then add it here."
+    },
     "upload": {
       "title": "Upload media",
       "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
@@ -1323,7 +1349,8 @@
       "deleteAction": "Remove",
       "cancel": "Cancel",
       "viewLarge": "View larger",
-      "download": "Download"
+      "download": "Download",
+      "select": "Select photo"
     },
     "preview": {
       "close": "Close preview"
@@ -1334,7 +1361,18 @@
       "uploadPartial": "Some files couldn’t be uploaded. Check your files and try again.",
       "loadError": "Couldn’t load your media. Refresh the page.",
       "deleted": "File removed",
-      "deleteError": "Couldn’t remove that file. Try again."
+      "deleteError": "Couldn’t remove that file. Try again.",
+      "collectionsLoadError": "Couldn’t load collections. Refresh the page.",
+      "collectionCreated": "Collection created",
+      "collectionCreateError": "Couldn’t create that collection. Try again.",
+      "collectionRenamed": "Collection renamed",
+      "collectionRenameError": "Couldn’t rename that collection. Try again.",
+      "collectionDeleted": "Collection deleted",
+      "collectionDeleteError": "Couldn’t delete that collection. Try again.",
+      "addedToCollection": "Added to collection",
+      "addToCollectionError": "Couldn’t add that photo to the collection.",
+      "removedFromCollection": "Removed from collection",
+      "removeFromCollectionError": "Couldn’t remove that photo from the collection."
     }
   },
   "reels": {

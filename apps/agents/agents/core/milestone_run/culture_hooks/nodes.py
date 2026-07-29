@@ -137,9 +137,7 @@ def _culture_hooks_search_queries(brief: dict[str, Any]) -> list[str]:
             f"{origin_keyword} places landmarks culture popular with people in {country}"
         )
         if city:
-            queries.append(
-                f"{origin_keyword} travel culture Instagram {city} {country}"
-            )
+            queries.append(f"{origin_keyword} travel culture Instagram {city} {country}")
         else:
             queries.append(f"{origin_keyword} travel culture Instagram {country}")
     elif location_bits:
@@ -168,10 +166,7 @@ async def _run_web_searches(queries: list[str]) -> str:
 
     if not sections:
         return ""
-    return (
-        "## Heritage and audience culture web research (optional)\n\n"
-        + "\n\n".join(sections)
-    )
+    return "## Heritage and audience culture web research (optional)\n\n" + "\n\n".join(sections)
 
 
 class CultureHookIntersectionDraft(BaseModel):

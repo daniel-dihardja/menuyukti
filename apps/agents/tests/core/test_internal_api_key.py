@@ -13,7 +13,9 @@ def client() -> TestClient:
         yield test_client
 
 
-def test_health_open_when_key_configured(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_health_open_when_key_configured(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("INTERNAL_API_KEY", "agents-secret")
     monkeypatch.delenv("GRAPHQL_INTERNAL_API_KEY", raising=False)
     response = client.get("/health")

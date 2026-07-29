@@ -736,23 +736,32 @@ INSTAGRAM_ITEM_FIELDS = """
   updatedAt
 """
 
-INSTAGRAM_ITEMS_QUERY = """
+INSTAGRAM_ITEMS_QUERY = (
+    """
 query InstagramItems($workflowId: ID!) {
   instagramItems(workflowId: $workflowId) {
-""" + INSTAGRAM_ITEM_FIELDS + """
+"""
+    + INSTAGRAM_ITEM_FIELDS
+    + """
   }
 }
 """
+)
 
-INSTAGRAM_ITEM_QUERY = """
+INSTAGRAM_ITEM_QUERY = (
+    """
 query InstagramItem($id: ID!) {
   instagramItem(id: $id) {
-""" + INSTAGRAM_ITEM_FIELDS + """
+"""
+    + INSTAGRAM_ITEM_FIELDS
+    + """
   }
 }
 """
+)
 
-CREATE_INSTAGRAM_ITEM_MUTATION = """
+CREATE_INSTAGRAM_ITEM_MUTATION = (
+    """
 mutation CreateInstagramItem(
   $workflowId: ID!
   $kind: String!
@@ -773,12 +782,16 @@ mutation CreateInstagramItem(
     status: $status
     schedule: $schedule
   ) {
-""" + INSTAGRAM_ITEM_FIELDS + """
+"""
+    + INSTAGRAM_ITEM_FIELDS
+    + """
   }
 }
 """
+)
 
-UPDATE_INSTAGRAM_ITEM_MUTATION = """
+UPDATE_INSTAGRAM_ITEM_MUTATION = (
+    """
 mutation UpdateInstagramItem(
   $id: ID!
   $kind: String
@@ -803,13 +816,40 @@ mutation UpdateInstagramItem(
     status: $status
     schedule: $schedule
   ) {
-""" + INSTAGRAM_ITEM_FIELDS + """
+"""
+    + INSTAGRAM_ITEM_FIELDS
+    + """
   }
 }
 """
+)
 
 DELETE_INSTAGRAM_ITEM_MUTATION = """
 mutation DeleteInstagramItem($id: ID!) {
   deleteInstagramItem(id: $id)
+}
+"""
+
+MEDIA_COLLECTIONS_QUERY = """
+query MediaCollections {
+  mediaCollections {
+    id
+    workspaceId
+    name
+    createdByClerkUserId
+    memberCount
+  }
+}
+"""
+
+MEDIA_ASSETS_QUERY = """
+query MediaAssets($collectionId: Int) {
+  mediaAssets(collectionId: $collectionId) {
+    id
+    workspaceId
+    filename
+    displayName
+    createdByClerkUserId
+  }
 }
 """

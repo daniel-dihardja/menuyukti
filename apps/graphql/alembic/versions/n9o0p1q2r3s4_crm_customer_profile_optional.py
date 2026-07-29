@@ -32,9 +32,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_column("crm_customer", "family_name")
     op.drop_column("crm_customer", "given_name")
-    op.execute(
-        "UPDATE crm_customer SET phone_e164 = '+00000000000' WHERE phone_e164 IS NULL"
-    )
+    op.execute("UPDATE crm_customer SET phone_e164 = '+00000000000' WHERE phone_e164 IS NULL")
     op.alter_column(
         "crm_customer",
         "phone_e164",

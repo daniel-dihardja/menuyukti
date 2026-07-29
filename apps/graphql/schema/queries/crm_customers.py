@@ -62,9 +62,7 @@ class CrmCustomersQuery:
                 return []
 
             customer_ids = [c.id for c in customers]
-            devices = (
-                session.query(CrmDevice).filter(CrmDevice.customer_id.in_(customer_ids)).all()
-            )
+            devices = session.query(CrmDevice).filter(CrmDevice.customer_id.in_(customer_ids)).all()
             by_customer: dict[uuid.UUID, list[CrmDevice]] = {cid: [] for cid in customer_ids}
             for device in devices:
                 by_customer.setdefault(device.customer_id, []).append(device)

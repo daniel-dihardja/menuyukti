@@ -34,6 +34,12 @@ from agents_app.agents.core.chat.instagram_items_client import (
 from agents_app.agents.core.chat.instagram_items_client import (
     update_instagram_item as persist_update_instagram_item,
 )
+from agents_app.agents.core.chat.media_collections_client import (
+    list_media_assets as fetch_media_assets,
+)
+from agents_app.agents.core.chat.media_collections_client import (
+    list_media_collections as fetch_media_collections,
+)
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
 from agents_app.agents.core.chat.workflow_overview import format_workflow_overview_markdown
@@ -1021,9 +1027,7 @@ async def create_instagram_items(
             continue
         kind = _normalize_ig_kind(row.get("kind"))
         if kind is None:
-            errors.append(
-                f"#{i}: kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}."
-            )
+            errors.append(f"#{i}: kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}.")
             continue
         unknown = set(row.keys()) - ({"kind"} | _IG_CREATE_OPTIONAL_KEYS)
         if unknown:
@@ -1047,9 +1051,7 @@ async def create_instagram_items(
                 hook=_optional_text(row.get("hook")),
                 visual_brief=_optional_text(row.get("visual_brief")),
                 status=status,
-                schedule=_optional_schedule(row.get("schedule"))
-                if "schedule" in row
-                else None,
+                schedule=_optional_schedule(row.get("schedule")) if "schedule" in row else None,
                 client=client,
             )
             successes.append(_format_ig_item_line(created))
@@ -1118,9 +1120,7 @@ async def update_instagram_items(
             if "kind" in row:
                 kind = _normalize_ig_kind(row.get("kind"))
                 if kind is None:
-                    raise ValueError(
-                        f"kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}"
-                    )
+                    raise ValueError(f"kind must be one of: {', '.join(sorted(_VALID_IG_KINDS))}")
                 kwargs["kind"] = kind
             if "title" in row:
                 kwargs["title"] = _optional_text(row.get("title"))
@@ -1209,3 +1209,76 @@ async def delete_instagram_items(
     if not parts:
         return "No Instagram items were deleted."
     return "\n".join(parts)
+
+
+def _user_id_from_config(config: RunnableConfig | None) -> str | None:
+    c = (config or {}).get("configurable") or {}
+    user_id = c.get("user_id")
+    if not isinstance(user_id, str) or not user_id.strip():
+        return None
+    return user_id.strip()
+
+
+@tool
+async def list_media_collections(
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """List workspace media collections (named groups of library photos).
+
+    Call when the user asks which collections exist, or before listing photos in a
+    specific collection via ``list_media``. Returns id, name, and member count.
+    """
+    user_id = _user_id_from_config(config)
+    if not user_id:
+        return "User context is missing. Cannot list media collections."
+    client = get_chat_http_client()
+    try:
+        rows = await fetch_media_collections(user_id, client=client)
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error listing media collections: {exc}"
+    if not rows:
+        return "No media collections in this workspace."
+    lines = [f"Media collections ({len(rows)}):"]
+    for row in rows:
+        cid = row.get("id")
+        name = row.get("name") or "(unnamed)"
+        count = row.get("memberCount", 0)
+        lines.append(f"- id={cid} name={name!r} members={count}")
+    return "\n".join(lines)
+
+
+@tool
+async def list_media(
+    collection_id: int | None = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+) -> str:
+    """List workspace media library photos (filenames).
+
+    Omit ``collection_id`` to list all cataloged photos. Pass a collection id from
+    ``list_media_collections`` to list only photos in that collection. Do not invent
+    filenames — use this tool (or user @ mentions) for real library files.
+    """
+    user_id = _user_id_from_config(config)
+    if not user_id:
+        return "User context is missing. Cannot list media."
+    if collection_id is not None and (not isinstance(collection_id, int) or collection_id <= 0):
+        return "collection_id must be a positive integer when provided."
+    client = get_chat_http_client()
+    try:
+        rows = await fetch_media_assets(user_id, collection_id=collection_id, client=client)
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error listing media: {exc}"
+    scope = (
+        f"collection id={collection_id}" if collection_id is not None else "all cataloged photos"
+    )
+    if not rows:
+        return f"No media assets for {scope}."
+    lines = [f"Media assets ({scope}, {len(rows)}):"]
+    for row in rows:
+        filename = row.get("filename") or ""
+        display = row.get("displayName")
+        if display:
+            lines.append(f"- {filename} (displayName={display!r})")
+        else:
+            lines.append(f"- {filename}")
+    return "\n".join(lines)

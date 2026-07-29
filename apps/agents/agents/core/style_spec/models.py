@@ -213,10 +213,7 @@ class DraftTextProperty(BaseModel):
 
 
 DraftPropertyEntry = Annotated[
-    DraftEnumProperty
-    | DraftBooleanProperty
-    | DraftNumberProperty
-    | DraftTextProperty,
+    DraftEnumProperty | DraftBooleanProperty | DraftNumberProperty | DraftTextProperty,
     Field(discriminator="type"),
 ]
 

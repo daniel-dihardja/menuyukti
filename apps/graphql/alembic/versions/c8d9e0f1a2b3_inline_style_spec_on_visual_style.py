@@ -66,9 +66,7 @@ def upgrade() -> None:
             style_table.c.rules,
             spec_table.c.spec,
         ).select_from(
-            style_table.outerjoin(
-                spec_table, spec_table.c.id == style_table.c.style_spec_id
-            )
+            style_table.outerjoin(spec_table, spec_table.c.id == style_table.c.style_spec_id)
         )
     ).mappings()
 
@@ -78,9 +76,7 @@ def upgrade() -> None:
             spec = raw_spec
         else:
             spec = _legacy_spec_from_rules(str(row["rules"] or ""))
-        conn.execute(
-            sa.update(style_table).where(style_table.c.id == row["id"]).values(spec=spec)
-        )
+        conn.execute(sa.update(style_table).where(style_table.c.id == row["id"]).values(spec=spec))
 
     op.alter_column(
         "visual_style",

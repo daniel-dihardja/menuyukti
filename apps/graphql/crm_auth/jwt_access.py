@@ -17,9 +17,7 @@ _ALGORITHM = "HS256"
 def _jwt_secret() -> str:
     secret = os.environ.get("CRM_JWT_SECRET", "").strip()
     if len(secret) < _MIN_SECRET_LEN:
-        raise RuntimeError(
-            f"CRM_JWT_SECRET must be set to at least {_MIN_SECRET_LEN} characters"
-        )
+        raise RuntimeError(f"CRM_JWT_SECRET must be set to at least {_MIN_SECRET_LEN} characters")
     return secret
 
 

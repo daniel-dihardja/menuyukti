@@ -41,9 +41,7 @@ class DeleteInstagramItemPageMediaVersionMutation:
     ) -> InstagramItemPageType:
         user_id = user_id_from_info(info)
         if not user_id:
-            raise ValueError(
-                "Missing authenticated user for deleteInstagramItemPageMediaVersion"
-            )
+            raise ValueError("Missing authenticated user for deleteInstagramItemPageMediaVersion")
 
         page_pk = parse_positive_id(page_id, label="instagram item page id")
 
