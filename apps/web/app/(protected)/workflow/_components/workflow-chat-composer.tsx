@@ -61,7 +61,7 @@ function WorkflowChatAttachmentStrip() {
   return (
     <Attachments className="ml-0 w-full justify-start px-3 pt-3" variant="grid">
       {items.map((item) => (
-        <Attachment className="size-16" data={item.data} key={item.id} onRemove={item.onRemove}>
+        <Attachment className="size-32" data={item.data} key={item.id} onRemove={item.onRemove}>
           <AttachmentPreview />
           <AttachmentRemove />
         </Attachment>

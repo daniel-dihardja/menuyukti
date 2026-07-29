@@ -553,7 +553,7 @@ export function PostCreatorChatPane() {
               >
                 {pendingChips.map((chip) => (
                   <Attachment
-                    className="size-16"
+                    className="size-32"
                     data={chip}
                     key={chip.id}
                     onRemove={() => handleRemovePending(chip.id)}
