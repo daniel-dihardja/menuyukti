@@ -243,11 +243,18 @@ export async function POST(req: Request) {
     imageQuality,
     styleId,
     generationReferences,
+    storyAssetAction,
   } = parsed.data
   const messages = rawMessages as UIMessage[]
 
   if (workflowId === undefined && agentThreadId === undefined) {
     return jsonError('workflowId or agentThreadId is required', 400)
+  }
+
+  const actionOnly = storyAssetAction !== undefined && messages.length === 0
+
+  if (!actionOnly && messages.length === 0) {
+    return jsonError('messages or storyAssetAction is required', 400)
   }
 
   const referenceSections: string[] = []
@@ -323,21 +330,23 @@ export async function POST(req: Request) {
     }
   }
 
-  let pythonMessage: Awaited<ReturnType<typeof buildPythonUserMessage>>
-  try {
-    pythonMessage = await buildPythonUserMessage({
-      messages,
-      userId,
-      referencedMediaNames,
-      referencedPostMediaNames,
-      referenceTextSections: referenceSections,
-    })
-  } catch (err) {
-    if (err instanceof ChatImageError) {
-      return jsonError(err.message, err.status)
+  let pythonMessage: Awaited<ReturnType<typeof buildPythonUserMessage>> | null = null
+  if (!actionOnly) {
+    try {
+      pythonMessage = await buildPythonUserMessage({
+        messages,
+        userId,
+        referencedMediaNames,
+        referencedPostMediaNames,
+        referenceTextSections: referenceSections,
+      })
+    } catch (err) {
+      if (err instanceof ChatImageError) {
+        return jsonError(err.message, err.status)
+      }
+      const detail = err instanceof Error ? err.message : String(err)
+      return jsonError(detail, 400)
     }
-    const detail = err instanceof Error ? err.message : String(err)
-    return jsonError(detail, 400)
   }
 
   let agentRes: Response
@@ -346,7 +355,7 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: buildAgentsHeaders(userId),
       body: JSON.stringify({
-        messages: [pythonMessage],
+        messages: pythonMessage !== null ? [pythonMessage] : [],
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
         ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),
@@ -366,6 +375,7 @@ export async function POST(req: Request) {
         ...(generationReferences !== undefined
           ? { generation_references: generationReferences }
           : {}),
+        ...(storyAssetAction !== undefined ? { story_asset_action: storyAssetAction } : {}),
       }),
       signal: req.signal,
     })

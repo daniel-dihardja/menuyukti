@@ -10,9 +10,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DEFAULT_CHAT_MODE, isChatModeId, type ChatModeId } from '@/lib/chat/chat-modes'
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
+import { clearStoryAssetViaChat } from '@/lib/chat/clear-story-asset-via-chat'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { appendWorkflowChatMention } from '@/lib/chat/append-workflow-chat-mention'
 import { mediaNamesToPhotoGenerationReferences } from '@/lib/chat/media-names-to-generation-references'
+import {
+  latestStoryAssetsFromMessages,
+  type StoryAssetRef,
+} from '@/lib/chat/story-assets-from-messages'
 import {
   clearWorkflowChatMentionTrigger,
   mediaTypeFromFilename,
@@ -69,6 +74,8 @@ export function useWorkflowChat({
   const [pendingMediaAttachments, setPendingMediaAttachments] = useState<PendingMediaAttachment[]>(
     [],
   )
+  const [storyAssetsOverride, setStoryAssetsOverride] = useState<StoryAssetRef[] | null>(null)
+  const storyAssetsClearInFlightRef = useRef(false)
 
   const chatApiContextRef = useRef({
     workflowId,
@@ -237,6 +244,51 @@ export function useWorkflowChat({
     setPendingMediaAttachments((prev) => prev.filter((m) => m.id !== id))
   }, [])
 
+  const storyAssetsFromMessages = useMemo(() => latestStoryAssetsFromMessages(messages), [messages])
+  const storyAssetsFromMessagesKey = useMemo(
+    () => JSON.stringify(storyAssetsFromMessages),
+    [storyAssetsFromMessages],
+  )
+
+  useEffect(() => {
+    setStoryAssetsOverride(null)
+  }, [storyAssetsFromMessagesKey])
+
+  const savedStoryAssets = storyAssetsOverride ?? storyAssetsFromMessages
+
+  const handleRemoveSavedStoryAsset = useCallback(
+    (name: string) => {
+      if (status === 'streaming' || status === 'submitted' || storyAssetsClearInFlightRef.current) {
+        return
+      }
+      const previous = savedStoryAssets
+      const optimistic = previous.filter((a) => a.name !== name)
+      setStoryAssetsOverride(optimistic)
+      storyAssetsClearInFlightRef.current = true
+      const ctx = chatApiContextRef.current
+      void clearStoryAssetViaChat({
+        name,
+        workflowId: ctx.workflowId,
+        locationId: ctx.locationId,
+        milestoneId: ctx.milestoneId,
+        analyticsRunId: ctx.analyticsRunId,
+        workflowChatSessionId: workflowChatSessionIdRef.current,
+        chatMode: chatModeRef.current,
+        model: selectedChatModelRef.current,
+      })
+        .then((snapshot) => {
+          setStoryAssetsOverride(snapshot)
+        })
+        .catch(() => {
+          setStoryAssetsOverride(previous)
+        })
+        .finally(() => {
+          storyAssetsClearInFlightRef.current = false
+        })
+    },
+    [savedStoryAssets, status],
+  )
+
   const handleSubmit = useCallback(
     async (message: PromptInputMessage) => {
       const mediaFiles: FileUIPart[] = pendingMediaAttachmentsRef.current.map((m) => ({
@@ -305,6 +357,7 @@ export function useWorkflowChat({
     setMessages([])
     setText('')
     setPendingMediaAttachments([])
+    setStoryAssetsOverride(null)
     pendingPresetReferenceMilestoneIdRef.current = null
     pendingReferencedVisualizationIdRef.current = null
     const sid = crypto.randomUUID()
@@ -376,8 +429,17 @@ export function useWorkflowChat({
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
+      savedStoryAssets,
     }),
-    [text, chatMode, selectedChatModel, isSubmitDisabled, slashCommands, pendingMediaAttachments],
+    [
+      text,
+      chatMode,
+      selectedChatModel,
+      isSubmitDisabled,
+      slashCommands,
+      pendingMediaAttachments,
+      savedStoryAssets,
+    ],
   )
 
   const actions = useMemo(
@@ -392,6 +454,7 @@ export function useWorkflowChat({
       handleSelectVisualizationMention,
       handleSelectMediaMention,
       handleRemovePendingMedia,
+      handleRemoveSavedStoryAsset,
       handleRetry,
       handleClearChat,
       stop,
@@ -405,6 +468,7 @@ export function useWorkflowChat({
       handleSelectVisualizationMention,
       handleSelectMediaMention,
       handleRemovePendingMedia,
+      handleRemoveSavedStoryAsset,
       handleRetry,
       handleClearChat,
       stop,

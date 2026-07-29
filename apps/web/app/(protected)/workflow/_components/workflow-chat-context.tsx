@@ -6,6 +6,7 @@ import { createContext, use, useMemo, type ReactNode } from 'react'
 
 import type { PendingMediaAttachment, WorkflowChatSlashCommand } from './use-workflow-chat'
 import { DEFAULT_CHAT_MODE, type ChatModeId } from '@/lib/chat/chat-modes'
+import type { StoryAssetRef } from '@/lib/chat/story-assets-from-messages'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
@@ -27,6 +28,7 @@ export type WorkflowChatComposerState = {
   isSubmitDisabled: boolean
   slashCommands: WorkflowChatSlashCommand[]
   pendingMediaAttachments: PendingMediaAttachment[]
+  savedStoryAssets: StoryAssetRef[]
 }
 
 /** @deprecated Prefer useWorkflowChatMessages + useWorkflowChatComposerState */
@@ -49,6 +51,7 @@ export type WorkflowChatActions = {
   ) => void
   handleSelectMediaMention: (item: MediaCatalogItem) => void
   handleRemovePendingMedia: (id: string) => void
+  handleRemoveSavedStoryAsset: (name: string) => void
   handleRetry: () => Promise<void>
   handleClearChat: () => void
   stop: () => void

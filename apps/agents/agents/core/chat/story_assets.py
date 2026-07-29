@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any, Literal
 
@@ -19,6 +20,7 @@ _SAFE_PHOTO_FILENAME_RE = re.compile(
 )
 
 StoryAssetRole = Literal["style", "product"]
+StoryAssetActionOp = Literal["save", "clear"]
 
 
 def is_safe_photo_filename(name: str) -> bool:
@@ -48,6 +50,25 @@ def _normalize_assets(raw: Any) -> list[StoryAssetRef]:
             }
         )
     return out
+
+
+def story_assets_tool_payload(
+    *,
+    ok: bool,
+    action: StoryAssetActionOp,
+    story_assets: list[StoryAssetRef],
+    message: str,
+) -> str:
+    """JSON ToolMessage content for UI chips + compact tool status."""
+    return json.dumps(
+        {
+            "ok": ok,
+            "action": action,
+            "story_assets": story_assets,
+            "message": message,
+        },
+        ensure_ascii=False,
+    )
 
 
 def upsert_story_asset_list(
@@ -88,12 +109,28 @@ def clear_story_asset_list(
     assets: list[StoryAssetRef],
     *,
     role: StoryAssetRole | None = None,
-) -> tuple[list[StoryAssetRef], str]:
-    """Clear all assets or only those matching ``role``."""
+    name: str | None = None,
+) -> tuple[list[StoryAssetRef] | None, str]:
+    """Clear by filename, by role, or all.
+
+    Returns ``(next_list, message)``; ``None`` list on validation error.
+    """
+    if name is not None:
+        trimmed = name.strip() if isinstance(name, str) else ""
+        if not is_safe_photo_filename(trimmed):
+            return None, (
+                "Error: name must be a media-library photo filename "
+                "(uuid + image extension)."
+            )
+        next_list = [a for a in assets if a["name"] != trimmed]
+        if len(next_list) == len(assets):
+            return next_list, f"No story asset named {trimmed} to clear."
+        return next_list, f"Cleared story asset {trimmed}."
+
     if role is None:
         return [], "Cleared all story assets."
     if role not in ("style", "product"):
-        return assets, "Error: role must be 'style', 'product', or omitted to clear all."
+        return None, "Error: role must be 'style', 'product', or omitted to clear all."
     next_list = [a for a in assets if a["role"] != role]
     return next_list, f"Cleared story assets with role={role}."
 
@@ -155,6 +192,28 @@ def merge_generation_references(
     return merged or None
 
 
+def apply_clear_story_assets(
+    assets: list[StoryAssetRef] | list[dict[str, Any]] | None,
+    *,
+    role: StoryAssetRole | None = None,
+    name: str | None = None,
+) -> tuple[list[StoryAssetRef] | None, str, str]:
+    """Apply clear and return ``(next_list|None, human_message, json_payload)``."""
+    current = _normalize_assets(assets)
+    next_list, message = clear_story_asset_list(current, role=role, name=name)
+    if next_list is None:
+        return None, message, story_assets_tool_payload(
+            ok=False, action="clear", story_assets=current, message=message
+        )
+    return (
+        next_list,
+        message,
+        story_assets_tool_payload(
+            ok=True, action="clear", story_assets=next_list, message=message
+        ),
+    )
+
+
 @tool
 def save_story_asset(
     role: StoryAssetRole,
@@ -175,12 +234,17 @@ def save_story_asset(
     current = _normalize_assets((runtime.state or {}).get("story_assets"))
     next_list, message = upsert_story_asset_list(current, role=role, name=name, note=note)
     if next_list is None:
-        return message
+        return story_assets_tool_payload(
+            ok=False, action="save", story_assets=current, message=message
+        )
 
+    payload = story_assets_tool_payload(
+        ok=True, action="save", story_assets=next_list, message=message
+    )
     return Command(
         update={
             "story_assets": next_list,
-            "messages": [ToolMessage(content=message, tool_call_id=runtime.tool_call_id)],
+            "messages": [ToolMessage(content=payload, tool_call_id=runtime.tool_call_id)],
         }
     )
 
@@ -188,23 +252,25 @@ def save_story_asset(
 @tool
 def clear_story_assets(
     role: StoryAssetRole | None = None,
+    name: str | None = None,
     runtime: ToolRuntime = None,  # type: ignore[assignment]
 ) -> Command | str:
     """Clear saved Story style/product photo refs from the scratchpad.
 
-    Omit ``role`` to clear all; pass ``style`` or ``product`` to clear only that role.
+    Pass ``name`` to remove one media-library filename. Pass ``role`` (style|product) to clear
+    that role. Omit both to clear all.
     """
     if runtime is None or not runtime.tool_call_id:
         return "Error: tool runtime unavailable."
 
     current = _normalize_assets((runtime.state or {}).get("story_assets"))
-    next_list, message = clear_story_asset_list(current, role=role)
-    if message.startswith("Error:"):
-        return message
+    next_list, message, payload = apply_clear_story_assets(current, role=role, name=name)
+    if next_list is None:
+        return payload
 
     return Command(
         update={
             "story_assets": next_list,
-            "messages": [ToolMessage(content=message, tool_call_id=runtime.tool_call_id)],
+            "messages": [ToolMessage(content=payload, tool_call_id=runtime.tool_call_id)],
         }
     )

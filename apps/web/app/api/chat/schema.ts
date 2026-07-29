@@ -88,6 +88,13 @@ export const chatRequestBodySchema = z.object({
     .array(chatGenerationReferenceSchema)
     .max(MAX_GENERATION_REFERENCES)
     .optional(),
+  /** Clear one Story scratchpad asset by media-library filename (no LLM turn). */
+  storyAssetAction: z
+    .object({
+      op: z.literal('clear'),
+      name: mediaFilenameSchema,
+    })
+    .optional(),
 })
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>

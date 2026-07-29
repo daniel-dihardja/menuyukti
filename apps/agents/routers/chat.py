@@ -3,13 +3,18 @@
 import asyncio
 import json
 import re
+import uuid
 from collections.abc import AsyncIterator, Iterator
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
 from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.http_context import chat_http_client_var
+from agents_app.agents.core.chat.story_assets import (
+    apply_clear_story_assets,
+    is_safe_photo_filename,
+)
 from agents_app.agents.core.chat.tools import get_milestone
 from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
@@ -24,7 +29,7 @@ from langchain_core.messages import (
 )
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 router = APIRouter()
 
@@ -64,10 +69,23 @@ class ChatMessage(BaseModel):
             raise ValueError("content must be a non-empty string or content block list")
 
 
+class StoryAssetAction(BaseModel):
+    """Client-driven scratchpad mutation (no LLM)."""
+
+    op: Literal["clear"]
+    name: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _validate_name(self) -> Self:
+        if not is_safe_photo_filename(self.name):
+            raise ValueError("story_asset_action.name must be a safe media-library filename")
+        return self
+
+
 class ChatRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    messages: list[ChatMessage] = Field(min_length=1)
+    messages: list[ChatMessage] = Field(default_factory=list)
     workflow_id: str | None = None
     milestone_id: str | None = None
     location_id: int | None = Field(default=None, ge=1)
@@ -94,6 +112,15 @@ class ChatRequest(BaseModel):
     image_quality: str | None = Field(default=None, min_length=1, max_length=40)
     style_id: int | None = Field(default=None, ge=1)
     generation_references: list[dict[str, Any]] | None = None
+    story_asset_action: StoryAssetAction | None = None
+
+    @model_validator(mode="after")
+    def _require_messages_or_action(self) -> Self:
+        if self.story_asset_action is not None:
+            return self
+        if len(self.messages) != 1:
+            raise ValueError("Expected exactly one user message per request")
+        return self
 
 
 def _sse_data_line(payload: object) -> str:
@@ -138,6 +165,51 @@ async def _stream_slash_get_milestone(
         yield _sse_data_line(structured_error_payload(exc))
     finally:
         chat_http_client_var.reset(token)
+
+
+async def _stream_story_asset_action(
+    graph: CompiledStateGraph,
+    *,
+    action: StoryAssetAction,
+    runnable_config: RunnableConfig,
+) -> AsyncIterator[str]:
+    """Clear one scratchpad asset in the checkpoint without running the LLM."""
+    tool_call_id = f"story-asset-{uuid.uuid4().hex[:12]}"
+    try:
+        yield _sse_data_line(
+            {
+                "status": "tool_start",
+                "tool": "clear_story_assets",
+                "tool_call_id": tool_call_id,
+            }
+        )
+        snapshot = await graph.aget_state(runnable_config)
+        values = snapshot.values if isinstance(snapshot.values, dict) else {}
+        current = values.get("story_assets")
+        next_list, _message, payload = apply_clear_story_assets(current, name=action.name)
+        if next_list is None:
+            yield _sse_data_line(
+                {
+                    "status": "tool_end",
+                    "tool": "clear_story_assets",
+                    "tool_call_id": tool_call_id,
+                    "output": payload,
+                }
+            )
+            return
+        await graph.aupdate_state(runnable_config, {"story_assets": next_list})
+        yield _sse_data_line(
+            {
+                "status": "tool_end",
+                "tool": "clear_story_assets",
+                "tool_call_id": tool_call_id,
+                "output": payload,
+            }
+        )
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        yield _sse_data_line(structured_error_payload(exc))
 
 
 def _resolve_thread_id(
@@ -351,10 +423,13 @@ async def chat_stream(
     if graph is None:
         raise HTTPException(status_code=503, detail="Chat graph is not initialized")
 
-    try:
-        human = incremental_user_message([m.model_dump() for m in body.messages])
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+    action_only = body.story_asset_action is not None and len(body.messages) == 0
+    human: HumanMessage | None = None
+    if not action_only:
+        try:
+            human = incremental_user_message([m.model_dump() for m in body.messages])
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
 
     thread_id = _resolve_thread_id(
         x_menuyukti_user_id,
@@ -382,12 +457,22 @@ async def chat_stream(
         chat_mode=body.chat_mode,
     )
 
-    slash_args = parse_slash_get_milestone(
-        human.content if isinstance(human, HumanMessage) else None
+    slash_args = (
+        None
+        if human is None
+        else parse_slash_get_milestone(human.content if isinstance(human, HumanMessage) else None)
     )
 
     async def event_stream():
         try:
+            if action_only and body.story_asset_action is not None:
+                async for line in _stream_story_asset_action(
+                    graph,
+                    action=body.story_asset_action,
+                    runnable_config=cfg,
+                ):
+                    yield line
+                return
             if slash_args is not None:
                 async for line in _stream_slash_get_milestone(
                     tool_args=slash_args,
@@ -396,6 +481,7 @@ async def chat_stream(
                 ):
                     yield line
                 return
+            assert human is not None
             async for line in _stream_chat_events(
                 graph,
                 [human],

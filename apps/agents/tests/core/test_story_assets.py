@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from langchain.tools import ToolRuntime
 from langgraph.types import Command
 
@@ -53,6 +55,7 @@ def test_upsert_and_clear_helpers() -> None:
     assert len(nxt3) == 2
 
     cleared_role, msg_role = clear_story_asset_list(nxt3, role="style")
+    assert cleared_role is not None
     assert len(cleared_role) == 1
     assert cleared_role[0]["role"] == "product"
     assert "style" in msg_role
@@ -60,6 +63,12 @@ def test_upsert_and_clear_helpers() -> None:
     empty, msg_all = clear_story_asset_list(nxt3, role=None)
     assert empty == []
     assert "Cleared all" in msg_all
+
+    by_name, msg_name = clear_story_asset_list(nxt3, name=VALID_PRODUCT)
+    assert by_name is not None
+    assert len(by_name) == 1
+    assert by_name[0]["name"] == VALID_STYLE
+    assert VALID_PRODUCT in msg_name
 
     filled = [
         {"role": "style", "name": f"{i:08x}-bbbb-cccc-dddd-eeeeeeeeeeee.webp", "note": ""}
@@ -93,7 +102,7 @@ def test_merge_generation_references_scratchpad_wins() -> None:
     ]
 
 
-def test_save_story_asset_tool_returns_command() -> None:
+def test_save_story_asset_tool_returns_command_with_json() -> None:
     from agents_app.agents.core.chat.story_assets import save_story_asset
 
     result = save_story_asset.invoke(
@@ -109,7 +118,11 @@ def test_save_story_asset_tool_returns_command() -> None:
     assert result.update["story_assets"] == [
         {"role": "style", "name": VALID_STYLE, "note": "editorial"}
     ]
-    assert result.update["messages"][0].content.startswith("Saved style")
+    payload = json.loads(result.update["messages"][0].content)
+    assert payload["ok"] is True
+    assert payload["action"] == "save"
+    assert payload["story_assets"] == result.update["story_assets"]
+    assert "Saved style" in payload["message"]
 
 
 def test_save_story_asset_rejects_unsafe_name() -> None:
@@ -119,10 +132,12 @@ def test_save_story_asset_rejects_unsafe_name() -> None:
         {"role": "product", "name": "raw-upload.png", "runtime": _runtime()}
     )
     assert isinstance(result, str)
-    assert result.startswith("Error:")
+    payload = json.loads(result)
+    assert payload["ok"] is False
+    assert payload["message"].startswith("Error:")
 
 
-def test_clear_story_assets_tool() -> None:
+def test_clear_story_assets_tool_by_role() -> None:
     from agents_app.agents.core.chat.story_assets import clear_story_assets
 
     result = clear_story_assets.invoke(
@@ -139,3 +154,28 @@ def test_clear_story_assets_tool() -> None:
     assert isinstance(result, Command)
     assert result.update is not None
     assert result.update["story_assets"] == [{"role": "style", "name": VALID_STYLE, "note": ""}]
+    payload = json.loads(result.update["messages"][0].content)
+    assert payload["ok"] is True
+    assert payload["action"] == "clear"
+    assert payload["story_assets"] == result.update["story_assets"]
+
+
+def test_clear_story_assets_tool_by_name() -> None:
+    from agents_app.agents.core.chat.story_assets import clear_story_assets
+
+    result = clear_story_assets.invoke(
+        {
+            "name": VALID_STYLE,
+            "runtime": _runtime(
+                assets=[
+                    {"role": "style", "name": VALID_STYLE, "note": ""},
+                    {"role": "product", "name": VALID_PRODUCT, "note": ""},
+                ]
+            ),
+        }
+    )
+    assert isinstance(result, Command)
+    assert result.update is not None
+    assert result.update["story_assets"] == [
+        {"role": "product", "name": VALID_PRODUCT, "note": ""}
+    ]

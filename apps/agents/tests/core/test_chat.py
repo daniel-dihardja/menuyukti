@@ -74,8 +74,56 @@ def test_chat_not_exactly_one_message(client: TestClient) -> None:
             ],
         },
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
     mock_graph.astream.assert_not_called()
+
+
+def test_chat_story_asset_action_clears_without_llm(client: TestClient) -> None:
+    import json
+    from unittest.mock import AsyncMock
+
+    style = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+    product = "11111111-2222-3333-4444-555555555555.jpg"
+
+    class _Snap:
+        values = {
+            "story_assets": [
+                {"role": "style", "name": style, "note": ""},
+                {"role": "product", "name": product, "note": ""},
+            ]
+        }
+
+    mock_graph = MagicMock()
+    mock_graph.aget_state = AsyncMock(return_value=_Snap())
+    mock_graph.aupdate_state = AsyncMock(return_value=None)
+    mock_graph.astream = MagicMock(side_effect=AssertionError("LLM must not run"))
+    client.app.state.chat_graph = mock_graph
+
+    response = client.post(
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "workflow_id": "1",
+            "messages": [],
+            "chat_mode": "story_image_assistant",
+            "story_asset_action": {"op": "clear", "name": style},
+        },
+    )
+    assert response.status_code == 200
+    mock_graph.astream.assert_not_called()
+    mock_graph.aupdate_state.assert_awaited()
+    body = response.text
+    assert "clear_story_assets" in body
+    outputs = []
+    for line in body.split("\n"):
+        if not line.startswith("data: "):
+            continue
+        payload = json.loads(line[6:])
+        if payload.get("status") == "tool_end":
+            outputs.append(json.loads(payload["output"]))
+    assert outputs
+    assert outputs[-1]["ok"] is True
+    assert outputs[-1]["story_assets"] == [{"role": "product", "name": product, "note": ""}]
 
 
 def test_chat_invalid_model_returns_400(client: TestClient) -> None:

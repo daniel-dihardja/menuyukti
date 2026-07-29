@@ -38,16 +38,27 @@ describe('chatRequestBodySchema', () => {
     }
   })
 
-  it('accepts referencedMediaNames with safe photo filenames', () => {
+  it('accepts storyAssetAction clear with safe filename', () => {
     const parsed = chatRequestBodySchema.safeParse({
-      messages: [{ role: 'user', parts: [{ type: 'text', text: 'Look' }] }],
+      messages: [],
       workflowId: '1',
-      referencedMediaNames: [VALID_MEDIA],
+      locationId: '10',
+      chatMode: 'story_image_assistant',
+      storyAssetAction: { op: 'clear', name: VALID_MEDIA },
     })
     expect(parsed.success).toBe(true)
     if (parsed.success) {
-      expect(parsed.data.referencedMediaNames).toEqual([VALID_MEDIA])
+      expect(parsed.data.storyAssetAction).toEqual({ op: 'clear', name: VALID_MEDIA })
     }
+  })
+
+  it('rejects storyAssetAction with unsafe filename', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      workflowId: '1',
+      storyAssetAction: { op: 'clear', name: '../secret.png' },
+    })
+    expect(parsed.success).toBe(false)
   })
 
   it('accepts referencedPostMediaNames with safe post filenames', () => {

@@ -60,6 +60,9 @@ function toolOutputLooksLikeError(part: ToolUIPart<UITools> | DynamicToolUIPart)
     return false
   }
   const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
+  if (/"ok"\s*:\s*false/.test(output)) {
+    return true
+  }
   return output.startsWith('Error')
 }
 
@@ -199,6 +202,8 @@ const COMPACT_TOOL_I18N = {
   get_milestone: 'getMilestone',
   update_milestone_input: 'updateMilestoneInput',
   get_location_data: 'getLocationData',
+  save_story_asset: 'saveStoryAsset',
+  clear_story_assets: 'clearStoryAssets',
 } as const
 
 type CompactToolName = keyof typeof COMPACT_TOOL_I18N

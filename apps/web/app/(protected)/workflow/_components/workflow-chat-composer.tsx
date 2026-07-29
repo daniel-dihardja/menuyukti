@@ -29,6 +29,7 @@ import {
   useWorkflowChatMessages,
 } from './workflow-chat-context'
 import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
+import { WorkflowChatSavedStoryAssetsStrip } from './workflow-chat-saved-story-assets-strip'
 import { useWorkflowMobileArtifact } from './workflow-mobile-artifact-context'
 
 function WorkflowChatAttachmentStrip() {
@@ -121,7 +122,8 @@ export function WorkflowChatComposer() {
   const t = useTranslations('analytics.workflows.chat')
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
-  const { text, chatMode, selectedChatModel, slashCommands } = useWorkflowChatComposerState()
+  const { text, chatMode, selectedChatModel, slashCommands, savedStoryAssets } =
+    useWorkflowChatComposerState()
   const { isChatBusy } = useWorkflowChatMessages()
   const {
     setText,
@@ -133,6 +135,7 @@ export function WorkflowChatComposer() {
     handleSelectMention,
     handleSelectVisualizationMention,
     handleSelectMediaMention,
+    handleRemoveSavedStoryAsset,
     handleClearChat,
   } = useWorkflowChatActions()
 
@@ -148,6 +151,13 @@ export function WorkflowChatComposer() {
         multiple
         onSubmit={handleSubmit}
       >
+        {chatMode === 'story_image_assistant' ? (
+          <WorkflowChatSavedStoryAssetsStrip
+            assets={savedStoryAssets}
+            disabled={isChatBusy}
+            onRemove={handleRemoveSavedStoryAsset}
+          />
+        ) : null}
         <WorkflowChatAttachmentStrip />
         <WorkflowChatComposerMenus
           commands={slashCommands}
