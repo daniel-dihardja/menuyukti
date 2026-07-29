@@ -124,7 +124,7 @@ export function WorkflowChatComposer() {
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
   const { text, chatMode, selectedChatModel, slashCommands, savedStoryAssets } =
     useWorkflowChatComposerState()
-  const { isChatBusy } = useWorkflowChatMessages()
+  const { isChatBusy, visibleMessages } = useWorkflowChatMessages()
   const {
     setText,
     setChatMode,
@@ -155,6 +155,7 @@ export function WorkflowChatComposer() {
           <WorkflowChatSavedStoryAssetsStrip
             assets={savedStoryAssets}
             disabled={isChatBusy}
+            messages={visibleMessages}
             onRemove={handleRemoveSavedStoryAsset}
           />
         ) : null}

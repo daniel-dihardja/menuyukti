@@ -3,11 +3,14 @@ import type { UIMessage } from 'ai'
 
 import {
   latestStoryAssetsFromMessages,
+  parseGenerateStoryAssetsOutput,
   parseStoryAssetsToolOutput,
+  resultThumbnailUrlFromMessages,
 } from '@/lib/chat/story-assets-from-messages'
 
 const STYLE = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee.webp'
 const PRODUCT = '11111111-2222-3333-4444-555555555555.jpg'
+const RESULT = 'dddddddd-eeee-ffff-aaaa-111111111111.webp'
 
 describe('parseStoryAssetsToolOutput', () => {
   it('parses ok JSON snapshot', () => {
@@ -38,6 +41,27 @@ describe('parseStoryAssetsToolOutput', () => {
         }),
       ),
     ).toBeNull()
+  })
+})
+
+describe('parseGenerateStoryAssetsOutput', () => {
+  it('parses save_result generate payload', () => {
+    const assets = parseGenerateStoryAssetsOutput(
+      JSON.stringify({
+        url: 'https://example.com/r.webp',
+        name: RESULT,
+        action: 'save_result',
+        story_assets: [
+          { role: 'style', name: STYLE, note: '' },
+          { role: 'result', name: RESULT, note: '' },
+        ],
+        prompt: 'sky',
+      }),
+    )
+    expect(assets).toEqual([
+      { role: 'style', name: STYLE, note: '' },
+      { role: 'result', name: RESULT, note: '' },
+    ])
   })
 })
 
@@ -87,11 +111,66 @@ describe('latestStoryAssetsFromMessages', () => {
     ])
   })
 
+  it('returns snapshot from generate save_result', () => {
+    const messages = [
+      {
+        id: '1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-generate_instagram_post_image',
+            toolCallId: 'g',
+            state: 'output-available',
+            input: {},
+            output: JSON.stringify({
+              url: 'https://example.com/r.webp',
+              name: RESULT,
+              action: 'save_result',
+              story_assets: [{ role: 'result', name: RESULT, note: '' }],
+              prompt: 'edit',
+            }),
+          },
+        ],
+      },
+    ] as UIMessage[]
+
+    expect(latestStoryAssetsFromMessages(messages)).toEqual([
+      { role: 'result', name: RESULT, note: '' },
+    ])
+  })
+
   it('returns empty when no story asset tools exist', () => {
     expect(
       latestStoryAssetsFromMessages([
         { id: '1', role: 'user', parts: [{ type: 'text', text: 'hi' }] },
       ] as UIMessage[]),
     ).toEqual([])
+  })
+})
+
+describe('resultThumbnailUrlFromMessages', () => {
+  it('returns matching generate url', () => {
+    const messages = [
+      {
+        id: '1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-generate_instagram_post_image',
+            toolCallId: 'g',
+            state: 'output-available',
+            input: {},
+            output: JSON.stringify({
+              url: 'https://example.com/r.webp',
+              name: RESULT,
+              action: 'save_result',
+              story_assets: [{ role: 'result', name: RESULT, note: '' }],
+            }),
+          },
+        ],
+      },
+    ] as UIMessage[]
+
+    expect(resultThumbnailUrlFromMessages(messages, RESULT)).toBe('https://example.com/r.webp')
   })
 })

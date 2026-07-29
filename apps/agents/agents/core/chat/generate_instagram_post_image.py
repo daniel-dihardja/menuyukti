@@ -7,10 +7,15 @@ import os
 from typing import Annotated, Any
 
 from agents_app.agents.core.chat.http_context import get_chat_http_client
-from agents_app.agents.core.chat.story_assets import merge_generation_references
+from agents_app.agents.core.chat.story_assets import (
+    merge_generation_references,
+    upsert_result_asset,
+)
+from langchain.messages import ToolMessage
 from langchain.tools import ToolRuntime
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
+from langgraph.types import Command
 
 GENERATE_PATH = "/api/posts/generate"
 # Leonardo poll can take up to ~2 minutes; leave headroom for S3 + GraphQL.
@@ -73,7 +78,7 @@ async def generate_instagram_post_image(
     quality: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
     runtime: ToolRuntime = None,  # type: ignore[assignment]
-) -> str:
+) -> Command | str:
     """Generate an image with Leonardo using a composed prompt.
 
     Use when the user asks to generate, create, or regenerate an image (workflow chat or
@@ -83,7 +88,8 @@ async def generate_instagram_post_image(
     In Post Creator, model/format/quality/style/references often come from the UI — do not ask
     the user to restate those unless they want to change them first. After success, briefly
     confirm; the image appears in chat (and updates the Post Creator preview when a saved
-    post page is in context).
+    post page is in context). In Story mode, the output is also saved as the scratchpad
+    ``result`` asset for later refine turns.
     """
     trimmed = prompt.strip() if isinstance(prompt, str) else ""
     if not trimmed:
@@ -188,11 +194,37 @@ async def generate_instagram_post_image(
     if not isinstance(url_out, str) or not url_out:
         return "Error: generate response missing image url."
 
-    result = {
+    result: dict[str, Any] = {
         "url": url_out,
         "name": name if isinstance(name, str) else None,
         "mediaS3Key": media_s3_key if isinstance(media_s3_key, str) else None,
         "createdAt": created_at if isinstance(created_at, str) else None,
         "prompt": trimmed,
     }
+
+    is_story = c.get("chat_mode") == "story_image_assistant"
+    if (
+        is_story
+        and isinstance(name, str)
+        and name.strip()
+        and runtime is not None
+        and runtime.tool_call_id
+    ):
+        current = (runtime.state or {}).get("story_assets")
+        next_list, _msg = upsert_result_asset(current, name=name)
+        if next_list is not None:
+            result["action"] = "save_result"
+            result["story_assets"] = next_list
+            return Command(
+                update={
+                    "story_assets": next_list,
+                    "messages": [
+                        ToolMessage(
+                            content=json.dumps(result, ensure_ascii=False),
+                            tool_call_id=runtime.tool_call_id,
+                        )
+                    ],
+                }
+            )
+
     return json.dumps(result, ensure_ascii=False)

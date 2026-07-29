@@ -1914,6 +1914,8 @@
           "title": "Saved for this Story",
           "roleStyle": "Style",
           "roleProduct": "Product",
+          "roleResult": "Result",
+          "resultLabel": "Last generated",
           "removeAriaLabel": "Remove {role} reference"
         },
         "slashCommands": {

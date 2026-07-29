@@ -1,4 +1,4 @@
-"""Story image assistant scratchpad: labeled style/product photo refs in graph state."""
+"""Story image assistant scratchpad: labeled style/product/result refs in graph state."""
 
 from __future__ import annotations
 
@@ -19,7 +19,8 @@ _SAFE_PHOTO_FILENAME_RE = re.compile(
     re.IGNORECASE,
 )
 
-StoryAssetRole = Literal["style", "product"]
+StoryAssetRole = Literal["style", "product", "result"]
+StoryAssetSaveRole = Literal["style", "product"]
 StoryAssetActionOp = Literal["save", "clear"]
 
 
@@ -38,7 +39,7 @@ def _normalize_assets(raw: Any) -> list[StoryAssetRef]:
         role = item.get("role")
         name = item.get("name")
         note = item.get("note")
-        if role not in ("style", "product"):
+        if role not in ("style", "product", "result"):
             continue
         if not isinstance(name, str) or not name.strip():
             continue
@@ -74,7 +75,7 @@ def story_assets_tool_payload(
 def upsert_story_asset_list(
     assets: list[StoryAssetRef],
     *,
-    role: StoryAssetRole,
+    role: StoryAssetSaveRole,
     name: str,
     note: str = "",
 ) -> tuple[list[StoryAssetRef] | None, str]:
@@ -105,6 +106,42 @@ def upsert_story_asset_list(
     return next_list, f"Saved {role} asset {trimmed_name}."
 
 
+def upsert_result_asset(
+    assets: list[StoryAssetRef] | list[dict[str, Any]] | None,
+    *,
+    name: str,
+    note: str = "",
+) -> tuple[list[StoryAssetRef] | None, str]:
+    """Replace any existing ``result`` with ``name`` (at most one result).
+
+    Replacement does not require a free slot. Inserting a first result respects
+    ``MAX_STORY_ASSETS``.
+    """
+    trimmed_name = name.strip() if isinstance(name, str) else ""
+    if not is_safe_photo_filename(trimmed_name):
+        return None, (
+            "Error: result name must be a posts media filename "
+            "(uuid + image extension)."
+        )
+
+    trimmed_note = note.strip() if isinstance(note, str) else ""
+    current = _normalize_assets(assets)
+    without_result = [a for a in current if a["role"] != "result"]
+    had_result = len(without_result) < len(current)
+    if not had_result and len(without_result) >= MAX_STORY_ASSETS:
+        return None, (
+            f"Error: at most {MAX_STORY_ASSETS} story assets can be saved. "
+            "Clear one with clear_story_assets before adding another."
+        )
+
+    next_list = [
+        *without_result,
+        {"role": "result", "name": trimmed_name, "note": trimmed_note},
+    ]
+    action = "Updated" if had_result else "Saved"
+    return next_list, f"{action} result asset {trimmed_name}."
+
+
 def clear_story_asset_list(
     assets: list[StoryAssetRef],
     *,
@@ -129,16 +166,18 @@ def clear_story_asset_list(
 
     if role is None:
         return [], "Cleared all story assets."
-    if role not in ("style", "product"):
-        return None, "Error: role must be 'style', 'product', or omitted to clear all."
+    if role not in ("style", "product", "result"):
+        return None, (
+            "Error: role must be 'style', 'product', 'result', or omitted to clear all."
+        )
     next_list = [a for a in assets if a["role"] != role]
     return next_list, f"Cleared story assets with role={role}."
 
 
-def photo_references_from_story_assets(
+def generation_references_from_story_assets(
     assets: list[StoryAssetRef] | list[dict[str, Any]] | None,
 ) -> list[dict[str, str]]:
-    """Leonardo ``{type: photo, name}`` refs from scratchpad (dedupe by name, max 6)."""
+    """Leonardo refs from scratchpad: photos for style/product, previous-result for result."""
     refs: list[dict[str, str]] = []
     seen: set[str] = set()
     for asset in _normalize_assets(assets):
@@ -148,10 +187,24 @@ def photo_references_from_story_assets(
         if not is_safe_photo_filename(name):
             continue
         seen.add(name)
-        refs.append({"type": "photo", "name": name})
+        if asset["role"] == "result":
+            refs.append({"type": "previous-result", "filename": name})
+        else:
+            refs.append({"type": "photo", "name": name})
         if len(refs) >= MAX_STORY_ASSETS:
             break
     return refs
+
+
+def photo_references_from_story_assets(
+    assets: list[StoryAssetRef] | list[dict[str, Any]] | None,
+) -> list[dict[str, str]]:
+    """Leonardo ``{type: photo, name}`` refs from style/product only (legacy helper)."""
+    return [
+        ref
+        for ref in generation_references_from_story_assets(assets)
+        if ref.get("type") == "photo"
+    ]
 
 
 def merge_generation_references(
@@ -159,15 +212,15 @@ def merge_generation_references(
     story_assets: list[StoryAssetRef] | list[dict[str, Any]] | None,
     request_references: list[Any] | None,
 ) -> list[dict[str, str]] | None:
-    """Merge scratchpad + request refs; scratchpad wins on name dedupe; cap at 6."""
+    """Merge scratchpad + request refs; scratchpad wins on filename dedupe; cap at 6."""
     merged: list[dict[str, str]] = []
     seen: set[str] = set()
 
-    for ref in photo_references_from_story_assets(story_assets):
-        name = ref["name"]
-        if name in seen:
+    for ref in generation_references_from_story_assets(story_assets):
+        key = ref.get("filename") if ref.get("type") == "previous-result" else ref.get("name")
+        if not isinstance(key, str) or key in seen:
             continue
-        seen.add(name)
+        seen.add(key)
         merged.append(ref)
 
     if isinstance(request_references, list):
@@ -176,7 +229,18 @@ def merge_generation_references(
                 break
             if not isinstance(item, dict):
                 continue
-            if item.get("type") != "photo":
+            ref_type = item.get("type")
+            if ref_type == "previous-result":
+                raw_name = item.get("filename")
+                if not isinstance(raw_name, str) or not raw_name.strip():
+                    continue
+                name = raw_name.strip()
+                if name in seen or not is_safe_photo_filename(name):
+                    continue
+                seen.add(name)
+                merged.append({"type": "previous-result", "filename": name})
+                continue
+            if ref_type != "photo":
                 continue
             raw_name = item.get("name")
             if not isinstance(raw_name, str) or not raw_name.strip():
@@ -216,7 +280,7 @@ def apply_clear_story_assets(
 
 @tool
 def save_story_asset(
-    role: StoryAssetRole,
+    role: StoryAssetSaveRole,
     name: str,
     note: str = "",
     runtime: ToolRuntime = None,  # type: ignore[assignment]
@@ -226,7 +290,8 @@ def save_story_asset(
     Call when the user attaches (via @) or confirms a media-library filename as the style
     direction reference (role=style) or a product/dish photo (role=product). ``name`` must be
     the library filename (uuid + extension), not a raw data URL. Optional ``note`` describes
-    how to use the image in the Leonardo prompt.
+    how to use the image in the Leonardo prompt. Do not use role=result — the last generate
+    output is saved automatically.
     """
     if runtime is None or not runtime.tool_call_id:
         return "Error: tool runtime unavailable."
@@ -255,9 +320,9 @@ def clear_story_assets(
     name: str | None = None,
     runtime: ToolRuntime = None,  # type: ignore[assignment]
 ) -> Command | str:
-    """Clear saved Story style/product photo refs from the scratchpad.
+    """Clear saved Story style/product/result photo refs from the scratchpad.
 
-    Pass ``name`` to remove one media-library filename. Pass ``role`` (style|product) to clear
+    Pass ``name`` to remove one media filename. Pass ``role`` (style|product|result) to clear
     that role. Omit both to clear all.
     """
     if runtime is None or not runtime.tool_call_id:

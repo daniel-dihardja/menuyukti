@@ -102,6 +102,42 @@ def test_merge_generation_references_scratchpad_wins() -> None:
     ]
 
 
+def test_upsert_result_replaces_previous() -> None:
+    from agents_app.agents.core.chat.story_assets import (
+        clear_story_asset_list,
+        merge_generation_references,
+        upsert_result_asset,
+    )
+
+    first = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+    second = "bbbbbbbb-cccc-dddd-eeee-ffffffffffff.webp"
+    assets: list = [{"role": "style", "name": VALID_STYLE, "note": ""}]
+
+    nxt, msg = upsert_result_asset(assets, name=first)
+    assert nxt is not None
+    assert "Saved result" in msg
+    assert [a for a in nxt if a["role"] == "result"] == [
+        {"role": "result", "name": first, "note": ""}
+    ]
+
+    nxt2, msg2 = upsert_result_asset(nxt, name=second)
+    assert nxt2 is not None
+    assert "Updated result" in msg2
+    results = [a for a in nxt2 if a["role"] == "result"]
+    assert len(results) == 1
+    assert results[0]["name"] == second
+
+    merged = merge_generation_references(story_assets=nxt2, request_references=None)
+    assert merged == [
+        {"type": "photo", "name": VALID_STYLE},
+        {"type": "previous-result", "filename": second},
+    ]
+
+    cleared, _ = clear_story_asset_list(nxt2, role="result")
+    assert cleared is not None
+    assert all(a["role"] != "result" for a in cleared)
+
+
 def test_save_story_asset_tool_returns_command_with_json() -> None:
     from agents_app.agents.core.chat.story_assets import save_story_asset
 
