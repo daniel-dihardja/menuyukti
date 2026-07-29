@@ -1896,12 +1896,6 @@
           "general": "General chat",
           "story_image_assistant": "Story assistant"
         },
-        "modeBanner": {
-          "title": "Story image assistant",
-          "hint": "Focused session — we'll guide you toward a 9:16 Instagram Story image.",
-          "exit": "Exit",
-          "exitAriaLabel": "Exit story image assistant and return to general chat"
-        },
         "storyArtifact": {
           "ariaLabel": "Instagram Story image preview",
           "placeholderLabel": "No story image yet"
