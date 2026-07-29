@@ -74,6 +74,10 @@ class ChatRequest(BaseModel):
     analytics_run_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str | None = Field(default=None, min_length=1)
     workflow_chat_session_id: str | None = Field(default=None, min_length=1)
+    chat_mode: Literal["general", "story_image_assistant"] | None = Field(
+        default=None,
+        description="Opt-in chat mode; stored on configurable for future prompt/tool branching.",
+    )
     chat_model: str | None = Field(
         default=None,
         max_length=120,
@@ -170,6 +174,7 @@ def _runnable_config(
     image_quality: str | None = None,
     style_id: int | None = None,
     generation_references: list[dict[str, Any]] | None = None,
+    chat_mode: str | None = None,
 ) -> RunnableConfig:
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
@@ -196,6 +201,8 @@ def _runnable_config(
         configurable["style_id"] = style_id
     if generation_references is not None:
         configurable["generation_references"] = generation_references
+    if chat_mode is not None:
+        configurable["chat_mode"] = chat_mode
     return RunnableConfig(configurable=configurable, recursion_limit=CHAT_RECURSION_LIMIT)
 
 
@@ -369,6 +376,7 @@ async def chat_stream(
         image_quality=body.image_quality,
         style_id=body.style_id,
         generation_references=body.generation_references,
+        chat_mode=body.chat_mode,
     )
 
     slash_args = parse_slash_get_milestone(

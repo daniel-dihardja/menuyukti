@@ -234,6 +234,7 @@ export async function POST(req: Request) {
     analyticsRunId,
     agentThreadId,
     workflowChatSessionId,
+    chatMode,
     model,
     postId,
     pageId,
@@ -354,6 +355,7 @@ export async function POST(req: Request) {
         ...(workflowChatSessionId !== undefined
           ? { workflow_chat_session_id: workflowChatSessionId }
           : {}),
+        ...(chatMode !== undefined ? { chat_mode: chatMode } : {}),
         ...(model !== undefined ? { model } : {}),
         ...(postId !== undefined ? { post_id: postId } : {}),
         ...(pageId !== undefined ? { page_id: pageId } : {}),

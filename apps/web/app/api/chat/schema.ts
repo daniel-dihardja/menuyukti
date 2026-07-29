@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { MAX_GENERATION_REFERENCES } from '@/app/(protected)/ig-studio/post-creator/_components/post-creator-constants'
 import { isSafeAssetFilename, isSafePhotoFilename } from '@/lib/assets/storage'
+import { CHAT_MODE_IDS } from '@/lib/chat/chat-modes'
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { POST_IMAGE_FORMAT_IDS, POST_IMAGE_QUALITY_IDS } from '@/lib/posts/leonardo-post-dimensions'
 import { LEONARDO_POST_MODEL_IDS } from '@/lib/posts/leonardo-post-models'
@@ -72,6 +73,8 @@ export const chatRequestBodySchema = z.object({
    * a fresh checkpoint without changing the workflow id.
    */
   workflowChatSessionId: z.string().uuid().optional(),
+  /** Opt-in chat mode (general vs focused assistants). Agents accept but may ignore until wired. */
+  chatMode: z.enum(CHAT_MODE_IDS).optional(),
   /** Vercel AI Gateway model id (provider/model); validated by agents allowlist. */
   model: z.string().min(1).max(120).optional(),
   /** IG Studio Post Creator — enables generate_instagram_post_image when both ids are set. */

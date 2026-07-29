@@ -140,6 +140,44 @@ def test_chat_valid_model_passed_in_config(client: TestClient) -> None:
     assert captured["config"]["configurable"]["chat_gateway_model"] == "openai/gpt-4o"
 
 
+def test_chat_mode_passed_in_config(client: TestClient) -> None:
+    captured: dict = {}
+    mock_graph = MagicMock()
+    _install_mock_astream(
+        mock_graph,
+        chunks=[("messages", (AIMessageChunk(content="ok"), {}))],
+        capture_config=captured,
+    )
+    client.app.state.chat_graph = mock_graph
+
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "workflow_id": "10",
+            "chat_mode": "story_image_assistant",
+        },
+    ) as response:
+        assert response.status_code == 200
+
+    assert captured["config"]["configurable"]["chat_mode"] == "story_image_assistant"
+
+
+def test_chat_rejects_unknown_chat_mode(client: TestClient) -> None:
+    response = client.post(
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "workflow_id": "10",
+            "chat_mode": "copywriter",
+        },
+    )
+    assert response.status_code == 422
+
+
 def test_chat_stream_sse(client: TestClient) -> None:
     """Patch app.state.chat_graph so we exercise SSE formatting without calling OpenAI."""
     mock_graph = MagicMock()

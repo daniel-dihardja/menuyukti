@@ -5,6 +5,7 @@ import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/pr
 import { createContext, use, useMemo, type ReactNode } from 'react'
 
 import type { PendingMediaAttachment, WorkflowChatSlashCommand } from './use-workflow-chat'
+import { DEFAULT_CHAT_MODE, type ChatModeId } from '@/lib/chat/chat-modes'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
@@ -21,6 +22,7 @@ export type WorkflowChatMessagesState = {
 
 export type WorkflowChatComposerState = {
   text: string
+  chatMode: ChatModeId
   selectedChatModel: ChatGatewayModelId
   isSubmitDisabled: boolean
   slashCommands: WorkflowChatSlashCommand[]
@@ -36,6 +38,7 @@ export type WorkflowChatState = WorkflowChatMessagesState &
 
 export type WorkflowChatActions = {
   setText: (value: string) => void
+  setChatMode: (mode: ChatModeId) => void
   setSelectedChatModel: (model: ChatGatewayModelId) => void
   setAutoAttachGenerated: (enabled: boolean) => void
   handleTextChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
@@ -128,4 +131,4 @@ export function useWorkflowChatState(): WorkflowChatState {
   )
 }
 
-export { DEFAULT_CHAT_GATEWAY_MODEL }
+export { DEFAULT_CHAT_GATEWAY_MODEL, DEFAULT_CHAT_MODE }

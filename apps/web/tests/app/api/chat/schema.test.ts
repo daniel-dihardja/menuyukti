@@ -147,4 +147,27 @@ describe('chatRequestBodySchema', () => {
     })
     expect(parsed.success).toBe(false)
   })
+
+  it('accepts valid chatMode values', () => {
+    for (const chatMode of ['general', 'story_image_assistant'] as const) {
+      const parsed = chatRequestBodySchema.safeParse({
+        messages: [],
+        workflowId: '1',
+        chatMode,
+      })
+      expect(parsed.success).toBe(true)
+      if (parsed.success) {
+        expect(parsed.data.chatMode).toBe(chatMode)
+      }
+    }
+  })
+
+  it('rejects unknown chatMode', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      workflowId: '1',
+      chatMode: 'copywriter',
+    })
+    expect(parsed.success).toBe(false)
+  })
 })

@@ -7,6 +7,7 @@ import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { DEFAULT_CHAT_MODE, isChatModeId, type ChatModeId } from '@/lib/chat/chat-modes'
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -33,9 +34,14 @@ import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualizat
 export type { PendingMediaAttachment } from '@/lib/chat/workflow-chat-auto-attach'
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
+const WORKFLOW_CHAT_MODE_STORAGE_PREFIX = 'menuyukti.wfChatMode.v1:'
 
 function workflowChatSessionStorageKey(workflowId: string) {
   return `${WORKFLOW_CHAT_SESSION_STORAGE_PREFIX}${workflowId}`
+}
+
+function workflowChatModeStorageKey(workflowId: string) {
+  return `${WORKFLOW_CHAT_MODE_STORAGE_PREFIX}${workflowId}`
 }
 
 const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i
@@ -82,6 +88,9 @@ export function useWorkflowChat({
     milestoneId: selectedMilestoneId,
   })
   const workflowChatSessionIdRef = useRef<string | null>(null)
+  const [chatMode, setChatModeState] = useState<ChatModeId>(DEFAULT_CHAT_MODE)
+  const chatModeRef = useRef<ChatModeId>(DEFAULT_CHAT_MODE)
+  chatModeRef.current = chatMode
   const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
     DEFAULT_CHAT_GATEWAY_MODEL,
   )
@@ -111,6 +120,10 @@ export function useWorkflowChat({
     }
     const raw = sessionStorage.getItem(workflowChatSessionStorageKey(workflowId))
     workflowChatSessionIdRef.current = raw !== null && UUID_RE.test(raw) ? raw : null
+    const modeRaw = sessionStorage.getItem(workflowChatModeStorageKey(workflowId))
+    const nextMode = modeRaw !== null && isChatModeId(modeRaw) ? modeRaw : DEFAULT_CHAT_MODE
+    setChatModeState(nextMode)
+    chatModeRef.current = nextMode
   }, [workflowId])
 
   const transport = useMemo(
@@ -135,6 +148,7 @@ export function useWorkflowChat({
               ...(sessionId !== null ? { workflowChatSessionId: sessionId } : {}),
               model:
                 typeof merged?.model === 'string' ? merged.model : selectedChatModelRef.current,
+              chatMode: chatModeRef.current,
             },
           }
         },
@@ -151,6 +165,11 @@ export function useWorkflowChat({
 
   const slashCommands = useMemo(
     (): WorkflowChatSlashCommand[] => [
+      {
+        id: 'story',
+        label: tSlash('story.label'),
+        description: tSlash('story.description'),
+      },
       {
         id: 'input',
         label: tSlash('input.label'),
@@ -317,17 +336,6 @@ export function useWorkflowChat({
     [sendMessage, buildSendBody],
   )
 
-  const handleSelectSlashCommand = useCallback(
-    async (command: string) => {
-      if (status === 'streaming' || status === 'submitted') {
-        return
-      }
-      setText('')
-      await sendMessage({ text: command }, { body: { model: selectedChatModelRef.current } })
-    },
-    [sendMessage, status],
-  )
-
   const handleSelectMention = useCallback(
     (milestoneId: string) => {
       if (status === 'streaming' || status === 'submitted') {
@@ -358,7 +366,7 @@ export function useWorkflowChat({
     await regenerate()
   }, [clearError, regenerate])
 
-  const handleClearChat = useCallback(() => {
+  const rotateChatSession = useCallback(() => {
     stop()
     clearError()
     setMessages([])
@@ -373,6 +381,44 @@ export function useWorkflowChat({
       sessionStorage.setItem(workflowChatSessionStorageKey(workflowId), sid)
     }
   }, [workflowId, stop, clearError, setMessages])
+
+  const handleClearChat = useCallback(() => {
+    rotateChatSession()
+  }, [rotateChatSession])
+
+  const setChatMode = useCallback(
+    (next: ChatModeId) => {
+      if (next === chatModeRef.current) {
+        return
+      }
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      rotateChatSession()
+      setChatModeState(next)
+      chatModeRef.current = next
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(workflowChatModeStorageKey(workflowId), next)
+      }
+    },
+    [rotateChatSession, status, workflowId],
+  )
+
+  const handleSelectSlashCommand = useCallback(
+    async (command: string) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      if (command === '/story') {
+        setText('')
+        setChatMode('story_image_assistant')
+        return
+      }
+      setText('')
+      await sendMessage({ text: command }, { body: { model: selectedChatModelRef.current } })
+    },
+    [sendMessage, setChatMode, status],
+  )
 
   const isChatBusy = status === 'streaming' || status === 'submitted'
   /** True when the composer has no text and no pending media library chips (upload files are checked in the submit control). */
@@ -393,6 +439,7 @@ export function useWorkflowChat({
   const composerState = useMemo(
     () => ({
       text,
+      chatMode,
       selectedChatModel,
       isSubmitDisabled,
       slashCommands,
@@ -401,6 +448,7 @@ export function useWorkflowChat({
     }),
     [
       text,
+      chatMode,
       selectedChatModel,
       isSubmitDisabled,
       slashCommands,
@@ -412,6 +460,7 @@ export function useWorkflowChat({
   const actions = useMemo(
     () => ({
       setText,
+      setChatMode,
       setSelectedChatModel,
       setAutoAttachGenerated,
       handleTextChange,
@@ -427,6 +476,7 @@ export function useWorkflowChat({
       stop,
     }),
     [
+      setChatMode,
       setAutoAttachGenerated,
       handleTextChange,
       handleSubmit,

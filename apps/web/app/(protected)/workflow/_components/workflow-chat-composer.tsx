@@ -16,9 +16,11 @@ import {
   AttachmentRemove,
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
+import { Button } from '@workspace/ui/components/button'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
+import { ChatModeSelect } from '@/components/chat-mode-select'
 import { cn } from '@workspace/ui/lib/utils'
-import { ImagePlus, PanelsTopLeft, Trash2 } from 'lucide-react'
+import { ImagePlus, PanelsTopLeft, Trash2, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 
@@ -142,14 +144,47 @@ function WorkflowChatAutoAttachToggle() {
   )
 }
 
+function WorkflowChatModeBanner() {
+  const t = useTranslations('analytics.workflows.chat')
+  const { chatMode } = useWorkflowChatComposerState()
+  const { isChatBusy } = useWorkflowChatMessages()
+  const { setChatMode } = useWorkflowChatActions()
+
+  if (chatMode !== 'story_image_assistant') {
+    return null
+  }
+
+  return (
+    <div className="mx-3 mt-3 flex items-start justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 lg:mx-0">
+      <div className="min-w-0 space-y-0.5">
+        <p className="text-sm font-medium text-foreground">{t('modeBanner.title')}</p>
+        <p className="text-muted-foreground text-xs leading-snug">{t('modeBanner.hint')}</p>
+      </div>
+      <Button
+        aria-label={t('modeBanner.exitAriaLabel')}
+        className="shrink-0"
+        disabled={isChatBusy}
+        onClick={() => setChatMode('general')}
+        size="sm"
+        type="button"
+        variant="ghost"
+      >
+        <X className="size-3.5" />
+        {t('modeBanner.exit')}
+      </Button>
+    </div>
+  )
+}
+
 export function WorkflowChatComposer() {
   const t = useTranslations('analytics.workflows.chat')
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
-  const { text, selectedChatModel, slashCommands } = useWorkflowChatComposerState()
+  const { text, chatMode, selectedChatModel, slashCommands } = useWorkflowChatComposerState()
   const { isChatBusy } = useWorkflowChatMessages()
   const {
     setText,
+    setChatMode,
     setSelectedChatModel,
     handleTextChange,
     handleSubmit,
@@ -160,6 +195,9 @@ export function WorkflowChatComposer() {
     handleClearChat,
   } = useWorkflowChatActions()
 
+  const placeholder =
+    chatMode === 'story_image_assistant' ? t('placeholderStoryAssistant') : t('placeholder')
+
   return (
     <div className="shrink-0 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
       <PromptInput
@@ -169,6 +207,7 @@ export function WorkflowChatComposer() {
         multiple
         onSubmit={handleSubmit}
       >
+        <WorkflowChatModeBanner />
         <WorkflowChatAttachmentStrip />
         <WorkflowChatComposerMenus
           commands={slashCommands}
@@ -184,7 +223,7 @@ export function WorkflowChatComposer() {
         >
           <PromptInputBody>
             <PromptInputTextarea
-              placeholder={t('placeholder')}
+              placeholder={placeholder}
               value={text}
               onChange={handleTextChange}
             />
@@ -194,6 +233,7 @@ export function WorkflowChatComposer() {
           <PromptInputTools>
             <WorkflowMobilePreviewOpenButton />
             <WorkflowChatAutoAttachToggle />
+            <ChatModeSelect disabled={isChatBusy} onValueChange={setChatMode} value={chatMode} />
             <ChatGatewayModelSelect
               className="max-w-[min(100%,7.5rem)] lg:max-w-[min(100%,11rem)]"
               disabled={isChatBusy}

@@ -1876,6 +1876,7 @@
           }
         },
         "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
+        "placeholderStoryAssistant": "Describe the story: dish, offer, mood, and any text on the image…",
         "thinking": "Thinking…",
         "errorTitle": "Something went wrong",
         "errorDescription": "The request could not be completed. Please try again.",
@@ -1896,8 +1897,23 @@
         "mobileArtifactSheetTitle": "Preview",
         "mobileArtifactSheetDescription": "View milestone results and generated Instagram content.",
         "mobileArtifactEmptyHint": "View generated content",
+        "modes": {
+          "ariaLabel": "Chat mode",
+          "general": "General chat",
+          "story_image_assistant": "Story assistant"
+        },
+        "modeBanner": {
+          "title": "Story image assistant",
+          "hint": "Focused session — we'll guide you toward a 9:16 Instagram Story image.",
+          "exit": "Exit",
+          "exitAriaLabel": "Exit story image assistant and return to general chat"
+        },
         "slashCommands": {
           "ariaLabel": "Slash commands",
+          "story": {
+            "label": "story",
+            "description": "Switch to Story image assistant mode."
+          },
           "input": {
             "label": "input",
             "description": "Get milestone input."
