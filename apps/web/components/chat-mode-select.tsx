@@ -19,6 +19,13 @@ type ChatModeSelectProps = {
   className?: string
 }
 
+/** Trigger chrome so active mode is visible without a separate banner.
+ *  PromptInputSelectTrigger uses `border-none` (border-style); override with `border-solid`. */
+const CHAT_MODE_TRIGGER_CLASS: Record<ChatModeId, string | undefined> = {
+  general: undefined,
+  story_image_assistant: 'border-2 border-solid border-primary',
+}
+
 export function ChatModeSelect({ value, onValueChange, disabled, className }: ChatModeSelectProps) {
   const t = useTranslations('analytics.workflows.chat.modes')
   const allowed = new Set<string>(CHAT_MODE_IDS)
@@ -35,7 +42,11 @@ export function ChatModeSelect({ value, onValueChange, disabled, className }: Ch
     >
       <PromptInputSelectTrigger
         aria-label={t('ariaLabel')}
-        className={cn('max-w-[min(100%,9.5rem)] min-w-0 lg:max-w-[min(100%,12rem)]', className)}
+        className={cn(
+          'max-w-[min(100%,9.5rem)] min-w-0 lg:max-w-[min(100%,12rem)]',
+          CHAT_MODE_TRIGGER_CLASS[value],
+          className,
+        )}
       >
         <PromptInputSelectValue placeholder={t('ariaLabel')} />
       </PromptInputSelectTrigger>
