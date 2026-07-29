@@ -1,3 +1,4 @@
+import { matchesMediaMentionFilter } from '@/lib/chat/media-mention-collection-browse'
 import { formatMediaMentionLabel } from '@/lib/chat/workflow-chat-media-mention'
 
 const MENTION_AT_END = /(?:^|\s)@([^\s@]*)$/
@@ -28,13 +29,13 @@ export function matchesMentionFilter(filterQuery: string, name: string, label?: 
 }
 
 /** Filter media catalog items for the chat `@` mention menu. */
-export function filterMediaForMention<T extends { name: string }>(
+export function filterMediaForMention<T extends { name: string; displayName?: string | null }>(
   items: T[],
   filterQuery: string,
   excludeNames?: ReadonlySet<string>,
 ): T[] {
   return items.filter((item) => {
     if (excludeNames?.has(item.name)) return false
-    return matchesMentionFilter(filterQuery, item.name)
+    return matchesMediaMentionFilter(filterQuery, item)
   })
 }

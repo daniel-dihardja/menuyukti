@@ -15,7 +15,7 @@ import {
   PopoverTitle,
 } from '@workspace/ui/components/popover'
 import { cn } from '@workspace/ui/lib/utils'
-import { Loader2 } from 'lucide-react'
+import { ChevronLeft, Folder, Loader2 } from 'lucide-react'
 import { useWorkflowChatMentionItems } from './workflow-chat-mention-context'
 import {
   useCallback,
@@ -28,8 +28,17 @@ import {
 } from 'react'
 import { useTranslations } from 'next-intl'
 
+import {
+  filterCollectionsForMention,
+  filterMediaForCollectionBrowse,
+} from '@/lib/chat/media-mention-collection-browse'
 import { formatMediaMentionLabel } from '@/lib/chat/workflow-chat-media-mention'
-import { loadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
+import {
+  listMediaCollections,
+  loadMedia,
+  type MediaCatalogItem,
+  type MediaCollection,
+} from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
 export type SlashCommandDefinition = {
@@ -44,6 +53,8 @@ export type MilestoneMentionItem = {
 }
 
 type MentionMenuEntry =
+  | { kind: 'back' }
+  | { kind: 'collection'; collection: MediaCollection }
   | { kind: 'milestone'; id: string; title: string }
   | { kind: 'visualization'; id: WorkflowVisualizationId; title: string }
   | { kind: 'media'; item: MediaCatalogItem }
@@ -82,6 +93,17 @@ export function WorkflowChatComposerMenus({
   const [mediaItems, setMediaItems] = useState<MediaCatalogItem[]>([])
   const [mediaLoading, setMediaLoading] = useState(false)
   const [mediaLoadAttempted, setMediaLoadAttempted] = useState(false)
+  const [collections, setCollections] = useState<MediaCollection[]>([])
+  const [collectionsLoading, setCollectionsLoading] = useState(false)
+  const [browseCollectionId, setBrowseCollectionId] = useState<number | null>(null)
+
+  const browsingCollection = useMemo(
+    () =>
+      browseCollectionId !== null
+        ? (collections.find((c) => c.id === browseCollectionId) ?? null)
+        : null,
+    [browseCollectionId, collections],
+  )
 
   const otherMilestones = useMemo(
     () =>
@@ -106,6 +128,35 @@ export function WorkflowChatComposerMenus({
   /** trimEnd so `@Title ` after picking still matches; avoid trim() stripping intentional leading spaces in rare cases. */
   const mentionFilterQuery = value.startsWith('@') ? value.slice(1).toLowerCase().trimEnd() : ''
   const mentionMenuOpenBase = value.startsWith('@') && !mentionMenusDisabled
+  const isBrowsingCollection = browseCollectionId !== null
+
+  useEffect(() => {
+    if (!mentionMenuOpenBase) {
+      setBrowseCollectionId(null)
+      return
+    }
+    let cancelled = false
+    setCollectionsLoading(true)
+    void listMediaCollections()
+      .then((cols) => {
+        if (!cancelled) {
+          setCollections(cols)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCollections([])
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCollectionsLoading(false)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [mentionMenuOpenBase])
 
   useEffect(() => {
     if (!mentionMenuOpenBase) {
@@ -113,7 +164,9 @@ export function WorkflowChatComposerMenus({
     }
     let cancelled = false
     setMediaLoading(true)
-    void loadMedia()
+    const load =
+      browseCollectionId === null ? loadMedia() : loadMedia({ collectionId: browseCollectionId })
+    void load
       .then((list) => {
         if (!cancelled) {
           setMediaItems(list)
@@ -134,35 +187,44 @@ export function WorkflowChatComposerMenus({
     return () => {
       cancelled = true
     }
-  }, [mentionMenuOpenBase])
+  }, [browseCollectionId, mentionMenuOpenBase])
 
   const filteredMilestones = useMemo(() => {
-    if (!value.startsWith('@')) {
+    if (!value.startsWith('@') || isBrowsingCollection) {
       return []
     }
     return otherMilestones.filter((m) => m.title.toLowerCase().includes(mentionFilterQuery))
-  }, [mentionFilterQuery, otherMilestones, value])
+  }, [isBrowsingCollection, mentionFilterQuery, otherMilestones, value])
 
   const filteredVisualizations = useMemo(() => {
-    if (!value.startsWith('@')) {
+    if (!value.startsWith('@') || isBrowsingCollection) {
       return []
     }
     return visualizations.filter((v) => v.title.toLowerCase().includes(mentionFilterQuery))
-  }, [mentionFilterQuery, value, visualizations])
+  }, [isBrowsingCollection, mentionFilterQuery, value, visualizations])
+
+  const filteredCollections = useMemo(() => {
+    if (!value.startsWith('@') || isBrowsingCollection) {
+      return []
+    }
+    return filterCollectionsForMention(collections, mentionFilterQuery)
+  }, [collections, isBrowsingCollection, mentionFilterQuery, value])
 
   const filteredMedia = useMemo(() => {
     if (!value.startsWith('@')) {
       return []
     }
-    return mediaItems.filter((item) => {
-      const label = formatMediaMentionLabel(item.name).toLowerCase()
-      return (
-        item.name.toLowerCase().includes(mentionFilterQuery) || label.includes(mentionFilterQuery)
-      )
-    })
+    return filterMediaForCollectionBrowse(mediaItems, mentionFilterQuery)
   }, [mentionFilterQuery, mediaItems, value])
 
   const flatMentionEntries = useMemo((): MentionMenuEntry[] => {
+    if (isBrowsingCollection) {
+      const entries: MentionMenuEntry[] = [{ kind: 'back' }]
+      for (const item of filteredMedia) {
+        entries.push({ kind: 'media', item })
+      }
+      return entries
+    }
     const milestoneEntries: MentionMenuEntry[] = filteredMilestones.map((m) => ({
       kind: 'milestone',
       id: m.id,
@@ -173,28 +235,49 @@ export function WorkflowChatComposerMenus({
       id: v.id as WorkflowVisualizationId,
       title: v.title,
     }))
+    const collectionEntries: MentionMenuEntry[] = filteredCollections.map((collection) => ({
+      kind: 'collection',
+      collection,
+    }))
     const mediaEntries: MentionMenuEntry[] = filteredMedia.map((item) => ({
       kind: 'media',
       item,
     }))
-    return [...milestoneEntries, ...visualizationEntries, ...mediaEntries]
-  }, [filteredMilestones, filteredVisualizations, filteredMedia])
+    return [...milestoneEntries, ...visualizationEntries, ...collectionEntries, ...mediaEntries]
+  }, [
+    filteredCollections,
+    filteredMedia,
+    filteredMilestones,
+    filteredVisualizations,
+    isBrowsingCollection,
+  ])
 
   const slashMenuOpen = value.startsWith('/') && filteredSlash.length > 0
   const hasMentionCandidates =
     otherMilestones.length > 0 ||
     visualizations.length > 0 ||
     mediaItems.length > 0 ||
+    collections.length > 0 ||
     mediaLoading ||
-    !mediaLoadAttempted
+    collectionsLoading ||
+    !mediaLoadAttempted ||
+    isBrowsingCollection
   /** Hide popover once the typed tail is not a mention prefix (e.g. `@Brief what is…`) so CommandEmpty does not flash. */
   const mentionMenuOpen =
     mentionMenuOpenBase &&
     hasMentionCandidates &&
-    (flatMentionEntries.length > 0 || mentionFilterQuery.length === 0 || mediaLoading)
+    (flatMentionEntries.length > 0 ||
+      mentionFilterQuery.length === 0 ||
+      mediaLoading ||
+      collectionsLoading ||
+      isBrowsingCollection)
 
   const menuOpen = slashMenuOpen || mentionMenuOpen
-  const panelAriaLabel = slashMenuOpen ? slashAriaLabel : mentionAriaLabel
+  const panelAriaLabel = slashMenuOpen
+    ? slashAriaLabel
+    : isBrowsingCollection
+      ? (browsingCollection?.name ?? mentionAriaLabel)
+      : mentionAriaLabel
 
   const [slashActiveIndex, setSlashActiveIndex] = useState(0)
   const [mentionActiveIndex, setMentionActiveIndex] = useState(0)
@@ -221,6 +304,10 @@ export function WorkflowChatComposerMenus({
   }, [flatMentionEntries.length, mentionMenuOpen])
 
   useEffect(() => {
+    setMentionActiveIndex(0)
+  }, [browseCollectionId])
+
+  useEffect(() => {
     if (!menuOpen) {
       return
     }
@@ -241,8 +328,20 @@ export function WorkflowChatComposerMenus({
     }
   }, [menuOpen, mentionActiveIndex, slashActiveIndex, slashMenuOpen, mentionMenuOpen])
 
+  const exitCollectionBrowse = useCallback(() => {
+    setBrowseCollectionId(null)
+  }, [])
+
   const selectMentionEntry = useCallback(
     (entry: MentionMenuEntry) => {
+      if (entry.kind === 'back') {
+        exitCollectionBrowse()
+        return
+      }
+      if (entry.kind === 'collection') {
+        setBrowseCollectionId(entry.collection.id)
+        return
+      }
       if (entry.kind === 'milestone') {
         onSelectMention(entry.id)
         return
@@ -253,7 +352,7 @@ export function WorkflowChatComposerMenus({
       }
       onSelectMediaMention(entry.item)
     },
-    [onSelectMention, onSelectVisualizationMention, onSelectMediaMention],
+    [exitCollectionBrowse, onSelectMention, onSelectVisualizationMention, onSelectMediaMention],
   )
 
   const handleKeyDownCapture = useCallback(
@@ -263,6 +362,15 @@ export function WorkflowChatComposerMenus({
       }
 
       if (mentionMenuOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          if (isBrowsingCollection) {
+            exitCollectionBrowse()
+            return
+          }
+          onValueChange('')
+          return
+        }
         if (flatMentionEntries.length > 0) {
           if (e.key === 'ArrowDown') {
             e.preventDefault()
@@ -276,11 +384,6 @@ export function WorkflowChatComposerMenus({
             )
             return
           }
-          if (e.key === 'Escape') {
-            e.preventDefault()
-            onValueChange('')
-            return
-          }
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
             const entry = flatMentionEntries[mentionActiveIndex]
@@ -289,9 +392,6 @@ export function WorkflowChatComposerMenus({
             }
             return
           }
-        } else if (e.key === 'Escape') {
-          e.preventDefault()
-          onValueChange('')
         }
         return
       }
@@ -322,8 +422,10 @@ export function WorkflowChatComposerMenus({
       }
     },
     [
+      exitCollectionBrowse,
       flatMentionEntries,
       filteredSlash,
+      isBrowsingCollection,
       mentionActiveIndex,
       mentionMenuOpen,
       onSelectSlashCommand,
@@ -335,6 +437,18 @@ export function WorkflowChatComposerMenus({
   )
 
   let flatIndex = -1
+
+  const mediaHeading = isBrowsingCollection
+    ? (browsingCollection?.name ?? tMention('mediaGroup'))
+    : tMention('mediaGroup')
+
+  const showCollectionMediaLoading =
+    isBrowsingCollection && mediaLoading && filteredMedia.length === 0
+  const showRootMediaLoading =
+    !isBrowsingCollection &&
+    mediaLoading &&
+    filteredMedia.length === 0 &&
+    filteredCollections.length === 0
 
   return (
     <Popover open={menuOpen}>
@@ -374,118 +488,247 @@ export function WorkflowChatComposerMenus({
               </CommandGroup>
             ) : (
               <>
-                {flatMentionEntries.length > 0 || mediaLoading ? (
+                {flatMentionEntries.length > 0 ||
+                mediaLoading ||
+                collectionsLoading ||
+                isBrowsingCollection ? (
                   <>
-                    {filteredMilestones.length > 0 ? (
-                      <CommandGroup
-                        heading={tMention('milestonesGroup')}
-                        aria-label={mentionAriaLabel}
-                      >
-                        {filteredMilestones.map((m) => {
+                    {isBrowsingCollection ? (
+                      <>
+                        {(() => {
                           flatIndex += 1
                           const activeIndex = flatIndex
                           return (
-                            <CommandItem
-                              key={`milestone-${m.id}`}
-                              className={cn(
-                                'w-full items-start',
-                                activeIndex === mentionActiveIndex &&
-                                  'bg-accent text-accent-foreground',
-                              )}
-                              data-workflow-chat-menu-active={
-                                activeIndex === mentionActiveIndex ? 'true' : undefined
-                              }
-                              onSelect={() => onSelectMention(m.id)}
-                              value={m.title}
-                            >
-                              <span className="font-medium">{m.title}</span>
-                            </CommandItem>
+                            <CommandGroup>
+                              <CommandItem
+                                className={cn(
+                                  'w-full items-center gap-2',
+                                  activeIndex === mentionActiveIndex &&
+                                    'bg-accent text-accent-foreground',
+                                )}
+                                data-workflow-chat-menu-active={
+                                  activeIndex === mentionActiveIndex ? 'true' : undefined
+                                }
+                                onSelect={() => selectMentionEntry({ kind: 'back' })}
+                                value="__back__"
+                              >
+                                <ChevronLeft className="size-4 shrink-0" aria-hidden />
+                                <span className="font-medium">{tMention('backToMedia')}</span>
+                              </CommandItem>
+                            </CommandGroup>
                           )
-                        })}
-                      </CommandGroup>
-                    ) : null}
-                    {filteredVisualizations.length > 0 ? (
-                      <CommandGroup
-                        heading={tMention('visualizationsGroup')}
-                        aria-label={tMention('visualizationsAriaLabel')}
-                      >
-                        {filteredVisualizations.map((v) => {
-                          flatIndex += 1
-                          const activeIndex = flatIndex
-                          return (
-                            <CommandItem
-                              key={`viz-${v.id}`}
-                              className={cn(
-                                'w-full items-start',
-                                activeIndex === mentionActiveIndex &&
-                                  'bg-accent text-accent-foreground',
-                              )}
-                              data-workflow-chat-menu-active={
-                                activeIndex === mentionActiveIndex ? 'true' : undefined
-                              }
-                              onSelect={() =>
-                                onSelectVisualizationMention(
-                                  v.id as WorkflowVisualizationId,
-                                  v.title,
-                                )
-                              }
-                              value={v.title}
-                            >
-                              <span className="font-medium">{v.title}</span>
-                            </CommandItem>
-                          )
-                        })}
-                      </CommandGroup>
-                    ) : null}
-                    {mediaLoading && filteredMedia.length === 0 ? (
-                      <CommandGroup heading={tMention('mediaGroup')}>
-                        <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
-                          <Loader2 className="size-4 animate-spin" />
-                          {tMention('mediaLoading')}
-                        </div>
-                      </CommandGroup>
-                    ) : null}
-                    {filteredMedia.length > 0 ? (
-                      <CommandGroup
-                        heading={tMention('mediaGroup')}
-                        aria-label={tMention('mediaAriaLabel')}
-                      >
-                        {filteredMedia.map((item) => {
-                          flatIndex += 1
-                          const activeIndex = flatIndex
-                          const label = formatMediaMentionLabel(item.name)
-                          return (
-                            <CommandItem
-                              key={`media-${item.name}`}
-                              className={cn(
-                                'w-full items-center gap-2',
-                                activeIndex === mentionActiveIndex &&
-                                  'bg-accent text-accent-foreground',
-                              )}
-                              data-workflow-chat-menu-active={
-                                activeIndex === mentionActiveIndex ? 'true' : undefined
-                              }
-                              onSelect={() => onSelectMediaMention(item)}
-                              value={item.name}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element -- mention preview */}
-                              <img
-                                alt=""
-                                className="size-16 shrink-0 rounded object-cover"
-                                height={64}
-                                src={item.url}
-                                width={64}
-                              />
-                              <span className="min-w-0 truncate font-medium">{label}</span>
-                            </CommandItem>
-                          )
-                        })}
-                      </CommandGroup>
-                    ) : null}
+                        })()}
+                        {showCollectionMediaLoading ? (
+                          <CommandGroup heading={mediaHeading}>
+                            <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
+                              <Loader2 className="size-4 animate-spin" />
+                              {tMention('collectionLoading')}
+                            </div>
+                          </CommandGroup>
+                        ) : null}
+                        {!showCollectionMediaLoading && filteredMedia.length === 0 ? (
+                          <div className="px-3 py-6 text-center text-muted-foreground text-sm">
+                            {tMention('collectionEmpty')}
+                          </div>
+                        ) : null}
+                        {filteredMedia.length > 0 ? (
+                          <CommandGroup
+                            heading={mediaHeading}
+                            aria-label={tMention('mediaAriaLabel')}
+                          >
+                            {filteredMedia.map((item) => {
+                              flatIndex += 1
+                              const activeIndex = flatIndex
+                              const label =
+                                item.displayName?.trim() || formatMediaMentionLabel(item.name)
+                              return (
+                                <CommandItem
+                                  key={`media-${item.name}`}
+                                  className={cn(
+                                    'w-full items-center gap-2',
+                                    activeIndex === mentionActiveIndex &&
+                                      'bg-accent text-accent-foreground',
+                                  )}
+                                  data-workflow-chat-menu-active={
+                                    activeIndex === mentionActiveIndex ? 'true' : undefined
+                                  }
+                                  onSelect={() => onSelectMediaMention(item)}
+                                  value={item.name}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element -- mention preview */}
+                                  <img
+                                    alt=""
+                                    className="size-16 shrink-0 rounded object-cover"
+                                    height={64}
+                                    src={item.url}
+                                    width={64}
+                                  />
+                                  <span className="min-w-0 truncate font-medium">{label}</span>
+                                </CommandItem>
+                              )
+                            })}
+                          </CommandGroup>
+                        ) : null}
+                      </>
+                    ) : (
+                      <>
+                        {filteredMilestones.length > 0 ? (
+                          <CommandGroup
+                            heading={tMention('milestonesGroup')}
+                            aria-label={mentionAriaLabel}
+                          >
+                            {filteredMilestones.map((m) => {
+                              flatIndex += 1
+                              const activeIndex = flatIndex
+                              return (
+                                <CommandItem
+                                  key={`milestone-${m.id}`}
+                                  className={cn(
+                                    'w-full items-start',
+                                    activeIndex === mentionActiveIndex &&
+                                      'bg-accent text-accent-foreground',
+                                  )}
+                                  data-workflow-chat-menu-active={
+                                    activeIndex === mentionActiveIndex ? 'true' : undefined
+                                  }
+                                  onSelect={() => onSelectMention(m.id)}
+                                  value={m.title}
+                                >
+                                  <span className="font-medium">{m.title}</span>
+                                </CommandItem>
+                              )
+                            })}
+                          </CommandGroup>
+                        ) : null}
+                        {filteredVisualizations.length > 0 ? (
+                          <CommandGroup
+                            heading={tMention('visualizationsGroup')}
+                            aria-label={tMention('visualizationsAriaLabel')}
+                          >
+                            {filteredVisualizations.map((v) => {
+                              flatIndex += 1
+                              const activeIndex = flatIndex
+                              return (
+                                <CommandItem
+                                  key={`viz-${v.id}`}
+                                  className={cn(
+                                    'w-full items-start',
+                                    activeIndex === mentionActiveIndex &&
+                                      'bg-accent text-accent-foreground',
+                                  )}
+                                  data-workflow-chat-menu-active={
+                                    activeIndex === mentionActiveIndex ? 'true' : undefined
+                                  }
+                                  onSelect={() =>
+                                    onSelectVisualizationMention(
+                                      v.id as WorkflowVisualizationId,
+                                      v.title,
+                                    )
+                                  }
+                                  value={v.title}
+                                >
+                                  <span className="font-medium">{v.title}</span>
+                                </CommandItem>
+                              )
+                            })}
+                          </CommandGroup>
+                        ) : null}
+                        {filteredCollections.length > 0 ? (
+                          <CommandGroup
+                            heading={tMention('collectionsGroup')}
+                            aria-label={tMention('collectionsAriaLabel')}
+                          >
+                            {filteredCollections.map((collection) => {
+                              flatIndex += 1
+                              const activeIndex = flatIndex
+                              return (
+                                <CommandItem
+                                  key={`collection-${collection.id}`}
+                                  className={cn(
+                                    'w-full items-center gap-2',
+                                    activeIndex === mentionActiveIndex &&
+                                      'bg-accent text-accent-foreground',
+                                  )}
+                                  data-workflow-chat-menu-active={
+                                    activeIndex === mentionActiveIndex ? 'true' : undefined
+                                  }
+                                  onSelect={() =>
+                                    selectMentionEntry({ kind: 'collection', collection })
+                                  }
+                                  value={`collection-${collection.name}`}
+                                >
+                                  <Folder
+                                    className="size-4 shrink-0 text-muted-foreground"
+                                    aria-hidden
+                                  />
+                                  <span className="min-w-0 flex-1 truncate font-medium">
+                                    {collection.name}
+                                  </span>
+                                  <span className="shrink-0 text-muted-foreground text-xs">
+                                    {tMention('collectionMemberCount', {
+                                      count: collection.memberCount,
+                                    })}
+                                  </span>
+                                </CommandItem>
+                              )
+                            })}
+                          </CommandGroup>
+                        ) : null}
+                        {showRootMediaLoading || collectionsLoading ? (
+                          <CommandGroup heading={tMention('mediaGroup')}>
+                            <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
+                              <Loader2 className="size-4 animate-spin" />
+                              {tMention('mediaLoading')}
+                            </div>
+                          </CommandGroup>
+                        ) : null}
+                        {filteredMedia.length > 0 ? (
+                          <CommandGroup
+                            heading={tMention('mediaGroup')}
+                            aria-label={tMention('mediaAriaLabel')}
+                          >
+                            {filteredMedia.map((item) => {
+                              flatIndex += 1
+                              const activeIndex = flatIndex
+                              const label =
+                                item.displayName?.trim() || formatMediaMentionLabel(item.name)
+                              return (
+                                <CommandItem
+                                  key={`media-${item.name}`}
+                                  className={cn(
+                                    'w-full items-center gap-2',
+                                    activeIndex === mentionActiveIndex &&
+                                      'bg-accent text-accent-foreground',
+                                  )}
+                                  data-workflow-chat-menu-active={
+                                    activeIndex === mentionActiveIndex ? 'true' : undefined
+                                  }
+                                  onSelect={() => onSelectMediaMention(item)}
+                                  value={item.name}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element -- mention preview */}
+                                  <img
+                                    alt=""
+                                    className="size-16 shrink-0 rounded object-cover"
+                                    height={64}
+                                    src={item.url}
+                                    width={64}
+                                  />
+                                  <span className="min-w-0 truncate font-medium">{label}</span>
+                                </CommandItem>
+                              )
+                            })}
+                          </CommandGroup>
+                        ) : null}
+                      </>
+                    )}
                   </>
                 ) : (
                   <CommandEmpty className="px-3 py-6 text-center text-muted-foreground text-sm">
-                    {mediaLoadAttempted && mediaItems.length === 0 && otherMilestones.length === 0
+                    {mediaLoadAttempted &&
+                    mediaItems.length === 0 &&
+                    collections.length === 0 &&
+                    otherMilestones.length === 0
                       ? tMention('mediaEmpty')
                       : visualizations.length === 0 && otherMilestones.length > 0
                         ? tMention('noAttachedCharts')

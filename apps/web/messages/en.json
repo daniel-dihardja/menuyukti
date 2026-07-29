@@ -1030,7 +1030,13 @@
         "mediaGroup": "Media",
         "mediaAriaLabel": "Attach image from Media library",
         "mediaLoading": "Loading media…",
-        "mediaEmpty": "No media files yet. Upload images on the Media page."
+        "mediaEmpty": "No media files yet. Upload images on the Media page.",
+        "collectionsGroup": "Collections",
+        "collectionsAriaLabel": "Browse media collections",
+        "collectionMemberCount": "{count, plural, one {# item} other {# items}}",
+        "backToMedia": "Back to all media",
+        "collectionLoading": "Loading collection…",
+        "collectionEmpty": "No images in this collection."
       }
     },
     "settings": {
@@ -1915,7 +1921,13 @@
           "mediaGroup": "Media",
           "mediaAriaLabel": "Attach image from Media library",
           "mediaLoading": "Loading media…",
-          "mediaEmpty": "No media files yet. Upload images on the Media page, or use the paperclip to attach from your device."
+          "mediaEmpty": "No media files yet. Upload images on the Media page, or use the paperclip to attach from your device.",
+          "collectionsGroup": "Collections",
+          "collectionsAriaLabel": "Browse media collections",
+          "collectionMemberCount": "{count, plural, one {# item} other {# items}}",
+          "backToMedia": "Back to all media",
+          "collectionLoading": "Loading collection…",
+          "collectionEmpty": "No images in this collection."
         },
         "artifactTitle": "Artifact",
         "artifactPlaceholder": "Content will appear here as you work with the assistant.",
