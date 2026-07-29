@@ -19,8 +19,7 @@ import {
 import { Button } from '@workspace/ui/components/button'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { ChatModeSelect } from '@/components/chat-mode-select'
-import { cn } from '@workspace/ui/lib/utils'
-import { ImagePlus, PanelsTopLeft, Trash2, X } from 'lucide-react'
+import { PanelsTopLeft, Trash2, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useMemo } from 'react'
 
@@ -119,31 +118,6 @@ function WorkflowMobilePreviewOpenButton() {
   )
 }
 
-function WorkflowChatAutoAttachToggle() {
-  const t = useTranslations('analytics.workflows.chat')
-  const { autoAttachGenerated } = useWorkflowChatComposerState()
-  const { isChatBusy } = useWorkflowChatMessages()
-  const { setAutoAttachGenerated } = useWorkflowChatActions()
-
-  return (
-    <PromptInputButton
-      aria-label={t('autoAttachGeneratedAriaLabel')}
-      aria-pressed={autoAttachGenerated}
-      className={cn(
-        'shrink-0 text-muted-foreground',
-        autoAttachGenerated && 'bg-accent text-accent-foreground',
-      )}
-      disabled={isChatBusy}
-      onClick={() => setAutoAttachGenerated(!autoAttachGenerated)}
-      tooltip={t('autoAttachGeneratedTooltip')}
-      type="button"
-      variant="ghost"
-    >
-      <ImagePlus className="size-4" />
-    </PromptInputButton>
-  )
-}
-
 function WorkflowChatModeBanner() {
   const t = useTranslations('analytics.workflows.chat')
   const { chatMode } = useWorkflowChatComposerState()
@@ -232,7 +206,6 @@ export function WorkflowChatComposer() {
         <PromptInputFooter>
           <PromptInputTools>
             <WorkflowMobilePreviewOpenButton />
-            <WorkflowChatAutoAttachToggle />
             <ChatModeSelect disabled={isChatBusy} onValueChange={setChatMode} value={chatMode} />
             <ChatGatewayModelSelect
               className="max-w-[min(100%,7.5rem)] lg:max-w-[min(100%,11rem)]"

@@ -1,3 +1,14 @@
+export type PendingMediaAttachmentKind = 'photo' | 'post'
+
+/** Pending media-library chip shown in the workflow chat composer. */
+export type PendingMediaAttachment = {
+  id: string
+  kind: PendingMediaAttachmentKind
+  name: string
+  url: string
+  mediaType: string
+}
+
 /** Clear an in-progress start-anchored `@` mention trigger without inserting a label. */
 export function clearWorkflowChatMentionTrigger(current: string): string {
   if (current.startsWith('@')) {
