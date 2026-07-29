@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import type { UIMessage } from 'ai'
 
 import { CHAT_MAX_IMAGES, CHAT_MAX_IMAGE_BYTES } from '@/lib/chat/chat-image-limits'
+import { formatAttachedMediaLibrarySection } from '@/lib/chat/format-attached-media-for-chat'
 import {
   getS3Bucket,
   getS3Client,
@@ -283,6 +284,10 @@ export async function buildPythonUserMessage(args: {
   const sections = (args.referenceTextSections ?? [])
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
+  const mediaLibrarySection = formatAttachedMediaLibrarySection(mediaNames)
+  if (mediaLibrarySection) {
+    sections.unshift(mediaLibrarySection)
+  }
   const userText = rawText.trim()
   const textParts = [...sections]
   if (userText) textParts.push(userText)

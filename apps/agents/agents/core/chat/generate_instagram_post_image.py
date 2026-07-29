@@ -7,6 +7,8 @@ import os
 from typing import Annotated, Any
 
 from agents_app.agents.core.chat.http_context import get_chat_http_client
+from agents_app.agents.core.chat.story_assets import merge_generation_references
+from langchain.tools import ToolRuntime
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
 
@@ -70,6 +72,7 @@ async def generate_instagram_post_image(
     model: str | None = None,
     quality: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
+    runtime: ToolRuntime = None,  # type: ignore[assignment]
 ) -> str:
     """Generate an image with Leonardo using a composed prompt.
 
@@ -131,9 +134,20 @@ async def generate_instagram_post_image(
     style_id = c.get("style_id")
     if isinstance(style_id, int) and style_id > 0:
         body["styleId"] = style_id
-    references = c.get("generation_references")
-    if isinstance(references, list) and references:
-        body["references"] = references
+
+    request_refs = c.get("generation_references")
+    if c.get("chat_mode") == "story_image_assistant":
+        story_assets = None
+        if runtime is not None and isinstance(getattr(runtime, "state", None), dict):
+            story_assets = runtime.state.get("story_assets")
+        references = merge_generation_references(
+            story_assets=story_assets if isinstance(story_assets, list) else None,
+            request_references=request_refs if isinstance(request_refs, list) else None,
+        )
+        if references:
+            body["references"] = references
+    elif isinstance(request_refs, list) and request_refs:
+        body["references"] = request_refs
 
     client = get_chat_http_client()
     url = f"{base}{GENERATE_PATH}"

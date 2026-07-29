@@ -1,4 +1,4 @@
-"""LangGraph chat graph: ReAct agent with get_milestone and short-term checkpoint memory."""
+"""LangGraph chat graph: create_agent with get_milestone and short-term checkpoint memory."""
 
 from __future__ import annotations
 
@@ -8,6 +8,8 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
     generate_instagram_post_image,
 )
 from agents_app.agents.core.chat.prompts import build_system_prompt
+from agents_app.agents.core.chat.state import ChatAgentState
+from agents_app.agents.core.chat.story_assets import clear_story_assets, save_story_asset
 from agents_app.agents.core.chat.tools import (
     create_instagram_items,
     delete_instagram_items,
@@ -24,14 +26,18 @@ from agents_app.agents.core.chat.tools import (
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 from agents_app.models.llm_config import chat_llm_for_gateway_model
+from langchain.agents import create_agent
+from langchain.agents.middleware import ModelRequest, dynamic_prompt, wrap_model_call
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.config import get_config
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.prebuilt import ToolNode, create_react_agent
+from langgraph.prebuilt.tool_node import ToolNode
 
 # Max tool/model turns per request (ReAct loop budget).
 CHAT_RECURSION_LIMIT = 20
+
+_STORY_SCRATCHPAD_TOOLS = [save_story_asset, clear_story_assets]
 
 
 def _has_ig_studio_post_context(conf: dict[str, Any]) -> bool:
@@ -77,14 +83,21 @@ def chat_tools_list(
 
     When ``workflow_id`` / ``milestone_id`` / ``location_id`` are False, the corresponding
     tools are omitted from the bound set (model cannot call them). The ToolNode still
-    registers the full union via ``chat_tools_list(include_post_image=True)``.
+    registers the full union via ``chat_tools_list(include_post_image=True)`` plus
+    Story scratchpad tools.
 
-    In ``story_image_assistant`` mode only media-library tools and
-    ``generate_instagram_post_image`` are bound (Story gather + generate/refine;
+    In ``story_image_assistant`` mode only media-library tools, Story scratchpad tools,
+    and ``generate_instagram_post_image`` are bound (Story gather + generate/refine;
     no campaign tooling).
     """
     if story_image_assistant:
-        return [list_media_collections, list_media, generate_instagram_post_image]
+        return [
+            list_media_collections,
+            list_media,
+            save_story_asset,
+            clear_story_assets,
+            generate_instagram_post_image,
+        ]
 
     tools: list = []
     tools.append(list_media_collections)
@@ -127,9 +140,8 @@ def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
     )
 
 
-def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
-    """Prepend the chat system prompt (with optional injected workflow catalog)."""
-    messages = state.get("messages") or []
+def _chat_system_prompt_from_config() -> str:
+    """Build the chat system prompt from RunnableConfig.configurable."""
     cfg = get_config() or {}
     conf = cfg.get("configurable") or {}
     conf_dict = conf if isinstance(conf, dict) else {}
@@ -137,47 +149,78 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     chat_mode = raw_mode if isinstance(raw_mode, str) else None
     raw_catalog = conf_dict.get("workflow_catalog_markdown")
     catalog = raw_catalog if isinstance(raw_catalog, str) else None
-    prompt_body = build_system_prompt(
+    return build_system_prompt(
         workflow_catalog=catalog,
         ig_studio_post_image=_has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=_has_leonardo_image_generation(conf_dict),
         include_chart_catalog=_has_location_id(conf_dict),
         chat_mode=chat_mode,
     )
-    return [SystemMessage(content=prompt_body), *messages]
+
+
+def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
+    """Prepend the chat system prompt (with optional injected workflow catalog).
+
+    Kept for unit tests; the live graph uses :func:`_dynamic_chat_prompt` middleware.
+    """
+    messages = state.get("messages") or []
+    return [SystemMessage(content=_chat_system_prompt_from_config()), *messages]
+
+
+@dynamic_prompt  # type: ignore[arg-type]
+async def _dynamic_chat_prompt(_request: ModelRequest) -> str:
+    return _chat_system_prompt_from_config()
+
+
+@wrap_model_call  # type: ignore[arg-type]
+async def _select_chat_model_and_tools(request: ModelRequest, handler: Any) -> Any:
+    """Resolve LLM + request-scoped tools from RunnableConfig (set by HTTP router)."""
+    cfg = get_config() or {}
+    conf = cfg.get("configurable") or {}
+    conf_dict = conf if isinstance(conf, dict) else {}
+    raw = conf_dict.get("chat_gateway_model")
+    gateway: str | None = raw.strip() if isinstance(raw, str) and raw.strip() else None
+    llm = chat_llm_for_gateway_model(gateway, streaming=True)
+    bound_tools = chat_tools_list_from_config(conf_dict)
+    return await handler(request.override(model=llm, tools=bound_tools))
+
+
+def _enable_handle_tool_errors(graph: CompiledStateGraph) -> None:
+    """Match prior create_react_agent ToolNode(handle_tool_errors=True) behavior."""
+    tools_node = graph.nodes.get("tools")
+    if tools_node is None:
+        return
+    bound = getattr(tools_node, "bound", tools_node)
+    node = getattr(bound, "afunc", None) or getattr(bound, "func", None) or bound
+    tool_node = node.__self__ if hasattr(node, "__self__") else node
+    if isinstance(tool_node, ToolNode):
+        tool_node._handle_tool_errors = True
 
 
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
     """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
     # ToolNode must include every tool the model may bind; binding is request-scoped below.
-    # handle_tool_errors=True: turn unexpected tool exceptions into ToolMessages so the
-    # checkpoint is not left with dangling tool_calls (which breaks the next chat turn).
-    all_tools = chat_tools_list(
-        include_post_image=True,
-        workflow_id=True,
-        milestone_id=True,
-        location_id=True,
-    )
-    tool_node = ToolNode(all_tools, handle_tool_errors=True)
-
-    def _select_chat_model(_state: dict[str, Any], _runtime: Any) -> Any:
-        """Resolve LLM from RunnableConfig (set by HTTP router when client picks a model)."""
-        cfg = get_config() or {}
-        conf = cfg.get("configurable") or {}
-        conf_dict = conf if isinstance(conf, dict) else {}
-        raw = conf_dict.get("chat_gateway_model")
-        gateway: str | None = raw.strip() if isinstance(raw, str) and raw.strip() else None
-        llm = chat_llm_for_gateway_model(gateway, streaming=True)
-        bound_tools = chat_tools_list_from_config(conf_dict)
-        return llm.bind_tools(bound_tools)
-
-    return create_react_agent(  # type: ignore[type-var]
-        _select_chat_model,
-        tool_node,
-        prompt=_chat_prompt,
+    all_tools = [
+        *chat_tools_list(
+            include_post_image=True,
+            workflow_id=True,
+            milestone_id=True,
+            location_id=True,
+        ),
+        *_STORY_SCRATCHPAD_TOOLS,
+    ]
+    # Placeholder model — overridden per request by _select_chat_model_and_tools.
+    placeholder_llm = chat_llm_for_gateway_model(None, streaming=True)
+    graph = create_agent(
+        model=placeholder_llm,
+        tools=all_tools,
+        middleware=[_dynamic_chat_prompt, _select_chat_model_and_tools],
+        state_schema=ChatAgentState,
         checkpointer=checkpointer,
         name="menuyukti_chat",
     )
+    _enable_handle_tool_errors(graph)
+    return graph
 
 
 def _normalize_user_content(content: Any) -> str | list[str | dict[Any, Any]]:

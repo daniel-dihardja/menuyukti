@@ -75,30 +75,49 @@ reference images), ask one concise question: the user can describe the wished lo
 text, attach a reference image, or both. A text description alone is enough; a reference
 image is optional.
 
-When the user provides a description and/or reference image(s), briefly confirm what you
+When the user provides a **style / look reference** as a media-library photo (via `@`
+attach), the user message includes an **Attached media library photos** section with the
+exact filename(s). Call `save_story_asset` with `role="style"`, that exact library `name`,
+and a short `note` describing the look. Then briefly confirm the labeled style asset to the
+user.
+
+If they only upload a raw image without a media-library filename in that section, ask them
+to attach it via `@` from the media library so it can be saved and used as a Leonardo
+reference.
+
+When the user provides a description and/or saved style reference, briefly confirm what you
 understood about the direction, then continue to Phase 2.
 
 ## Phase 2: product photos and on-image text
 
 Once direction is clear, gather a flexible checklist of production assets:
 
-- **Product / dish photos** — chat attachments and/or workspace media (mention or library).
+- **Product / dish photos** — workspace media via `@` (preferred) and/or chat description.
+  When they provide a product photo from the media library, use the exact filename from the
+  **Attached media library photos** section and call `save_story_asset` with
+  `role="product"`, that `name`, and a short `note`. Confirm the label to the user.
 - **On-image text** — headline, offer, CTA, or other copy that should appear on the Story.
 
 Each item is optional if the user declines (for example “no product photo”, “text-free”).
 Skip anything they say they do not need. Ask concisely: one focused question at a time,
 or a short checklist — not a long form.
 
+Use `clear_story_assets` when the user wants to replace or drop a saved style/product slot.
+Raw uploads without a library `name` cannot be saved — ask for an `@` media-library attach.
+
 When every checklist item is either collected or explicitly skipped, briefly summarize
-the direction plus assets, then continue to Phase 3.
+the direction plus assets (including saved style/product labels), then continue to Phase 3.
 
 ## Phase 3: generate and refine
 
-Compose a concrete Leonardo image-generation prompt from the confirmed direction, product
-references, and on-image text, then call `generate_instagram_post_image`. Do not only
-describe a prompt — call the tool. Output is always a 9:16 Story at **768×1376** (format
-is forced to story). After success, briefly confirm in one or two sentences. Do not paste
-the image URL, markdown image syntax, or HTML img tags — the UI already shows the image.
+Compose a concrete Leonardo image-generation prompt that explicitly names which saved
+image is the **style** reference and which is the **product** (use the notes from
+`save_story_asset`), plus on-image text, then call `generate_instagram_post_image`.
+Saved scratchpad assets are passed as Leonardo photo references automatically — do not
+ask the user to re-attach them on the generate turn. Do not only describe a prompt — call
+the tool. Output is always a 9:16 Story at **768×1376** (format is forced to story). After
+success, briefly confirm in one or two sentences. Do not paste the image URL, markdown
+image syntax, or HTML img tags — the UI already shows the image.
 
 When the user requests changes, update the prompt from their feedback and call
 `generate_instagram_post_image` again. Keep refining until they are satisfied.
@@ -109,6 +128,7 @@ Never say you cannot create the image when the tool is available.
 If the user wants to pick a style reference or product shot from the workspace library,
 you may use `list_media_collections` and `list_media`. Do not invent filenames.
 """
+
 
 # Full prompt structure. Placeholders: chart_catalog_block, workflow_catalog_block,
 # leonardo_image_block, ig_studio_block.

@@ -117,6 +117,12 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "Phase 3" in out
     assert "generate and refine" in out
     assert "generate_instagram_post_image" in out
+    assert "save_story_asset" in out
+    assert 'role="style"' in out
+    assert 'role="product"' in out
+    assert "Attached media library photos" in out
+    assert "clear_story_assets" in out
+    assert "media library" in out.lower()
     assert "Canva" in out
     assert "Operating loop for planning or content requests" not in out
     assert "acting through Instagram item tools" not in out
@@ -139,7 +145,13 @@ def test_story_image_assistant_tools_include_generate() -> None:
         }
     )
     names = {getattr(t, "name", None) or getattr(t, "__name__", None) for t in tools}
-    assert names == {"list_media_collections", "list_media", "generate_instagram_post_image"}
+    assert names == {
+        "list_media_collections",
+        "list_media",
+        "save_story_asset",
+        "clear_story_assets",
+        "generate_instagram_post_image",
+    }
     assert "list_instagram_items" not in names
     assert "create_instagram_items" not in names
     assert "get_milestone" not in names

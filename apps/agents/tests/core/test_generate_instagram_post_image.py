@@ -212,6 +212,59 @@ async def test_story_chat_mode_forces_format_story(
 
 
 @pytest.mark.asyncio
+async def test_story_mode_uses_story_assets_as_references(
+    tool_under_test: Any, monkeypatch: Any
+) -> None:
+    from langchain.tools import ToolRuntime
+
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    style_name = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+    product_name = "11111111-2222-3333-4444-555555555555.jpg"
+    runtime = ToolRuntime(
+        state={
+            "story_assets": [
+                {"role": "style", "name": style_name, "note": "neon"},
+                {"role": "product", "name": product_name, "note": "bowl"},
+            ]
+        },
+        context=None,
+        config={},
+        stream_writer=lambda *_a: None,
+        tool_call_id="tc-gen",
+        store=None,
+    )
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps({"url": "https://example.com/img.webp"})
+    mock_response.json.return_value = {"url": "https://example.com/img.webp"}
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        await tool_under_test.ainvoke(
+            {"prompt": "Story with style and product", "runtime": runtime},
+            config=_config(
+                user_id="user-1",
+                chat_mode="story_image_assistant",
+                # empty request-scoped refs — scratchpad alone should populate
+            ),
+        )
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert body["format"] == "story"
+    assert body["references"] == [
+        {"type": "photo", "name": style_name},
+        {"type": "photo", "name": product_name},
+    ]
+
+
+@pytest.mark.asyncio
 async def test_http_error(tool_under_test: Any, monkeypatch: Any) -> None:
     monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
