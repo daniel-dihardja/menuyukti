@@ -12,6 +12,8 @@ export type ContentMediaGridLabels = {
   download: string
   emptyTitle: string
   emptyDescription: string
+  /** When selection is enabled; defaults to “Select”. */
+  select?: string
 }
 
 export type ContentMediaGridState = {
@@ -23,6 +25,8 @@ export type ContentMediaGridState = {
   emptyIcon: LucideIcon
   skeletonCount: number
   defaultAspectRatio: string
+  /** Filename of the currently selected tile, when selection mode is on. */
+  selectedName: string | null
 }
 
 export type ContentMediaGridActions = {
@@ -31,6 +35,8 @@ export type ContentMediaGridActions = {
   onPreview: (item: ContentCatalogItem) => void
   onDeleteRequest: (name: string) => void
   getDownloadHref: (name: string) => string
+  /** When set, tiles support select (checkbox / tile click); preview stays on the expand control. */
+  onSelect: ((item: ContentCatalogItem) => void) | null
 }
 
 export type ContentMediaTileMode = 'static' | 'videoHoverPreview'

@@ -189,9 +189,7 @@ def test_challenge_verify_issues_access_jwt(auth_workspace: int):
         )
         assert {e.event_type for e in events} >= {"enroll", "challenge", "verify_ok"}
         device = (
-            session.query(CrmDevice)
-            .filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"]))
-            .one()
+            session.query(CrmDevice).filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"])).one()
         )
         assert device.last_seen_at is not None
     finally:
@@ -269,9 +267,7 @@ def test_revoke_with_bearer_access_token(auth_workspace: int):
     session = SessionLocal()
     try:
         device = (
-            session.query(CrmDevice)
-            .filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"]))
-            .one()
+            session.query(CrmDevice).filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"])).one()
         )
         assert device.revoked_at is not None
         assert device.refresh_token_hash is None
@@ -351,17 +347,11 @@ def test_bad_signature_fails_and_audits(auth_workspace: int):
 
     session = SessionLocal()
     try:
-        fails = (
-            session.query(CrmAuditEvent)
-            .filter(CrmAuditEvent.event_type == "verify_fail")
-            .all()
-        )
+        fails = session.query(CrmAuditEvent).filter(CrmAuditEvent.event_type == "verify_fail").all()
         assert any(e.detail == "bad_signature" for e in fails)
         # Refresh hash must not equal the raw token
         device = (
-            session.query(CrmDevice)
-            .filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"]))
-            .one()
+            session.query(CrmDevice).filter(CrmDevice.id == uuid.UUID(enrolled["deviceId"])).one()
         )
         assert device.refresh_token_hash == hash_opaque_token(enrolled["refreshToken"])
         assert device.refresh_token_hash != enrolled["refreshToken"]

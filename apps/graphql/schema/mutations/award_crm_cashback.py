@@ -71,7 +71,9 @@ class AwardCrmCashbackMutation:
             if has_payment:
                 assert payment_amount is not None
                 if payment_amount <= 0:
-                    raise ValueError("paymentAmount must be a positive integer for awardCrmCashback")
+                    raise ValueError(
+                        "paymentAmount must be a positive integer for awardCrmCashback"
+                    )
                 if payment_amount < app.cashback_threshold_amount:
                     raise ValueError(
                         "paymentAmount is below the cashback threshold for awardCrmCashback"

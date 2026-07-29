@@ -45,7 +45,9 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_crm_customer")),
     )
-    op.create_index(op.f("ix_crm_customer_crm_app_id"), "crm_customer", ["crm_app_id"], unique=False)
+    op.create_index(
+        op.f("ix_crm_customer_crm_app_id"), "crm_customer", ["crm_app_id"], unique=False
+    )
     op.create_index(
         op.f("uq_crm_customer_app_phone"),
         "crm_customer",

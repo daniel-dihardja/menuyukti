@@ -192,9 +192,7 @@ def _require_property(raw: Any, key: str) -> dict[str, Any]:
         return _require_number_property(raw, key)
     if prop_type == "text":
         return _require_text_property(raw, key)
-    raise ValueError(
-        f"styleSpec.properties.{key}.type must be one of: enum, boolean, number, text"
-    )
+    raise ValueError(f"styleSpec.properties.{key}.type must be one of: enum, boolean, number, text")
 
 
 def validate_style_spec(raw: Any) -> dict[str, Any]:
@@ -250,16 +248,14 @@ def rules_from_style_spec(spec: dict[str, Any]) -> str:
                 lines.append(f"- {key}: {default} → {instruction}")
         elif prop_type == "number":
             default = prop.get("default")
-            instruction = str(prop.get("instruction", "")).strip().replace(
-                "{{value}}", str(default)
+            instruction = (
+                str(prop.get("instruction", "")).strip().replace("{{value}}", str(default))
             )
             if instruction:
                 lines.append(f"- {key}: {default} → {instruction}")
         elif prop_type == "text":
             default = str(prop.get("default", ""))
-            instruction = str(prop.get("instruction", "")).strip().replace(
-                "{{value}}", default
-            )
+            instruction = str(prop.get("instruction", "")).strip().replace("{{value}}", default)
             if instruction:
                 lines.append(f"- {key}: {default} → {instruction}")
 

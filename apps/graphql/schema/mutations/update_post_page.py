@@ -44,6 +44,8 @@ def _post_media_scope(session, post_row) -> tuple[int | None, str]:
         post_row.workspace_id,
         post_row.created_by_clerk_user_id,
     )
+
+
 def _normalize_optional_setting(
     value: str | None, *, allowed: frozenset[str], field: str
 ) -> str | None:

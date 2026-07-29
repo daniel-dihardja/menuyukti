@@ -10,6 +10,7 @@ from .instagram_signals import InstagramSignalsQuery
 from .latest_analytics_run_signals import LatestAnalyticsRunWithSignalsQuery
 from .location_manual_brief_input import LocationManualBriefInputQuery
 from .locations import LocationsQuery
+from .media_collections import MediaCollectionsQuery
 from .menu_catalog import MenuCatalogQuery
 from .menu_combos import MenuCombosQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
@@ -44,6 +45,7 @@ __all__ = [
     "LocationsQuery",
     "LocationManualBriefInputQuery",
     "StylesQuery",
+    "MediaCollectionsQuery",
     "MenuCatalogQuery",
     "MilestonePriorDataQuery",
     "MenuCombosQuery",

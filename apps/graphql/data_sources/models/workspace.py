@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.crm_app import CrmApp
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.location import Location
+    from graphql.data_sources.models.media_asset import MediaAsset, MediaCollection
     from graphql.data_sources.models.visual_style import VisualStyle
 
 
@@ -40,6 +41,16 @@ class Workspace(Base):
         back_populates="workspace",
         cascade="all, delete-orphan",
         order_by="VisualStyle.name",
+    )
+    media_assets: Mapped[list[MediaAsset]] = relationship(
+        back_populates="workspace",
+        cascade="all, delete-orphan",
+        order_by="MediaAsset.filename",
+    )
+    media_collections: Mapped[list[MediaCollection]] = relationship(
+        back_populates="workspace",
+        cascade="all, delete-orphan",
+        order_by="MediaCollection.name",
     )
     crm_apps: Mapped[list[CrmApp]] = relationship(
         back_populates="workspace",

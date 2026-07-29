@@ -75,9 +75,7 @@ class UpdateInstagramItemPageMutation:
                             if existing_version is None:
                                 if prompt is not UNSET:
                                     version_prompt = (
-                                        None
-                                        if prompt is None
-                                        else normalize_optional_text(prompt)
+                                        None if prompt is None else normalize_optional_text(prompt)
                                     )
                                 else:
                                     version_prompt = page_row.prompt

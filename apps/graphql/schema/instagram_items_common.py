@@ -134,6 +134,8 @@ def item_workspace_media_scope(session, item_row: InstagramItem) -> tuple[int | 
     from graphql.schema.media_s3_keys import resolve_workspace_media_scope_for_location
 
     return resolve_workspace_media_scope_for_location(session, item_row.location_id)
+
+
 def normalize_reference_images(
     raw: list[InstagramItemReferenceImageInput] | list[dict[str, Any]] | None,
 ) -> list[dict[str, Any]]:

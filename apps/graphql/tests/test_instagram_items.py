@@ -224,12 +224,8 @@ mutation DeleteInstagramItemPageMediaVersion($pageId: ID!, $mediaS3Key: String!)
 }
 """
 
-VALID_MEDIA_KEY = (
-    f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
-)
-VALID_MEDIA_KEY_2 = (
-    f"users/{GRAPHQL_TEST_USER_ID}/posts/bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
-)
+VALID_MEDIA_KEY = f"users/{GRAPHQL_TEST_USER_ID}/posts/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+VALID_MEDIA_KEY_2 = f"users/{GRAPHQL_TEST_USER_ID}/posts/bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 VALID_PHOTO_NAME = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 
 DELETE_ITEM = """

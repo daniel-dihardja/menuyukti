@@ -15,7 +15,7 @@ import {
   PopoverTitle,
 } from '@workspace/ui/components/popover'
 import { cn } from '@workspace/ui/lib/utils'
-import { ImageIcon, Loader2 } from 'lucide-react'
+import { ChevronLeft, Folder, ImageIcon, Loader2 } from 'lucide-react'
 import {
   useCallback,
   useEffect,
@@ -25,15 +25,24 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react'
+import { useTranslations } from 'next-intl'
 
 import {
+  filterCollectionsForMention,
+  filterMediaForCollectionBrowse,
+} from '@/lib/chat/media-mention-collection-browse'
+import {
   clearTrailingMentionTrigger,
-  filterMediaForMention,
   matchesMentionFilter,
   parseMentionAtEnd,
 } from '@/lib/chat/post-creator-chat-mention'
 import { formatMediaMentionLabel } from '@/lib/chat/workflow-chat-media-mention'
-import { loadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
+import {
+  listMediaCollections,
+  loadMedia,
+  type MediaCatalogItem,
+  type MediaCollection,
+} from '@/lib/media/client-api'
 
 export type PostCreatorPreviewMentionCandidate = {
   kind: 'post' | 'photo'
@@ -43,6 +52,8 @@ export type PostCreatorPreviewMentionCandidate = {
 }
 
 type MentionMenuEntry =
+  | { kind: 'back' }
+  | { kind: 'collection'; collection: MediaCollection }
   | { kind: 'preview'; candidate: PostCreatorPreviewMentionCandidate }
   | { kind: 'media'; item: MediaCatalogItem }
 
@@ -81,6 +92,7 @@ export function PostCreatorChatPreviewMention({
   onSelectMedia,
   children,
 }: PostCreatorChatPreviewMentionProps) {
+  const tMention = useTranslations('postCreator.chat.mentionMenu')
   const mention = parseMentionAtEnd(value)
   const filterQuery = mention?.filterQuery ?? ''
   const menuOpen = mention !== null && !disabled
@@ -88,37 +100,89 @@ export function PostCreatorChatPreviewMention({
   const [mediaItems, setMediaItems] = useState<MediaCatalogItem[]>([])
   const [mediaLoading, setMediaLoading] = useState(false)
   const [mediaLoadAttempted, setMediaLoadAttempted] = useState(false)
+  const [collections, setCollections] = useState<MediaCollection[]>([])
+  const [collectionsLoading, setCollectionsLoading] = useState(false)
+  const [browseCollectionId, setBrowseCollectionId] = useState<number | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const commandListRef = useRef<HTMLDivElement>(null)
 
+  const isBrowsingCollection = browseCollectionId !== null
+  const browsingCollection = useMemo(
+    () =>
+      browseCollectionId !== null
+        ? (collections.find((c) => c.id === browseCollectionId) ?? null)
+        : null,
+    [browseCollectionId, collections],
+  )
+
   const candidateMatches =
-    candidate != null && matchesMentionFilter(filterQuery, candidate.name, candidate.label)
+    !isBrowsingCollection &&
+    candidate != null &&
+    matchesMentionFilter(filterQuery, candidate.name, candidate.label)
+
+  const filteredCollections = useMemo(() => {
+    if (isBrowsingCollection) return []
+    return filterCollectionsForMention(collections, filterQuery)
+  }, [collections, filterQuery, isBrowsingCollection])
 
   const filteredMedia = useMemo(
-    () => filterMediaForMention(mediaItems, filterQuery, excludeNames),
+    () => filterMediaForCollectionBrowse(mediaItems, filterQuery, excludeNames),
     [excludeNames, filterQuery, mediaItems],
   )
 
   const flatEntries = useMemo((): MentionMenuEntry[] => {
+    if (isBrowsingCollection) {
+      const entries: MentionMenuEntry[] = [{ kind: 'back' }]
+      for (const item of filteredMedia) {
+        entries.push({ kind: 'media', item })
+      }
+      return entries
+    }
     const entries: MentionMenuEntry[] = []
     if (candidateMatches && candidate) {
       entries.push({ kind: 'preview', candidate })
+    }
+    for (const collection of filteredCollections) {
+      entries.push({ kind: 'collection', collection })
     }
     for (const item of filteredMedia) {
       entries.push({ kind: 'media', item })
     }
     return entries
-  }, [candidate, candidateMatches, filteredMedia])
+  }, [candidate, candidateMatches, filteredCollections, filteredMedia, isBrowsingCollection])
 
   useEffect(() => {
     if (!menuOpen) {
+      setBrowseCollectionId(null)
       setActiveIndex(0)
       return
     }
+    let cancelled = false
+    setCollectionsLoading(true)
+    void listMediaCollections()
+      .then((cols) => {
+        if (!cancelled) setCollections(cols)
+      })
+      .catch(() => {
+        if (!cancelled) setCollections([])
+      })
+      .finally(() => {
+        if (!cancelled) setCollectionsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [menuOpen])
 
+  useEffect(() => {
+    if (!menuOpen) {
+      return
+    }
     let cancelled = false
     setMediaLoading(true)
-    void loadMedia()
+    const load =
+      browseCollectionId === null ? loadMedia() : loadMedia({ collectionId: browseCollectionId })
+    void load
       .then((list) => {
         if (!cancelled) {
           setMediaItems(list)
@@ -134,11 +198,10 @@ export function PostCreatorChatPreviewMention({
       .finally(() => {
         if (!cancelled) setMediaLoading(false)
       })
-
     return () => {
       cancelled = true
     }
-  }, [menuOpen])
+  }, [browseCollectionId, menuOpen])
 
   useEffect(() => {
     if (!menuOpen) {
@@ -151,6 +214,10 @@ export function PostCreatorChatPreviewMention({
     }
     setActiveIndex((prev) => Math.min(prev, flatEntries.length - 1))
   }, [flatEntries.length, menuOpen])
+
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [browseCollectionId])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -167,8 +234,20 @@ export function PostCreatorChatPreviewMention({
     }
   }, [activeIndex, menuOpen])
 
+  const exitCollectionBrowse = useCallback(() => {
+    setBrowseCollectionId(null)
+  }, [])
+
   const selectEntry = useCallback(
     (entry: MentionMenuEntry) => {
+      if (entry.kind === 'back') {
+        exitCollectionBrowse()
+        return
+      }
+      if (entry.kind === 'collection') {
+        setBrowseCollectionId(entry.collection.id)
+        return
+      }
       if (entry.kind === 'preview') {
         onSelectPreview(entry.candidate)
       } else {
@@ -176,7 +255,7 @@ export function PostCreatorChatPreviewMention({
       }
       onValueChange(clearTrailingMentionTrigger(value))
     },
-    [onSelectMedia, onSelectPreview, onValueChange, value],
+    [exitCollectionBrowse, onSelectMedia, onSelectPreview, onValueChange, value],
   )
 
   const handleKeyDownCapture = useCallback(
@@ -185,6 +264,10 @@ export function PostCreatorChatPreviewMention({
 
       if (e.key === 'Escape') {
         e.preventDefault()
+        if (isBrowsingCollection) {
+          exitCollectionBrowse()
+          return
+        }
         onValueChange(clearTrailingMentionTrigger(value))
         return
       }
@@ -209,17 +292,39 @@ export function PostCreatorChatPreviewMention({
         if (entry) selectEntry(entry)
       }
     },
-    [activeIndex, flatEntries, menuOpen, onValueChange, selectEntry, value],
+    [
+      activeIndex,
+      exitCollectionBrowse,
+      flatEntries,
+      isBrowsingCollection,
+      menuOpen,
+      onValueChange,
+      selectEntry,
+      value,
+    ],
   )
 
-  const showMediaLoading = mediaLoading && filteredMedia.length === 0
+  const mediaHeading = isBrowsingCollection
+    ? (browsingCollection?.name ?? mediaGroupLabel)
+    : mediaGroupLabel
+
+  const showMediaLoading =
+    mediaLoading &&
+    filteredMedia.length === 0 &&
+    (isBrowsingCollection || filteredCollections.length === 0)
   const showEmpty =
-    !showMediaLoading && flatEntries.length === 0 && (!mediaLoading || mediaLoadAttempted)
+    !showMediaLoading &&
+    !collectionsLoading &&
+    flatEntries.length === 0 &&
+    (!mediaLoading || mediaLoadAttempted) &&
+    !isBrowsingCollection
 
   const emptyLabel =
-    mediaLoadAttempted && mediaItems.length === 0 && !candidateMatches
+    mediaLoadAttempted && mediaItems.length === 0 && collections.length === 0 && !candidateMatches
       ? mediaEmptyLabel
       : mentionEmptyLabel
+
+  let flatIndex = -1
 
   return (
     <Popover open={menuOpen}>
@@ -235,7 +340,11 @@ export function PostCreatorChatPreviewMention({
         side="top"
       >
         <PopoverHeader className="sr-only">
-          <PopoverTitle>{mentionAriaLabel}</PopoverTitle>
+          <PopoverTitle>
+            {isBrowsingCollection
+              ? (browsingCollection?.name ?? mentionAriaLabel)
+              : mentionAriaLabel}
+          </PopoverTitle>
         </PopoverHeader>
         <Command shouldFilter={false}>
           <CommandList ref={commandListRef}>
@@ -245,78 +354,214 @@ export function PostCreatorChatPreviewMention({
               </CommandEmpty>
             ) : (
               <>
-                {candidateMatches && candidate ? (
-                  <CommandGroup heading={previewGroupLabel} aria-label={previewGroupLabel}>
-                    <CommandItem
-                      className={cn(
-                        'flex w-full items-center gap-2',
-                        activeIndex === 0 && 'bg-accent text-accent-foreground',
-                      )}
-                      data-post-creator-mention-active={activeIndex === 0 ? 'true' : undefined}
-                      onSelect={() => selectEntry({ kind: 'preview', candidate })}
-                      value={`preview-${candidate.name}`}
-                    >
-                      {candidate.url ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-                        <img
-                          alt=""
-                          className="size-8 shrink-0 rounded object-cover"
-                          src={candidate.url}
-                        />
-                      ) : (
-                        <ImageIcon className="size-8 shrink-0 text-muted-foreground" aria-hidden />
-                      )}
-                      <span className="truncate text-sm">{candidate.label}</span>
-                    </CommandItem>
-                  </CommandGroup>
-                ) : null}
-                {showMediaLoading ? (
-                  <CommandGroup heading={mediaGroupLabel}>
-                    <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
-                      {mediaLoadingLabel}
-                    </div>
-                  </CommandGroup>
-                ) : null}
-                {filteredMedia.length > 0 ? (
-                  <CommandGroup heading={mediaGroupLabel} aria-label={mediaAriaLabel}>
-                    {filteredMedia.map((item, mediaIndex) => {
-                      const flatIndex = (candidateMatches ? 1 : 0) + mediaIndex
-                      const label = formatMediaMentionLabel(item.name)
+                {isBrowsingCollection ? (
+                  <>
+                    {(() => {
+                      flatIndex += 1
+                      const idx = flatIndex
                       return (
-                        <CommandItem
-                          key={item.name}
-                          className={cn(
-                            'flex w-full items-center gap-2',
-                            activeIndex === flatIndex && 'bg-accent text-accent-foreground',
-                          )}
-                          data-post-creator-mention-active={
-                            activeIndex === flatIndex ? 'true' : undefined
-                          }
-                          onSelect={() => selectEntry({ kind: 'media', item })}
-                          value={`media-${item.name}`}
-                        >
-                          {item.url ? (
-                            // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
-                            <img
-                              alt=""
-                              className="size-8 shrink-0 rounded object-cover"
-                              height={32}
-                              src={item.url}
-                              width={32}
-                            />
-                          ) : (
-                            <ImageIcon
-                              className="size-8 shrink-0 text-muted-foreground"
-                              aria-hidden
-                            />
-                          )}
-                          <span className="min-w-0 truncate text-sm">{label}</span>
-                        </CommandItem>
+                        <CommandGroup>
+                          <CommandItem
+                            className={cn(
+                              'flex w-full items-center gap-2',
+                              activeIndex === idx && 'bg-accent text-accent-foreground',
+                            )}
+                            data-post-creator-mention-active={
+                              activeIndex === idx ? 'true' : undefined
+                            }
+                            onSelect={() => selectEntry({ kind: 'back' })}
+                            value="__back__"
+                          >
+                            <ChevronLeft className="size-4 shrink-0" aria-hidden />
+                            <span className="font-medium">{tMention('backToMedia')}</span>
+                          </CommandItem>
+                        </CommandGroup>
                       )
-                    })}
-                  </CommandGroup>
-                ) : null}
+                    })()}
+                    {showMediaLoading ? (
+                      <CommandGroup heading={mediaHeading}>
+                        <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                          {tMention('collectionLoading')}
+                        </div>
+                      </CommandGroup>
+                    ) : null}
+                    {!showMediaLoading && filteredMedia.length === 0 ? (
+                      <div className="px-3 py-6 text-center text-muted-foreground text-sm">
+                        {tMention('collectionEmpty')}
+                      </div>
+                    ) : null}
+                    {filteredMedia.length > 0 ? (
+                      <CommandGroup heading={mediaHeading} aria-label={mediaAriaLabel}>
+                        {filteredMedia.map((item) => {
+                          flatIndex += 1
+                          const idx = flatIndex
+                          const label =
+                            item.displayName?.trim() || formatMediaMentionLabel(item.name)
+                          return (
+                            <CommandItem
+                              key={item.name}
+                              className={cn(
+                                'flex w-full items-center gap-2',
+                                activeIndex === idx && 'bg-accent text-accent-foreground',
+                              )}
+                              data-post-creator-mention-active={
+                                activeIndex === idx ? 'true' : undefined
+                              }
+                              onSelect={() => selectEntry({ kind: 'media', item })}
+                              value={`media-${item.name}`}
+                            >
+                              {item.url ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+                                <img
+                                  alt=""
+                                  className="size-16 shrink-0 rounded object-cover"
+                                  height={64}
+                                  src={item.url}
+                                  width={64}
+                                />
+                              ) : (
+                                <ImageIcon
+                                  className="size-16 shrink-0 text-muted-foreground"
+                                  aria-hidden
+                                />
+                              )}
+                              <span className="min-w-0 truncate text-sm">{label}</span>
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    {candidateMatches && candidate ? (
+                      <CommandGroup heading={previewGroupLabel} aria-label={previewGroupLabel}>
+                        {(() => {
+                          flatIndex += 1
+                          const idx = flatIndex
+                          return (
+                            <CommandItem
+                              className={cn(
+                                'flex w-full items-center gap-2',
+                                activeIndex === idx && 'bg-accent text-accent-foreground',
+                              )}
+                              data-post-creator-mention-active={
+                                activeIndex === idx ? 'true' : undefined
+                              }
+                              onSelect={() => selectEntry({ kind: 'preview', candidate })}
+                              value={`preview-${candidate.name}`}
+                            >
+                              {candidate.url ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+                                <img
+                                  alt=""
+                                  className="size-16 shrink-0 rounded object-cover"
+                                  height={64}
+                                  src={candidate.url}
+                                  width={64}
+                                />
+                              ) : (
+                                <ImageIcon
+                                  className="size-16 shrink-0 text-muted-foreground"
+                                  aria-hidden
+                                />
+                              )}
+                              <span className="truncate text-sm">{candidate.label}</span>
+                            </CommandItem>
+                          )
+                        })()}
+                      </CommandGroup>
+                    ) : null}
+                    {filteredCollections.length > 0 ? (
+                      <CommandGroup
+                        heading={tMention('collectionsGroup')}
+                        aria-label={tMention('collectionsAriaLabel')}
+                      >
+                        {filteredCollections.map((collection) => {
+                          flatIndex += 1
+                          const idx = flatIndex
+                          return (
+                            <CommandItem
+                              key={`collection-${collection.id}`}
+                              className={cn(
+                                'flex w-full items-center gap-2',
+                                activeIndex === idx && 'bg-accent text-accent-foreground',
+                              )}
+                              data-post-creator-mention-active={
+                                activeIndex === idx ? 'true' : undefined
+                              }
+                              onSelect={() => selectEntry({ kind: 'collection', collection })}
+                              value={`collection-${collection.name}`}
+                            >
+                              <Folder
+                                className="size-4 shrink-0 text-muted-foreground"
+                                aria-hidden
+                              />
+                              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                                {collection.name}
+                              </span>
+                              <span className="shrink-0 text-muted-foreground text-xs">
+                                {tMention('collectionMemberCount', {
+                                  count: collection.memberCount,
+                                })}
+                              </span>
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    ) : null}
+                    {showMediaLoading || collectionsLoading ? (
+                      <CommandGroup heading={mediaGroupLabel}>
+                        <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                          {mediaLoadingLabel}
+                        </div>
+                      </CommandGroup>
+                    ) : null}
+                    {filteredMedia.length > 0 ? (
+                      <CommandGroup heading={mediaGroupLabel} aria-label={mediaAriaLabel}>
+                        {filteredMedia.map((item) => {
+                          flatIndex += 1
+                          const idx = flatIndex
+                          const label =
+                            item.displayName?.trim() || formatMediaMentionLabel(item.name)
+                          return (
+                            <CommandItem
+                              key={item.name}
+                              className={cn(
+                                'flex w-full items-center gap-2',
+                                activeIndex === idx && 'bg-accent text-accent-foreground',
+                              )}
+                              data-post-creator-mention-active={
+                                activeIndex === idx ? 'true' : undefined
+                              }
+                              onSelect={() => selectEntry({ kind: 'media', item })}
+                              value={`media-${item.name}`}
+                            >
+                              {item.url ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
+                                <img
+                                  alt=""
+                                  className="size-16 shrink-0 rounded object-cover"
+                                  height={64}
+                                  src={item.url}
+                                  width={64}
+                                />
+                              ) : (
+                                <ImageIcon
+                                  className="size-16 shrink-0 text-muted-foreground"
+                                  aria-hidden
+                                />
+                              )}
+                              <span className="min-w-0 truncate text-sm">{label}</span>
+                            </CommandItem>
+                          )
+                        })}
+                      </CommandGroup>
+                    ) : null}
+                  </>
+                )}
               </>
             )}
           </CommandList>

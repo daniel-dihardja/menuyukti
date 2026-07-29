@@ -179,6 +179,84 @@ type ComboPromoPostureType {
   promoReason: String!
 }
 
+"""
+Workspace-scoped CRM app: loyalty / customer-registration tenant. Public appId (UUID) is used in enrollment QR and mobile auth claims.
+"""
+type CrmAppType {
+  id: Int!
+  appId: UUID!
+  title: String!
+  cashbackThresholdAmount: Int!
+  cashbackPercent: Int!
+  workspaceId: Int!
+  createdByClerkUserId: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Cashback ledger entry for a CRM customer."""
+type CrmCashbackEntryType {
+  id: UUID!
+  customerId: UUID!
+  amount: Int!
+  paymentAmount: Int
+  cashbackPercent: Int
+  label: String
+  createdAt: DateTime!
+}
+
+"""Registration status derived from enrolled devices."""
+enum CrmCustomerStatus {
+  ACTIVE
+  REVOKED
+  NONE
+}
+
+"""Customer enrolled in a CRM app."""
+type CrmCustomerType {
+  id: UUID!
+
+  """Internal CRM app id (crm_app.id)."""
+  appId: Int!
+  phoneMasked: String!
+  givenName: String
+  familyName: String
+  createdAt: DateTime!
+  deviceCount: Int!
+  lastSeenAt: DateTime
+  status: CrmCustomerStatus!
+
+  """Enrolled devices (populated on crmCustomer detail)."""
+  devices: [CrmDeviceType!]!
+
+  """
+  Sum of cashback ledger amounts in IDR (populated on crmCustomer detail).
+  """
+  cashbackBalance: Int!
+
+  """Recent cashback ledger entries (populated on crmCustomer detail)."""
+  cashbackEntries: [CrmCashbackEntryType!]!
+}
+
+"""Device enrolled for a CRM customer."""
+type CrmDeviceType {
+  id: UUID!
+  platform: String!
+  label: String
+  createdAt: DateTime!
+  lastSeenAt: DateTime
+  revokedAt: DateTime
+}
+
+"""
+Staff-minted enrollment token. The raw token is returned only once; the server stores a hash.
+"""
+type CrmEnrollmentTokenCreatedType {
+  token: String!
+  expiresAt: DateTime!
+  enrollUrl: String!
+}
+
 """Hourly demand distribution for a menu item."""
 type DailyHeatmapType {
   hour: Int!
@@ -421,6 +499,25 @@ type MealPeriodBreakdownType {
   revenueShare: Float!
 }
 
+"""Catalog entry for a workspace photo in the media library."""
+type MediaAssetType {
+  id: Int!
+  workspaceId: Int!
+  filename: String!
+  displayName: String
+  createdByClerkUserId: String!
+}
+
+"""Named group of media assets within a workspace."""
+type MediaCollectionType {
+  id: Int!
+  workspaceId: Int!
+  name: String!
+  createdByClerkUserId: String!
+  memberCount: Int!
+  members: [MediaAssetType!]!
+}
+
 """
 One distinct menu line from POS data with aggregated quantity and avg unit price.
 """
@@ -586,6 +683,11 @@ type Mutation {
   Upload and normalize a POS sales Excel file, persist order facts, and return metadata and sales analytics. Set includeLineItems to receive normalizedRows and orders (large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB).
   """
   uploadSalesReport(file: Upload!, locationId: ID!, includeLineItems: Boolean! = false): ExcelUploadResult!
+
+  """
+  Award cashback from a payment total (applies app threshold/percent) or redeem a positive amount from the customer's balance. Pass exactly one of paymentAmount or redeemAmount.
+  """
+  awardCrmCashback(customerId: UUID!, paymentAmount: Int = null, redeemAmount: Int = null, label: String = null): CrmCashbackEntryType!
   createNode(locationId: Int!, nodeType: String!, name: String = null, parentId: ID = null, description: String = null, data: JSON = null): NodeType!
   createPost(title: String = null): PostType!
   createPostPage(postId: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
@@ -613,6 +715,17 @@ type Mutation {
   """Create a named visual style pack in the caller's workspace."""
   createStyle(name: String!, referenceImageName: String!, spec: JSON!, isDefault: Boolean! = false): StyleType!
 
+  """Create a named media collection in the caller's workspace."""
+  createMediaCollection(name: String!): MediaCollectionType!
+
+  """Create a CRM app in the caller's primary workspace."""
+  createCrmApp(title: String!): CrmAppType!
+
+  """
+  Create a single-use enrollment token for a CRM app. Returns the raw token once; expires in 5 minutes.
+  """
+  createCrmEnrollmentToken(appId: Int!): CrmEnrollmentTokenCreatedType!
+
   """Create a manual calendar entry for a location."""
   createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null, sourceRef: CalendarSourceRefInput = null): CalendarEntryType!
   createWorkspace(name: String!): WorkspaceType!
@@ -628,13 +741,46 @@ type Mutation {
 
   """Delete a manual calendar entry."""
   deleteCalendarEntry(id: Int!): CalendarEntryType!
+
+  """Delete a CRM app by id."""
+  deleteCrmApp(id: Int!): Boolean!
+
+  """Delete a CRM customer registration by id. Cascades enrolled devices."""
+  deleteCrmCustomer(id: UUID!): Boolean!
   deleteImageAiFlow(slug: String!): Boolean!
 
   """Delete a visual style pack by id."""
   deleteStyle(id: Int!): Boolean!
 
+  """Delete a media collection by id (memberships cascade)."""
+  deleteMediaCollection(id: Int!): Boolean!
+
+  """
+  Delete a media asset catalog row by filename (memberships cascade). Returns true when a row was removed; false when already absent.
+  """
+  deleteMediaAsset(filename: String!): Boolean!
+
+  """
+  Idempotently create or update a media asset catalog row for a workspace photo filename.
+  """
+  ensureMediaAsset(filename: String!, displayName: String = null): MediaAssetType!
+
+  """Add a photo (by filename) to a media collection."""
+  addMediaToCollection(collectionId: Int!, filename: String!): MediaCollectionType!
+
+  """Remove a photo (by filename) from a media collection."""
+  removeMediaFromCollection(collectionId: Int!, filename: String!): MediaCollectionType!
+
+  """
+  Revoke a CRM device so it can no longer authenticate. Clears refresh token hash. Idempotent if already revoked.
+  """
+  revokeCrmDevice(deviceId: UUID!): CrmDeviceType!
+
   """Update a manual calendar entry."""
   updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!], sourceRef: CalendarSourceRefInput): CalendarEntryType!
+
+  """Update a CRM app by id."""
+  updateCrmApp(id: Int!, title: String!, cashbackThresholdAmount: Int = null, cashbackPercent: Int = null): CrmAppType!
   updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
 
   """
@@ -644,6 +790,9 @@ type Mutation {
 
   """Update a visual style pack in the caller's workspace."""
   updateStyle(id: Int!, name: String = null, referenceImageName: String = null, spec: JSON = null, isDefault: Boolean = null): StyleType!
+
+  """Rename a media collection by id."""
+  updateMediaCollection(id: Int!, name: String!): MediaCollectionType!
 }
 
 """
@@ -873,6 +1022,33 @@ type Query {
 
   """Fetch one visual style pack by id. Null when missing or access denied."""
   style(id: Int!): StyleType
+
+  """List media collections in workspaces the current user belongs to."""
+  mediaCollections: [MediaCollectionType!]!
+
+  """
+  Fetch one media collection by id, including member assets. Null when missing.
+  """
+  mediaCollection(id: Int!): MediaCollectionType
+
+  """
+  List media assets (photos) in the caller's workspaces. When collectionId is set, only members of that collection.
+  """
+  mediaAssets(collectionId: Int = null): [MediaAssetType!]!
+
+  """List CRM apps in workspaces the current user belongs to."""
+  crmApps: [CrmAppType!]!
+
+  """Fetch one CRM app by id. Null when missing or access denied."""
+  crmApp(id: Int!): CrmAppType
+
+  """
+  List customers enrolled in a CRM app. Empty when missing or access denied.
+  """
+  crmCustomers(appId: Int!, search: String = null): [CrmCustomerType!]!
+
+  """CRM customer detail with devices. Null when missing or access denied."""
+  crmCustomer(id: UUID!): CrmCustomerType
 
   """
   List nodes for a location, optionally filtered by nodeType and/or parentId. Results are paginated with `first` (default and max 500). When parentId is omitted, use `afterId` (last-seen node id) for cursor pagination in primary-key-desc order (aligned with creation order for autoincrement ids).
@@ -1138,6 +1314,8 @@ type TrendingItemType {
   rankPrevious: Int!
   trendLabel: String!
 }
+
+scalar UUID
 
 """Represents a file upload."""
 scalar Upload

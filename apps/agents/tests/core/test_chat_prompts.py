@@ -4,6 +4,7 @@ from agents_app.agents.core.chat.prompts import (
     CHART_CATALOG_BLOCK,
     IG_STUDIO_BLOCK,
     LEONARDO_IMAGE_BLOCK,
+    MEDIA_LIBRARY_BLOCK,
     SYSTEM_PROMPT_TEMPLATE,
     build_system_prompt,
 )
@@ -23,6 +24,9 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "{workflow_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{leonardo_image_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{ig_studio_block}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{media_library_block}" in SYSTEM_PROMPT_TEMPLATE
+    assert "list_media_collections" in MEDIA_LIBRARY_BLOCK
+    assert "list_media" in MEDIA_LIBRARY_BLOCK
     assert "get_milestone" in SYSTEM_PROMPT_TEMPLATE
     assert "secondary" in SYSTEM_PROMPT_TEMPLATE.lower()
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
@@ -51,6 +55,8 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "{workflow_catalog_block}" not in out
     assert "{leonardo_image_block}" not in out
     assert "{ig_studio_block}" not in out
+    assert "list_media_collections" in out
+    assert "## Media library" in out
 
 
 def test_build_system_prompt_with_milestone_catalog() -> None:

@@ -6,6 +6,7 @@ from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_instagram_item import CreateInstagramItemMutation
 from .create_instagram_item_page import CreateInstagramItemPageMutation
 from .create_location import CreateLocationMutation
+from .create_media_collection import CreateMediaCollectionMutation
 from .create_node import CreateNodeMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
@@ -22,12 +23,18 @@ from .delete_instagram_item_page import DeleteInstagramItemPageMutation
 from .delete_instagram_item_page_media_version import (
     DeleteInstagramItemPageMediaVersionMutation,
 )
+from .delete_media_collection import DeleteMediaCollectionMutation
 from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .delete_style import DeleteStyleMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
+from .media_asset_catalog import DeleteMediaAssetMutation, EnsureMediaAssetMutation
+from .media_collection_members import (
+    AddMediaToCollectionMutation,
+    RemoveMediaFromCollectionMutation,
+)
 from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .reorder_milestones import ReorderMilestonesMutation
@@ -42,6 +49,7 @@ from .update_instagram_item import UpdateInstagramItemMutation
 from .update_instagram_item_page import UpdateInstagramItemPageMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
+from .update_media_collection import UpdateMediaCollectionMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .update_node import UpdateNodeMutation
 from .update_post import UpdatePostMutation
@@ -52,6 +60,7 @@ from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
 __all__ = [
     "AwardCrmCashbackMutation",
+    "AddMediaToCollectionMutation",
     "CreateImageAiFlowMutation",
     "CreateInstagramItemMutation",
     "CreateInstagramItemPageMutation",
@@ -59,6 +68,7 @@ __all__ = [
     "CreateCrmAppMutation",
     "CreateCrmEnrollmentTokenMutation",
     "CreateLocationMutation",
+    "CreateMediaCollectionMutation",
     "CreateStyleMutation",
     "CreateNodeMutation",
     "CreatePostMutation",
@@ -74,13 +84,17 @@ __all__ = [
     "DeleteInstagramItemMutation",
     "DeleteInstagramItemPageMutation",
     "DeleteInstagramItemPageMediaVersionMutation",
+    "DeleteMediaAssetMutation",
+    "DeleteMediaCollectionMutation",
     "DeleteStyleMutation",
     "DeleteNodeMutation",
     "DeletePostMutation",
     "DeletePostPageMutation",
     "DeletePostPageMediaVersionMutation",
+    "EnsureMediaAssetMutation",
     "InviteWorkspaceMemberMutation",
     "MilestoneAgentRunMutation",
+    "RemoveMediaFromCollectionMutation",
     "RemoveWorkspaceMemberMutation",
     "ReorderMilestonesMutation",
     "ReplacePassCriteriaMutation",
@@ -93,6 +107,7 @@ __all__ = [
     "UpdateInstagramItemPageMutation",
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
+    "UpdateMediaCollectionMutation",
     "UpdateStyleMutation",
     "UpdateNodeMutation",
     "UpdatePostMutation",

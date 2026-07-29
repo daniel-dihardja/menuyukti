@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useFormatter } from 'next-intl'
-import { Download, Loader2, Maximize2, Play, Trash2, type LucideIcon } from 'lucide-react'
+import { Check, Download, Loader2, Maximize2, Play, Trash2, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Button } from '@workspace/ui/components/button'
@@ -280,33 +280,64 @@ function ContentMediaTileMeta({ item }: { item: ContentCatalogItem }) {
 }
 
 function ContentMediaTile({ item }: { item: ContentCatalogItem }) {
-  const { labels } = useContentMediaGridState()
-  const { onPreview } = useContentMediaGridActions()
+  const { labels, selectedName } = useContentMediaGridState()
+  const { onPreview, onSelect } = useContentMediaGridActions()
   const isVideo = contentMediaType(item) === 'video'
   const previewLabel = isVideo ? labels.previewVideo : labels.previewImage
+  const selectionEnabled = onSelect != null
+  const isSelected = selectionEnabled && selectedName === item.name
+  const selectLabel = labels.select ?? 'Select'
 
   const openPreview = () => {
     onPreview(item)
   }
 
+  const toggleSelect = () => {
+    onSelect?.(item)
+  }
+
   const handleMediaKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      openPreview()
+      if (selectionEnabled) toggleSelect()
+      else openPreview()
     }
   }
 
   return (
-    <figure className="group/tile w-full max-w-[11rem] min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md">
+    <figure
+      className={cn(
+        'group/tile w-full max-w-[11rem] min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm transition-[box-shadow,border-color,opacity]',
+        isSelected
+          ? 'border-primary ring-2 ring-primary/40 shadow-md'
+          : 'border-border/60 hover:shadow-md',
+        selectionEnabled && selectedName && !isSelected ? 'opacity-70' : 'opacity-100',
+      )}
+      data-selected={isSelected ? 'true' : undefined}
+    >
       <div
         role="button"
         tabIndex={0}
-        aria-label={previewLabel}
+        aria-label={selectionEnabled ? selectLabel : previewLabel}
+        aria-pressed={selectionEnabled ? isSelected : undefined}
         className="relative w-full cursor-pointer overflow-hidden outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        onClick={openPreview}
+        onClick={selectionEnabled ? toggleSelect : openPreview}
         onKeyDown={handleMediaKeyDown}
       >
         <ContentMediaTileMedia item={item} />
+        {selectionEnabled ? (
+          <div
+            className={cn(
+              'absolute top-2 left-2 z-20 flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors',
+              isSelected
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-white/80 bg-black/45 text-white',
+            )}
+            aria-hidden
+          >
+            {isSelected ? <Check className="size-4" strokeWidth={3} /> : null}
+          </div>
+        ) : null}
         <div
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent ${contentTileOverlayReveal}`}
         />
@@ -386,6 +417,9 @@ export type ContentMediaGridProps = {
   skeletonCount?: number
   defaultAspectRatio?: string
   tileMode?: 'static' | 'videoHoverPreview'
+  /** When set with `onSelect`, tiles show selection chrome; click selects, expand still previews. */
+  selectedName?: string | null
+  onSelect?: (item: ContentCatalogItem) => void
 }
 
 /** Flat API wrapper; prefer `ContentMediaGridParts` for explicit composition. */
@@ -393,6 +427,8 @@ export function ContentMediaGrid({
   skeletonCount = MEDIA_GRID_SKELETON_COUNT,
   defaultAspectRatio = DEFAULT_CONTENT_ASPECT_RATIO,
   tileMode = 'static',
+  selectedName = null,
+  onSelect,
   ...props
 }: ContentMediaGridProps) {
   return (
@@ -403,6 +439,7 @@ export function ContentMediaGrid({
         onImageNaturalSize: props.onImageNaturalSize,
         onPreview: props.onPreview,
         onVideoMetadata: props.onVideoMetadata,
+        onSelect: onSelect ?? null,
       }}
       state={{
         defaultAspectRatio,
@@ -413,6 +450,7 @@ export function ContentMediaGrid({
         labels: props.labels,
         loading: props.loading,
         skeletonCount,
+        selectedName,
       }}
       tileMode={tileMode}
     >

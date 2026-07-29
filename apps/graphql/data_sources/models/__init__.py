@@ -23,6 +23,11 @@ from graphql.data_sources.models.instagram_item import (
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
+from graphql.data_sources.models.media_asset import (
+    MediaAsset,
+    MediaCollection,
+    MediaCollectionMember,
+)
 from graphql.data_sources.models.milestone_agent_run import MilestoneAgentRun
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.visual_style import VisualStyle
@@ -48,6 +53,9 @@ __all__ = [
     "Location",
     "LocationOpeningHour",
     "LocationManualBriefInput",
+    "MediaAsset",
+    "MediaCollection",
+    "MediaCollectionMember",
     "MilestoneAgentRun",
     "MenuItemCogs",
     "Node",

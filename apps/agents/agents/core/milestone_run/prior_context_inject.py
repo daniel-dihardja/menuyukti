@@ -87,9 +87,7 @@ def collect_matched_prior_rows(
     for row in rows:
         pid = row.get("presetId")
         if isinstance(pid, str) and pid.strip() and pid.strip() in wanted:
-            matched.append(
-                _matched_row_payload(row, preset_id=pid.strip(), data=row.get("data"))
-            )
+            matched.append(_matched_row_payload(row, preset_id=pid.strip(), data=row.get("data")))
             if pid.strip() not in matched_ids:
                 matched_ids.append(pid.strip())
 
@@ -97,9 +95,7 @@ def collect_matched_prior_rows(
         for row in rows:
             data = row.get("data")
             if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
-                matched.append(
-                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
-                )
+                matched.append(_matched_row_payload(row, preset_id=row.get("presetId"), data=data))
                 matched_ids.append("restaurant_campaign_brief")
                 break
 
@@ -107,9 +103,7 @@ def collect_matched_prior_rows(
         for row in rows:
             data = row.get("data")
             if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
-                matched.append(
-                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
-                )
+                matched.append(_matched_row_payload(row, preset_id=row.get("presetId"), data=data))
                 matched_ids.append("promotion_candidates")
                 break
 
@@ -117,9 +111,7 @@ def collect_matched_prior_rows(
         for row in rows:
             data = row.get("data")
             if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
-                matched.append(
-                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
-                )
+                matched.append(_matched_row_payload(row, preset_id=row.get("presetId"), data=data))
                 matched_ids.append("menu_tagger")
                 break
 
@@ -127,9 +119,7 @@ def collect_matched_prior_rows(
         for row in rows:
             data = row.get("data")
             if isinstance(data, dict) and is_ig_plan_milestone_data(data):
-                matched.append(
-                    _matched_row_payload(row, preset_id=row.get("presetId"), data=data)
-                )
+                matched.append(_matched_row_payload(row, preset_id=row.get("presetId"), data=data))
                 matched_ids.append("ig_plan")
                 break
 

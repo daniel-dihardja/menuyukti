@@ -164,7 +164,11 @@ def test_create_enrollment_token(crm_enroll_workspace_id: int):
 
     session = SessionLocal()
     try:
-        rows = session.query(CrmEnrollmentToken).filter(CrmEnrollmentToken.crm_app_id == app["id"]).all()
+        rows = (
+            session.query(CrmEnrollmentToken)
+            .filter(CrmEnrollmentToken.crm_app_id == app["id"])
+            .all()
+        )
         assert len(rows) == 1
         assert rows[0].token_hash == hash_enrollment_token(payload["token"])
         assert rows[0].used_at is None
@@ -246,8 +250,12 @@ def test_delete_customer_cascades_devices(crm_enroll_workspace_id: int):
 
     session = SessionLocal()
     try:
-        assert session.query(CrmCustomer).filter(CrmCustomer.id == UUID(customer_id)).first() is None
-        assert session.query(CrmDevice).filter(CrmDevice.public_key == "delete-me-key").first() is None
+        assert (
+            session.query(CrmCustomer).filter(CrmCustomer.id == UUID(customer_id)).first() is None
+        )
+        assert (
+            session.query(CrmDevice).filter(CrmDevice.public_key == "delete-me-key").first() is None
+        )
     finally:
         session.close()
 
@@ -274,7 +282,8 @@ def test_non_member_cannot_delete_customer(crm_enroll_workspace_id: int):
     session = SessionLocal()
     try:
         assert (
-            session.query(CrmCustomer).filter(CrmCustomer.id == UUID(customer_id)).first() is not None
+            session.query(CrmCustomer).filter(CrmCustomer.id == UUID(customer_id)).first()
+            is not None
         )
     finally:
         session.close()

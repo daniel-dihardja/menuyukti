@@ -68,9 +68,7 @@ def user_can_access_workspace(session: Session, workspace_id: int, user_id: str)
     return is_workspace_member(session, workspace_id, user_id)
 
 
-def user_can_manage_workspace_members(
-    session: Session, workspace_id: int, user_id: str
-) -> bool:
+def user_can_manage_workspace_members(session: Session, workspace_id: int, user_id: str) -> bool:
     """True if the user may invite/remove teammates (v1: owner role only)."""
     return is_workspace_owner_role(session, workspace_id, user_id)
 

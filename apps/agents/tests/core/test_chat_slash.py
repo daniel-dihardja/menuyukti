@@ -33,7 +33,9 @@ def test_parse_slash_get_milestone(content: object, expected: dict | None) -> No
     assert parse_slash_get_milestone(content) == expected
 
 
-def test_chat_stream_slash_input_bypasses_graph(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_chat_stream_slash_input_bypasses_graph(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     mock_graph = MagicMock()
     mock_graph.astream = MagicMock(side_effect=AssertionError("graph should not run for slash"))
     client.app.state.chat_graph = mock_graph

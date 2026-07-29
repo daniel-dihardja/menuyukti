@@ -68,9 +68,7 @@ class CreateInstagramItemPageMutation:
                     page_row.media_s3_key = key_clean
 
                     if prompt is not UNSET:
-                        version_prompt = (
-                            None if prompt is None else normalize_optional_text(prompt)
-                        )
+                        version_prompt = None if prompt is None else normalize_optional_text(prompt)
                     else:
                         version_prompt = None
 

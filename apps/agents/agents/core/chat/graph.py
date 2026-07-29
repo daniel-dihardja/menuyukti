@@ -17,6 +17,8 @@ from agents_app.agents.core.chat.tools import (
     get_milestone,
     get_workflow_overview,
     list_instagram_items,
+    list_media,
+    list_media_collections,
     update_instagram_items,
     update_milestone_input,
 )
@@ -73,6 +75,8 @@ def chat_tools_list(
     registers the full union via ``chat_tools_list(include_post_image=True)``.
     """
     tools: list = []
+    tools.append(list_media_collections)
+    tools.append(list_media)
     if workflow_id:
         tools.append(get_workflow_overview)
         tools.append(get_milestone)

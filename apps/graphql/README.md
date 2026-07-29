@@ -39,6 +39,10 @@ The app still falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graph
 
 Import `SessionLocal` from `graphql.data_sources` inside resolvers to read or write rows via SQLAlchemy sessions.
 
+### Media library catalog
+
+Workspace photos stay as flat S3 objects under `workspaces/<id>/photos/`. GraphQL `media_asset` / `media_collection` tables catalog and group them. After deploying the media-collections migration, existing S3 photos can be indexed once via the web BFF: `POST /api/media/backfill` (authenticated workspace member). New uploads call `ensureMediaAsset` automatically.
+
 **Legacy one-off SQL** (only if you still have a pre–Alembic database that never ran migrations): to align an older `node` table manually, you could run:
 
 ```sql

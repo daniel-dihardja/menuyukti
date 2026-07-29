@@ -47,6 +47,18 @@ image syntax (`![...](...)`), or HTML img tags — the UI already displays the g
 image in the tool result.
 """
 
+MEDIA_LIBRARY_BLOCK = """\
+## Media library
+
+Workspace photos live in the media library. Named **collections** group photos without
+duplicating files (for example style references).
+
+- `list_media_collections` — list collection id, name, and member count.
+- `list_media` — list photo filenames (optional `collection_id` to filter).
+
+Call these when the user asks what media or collections exist. Do not invent filenames.
+"""
+
 # Full prompt structure. Placeholders: chart_catalog_block, workflow_catalog_block,
 # leonardo_image_block, ig_studio_block.
 SYSTEM_PROMPT_TEMPLATE = """\
@@ -134,7 +146,7 @@ When users ask about venue hours, address, cuisine, contact links, or other loca
 settings from the location page, call `get_location_data` rather than guessing or using
 web search.
 
-{leonardo_image_block}{ig_studio_block}"""
+{media_library_block}{leonardo_image_block}{ig_studio_block}"""
 
 
 def build_system_prompt(
@@ -152,10 +164,12 @@ def build_system_prompt(
         f"{LEONARDO_IMAGE_BLOCK.strip()}\n\n" if leonardo_image_generation else ""
     )
     ig_studio_block = f"{IG_STUDIO_BLOCK.strip()}\n" if ig_studio_post_image else ""
+    media_library_block = f"{MEDIA_LIBRARY_BLOCK.strip()}\n\n"
     return (
         SYSTEM_PROMPT_TEMPLATE.format(
             chart_catalog_block=chart_catalog_block,
             workflow_catalog_block=workflow_catalog_block,
+            media_library_block=media_library_block,
             leonardo_image_block=leonardo_image_block,
             ig_studio_block=ig_studio_block,
         ).rstrip()
