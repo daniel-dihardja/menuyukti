@@ -133,6 +133,24 @@ export function latestStoryAssetsFromMessages(messages: UIMessage[]): StoryAsset
 }
 
 /**
+ * Snapshot of story assets as of a given message (inclusive).
+ * Returns [] when ``messageId`` is not found.
+ */
+export function storyAssetsAsOfMessage(
+  messages: readonly UIMessage[],
+  messageId: string,
+): StoryAssetRef[] {
+  const end = messages.findIndex((m) => m.id === messageId)
+  if (end < 0) return []
+  return latestStoryAssetsFromMessages(messages.slice(0, end + 1) as UIMessage[])
+}
+
+/** Style and content refs for Phase 3 confirmation previews (excludes result). */
+export function styleAndContentStoryAssets(assets: readonly StoryAssetRef[]): StoryAssetRef[] {
+  return assets.filter((a) => a.role === 'style' || a.role === 'content')
+}
+
+/**
  * Thumbnail URL for a Result chip: latest generate tool output whose ``name`` matches.
  */
 export function resultThumbnailUrlFromMessages(

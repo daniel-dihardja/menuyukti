@@ -7,6 +7,8 @@ import {
   parseGenerateStoryAssetsOutput,
   parseStoryAssetsToolOutput,
   resultThumbnailUrlFromMessages,
+  storyAssetsAsOfMessage,
+  styleAndContentStoryAssets,
 } from '@/lib/chat/story-assets-from-messages'
 
 const STYLE = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee.webp'
@@ -211,5 +213,83 @@ describe('resultThumbnailUrlFromMessages', () => {
     ] as UIMessage[]
 
     expect(resultThumbnailUrlFromMessages(messages, RESULT)).toBe('https://example.com/r.webp')
+  })
+})
+
+describe('storyAssetsAsOfMessage', () => {
+  const messages = [
+    {
+      id: 'save-style',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'tool-save_story_asset',
+          toolCallId: 'a',
+          state: 'output-available',
+          input: {},
+          output: JSON.stringify({
+            ok: true,
+            action: 'save',
+            story_assets: [{ role: 'style', name: STYLE, note: '' }],
+            message: 'Saved',
+          }),
+        },
+      ],
+    },
+    {
+      id: 'confirm',
+      role: 'assistant',
+      parts: [{ type: 'text', text: 'Ready?' }],
+    },
+    {
+      id: 'save-content',
+      role: 'assistant',
+      parts: [
+        {
+          type: 'tool-save_story_asset',
+          toolCallId: 'b',
+          state: 'output-available',
+          input: {},
+          output: JSON.stringify({
+            ok: true,
+            action: 'save',
+            story_assets: [
+              { role: 'style', name: STYLE, note: '' },
+              { role: 'content', name: CONTENT, note: 'bowl' },
+            ],
+            message: 'Saved',
+          }),
+        },
+      ],
+    },
+  ] as UIMessage[]
+
+  it('returns snapshot inclusive of the target message', () => {
+    expect(storyAssetsAsOfMessage(messages, 'confirm')).toEqual([
+      { role: 'style', name: STYLE, note: '' },
+    ])
+    expect(storyAssetsAsOfMessage(messages, 'save-content')).toEqual([
+      { role: 'style', name: STYLE, note: '' },
+      { role: 'content', name: CONTENT, note: 'bowl' },
+    ])
+  })
+
+  it('returns empty when message id is missing', () => {
+    expect(storyAssetsAsOfMessage(messages, 'missing')).toEqual([])
+  })
+})
+
+describe('styleAndContentStoryAssets', () => {
+  it('filters out result roles', () => {
+    expect(
+      styleAndContentStoryAssets([
+        { role: 'style', name: STYLE, note: '' },
+        { role: 'content', name: CONTENT, note: '' },
+        { role: 'result', name: RESULT, note: '' },
+      ]),
+    ).toEqual([
+      { role: 'style', name: STYLE, note: '' },
+      { role: 'content', name: CONTENT, note: '' },
+    ])
   })
 })

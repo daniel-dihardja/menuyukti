@@ -7,7 +7,12 @@ import { useCallback, useMemo } from 'react'
 
 import { ChatMessageParts } from '@/components/chat-message-parts'
 import {
+  storyAssetsAsOfMessage,
+  styleAndContentStoryAssets,
+} from '@/lib/chat/story-assets-from-messages'
+import {
   isStoryGenerateConfirmationActionable,
+  messageHasCompletedStoryGenerateConfirmation,
   messageHasGenerateInstagramPostImage,
   STORY_GENERATE_CHANGE_REPLY,
   STORY_GENERATE_CONFIRM_REPLY,
@@ -15,6 +20,7 @@ import {
 
 import { useWorkflowChatActions, useWorkflowChatMessages } from './workflow-chat-context'
 import { useWorkflowChatMentionTitles } from './workflow-chat-mention-context'
+import { WorkflowChatStoryConfirmAssets } from './workflow-chat-story-confirm-assets'
 
 export function WorkflowChatMessageParts({
   message,
@@ -41,6 +47,11 @@ export function WorkflowChatMessageParts({
       }),
     [message, visibleMessages, status],
   )
+
+  const confirmAssets = useMemo(() => {
+    if (!messageHasCompletedStoryGenerateConfirmation(message)) return []
+    return styleAndContentStoryAssets(storyAssetsAsOfMessage(visibleMessages, message.id))
+  }, [message, visibleMessages])
 
   const onConfirmGenerate = useCallback(() => {
     void sendQuickReply(STORY_GENERATE_CONFIRM_REPLY)
@@ -70,6 +81,7 @@ export function WorkflowChatMessageParts({
         role={role}
         storyGenerateConfirmation={storyGenerateConfirmation}
       />
+      {confirmAssets.length > 0 ? <WorkflowChatStoryConfirmAssets assets={confirmAssets} /> : null}
       {actionsEnabled ? (
         <Suggestions data-testid="story-generate-confirmation-actions">
           <Suggestion onClick={onConfirmGenerate} suggestion={t('generate')} variant="default" />
