@@ -1,4 +1,4 @@
-import { formatMediaMentionLabel } from '@/lib/chat/workflow-chat-media-mention'
+import { formatMediaMentionLabel } from '@/lib/chat/chat-media-mention'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { MediaCollection } from '@/lib/graphql/queries/media-collections'
 

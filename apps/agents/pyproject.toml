@@ -40,8 +40,7 @@ packages = [
     "agents_app.agents.core",
     "agents_app.agents.core.chat",
     "agents_app.agents.core.format_markdown",
-    "agents_app.agents.core.milestone_data",
-    "agents_app.agents.core.milestone_eval",
+    "agents_app.agents.core.style_spec",
     "agents_app.models",
     "agents_app.routers",
 ]

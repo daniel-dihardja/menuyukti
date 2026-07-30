@@ -24,7 +24,6 @@ _HEAVY_ROOT_FIELDS: dict[str, int] = {
     "igPlanInputs": 45,
     "slotMenuCandidates": 30,
     "weeklyDemandPattern": 15,
-    "workflowCampaignTree": 15,
 }
 
 _DEFAULT_FIELD_COST = 1

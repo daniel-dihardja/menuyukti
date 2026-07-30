@@ -7,22 +7,22 @@ alwaysApply: true
 
 ## Product
 
-Menuyukti is an **agentic AI platform for data-driven restaurant marketing automation**. It turns restaurant sales data into targeted Instagram campaigns: analytics, content generation, and campaign workflows with less manual work.
+Menuyukti is an **agentic AI platform for data-driven restaurant marketing**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, media, IG Studio, and calendar — without a live campaign-workflow / milestone pipeline.
 
 ## Apps and frameworks
 
 | App | Path | Role |
 |-----|------|------|
 | **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
-| **Web** | `apps/web` | Next.js user-facing app: chat, artifacts, CRUD for product entities. Calls GraphQL. |
+| **Web** | `apps/web` | Next.js user-facing app: chat (`agentThreadId`), artifacts, CRUD for product entities. Calls GraphQL. |
 | **Mobile** | `apps/mobile-app` | Expo (React Native) client. Calls GraphQL over HTTP; does not open DB connections. |
-| **LangGraph agents** | `apps/agents` | Python FastAPI service: LangChain / LangGraph graphs, streaming chat (OpenAI), LCEL-friendly composition. Can call into platform APIs as features grow. |
+| **LangGraph agents** | `apps/agents` | Python FastAPI service: LangChain / LangGraph **streaming chat** (OpenAI via AI Gateway). Calls GraphQL over HTTP. |
 
 ## Agentic patterns in use
 
-- **LangChain / LangGraph (`apps/agents`)** — LCEL chains, `MessagesState` graphs, async streaming (`astream_events`), OpenAI via `langchain-openai`. Prefer modular layout: **`agents/`** (graphs and co-located `prompts.py` per flow), **`models/`**, **`routers/`**, **`server.py`**. See `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
-- **Plan-and-execute** — explicit multi-step plans for pipelines (e.g. campaign: data → slots → schedule → formats → brief).
-- **Reflect** — generate → critique → revise for drafts (e.g. location profiles, format plans) with iteration bounds.
+- **LangChain / LangGraph (`apps/agents`)** — chat ReAct via `create_agent`, checkpointer threads, async streaming (`astream_events`), tools that call GraphQL. Prefer modular layout: **`agents/core/chat/`**, **`models/`**, **`routers/`**, **`server.py`**. See `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
+- **Mode-driven tools** — general vs story assistant bind different tool sets (location/charts vs story scratchpad / IG image).
+- **Reflect** — generate → critique → revise remains useful for draft helpers (e.g. style specs) with iteration bounds when those flows exist.
 
 ## Layering and boundaries
 
@@ -33,3 +33,4 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing autom
 ## Further reading
 
 - Root [`README.md`](../../README.md) — features and high-level architecture.
+- Cleanup history (milestones removed): [`packages/docs/menuyukti/remove-milestones.md`](../../packages/docs/menuyukti/remove-milestones.md).

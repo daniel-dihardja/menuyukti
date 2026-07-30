@@ -49,6 +49,9 @@ packages/cv-snippet/
 # Social media plans and assets (local; not versioned)
 packages/sosmed/
 
+# Local Menuyukti product notes (not versioned)
+packages/docs/menuyukti/
+
 # POD product assets (local / generated; not versioned)
 packages/pod/
 

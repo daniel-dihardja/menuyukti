@@ -7,8 +7,6 @@ import {
   graphqlAnalyticsRunCacheTag,
   graphqlAnalyticsRunComputationsCacheTag,
   graphqlLocationsDataCacheTag,
-  graphqlWorkflowsByLocationCacheTag,
-  graphqlWorkflowCampaignTreeCacheTag,
   graphqlSchedulerCalendarCacheTag,
 } from '@/lib/graphql/cache-tags'
 import {
@@ -22,24 +20,19 @@ import {
   MENU_COMBOS_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
   MENU_HEATMAPS_QUERY,
-  NODES_QUERY,
   INSTAGRAM_SIGNALS_QUERY,
   ORDER_METRICS_QUERY,
   PROMOTION_MENU_ITEMS_QUERY,
   PUBLIC_HOLIDAYS_QUERY,
   SCHEDULER_CALENDAR_QUERY,
-  WORKFLOW_CAMPAIGN_TREE_QUERY,
-  parseNodesData,
   type AnalyticsBundleHeatmapData,
   type AnalyticsRunsByLocationData,
-  type AnyNode,
   type AnalyticsRunMetadataData,
   type LocationsListData,
   type LocationsData,
   type MenuCombosData,
   type MenuEngineeringMatrixData,
   type MenuHeatmapsData,
-  type NodesDataRaw,
   type LocationAnalyticsSummariesData,
   type LocationData,
   type InstagramSignalsData,
@@ -47,7 +40,6 @@ import {
   type PromotionMenuItemsData,
   type PublicHolidaysData,
   type SchedulerCalendarData,
-  type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
 
 /** Cached per user; list view without opening hours payload. */
@@ -92,23 +84,7 @@ export async function getCachedLocationAnalyticsSummaries(
   )
 }
 
-/** Cached per user/location for workflow listings in dashboard and workflows pages. */
-export async function getCachedWorkflowsByLocation(
-  userId: string,
-  locationId: number,
-): Promise<AnyNode[]> {
-  'use cache'
-  cacheTag(graphqlWorkflowsByLocationCacheTag(userId, locationId))
-  cacheLife({ revalidate: 60 })
-  const raw = await graphqlQuery<NodesDataRaw>(
-    NODES_QUERY,
-    { locationId, nodeType: 'workflow' },
-    userId,
-  )
-  return parseNodesData(raw).nodes
-}
-
-/** Cached per user/location for analytics run selectors in sales and workflows pages. */
+/** Cached per user/location for analytics run selectors. */
 export async function getCachedAnalyticsRunsByLocation(
   userId: string,
   locationId: number,
@@ -275,26 +251,7 @@ export async function getCachedPromotionMenuItems(
   )
 }
 
-/**
- * Full workflow campaign tree for the workflow detail page. Invalidate via
- * `revalidateWorkflowCampaignTreeCache` after milestone/workflow BFF mutations.
- */
-export async function getCachedWorkflowCampaignTree(
-  userId: string,
-  workflowId: string,
-): Promise<WorkflowCampaignTreeDataRaw> {
-  'use cache'
-  cacheTag(graphqlWorkflowCampaignTreeCacheTag(userId, workflowId))
-  cacheLife({ revalidate: 60 })
-  return graphqlQuery<WorkflowCampaignTreeDataRaw>(
-    WORKFLOW_CAMPAIGN_TREE_QUERY,
-    { workflowId },
-    userId,
-    'WorkflowCampaignTree',
-  )
-}
-
-/** Public holidays for a country and date range (shared across workflow milestones). */
+/** Public holidays for a country and date range. */
 export async function getCachedPublicHolidays(
   userId: string,
   country: string,

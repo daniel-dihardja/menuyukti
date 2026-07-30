@@ -44,7 +44,7 @@ When implementing in **`packages/menuyukti` analytics**, follow these skills in 
 | `compute_order_metrics_by_day_from_orders`      | Bill-level rows                                 | Order metrics grouped by day                         |
 | `calculate_menu_engineering_matrix`             | Menu-level revenue + COGS                       | Star / plow_horse / puzzle / low_end                 |
 | `compute_menu_engineering_from_orders`          | Typed order rows                                | Delegates to `calculate_menu_engineering_matrix`     |
-| `compute_menu_engineering_promotion_candidates` | Engineering matrix + signals                    | Simplified candidates for promotion milestone        |
+| `compute_menu_engineering_promotion_candidates` | Engineering matrix + signals                    | Simplified promotion candidates for GraphQL / chat   |
 | `calculate_category_mix`                        | Line items with optional categories             | Revenue/qty share per category                       |
 | `calculate_revenue_trends`                      | Current vs previous period frames               | Deltas, ranks, trend labels                          |
 | `calculate_weekly_demand_pattern`               | Line-item frame (ISO week indices)              | Revenue/tx indices vs location mean                  |
@@ -102,4 +102,4 @@ If this file grows, split long API tables into `reference.md` in this folder.
 
 - [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) — monorepo boundaries, pnpm vs uv.
 - [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md) — Strawberry layer and `reports/transform` integration.
-- [`menuyukti-agents`](../menuyukti-agents/SKILL.md) — preset subgraphs call GraphQL payloads derived from this package.
+- [`menuyukti-agents`](../menuyukti-agents/SKILL.md) — chat tools consume GraphQL payloads derived from this package.

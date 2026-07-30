@@ -68,7 +68,7 @@ export const routes = {
     igStories: '/content/igstories',
   },
 
-  /** Owner-facing schedule aggregated from scheduler milestones. */
+  /** Owner-facing schedule (manual calendar entries). */
   calendar: '/calendar',
   calendarWithLocation: (locationId: string | number) =>
     `/calendar?locationId=${encodeURIComponent(String(locationId))}`,
@@ -90,8 +90,14 @@ export const routes = {
   igStudioStyleNew: '/ig-studio/styles/new',
   igStudioStyleDetail: (id: string | number) =>
     `/ig-studio/styles/${encodeURIComponent(String(id))}`,
-  /** Standalone assistant chat (same `/api/chat` stack as workflows). */
+  /**
+   * Chat home (`agentThreadId`). List + thread detail under `/advisor`.
+   * Do not add workflow-container features here.
+   */
   agent: '/advisor',
+  agentWithLocation: (locationId: string | number) =>
+    `/advisor?locationId=${encodeURIComponent(String(locationId))}`,
+  agentThread: (threadId: string) => `/advisor/${encodeURIComponent(threadId)}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
   /** Menuyukti staff-only console (platform role `admin`). */
@@ -104,13 +110,6 @@ export const routes = {
   profileTeam: '/profile/team',
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
-
-  workflows: {
-    list: '/workflow',
-    listWithLocation: (locationId: string | number) =>
-      `/workflow?locationId=${encodeURIComponent(String(locationId))}`,
-    detail: (id: string | number) => `/workflow/${id}`,
-  },
 
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,

@@ -7,8 +7,15 @@ import os
 from typing import Annotated, Any
 
 from agents_app.agents.core.chat.http_context import get_chat_http_client
+from agents_app.agents.core.chat.story_assets import (
+    merge_generation_references,
+    upsert_result_asset,
+)
+from langchain.messages import ToolMessage
+from langchain.tools import ToolRuntime
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
+from langgraph.types import Command
 
 GENERATE_PATH = "/api/posts/generate"
 # Leonardo poll can take up to ~2 minutes; leave headroom for S3 + GraphQL.
@@ -63,6 +70,11 @@ def _resolve_setting(
     return None
 
 
+def _is_image_assistant_mode(configurable: dict[str, Any]) -> bool:
+    mode = configurable.get("chat_mode")
+    return mode in ("image_assistant", "story_image_assistant")
+
+
 @tool
 async def generate_instagram_post_image(
     prompt: str,
@@ -70,7 +82,8 @@ async def generate_instagram_post_image(
     model: str | None = None,
     quality: str | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
-) -> str:
+    runtime: ToolRuntime = None,  # type: ignore[assignment]
+) -> Command | str:
     """Generate an image with Leonardo using a composed prompt.
 
     Use when the user asks to generate, create, or regenerate an image (workflow chat or
@@ -80,7 +93,10 @@ async def generate_instagram_post_image(
     In Post Creator, model/format/quality/style/references often come from the UI — do not ask
     the user to restate those unless they want to change them first. After success, briefly
     confirm; the image appears in chat (and updates the Post Creator preview when a saved
-    post page is in context).
+    post page is in context). In Image assistant mode, call only after the user explicitly
+    confirms the collected-data plan (first generate); refine turns after a successful generate
+    may call again from feedback. The output is also saved as the scratchpad ``result`` asset
+    for later refine turns.
     """
     trimmed = prompt.strip() if isinstance(prompt, str) else ""
     if not trimmed:
@@ -92,6 +108,7 @@ async def generate_instagram_post_image(
     user_id = c.get("user_id")
     post_id = _optional_str(c.get("post_id"))
     page_id = _optional_str(c.get("page_id"))
+    image_assistant = _is_image_assistant_mode(c)
 
     if not user_id:
         return "Error: user context is missing. Cannot generate an image."
@@ -114,11 +131,22 @@ async def generate_instagram_post_image(
     if resolved_model is not None:
         body["model"] = resolved_model
 
-    resolved_format = _resolve_setting(
-        format, config_key="image_format", allowed=POST_IMAGE_FORMAT_IDS, configurable=c
-    )
-    if resolved_format is not None:
-        body["format"] = resolved_format
+    # Image assistant: UI format is source of truth (prefer configurable over tool arg).
+    if image_assistant:
+        ui_format = _optional_str(c.get("image_format"))
+        tool_format = _optional_str(format)
+        if ui_format is not None and ui_format in POST_IMAGE_FORMAT_IDS:
+            body["format"] = ui_format
+        elif tool_format is not None and tool_format in POST_IMAGE_FORMAT_IDS:
+            body["format"] = tool_format
+        else:
+            body["format"] = "story"
+    else:
+        resolved_format = _resolve_setting(
+            format, config_key="image_format", allowed=POST_IMAGE_FORMAT_IDS, configurable=c
+        )
+        if resolved_format is not None:
+            body["format"] = resolved_format
 
     resolved_quality = _resolve_setting(
         quality, config_key="image_quality", allowed=POST_IMAGE_QUALITY_IDS, configurable=c
@@ -129,9 +157,20 @@ async def generate_instagram_post_image(
     style_id = c.get("style_id")
     if isinstance(style_id, int) and style_id > 0:
         body["styleId"] = style_id
-    references = c.get("generation_references")
-    if isinstance(references, list) and references:
-        body["references"] = references
+
+    request_refs = c.get("generation_references")
+    if image_assistant:
+        story_assets = None
+        if runtime is not None and isinstance(getattr(runtime, "state", None), dict):
+            story_assets = runtime.state.get("story_assets")
+        references = merge_generation_references(
+            story_assets=story_assets if isinstance(story_assets, list) else None,
+            request_references=request_refs if isinstance(request_refs, list) else None,
+        )
+        if references:
+            body["references"] = references
+    elif isinstance(request_refs, list) and request_refs:
+        body["references"] = request_refs
 
     client = get_chat_http_client()
     url = f"{base}{GENERATE_PATH}"
@@ -172,11 +211,36 @@ async def generate_instagram_post_image(
     if not isinstance(url_out, str) or not url_out:
         return "Error: generate response missing image url."
 
-    result = {
+    result: dict[str, Any] = {
         "url": url_out,
         "name": name if isinstance(name, str) else None,
         "mediaS3Key": media_s3_key if isinstance(media_s3_key, str) else None,
         "createdAt": created_at if isinstance(created_at, str) else None,
         "prompt": trimmed,
     }
+
+    if (
+        image_assistant
+        and isinstance(name, str)
+        and name.strip()
+        and runtime is not None
+        and runtime.tool_call_id
+    ):
+        current = (runtime.state or {}).get("story_assets")
+        next_list, _msg = upsert_result_asset(current, name=name)
+        if next_list is not None:
+            result["action"] = "save_result"
+            result["story_assets"] = next_list
+            return Command(
+                update={
+                    "story_assets": next_list,
+                    "messages": [
+                        ToolMessage(
+                            content=json.dumps(result, ensure_ascii=False),
+                            tool_call_id=runtime.tool_call_id,
+                        )
+                    ],
+                }
+            )
+
     return json.dumps(result, ensure_ascii=False)

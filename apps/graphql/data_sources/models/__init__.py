@@ -15,11 +15,6 @@ from graphql.data_sources.models.instagram import (
     InstagramPostPage,
     InstagramPostPageMediaVersion,
 )
-from graphql.data_sources.models.instagram_item import (
-    InstagramItem,
-    InstagramItemPage,
-    InstagramItemPageMediaVersion,
-)
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -28,7 +23,6 @@ from graphql.data_sources.models.media_asset import (
     MediaCollection,
     MediaCollectionMember,
 )
-from graphql.data_sources.models.milestone_agent_run import MilestoneAgentRun
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.visual_style import VisualStyle
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
@@ -44,9 +38,6 @@ __all__ = [
     "CrmDevice",
     "CrmEnrollmentToken",
     "ImageAiFlow",
-    "InstagramItem",
-    "InstagramItemPage",
-    "InstagramItemPageMediaVersion",
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",
@@ -56,7 +47,6 @@ __all__ = [
     "MediaAsset",
     "MediaCollection",
     "MediaCollectionMember",
-    "MilestoneAgentRun",
     "MenuItemCogs",
     "Node",
     "OrderFact",

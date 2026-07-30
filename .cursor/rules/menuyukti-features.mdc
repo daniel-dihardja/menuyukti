@@ -1,10 +1,11 @@
 ---
 description: >-
-  Feature glossary — milestone preset, style pack, Instagram item, named product feature.
-  Maps user phrases to repo paths. Read .agents/menuyukti-features.md for the full table.
+  Feature glossary — chat/advisor, style pack, media collections, calendar,
+  named product features. Maps user phrases to repo paths. Read
+  .agents/menuyukti-features.md for the full table.
 alwaysApply: false
 ---
 
 # Menuyukti feature glossary (pointer)
 
-For aliases, preset IDs, key symbols, and UI touchpoints, read the canonical table in [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md). Add new features there; keep this rule as a short pointer only.
+For aliases, key symbols, and UI touchpoints, read the canonical table in [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md). Add new features there; keep this rule as a short pointer only. Milestone / workflow-container rows are **removed** — do not treat them as live product.

@@ -20,14 +20,9 @@ def test_chat_tools_list_excludes_search_web_without_key() -> None:
     assert "generate_instagram_post_image" not in names
     assert "list_media_collections" in names
     assert "list_media" in names
-    assert "get_workflow_overview" in names
-    assert "get_milestone" in names
-    assert "list_instagram_items" in names
-    assert "get_instagram_item" in names
-    assert "create_instagram_items" in names
-    assert "update_instagram_items" in names
-    assert "delete_instagram_items" in names
-    assert "update_milestone_input" in names
+    assert "get_workflow_overview" not in names
+    assert "get_milestone" not in names
+    assert "update_milestone_input" not in names
     assert "get_location_data" in names
     assert "get_chart_data" in names
 
@@ -49,43 +44,14 @@ def test_chat_tools_list_includes_post_image_when_requested() -> None:
     assert "generate_instagram_post_image" in names
 
 
-def test_chat_tools_list_omits_workflow_tools_without_workflow() -> None:
-    from agents_app.agents.core.chat.graph import chat_tools_list
-
-    names = [getattr(t, "name", "") for t in chat_tools_list(workflow_id=False)]
-    assert "get_workflow_overview" not in names
-    assert "get_milestone" not in names
-    assert "list_instagram_items" not in names
-    assert "get_instagram_item" not in names
-    assert "create_instagram_items" not in names
-    assert "update_instagram_items" not in names
-    assert "delete_instagram_items" not in names
-    assert "update_milestone_input" not in names
-    assert "list_media_collections" in names
-    assert "list_media" in names
-    assert "get_location_data" in names
-    assert "get_chart_data" in names
-
-
-def test_chat_tools_list_omits_update_without_milestone() -> None:
-    from agents_app.agents.core.chat.graph import chat_tools_list
-
-    names = [getattr(t, "name", "") for t in chat_tools_list(workflow_id=True, milestone_id=False)]
-    assert "get_milestone" in names
-    assert "list_instagram_items" in names
-    assert "get_instagram_item" in names
-    assert "create_instagram_items" in names
-    assert "update_instagram_items" in names
-    assert "delete_instagram_items" in names
-    assert "update_milestone_input" not in names
-
-
 def test_chat_tools_list_omits_location_without_location_id() -> None:
     from agents_app.agents.core.chat.graph import chat_tools_list
 
     names = [getattr(t, "name", "") for t in chat_tools_list(location_id=False)]
     assert "get_location_data" not in names
     assert "get_chart_data" not in names
+    assert "list_media_collections" in names
+    assert "list_media" in names
 
 
 def test_chat_tools_list_from_config_gates_by_context() -> None:
@@ -100,40 +66,33 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "list_media_collections" in agent_names
     assert "list_media" in agent_names
 
-    wf = chat_tools_list_from_config({"workflow_id": "100", "location_id": 7, "user_id": "u1"})
-    wf_names = [getattr(t, "name", "") for t in wf]
-    assert "get_milestone" in wf_names
-    assert "list_instagram_items" in wf_names
-    assert "get_instagram_item" in wf_names
-    assert "create_instagram_items" in wf_names
-    assert "update_milestone_input" not in wf_names
-    assert "get_location_data" in wf_names
-    assert "get_chart_data" in wf_names
-    assert "generate_instagram_post_image" in wf_names
+    with_location = chat_tools_list_from_config(
+        {"location_id": 7, "user_id": "u1"}
+    )
+    with_location_names = [getattr(t, "name", "") for t in with_location]
+    assert "get_milestone" not in with_location_names
+    assert "update_milestone_input" not in with_location_names
+    assert "get_location_data" in with_location_names
+    assert "get_chart_data" in with_location_names
+    assert "generate_instagram_post_image" not in with_location_names
+
+    agent_thread = chat_tools_list_from_config(
+        {"agent_thread_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", "location_id": 7, "user_id": "u1"}
+    )
+    agent_thread_names = [getattr(t, "name", "") for t in agent_thread]
+    assert "generate_instagram_post_image" in agent_thread_names
+    assert "get_location_data" in agent_thread_names
+    assert "get_milestone" not in agent_thread_names
 
     ig_studio = chat_tools_list_from_config({"user_id": "u1", "post_id": "10", "page_id": "20"})
     ig_names = [getattr(t, "name", "") for t in ig_studio]
     assert "generate_instagram_post_image" in ig_names
     assert "get_milestone" not in ig_names
 
-    selected = chat_tools_list_from_config(
-        {
-            "workflow_id": "100",
-            "milestone_id": "42",
-            "location_id": 7,
-            "user_id": "u1",
-        }
-    )
-    selected_names = [getattr(t, "name", "") for t in selected]
-    assert "update_milestone_input" in selected_names
-    assert "get_instagram_item" in selected_names
-    assert "create_instagram_items" in selected_names
-    assert "delete_instagram_items" in selected_names
-    assert "generate_instagram_post_image" in selected_names
-
 
 def test_compile_chat_graph_uses_tool_node_with_handle_tool_errors() -> None:
     from agents_app.agents.core.chat.graph import compile_chat_graph
+    from agents_app.agents.core.chat.state import ChatAgentState
     from langgraph.prebuilt.tool_node import ToolNode
 
     graph = compile_chat_graph(checkpointer=None)
@@ -148,3 +107,7 @@ def test_compile_chat_graph_uses_tool_node_with_handle_tool_errors() -> None:
         tool_node = getattr(tools_node, "tools_by_name", None) and tools_node
     assert isinstance(tool_node, ToolNode)
     assert tool_node._handle_tool_errors is True
+    assert "save_story_asset" in tool_node.tools_by_name
+    assert "clear_story_assets" in tool_node.tools_by_name
+    assert "request_story_generate_confirmation" in tool_node.tools_by_name
+    assert "story_assets" in ChatAgentState.__annotations__

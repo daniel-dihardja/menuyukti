@@ -3,8 +3,7 @@ name: menuyukti-graphql
 description: >-
   GraphQL API app (apps/graphql): Strawberry schema, query modules, services, SQLAlchemy and Alembic,
   reports/transform integration with packages/menuyukti, auth, and tests. Use when adding queries or
-  mutations for web/agents, resolver logic, migrations, or analytics-shaped API fields consumed by
-  agents milestone run tools.
+  mutations for web/agents, resolver logic, migrations, calendar entries, or analytics-shaped API fields.
 ---
 
 # Menuyukti: `apps/graphql`
@@ -25,8 +24,8 @@ When implementing in **`apps/graphql`**, follow these skills in addition to this
 | Area            | Path                                                                              | Role                                                                 |
 | --------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | Schema root     | [`apps/graphql/schema/query.py`](../../../apps/graphql/schema/query.py)           | Composes query type from mixins.                                     |
-| Query modules   | [`apps/graphql/schema/queries/`](../../../apps/graphql/schema/queries/)           | Feature queries (locations, analytics runs, category mix, …).        |
-| Mutations       | [`apps/graphql/schema/mutations/`](../../../apps/graphql/schema/mutations/)       | Includes workflow export/import — see below.                         |
+| Query modules   | [`apps/graphql/schema/queries/`](../../../apps/graphql/schema/queries/)           | Feature queries (locations, analytics runs, calendar, …).            |
+| Mutations       | [`apps/graphql/schema/mutations/`](../../../apps/graphql/schema/mutations/)       | Create/update/delete and domain writes.                              |
 | Services        | [`apps/graphql/services/`](../../../apps/graphql/services/)                       | Domain orchestration (e.g. menu engineering).                        |
 | Ingest / frames | [`apps/graphql/reports/transform.py`](../../../apps/graphql/reports/transform.py) | Rows → DataFrame → `packages/menuyukti` `calculate_*` / `compute_*`. |
 | Migrations      | [`apps/graphql/alembic/`](../../../apps/graphql/alembic/)                         | Alembic revisions; **only** here for product schema.                 |
@@ -40,19 +39,19 @@ Commands: [AGENTS.md](../../../AGENTS.md) § GraphQL API. Deep SQLAlchemy patter
 2. **Logic** — non-trivial math and pandas in [`packages/menuyukti`](../../../packages/menuyukti); resolvers map ORM rows to API types (avoid ad hoc frames in resolvers — prefer `reports/transform` helpers).
 3. **Persistence** — new tables/columns **only** in `apps/graphql` (Alembic).
 4. **Tests** — add coverage under `apps/graphql/tests/`.
-5. **Workflow roots** — location-scoped workflow container is a GraphQL `Node` with **`nodeType` `workflow`** (milestones hang under it).
+5. **Generic `Node`** — polymorphic `node` rows (`type` + JSON `data`) still exist for some product entities; use `GenericHandler` / type-specific handlers under `schema/node_handlers/` when needed. **Do not** treat workflow-container / milestone export-import as live product APIs.
+
+## Calendar
+
+Manual calendar entries and scheduler-calendar reads live under calendar query/mutation modules (e.g. `scheduler_calendar`, `create_calendar_entry` / `update_calendar_entry`). Prefer **manual entries**; do not reintroduce scheduler-milestone / workflow `sourceRef` linkage as the product model.
 
 ## Agents-facing queries
 
-`apps/agents` calls GraphQL via `graphql_post` — see [`menuyukti-agents`](../menuyukti-agents/SKILL.md). When adding fields used by milestone run tools:
+`apps/agents` calls GraphQL via `graphql_post` — see [`menuyukti-agents`](../menuyukti-agents/SKILL.md). When adding fields used by chat tools:
 
-- Keep response shapes **stable** and **JSON-friendly** for `milestone_run/graphql_client` helpers.
+- Keep response shapes **stable** and **JSON-friendly**.
 
 Example query/service touchpoints (not exhaustive): [`menu_heatmaps.py`](../../../apps/graphql/schema/queries/menu_heatmaps.py), [`services/menu_engineering.py`](../../../apps/graphql/services/menu_engineering.py), [`instagram_signals.py`](../../../apps/graphql/schema/queries/instagram_signals.py).
-
-## Workflow export / import
-
-Milestone snapshots are serialized in [`schema/mutations/export_workflow.py`](../../../apps/graphql/schema/mutations/export_workflow.py) and recreated from JSON in [`schema/mutations/import_workflow.py`](../../../apps/graphql/schema/mutations/import_workflow.py). Shape is documented in [`workflow_export_schema.json`](../../../apps/graphql/workflow_export_schema.json).
 
 ## Checklist (GraphQL-only)
 
@@ -66,7 +65,7 @@ Milestone snapshots are serialized in [`schema/mutations/export_workflow.py`](..
 
 | Topic             | Skill                                                                  |
 | ----------------- | ---------------------------------------------------------------------- |
-| Agents prefetch   | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                     |
+| Chat agents       | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                     |
 | Analytics package | [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md)               |
 | Web consumer      | [`menuyukti-web`](../menuyukti-web/SKILL.md)                           |
 | Monorepo map      | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) |

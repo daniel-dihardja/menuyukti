@@ -92,7 +92,7 @@ function buildActionItems(
       id: 'ask-ai',
       label: t('askAi'),
       icon: Sparkles,
-      href: routes.workflows.list,
+      href: routes.agent,
       separatorBefore: true,
     },
     {

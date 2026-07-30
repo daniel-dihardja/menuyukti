@@ -4,15 +4,10 @@ from __future__ import annotations
 
 from graphql.node_handlers._generic import GenericHandler
 from graphql.node_handlers.base import NodeHandler
-from graphql.node_handlers.milestone import MilestoneHandler
-from graphql.node_handlers.workflow import WorkflowHandler
 
 _GENERIC_HANDLER = GenericHandler()
 
-_REGISTRY: dict[str, NodeHandler] = {
-    "workflow": WorkflowHandler(),
-    "milestone": MilestoneHandler(),
-}
+_REGISTRY: dict[str, NodeHandler] = {}
 
 
 def get_handler(node_type: str | None) -> NodeHandler:
@@ -26,9 +21,7 @@ def get_handler(node_type: str | None) -> NodeHandler:
 
 
 __all__ = [
-    "WorkflowHandler",
     "GenericHandler",
-    "MilestoneHandler",
     "NodeHandler",
     "get_handler",
 ]

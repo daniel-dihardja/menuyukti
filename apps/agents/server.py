@@ -2,20 +2,19 @@
 
 import logging
 import os
-from contextlib import ExitStack, asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Any
 
 import httpx
 from agents_app.agents.core.chat.graph import compile_chat_graph
 from agents_app.routers.chat import router as chat_router
 from agents_app.routers.format_markdown import router as format_markdown_router
-from agents_app.routers.milestone_run import router as milestone_run_router
 from agents_app.routers.style_specs import router as style_specs_router
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -24,7 +23,7 @@ load_dotenv()
 
 
 def _configure_agents_app_logging() -> None:
-    """Emit INFO logs from ``agents_app`` (e.g. milestone run fetch steps) without raising root level."""
+    """Emit INFO logs from ``agents_app`` without raising root level."""
     pkg = logging.getLogger("agents_app")
     if pkg.handlers:
         return
@@ -59,27 +58,29 @@ class InternalApiKeyMiddleware(BaseHTTPMiddleware):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> Any:
-    exit_stack = ExitStack()
-    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL")
-    checkpointer: BaseCheckpointSaver
-    if db_url:
-        saver = exit_stack.enter_context(PostgresSaver.from_conn_string(db_url))
-        saver.setup()
-        checkpointer = saver
-    else:
-        checkpointer = InMemorySaver()
+async def _chat_runtime(app: FastAPI, checkpointer: BaseCheckpointSaver) -> Any:
     app.state.chat_checkpointer = checkpointer
     app.state.chat_graph = compile_chat_graph(checkpointer)
-    try:
-        async with httpx.AsyncClient(
-            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
-            timeout=httpx.Timeout(60.0),
-        ) as http_client:
-            app.state.http_client = http_client
+    async with httpx.AsyncClient(
+        limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+        timeout=httpx.Timeout(60.0),
+    ) as http_client:
+        app.state.http_client = http_client
+        yield
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> Any:
+    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL", "").strip()
+    # Sync PostgresSaver does not implement aget_tuple; FastAPI chat uses async graph APIs.
+    if db_url:
+        async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
+            await checkpointer.setup()
+            async with _chat_runtime(app, checkpointer):
+                yield
+    else:
+        async with _chat_runtime(app, InMemorySaver()):
             yield
-    finally:
-        exit_stack.close()
 
 
 app = FastAPI(
@@ -90,7 +91,6 @@ app = FastAPI(
 app.add_middleware(InternalApiKeyMiddleware)
 app.include_router(chat_router, tags=["chat"])
 app.include_router(format_markdown_router, tags=["core", "format-markdown"])
-app.include_router(milestone_run_router, tags=["milestones"])
 app.include_router(style_specs_router, tags=["style-specs"])
 
 

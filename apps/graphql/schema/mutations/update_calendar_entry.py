@@ -11,13 +11,11 @@ from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mutations.create_calendar_entry import (
     _entry_to_gql,
     _normalize_media_refs,
-    _normalize_source_ref,
     _validate_fields,
 )
 from graphql.schema.types.calendar_entry import (
     CalendarEntryType,
     CalendarMediaRefInput,
-    CalendarSourceRefInput,
 )
 
 
@@ -33,7 +31,6 @@ class UpdateCalendarEntryMutation:
         time: str | None = None,
         description: str | None = UNSET,
         media_refs: list[CalendarMediaRefInput] | None = UNSET,
-        source_ref: CalendarSourceRefInput | None = UNSET,
     ) -> CalendarEntryType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -63,9 +60,6 @@ class UpdateCalendarEntryMutation:
 
             if media_refs is not UNSET:
                 row.media_refs = _normalize_media_refs(media_refs)
-
-            if source_ref is not UNSET:
-                row.source_ref = _normalize_source_ref(source_ref)
 
             session.commit()
             session.refresh(row)

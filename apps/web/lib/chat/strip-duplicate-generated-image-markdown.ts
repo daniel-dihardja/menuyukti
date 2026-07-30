@@ -3,8 +3,24 @@
  * `generate_instagram_post_image` tool results (markdown / bare URL / HTML img).
  */
 
+import type { UIMessage } from 'ai'
+import { isToolUIPart } from 'ai'
+
+import { parseGeneratedImageToolResult } from '@/lib/chat/parse-generated-image-tool-output'
+
 const MARKDOWN_IMAGE_RE = /!\[[^\]]*]\(\s*<?([^)\s>]+)>?\s*\)/g
 const HTML_IMG_RE = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>/gi
+const GENERATE_INSTAGRAM_POST_IMAGE_TOOL = 'generate_instagram_post_image'
+
+function resolveToolName(part: { type: string; toolName?: string }): string {
+  if (part.type === 'dynamic-tool' && typeof part.toolName === 'string') {
+    return part.toolName
+  }
+  if (part.type.startsWith('tool-')) {
+    return part.type.slice('tool-'.length)
+  }
+  return ''
+}
 
 function normalizeUrlForCompare(url: string): string {
   try {
@@ -39,49 +55,6 @@ function urlMatchesAny(candidate: string, knownUrls: ReadonlySet<string>): boole
   return false
 }
 
-/**
- * Remove markdown images, HTML img tags, and bare URL lines that duplicate
- * known generated-image URLs already rendered from tool parts.
- */
-export function stripDuplicateGeneratedImageMarkdown(
-  text: string,
-  imageUrls: readonly string[],
-): string {
-  if (!text || imageUrls.length === 0) {
-    return text
-  }
-
-  const known = new Set(imageUrls.map((u) => normalizeUrlForCompare(u)).filter(Boolean))
-  if (known.size === 0) {
-    return text
-  }
-
-  let next = text.replace(MARKDOWN_IMAGE_RE, (full, url: string) =>
-    urlMatchesAny(url, known) ? '' : full,
-  )
-  next = next.replace(HTML_IMG_RE, (full, url: string) => (urlMatchesAny(url, known) ? '' : full))
-
-  // Drop lines that are only a known image URL (common model habit).
-  next = next
-    .split('\n')
-    .filter((line) => {
-      const trimmed = line.trim()
-      if (!trimmed) return true
-      if (urlMatchesAny(trimmed, known)) return false
-      // Angle-bracket autolink form
-      const angle = trimmed.match(/^<(https?:\/\/[^>]+)>$/)
-      const angleUrl = angle?.[1]
-      if (angleUrl && urlMatchesAny(angleUrl, known)) return false
-      return true
-    })
-    .join('\n')
-
-  // Collapse excess blank lines left by removals.
-  return next.replace(/\n{3,}/g, '\n\n').trim()
-}
-
-import { parseGeneratedImageToolResult } from '@/lib/chat/parse-generated-image-tool-output'
-
 /** Parse `url` from generate_instagram_post_image tool output JSON (or stringified JSON). */
 export function parseGeneratedImageUrlFromToolOutput(output: unknown): string | null {
   const full = parseGeneratedImageToolResult(output)
@@ -103,4 +76,94 @@ export function parseGeneratedImageUrlFromToolOutput(output: unknown): string | 
   } catch {
     return null
   }
+}
+
+export function collectGeneratedImageUrlsFromParts(
+  parts: UIMessage['parts'] | undefined,
+): string[] {
+  if (!parts?.length) return []
+  const urls: string[] = []
+  for (const part of parts) {
+    if (!isToolUIPart(part)) continue
+    if (resolveToolName(part) !== GENERATE_INSTAGRAM_POST_IMAGE_TOOL) continue
+    if (!('output' in part) || part.output == null) continue
+    const url = parseGeneratedImageUrlFromToolOutput(part.output)
+    if (url) urls.push(url)
+  }
+  return urls
+}
+
+/** All successful generate_instagram_post_image URLs across the thread (order preserved). */
+export function collectGeneratedImageUrlsFromMessages(
+  messages: readonly UIMessage[] | undefined,
+): string[] {
+  if (!messages?.length) return []
+  const urls: string[] = []
+  const seen = new Set<string>()
+  for (const message of messages) {
+    for (const url of collectGeneratedImageUrlsFromParts(message.parts)) {
+      const key = normalizeUrlForCompare(url)
+      if (seen.has(key)) continue
+      seen.add(key)
+      urls.push(url)
+    }
+  }
+  return urls
+}
+
+export function messageHasSuccessfulGenerateImageTool(message: UIMessage): boolean {
+  return collectGeneratedImageUrlsFromParts(message.parts).length > 0
+}
+
+export type StripDuplicateGeneratedImageOptions = {
+  /**
+   * When true (message already rendered the tool thumbnail), remove every markdown /
+   * HTML image embed from assistant text — not only URL matches.
+   */
+  stripAllImageEmbeds?: boolean
+}
+
+/**
+ * Remove markdown images, HTML img tags, and bare URL lines that duplicate
+ * known generated-image URLs already rendered from tool parts.
+ */
+export function stripDuplicateGeneratedImageMarkdown(
+  text: string,
+  imageUrls: readonly string[],
+  options?: StripDuplicateGeneratedImageOptions,
+): string {
+  if (!text) {
+    return text
+  }
+
+  const stripAll = Boolean(options?.stripAllImageEmbeds)
+  const known = new Set(imageUrls.map((u) => normalizeUrlForCompare(u)).filter(Boolean))
+  if (!stripAll && known.size === 0) {
+    return text
+  }
+
+  let next = text.replace(MARKDOWN_IMAGE_RE, (full, url: string) =>
+    stripAll || urlMatchesAny(url, known) ? '' : full,
+  )
+  next = next.replace(HTML_IMG_RE, (full, url: string) =>
+    stripAll || urlMatchesAny(url, known) ? '' : full,
+  )
+
+  // Drop lines that are only a known image URL (common model habit).
+  next = next
+    .split('\n')
+    .filter((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return true
+      if (known.size > 0 && urlMatchesAny(trimmed, known)) return false
+      // Angle-bracket autolink form
+      const angle = trimmed.match(/^<(https?:\/\/[^>]+)>$/)
+      const angleUrl = angle?.[1]
+      if (angleUrl && known.size > 0 && urlMatchesAny(angleUrl, known)) return false
+      return true
+    })
+    .join('\n')
+
+  // Collapse excess blank lines left by removals.
+  return next.replace(/\n{3,}/g, '\n\n').trim()
 }

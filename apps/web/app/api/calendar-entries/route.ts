@@ -35,7 +35,6 @@ export async function POST(req: Request) {
         time: body.time,
         description: body.description ?? '',
         mediaRefs: body.mediaRefs ?? [],
-        ...(body.sourceRef !== undefined ? { sourceRef: body.sourceRef } : {}),
       },
       userId,
     )

@@ -1,4 +1,4 @@
-"""GraphQL query: simplified promotion candidates for promotion_candidates milestone."""
+"""GraphQL query: simplified promotion engineering candidates from analytics."""
 
 from __future__ import annotations
 

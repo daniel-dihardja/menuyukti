@@ -3,26 +3,18 @@ from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
 from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
-from .create_instagram_item import CreateInstagramItemMutation
-from .create_instagram_item_page import CreateInstagramItemPageMutation
 from .create_location import CreateLocationMutation
 from .create_media_collection import CreateMediaCollectionMutation
 from .create_node import CreateNodeMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
 from .create_style import CreateStyleMutation
-from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_crm_app import DeleteCrmAppMutation
 from .delete_crm_customer import DeleteCrmCustomerMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
-from .delete_instagram_item import DeleteInstagramItemMutation
-from .delete_instagram_item_page import DeleteInstagramItemPageMutation
-from .delete_instagram_item_page_media_version import (
-    DeleteInstagramItemPageMediaVersionMutation,
-)
 from .delete_media_collection import DeleteMediaCollectionMutation
 from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
@@ -35,18 +27,11 @@ from .media_collection_members import (
     AddMediaToCollectionMutation,
     RemoveMediaFromCollectionMutation,
 )
-from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
-from .reorder_milestones import ReorderMilestonesMutation
-from .replace_pass_criteria import ReplacePassCriteriaMutation
 from .revoke_crm_device import RevokeCrmDeviceMutation
-from .set_pass_criteria_statuses import SetPassCriteriaStatusesMutation
-from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
-from .update_instagram_item import UpdateInstagramItemMutation
-from .update_instagram_item_page import UpdateInstagramItemPageMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_media_collection import UpdateMediaCollectionMutation
@@ -62,8 +47,6 @@ __all__ = [
     "AwardCrmCashbackMutation",
     "AddMediaToCollectionMutation",
     "CreateImageAiFlowMutation",
-    "CreateInstagramItemMutation",
-    "CreateInstagramItemPageMutation",
     "CreateCalendarEntryMutation",
     "CreateCrmAppMutation",
     "CreateCrmEnrollmentTokenMutation",
@@ -73,7 +56,6 @@ __all__ = [
     "CreateNodeMutation",
     "CreatePostMutation",
     "CreatePostPageMutation",
-    "CreateWorkflowFromPayloadMutation",
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteCalendarEntryMutation",
@@ -81,9 +63,6 @@ __all__ = [
     "DeleteCrmCustomerMutation",
     "RevokeCrmDeviceMutation",
     "DeleteImageAiFlowMutation",
-    "DeleteInstagramItemMutation",
-    "DeleteInstagramItemPageMutation",
-    "DeleteInstagramItemPageMediaVersionMutation",
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",
     "DeleteStyleMutation",
@@ -93,18 +72,11 @@ __all__ = [
     "DeletePostPageMediaVersionMutation",
     "EnsureMediaAssetMutation",
     "InviteWorkspaceMemberMutation",
-    "MilestoneAgentRunMutation",
     "RemoveMediaFromCollectionMutation",
     "RemoveWorkspaceMemberMutation",
-    "ReorderMilestonesMutation",
-    "ReplacePassCriteriaMutation",
-    "SetPassCriterionStatusMutation",
-    "SetPassCriteriaStatusesMutation",
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateImageAiFlowMutation",
-    "UpdateInstagramItemMutation",
-    "UpdateInstagramItemPageMutation",
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateMediaCollectionMutation",

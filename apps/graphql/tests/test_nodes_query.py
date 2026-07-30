@@ -37,121 +37,125 @@ query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
 """
 
 
-def test_nodes_filters_by_parent_id_and_returns_milestone_children():
+def _fresh_location(name: str) -> int:
     session = SessionLocal()
     try:
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Nodes Query Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(name=name, clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
-        location_id = location.id
+        return location.id
     finally:
         session.close()
 
-    campaign = asyncio.run(
+
+def test_nodes_filters_by_parent_id():
+    location_id = _fresh_location("Nodes Query Location")
+
+    root = asyncio.run(
         schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Test Campaign",
+                "nodeType": "note",
+                "name": "Test Root",
                 "parentId": None,
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not campaign.errors, campaign.errors
-    campaign_id = campaign.data["createNode"]["id"]
+    assert not root.errors, root.errors
+    root_id = root.data["createNode"]["id"]
 
-    milestone = asyncio.run(
+    root2 = asyncio.run(
         schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "Step one",
-                "parentId": campaign_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not milestone.errors, milestone.errors
-    m_data = milestone.data["createNode"]
-    assert m_data["parentId"] == campaign_id
-    assert m_data["nodeType"] == "milestone"
-
-    # Other campaign's milestone should not appear
-    campaign2 = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Other Campaign",
+                "nodeType": "note",
+                "name": "Other Root",
                 "parentId": None,
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not campaign2.errors, campaign2.errors
-    other_id = campaign2.data["createNode"]["id"]
-    asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "Other step",
-                "parentId": other_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
+    assert not root2.errors, root2.errors
 
     result = asyncio.run(
         schema.execute(
             NODES_BY_PARENT,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "milestone",
-                "parentId": campaign_id,
+                "nodeType": "note",
+                "parentId": None,
             },
             context_value=graphql_auth_context(),
         )
     )
     assert not result.errors, result.errors
     nodes = result.data["nodes"]
-    assert len(nodes) == 1
-    assert nodes[0]["id"] == m_data["id"]
-    assert nodes[0]["name"] == "Step one"
-    assert nodes[0]["parentId"] == campaign_id
+    assert len(nodes) == 2
+    assert {n["id"] for n in nodes} == {
+        root_id,
+        root2.data["createNode"]["id"],
+    }
+    assert all(n["parentId"] is None for n in nodes)
 
-
-def test_nodes_respects_first_and_after_cursor():
+    # Child notes under a parent still filter by parentId.
     session = SessionLocal()
     try:
-        session.query(Node).delete()
-        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        parent = session.get(Node, int(root_id))
+        assert parent is not None
+        child = Node(
+            parent_id=int(root_id),
+            name="Step one",
+            description=None,
+            path="",
+            node_type="note",
+            location_id=location_id,
+            data={"order": 1},
+        )
+        session.add(child)
+        session.flush()
+        child.path = f"{parent.path.rstrip('/')}/{child.id}"
         session.commit()
-
-        location = Location(name="Cursor Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
-        session.add(location)
-        session.commit()
-        session.refresh(location)
-        location_id = location.id
+        session.refresh(child)
+        child_id = str(child.id)
     finally:
         session.close()
 
-    async def _create_workflow(name: str) -> str:
+    listed = asyncio.run(
+        schema.execute(
+            NODES_BY_PARENT,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "note",
+                "parentId": root_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not listed.errors, listed.errors
+    nodes = listed.data["nodes"]
+    assert len(nodes) == 1
+    assert nodes[0]["id"] == child_id
+    assert nodes[0]["name"] == "Step one"
+    assert nodes[0]["parentId"] == root_id
+
+
+def test_nodes_respects_first_and_after_cursor():
+    location_id = _fresh_location("Cursor Location")
+
+    async def _create_note(name: str) -> str:
         r = await schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
+                "nodeType": "note",
                 "name": name,
                 "parentId": None,
             },
@@ -160,8 +164,8 @@ def test_nodes_respects_first_and_after_cursor():
         assert not r.errors, r.errors
         return r.data["createNode"]["id"]
 
-    w1 = asyncio.run(_create_workflow("W1"))
-    w2 = asyncio.run(_create_workflow("W2"))
+    n1 = asyncio.run(_create_note("N1"))
+    n2 = asyncio.run(_create_note("N2"))
 
     page1 = asyncio.run(
         schema.execute(
@@ -194,4 +198,4 @@ def test_nodes_respects_first_and_after_cursor():
     assert len(nodes2) == 1
     assert nodes2[0]["id"] != nodes1[0]["id"]
     ids = {nodes1[0]["id"], nodes2[0]["id"]}
-    assert ids == {w1, w2}
+    assert ids == {n1, n2}

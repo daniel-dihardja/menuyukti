@@ -57,7 +57,7 @@ type NavItem = {
 /**
  * Sidebar order follows daily product flow:
  * overview → create/plan → measure → crm → commerce → account.
- * Chat leads create (default authenticated home is `/workflow`).
+ * Chat leads create (default authenticated home is `/advisor`).
  */
 const NAV_WORKSPACE: NavItem[] = [
   {
@@ -68,9 +68,9 @@ const NAV_WORKSPACE: NavItem[] = [
     group: 'overview',
   },
   {
-    key: 'workflows',
-    labelKey: 'workflows',
-    href: routes.workflows.list,
+    key: 'chat',
+    labelKey: 'chat',
+    href: routes.agent,
     icon: <Megaphone className="w-4 h-4" />,
     group: 'create',
   },

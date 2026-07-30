@@ -73,7 +73,6 @@ type CalendarEntryType {
   date: String!
   time: String!
   mediaRefs: [CalendarMediaRefType!]!
-  sourceRef: CalendarSourceRefType
 }
 
 """Input for attaching a media-library file to an entry."""
@@ -86,20 +85,6 @@ input CalendarMediaRefInput {
 type CalendarMediaRefType {
   kind: String!
   name: String!
-}
-
-"""Input for linking a calendar entry to a product entity."""
-input CalendarSourceRefInput {
-  type: String!
-  workflowId: String!
-  itemId: String!
-}
-
-"""Optional link from a calendar entry back to a product entity."""
-type CalendarSourceRefType {
-  type: String!
-  workflowId: String!
-  itemId: String!
 }
 
 type CampaignBriefSignalCapabilitiesType {
@@ -318,38 +303,6 @@ type FundamentalSignalsType {
   trendingItems: [TrendingItemType!]!
 }
 
-"""Options for the IG Plan composite inputs query."""
-input IgPlanInputsOptionsInput {
-  matrixCategories: [String!] = null
-  maxCandidatesPerSlot: Int = null
-  includeLowEnd: Boolean = null
-}
-
-"""
-Composite IG Plan inputs for a location: owner location profile plus latest-run slot demand, menu engineering matrix, and slot menu candidates from one OrderFact load.
-"""
-type IgPlanInputsType {
-  version: Int!
-  location: IgPlanLocationSnapshotType!
-  analyticsRun: LatestAnalyticsRunType
-  slotDemandProfile: [SlotDemandCellType!]!
-  menuEngineeringMatrix: MenuEngineeringMatrixType
-  slotMenuCandidates: SlotMenuCandidatesType
-  coverageNotes: [String!]!
-}
-
-"""Location identity and owner quick profile for IG Plan."""
-type IgPlanLocationSnapshotType {
-  id: ID!
-  name: String!
-  street: String
-  city: String
-  country: String
-  currency: String
-  manualBriefInput: LocationManualBriefInputType
-  openingHours: [OpeningHourType!]!
-}
-
 type ImageAiFlowType {
   id: Int!
   slug: String!
@@ -361,57 +314,6 @@ type ImageAiFlowType {
   styleIds: JSON
   isActive: Boolean!
   sortOrder: Int!
-}
-
-"""A single generated image version for an Instagram item page."""
-type InstagramItemPageMediaVersionType {
-  id: ID!
-  mediaS3Key: String!
-  prompt: String
-  createdAt: DateTime
-}
-
-"""A single page/frame within a workflow Instagram item."""
-type InstagramItemPageType {
-  id: ID!
-  sortOrder: Int!
-  mediaS3Key: String
-  prompt: String
-  mediaVersions: [InstagramItemPageMediaVersionType!]!
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-"""Input for an attached media-library generation reference."""
-input InstagramItemReferenceImageInput {
-  name: String!
-  enabled: Boolean! = true
-}
-
-"""Media-library photo attached as an image-generation reference."""
-type InstagramItemReferenceImageType {
-  name: String!
-  enabled: Boolean!
-}
-
-"""A workflow-scoped Instagram story, post, or reel draft."""
-type InstagramItemType {
-  id: ID!
-  workflowId: ID!
-  locationId: Int!
-  kind: String!
-  title: String
-  caption: String
-  hook: String
-  visualBrief: String
-  generationPrompt: String
-  referenceImages: [InstagramItemReferenceImageType!]!
-  pages: [InstagramItemPageType!]!
-  styleId: Int
-  status: String!
-  schedule: DateTime
-  createdAt: DateTime
-  updatedAt: DateTime
 }
 
 """Tiered analytics payload for campaign_brief and growth agents."""
@@ -460,7 +362,7 @@ type LocationManualBriefInputType {
 }
 
 """
-A restaurant location; ties POS data and workflow roots to a workspace or legacy owner.
+A restaurant location; ties POS data and product entities to a workspace or legacy owner.
 """
 type LocationType {
   id: ID!
@@ -664,19 +566,7 @@ input MenuItemCogsUpsertInput {
 }
 
 """
-A milestone node with typed milestone fields (goal, preset data, result, pass criteria).
-"""
-type MilestoneCampaignBundleType {
-  milestone: NodeType!
-}
-
-input MilestoneOrderInput {
-  milestoneId: ID!
-  order: Int!
-}
-
-"""
-Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration.
+Root mutation: sales uploads, node CRUD, workspace invites, and image AI flow configuration.
 """
 type Mutation {
   """
@@ -691,25 +581,13 @@ type Mutation {
   createNode(locationId: Int!, nodeType: String!, name: String = null, parentId: ID = null, description: String = null, data: JSON = null): NodeType!
   createPost(title: String = null): PostType!
   createPostPage(postId: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
-  createInstagramItem(workflowId: ID!, kind: String!, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, status: String = null, schedule: DateTime = null): InstagramItemType!
-  createInstagramItemPage(itemId: ID!, mediaS3Key: String, prompt: String): InstagramItemPageType!
-  createWorkflowFromPayload(locationId: Int!, payload: JSON!, analyticsRunId: Int = null): NodeType!
   deleteNode(id: ID!): Boolean!
   deletePost(id: ID!): Boolean!
   deletePostPage(pageId: ID!): Boolean!
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
-  deleteInstagramItem(id: ID!): Boolean!
-  deleteInstagramItemPage(pageId: ID!): Boolean!
-  deleteInstagramItemPageMediaVersion(pageId: ID!, mediaS3Key: String!): InstagramItemPageType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
-  updateInstagramItem(id: ID!, kind: String = null, title: String = null, caption: String = null, hook: String = null, visualBrief: String = null, generationPrompt: String, referenceImages: [InstagramItemReferenceImageInput!], styleId: Int, status: String = null, schedule: DateTime): InstagramItemType!
-  updateInstagramItemPage(id: ID!, mediaS3Key: String, prompt: String): InstagramItemPageType!
-  replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
-  setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
-  setPassCriteriaStatuses(milestoneId: ID!, locationId: Int!, updates: [PassCriterionStatusInput!]!): Boolean!
-  reorderMilestones(workflowId: ID!, locationId: Int!, orders: [MilestoneOrderInput!]!): Boolean!
   createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String): LocationType!
 
   """Create a named visual style pack in the caller's workspace."""
@@ -727,11 +605,9 @@ type Mutation {
   createCrmEnrollmentToken(appId: Int!): CrmEnrollmentTokenCreatedType!
 
   """Create a manual calendar entry for a location."""
-  createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null, sourceRef: CalendarSourceRefInput = null): CalendarEntryType!
+  createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null): CalendarEntryType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
-  startMilestoneAgentRun(runId: String!, milestoneId: ID!, workflowId: ID = null, traceparent: String = null): Boolean!
-  completeMilestoneAgentRun(runId: String!, status: String!, summary: JSON = null, externalTraceId: String = null, externalTraceUrl: String = null, timeline: JSON = null, errorMessage: String = null): Boolean!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
   upsertMenuItemCogsBulk(analyticsRunId: ID!, items: [MenuItemCogsUpsertInput!]!): [MenuItemCogsType!]!
   updateMenuItemCogsBulk(updates: [MenuItemCogsUpdateInput!]!): [MenuItemCogsType!]!
@@ -777,7 +653,7 @@ type Mutation {
   revokeCrmDevice(deviceId: UUID!): CrmDeviceType!
 
   """Update a manual calendar entry."""
-  updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!], sourceRef: CalendarSourceRefInput): CalendarEntryType!
+  updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!]): CalendarEntryType!
 
   """Update a CRM app by id."""
   updateCrmApp(id: Int!, title: String!, cashbackThresholdAmount: Int = null, cashbackPercent: Int = null): CrmAppType!
@@ -795,9 +671,7 @@ type Mutation {
   updateMediaCollection(id: Int!, name: String!): MediaCollectionType!
 }
 
-"""
-A workflow tree node (workflow, milestone, etc.) stored in the polymorphic `node` table. Milestone-owned payloads also appear as typed fields (milestoneGoal, milestonePresetData, …).
-"""
+"""A polymorphic row in the `node` table (generic hierarchy; e.g. notes)."""
 type NodeType {
   id: ID!
   name: String!
@@ -807,11 +681,6 @@ type NodeType {
   parentId: ID
   locationId: Int
   data: JSON
-  milestoneGoal: String
-  milestoneInput: JSON
-  passCriterias: JSON
-  milestonePresetData: JSON
-  milestoneResult: JSON
 }
 
 type NormalizedLineItem {
@@ -879,11 +748,6 @@ type OrderType {
   billNumber: String!
   orderTime: DateTime!
   items: [OrderItemType!]!
-}
-
-input PassCriterionStatusInput {
-  criterionId: String!
-  status: String!
 }
 
 type PeriodHeadlineType {
@@ -981,14 +845,9 @@ type PublicHolidayType {
 }
 
 """
-Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
+Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
 """
 type Query {
-  """
-  Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller.
-  """
-  workflowCampaignTree(workflowId: ID!): WorkflowCampaignTreeType
-
   """
   Return multiple analytics sections for one run using a shared OrderFact load. Use options to omit sections you do not need.
   """
@@ -1113,7 +972,7 @@ type Query {
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
 
   """
-  Aggregate scheduler milestone slots and manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no scheduler milestones or manual entries.
+  Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries.
   """
   schedulerCalendar(locationId: Int!): SchedulerCalendarPayload!
   operatingProfile(locationId: ID!, analyticsRunId: ID!): OperatingProfileType
@@ -1123,14 +982,6 @@ type Query {
 
   """A single post in the caller's workspace, with pages."""
   post(id: ID!): PostType
-
-  """
-  Instagram items for a workflow the caller owns, earliest schedule first (unscheduled last).
-  """
-  instagramItems(workflowId: ID!): [InstagramItemType!]!
-
-  """A single Instagram item owned via its workflow location."""
-  instagramItem(id: ID!): InstagramItemType
 
   """
   Composite Instagram signals for an analytics run: content heroes, trending items, avoid list, category focus, best posting window, and period headline. Requires order facts; returns null if none.
@@ -1151,20 +1002,10 @@ type Query {
   Bill-level revenue and transaction counts rolled up by ISO week for the latest analytics run. Indices are normalized to mean 1.0 within the series.
   """
   weeklyDemandPattern(locationId: Int!): WeeklyDemandPatternPayloadType
-
-  """
-  JSON array of prior milestones' preset payloads: each element is `{"id": string, "title": string, "presetId": string|null, "data": object|null}` for milestones strictly before the given milestone in workflow display order. `id` is the milestone node id. `presetId` is copied from the milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the `milestone_preset_data` column (flat preset JSON). Empty array when there are no prior milestones or the request is not authorized.
-  """
-  priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): JSON!
   myWorkspace: WorkspaceType
   workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
   imageAiFlows(includeInactive: Boolean! = false): [ImageAiFlowType!]!
   imageAiFlow(slug: String!): ImageAiFlowType
-
-  """
-  Return location profile and latest analytics-run inputs for IG Plan in one request. Uses a single OrderFact load for slot demand, menu engineering matrix, and slot menu candidates. Returns null when the caller cannot access the location.
-  """
-  igPlanInputs(locationId: Int!, analyticsRunId: ID = null, options: IgPlanInputsOptionsInput = null): IgPlanInputsType
 }
 
 """Per-menu revenue comparison between two analytics periods."""
@@ -1194,7 +1035,7 @@ type SchedulerCalendarHolidayType {
 }
 
 """
-Location-scoped calendar: union of all scheduler milestone windows, flattened slots, manual calendar entries, and deduped public holidays.
+Location-scoped calendar of manual calendar entries. Public holidays are not populated by this query.
 """
 type SchedulerCalendarPayload {
   windowStart: String
@@ -1213,7 +1054,6 @@ type SchedulerCalendarSlotType {
   description: String
   mediaRefs: [CalendarMediaRefType!]
   source: String
-  sourceRef: CalendarSourceRefType
 }
 
 type SignalConfidenceType {
@@ -1337,14 +1177,6 @@ type WeeklyDemandPatternRowType {
 type WeeklyHeatmapType {
   day: String!
   quantity: Int!
-}
-
-"""
-Workflow campaign tree for SSR: workflow root, ordered milestones (single round-trip vs many `nodes` calls).
-"""
-type WorkflowCampaignTreeType {
-  workflow: NodeType!
-  milestones: [MilestoneCampaignBundleType!]!
 }
 
 type WorkspaceMembershipType {

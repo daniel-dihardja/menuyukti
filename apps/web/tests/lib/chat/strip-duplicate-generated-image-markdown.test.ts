@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import type { UIMessage } from 'ai'
+
 import {
+  collectGeneratedImageUrlsFromMessages,
   parseGeneratedImageUrlFromToolOutput,
   stripDuplicateGeneratedImageMarkdown,
 } from '@/lib/chat/strip-duplicate-generated-image-markdown'
@@ -8,6 +11,7 @@ import {
 const URL_A = 'https://bucket.s3.amazonaws.com/users/u/posts/abc.webp?X-Amz-Signature=sig1'
 const URL_A_OTHER_QUERY =
   'https://bucket.s3.amazonaws.com/users/u/posts/abc.webp?X-Amz-Signature=other'
+const URL_B = 'https://cdn.example.com/other.webp'
 
 describe('stripDuplicateGeneratedImageMarkdown', () => {
   it('returns text unchanged when there are no known urls', () => {
@@ -32,8 +36,41 @@ describe('stripDuplicateGeneratedImageMarkdown', () => {
   })
 
   it('keeps markdown images for unrelated urls', () => {
-    const text = '![other](https://cdn.example.com/other.webp)'
+    const text = `![other](${URL_B})`
     expect(stripDuplicateGeneratedImageMarkdown(text, [URL_A])).toBe(text)
+  })
+
+  it('stripAllImageEmbeds removes every markdown and html image', () => {
+    const text = `Done.\n\n![a](${URL_B})\n<img src="${URL_B}" alt="x" />\nNice.`
+    expect(stripDuplicateGeneratedImageMarkdown(text, [], { stripAllImageEmbeds: true })).toBe(
+      'Done.\n\nNice.',
+    )
+  })
+})
+
+describe('collectGeneratedImageUrlsFromMessages', () => {
+  it('collects urls across multiple messages', () => {
+    const messages = [
+      {
+        id: 'a1',
+        role: 'assistant',
+        parts: [
+          {
+            type: 'tool-generate_instagram_post_image',
+            toolCallId: 'c1',
+            state: 'output-available',
+            input: {},
+            output: JSON.stringify({ url: URL_A, name: 'a.webp', mediaS3Key: 'k/a.webp' }),
+          },
+        ],
+      },
+      {
+        id: 'a2',
+        role: 'assistant',
+        parts: [{ type: 'text', text: `Here ![x](${URL_A})` }],
+      },
+    ] as UIMessage[]
+    expect(collectGeneratedImageUrlsFromMessages(messages)).toEqual([URL_A])
   })
 })
 

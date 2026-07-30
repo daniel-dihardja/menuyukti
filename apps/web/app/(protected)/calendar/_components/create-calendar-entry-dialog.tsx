@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useId, useState } from 'react'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
@@ -40,10 +39,8 @@ import {
   deleteCalendarEntry,
   updateCalendarEntry,
   type CalendarMediaRef,
-  type CalendarSourceRef,
 } from '@/lib/calendar/client-api'
-import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import { routes } from '@/lib/routes'
+import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 import { useCloseLabel } from '@/hooks/use-close-label'
 
 import { CalendarMediaRefPicker } from './calendar-media-ref-picker'
@@ -55,7 +52,6 @@ export type CalendarEntryDialogValues = {
   dateIso: string
   time: string
   mediaRefs: CalendarMediaRef[]
-  sourceRef?: CalendarSourceRef | null
 }
 
 type CalendarEntryDialogProps = {
@@ -170,7 +166,6 @@ export function CalendarEntryDialog({
           date: dateIso,
           time: timeClean,
           mediaRefs,
-          ...(initial.sourceRef ? { sourceRef: initial.sourceRef } : {}),
         })
         toast.success(t('updateSuccessToast'))
       } else {
@@ -181,7 +176,6 @@ export function CalendarEntryDialog({
           date: dateIso,
           time: timeClean,
           mediaRefs,
-          ...(initial.sourceRef ? { sourceRef: initial.sourceRef } : {}),
         })
         toast.success(t('successToast'))
       }
@@ -266,16 +260,6 @@ export function CalendarEntryDialog({
               }}
             >
               <FieldGroup className="gap-4">
-                {initial.sourceRef?.type === 'instagram_item' ? (
-                  <Button asChild className="w-fit" size="sm" variant="outline">
-                    <Link
-                      href={`${routes.workflows.detail(initial.sourceRef.workflowId)}?item=${encodeURIComponent(initial.sourceRef.itemId)}`}
-                    >
-                      {t('openInstagramItem')}
-                    </Link>
-                  </Button>
-                ) : null}
-
                 <Field data-invalid={titleError || undefined}>
                   <FieldLabel htmlFor={titleId}>{t('titleLabel')}</FieldLabel>
                   <Input

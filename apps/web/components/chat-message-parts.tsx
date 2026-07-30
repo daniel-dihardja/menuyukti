@@ -15,16 +15,10 @@ import {
   ToolInput,
   ToolOutput,
 } from '@workspace/ui/components/ai-elements/tool'
+import { Suggestion, Suggestions } from '@workspace/ui/components/ai-elements/suggestion'
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
-import { Button } from '@workspace/ui/components/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@workspace/ui/components/dropdown-menu'
 import { Spinner } from '@workspace/ui/components/spinner'
-import { CheckIcon, MoreHorizontal, XIcon } from 'lucide-react'
+import { CheckIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { memo } from 'react'
@@ -34,18 +28,15 @@ import {
   joinReasoningText,
   partitionMessageParts,
 } from '@/lib/chat/partition-message-parts'
+import { isRejectedStoryAssetSaveOutput } from '@/lib/chat/story-assets-from-messages'
 import {
-  parseGeneratedImageToolResult,
-  type GeneratedImageToolResult,
-} from '@/lib/chat/parse-generated-image-tool-output'
-import {
+  collectGeneratedImageUrlsFromMessages,
+  collectGeneratedImageUrlsFromParts,
+  messageHasSuccessfulGenerateImageTool,
   parseGeneratedImageUrlFromToolOutput,
   stripDuplicateGeneratedImageMarkdown,
 } from '@/lib/chat/strip-duplicate-generated-image-markdown'
-import {
-  isWorkflowVisualizationId,
-  type WorkflowVisualizationId,
-} from '@/lib/workflow/workflow-visualization-ids'
+import { isChatVisualizationId, type ChatVisualizationId } from '@/lib/chat/visualization-ids'
 import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
 
 function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string {
@@ -55,12 +46,12 @@ function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string 
   return part.type.split('-').slice(1).join('-')
 }
 
-function resolveChartIdFromToolInput(input: unknown): WorkflowVisualizationId | null {
+function resolveChartIdFromToolInput(input: unknown): ChatVisualizationId | null {
   if (!input || typeof input !== 'object' || !('chart_id' in input)) {
     return null
   }
   const chartId = (input as { chart_id?: unknown }).chart_id
-  return typeof chartId === 'string' && isWorkflowVisualizationId(chartId) ? chartId : null
+  return typeof chartId === 'string' && isChatVisualizationId(chartId) ? chartId : null
 }
 
 function toolOutputLooksLikeError(part: ToolUIPart<UITools> | DynamicToolUIPart): boolean {
@@ -71,6 +62,9 @@ function toolOutputLooksLikeError(part: ToolUIPart<UITools> | DynamicToolUIPart)
     return false
   }
   const output = typeof part.output === 'string' ? part.output : JSON.stringify(part.output)
+  if (/"ok"\s*:\s*false/.test(output)) {
+    return true
+  }
   return output.startsWith('Error')
 }
 
@@ -96,22 +90,6 @@ function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolU
       ) : null}
     </Tool>
   )
-}
-
-export type AttachGeneratedImageHandler = (image: GeneratedImageToolResult) => void
-
-function collectGeneratedImageUrlsFromParts(parts: UIMessage['parts'] | undefined): string[] {
-  if (!parts?.length) return []
-  const urls: string[] = []
-  for (const part of parts) {
-    if (!isToolUIPart(part)) continue
-    const toolName = resolveToolName(part)
-    if (toolName !== 'generate_instagram_post_image') continue
-    if (!('output' in part) || part.output == null) continue
-    const url = parseGeneratedImageUrlFromToolOutput(part.output)
-    if (url) urls.push(url)
-  }
-  return urls
 }
 
 function CompactToolStatus({
@@ -147,29 +125,15 @@ function CompactToolStatus({
 
 function GenerateInstagramPostImageToolBlock({
   part,
-  onAttachGeneratedImage,
-  attachedGeneratedImageName,
-  generatedImageActionsDisabled = false,
 }: {
   part: ToolUIPart<UITools> | DynamicToolUIPart
-  onAttachGeneratedImage?: AttachGeneratedImageHandler
-  attachedGeneratedImageName?: string | null
-  generatedImageActionsDisabled?: boolean
 }) {
   const t = useTranslations('chatTools.generateInstagramPostImage')
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
   const isError = toolOutputLooksLikeError(part)
   const output = 'output' in part ? part.output : undefined
-  const generatedFull = !isInFlight && !isError ? parseGeneratedImageToolResult(output) : null
-  const imageUrl =
-    generatedFull?.url ??
-    (!isInFlight && !isError ? parseGeneratedImageUrlFromToolOutput(output) : null)
+  const imageUrl = !isInFlight && !isError ? parseGeneratedImageUrlFromToolOutput(output) : null
   const message = isError ? t('error') : isInFlight ? t('runningDetail') : t('done')
-  const isAttached =
-    generatedFull != null &&
-    attachedGeneratedImageName != null &&
-    attachedGeneratedImageName === generatedFull.name
-  const showActions = Boolean(onAttachGeneratedImage && generatedFull)
 
   return (
     <div className="flex flex-col gap-2">
@@ -182,30 +146,6 @@ function GenerateInstagramPostImageToolBlock({
             className="max-h-80 max-w-full rounded-md border border-border object-contain"
             src={imageUrl}
           />
-          {showActions && generatedFull ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  aria-label={t('actionsMenuAriaLabel')}
-                  className="absolute top-2 right-2 size-8 rounded-full bg-background/90 shadow-sm backdrop-blur-sm"
-                  disabled={generatedImageActionsDisabled}
-                  size="icon"
-                  type="button"
-                  variant="secondary"
-                >
-                  <MoreHorizontal aria-hidden className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  disabled={generatedImageActionsDisabled || isAttached}
-                  onSelect={() => onAttachGeneratedImage?.(generatedFull)}
-                >
-                  {isAttached ? t('attachedAsReference') : t('attachAsReference')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
         </div>
       ) : null}
     </div>
@@ -241,15 +181,9 @@ function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicTo
 }
 
 const COMPACT_TOOL_I18N = {
-  list_instagram_items: 'listInstagramItems',
-  get_instagram_item: 'getInstagramItem',
-  create_instagram_items: 'createInstagramItems',
-  update_instagram_items: 'updateInstagramItems',
-  delete_instagram_items: 'deleteInstagramItems',
-  get_workflow_overview: 'getWorkflowOverview',
-  get_milestone: 'getMilestone',
-  update_milestone_input: 'updateMilestoneInput',
   get_location_data: 'getLocationData',
+  save_story_asset: 'saveStoryAsset',
+  clear_story_assets: 'clearStoryAssets',
 } as const
 
 type CompactToolName = keyof typeof COMPACT_TOOL_I18N
@@ -268,39 +202,96 @@ function CompactNamedToolBlock({
   const t = useTranslations('chatTools')
   const key = COMPACT_TOOL_I18N[toolName]
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const output = 'output' in part ? part.output : undefined
+  // Hide rejected speculative saves (invented / unattached names) — avoid alarming the user.
+  if (toolName === 'save_story_asset' && !isInFlight && isRejectedStoryAssetSaveOutput(output)) {
+    return null
+  }
   const isError = toolOutputLooksLikeError(part)
   const message = isError ? t(`${key}.error`) : isInFlight ? t(`${key}.running`) : t(`${key}.done`)
 
   return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
 }
 
-function ToolPartBlock({
+export type StoryGenerateConfirmationActions = {
+  actionsEnabled: boolean
+  /** When true, hide the confirmation tool UI entirely (e.g. generate already ran). */
+  hideToolUi?: boolean
+  onConfirmGenerate: () => void
+  onRequestChanges: () => void
+}
+
+function RequestStoryGenerateConfirmationToolBlock({
   part,
-  onAttachGeneratedImage,
-  attachedGeneratedImageName,
-  generatedImageActionsDisabled,
+  storyGenerateConfirmation,
 }: {
   part: ToolUIPart<UITools> | DynamicToolUIPart
-  onAttachGeneratedImage?: AttachGeneratedImageHandler
-  attachedGeneratedImageName?: string | null
-  generatedImageActionsDisabled?: boolean
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
+}) {
+  const t = useTranslations('chatTools.requestStoryGenerateConfirmation')
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const isError = toolOutputLooksLikeError(part)
+  const actionsEnabled =
+    Boolean(storyGenerateConfirmation?.actionsEnabled) && !isInFlight && !isError
+
+  if (storyGenerateConfirmation?.hideToolUi) {
+    return null
+  }
+
+  if (isInFlight) {
+    return <CompactToolStatus isError={false} isInFlight message={t('running')} />
+  }
+
+  if (isError) {
+    return <CompactToolStatus isError isInFlight={false} message={t('error')} />
+  }
+
+  if (!actionsEnabled) {
+    return <CompactToolStatus isError={false} isInFlight={false} message={t('done')} />
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <CompactToolStatus isError={false} isInFlight={false} message={t('ready')} />
+      <Suggestions>
+        <Suggestion
+          onClick={() => storyGenerateConfirmation?.onConfirmGenerate()}
+          suggestion={t('generate')}
+          variant="default"
+        />
+        <Suggestion
+          onClick={() => storyGenerateConfirmation?.onRequestChanges()}
+          suggestion={t('change')}
+        />
+      </Suggestions>
+    </div>
+  )
+}
+
+function ToolPartBlock({
+  part,
+  storyGenerateConfirmation,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
 }) {
   const toolName = resolveToolName(part)
   if (toolName === 'search_web') {
     return <SearchWebToolBlock part={part} />
   }
   if (toolName === 'generate_instagram_post_image') {
-    return (
-      <GenerateInstagramPostImageToolBlock
-        attachedGeneratedImageName={attachedGeneratedImageName}
-        generatedImageActionsDisabled={generatedImageActionsDisabled}
-        onAttachGeneratedImage={onAttachGeneratedImage}
-        part={part}
-      />
-    )
+    return <GenerateInstagramPostImageToolBlock part={part} />
   }
   if (toolName === 'get_chart_data') {
     return <GetChartDataToolBlock part={part} />
+  }
+  if (toolName === 'request_story_generate_confirmation') {
+    return (
+      <RequestStoryGenerateConfirmationToolBlock
+        part={part}
+        storyGenerateConfirmation={storyGenerateConfirmation}
+      />
+    )
   }
   if (isCompactToolName(toolName)) {
     return <CompactNamedToolBlock part={part} toolName={toolName} />
@@ -337,9 +328,8 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   role,
   mentionTitles,
   isStreaming = false,
-  onAttachGeneratedImage,
-  attachedGeneratedImageName,
-  generatedImageActionsDisabled = false,
+  storyGenerateConfirmation,
+  threadMessages,
 }: {
   message: UIMessage
   role: UIMessage['role']
@@ -347,19 +337,28 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   mentionTitles?: string[]
   /** When true, assistant text uses incremental Streamdown rendering. */
   isStreaming?: boolean
-  /** When set, generated images show a ⋯ menu with “Use as reference”. */
-  onAttachGeneratedImage?: AttachGeneratedImageHandler
-  /** Filename of the currently attached generated (post) ref chip, if any. */
-  attachedGeneratedImageName?: string | null
-  /** Disable image actions while the chat turn is in flight. */
-  generatedImageActionsDisabled?: boolean
+  /** Story Phase 3 Generate / Change buttons (workflow chat only). */
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
+  /**
+   * Full visible thread — used so follow-up assistant text that pastes a generated
+   * image URL is stripped even when the tool part lived on an earlier message.
+   */
+  threadMessages?: readonly UIMessage[]
 }) {
   const parts = message.parts
 
   if (!parts?.length) {
     const fallback = getPlainText(message)
     if (role === 'assistant') {
-      return <AssistantTextPart text={fallback} />
+      const urls =
+        threadMessages && threadMessages.length > 0
+          ? collectGeneratedImageUrlsFromMessages(threadMessages)
+          : []
+      const stripped = stripDuplicateGeneratedImageMarkdown(fallback, urls, {
+        stripAllImageEmbeds: messageHasSuccessfulGenerateImageTool(message),
+      })
+      if (!stripped) return null
+      return <AssistantTextPart text={stripped} />
     }
     return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={fallback} />
   }
@@ -367,7 +366,12 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   const { reasoningParts, otherParts } = partitionMessageParts(parts)
   const reasoningText = joinReasoningText(reasoningParts)
   const reasoningStreaming = isReasoningStreaming(reasoningParts, isStreaming)
-  const generatedImageUrls = collectGeneratedImageUrlsFromParts(parts)
+  const generatedImageUrlsFromMessage = collectGeneratedImageUrlsFromParts(parts)
+  const generatedImageUrls =
+    threadMessages && threadMessages.length > 0
+      ? collectGeneratedImageUrlsFromMessages(threadMessages)
+      : generatedImageUrlsFromMessage
+  const stripAllImageEmbeds = messageHasSuccessfulGenerateImageTool(message)
 
   return (
     <>
@@ -379,14 +383,13 @@ export const ChatMessageParts = memo(function ChatMessageParts({
       ) : null}
       {otherParts.map((part, index) => (
         <MessagePartRenderer
-          attachedGeneratedImageName={attachedGeneratedImageName}
-          generatedImageActionsDisabled={generatedImageActionsDisabled}
           generatedImageUrls={generatedImageUrls}
           key={`${message.id}-${index}`}
           mentionTitles={mentionTitles}
-          onAttachGeneratedImage={onAttachGeneratedImage}
           part={part}
           role={role}
+          storyGenerateConfirmation={storyGenerateConfirmation}
+          stripAllImageEmbeds={stripAllImageEmbeds}
         />
       ))}
     </>
@@ -407,23 +410,24 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   role,
   mentionTitles,
   generatedImageUrls = [],
-  onAttachGeneratedImage,
-  attachedGeneratedImageName,
-  generatedImageActionsDisabled,
+  stripAllImageEmbeds = false,
+  storyGenerateConfirmation,
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
   mentionTitles?: string[]
-  /** URLs from generate_instagram_post_image tool results in this message. */
+  /** URLs from generate_instagram_post_image tool results in this thread. */
   generatedImageUrls?: readonly string[]
-  onAttachGeneratedImage?: AttachGeneratedImageHandler
-  attachedGeneratedImageName?: string | null
-  generatedImageActionsDisabled?: boolean
+  /** Drop every markdown/HTML image when this message already shows the tool thumbnail. */
+  stripAllImageEmbeds?: boolean
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
 }) {
   if (part.type === 'text') {
     const text =
-      role === 'assistant' && generatedImageUrls.length > 0
-        ? stripDuplicateGeneratedImageMarkdown(part.text, generatedImageUrls)
+      role === 'assistant' && (generatedImageUrls.length > 0 || stripAllImageEmbeds)
+        ? stripDuplicateGeneratedImageMarkdown(part.text, generatedImageUrls, {
+            stripAllImageEmbeds,
+          })
         : part.text
     if (!text) {
       return null
@@ -435,14 +439,7 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   }
 
   if (isToolUIPart(part)) {
-    return (
-      <ToolPartBlock
-        attachedGeneratedImageName={attachedGeneratedImageName}
-        generatedImageActionsDisabled={generatedImageActionsDisabled}
-        onAttachGeneratedImage={onAttachGeneratedImage}
-        part={part}
-      />
-    )
+    return <ToolPartBlock part={part} storyGenerateConfirmation={storyGenerateConfirmation} />
   }
 
   if (part.type === 'source-url') {

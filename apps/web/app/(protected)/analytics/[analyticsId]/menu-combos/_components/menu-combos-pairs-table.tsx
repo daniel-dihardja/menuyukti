@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
-import { MilestonePreviewHelpTrigger } from '@/app/(protected)/workflow/_components/milestone-preview/milestone-preview-help-trigger'
+import { HelpTooltipTrigger } from '@/components/help-tooltip-trigger'
 import { MATRIX_CATEGORY_BADGE_CLASS } from '@/lib/analytics/matrix-category-styles'
 import type { MatrixCategory } from '@/lib/analytics/matrix-page-adapter'
 import {
@@ -143,7 +143,7 @@ function MobilePairCard({ pair, locale }: { pair: MenuComboPair; locale: string 
         <div className="flex flex-col gap-0.5">
           <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
             {t('lift')}
-            <MilestonePreviewHelpTrigger helpText={t('liftTooltip')} ariaLabel={t('liftTooltip')} />
+            <HelpTooltipTrigger helpText={t('liftTooltip')} ariaLabel={t('liftTooltip')} />
           </span>
           <div className="flex flex-col gap-1">
             <span className="text-lg font-semibold tabular-nums">
@@ -163,10 +163,7 @@ function MobilePairCard({ pair, locale }: { pair: MenuComboPair; locale: string 
         <div className="flex flex-col gap-0.5">
           <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
             {t('support')}
-            <MilestonePreviewHelpTrigger
-              helpText={t('supportTooltip')}
-              ariaLabel={t('supportTooltip')}
-            />
+            <HelpTooltipTrigger helpText={t('supportTooltip')} ariaLabel={t('supportTooltip')} />
           </span>
           <span className="text-lg font-semibold tabular-nums">
             {formatPercent(pair.support, locale)}

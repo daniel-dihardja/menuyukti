@@ -7,11 +7,9 @@ export * from './queries/locations'
 export * from './queries/styles'
 export * from './queries/crm-apps'
 export * from './queries/calendar-entries'
-export * from './queries/workflows'
 export * from './queries/analytics'
 export * from './queries/workspace'
 export * from './queries/posts'
-export * from './queries/instagram-items'
 export {
   SCHEDULER_CALENDAR_QUERY,
   type CalendarDisplaySlot,

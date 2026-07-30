@@ -11,7 +11,7 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 **Query protections.** The schema enables depth, alias count, token count, and maximum field-selection limits (see [`limits.py`](./limits.py) and [`schema/__init__.py`](./schema/__init__.py)). Oversized documents fail validation before execution.
 
-**Pagination.** `nodes` accepts optional `first` (default 500, max 500) and `afterId` (last-seen node id) when listing by location without `parentId`; pages are ordered by **id descending** (typically newest-first with serial PKs). With `parentId`, results use milestone display order and truncate to `first`. `analyticsRuns` accepts optional `first` (default 100, max 300).
+**Pagination.** `nodes` accepts optional `first` (default 500, max 500) and `afterId` (last-seen node id) when listing by location without `parentId`; pages are ordered by **id descending** (typically newest-first with serial PKs). With `parentId`, results are truncated to `first`. `analyticsRuns` accepts optional `first` (default 100, max 300).
 
 **Uploads.** `uploadSalesReport` rejects files larger than `MAX_SALES_REPORT_UPLOAD_BYTES` (default 30 MiB). Line-level `normalizedRows` and `orders` are returned only when **`includeLineItems`** is true; otherwise the mutation still ingests data but omits those large fields in the response.
 
@@ -52,19 +52,9 @@ CREATE INDEX IF NOT EXISTS ix_node_location_id ON node(location_id);
 CREATE INDEX IF NOT EXISTS ix_node_location_type ON node(location_id, type);
 ```
 
-Export snapshots for workflow roots are stored in the **`workflow`** table (created by Alembic migrations / `create_all` in tests).
+### Generic `Node` rows
 
-### Workflow root node type (`workflow`)
-
-The GraphQL `nodeType` for a **workflow root** (the container for milestones under a location) is **`workflow`**, persisted in the `node` table column **`type`**.
-
-If you upgrade from a build that stored the legacy value `campaign` on those rows, run this **once per database** before or immediately after deploying the new code (SQLite and PostgreSQL both use the `type` column):
-
-```sql
-UPDATE node SET type = 'workflow' WHERE type = 'campaign';
-```
-
-Deploy order: apply the SQL update so existing roots match what the API expects, then restart the GraphQL and web services.
+The polymorphic **`node`** table (`type` + JSON `data`) remains for entities that still use it. Prefer dedicated tables (e.g. calendar entries, media) for new features. **Workflow-container / milestone export-import are not live product APIs** — see [`packages/docs/menuyukti/remove-milestones.md`](../../packages/docs/menuyukti/remove-milestones.md) for cleanup history.
 
 Need a clean slate on PostgreSQL? Run `make drop-db` (destructive: drops `public` schema), then `make db-upgrade`. For local SQLite only, you can also use `uv run python -m graphql.data_sources.database` for `create_all` (not used for production Postgres).  
 To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.

@@ -2,7 +2,6 @@
 
 __all__ = [
     "Base",
-    "MilestoneAgentRun",
     "Workspace",
     "WorkspaceMembership",
     "Location",
@@ -23,9 +22,6 @@ __all__ = [
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",
-    "InstagramItem",
-    "InstagramItemPage",
-    "InstagramItemPageMediaVersion",
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",

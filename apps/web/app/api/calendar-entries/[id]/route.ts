@@ -47,7 +47,6 @@ export async function PATCH(req: Request, context: RouteContext) {
         ...(body.time !== undefined ? { time: body.time } : {}),
         ...(body.description !== undefined ? { description: body.description } : {}),
         ...(body.mediaRefs !== undefined ? { mediaRefs: body.mediaRefs } : {}),
-        ...(body.sourceRef !== undefined ? { sourceRef: body.sourceRef } : {}),
       },
       userId,
     )

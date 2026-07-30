@@ -8,16 +8,16 @@ description: >-
 
 # Menuyukti: repository orientation
 
-This skill is for **Cursor/agents** navigating the repo. **Runtime milestone execution** uses dedicated **preset subgraphs** in `apps/agents/agents/core/milestone_run/<preset_id>/` (see [`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
+This skill is for **Cursor/agents** navigating the repo. The **product home** is chat-first (`/advisor`, `agentThreadId`) — see [`menuyukti-web`](../menuyukti-web/SKILL.md) and [`menuyukti-agents`](../menuyukti-agents/SKILL.md).
 
 ## Service map
 
 | Area                 | Path              | Role                                                                                                                                                      |
 | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Web**              | `apps/web`        | Next.js UI: chat, campaigns, CRUD. **Reads/writes go through GraphQL** (not direct DB). Workflow roots use GraphQL **`nodeType` `workflow`**.             |
+| **Web**              | `apps/web`        | Next.js UI: chat (`/advisor`), analytics, media, calendar, IG Studio, CRM. **Reads/writes go through GraphQL** (not direct DB).                           |
 | **Mobile**           | `apps/mobile-app` | Expo (React Native) client. **Reads/writes go through GraphQL** (not direct DB).                                                                          |
 | **GraphQL API**      | `apps/graphql`    | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                 |
-| **LangGraph agents** | `apps/agents`     | FastAPI, LangChain / LangGraph. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                                       |
+| **LangGraph agents** | `apps/agents`     | FastAPI, LangChain / LangGraph **streaming chat**. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                    |
 | **Shared packages**  | `packages/*`      | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), optional legacy workspace packages per root config. |
 
 ```mermaid
@@ -35,15 +35,20 @@ flowchart LR
 
 | Skill                                                    | When to open it                                                                             |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph milestone run (preset subgraphs + eval), streaming chat.  |
+| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph streaming chat (general + story), GraphQL clients.        |
 | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                     |
-| [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, GraphQL from the browser/BFF, milestone UI.          |
+| [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, `/advisor` chat, GraphQL from the browser/BFF.       |
 | [`menuyukti-mobile`](../menuyukti-mobile/SKILL.md)       | `apps/mobile-app`: Expo, CRM enroll, React Navigation, brand/session, mobile HTTP clients.  |
 | [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration. |
 
-## Cross-app flow: milestone run
+## Cross-app flow: chat
 
-The web BFF streams **`POST .../milestones/{id}/run`** to agents; the LangGraph run resolves **`presetId`**, executes the matching preset subgraph, then runs shared eval. See [`menuyukti-agents`](../menuyukti-agents/SKILL.md), [`menuyukti-web`](../menuyukti-web/SKILL.md), and [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
+1. User opens **`/advisor`** (thread = `agentThreadId`).
+2. Web BFF **`/api/chat`** forwards the turn to agents **`POST /chat`** with `agent_thread_id` (+ optional `location_id`, `chat_mode`).
+3. Agents ReAct graph may call **GraphQL** (location, charts, media) via `graphql_post`.
+4. History loads via **`/api/chat/history`** ↔ agents **`GET /chat/history`**.
+
+See [`menuyukti-agents`](../menuyukti-agents/SKILL.md) and [`menuyukti-web`](../menuyukti-web/SKILL.md). Cleanup history for the old campaign-pipeline model: [`packages/docs/menuyukti/remove-milestones.md`](../../../packages/docs/menuyukti/remove-milestones.md).
 
 ## Database ownership
 

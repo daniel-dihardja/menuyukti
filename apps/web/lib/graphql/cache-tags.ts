@@ -6,17 +6,13 @@
 /**
  * Pass as the second argument to `revalidateTag` from route handlers after a mutation.
  * Using the string profile `'max'` is stale-while-revalidate under Cache Components: the
- * next request can still receive the previous cached value (e.g. deleted workflows
+ * next request can still receive the previous cached value (e.g. deleted analytics runs
  * appearing until a second reload). `{ expire: 0 }` expires the stale entry immediately.
  */
 export const revalidateTagAfterMutation = { expire: 0 } as const
 
 export function graphqlLocationsDataCacheTag(userId: string): string {
   return `graphql-locations-data-${userId}`
-}
-
-export function graphqlWorkflowsByLocationCacheTag(userId: string, locationId: number): string {
-  return `graphql-workflows-by-location-${userId}-${locationId}`
 }
 
 export function graphqlAnalyticsRunsByLocationCacheTag(userId: string, locationId: number): string {
@@ -36,10 +32,6 @@ export function graphqlAnalyticsRunComputationsCacheTag(
   analyticsRunId: string,
 ): string {
   return `graphql-analytics-run-computations-${userId}-${analyticsRunId}`
-}
-
-export function graphqlWorkflowCampaignTreeCacheTag(userId: string, workflowId: string): string {
-  return `graphql-workflow-campaign-tree-${userId}-${workflowId}`
 }
 
 export function graphqlSchedulerCalendarCacheTag(userId: string, locationId: number): string {

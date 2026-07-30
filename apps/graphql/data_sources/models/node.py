@@ -46,19 +46,6 @@ class Node(Base):
     data: Mapped[dict | list | None] = mapped_column(
         JSONB().with_variant(JSON(), "sqlite"), nullable=True
     )
-    milestone_goal: Mapped[str | None] = mapped_column(Text, nullable=True)
-    milestone_input: Mapped[dict | list | None] = mapped_column(
-        JSONB().with_variant(JSON(), "sqlite"), nullable=True
-    )
-    pass_criterias: Mapped[list | dict | None] = mapped_column(
-        JSONB().with_variant(JSON(), "sqlite"), nullable=True
-    )
-    milestone_preset_data: Mapped[dict | list | None] = mapped_column(
-        JSONB().with_variant(JSON(), "sqlite"), nullable=True
-    )
-    milestone_result: Mapped[dict | list | None] = mapped_column(
-        JSONB().with_variant(JSON(), "sqlite"), nullable=True
-    )
     created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),

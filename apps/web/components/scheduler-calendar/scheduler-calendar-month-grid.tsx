@@ -5,9 +5,9 @@ import { useTranslations } from 'next-intl'
 
 import { cn } from '@workspace/ui/lib/utils'
 
-import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
-import type { CampaignWindowPublicHoliday } from '@/lib/graphql/node-schemas'
+import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
+import type { SchedulerSlot } from '@/lib/calendar/scheduler-calendar'
+import type { CalendarPublicHoliday } from '@/lib/calendar/types'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
@@ -20,7 +20,7 @@ import {
   schedulerSlotKind,
   schedulerSlotsForDate,
   schedulerWeekdayLabels,
-} from '@/lib/milestones/scheduler-calendar'
+} from '@/lib/calendar/scheduler-calendar'
 
 import { SchedulerSlotDisplayTitle } from './scheduler-calendar-slot-title'
 
@@ -30,7 +30,7 @@ export type SchedulerCalendarMonthGridProps = {
   windowEnd: string
   locale: string
   slots?: SchedulerSlot[]
-  publicHolidays?: CampaignWindowPublicHoliday[]
+  publicHolidays?: CalendarPublicHoliday[]
   className?: string
   onDayClick?: (isoDate: string) => void
   onSlotClick?: (slot: SchedulerSlot) => void

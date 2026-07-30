@@ -38,10 +38,7 @@ import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { shouldShowAssistantThinkingFallback } from '@/lib/chat/should-show-assistant-thinking-fallback'
-import {
-  formatMediaMentionLabel,
-  mediaTypeFromFilename,
-} from '@/lib/chat/workflow-chat-media-mention'
+import { formatMediaMentionLabel, mediaTypeFromFilename } from '@/lib/chat/chat-media-mention'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { PostCreatorReferenceImage } from '@/lib/posts/post-creator-types'
 import type { PostImageFormatId, PostImageQualityId } from '@/lib/posts/leonardo-post-dimensions'
@@ -504,6 +501,7 @@ export function PostCreatorChatPane() {
                           isStreaming={isActiveStream}
                           message={msg}
                           role={msg.role}
+                          threadMessages={visibleMessages}
                         />
                       )}
                     </MessageContent>

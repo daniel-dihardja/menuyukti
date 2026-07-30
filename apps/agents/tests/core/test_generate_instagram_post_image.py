@@ -181,6 +181,191 @@ async def test_tool_args_override_configurable(tool_under_test: Any, monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_image_assistant_uses_configurable_format(
+    tool_under_test: Any, monkeypatch: Any
+) -> None:
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps({"url": "https://example.com/img.webp"})
+    mock_response.json.return_value = {"url": "https://example.com/img.webp"}
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        await tool_under_test.ainvoke(
+            {"prompt": "Ice matcha feed", "format": "story"},
+            config=_config(
+                user_id="user-1",
+                chat_mode="image_assistant",
+                image_format="feed",
+            ),
+        )
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert body["format"] == "feed"
+
+
+@pytest.mark.asyncio
+async def test_image_assistant_defaults_format_story_when_unset(
+    tool_under_test: Any, monkeypatch: Any
+) -> None:
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps({"url": "https://example.com/img.webp"})
+    mock_response.json.return_value = {"url": "https://example.com/img.webp"}
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        await tool_under_test.ainvoke(
+            {"prompt": "Ice matcha story"},
+            config=_config(
+                user_id="user-1",
+                chat_mode="image_assistant",
+            ),
+        )
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert body["format"] == "story"
+
+
+@pytest.mark.asyncio
+async def test_story_mode_uses_story_assets_as_references(
+    tool_under_test: Any, monkeypatch: Any
+) -> None:
+    from langchain.tools import ToolRuntime
+
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    style_name = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+    content_name = "11111111-2222-3333-4444-555555555555.jpg"
+    result_name = "cccccccc-dddd-eeee-ffff-000000000000.webp"
+    runtime = ToolRuntime(
+        state={
+            "story_assets": [
+                {"role": "style", "name": style_name, "note": "neon"},
+                {"role": "content", "name": content_name, "note": "bowl"},
+                {"role": "result", "name": result_name, "note": ""},
+            ]
+        },
+        context=None,
+        config={},
+        stream_writer=lambda *_a: None,
+        tool_call_id="tc-gen",
+        store=None,
+    )
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps({"url": "https://example.com/img.webp"})
+    mock_response.json.return_value = {"url": "https://example.com/img.webp"}
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        await tool_under_test.ainvoke(
+            {"prompt": "Story with style and content", "runtime": runtime},
+            config=_config(
+                user_id="user-1",
+                chat_mode="image_assistant",
+                # empty request-scoped refs — scratchpad alone should populate
+            ),
+        )
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert body["format"] == "story"
+    assert body["references"] == [
+        {"type": "photo", "name": style_name},
+        {"type": "photo", "name": content_name},
+        {"type": "previous-result", "filename": result_name},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_story_mode_generate_upserts_result_command(
+    tool_under_test: Any, monkeypatch: Any
+) -> None:
+    from langchain.tools import ToolRuntime
+    from langgraph.types import Command
+
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    style_name = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+    out_name = "dddddddd-eeee-ffff-aaaa-111111111111.webp"
+    runtime = ToolRuntime(
+        state={
+            "story_assets": [
+                {"role": "style", "name": style_name, "note": ""},
+                {
+                    "role": "result",
+                    "name": "cccccccc-dddd-eeee-ffff-000000000000.webp",
+                    "note": "",
+                },
+            ]
+        },
+        context=None,
+        config={},
+        stream_writer=lambda *_a: None,
+        tool_call_id="tc-gen-2",
+        store=None,
+    )
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps(
+        {
+            "url": "https://example.com/new.webp",
+            "name": out_name,
+            "mediaS3Key": f"users/u/posts/{out_name}",
+            "createdAt": "2026-01-01T00:00:00.000Z",
+        }
+    )
+    mock_response.json.return_value = {
+        "url": "https://example.com/new.webp",
+        "name": out_name,
+        "mediaS3Key": f"users/u/posts/{out_name}",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+    }
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        out = await tool_under_test.ainvoke(
+            {"prompt": "Make the sky blue", "runtime": runtime},
+            config=_config(user_id="user-1", chat_mode="image_assistant"),
+        )
+
+    assert isinstance(out, Command)
+    assert out.update is not None
+    results = [a for a in out.update["story_assets"] if a["role"] == "result"]
+    assert results == [{"role": "result", "name": out_name, "note": ""}]
+    payload = json.loads(out.update["messages"][0].content)
+    assert payload["action"] == "save_result"
+    assert payload["url"] == "https://example.com/new.webp"
+    assert payload["story_assets"] == out.update["story_assets"]
+
+
+@pytest.mark.asyncio
 async def test_http_error(tool_under_test: Any, monkeypatch: Any) -> None:
     monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")

@@ -2,7 +2,8 @@
 #   docker compose up --build
 #
 # In `.env` next to this file, set:
-#   DATABASE_URL   — Neon Postgres URL (web + GraphQL), e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
+#   DATABASE_URL   — Neon Postgres URL (web + GraphQL + agents LangGraph checkpoints),
+#                    e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
 #   AI_GATEWAY_API_KEY — for agents (LangGraph via Vercel AI Gateway)
 #   CLERK_SECRET_KEY — Clerk secret key (also passed into the web container via `environment:`)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (pk_…); used at `next build` and, for the web
@@ -43,6 +44,8 @@ services:
       GRAPHQL_INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
       AGENTS_API_KEY: ${AGENTS_API_KEY:-}
       WEB_APP_URL: http://web:3000
+      # Durable LangGraph chat checkpoints (same Neon DB as GraphQL/web).
+      LANGGRAPH_CHECKPOINT_DATABASE_URL: ${DATABASE_URL}
     depends_on:
       - graphql
     ports:

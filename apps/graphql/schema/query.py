@@ -6,9 +6,7 @@ from graphql.schema.queries import (
     CategoryMixQuery,
     CrmAppsQuery,
     CrmCustomersQuery,
-    IgPlanInputsQuery,
     ImageAiFlowsQuery,
-    InstagramItemsQuery,
     InstagramSignalsQuery,
     LatestAnalyticsRunWithSignalsQuery,
     LocationManualBriefInputQuery,
@@ -18,7 +16,6 @@ from graphql.schema.queries import (
     MenuCombosQuery,
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
-    MilestonePriorDataQuery,
     NodesQuery,
     OperatingProfileQuery,
     PostsQuery,
@@ -30,19 +27,17 @@ from graphql.schema.queries import (
     SlotMenuCandidatesQuery,
     StylesQuery,
     WeeklyDemandPatternQuery,
-    WorkflowCampaignTreeQuery,
     WorkspaceQuery,
 )
 
 
 @strawberry.type(
     description=(
-        "Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, "
+        "Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, "
         "and workspace membership."
     )
 )
 class Query(
-    WorkflowCampaignTreeQuery,
     AnalyticsBundleQuery,
     LatestAnalyticsRunWithSignalsQuery,
     LocationsQuery,
@@ -64,14 +59,11 @@ class Query(
     SchedulerCalendarQuery,
     OperatingProfileQuery,
     PostsQuery,
-    InstagramItemsQuery,
     InstagramSignalsQuery,
     CategoryMixQuery,
     RevenueTrendsQuery,
     WeeklyDemandPatternQuery,
-    MilestonePriorDataQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
-    IgPlanInputsQuery,
 ):
     pass

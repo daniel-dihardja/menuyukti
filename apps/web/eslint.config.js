@@ -7,7 +7,6 @@ export default [
   {
     files: [
       "app/(protected)/analytics/sales/sales-table.tsx",
-      "app/(protected)/workflow/_components/workflows-table.tsx",
       "components/sortable-table.tsx",
       "components/clerk/custom-login-form.tsx",
     ],
@@ -26,5 +25,5 @@ export default [
       ],
     },
   },
-  { ignores: [".next/**", "node_modules/**"] },
+  { ignores: [".next/**", "node_modules/**", "lib/graphql/generated/**"] },
 ]

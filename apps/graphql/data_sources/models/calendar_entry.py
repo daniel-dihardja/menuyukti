@@ -42,11 +42,6 @@ class CalendarEntry(Base):
         default=list,
         server_default=text("'[]'"),
     )
-    source_ref: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB().with_variant(JSON(), "sqlite"),
-        nullable=True,
-        default=None,
-    )
     created_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

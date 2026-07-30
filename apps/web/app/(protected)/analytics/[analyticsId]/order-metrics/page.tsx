@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { formatPreviewDateString } from '@/lib/format-preview-date'
@@ -118,7 +117,6 @@ export default async function Page({ params }: PageProps) {
           <Button asChild variant="outline">
             <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
           </Button>
-          <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
         {!orderMetrics ? (

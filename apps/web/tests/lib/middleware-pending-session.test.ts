@@ -4,7 +4,7 @@ import { shouldRedirectPendingSession } from '@/lib/middleware-pending-session'
 
 describe('shouldRedirectPendingSession', () => {
   it('does not redirect active sessions on protected routes', () => {
-    expect(shouldRedirectPendingSession('/workflow', 'active')).toBe(false)
+    expect(shouldRedirectPendingSession('/advisor', 'active')).toBe(false)
   })
 
   it('does not redirect pending sessions on /login', () => {
@@ -21,8 +21,8 @@ describe('shouldRedirectPendingSession', () => {
   })
 
   it('redirects pending sessions on protected routes to login via middleware', () => {
-    expect(shouldRedirectPendingSession('/workflow', 'pending')).toBe(true)
-    expect(shouldRedirectPendingSession('/workflow/abc', 'pending')).toBe(true)
+    expect(shouldRedirectPendingSession('/advisor', 'pending')).toBe(true)
+    expect(shouldRedirectPendingSession('/advisor/abc', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/dashboard', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/agent', 'pending')).toBe(true)
   })
@@ -33,6 +33,6 @@ describe('shouldRedirectPendingSession', () => {
   })
 
   it('does not redirect when session status is undefined', () => {
-    expect(shouldRedirectPendingSession('/workflow', undefined)).toBe(false)
+    expect(shouldRedirectPendingSession('/advisor', undefined)).toBe(false)
   })
 })

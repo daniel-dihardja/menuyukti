@@ -7,13 +7,13 @@ import {
 } from '@/lib/feature-flags'
 
 describe('feature-flags', () => {
-  it('reports release-aligned nav surface (workflows/reports/branches/crm/team/media/calendar on)', () => {
+  it('reports release-aligned nav surface (chat/reports/branches/crm/team/media/calendar on)', () => {
     expect(isNavKeyEnabled('dashboard')).toBe(false)
     expect(isNavKeyEnabled('media')).toBe(true)
     expect(isNavKeyEnabled('posts')).toBe(false)
     expect(isNavKeyEnabled('calendar')).toBe(true)
     expect(isNavKeyEnabled('printShop')).toBe(false)
-    expect(isNavKeyEnabled('workflows')).toBe(true)
+    expect(isNavKeyEnabled('chat')).toBe(true)
     expect(isNavKeyEnabled('reports')).toBe(true)
     expect(isNavKeyEnabled('branches')).toBe(true)
     expect(isNavKeyEnabled('crm')).toBe(true)
@@ -32,7 +32,8 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/crm/registrations')).toBe(true)
     expect(isPathnameFeatureEnabled('/media')).toBe(true)
     expect(isPathnameFeatureEnabled('/shop')).toBe(false)
-    expect(isPathnameFeatureEnabled('/workflow/abc')).toBe(true)
+    expect(isPathnameFeatureEnabled('/advisor')).toBe(true)
+    expect(isPathnameFeatureEnabled('/advisor/abc')).toBe(true)
     expect(isPathnameFeatureEnabled('/analytics/sales')).toBe(true)
   })
 
@@ -44,7 +45,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('usage')).toBe(true)
   })
 
-  it('returns /workflow as default authenticated path', () => {
-    expect(getDefaultAuthenticatedPath()).toBe('/workflow')
+  it('returns /advisor as default authenticated path', () => {
+    expect(getDefaultAuthenticatedPath()).toBe('/advisor')
   })
 })

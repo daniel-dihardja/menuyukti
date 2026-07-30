@@ -687,14 +687,14 @@ For bars/nightlife:
 
 ---
 
-## Notes for workflow alignment
+## Notes for chat-first product alignment
 
-This document can support campaign milestone work by mapping:
+This guide is Instagram operating advice for gastro venues. In Menuyukti, campaign work is supported through **chat** (`/advisor`, general + story modes), analytics, media, IG Studio, and the calendar — not a milestone pipeline.
 
-- objective -> step goal
-- content and offers -> milestone data
-- KPI targets -> pass criteria
+Map ideas loosely if helpful:
 
-For workflow model details, see:
+- objective / themes → chat brief or location context
+- content and offers → drafts and assets in chat / IG Studio
+- KPI targets → analytics views and operator judgment
 
-- [`workflows/README.md`](../workflows/README.md)
+For the removed workflow/milestone model (historical), see [`../menuyukti/remove-milestones.md`](../menuyukti/remove-milestones.md).

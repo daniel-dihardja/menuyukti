@@ -5,7 +5,9 @@ from unittest.mock import MagicMock
 import pytest
 from agents_app.server import app
 from fastapi.testclient import TestClient
-from langchain_core.messages import AIMessage, AIMessageChunk, ToolMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
+
+AGENT_THREAD_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
 
 @pytest.fixture
@@ -41,13 +43,16 @@ def test_chat_missing_thread_key(client: TestClient) -> None:
         headers={"X-Menuyukti-User-Id": "user-1"},
         json={"messages": [{"role": "user", "content": "Hello"}]},
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_chat_missing_user_header(client: TestClient) -> None:
     response = client.post(
         "/chat",
-        json={"messages": [{"role": "user", "content": "Hello"}], "workflow_id": "1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     )
     assert response.status_code == 401
 
@@ -55,7 +60,10 @@ def test_chat_missing_user_header(client: TestClient) -> None:
 def test_chat_invalid_role(client: TestClient) -> None:
     response = client.post(
         "/chat",
-        json={"messages": [{"role": "system", "content": "nope"}]},
+        json={
+            "messages": [{"role": "system", "content": "nope"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     )
     assert response.status_code == 422
 
@@ -67,15 +75,63 @@ def test_chat_not_exactly_one_message(client: TestClient) -> None:
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
         json={
-            "workflow_id": "1",
+            "agent_thread_id": AGENT_THREAD_ID,
             "messages": [
                 {"role": "user", "content": "a"},
                 {"role": "user", "content": "b"},
             ],
         },
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
     mock_graph.astream.assert_not_called()
+
+
+def test_chat_story_asset_action_clears_without_llm(client: TestClient) -> None:
+    import json
+    from unittest.mock import AsyncMock
+
+    style = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
+    content = "11111111-2222-3333-4444-555555555555.jpg"
+
+    class _Snap:
+        values = {
+            "story_assets": [
+                {"role": "style", "name": style, "note": ""},
+                {"role": "content", "name": content, "note": ""},
+            ]
+        }
+
+    mock_graph = MagicMock()
+    mock_graph.aget_state = AsyncMock(return_value=_Snap())
+    mock_graph.aupdate_state = AsyncMock(return_value=None)
+    mock_graph.astream = MagicMock(side_effect=AssertionError("LLM must not run"))
+    client.app.state.chat_graph = mock_graph
+
+    response = client.post(
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "agent_thread_id": AGENT_THREAD_ID,
+            "messages": [],
+            "chat_mode": "image_assistant",
+            "story_asset_action": {"op": "clear", "name": style},
+        },
+    )
+    assert response.status_code == 200
+    mock_graph.astream.assert_not_called()
+    mock_graph.aupdate_state.assert_awaited()
+    body = response.text
+    assert "clear_story_assets" in body
+    outputs = []
+    for line in body.split("\n"):
+        if not line.startswith("data: "):
+            continue
+        payload = json.loads(line[6:])
+        if payload.get("status") == "tool_end":
+            outputs.append(json.loads(payload["output"]))
+    assert outputs
+    assert outputs[-1]["ok"] is True
+    assert outputs[-1]["story_assets"] == [{"role": "content", "name": content, "note": ""}]
 
 
 def test_chat_invalid_model_returns_400(client: TestClient) -> None:
@@ -86,7 +142,7 @@ def test_chat_invalid_model_returns_400(client: TestClient) -> None:
         headers={"X-Menuyukti-User-Id": "user-1"},
         json={
             "messages": [{"role": "user", "content": "Hello"}],
-            "workflow_id": "10",
+            "agent_thread_id": AGENT_THREAD_ID,
             "model": "not-a-real/model-id-for-chat",
         },
     )
@@ -108,7 +164,10 @@ def test_chat_omits_gateway_model_in_config_when_model_not_sent(client: TestClie
         "POST",
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Hi"}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": "Hi"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     ) as response:
         assert response.status_code == 200
 
@@ -131,13 +190,51 @@ def test_chat_valid_model_passed_in_config(client: TestClient) -> None:
         headers={"X-Menuyukti-User-Id": "user-1"},
         json={
             "messages": [{"role": "user", "content": "Hello"}],
-            "workflow_id": "10",
+            "agent_thread_id": AGENT_THREAD_ID,
             "model": "openai/gpt-4o",
         },
     ) as response:
         assert response.status_code == 200
 
     assert captured["config"]["configurable"]["chat_gateway_model"] == "openai/gpt-4o"
+
+
+def test_chat_mode_passed_in_config(client: TestClient) -> None:
+    captured: dict = {}
+    mock_graph = MagicMock()
+    _install_mock_astream(
+        mock_graph,
+        chunks=[("messages", (AIMessageChunk(content="ok"), {}))],
+        capture_config=captured,
+    )
+    client.app.state.chat_graph = mock_graph
+
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+            "chat_mode": "image_assistant",
+        },
+    ) as response:
+        assert response.status_code == 200
+
+    assert captured["config"]["configurable"]["chat_mode"] == "image_assistant"
+
+
+def test_chat_rejects_unknown_chat_mode(client: TestClient) -> None:
+    response = client.post(
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+            "chat_mode": "copywriter",
+        },
+    )
+    assert response.status_code == 422
 
 
 def test_chat_stream_sse(client: TestClient) -> None:
@@ -156,7 +253,10 @@ def test_chat_stream_sse(client: TestClient) -> None:
         "POST",
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Hello"}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     ) as response:
         assert response.status_code == 200
         text = "".join(response.iter_text())
@@ -168,7 +268,8 @@ def test_chat_stream_sse(client: TestClient) -> None:
     args, kwargs = mock_graph.astream.call_args
     assert len(args[0]["messages"]) == 1
     cfg = args[1]
-    assert cfg["configurable"]["thread_id"] == "user-1:wf:10"
+    assert cfg["configurable"]["thread_id"] == f"user-1:agent:{AGENT_THREAD_ID}"
+    assert "workflow_id" not in cfg["configurable"]
     assert kwargs.get("stream_mode") == ["messages", "updates"]
 
 
@@ -192,7 +293,10 @@ def test_chat_stream_list_content_blocks(client: TestClient) -> None:
         "POST",
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Hello"}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     ) as response:
         assert response.status_code == 200
         text = "".join(response.iter_text())
@@ -226,7 +330,10 @@ def test_chat_stream_omits_tool_message_tokens(client: TestClient) -> None:
         "POST",
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Find a recipe"}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": "Find a recipe"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     ) as response:
         assert response.status_code == 200
         text = "".join(response.iter_text())
@@ -246,7 +353,7 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                         "messages": [
                             AIMessage(
                                 content="",
-                                tool_calls=[{"name": "get_milestone", "id": "1", "args": {}}],
+                                tool_calls=[{"name": "get_location_data", "id": "1", "args": {}}],
                             ),
                         ],
                     },
@@ -257,7 +364,7 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                 {
                     "tools": {
                         "messages": [
-                            ToolMessage(content="ok", tool_call_id="1", name="get_milestone")
+                            ToolMessage(content="ok", tool_call_id="1", name="get_location_data")
                         ],
                     },
                 },
@@ -271,12 +378,16 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
         "POST",
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Hello"}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+            "location_id": 7,
+        },
     ) as response:
         assert response.status_code == 200
         text = "".join(response.iter_text())
         assert "tool_start" in text or '"status": "tool_start"' in text
-        assert "get_milestone" in text
+        assert "get_location_data" in text
         assert "tool_end" in text or '"status": "tool_end"' in text
         assert '"tool_call_id": "1"' in text
         assert "Done" in text
@@ -342,7 +453,10 @@ def test_chat_stream_emits_distinct_tool_call_ids_for_parallel_same_tool(
         "POST",
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Plan posts"}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": "Plan posts"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     ) as response:
         assert response.status_code == 200
         text = "".join(response.iter_text())
@@ -351,7 +465,7 @@ def test_chat_stream_emits_distinct_tool_call_ids_for_parallel_same_tool(
         assert "Planned" in text
 
 
-def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
+def test_chat_stream_passes_location_in_config(client: TestClient) -> None:
     captured: dict = {}
     mock_graph = MagicMock()
     _install_mock_astream(
@@ -367,44 +481,18 @@ def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
         headers={"X-Menuyukti-User-Id": "user-1"},
         json={
             "messages": [{"role": "user", "content": "Run"}],
-            "workflow_id": "99",
-            "milestone_id": "42",
+            "agent_thread_id": "opaque-99",
             "location_id": 7,
         },
     ) as response:
         assert response.status_code == 200
 
-    assert captured["config"]["configurable"]["thread_id"] == "user-1:wf:99"
-    assert captured["config"]["configurable"]["milestone_id"] == "42"
+    assert captured["config"]["configurable"]["thread_id"] == "user-1:agent:opaque-99"
+    assert "milestone_id" not in captured["config"]["configurable"]
+    assert "workflow_id" not in captured["config"]["configurable"]
     assert captured["config"]["configurable"]["location_id"] == 7
     assert captured["config"]["configurable"]["user_id"] == "user-1"
     assert "workflow_catalog_markdown" not in captured["config"]["configurable"]
-
-
-def test_chat_workflow_session_suffixes_thread_id(client: TestClient) -> None:
-    captured: dict = {}
-    mock_graph = MagicMock()
-    _install_mock_astream(
-        mock_graph,
-        chunks=[("messages", (AIMessageChunk(content="x"), {}))],
-        capture_config=captured,
-    )
-    client.app.state.chat_graph = mock_graph
-
-    session = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-    with client.stream(
-        "POST",
-        "/chat",
-        headers={"X-Menuyukti-User-Id": "user-1"},
-        json={
-            "messages": [{"role": "user", "content": "Hi"}],
-            "workflow_id": "10",
-            "workflow_chat_session_id": session,
-        },
-    ) as response:
-        assert response.status_code == 200
-
-    assert captured["config"]["configurable"]["thread_id"] == f"user-1:wf:10:sess:{session}"
 
 
 def test_chat_agent_thread_id(client: TestClient) -> None:
@@ -429,6 +517,7 @@ def test_chat_agent_thread_id(client: TestClient) -> None:
         assert response.status_code == 200
 
     assert captured["config"]["configurable"]["thread_id"] == "u-2:agent:opaque-uuid"
+    assert captured["config"]["configurable"]["agent_thread_id"] == "opaque-uuid"
     assert "workflow_catalog_markdown" not in captured["config"]["configurable"]
 
 
@@ -446,7 +535,7 @@ def test_chat_multimodal_user_content(client: TestClient) -> None:
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
         json={
-            "workflow_id": "10",
+            "agent_thread_id": AGENT_THREAD_ID,
             "messages": [
                 {
                     "role": "user",
@@ -475,7 +564,10 @@ def test_chat_empty_content_rejected(client: TestClient) -> None:
     response = client.post(
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": ""}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": ""}],
+            "agent_thread_id": AGENT_THREAD_ID,
+        },
     )
     assert response.status_code == 422
     mock_graph.astream.assert_not_called()
@@ -484,3 +576,90 @@ def test_chat_empty_content_rejected(client: TestClient) -> None:
 def test_lifespan_compiles_chat_graph(client: TestClient) -> None:
     assert client.app.state.chat_graph is not None
     assert client.app.state.chat_checkpointer is not None
+
+
+def test_chat_history_requires_agent_thread_id(client: TestClient) -> None:
+    response = client.get(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+    )
+    assert response.status_code == 400
+
+
+def test_chat_history_returns_ui_messages(client: TestClient) -> None:
+    from unittest.mock import AsyncMock
+
+    class _Snap:
+        values = {
+            "messages": [
+                HumanMessage(content="Hello", id="u1"),
+                AIMessage(content="Hi", id="a1"),
+            ],
+            "story_assets": [{"role": "style", "name": "a.webp", "note": ""}],
+        }
+
+    mock_graph = MagicMock()
+    mock_graph.aget_state = AsyncMock(return_value=_Snap())
+    client.app.state.chat_graph = mock_graph
+
+    response = client.get(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"agent_thread_id": AGENT_THREAD_ID},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["thread_id"] == f"user-1:agent:{AGENT_THREAD_ID}"
+    assert len(body["messages"]) == 2
+    assert body["messages"][0]["role"] == "user"
+    assert body["messages"][1]["role"] == "assistant"
+    assert body["story_assets"] == [{"role": "style", "name": "a.webp", "note": ""}]
+
+
+def test_chat_history_empty_checkpoint(client: TestClient) -> None:
+    from unittest.mock import AsyncMock
+
+    class _Snap:
+        values = {}
+
+    mock_graph = MagicMock()
+    mock_graph.aget_state = AsyncMock(return_value=_Snap())
+    client.app.state.chat_graph = mock_graph
+
+    response = client.get(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"agent_thread_id": AGENT_THREAD_ID},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["messages"] == []
+    assert body["story_assets"] == []
+
+
+def test_delete_chat_history_requires_user_header(client: TestClient) -> None:
+    response = client.delete(
+        "/chat/history",
+        params={"agent_thread_id": AGENT_THREAD_ID},
+    )
+    assert response.status_code == 400
+
+
+def test_delete_chat_history_removes_agent_thread(client: TestClient) -> None:
+    cp = client.app.state.chat_checkpointer
+    thread_id = f"user-1:agent:{AGENT_THREAD_ID}"
+    other = "user-1:agent:bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+    cp.storage[thread_id] = {}
+    cp.storage[other] = {}
+
+    response = client.delete(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"agent_thread_id": AGENT_THREAD_ID},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] == 1
+    assert body["deleted_thread_ids"] == [thread_id]
+    assert thread_id not in cp.storage
+    assert other in cp.storage
