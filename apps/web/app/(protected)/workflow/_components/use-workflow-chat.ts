@@ -7,6 +7,7 @@ import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { apiFetch } from '@/lib/api/client-fetch'
 import { DEFAULT_CHAT_MODE, isChatModeId, type ChatModeId } from '@/lib/chat/chat-modes'
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
@@ -14,6 +15,10 @@ import { clearStoryAssetViaChat } from '@/lib/chat/clear-story-asset-via-chat'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import { appendWorkflowChatMention } from '@/lib/chat/append-workflow-chat-mention'
 import { mediaNamesToPhotoGenerationReferences } from '@/lib/chat/media-names-to-generation-references'
+import {
+  applyPresignedUrlsToMessages,
+  collectGeneratedImageMediaS3Keys,
+} from '@/lib/chat/refresh-generated-image-urls'
 import {
   latestStoryAssetsFromMessages,
   type StoryAssetRef,
@@ -28,12 +33,12 @@ import {
   mediaTypeFromFilename,
   type PendingMediaAttachment,
 } from '@/lib/chat/workflow-chat-media-mention'
+import type { MediaCatalogItem } from '@/lib/media/client-api'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
   isLeonardoPostModelId,
   type LeonardoPostModelId,
 } from '@/lib/posts/leonardo-post-models'
-import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
 export type { PendingMediaAttachment } from '@/lib/chat/workflow-chat-media-mention'
@@ -233,6 +238,47 @@ export function useWorkflowChat({
     }
     writeWorkflowChatMessages(workflowId, workflowChatSessionIdRef.current, messages)
   }, [workflowId, status, messages])
+
+  // Re-presign generated image URLs after sessionStorage hydrate (signed URLs expire ~1h).
+  useEffect(() => {
+    // Cap matches PRESIGN_POSTS_MAX_KEYS in app/api/media/presign-posts/schema.ts
+    const keys = collectGeneratedImageMediaS3Keys(initialMessagesRef.current).slice(0, 32)
+    if (keys.length === 0) {
+      return
+    }
+
+    let cancelled = false
+    void (async () => {
+      const result = await apiFetch<{ urls?: Record<string, string> }>(
+        '/api/media/presign-posts',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keys }),
+        },
+        'Failed to refresh image URLs',
+      )
+      if (cancelled || !result.ok) {
+        return
+      }
+      const urls = result.data.urls
+      if (!urls || typeof urls !== 'object') {
+        return
+      }
+      let rewritten: UIMessage[] | null = null
+      setMessages((current) => {
+        rewritten = applyPresignedUrlsToMessages(current, urls)
+        return rewritten
+      })
+      if (rewritten !== null) {
+        writeWorkflowChatMessages(workflowId, workflowChatSessionIdRef.current, rewritten)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [workflowId, setMessages])
 
   const slashCommands = useMemo(
     (): WorkflowChatSlashCommand[] => [

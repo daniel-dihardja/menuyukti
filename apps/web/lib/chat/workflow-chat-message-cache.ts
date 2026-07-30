@@ -1,5 +1,7 @@
 import type { UIMessage } from 'ai'
 
+import { normalizeGeneratedImageToolOutputsInMessages } from '@/lib/chat/refresh-generated-image-urls'
+
 const WORKFLOW_CHAT_MESSAGES_STORAGE_PREFIX = 'menuyukti.wfChatMessages.v1:'
 const CACHE_VERSION = 1
 const DEFAULT_SESSION_KEY = 'default'
@@ -48,7 +50,8 @@ export function parseStoredWorkflowChatMessages(raw: string | null): UIMessage[]
 }
 
 export function serializeWorkflowChatMessages(messages: UIMessage[]): string {
-  return JSON.stringify({ v: CACHE_VERSION, messages })
+  const normalized = normalizeGeneratedImageToolOutputsInMessages(messages)
+  return JSON.stringify({ v: CACHE_VERSION, messages: normalized })
 }
 
 export function readWorkflowChatMessages(
