@@ -73,7 +73,6 @@ type CalendarEntryType {
   date: String!
   time: String!
   mediaRefs: [CalendarMediaRefType!]!
-  sourceRef: CalendarSourceRefType
 }
 
 """Input for attaching a media-library file to an entry."""
@@ -86,20 +85,6 @@ input CalendarMediaRefInput {
 type CalendarMediaRefType {
   kind: String!
   name: String!
-}
-
-"""Input for linking a calendar entry to a product entity."""
-input CalendarSourceRefInput {
-  type: String!
-  workflowId: String!
-  itemId: String!
-}
-
-"""Optional link from a calendar entry back to a product entity."""
-type CalendarSourceRefType {
-  type: String!
-  workflowId: String!
-  itemId: String!
 }
 
 type CampaignBriefSignalCapabilitiesType {
@@ -620,7 +605,7 @@ type Mutation {
   createCrmEnrollmentToken(appId: Int!): CrmEnrollmentTokenCreatedType!
 
   """Create a manual calendar entry for a location."""
-  createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null, sourceRef: CalendarSourceRefInput = null): CalendarEntryType!
+  createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null): CalendarEntryType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
@@ -668,7 +653,7 @@ type Mutation {
   revokeCrmDevice(deviceId: UUID!): CrmDeviceType!
 
   """Update a manual calendar entry."""
-  updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!], sourceRef: CalendarSourceRefInput): CalendarEntryType!
+  updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!]): CalendarEntryType!
 
   """Update a CRM app by id."""
   updateCrmApp(id: Int!, title: String!, cashbackThresholdAmount: Int = null, cashbackPercent: Int = null): CrmAppType!
@@ -989,7 +974,7 @@ type Query {
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
 
   """
-  Aggregate scheduler milestone slots and manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no scheduler milestones or manual entries.
+  Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries.
   """
   schedulerCalendar(locationId: Int!): SchedulerCalendarPayload!
   operatingProfile(locationId: ID!, analyticsRunId: ID!): OperatingProfileType
@@ -1052,7 +1037,7 @@ type SchedulerCalendarHolidayType {
 }
 
 """
-Location-scoped calendar: union of all scheduler milestone windows, flattened slots, manual calendar entries, and deduped public holidays.
+Location-scoped calendar of manual calendar entries. Public holidays are not populated by this query.
 """
 type SchedulerCalendarPayload {
   windowStart: String
@@ -1071,7 +1056,6 @@ type SchedulerCalendarSlotType {
   description: String
   mediaRefs: [CalendarMediaRefType!]
   source: String
-  sourceRef: CalendarSourceRefType
 }
 
 type SignalConfidenceType {

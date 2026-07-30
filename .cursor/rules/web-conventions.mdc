@@ -17,16 +17,16 @@ Use **route groups** to separate concerns:
 
 | Group | Path | Notes |
 |---|---|---|
-| `(protected)` | `/analytics/*`, `/workflow/*`, `/canvas/*`, `/content/*`, `/agent/*`, `/dashboard`, `/staff`, `/usage`, `/profile/*`, … | Shared layout: sidebar + context providers; `auth()` guard — see `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts` |
+| `(protected)` | `/advisor` (chat home), `/analytics/*`, `/calendar`, `/ig-studio/*`, `/media`, `/content/*`, `/crm/*`, `/dashboard`, `/staff`, `/usage`, `/profile/*`, … | Shared layout: sidebar + context providers; `auth()` guard — see `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts` |
 | `(standalone)` | `/login`, `/sign-up`, `/sso-callback` | No sidebar; Clerk-branded pages |
 | `app/api/` | `/api/**` | BFF route handlers — call `graphqlQuery` with Clerk user id |
 
-Feature-specific client components live **next to their route** under `app/(protected)/<feature>/_components/`, not centrally in `components/`.
+Chat home public URL is **`/advisor`** (`routes.agent`); App Router pages live under `app/(protected)/agent/` via rewrite. Legacy `/workflow` redirects to `/advisor`. Shared chat UI lives in `components/chat/`. Other feature-specific client components live **next to their route** under `app/(protected)/<feature>/_components/`.
 
 ## Auth
 
 - **Clerk** (`@clerk/nextjs`) — do not introduce custom sessions or cookie-based auth.
-- **Middleware** (`middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects app shell routes (aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts`, plus `/agent`). Uses `routes.ts` for URL constants.
+- **Middleware** (`middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects app shell routes (aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts`, plus `/advisor` / `/agent`). Uses `routes.ts` for URL constants.
 - **Server layouts/pages**: `auth()` from `@clerk/nextjs/server`; redirect if no `userId`. Protected layout does this as defense-in-depth after middleware.
 - **Client components**: `useAuth`, `UserButton`, `SignInButton` from `@clerk/nextjs`.
 - Clerk config: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for the client; sign-in/up URLs in `lib/routes.ts`; optional `getClerkSecretKey()` in `lib/clerk-env.ts` for server tooling.

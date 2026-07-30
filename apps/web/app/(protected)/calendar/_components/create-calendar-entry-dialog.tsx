@@ -39,7 +39,6 @@ import {
   deleteCalendarEntry,
   updateCalendarEntry,
   type CalendarMediaRef,
-  type CalendarSourceRef,
 } from '@/lib/calendar/client-api'
 import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 import { useCloseLabel } from '@/hooks/use-close-label'
@@ -53,7 +52,6 @@ export type CalendarEntryDialogValues = {
   dateIso: string
   time: string
   mediaRefs: CalendarMediaRef[]
-  sourceRef?: CalendarSourceRef | null
 }
 
 type CalendarEntryDialogProps = {
@@ -168,7 +166,6 @@ export function CalendarEntryDialog({
           date: dateIso,
           time: timeClean,
           mediaRefs,
-          ...(initial.sourceRef ? { sourceRef: initial.sourceRef } : {}),
         })
         toast.success(t('updateSuccessToast'))
       } else {
@@ -179,7 +176,6 @@ export function CalendarEntryDialog({
           date: dateIso,
           time: timeClean,
           mediaRefs,
-          ...(initial.sourceRef ? { sourceRef: initial.sourceRef } : {}),
         })
         toast.success(t('successToast'))
       }

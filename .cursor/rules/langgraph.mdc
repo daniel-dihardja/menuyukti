@@ -10,7 +10,7 @@ Use this together with **`.cursor/rules/agents-conventions.mdc`** (factories, `S
 
 Define one responsibility per node. Extract reusable pieces as **subgraphs** only when it clarifies reuse (avoid deep nesting without reason). Prefer **DAGs**; add cycles only for explicit feedback loops.
 
-**Use `START` / `END`** with `StateGraph` — match the style in `agents/core/milestone_eval/graph.py`:
+**Use `START` / `END`** with `StateGraph` when building custom graphs. For product chat, prefer the existing factory in `agents/core/chat/graph.py` (`create_agent` + checkpointer) rather than inventing a parallel topology:
 
 ```python
 from langgraph.graph import END, START, StateGraph
@@ -36,7 +36,7 @@ Expose graphs via **`build_*_graph(...)`** factories that return **`compile()`**
 ## 3. State shape and reducers
 
 - Use **`TypedDict`** (or Pydantic where the team standardises on it) for graph state.
-- Use **`Annotated[..., operator.add]`** (or another reducer) when multiple nodes append to the same list (e.g. parallel criterion eval).
+- Use **`Annotated[..., operator.add]`** (or another reducer) when multiple nodes append to the same list (e.g. parallel fan-out workers).
 - Keep state **serialisable** if you use **checkpointers** (see below).
 
 ## 4. Parallel fan-out with `Send`

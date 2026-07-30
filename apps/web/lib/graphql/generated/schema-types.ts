@@ -102,7 +102,6 @@ export type CalendarEntryType = {
   id: Scalars['Int']['output']
   locationId: Scalars['Int']['output']
   mediaRefs: Array<CalendarMediaRefType>
-  sourceRef?: Maybe<CalendarSourceRefType>
   time: Scalars['String']['output']
   title: Scalars['String']['output']
 }
@@ -118,21 +117,6 @@ export type CalendarMediaRefType = {
   __typename?: 'CalendarMediaRefType'
   kind: Scalars['String']['output']
   name: Scalars['String']['output']
-}
-
-/** Input for linking a calendar entry to a product entity. */
-export type CalendarSourceRefInput = {
-  itemId: Scalars['String']['input']
-  type: Scalars['String']['input']
-  workflowId: Scalars['String']['input']
-}
-
-/** Optional link from a calendar entry back to a product entity. */
-export type CalendarSourceRefType = {
-  __typename?: 'CalendarSourceRefType'
-  itemId: Scalars['String']['output']
-  type: Scalars['String']['output']
-  workflowId: Scalars['String']['output']
 }
 
 export type CampaignBriefSignalCapabilitiesType = {
@@ -708,7 +692,6 @@ export type MutationCreateCalendarEntryArgs = {
   description?: InputMaybe<Scalars['String']['input']>
   locationId: Scalars['Int']['input']
   mediaRefs?: InputMaybe<Array<CalendarMediaRefInput>>
-  sourceRef?: InputMaybe<CalendarSourceRefInput>
   time: Scalars['String']['input']
   title: Scalars['String']['input']
 }
@@ -885,7 +868,6 @@ export type MutationUpdateCalendarEntryArgs = {
   description?: InputMaybe<Scalars['String']['input']>
   id: Scalars['Int']['input']
   mediaRefs?: InputMaybe<Array<CalendarMediaRefInput>>
-  sourceRef?: InputMaybe<CalendarSourceRefInput>
   time?: InputMaybe<Scalars['String']['input']>
   title?: InputMaybe<Scalars['String']['input']>
 }
@@ -1230,7 +1212,7 @@ export type Query = {
   publicHolidays: Array<PublicHolidayType>
   /** Compare per-menu revenue for an analytics run against the previous run for the same location (or an explicit previousRunId). Returns null when the current run has no order lines. */
   revenueTrends?: Maybe<RevenueTrendsPayloadType>
-  /** Aggregate scheduler milestone slots and manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no scheduler milestones or manual entries. */
+  /** Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries. */
   schedulerCalendar: SchedulerCalendarPayload
   /** Rank menu promotion candidates per venue slot (day × meal_period). Combines slot demand profile, per-slot order-line sales, and global menu engineering classification. Returns null when the run has no order facts. When COGS are missing, matrixAvailable is false and candidates are ranked by slot sales only. When locationId is set, the run must belong to that location (otherwise returns null). */
   slotMenuCandidates?: Maybe<SlotMenuCandidatesType>
@@ -1483,7 +1465,7 @@ export type SchedulerCalendarHolidayType = {
   name: Scalars['String']['output']
 }
 
-/** Location-scoped calendar: union of all scheduler milestone windows, flattened slots, manual calendar entries, and deduped public holidays. */
+/** Location-scoped calendar of manual calendar entries. Public holidays are not populated by this query. */
 export type SchedulerCalendarPayload = {
   __typename?: 'SchedulerCalendarPayload'
   publicHolidays: Array<SchedulerCalendarHolidayType>
@@ -1501,7 +1483,6 @@ export type SchedulerCalendarSlotType = {
   kind?: Maybe<Scalars['String']['output']>
   mediaRefs?: Maybe<Array<CalendarMediaRefType>>
   source?: Maybe<Scalars['String']['output']>
-  sourceRef?: Maybe<CalendarSourceRefType>
   time: Scalars['String']['output']
   title: Scalars['String']['output']
 }

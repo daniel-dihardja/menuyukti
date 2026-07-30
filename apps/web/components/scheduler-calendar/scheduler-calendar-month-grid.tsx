@@ -7,7 +7,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 import type { SchedulerSlot } from '@/lib/calendar/scheduler-calendar'
-import type { CampaignWindowPublicHoliday } from '@/lib/calendar/types'
+import type { CalendarPublicHoliday } from '@/lib/calendar/types'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
@@ -30,7 +30,7 @@ export type SchedulerCalendarMonthGridProps = {
   windowEnd: string
   locale: string
   slots?: SchedulerSlot[]
-  publicHolidays?: CampaignWindowPublicHoliday[]
+  publicHolidays?: CalendarPublicHoliday[]
   className?: string
   onDayClick?: (isoDate: string) => void
   onSlotClick?: (slot: SchedulerSlot) => void

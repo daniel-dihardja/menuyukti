@@ -68,7 +68,7 @@ export const routes = {
     igStories: '/content/igstories',
   },
 
-  /** Owner-facing schedule aggregated from scheduler milestones. */
+  /** Owner-facing schedule (manual calendar entries). */
   calendar: '/calendar',
   calendarWithLocation: (locationId: string | number) =>
     `/calendar?locationId=${encodeURIComponent(String(locationId))}`,

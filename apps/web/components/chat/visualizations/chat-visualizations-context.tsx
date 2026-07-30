@@ -22,7 +22,7 @@ export function ChatVisualizationsProvider({
   analyticsRunId,
   children,
 }: {
-  /** Persistence key (agentThreadId or legacy workflowId). */
+  /** Persistence key (`agentThreadId`). */
   storageKeyId: string
   locationId: number
   analyticsRunId: number | null

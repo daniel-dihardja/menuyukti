@@ -19,23 +19,22 @@ alwaysApply: false
 agents/
   graphql_base.py   # Shared GraphQL HTTP helpers (httpx + auth headers)
   core/
-    chat/
-    milestone_eval/   # Criterion loop + synthesis; invoked from milestone_run only
-    milestone_data/   # GraphQL upsert for milestonedata (structured JSON / legacy text)
-    milestone_run/      # Outer graph: fetch → preset subgraph (by presetId) → eval
-      presets/registry.py   # PRESET_RUNNERS dispatch table
-      <preset>/graph.py     # Dedicated StateGraph per preset
-      tools/                # Legacy LangChain tools (tests); presets use nodes + GraphQL
-      graph.py, stream.py, state.py, graphql_client.py
+    chat/             # ReAct chat graph (primary product surface)
+    format_markdown/  # POST /format-markdown helper
+    style_spec/       # IG Studio style draft helpers
+    llm_invoke.py
 models/
   llm_config.py
 routers/
+  chat.py
+  format_markdown.py
+  style_specs.py
 server.py
 tests/
   core/
 ```
 
-**Convention:** add a new **milestone preset** as `agents/core/milestone_run/<preset_id>/` (`graph.py`, `nodes.py`, `state.py`, `prompts.py`) and register the runner in `presets/registry.py` via `register_preset_runner` (wired from `graph.py`). Set `milestone.data.presetId` in GraphQL. **Milestone data persistence** uses `milestone_data` upsert from preset `persist_result` nodes.
+**Convention:** product work belongs in **`agents/core/chat/`** (`graph.py`, `tools.py`, `prompts.py`, mode-gated tools). Expose HTTP via thin routers that call `build_chat_graph(...)`. Do **not** add milestone-run / preset-registry layout as live product.
 
 ## Graph factory pattern
 
@@ -43,22 +42,18 @@ Compile graphs in a `build_*_graph(...)` factory function — do not import comp
 
 ```python
 # agents/core/chat/graph.py
-def build_chat_graph(*, workflow_id=None, milestone_id=None):
-    builder = StateGraph(MessagesState)
-    builder.add_node("chat", chat_node)
-    builder.add_edge(START, "chat")
-    builder.add_edge("chat", END)
-    return builder.compile()
+def build_chat_graph(*, checkpointer: BaseCheckpointSaver | None = None):
+    return create_agent(...)  # ReAct + tools; see chat/graph.py
 
 # routers/chat.py — thin; never embeds graph topology
-graph = build_chat_graph(workflow_id=..., milestone_id=...)
+graph = build_chat_graph(checkpointer=...)
 ```
 
 ## State design
 
 | Use case | State type | Notes |
 |---|---|---|
-| Simple chat | `MessagesState` | Built-in LangGraph message list; no checkpointer needed for stateless SSE |
+| Chat | `ChatAgentState` / MessagesState | Checkpointer keyed by `agent_thread_id` for durable history |
 | Parallel fan-out (Send) | `TypedDict` + `Annotated[list[...], operator.add]` reducer | Merge worker outputs back into the parent state |
 
 ```python
@@ -66,10 +61,9 @@ graph = build_chat_graph(workflow_id=..., milestone_id=...)
 import operator
 from typing import Annotated, TypedDict
 
-class MilestoneEvalState(TypedDict):
-    milestone_id: str
-    evaluated: Annotated[list[CriterionEval], operator.add]
-    ...
+class FanOutState(TypedDict):
+    items: list[str]
+    results: Annotated[list[dict], operator.add]
 ```
 
 ## Fan-out with Send
@@ -77,15 +71,14 @@ class MilestoneEvalState(TypedDict):
 Use `Send` for parallel node execution; route via a conditional edge function that returns a list of `Send` objects or a fallback node name.
 
 ```python
-def route_after_fetch(state) -> list[Send] | Literal["update_criteria"]:
-    criteria = state.get("criteria") or []
-    if not criteria:
-        return "update_criteria"
-    return [Send("evaluate_criterion", {"criterion_id": c["id"], ...}) for c in criteria]
+def route_after_fetch(state) -> list[Send] | Literal["finalize"]:
+    items = state.get("items") or []
+    if not items:
+        return "finalize"
+    return [Send("work_item", {"item": item}) for item in items]
 
-builder.add_conditional_edges("fetch_context", route_after_fetch, ["evaluate_criterion", "update_criteria"])
-builder.add_edge("evaluate_criterion", "update_criteria")
-builder.add_edge("update_criteria", "synthesize")
+builder.add_conditional_edges("fetch", route_after_fetch, ["work_item", "finalize"])
+builder.add_edge("work_item", "finalize")
 ```
 
 ## Streaming patterns
@@ -132,7 +125,7 @@ verdict: CriterionVerdict = await llm.ainvoke([...])
 
 ## External data
 
-Agents call the GraphQL API over HTTP (`GRAPHQL_ENDPOINT`) via dedicated `graphql_client.py` helpers — never import `data_sources` or open a DB session from the agents app.
+Agents call the GraphQL API over HTTP (`GRAPHQL_ENDPOINT`) via dedicated helpers — never import `data_sources` or open a DB session from the agents app.
 
 Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL calls use **`graphql_headers()`** in `agents/graphql_base.py`: **`X-User-Id`**, plus **`X-Internal-Api-Key`** when `GRAPHQL_INTERNAL_API_KEY` is set (same header names as the web app’s `graphqlQuery`).
 
@@ -150,8 +143,9 @@ Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL calls use **`graphq
 | `AI_GATEWAY_API_KEY` | Yes (unless `VERCEL_OIDC_TOKEN`) | LLM calls via Vercel AI Gateway |
 | `VERCEL_OIDC_TOKEN` | No | On Vercel; alternative to `AI_GATEWAY_API_KEY` |
 | `OPENAI_MODEL` | No | Override model (`gpt-4o-mini` → `openai/gpt-4o-mini`, or full `provider/model`) |
-| `GRAPHQL_ENDPOINT` | Yes (for non-chat flows) | GraphQL API base URL |
+| `GRAPHQL_ENDPOINT` | Yes (for tools that call GraphQL) | GraphQL API base URL |
 | `GRAPHQL_INTERNAL_API_KEY` | No | Server-to-server auth header |
+| `LANGGRAPH_CHECKPOINT_DATABASE_URL` | No | Durable Postgres checkpoints for chat threads |
 
 Load with `load_dotenv()` at server startup (`server.py`); `.env.example` documents all variables.
 

@@ -12,9 +12,9 @@ import { cn } from '@workspace/ui/lib/utils'
 import { SchedulerCalendarMonthGrid } from '@/components/scheduler-calendar/scheduler-calendar-month-grid'
 import { SchedulerCalendarMonthList } from '@/components/scheduler-calendar/scheduler-calendar-month-list'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
-import type { CalendarMediaRef, CalendarSourceRef } from '@/lib/calendar/client-api'
+import type { CalendarMediaRef } from '@/lib/calendar/client-api'
 import type { CalendarDisplaySlot } from '@/lib/graphql/queries/scheduler-calendar'
-import type { CampaignWindowPublicHoliday } from '@/lib/calendar/types'
+import type { CalendarPublicHoliday } from '@/lib/calendar/types'
 import {
   addDays,
   formatSchedulerMonthLabel,
@@ -23,6 +23,7 @@ import {
   previousMonthStartIso,
   startOfMonth,
   startOfWeekMonday,
+  type SchedulerSlot,
 } from '@/lib/calendar/scheduler-calendar'
 import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 
@@ -32,7 +33,7 @@ export type WorkspaceCalendarProps = {
   locale: string
   locationId: number | null
   slots?: CalendarDisplaySlot[]
-  publicHolidays?: CampaignWindowPublicHoliday[]
+  publicHolidays?: CalendarPublicHoliday[]
   className?: string
 }
 
@@ -68,25 +69,11 @@ function createDraftValues(dateIso: string): CalendarEntryDialogValues {
     dateIso,
     time: defaultTime(),
     mediaRefs: [],
-    sourceRef: null,
   }
 }
 
-function slotToEditValues(
-  slot:
-    | CalendarDisplaySlot
-    | {
-        id?: string | null
-        title: string
-        description?: string | null
-        date: string
-        time: string
-        mediaRefs?: Array<{ kind: string; name: string }> | null
-        source?: string | null
-        sourceRef?: CalendarSourceRef | null
-      },
-): CalendarEntryDialogValues | null {
-  if (slot.source !== 'manual' || !slot.id) {
+function slotToEditValues(slot: SchedulerSlot): CalendarEntryDialogValues | null {
+  if (!slot.id) {
     return null
   }
   const id = Number(slot.id)
@@ -100,17 +87,6 @@ function slotToEditValues(
     }
   }
 
-  const sourceRef =
-    slot.sourceRef?.type === 'instagram_item' &&
-    slot.sourceRef.workflowId.trim() &&
-    slot.sourceRef.itemId.trim()
-      ? {
-          type: 'instagram_item' as const,
-          workflowId: slot.sourceRef.workflowId,
-          itemId: slot.sourceRef.itemId,
-        }
-      : null
-
   return {
     id,
     title: slot.title,
@@ -118,7 +94,6 @@ function slotToEditValues(
     dateIso: slot.date,
     time: slot.time,
     mediaRefs,
-    sourceRef,
   }
 }
 
@@ -158,10 +133,10 @@ export function WorkspaceCalendar({
     }
   }
 
-  const handleSlotClick = (slot: Parameters<typeof slotToEditValues>[0]) => {
+  const handleSlotClick = (slot: SchedulerSlot) => {
     const values = slotToEditValues(slot)
     if (!values) {
-      toast.message(tEntry('workflowSlotReadonly'))
+      toast.message(tEntry('slotNotEditable'))
       return
     }
     if (canCreate) {

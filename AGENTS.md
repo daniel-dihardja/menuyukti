@@ -15,13 +15,13 @@ This file helps AI coding agents (Cursor, Claude Code, Codex, etc.) run the righ
 
 Persistent Cursor guidance lives in **`.cursor/rules/*.mdc`**.
 
-Menuyukti-specific agent workflows live under **`.agents/skills/menuyukti-*/`**: [`menuyukti-repo-orientation`](.agents/skills/menuyukti-repo-orientation/SKILL.md) (monorepo map and cross-app flows), [`menuyukti-agents`](.agents/skills/menuyukti-agents/SKILL.md) (`apps/agents`, LangGraph milestone run), [`menuyukti-graphql`](.agents/skills/menuyukti-graphql/SKILL.md) (`apps/graphql`, schema, Alembic), [`menuyukti-web`](.agents/skills/menuyukti-web/SKILL.md) (`apps/web`, milestones, next-intl), [`menuyukti-mobile`](.agents/skills/menuyukti-mobile/SKILL.md) (`apps/mobile-app`, Expo CRM enroll / navigation), [`menuyukti-analytics`](.agents/skills/menuyukti-analytics/SKILL.md) (`packages/menuyukti` pipelines and Instagram signals).
+Menuyukti-specific agent workflows live under **`.agents/skills/menuyukti-*/`**: [`menuyukti-repo-orientation`](.agents/skills/menuyukti-repo-orientation/SKILL.md) (monorepo map and cross-app flows), [`menuyukti-agents`](.agents/skills/menuyukti-agents/SKILL.md) (`apps/agents`, streaming chat), [`menuyukti-graphql`](.agents/skills/menuyukti-graphql/SKILL.md) (`apps/graphql`, schema, Alembic), [`menuyukti-web`](.agents/skills/menuyukti-web/SKILL.md) (`apps/web`, `/advisor` chat, next-intl), [`menuyukti-mobile`](.agents/skills/menuyukti-mobile/SKILL.md) (`apps/mobile-app`, Expo CRM enroll / navigation), [`menuyukti-analytics`](.agents/skills/menuyukti-analytics/SKILL.md) (`packages/menuyukti` pipelines and Instagram signals).
 
 Mobile companion skills (Expo / RN) live alongside them: `expo-native-ui`, `expo-data-fetching`, `expo-upgrade`, `expo-examples`, `expo-dev-client`, `eas-app-stores`, `eas-workflows`, `react-native-best-practices`, `react-navigation` — see [`menuyukti-mobile`](.agents/skills/menuyukti-mobile/SKILL.md).
 
 ## Feature glossary
 
-When the user mentions a **named product feature** (e.g. workflow presets), map it to code using [`.agents/menuyukti-features.md`](.agents/menuyukti-features.md). The Cursor rule **menuyukti-features** (`.cursor/rules/menuyukti-features.mdc`) summarizes the same and points there for the full table.
+When the user mentions a **named product feature** (e.g. chat modes, style packs), map it to code using [`.agents/menuyukti-features.md`](.agents/menuyukti-features.md). The Cursor rule **menuyukti-features** (`.cursor/rules/menuyukti-features.mdc`) summarizes the same and points there for the full table.
 
 ## Environment and secrets
 

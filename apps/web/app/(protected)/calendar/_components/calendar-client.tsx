@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import type { CalendarDisplaySlot } from '@/lib/graphql/queries/scheduler-calendar'
-import type { CampaignWindowPublicHoliday } from '@/lib/calendar/types'
+import type { CalendarPublicHoliday } from '@/lib/calendar/types'
 import { routes } from '@/lib/routes'
 
 import { WorkspaceCalendar } from './workspace-calendar'
@@ -21,7 +21,7 @@ type Props = {
   branches: Branch[]
   initialLocationId: number | null
   slots?: CalendarDisplaySlot[]
-  publicHolidays?: CampaignWindowPublicHoliday[]
+  publicHolidays?: CalendarPublicHoliday[]
 }
 
 export function CalendarClient({

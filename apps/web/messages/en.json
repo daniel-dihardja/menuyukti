@@ -966,7 +966,7 @@
         "successToast": "Calendar entry created",
         "updateSuccessToast": "Calendar entry updated",
         "errorToast": "Could not save calendar entry",
-        "workflowSlotReadonly": "Workflow schedule slots can’t be edited here.",
+        "slotNotEditable": "This calendar slot can’t be edited.",
         "discardTitle": "Discard entry?",
         "discardDescription": "You have unsaved changes. Close without saving?",
         "discardKeepEditing": "Keep editing",

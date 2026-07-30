@@ -10,7 +10,7 @@ export const SCHEDULER_HAPPY_HOLIDAY_STORY_TIME = '10:00'
 
 export type SchedulerSlotKind = 'story' | 'post' | 'reel'
 
-/** Slot shape for calendar grids (workflow milestone slots and manual entries). */
+/** Slot shape for calendar grids (manual calendar entries). */
 export type SchedulerSlot = {
   kind?: SchedulerSlotKind | null
   date: string

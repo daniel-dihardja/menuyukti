@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
-import type { CampaignWindowPublicHoliday } from '@/lib/calendar/types'
+import type { CalendarPublicHoliday } from '@/lib/calendar/types'
 import type { SchedulerSlot } from '@/lib/calendar/scheduler-calendar'
 import {
   buildSchedulerMonth,
@@ -28,7 +28,7 @@ export type SchedulerCalendarMonthListProps = {
   windowEnd: string
   locale: string
   slots?: SchedulerSlot[]
-  publicHolidays?: CampaignWindowPublicHoliday[]
+  publicHolidays?: CalendarPublicHoliday[]
   className?: string
   onDayClick?: (isoDate: string) => void
   onSlotClick?: (slot: SchedulerSlot) => void

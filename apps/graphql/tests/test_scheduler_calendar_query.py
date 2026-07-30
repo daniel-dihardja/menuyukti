@@ -1,6 +1,7 @@
 import asyncio
 
 from graphql.data_sources import Location, Node, SessionLocal
+from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
@@ -31,12 +32,33 @@ query SchedulerCalendar($locationId: Int!) {
 }
 """
 
+CREATE_CALENDAR_ENTRY = """
+mutation CreateCalendarEntry(
+  $locationId: Int!
+  $title: String!
+  $date: String!
+  $time: String!
+  $description: String
+) {
+  createCalendarEntry(
+    locationId: $locationId
+    title: $title
+    date: $date
+    time: $time
+    description: $description
+  ) {
+    id
+    title
+    date
+    time
+  }
+}
+"""
+
 
 def _create_location(name: str) -> int:
     session = SessionLocal()
     try:
-        from graphql.data_sources.models.calendar_entry import CalendarEntry
-
         session.query(CalendarEntry).delete()
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
@@ -49,77 +71,6 @@ def _create_location(name: str) -> int:
         return location.id
     finally:
         session.close()
-
-
-def _create_workflow(location_id: int, name: str) -> str:
-    """Insert a legacy workflow root via ORM (createNode rejects nodeType workflow)."""
-    session = SessionLocal()
-    try:
-        row = Node(
-            parent_id=None,
-            name=name,
-            description=None,
-            path="",
-            node_type="workflow",
-            location_id=location_id,
-            data=None,
-        )
-        session.add(row)
-        session.flush()
-        row.path = f"/{row.id}"
-        session.commit()
-        session.refresh(row)
-        return str(row.id)
-    finally:
-        session.close()
-
-
-def _insert_milestone(
-    *,
-    location_id: int,
-    workflow_id: str,
-    name: str,
-    data: dict | None = None,
-    milestone_preset_data: dict | None = None,
-) -> int:
-    session = SessionLocal()
-    try:
-        parent = session.get(Node, int(workflow_id))
-        assert parent is not None
-        row = Node(
-            parent_id=int(workflow_id),
-            name=name,
-            description=None,
-            path="",
-            node_type="milestone",
-            location_id=location_id,
-            data=data,
-            milestone_preset_data=milestone_preset_data,
-        )
-        session.add(row)
-        session.flush()
-        row.path = f"{parent.path.rstrip('/')}/{row.id}"
-        session.commit()
-        session.refresh(row)
-        return row.id
-    finally:
-        session.close()
-
-
-def _create_scheduler_milestone(
-    *,
-    location_id: int,
-    workflow_id: str,
-    name: str,
-    preset_data: dict,
-) -> int:
-    return _insert_milestone(
-        location_id=location_id,
-        workflow_id=workflow_id,
-        name=name,
-        data={"presetId": "scheduler"},
-        milestone_preset_data=preset_data,
-    )
 
 
 def test_scheduler_calendar_empty_for_unauthenticated():
@@ -139,20 +90,8 @@ def test_scheduler_calendar_empty_for_unauthenticated():
     assert payload["publicHolidays"] == []
 
 
-def test_scheduler_calendar_empty_when_no_scheduler_milestones():
+def test_scheduler_calendar_empty_when_no_entries():
     location_id = _create_location("Calendar Empty Location")
-    workflow_id = _create_workflow(location_id, "Campaign")
-    _insert_milestone(
-        location_id=location_id,
-        workflow_id=workflow_id,
-        name="Dates",
-        data={"presetId": "dates"},
-        milestone_preset_data={
-            "startDate": "2026-07-01",
-            "endDate": "2026-07-31",
-            "publicHolidays": [],
-        },
-    )
 
     result = asyncio.run(
         schema.execute(
@@ -166,59 +105,40 @@ def test_scheduler_calendar_empty_when_no_scheduler_milestones():
     assert payload["windowStart"] is None
     assert payload["windowEnd"] is None
     assert payload["slots"] == []
+    assert payload["publicHolidays"] == []
 
 
-def test_scheduler_calendar_unions_windows_and_flattens_slots():
-    location_id = _create_location("Calendar Aggregate Location")
-    wf_a = _create_workflow(location_id, "Campaign A")
-    wf_b = _create_workflow(location_id, "Campaign B")
+def test_scheduler_calendar_returns_manual_entries_window():
+    location_id = _create_location("Calendar Manual Location")
 
-    _create_scheduler_milestone(
-        location_id=location_id,
-        workflow_id=wf_a,
-        name="Scheduler A",
-        preset_data={
-            "startDate": "2026-07-01",
-            "endDate": "2026-07-15",
-            "publicHolidays": [
-                {"name": "Holiday A", "description": "A", "date": "2026-07-04"},
-            ],
-            "slots": [
-                {
-                    "kind": "post",
-                    "date": "2026-07-02",
-                    "time": "11:00",
-                    "title": "Post: Lunch special",
-                },
-            ],
-        },
+    first = asyncio.run(
+        schema.execute(
+            CREATE_CALENDAR_ENTRY,
+            variable_values={
+                "locationId": location_id,
+                "title": "Lunch special",
+                "date": "2026-07-02",
+                "time": "11:00",
+            },
+            context_value=graphql_auth_context(),
+        )
     )
-    _create_scheduler_milestone(
-        location_id=location_id,
-        workflow_id=wf_b,
-        name="Scheduler B",
-        preset_data={
-            "startDate": "2026-07-10",
-            "endDate": "2026-07-31",
-            "publicHolidays": [
-                {"name": "Holiday A", "description": "A", "date": "2026-07-04"},
-                {"name": "Holiday B", "description": "B", "date": "2026-07-20"},
-            ],
-            "slots": [
-                {
-                    "kind": "reel",
-                    "date": "2026-07-12",
-                    "time": "18:00",
-                    "title": "Reel: Weekend buzz",
-                },
-                {
-                    "date": "2026-07-13",
-                    "time": "09:00",
-                    "title": "Story: Morning open",
-                },
-            ],
-        },
+    assert not first.errors, first.errors
+
+    second = asyncio.run(
+        schema.execute(
+            CREATE_CALENDAR_ENTRY,
+            variable_values={
+                "locationId": location_id,
+                "title": "Weekend buzz",
+                "date": "2026-07-12",
+                "time": "18:00",
+                "description": "Reel plan",
+            },
+            context_value=graphql_auth_context(),
+        )
     )
+    assert not second.errors, second.errors
 
     result = asyncio.run(
         schema.execute(
@@ -229,22 +149,19 @@ def test_scheduler_calendar_unions_windows_and_flattens_slots():
     )
     assert not result.errors, result.errors
     payload = result.data["schedulerCalendar"]
-    assert payload["windowStart"] == "2026-07-01"
-    assert payload["windowEnd"] == "2026-07-31"
-    assert len(payload["publicHolidays"]) == 2
-    assert {h["name"] for h in payload["publicHolidays"]} == {"Holiday A", "Holiday B"}
-    assert len(payload["slots"]) == 3
+    assert payload["windowStart"] == "2026-07-02"
+    assert payload["windowEnd"] == "2026-07-12"
+    assert payload["publicHolidays"] == []
+    assert len(payload["slots"]) == 2
     titles = {s["title"] for s in payload["slots"]}
-    assert titles == {
-        "Post: Lunch special",
-        "Reel: Weekend buzz",
-        "Story: Morning open",
-    }
+    assert titles == {"Lunch special", "Weekend buzz"}
+    assert all(s["source"] == "manual" for s in payload["slots"])
 
 
 def test_scheduler_calendar_empty_for_other_user_location():
     session = SessionLocal()
     try:
+        session.query(CalendarEntry).delete()
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()

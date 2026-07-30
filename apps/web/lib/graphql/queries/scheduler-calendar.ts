@@ -1,9 +1,9 @@
 import type { SchedulerSlot } from '@/lib/calendar/scheduler-calendar'
-import type { CalendarMediaRef, CalendarSourceRef } from './calendar-entries'
+import type { CalendarMediaRef } from './calendar-entries'
 
-export type { CalendarMediaRef, CalendarSourceRef }
+export type { CalendarMediaRef }
 
-/** Slot shown on the workspace / scheduler calendar (workflow or manual). */
+/** Slot shown on the workspace calendar (manual entries). */
 export type CalendarDisplaySlot = {
   kind?: SchedulerSlot['kind'] | null
   date: string
@@ -12,8 +12,7 @@ export type CalendarDisplaySlot = {
   id?: string | null
   description?: string | null
   mediaRefs?: CalendarMediaRef[] | null
-  source?: 'manual' | 'workflow' | null
-  sourceRef?: CalendarSourceRef | null
+  source?: 'manual' | null
 }
 
 export const SCHEDULER_CALENDAR_QUERY = `
@@ -37,11 +36,6 @@ export const SCHEDULER_CALENDAR_QUERY = `
         mediaRefs {
           kind
           name
-        }
-        sourceRef {
-          type
-          workflowId
-          itemId
         }
       }
     }

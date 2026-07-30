@@ -13,7 +13,6 @@ mutation CreateCalendarEntry(
   $time: String!
   $description: String
   $mediaRefs: [CalendarMediaRefInput!]
-  $sourceRef: CalendarSourceRefInput
 ) {
   createCalendarEntry(
     locationId: $locationId
@@ -22,7 +21,6 @@ mutation CreateCalendarEntry(
     time: $time
     description: $description
     mediaRefs: $mediaRefs
-    sourceRef: $sourceRef
   ) {
     id
     locationId
@@ -33,11 +31,6 @@ mutation CreateCalendarEntry(
     mediaRefs {
       kind
       name
-    }
-    sourceRef {
-      type
-      workflowId
-      itemId
     }
   }
 }
@@ -59,11 +52,6 @@ query SchedulerCalendar($locationId: Int!) {
       mediaRefs {
         kind
         name
-      }
-      sourceRef {
-        type
-        workflowId
-        itemId
       }
     }
   }
@@ -112,58 +100,6 @@ def test_create_calendar_entry():
     assert entry["time"] == "12:30"
     assert entry["locationId"] == location_id
     assert entry["mediaRefs"] == [{"kind": "photo", "name": "agenda.webp"}]
-    assert entry["sourceRef"] is None
-
-
-def test_create_calendar_entry_with_source_ref():
-    location_id = _create_location("Calendar Entry Source Ref")
-    result = asyncio.run(
-        schema.execute(
-            CREATE_CALENDAR_ENTRY,
-            variable_values={
-                "locationId": location_id,
-                "title": "IG post",
-                "date": "2026-08-02",
-                "time": "18:00",
-                "sourceRef": {
-                    "type": "instagram_item",
-                    "workflowId": "42",
-                    "itemId": "99",
-                },
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not result.errors, result.errors
-    entry = result.data["createCalendarEntry"]
-    assert entry["sourceRef"] == {
-        "type": "instagram_item",
-        "workflowId": "42",
-        "itemId": "99",
-    }
-
-
-def test_create_calendar_entry_rejects_invalid_source_type():
-    location_id = _create_location("Calendar Entry Bad Source")
-    result = asyncio.run(
-        schema.execute(
-            CREATE_CALENDAR_ENTRY,
-            variable_values={
-                "locationId": location_id,
-                "title": "Nope",
-                "date": "2026-08-01",
-                "time": "12:00",
-                "sourceRef": {
-                    "type": "unknown",
-                    "workflowId": "1",
-                    "itemId": "2",
-                },
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert result.errors
-    assert "sourceref" in str(result.errors[0]).lower().replace(" ", "")
 
 
 def test_create_calendar_entry_requires_auth():
@@ -215,11 +151,6 @@ def test_scheduler_calendar_includes_manual_entries():
                 "time": "09:00",
                 "description": "Hello",
                 "mediaRefs": [{"kind": "photo", "name": "shot.jpg"}],
-                "sourceRef": {
-                    "type": "instagram_item",
-                    "workflowId": "7",
-                    "itemId": "3",
-                },
             },
             context_value=graphql_auth_context(),
         )
@@ -246,11 +177,6 @@ def test_scheduler_calendar_includes_manual_entries():
     assert slot["source"] == "manual"
     assert slot["kind"] is None
     assert slot["mediaRefs"] == [{"kind": "photo", "name": "shot.jpg"}]
-    assert slot["sourceRef"] == {
-        "type": "instagram_item",
-        "workflowId": "7",
-        "itemId": "3",
-    }
 
 
 UPDATE_CALENDAR_ENTRY = """
@@ -261,7 +187,6 @@ mutation UpdateCalendarEntry(
   $time: String
   $description: String
   $mediaRefs: [CalendarMediaRefInput!]
-  $sourceRef: CalendarSourceRefInput
 ) {
   updateCalendarEntry(
     id: $id
@@ -270,7 +195,6 @@ mutation UpdateCalendarEntry(
     time: $time
     description: $description
     mediaRefs: $mediaRefs
-    sourceRef: $sourceRef
   ) {
     id
     title
@@ -280,11 +204,6 @@ mutation UpdateCalendarEntry(
     mediaRefs {
       kind
       name
-    }
-    sourceRef {
-      type
-      workflowId
-      itemId
     }
   }
 }
@@ -302,11 +221,6 @@ def test_update_calendar_entry():
                 "date": "2026-10-01",
                 "time": "10:00",
                 "description": "Before",
-                "sourceRef": {
-                    "type": "instagram_item",
-                    "workflowId": "1",
-                    "itemId": "2",
-                },
             },
             context_value=graphql_auth_context(),
         )
@@ -323,11 +237,6 @@ def test_update_calendar_entry():
                 "time": "14:30",
                 "description": "After",
                 "mediaRefs": [{"kind": "photo", "name": "note.jpg"}],
-                "sourceRef": {
-                    "type": "instagram_item",
-                    "workflowId": "1",
-                    "itemId": "2",
-                },
             },
             context_value=graphql_auth_context(),
         )
@@ -338,11 +247,6 @@ def test_update_calendar_entry():
     assert entry["time"] == "14:30"
     assert entry["description"] == "After"
     assert entry["mediaRefs"] == [{"kind": "photo", "name": "note.jpg"}]
-    assert entry["sourceRef"] == {
-        "type": "instagram_item",
-        "workflowId": "1",
-        "itemId": "2",
-    }
 
 
 DELETE_CALENDAR_ENTRY = """
