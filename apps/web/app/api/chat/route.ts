@@ -222,14 +222,12 @@ export async function POST(req: Request) {
 
   const {
     messages: rawMessages,
-    workflowId,
     locationId,
     referencedVisualizationId,
     referencedMediaNames,
     referencedPostMediaNames,
     analyticsRunId,
     agentThreadId,
-    workflowChatSessionId,
     chatMode,
     model,
     postId,
@@ -242,10 +240,6 @@ export async function POST(req: Request) {
     storyAssetAction,
   } = parsed.data
   const messages = rawMessages as UIMessage[]
-
-  if (workflowId === undefined && agentThreadId === undefined) {
-    return jsonError('workflowId or agentThreadId is required', 400)
-  }
 
   const actionOnly = storyAssetAction !== undefined && messages.length === 0
 
@@ -313,13 +307,9 @@ export async function POST(req: Request) {
       headers: buildAgentsHeaders(userId),
       body: JSON.stringify({
         messages: pythonMessage !== null ? [pythonMessage] : [],
-        ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),
         ...(analyticsRunId !== undefined ? { analytics_run_id: Number(analyticsRunId) } : {}),
-        ...(agentThreadId !== undefined ? { agent_thread_id: agentThreadId } : {}),
-        ...(workflowChatSessionId !== undefined
-          ? { workflow_chat_session_id: workflowChatSessionId }
-          : {}),
+        agent_thread_id: agentThreadId,
         ...(chatMode !== undefined ? { chat_mode: chatMode } : {}),
         ...(model !== undefined ? { model } : {}),
         ...(postId !== undefined ? { post_id: postId } : {}),

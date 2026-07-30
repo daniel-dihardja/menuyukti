@@ -1,5 +1,5 @@
 import { matchesMediaMentionFilter } from '@/lib/chat/media-mention-collection-browse'
-import { formatMediaMentionLabel } from '@/lib/chat/workflow-chat-media-mention'
+import { formatMediaMentionLabel } from '@/lib/chat/chat-media-mention'
 
 const MENTION_AT_END = /(?:^|\s)@([^\s@]*)$/
 

@@ -2,17 +2,13 @@
  * Node parsing utilities for GraphQL payloads.
  */
 
-import { unknownNodeSchema, workflowNodeSchema, type AnyNode } from './workflow-nodes'
+import { unknownNodeSchema, type AnyNode } from './workflow-nodes'
 
 /**
- * Parse a single node from GraphQL JSON. Tries workflow, then falls back to a generic
- * node so callers can still narrow on `nodeType`.
+ * Parse a single node from GraphQL JSON. Falls back to a generic node shape so
+ * callers can still narrow on `nodeType`.
  */
 export function parseNode(raw: unknown): AnyNode {
-  const w = workflowNodeSchema.safeParse(raw)
-  if (w.success) {
-    return w.data
-  }
   const u = unknownNodeSchema.safeParse(raw)
   if (u.success) {
     return u.data

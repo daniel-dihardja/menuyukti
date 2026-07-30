@@ -6,7 +6,6 @@ import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
@@ -170,9 +169,6 @@ export default async function Page({ params }: PageProps) {
           <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
           </Button>
-          <div className="w-full sm:w-auto [&_a]:w-full [&_button]:w-full sm:[&_a]:w-auto sm:[&_button]:w-auto">
-            <CreateWorkflowFromReportButton analyticsId={analyticsId} />
-          </div>
         </div>
 
         <Suspense fallback={<MenuCombosReportSkeleton />}>

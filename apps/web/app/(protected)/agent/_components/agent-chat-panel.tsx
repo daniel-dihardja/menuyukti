@@ -7,25 +7,22 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
-import { useWorkflowPreviewVisibility } from '@/app/(protected)/workflow/_components/use-workflow-preview-visibility'
-import { useWorkflowChatComposerState } from '@/app/(protected)/workflow/_components/workflow-chat-context'
-import { WorkflowChatLayout } from '@/app/(protected)/workflow/_components/workflow-chat-layout'
-import { WorkflowChatMentionProvider } from '@/app/(protected)/workflow/_components/workflow-chat-mention-context'
-import { WorkflowSidePanel } from '@/app/(protected)/workflow/_components/workflow-side-panel'
-import { WorkflowVisualizationsProvider } from '@/app/(protected)/workflow/_components/workflow-visualizations-context'
-import { WorkflowPreviewPanelSkeleton } from '@/app/(protected)/workflow/_components/workflow-workspace-skeleton'
+import { useChatPreviewVisibility } from '@/components/chat/use-chat-preview-visibility'
+import { useChatComposerState } from '@/components/chat/chat-context'
+import { ChatLayout } from '@/components/chat/chat-layout'
+import { ChatMentionProvider } from '@/components/chat/chat-mention-context'
+import { ChatSidePanel } from '@/components/chat/chat-side-panel'
+import { ChatVisualizationsProvider } from '@/components/chat/visualizations/chat-visualizations-context'
+import { ChatPreviewPanelSkeleton } from '@/components/chat/chat-workspace-skeleton'
 import { routes } from '@/lib/routes'
 
 import { AgentChatHost } from './agent-chat-host'
 
-const WorkflowPreviewPanelBodyLazy = dynamic(
-  () =>
-    import('@/app/(protected)/workflow/_components/workflow-preview-panel-body').then(
-      (m) => m.WorkflowPreviewPanelBody,
-    ),
+const ChatPreviewPanelBodyLazy = dynamic(
+  () => import('@/components/chat/chat-preview-panel-body').then((m) => m.ChatPreviewPanelBody),
   {
     ssr: false,
-    loading: () => <WorkflowPreviewPanelSkeleton className="h-full w-full" />,
+    loading: () => <ChatPreviewPanelSkeleton className="h-full w-full" />,
   },
 )
 
@@ -36,11 +33,11 @@ export type AgentChatPanelProps = {
 }
 
 export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: AgentChatPanelProps) {
-  const t = useTranslations('analytics.workflows.chat')
+  const t = useTranslations('chat')
   const router = useRouter()
   const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
   const [chatBusy, setChatBusy] = useState(false)
-  const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
+  const { previewOpen, setPreviewOpen } = useChatPreviewVisibility()
   const isDesktop = useDesktopLayout()
   const previewPanelRef = usePanelRef()
 
@@ -59,12 +56,12 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
       onBusyChange={setChatBusy}
       onThreadRotated={handleThreadRotated}
     >
-      <WorkflowVisualizationsProvider
+      <ChatVisualizationsProvider
         analyticsRunId={analyticsRunId}
         locationId={locationId}
         storageKeyId={agentThreadId}
       >
-        <WorkflowChatMentionProvider chatBusy={chatBusy}>
+        <ChatMentionProvider chatBusy={chatBusy}>
           <AgentChatPanelLayout
             isDesktop={isDesktop}
             mobileArtifactOpen={mobileArtifactOpen}
@@ -75,8 +72,8 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
             storyArtifactHint={t('storyArtifact.ariaLabel')}
             storyArtifactTitle={t('storyArtifact.ariaLabel')}
           />
-        </WorkflowChatMentionProvider>
-      </WorkflowVisualizationsProvider>
+        </ChatMentionProvider>
+      </ChatVisualizationsProvider>
     </AgentChatHost>
   )
 }
@@ -87,7 +84,7 @@ type AgentChatPanelLayoutProps = {
   onMobileArtifactOpenChange: (open: boolean) => void
   previewOpen: boolean
   previewPanelRef: ReturnType<typeof usePanelRef>
-  setPreviewOpen: ReturnType<typeof useWorkflowPreviewVisibility>['setPreviewOpen']
+  setPreviewOpen: ReturnType<typeof useChatPreviewVisibility>['setPreviewOpen']
   storyArtifactHint: string
   storyArtifactTitle: string
 }
@@ -102,7 +99,7 @@ function AgentChatPanelLayout({
   storyArtifactHint,
   storyArtifactTitle,
 }: AgentChatPanelLayoutProps) {
-  const { chatMode } = useWorkflowChatComposerState()
+  const { chatMode } = useChatComposerState()
   const showPreview = chatMode === 'story_image_assistant'
 
   useEffect(() => {
@@ -118,13 +115,13 @@ function AgentChatPanelLayout({
   }, [showPreview, isDesktop, setPreviewOpen, onMobileArtifactOpenChange])
 
   return (
-    <WorkflowChatLayout
-      chatPane={<WorkflowSidePanel />}
+    <ChatLayout
+      chatPane={<ChatSidePanel />}
       mobileArtifactHint={storyArtifactHint}
       mobileArtifactOpen={mobileArtifactOpen}
       mobileArtifactTitle={storyArtifactTitle}
       onMobileArtifactOpenChange={onMobileArtifactOpenChange}
-      previewPane={showPreview ? <WorkflowPreviewPanelBodyLazy /> : null}
+      previewPane={showPreview ? <ChatPreviewPanelBodyLazy /> : null}
       previewPanelRef={previewPanelRef}
       showPreview={showPreview && previewOpen}
     />

@@ -6,7 +6,7 @@ import { CHAT_MODE_IDS } from '@/lib/chat/chat-modes'
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { POST_IMAGE_FORMAT_IDS, POST_IMAGE_QUALITY_IDS } from '@/lib/posts/leonardo-post-dimensions'
 import { LEONARDO_POST_MODEL_IDS } from '@/lib/posts/leonardo-post-models'
-import { WORKFLOW_VISUALIZATION_ID_VALUES } from '@/lib/workflow/workflow-visualization-ids'
+import { CHAT_VISUALIZATION_ID_VALUES } from '@/lib/chat/visualization-ids'
 
 const messagePartSchema = z
   .object({
@@ -53,23 +53,17 @@ export const chatGenerationReferenceSchema = z.discriminatedUnion('type', [
 
 export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
-  workflowId: z.string().regex(/^\d+$/, 'Invalid workflow id').optional(),
   locationId: z.string().regex(/^\d+$/, 'Invalid location id').optional(),
-  /** When set, the BFF loads this attached visualization and inlines analytics data (requires workflowId + locationId). */
-  referencedVisualizationId: z.enum(WORKFLOW_VISUALIZATION_ID_VALUES).optional(),
-  /** Workflow-linked analytics run; used when loading visualization references. */
+  /** When set, the BFF loads this attached visualization and inlines analytics data (requires locationId). */
+  referencedVisualizationId: z.enum(CHAT_VISUALIZATION_ID_VALUES).optional(),
+  /** Analytics run used when loading visualization references. */
   analyticsRunId: z.string().regex(/^\d+$/, 'Invalid analytics run id').optional(),
   /** Media library filenames to load from S3 and attach as vision inputs (max 4). */
   referencedMediaNames: z.array(mediaFilenameSchema).max(CHAT_MAX_IMAGES).optional(),
   /** Post creator media filenames (`users/<id>/posts/…`) to load as vision inputs (max 4). */
   referencedPostMediaNames: z.array(postMediaFilenameSchema).max(CHAT_MAX_IMAGES).optional(),
-  /** Opaque id for `/agent` chat (no workflow); required by agents when `workflowId` is absent. */
-  agentThreadId: z.string().min(1).optional(),
-  /**
-   * When set with `workflowId`, agents use a distinct LangGraph thread so "clear chat" can start
-   * a fresh checkpoint without changing the workflow id.
-   */
-  workflowChatSessionId: z.string().uuid().optional(),
+  /** Opaque thread id for `/advisor` chat. */
+  agentThreadId: z.string().min(1),
   /** Opt-in chat mode (general vs focused assistants). Agents accept but may ignore until wired. */
   chatMode: z.enum(CHAT_MODE_IDS).optional(),
   /** Vercel AI Gateway model id (provider/model); validated by agents allowlist. */

@@ -36,7 +36,7 @@ import {
   matchesMentionFilter,
   parseMentionAtEnd,
 } from '@/lib/chat/post-creator-chat-mention'
-import { formatMediaMentionLabel } from '@/lib/chat/workflow-chat-media-mention'
+import { formatMediaMentionLabel } from '@/lib/chat/chat-media-mention'
 import {
   listMediaCollections,
   loadMedia,

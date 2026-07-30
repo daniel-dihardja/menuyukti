@@ -7,29 +7,9 @@ import { getPythonAgentsUrl } from '@/lib/config'
 
 const uuidSchema = z.string().uuid()
 
-const getQuerySchema = z.union([
-  z.object({
-    agentThreadId: uuidSchema,
-    workflowId: z.undefined().optional(),
-    workflowChatSessionId: z.undefined().optional(),
-  }),
-  z.object({
-    workflowId: z.string().trim().min(1),
-    workflowChatSessionId: uuidSchema,
-    agentThreadId: z.undefined().optional(),
-  }),
-])
-
-const deleteQuerySchema = z.union([
-  z.object({
-    agentThreadId: uuidSchema,
-    workflowId: z.undefined().optional(),
-  }),
-  z.object({
-    workflowId: z.string().trim().min(1),
-    agentThreadId: z.undefined().optional(),
-  }),
-])
+const agentThreadQuerySchema = z.object({
+  agentThreadId: uuidSchema,
+})
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status })
@@ -59,30 +39,16 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url)
-  const agentThreadIdRaw = url.searchParams.get('agentThreadId')
-  const workflowIdRaw = url.searchParams.get('workflowId')
-  const sessionRaw = url.searchParams.get('workflowChatSessionId')
-
-  const parsed = getQuerySchema.safeParse(
-    agentThreadIdRaw
-      ? { agentThreadId: agentThreadIdRaw }
-      : {
-          workflowId: workflowIdRaw ?? '',
-          workflowChatSessionId: sessionRaw ?? '',
-        },
-  )
+  const parsed = agentThreadQuerySchema.safeParse({
+    agentThreadId: url.searchParams.get('agentThreadId') ?? '',
+  })
   if (!parsed.success) {
     return jsonError('Invalid query parameters', 400)
   }
 
   const baseUrl = getPythonAgentsUrl()
   const agentsUrl = new URL(`${baseUrl}/chat/history`)
-  if ('agentThreadId' in parsed.data && parsed.data.agentThreadId) {
-    agentsUrl.searchParams.set('agent_thread_id', parsed.data.agentThreadId)
-  } else if ('workflowId' in parsed.data && parsed.data.workflowId) {
-    agentsUrl.searchParams.set('workflow_id', parsed.data.workflowId)
-    agentsUrl.searchParams.set('workflow_chat_session_id', parsed.data.workflowChatSessionId)
-  }
+  agentsUrl.searchParams.set('agent_thread_id', parsed.data.agentThreadId)
 
   let agentRes: Response
   try {
@@ -124,7 +90,7 @@ export async function GET(req: Request) {
   }
 }
 
-/** Delete LangGraph chat checkpoints for an agent thread or all sessions of a workflow. */
+/** Delete LangGraph chat checkpoints for an agent thread. */
 export async function DELETE(req: Request) {
   await connection()
   const { isAuthenticated, userId } = await auth()
@@ -133,23 +99,16 @@ export async function DELETE(req: Request) {
   }
 
   const url = new URL(req.url)
-  const agentThreadIdRaw = url.searchParams.get('agentThreadId')
-  const workflowIdRaw = url.searchParams.get('workflowId')
-
-  const parsed = deleteQuerySchema.safeParse(
-    agentThreadIdRaw ? { agentThreadId: agentThreadIdRaw } : { workflowId: workflowIdRaw ?? '' },
-  )
+  const parsed = agentThreadQuerySchema.safeParse({
+    agentThreadId: url.searchParams.get('agentThreadId') ?? '',
+  })
   if (!parsed.success) {
     return jsonError('Invalid query parameters', 400)
   }
 
   const baseUrl = getPythonAgentsUrl()
   const agentsUrl = new URL(`${baseUrl}/chat/history`)
-  if ('agentThreadId' in parsed.data && parsed.data.agentThreadId) {
-    agentsUrl.searchParams.set('agent_thread_id', parsed.data.agentThreadId)
-  } else if ('workflowId' in parsed.data && parsed.data.workflowId) {
-    agentsUrl.searchParams.set('workflow_id', parsed.data.workflowId)
-  }
+  agentsUrl.searchParams.set('agent_thread_id', parsed.data.agentThreadId)
 
   let agentRes: Response
   try {

@@ -1,7 +1,7 @@
 import { buildLiftMatrixRows } from '@/lib/analytics/menu-combos-page-adapter'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
 import type { MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
-import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
+import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
 
 /** Max menu items included in chat summaries (raw hourly arrays are omitted). */
 export const MENU_HEATMAP_CHAT_TOP_N = 25
@@ -209,7 +209,7 @@ function formatMenuHeatmapSummary(payload: MenuHeatmapChatPayload): string {
 }
 
 function formatVisualizationPayload(
-  visualizationId: WorkflowVisualizationId,
+  visualizationId: ChatVisualizationId,
   payload: unknown,
 ): string {
   switch (visualizationId) {
@@ -229,7 +229,7 @@ function formatVisualizationPayload(
 /** Same structure as preset data blocks — human-readable markdown for LLM context. */
 export function formatVisualizationDataMarkdownSection(args: {
   title: string
-  visualizationId: WorkflowVisualizationId
+  visualizationId: ChatVisualizationId
   payload: unknown
   usedFallbackRun?: boolean
 }): string {

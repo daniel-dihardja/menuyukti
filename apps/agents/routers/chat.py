@@ -8,9 +8,6 @@ from typing import Annotated, Any, Literal, Self
 
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
-from agents_app.agents.core.chat.delete_workflow_threads import (
-    adelete_workflow_chat_threads,
-)
 from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.history_messages import (
     langchain_messages_to_ui_messages,
@@ -90,11 +87,9 @@ class ChatRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     messages: list[ChatMessage] = Field(default_factory=list)
-    workflow_id: str | None = None
     location_id: int | None = Field(default=None, ge=1)
     analytics_run_id: int | None = Field(default=None, ge=1)
-    agent_thread_id: str | None = Field(default=None, min_length=1)
-    workflow_chat_session_id: str | None = Field(default=None, min_length=1)
+    agent_thread_id: str = Field(min_length=1)
     chat_mode: Literal["general", "story_image_assistant"] | None = Field(
         default=None,
         description=(
@@ -175,31 +170,20 @@ async def _stream_story_asset_action(
         yield _sse_data_line(structured_error_payload(exc))
 
 
-def _resolve_thread_id(
-    user_id: str | None,
-    workflow_id: str | None,
-    agent_thread_id: str | None,
-    workflow_chat_session_id: str | None,
-) -> str:
+def _resolve_thread_id(user_id: str | None, agent_thread_id: str | None) -> str:
     if not user_id:
         raise HTTPException(status_code=401, detail="Missing X-Menuyukti-User-Id")
-    if workflow_id:
-        base = f"{user_id}:wf:{workflow_id}"
-        if workflow_chat_session_id:
-            return f"{base}:sess:{workflow_chat_session_id}"
-        return base
     if agent_thread_id:
         return f"{user_id}:agent:{agent_thread_id}"
     raise HTTPException(
         status_code=400,
-        detail="workflow_id or agent_thread_id is required",
+        detail="agent_thread_id is required",
     )
 
 
 def _runnable_config(
     *,
     thread_id: str,
-    workflow_id: str | None,
     location_id: int | None,
     user_id: str | None,
     chat_gateway_model: str | None,
@@ -216,7 +200,6 @@ def _runnable_config(
 ) -> RunnableConfig:
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
-        "workflow_id": workflow_id,
         "location_id": location_id,
         "user_id": user_id,
     }
@@ -395,17 +378,11 @@ async def chat_stream(
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
 
-    thread_id = _resolve_thread_id(
-        x_menuyukti_user_id,
-        body.workflow_id,
-        body.agent_thread_id,
-        body.workflow_chat_session_id,
-    )
+    thread_id = _resolve_thread_id(x_menuyukti_user_id, body.agent_thread_id)
     gateway_model = _resolved_chat_gateway_model(body.chat_model)
 
     cfg = _runnable_config(
         thread_id=thread_id,
-        workflow_id=body.workflow_id,
         location_id=body.location_id,
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
@@ -456,8 +433,6 @@ async def chat_stream(
 @router.get("/chat/history")
 async def chat_history(
     request: Request,
-    workflow_id: Annotated[str | None, Query()] = None,
-    workflow_chat_session_id: Annotated[str | None, Query()] = None,
     agent_thread_id: Annotated[str | None, Query()] = None,
     x_menuyukti_user_id: Annotated[str | None, Header(alias="X-Menuyukti-User-Id")] = None,
 ) -> JSONResponse:
@@ -466,31 +441,16 @@ async def chat_history(
     if graph is None:
         raise HTTPException(status_code=503, detail="Chat graph is not initialized")
 
-    if workflow_id is not None and not workflow_id.strip():
-        workflow_id = None
-    if workflow_chat_session_id is not None and not workflow_chat_session_id.strip():
-        workflow_chat_session_id = None
     if agent_thread_id is not None and not agent_thread_id.strip():
         agent_thread_id = None
 
-    if workflow_id and not workflow_chat_session_id:
-        raise HTTPException(
-            status_code=400,
-            detail="workflow_chat_session_id is required when workflow_id is set",
-        )
-
-    thread_id = _resolve_thread_id(
-        x_menuyukti_user_id,
-        workflow_id,
-        agent_thread_id,
-        workflow_chat_session_id,
-    )
+    thread_id = _resolve_thread_id(x_menuyukti_user_id, agent_thread_id)
     cfg = _runnable_config(
         thread_id=thread_id,
-        workflow_id=workflow_id,
         location_id=None,
         user_id=x_menuyukti_user_id,
         chat_gateway_model=None,
+        agent_thread_id=agent_thread_id,
     )
 
     snapshot = await graph.aget_state(cfg)
@@ -512,43 +472,27 @@ async def chat_history(
 @router.delete("/chat/history")
 async def delete_chat_history(
     request: Request,
-    workflow_id: Annotated[str | None, Query()] = None,
     agent_thread_id: Annotated[str | None, Query()] = None,
     x_menuyukti_user_id: Annotated[str | None, Header(alias="X-Menuyukti-User-Id")] = None,
 ) -> JSONResponse:
-    """Delete LangGraph checkpoints for a workflow (all sessions) or one agent thread."""
+    """Delete LangGraph checkpoints for one agent thread."""
     user_id = (x_menuyukti_user_id or "").strip()
     if not user_id:
         raise HTTPException(status_code=400, detail="X-Menuyukti-User-Id is required")
 
-    if workflow_id is not None and not workflow_id.strip():
-        workflow_id = None
     if agent_thread_id is not None and not agent_thread_id.strip():
         agent_thread_id = None
 
-    if not workflow_id and not agent_thread_id:
+    if not agent_thread_id:
         raise HTTPException(
             status_code=400,
-            detail="workflow_id or agent_thread_id is required",
-        )
-    if workflow_id and agent_thread_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Pass only one of workflow_id or agent_thread_id",
+            detail="agent_thread_id is required",
         )
 
     checkpointer = getattr(request.app.state, "chat_checkpointer", None)
     if checkpointer is None:
         raise HTTPException(status_code=503, detail="Chat checkpointer is not initialized")
 
-    if agent_thread_id:
-        thread_id = f"{user_id}:agent:{agent_thread_id.strip()}"
-        await checkpointer.adelete_thread(thread_id)
-        return JSONResponse({"deleted_thread_ids": [thread_id], "count": 1})
-
-    deleted = await adelete_workflow_chat_threads(
-        checkpointer,
-        user_id=user_id,
-        workflow_id=workflow_id.strip(),  # type: ignore[union-attr]
-    )
-    return JSONResponse({"deleted_thread_ids": deleted, "count": len(deleted)})
+    thread_id = f"{user_id}:agent:{agent_thread_id.strip()}"
+    await checkpointer.adelete_thread(thread_id)
+    return JSONResponse({"deleted_thread_ids": [thread_id], "count": 1})

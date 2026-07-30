@@ -4,7 +4,7 @@
 
 import { parseNode, parseNodeNullable, parseNodes, type AnyNode } from '../node-schemas'
 
-export type { AnyNode, KnownNode, WorkflowNode } from '../node-schemas'
+export type { AnyNode } from '../node-schemas'
 
 export type NodeDataRaw = { node: unknown | null }
 export type NodesDataRaw = { nodes: unknown[] }

@@ -16,7 +16,6 @@ import {
 import { deriveDailyHeatmapHourRange } from '@/lib/analytics/heatmap-hours'
 import { getAppCurrencyLocale } from '@/lib/app-currency'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
-import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { HeatmapViewDynamic } from './heatmap-view-dynamic'
 import { cn } from '@workspace/ui/lib/utils'
@@ -110,7 +109,6 @@ export default async function Page({ params }: PageProps) {
           <Button asChild variant="outline">
             <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
           </Button>
-          <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
         <Suspense fallback={<HeatmapReportSkeleton />}>

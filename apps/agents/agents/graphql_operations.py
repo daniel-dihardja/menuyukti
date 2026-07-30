@@ -34,25 +34,6 @@ query Node($id: ID!) {
 }
 """
 
-WORKFLOW_CAMPAIGN_TREE_QUERY = """
-query WorkflowCampaignTree($workflowId: ID!) {
-  workflowCampaignTree(workflowId: $workflowId) {
-    workflow {
-      id
-      name
-      locationId
-    }
-    milestones {
-      milestone {
-        id
-        name
-        data
-      }
-    }
-  }
-}
-"""
-
 UPDATE_NODE_MUTATION = """
 mutation UpdateNode($id: ID!, $data: JSON) {
   updateNode(id: $id, data: $data) {

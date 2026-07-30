@@ -4,19 +4,18 @@
     "media": true,
     "posts": false,
     "calendar": true,
-    "workflows": true,
     "reports": true,
     "branches": true,
     "crm": true,
     "printShop": false,
-    "team": true
+    "team": true,
+    "chat": true
   },
   "routes": {
     "/dashboard": true,
     "/media": true,
     "/ig-studio": false,
     "/calendar": true,
-    "/workflow": true,
     "/analytics": true,
     "/crm": true,
     "/shop": false,

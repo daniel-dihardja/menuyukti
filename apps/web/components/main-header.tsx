@@ -43,12 +43,11 @@ export function MainHeader() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const showWorkflowsNav = isNavKeyEnabled('workflows')
+  const showChatNav = isNavKeyEnabled('chat')
   const showStudioNav = isNavKeyEnabled('posts')
-  const workflowsActive =
-    pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
+  const chatActive = pathname === routes.agent || pathname?.startsWith(`${routes.agent}/`)
   const igStudioActive = pathname === routes.igStudio || pathname?.startsWith(`${routes.igStudio}/`)
-  const showProductNavLinks = showWorkflowsNav || showStudioNav
+  const showProductNavLinks = showChatNav || showStudioNav
   const showMobileMainMenu = true
 
   const navLinkClass = (active: boolean) =>
@@ -86,9 +85,9 @@ export function MainHeader() {
               className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
               aria-label={t('navAria')}
             >
-              {showWorkflowsNav ? (
-                <Link href={routes.workflows.list} className={navLinkClass(workflowsActive)}>
-                  {t('navWorkflows')}
+              {showChatNav ? (
+                <Link href={routes.agent} className={navLinkClass(chatActive)}>
+                  {t('navChat')}
                 </Link>
               ) : null}
               {showStudioNav ? (
@@ -130,23 +129,23 @@ export function MainHeader() {
                   </SheetHeader>
                   {!isLanding && showProductNavLinks ? (
                     <nav aria-label={t('navAria')} className="flex flex-col gap-2 px-4 pt-4">
-                      {showWorkflowsNav ? (
+                      {showChatNav ? (
                         <SheetClose asChild>
                           <Button
                             asChild
                             variant="ghost"
                             className={cn(
                               'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                              workflowsActive
+                              chatActive
                                 ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
                                 : 'text-muted-foreground hover:text-foreground',
                             )}
                           >
                             <Link
-                              href={routes.workflows.list}
-                              aria-current={workflowsActive ? 'page' : undefined}
+                              href={routes.agent}
+                              aria-current={chatActive ? 'page' : undefined}
                             >
-                              {t('navWorkflows')}
+                              {t('navChat')}
                             </Link>
                           </Button>
                         </SheetClose>

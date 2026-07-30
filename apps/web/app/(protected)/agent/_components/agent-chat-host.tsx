@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, type ReactNode } from 'react'
 
-import { WorkflowChatProvider } from '@/app/(protected)/workflow/_components/workflow-chat-context'
+import { ChatProvider } from '@/components/chat/chat-context'
 
 import { useAgentChat, type UseAgentChatOptions } from './use-agent-chat'
 
@@ -27,5 +27,5 @@ export function AgentChatHost({ onBusyChange, children, ...chatOptions }: AgentC
     [messagesState, composerState, actions],
   )
 
-  return <WorkflowChatProvider {...providerProps}>{children}</WorkflowChatProvider>
+  return <ChatProvider {...providerProps}>{children}</ChatProvider>
 }

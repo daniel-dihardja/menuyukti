@@ -50,11 +50,6 @@ def _has_ig_studio_post_context(conf: dict[str, Any]) -> bool:
     )
 
 
-def _has_workflow_id(conf: dict[str, Any]) -> bool:
-    raw = conf.get("workflow_id")
-    return isinstance(raw, str) and bool(raw.strip())
-
-
 def _has_location_id(conf: dict[str, Any]) -> bool:
     return conf.get("location_id") is not None
 
@@ -108,12 +103,8 @@ def _has_agent_thread_id(conf: dict[str, Any]) -> bool:
 
 
 def _has_leonardo_image_generation(conf: dict[str, Any]) -> bool:
-    """Leonardo generate tool: IG Studio, workflow chat, or agent-thread chat."""
-    return (
-        _has_ig_studio_post_context(conf)
-        or _has_workflow_id(conf)
-        or _has_agent_thread_id(conf)
-    )
+    """Leonardo generate tool: IG Studio or agent-thread chat."""
+    return _has_ig_studio_post_context(conf) or _has_agent_thread_id(conf)
 
 
 def chat_tools_list_from_config(conf: dict[str, Any]) -> list:

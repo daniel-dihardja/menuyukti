@@ -13,13 +13,13 @@ import {
 import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
-import { WorkflowWorkspaceSkeleton } from '@/app/(protected)/workflow/_components/workflow-workspace-skeleton'
+import { ChatWorkspaceSkeleton } from '@/components/chat/chat-workspace-skeleton'
 
 const AgentChatPanel = dynamic(
   () => import('../_components/agent-chat-panel').then((m) => m.AgentChatPanel),
   {
     ssr: false,
-    loading: () => <WorkflowWorkspaceSkeleton className="min-h-[min(420px,50vh)] flex-1" />,
+    loading: () => <ChatWorkspaceSkeleton className="min-h-[min(420px,50vh)] flex-1" />,
   },
 )
 

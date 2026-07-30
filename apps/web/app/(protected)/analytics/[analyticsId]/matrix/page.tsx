@@ -12,7 +12,6 @@ import { getCachedAnalyticsRun, getCachedMenuEngineeringMatrix } from '@/lib/gra
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { formatPreviewDateString } from '@/lib/format-preview-date'
-import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { Badge } from '@workspace/ui/components/badge'
 import {
   Empty,
@@ -172,7 +171,6 @@ export default async function Page({ params }: PageProps) {
           <Button asChild variant="outline" size="sm">
             <Link href={routes.analytics.cogs(analyticsId)}>{tMatrix('links.cogs')}</Link>
           </Button>
-          <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
         <Suspense fallback={<MatrixReportSkeleton />}>

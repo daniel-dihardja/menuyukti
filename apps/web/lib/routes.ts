@@ -111,17 +111,6 @@ export const routes = {
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 
-  /**
-   * Legacy chat container (redirect-only after Phase 2). Kept until Phase 4 deletes
-   * workflow CRUD. Prefer `routes.agent` / `agentThreadId`.
-   */
-  workflows: {
-    list: '/workflow',
-    listWithLocation: (locationId: string | number) =>
-      `/workflow?locationId=${encodeURIComponent(String(locationId))}`,
-    detail: (id: string | number) => `/workflow/${id}`,
-  },
-
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,

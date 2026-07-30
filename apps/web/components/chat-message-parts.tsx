@@ -36,10 +36,7 @@ import {
   parseGeneratedImageUrlFromToolOutput,
   stripDuplicateGeneratedImageMarkdown,
 } from '@/lib/chat/strip-duplicate-generated-image-markdown'
-import {
-  isWorkflowVisualizationId,
-  type WorkflowVisualizationId,
-} from '@/lib/workflow/workflow-visualization-ids'
+import { isChatVisualizationId, type ChatVisualizationId } from '@/lib/chat/visualization-ids'
 import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
 
 function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string {
@@ -49,12 +46,12 @@ function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string 
   return part.type.split('-').slice(1).join('-')
 }
 
-function resolveChartIdFromToolInput(input: unknown): WorkflowVisualizationId | null {
+function resolveChartIdFromToolInput(input: unknown): ChatVisualizationId | null {
   if (!input || typeof input !== 'object' || !('chart_id' in input)) {
     return null
   }
   const chartId = (input as { chart_id?: unknown }).chart_id
-  return typeof chartId === 'string' && isWorkflowVisualizationId(chartId) ? chartId : null
+  return typeof chartId === 'string' && isChatVisualizationId(chartId) ? chartId : null
 }
 
 function toolOutputLooksLikeError(part: ToolUIPart<UITools> | DynamicToolUIPart): boolean {

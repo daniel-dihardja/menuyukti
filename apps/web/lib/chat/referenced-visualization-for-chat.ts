@@ -1,19 +1,19 @@
 import { loadMenuHeatmapsForWorkflow } from '@/lib/analytics/load-menu-heatmaps-for-workflow'
 import { loadPairLiftMatrixForWorkflow } from '@/lib/analytics/load-pair-lift-matrix-for-workflow'
 import { loadSlotDemandProfileForWorkflow } from '@/lib/analytics/load-slot-demand-profile'
-import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
+import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
 
 export type ReferencedVisualizationLoadResult =
   | {
       ok: true
       title: string
-      visualizationId: WorkflowVisualizationId
+      visualizationId: ChatVisualizationId
       payload: unknown
       usedFallbackRun: boolean
     }
   | { ok: false; status: 400 | 404; message: string }
 
-export const WORKFLOW_VISUALIZATION_CHAT_TITLES: Record<WorkflowVisualizationId, string> = {
+export const WORKFLOW_VISUALIZATION_CHAT_TITLES: Record<ChatVisualizationId, string> = {
   venue_slot_strength_heatmap: 'Venue slot strength',
   menu_item_heatmap: 'Menu item heatmap',
   pair_lift_matrix_heatmap: 'Pair lift matrix',
@@ -26,7 +26,7 @@ export async function loadReferencedVisualizationForChat(
   userId: string,
   args: {
     locationId: number
-    referencedVisualizationId: WorkflowVisualizationId
+    referencedVisualizationId: ChatVisualizationId
     analyticsRunId?: number | null
   },
 ): Promise<ReferencedVisualizationLoadResult> {

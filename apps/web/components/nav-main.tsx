@@ -68,8 +68,8 @@ const NAV_WORKSPACE: NavItem[] = [
     group: 'overview',
   },
   {
-    key: 'workflows',
-    labelKey: 'workflows',
+    key: 'chat',
+    labelKey: 'chat',
     href: routes.agent,
     icon: <Megaphone className="w-4 h-4" />,
     group: 'create',

@@ -23,7 +23,7 @@ import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { clearStoryAssetViaChat } from '@/lib/chat/clear-story-asset-via-chat'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
-import { appendWorkflowChatMention } from '@/lib/chat/append-workflow-chat-mention'
+import { appendChatMention } from '@/lib/chat/append-chat-mention'
 import { mediaNamesToPhotoGenerationReferences } from '@/lib/chat/media-names-to-generation-references'
 import {
   applyPresignedUrlsToMessages,
@@ -34,19 +34,19 @@ import {
   type StoryAssetRef,
 } from '@/lib/chat/story-assets-from-messages'
 import {
-  clearWorkflowChatMentionTrigger,
+  clearChatMentionTrigger,
   mediaTypeFromFilename,
   type PendingMediaAttachment,
-} from '@/lib/chat/workflow-chat-media-mention'
+} from '@/lib/chat/chat-media-mention'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import {
   DEFAULT_LEONARDO_POST_MODEL,
   isLeonardoPostModelId,
   type LeonardoPostModelId,
 } from '@/lib/posts/leonardo-post-models'
-import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
+import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
 
-export type { PendingMediaAttachment } from '@/lib/chat/workflow-chat-media-mention'
+export type { PendingMediaAttachment } from '@/lib/chat/chat-media-mention'
 
 const AGENT_CHAT_MODE_STORAGE_PREFIX = 'menuyukti.agentChatMode.v1:'
 const AGENT_CHAT_IMAGE_MODEL_STORAGE_PREFIX = 'menuyukti.agentChatImageModel.v1:'
@@ -101,7 +101,7 @@ export function useAgentChat({
   analyticsRunId,
   onThreadRotated,
 }: UseAgentChatOptions) {
-  const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
+  const tSlash = useTranslations('chat.slashCommands')
   const [text, setText] = useState('')
   const [pendingMediaAttachments, setPendingMediaAttachments] = useState<PendingMediaAttachment[]>(
     [],
@@ -135,7 +135,7 @@ export function useAgentChat({
   )
   const selectedGenerationModelRef = useRef<LeonardoPostModelId>(selectedGenerationModel)
   selectedGenerationModelRef.current = selectedGenerationModel
-  const pendingReferencedVisualizationIdRef = useRef<WorkflowVisualizationId | null>(null)
+  const pendingReferencedVisualizationIdRef = useRef<ChatVisualizationId | null>(null)
   const pendingMediaAttachmentsRef = useRef<PendingMediaAttachment[]>([])
   pendingMediaAttachmentsRef.current = pendingMediaAttachments
   chatApiContextRef.current = {
@@ -331,7 +331,7 @@ export function useAgentChat({
           },
         ]
       })
-      setText((current) => clearWorkflowChatMentionTrigger(current))
+      setText((current) => clearChatMentionTrigger(current))
     },
     [status],
   )
@@ -433,12 +433,12 @@ export function useAgentChat({
   )
 
   const handleSelectVisualizationMention = useCallback(
-    (visualizationId: WorkflowVisualizationId, title: string) => {
+    (visualizationId: ChatVisualizationId, title: string) => {
       if (status === 'streaming' || status === 'submitted') {
         return
       }
       pendingReferencedVisualizationIdRef.current = visualizationId
-      setText((current) => appendWorkflowChatMention(current, title))
+      setText((current) => appendChatMention(current, title))
     },
     [status],
   )

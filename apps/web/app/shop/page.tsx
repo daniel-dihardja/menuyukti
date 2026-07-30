@@ -3,16 +3,7 @@ import { getTranslations } from 'next-intl/server'
 
 import { ShopHero } from '@/components/shop/shop-hero'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
-import { ShopWorkflowContextBanner } from '@/components/shop/shop-workflow-context-banner'
 import { filterAndSortShopProducts } from '@/lib/shop/shop-catalog'
-
-const WORKFLOW_ID_RE = /^\d+$/
-
-function pickWorkflowId(raw: string | string[] | undefined): string | null {
-  const v = Array.isArray(raw) ? raw[0] : raw
-  if (v == null || v === '') return null
-  return WORKFLOW_ID_RE.test(v) ? v : null
-}
 
 const SHOP_URL = 'https://menuyukti.com/shop'
 const shopOgImage = {
@@ -50,14 +41,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-type ShopPageProps = {
-  searchParams: Promise<{ workflowId?: string | string[] }>
-}
-
-export default async function ShopPage({ searchParams }: ShopPageProps) {
+export default async function ShopPage() {
   const products = filterAndSortShopProducts('all', 'newest')
-  const sp = await searchParams
-  const workflowId = pickWorkflowId(sp.workflowId)
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
@@ -66,7 +51,6 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         id="shop-main"
         tabIndex={-1}
       >
-        {workflowId ? <ShopWorkflowContextBanner workflowId={workflowId} /> : null}
         <ShopHero />
         <ShopProductGrid products={products} />
       </main>
