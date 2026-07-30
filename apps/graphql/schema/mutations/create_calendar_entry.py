@@ -117,7 +117,6 @@ class CreateCalendarEntryMutation:
                 entry_date=date_clean,
                 entry_time=time_clean,
                 media_refs=refs,
-                source_ref=None,
             )
             session.add(row)
             session.commit()

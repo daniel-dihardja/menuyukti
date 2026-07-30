@@ -13,7 +13,7 @@ class OpeningHourType:
 
 
 @strawberry.type(
-    description="A restaurant location; ties POS data and workflow roots to a workspace or legacy owner."
+    description="A restaurant location; ties POS data and product entities to a workspace or legacy owner."
 )
 class LocationType:
     id: strawberry.ID

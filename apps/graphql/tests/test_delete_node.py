@@ -69,14 +69,12 @@ def _insert_root_node(*, location_id: int, name: str, node_type: str = "note") -
         session.close()
 
 
-def _insert_milestone(
+def _insert_child_note(
     *,
     location_id: int,
     parent_id: int,
     name: str,
     data: dict | None = None,
-    milestone_goal: str | None = None,
-    milestone_preset_data: dict | None = None,
 ) -> int:
     session = SessionLocal()
     try:
@@ -87,11 +85,9 @@ def _insert_milestone(
             name=name,
             description=None,
             path="",
-            node_type="milestone",
+            node_type="note",
             location_id=location_id,
             data=data,
-            milestone_goal=milestone_goal,
-            milestone_preset_data=milestone_preset_data,
         )
         session.add(row)
         session.flush()
@@ -138,23 +134,22 @@ def test_delete_note_only():
         session.close()
 
 
-def test_delete_orm_milestone_row():
-    location_id = _fresh_location("Delete ORM Milestone Location")
+def test_delete_child_note_row():
+    location_id = _fresh_location("Delete Child Note Location")
 
-    parent_id = _insert_root_node(location_id=location_id, name="Campaign", node_type="workflow")
+    parent_id = _insert_root_node(location_id=location_id, name="Parent", node_type="note")
 
-    milestone_id = _insert_milestone(
+    child_id = _insert_child_note(
         location_id=location_id,
         parent_id=parent_id,
         name="Only",
-        milestone_goal="Keep me",
-        milestone_preset_data={"note": "Keep me"},
+        data={"note": "Keep me"},
     )
 
     deleted = asyncio.run(
         schema.execute(
             DELETE_NODE,
-            variable_values={"id": str(milestone_id)},
+            variable_values={"id": str(child_id)},
             context_value=graphql_auth_context(),
         )
     )
@@ -163,7 +158,7 @@ def test_delete_orm_milestone_row():
 
     session = SessionLocal()
     try:
-        assert session.get(Node, milestone_id) is None
+        assert session.get(Node, child_id) is None
         assert session.get(Node, parent_id) is not None
     finally:
         session.close()
@@ -173,22 +168,22 @@ def test_delete_children_then_parent():
     """Generic delete does not cascade; children must be removed first."""
     location_id = _fresh_location("Delete Children Then Parent Location")
 
-    parent_id = _insert_root_node(location_id=location_id, name="Campaign", node_type="workflow")
+    parent_id = _insert_root_node(location_id=location_id, name="Parent", node_type="note")
 
-    first_milestone_id = _insert_milestone(
+    first_child_id = _insert_child_note(
         location_id=location_id,
         parent_id=parent_id,
         name="First",
         data={"order": 1},
     )
-    second_milestone_id = _insert_milestone(
+    second_child_id = _insert_child_note(
         location_id=location_id,
         parent_id=parent_id,
         name="Second",
         data={"order": 2},
     )
 
-    for child_id in (first_milestone_id, second_milestone_id):
+    for child_id in (first_child_id, second_child_id):
         deleted_child = asyncio.run(
             schema.execute(
                 DELETE_NODE,
@@ -212,7 +207,7 @@ def test_delete_children_then_parent():
     session = SessionLocal()
     try:
         assert session.get(Node, parent_id) is None
-        assert session.get(Node, first_milestone_id) is None
-        assert session.get(Node, second_milestone_id) is None
+        assert session.get(Node, first_child_id) is None
+        assert session.get(Node, second_child_id) is None
     finally:
         session.close()

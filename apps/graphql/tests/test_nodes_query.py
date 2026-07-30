@@ -105,7 +105,7 @@ def test_nodes_filters_by_parent_id():
     }
     assert all(n["parentId"] is None for n in nodes)
 
-    # Legacy milestone children inserted via ORM still filter by parent.
+    # Child notes under a parent still filter by parentId.
     session = SessionLocal()
     try:
         parent = session.get(Node, int(root_id))
@@ -115,7 +115,7 @@ def test_nodes_filters_by_parent_id():
             name="Step one",
             description=None,
             path="",
-            node_type="milestone",
+            node_type="note",
             location_id=location_id,
             data={"order": 1},
         )
@@ -133,7 +133,7 @@ def test_nodes_filters_by_parent_id():
             NODES_BY_PARENT,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "milestone",
+                "nodeType": "note",
                 "parentId": root_id,
             },
             context_value=graphql_auth_context(),

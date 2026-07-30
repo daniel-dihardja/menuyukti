@@ -3,9 +3,7 @@ from strawberry.scalars import JSON
 
 
 @strawberry.type(
-    description=(
-        "A workflow tree node (workflow, etc.) stored in the polymorphic `node` table."
-    )
+    description="A polymorphic row in the `node` table (generic hierarchy; e.g. notes)."
 )
 class NodeType:
     id: strawberry.ID

@@ -2,7 +2,7 @@
  * Node parsing utilities for GraphQL payloads.
  */
 
-import { unknownNodeSchema, type AnyNode } from './workflow-nodes'
+import { unknownNodeSchema, type AnyNode } from './any-nodes'
 
 /**
  * Parse a single node from GraphQL JSON. Falls back to a generic node shape so

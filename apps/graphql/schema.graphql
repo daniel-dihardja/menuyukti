@@ -362,7 +362,7 @@ type LocationManualBriefInputType {
 }
 
 """
-A restaurant location; ties POS data and workflow roots to a workspace or legacy owner.
+A restaurant location; ties POS data and product entities to a workspace or legacy owner.
 """
 type LocationType {
   id: ID!
@@ -671,9 +671,7 @@ type Mutation {
   updateMediaCollection(id: Int!, name: String!): MediaCollectionType!
 }
 
-"""
-A workflow tree node (workflow, etc.) stored in the polymorphic `node` table.
-"""
+"""A polymorphic row in the `node` table (generic hierarchy; e.g. notes)."""
 type NodeType {
   id: ID!
   name: String!

@@ -2,7 +2,6 @@
 
 __all__ = [
     "Base",
-    "MilestoneAgentRun",
     "Workspace",
     "WorkspaceMembership",
     "Location",

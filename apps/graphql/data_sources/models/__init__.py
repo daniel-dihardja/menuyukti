@@ -23,7 +23,6 @@ from graphql.data_sources.models.media_asset import (
     MediaCollection,
     MediaCollectionMember,
 )
-from graphql.data_sources.models.milestone_agent_run import MilestoneAgentRun
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.visual_style import VisualStyle
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
@@ -48,7 +47,6 @@ __all__ = [
     "MediaAsset",
     "MediaCollection",
     "MediaCollectionMember",
-    "MilestoneAgentRun",
     "MenuItemCogs",
     "Node",
     "OrderFact",
