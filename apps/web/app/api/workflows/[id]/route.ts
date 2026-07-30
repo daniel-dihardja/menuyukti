@@ -1,8 +1,10 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
+import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
+import { getPythonAgentsUrl } from '@/lib/config'
 import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
@@ -16,6 +18,28 @@ import {
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
 import { patchWorkflowRootSchema } from './schema'
+
+/** Best-effort: remove LangGraph chat checkpoints for this workflow. */
+async function deleteWorkflowChatHistory(userId: string, workflowId: string): Promise<void> {
+  const baseUrl = getPythonAgentsUrl()
+  const agentsUrl = new URL(`${baseUrl}/chat/history`)
+  agentsUrl.searchParams.set('workflow_id', workflowId)
+  try {
+    const res = await fetch(agentsUrl, {
+      method: 'DELETE',
+      headers: buildAgentsHeaders(userId),
+      cache: 'no-store',
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      console.error(
+        `Failed to delete workflow chat history for ${workflowId} (${res.status}): ${text}`,
+      )
+    }
+  } catch (err) {
+    console.error(`Failed to delete workflow chat history for ${workflowId}:`, err)
+  }
+}
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -112,6 +136,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
       }
       throw err
     }
+
+    await deleteWorkflowChatHistory(userId, workflowId)
 
     if (node.locationId != null) {
       revalidateLocationScopedLists(userId, node.locationId)

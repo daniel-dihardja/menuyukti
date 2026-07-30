@@ -63,11 +63,47 @@ const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i
 
 function readWorkflowChatSessionId(workflowId: string): string | null {
   if (typeof window === 'undefined') return null
+  const key = workflowChatSessionStorageKey(workflowId)
   try {
-    const raw = sessionStorage.getItem(workflowChatSessionStorageKey(workflowId))
-    return raw !== null && UUID_RE.test(raw) ? raw : null
+    const fromLocal = localStorage.getItem(key)
+    if (fromLocal !== null && UUID_RE.test(fromLocal)) {
+      return fromLocal
+    }
+    // Migrate per-tab sessionStorage → cross-tab localStorage (step 3).
+    const fromSession = sessionStorage.getItem(key)
+    if (fromSession !== null && UUID_RE.test(fromSession)) {
+      localStorage.setItem(key, fromSession)
+      sessionStorage.removeItem(key)
+      return fromSession
+    }
   } catch {
     return null
+  }
+  return null
+}
+
+/** Always returns a stable session UUID (creates + persists to localStorage when missing). */
+function ensureWorkflowChatSessionId(workflowId: string): string {
+  const existing = readWorkflowChatSessionId(workflowId)
+  if (existing !== null) {
+    return existing
+  }
+  const sid = crypto.randomUUID()
+  try {
+    localStorage.setItem(workflowChatSessionStorageKey(workflowId), sid)
+  } catch {
+    /* ignore quota / private mode */
+  }
+  return sid
+}
+
+function writeWorkflowChatSessionId(workflowId: string, sessionId: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(workflowChatSessionStorageKey(workflowId), sessionId)
+    sessionStorage.removeItem(workflowChatSessionStorageKey(workflowId))
+  } catch {
+    /* ignore */
   }
 }
 
@@ -141,7 +177,7 @@ export function useWorkflowChat({
   // Sync hydrate when workflowId changes so useChat receives cached messages on create.
   if (chatHydrateWorkflowIdRef.current !== workflowId) {
     chatHydrateWorkflowIdRef.current = workflowId
-    const sessionId = readWorkflowChatSessionId(workflowId)
+    const sessionId = ensureWorkflowChatSessionId(workflowId)
     workflowChatSessionIdRef.current = sessionId
     initialMessagesRef.current = readWorkflowChatMessages(workflowId, sessionId)
   }
@@ -239,16 +275,20 @@ export function useWorkflowChat({
     writeWorkflowChatMessages(workflowId, workflowChatSessionIdRef.current, messages)
   }, [workflowId, status, messages])
 
-  // Re-presign generated image URLs after sessionStorage hydrate (signed URLs expire ~1h).
+  // Server history (authoritative) then re-presign generated image URLs.
   useEffect(() => {
-    // Cap matches PRESIGN_POSTS_MAX_KEYS in app/api/media/presign-posts/schema.ts
-    const keys = collectGeneratedImageMediaS3Keys(initialMessagesRef.current).slice(0, 32)
-    if (keys.length === 0) {
+    const sessionId = workflowChatSessionIdRef.current
+    if (sessionId === null) {
       return
     }
 
     let cancelled = false
-    void (async () => {
+
+    async function refreshPresignedUrls(source: UIMessage[]) {
+      const keys = collectGeneratedImageMediaS3Keys(source).slice(0, 32)
+      if (keys.length === 0 || cancelled) {
+        return
+      }
       const result = await apiFetch<{ urls?: Record<string, string> }>(
         '/api/media/presign-posts',
         {
@@ -273,6 +313,28 @@ export function useWorkflowChat({
       if (rewritten !== null) {
         writeWorkflowChatMessages(workflowId, workflowChatSessionIdRef.current, rewritten)
       }
+    }
+
+    void (async () => {
+      let messagesToRefresh = initialMessagesRef.current
+      const history = await apiFetch<{
+        messages?: UIMessage[]
+        storyAssets?: StoryAssetRef[]
+      }>(
+        `/api/chat/history?workflowId=${encodeURIComponent(workflowId)}&workflowChatSessionId=${encodeURIComponent(sessionId)}`,
+        { cache: 'no-store' },
+        'Failed to load chat history',
+      )
+      if (cancelled) {
+        return
+      }
+      if (history.ok && Array.isArray(history.data.messages) && history.data.messages.length > 0) {
+        const historyMessages = history.data.messages
+        setMessages(historyMessages)
+        writeWorkflowChatMessages(workflowId, sessionId, historyMessages)
+        messagesToRefresh = historyMessages
+      }
+      await refreshPresignedUrls(messagesToRefresh)
     })()
 
     return () => {
@@ -509,9 +571,7 @@ export function useWorkflowChat({
     pendingReferencedVisualizationIdRef.current = null
     const sid = crypto.randomUUID()
     workflowChatSessionIdRef.current = sid
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem(workflowChatSessionStorageKey(workflowId), sid)
-    }
+    writeWorkflowChatSessionId(workflowId, sid)
   }, [workflowId, stop, clearError, setMessages])
 
   const handleClearChat = useCallback(() => {

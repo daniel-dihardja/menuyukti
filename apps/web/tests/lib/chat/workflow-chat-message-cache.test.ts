@@ -2,6 +2,7 @@ import type { UIMessage } from 'ai'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import {
+  clearAllWorkflowChatMessages,
   clearWorkflowChatMessages,
   parseStoredWorkflowChatMessages,
   readWorkflowChatMessages,
@@ -37,6 +38,12 @@ function installSessionStorageMock() {
     },
     clear() {
       store.clear()
+    },
+    get length() {
+      return store.size
+    },
+    key(index: number) {
+      return [...store.keys()][index] ?? null
     },
   }
   Object.defineProperty(globalThis, 'window', {
@@ -114,5 +121,16 @@ describe('sessionStorage read/write/clear', () => {
     clearWorkflowChatMessages('wf-1', null)
     expect(readWorkflowChatMessages('wf-1', null)).toEqual([])
     expect(readWorkflowChatMessages('wf-1', sid)).toEqual([assistantMsg])
+  })
+
+  it('clearAllWorkflowChatMessages removes every session for that workflow', () => {
+    const sid = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+    writeWorkflowChatMessages('wf-1', null, [userMsg])
+    writeWorkflowChatMessages('wf-1', sid, [assistantMsg])
+    writeWorkflowChatMessages('wf-2', null, [userMsg])
+    clearAllWorkflowChatMessages('wf-1')
+    expect(readWorkflowChatMessages('wf-1', null)).toEqual([])
+    expect(readWorkflowChatMessages('wf-1', sid)).toEqual([])
+    expect(readWorkflowChatMessages('wf-2', null)).toEqual([userMsg])
   })
 })

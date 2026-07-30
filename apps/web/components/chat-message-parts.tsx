@@ -30,6 +30,9 @@ import {
 } from '@/lib/chat/partition-message-parts'
 import { isRejectedStoryAssetSaveOutput } from '@/lib/chat/story-assets-from-messages'
 import {
+  collectGeneratedImageUrlsFromMessages,
+  collectGeneratedImageUrlsFromParts,
+  messageHasSuccessfulGenerateImageTool,
   parseGeneratedImageUrlFromToolOutput,
   stripDuplicateGeneratedImageMarkdown,
 } from '@/lib/chat/strip-duplicate-generated-image-markdown'
@@ -90,20 +93,6 @@ function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolU
       ) : null}
     </Tool>
   )
-}
-
-function collectGeneratedImageUrlsFromParts(parts: UIMessage['parts'] | undefined): string[] {
-  if (!parts?.length) return []
-  const urls: string[] = []
-  for (const part of parts) {
-    if (!isToolUIPart(part)) continue
-    const toolName = resolveToolName(part)
-    if (toolName !== 'generate_instagram_post_image') continue
-    if (!('output' in part) || part.output == null) continue
-    const url = parseGeneratedImageUrlFromToolOutput(part.output)
-    if (url) urls.push(url)
-  }
-  return urls
 }
 
 function CompactToolStatus({
@@ -351,6 +340,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   mentionTitles,
   isStreaming = false,
   storyGenerateConfirmation,
+  threadMessages,
 }: {
   message: UIMessage
   role: UIMessage['role']
@@ -360,13 +350,26 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   isStreaming?: boolean
   /** Story Phase 3 Generate / Change buttons (workflow chat only). */
   storyGenerateConfirmation?: StoryGenerateConfirmationActions
+  /**
+   * Full visible thread — used so follow-up assistant text that pastes a generated
+   * image URL is stripped even when the tool part lived on an earlier message.
+   */
+  threadMessages?: readonly UIMessage[]
 }) {
   const parts = message.parts
 
   if (!parts?.length) {
     const fallback = getPlainText(message)
     if (role === 'assistant') {
-      return <AssistantTextPart text={fallback} />
+      const urls =
+        threadMessages && threadMessages.length > 0
+          ? collectGeneratedImageUrlsFromMessages(threadMessages)
+          : []
+      const stripped = stripDuplicateGeneratedImageMarkdown(fallback, urls, {
+        stripAllImageEmbeds: messageHasSuccessfulGenerateImageTool(message),
+      })
+      if (!stripped) return null
+      return <AssistantTextPart text={stripped} />
     }
     return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={fallback} />
   }
@@ -374,7 +377,12 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   const { reasoningParts, otherParts } = partitionMessageParts(parts)
   const reasoningText = joinReasoningText(reasoningParts)
   const reasoningStreaming = isReasoningStreaming(reasoningParts, isStreaming)
-  const generatedImageUrls = collectGeneratedImageUrlsFromParts(parts)
+  const generatedImageUrlsFromMessage = collectGeneratedImageUrlsFromParts(parts)
+  const generatedImageUrls =
+    threadMessages && threadMessages.length > 0
+      ? collectGeneratedImageUrlsFromMessages(threadMessages)
+      : generatedImageUrlsFromMessage
+  const stripAllImageEmbeds = messageHasSuccessfulGenerateImageTool(message)
 
   return (
     <>
@@ -392,6 +400,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
           part={part}
           role={role}
           storyGenerateConfirmation={storyGenerateConfirmation}
+          stripAllImageEmbeds={stripAllImageEmbeds}
         />
       ))}
     </>
@@ -412,19 +421,24 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   role,
   mentionTitles,
   generatedImageUrls = [],
+  stripAllImageEmbeds = false,
   storyGenerateConfirmation,
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
   mentionTitles?: string[]
-  /** URLs from generate_instagram_post_image tool results in this message. */
+  /** URLs from generate_instagram_post_image tool results in this thread. */
   generatedImageUrls?: readonly string[]
+  /** Drop every markdown/HTML image when this message already shows the tool thumbnail. */
+  stripAllImageEmbeds?: boolean
   storyGenerateConfirmation?: StoryGenerateConfirmationActions
 }) {
   if (part.type === 'text') {
     const text =
-      role === 'assistant' && generatedImageUrls.length > 0
-        ? stripDuplicateGeneratedImageMarkdown(part.text, generatedImageUrls)
+      role === 'assistant' && (generatedImageUrls.length > 0 || stripAllImageEmbeds)
+        ? stripDuplicateGeneratedImageMarkdown(part.text, generatedImageUrls, {
+            stripAllImageEmbeds,
+          })
         : part.text
     if (!text) {
       return null

@@ -92,3 +92,23 @@ export function clearWorkflowChatMessages(workflowId: string, sessionId: string 
     /* ignore */
   }
 }
+
+/** Remove all sessionStorage message caches for a workflow (any session key). */
+export function clearAllWorkflowChatMessages(workflowId: string): void {
+  if (typeof window === 'undefined') return
+  const prefix = `${WORKFLOW_CHAT_MESSAGES_STORAGE_PREFIX}${workflowId}:`
+  try {
+    const keys: string[] = []
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i)
+      if (key !== null && key.startsWith(prefix)) {
+        keys.push(key)
+      }
+    }
+    for (const key of keys) {
+      sessionStorage.removeItem(key)
+    }
+  } catch {
+    /* ignore */
+  }
+}

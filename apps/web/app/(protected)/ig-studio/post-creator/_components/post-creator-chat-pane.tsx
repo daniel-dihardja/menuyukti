@@ -504,6 +504,7 @@ export function PostCreatorChatPane() {
                           isStreaming={isActiveStream}
                           message={msg}
                           role={msg.role}
+                          threadMessages={visibleMessages}
                         />
                       )}
                     </MessageContent>

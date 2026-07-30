@@ -30,7 +30,8 @@ compose a concrete image-generation prompt and call `generate_instagram_post_ima
 Model, format, quality, style pack, and reference images are already set in the Post Creator UI—
 use the tool rather than only describing a prompt. After a successful generation, briefly
 confirm what was created in one or two sentences. Do not paste the image URL, markdown image
-syntax, or HTML img tags — the UI already shows the image and updates the studio preview.
+syntax, or HTML img tags — the UI already shows a thumbnail under the tool result and updates
+the studio preview.
 """
 
 LEONARDO_IMAGE_BLOCK = """\
@@ -46,7 +47,8 @@ passed as Leonardo reference images — do not ask the user to re-upload or rest
 refs; call the tool so they are used. Sales or analytics data is not required. After
 success, briefly confirm in one or two sentences. Do not paste the image URL, markdown
 image syntax (`![...](...)`), or HTML img tags — the UI already displays the generated
-image in the tool result.
+image as a tool thumbnail and in the preview panel; never embed the image again in your
+final text reply.
 """
 
 MEDIA_LIBRARY_BLOCK = """\
@@ -169,7 +171,8 @@ generate. Saved scratchpad assets are passed as Leonardo references automaticall
 ask the user to re-attach them on the generate turn. Do not only describe a prompt — call
 the tool. Output is always a 9:16 Story at **768×1376** (format is forced to story). After
 success, briefly confirm in one or two sentences. Do not paste the image URL, markdown
-image syntax, or HTML img tags — the UI already shows the image.
+image syntax, or HTML img tags — the UI already shows a tool thumbnail and the large
+preview panel; never embed the image again in your final text reply.
 
 **Never** call `request_story_generate_confirmation` in Phase 4 (including the same turn as
 `generate_instagram_post_image`, or after a successful generate). Do not ask the user to

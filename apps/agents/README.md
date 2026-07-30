@@ -20,7 +20,8 @@ make dev
 
 - API: `http://127.0.0.1:8001`
 - Health: `GET /health`
-- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`workflow_id`** (campaign) or **`agent_thread_id`** (standalone agent) selects the thread; **`milestone_id`** / **`location_id`** are optional and passed into tools via run config. ReAct uses **`CHAT_RECURSION_LIMIT`** (20). Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints (see `.env.example`). Optional **`TAVILY_API_KEY`** enables **`search_web`** in chat.
+- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`workflow_id`** (campaign) or **`agent_thread_id`** (standalone agent) selects the thread; **`milestone_id`** / **`location_id`** are optional and passed into tools via run config. ReAct uses **`CHAT_RECURSION_LIMIT`** (20). Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints via **`AsyncPostgresSaver`** (see `.env.example`). Optional **`TAVILY_API_KEY`** enables **`search_web`** in chat.
+- Chat history: `GET /chat/history` — returns checkpoint messages as UIMessage-shaped JSON (`messages`, `story_assets`, `thread_id`). For workflow chat require **`workflow_id`** + **`workflow_chat_session_id`**. Durable across restarts only when Postgres checkpoints are configured.
 - **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-data"}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup for free-form notes (platform helper in `agents/core/format_markdown/`, not structured milestonedata).
 
 ## Milestone run

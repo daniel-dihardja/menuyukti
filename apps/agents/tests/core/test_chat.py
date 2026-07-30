@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from agents_app.server import app
 from fastapi.testclient import TestClient
-from langchain_core.messages import AIMessage, AIMessageChunk, ToolMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
 
 @pytest.fixture
@@ -570,3 +570,95 @@ def test_chat_empty_content_rejected(client: TestClient) -> None:
 def test_lifespan_compiles_chat_graph(client: TestClient) -> None:
     assert client.app.state.chat_graph is not None
     assert client.app.state.chat_checkpointer is not None
+
+
+def test_chat_history_requires_session_for_workflow(client: TestClient) -> None:
+    response = client.get(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"workflow_id": "10"},
+    )
+    assert response.status_code == 400
+
+
+def test_chat_history_returns_ui_messages(client: TestClient) -> None:
+    from unittest.mock import AsyncMock
+
+    class _Snap:
+        values = {
+            "messages": [
+                HumanMessage(content="Hello", id="u1"),
+                AIMessage(content="Hi", id="a1"),
+            ],
+            "story_assets": [{"role": "style", "name": "a.webp", "note": ""}],
+        }
+
+    mock_graph = MagicMock()
+    mock_graph.aget_state = AsyncMock(return_value=_Snap())
+    client.app.state.chat_graph = mock_graph
+
+    session = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    response = client.get(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"workflow_id": "10", "workflow_chat_session_id": session},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["thread_id"] == f"user-1:wf:10:sess:{session}"
+    assert len(body["messages"]) == 2
+    assert body["messages"][0]["role"] == "user"
+    assert body["messages"][1]["role"] == "assistant"
+    assert body["story_assets"] == [{"role": "style", "name": "a.webp", "note": ""}]
+
+
+def test_chat_history_empty_checkpoint(client: TestClient) -> None:
+    from unittest.mock import AsyncMock
+
+    class _Snap:
+        values = {}
+
+    mock_graph = MagicMock()
+    mock_graph.aget_state = AsyncMock(return_value=_Snap())
+    client.app.state.chat_graph = mock_graph
+
+    response = client.get(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={
+            "workflow_id": "10",
+            "workflow_chat_session_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["messages"] == []
+    assert body["story_assets"] == []
+
+
+def test_delete_chat_history_requires_user_header(client: TestClient) -> None:
+    response = client.delete("/chat/history", params={"workflow_id": "10"})
+    assert response.status_code == 400
+
+
+def test_delete_chat_history_removes_memory_threads(client: TestClient) -> None:
+    cp = client.app.state.chat_checkpointer
+    base = "user-1:wf:10"
+    sess = f"{base}:sess:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    other = "user-1:wf:99:sess:bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+    cp.storage[base] = {}
+    cp.storage[sess] = {}
+    cp.storage[other] = {}
+
+    response = client.delete(
+        "/chat/history",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        params={"workflow_id": "10"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] == 2
+    assert sorted(body["deleted_thread_ids"]) == sorted([base, sess])
+    assert base not in cp.storage
+    assert sess not in cp.storage
+    assert other in cp.storage

@@ -1,5 +1,7 @@
 /** Markdown section listing media-library photo filenames attached to a chat turn. */
 
+export const ATTACHED_MEDIA_LIBRARY_SECTION_HEADING = '## Attached media library photos'
+
 /**
  * Build a text block so the LLM can see exact media-library filenames for tool calls
  * (e.g. ``save_story_asset``). Vision attachments alone do not include filenames.
@@ -9,7 +11,7 @@ export function formatAttachedMediaLibrarySection(names: string[]): string {
   if (unique.length === 0) return ''
 
   const lines = [
-    '## Attached media library photos',
+    ATTACHED_MEDIA_LIBRARY_SECTION_HEADING,
     'These images are also attached as vision inputs. Call `save_story_asset` only with these exact filenames when labeling style/content; do not invent, guess, or truncate names. If this section is absent, do not call `save_story_asset`.',
     ...unique.map((name, i) => `${i + 1}. ${name}`),
   ]

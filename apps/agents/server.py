@@ -2,7 +2,7 @@
 
 import logging
 import os
-from contextlib import ExitStack, asynccontextmanager
+from contextlib import asynccontextmanager
 from typing import Any
 
 import httpx
@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -59,27 +59,29 @@ class InternalApiKeyMiddleware(BaseHTTPMiddleware):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> Any:
-    exit_stack = ExitStack()
-    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL")
-    checkpointer: BaseCheckpointSaver
-    if db_url:
-        saver = exit_stack.enter_context(PostgresSaver.from_conn_string(db_url))
-        saver.setup()
-        checkpointer = saver
-    else:
-        checkpointer = InMemorySaver()
+async def _chat_runtime(app: FastAPI, checkpointer: BaseCheckpointSaver) -> Any:
     app.state.chat_checkpointer = checkpointer
     app.state.chat_graph = compile_chat_graph(checkpointer)
-    try:
-        async with httpx.AsyncClient(
-            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
-            timeout=httpx.Timeout(60.0),
-        ) as http_client:
-            app.state.http_client = http_client
+    async with httpx.AsyncClient(
+        limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+        timeout=httpx.Timeout(60.0),
+    ) as http_client:
+        app.state.http_client = http_client
+        yield
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> Any:
+    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL", "").strip()
+    # Sync PostgresSaver does not implement aget_tuple; FastAPI chat uses async graph APIs.
+    if db_url:
+        async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
+            await checkpointer.setup()
+            async with _chat_runtime(app, checkpointer):
+                yield
+    else:
+        async with _chat_runtime(app, InMemorySaver()):
             yield
-    finally:
-        exit_stack.close()
 
 
 app = FastAPI(

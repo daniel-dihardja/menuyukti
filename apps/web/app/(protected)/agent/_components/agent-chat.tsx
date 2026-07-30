@@ -153,6 +153,7 @@ export function AgentChat() {
                             isStreaming={isActiveStream}
                             message={msg}
                             role={msg.role}
+                            threadMessages={visibleMessages}
                           />
                         )}
                       </MessageContent>

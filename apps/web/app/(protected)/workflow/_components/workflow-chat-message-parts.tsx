@@ -80,6 +80,7 @@ export function WorkflowChatMessageParts({
         message={message}
         role={role}
         storyGenerateConfirmation={storyGenerateConfirmation}
+        threadMessages={visibleMessages}
       />
       {confirmAssets.length > 0 ? <WorkflowChatStoryConfirmAssets assets={confirmAssets} /> : null}
       {actionsEnabled ? (

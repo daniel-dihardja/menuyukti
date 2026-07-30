@@ -10,6 +10,13 @@ from typing import Annotated, Any, Literal, Self
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
 from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
+from agents_app.agents.core.chat.delete_workflow_threads import (
+    adelete_workflow_chat_threads,
+)
+from agents_app.agents.core.chat.history_messages import (
+    langchain_messages_to_ui_messages,
+    normalize_story_assets,
+)
 from agents_app.agents.core.chat.http_context import chat_http_client_var
 from agents_app.agents.core.chat.story_assets import (
     apply_clear_story_assets,
@@ -18,7 +25,7 @@ from agents_app.agents.core.chat.story_assets import (
 from agents_app.agents.core.chat.tools import get_milestone
 from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import (
     AIMessage,
@@ -30,7 +37,7 @@ from langchain_core.messages import (
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-
+from starlette.responses import JSONResponse
 router = APIRouter()
 
 _SLASH_PRESET_RE = re.compile(r"^/preset\s+(\d+)$")
@@ -501,3 +508,87 @@ async def chat_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.get("/chat/history")
+async def chat_history(
+    request: Request,
+    workflow_id: Annotated[str | None, Query()] = None,
+    workflow_chat_session_id: Annotated[str | None, Query()] = None,
+    agent_thread_id: Annotated[str | None, Query()] = None,
+    x_menuyukti_user_id: Annotated[str | None, Header(alias="X-Menuyukti-User-Id")] = None,
+) -> JSONResponse:
+    """Return checkpoint messages as UIMessage-shaped DTOs for UI hydrate."""
+    graph = getattr(request.app.state, "chat_graph", None)
+    if graph is None:
+        raise HTTPException(status_code=503, detail="Chat graph is not initialized")
+
+    if workflow_id is not None and not workflow_id.strip():
+        workflow_id = None
+    if workflow_chat_session_id is not None and not workflow_chat_session_id.strip():
+        workflow_chat_session_id = None
+    if agent_thread_id is not None and not agent_thread_id.strip():
+        agent_thread_id = None
+
+    if workflow_id and not workflow_chat_session_id:
+        raise HTTPException(
+            status_code=400,
+            detail="workflow_chat_session_id is required when workflow_id is set",
+        )
+
+    thread_id = _resolve_thread_id(
+        x_menuyukti_user_id,
+        workflow_id,
+        agent_thread_id,
+        workflow_chat_session_id,
+    )
+    cfg = _runnable_config(
+        thread_id=thread_id,
+        workflow_id=workflow_id,
+        milestone_id=None,
+        location_id=None,
+        user_id=x_menuyukti_user_id,
+        chat_gateway_model=None,
+    )
+
+    snapshot = await graph.aget_state(cfg)
+    values = snapshot.values if isinstance(getattr(snapshot, "values", None), dict) else {}
+    raw_messages = values.get("messages")
+    messages_list = raw_messages if isinstance(raw_messages, list) else []
+    ui_messages = langchain_messages_to_ui_messages(messages_list)
+    story_assets = normalize_story_assets(values.get("story_assets"))
+
+    return JSONResponse(
+        {
+            "thread_id": thread_id,
+            "messages": ui_messages,
+            "story_assets": story_assets,
+        }
+    )
+
+
+@router.delete("/chat/history")
+async def delete_chat_history(
+    request: Request,
+    workflow_id: Annotated[str, Query(min_length=1)],
+    x_menuyukti_user_id: Annotated[str | None, Header(alias="X-Menuyukti-User-Id")] = None,
+) -> JSONResponse:
+    """Delete all LangGraph checkpoints for a workflow (all chat sessions)."""
+    user_id = (x_menuyukti_user_id or "").strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="X-Menuyukti-User-Id is required")
+
+    wf_id = workflow_id.strip()
+    if not wf_id:
+        raise HTTPException(status_code=400, detail="workflow_id is required")
+
+    checkpointer = getattr(request.app.state, "chat_checkpointer", None)
+    if checkpointer is None:
+        raise HTTPException(status_code=503, detail="Chat checkpointer is not initialized")
+
+    deleted = await adelete_workflow_chat_threads(
+        checkpointer,
+        user_id=user_id,
+        workflow_id=wf_id,
+    )
+    return JSONResponse({"deleted_thread_ids": deleted, "count": len(deleted)})

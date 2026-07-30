@@ -32,6 +32,7 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Check, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { purgeWorkflowChatClientState } from '@/lib/chat/purge-workflow-chat-client-state'
 import { routes } from '@/lib/routes'
 
 export type WorkflowTableRow = {
@@ -181,6 +182,7 @@ export function WorkflowsTable({
         setDeleteError(body?.message ?? tTable('deleteError'))
         return
       }
+      purgeWorkflowChatClientState(pendingDelete.id)
       onWorkflowDeleted?.(pendingDelete.id)
       setPendingDelete(null)
     } catch {
