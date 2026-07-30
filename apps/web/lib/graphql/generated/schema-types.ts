@@ -326,61 +326,6 @@ export type ImageAiFlowType = {
   styleIds?: Maybe<Scalars['JSON']['output']>
 }
 
-/** A single generated image version for an Instagram item page. */
-export type InstagramItemPageMediaVersionType = {
-  __typename?: 'InstagramItemPageMediaVersionType'
-  createdAt?: Maybe<Scalars['DateTime']['output']>
-  id: Scalars['ID']['output']
-  mediaS3Key: Scalars['String']['output']
-  prompt?: Maybe<Scalars['String']['output']>
-}
-
-/** A single page/frame within a workflow Instagram item. */
-export type InstagramItemPageType = {
-  __typename?: 'InstagramItemPageType'
-  createdAt?: Maybe<Scalars['DateTime']['output']>
-  id: Scalars['ID']['output']
-  mediaS3Key?: Maybe<Scalars['String']['output']>
-  mediaVersions: Array<InstagramItemPageMediaVersionType>
-  prompt?: Maybe<Scalars['String']['output']>
-  sortOrder: Scalars['Int']['output']
-  updatedAt?: Maybe<Scalars['DateTime']['output']>
-}
-
-/** Input for an attached media-library generation reference. */
-export type InstagramItemReferenceImageInput = {
-  enabled?: Scalars['Boolean']['input']
-  name: Scalars['String']['input']
-}
-
-/** Media-library photo attached as an image-generation reference. */
-export type InstagramItemReferenceImageType = {
-  __typename?: 'InstagramItemReferenceImageType'
-  enabled: Scalars['Boolean']['output']
-  name: Scalars['String']['output']
-}
-
-/** A workflow-scoped Instagram story, post, or reel draft. */
-export type InstagramItemType = {
-  __typename?: 'InstagramItemType'
-  caption?: Maybe<Scalars['String']['output']>
-  createdAt?: Maybe<Scalars['DateTime']['output']>
-  generationPrompt?: Maybe<Scalars['String']['output']>
-  hook?: Maybe<Scalars['String']['output']>
-  id: Scalars['ID']['output']
-  kind: Scalars['String']['output']
-  locationId: Scalars['Int']['output']
-  pages: Array<InstagramItemPageType>
-  referenceImages: Array<InstagramItemReferenceImageType>
-  schedule?: Maybe<Scalars['DateTime']['output']>
-  status: Scalars['String']['output']
-  styleId?: Maybe<Scalars['Int']['output']>
-  title?: Maybe<Scalars['String']['output']>
-  updatedAt?: Maybe<Scalars['DateTime']['output']>
-  visualBrief?: Maybe<Scalars['String']['output']>
-  workflowId: Scalars['ID']['output']
-}
-
 /** Tiered analytics payload for campaign_brief and growth agents. */
 export type InstagramSignalsType = {
   __typename?: 'InstagramSignalsType'
@@ -628,8 +573,6 @@ export type Mutation = {
   /** Create a manual calendar entry for a location. */
   createCalendarEntry: CalendarEntryType
   createImageAiFlow: ImageAiFlowType
-  createInstagramItem: InstagramItemType
-  createInstagramItemPage: InstagramItemPageType
   createLocation: LocationType
   createNode: NodeType
   createPost: PostType
@@ -642,9 +585,6 @@ export type Mutation = {
   /** Delete a manual calendar entry. */
   deleteCalendarEntry: CalendarEntryType
   deleteImageAiFlow: Scalars['Boolean']['output']
-  deleteInstagramItem: Scalars['Boolean']['output']
-  deleteInstagramItemPage: Scalars['Boolean']['output']
-  deleteInstagramItemPageMediaVersion: InstagramItemPageType
   deleteNode: Scalars['Boolean']['output']
   deletePost: Scalars['Boolean']['output']
   deletePostPage: Scalars['Boolean']['output']
@@ -661,8 +601,6 @@ export type Mutation = {
   /** Update a manual calendar entry. */
   updateCalendarEntry: CalendarEntryType
   updateImageAiFlow: ImageAiFlowType
-  updateInstagramItem: InstagramItemType
-  updateInstagramItemPage: InstagramItemPageType
   updateLocation: LocationType
   /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
   updateLocationManualBriefInput: LocationManualBriefInputType
@@ -710,25 +648,6 @@ export type MutationCreateImageAiFlowArgs = {
   slug: Scalars['String']['input']
   sortOrder?: Scalars['Int']['input']
   styleIds?: InputMaybe<Scalars['JSON']['input']>
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
-export type MutationCreateInstagramItemArgs = {
-  caption?: InputMaybe<Scalars['String']['input']>
-  hook?: InputMaybe<Scalars['String']['input']>
-  kind: Scalars['String']['input']
-  schedule?: InputMaybe<Scalars['DateTime']['input']>
-  status?: InputMaybe<Scalars['String']['input']>
-  title?: InputMaybe<Scalars['String']['input']>
-  visualBrief?: InputMaybe<Scalars['String']['input']>
-  workflowId: Scalars['ID']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
-export type MutationCreateInstagramItemPageArgs = {
-  itemId: Scalars['ID']['input']
-  mediaS3Key?: InputMaybe<Scalars['String']['input']>
-  prompt?: InputMaybe<Scalars['String']['input']>
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
@@ -799,22 +718,6 @@ export type MutationDeleteCalendarEntryArgs = {
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationDeleteImageAiFlowArgs = {
   slug: Scalars['String']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
-export type MutationDeleteInstagramItemArgs = {
-  id: Scalars['ID']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
-export type MutationDeleteInstagramItemPageArgs = {
-  pageId: Scalars['ID']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
-export type MutationDeleteInstagramItemPageMediaVersionArgs = {
-  mediaS3Key: Scalars['String']['input']
-  pageId: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
@@ -915,28 +818,6 @@ export type MutationUpdateImageAiFlowArgs = {
   slug: Scalars['String']['input']
   sortOrder?: InputMaybe<Scalars['Int']['input']>
   styleIds?: InputMaybe<Scalars['JSON']['input']>
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
-export type MutationUpdateInstagramItemArgs = {
-  caption?: InputMaybe<Scalars['String']['input']>
-  generationPrompt?: InputMaybe<Scalars['String']['input']>
-  hook?: InputMaybe<Scalars['String']['input']>
-  id: Scalars['ID']['input']
-  kind?: InputMaybe<Scalars['String']['input']>
-  referenceImages?: InputMaybe<Array<InstagramItemReferenceImageInput>>
-  schedule?: InputMaybe<Scalars['DateTime']['input']>
-  status?: InputMaybe<Scalars['String']['input']>
-  styleId?: InputMaybe<Scalars['Int']['input']>
-  title?: InputMaybe<Scalars['String']['input']>
-  visualBrief?: InputMaybe<Scalars['String']['input']>
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
-export type MutationUpdateInstagramItemPageArgs = {
-  id: Scalars['ID']['input']
-  mediaS3Key?: InputMaybe<Scalars['String']['input']>
-  prompt?: InputMaybe<Scalars['String']['input']>
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
@@ -1209,9 +1090,7 @@ export type Query = {
   imageAiFlow?: Maybe<ImageAiFlowType>
   imageAiFlows: Array<ImageAiFlowType>
   /** A single Instagram item owned via its workflow location. */
-  instagramItem?: Maybe<InstagramItemType>
   /** Instagram items for a workflow the caller owns, earliest schedule first (unscheduled last). */
-  instagramItems: Array<InstagramItemType>
   /** Composite Instagram signals for an analytics run: content heroes, trending items, avoid list, category focus, best posting window, and period headline. Requires order facts; returns null if none. */
   instagramSignals?: Maybe<InstagramSignalsType>
   /** Resolve the newest analytics run for a location and return instagramSignals in one request (single OrderFact load path when signals are requested). */
@@ -1309,16 +1188,6 @@ export type QueryImageAiFlowArgs = {
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryImageAiFlowsArgs = {
   includeInactive?: Scalars['Boolean']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryInstagramItemArgs = {
-  id: Scalars['ID']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryInstagramItemsArgs = {
-  workflowId: Scalars['ID']['input']
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */

@@ -14,17 +14,12 @@ from agents_app.agents.core.chat.request_story_generate_confirmation import (
 from agents_app.agents.core.chat.state import ChatAgentState
 from agents_app.agents.core.chat.story_assets import clear_story_assets, save_story_asset
 from agents_app.agents.core.chat.tools import (
-    create_instagram_items,
-    delete_instagram_items,
     get_chart_data,
-    get_instagram_item,
     get_location_data,
     get_milestone,
     get_workflow_overview,
-    list_instagram_items,
     list_media,
     list_media_collections,
-    update_instagram_items,
     update_milestone_input,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
@@ -113,11 +108,6 @@ def chat_tools_list(
     if workflow_id:
         tools.append(get_workflow_overview)
         tools.append(get_milestone)
-        tools.append(list_instagram_items)
-        tools.append(get_instagram_item)
-        tools.append(create_instagram_items)
-        tools.append(update_instagram_items)
-        tools.append(delete_instagram_items)
         if milestone_id:
             tools.append(update_milestone_input)
     if location_id:

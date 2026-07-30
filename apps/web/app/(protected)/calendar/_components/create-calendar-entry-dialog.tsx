@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useId, useState } from 'react'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
@@ -43,7 +42,6 @@ import {
   type CalendarSourceRef,
 } from '@/lib/calendar/client-api'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
-import { routes } from '@/lib/routes'
 import { useCloseLabel } from '@/hooks/use-close-label'
 
 import { CalendarMediaRefPicker } from './calendar-media-ref-picker'
@@ -266,16 +264,6 @@ export function CalendarEntryDialog({
               }}
             >
               <FieldGroup className="gap-4">
-                {initial.sourceRef?.type === 'instagram_item' ? (
-                  <Button asChild className="w-fit" size="sm" variant="outline">
-                    <Link
-                      href={`${routes.workflows.detail(initial.sourceRef.workflowId)}?item=${encodeURIComponent(initial.sourceRef.itemId)}`}
-                    >
-                      {t('openInstagramItem')}
-                    </Link>
-                  </Button>
-                ) : null}
-
                 <Field data-invalid={titleError || undefined}>
                   <FieldLabel htmlFor={titleId}>{t('titleLabel')}</FieldLabel>
                   <Input

@@ -14,20 +14,19 @@ import { WorkflowMobileArtifactSheet } from './workflow-mobile-artifact-sheet'
 
 export type WorkflowChatLayoutProps = {
   previewPanelRef: NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
-  /** @deprecated Milestones column is hidden in the UI; prop kept for call-site compatibility. */
-  timelinePane?: ReactNode
+  /** When false, chat is full-width / centered with no artifact panel. */
+  showPreview: boolean
   previewPane: ReactNode
   chatPane: ReactNode
   mobileArtifactOpen: boolean
   onMobileArtifactOpenChange: (open: boolean) => void
-  /** Optional mobile artifact sheet title (e.g. selected milestone). */
   mobileArtifactTitle?: string | null
-  /** Optional mobile artifact open-button hint / tooltip. */
   mobileArtifactHint?: string | null
 }
 
 export function WorkflowChatLayout({
   previewPanelRef,
+  showPreview,
   previewPane,
   chatPane,
   mobileArtifactOpen,
@@ -36,6 +35,16 @@ export function WorkflowChatLayout({
   mobileArtifactHint,
 }: WorkflowChatLayoutProps) {
   const isDesktop = useDesktopLayout()
+
+  if (!showPreview) {
+    return (
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-background">
+          {chatPane}
+        </div>
+      </div>
+    )
+  }
 
   if (!isDesktop) {
     return (

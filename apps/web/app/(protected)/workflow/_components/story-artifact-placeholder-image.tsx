@@ -2,23 +2,18 @@
 
 import { cn } from '@workspace/ui/lib/utils'
 
-type InstagramItemDefaultImageProps = {
-  /** Unused; accepted so existing call sites keep working. */
-  kind?: string
+type StoryArtifactPlaceholderImageProps = {
   className?: string
   iconClassName?: string
   label?: string
 }
 
-/**
- * Placeholder media tile when an Instagram item / page has no generated image.
- * Uses a darkened page background so multi-item grids stay calm.
- */
-export function InstagramItemDefaultImage({
+/** Placeholder tile when story mode has no generated image yet. */
+export function StoryArtifactPlaceholderImage({
   className,
   iconClassName,
   label,
-}: InstagramItemDefaultImageProps) {
+}: StoryArtifactPlaceholderImageProps) {
   return (
     <span
       aria-hidden={label ? undefined : true}

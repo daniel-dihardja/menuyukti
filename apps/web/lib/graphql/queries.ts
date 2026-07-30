@@ -11,7 +11,6 @@ export * from './queries/workflows'
 export * from './queries/analytics'
 export * from './queries/workspace'
 export * from './queries/posts'
-export * from './queries/instagram-items'
 export {
   SCHEDULER_CALENDAR_QUERY,
   type CalendarDisplaySlot,

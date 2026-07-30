@@ -143,8 +143,6 @@ export type UseWorkflowChatOptions = {
   milestoneTitles: ReadonlyArray<{ id: string; title: string | null | undefined }>
   onHydrateAfterChat: (milestoneId: string) => void
   onPrefetchMilestoneReference?: (milestoneId: string) => void
-  /** Called when a chat turn finishes successfully (refetch Instagram items panel). */
-  onRefreshInstagramItems?: () => void
 }
 
 export function useWorkflowChat({
@@ -155,7 +153,6 @@ export function useWorkflowChat({
   milestoneTitles,
   onHydrateAfterChat,
   onPrefetchMilestoneReference,
-  onRefreshInstagramItems,
 }: UseWorkflowChatOptions) {
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const [text, setText] = useState('')
@@ -375,10 +372,9 @@ export function useWorkflowChat({
       if (selectedMilestoneId !== null) {
         onHydrateAfterChat(selectedMilestoneId)
       }
-      onRefreshInstagramItems?.()
     }
     chatWasBusy.current = busy
-  }, [status, error, selectedMilestoneId, onHydrateAfterChat, onRefreshInstagramItems])
+  }, [status, error, selectedMilestoneId, onHydrateAfterChat])
 
   const buildSendBody = useCallback(() => {
     const presetRef = pendingPresetReferenceMilestoneIdRef.current

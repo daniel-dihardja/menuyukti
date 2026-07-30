@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
-import { InstagramItemDefaultImage } from './instagram-items/instagram-item-default-image'
+import { StoryArtifactPlaceholderImage } from './story-artifact-placeholder-image'
 
 type StoryImageArtifactProps = {
   imageUrl?: string | null
@@ -30,10 +30,9 @@ export function StoryImageArtifact({ imageUrl }: StoryImageArtifactProps) {
             // eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs
             <img alt={t('ariaLabel')} className="size-full object-cover" src={imageUrl} />
           ) : (
-            <InstagramItemDefaultImage
+            <StoryArtifactPlaceholderImage
               className="gap-3 p-8 text-center"
               iconClassName="text-5xl"
-              kind="story"
               label={t('placeholderLabel')}
             />
           )}

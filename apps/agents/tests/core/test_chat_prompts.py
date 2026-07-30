@@ -14,7 +14,7 @@ from agents_app.agents.core.chat.prompts import (
 
 def test_system_prompt_template_has_complete_structure() -> None:
     assert "Instagram content assistant" in SYSTEM_PROMPT_TEMPLATE
-    assert "acting through Instagram item tools" in SYSTEM_PROMPT_TEMPLATE
+    assert "prefer grounded answers" in SYSTEM_PROMPT_TEMPLATE
     assert "venue_slot_strength_heatmap" in SYSTEM_PROMPT_TEMPLATE
     assert "posting frequency" in SYSTEM_PROMPT_TEMPLATE
     assert "menu_item_heatmap" in SYSTEM_PROMPT_TEMPLATE
@@ -30,13 +30,7 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "list_media_collections" in MEDIA_LIBRARY_BLOCK
     assert "list_media" in MEDIA_LIBRARY_BLOCK
     assert "get_milestone" in SYSTEM_PROMPT_TEMPLATE
-    assert "secondary" in SYSTEM_PROMPT_TEMPLATE.lower()
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
-    assert "get_instagram_item" in SYSTEM_PROMPT_TEMPLATE
-    assert "create_instagram_items" in SYSTEM_PROMPT_TEMPLATE
-    assert "list_instagram_items" in SYSTEM_PROMPT_TEMPLATE
-    assert "update_instagram_items" in SYSTEM_PROMPT_TEMPLATE
-    assert "delete_instagram_items" in SYSTEM_PROMPT_TEMPLATE
 
 
 def test_build_system_prompt_without_optional_blocks() -> None:
@@ -51,8 +45,7 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "get_workflow_overview" in out
     assert "only if the catalog is missing" in out
     assert "get_chart_data" in out
-    assert "get_instagram_item" in out
-    assert "Milestones are secondary" in out
+    assert "get_milestone" in out
     assert "{chart_catalog_block}" not in out
     assert "{workflow_catalog_block}" not in out
     assert "{leonardo_image_block}" not in out
@@ -145,7 +138,6 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "media library" in out.lower()
     assert "Canva" in out
     assert "Operating loop for planning or content requests" not in out
-    assert "acting through Instagram item tools" not in out
     assert "get_chart_data" not in out
 
 

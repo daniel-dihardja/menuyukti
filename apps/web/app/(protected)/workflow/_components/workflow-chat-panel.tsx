@@ -16,16 +16,13 @@ import { parseAsString, useQueryState } from 'nuqs'
 
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
-import {
-  InstagramItemsRefreshProvider,
-  useInstagramItemsRefresh,
-} from './instagram-items/instagram-items-refresh-context'
 import { TimelineProvider } from './timeline-context'
 import type { MilestoneInput } from './timeline/types'
 import type { TimelineMilestone } from './timeline-workspace'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { useWorkflowPreviewVisibility } from './use-workflow-preview-visibility'
 import { useWorkflowTimelineProviderSlices } from './use-workflow-timeline-provider-value'
+import { useWorkflowChatComposerState } from './workflow-chat-context'
 import { WorkflowChatHost } from './workflow-chat-host'
 import { WorkflowChatLayout } from './workflow-chat-layout'
 import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
@@ -58,31 +55,10 @@ export function WorkflowChatPanel({
   locationId,
   analyticsRunId,
 }: WorkflowChatPanelProps) {
-  return (
-    <InstagramItemsRefreshProvider>
-      <WorkflowChatPanelInner
-        analyticsRunId={analyticsRunId}
-        initialMilestones={initialMilestones}
-        locationId={locationId}
-        workflowId={workflowId}
-      />
-    </InstagramItemsRefreshProvider>
-  )
-}
-
-function WorkflowChatPanelInner({
-  workflowId,
-  initialMilestones,
-  locationId,
-  analyticsRunId,
-}: WorkflowChatPanelProps) {
   const t = useTranslations('analytics.workflows.chat')
   const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
   const [chatBusy, setChatBusy] = useState(false)
   const [, startPreviewTransition] = useTransition()
-  const { refresh: onRefreshInstagramItems, version: instagramItemsRefreshVersion } =
-    useInstagramItemsRefresh()
-
   const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
   const isDesktop = useDesktopLayout()
   const previewPanelRef = usePanelRef()
@@ -182,9 +158,85 @@ function WorkflowChatPanelInner({
     timelineOps,
   )
 
+  return (
+    <TimelineProvider
+      actions={timelineSlices.actions}
+      chat={timelineSlices.chat}
+      workspace={timelineSlices.workspace}
+    >
+      <WorkflowChatHost
+        analyticsRunId={analyticsRunId}
+        locationId={locationId}
+        milestoneTitles={milestoneTitles}
+        onBusyChange={setChatBusy}
+        onHydrateAfterChat={onHydrateAfterChat}
+        onPrefetchMilestoneReference={onPrefetchMilestoneReference}
+        selectedMilestoneId={selectedMilestoneId}
+        workflowId={workflowId}
+      >
+        <WorkflowVisualizationsProvider workflowId={workflowId}>
+          <WorkflowChatMentionProvider milestoneTitles={milestoneTitles}>
+            <WorkflowChatPanelLayout
+              isDesktop={isDesktop}
+              mobileArtifactOpen={mobileArtifactOpen}
+              onMobileArtifactOpenChange={setMobileArtifactOpen}
+              previewOpen={previewOpen}
+              previewPanelRef={previewPanelRef}
+              setPreviewOpen={setPreviewOpen}
+              startPreviewTransition={startPreviewTransition}
+              storyArtifactHint={t('storyArtifact.ariaLabel')}
+              storyArtifactTitle={t('storyArtifact.ariaLabel')}
+            />
+          </WorkflowChatMentionProvider>
+        </WorkflowVisualizationsProvider>
+      </WorkflowChatHost>
+    </TimelineProvider>
+  )
+}
+
+type WorkflowChatPanelLayoutProps = {
+  isDesktop: boolean
+  mobileArtifactOpen: boolean
+  onMobileArtifactOpenChange: (open: boolean) => void
+  previewOpen: boolean
+  previewPanelRef: ReturnType<typeof usePanelRef>
+  setPreviewOpen: ReturnType<typeof useWorkflowPreviewVisibility>['setPreviewOpen']
+  startPreviewTransition: (cb: () => void) => void
+  storyArtifactHint: string
+  storyArtifactTitle: string
+}
+
+function WorkflowChatPanelLayout({
+  isDesktop,
+  mobileArtifactOpen,
+  onMobileArtifactOpenChange,
+  previewOpen,
+  previewPanelRef,
+  setPreviewOpen,
+  startPreviewTransition,
+  storyArtifactHint,
+  storyArtifactTitle,
+}: WorkflowChatPanelLayoutProps) {
+  const { chatMode } = useWorkflowChatComposerState()
+  const showPreview = chatMode === 'story_image_assistant'
+
+  useEffect(() => {
+    if (showPreview) {
+      setPreviewOpen(true)
+      if (!isDesktop) {
+        onMobileArtifactOpenChange(true)
+      }
+      return
+    }
+    onMobileArtifactOpenChange(false)
+  }, [showPreview, isDesktop, setPreviewOpen, onMobileArtifactOpenChange])
+
   useLayoutEffect(() => {
+    if (!showPreview || !isDesktop) {
+      return
+    }
     const panel = previewPanelRef.current
-    if (!panel || !isDesktop) {
+    if (!panel) {
       return
     }
     if (previewOpen) {
@@ -192,10 +244,10 @@ function WorkflowChatPanelInner({
     } else {
       panel.collapse()
     }
-  }, [previewOpen, isDesktop, previewPanelRef])
+  }, [previewOpen, isDesktop, previewPanelRef, showPreview])
 
   useEffect(() => {
-    if (!isDesktop) {
+    if (!showPreview || !isDesktop) {
       return
     }
     const onKeyDown = (e: KeyboardEvent) => {
@@ -217,57 +269,18 @@ function WorkflowChatPanelInner({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isDesktop, setPreviewOpen])
-
-  useEffect(() => {
-    if (!isDesktop && instagramItemsRefreshVersion > 0) {
-      setMobileArtifactOpen(true)
-    }
-  }, [instagramItemsRefreshVersion, isDesktop])
-
-  useEffect(() => {
-    if (!isDesktop && selectedMilestoneId !== null) {
-      setMobileArtifactOpen(true)
-    }
-  }, [selectedMilestoneId, isDesktop])
-
-  const selectedMilestoneTitle =
-    selectedMilestoneId !== null
-      ? (milestoneTitles.find((m) => m.id === selectedMilestoneId)?.title ?? null)
-      : null
-  const mobileArtifactHint = selectedMilestoneTitle ?? t('mobileArtifactEmptyHint')
+  }, [isDesktop, setPreviewOpen, showPreview, startPreviewTransition])
 
   return (
-    <TimelineProvider
-      actions={timelineSlices.actions}
-      chat={timelineSlices.chat}
-      workspace={timelineSlices.workspace}
-    >
-      <WorkflowChatHost
-        analyticsRunId={analyticsRunId}
-        locationId={locationId}
-        milestoneTitles={milestoneTitles}
-        onBusyChange={setChatBusy}
-        onHydrateAfterChat={onHydrateAfterChat}
-        onPrefetchMilestoneReference={onPrefetchMilestoneReference}
-        onRefreshInstagramItems={onRefreshInstagramItems}
-        selectedMilestoneId={selectedMilestoneId}
-        workflowId={workflowId}
-      >
-        <WorkflowVisualizationsProvider workflowId={workflowId}>
-          <WorkflowChatMentionProvider milestoneTitles={milestoneTitles}>
-            <WorkflowChatLayout
-              chatPane={<WorkflowSidePanel />}
-              mobileArtifactHint={mobileArtifactHint}
-              mobileArtifactOpen={mobileArtifactOpen}
-              mobileArtifactTitle={selectedMilestoneTitle}
-              onMobileArtifactOpenChange={setMobileArtifactOpen}
-              previewPane={<WorkflowPreviewPanelBodyLazy />}
-              previewPanelRef={previewPanelRef}
-            />
-          </WorkflowChatMentionProvider>
-        </WorkflowVisualizationsProvider>
-      </WorkflowChatHost>
-    </TimelineProvider>
+    <WorkflowChatLayout
+      chatPane={<WorkflowSidePanel />}
+      mobileArtifactHint={storyArtifactHint}
+      mobileArtifactOpen={mobileArtifactOpen}
+      mobileArtifactTitle={storyArtifactTitle}
+      onMobileArtifactOpenChange={onMobileArtifactOpenChange}
+      previewPane={<WorkflowPreviewPanelBodyLazy />}
+      previewPanelRef={previewPanelRef}
+      showPreview={showPreview}
+    />
   )
 }

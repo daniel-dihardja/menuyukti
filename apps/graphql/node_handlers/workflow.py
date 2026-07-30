@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import InstagramItem, Node
+from graphql.data_sources import Node
 from graphql.node_handlers._generic import GenericHandler
 from graphql.node_handlers.milestone import _milestone_sort_key, delete_milestone_children
 
@@ -29,10 +29,6 @@ class WorkflowHandler(GenericHandler):
             raise ValueError("Expected workflow node")
         if node.location_id is None:
             raise ValueError("Workflow has no location")
-
-        session.query(InstagramItem).filter(InstagramItem.workflow_id == node.id).delete(
-            synchronize_session=False
-        )
 
         children = session.query(Node).filter(Node.parent_id == node.id).all()
         milestones: list[Node] = []

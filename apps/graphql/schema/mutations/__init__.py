@@ -3,8 +3,6 @@ from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
 from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
-from .create_instagram_item import CreateInstagramItemMutation
-from .create_instagram_item_page import CreateInstagramItemPageMutation
 from .create_location import CreateLocationMutation
 from .create_media_collection import CreateMediaCollectionMutation
 from .create_node import CreateNodeMutation
@@ -18,11 +16,6 @@ from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_crm_app import DeleteCrmAppMutation
 from .delete_crm_customer import DeleteCrmCustomerMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
-from .delete_instagram_item import DeleteInstagramItemMutation
-from .delete_instagram_item_page import DeleteInstagramItemPageMutation
-from .delete_instagram_item_page_media_version import (
-    DeleteInstagramItemPageMediaVersionMutation,
-)
 from .delete_media_collection import DeleteMediaCollectionMutation
 from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
@@ -45,8 +38,6 @@ from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
-from .update_instagram_item import UpdateInstagramItemMutation
-from .update_instagram_item_page import UpdateInstagramItemPageMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_media_collection import UpdateMediaCollectionMutation
@@ -62,8 +53,6 @@ __all__ = [
     "AwardCrmCashbackMutation",
     "AddMediaToCollectionMutation",
     "CreateImageAiFlowMutation",
-    "CreateInstagramItemMutation",
-    "CreateInstagramItemPageMutation",
     "CreateCalendarEntryMutation",
     "CreateCrmAppMutation",
     "CreateCrmEnrollmentTokenMutation",
@@ -81,9 +70,6 @@ __all__ = [
     "DeleteCrmCustomerMutation",
     "RevokeCrmDeviceMutation",
     "DeleteImageAiFlowMutation",
-    "DeleteInstagramItemMutation",
-    "DeleteInstagramItemPageMutation",
-    "DeleteInstagramItemPageMediaVersionMutation",
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",
     "DeleteStyleMutation",
@@ -103,8 +89,6 @@ __all__ = [
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateImageAiFlowMutation",
-    "UpdateInstagramItemMutation",
-    "UpdateInstagramItemPageMutation",
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateMediaCollectionMutation",

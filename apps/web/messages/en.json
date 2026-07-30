@@ -45,31 +45,6 @@
         }
       }
     },
-    "listInstagramItems": {
-      "running": "Listing Instagram drafts…",
-      "done": "Listed Instagram drafts",
-      "error": "Couldn’t list Instagram drafts"
-    },
-    "getInstagramItem": {
-      "running": "Loading Instagram draft…",
-      "done": "Loaded Instagram draft",
-      "error": "Couldn’t load Instagram draft"
-    },
-    "createInstagramItems": {
-      "running": "Creating Instagram drafts…",
-      "done": "Created Instagram drafts",
-      "error": "Couldn’t create Instagram drafts"
-    },
-    "updateInstagramItems": {
-      "running": "Updating Instagram drafts…",
-      "done": "Updated Instagram drafts",
-      "error": "Couldn’t update Instagram drafts"
-    },
-    "deleteInstagramItems": {
-      "running": "Deleting Instagram drafts…",
-      "done": "Deleted Instagram drafts",
-      "error": "Couldn’t delete Instagram drafts"
-    },
     "getWorkflowOverview": {
       "running": "Refreshing workflow overview…",
       "done": "Reviewed workflow overview",
@@ -985,7 +960,6 @@
         "updateSuccessToast": "Calendar entry updated",
         "errorToast": "Could not save calendar entry",
         "workflowSlotReadonly": "Workflow schedule slots can’t be edited here.",
-        "openInstagramItem": "Open Instagram item",
         "discardTitle": "Discard entry?",
         "discardDescription": "You have unsaved changes. Close without saving?",
         "discardKeepEditing": "Keep editing",
@@ -1873,8 +1847,8 @@
       "chat": {
         "pageLoadingTitle": "Loading workflow…",
         "pageTitle": "Workflow #{id}",
-        "emptyTitle": "Draft Instagram content",
-        "emptyDescription": "Ask the assistant to plan Stories, posts, or Reels from your venue slot strength, menu heatmap, and pair lift charts—or to create and update Instagram items for this campaign.",
+        "emptyTitle": "Campaign assistant",
+        "emptyDescription": "Ask the assistant about venue slot strength, menu heatmap, pair lift, and campaign planning for this workflow.",
         "waitHint": "Usually takes about 30 seconds.",
         "quickPrompts": {
           "weeklyPlan": {
@@ -2660,123 +2634,6 @@
         "goalSheetTitle": "Workflow goal",
         "goalSheetDescription": "Describe what this campaign should achieve in plain text. Changes save when you close this panel or choose Save.",
         "goalSaveError": "Could not save goal. Please try again."
-      },
-      "instagramItems": {
-        "title": "Instagram items",
-        "panelDescription": "Create and edit Stories, posts, and Reels for this campaign. Select a milestone to switch back to milestone data.",
-        "newButton": "New item",
-        "loading": "Loading items…",
-        "emptyTitle": "No Instagram items yet",
-        "empty": "Create one to start drafting Stories, posts, or Reels for this campaign.",
-        "untitled": "Untitled item",
-        "notFound": "That Instagram item was not found. Pick another or create a new one.",
-        "backAria": "Back to Instagram items",
-        "saveButton": "Save",
-        "addToCalendar": "Add to calendar",
-        "addToCalendarSuccess": "Added to calendar",
-        "addToCalendarError": "Could not add to calendar. Please try again.",
-        "addToCalendarNeedSchedule": "Set a title and schedule before adding to the calendar.",
-        "deleteRowAria": "Delete {title}",
-        "createError": "Could not create Instagram item. Please try again.",
-        "saveError": "Could not save Instagram item. Please try again.",
-        "deleteError": "Could not delete Instagram item. Please try again.",
-        "deleteConfirmTitle": "Delete Instagram item?",
-        "deleteConfirmDescription": "This permanently removes the item from this campaign. This cannot be undone.",
-        "deleteConfirmDescriptionNamed": "This permanently removes “{title}” from this campaign. This cannot be undone.",
-        "deleteConfirmCancel": "Cancel",
-        "deleteConfirmAction": "Delete",
-        "sections": {
-          "content": "Content",
-          "generate": "Generate"
-        },
-        "pages": {
-          "label": "Pages",
-          "description": "Each page is a frame of this Story or post, with its own content and image.",
-          "tabLabel": "Page {index}",
-          "empty": "This item has no pages yet. Add a page to continue.",
-          "selectAria": "Select page {index}",
-          "actionsAria": "Page actions",
-          "selectedIndicator": "Page {current} of {total}",
-          "workspaceHeading": "Page {current} of {total}",
-          "add": "Add page",
-          "duplicate": "Duplicate page",
-          "delete": "Delete page",
-          "addError": "Could not add a page. Please try again.",
-          "duplicateError": "Could not duplicate this page. Please try again.",
-          "deleteError": "Could not delete this page. Please try again.",
-          "maxReached": "Items support up to 10 pages.",
-          "countBadge": "{count, plural, one {# page} other {# pages}}",
-          "deleteConfirmTitle": "Delete this empty page?",
-          "deleteConfirmDescription": "This removes the page from the item. Only empty pages without generated images can be deleted.",
-          "deleteConfirmCancel": "Cancel",
-          "deleteConfirmAction": "Delete page",
-          "deleteDeleting": "Deleting…"
-        },
-        "fields": {
-          "kind": "Format",
-          "status": "Status",
-          "schedule": "Schedule",
-          "scheduleDatePlaceholder": "Pick date and time",
-          "scheduleTime": "Time",
-          "title": "Title",
-          "hook": "Hook",
-          "caption": "Caption",
-          "visualBrief": "Visual brief",
-          "pageVisualBrief": "Visual brief for this page",
-          "pageContent": "Content",
-          "pageContentHint": "Describe what should appear on this page. Used when generating the image.",
-          "pageContentPlaceholder": "Describe the scene, layout, and on-image text."
-        },
-        "generate": {
-          "button": "Generate image",
-          "generating": "Generating…",
-          "error": "Could not generate image. Please try again.",
-          "tooManyReferences": "Too many references selected. Leave room for the style pack reference (at most 5 total including style).",
-          "previewLabel": "Generated image",
-          "previewEmpty": "No image yet. Write a visual brief and generate.",
-          "previewEmptyTitle": "No image yet",
-          "expandPreview": "View larger image",
-          "closePreview": "Close image preview",
-          "visualBriefHint": "Type @ to attach product photos from Media as generation references.",
-          "pageVisualBriefHint": "Describe this page only. Type @ to attach product photos from Media as generation references.",
-          "visualBriefPlaceholder": "Describe the scene, layout, and on-image text. Type @ to attach photos.",
-          "formatHintPost": "Output size: 1024×1024 (square post).",
-          "formatHintStory": "Output size: 768×1376 (story / reel).",
-          "style": {
-            "label": "Style pack",
-            "placeholder": "Select style",
-            "none": "No style",
-            "defaultSuffix": "default",
-            "description": "Applied automatically to this generation — you don’t need to repeat style rules in the brief.",
-            "create": "Create style",
-            "manage": "Manage styles",
-            "loadError": "Failed to load style packs."
-          },
-          "previousVersion": "Previous generated image",
-          "nextVersion": "Next generated image",
-          "versionIndicator": "{current} of {total}",
-          "versionDotAria": "Show version {index} of {total}",
-          "useAsItemImage": "Use as page image",
-          "committing": "Setting page image…",
-          "commitError": "Could not set this image as the page image. Please try again.",
-          "deleteVersion": "Delete generated image",
-          "deleteVersionConfirmTitle": "Delete this generated image?",
-          "deleteVersionConfirmDescription": "This removes the image from this page's version history. This cannot be undone.",
-          "deleteVersionConfirmCancel": "Cancel",
-          "deleteVersionConfirmAction": "Delete image",
-          "deleteVersionDeleting": "Deleting…",
-          "deleteVersionError": "Could not delete this image. Please try again."
-        },
-        "clearScheduleAria": "Clear schedule",
-        "kind": {
-          "story": "Story",
-          "post": "Post",
-          "reel": "Reel"
-        },
-        "status": {
-          "draft": "Draft",
-          "ready": "Ready"
-        }
       },
       "milestoneRun": {
         "runningLabel": "Milestone run in progress…",

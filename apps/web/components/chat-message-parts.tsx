@@ -184,11 +184,6 @@ function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicTo
 }
 
 const COMPACT_TOOL_I18N = {
-  list_instagram_items: 'listInstagramItems',
-  get_instagram_item: 'getInstagramItem',
-  create_instagram_items: 'createInstagramItems',
-  update_instagram_items: 'updateInstagramItems',
-  delete_instagram_items: 'deleteInstagramItems',
   get_workflow_overview: 'getWorkflowOverview',
   get_milestone: 'getMilestone',
   update_milestone_input: 'updateMilestoneInput',
