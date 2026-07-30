@@ -10,7 +10,7 @@ export function formatAttachedMediaLibrarySection(names: string[]): string {
 
   const lines = [
     '## Attached media library photos',
-    'These images are also attached as vision inputs. Use these exact filenames when calling tools (for example `save_story_asset`); do not invent or truncate names.',
+    'These images are also attached as vision inputs. Call `save_story_asset` only with these exact filenames when labeling style/content; do not invent, guess, or truncate names. If this section is absent, do not call `save_story_asset`.',
     ...unique.map((name, i) => `${i + 1}. ${name}`),
   ]
   return lines.join('\n')

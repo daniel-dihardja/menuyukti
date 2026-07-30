@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+from langchain.messages import HumanMessage
 from langchain.tools import ToolRuntime
 from langgraph.types import Command
 
@@ -11,9 +12,23 @@ VALID_STYLE = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
 VALID_CONTENT = "11111111-2222-3333-4444-555555555555.jpg"
 
 
-def _runtime(*, assets: list | None = None, tool_call_id: str = "tc-1") -> ToolRuntime:
+def _attached_user_message(*names: str) -> HumanMessage:
+    lines = [
+        "## Attached media library photos",
+        "These images are also attached as vision inputs.",
+        *[f"{i}. {name}" for i, name in enumerate(names, start=1)],
+    ]
+    return HumanMessage(content="\n".join(lines))
+
+
+def _runtime(
+    *,
+    assets: list | None = None,
+    tool_call_id: str = "tc-1",
+    messages: list | None = None,
+) -> ToolRuntime:
     return ToolRuntime(
-        state={"story_assets": assets or []},
+        state={"story_assets": assets or [], "messages": messages or []},
         context=None,
         config={},
         stream_writer=lambda *_a: None,
@@ -138,6 +153,19 @@ def test_upsert_result_replaces_previous() -> None:
     assert all(a["role"] != "result" for a in cleared)
 
 
+def test_attached_media_library_names_from_messages() -> None:
+    from agents_app.agents.core.chat.story_assets import (
+        attached_media_library_names_from_messages,
+    )
+
+    msg = _attached_user_message(VALID_STYLE, VALID_CONTENT)
+    assert attached_media_library_names_from_messages([msg]) == {VALID_STYLE, VALID_CONTENT}
+    assert attached_media_library_names_from_messages([]) == set()
+    assert attached_media_library_names_from_messages(
+        [HumanMessage(content="no attach section")]
+    ) == set()
+
+
 def test_save_story_asset_tool_returns_command_with_json() -> None:
     from agents_app.agents.core.chat.story_assets import save_story_asset
 
@@ -146,7 +174,7 @@ def test_save_story_asset_tool_returns_command_with_json() -> None:
             "role": "style",
             "name": VALID_STYLE,
             "note": "editorial",
-            "runtime": _runtime(),
+            "runtime": _runtime(messages=[_attached_user_message(VALID_STYLE)]),
         }
     )
     assert isinstance(result, Command)
@@ -165,12 +193,50 @@ def test_save_story_asset_rejects_unsafe_name() -> None:
     from agents_app.agents.core.chat.story_assets import save_story_asset
 
     result = save_story_asset.invoke(
-        {"role": "content", "name": "raw-upload.png", "runtime": _runtime()}
+        {
+            "role": "content",
+            "name": "raw-upload.png",
+            "runtime": _runtime(messages=[_attached_user_message(VALID_STYLE)]),
+        }
     )
     assert isinstance(result, str)
     payload = json.loads(result)
     assert payload["ok"] is False
     assert payload["message"].startswith("Error:")
+    assert "Attached media library photos" in payload["message"]
+
+
+def test_save_story_asset_rejects_name_not_in_attached_section() -> None:
+    from agents_app.agents.core.chat.story_assets import save_story_asset
+
+    # Valid uuid filename, but never @-attached in this chat.
+    result = save_story_asset.invoke(
+        {
+            "role": "content",
+            "name": VALID_CONTENT,
+            "runtime": _runtime(messages=[_attached_user_message(VALID_STYLE)]),
+        }
+    )
+    assert isinstance(result, str)
+    payload = json.loads(result)
+    assert payload["ok"] is False
+    assert "Attached media library photos" in payload["message"]
+
+
+def test_save_story_asset_rejects_when_no_attachments() -> None:
+    from agents_app.agents.core.chat.story_assets import save_story_asset
+
+    result = save_story_asset.invoke(
+        {
+            "role": "content",
+            "name": VALID_CONTENT,
+            "runtime": _runtime(messages=[HumanMessage(content="make a story")]),
+        }
+    )
+    assert isinstance(result, str)
+    payload = json.loads(result)
+    assert payload["ok"] is False
+    assert "skip saving content" in payload["message"].lower() or "Attached" in payload["message"]
 
 
 def test_clear_story_assets_tool_by_role() -> None:

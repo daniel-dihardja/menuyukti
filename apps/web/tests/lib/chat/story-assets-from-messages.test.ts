@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { UIMessage } from 'ai'
 
 import {
+  isRejectedStoryAssetSaveOutput,
   latestStoryAssetsFromMessages,
   parseGenerateStoryAssetsOutput,
   parseStoryAssetsToolOutput,
@@ -41,6 +42,44 @@ describe('parseStoryAssetsToolOutput', () => {
         }),
       ),
     ).toBeNull()
+  })
+})
+
+describe('isRejectedStoryAssetSaveOutput', () => {
+  it('detects rejected save payloads', () => {
+    expect(
+      isRejectedStoryAssetSaveOutput(
+        JSON.stringify({
+          ok: false,
+          action: 'save',
+          story_assets: [],
+          message: 'Error: invent',
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('ignores successful saves and clears', () => {
+    expect(
+      isRejectedStoryAssetSaveOutput(
+        JSON.stringify({
+          ok: true,
+          action: 'save',
+          story_assets: [],
+          message: 'Saved',
+        }),
+      ),
+    ).toBe(false)
+    expect(
+      isRejectedStoryAssetSaveOutput(
+        JSON.stringify({
+          ok: false,
+          action: 'clear',
+          story_assets: [],
+          message: 'Error',
+        }),
+      ),
+    ).toBe(false)
   })
 })
 

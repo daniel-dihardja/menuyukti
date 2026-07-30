@@ -13,6 +13,7 @@ describe('formatAttachedMediaLibrarySection', () => {
     const out = formatAttachedMediaLibrarySection([name, name, ` ${name} `])
     expect(out).toContain('## Attached media library photos')
     expect(out).toContain('save_story_asset')
+    expect(out).toContain('If this section is absent')
     expect(out).toContain(`1. ${name}`)
     expect(out.match(/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee\.webp/g)).toHaveLength(1)
   })

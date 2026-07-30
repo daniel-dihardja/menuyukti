@@ -7,7 +7,7 @@ import re
 from typing import Any, Literal
 
 from agents_app.agents.core.chat.state import StoryAssetRef
-from langchain.messages import ToolMessage
+from langchain.messages import HumanMessage, ToolMessage
 from langchain.tools import ToolRuntime, tool
 from langgraph.types import Command
 
@@ -16,6 +16,17 @@ MAX_STORY_ASSETS = 6
 _SAFE_PHOTO_FILENAME_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
     r"\.(webp|jpg|jpeg|png|gif|avif|tif|tiff)$",
+    re.IGNORECASE,
+)
+_ATTACHED_MEDIA_SECTION_RE = re.compile(
+    r"## Attached media library photos\b(.*?)(?=\n## |\Z)",
+    re.DOTALL | re.IGNORECASE,
+)
+_ATTACHED_FILENAME_LINE_RE = re.compile(
+    r"(?m)^\d+\.\s+("
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    r"\.(?:webp|jpg|jpeg|png|gif|avif|tif|tiff)"
+    r")\s*$",
     re.IGNORECASE,
 )
 
@@ -27,6 +38,43 @@ StoryAssetActionOp = Literal["save", "clear"]
 def is_safe_photo_filename(name: str) -> bool:
     """True when ``name`` matches the workspace media-library photo filename rules."""
     return bool(isinstance(name, str) and _SAFE_PHOTO_FILENAME_RE.match(name.strip()))
+
+
+def _message_text_content(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and block.get("type") == "text":
+                text = block.get("text")
+                if isinstance(text, str):
+                    parts.append(text)
+        return "\n".join(parts)
+    return ""
+
+
+def attached_media_library_names_from_messages(messages: Any) -> set[str]:
+    """Filenames listed under **Attached media library photos** in human turns."""
+    if not isinstance(messages, list):
+        return set()
+    names: set[str] = set()
+    for msg in messages:
+        text = ""
+        if isinstance(msg, HumanMessage):
+            text = _message_text_content(msg.content)
+        elif isinstance(msg, dict) and msg.get("role") in ("user", "human"):
+            text = _message_text_content(msg.get("content"))
+        elif getattr(msg, "type", None) == "human":
+            text = _message_text_content(getattr(msg, "content", ""))
+        if not text:
+            continue
+        for section in _ATTACHED_MEDIA_SECTION_RE.finditer(text):
+            for match in _ATTACHED_FILENAME_LINE_RE.finditer(section.group(1)):
+                names.add(match.group(1).strip())
+    return names
 
 
 def _normalize_assets(raw: Any) -> list[StoryAssetRef]:
@@ -287,17 +335,29 @@ def save_story_asset(
 ) -> Command | str:
     """Save a labeled style or content photo from the media library into Story scratchpad.
 
-    Call when the user attaches (via @) or confirms a media-library filename as the style
-    direction reference (role=style) or a content image (role=content) — a product/dish photo
-    or a complete custom image to optimize for Story. ``name`` must be the library filename
-    (uuid + extension), not a raw data URL. Optional ``note`` describes how to use the image
-    in the Leonardo prompt. Do not use role=result — the last generate output is saved
-    automatically.
+    Call **only** when the current user message includes an **Attached media library photos**
+    section (user `@`-attached from the media library). Use that exact ``name`` — never invent
+    filenames. role=style for look direction; role=content for an optional product/dish or
+    full-frame custom image. Content is optional: if the user did not attach a content photo,
+    skip this tool for content and continue. Optional ``note`` describes Leonardo usage.
+    Do not use role=result — the last generate output is saved automatically.
     """
     if runtime is None or not runtime.tool_call_id:
         return "Error: tool runtime unavailable."
 
     current = _normalize_assets((runtime.state or {}).get("story_assets"))
+    trimmed_name = name.strip() if isinstance(name, str) else ""
+    allowed = attached_media_library_names_from_messages((runtime.state or {}).get("messages"))
+    if trimmed_name not in allowed:
+        message = (
+            "Error: name must appear under **Attached media library photos** in a user "
+            "message (via @ attach). Do not invent filenames. If the user has no content "
+            "image, skip saving content and continue without calling this tool."
+        )
+        return story_assets_tool_payload(
+            ok=False, action="save", story_assets=current, message=message
+        )
+
     next_list, message = upsert_story_asset_list(current, role=role, name=name, note=note)
     if next_list is None:
         return story_assets_tool_payload(

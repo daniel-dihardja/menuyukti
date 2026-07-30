@@ -66,6 +66,16 @@ export function parseStoryAssetsToolOutput(output: unknown): StoryAssetsToolPayl
 }
 
 /**
+ * True when save_story_asset rejected the call (e.g. invented filename).
+ * Used to hide the red error chip — the model still sees the tool result.
+ */
+export function isRejectedStoryAssetSaveOutput(output: unknown): boolean {
+  const obj = parseJsonObject(output)
+  if (!obj) return false
+  return obj.ok === false && obj.action === 'save'
+}
+
+/**
  * Parse generate_instagram_post_image output that embeds a story_assets snapshot
  * (Story mode save_result).
  */

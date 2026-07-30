@@ -28,6 +28,7 @@ import {
   joinReasoningText,
   partitionMessageParts,
 } from '@/lib/chat/partition-message-parts'
+import { isRejectedStoryAssetSaveOutput } from '@/lib/chat/story-assets-from-messages'
 import {
   parseGeneratedImageUrlFromToolOutput,
   stripDuplicateGeneratedImageMarkdown,
@@ -223,6 +224,11 @@ function CompactNamedToolBlock({
   const t = useTranslations('chatTools')
   const key = COMPACT_TOOL_I18N[toolName]
   const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const output = 'output' in part ? part.output : undefined
+  // Hide rejected speculative saves (invented / unattached names) — avoid alarming the user.
+  if (toolName === 'save_story_asset' && !isInFlight && isRejectedStoryAssetSaveOutput(output)) {
+    return null
+  }
   const isError = toolOutputLooksLikeError(part)
   const message = isError ? t(`${key}.error`) : isInFlight ? t(`${key}.running`) : t(`${key}.done`)
 

@@ -139,6 +139,8 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert 'role="style"' in out
     assert 'role="content"' in out
     assert "Attached media library photos" in out
+    assert "Never invent" in out or "never invent" in out.lower()
+    assert "skip" in out.lower() and "content" in out.lower()
     assert "clear_story_assets" in out
     assert "media library" in out.lower()
     assert "Canva" in out
