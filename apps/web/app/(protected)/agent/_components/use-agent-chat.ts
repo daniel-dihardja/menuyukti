@@ -26,6 +26,11 @@ import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/
 import { appendChatMention } from '@/lib/chat/append-chat-mention'
 import { mediaNamesToPhotoGenerationReferences } from '@/lib/chat/media-names-to-generation-references'
 import {
+  ATTACHED_MEDIA_PRESIGN_MAX,
+  collectAttachedPhotoFilenames,
+  hydrateAttachedMediaInMessages,
+} from '@/lib/chat/hydrate-attached-media-urls'
+import {
   applyPresignedUrlsToMessages,
   collectGeneratedImageMediaS3Keys,
 } from '@/lib/chat/refresh-generated-image-urls'
@@ -219,7 +224,7 @@ export function useAgentChat({
   useEffect(() => {
     let cancelled = false
 
-    async function refreshPresignedUrls(source: UIMessage[]) {
+    async function refreshGeneratedImageUrls(source: UIMessage[]) {
       const keys = collectGeneratedImageMediaS3Keys(source).slice(0, 32)
       if (keys.length === 0 || cancelled) {
         return
@@ -250,6 +255,37 @@ export function useAgentChat({
       }
     }
 
+    async function refreshAttachedPhotoUrls(source: UIMessage[]) {
+      const names = collectAttachedPhotoFilenames(source).slice(0, ATTACHED_MEDIA_PRESIGN_MAX)
+      if (names.length === 0 || cancelled) {
+        return
+      }
+      const result = await apiFetch<{ urls?: Record<string, string> }>(
+        '/api/media/presign-photos',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ names }),
+        },
+        'Failed to refresh attached photo URLs',
+      )
+      if (cancelled || !result.ok) {
+        return
+      }
+      const urls = result.data.urls
+      if (!urls || typeof urls !== 'object') {
+        return
+      }
+      let rewritten: UIMessage[] | null = null
+      setMessages((current) => {
+        rewritten = hydrateAttachedMediaInMessages(current, urls)
+        return rewritten
+      })
+      if (rewritten !== null) {
+        writeAgentChatMessages(agentThreadId, rewritten)
+      }
+    }
+
     void (async () => {
       let messagesToRefresh = initialMessagesRef.current
       const history = await apiFetch<{
@@ -269,7 +305,11 @@ export function useAgentChat({
         writeAgentChatMessages(agentThreadId, historyMessages)
         messagesToRefresh = historyMessages
       }
-      await refreshPresignedUrls(messagesToRefresh)
+      await refreshGeneratedImageUrls(messagesToRefresh)
+      if (cancelled) {
+        return
+      }
+      await refreshAttachedPhotoUrls(messagesToRefresh)
     })()
 
     return () => {

@@ -1,9 +1,16 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import type { UIMessage } from 'ai'
 import { z } from 'zod'
 
 import { buildAgentsHeaders } from '@/lib/agents/headers'
+import {
+  ATTACHED_MEDIA_PRESIGN_MAX,
+  collectAttachedPhotoFilenames,
+  hydrateAttachedMediaInMessages,
+} from '@/lib/chat/hydrate-attached-media-urls'
 import { getPythonAgentsUrl } from '@/lib/config'
+import { presignPhotoUrlsByName } from '@/lib/media/presign-photo-urls'
 
 const uuidSchema = z.string().uuid()
 
@@ -13,6 +20,17 @@ const agentThreadQuerySchema = z.object({
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status })
+}
+
+async function hydrateAttachedPhotos(userId: string, messages: UIMessage[]): Promise<UIMessage[]> {
+  const names = collectAttachedPhotoFilenames(messages).slice(0, ATTACHED_MEDIA_PRESIGN_MAX)
+  if (names.length === 0) return messages
+  const urls = await presignPhotoUrlsByName(userId, names)
+  if (Object.keys(urls).length === 0) {
+    // Still convert legacy Attached: text → file parts (possibly without urls).
+    return hydrateAttachedMediaInMessages(messages, {})
+  }
+  return hydrateAttachedMediaInMessages(messages, urls)
 }
 
 async function agentsFetchError(
@@ -80,9 +98,10 @@ export async function GET(req: Request) {
     if (!Array.isArray(data.messages)) {
       return jsonError('Invalid agents response', 502)
     }
+    const messages = await hydrateAttachedPhotos(userId, data.messages as UIMessage[])
     return NextResponse.json({
       threadId: typeof data.thread_id === 'string' ? data.thread_id : null,
-      messages: data.messages,
+      messages,
       storyAssets: Array.isArray(data.story_assets) ? data.story_assets : [],
     })
   } catch {

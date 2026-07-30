@@ -110,20 +110,46 @@ def _tool_message_output(msg: ToolMessage) -> str:
         return str(content)
 
 
+def _media_type_from_filename(name: str) -> str:
+    """MIME type from a media library filename (aligned with web mediaTypeFromFilename)."""
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    if ext in ("jpg", "jpeg"):
+        return "image/jpeg"
+    if ext == "png":
+        return "image/png"
+    if ext == "webp":
+        return "image/webp"
+    if ext == "gif":
+        return "image/gif"
+    if ext == "avif":
+        return "image/avif"
+    if ext in ("tif", "tiff"):
+        return "image/tiff"
+    return "image/webp"
+
+
 def _human_ui_message(msg: HumanMessage) -> dict[str, Any] | None:
     raw_text = _text_from_content(msg.content).strip()
     if not raw_text:
         return None
     text, attached_names = strip_llm_only_chat_sections(raw_text)
-    if attached_names:
-        label = "Attached: " + ", ".join(attached_names)
-        text = f"{label}\n\n{text}" if text else label
-    if not text:
+    parts: list[dict[str, Any]] = []
+    if text:
+        parts.append({"type": "text", "text": text})
+    for name in attached_names:
+        parts.append(
+            {
+                "type": "file",
+                "filename": name,
+                "mediaType": _media_type_from_filename(name),
+            }
+        )
+    if not parts:
         return None
     return {
         "id": _message_id(msg),
         "role": "user",
-        "parts": [{"type": "text", "text": text}],
+        "parts": parts,
     }
 
 

@@ -104,11 +104,35 @@ def test_human_strips_llm_only_attached_media_section() -> None:
     )
     out = langchain_messages_to_ui_messages([HumanMessage(content=content, id="u1")])
     assert len(out) == 1
-    text = out[0]["parts"][0]["text"]
+    parts = out[0]["parts"]
+    assert parts[0] == {"type": "text", "text": "Please label style"}
+    assert parts[1] == {
+        "type": "file",
+        "filename": name,
+        "mediaType": "image/png",
+    }
+    text = parts[0]["text"]
     assert "save_story_asset" not in text
     assert "## Attached media library photos" not in text
-    assert f"Attached: {name}" in text
-    assert "Please label style" in text
+    assert f"Attached: {name}" not in text
+
+
+def test_human_attachment_only_emits_file_parts() -> None:
+    name = "f72bd586-2e75-4017-8e23-0db2bb1c3781.png"
+    content = (
+        "## Attached media library photos\n"
+        "These images are also attached as vision inputs.\n"
+        f"1. {name}\n"
+    )
+    out = langchain_messages_to_ui_messages([HumanMessage(content=content, id="u1")])
+    assert len(out) == 1
+    assert out[0]["parts"] == [
+        {
+            "type": "file",
+            "filename": name,
+            "mediaType": "image/png",
+        }
+    ]
 
 
 def test_message_cap_keeps_tail() -> None:
