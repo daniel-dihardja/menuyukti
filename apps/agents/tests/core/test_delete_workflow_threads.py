@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from langgraph.checkpoint.memory import InMemorySaver
-
 from agents_app.agents.core.chat.delete_workflow_threads import (
     adelete_workflow_chat_threads,
     workflow_chat_thread_base,
 )
+from langgraph.checkpoint.memory import InMemorySaver
 
 
 @pytest.mark.asyncio

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import json
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-
 from agents_app.agents.core.chat.history_messages import (
     HISTORY_MESSAGE_CAP,
     langchain_messages_to_ui_messages,
     normalize_story_assets,
 )
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 
 def test_empty_messages() -> None:

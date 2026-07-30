@@ -9,10 +9,10 @@ from typing import Annotated, Any, Literal, Self
 
 import httpx
 from agents_app.agents.core.chat.allowed_models import CHAT_GATEWAY_MODEL_ALLOWLIST
-from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.delete_workflow_threads import (
     adelete_workflow_chat_threads,
 )
+from agents_app.agents.core.chat.graph import CHAT_RECURSION_LIMIT, incremental_user_message
 from agents_app.agents.core.chat.history_messages import (
     langchain_messages_to_ui_messages,
     normalize_story_assets,
@@ -38,6 +38,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from starlette.responses import JSONResponse
+
 router = APIRouter()
 
 _SLASH_PRESET_RE = re.compile(r"^/preset\s+(\d+)$")
