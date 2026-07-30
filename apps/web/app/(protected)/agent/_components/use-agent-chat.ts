@@ -485,14 +485,13 @@ export function useAgentChat({
       if (status === 'streaming' || status === 'submitted') {
         return
       }
-      clearLocalChatState()
       setChatModeState(next)
       chatModeRef.current = next
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(agentChatModeStorageKey(agentThreadId), next)
       }
     },
-    [clearLocalChatState, status, agentThreadId],
+    [status, agentThreadId],
   )
 
   const handleSelectSlashCommand = useCallback(
