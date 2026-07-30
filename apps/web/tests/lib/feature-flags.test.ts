@@ -44,7 +44,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('usage')).toBe(true)
   })
 
-  it('returns /workflow as default authenticated path', () => {
-    expect(getDefaultAuthenticatedPath()).toBe('/workflow')
+  it('returns /advisor as default authenticated path', () => {
+    expect(getDefaultAuthenticatedPath()).toBe('/advisor')
   })
 })

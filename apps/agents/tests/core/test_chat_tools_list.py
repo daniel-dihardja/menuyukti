@@ -74,6 +74,14 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_chart_data" in wf_names
     assert "generate_instagram_post_image" in wf_names
 
+    agent_thread = chat_tools_list_from_config(
+        {"agent_thread_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", "location_id": 7, "user_id": "u1"}
+    )
+    agent_thread_names = [getattr(t, "name", "") for t in agent_thread]
+    assert "generate_instagram_post_image" in agent_thread_names
+    assert "get_location_data" in agent_thread_names
+    assert "get_milestone" not in agent_thread_names
+
     ig_studio = chat_tools_list_from_config({"user_id": "u1", "post_id": "10", "page_id": "20"})
     ig_names = [getattr(t, "name", "") for t in ig_studio]
     assert "generate_instagram_post_image" in ig_names

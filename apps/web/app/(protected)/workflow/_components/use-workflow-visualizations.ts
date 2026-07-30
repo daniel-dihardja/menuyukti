@@ -9,36 +9,36 @@ import {
   type WorkflowVisualizationId,
 } from './workflow-visualization-catalog'
 
-function storageKey(workflowId: string): string {
-  return `workflow-visualizations:${workflowId}`
+function storageKey(storageKeyId: string): string {
+  return `chat-visualizations:${storageKeyId}`
 }
 
-function readStored(workflowId: string): WorkflowVisualizationId[] {
+function readStored(storageKeyId: string): WorkflowVisualizationId[] {
   if (typeof window === 'undefined') return []
   try {
-    return parseStoredVisualizationIds(localStorage.getItem(storageKey(workflowId)))
+    return parseStoredVisualizationIds(localStorage.getItem(storageKey(storageKeyId)))
   } catch {
     return []
   }
 }
 
-export function useWorkflowVisualizations(workflowId: string) {
+export function useWorkflowVisualizations(storageKeyId: string) {
   const [addedIds, setAddedIds] = useState<WorkflowVisualizationId[]>([])
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    setAddedIds(readStored(workflowId))
+    setAddedIds(readStored(storageKeyId))
     setHydrated(true)
-  }, [workflowId])
+  }, [storageKeyId])
 
   useEffect(() => {
     if (!hydrated) return
     try {
-      localStorage.setItem(storageKey(workflowId), JSON.stringify(addedIds))
+      localStorage.setItem(storageKey(storageKeyId), JSON.stringify(addedIds))
     } catch {
       /* ignore quota / private mode */
     }
-  }, [addedIds, hydrated, workflowId])
+  }, [addedIds, hydrated, storageKeyId])
 
   const addVisualization = useCallback((id: WorkflowVisualizationId) => {
     setAddedIds((prev) => addVisualizationId(prev, id))

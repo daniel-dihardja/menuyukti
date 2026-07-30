@@ -5,31 +5,43 @@ import {
 
 type ClearStoryAssetArgs = {
   name: string
-  workflowId: string
   locationId: number
   analyticsRunId: number | null
-  workflowChatSessionId: string | null
   chatMode: string
   model: string
   signal?: AbortSignal
-}
+} & (
+  | { agentThreadId: string; workflowId?: never; workflowChatSessionId?: never }
+  | {
+      workflowId: string
+      workflowChatSessionId: string | null
+      agentThreadId?: never
+    }
+)
 
 /**
  * POST /api/chat with storyAssetAction only; returns the confirmed scratchpad snapshot.
  */
 export async function clearStoryAssetViaChat(args: ClearStoryAssetArgs): Promise<StoryAssetRef[]> {
+  const identity =
+    'agentThreadId' in args && args.agentThreadId
+      ? { agentThreadId: args.agentThreadId }
+      : {
+          workflowId: args.workflowId,
+          ...(args.workflowChatSessionId !== null
+            ? { workflowChatSessionId: args.workflowChatSessionId }
+            : {}),
+        }
+
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal: args.signal,
     body: JSON.stringify({
       messages: [],
-      workflowId: args.workflowId,
+      ...identity,
       locationId: String(args.locationId),
       ...(args.analyticsRunId !== null ? { analyticsRunId: String(args.analyticsRunId) } : {}),
-      ...(args.workflowChatSessionId !== null
-        ? { workflowChatSessionId: args.workflowChatSessionId }
-        : {}),
       chatMode: args.chatMode,
       model: args.model,
       storyAssetAction: { op: 'clear', name: args.name },

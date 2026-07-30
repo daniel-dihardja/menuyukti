@@ -98,10 +98,32 @@
     "signOut": "Sign out"
   },
   "agentChat": {
-    "metaTitle": "Advisor",
-    "metaDescription": "Chat with your Menuyukti marketing advisor.",
+    "metaTitle": "Chat",
+    "metaDescription": "Chat with your Menuyukti marketing advisor—general help and Story mode, grounded in your restaurant location.",
+    "listDescription": "Start a location-scoped chat for campaign ideas, or open Story mode to generate Instagram visuals.",
+    "locationLabel": "Location",
+    "locationPlaceholder": "Select a location",
+    "analyticsRunLabel": "Sales report",
+    "analyticsRunPlaceholder": "Select a report",
+    "newChat": "New chat",
+    "threadsHeading": "Recent chats",
+    "threadsLoading": "Loading chats…",
+    "threadsEmpty": "No chats for this location yet. Create one to get started.",
+    "selectLocation": "Select a location to view chats.",
+    "threadColumn": "Chat",
+    "actionsColumn": "Actions",
+    "untitledThread": "Chat {id}",
+    "removeThread": "Remove",
+    "threadPageTitle": "Chat {id}",
+    "threadNotFound": "This chat is not on this device. Create a new chat from the list.",
+    "backToList": "Back to chats",
+    "noBranches": {
+      "title": "Add a location first",
+      "description": "Chats are scoped to a restaurant location. Create a location, then come back to start chatting.",
+      "cta": "Create location"
+    },
     "emptyTitle": "Ask anything",
-    "emptyDescription": "Get campaign and content ideas backed by your restaurant context—the same advisor as on the Workflow page—without opening a workflow first.",
+    "emptyDescription": "Get campaign and content ideas backed by your restaurant context.",
     "placeholder": "What would you like help with?",
     "thinking": "Thinking…",
     "errorTitle": "Something went wrong",
@@ -109,7 +131,7 @@
     "retry": "Retry",
     "clearChatAriaLabel": "Clear chat",
     "clearChatLabel": "Clear chat",
-    "clearChatTooltip": "Clear messages and start a fresh advisor thread"
+    "clearChatTooltip": "Clear messages and start a fresh chat thread"
   },
   "chatGatewayModels": {
     "ariaLabel": "AI model",

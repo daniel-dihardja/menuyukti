@@ -256,8 +256,8 @@ export async function POST(req: Request) {
   const referenceSections: string[] = []
 
   if (referencedVisualizationId !== undefined) {
-    if (workflowId === undefined || locationId === undefined) {
-      return jsonError('Referenced visualization requires workflowId and locationId', 400)
+    if (locationId === undefined) {
+      return jsonError('Referenced visualization requires locationId', 400)
     }
     const locationIdNum = Number(locationId)
     const analyticsRunIdNum = analyticsRunId !== undefined ? Number(analyticsRunId) : null
@@ -265,7 +265,6 @@ export async function POST(req: Request) {
     let visualizationLoaded: Awaited<ReturnType<typeof loadReferencedVisualizationForChat>>
     try {
       visualizationLoaded = await loadReferencedVisualizationForChat(userId, {
-        workflowId,
         locationId: locationIdNum,
         referencedVisualizationId,
         analyticsRunId: analyticsRunIdNum,

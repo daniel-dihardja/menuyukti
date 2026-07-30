@@ -5,14 +5,31 @@ import { z } from 'zod'
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
 
-const getQuerySchema = z.object({
-  workflowId: z.string().trim().min(1),
-  workflowChatSessionId: z.string().uuid(),
-})
+const uuidSchema = z.string().uuid()
 
-const deleteQuerySchema = z.object({
-  workflowId: z.string().trim().min(1),
-})
+const getQuerySchema = z.union([
+  z.object({
+    agentThreadId: uuidSchema,
+    workflowId: z.undefined().optional(),
+    workflowChatSessionId: z.undefined().optional(),
+  }),
+  z.object({
+    workflowId: z.string().trim().min(1),
+    workflowChatSessionId: uuidSchema,
+    agentThreadId: z.undefined().optional(),
+  }),
+])
+
+const deleteQuerySchema = z.union([
+  z.object({
+    agentThreadId: uuidSchema,
+    workflowId: z.undefined().optional(),
+  }),
+  z.object({
+    workflowId: z.string().trim().min(1),
+    agentThreadId: z.undefined().optional(),
+  }),
+])
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status })
@@ -42,19 +59,30 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url)
-  const parsed = getQuerySchema.safeParse({
-    workflowId: url.searchParams.get('workflowId') ?? '',
-    workflowChatSessionId: url.searchParams.get('workflowChatSessionId') ?? '',
-  })
+  const agentThreadIdRaw = url.searchParams.get('agentThreadId')
+  const workflowIdRaw = url.searchParams.get('workflowId')
+  const sessionRaw = url.searchParams.get('workflowChatSessionId')
+
+  const parsed = getQuerySchema.safeParse(
+    agentThreadIdRaw
+      ? { agentThreadId: agentThreadIdRaw }
+      : {
+          workflowId: workflowIdRaw ?? '',
+          workflowChatSessionId: sessionRaw ?? '',
+        },
+  )
   if (!parsed.success) {
     return jsonError('Invalid query parameters', 400)
   }
 
-  const { workflowId, workflowChatSessionId } = parsed.data
   const baseUrl = getPythonAgentsUrl()
   const agentsUrl = new URL(`${baseUrl}/chat/history`)
-  agentsUrl.searchParams.set('workflow_id', workflowId)
-  agentsUrl.searchParams.set('workflow_chat_session_id', workflowChatSessionId)
+  if ('agentThreadId' in parsed.data && parsed.data.agentThreadId) {
+    agentsUrl.searchParams.set('agent_thread_id', parsed.data.agentThreadId)
+  } else if ('workflowId' in parsed.data && parsed.data.workflowId) {
+    agentsUrl.searchParams.set('workflow_id', parsed.data.workflowId)
+    agentsUrl.searchParams.set('workflow_chat_session_id', parsed.data.workflowChatSessionId)
+  }
 
   let agentRes: Response
   try {
@@ -96,7 +124,7 @@ export async function GET(req: Request) {
   }
 }
 
-/** Delete all LangGraph chat checkpoints for a workflow (all sessions). */
+/** Delete LangGraph chat checkpoints for an agent thread or all sessions of a workflow. */
 export async function DELETE(req: Request) {
   await connection()
   const { isAuthenticated, userId } = await auth()
@@ -105,17 +133,23 @@ export async function DELETE(req: Request) {
   }
 
   const url = new URL(req.url)
-  const parsed = deleteQuerySchema.safeParse({
-    workflowId: url.searchParams.get('workflowId') ?? '',
-  })
+  const agentThreadIdRaw = url.searchParams.get('agentThreadId')
+  const workflowIdRaw = url.searchParams.get('workflowId')
+
+  const parsed = deleteQuerySchema.safeParse(
+    agentThreadIdRaw ? { agentThreadId: agentThreadIdRaw } : { workflowId: workflowIdRaw ?? '' },
+  )
   if (!parsed.success) {
     return jsonError('Invalid query parameters', 400)
   }
 
-  const { workflowId } = parsed.data
   const baseUrl = getPythonAgentsUrl()
   const agentsUrl = new URL(`${baseUrl}/chat/history`)
-  agentsUrl.searchParams.set('workflow_id', workflowId)
+  if ('agentThreadId' in parsed.data && parsed.data.agentThreadId) {
+    agentsUrl.searchParams.set('agent_thread_id', parsed.data.agentThreadId)
+  } else if ('workflowId' in parsed.data && parsed.data.workflowId) {
+    agentsUrl.searchParams.set('workflow_id', parsed.data.workflowId)
+  }
 
   let agentRes: Response
   try {

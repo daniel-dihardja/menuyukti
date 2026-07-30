@@ -102,9 +102,18 @@ def chat_tools_list(
     return tools
 
 
+def _has_agent_thread_id(conf: dict[str, Any]) -> bool:
+    raw = conf.get("agent_thread_id")
+    return isinstance(raw, str) and bool(raw.strip())
+
+
 def _has_leonardo_image_generation(conf: dict[str, Any]) -> bool:
-    """Leonardo generate tool: workflow chat or IG Studio Post Creator page context."""
-    return _has_ig_studio_post_context(conf) or _has_workflow_id(conf)
+    """Leonardo generate tool: IG Studio, workflow chat, or agent-thread chat."""
+    return (
+        _has_ig_studio_post_context(conf)
+        or _has_workflow_id(conf)
+        or _has_agent_thread_id(conf)
+    )
 
 
 def chat_tools_list_from_config(conf: dict[str, Any]) -> list:

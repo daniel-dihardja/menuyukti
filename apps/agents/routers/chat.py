@@ -212,6 +212,7 @@ def _runnable_config(
     style_id: int | None = None,
     generation_references: list[dict[str, Any]] | None = None,
     chat_mode: str | None = None,
+    agent_thread_id: str | None = None,
 ) -> RunnableConfig:
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
@@ -219,6 +220,8 @@ def _runnable_config(
         "location_id": location_id,
         "user_id": user_id,
     }
+    if agent_thread_id is not None:
+        configurable["agent_thread_id"] = agent_thread_id
     if chat_gateway_model is not None:
         configurable["chat_gateway_model"] = chat_gateway_model
     if analytics_run_id is not None:
@@ -415,6 +418,7 @@ async def chat_stream(
         style_id=body.style_id,
         generation_references=body.generation_references,
         chat_mode=body.chat_mode,
+        agent_thread_id=body.agent_thread_id,
     )
 
     async def event_stream():
@@ -508,25 +512,43 @@ async def chat_history(
 @router.delete("/chat/history")
 async def delete_chat_history(
     request: Request,
-    workflow_id: Annotated[str, Query(min_length=1)],
+    workflow_id: Annotated[str | None, Query()] = None,
+    agent_thread_id: Annotated[str | None, Query()] = None,
     x_menuyukti_user_id: Annotated[str | None, Header(alias="X-Menuyukti-User-Id")] = None,
 ) -> JSONResponse:
-    """Delete all LangGraph checkpoints for a workflow (all chat sessions)."""
+    """Delete LangGraph checkpoints for a workflow (all sessions) or one agent thread."""
     user_id = (x_menuyukti_user_id or "").strip()
     if not user_id:
         raise HTTPException(status_code=400, detail="X-Menuyukti-User-Id is required")
 
-    wf_id = workflow_id.strip()
-    if not wf_id:
-        raise HTTPException(status_code=400, detail="workflow_id is required")
+    if workflow_id is not None and not workflow_id.strip():
+        workflow_id = None
+    if agent_thread_id is not None and not agent_thread_id.strip():
+        agent_thread_id = None
+
+    if not workflow_id and not agent_thread_id:
+        raise HTTPException(
+            status_code=400,
+            detail="workflow_id or agent_thread_id is required",
+        )
+    if workflow_id and agent_thread_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Pass only one of workflow_id or agent_thread_id",
+        )
 
     checkpointer = getattr(request.app.state, "chat_checkpointer", None)
     if checkpointer is None:
         raise HTTPException(status_code=503, detail="Chat checkpointer is not initialized")
 
+    if agent_thread_id:
+        thread_id = f"{user_id}:agent:{agent_thread_id.strip()}"
+        await checkpointer.adelete_thread(thread_id)
+        return JSONResponse({"deleted_thread_ids": [thread_id], "count": 1})
+
     deleted = await adelete_workflow_chat_threads(
         checkpointer,
         user_id=user_id,
-        workflow_id=wf_id,
+        workflow_id=workflow_id.strip(),  # type: ignore[union-attr]
     )
     return JSONResponse({"deleted_thread_ids": deleted, "count": len(deleted)})

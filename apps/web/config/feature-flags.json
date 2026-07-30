@@ -25,5 +25,5 @@
     "/advisor": true,
     "/staff": true
   },
-  "defaultAuthenticatedPath": "/workflow"
+  "defaultAuthenticatedPath": "/advisor"
 }

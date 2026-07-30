@@ -17,17 +17,18 @@ export type WorkflowVisualizationsContextValue = {
 const WorkflowVisualizationsContext = createContext<WorkflowVisualizationsContextValue | null>(null)
 
 export function WorkflowVisualizationsProvider({
-  workflowId,
+  storageKeyId,
   locationId,
   analyticsRunId,
   children,
 }: {
-  workflowId: string
+  /** Persistence key (agentThreadId or legacy workflowId). */
+  storageKeyId: string
   locationId: number
   analyticsRunId: number | null
   children: ReactNode
 }) {
-  const visualizations = useWorkflowVisualizations(workflowId)
+  const visualizations = useWorkflowVisualizations(storageKeyId)
   const value: WorkflowVisualizationsContextValue = {
     ...visualizations,
     locationId,

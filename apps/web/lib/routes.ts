@@ -91,10 +91,13 @@ export const routes = {
   igStudioStyleDetail: (id: string | number) =>
     `/ig-studio/styles/${encodeURIComponent(String(id))}`,
   /**
-   * Standalone assistant chat (`agentThreadId`). End-state chat home after workflow
-   * re-home — same `/api/chat` stack. Do not add new workflow-container features.
+   * Chat home (`agentThreadId`). List + thread detail under `/advisor`.
+   * Do not add workflow-container features here.
    */
   agent: '/advisor',
+  agentWithLocation: (locationId: string | number) =>
+    `/advisor?locationId=${encodeURIComponent(String(locationId))}`,
+  agentThread: (threadId: string) => `/advisor/${encodeURIComponent(threadId)}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
   /** Menuyukti staff-only console (platform role `admin`). */
@@ -109,9 +112,8 @@ export const routes = {
   profileAccount: '/profile/account',
 
   /**
-   * Interim chat home (general + story modes). Thread identity is still `workflowId` +
-   * session until re-home to `routes.agent` / `agentThreadId`. Do not add new workflow
-   * or milestone product features here.
+   * Legacy chat container (redirect-only after Phase 2). Kept until Phase 4 deletes
+   * workflow CRUD. Prefer `routes.agent` / `agentThreadId`.
    */
   workflows: {
     list: '/workflow',
