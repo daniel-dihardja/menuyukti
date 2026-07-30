@@ -88,6 +88,8 @@ def test_build_system_prompt_with_leonardo_image_generation() -> None:
     assert "Sales or analytics data is not required" in out
     assert "Leonardo reference images" in out
     assert "Do not paste the image URL" in out
+    assert "prefer that context default" in out
+    assert "do **not** pass the tool `model` arg" in out
     assert "IG Studio Post Creator" not in out
 
 
@@ -123,6 +125,8 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "how the image will be generated" in out.lower()
     assert "Do **not** call `generate_instagram_post_image` in this phase" in out
     assert "generate_instagram_post_image" in out
+    assert "prefer that context default" in out
+    assert "do **not** pass the tool `model` arg" in out
     assert "save_story_asset" in out
     assert 'role="style"' in out
     assert 'role="content"' in out

@@ -17,6 +17,7 @@ import {
   Attachments,
 } from '@workspace/ui/components/ai-elements/attachments'
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
+import { LeonardoPostModelSelect } from '@/components/leonardo-post-model-select'
 import { ChatModeSelect } from '@/components/chat-mode-select'
 import { PanelsTopLeft, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -122,13 +123,20 @@ export function WorkflowChatComposer() {
   const t = useTranslations('analytics.workflows.chat')
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
-  const { text, chatMode, selectedChatModel, slashCommands, savedStoryAssets } =
-    useWorkflowChatComposerState()
+  const {
+    text,
+    chatMode,
+    selectedChatModel,
+    selectedGenerationModel,
+    slashCommands,
+    savedStoryAssets,
+  } = useWorkflowChatComposerState()
   const { isChatBusy, visibleMessages } = useWorkflowChatMessages()
   const {
     setText,
     setChatMode,
     setSelectedChatModel,
+    setSelectedGenerationModel,
     handleTextChange,
     handleSubmit,
     handleSelectSlashCommand,
@@ -189,6 +197,12 @@ export function WorkflowChatComposer() {
               disabled={isChatBusy}
               onValueChange={setSelectedChatModel}
               value={selectedChatModel}
+            />
+            <LeonardoPostModelSelect
+              className="max-w-[min(100%,7.5rem)] lg:max-w-[min(100%,11rem)]"
+              disabled={isChatBusy}
+              onValueChange={setSelectedGenerationModel}
+              value={selectedGenerationModel}
             />
             <PromptInputButton
               aria-label={t('clearChatAriaLabel')}

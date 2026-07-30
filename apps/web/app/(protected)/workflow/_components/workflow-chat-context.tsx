@@ -8,6 +8,7 @@ import type { PendingMediaAttachment, WorkflowChatSlashCommand } from './use-wor
 import { DEFAULT_CHAT_MODE, type ChatModeId } from '@/lib/chat/chat-modes'
 import type { StoryAssetRef } from '@/lib/chat/story-assets-from-messages'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
+import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
@@ -25,6 +26,7 @@ export type WorkflowChatComposerState = {
   text: string
   chatMode: ChatModeId
   selectedChatModel: ChatGatewayModelId
+  selectedGenerationModel: LeonardoPostModelId
   isSubmitDisabled: boolean
   slashCommands: WorkflowChatSlashCommand[]
   pendingMediaAttachments: PendingMediaAttachment[]
@@ -41,6 +43,7 @@ export type WorkflowChatActions = {
   setText: (value: string) => void
   setChatMode: (mode: ChatModeId) => void
   setSelectedChatModel: (model: ChatGatewayModelId) => void
+  setSelectedGenerationModel: (model: LeonardoPostModelId) => void
   handleTextChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (message: PromptInputMessage) => Promise<void>
   handleSelectSlashCommand: (command: string) => Promise<void>

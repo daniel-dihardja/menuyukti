@@ -125,6 +125,20 @@ describe('chatRequestBodySchema', () => {
     expect(parsed.success).toBe(false)
   })
 
+  it('accepts generationModel on workflow chat requests', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [{ role: 'user', parts: [{ type: 'text', text: 'Generate a story' }] }],
+      workflowId: '1',
+      locationId: '10',
+      chatMode: 'story_image_assistant',
+      generationModel: 'nano-banana-2',
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.generationModel).toBe('nano-banana-2')
+    }
+  })
+
   it('accepts IG Studio post generation context', () => {
     const parsed = chatRequestBodySchema.safeParse({
       messages: [{ role: 'user', parts: [{ type: 'text', text: 'Generate' }] }],

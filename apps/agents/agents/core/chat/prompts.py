@@ -38,7 +38,9 @@ LEONARDO_IMAGE_BLOCK = """\
 
 When the user asks to generate, create, or regenerate an image, compose a concrete
 image-generation prompt and call `generate_instagram_post_image` — do not only describe a
-prompt. Optional tool args: `format` (feed|tall|square|story|wide), `model`, `quality`
+prompt. The chat UI already selects the Leonardo image model — prefer that context default;
+do **not** pass the tool `model` arg unless the user explicitly asks to switch models for
+this generate. Optional tool args: `format` (feed|tall|square|story|wide), `quality`
 (standard|high|ultra). Media attached via `@` (or equivalent request context) is already
 passed as Leonardo reference images — do not ask the user to re-upload or restate those
 refs; call the tool so they are used. Sales or analytics data is not required. After
@@ -140,10 +142,12 @@ update the summary (and `save_story_asset` / `clear_story_assets` as needed) and
 Only after the user explicitly confirms the Phase 3 plan, compose a concrete Leonardo
 image-generation prompt that explicitly names which saved image is the **style**
 reference and which is the **content** (use the notes from `save_story_asset`), plus
-on-image text, then call `generate_instagram_post_image`. Saved scratchpad assets are
-passed as Leonardo references automatically — do not ask the user to re-attach them on
-the generate turn. Do not only describe a prompt — call the tool. Output is always a
-9:16 Story at **768×1376** (format is forced to story). After success, briefly confirm in
+on-image text, then call `generate_instagram_post_image`. The chat UI already selects the
+Leonardo image model — prefer that context default; do **not** pass the tool `model` arg
+unless the user explicitly asks to switch models for this generate. Saved scratchpad
+assets are passed as Leonardo references automatically — do not ask the user to re-attach
+them on the generate turn. Do not only describe a prompt — call the tool. Output is always
+a 9:16 Story at **768×1376** (format is forced to story). After success, briefly confirm in
 one or two sentences. Do not paste the image URL, markdown image syntax, or HTML img
 tags — the UI already shows the image.
 

@@ -23,6 +23,11 @@ import {
   mediaTypeFromFilename,
   type PendingMediaAttachment,
 } from '@/lib/chat/workflow-chat-media-mention'
+import {
+  DEFAULT_LEONARDO_POST_MODEL,
+  isLeonardoPostModelId,
+  type LeonardoPostModelId,
+} from '@/lib/posts/leonardo-post-models'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { WorkflowVisualizationId } from '@/lib/workflow/workflow-visualization-ids'
 
@@ -30,6 +35,7 @@ export type { PendingMediaAttachment } from '@/lib/chat/workflow-chat-media-ment
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
 const WORKFLOW_CHAT_MODE_STORAGE_PREFIX = 'menuyukti.wfChatMode.v1:'
+const WORKFLOW_CHAT_IMAGE_MODEL_STORAGE_PREFIX = 'menuyukti.wfChatImageModel.v1:'
 
 function workflowChatSessionStorageKey(workflowId: string) {
   return `${WORKFLOW_CHAT_SESSION_STORAGE_PREFIX}${workflowId}`
@@ -37,6 +43,10 @@ function workflowChatSessionStorageKey(workflowId: string) {
 
 function workflowChatModeStorageKey(workflowId: string) {
   return `${WORKFLOW_CHAT_MODE_STORAGE_PREFIX}${workflowId}`
+}
+
+function workflowChatImageModelStorageKey(workflowId: string) {
+  return `${WORKFLOW_CHAT_IMAGE_MODEL_STORAGE_PREFIX}${workflowId}`
 }
 
 const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i
@@ -92,6 +102,11 @@ export function useWorkflowChat({
   )
   const selectedChatModelRef = useRef<ChatGatewayModelId>(DEFAULT_CHAT_GATEWAY_MODEL)
   selectedChatModelRef.current = selectedChatModel
+  const [selectedGenerationModel, setSelectedGenerationModelState] = useState<LeonardoPostModelId>(
+    DEFAULT_LEONARDO_POST_MODEL,
+  )
+  const selectedGenerationModelRef = useRef<LeonardoPostModelId>(DEFAULT_LEONARDO_POST_MODEL)
+  selectedGenerationModelRef.current = selectedGenerationModel
   const pendingPresetReferenceMilestoneIdRef = useRef<string | null>(null)
   const pendingReferencedVisualizationIdRef = useRef<WorkflowVisualizationId | null>(null)
   const pendingMediaAttachmentsRef = useRef<PendingMediaAttachment[]>([])
@@ -113,7 +128,25 @@ export function useWorkflowChat({
     const nextMode = modeRaw !== null && isChatModeId(modeRaw) ? modeRaw : DEFAULT_CHAT_MODE
     setChatModeState(nextMode)
     chatModeRef.current = nextMode
+    const imageModelRaw = sessionStorage.getItem(workflowChatImageModelStorageKey(workflowId))
+    const nextImageModel =
+      imageModelRaw !== null && isLeonardoPostModelId(imageModelRaw)
+        ? imageModelRaw
+        : DEFAULT_LEONARDO_POST_MODEL
+    setSelectedGenerationModelState(nextImageModel)
+    selectedGenerationModelRef.current = nextImageModel
   }, [workflowId])
+
+  const setSelectedGenerationModel = useCallback(
+    (model: LeonardoPostModelId) => {
+      setSelectedGenerationModelState(model)
+      selectedGenerationModelRef.current = model
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(workflowChatImageModelStorageKey(workflowId), model)
+      }
+    },
+    [workflowId],
+  )
 
   const transport = useMemo(
     () =>
@@ -137,6 +170,11 @@ export function useWorkflowChat({
               ...(sessionId !== null ? { workflowChatSessionId: sessionId } : {}),
               model:
                 typeof merged?.model === 'string' ? merged.model : selectedChatModelRef.current,
+              generationModel:
+                typeof merged?.generationModel === 'string' &&
+                isLeonardoPostModelId(merged.generationModel)
+                  ? merged.generationModel
+                  : selectedGenerationModelRef.current,
               chatMode: chatModeRef.current,
             },
           }
@@ -200,6 +238,7 @@ export function useWorkflowChat({
     pendingReferencedVisualizationIdRef.current = null
     return {
       model: selectedChatModelRef.current,
+      generationModel: selectedGenerationModelRef.current,
       ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
       ...(vizRef !== null ? { referencedVisualizationId: vizRef } : {}),
       ...(photoNames.length > 0 ? { referencedMediaNames: photoNames } : {}),
@@ -400,7 +439,15 @@ export function useWorkflowChat({
         return
       }
       setText('')
-      await sendMessage({ text: command }, { body: { model: selectedChatModelRef.current } })
+      await sendMessage(
+        { text: command },
+        {
+          body: {
+            model: selectedChatModelRef.current,
+            generationModel: selectedGenerationModelRef.current,
+          },
+        },
+      )
     },
     [sendMessage, setChatMode, status],
   )
@@ -426,6 +473,7 @@ export function useWorkflowChat({
       text,
       chatMode,
       selectedChatModel,
+      selectedGenerationModel,
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
@@ -435,6 +483,7 @@ export function useWorkflowChat({
       text,
       chatMode,
       selectedChatModel,
+      selectedGenerationModel,
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
@@ -447,6 +496,7 @@ export function useWorkflowChat({
       setText,
       setChatMode,
       setSelectedChatModel,
+      setSelectedGenerationModel,
       handleTextChange,
       handleSubmit,
       handleSelectSlashCommand,
@@ -461,6 +511,7 @@ export function useWorkflowChat({
     }),
     [
       setChatMode,
+      setSelectedGenerationModel,
       handleTextChange,
       handleSubmit,
       handleSelectSlashCommand,
