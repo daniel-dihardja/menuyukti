@@ -120,13 +120,21 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "confirm before generate" in out
     assert "Phase 4" in out
     assert "generate and refine" in out
-    assert "explicitly confirms" in out or "explicit accept" in out
+    assert "Generate" in out and "Change" in out
+    assert "single" in out.lower() or "one** step" in out or "one step" in out.lower()
     assert "List all collected data" in out or "list all collected data" in out.lower()
     assert "how the image will be generated" in out.lower()
+    assert "request_story_generate_confirmation" in out
+    assert "must" in out.lower()
     assert "Do **not** call `generate_instagram_post_image` in this phase" in out
+    assert "Never** call `request_story_generate_confirmation` in Phase 4" in out or (
+        "Never" in out and "request_story_generate_confirmation" in out and "Phase 4" in out
+    )
+    assert "yes/no" in out.lower()
+    assert "without" in out.lower() and "tool" in out.lower()
     assert "generate_instagram_post_image" in out
     assert "prefer that context default" in out
-    assert "do **not** pass the tool `model` arg" in out
+    assert "model" in out and "arg" in out
     assert "save_story_asset" in out
     assert 'role="style"' in out
     assert 'role="content"' in out
@@ -160,6 +168,7 @@ def test_story_image_assistant_tools_include_generate() -> None:
         "list_media",
         "save_story_asset",
         "clear_story_assets",
+        "request_story_generate_confirmation",
         "generate_instagram_post_image",
     }
     assert "list_instagram_items" not in names

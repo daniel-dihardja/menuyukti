@@ -360,6 +360,23 @@ export function useWorkflowChat({
     [sendMessage, buildSendBody],
   )
 
+  const sendQuickReply = useCallback(
+    async (text: string) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      const content = text.trim()
+      if (!content) {
+        return
+      }
+      const body = buildSendBody()
+      setText('')
+      setPendingMediaAttachments([])
+      await sendMessage({ text: content }, { body })
+    },
+    [sendMessage, buildSendBody, status],
+  )
+
   const handleSelectMention = useCallback(
     (milestoneId: string) => {
       if (status === 'streaming' || status === 'submitted') {
@@ -499,6 +516,7 @@ export function useWorkflowChat({
       setSelectedGenerationModel,
       handleTextChange,
       handleSubmit,
+      sendQuickReply,
       handleSelectSlashCommand,
       handleSelectMention,
       handleSelectVisualizationMention,
@@ -514,6 +532,7 @@ export function useWorkflowChat({
       setSelectedGenerationModel,
       handleTextChange,
       handleSubmit,
+      sendQuickReply,
       handleSelectSlashCommand,
       handleSelectMention,
       handleSelectVisualizationMention,

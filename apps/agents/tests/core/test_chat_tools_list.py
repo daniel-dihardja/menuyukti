@@ -151,4 +151,5 @@ def test_compile_chat_graph_uses_tool_node_with_handle_tool_errors() -> None:
     assert tool_node._handle_tool_errors is True
     assert "save_story_asset" in tool_node.tools_by_name
     assert "clear_story_assets" in tool_node.tools_by_name
+    assert "request_story_generate_confirmation" in tool_node.tools_by_name
     assert "story_assets" in ChatAgentState.__annotations__

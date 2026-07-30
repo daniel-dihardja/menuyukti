@@ -46,6 +46,8 @@ export type WorkflowChatActions = {
   setSelectedGenerationModel: (model: LeonardoPostModelId) => void
   handleTextChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (message: PromptInputMessage) => Promise<void>
+  /** Send a short text-only user message (e.g. Story Generate / Change confirm buttons). */
+  sendQuickReply: (text: string) => Promise<void>
   handleSelectSlashCommand: (command: string) => Promise<void>
   handleSelectMention: (milestoneId: string) => void
   handleSelectVisualizationMention: (

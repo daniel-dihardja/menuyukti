@@ -9,6 +9,9 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
 )
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.state import ChatAgentState
+from agents_app.agents.core.chat.request_story_generate_confirmation import (
+    request_story_generate_confirmation,
+)
 from agents_app.agents.core.chat.story_assets import clear_story_assets, save_story_asset
 from agents_app.agents.core.chat.tools import (
     create_instagram_items,
@@ -37,7 +40,11 @@ from langgraph.prebuilt.tool_node import ToolNode
 # Max tool/model turns per request (ReAct loop budget).
 CHAT_RECURSION_LIMIT = 20
 
-_STORY_SCRATCHPAD_TOOLS = [save_story_asset, clear_story_assets]
+_STORY_SCRATCHPAD_TOOLS = [
+    save_story_asset,
+    clear_story_assets,
+    request_story_generate_confirmation,
+]
 
 
 def _has_ig_studio_post_context(conf: dict[str, Any]) -> bool:
@@ -87,8 +94,8 @@ def chat_tools_list(
     Story scratchpad tools.
 
     In ``story_image_assistant`` mode only media-library tools, Story scratchpad tools,
-    and ``generate_instagram_post_image`` are bound (Story gather + generate/refine;
-    no campaign tooling).
+    confirmation UI, and ``generate_instagram_post_image`` are bound (Story gather +
+    generate/refine; no campaign tooling).
     """
     if story_image_assistant:
         return [
@@ -96,6 +103,7 @@ def chat_tools_list(
             list_media,
             save_story_asset,
             clear_story_assets,
+            request_story_generate_confirmation,
             generate_instagram_post_image,
         ]
 

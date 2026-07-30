@@ -15,6 +15,7 @@ import {
   ToolInput,
   ToolOutput,
 } from '@workspace/ui/components/ai-elements/tool'
+import { Suggestion, Suggestions } from '@workspace/ui/components/ai-elements/suggestion'
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { CheckIcon, XIcon } from 'lucide-react'
@@ -228,7 +229,68 @@ function CompactNamedToolBlock({
   return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
 }
 
-function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
+export type StoryGenerateConfirmationActions = {
+  actionsEnabled: boolean
+  /** When true, hide the confirmation tool UI entirely (e.g. generate already ran). */
+  hideToolUi?: boolean
+  onConfirmGenerate: () => void
+  onRequestChanges: () => void
+}
+
+function RequestStoryGenerateConfirmationToolBlock({
+  part,
+  storyGenerateConfirmation,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
+}) {
+  const t = useTranslations('chatTools.requestStoryGenerateConfirmation')
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const isError = toolOutputLooksLikeError(part)
+  const actionsEnabled =
+    Boolean(storyGenerateConfirmation?.actionsEnabled) && !isInFlight && !isError
+
+  if (storyGenerateConfirmation?.hideToolUi) {
+    return null
+  }
+
+  if (isInFlight) {
+    return <CompactToolStatus isError={false} isInFlight message={t('running')} />
+  }
+
+  if (isError) {
+    return <CompactToolStatus isError isInFlight={false} message={t('error')} />
+  }
+
+  if (!actionsEnabled) {
+    return <CompactToolStatus isError={false} isInFlight={false} message={t('done')} />
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <CompactToolStatus isError={false} isInFlight={false} message={t('ready')} />
+      <Suggestions>
+        <Suggestion
+          onClick={() => storyGenerateConfirmation?.onConfirmGenerate()}
+          suggestion={t('generate')}
+          variant="default"
+        />
+        <Suggestion
+          onClick={() => storyGenerateConfirmation?.onRequestChanges()}
+          suggestion={t('change')}
+        />
+      </Suggestions>
+    </div>
+  )
+}
+
+function ToolPartBlock({
+  part,
+  storyGenerateConfirmation,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
+}) {
   const toolName = resolveToolName(part)
   if (toolName === 'search_web') {
     return <SearchWebToolBlock part={part} />
@@ -238,6 +300,14 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
   }
   if (toolName === 'get_chart_data') {
     return <GetChartDataToolBlock part={part} />
+  }
+  if (toolName === 'request_story_generate_confirmation') {
+    return (
+      <RequestStoryGenerateConfirmationToolBlock
+        part={part}
+        storyGenerateConfirmation={storyGenerateConfirmation}
+      />
+    )
   }
   if (isCompactToolName(toolName)) {
     return <CompactNamedToolBlock part={part} toolName={toolName} />
@@ -274,6 +344,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   role,
   mentionTitles,
   isStreaming = false,
+  storyGenerateConfirmation,
 }: {
   message: UIMessage
   role: UIMessage['role']
@@ -281,6 +352,8 @@ export const ChatMessageParts = memo(function ChatMessageParts({
   mentionTitles?: string[]
   /** When true, assistant text uses incremental Streamdown rendering. */
   isStreaming?: boolean
+  /** Story Phase 3 Generate / Change buttons (workflow chat only). */
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
 }) {
   const parts = message.parts
 
@@ -312,6 +385,7 @@ export const ChatMessageParts = memo(function ChatMessageParts({
           mentionTitles={mentionTitles}
           part={part}
           role={role}
+          storyGenerateConfirmation={storyGenerateConfirmation}
         />
       ))}
     </>
@@ -332,12 +406,14 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   role,
   mentionTitles,
   generatedImageUrls = [],
+  storyGenerateConfirmation,
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
   mentionTitles?: string[]
   /** URLs from generate_instagram_post_image tool results in this message. */
   generatedImageUrls?: readonly string[]
+  storyGenerateConfirmation?: StoryGenerateConfirmationActions
 }) {
   if (part.type === 'text') {
     const text =
@@ -354,7 +430,7 @@ const MessagePartRenderer = memo(function MessagePartRenderer({
   }
 
   if (isToolUIPart(part)) {
-    return <ToolPartBlock part={part} />
+    return <ToolPartBlock part={part} storyGenerateConfirmation={storyGenerateConfirmation} />
   }
 
   if (part.type === 'source-url') {

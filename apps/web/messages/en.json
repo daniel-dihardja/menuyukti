@@ -99,6 +99,14 @@
       "running": "Updating Story references…",
       "done": "Updated Story references",
       "error": "Couldn’t update Story references"
+    },
+    "requestStoryGenerateConfirmation": {
+      "running": "Preparing confirmation…",
+      "done": "Waiting for confirmation",
+      "ready": "Ready to generate when you confirm",
+      "error": "Couldn’t prepare confirmation",
+      "generate": "Generate",
+      "change": "Change"
     }
   },
   "appShell": {
