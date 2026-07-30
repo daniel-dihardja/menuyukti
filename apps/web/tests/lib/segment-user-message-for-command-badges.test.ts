@@ -21,7 +21,7 @@ describe('segmentUserMessageForCommandBadges', () => {
     ])
   })
 
-  it('uses milestone titles for multi-word mentions', () => {
+  it('uses mention titles for multi-word mentions', () => {
     expect(
       segmentUserMessageForCommandBadges('@Summer Promo what next?', {
         mentionTitles: ['Summer Promo', 'Brief'],
@@ -50,7 +50,7 @@ describe('segmentUserMessageForCommandBadges', () => {
     ])
   })
 
-  it('badges attached visualization titles alongside milestones', () => {
+  it('badges attached visualization titles', () => {
     expect(
       segmentUserMessageForCommandBadges('@Campaign Brief @Pair lift matrix question', {
         mentionTitles: ['Campaign Brief', 'Pair lift matrix'],

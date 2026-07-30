@@ -13,7 +13,6 @@ describe('chatRequestBodySchema', () => {
       locationId: '10',
       analyticsRunId: '99',
       referencedVisualizationId: 'pair_lift_matrix_heatmap',
-      presetReferenceMilestoneId: '42',
     })
     expect(parsed.success).toBe(true)
   })

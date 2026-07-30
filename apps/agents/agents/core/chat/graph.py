@@ -1,4 +1,4 @@
-"""LangGraph chat graph: create_agent with get_milestone and short-term checkpoint memory."""
+"""LangGraph chat graph: create_agent with short-term checkpoint memory."""
 
 from __future__ import annotations
 
@@ -16,11 +16,8 @@ from agents_app.agents.core.chat.story_assets import clear_story_assets, save_st
 from agents_app.agents.core.chat.tools import (
     get_chart_data,
     get_location_data,
-    get_milestone,
-    get_workflow_overview,
     list_media,
     list_media_collections,
-    update_milestone_input,
 )
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 from agents_app.models.llm_config import chat_llm_for_gateway_model
@@ -58,13 +55,6 @@ def _has_workflow_id(conf: dict[str, Any]) -> bool:
     return isinstance(raw, str) and bool(raw.strip())
 
 
-def _has_milestone_id(conf: dict[str, Any]) -> bool:
-    raw = conf.get("milestone_id")
-    if isinstance(raw, str):
-        return bool(raw.strip())
-    return raw is not None
-
-
 def _has_location_id(conf: dict[str, Any]) -> bool:
     return conf.get("location_id") is not None
 
@@ -76,21 +66,17 @@ def _is_story_image_assistant_mode(conf: dict[str, Any]) -> bool:
 def chat_tools_list(
     *,
     include_post_image: bool = False,
-    workflow_id: bool = True,
-    milestone_id: bool = True,
     location_id: bool = True,
     story_image_assistant: bool = False,
 ) -> list:
     """Build chat ReAct tools for the given request context.
 
-    When ``workflow_id`` / ``milestone_id`` / ``location_id`` are False, the corresponding
-    tools are omitted from the bound set (model cannot call them). The ToolNode still
+    When ``location_id`` is False, location/chart tools are omitted. The ToolNode still
     registers the full union via ``chat_tools_list(include_post_image=True)`` plus
     Story scratchpad tools.
 
     In ``story_image_assistant`` mode only media-library tools, Story scratchpad tools,
-    confirmation UI, and ``generate_instagram_post_image`` are bound (Story gather +
-    generate/refine; no campaign tooling).
+    confirmation UI, and ``generate_instagram_post_image`` are bound.
     """
     if story_image_assistant:
         return [
@@ -105,11 +91,6 @@ def chat_tools_list(
     tools: list = []
     tools.append(list_media_collections)
     tools.append(list_media)
-    if workflow_id:
-        tools.append(get_workflow_overview)
-        tools.append(get_milestone)
-        if milestone_id:
-            tools.append(update_milestone_input)
     if location_id:
         tools.append(get_location_data)
         tools.append(get_chart_data)
@@ -132,8 +113,6 @@ def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
         return chat_tools_list(story_image_assistant=True)
     return chat_tools_list(
         include_post_image=_has_leonardo_image_generation(conf),
-        workflow_id=_has_workflow_id(conf),
-        milestone_id=_has_milestone_id(conf),
         location_id=_has_location_id(conf),
     )
 
@@ -145,10 +124,7 @@ def _chat_system_prompt_from_config() -> str:
     conf_dict = conf if isinstance(conf, dict) else {}
     raw_mode = conf_dict.get("chat_mode")
     chat_mode = raw_mode if isinstance(raw_mode, str) else None
-    raw_catalog = conf_dict.get("workflow_catalog_markdown")
-    catalog = raw_catalog if isinstance(raw_catalog, str) else None
     return build_system_prompt(
-        workflow_catalog=catalog,
         ig_studio_post_image=_has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=_has_leonardo_image_generation(conf_dict),
         include_chart_catalog=_has_location_id(conf_dict),
@@ -157,7 +133,7 @@ def _chat_system_prompt_from_config() -> str:
 
 
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
-    """Prepend the chat system prompt (with optional injected workflow catalog).
+    """Prepend the chat system prompt.
 
     Kept for unit tests; the live graph uses :func:`_dynamic_chat_prompt` middleware.
     """
@@ -196,13 +172,11 @@ def _enable_handle_tool_errors(graph: CompiledStateGraph) -> None:
 
 
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
-    """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
+    """Compile the shared chat agent (single graph for all requests; context via config)."""
     # ToolNode must include every tool the model may bind; binding is request-scoped below.
     all_tools = [
         *chat_tools_list(
             include_post_image=True,
-            workflow_id=True,
-            milestone_id=True,
             location_id=True,
         ),
         *_STORY_SCRATCHPAD_TOOLS,

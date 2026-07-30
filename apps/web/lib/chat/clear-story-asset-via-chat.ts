@@ -7,7 +7,6 @@ type ClearStoryAssetArgs = {
   name: string
   workflowId: string
   locationId: number
-  milestoneId: string | null
   analyticsRunId: number | null
   workflowChatSessionId: string | null
   chatMode: string
@@ -27,7 +26,6 @@ export async function clearStoryAssetViaChat(args: ClearStoryAssetArgs): Promise
       messages: [],
       workflowId: args.workflowId,
       locationId: String(args.locationId),
-      ...(args.milestoneId !== null ? { milestoneId: args.milestoneId } : {}),
       ...(args.analyticsRunId !== null ? { analyticsRunId: String(args.analyticsRunId) } : {}),
       ...(args.workflowChatSessionId !== null
         ? { workflowChatSessionId: args.workflowChatSessionId }

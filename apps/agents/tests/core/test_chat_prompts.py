@@ -14,7 +14,7 @@ from agents_app.agents.core.chat.prompts import (
 
 def test_system_prompt_template_has_complete_structure() -> None:
     assert "Instagram content assistant" in SYSTEM_PROMPT_TEMPLATE
-    assert "prefer grounded answers" in SYSTEM_PROMPT_TEMPLATE
+    assert "prefer grounded answers" in SYSTEM_PROMPT_TEMPLATE.replace("\n", " ")
     assert "venue_slot_strength_heatmap" in SYSTEM_PROMPT_TEMPLATE
     assert "posting frequency" in SYSTEM_PROMPT_TEMPLATE
     assert "menu_item_heatmap" in SYSTEM_PROMPT_TEMPLATE
@@ -23,13 +23,13 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "menu combos" in SYSTEM_PROMPT_TEMPLATE
     assert "do not dump full chart payloads" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
-    assert "{workflow_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
+    assert "{workflow_catalog_block}" not in SYSTEM_PROMPT_TEMPLATE
     assert "{leonardo_image_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{ig_studio_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{media_library_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "list_media_collections" in MEDIA_LIBRARY_BLOCK
     assert "list_media" in MEDIA_LIBRARY_BLOCK
-    assert "get_milestone" in SYSTEM_PROMPT_TEMPLATE
+    assert "get_milestone" not in SYSTEM_PROMPT_TEMPLATE
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
 
 
@@ -41,27 +41,14 @@ def test_build_system_prompt_without_optional_blocks() -> None:
     assert "## Workflow milestone catalog" not in out
     assert "IG Studio Post Creator" not in out
     assert "Image generation (Leonardo)" not in out
-    assert "source of truth" in out
-    assert "get_workflow_overview" in out
-    assert "only if the catalog is missing" in out
+    assert "get_workflow_overview" not in out
     assert "get_chart_data" in out
-    assert "get_milestone" in out
+    assert "get_milestone" not in out
     assert "{chart_catalog_block}" not in out
-    assert "{workflow_catalog_block}" not in out
     assert "{leonardo_image_block}" not in out
     assert "{ig_studio_block}" not in out
     assert "list_media_collections" in out
     assert "## Media library" in out
-
-
-def test_build_system_prompt_with_milestone_catalog() -> None:
-    catalog = "# Workflow overview\n\n## 1. Campaign Brief\n- **id**: 42\n"
-    out = build_system_prompt(workflow_catalog=catalog)
-    assert "Instagram content assistant" in out
-    assert "## Workflow milestone catalog" in out
-    assert "# Workflow overview" in out
-    assert "**id**: 42" in out
-    assert "## Workflow chart catalog" not in out
 
 
 def test_build_system_prompt_with_chart_catalog() -> None:
@@ -91,12 +78,6 @@ def test_build_system_prompt_with_ig_studio() -> None:
     assert IG_STUDIO_BLOCK.strip() in out
     assert "generate_instagram_post_image" in out
     assert "Do not paste the image URL" in out
-
-
-def test_build_system_prompt_ignores_blank_catalog() -> None:
-    base = build_system_prompt()
-    assert build_system_prompt(workflow_catalog="   ") == base
-    assert build_system_prompt(workflow_catalog="") == base
 
 
 def test_build_system_prompt_story_image_assistant_mode() -> None:
@@ -152,7 +133,6 @@ def test_story_image_assistant_tools_include_generate() -> None:
         {
             "chat_mode": "story_image_assistant",
             "workflow_id": "wf-1",
-            "milestone_id": "ms-1",
             "location_id": 1,
         }
     )

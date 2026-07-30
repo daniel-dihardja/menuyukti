@@ -54,10 +54,7 @@ export const chatGenerationReferenceSchema = z.discriminatedUnion('type', [
 export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
   workflowId: z.string().regex(/^\d+$/, 'Invalid workflow id').optional(),
-  milestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
   locationId: z.string().regex(/^\d+$/, 'Invalid location id').optional(),
-  /** When set, the BFF loads this milestone’s preset from GraphQL and inlines it into the user message (requires workflowId + locationId). */
-  presetReferenceMilestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
   /** When set, the BFF loads this attached visualization and inlines analytics data (requires workflowId + locationId). */
   referencedVisualizationId: z.enum(WORKFLOW_VISUALIZATION_ID_VALUES).optional(),
   /** Workflow-linked analytics run; used when loading visualization references. */

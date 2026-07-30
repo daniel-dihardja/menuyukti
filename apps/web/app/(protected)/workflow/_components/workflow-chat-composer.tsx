@@ -140,7 +140,6 @@ export function WorkflowChatComposer() {
     handleTextChange,
     handleSubmit,
     handleSelectSlashCommand,
-    handleSelectMention,
     handleSelectVisualizationMention,
     handleSelectMediaMention,
     handleRemoveSavedStoryAsset,
@@ -173,7 +172,6 @@ export function WorkflowChatComposer() {
           mentionAriaLabel={tMention('ariaLabel')}
           mentionEmptyLabel={tMention('empty')}
           onSelectMediaMention={handleSelectMediaMention}
-          onSelectMention={handleSelectMention}
           onSelectVisualizationMention={handleSelectVisualizationMention}
           onSelectSlashCommand={(cmd) => void handleSelectSlashCommand(cmd)}
           onValueChange={setText}

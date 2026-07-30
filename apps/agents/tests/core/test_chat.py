@@ -332,7 +332,7 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                         "messages": [
                             AIMessage(
                                 content="",
-                                tool_calls=[{"name": "get_milestone", "id": "1", "args": {}}],
+                                tool_calls=[{"name": "get_location_data", "id": "1", "args": {}}],
                             ),
                         ],
                     },
@@ -343,7 +343,7 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                 {
                     "tools": {
                         "messages": [
-                            ToolMessage(content="ok", tool_call_id="1", name="get_milestone")
+                            ToolMessage(content="ok", tool_call_id="1", name="get_location_data")
                         ],
                     },
                 },
@@ -357,12 +357,16 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
         "POST",
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Hello"}], "workflow_id": "10"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "workflow_id": "10",
+            "location_id": 7,
+        },
     ) as response:
         assert response.status_code == 200
         text = "".join(response.iter_text())
         assert "tool_start" in text or '"status": "tool_start"' in text
-        assert "get_milestone" in text
+        assert "get_location_data" in text
         assert "tool_end" in text or '"status": "tool_end"' in text
         assert '"tool_call_id": "1"' in text
         assert "Done" in text
@@ -437,7 +441,7 @@ def test_chat_stream_emits_distinct_tool_call_ids_for_parallel_same_tool(
         assert "Planned" in text
 
 
-def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
+def test_chat_stream_passes_location_in_config(client: TestClient) -> None:
     captured: dict = {}
     mock_graph = MagicMock()
     _install_mock_astream(
@@ -454,14 +458,13 @@ def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
         json={
             "messages": [{"role": "user", "content": "Run"}],
             "workflow_id": "99",
-            "milestone_id": "42",
             "location_id": 7,
         },
     ) as response:
         assert response.status_code == 200
 
     assert captured["config"]["configurable"]["thread_id"] == "user-1:wf:99"
-    assert captured["config"]["configurable"]["milestone_id"] == "42"
+    assert "milestone_id" not in captured["config"]["configurable"]
     assert captured["config"]["configurable"]["location_id"] == 7
     assert captured["config"]["configurable"]["user_id"] == "user-1"
     assert "workflow_catalog_markdown" not in captured["config"]["configurable"]

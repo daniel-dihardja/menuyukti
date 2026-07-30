@@ -5,12 +5,7 @@ import { useEffect, useMemo, type ReactNode } from 'react'
 import { WorkflowChatProvider } from './workflow-chat-context'
 import { useWorkflowChat, type UseWorkflowChatOptions } from './use-workflow-chat'
 
-export type WorkflowChatHostProps = Omit<
-  UseWorkflowChatOptions,
-  'onHydrateAfterChat' | 'onPrefetchMilestoneReference'
-> & {
-  onHydrateAfterChat: (milestoneId: string) => void
-  onPrefetchMilestoneReference?: (milestoneId: string) => void
+export type WorkflowChatHostProps = UseWorkflowChatOptions & {
   onBusyChange: (isBusy: boolean) => void
   children: ReactNode
 }

@@ -49,7 +49,6 @@ export type WorkflowChatActions = {
   /** Send a short text-only user message (e.g. Story Generate / Change confirm buttons). */
   sendQuickReply: (text: string) => Promise<void>
   handleSelectSlashCommand: (command: string) => Promise<void>
-  handleSelectMention: (milestoneId: string) => void
   handleSelectVisualizationMention: (
     visualizationId: WorkflowVisualizationId,
     title: string,

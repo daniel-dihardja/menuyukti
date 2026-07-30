@@ -2,9 +2,7 @@ import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { UIMessage } from 'ai'
 import { buildPythonUserMessage, ChatImageError } from '@/lib/chat/build-python-user-message'
-import { formatPresetDataMarkdownSection } from '@/lib/chat/format-payload-for-chat'
 import { formatVisualizationDataMarkdownSection } from '@/lib/chat/format-visualization-for-chat'
-import { loadReferencedMilestonePresetForChat } from '@/lib/chat/referenced-milestone-for-chat'
 import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
@@ -225,9 +223,7 @@ export async function POST(req: Request) {
   const {
     messages: rawMessages,
     workflowId,
-    milestoneId,
     locationId,
-    presetReferenceMilestoneId,
     referencedVisualizationId,
     referencedMediaNames,
     referencedPostMediaNames,
@@ -259,75 +255,37 @@ export async function POST(req: Request) {
 
   const referenceSections: string[] = []
 
-  if (presetReferenceMilestoneId !== undefined || referencedVisualizationId !== undefined) {
+  if (referencedVisualizationId !== undefined) {
     if (workflowId === undefined || locationId === undefined) {
-      return jsonError(
-        'Referenced milestone or visualization requires workflowId and locationId',
-        400,
-      )
+      return jsonError('Referenced visualization requires workflowId and locationId', 400)
     }
     const locationIdNum = Number(locationId)
     const analyticsRunIdNum = analyticsRunId !== undefined ? Number(analyticsRunId) : null
 
-    const presetPromise =
-      presetReferenceMilestoneId !== undefined
-        ? loadReferencedMilestonePresetForChat(userId, {
-            workflowId,
-            locationId: locationIdNum,
-            presetReferenceMilestoneId,
-          }).catch((err: unknown) => {
-            const detail = err instanceof Error ? err.message : String(err)
-            throw new Error(`Failed to load referenced milestone: ${detail}`)
-          })
-        : Promise.resolve(null)
-
-    const visualizationPromise =
-      referencedVisualizationId !== undefined
-        ? loadReferencedVisualizationForChat(userId, {
-            workflowId,
-            locationId: locationIdNum,
-            referencedVisualizationId,
-            analyticsRunId: analyticsRunIdNum,
-          }).catch((err: unknown) => {
-            const detail = err instanceof Error ? err.message : String(err)
-            throw new Error(`Failed to load referenced visualization: ${detail}`)
-          })
-        : Promise.resolve(null)
-
-    let presetLoaded: Awaited<ReturnType<typeof loadReferencedMilestonePresetForChat>> | null
-    let visualizationLoaded: Awaited<ReturnType<typeof loadReferencedVisualizationForChat>> | null
+    let visualizationLoaded: Awaited<ReturnType<typeof loadReferencedVisualizationForChat>>
     try {
-      ;[presetLoaded, visualizationLoaded] = await Promise.all([
-        presetPromise,
-        visualizationPromise,
-      ])
+      visualizationLoaded = await loadReferencedVisualizationForChat(userId, {
+        workflowId,
+        locationId: locationIdNum,
+        referencedVisualizationId,
+        analyticsRunId: analyticsRunIdNum,
+      })
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err)
-      return jsonError(detail, 502)
+      return jsonError(`Failed to load referenced visualization: ${detail}`, 502)
     }
 
-    if (presetLoaded !== null) {
-      if (!presetLoaded.ok) {
-        return jsonError(presetLoaded.message, presetLoaded.status)
-      }
-      referenceSections.push(
-        formatPresetDataMarkdownSection(presetLoaded.title, presetLoaded.presetPayload),
-      )
+    if (!visualizationLoaded.ok) {
+      return jsonError(visualizationLoaded.message, visualizationLoaded.status)
     }
-
-    if (visualizationLoaded !== null) {
-      if (!visualizationLoaded.ok) {
-        return jsonError(visualizationLoaded.message, visualizationLoaded.status)
-      }
-      referenceSections.push(
-        formatVisualizationDataMarkdownSection({
-          title: visualizationLoaded.title,
-          visualizationId: visualizationLoaded.visualizationId,
-          payload: visualizationLoaded.payload,
-          usedFallbackRun: visualizationLoaded.usedFallbackRun,
-        }),
-      )
-    }
+    referenceSections.push(
+      formatVisualizationDataMarkdownSection({
+        title: visualizationLoaded.title,
+        visualizationId: visualizationLoaded.visualizationId,
+        payload: visualizationLoaded.payload,
+        usedFallbackRun: visualizationLoaded.usedFallbackRun,
+      }),
+    )
   }
 
   let pythonMessage: Awaited<ReturnType<typeof buildPythonUserMessage>> | null = null
@@ -357,7 +315,6 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         messages: pythonMessage !== null ? [pythonMessage] : [],
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
-        ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),
         ...(analyticsRunId !== undefined ? { analytics_run_id: Number(analyticsRunId) } : {}),
         ...(agentThreadId !== undefined ? { agent_thread_id: agentThreadId } : {}),

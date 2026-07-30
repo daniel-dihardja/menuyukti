@@ -10,18 +10,29 @@ export type WorkflowVisualizationsContextValue = {
   addVisualization: (id: WorkflowVisualizationId) => void
   removeVisualization: (id: WorkflowVisualizationId) => void
   hydrated: boolean
+  locationId: number
+  analyticsRunId: number | null
 }
 
 const WorkflowVisualizationsContext = createContext<WorkflowVisualizationsContextValue | null>(null)
 
 export function WorkflowVisualizationsProvider({
   workflowId,
+  locationId,
+  analyticsRunId,
   children,
 }: {
   workflowId: string
+  locationId: number
+  analyticsRunId: number | null
   children: ReactNode
 }) {
-  const value = useWorkflowVisualizations(workflowId)
+  const visualizations = useWorkflowVisualizations(workflowId)
+  const value: WorkflowVisualizationsContextValue = {
+    ...visualizations,
+    locationId,
+    analyticsRunId,
+  }
   return <WorkflowVisualizationsContext value={value}>{children}</WorkflowVisualizationsContext>
 }
 

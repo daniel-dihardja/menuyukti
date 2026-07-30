@@ -2,7 +2,6 @@
 
 import asyncio
 import json
-import re
 import uuid
 from collections.abc import AsyncIterator, Iterator
 from typing import Annotated, Any, Literal, Self
@@ -22,7 +21,6 @@ from agents_app.agents.core.chat.story_assets import (
     apply_clear_story_assets,
     is_safe_photo_filename,
 )
-from agents_app.agents.core.chat.tools import get_milestone
 from agents_app.agents.errors import structured_error_payload
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -40,8 +38,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from starlette.responses import JSONResponse
 
 router = APIRouter()
-
-_SLASH_PRESET_RE = re.compile(r"^/preset\s+(\d+)$")
 
 
 class ChatTextContentBlock(BaseModel):
@@ -95,7 +91,6 @@ class ChatRequest(BaseModel):
 
     messages: list[ChatMessage] = Field(default_factory=list)
     workflow_id: str | None = None
-    milestone_id: str | None = None
     location_id: int | None = Field(default=None, ge=1)
     analytics_run_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str | None = Field(default=None, min_length=1)
@@ -133,46 +128,6 @@ class ChatRequest(BaseModel):
 
 def _sse_data_line(payload: object) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
-
-
-def parse_slash_get_milestone(content: object) -> dict[str, Any] | None:
-    """Map exact slash commands to ``get_milestone`` args; otherwise ``None``."""
-    if not isinstance(content, str):
-        return None
-    text = content.strip()
-    if text == "/input":
-        return {"fields": ["input"]}
-    if text == "/data":
-        return {"fields": ["data"]}
-    if text == "/help":
-        return {"fields": ["help"]}
-    match = _SLASH_PRESET_RE.fullmatch(text)
-    if match is not None:
-        return {"fields": ["data"], "milestone_id": match.group(1)}
-    return None
-
-
-async def _stream_slash_get_milestone(
-    *,
-    tool_args: dict[str, Any],
-    runnable_config: RunnableConfig,
-    http_client: httpx.AsyncClient,
-) -> AsyncIterator[str]:
-    """Invoke ``get_milestone`` without the LLM and emit chat SSE tool + token events."""
-    token = chat_http_client_var.set(http_client)
-    try:
-        yield _sse_data_line({"status": "tool_start", "tool": "get_milestone"})
-        output = await get_milestone.ainvoke(tool_args, config=runnable_config)
-        text = output if isinstance(output, str) else str(output)
-        yield _sse_data_line({"status": "tool_end", "tool": "get_milestone", "output": text})
-        if text:
-            yield _sse_data_line({"token": text})
-    except asyncio.CancelledError:
-        raise
-    except Exception as exc:
-        yield _sse_data_line(structured_error_payload(exc))
-    finally:
-        chat_http_client_var.reset(token)
 
 
 async def _stream_story_asset_action(
@@ -245,7 +200,6 @@ def _runnable_config(
     *,
     thread_id: str,
     workflow_id: str | None,
-    milestone_id: str | None,
     location_id: int | None,
     user_id: str | None,
     chat_gateway_model: str | None,
@@ -262,7 +216,6 @@ def _runnable_config(
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
         "workflow_id": workflow_id,
-        "milestone_id": milestone_id,
         "location_id": location_id,
         "user_id": user_id,
     }
@@ -450,7 +403,6 @@ async def chat_stream(
     cfg = _runnable_config(
         thread_id=thread_id,
         workflow_id=body.workflow_id,
-        milestone_id=body.milestone_id,
         location_id=body.location_id,
         user_id=x_menuyukti_user_id,
         chat_gateway_model=gateway_model,
@@ -465,12 +417,6 @@ async def chat_stream(
         chat_mode=body.chat_mode,
     )
 
-    slash_args = (
-        None
-        if human is None
-        else parse_slash_get_milestone(human.content if isinstance(human, HumanMessage) else None)
-    )
-
     async def event_stream():
         try:
             if action_only and body.story_asset_action is not None:
@@ -478,14 +424,6 @@ async def chat_stream(
                     graph,
                     action=body.story_asset_action,
                     runnable_config=cfg,
-                ):
-                    yield line
-                return
-            if slash_args is not None:
-                async for line in _stream_slash_get_milestone(
-                    tool_args=slash_args,
-                    runnable_config=cfg,
-                    http_client=client,
                 ):
                     yield line
                 return
@@ -546,7 +484,6 @@ async def chat_history(
     cfg = _runnable_config(
         thread_id=thread_id,
         workflow_id=workflow_id,
-        milestone_id=None,
         location_id=None,
         user_id=x_menuyukti_user_id,
         chat_gateway_model=None,

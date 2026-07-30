@@ -184,9 +184,6 @@ function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicTo
 }
 
 const COMPACT_TOOL_I18N = {
-  get_workflow_overview: 'getWorkflowOverview',
-  get_milestone: 'getMilestone',
-  update_milestone_input: 'updateMilestoneInput',
   get_location_data: 'getLocationData',
   save_story_asset: 'saveStoryAsset',
   clear_story_assets: 'clearStoryAssets',

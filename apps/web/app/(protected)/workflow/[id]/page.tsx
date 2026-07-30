@@ -6,18 +6,14 @@ import { Suspense } from 'react'
 import { z } from 'zod'
 import { routes } from '@/lib/routes'
 import { parseNode } from '@/lib/graphql/node-schemas'
-import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import { getCachedWorkflowCampaignTree } from '@/lib/graphql/cached-queries'
 import type { WorkflowNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
-import { ensureMilestoneDisplayCodes } from '@/lib/milestones/ensure-milestone-display-codes'
 
 import { WorkflowWorkspace } from '../_components/workflow-workspace'
-import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
-import type { TimelineMilestone } from '../_components/timeline-workspace'
 import { parseWorkflowAnalyticsRunId } from '@/lib/workflows/parse-workflow-analytics-run-id'
 
 const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
@@ -84,26 +80,9 @@ async function WorkflowDetailContent({
   }
   const analyticsRunId = parseWorkflowAnalyticsRunId(workflowNode.data)
 
-  const milestoneNodes = tree.milestones.map((bundle) => {
-    const m = parseNode(bundle.milestone)
-    if (m.nodeType !== 'milestone') {
-      throw new Error('Invariant: expected milestone node in workflow tree')
-    }
-    return m as MilestoneNode
-  })
-
-  const codeById = await ensureMilestoneDisplayCodes(userId, workflowId, milestoneNodes)
-
-  const initialMilestones: TimelineMilestone[] = milestoneNodes.map((m) => {
-    const mapped = milestoneNodeToTimelineMilestone(m)
-    const displayCode = codeById.get(m.id) ?? mapped.displayCode
-    return displayCode ? { ...mapped, displayCode } : mapped
-  })
-
   return (
     <WorkflowWorkspace
       analyticsRunId={analyticsRunId}
-      initialMilestones={initialMilestones}
       locationId={locationId}
       workflowId={workflowId}
     />

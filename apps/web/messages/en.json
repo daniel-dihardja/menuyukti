@@ -45,21 +45,6 @@
         }
       }
     },
-    "getWorkflowOverview": {
-      "running": "Refreshing workflow overview…",
-      "done": "Reviewed workflow overview",
-      "error": "Couldn’t load workflow overview"
-    },
-    "getMilestone": {
-      "running": "Loading milestone…",
-      "done": "Loaded milestone",
-      "error": "Couldn’t load milestone"
-    },
-    "updateMilestoneInput": {
-      "running": "Updating milestone input…",
-      "done": "Updated milestone input",
-      "error": "Couldn’t update milestone input"
-    },
     "getLocationData": {
       "running": "Loading location context…",
       "done": "Loaded location context",
@@ -1785,25 +1770,25 @@
       }
     },
     "workflows": {
-      "title": "Workflows",
-      "description": "Create a campaign workflow for a location, then open it to plan milestones and content.",
-      "sectionTitle": "Existing workflows",
+      "title": "Chat",
+      "description": "Open a location chat for campaign planning — general assistant or Instagram Story mode.",
+      "sectionTitle": "Existing chats",
       "selectBranchTitle": "Choose a location",
-      "selectBranchDescription": "Please select a location to view workflows.",
+      "selectBranchDescription": "Please select a location to view chats.",
       "errors": {
-        "createTitle": "Could not create workflow",
-        "listTitle": "Could not load workflows"
+        "createTitle": "Could not create chat",
+        "listTitle": "Could not load chats"
       },
       "dataRedesign": {
         "title": "Workflow data is being redesigned",
         "description": "Saved workflows, briefs, location profiles, and promotion candidates from the previous schema are no longer stored. A new model will replace them.",
-        "note": "You can still open an existing workflow chat URL if you have one bookmarked; list and create flows will return when the new backend is ready."
+        "note": "You can still open an existing chat URL if you have one bookmarked; list and create flows will return when the new backend is ready."
       },
-      "create": "Create New Workflow",
+      "create": "New chat",
       "creating": "Creating…",
-      "createFailed": "Could not create a workflow. Please try again.",
+      "createFailed": "Could not create a chat. Please try again.",
       "missingLocationNode": "This location has no workspace root. Refresh the page or recreate the location, then try again.",
-      "listFailed": "Could not load workflows. Please try again.",
+      "listFailed": "Could not load chats. Please try again.",
       "branchLabel": "Location",
       "branchPlaceholder": "Select a location",
       "analyticsRunLabel": "Analytics run",
@@ -1811,44 +1796,44 @@
       "analyticsRunLoading": "Loading runs…",
       "analyticsRunNone": "No analytics runs found",
       "createWorkflowPanel": {
-        "title": "Create workflow",
+        "title": "New chat",
         "sectionLocation": "Location",
         "sectionData": "Sales report",
-        "footerHint": "Milestones can be added after you create the workflow.",
-        "ctaPrimary": "Create workflow"
+        "footerHint": "Use general chat or Story mode after you create the chat.",
+        "ctaPrimary": "Create chat"
       },
       "newWorkflowDialog": {
         "creating": "Creating…",
-        "createFailed": "Could not create the workflow. Please try again."
+        "createFailed": "Could not create the chat. Please try again."
       },
-      "selectBranch": "Please select a location to view workflows.",
-      "loading": "Loading workflows…",
+      "selectBranch": "Please select a location to view chats.",
+      "loading": "Loading chats…",
       "table": {
         "index": "#",
-        "name": "Workflow Name",
+        "name": "Chat name",
         "status": "Status",
         "dates": "Dates",
         "action": "Actions",
         "actionsForRow": "Actions for {name}",
         "view": "View",
         "delete": "Delete",
-        "deleteConfirmTitle": "Delete this workflow?",
-        "deleteConfirmDescription": "This permanently removes the workflow and all of its milestones. You can't undo this action.",
+        "deleteConfirmTitle": "Delete this chat?",
+        "deleteConfirmDescription": "This permanently removes the chat and its history. You can't undo this action.",
         "deleteConfirmCancel": "Cancel",
-        "deleteConfirmAction": "Delete workflow",
-        "deleteError": "Could not delete the workflow. Please try again.",
-        "editNameAria": "Edit workflow name",
-        "saveNameAria": "Save workflow name",
+        "deleteConfirmAction": "Delete chat",
+        "deleteError": "Could not delete the chat. Please try again.",
+        "editNameAria": "Edit chat name",
+        "saveNameAria": "Save chat name",
         "renameError": "Could not save the name. Please try again."
       },
       "detail": {
         "breadcrumb": "View Chat"
       },
       "chat": {
-        "pageLoadingTitle": "Loading workflow…",
-        "pageTitle": "Workflow #{id}",
+        "pageLoadingTitle": "Loading chat…",
+        "pageTitle": "Chat #{id}",
         "emptyTitle": "Campaign assistant",
-        "emptyDescription": "Ask the assistant about venue slot strength, menu heatmap, pair lift, and campaign planning for this workflow.",
+        "emptyDescription": "Ask about venue slot strength, menu heatmap, pair lift, and campaign planning — or switch to Story mode for Instagram Stories.",
         "waitHint": "Usually takes about 30 seconds.",
         "quickPrompts": {
           "weeklyPlan": {

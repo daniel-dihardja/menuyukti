@@ -13,7 +13,6 @@ import {
 } from '@workspace/ui/components/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 
-import { useTimelineWorkspaceState } from './timeline-context'
 import { useWorkflowVisualizationsState } from './workflow-visualizations-context'
 import {
   getAvailableCatalogEntries,
@@ -48,7 +47,7 @@ function VisualizationCardBody({
 
 export function WorkflowVisualizationsPane() {
   const t = useTranslations('analytics.workflows.visualizations')
-  const { analyticsRunId, locationId } = useTimelineWorkspaceState()
+  const { analyticsRunId, locationId } = useWorkflowVisualizationsState()
   const { addedIds, addVisualization, removeVisualization, hydrated } =
     useWorkflowVisualizationsState()
 

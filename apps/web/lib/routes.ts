@@ -90,7 +90,10 @@ export const routes = {
   igStudioStyleNew: '/ig-studio/styles/new',
   igStudioStyleDetail: (id: string | number) =>
     `/ig-studio/styles/${encodeURIComponent(String(id))}`,
-  /** Standalone assistant chat (same `/api/chat` stack as workflows). */
+  /**
+   * Standalone assistant chat (`agentThreadId`). End-state chat home after workflow
+   * re-home — same `/api/chat` stack. Do not add new workflow-container features.
+   */
   agent: '/advisor',
   printOrders: '/print-orders',
   dashboard: '/dashboard',
@@ -105,6 +108,11 @@ export const routes = {
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 
+  /**
+   * Interim chat home (general + story modes). Thread identity is still `workflowId` +
+   * session until re-home to `routes.agent` / `agentThreadId`. Do not add new workflow
+   * or milestone product features here.
+   */
   workflows: {
     list: '/workflow',
     listWithLocation: (locationId: string | number) =>

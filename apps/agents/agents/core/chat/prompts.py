@@ -193,12 +193,12 @@ you may use `list_media_collections` and `list_media`. Do not invent filenames.
 """
 
 
-# Full prompt structure. Placeholders: chart_catalog_block, workflow_catalog_block,
-# leonardo_image_block, ig_studio_block.
+# Full prompt structure. Placeholders: chart_catalog_block, leonardo_image_block,
+# ig_studio_block.
 SYSTEM_PROMPT_TEMPLATE = """\
-You are the Menuyukti Instagram content assistant for restaurant marketers on a campaign
-workflow. Your primary role is to help the user plan campaign content and use workflow
-context, charts, and milestones—prefer grounded answers over generic social-media advice.
+You are the Menuyukti Instagram content assistant for restaurant marketers. Your primary
+role is to help the user plan campaign content using venue context and sales charts—prefer
+grounded answers over generic social-media advice.
 
 Answer clearly and concisely. Ground timing, menus, and combos in the three visualization
 charts when those tools are available, not generic social-media advice.
@@ -220,24 +220,6 @@ to decide timing and content; do not dump full chart payloads into the user repl
 For Instagram planning, load the relevant chart(s) before guessing from general knowledge.
 
 {chart_catalog_block}
-## Workflow milestones
-
-When a Workflow milestone catalog is present in this system message, treat it as the source of truth
-for which milestones exist, their ids, presetIds, and what each step does.
-Read each milestone summary to decide which step(s) are relevant, then load only the needed
-projections with `get_milestone`
-(fields: goal, input, data, help, criteria, eval, meta;
-pass milestone_id from the catalog; omit milestone_id only for the UI-selected milestone).
-Do not fetch every milestone or every field unless the question truly needs a pipeline-wide
-comparison.
-Call `get_workflow_overview` only if the catalog is missing or unavailable, or the user
-implies the workflow pipeline changed and you need a fresh list.
-When users request edits to selected milestone input data, use `update_milestone_input`
-with minimal patch operations (add/replace/remove) rather than rewriting the whole payload.
-Input edits apply only to the UI-selected milestone, not other workflow milestones.
-If the target path or item is ambiguous, ask one concise clarification before updating.
-
-{workflow_catalog_block}
 ## Location
 
 When users ask about venue hours, address, cuisine, contact links, or other location
@@ -249,7 +231,6 @@ web search.
 
 def build_system_prompt(
     *,
-    workflow_catalog: str | None = None,
     ig_studio_post_image: bool = False,
     leonardo_image_generation: bool = False,
     include_chart_catalog: bool = False,
@@ -260,8 +241,6 @@ def build_system_prompt(
         return STORY_IMAGE_ASSISTANT_PROMPT.rstrip() + "\n"
 
     chart_catalog_block = f"{CHART_CATALOG_BLOCK.strip()}\n\n" if include_chart_catalog else ""
-    catalog = workflow_catalog.strip() if isinstance(workflow_catalog, str) else ""
-    workflow_catalog_block = f"## Workflow milestone catalog\n\n{catalog}\n\n" if catalog else ""
     leonardo_image_block = (
         f"{LEONARDO_IMAGE_BLOCK.strip()}\n\n" if leonardo_image_generation else ""
     )
@@ -270,7 +249,6 @@ def build_system_prompt(
     return (
         SYSTEM_PROMPT_TEMPLATE.format(
             chart_catalog_block=chart_catalog_block,
-            workflow_catalog_block=workflow_catalog_block,
             media_library_block=media_library_block,
             leonardo_image_block=leonardo_image_block,
             ig_studio_block=ig_studio_block,

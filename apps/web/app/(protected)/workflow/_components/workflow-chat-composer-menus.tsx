@@ -47,15 +47,9 @@ export type SlashCommandDefinition = {
   description: string
 }
 
-export type MilestoneMentionItem = {
-  id: string
-  title: string
-}
-
 type MentionMenuEntry =
   | { kind: 'back' }
   | { kind: 'collection'; collection: MediaCollection }
-  | { kind: 'milestone'; id: string; title: string }
   | { kind: 'visualization'; id: WorkflowVisualizationId; title: string }
   | { kind: 'media'; item: MediaCatalogItem }
 
@@ -65,7 +59,6 @@ export type WorkflowChatComposerMenusProps = {
   commands: SlashCommandDefinition[]
   onSelectSlashCommand: (command: string) => void
   slashAriaLabel: string
-  onSelectMention: (milestoneId: string) => void
   onSelectVisualizationMention: (visualizationId: WorkflowVisualizationId, title: string) => void
   onSelectMediaMention: (item: MediaCatalogItem) => void
   mentionAriaLabel: string
@@ -79,7 +72,6 @@ export function WorkflowChatComposerMenus({
   commands,
   onSelectSlashCommand,
   slashAriaLabel,
-  onSelectMention,
   onSelectVisualizationMention,
   onSelectMediaMention,
   mentionAriaLabel,
@@ -87,8 +79,7 @@ export function WorkflowChatComposerMenus({
   children,
 }: WorkflowChatComposerMenusProps) {
   const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
-  const { milestones, visualizations, selectedMilestoneId, mentionMenusDisabled } =
-    useWorkflowChatMentionItems()
+  const { visualizations, mentionMenusDisabled } = useWorkflowChatMentionItems()
 
   const [mediaItems, setMediaItems] = useState<MediaCatalogItem[]>([])
   const [mediaLoading, setMediaLoading] = useState(false)
@@ -103,17 +94,6 @@ export function WorkflowChatComposerMenus({
         ? (collections.find((c) => c.id === browseCollectionId) ?? null)
         : null,
     [browseCollectionId, collections],
-  )
-
-  const otherMilestones = useMemo(
-    () =>
-      milestones
-        .filter((m) => (selectedMilestoneId === null ? true : m.id !== selectedMilestoneId))
-        .map((m) => ({
-          id: m.id,
-          title: m.title?.trim() ?? m.id,
-        })),
-    [milestones, selectedMilestoneId],
   )
 
   const slashQuery = value.startsWith('/') ? value.slice(1).toLowerCase() : ''
@@ -189,13 +169,6 @@ export function WorkflowChatComposerMenus({
     }
   }, [browseCollectionId, mentionMenuOpenBase])
 
-  const filteredMilestones = useMemo(() => {
-    if (!value.startsWith('@') || isBrowsingCollection) {
-      return []
-    }
-    return otherMilestones.filter((m) => m.title.toLowerCase().includes(mentionFilterQuery))
-  }, [isBrowsingCollection, mentionFilterQuery, otherMilestones, value])
-
   const filteredVisualizations = useMemo(() => {
     if (!value.startsWith('@') || isBrowsingCollection) {
       return []
@@ -225,11 +198,6 @@ export function WorkflowChatComposerMenus({
       }
       return entries
     }
-    const milestoneEntries: MentionMenuEntry[] = filteredMilestones.map((m) => ({
-      kind: 'milestone',
-      id: m.id,
-      title: m.title,
-    }))
     const visualizationEntries: MentionMenuEntry[] = filteredVisualizations.map((v) => ({
       kind: 'visualization',
       id: v.id as WorkflowVisualizationId,
@@ -243,18 +211,11 @@ export function WorkflowChatComposerMenus({
       kind: 'media',
       item,
     }))
-    return [...milestoneEntries, ...visualizationEntries, ...collectionEntries, ...mediaEntries]
-  }, [
-    filteredCollections,
-    filteredMedia,
-    filteredMilestones,
-    filteredVisualizations,
-    isBrowsingCollection,
-  ])
+    return [...visualizationEntries, ...collectionEntries, ...mediaEntries]
+  }, [filteredCollections, filteredMedia, filteredVisualizations, isBrowsingCollection])
 
   const slashMenuOpen = value.startsWith('/') && filteredSlash.length > 0
   const hasMentionCandidates =
-    otherMilestones.length > 0 ||
     visualizations.length > 0 ||
     mediaItems.length > 0 ||
     collections.length > 0 ||
@@ -342,17 +303,13 @@ export function WorkflowChatComposerMenus({
         setBrowseCollectionId(entry.collection.id)
         return
       }
-      if (entry.kind === 'milestone') {
-        onSelectMention(entry.id)
-        return
-      }
       if (entry.kind === 'visualization') {
         onSelectVisualizationMention(entry.id, entry.title)
         return
       }
       onSelectMediaMention(entry.item)
     },
-    [exitCollectionBrowse, onSelectMention, onSelectVisualizationMention, onSelectMediaMention],
+    [exitCollectionBrowse, onSelectVisualizationMention, onSelectMediaMention],
   )
 
   const handleKeyDownCapture = useCallback(
@@ -572,34 +529,6 @@ export function WorkflowChatComposerMenus({
                       </>
                     ) : (
                       <>
-                        {filteredMilestones.length > 0 ? (
-                          <CommandGroup
-                            heading={tMention('milestonesGroup')}
-                            aria-label={mentionAriaLabel}
-                          >
-                            {filteredMilestones.map((m) => {
-                              flatIndex += 1
-                              const activeIndex = flatIndex
-                              return (
-                                <CommandItem
-                                  key={`milestone-${m.id}`}
-                                  className={cn(
-                                    'w-full items-start',
-                                    activeIndex === mentionActiveIndex &&
-                                      'bg-accent text-accent-foreground',
-                                  )}
-                                  data-workflow-chat-menu-active={
-                                    activeIndex === mentionActiveIndex ? 'true' : undefined
-                                  }
-                                  onSelect={() => onSelectMention(m.id)}
-                                  value={m.title}
-                                >
-                                  <span className="font-medium">{m.title}</span>
-                                </CommandItem>
-                              )
-                            })}
-                          </CommandGroup>
-                        ) : null}
                         {filteredVisualizations.length > 0 ? (
                           <CommandGroup
                             heading={tMention('visualizationsGroup')}
@@ -728,11 +657,9 @@ export function WorkflowChatComposerMenus({
                     {mediaLoadAttempted &&
                     mediaItems.length === 0 &&
                     collections.length === 0 &&
-                    otherMilestones.length === 0
+                    visualizations.length === 0
                       ? tMention('mediaEmpty')
-                      : visualizations.length === 0 && otherMilestones.length > 0
-                        ? tMention('noAttachedCharts')
-                        : mentionEmptyLabel}
+                      : mentionEmptyLabel}
                   </CommandEmpty>
                 )}
               </>

@@ -19,7 +19,6 @@ def test_runnable_config_includes_analytics_run_id() -> None:
     cfg = _runnable_config(
         thread_id="u1:wf:100",
         workflow_id="100",
-        milestone_id=None,
         location_id=7,
         user_id="u1",
         chat_gateway_model=None,
@@ -32,7 +31,6 @@ def test_runnable_config_omits_analytics_run_id_when_none() -> None:
     cfg = _runnable_config(
         thread_id="u1:wf:100",
         workflow_id="100",
-        milestone_id=None,
         location_id=7,
         user_id="u1",
         chat_gateway_model=None,
@@ -56,7 +54,6 @@ def test_runnable_config_includes_chat_mode() -> None:
     cfg = _runnable_config(
         thread_id="u1:wf:100",
         workflow_id="100",
-        milestone_id=None,
         location_id=7,
         user_id="u1",
         chat_gateway_model=None,

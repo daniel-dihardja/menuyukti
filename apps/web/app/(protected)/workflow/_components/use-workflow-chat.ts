@@ -139,20 +139,12 @@ export type UseWorkflowChatOptions = {
   workflowId: string
   locationId: number
   analyticsRunId: number | null
-  selectedMilestoneId: string | null
-  milestoneTitles: ReadonlyArray<{ id: string; title: string | null | undefined }>
-  onHydrateAfterChat: (milestoneId: string) => void
-  onPrefetchMilestoneReference?: (milestoneId: string) => void
 }
 
 export function useWorkflowChat({
   workflowId,
   locationId,
   analyticsRunId,
-  selectedMilestoneId,
-  milestoneTitles,
-  onHydrateAfterChat,
-  onPrefetchMilestoneReference,
 }: UseWorkflowChatOptions) {
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
   const [text, setText] = useState('')
@@ -166,7 +158,6 @@ export function useWorkflowChat({
     workflowId,
     locationId,
     analyticsRunId,
-    milestoneId: selectedMilestoneId,
   })
   const workflowChatSessionIdRef = useRef<string | null>(null)
   const chatHydrateWorkflowIdRef = useRef<string | null>(null)
@@ -191,7 +182,6 @@ export function useWorkflowChat({
   )
   const selectedGenerationModelRef = useRef<LeonardoPostModelId>(selectedGenerationModel)
   selectedGenerationModelRef.current = selectedGenerationModel
-  const pendingPresetReferenceMilestoneIdRef = useRef<string | null>(null)
   const pendingReferencedVisualizationIdRef = useRef<WorkflowVisualizationId | null>(null)
   const pendingMediaAttachmentsRef = useRef<PendingMediaAttachment[]>([])
   pendingMediaAttachmentsRef.current = pendingMediaAttachments
@@ -199,7 +189,6 @@ export function useWorkflowChat({
     workflowId,
     locationId,
     analyticsRunId,
-    milestoneId: selectedMilestoneId,
   }
 
   useEffect(() => {
@@ -237,7 +226,6 @@ export function useWorkflowChat({
               messages: lastUser ? [lastUser] : messages,
               workflowId: ctx.workflowId,
               locationId: String(ctx.locationId),
-              ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
               ...(ctx.analyticsRunId !== null
                 ? { analyticsRunId: String(ctx.analyticsRunId) }
                 : {}),
@@ -346,48 +334,19 @@ export function useWorkflowChat({
         label: tSlash('story.label'),
         description: tSlash('story.description'),
       },
-      {
-        id: 'input',
-        label: tSlash('input.label'),
-        description: tSlash('input.description'),
-      },
-      {
-        id: 'data',
-        label: tSlash('data.label'),
-        description: tSlash('data.description'),
-      },
-      {
-        id: 'help',
-        label: tSlash('help.label'),
-        description: tSlash('help.description'),
-      },
     ],
     [tSlash],
   )
 
-  const chatWasBusy = useRef(false)
-  useEffect(() => {
-    const busy = status === 'streaming' || status === 'submitted'
-    if (chatWasBusy.current && !busy && error == null) {
-      if (selectedMilestoneId !== null) {
-        onHydrateAfterChat(selectedMilestoneId)
-      }
-    }
-    chatWasBusy.current = busy
-  }, [status, error, selectedMilestoneId, onHydrateAfterChat])
-
   const buildSendBody = useCallback(() => {
-    const presetRef = pendingPresetReferenceMilestoneIdRef.current
     const vizRef = pendingReferencedVisualizationIdRef.current
     const pending = pendingMediaAttachmentsRef.current
     const photoNames = pending.filter((m) => m.kind === 'photo').map((m) => m.name)
     const generationReferences = mediaNamesToPhotoGenerationReferences(photoNames)
-    pendingPresetReferenceMilestoneIdRef.current = null
     pendingReferencedVisualizationIdRef.current = null
     return {
       model: selectedChatModelRef.current,
       generationModel: selectedGenerationModelRef.current,
-      ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
       ...(vizRef !== null ? { referencedVisualizationId: vizRef } : {}),
       ...(photoNames.length > 0 ? { referencedMediaNames: photoNames } : {}),
       ...(generationReferences.length > 0 ? { generationReferences } : {}),
@@ -457,7 +416,6 @@ export function useWorkflowChat({
         name,
         workflowId: ctx.workflowId,
         locationId: ctx.locationId,
-        milestoneId: ctx.milestoneId,
         analyticsRunId: ctx.analyticsRunId,
         workflowChatSessionId: workflowChatSessionIdRef.current,
         chatMode: chatModeRef.current,
@@ -525,20 +483,6 @@ export function useWorkflowChat({
     [sendMessage, buildSendBody, status],
   )
 
-  const handleSelectMention = useCallback(
-    (milestoneId: string) => {
-      if (status === 'streaming' || status === 'submitted') {
-        return
-      }
-      const rawTitle = milestoneTitles.find((m) => m.id === milestoneId)?.title?.trim() ?? ''
-      const label = rawTitle.length > 0 ? rawTitle.replace(/\s+/g, ' ') : milestoneId
-      pendingPresetReferenceMilestoneIdRef.current = milestoneId
-      onPrefetchMilestoneReference?.(milestoneId)
-      setText((current) => appendWorkflowChatMention(current, label))
-    },
-    [milestoneTitles, onPrefetchMilestoneReference, status],
-  )
-
   const handleSelectVisualizationMention = useCallback(
     (visualizationId: WorkflowVisualizationId, title: string) => {
       if (status === 'streaming' || status === 'submitted') {
@@ -563,7 +507,6 @@ export function useWorkflowChat({
     setText('')
     setPendingMediaAttachments([])
     setStoryAssetsOverride(null)
-    pendingPresetReferenceMilestoneIdRef.current = null
     pendingReferencedVisualizationIdRef.current = null
     const sid = crypto.randomUUID()
     workflowChatSessionIdRef.current = sid
@@ -665,7 +608,6 @@ export function useWorkflowChat({
       handleSubmit,
       sendQuickReply,
       handleSelectSlashCommand,
-      handleSelectMention,
       handleSelectVisualizationMention,
       handleSelectMediaMention,
       handleRemovePendingMedia,
@@ -681,7 +623,6 @@ export function useWorkflowChat({
       handleSubmit,
       sendQuickReply,
       handleSelectSlashCommand,
-      handleSelectMention,
       handleSelectVisualizationMention,
       handleSelectMediaMention,
       handleRemovePendingMedia,
