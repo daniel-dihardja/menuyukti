@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextvars
-from typing import Any
 
 import httpx
 
@@ -11,18 +10,6 @@ chat_http_client_var: contextvars.ContextVar[httpx.AsyncClient | None] = context
     "chat_http_client_var",
     default=None,
 )
-
-chat_milestone_node_cache_var: contextvars.ContextVar[
-    dict[tuple[str, str], dict[str, Any] | None] | None
-] = contextvars.ContextVar("chat_milestone_node_cache_var", default=None)
-
-
-def get_chat_milestone_cache() -> dict[tuple[str, str], dict[str, Any] | None]:
-    cache = chat_milestone_node_cache_var.get()
-    if cache is None:
-        cache = {}
-        chat_milestone_node_cache_var.set(cache)
-    return cache
 
 
 def get_chat_http_client() -> httpx.AsyncClient:

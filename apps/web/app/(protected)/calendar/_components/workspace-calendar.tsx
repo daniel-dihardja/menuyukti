@@ -14,7 +14,7 @@ import { SchedulerCalendarMonthList } from '@/components/scheduler-calendar/sche
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { CalendarMediaRef, CalendarSourceRef } from '@/lib/calendar/client-api'
 import type { CalendarDisplaySlot } from '@/lib/graphql/queries/scheduler-calendar'
-import type { CampaignWindowPublicHoliday } from '@/lib/graphql/node-schemas'
+import type { CampaignWindowPublicHoliday } from '@/lib/calendar/types'
 import {
   addDays,
   formatSchedulerMonthLabel,
@@ -23,8 +23,8 @@ import {
   previousMonthStartIso,
   startOfMonth,
   startOfWeekMonday,
-} from '@/lib/milestones/scheduler-calendar'
-import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+} from '@/lib/calendar/scheduler-calendar'
+import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 
 import { CalendarEntryDialog, type CalendarEntryDialogValues } from './create-calendar-entry-dialog'
 

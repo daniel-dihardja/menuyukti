@@ -9,7 +9,6 @@ from .create_node import CreateNodeMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
 from .create_style import CreateStyleMutation
-from .create_workflow_from_payload import CreateWorkflowFromPayloadMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
@@ -28,13 +27,8 @@ from .media_collection_members import (
     AddMediaToCollectionMutation,
     RemoveMediaFromCollectionMutation,
 )
-from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
-from .reorder_milestones import ReorderMilestonesMutation
-from .replace_pass_criteria import ReplacePassCriteriaMutation
 from .revoke_crm_device import RevokeCrmDeviceMutation
-from .set_pass_criteria_statuses import SetPassCriteriaStatusesMutation
-from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
@@ -62,7 +56,6 @@ __all__ = [
     "CreateNodeMutation",
     "CreatePostMutation",
     "CreatePostPageMutation",
-    "CreateWorkflowFromPayloadMutation",
     "CreateWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteCalendarEntryMutation",
@@ -79,13 +72,8 @@ __all__ = [
     "DeletePostPageMediaVersionMutation",
     "EnsureMediaAssetMutation",
     "InviteWorkspaceMemberMutation",
-    "MilestoneAgentRunMutation",
     "RemoveMediaFromCollectionMutation",
     "RemoveWorkspaceMemberMutation",
-    "ReorderMilestonesMutation",
-    "ReplacePassCriteriaMutation",
-    "SetPassCriterionStatusMutation",
-    "SetPassCriteriaStatusesMutation",
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateImageAiFlowMutation",

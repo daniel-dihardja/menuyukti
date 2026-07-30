@@ -41,7 +41,7 @@ import {
   type CalendarMediaRef,
   type CalendarSourceRef,
 } from '@/lib/calendar/client-api'
-import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 import { useCloseLabel } from '@/hooks/use-close-label'
 
 import { CalendarMediaRefPicker } from './calendar-media-ref-picker'

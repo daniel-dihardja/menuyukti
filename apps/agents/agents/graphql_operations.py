@@ -30,51 +30,6 @@ query Node($id: ID!) {
     parentId
     locationId
     data
-    milestoneGoal
-    milestoneInput
-    passCriterias
-    milestonePresetData
-    milestoneResult
-  }
-}
-"""
-
-MILESTONE_INPUT_QUERY = """
-query MilestoneInput($id: ID!) {
-  node(id: $id) {
-    id
-    nodeType
-    locationId
-    parentId
-    milestoneInput
-  }
-}
-"""
-
-MILESTONE_PRESET_DATA_QUERY = """
-query MilestonePresetData($id: ID!) {
-  node(id: $id) {
-    id
-    name
-    nodeType
-    locationId
-    parentId
-    milestonePresetData
-  }
-}
-"""
-
-MILESTONE_HELP_QUERY = """
-query MilestoneHelp($id: ID!) {
-  node(id: $id) {
-    id
-    nodeType
-    locationId
-    parentId
-    name
-    milestoneGoal
-    data
-    passCriterias
   }
 }
 """
@@ -91,7 +46,6 @@ query WorkflowCampaignTree($workflowId: ID!) {
       milestone {
         id
         name
-        milestoneGoal
         data
       }
     }
@@ -105,48 +59,7 @@ mutation UpdateNode($id: ID!, $data: JSON) {
     id
     nodeType
     data
-    milestoneGoal
-    milestoneInput
-    passCriterias
-    milestonePresetData
-    milestoneResult
   }
-}
-"""
-
-SET_PASS_CRITERION_STATUS_MUTATION = """
-mutation SetPassCriterionStatus(
-  $milestoneId: ID!
-  $locationId: Int!
-  $criterionId: String!
-  $status: String!
-) {
-  setPassCriterionStatus(
-    milestoneId: $milestoneId
-    locationId: $locationId
-    criterionId: $criterionId
-    status: $status
-  )
-}
-"""
-
-SET_PASS_CRITERIA_STATUSES_MUTATION = """
-mutation SetPassCriteriaStatuses(
-  $milestoneId: ID!
-  $locationId: Int!
-  $updates: [PassCriterionStatusInput!]!
-) {
-  setPassCriteriaStatuses(
-    milestoneId: $milestoneId
-    locationId: $locationId
-    updates: $updates
-  )
-}
-"""
-
-REPLACE_PASS_CRITERIA_MUTATION = """
-mutation ReplacePassCriteria($milestoneId: ID!, $locationId: Int!, $requirements: [String!]!) {
-  replacePassCriteria(milestoneId: $milestoneId, locationId: $locationId, requirements: $requirements)
 }
 """
 
@@ -228,20 +141,6 @@ query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) 
     holidayType
     isTentative
   }
-}
-"""
-
-PRIOR_MILESTONES_MILESTONE_DATA_QUERY = """
-query PriorMilestonesMilestoneData(
-  $workflowId: ID!
-  $milestoneId: ID!
-  $locationId: Int!
-) {
-  priorMilestonesMilestoneData(
-    workflowId: $workflowId
-    milestoneId: $milestoneId
-    locationId: $locationId
-  )
 }
 """
 
@@ -485,103 +384,6 @@ query SlotMenuCandidates(
 }
 """
 
-IG_PLAN_INPUTS_QUERY = """
-query IgPlanInputs($locationId: Int!, $analyticsRunId: ID, $options: IgPlanInputsOptionsInput) {
-  igPlanInputs(locationId: $locationId, analyticsRunId: $analyticsRunId, options: $options) {
-    version
-    coverageNotes
-    location {
-      id
-      name
-      street
-      city
-      country
-      currency
-      openingHours {
-        dayOfWeek
-        openTime
-        closeTime
-      }
-      manualBriefInput {
-        locationId
-        quickProfile
-      }
-    }
-    analyticsRun {
-      id
-      name
-    }
-    slotDemandProfile {
-      day
-      mealPeriod
-      mealPeriodLabel
-      mealPeriodHoursLabel
-      orderCount
-      trafficShare
-      demandIndex
-      relativeDemand
-    }
-    menuEngineeringMatrix {
-      thresholds {
-        avgPopularity
-        avgContributionMargin
-        totalCogs
-        totalProfit
-        totalMargin
-      }
-      distribution {
-        category
-        itemCount
-        itemShare
-        marginShare
-      }
-      items {
-        menu
-        quantity
-        totalRevenue
-        contributionMargin
-        contributionMarginPercentage
-        weValue
-        category
-        action
-        menuCategory
-        menuCategoryDetail
-      }
-    }
-    slotMenuCandidates {
-      reportingPeriod
-      matrixAvailable
-      coverageNotes
-      slots {
-        day
-        mealPeriod
-        mealPeriodLabel
-        mealPeriodHoursLabel
-        orderCount
-        demandIndex
-        relativeDemand
-        posture
-        recommendedCategories
-        totalItemQuantity
-        insufficientData
-        candidates {
-          menu
-          globalCategory
-          globalAction
-          slotQuantity
-          slotShare
-          slotAffinity
-          recommendedUse
-          rank
-          score
-          menuCategory
-        }
-      }
-    }
-  }
-}
-"""
-
 LOCATION_OPERATING_SIGNALS_QUERY = """
 query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
   instagramSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
@@ -663,44 +465,6 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
       }
     }
   }
-}
-"""
-
-START_MILESTONE_AGENT_RUN_MUTATION = """
-mutation StartMilestoneAgentRun(
-  $runId: String!
-  $milestoneId: ID!
-  $workflowId: ID
-  $traceparent: String
-) {
-  startMilestoneAgentRun(
-    runId: $runId
-    milestoneId: $milestoneId
-    workflowId: $workflowId
-    traceparent: $traceparent
-  )
-}
-"""
-
-COMPLETE_MILESTONE_AGENT_RUN_MUTATION = """
-mutation CompleteMilestoneAgentRun(
-  $runId: String!
-  $status: String!
-  $summary: JSON
-  $externalTraceId: String
-  $externalTraceUrl: String
-  $timeline: JSON
-  $errorMessage: String
-) {
-  completeMilestoneAgentRun(
-    runId: $runId
-    status: $status
-    summary: $summary
-    externalTraceId: $externalTraceId
-    externalTraceUrl: $externalTraceUrl
-    timeline: $timeline
-    errorMessage: $errorMessage
-  )
 }
 """
 

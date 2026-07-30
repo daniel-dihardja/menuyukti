@@ -9,7 +9,6 @@ from graphql.limits import (
 )
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.node_gql import node_to_gql
-from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.schema.types import NodeType
 
 
@@ -51,7 +50,7 @@ class NodesQuery:
                     return []
                 q = q.filter(Node.parent_id == parent_pk)
                 rows = q.order_by(Node.created_at.asc()).limit(limit).all()
-                rows.sort(key=_milestone_sort_key)
+                rows.sort(key=lambda r: (r.created_at or 0, r.id))
                 return [node_to_gql(r) for r in rows]
             if after_id is not None:
                 try:

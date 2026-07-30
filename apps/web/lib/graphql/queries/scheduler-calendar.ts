@@ -1,11 +1,11 @@
-import type { SchedulerSlot as MilestoneSchedulerSlot } from '@/lib/graphql/node-schemas'
+import type { SchedulerSlot } from '@/lib/calendar/scheduler-calendar'
 import type { CalendarMediaRef, CalendarSourceRef } from './calendar-entries'
 
 export type { CalendarMediaRef, CalendarSourceRef }
 
 /** Slot shown on the workspace / scheduler calendar (workflow or manual). */
 export type CalendarDisplaySlot = {
-  kind?: MilestoneSchedulerSlot['kind'] | null
+  kind?: SchedulerSlot['kind'] | null
   date: string
   time: string
   title: string

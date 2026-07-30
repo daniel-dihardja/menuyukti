@@ -4,14 +4,7 @@
 
 import { parseNode, parseNodeNullable, parseNodes, type AnyNode } from '../node-schemas'
 
-export type {
-  AnyNode,
-  KnownNode,
-  MilestoneNode,
-  PassCriteriaData,
-  ResultNode,
-  WorkflowNode,
-} from '../node-schemas'
+export type { AnyNode, KnownNode, WorkflowNode } from '../node-schemas'
 
 export type NodeDataRaw = { node: unknown | null }
 export type NodesDataRaw = { nodes: unknown[] }
@@ -34,7 +27,7 @@ export function parseUpdateNodeData(data: UpdateNodeDataRaw): { updateNode: AnyN
   return { updateNode: parseNode(data.updateNode) }
 }
 
-/** Shared node fields for queries returning `NodeType` (includes milestone column payloads). */
+/** Shared node fields for queries returning `NodeType`. */
 export const NODE_SELECTION_FIELDS = `
       id
       name
@@ -43,9 +36,4 @@ export const NODE_SELECTION_FIELDS = `
       path
       parentId
       locationId
-      data
-      milestoneGoal
-      milestoneInput
-      passCriterias
-      milestonePresetData
-      milestoneResult`
+      data`

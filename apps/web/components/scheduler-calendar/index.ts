@@ -1,9 +1,4 @@
 export {
-  SchedulerCalendar,
-  type SchedulerCalendarProps,
-  type SchedulerCalendarViewMode,
-} from './scheduler-calendar'
-export {
   SchedulerCalendarMonthGrid,
   type SchedulerCalendarMonthGridProps,
 } from './scheduler-calendar-month-grid'

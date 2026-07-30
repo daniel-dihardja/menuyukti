@@ -19,7 +19,6 @@ query WorkflowCampaignTree($workflowId: ID!) {
         name
         nodeType
         data
-        milestoneGoal
       }
     }
   }
@@ -27,20 +26,54 @@ query WorkflowCampaignTree($workflowId: ID!) {
 """
 
 
-def test_workflow_campaign_tree_returns_milestones_and_children():
+def _fresh_location(name: str) -> int:
     session = SessionLocal()
     try:
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Tree Query Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(name=name, clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
-        location_id = location.id
+        return location.id
     finally:
         session.close()
+
+
+def _insert_milestone(
+    *,
+    location_id: int,
+    parent_id: int,
+    name: str,
+    data: dict | None = None,
+) -> int:
+    session = SessionLocal()
+    try:
+        parent = session.get(Node, parent_id)
+        assert parent is not None
+        row = Node(
+            parent_id=parent_id,
+            name=name,
+            description=None,
+            path="",
+            node_type="milestone",
+            location_id=location_id,
+            data=data,
+        )
+        session.add(row)
+        session.flush()
+        row.path = f"{parent.path.rstrip('/')}/{row.id}"
+        session.commit()
+        session.refresh(row)
+        return row.id
+    finally:
+        session.close()
+
+
+def test_workflow_campaign_tree_returns_workflow_and_empty_milestones():
+    location_id = _fresh_location("Tree Query Location")
 
     wf = asyncio.run(
         schema.execute(
@@ -56,42 +89,6 @@ def test_workflow_campaign_tree_returns_milestones_and_children():
     )
     assert not wf.errors, wf.errors
     workflow_id = wf.data["createNode"]["id"]
-
-    ms = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "M1",
-                "parentId": workflow_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not ms.errors, ms.errors
-    milestone_id = ms.data["createNode"]["id"]
-
-    upd = asyncio.run(
-        schema.execute(
-            """
-mutation UpdateNode($id: ID!, $data: JSON) {
-  updateNode(id: $id, data: $data) {
-    id
-    milestoneGoal
-    data
-  }
-}
-""",
-            variable_values={
-                "id": milestone_id,
-                "data": {"order": 1, "goal": "Win the week"},
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not upd.errors, upd.errors
-    assert upd.data["updateNode"]["milestoneGoal"] == "Win the week"
 
     result = asyncio.run(
         schema.execute(
@@ -104,26 +101,12 @@ mutation UpdateNode($id: ID!, $data: JSON) {
     data = result.data["workflowCampaignTree"]
     assert data is not None
     assert data["workflow"]["nodeType"] == "workflow"
-    assert len(data["milestones"]) == 1
-    m0 = data["milestones"][0]
-    assert m0["milestone"]["id"] == milestone_id
-    assert m0["milestone"]["milestoneGoal"] == "Win the week"
+    assert data["workflow"]["id"] == workflow_id
+    assert data["milestones"] == []
 
 
-def test_workflow_campaign_tree_returns_null_for_non_workflow():
-    session = SessionLocal()
-    try:
-        session.query(Node).delete()
-        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-        session.commit()
-
-        location = Location(name="Tree Query Location 2", clerk_user_id=GRAPHQL_TEST_USER_ID)
-        session.add(location)
-        session.commit()
-        session.refresh(location)
-        location_id = location.id
-    finally:
-        session.close()
+def test_workflow_campaign_tree_returns_orm_milestones():
+    location_id = _fresh_location("Tree Query ORM Location")
 
     wf = asyncio.run(
         schema.execute(
@@ -140,25 +123,60 @@ def test_workflow_campaign_tree_returns_null_for_non_workflow():
     assert not wf.errors, wf.errors
     workflow_id = wf.data["createNode"]["id"]
 
-    ms = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "M1",
-                "parentId": workflow_id,
-            },
-            context_value=graphql_auth_context(),
-        )
+    milestone_id = _insert_milestone(
+        location_id=location_id,
+        parent_id=int(workflow_id),
+        name="M1",
+        data={"order": 1},
     )
-    assert not ms.errors, ms.errors
-    milestone_id = ms.data["createNode"]["id"]
 
     result = asyncio.run(
         schema.execute(
             TREE_QUERY,
-            variable_values={"workflowId": milestone_id},
+            variable_values={"workflowId": workflow_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors, result.errors
+    data = result.data["workflowCampaignTree"]
+    assert data is not None
+    assert len(data["milestones"]) == 1
+    m0 = data["milestones"][0]
+    assert m0["milestone"]["id"] == str(milestone_id)
+    assert m0["milestone"]["name"] == "M1"
+    assert m0["milestone"]["nodeType"] == "milestone"
+    assert m0["milestone"]["data"] == {"order": 1}
+
+
+def test_workflow_campaign_tree_returns_null_for_non_workflow():
+    location_id = _fresh_location("Tree Query Location 2")
+
+    wf = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": "Campaign",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not wf.errors, wf.errors
+    workflow_id = int(wf.data["createNode"]["id"])
+
+    milestone_id = _insert_milestone(
+        location_id=location_id,
+        parent_id=workflow_id,
+        name="M1",
+        data={"order": 1},
+    )
+
+    result = asyncio.run(
+        schema.execute(
+            TREE_QUERY,
+            variable_values={"workflowId": str(milestone_id)},
             context_value=graphql_auth_context(),
         )
     )

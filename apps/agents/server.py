@@ -9,7 +9,6 @@ import httpx
 from agents_app.agents.core.chat.graph import compile_chat_graph
 from agents_app.routers.chat import router as chat_router
 from agents_app.routers.format_markdown import router as format_markdown_router
-from agents_app.routers.milestone_run import router as milestone_run_router
 from agents_app.routers.style_specs import router as style_specs_router
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -24,7 +23,7 @@ load_dotenv()
 
 
 def _configure_agents_app_logging() -> None:
-    """Emit INFO logs from ``agents_app`` (e.g. milestone run fetch steps) without raising root level."""
+    """Emit INFO logs from ``agents_app`` without raising root level."""
     pkg = logging.getLogger("agents_app")
     if pkg.handlers:
         return
@@ -92,7 +91,6 @@ app = FastAPI(
 app.add_middleware(InternalApiKeyMiddleware)
 app.include_router(chat_router, tags=["chat"])
 app.include_router(format_markdown_router, tags=["core", "format-markdown"])
-app.include_router(milestone_run_router, tags=["milestones"])
 app.include_router(style_specs_router, tags=["style-specs"])
 
 

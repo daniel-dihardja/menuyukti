@@ -37,20 +37,24 @@ query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
 """
 
 
-def test_nodes_filters_by_parent_id_and_returns_milestone_children():
+def _fresh_location(name: str) -> int:
     session = SessionLocal()
     try:
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Nodes Query Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(name=name, clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
-        location_id = location.id
+        return location.id
     finally:
         session.close()
+
+
+def test_nodes_filters_by_parent_id():
+    location_id = _fresh_location("Nodes Query Location")
 
     campaign = asyncio.run(
         schema.execute(
@@ -67,24 +71,6 @@ def test_nodes_filters_by_parent_id_and_returns_milestone_children():
     assert not campaign.errors, campaign.errors
     campaign_id = campaign.data["createNode"]["id"]
 
-    milestone = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "Step one",
-                "parentId": campaign_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not milestone.errors, milestone.errors
-    m_data = milestone.data["createNode"]
-    assert m_data["parentId"] == campaign_id
-    assert m_data["nodeType"] == "milestone"
-
-    # Other campaign's milestone should not appear
     campaign2 = asyncio.run(
         schema.execute(
             CREATE_NODE,
@@ -98,21 +84,52 @@ def test_nodes_filters_by_parent_id_and_returns_milestone_children():
         )
     )
     assert not campaign2.errors, campaign2.errors
-    other_id = campaign2.data["createNode"]["id"]
-    asyncio.run(
+
+    # Workflow roots have no parent; filter by parentId=null should return both.
+    result = asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            NODES_BY_PARENT,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "Other step",
-                "parentId": other_id,
+                "nodeType": "workflow",
+                "parentId": None,
             },
             context_value=graphql_auth_context(),
         )
     )
+    assert not result.errors, result.errors
+    nodes = result.data["nodes"]
+    assert len(nodes) == 2
+    assert {n["id"] for n in nodes} == {
+        campaign_id,
+        campaign2.data["createNode"]["id"],
+    }
+    assert all(n["parentId"] is None for n in nodes)
 
-    result = asyncio.run(
+    # Legacy milestone children inserted via ORM still filter by parent.
+    session = SessionLocal()
+    try:
+        parent = session.get(Node, int(campaign_id))
+        assert parent is not None
+        child = Node(
+            parent_id=int(campaign_id),
+            name="Step one",
+            description=None,
+            path="",
+            node_type="milestone",
+            location_id=location_id,
+            data={"order": 1},
+        )
+        session.add(child)
+        session.flush()
+        child.path = f"{parent.path.rstrip('/')}/{child.id}"
+        session.commit()
+        session.refresh(child)
+        child_id = str(child.id)
+    finally:
+        session.close()
+
+    listed = asyncio.run(
         schema.execute(
             NODES_BY_PARENT,
             variable_values={
@@ -123,28 +140,16 @@ def test_nodes_filters_by_parent_id_and_returns_milestone_children():
             context_value=graphql_auth_context(),
         )
     )
-    assert not result.errors, result.errors
-    nodes = result.data["nodes"]
+    assert not listed.errors, listed.errors
+    nodes = listed.data["nodes"]
     assert len(nodes) == 1
-    assert nodes[0]["id"] == m_data["id"]
+    assert nodes[0]["id"] == child_id
     assert nodes[0]["name"] == "Step one"
     assert nodes[0]["parentId"] == campaign_id
 
 
 def test_nodes_respects_first_and_after_cursor():
-    session = SessionLocal()
-    try:
-        session.query(Node).delete()
-        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-        session.commit()
-
-        location = Location(name="Cursor Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
-        session.add(location)
-        session.commit()
-        session.refresh(location)
-        location_id = location.id
-    finally:
-        session.close()
+    location_id = _fresh_location("Cursor Location")
 
     async def _create_workflow(name: str) -> str:
         r = await schema.execute(

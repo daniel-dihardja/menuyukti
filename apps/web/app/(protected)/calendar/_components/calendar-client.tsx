@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import type { CalendarDisplaySlot } from '@/lib/graphql/queries/scheduler-calendar'
-import type { CampaignWindowPublicHoliday } from '@/lib/graphql/node-schemas'
+import type { CampaignWindowPublicHoliday } from '@/lib/calendar/types'
 import { routes } from '@/lib/routes'
 
 import { WorkspaceCalendar } from './workspace-calendar'

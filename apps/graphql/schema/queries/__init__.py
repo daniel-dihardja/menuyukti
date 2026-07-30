@@ -3,7 +3,6 @@ from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
 from .crm_apps import CrmAppsQuery
 from .crm_customers import CrmCustomersQuery
-from .ig_plan_inputs import IgPlanInputsQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .latest_analytics_run_signals import LatestAnalyticsRunWithSignalsQuery
@@ -14,7 +13,6 @@ from .menu_catalog import MenuCatalogQuery
 from .menu_combos import MenuCombosQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
-from .milestone_prior_data import MilestonePriorDataQuery
 from .nodes import NodesQuery
 from .operating_profile import OperatingProfileQuery
 from .posts import PostsQuery
@@ -37,7 +35,6 @@ __all__ = [
     "CategoryMixQuery",
     "CrmAppsQuery",
     "CrmCustomersQuery",
-    "IgPlanInputsQuery",
     "ImageAiFlowsQuery",
     "InstagramSignalsQuery",
     "LocationsQuery",
@@ -45,7 +42,6 @@ __all__ = [
     "StylesQuery",
     "MediaCollectionsQuery",
     "MenuCatalogQuery",
-    "MilestonePriorDataQuery",
     "MenuCombosQuery",
     "MenuEngineeringMatrixQuery",
     "MenuHeatmapsQuery",

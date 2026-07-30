@@ -1,5 +1,5 @@
-import type { SchedulerSlot } from '@/lib/milestones/scheduler-calendar'
-import { schedulerSlotDisplayTitleParts } from '@/lib/milestones/scheduler-calendar'
+import type { SchedulerSlot } from '@/lib/calendar/scheduler-calendar'
+import { schedulerSlotDisplayTitleParts } from '@/lib/calendar/scheduler-calendar'
 
 export function SchedulerSlotDisplayTitle({
   slot,

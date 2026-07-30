@@ -13,7 +13,6 @@ from graphql.schema.mutations import (
     CreatePostMutation,
     CreatePostPageMutation,
     CreateStyleMutation,
-    CreateWorkflowFromPayloadMutation,
     CreateWorkspaceMutation,
     DeleteAnalyticsRunMutation,
     DeleteCalendarEntryMutation,
@@ -29,14 +28,9 @@ from graphql.schema.mutations import (
     DeleteStyleMutation,
     EnsureMediaAssetMutation,
     InviteWorkspaceMemberMutation,
-    MilestoneAgentRunMutation,
     RemoveMediaFromCollectionMutation,
     RemoveWorkspaceMemberMutation,
-    ReorderMilestonesMutation,
-    ReplacePassCriteriaMutation,
     RevokeCrmDeviceMutation,
-    SetPassCriteriaStatusesMutation,
-    SetPassCriterionStatusMutation,
     UpdateCalendarEntryMutation,
     UpdateCrmAppMutation,
     UpdateImageAiFlowMutation,
@@ -55,7 +49,7 @@ from graphql.schema.mutations import (
 
 @strawberry.type(
     description=(
-        "Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, "
+        "Root mutation: sales uploads, node CRUD, workspace invites, "
         "and image AI flow configuration."
     )
 )
@@ -65,7 +59,6 @@ class Mutation(
     CreateNodeMutation,
     CreatePostMutation,
     CreatePostPageMutation,
-    CreateWorkflowFromPayloadMutation,
     DeleteNodeMutation,
     DeletePostMutation,
     DeletePostPageMutation,
@@ -73,10 +66,6 @@ class Mutation(
     UpdateNodeMutation,
     UpdatePostMutation,
     UpdatePostPageMutation,
-    ReplacePassCriteriaMutation,
-    SetPassCriterionStatusMutation,
-    SetPassCriteriaStatusesMutation,
-    ReorderMilestonesMutation,
     CreateLocationMutation,
     CreateStyleMutation,
     CreateMediaCollectionMutation,
@@ -85,7 +74,6 @@ class Mutation(
     CreateCalendarEntryMutation,
     CreateWorkspaceMutation,
     InviteWorkspaceMemberMutation,
-    MilestoneAgentRunMutation,
     RemoveWorkspaceMemberMutation,
     UpsertMenuItemCogsBulkMutation,
     UpdateMenuItemCogsBulkMutation,

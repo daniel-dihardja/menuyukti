@@ -6,7 +6,6 @@ from graphql.schema.queries import (
     CategoryMixQuery,
     CrmAppsQuery,
     CrmCustomersQuery,
-    IgPlanInputsQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
     LatestAnalyticsRunWithSignalsQuery,
@@ -17,7 +16,6 @@ from graphql.schema.queries import (
     MenuCombosQuery,
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
-    MilestonePriorDataQuery,
     NodesQuery,
     OperatingProfileQuery,
     PostsQuery,
@@ -67,9 +65,7 @@ class Query(
     CategoryMixQuery,
     RevenueTrendsQuery,
     WeeklyDemandPatternQuery,
-    MilestonePriorDataQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
-    IgPlanInputsQuery,
 ):
     pass

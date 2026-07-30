@@ -5,16 +5,6 @@ from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from graphql.tests.test_nodes_query import CREATE_NODE
 
-UPDATE_NODE = """
-mutation UpdateNode($id: ID!, $data: JSON) {
-  updateNode(id: $id, data: $data) {
-    id
-    milestonePresetData
-    data
-  }
-}
-"""
-
 SCHEDULER_CALENDAR_QUERY = """
 query SchedulerCalendar($locationId: Int!) {
   schedulerCalendar(locationId: $locationId) {
@@ -79,43 +69,52 @@ def _create_workflow(location_id: int, name: str) -> str:
     return result.data["createNode"]["id"]
 
 
+def _insert_milestone(
+    *,
+    location_id: int,
+    workflow_id: str,
+    name: str,
+    data: dict | None = None,
+    milestone_preset_data: dict | None = None,
+) -> int:
+    session = SessionLocal()
+    try:
+        parent = session.get(Node, int(workflow_id))
+        assert parent is not None
+        row = Node(
+            parent_id=int(workflow_id),
+            name=name,
+            description=None,
+            path="",
+            node_type="milestone",
+            location_id=location_id,
+            data=data,
+            milestone_preset_data=milestone_preset_data,
+        )
+        session.add(row)
+        session.flush()
+        row.path = f"{parent.path.rstrip('/')}/{row.id}"
+        session.commit()
+        session.refresh(row)
+        return row.id
+    finally:
+        session.close()
+
+
 def _create_scheduler_milestone(
     *,
     location_id: int,
     workflow_id: str,
     name: str,
     preset_data: dict,
-) -> str:
-    created = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "milestone",
-                "name": name,
-                "parentId": workflow_id,
-            },
-            context_value=graphql_auth_context(),
-        )
+) -> int:
+    return _insert_milestone(
+        location_id=location_id,
+        workflow_id=workflow_id,
+        name=name,
+        data={"presetId": "scheduler"},
+        milestone_preset_data=preset_data,
     )
-    assert not created.errors, created.errors
-    milestone_id = created.data["createNode"]["id"]
-
-    updated = asyncio.run(
-        schema.execute(
-            UPDATE_NODE,
-            variable_values={
-                "id": milestone_id,
-                "data": {
-                    "presetId": "scheduler",
-                    "milestonePresetData": preset_data,
-                },
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not updated.errors, updated.errors
-    return milestone_id
 
 
 def test_scheduler_calendar_empty_for_unauthenticated():
@@ -138,35 +137,16 @@ def test_scheduler_calendar_empty_for_unauthenticated():
 def test_scheduler_calendar_empty_when_no_scheduler_milestones():
     location_id = _create_location("Calendar Empty Location")
     workflow_id = _create_workflow(location_id, "Campaign")
-    created = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "Dates",
-                "parentId": workflow_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not created.errors, created.errors
-    asyncio.run(
-        schema.execute(
-            UPDATE_NODE,
-            variable_values={
-                "id": created.data["createNode"]["id"],
-                "data": {
-                    "presetId": "dates",
-                    "milestonePresetData": {
-                        "startDate": "2026-07-01",
-                        "endDate": "2026-07-31",
-                        "publicHolidays": [],
-                    },
-                },
-            },
-            context_value=graphql_auth_context(),
-        )
+    _insert_milestone(
+        location_id=location_id,
+        workflow_id=workflow_id,
+        name="Dates",
+        data={"presetId": "dates"},
+        milestone_preset_data={
+            "startDate": "2026-07-01",
+            "endDate": "2026-07-31",
+            "publicHolidays": [],
+        },
     )
 
     result = asyncio.run(

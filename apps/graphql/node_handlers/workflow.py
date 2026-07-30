@@ -1,12 +1,15 @@
-"""Workflow root node: same create/update data behavior as generic; delete cascades to milestones."""
+"""Workflow root node: same create/update data behavior as generic; delete cascades children."""
 
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import Node
+from graphql.data_sources import MilestoneAgentRun, Node
 from graphql.node_handlers._generic import GenericHandler
-from graphql.node_handlers.milestone import _milestone_sort_key, delete_milestone_children
+
+
+def _child_sort_key(row: Node) -> tuple[object, int]:
+    return (row.created_at or 0, row.id)
 
 
 class WorkflowHandler(GenericHandler):
@@ -31,16 +34,14 @@ class WorkflowHandler(GenericHandler):
             raise ValueError("Workflow has no location")
 
         children = session.query(Node).filter(Node.parent_id == node.id).all()
-        milestones: list[Node] = []
         for child in children:
-            if child.node_type != "milestone":
-                raise ValueError(f"Unexpected child node type under workflow: {child.node_type}")
             if child.location_id != node.location_id:
                 raise ValueError("Node location mismatch")
-            milestones.append(child)
 
-        milestones.sort(key=_milestone_sort_key, reverse=True)
-        for m in milestones:
-            delete_milestone_children(session, m.id)
-            session.delete(m)
+        children.sort(key=_child_sort_key, reverse=True)
+        for child in children:
+            session.query(MilestoneAgentRun).filter(
+                MilestoneAgentRun.milestone_node_id == child.id,
+            ).delete(synchronize_session=False)
+            session.delete(child)
             session.flush()

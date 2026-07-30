@@ -8,17 +8,15 @@ from graphql.data_sources import Node
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
-from graphql.schema.node_handlers.milestone import sync_milestone_columns_from_initial_data
 from graphql.schema.types import NodeType
 
-_DEPRECATED_CHILD_TYPES = frozenset({"milestonedata", "result", "passcriteria"})
-
-_ADJECTIVES = ("Swift", "Bright", "Urban", "Golden", "Fresh", "Bold")
-_NOUNS = ("Launch", "Push", "Drive", "Wave", "Spark", "Pulse")
+_DEPRECATED_CHILD_TYPES = frozenset({"milestonedata", "result", "passcriteria", "milestone", "goal"})
 
 
 def _random_default_name() -> str:
-    return f"{secrets.choice(_ADJECTIVES)} {secrets.choice(_NOUNS)} {secrets.token_hex(2).upper()}"
+    adjectives = ("Swift", "Bright", "Urban", "Golden", "Fresh", "Bold")
+    nouns = ("Launch", "Push", "Drive", "Wave", "Spark", "Pulse")
+    return f"{secrets.choice(adjectives)} {secrets.choice(nouns)} {secrets.token_hex(2).upper()}"
 
 
 @strawberry.type
@@ -40,10 +38,7 @@ class CreateNodeMutation:
 
         nt_norm = node_type.strip().lower()
         if nt_norm in _DEPRECATED_CHILD_TYPES:
-            raise ValueError(
-                f"node type {node_type!r} is no longer supported; store payloads on the milestone row "
-                "(milestonePresetData, milestoneResult, passCriterias, etc.)"
-            )
+            raise ValueError(f"node type {node_type!r} is no longer supported")
 
         with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id)
@@ -64,12 +59,6 @@ class CreateNodeMutation:
                     raise ValueError("Parent node does not belong to this location")
                 resolved_parent_id = parent_pk
 
-            if nt_norm == "goal":
-                raise ValueError(
-                    "node type goal is no longer supported; store goal text on the milestone "
-                    "node field milestoneGoal"
-                )
-
             handler = get_handler(node_type)
             resolved_data = handler.validate_create(parent, data, session)
 
@@ -88,9 +77,6 @@ class CreateNodeMutation:
                 node.path = f"/{node.id}"
             else:
                 node.path = f"{parent.path.rstrip('/')}/{node.id}"
-            if nt_norm == "milestone":
-                sync_milestone_columns_from_initial_data(node)
-                session.flush()
             session.commit()
             session.refresh(node)
 
