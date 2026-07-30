@@ -9,7 +9,7 @@ import {
 } from '@/lib/chat/story-assets-from-messages'
 
 const STYLE = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee.webp'
-const PRODUCT = '11111111-2222-3333-4444-555555555555.jpg'
+const CONTENT = '11111111-2222-3333-4444-555555555555.jpg'
 const RESULT = 'dddddddd-eeee-ffff-aaaa-111111111111.webp'
 
 describe('parseStoryAssetsToolOutput', () => {
@@ -98,7 +98,7 @@ describe('latestStoryAssetsFromMessages', () => {
             output: JSON.stringify({
               ok: true,
               action: 'clear',
-              story_assets: [{ role: 'product', name: PRODUCT, note: 'bowl' }],
+              story_assets: [{ role: 'content', name: CONTENT, note: 'bowl' }],
               message: 'Cleared',
             }),
           },
@@ -107,7 +107,7 @@ describe('latestStoryAssetsFromMessages', () => {
     ] as UIMessage[]
 
     expect(latestStoryAssetsFromMessages(messages)).toEqual([
-      { role: 'product', name: PRODUCT, note: 'bowl' },
+      { role: 'content', name: CONTENT, note: 'bowl' },
     ])
   })
 

@@ -1,4 +1,4 @@
-"""Story image assistant scratchpad: labeled style/product/result refs in graph state."""
+"""Story image assistant scratchpad: labeled style/content/result refs in graph state."""
 
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ _SAFE_PHOTO_FILENAME_RE = re.compile(
     re.IGNORECASE,
 )
 
-StoryAssetRole = Literal["style", "product", "result"]
-StoryAssetSaveRole = Literal["style", "product"]
+StoryAssetRole = Literal["style", "content", "result"]
+StoryAssetSaveRole = Literal["style", "content"]
 StoryAssetActionOp = Literal["save", "clear"]
 
 
@@ -39,7 +39,7 @@ def _normalize_assets(raw: Any) -> list[StoryAssetRef]:
         role = item.get("role")
         name = item.get("name")
         note = item.get("note")
-        if role not in ("style", "product", "result"):
+        if role not in ("style", "content", "result"):
             continue
         if not isinstance(name, str) or not name.strip():
             continue
@@ -86,8 +86,8 @@ def upsert_story_asset_list(
             "Error: name must be a media-library photo filename "
             "(uuid + image extension). Ask the user to attach via @ from the media library."
         )
-    if role not in ("style", "product"):
-        return None, "Error: role must be 'style' or 'product'."
+    if role not in ("style", "content"):
+        return None, "Error: role must be 'style' or 'content'."
 
     trimmed_note = note.strip() if isinstance(note, str) else ""
     next_list = list(assets)
@@ -166,9 +166,9 @@ def clear_story_asset_list(
 
     if role is None:
         return [], "Cleared all story assets."
-    if role not in ("style", "product", "result"):
+    if role not in ("style", "content", "result"):
         return None, (
-            "Error: role must be 'style', 'product', 'result', or omitted to clear all."
+            "Error: role must be 'style', 'content', 'result', or omitted to clear all."
         )
     next_list = [a for a in assets if a["role"] != role]
     return next_list, f"Cleared story assets with role={role}."
@@ -177,7 +177,7 @@ def clear_story_asset_list(
 def generation_references_from_story_assets(
     assets: list[StoryAssetRef] | list[dict[str, Any]] | None,
 ) -> list[dict[str, str]]:
-    """Leonardo refs from scratchpad: photos for style/product, previous-result for result."""
+    """Leonardo refs from scratchpad: photos for style/content, previous-result for result."""
     refs: list[dict[str, str]] = []
     seen: set[str] = set()
     for asset in _normalize_assets(assets):
@@ -199,7 +199,7 @@ def generation_references_from_story_assets(
 def photo_references_from_story_assets(
     assets: list[StoryAssetRef] | list[dict[str, Any]] | None,
 ) -> list[dict[str, str]]:
-    """Leonardo ``{type: photo, name}`` refs from style/product only (legacy helper)."""
+    """Leonardo ``{type: photo, name}`` refs from style/content only (legacy helper)."""
     return [
         ref
         for ref in generation_references_from_story_assets(assets)
@@ -285,13 +285,14 @@ def save_story_asset(
     note: str = "",
     runtime: ToolRuntime = None,  # type: ignore[assignment]
 ) -> Command | str:
-    """Save a labeled style or product photo from the media library into Story scratchpad.
+    """Save a labeled style or content photo from the media library into Story scratchpad.
 
     Call when the user attaches (via @) or confirms a media-library filename as the style
-    direction reference (role=style) or a product/dish photo (role=product). ``name`` must be
-    the library filename (uuid + extension), not a raw data URL. Optional ``note`` describes
-    how to use the image in the Leonardo prompt. Do not use role=result — the last generate
-    output is saved automatically.
+    direction reference (role=style) or a content image (role=content) — a product/dish photo
+    or a complete custom image to optimize for Story. ``name`` must be the library filename
+    (uuid + extension), not a raw data URL. Optional ``note`` describes how to use the image
+    in the Leonardo prompt. Do not use role=result — the last generate output is saved
+    automatically.
     """
     if runtime is None or not runtime.tool_call_id:
         return "Error: tool runtime unavailable."
@@ -320,9 +321,9 @@ def clear_story_assets(
     name: str | None = None,
     runtime: ToolRuntime = None,  # type: ignore[assignment]
 ) -> Command | str:
-    """Clear saved Story style/product/result photo refs from the scratchpad.
+    """Clear saved Story style/content/result photo refs from the scratchpad.
 
-    Pass ``name`` to remove one media filename. Pass ``role`` (style|product|result) to clear
+    Pass ``name`` to remove one media filename. Pass ``role`` (style|content|result) to clear
     that role. Omit both to clear all.
     """
     if runtime is None or not runtime.tool_call_id:

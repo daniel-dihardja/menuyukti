@@ -1,6 +1,6 @@
 import { isToolUIPart, type UIMessage } from 'ai'
 
-export type StoryAssetRole = 'style' | 'product' | 'result'
+export type StoryAssetRole = 'style' | 'content' | 'result'
 
 export type StoryAssetRef = {
   role: StoryAssetRole
@@ -16,7 +16,7 @@ export type StoryAssetsToolPayload = {
 }
 
 function isStoryAssetRole(value: unknown): value is StoryAssetRole {
-  return value === 'style' || value === 'product' || value === 'result'
+  return value === 'style' || value === 'content' || value === 'result'
 }
 
 function normalizeStoryAssets(raw: unknown): StoryAssetRef[] | null {

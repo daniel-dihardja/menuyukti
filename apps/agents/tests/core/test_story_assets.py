@@ -8,7 +8,7 @@ from langchain.tools import ToolRuntime
 from langgraph.types import Command
 
 VALID_STYLE = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
-VALID_PRODUCT = "11111111-2222-3333-4444-555555555555.jpg"
+VALID_CONTENT = "11111111-2222-3333-4444-555555555555.jpg"
 
 
 def _runtime(*, assets: list | None = None, tool_call_id: str = "tc-1") -> ToolRuntime:
@@ -26,7 +26,7 @@ def test_is_safe_photo_filename() -> None:
     from agents_app.agents.core.chat.story_assets import is_safe_photo_filename
 
     assert is_safe_photo_filename(VALID_STYLE)
-    assert is_safe_photo_filename(VALID_PRODUCT)
+    assert is_safe_photo_filename(VALID_CONTENT)
     assert not is_safe_photo_filename("not-a-uuid.png")
     assert not is_safe_photo_filename("../etc/passwd.webp")
     assert not is_safe_photo_filename("")
@@ -50,25 +50,25 @@ def test_upsert_and_clear_helpers() -> None:
     assert "Updated style" in msg2
     assert nxt2[0]["note"] == "cooler"
 
-    nxt3, _ = upsert_story_asset_list(nxt2, role="product", name=VALID_PRODUCT, note="bowl")
+    nxt3, _ = upsert_story_asset_list(nxt2, role="content", name=VALID_CONTENT, note="bowl")
     assert nxt3 is not None
     assert len(nxt3) == 2
 
     cleared_role, msg_role = clear_story_asset_list(nxt3, role="style")
     assert cleared_role is not None
     assert len(cleared_role) == 1
-    assert cleared_role[0]["role"] == "product"
+    assert cleared_role[0]["role"] == "content"
     assert "style" in msg_role
 
     empty, msg_all = clear_story_asset_list(nxt3, role=None)
     assert empty == []
     assert "Cleared all" in msg_all
 
-    by_name, msg_name = clear_story_asset_list(nxt3, name=VALID_PRODUCT)
+    by_name, msg_name = clear_story_asset_list(nxt3, name=VALID_CONTENT)
     assert by_name is not None
     assert len(by_name) == 1
     assert by_name[0]["name"] == VALID_STYLE
-    assert VALID_PRODUCT in msg_name
+    assert VALID_CONTENT in msg_name
 
     filled = [
         {"role": "style", "name": f"{i:08x}-bbbb-cccc-dddd-eeeeeeeeeeee.webp", "note": ""}
@@ -76,8 +76,8 @@ def test_upsert_and_clear_helpers() -> None:
     ]
     overflow, err = upsert_story_asset_list(
         filled,  # type: ignore[arg-type]
-        role="product",
-        name=VALID_PRODUCT,
+        role="content",
+        name=VALID_CONTENT,
     )
     assert overflow is None
     assert "at most" in err
@@ -88,7 +88,7 @@ def test_merge_generation_references_scratchpad_wins() -> None:
 
     assets = [
         {"role": "style", "name": VALID_STYLE, "note": "look"},
-        {"role": "product", "name": VALID_PRODUCT, "note": "dish"},
+        {"role": "content", "name": VALID_CONTENT, "note": "dish"},
     ]
     request = [
         {"type": "photo", "name": VALID_STYLE},  # duplicate — scratchpad already has it
@@ -97,7 +97,7 @@ def test_merge_generation_references_scratchpad_wins() -> None:
     merged = merge_generation_references(story_assets=assets, request_references=request)
     assert merged == [
         {"type": "photo", "name": VALID_STYLE},
-        {"type": "photo", "name": VALID_PRODUCT},
+        {"type": "photo", "name": VALID_CONTENT},
         {"type": "photo", "name": "99999999-aaaa-bbbb-cccc-dddddddddddd.png"},
     ]
 
@@ -165,7 +165,7 @@ def test_save_story_asset_rejects_unsafe_name() -> None:
     from agents_app.agents.core.chat.story_assets import save_story_asset
 
     result = save_story_asset.invoke(
-        {"role": "product", "name": "raw-upload.png", "runtime": _runtime()}
+        {"role": "content", "name": "raw-upload.png", "runtime": _runtime()}
     )
     assert isinstance(result, str)
     payload = json.loads(result)
@@ -178,11 +178,11 @@ def test_clear_story_assets_tool_by_role() -> None:
 
     result = clear_story_assets.invoke(
         {
-            "role": "product",
+            "role": "content",
             "runtime": _runtime(
                 assets=[
                     {"role": "style", "name": VALID_STYLE, "note": ""},
-                    {"role": "product", "name": VALID_PRODUCT, "note": ""},
+                    {"role": "content", "name": VALID_CONTENT, "note": ""},
                 ]
             ),
         }
@@ -205,7 +205,7 @@ def test_clear_story_assets_tool_by_name() -> None:
             "runtime": _runtime(
                 assets=[
                     {"role": "style", "name": VALID_STYLE, "note": ""},
-                    {"role": "product", "name": VALID_PRODUCT, "note": ""},
+                    {"role": "content", "name": VALID_CONTENT, "note": ""},
                 ]
             ),
         }
@@ -213,5 +213,5 @@ def test_clear_story_assets_tool_by_name() -> None:
     assert isinstance(result, Command)
     assert result.update is not None
     assert result.update["story_assets"] == [
-        {"role": "product", "name": VALID_PRODUCT, "note": ""}
+        {"role": "content", "name": VALID_CONTENT, "note": ""}
     ]

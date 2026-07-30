@@ -19,9 +19,9 @@ type WorkflowChatSavedStoryAssetsStripProps = {
   onRemove: (name: string) => void
 }
 
-function roleLabelKey(role: StoryAssetRef['role']): 'roleStyle' | 'roleProduct' | 'roleResult' {
+function roleLabelKey(role: StoryAssetRef['role']): 'roleStyle' | 'roleContent' | 'roleResult' {
   if (role === 'style') return 'roleStyle'
-  if (role === 'product') return 'roleProduct'
+  if (role === 'content') return 'roleContent'
   return 'roleResult'
 }
 

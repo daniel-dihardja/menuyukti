@@ -111,7 +111,7 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "direction gathering" in out
     assert "describe the wished look" in out
     assert "reference image" in out
-    assert "product" in out.lower()
+    assert "content" in out.lower()
     assert "on-image text" in out
     assert "skip" in out.lower() or "declines" in out
     assert "Phase 3" in out
@@ -119,7 +119,7 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "generate_instagram_post_image" in out
     assert "save_story_asset" in out
     assert 'role="style"' in out
-    assert 'role="product"' in out
+    assert 'role="content"' in out
     assert "Attached media library photos" in out
     assert "clear_story_assets" in out
     assert "media library" in out.lower()

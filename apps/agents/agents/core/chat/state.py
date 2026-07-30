@@ -8,9 +8,9 @@ from langchain.agents import AgentState
 
 
 class StoryAssetRef(TypedDict):
-    """Labeled Story Leonardo reference (style/product photos, or last generate result)."""
+    """Labeled Story Leonardo reference (style/content photos, or last generate result)."""
 
-    role: Literal["style", "product", "result"]
+    role: Literal["style", "content", "result"]
     name: str  # photos library filename, or posts filename when role=result
     note: str  # short description for prompt wording
 

@@ -221,13 +221,13 @@ async def test_story_mode_uses_story_assets_as_references(
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
 
     style_name = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
-    product_name = "11111111-2222-3333-4444-555555555555.jpg"
+    content_name = "11111111-2222-3333-4444-555555555555.jpg"
     result_name = "cccccccc-dddd-eeee-ffff-000000000000.webp"
     runtime = ToolRuntime(
         state={
             "story_assets": [
                 {"role": "style", "name": style_name, "note": "neon"},
-                {"role": "product", "name": product_name, "note": "bowl"},
+                {"role": "content", "name": content_name, "note": "bowl"},
                 {"role": "result", "name": result_name, "note": ""},
             ]
         },
@@ -250,7 +250,7 @@ async def test_story_mode_uses_story_assets_as_references(
         return_value=mock_client,
     ):
         await tool_under_test.ainvoke(
-            {"prompt": "Story with style and product", "runtime": runtime},
+            {"prompt": "Story with style and content", "runtime": runtime},
             config=_config(
                 user_id="user-1",
                 chat_mode="story_image_assistant",
@@ -262,7 +262,7 @@ async def test_story_mode_uses_story_assets_as_references(
     assert body["format"] == "story"
     assert body["references"] == [
         {"type": "photo", "name": style_name},
-        {"type": "photo", "name": product_name},
+        {"type": "photo", "name": content_name},
         {"type": "previous-result", "filename": result_name},
     ]
 

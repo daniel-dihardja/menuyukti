@@ -1913,7 +1913,7 @@
         "storyAssets": {
           "title": "Saved for this Story",
           "roleStyle": "Style",
-          "roleProduct": "Product",
+          "roleContent": "Content",
           "roleResult": "Result",
           "resultLabel": "Last generated",
           "removeAriaLabel": "Remove {role} reference"

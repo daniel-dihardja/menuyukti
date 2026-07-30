@@ -83,13 +83,13 @@ def test_chat_story_asset_action_clears_without_llm(client: TestClient) -> None:
     from unittest.mock import AsyncMock
 
     style = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.webp"
-    product = "11111111-2222-3333-4444-555555555555.jpg"
+    content = "11111111-2222-3333-4444-555555555555.jpg"
 
     class _Snap:
         values = {
             "story_assets": [
                 {"role": "style", "name": style, "note": ""},
-                {"role": "product", "name": product, "note": ""},
+                {"role": "content", "name": content, "note": ""},
             ]
         }
 
@@ -123,7 +123,7 @@ def test_chat_story_asset_action_clears_without_llm(client: TestClient) -> None:
             outputs.append(json.loads(payload["output"]))
     assert outputs
     assert outputs[-1]["ok"] is True
-    assert outputs[-1]["story_assets"] == [{"role": "product", "name": product, "note": ""}]
+    assert outputs[-1]["story_assets"] == [{"role": "content", "name": content, "note": ""}]
 
 
 def test_chat_invalid_model_returns_400(client: TestClient) -> None:
