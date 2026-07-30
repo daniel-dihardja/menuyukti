@@ -54,15 +54,16 @@ def _has_location_id(conf: dict[str, Any]) -> bool:
     return conf.get("location_id") is not None
 
 
-def _is_story_image_assistant_mode(conf: dict[str, Any]) -> bool:
-    return conf.get("chat_mode") == "story_image_assistant"
+def _is_image_assistant_mode(conf: dict[str, Any]) -> bool:
+    mode = conf.get("chat_mode")
+    return mode in ("image_assistant", "story_image_assistant")
 
 
 def chat_tools_list(
     *,
     include_post_image: bool = False,
     location_id: bool = True,
-    story_image_assistant: bool = False,
+    image_assistant: bool = False,
 ) -> list:
     """Build chat ReAct tools for the given request context.
 
@@ -70,10 +71,10 @@ def chat_tools_list(
     registers the full union via ``chat_tools_list(include_post_image=True)`` plus
     Story scratchpad tools.
 
-    In ``story_image_assistant`` mode only media-library tools, Story scratchpad tools,
+    In ``image_assistant`` mode only media-library tools, Story scratchpad tools,
     confirmation UI, and ``generate_instagram_post_image`` are bound.
     """
-    if story_image_assistant:
+    if image_assistant:
         return [
             list_media_collections,
             list_media,
@@ -109,8 +110,8 @@ def _has_leonardo_image_generation(conf: dict[str, Any]) -> bool:
 
 def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
     """Resolve request-scoped tools from RunnableConfig.configurable."""
-    if _is_story_image_assistant_mode(conf):
-        return chat_tools_list(story_image_assistant=True)
+    if _is_image_assistant_mode(conf):
+        return chat_tools_list(image_assistant=True)
     return chat_tools_list(
         include_post_image=_has_leonardo_image_generation(conf),
         location_id=_has_location_id(conf),
@@ -124,11 +125,14 @@ def _chat_system_prompt_from_config() -> str:
     conf_dict = conf if isinstance(conf, dict) else {}
     raw_mode = conf_dict.get("chat_mode")
     chat_mode = raw_mode if isinstance(raw_mode, str) else None
+    raw_format = conf_dict.get("image_format")
+    image_format = raw_format if isinstance(raw_format, str) else None
     return build_system_prompt(
         ig_studio_post_image=_has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=_has_leonardo_image_generation(conf_dict),
         include_chart_catalog=_has_location_id(conf_dict),
         chat_mode=chat_mode,
+        image_format=image_format,
     )
 
 

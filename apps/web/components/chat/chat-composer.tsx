@@ -147,7 +147,7 @@ export function ChatComposer() {
   } = useChatActions()
 
   const placeholder =
-    chatMode === 'story_image_assistant' ? t('placeholderStoryAssistant') : t('placeholder')
+    chatMode === 'image_assistant' ? t('placeholderImageAssistant') : t('placeholder')
 
   return (
     <div className="shrink-0 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
@@ -158,7 +158,7 @@ export function ChatComposer() {
         multiple
         onSubmit={handleSubmit}
       >
-        {chatMode === 'story_image_assistant' ? (
+        {chatMode === 'image_assistant' ? (
           <ChatSavedStoryAssetsStrip
             assets={savedStoryAssets}
             disabled={isChatBusy}

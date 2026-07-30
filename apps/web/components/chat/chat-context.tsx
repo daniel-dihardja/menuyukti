@@ -9,6 +9,7 @@ import { DEFAULT_CHAT_MODE, type ChatModeId } from '@/lib/chat/chat-modes'
 import type { StoryAssetRef } from '@/lib/chat/story-assets-from-messages'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 import type { LeonardoPostModelId } from '@/lib/posts/leonardo-post-models'
+import type { ChatImageAssistantFormatId } from '@/lib/posts/leonardo-post-dimensions'
 import type { MediaCatalogItem } from '@/lib/media/client-api'
 import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
 
@@ -27,6 +28,7 @@ export type ChatComposerState = {
   chatMode: ChatModeId
   selectedChatModel: ChatGatewayModelId
   selectedGenerationModel: LeonardoPostModelId
+  selectedImageFormat: ChatImageAssistantFormatId
   isSubmitDisabled: boolean
   slashCommands: ChatSlashCommand[]
   pendingMediaAttachments: PendingMediaAttachment[]
@@ -44,6 +46,7 @@ export type ChatActions = {
   setChatMode: (mode: ChatModeId) => void
   setSelectedChatModel: (model: ChatGatewayModelId) => void
   setSelectedGenerationModel: (model: LeonardoPostModelId) => void
+  setSelectedImageFormat: (format: ChatImageAssistantFormatId) => void
   handleTextChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (message: PromptInputMessage) => Promise<void>
   /** Send a short text-only user message (e.g. Story Generate / Change confirm buttons). */

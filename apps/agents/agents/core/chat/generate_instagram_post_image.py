@@ -70,6 +70,11 @@ def _resolve_setting(
     return None
 
 
+def _is_image_assistant_mode(configurable: dict[str, Any]) -> bool:
+    mode = configurable.get("chat_mode")
+    return mode in ("image_assistant", "story_image_assistant")
+
+
 @tool
 async def generate_instagram_post_image(
     prompt: str,
@@ -88,10 +93,10 @@ async def generate_instagram_post_image(
     In Post Creator, model/format/quality/style/references often come from the UI — do not ask
     the user to restate those unless they want to change them first. After success, briefly
     confirm; the image appears in chat (and updates the Post Creator preview when a saved
-    post page is in context). In Story mode, call only after the user explicitly confirms the
-    collected-data plan (first generate); refine turns after a successful generate may call
-    again from feedback. The output is also saved as the scratchpad ``result`` asset for
-    later refine turns.
+    post page is in context). In Image assistant mode, call only after the user explicitly
+    confirms the collected-data plan (first generate); refine turns after a successful generate
+    may call again from feedback. The output is also saved as the scratchpad ``result`` asset
+    for later refine turns.
     """
     trimmed = prompt.strip() if isinstance(prompt, str) else ""
     if not trimmed:
@@ -103,6 +108,7 @@ async def generate_instagram_post_image(
     user_id = c.get("user_id")
     post_id = _optional_str(c.get("post_id"))
     page_id = _optional_str(c.get("page_id"))
+    image_assistant = _is_image_assistant_mode(c)
 
     if not user_id:
         return "Error: user context is missing. Cannot generate an image."
@@ -125,13 +131,22 @@ async def generate_instagram_post_image(
     if resolved_model is not None:
         body["model"] = resolved_model
 
-    resolved_format = _resolve_setting(
-        format, config_key="image_format", allowed=POST_IMAGE_FORMAT_IDS, configurable=c
-    )
-    if c.get("chat_mode") == "story_image_assistant":
-        body["format"] = "story"
-    elif resolved_format is not None:
-        body["format"] = resolved_format
+    # Image assistant: UI format is source of truth (prefer configurable over tool arg).
+    if image_assistant:
+        ui_format = _optional_str(c.get("image_format"))
+        tool_format = _optional_str(format)
+        if ui_format is not None and ui_format in POST_IMAGE_FORMAT_IDS:
+            body["format"] = ui_format
+        elif tool_format is not None and tool_format in POST_IMAGE_FORMAT_IDS:
+            body["format"] = tool_format
+        else:
+            body["format"] = "story"
+    else:
+        resolved_format = _resolve_setting(
+            format, config_key="image_format", allowed=POST_IMAGE_FORMAT_IDS, configurable=c
+        )
+        if resolved_format is not None:
+            body["format"] = resolved_format
 
     resolved_quality = _resolve_setting(
         quality, config_key="image_quality", allowed=POST_IMAGE_QUALITY_IDS, configurable=c
@@ -144,7 +159,7 @@ async def generate_instagram_post_image(
         body["styleId"] = style_id
 
     request_refs = c.get("generation_references")
-    if c.get("chat_mode") == "story_image_assistant":
+    if image_assistant:
         story_assets = None
         if runtime is not None and isinstance(getattr(runtime, "state", None), dict):
             story_assets = runtime.state.get("story_assets")
@@ -204,9 +219,8 @@ async def generate_instagram_post_image(
         "prompt": trimmed,
     }
 
-    is_story = c.get("chat_mode") == "story_image_assistant"
     if (
-        is_story
+        image_assistant
         and isinstance(name, str)
         and name.strip()
         and runtime is not None

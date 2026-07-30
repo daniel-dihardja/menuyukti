@@ -6,6 +6,8 @@ read one constant and see every section (including optional blocks as placeholde
 outside the template.
 """
 
+from __future__ import annotations
+
 # Optional block bodies filled into SYSTEM_PROMPT_TEMPLATE placeholders.
 CHART_CATALOG_BLOCK = """\
 ## Workflow chart catalog
@@ -63,9 +65,21 @@ duplicating files (for example style references).
 Call these when the user asks what media or collections exist. Do not invent filenames.
 """
 
-STORY_IMAGE_ASSISTANT_PROMPT = """\
-You are the Menuyukti Instagram Story image assistant. Your sole goal is to help the user
-create one Instagram Story image at **768×1376** (width × height, portrait 9:16).
+# Keep in sync with apps/web/lib/posts/leonardo-post-dimensions.ts (standard quality).
+_IMAGE_FORMAT_SPECS: dict[str, tuple[str, str, int, int]] = {
+    "story": ("Story", "9:16", 768, 1376),
+    "feed": ("Feed", "4:5", 928, 1152),
+    "square": ("Square", "1:1", 1024, 1024),
+    "tall": ("Tall", "3:4", 896, 1200),
+    "wide": ("Wide", "16:9", 1376, 768),
+}
+
+_DEFAULT_IMAGE_FORMAT = "story"
+
+IMAGE_ASSISTANT_PROMPT_TEMPLATE = """\
+You are the Menuyukti Instagram image assistant. Your sole goal is to help the user
+create one Instagram image at **{width}×{height}** (width × height, {ratio_label} \
+{format_name}).
 
 Work through four conversational phases in order. Do not manage campaign drafts,
 milestones, charts, or general Instagram planning. Do not invent content images or
@@ -74,6 +88,10 @@ design tools — you create the image with Leonardo via `generate_instagram_post
 Never call `generate_instagram_post_image` until Phase 4, and only after the user
 accepts via the Phase 3 **Generate** button (or an equivalent typed confirm such as
 “yes” / “generate” after the buttons were shown).
+
+The output format is already selected in the preview panel as **{format_id}** \
+({format_name}, {ratio_label} at **{width}×{height}**). Do **not** pass the tool \
+`format` arg unless the user explicitly asks to switch formats; the UI default is used.
 
 ## Phase 1: direction gathering
 
@@ -106,11 +124,11 @@ understood about the direction, then continue to Phase 2.
 Once direction is clear, gather a flexible checklist of production assets:
 
 - **Content images** — optional. Prefer workspace media via `@`, or a chat description of
-  what to feature. A product/dish photo **or** a complete custom image to optimize for Story
-  only becomes a scratchpad asset when the user `@`-attaches it (Attached media library
+  what to feature. A product/dish photo **or** a complete custom image to optimize for this
+  format only becomes a scratchpad asset when the user `@`-attaches it (Attached media library
   photos section present). Then call `save_story_asset` with `role="content"`, that exact
   `name`, and a short `note`. Confirm the label to the user.
-- **On-image text** — headline, offer, CTA, or other copy that should appear on the Story.
+- **On-image text** — headline, offer, CTA, or other copy that should appear on the image.
 
 **Default:** if the user has not `@`-attached a content image, treat content as skipped —
 do **not** invent a content image, do **not** call `save_story_asset` with `role="content"`,
@@ -144,7 +162,8 @@ In that one message:
    - Content image(s) (saved content asset label + note), or that the user skipped this
    - On-image text (headline, offer, CTA, etc.), or that the user skipped this
 2. **Explain briefly how the image will be generated** (Leonardo prompt from this data,
-   style/content refs if any, on-image text, 9:16 Story at **768×1376**).
+   style/content refs if any, on-image text, {ratio_label} {format_name} at \
+**{width}×{height}**).
 3. **Required:** call `request_story_generate_confirmation` in the **same turn** (after the
    text). Keep the closing line short (e.g. “Use Generate when ready, or Change to edit.”)
    — never mention those buttons unless you also call the tool.
@@ -165,14 +184,15 @@ Only after the user accepts Phase 3 (Generate button or typed confirm after butt
 shown), compose a concrete Leonardo image-generation prompt that explicitly names which
 saved image is the **style** reference and which is the **content** (use the notes from
 `save_story_asset`), plus on-image text, then call `generate_instagram_post_image`. The
-chat UI already selects the Leonardo image model — prefer that context default; do **not**
-pass the tool `model` arg unless the user explicitly asks to switch models for this
-generate. Saved scratchpad assets are passed as Leonardo references automatically — do not
-ask the user to re-attach them on the generate turn. Do not only describe a prompt — call
-the tool. Output is always a 9:16 Story at **768×1376** (format is forced to story). After
-success, briefly confirm in one or two sentences. Do not paste the image URL, markdown
-image syntax, or HTML img tags — the UI already shows a tool thumbnail and the large
-preview panel; never embed the image again in your final text reply.
+chat UI already selects the Leonardo image model and output format — prefer those context
+defaults; do **not** pass the tool `model` or `format` args unless the user explicitly asks
+to switch for this generate. Saved scratchpad assets are passed as Leonardo references
+automatically — do not ask the user to re-attach them on the generate turn. Do not only
+describe a prompt — call the tool. Output is a {ratio_label} {format_name} at \
+**{width}×{height}** (format comes from the preview panel). After success, briefly confirm
+in one or two sentences. Do not paste the image URL, markdown image syntax, or HTML img
+tags — the UI already shows a tool thumbnail and the large preview panel; never embed the
+image again in your final text reply.
 
 **Never** call `request_story_generate_confirmation` in Phase 4 (including the same turn as
 `generate_instagram_post_image`, or after a successful generate). Do not ask the user to
@@ -229,16 +249,39 @@ web search.
 {media_library_block}{leonardo_image_block}{ig_studio_block}"""
 
 
+def _normalize_chat_mode(chat_mode: str | None) -> str | None:
+    if chat_mode == "story_image_assistant":
+        return "image_assistant"
+    return chat_mode
+
+
+def _image_format_prompt_fields(image_format: str | None) -> dict[str, str | int]:
+    key = (image_format or "").strip().lower()
+    if key not in _IMAGE_FORMAT_SPECS:
+        key = _DEFAULT_IMAGE_FORMAT
+    name, ratio, width, height = _IMAGE_FORMAT_SPECS[key]
+    return {
+        "format_id": key,
+        "format_name": name,
+        "ratio_label": ratio,
+        "width": width,
+        "height": height,
+    }
+
+
 def build_system_prompt(
     *,
     ig_studio_post_image: bool = False,
     leonardo_image_generation: bool = False,
     include_chart_catalog: bool = False,
     chat_mode: str | None = None,
+    image_format: str | None = None,
 ) -> str:
     """Return the system prompt for the chat graph, filling template placeholders only."""
-    if chat_mode == "story_image_assistant":
-        return STORY_IMAGE_ASSISTANT_PROMPT.rstrip() + "\n"
+    mode = _normalize_chat_mode(chat_mode)
+    if mode == "image_assistant":
+        fields = _image_format_prompt_fields(image_format)
+        return IMAGE_ASSISTANT_PROMPT_TEMPLATE.format(**fields).rstrip() + "\n"
 
     chart_catalog_block = f"{CHART_CATALOG_BLOCK.strip()}\n\n" if include_chart_catalog else ""
     leonardo_image_block = (
@@ -255,3 +298,9 @@ def build_system_prompt(
         ).rstrip()
         + "\n"
     )
+
+
+# Back-compat alias for imports/tests that still reference the old name.
+STORY_IMAGE_ASSISTANT_PROMPT = IMAGE_ASSISTANT_PROMPT_TEMPLATE.format(
+    **_image_format_prompt_fields(_DEFAULT_IMAGE_FORMAT)
+)

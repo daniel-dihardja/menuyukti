@@ -61,11 +61,12 @@ describe('chatRequestBodySchema', () => {
       messages: [],
       agentThreadId: AGENT_THREAD,
       locationId: '10',
-      chatMode: 'story_image_assistant',
+      chatMode: 'image_assistant',
       storyAssetAction: { op: 'clear', name: VALID_MEDIA },
     })
     expect(parsed.success).toBe(true)
     if (parsed.success) {
+      expect(parsed.data.chatMode).toBe('image_assistant')
       expect(parsed.data.storyAssetAction).toEqual({ op: 'clear', name: VALID_MEDIA })
     }
   })
@@ -146,12 +147,13 @@ describe('chatRequestBodySchema', () => {
       messages: [{ role: 'user', parts: [{ type: 'text', text: 'Generate a story' }] }],
       agentThreadId: AGENT_THREAD,
       locationId: '10',
-      chatMode: 'story_image_assistant',
+      chatMode: 'image_assistant',
       generationModel: 'nano-banana-2',
     })
     expect(parsed.success).toBe(true)
     if (parsed.success) {
       expect(parsed.data.generationModel).toBe('nano-banana-2')
+      expect(parsed.data.chatMode).toBe('image_assistant')
     }
   })
 
@@ -189,8 +191,8 @@ describe('chatRequestBodySchema', () => {
     expect(parsed.success).toBe(false)
   })
 
-  it('accepts valid chatMode values', () => {
-    for (const chatMode of ['general', 'story_image_assistant'] as const) {
+  it('accepts valid chatMode values and normalizes legacy alias', () => {
+    for (const chatMode of ['general', 'image_assistant'] as const) {
       const parsed = chatRequestBodySchema.safeParse({
         messages: [],
         agentThreadId: AGENT_THREAD,
@@ -200,6 +202,15 @@ describe('chatRequestBodySchema', () => {
       if (parsed.success) {
         expect(parsed.data.chatMode).toBe(chatMode)
       }
+    }
+    const legacy = chatRequestBodySchema.safeParse({
+      messages: [],
+      agentThreadId: AGENT_THREAD,
+      chatMode: 'story_image_assistant',
+    })
+    expect(legacy.success).toBe(true)
+    if (legacy.success) {
+      expect(legacy.data.chatMode).toBe('image_assistant')
     }
   })
 

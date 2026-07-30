@@ -80,10 +80,11 @@ def test_build_system_prompt_with_ig_studio() -> None:
     assert "Do not paste the image URL" in out
 
 
-def test_build_system_prompt_story_image_assistant_mode() -> None:
-    out = build_system_prompt(chat_mode="story_image_assistant")
+def test_build_system_prompt_image_assistant_mode() -> None:
+    out = build_system_prompt(chat_mode="image_assistant")
     assert out == STORY_IMAGE_ASSISTANT_PROMPT.rstrip() + "\n"
     assert "768×1376" in out
+    assert "Instagram image assistant" in out
     assert "direction gathering" in out
     assert "describe the wished look" in out
     assert "reference image" in out
@@ -107,7 +108,8 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "yes/no" in out.lower()
     assert "without" in out.lower() and "tool" in out.lower()
     assert "generate_instagram_post_image" in out
-    assert "prefer that context default" in out
+    assert "prefer those context" in out
+    assert "defaults" in out
     assert "model" in out and "arg" in out
     assert "save_story_asset" in out
     assert 'role="style"' in out
@@ -122,16 +124,30 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "get_chart_data" not in out
 
 
+def test_build_system_prompt_image_assistant_legacy_alias() -> None:
+    assert build_system_prompt(chat_mode="story_image_assistant") == build_system_prompt(
+        chat_mode="image_assistant"
+    )
+
+
+def test_build_system_prompt_image_assistant_feed_format() -> None:
+    out = build_system_prompt(chat_mode="image_assistant", image_format="feed")
+    assert "928×1152" in out
+    assert "4:5" in out
+    assert "Feed" in out
+    assert "768×1376" not in out
+
+
 def test_build_system_prompt_general_chat_mode_unchanged() -> None:
     base = build_system_prompt()
     assert build_system_prompt(chat_mode=None) == base
     assert build_system_prompt(chat_mode="general") == base
 
 
-def test_story_image_assistant_tools_include_generate() -> None:
+def test_image_assistant_tools_include_generate() -> None:
     tools = chat_tools_list_from_config(
         {
-            "chat_mode": "story_image_assistant",
+            "chat_mode": "image_assistant",
             "agent_thread_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
             "location_id": 1,
         }

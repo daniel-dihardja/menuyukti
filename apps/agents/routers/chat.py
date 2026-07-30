@@ -90,11 +90,12 @@ class ChatRequest(BaseModel):
     location_id: int | None = Field(default=None, ge=1)
     analytics_run_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str = Field(min_length=1)
-    chat_mode: Literal["general", "story_image_assistant"] | None = Field(
+    chat_mode: Literal["general", "image_assistant", "story_image_assistant"] | None = Field(
         default=None,
         description=(
             "Opt-in chat mode; branches system prompt and tools "
-            "(story_image_assistant = Story direction gathering)."
+            "(image_assistant = Instagram image direction gathering; "
+            "story_image_assistant is a legacy alias)."
         ),
     )
     chat_model: str | None = Field(
@@ -224,7 +225,10 @@ def _runnable_config(
     if generation_references is not None:
         configurable["generation_references"] = generation_references
     if chat_mode is not None:
-        configurable["chat_mode"] = chat_mode
+        # Normalize legacy alias so downstream checks use a single ID.
+        configurable["chat_mode"] = (
+            "image_assistant" if chat_mode == "story_image_assistant" else chat_mode
+        )
     return RunnableConfig(configurable=configurable, recursion_limit=CHAT_RECURSION_LIMIT)
 
 

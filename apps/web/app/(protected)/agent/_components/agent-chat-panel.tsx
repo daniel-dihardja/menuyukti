@@ -100,7 +100,7 @@ function AgentChatPanelLayout({
   storyArtifactTitle,
 }: AgentChatPanelLayoutProps) {
   const { chatMode } = useChatComposerState()
-  const showPreview = chatMode === 'story_image_assistant'
+  const showPreview = chatMode === 'image_assistant'
 
   useEffect(() => {
     if (showPreview) {

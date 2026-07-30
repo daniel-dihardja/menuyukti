@@ -181,7 +181,7 @@ async def test_tool_args_override_configurable(tool_under_test: Any, monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_story_chat_mode_forces_format_story(
+async def test_image_assistant_uses_configurable_format(
     tool_under_test: Any, monkeypatch: Any
 ) -> None:
     monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
@@ -199,11 +199,41 @@ async def test_story_chat_mode_forces_format_story(
         return_value=mock_client,
     ):
         await tool_under_test.ainvoke(
-            {"prompt": "Ice matcha story", "format": "feed"},
+            {"prompt": "Ice matcha feed", "format": "story"},
             config=_config(
                 user_id="user-1",
-                chat_mode="story_image_assistant",
-                image_format="square",
+                chat_mode="image_assistant",
+                image_format="feed",
+            ),
+        )
+
+    body = mock_client.post.await_args.kwargs["json"]
+    assert body["format"] == "feed"
+
+
+@pytest.mark.asyncio
+async def test_image_assistant_defaults_format_story_when_unset(
+    tool_under_test: Any, monkeypatch: Any
+) -> None:
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = json.dumps({"url": "https://example.com/img.webp"})
+    mock_response.json.return_value = {"url": "https://example.com/img.webp"}
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        await tool_under_test.ainvoke(
+            {"prompt": "Ice matcha story"},
+            config=_config(
+                user_id="user-1",
+                chat_mode="image_assistant",
             ),
         )
 
@@ -253,7 +283,7 @@ async def test_story_mode_uses_story_assets_as_references(
             {"prompt": "Story with style and content", "runtime": runtime},
             config=_config(
                 user_id="user-1",
-                chat_mode="story_image_assistant",
+                chat_mode="image_assistant",
                 # empty request-scoped refs — scratchpad alone should populate
             ),
         )
@@ -322,7 +352,7 @@ async def test_story_mode_generate_upserts_result_command(
     ):
         out = await tool_under_test.ainvoke(
             {"prompt": "Make the sky blue", "runtime": runtime},
-            config=_config(user_id="user-1", chat_mode="story_image_assistant"),
+            config=_config(user_id="user-1", chat_mode="image_assistant"),
         )
 
     assert isinstance(out, Command)

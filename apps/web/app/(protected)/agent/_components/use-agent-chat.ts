@@ -18,7 +18,7 @@ import {
   removeAgentThread,
   touchAgentThread,
 } from '@/lib/chat/agent-thread-registry'
-import { DEFAULT_CHAT_MODE, isChatModeId, type ChatModeId } from '@/lib/chat/chat-modes'
+import { DEFAULT_CHAT_MODE, normalizeChatModeId, type ChatModeId } from '@/lib/chat/chat-modes'
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import { CHAT_STREAM_THROTTLE_MS } from '@/lib/chat/chat-stream-config'
 import { clearStoryAssetViaChat } from '@/lib/chat/clear-story-asset-via-chat'
@@ -49,12 +49,18 @@ import {
   isLeonardoPostModelId,
   type LeonardoPostModelId,
 } from '@/lib/posts/leonardo-post-models'
+import {
+  DEFAULT_CHAT_IMAGE_ASSISTANT_FORMAT,
+  isChatImageAssistantFormatId,
+  type ChatImageAssistantFormatId,
+} from '@/lib/posts/leonardo-post-dimensions'
 import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
 
 export type { PendingMediaAttachment } from '@/lib/chat/chat-media-mention'
 
 const AGENT_CHAT_MODE_STORAGE_PREFIX = 'menuyukti.agentChatMode.v1:'
 const AGENT_CHAT_IMAGE_MODEL_STORAGE_PREFIX = 'menuyukti.agentChatImageModel.v1:'
+const AGENT_CHAT_IMAGE_FORMAT_STORAGE_PREFIX = 'menuyukti.agentChatImageFormat.v1:'
 
 function agentChatModeStorageKey(agentThreadId: string) {
   return `${AGENT_CHAT_MODE_STORAGE_PREFIX}${agentThreadId}`
@@ -64,11 +70,21 @@ function agentChatImageModelStorageKey(agentThreadId: string) {
   return `${AGENT_CHAT_IMAGE_MODEL_STORAGE_PREFIX}${agentThreadId}`
 }
 
+function agentChatImageFormatStorageKey(agentThreadId: string) {
+  return `${AGENT_CHAT_IMAGE_FORMAT_STORAGE_PREFIX}${agentThreadId}`
+}
+
 function readStoredChatMode(agentThreadId: string): ChatModeId {
   if (typeof window === 'undefined') return DEFAULT_CHAT_MODE
   try {
     const modeRaw = sessionStorage.getItem(agentChatModeStorageKey(agentThreadId))
-    return modeRaw !== null && isChatModeId(modeRaw) ? modeRaw : DEFAULT_CHAT_MODE
+    if (modeRaw === null) return DEFAULT_CHAT_MODE
+    const normalized = normalizeChatModeId(modeRaw)
+    if (normalized === null) return DEFAULT_CHAT_MODE
+    if (normalized !== modeRaw) {
+      sessionStorage.setItem(agentChatModeStorageKey(agentThreadId), normalized)
+    }
+    return normalized
   } catch {
     return DEFAULT_CHAT_MODE
   }
@@ -83,6 +99,18 @@ function readStoredGenerationModel(agentThreadId: string): LeonardoPostModelId {
       : DEFAULT_LEONARDO_POST_MODEL
   } catch {
     return DEFAULT_LEONARDO_POST_MODEL
+  }
+}
+
+function readStoredImageFormat(agentThreadId: string): ChatImageAssistantFormatId {
+  if (typeof window === 'undefined') return DEFAULT_CHAT_IMAGE_ASSISTANT_FORMAT
+  try {
+    const formatRaw = sessionStorage.getItem(agentChatImageFormatStorageKey(agentThreadId))
+    return formatRaw !== null && isChatImageAssistantFormatId(formatRaw)
+      ? formatRaw
+      : DEFAULT_CHAT_IMAGE_ASSISTANT_FORMAT
+  } catch {
+    return DEFAULT_CHAT_IMAGE_ASSISTANT_FORMAT
   }
 }
 
@@ -140,6 +168,11 @@ export function useAgentChat({
   )
   const selectedGenerationModelRef = useRef<LeonardoPostModelId>(selectedGenerationModel)
   selectedGenerationModelRef.current = selectedGenerationModel
+  const [selectedImageFormat, setSelectedImageFormatState] = useState<ChatImageAssistantFormatId>(
+    () => readStoredImageFormat(agentThreadId),
+  )
+  const selectedImageFormatRef = useRef<ChatImageAssistantFormatId>(selectedImageFormat)
+  selectedImageFormatRef.current = selectedImageFormat
   const pendingReferencedVisualizationIdRef = useRef<ChatVisualizationId | null>(null)
   const pendingMediaAttachmentsRef = useRef<PendingMediaAttachment[]>([])
   pendingMediaAttachmentsRef.current = pendingMediaAttachments
@@ -156,6 +189,9 @@ export function useAgentChat({
     const nextImageModel = readStoredGenerationModel(agentThreadId)
     setSelectedGenerationModelState(nextImageModel)
     selectedGenerationModelRef.current = nextImageModel
+    const nextImageFormat = readStoredImageFormat(agentThreadId)
+    setSelectedImageFormatState(nextImageFormat)
+    selectedImageFormatRef.current = nextImageFormat
   }, [agentThreadId])
 
   useEffect(() => {
@@ -168,6 +204,17 @@ export function useAgentChat({
       selectedGenerationModelRef.current = model
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(agentChatImageModelStorageKey(agentThreadId), model)
+      }
+    },
+    [agentThreadId],
+  )
+
+  const setSelectedImageFormat = useCallback(
+    (format: ChatImageAssistantFormatId) => {
+      setSelectedImageFormatState(format)
+      selectedImageFormatRef.current = format
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(agentChatImageFormatStorageKey(agentThreadId), format)
       }
     },
     [agentThreadId],
@@ -197,6 +244,11 @@ export function useAgentChat({
                 isLeonardoPostModelId(merged.generationModel)
                   ? merged.generationModel
                   : selectedGenerationModelRef.current,
+              imageFormat:
+                typeof merged?.imageFormat === 'string' &&
+                isChatImageAssistantFormatId(merged.imageFormat)
+                  ? merged.imageFormat
+                  : selectedImageFormatRef.current,
               chatMode: chatModeRef.current,
             },
           }
@@ -320,6 +372,11 @@ export function useAgentChat({
   const slashCommands = useMemo(
     (): AgentChatSlashCommand[] => [
       {
+        id: 'image',
+        label: tSlash('image.label'),
+        description: tSlash('image.description'),
+      },
+      {
         id: 'story',
         label: tSlash('story.label'),
         description: tSlash('story.description'),
@@ -337,6 +394,7 @@ export function useAgentChat({
     return {
       model: selectedChatModelRef.current,
       generationModel: selectedGenerationModelRef.current,
+      imageFormat: selectedImageFormatRef.current,
       ...(vizRef !== null ? { referencedVisualizationId: vizRef } : {}),
       ...(photoNames.length > 0 ? { referencedMediaNames: photoNames } : {}),
       ...(generationReferences.length > 0 ? { generationReferences } : {}),
@@ -539,9 +597,12 @@ export function useAgentChat({
       if (status === 'streaming' || status === 'submitted') {
         return
       }
-      if (command === '/story') {
+      if (command === '/image' || command === '/story') {
         setText('')
-        setChatMode('story_image_assistant')
+        setChatMode('image_assistant')
+        if (command === '/story') {
+          setSelectedImageFormat('story')
+        }
         return
       }
       setText('')
@@ -551,11 +612,12 @@ export function useAgentChat({
           body: {
             model: selectedChatModelRef.current,
             generationModel: selectedGenerationModelRef.current,
+            imageFormat: selectedImageFormatRef.current,
           },
         },
       )
     },
-    [sendMessage, setChatMode, status],
+    [sendMessage, setChatMode, setSelectedImageFormat, status],
   )
 
   const isChatBusy = status === 'streaming' || status === 'submitted'
@@ -579,6 +641,7 @@ export function useAgentChat({
       chatMode,
       selectedChatModel,
       selectedGenerationModel,
+      selectedImageFormat,
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
@@ -589,6 +652,7 @@ export function useAgentChat({
       chatMode,
       selectedChatModel,
       selectedGenerationModel,
+      selectedImageFormat,
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
@@ -602,6 +666,7 @@ export function useAgentChat({
       setChatMode,
       setSelectedChatModel,
       setSelectedGenerationModel,
+      setSelectedImageFormat,
       handleTextChange,
       handleSubmit,
       sendQuickReply,
@@ -617,6 +682,7 @@ export function useAgentChat({
     [
       setChatMode,
       setSelectedGenerationModel,
+      setSelectedImageFormat,
       handleTextChange,
       handleSubmit,
       sendQuickReply,

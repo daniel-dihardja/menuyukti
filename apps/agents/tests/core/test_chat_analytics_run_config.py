@@ -47,6 +47,17 @@ def test_chat_request_accepts_chat_mode() -> None:
         {
             "messages": [{"role": "user", "content": "hi"}],
             "agent_thread_id": AGENT_THREAD_ID,
+            "chat_mode": "image_assistant",
+        }
+    )
+    assert body.chat_mode == "image_assistant"
+
+
+def test_chat_request_accepts_legacy_story_mode_alias() -> None:
+    body = ChatRequest.model_validate(
+        {
+            "messages": [{"role": "user", "content": "hi"}],
+            "agent_thread_id": AGENT_THREAD_ID,
             "chat_mode": "story_image_assistant",
         }
     )
@@ -63,3 +74,15 @@ def test_runnable_config_includes_chat_mode() -> None:
         agent_thread_id=AGENT_THREAD_ID,
     )
     assert cfg["configurable"]["chat_mode"] == "general"
+
+
+def test_runnable_config_normalizes_legacy_story_mode() -> None:
+    cfg = _runnable_config(
+        thread_id=f"u1:agent:{AGENT_THREAD_ID}",
+        location_id=7,
+        user_id="u1",
+        chat_gateway_model=None,
+        chat_mode="story_image_assistant",
+        agent_thread_id=AGENT_THREAD_ID,
+    )
+    assert cfg["configurable"]["chat_mode"] == "image_assistant"

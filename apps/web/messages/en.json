@@ -1872,7 +1872,8 @@
           }
         },
         "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
-        "placeholderStoryAssistant": "Describe the story: dish, offer, mood, and any text on the image…",
+        "placeholderImageAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
+        "placeholderStoryAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
         "thinking": "Thinking…",
         "errorTitle": "Something went wrong",
         "errorDescription": "The request could not be completed. Please try again.",
@@ -1893,14 +1894,15 @@
         "modes": {
           "ariaLabel": "Chat mode",
           "general": "General chat",
-          "story_image_assistant": "Story assistant"
+          "image_assistant": "Image assistant"
         },
         "storyArtifact": {
-          "ariaLabel": "Instagram Story image preview",
-          "placeholderLabel": "No story image yet"
+          "ariaLabel": "Instagram image preview",
+          "placeholderLabel": "No image yet",
+          "formatAriaLabel": "Image size"
         },
         "storyAssets": {
-          "title": "Saved for this Story",
+          "title": "Saved for this image",
           "roleStyle": "Style",
           "roleContent": "Content",
           "roleResult": "Result",
@@ -1909,9 +1911,13 @@
         },
         "slashCommands": {
           "ariaLabel": "Slash commands",
+          "image": {
+            "label": "image",
+            "description": "Switch to Image assistant mode."
+          },
           "story": {
             "label": "story",
-            "description": "Switch to Story image assistant mode."
+            "description": "Switch to Image assistant with Story (9:16) size."
           },
           "input": {
             "label": "input",
@@ -3460,7 +3466,8 @@
       }
     },
     "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
-    "placeholderStoryAssistant": "Describe the story: dish, offer, mood, and any text on the image…",
+    "placeholderImageAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
+    "placeholderStoryAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
     "thinking": "Thinking…",
     "errorTitle": "Something went wrong",
     "errorDescription": "The request could not be completed. Please try again.",
@@ -3481,14 +3488,15 @@
     "modes": {
       "ariaLabel": "Chat mode",
       "general": "General chat",
-      "story_image_assistant": "Story assistant"
+      "image_assistant": "Image assistant"
     },
     "storyArtifact": {
-      "ariaLabel": "Instagram Story image preview",
-      "placeholderLabel": "No story image yet"
+      "ariaLabel": "Instagram image preview",
+      "placeholderLabel": "No image yet",
+      "formatAriaLabel": "Image size"
     },
     "storyAssets": {
-      "title": "Saved for this Story",
+      "title": "Saved for this image",
       "roleStyle": "Style",
       "roleContent": "Content",
       "roleResult": "Result",
@@ -3497,9 +3505,13 @@
     },
     "slashCommands": {
       "ariaLabel": "Slash commands",
+      "image": {
+        "label": "image",
+        "description": "Switch to Image assistant mode."
+      },
       "story": {
         "label": "story",
-        "description": "Switch to Story image assistant mode."
+        "description": "Switch to Image assistant with Story (9:16) size."
       },
       "input": {
         "label": "input",

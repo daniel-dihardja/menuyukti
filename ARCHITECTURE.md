@@ -4,7 +4,7 @@ This document describes how the Menuyukti services and packages fit together, wi
 
 ## Platform model
 
-Menuyukti is a **chat-first** restaurant marketing assistant. The primary product surface is **`/advisor`** (App Router under `apps/web/app/(protected)/agent/`), with chat modes **`general`** and **`story_image_assistant`**. Session identity is an opaque **`agentThreadId`** (LangGraph thread `{user_id}:agent:{agent_thread_id}`) — not a GraphQL workflow or milestone node.
+Menuyukti is a **chat-first** restaurant marketing assistant. The primary product surface is **`/advisor`** (App Router under `apps/web/app/(protected)/agent/`), with chat modes **`general`** and **`image_assistant`**. Session identity is an opaque **`agentThreadId`** (LangGraph thread `{user_id}:agent:{agent_thread_id}`) — not a GraphQL workflow or milestone node.
 
 Supporting product areas (analytics, media library, IG Studio, CRM, location calendar with **manual entries**) remain independent GraphQL-backed features. The former campaign **workflow / milestone** pipeline has been removed from the live product surface.
 
@@ -60,7 +60,7 @@ There is **no** live `POST /milestones/.../run` API. Do not reintroduce mileston
 
 2. **ReAct tools** — Tools from `chat_tools_list()` load location/analytics/chart/media/Leonardo (and optional **`search_web`**) on demand. Context ids come from per-request **`RunnableConfig["configurable"]`**. The shared **`httpx` client** is bound per request via a **context variable** (`agents/core/chat/http_context.py`) so it is never stored in checkpoints.
 
-3. **Modes** — `general` vs `story_image_assistant` change prompts, tools, and story-asset handling; story artifacts are mode-driven, not milestone previews.
+3. **Modes** — `general` vs `image_assistant` change prompts, tools, and story-asset handling; image artifacts are mode-driven, not milestone previews.
 
 ### Cross-cutting agentic patterns
 

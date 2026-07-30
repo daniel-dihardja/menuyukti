@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Product
 
-Menuyukti is an **agentic AI platform for data-driven restaurant marketing**. Operators use a **chat-first** home (`/advisor`, modes `general` | `story_image_assistant`) plus analytics, media, IG Studio, and calendar — without a live campaign-workflow / milestone pipeline.
+Menuyukti is an **agentic AI platform for data-driven restaurant marketing**. Operators use a **chat-first** home (`/advisor`, modes `general` | `image_assistant`) plus analytics, media, IG Studio, and calendar — without a live campaign-workflow / milestone pipeline.
 
 ## Apps and frameworks
 

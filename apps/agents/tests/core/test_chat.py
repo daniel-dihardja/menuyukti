@@ -113,7 +113,7 @@ def test_chat_story_asset_action_clears_without_llm(client: TestClient) -> None:
         json={
             "agent_thread_id": AGENT_THREAD_ID,
             "messages": [],
-            "chat_mode": "story_image_assistant",
+            "chat_mode": "image_assistant",
             "story_asset_action": {"op": "clear", "name": style},
         },
     )
@@ -216,12 +216,12 @@ def test_chat_mode_passed_in_config(client: TestClient) -> None:
         json={
             "messages": [{"role": "user", "content": "Hello"}],
             "agent_thread_id": AGENT_THREAD_ID,
-            "chat_mode": "story_image_assistant",
+            "chat_mode": "image_assistant",
         },
     ) as response:
         assert response.status_code == 200
 
-    assert captured["config"]["configurable"]["chat_mode"] == "story_image_assistant"
+    assert captured["config"]["configurable"]["chat_mode"] == "image_assistant"
 
 
 def test_chat_rejects_unknown_chat_mode(client: TestClient) -> None:

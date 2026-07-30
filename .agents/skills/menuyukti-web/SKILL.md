@@ -41,7 +41,7 @@ When improving an existing implementation (not only greenfield features), also r
 | App Router       | [`apps/web/app/`](../../../apps/web/app/)                                                                                                                                                         |
 | Protected shell  | [`apps/web/app/(protected)/`](<../../../apps/web/app/(protected)/>) — `/advisor`, `/analytics`, `/calendar`, `/ig-studio`, `/media`, …                                                            |
 | Chat home        | Public URL **`/advisor`** (rewrites to `app/(protected)/agent/`); thread id = **`agentThreadId`**. Shared UI: [`components/chat/`](../../../apps/web/components/chat/)                            |
-| Chat modes       | [`lib/chat/chat-modes.ts`](../../../apps/web/lib/chat/chat-modes.ts) — `general` \| `story_image_assistant`                                                                                       |
+| Chat modes       | [`lib/chat/chat-modes.ts`](../../../apps/web/lib/chat/chat-modes.ts) — `general` \| `image_assistant`                                                                                             |
 | GraphQL client   | [`apps/web/lib/graphql/client.ts`](../../../apps/web/lib/graphql/client.ts), [`queries/`](../../../apps/web/lib/graphql/queries/), [`node-schemas/`](../../../apps/web/lib/graphql/node-schemas/) |
 | API routes (BFF) | [`apps/web/app/api/`](../../../apps/web/app/api/) — e.g. `/api/chat`, `/api/calendar-entries`, media, styles                                                                                      |
 

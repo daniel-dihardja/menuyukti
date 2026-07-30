@@ -7,7 +7,7 @@ description: >-
 
 # Menuyukti: `apps/agents`
 
-Python **FastAPI** service: LangChain / LangGraph **streaming chat** only. **`POST /chat`** runs a ReAct graph keyed by **`agent_thread_id`** (modes: `general` | `story_image_assistant`). Agents call **GraphQL over HTTP** only — no direct DB.
+Python **FastAPI** service: LangChain / LangGraph **streaming chat** only. **`POST /chat`** runs a ReAct graph keyed by **`agent_thread_id`** (modes: `general` | `image_assistant`). Agents call **GraphQL over HTTP** only — no direct DB.
 
 For monorepo boundaries and pnpm vs uv, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md).
 
@@ -36,7 +36,7 @@ Commands and ports: [AGENTS.md](../../../AGENTS.md).
 ## Chat (primary product surface)
 
 - **Identity:** `agent_thread_id` (required). Optional `location_id` for location/chart tools.
-- **Modes:** `general` (location, charts, media, optional web search) and `story_image_assistant` (media + story scratchpad + IG image generate).
+- **Modes:** `general` (location, charts, media, optional web search) and `image_assistant` (media + story scratchpad + IG image generate; format from UI).
 - **Graph:** [`chat/graph.py`](../../../apps/agents/agents/core/chat/graph.py) — `build_chat_graph` / `create_agent`; tools in [`chat/tools.py`](../../../apps/agents/agents/core/chat/tools.py).
 - **History:** `GET` / `DELETE /chat/history` by `agent_thread_id` (Postgres checkpointer when configured).
 - **Web BFF:** `apps/web` `/api/chat` forwards to this service with Clerk user id.

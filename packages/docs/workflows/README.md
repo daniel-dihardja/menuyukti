@@ -2,7 +2,7 @@
 
 The campaign **workflow container** and **milestone** product model have been **removed**.
 
-**Current product:** chat-first home at **`/advisor`** with thread identity **`agentThreadId`** and modes `general` | `story_image_assistant`. See:
+**Current product:** chat-first home at **`/advisor`** with thread identity **`agentThreadId`** and modes `general` | `image_assistant`. See:
 
 - [`menuyukti-web`](../../../.agents/skills/menuyukti-web/SKILL.md)
 - [`menuyukti-agents`](../../../.agents/skills/menuyukti-agents/SKILL.md)

@@ -13,6 +13,20 @@ export const POST_IMAGE_FORMAT_IDS = ['feed', 'tall', 'square', 'story', 'wide']
 
 export type PostImageFormatId = (typeof POST_IMAGE_FORMAT_IDS)[number]
 
+/** Formats exposed in the advisor image-assistant artifact picker. */
+export const CHAT_IMAGE_ASSISTANT_FORMAT_IDS = ['story', 'feed', 'square'] as const
+
+export type ChatImageAssistantFormatId = (typeof CHAT_IMAGE_ASSISTANT_FORMAT_IDS)[number]
+
+export const DEFAULT_CHAT_IMAGE_ASSISTANT_FORMAT: ChatImageAssistantFormatId = 'story'
+
+export function isChatImageAssistantFormatId(value: unknown): value is ChatImageAssistantFormatId {
+  return (
+    typeof value === 'string' &&
+    (CHAT_IMAGE_ASSISTANT_FORMAT_IDS as readonly string[]).includes(value)
+  )
+}
+
 /** @deprecated Use POST_IMAGE_FORMAT_IDS — kept as an alias for call sites that listed explicit formats. */
 export const POST_IMAGE_EXPLICIT_FORMAT_IDS = POST_IMAGE_FORMAT_IDS
 
