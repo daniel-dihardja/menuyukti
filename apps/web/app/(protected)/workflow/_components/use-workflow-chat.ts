@@ -19,6 +19,11 @@ import {
   type StoryAssetRef,
 } from '@/lib/chat/story-assets-from-messages'
 import {
+  clearWorkflowChatMessages,
+  readWorkflowChatMessages,
+  writeWorkflowChatMessages,
+} from '@/lib/chat/workflow-chat-message-cache'
+import {
   clearWorkflowChatMentionTrigger,
   mediaTypeFromFilename,
   type PendingMediaAttachment,
@@ -50,6 +55,38 @@ function workflowChatImageModelStorageKey(workflowId: string) {
 }
 
 const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i
+
+function readWorkflowChatSessionId(workflowId: string): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(workflowChatSessionStorageKey(workflowId))
+    return raw !== null && UUID_RE.test(raw) ? raw : null
+  } catch {
+    return null
+  }
+}
+
+function readStoredChatMode(workflowId: string): ChatModeId {
+  if (typeof window === 'undefined') return DEFAULT_CHAT_MODE
+  try {
+    const modeRaw = sessionStorage.getItem(workflowChatModeStorageKey(workflowId))
+    return modeRaw !== null && isChatModeId(modeRaw) ? modeRaw : DEFAULT_CHAT_MODE
+  } catch {
+    return DEFAULT_CHAT_MODE
+  }
+}
+
+function readStoredGenerationModel(workflowId: string): LeonardoPostModelId {
+  if (typeof window === 'undefined') return DEFAULT_LEONARDO_POST_MODEL
+  try {
+    const imageModelRaw = sessionStorage.getItem(workflowChatImageModelStorageKey(workflowId))
+    return imageModelRaw !== null && isLeonardoPostModelId(imageModelRaw)
+      ? imageModelRaw
+      : DEFAULT_LEONARDO_POST_MODEL
+  } catch {
+    return DEFAULT_LEONARDO_POST_MODEL
+  }
+}
 
 export type WorkflowChatSlashCommand = {
   id: string
@@ -94,8 +131,17 @@ export function useWorkflowChat({
     milestoneId: selectedMilestoneId,
   })
   const workflowChatSessionIdRef = useRef<string | null>(null)
-  const [chatMode, setChatModeState] = useState<ChatModeId>(DEFAULT_CHAT_MODE)
-  const chatModeRef = useRef<ChatModeId>(DEFAULT_CHAT_MODE)
+  const chatHydrateWorkflowIdRef = useRef<string | null>(null)
+  const initialMessagesRef = useRef<UIMessage[]>([])
+  // Sync hydrate when workflowId changes so useChat receives cached messages on create.
+  if (chatHydrateWorkflowIdRef.current !== workflowId) {
+    chatHydrateWorkflowIdRef.current = workflowId
+    const sessionId = readWorkflowChatSessionId(workflowId)
+    workflowChatSessionIdRef.current = sessionId
+    initialMessagesRef.current = readWorkflowChatMessages(workflowId, sessionId)
+  }
+  const [chatMode, setChatModeState] = useState<ChatModeId>(() => readStoredChatMode(workflowId))
+  const chatModeRef = useRef<ChatModeId>(chatMode)
   chatModeRef.current = chatMode
   const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
     DEFAULT_CHAT_GATEWAY_MODEL,
@@ -103,9 +149,9 @@ export function useWorkflowChat({
   const selectedChatModelRef = useRef<ChatGatewayModelId>(DEFAULT_CHAT_GATEWAY_MODEL)
   selectedChatModelRef.current = selectedChatModel
   const [selectedGenerationModel, setSelectedGenerationModelState] = useState<LeonardoPostModelId>(
-    DEFAULT_LEONARDO_POST_MODEL,
+    () => readStoredGenerationModel(workflowId),
   )
-  const selectedGenerationModelRef = useRef<LeonardoPostModelId>(DEFAULT_LEONARDO_POST_MODEL)
+  const selectedGenerationModelRef = useRef<LeonardoPostModelId>(selectedGenerationModel)
   selectedGenerationModelRef.current = selectedGenerationModel
   const pendingPresetReferenceMilestoneIdRef = useRef<string | null>(null)
   const pendingReferencedVisualizationIdRef = useRef<WorkflowVisualizationId | null>(null)
@@ -119,20 +165,10 @@ export function useWorkflowChat({
   }
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-    const raw = sessionStorage.getItem(workflowChatSessionStorageKey(workflowId))
-    workflowChatSessionIdRef.current = raw !== null && UUID_RE.test(raw) ? raw : null
-    const modeRaw = sessionStorage.getItem(workflowChatModeStorageKey(workflowId))
-    const nextMode = modeRaw !== null && isChatModeId(modeRaw) ? modeRaw : DEFAULT_CHAT_MODE
+    const nextMode = readStoredChatMode(workflowId)
     setChatModeState(nextMode)
     chatModeRef.current = nextMode
-    const imageModelRaw = sessionStorage.getItem(workflowChatImageModelStorageKey(workflowId))
-    const nextImageModel =
-      imageModelRaw !== null && isLeonardoPostModelId(imageModelRaw)
-        ? imageModelRaw
-        : DEFAULT_LEONARDO_POST_MODEL
+    const nextImageModel = readStoredGenerationModel(workflowId)
     setSelectedGenerationModelState(nextImageModel)
     selectedGenerationModelRef.current = nextImageModel
   }, [workflowId])
@@ -186,9 +222,17 @@ export function useWorkflowChat({
   const { messages, sendMessage, status, stop, error, clearError, regenerate, setMessages } =
     useChat({
       id: workflowId,
+      messages: initialMessagesRef.current,
       transport,
       experimental_throttle: CHAT_STREAM_THROTTLE_MS,
     })
+
+  useEffect(() => {
+    if (status !== 'ready' && status !== 'error') {
+      return
+    }
+    writeWorkflowChatMessages(workflowId, workflowChatSessionIdRef.current, messages)
+  }, [workflowId, status, messages])
 
   const slashCommands = useMemo(
     (): WorkflowChatSlashCommand[] => [
@@ -410,6 +454,7 @@ export function useWorkflowChat({
   const rotateChatSession = useCallback(() => {
     stop()
     clearError()
+    clearWorkflowChatMessages(workflowId, workflowChatSessionIdRef.current)
     setMessages([])
     setText('')
     setPendingMediaAttachments([])
