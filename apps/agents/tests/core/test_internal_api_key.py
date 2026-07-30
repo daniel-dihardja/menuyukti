@@ -29,7 +29,10 @@ def test_chat_forbidden_without_key(client: TestClient, monkeypatch: pytest.Monk
     response = client.post(
         "/chat",
         headers={"X-Menuyukti-User-Id": "user-1"},
-        json={"messages": [{"role": "user", "content": "Hello"}], "workflow_id": "1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        },
     )
     assert response.status_code == 403
 
@@ -43,7 +46,10 @@ def test_chat_forbidden_with_wrong_key(client: TestClient, monkeypatch: pytest.M
             "X-Menuyukti-User-Id": "user-1",
             "X-Internal-Api-Key": "wrong",
         },
-        json={"messages": [{"role": "user", "content": "Hello"}], "workflow_id": "1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "agent_thread_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        },
     )
     assert response.status_code == 403
 

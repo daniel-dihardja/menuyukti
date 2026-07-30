@@ -581,13 +581,6 @@ input MenuItemCogsUpsertInput {
 }
 
 """
-A milestone node under a workflow (legacy rows may still exist in the DB).
-"""
-type MilestoneCampaignBundleType {
-  milestone: NodeType!
-}
-
-"""
 Root mutation: sales uploads, node CRUD, workspace invites, and image AI flow configuration.
 """
 type Mutation {
@@ -869,14 +862,9 @@ type PublicHolidayType {
 }
 
 """
-Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
+Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
 """
 type Query {
-  """
-  Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller.
-  """
-  workflowCampaignTree(workflowId: ID!): WorkflowCampaignTreeType
-
   """
   Return multiple analytics sections for one run using a shared OrderFact load. Use options to omit sections you do not need.
   """
@@ -1207,14 +1195,6 @@ type WeeklyDemandPatternRowType {
 type WeeklyHeatmapType {
   day: String!
   quantity: Int!
-}
-
-"""
-Workflow campaign tree for SSR: workflow root, ordered milestones (single round-trip vs many `nodes` calls).
-"""
-type WorkflowCampaignTreeType {
-  workflow: NodeType!
-  milestones: [MilestoneCampaignBundleType!]!
 }
 
 type WorkspaceMembershipType {

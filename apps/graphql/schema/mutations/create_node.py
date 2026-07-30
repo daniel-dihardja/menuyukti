@@ -10,7 +10,9 @@ from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
 from graphql.schema.types import NodeType
 
-_DEPRECATED_CHILD_TYPES = frozenset({"milestonedata", "result", "passcriteria", "milestone", "goal"})
+_DEPRECATED_CHILD_TYPES = frozenset(
+    {"milestonedata", "result", "passcriteria", "milestone", "goal", "workflow"}
+)
 
 
 def _random_default_name() -> str:

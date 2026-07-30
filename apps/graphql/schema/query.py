@@ -27,19 +27,17 @@ from graphql.schema.queries import (
     SlotMenuCandidatesQuery,
     StylesQuery,
     WeeklyDemandPatternQuery,
-    WorkflowCampaignTreeQuery,
     WorkspaceQuery,
 )
 
 
 @strawberry.type(
     description=(
-        "Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, "
+        "Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, "
         "and workspace membership."
     )
 )
 class Query(
-    WorkflowCampaignTreeQuery,
     AnalyticsBundleQuery,
     LatestAnalyticsRunWithSignalsQuery,
     LocationsQuery,

@@ -66,13 +66,15 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "list_media_collections" in agent_names
     assert "list_media" in agent_names
 
-    wf = chat_tools_list_from_config({"workflow_id": "100", "location_id": 7, "user_id": "u1"})
-    wf_names = [getattr(t, "name", "") for t in wf]
-    assert "get_milestone" not in wf_names
-    assert "update_milestone_input" not in wf_names
-    assert "get_location_data" in wf_names
-    assert "get_chart_data" in wf_names
-    assert "generate_instagram_post_image" in wf_names
+    with_location = chat_tools_list_from_config(
+        {"location_id": 7, "user_id": "u1"}
+    )
+    with_location_names = [getattr(t, "name", "") for t in with_location]
+    assert "get_milestone" not in with_location_names
+    assert "update_milestone_input" not in with_location_names
+    assert "get_location_data" in with_location_names
+    assert "get_chart_data" in with_location_names
+    assert "generate_instagram_post_image" not in with_location_names
 
     agent_thread = chat_tools_list_from_config(
         {"agent_thread_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", "location_id": 7, "user_id": "u1"}

@@ -618,12 +618,6 @@ export type MenuItemCogsUpsertInput = {
   menuName: Scalars['String']['input']
 }
 
-/** A milestone node under a workflow (legacy rows may still exist in the DB). */
-export type MilestoneCampaignBundleType = {
-  __typename?: 'MilestoneCampaignBundleType'
-  milestone: NodeType
-}
-
 /** Root mutation: sales uploads, node CRUD, workspace invites, and image AI flow configuration. */
 export type Mutation = {
   __typename?: 'Mutation'
@@ -1168,7 +1162,7 @@ export type PublicHolidayType = {
   name: Scalars['String']['output']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type Query = {
   __typename?: 'Query'
   /** Return multiple analytics sections for one run using a shared OrderFact load. Use options to omit sections you do not need. */
@@ -1246,137 +1240,135 @@ export type Query = {
   styles: Array<StyleType>
   /** Bill-level revenue and transaction counts rolled up by ISO week for the latest analytics run. Indices are normalized to mean 1.0 within the series. */
   weeklyDemandPattern?: Maybe<WeeklyDemandPatternPayloadType>
-  /** Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller. */
-  workflowCampaignTree?: Maybe<WorkflowCampaignTreeType>
   workspaceMembers: Array<WorkspaceMembershipType>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryAnalyticsBundleArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
   options?: InputMaybe<AnalyticsBundleOptionsInput>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryAnalyticsRunArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryAnalyticsRunsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryCategoryMixArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryCrmAppArgs = {
   id: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryCrmCustomerArgs = {
   id: Scalars['UUID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryCrmCustomersArgs = {
   appId: Scalars['Int']['input']
   search?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryImageAiFlowArgs = {
   slug: Scalars['String']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryImageAiFlowsArgs = {
   includeInactive?: Scalars['Boolean']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryInstagramSignalsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLatestAnalyticsRunWithSignalsArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationAnalyticsSummariesArgs = {
   locationIds: Array<Scalars['Int']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationManualBriefInputArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMediaAssetsArgs = {
   collectionId?: InputMaybe<Scalars['Int']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMediaCollectionArgs = {
   id: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMenuCombosArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMenuEngineeringMatrixArgs = {
   analyticsRunId: Scalars['ID']['input']
   categories?: InputMaybe<Array<Scalars['String']['input']>>
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMenuHeatmapsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMenuItemsCatalogArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMenuItemsCatalogForRunArgs = {
   analyticsRunId: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryNodeArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryNodesArgs = {
   afterId?: InputMaybe<Scalars['ID']['input']>
   first?: InputMaybe<Scalars['Int']['input']>
@@ -1385,28 +1377,28 @@ export type QueryNodesArgs = {
   parentId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryOperatingProfileArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryOrderMetricsArgs = {
   analyticsRunId: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPostArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPostsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPromotionEngineeringCandidatesArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
@@ -1414,54 +1406,49 @@ export type QueryPromotionEngineeringCandidatesArgs = {
   maxStarItems?: InputMaybe<Scalars['Int']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPromotionMenuItemsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPublicHolidaysArgs = {
   country: Scalars['String']['input']
   endDate: Scalars['String']['input']
   startDate: Scalars['String']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryRevenueTrendsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
   previousRunId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QuerySchedulerCalendarArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QuerySlotMenuCandidatesArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
   options?: InputMaybe<SlotMenuCandidatesOptionsInput>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryStyleArgs = {
   id: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryWeeklyDemandPatternArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryWorkflowCampaignTreeArgs = {
-  workflowId: Scalars['ID']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryWorkspaceMembersArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
   workspaceId: Scalars['ID']['input']
@@ -1637,13 +1624,6 @@ export type WeeklyHeatmapType = {
   __typename?: 'WeeklyHeatmapType'
   day: Scalars['String']['output']
   quantity: Scalars['Int']['output']
-}
-
-/** Workflow campaign tree for SSR: workflow root, ordered milestones (single round-trip vs many `nodes` calls). */
-export type WorkflowCampaignTreeType = {
-  __typename?: 'WorkflowCampaignTreeType'
-  milestones: Array<MilestoneCampaignBundleType>
-  workflow: NodeType
 }
 
 export type WorkspaceMembershipType = {

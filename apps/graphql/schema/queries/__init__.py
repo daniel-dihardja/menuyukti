@@ -24,14 +24,12 @@ from .scheduler_calendar import SchedulerCalendarQuery
 from .slot_menu_candidates import SlotMenuCandidatesQuery
 from .styles import StylesQuery
 from .weekly_demand_pattern import WeeklyDemandPatternQuery
-from .workflow_campaign_tree import WorkflowCampaignTreeQuery
 from .workspace import WorkspaceQuery
 
 __all__ = [
     "AnalyticsBundleQuery",
     "AnalyticsRunQuery",
     "LatestAnalyticsRunWithSignalsQuery",
-    "WorkflowCampaignTreeQuery",
     "CategoryMixQuery",
     "CrmAppsQuery",
     "CrmCustomersQuery",

@@ -132,7 +132,7 @@ def test_story_image_assistant_tools_include_generate() -> None:
     tools = chat_tools_list_from_config(
         {
             "chat_mode": "story_image_assistant",
-            "workflow_id": "wf-1",
+            "agent_thread_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
             "location_id": 1,
         }
     )

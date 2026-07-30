@@ -52,15 +52,15 @@ def _fresh_location(name: str) -> int:
         session.close()
 
 
-def test_update_workflow_name_and_data():
-    location_id = _fresh_location("Update Workflow Location")
+def test_update_note_name_and_data():
+    location_id = _fresh_location("Update Note Location")
 
     created = asyncio.run(
         schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
+                "nodeType": "note",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -68,13 +68,13 @@ def test_update_workflow_name_and_data():
         )
     )
     assert not created.errors, created.errors
-    workflow_id = created.data["createNode"]["id"]
+    note_id = created.data["createNode"]["id"]
 
     updated = asyncio.run(
         schema.execute(
             UPDATE_NODE,
             variable_values={
-                "id": workflow_id,
+                "id": note_id,
                 "name": "Renamed Campaign",
                 "data": {"phase": "draft"},
             },
@@ -84,14 +84,14 @@ def test_update_workflow_name_and_data():
     assert not updated.errors, updated.errors
     out = updated.data["updateNode"]
     assert out["name"] == "Renamed Campaign"
-    assert out["nodeType"] == "workflow"
+    assert out["nodeType"] == "note"
     assert out["data"] == {"phase": "draft"}
 
     again = asyncio.run(
         schema.execute(
             UPDATE_NODE,
             variable_values={
-                "id": workflow_id,
+                "id": note_id,
                 "data": {"phase": "live", "note": "shipped"},
             },
             context_value=graphql_auth_context(),
@@ -102,8 +102,9 @@ def test_update_workflow_name_and_data():
 
 
 def test_get_handler_strips_node_type_for_lookup():
-    from graphql.schema.node_handlers import GenericHandler, WorkflowHandler, get_handler
+    from graphql.schema.node_handlers import GenericHandler, get_handler
 
-    assert isinstance(get_handler("  workflow  "), WorkflowHandler)
+    assert isinstance(get_handler("  workflow  "), GenericHandler)
     assert isinstance(get_handler("  unknown  "), GenericHandler)
     assert isinstance(get_handler("  milestone  "), GenericHandler)
+    assert isinstance(get_handler("  note  "), GenericHandler)

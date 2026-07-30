@@ -47,6 +47,28 @@ def _fresh_location(name: str) -> int:
         session.close()
 
 
+def _insert_root_node(*, location_id: int, name: str, node_type: str = "note") -> int:
+    session = SessionLocal()
+    try:
+        row = Node(
+            parent_id=None,
+            name=name,
+            description=None,
+            path="",
+            node_type=node_type,
+            location_id=location_id,
+            data=None,
+        )
+        session.add(row)
+        session.flush()
+        row.path = f"/{row.id}"
+        session.commit()
+        session.refresh(row)
+        return row.id
+    finally:
+        session.close()
+
+
 def _insert_milestone(
     *,
     location_id: int,
@@ -81,28 +103,28 @@ def _insert_milestone(
         session.close()
 
 
-def test_delete_workflow_only():
-    location_id = _fresh_location("Delete Workflow Only Location")
+def test_delete_note_only():
+    location_id = _fresh_location("Delete Note Only Location")
 
-    campaign = asyncio.run(
+    created = asyncio.run(
         schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
+                "nodeType": "note",
                 "name": "Campaign",
                 "parentId": None,
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not campaign.errors, campaign.errors
-    campaign_id = campaign.data["createNode"]["id"]
+    assert not created.errors, created.errors
+    note_id = created.data["createNode"]["id"]
 
     deleted = asyncio.run(
         schema.execute(
             DELETE_NODE,
-            variable_values={"id": campaign_id},
+            variable_values={"id": note_id},
             context_value=graphql_auth_context(),
         )
     )
@@ -111,7 +133,7 @@ def test_delete_workflow_only():
 
     session = SessionLocal()
     try:
-        assert session.get(Node, int(campaign_id)) is None
+        assert session.get(Node, int(note_id)) is None
     finally:
         session.close()
 
@@ -119,24 +141,11 @@ def test_delete_workflow_only():
 def test_delete_orm_milestone_row():
     location_id = _fresh_location("Delete ORM Milestone Location")
 
-    campaign = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Campaign",
-                "parentId": None,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not campaign.errors, campaign.errors
-    campaign_id = int(campaign.data["createNode"]["id"])
+    parent_id = _insert_root_node(location_id=location_id, name="Campaign", node_type="workflow")
 
     milestone_id = _insert_milestone(
         location_id=location_id,
-        parent_id=campaign_id,
+        parent_id=parent_id,
         name="Only",
         milestone_goal="Keep me",
         milestone_preset_data={"note": "Keep me"},
@@ -155,46 +164,45 @@ def test_delete_orm_milestone_row():
     session = SessionLocal()
     try:
         assert session.get(Node, milestone_id) is None
-        assert session.get(Node, campaign_id) is not None
+        assert session.get(Node, parent_id) is not None
     finally:
         session.close()
 
 
-def test_delete_workflow_cascades_milestones_and_children():
-    location_id = _fresh_location("Delete Workflow Cascade Location")
+def test_delete_children_then_parent():
+    """Generic delete does not cascade; children must be removed first."""
+    location_id = _fresh_location("Delete Children Then Parent Location")
 
-    campaign = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Campaign",
-                "parentId": None,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not campaign.errors, campaign.errors
-    campaign_id = int(campaign.data["createNode"]["id"])
+    parent_id = _insert_root_node(location_id=location_id, name="Campaign", node_type="workflow")
 
     first_milestone_id = _insert_milestone(
         location_id=location_id,
-        parent_id=campaign_id,
+        parent_id=parent_id,
         name="First",
         data={"order": 1},
     )
     second_milestone_id = _insert_milestone(
         location_id=location_id,
-        parent_id=campaign_id,
+        parent_id=parent_id,
         name="Second",
         data={"order": 2},
     )
 
+    for child_id in (first_milestone_id, second_milestone_id):
+        deleted_child = asyncio.run(
+            schema.execute(
+                DELETE_NODE,
+                variable_values={"id": str(child_id)},
+                context_value=graphql_auth_context(),
+            )
+        )
+        assert not deleted_child.errors, deleted_child.errors
+        assert deleted_child.data["deleteNode"] is True
+
     deleted = asyncio.run(
         schema.execute(
             DELETE_NODE,
-            variable_values={"id": str(campaign_id)},
+            variable_values={"id": str(parent_id)},
             context_value=graphql_auth_context(),
         )
     )
@@ -203,14 +211,8 @@ def test_delete_workflow_cascades_milestones_and_children():
 
     session = SessionLocal()
     try:
-        assert session.get(Node, campaign_id) is None
+        assert session.get(Node, parent_id) is None
         assert session.get(Node, first_milestone_id) is None
         assert session.get(Node, second_milestone_id) is None
-        remaining = (
-            session.query(Node)
-            .filter(Node.location_id == location_id, Node.parent_id == campaign_id)
-            .count()
-        )
-        assert remaining == 0
     finally:
         session.close()

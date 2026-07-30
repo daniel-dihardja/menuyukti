@@ -19,7 +19,7 @@ mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $descr
 }
 """
 
-_DEPRECATED_TYPES = ("milestonedata", "result", "passcriteria", "milestone", "goal")
+_DEPRECATED_TYPES = ("milestonedata", "result", "passcriteria", "milestone", "goal", "workflow")
 
 
 def _fresh_location(name: str) -> int:
@@ -38,7 +38,7 @@ def _fresh_location(name: str) -> int:
         session.close()
 
 
-def test_create_node_inserts_root_workflow_node():
+def test_create_node_inserts_root_note_node():
     location_id = _fresh_location("Campaign Test Location")
 
     result = asyncio.run(
@@ -46,7 +46,7 @@ def test_create_node_inserts_root_workflow_node():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
+                "nodeType": "note",
                 "name": None,
             },
             context_value=graphql_auth_context(),
@@ -55,7 +55,7 @@ def test_create_node_inserts_root_workflow_node():
     assert not result.errors, result.errors
     data = result.data["createNode"]
     assert data["parentId"] is None
-    assert data["nodeType"] == "workflow"
+    assert data["nodeType"] == "note"
     assert data["locationId"] == location_id
     assert data["name"]
     assert data["path"] == f"/{data['id']}"
@@ -67,7 +67,7 @@ def test_create_node_inserts_root_workflow_node():
         row = session.get(Node, int(data["id"]))
         assert row is not None
         assert row.parent_id is None
-        assert row.node_type == "workflow"
+        assert row.node_type == "note"
         assert row.location_id == location_id
         assert row.name == data["name"]
         assert row.data is None
@@ -76,37 +76,8 @@ def test_create_node_inserts_root_workflow_node():
         session.close()
 
 
-def test_create_workflow_rejects_parent_node():
-    session = SessionLocal()
-    try:
-        session.query(Node).delete()
-        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-        session.commit()
-
-        location = Location(
-            name="Workflow Parent Guard Location", clerk_user_id=GRAPHQL_TEST_USER_ID
-        )
-        session.add(location)
-        session.commit()
-        session.refresh(location)
-        location_id = location.id
-
-        loc_root = Node(
-            parent_id=None,
-            name="Loc root",
-            description=None,
-            path="",
-            node_type="location",
-            location_id=location_id,
-            data=None,
-        )
-        session.add(loc_root)
-        session.flush()
-        loc_root.path = f"/{loc_root.id}"
-        session.commit()
-        location_node_id = str(loc_root.id)
-    finally:
-        session.close()
+def test_create_workflow_rejected():
+    location_id = _fresh_location("Workflow Deprecated Location")
 
     result = asyncio.run(
         schema.execute(
@@ -115,7 +86,6 @@ def test_create_workflow_rejects_parent_node():
                 "locationId": location_id,
                 "nodeType": "workflow",
                 "name": "Should fail",
-                "parentId": location_node_id,
             },
             context_value=graphql_auth_context(),
         )
@@ -125,7 +95,7 @@ def test_create_workflow_rejects_parent_node():
 
 
 def test_deprecated_child_node_types_rejected():
-    """milestone / goal / milestonedata / result / passcriteria are no longer creatable."""
+    """milestone / goal / milestonedata / result / passcriteria / workflow are no longer creatable."""
     location_id = _fresh_location("Deprecated Types Location")
 
     for nt in _DEPRECATED_TYPES:
@@ -153,7 +123,7 @@ def test_create_node_with_json_data():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
+                "nodeType": "note",
                 "name": "With data",
                 "description": "A test campaign",
                 "data": payload,
@@ -215,19 +185,19 @@ def test_create_milestonedata_rejected():
 def test_create_milestone_node_type_rejected():
     location_id = _fresh_location("Milestone Reject Location")
 
-    campaign = asyncio.run(
+    parent = asyncio.run(
         schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Campaign",
+                "nodeType": "note",
+                "name": "Parent",
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not campaign.errors, campaign.errors
-    campaign_id = campaign.data["createNode"]["id"]
+    assert not parent.errors, parent.errors
+    parent_id = parent.data["createNode"]["id"]
 
     milestone = asyncio.run(
         schema.execute(
@@ -236,7 +206,7 @@ def test_create_milestone_node_type_rejected():
                 "locationId": location_id,
                 "nodeType": "milestone",
                 "name": "M1",
-                "parentId": campaign_id,
+                "parentId": parent_id,
             },
             context_value=graphql_auth_context(),
         )

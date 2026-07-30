@@ -3,7 +3,6 @@ import asyncio
 from graphql.data_sources import Location, Node, SessionLocal
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
-from graphql.tests.test_nodes_query import CREATE_NODE
 
 SCHEDULER_CALENDAR_QUERY = """
 query SchedulerCalendar($locationId: Int!) {
@@ -53,20 +52,26 @@ def _create_location(name: str) -> int:
 
 
 def _create_workflow(location_id: int, name: str) -> str:
-    result = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "workflow",
-                "name": name,
-                "parentId": None,
-            },
-            context_value=graphql_auth_context(),
+    """Insert a legacy workflow root via ORM (createNode rejects nodeType workflow)."""
+    session = SessionLocal()
+    try:
+        row = Node(
+            parent_id=None,
+            name=name,
+            description=None,
+            path="",
+            node_type="workflow",
+            location_id=location_id,
+            data=None,
         )
-    )
-    assert not result.errors, result.errors
-    return result.data["createNode"]["id"]
+        session.add(row)
+        session.flush()
+        row.path = f"/{row.id}"
+        session.commit()
+        session.refresh(row)
+        return str(row.id)
+    finally:
+        session.close()
 
 
 def _insert_milestone(

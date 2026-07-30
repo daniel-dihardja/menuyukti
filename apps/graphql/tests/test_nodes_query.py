@@ -56,42 +56,41 @@ def _fresh_location(name: str) -> int:
 def test_nodes_filters_by_parent_id():
     location_id = _fresh_location("Nodes Query Location")
 
-    campaign = asyncio.run(
+    root = asyncio.run(
         schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Test Campaign",
+                "nodeType": "note",
+                "name": "Test Root",
                 "parentId": None,
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not campaign.errors, campaign.errors
-    campaign_id = campaign.data["createNode"]["id"]
+    assert not root.errors, root.errors
+    root_id = root.data["createNode"]["id"]
 
-    campaign2 = asyncio.run(
+    root2 = asyncio.run(
         schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Other Campaign",
+                "nodeType": "note",
+                "name": "Other Root",
                 "parentId": None,
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not campaign2.errors, campaign2.errors
+    assert not root2.errors, root2.errors
 
-    # Workflow roots have no parent; filter by parentId=null should return both.
     result = asyncio.run(
         schema.execute(
             NODES_BY_PARENT,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
+                "nodeType": "note",
                 "parentId": None,
             },
             context_value=graphql_auth_context(),
@@ -101,18 +100,18 @@ def test_nodes_filters_by_parent_id():
     nodes = result.data["nodes"]
     assert len(nodes) == 2
     assert {n["id"] for n in nodes} == {
-        campaign_id,
-        campaign2.data["createNode"]["id"],
+        root_id,
+        root2.data["createNode"]["id"],
     }
     assert all(n["parentId"] is None for n in nodes)
 
     # Legacy milestone children inserted via ORM still filter by parent.
     session = SessionLocal()
     try:
-        parent = session.get(Node, int(campaign_id))
+        parent = session.get(Node, int(root_id))
         assert parent is not None
         child = Node(
-            parent_id=int(campaign_id),
+            parent_id=int(root_id),
             name="Step one",
             description=None,
             path="",
@@ -135,7 +134,7 @@ def test_nodes_filters_by_parent_id():
             variable_values={
                 "locationId": location_id,
                 "nodeType": "milestone",
-                "parentId": campaign_id,
+                "parentId": root_id,
             },
             context_value=graphql_auth_context(),
         )
@@ -145,18 +144,18 @@ def test_nodes_filters_by_parent_id():
     assert len(nodes) == 1
     assert nodes[0]["id"] == child_id
     assert nodes[0]["name"] == "Step one"
-    assert nodes[0]["parentId"] == campaign_id
+    assert nodes[0]["parentId"] == root_id
 
 
 def test_nodes_respects_first_and_after_cursor():
     location_id = _fresh_location("Cursor Location")
 
-    async def _create_workflow(name: str) -> str:
+    async def _create_note(name: str) -> str:
         r = await schema.execute(
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "workflow",
+                "nodeType": "note",
                 "name": name,
                 "parentId": None,
             },
@@ -165,8 +164,8 @@ def test_nodes_respects_first_and_after_cursor():
         assert not r.errors, r.errors
         return r.data["createNode"]["id"]
 
-    w1 = asyncio.run(_create_workflow("W1"))
-    w2 = asyncio.run(_create_workflow("W2"))
+    n1 = asyncio.run(_create_note("N1"))
+    n2 = asyncio.run(_create_note("N2"))
 
     page1 = asyncio.run(
         schema.execute(
@@ -199,4 +198,4 @@ def test_nodes_respects_first_and_after_cursor():
     assert len(nodes2) == 1
     assert nodes2[0]["id"] != nodes1[0]["id"]
     ids = {nodes1[0]["id"], nodes2[0]["id"]}
-    assert ids == {w1, w2}
+    assert ids == {n1, n2}
