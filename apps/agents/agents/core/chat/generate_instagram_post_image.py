@@ -88,8 +88,10 @@ async def generate_instagram_post_image(
     In Post Creator, model/format/quality/style/references often come from the UI — do not ask
     the user to restate those unless they want to change them first. After success, briefly
     confirm; the image appears in chat (and updates the Post Creator preview when a saved
-    post page is in context). In Story mode, the output is also saved as the scratchpad
-    ``result`` asset for later refine turns.
+    post page is in context). In Story mode, call only after the user explicitly confirms the
+    collected-data plan (first generate); refine turns after a successful generate may call
+    again from feedback. The output is also saved as the scratchpad ``result`` asset for
+    later refine turns.
     """
     trimmed = prompt.strip() if isinstance(prompt, str) else ""
     if not trimmed:

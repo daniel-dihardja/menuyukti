@@ -115,7 +115,13 @@ def test_build_system_prompt_story_image_assistant_mode() -> None:
     assert "on-image text" in out
     assert "skip" in out.lower() or "declines" in out
     assert "Phase 3" in out
+    assert "confirm before generate" in out
+    assert "Phase 4" in out
     assert "generate and refine" in out
+    assert "explicitly confirms" in out or "explicit accept" in out
+    assert "List all collected data" in out or "list all collected data" in out.lower()
+    assert "how the image will be generated" in out.lower()
+    assert "Do **not** call `generate_instagram_post_image` in this phase" in out
     assert "generate_instagram_post_image" in out
     assert "save_story_asset" in out
     assert 'role="style"' in out
