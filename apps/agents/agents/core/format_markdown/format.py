@@ -1,6 +1,7 @@
 """LLM-backed Markdown formatting (core platform helper)."""
 
 from agents_app.agents.core.format_markdown.presets import get_preset_system_prompt
+from agents_app.agents.core.llm_invoke import ainvoke_with_retry
 from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
@@ -20,11 +21,12 @@ async def format_markdown(*, content: str, preset: str) -> str:
         raise UnknownPresetError(f"Unknown preset: {preset}")
 
     llm = get_llm_structured()
-    msg = await llm.ainvoke(
+    msg = await ainvoke_with_retry(
+        llm,
         [
             SystemMessage(content=system),
             HumanMessage(content=content),
-        ]
+        ],
     )
     raw = msg.content if isinstance(msg, AIMessage) else getattr(msg, "content", "")
     if isinstance(raw, str):

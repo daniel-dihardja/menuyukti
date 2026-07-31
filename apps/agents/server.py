@@ -21,6 +21,8 @@ from starlette.responses import Response
 
 load_dotenv()
 
+_logger = logging.getLogger(__name__)
+
 
 def _configure_agents_app_logging() -> None:
     """Emit INFO logs from ``agents_app`` without raising root level."""
@@ -37,12 +39,49 @@ def _configure_agents_app_logging() -> None:
 _configure_agents_app_logging()
 
 
+def _env_flag_true(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def is_production_runtime() -> bool:
+    """True when deployed production-like (or explicit AGENTS_ENV=production)."""
+    for key in ("AGENTS_ENV", "ENV", "VERCEL_ENV", "NODE_ENV"):
+        if os.environ.get(key, "").strip().lower() == "production":
+            return True
+    return False
+
+
 def _expected_internal_api_key() -> str:
     """Shared secret with GraphQL / web BFF (``INTERNAL_API_KEY`` or ``GRAPHQL_INTERNAL_API_KEY``)."""
     return (
         os.environ.get("INTERNAL_API_KEY", "").strip()
         or os.environ.get("GRAPHQL_INTERNAL_API_KEY", "").strip()
     )
+
+
+def validate_startup_security() -> None:
+    """Fail fast in production when checkpoint DB or internal API key is missing."""
+    require_key = is_production_runtime() or _env_flag_true("AGENTS_REQUIRE_INTERNAL_API_KEY")
+    if require_key and not _expected_internal_api_key():
+        msg = (
+            "INTERNAL_API_KEY or GRAPHQL_INTERNAL_API_KEY must be set in production "
+            "(or set AGENTS_REQUIRE_INTERNAL_API_KEY=0 only for local dev)."
+        )
+        raise RuntimeError(msg)
+
+    db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL", "").strip()
+    require_db = is_production_runtime() or _env_flag_true("AGENTS_REQUIRE_CHECKPOINT_DB")
+    if not db_url:
+        if require_db:
+            msg = (
+                "LANGGRAPH_CHECKPOINT_DATABASE_URL must be set in production "
+                "(InMemorySaver loses history on restart / across instances)."
+            )
+            raise RuntimeError(msg)
+        _logger.warning(
+            "LANGGRAPH_CHECKPOINT_DATABASE_URL unset — using InMemorySaver "
+            "(chat history is lost on restart and not shared across workers)"
+        )
 
 
 class InternalApiKeyMiddleware(BaseHTTPMiddleware):
@@ -71,6 +110,7 @@ async def _chat_runtime(app: FastAPI, checkpointer: BaseCheckpointSaver) -> Any:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> Any:
+    validate_startup_security()
     db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL", "").strip()
     # Sync PostgresSaver does not implement aget_tuple; FastAPI chat uses async graph APIs.
     if db_url:
@@ -97,6 +137,3 @@ app.include_router(style_specs_router, tags=["style-specs"])
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
-
-
-__all__ = ["app"]

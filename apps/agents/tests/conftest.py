@@ -16,6 +16,13 @@ os.environ["LANGGRAPH_CHECKPOINT_DATABASE_URL"] = ""
 os.environ["INTERNAL_API_KEY"] = ""
 os.environ["GRAPHQL_INTERNAL_API_KEY"] = ""
 
+# Avoid production startup hard-fails during TestClient lifespan.
+for _prod_key in ("AGENTS_ENV", "ENV", "VERCEL_ENV", "NODE_ENV"):
+    if os.environ.get(_prod_key, "").strip().lower() == "production":
+        os.environ[_prod_key] = "test"
+os.environ["AGENTS_REQUIRE_CHECKPOINT_DB"] = ""
+os.environ["AGENTS_REQUIRE_INTERNAL_API_KEY"] = ""
+
 
 @pytest.fixture(autouse=True)
 def _clear_agents_inbound_api_keys(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -23,3 +30,9 @@ def _clear_agents_inbound_api_keys(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("INTERNAL_API_KEY", "")
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "")
     monkeypatch.setenv("LANGGRAPH_CHECKPOINT_DATABASE_URL", "")
+    monkeypatch.setenv("AGENTS_REQUIRE_CHECKPOINT_DB", "")
+    monkeypatch.setenv("AGENTS_REQUIRE_INTERNAL_API_KEY", "")
+    for key in ("AGENTS_ENV", "ENV", "VERCEL_ENV"):
+        monkeypatch.delenv(key, raising=False)
+    if os.environ.get("NODE_ENV", "").strip().lower() == "production":
+        monkeypatch.setenv("NODE_ENV", "test")

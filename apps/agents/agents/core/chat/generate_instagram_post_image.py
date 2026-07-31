@@ -3,19 +3,25 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Annotated, Any
 
+from agents_app.agents.core.chat.generate_confirmation_gate import (
+    image_assistant_generate_block_reason,
+)
 from agents_app.agents.core.chat.http_context import get_chat_http_client
 from agents_app.agents.core.chat.story_assets import (
     merge_generation_references,
     upsert_result_asset,
 )
-from langchain.messages import ToolMessage
 from langchain.tools import ToolRuntime
+from langchain_core.messages import ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
 from langgraph.types import Command
+
+_logger = logging.getLogger(__name__)
 
 GENERATE_PATH = "/api/posts/generate"
 # Leonardo poll can take up to ~2 minutes; leave headroom for S3 + GraphQL.
@@ -112,6 +118,19 @@ async def generate_instagram_post_image(
 
     if not user_id:
         return "Error: user context is missing. Cannot generate an image."
+
+    if image_assistant:
+        state_messages = None
+        story_assets = None
+        if runtime is not None and isinstance(getattr(runtime, "state", None), dict):
+            state_messages = runtime.state.get("messages")
+            story_assets = runtime.state.get("story_assets")
+        block = image_assistant_generate_block_reason(
+            state_messages if isinstance(state_messages, list) else None,
+            story_assets=story_assets if isinstance(story_assets, list) else None,
+        )
+        if block is not None:
+            return block
 
     base = _web_app_url()
     api_key = _internal_api_key()
@@ -242,5 +261,10 @@ async def generate_instagram_post_image(
                     ],
                 }
             )
+        # Upstream generate succeeded but scratchpad upsert could not apply — still return image.
+        _logger.warning(
+            "generate succeeded but story_assets upsert returned None name=%r",
+            name,
+        )
 
     return json.dumps(result, ensure_ascii=False)
