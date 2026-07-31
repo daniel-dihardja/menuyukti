@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import { CRM_APPS_QUERY, type CrmAppsData } from '@/lib/graphql/queries/crm-apps'
 import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
@@ -26,7 +27,11 @@ async function AppsData() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await graphqlQuery<CrmAppsData>(CRM_APPS_QUERY, {}, userId)
+  const data = await graphqlQuery<CrmAppsData>(
+    CRM_APPS_QUERY,
+    { first: DEFAULT_LIST_FIRST },
+    userId,
+  )
   return <AppsClient initialApps={data.crmApps} />
 }
 

@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramPost, InstagramPostPage
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.queries.posts import _post_to_gql
+from graphql.schema.mappers.post import post_to_gql
 from graphql.schema.types import PostType
 from graphql.services.workspace_scope import primary_workspace_id
 
@@ -49,4 +49,4 @@ class CreatePostMutation:
             )
             if loaded is None:
                 raise ValueError("Failed to load created post")
-            return _post_to_gql(loaded)
+            return post_to_gql(loaded)

@@ -2,9 +2,10 @@ import strawberry
 from strawberry import UNSET
 
 from graphql.context import request_session_scope
-from graphql.data_sources import Location
 from graphql.schema.auth import is_workspace_member, user_id_from_info
+from graphql.schema.mappers.location import location_to_gql
 from graphql.schema.types import LocationType
+from graphql.services.location import create_location_row
 
 
 @strawberry.type
@@ -27,28 +28,17 @@ class CreateLocationMutation:
         with request_session_scope(info) as session:
             if not is_workspace_member(session, wid, user_id):
                 raise PermissionError("Access denied")
-            loc_kwargs: dict[str, object] = {
-                "workspace_id": wid,
-                "name": name,
-                "street": street,
-                "city": city,
-                "country": country,
-                "clerk_user_id": user_id,
-            }
-            if currency is not UNSET:
-                loc_kwargs["currency"] = currency
-            loc = Location(**loc_kwargs)
-            session.add(loc)
+            loc = create_location_row(
+                session,
+                workspace_id=wid,
+                clerk_user_id=user_id,
+                name=name,
+                street=street,
+                city=city,
+                country=country,
+                currency=currency if currency is not UNSET else None,
+                include_currency=currency is not UNSET,
+            )
             session.commit()
             session.refresh(loc)
-            return LocationType(
-                id=loc.id,
-                name=loc.name,
-                street=loc.street,
-                city=loc.city,
-                country=loc.country,
-                currency=loc.currency,
-                node_id=str(loc.node_id) if loc.node_id is not None else None,
-                workspace_id=str(loc.workspace_id) if loc.workspace_id is not None else None,
-                opening_hours=[],
-            )
+            return location_to_gql(loc)

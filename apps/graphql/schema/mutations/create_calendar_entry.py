@@ -3,43 +3,21 @@
 from __future__ import annotations
 
 import re
-from typing import Any
 
 import strawberry
 
 from graphql.context import request_session_scope
 from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.mappers.calendar import entry_to_gql
 from graphql.schema.types.calendar_entry import (
     CalendarEntryType,
     CalendarMediaRefInput,
-    CalendarMediaRefType,
 )
 
 _ALLOWED_MEDIA_KINDS = frozenset({"photo"})
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TIME_RE = re.compile(r"^\d{2}:\d{2}$")
-
-
-def _entry_to_gql(row: CalendarEntry) -> CalendarEntryType:
-    refs_raw = row.media_refs if isinstance(row.media_refs, list) else []
-    media_refs: list[CalendarMediaRefType] = []
-    for item in refs_raw:
-        if not isinstance(item, dict):
-            continue
-        kind = item.get("kind")
-        name = item.get("name")
-        if isinstance(kind, str) and isinstance(name, str) and kind and name:
-            media_refs.append(CalendarMediaRefType(kind=kind, name=name))
-    return CalendarEntryType(
-        id=row.id,
-        location_id=row.location_id,
-        title=row.title,
-        description=row.description or "",
-        date=row.entry_date,
-        time=row.entry_time,
-        media_refs=media_refs,
-    )
 
 
 def _normalize_media_refs(raw: list[CalendarMediaRefInput] | None) -> list[dict[str, str]]:
@@ -121,27 +99,4 @@ class CreateCalendarEntryMutation:
             session.add(row)
             session.commit()
             session.refresh(row)
-            return _entry_to_gql(row)
-
-
-def calendar_entry_to_slot_fields(row: CalendarEntry) -> dict[str, Any]:
-    """Map ORM row to scheduler calendar slot kwargs."""
-    refs_raw = row.media_refs if isinstance(row.media_refs, list) else []
-    media_refs: list[CalendarMediaRefType] = []
-    for item in refs_raw:
-        if not isinstance(item, dict):
-            continue
-        kind = item.get("kind")
-        name = item.get("name")
-        if isinstance(kind, str) and isinstance(name, str) and kind and name:
-            media_refs.append(CalendarMediaRefType(kind=kind, name=name))
-    return {
-        "id": str(row.id),
-        "date": row.entry_date,
-        "time": row.entry_time,
-        "title": row.title,
-        "kind": None,
-        "description": row.description or "",
-        "media_refs": media_refs,
-        "source": "manual",
-    }
+            return entry_to_gql(row)

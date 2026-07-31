@@ -8,7 +8,7 @@ from strawberry.scalars import JSON
 
 from graphql.context import request_session_scope
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.queries.image_ai_flows import _flow_to_gql
+from graphql.schema.mappers.image_ai_flow import flow_to_gql
 from graphql.schema.types import ImageAiFlowType
 from graphql.services.image_ai_flow import update_image_ai_flow
 
@@ -48,4 +48,4 @@ class UpdateImageAiFlowMutation:
                 is_active=is_active,
                 sort_order=sort_order,
             )
-            return _flow_to_gql(row)
+            return flow_to_gql(row)

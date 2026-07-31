@@ -11,6 +11,7 @@ from strawberry import UNSET
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramPostPage, InstagramPostPageMediaVersion
 from graphql.schema.auth import user_id_from_info
+from graphql.schema.mappers.post import post_page_to_gql
 from graphql.schema.mutations.update_post_page import (
     _ALLOWED_GENERATION_MODELS,
     _ALLOWED_IMAGE_FORMATS,
@@ -19,8 +20,8 @@ from graphql.schema.mutations.update_post_page import (
     _post_media_scope,
     _validate_media_s3_key,
 )
-from graphql.schema.queries.posts import _load_post_for_user, _post_page_to_gql
 from graphql.schema.types import PostPageType
+from graphql.services.posts import load_post_for_user as _load_post_for_user
 
 MAX_POST_PAGES = 10
 
@@ -135,4 +136,4 @@ class CreatePostPageMutation:
             )
             if page_row is None:
                 raise ValueError("Failed to load created post page")
-            return _post_page_to_gql(page_row)
+            return post_page_to_gql(page_row)

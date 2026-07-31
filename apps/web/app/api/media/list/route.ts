@@ -7,6 +7,7 @@ import {
   requireWorkspaceMediaAccess,
 } from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import { MEDIA_ASSETS_QUERY, type MediaAssetsData } from '@/lib/graphql/queries/media-collections'
 
 export async function GET(req: Request) {
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
     )
     const catalogPromise = graphqlQuery<MediaAssetsData>(
       MEDIA_ASSETS_QUERY,
-      { collectionId: collectionId ?? null },
+      { collectionId: collectionId ?? null, first: DEFAULT_LIST_FIRST },
       userId,
     )
       .then((catalog) => ({ ok: true as const, catalog }))

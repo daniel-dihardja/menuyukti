@@ -7,7 +7,7 @@ import strawberry
 from graphql.context import request_session_scope
 from graphql.data_sources.models.media_asset import MediaCollection
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.queries.media_collections import _collection_to_gql
+from graphql.schema.mappers.media import collection_to_gql
 from graphql.schema.types.media_collection import MediaCollectionType
 from graphql.services.media_collections import validate_collection_name
 from graphql.services.workspace_scope import primary_workspace_id
@@ -46,4 +46,4 @@ class CreateMediaCollectionMutation:
             session.add(row)
             session.commit()
             session.refresh(row)
-            return _collection_to_gql(row, include_members=False)
+            return collection_to_gql(row, include_members=False)

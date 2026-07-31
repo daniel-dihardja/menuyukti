@@ -21,8 +21,8 @@ const STYLE_FIELDS = `
 `
 
 export const STYLES_QUERY = `
-  query Styles {
-    styles {
+  query Styles($first: Int) {
+    styles(first: $first) {
       ${STYLE_FIELDS}
     }
   }

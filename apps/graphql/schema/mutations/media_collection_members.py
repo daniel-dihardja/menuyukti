@@ -12,7 +12,7 @@ from graphql.data_sources.models.media_asset import (
     MediaCollectionMember,
 )
 from graphql.schema.auth import is_workspace_member, user_id_from_info
-from graphql.schema.queries.media_collections import _collection_to_gql
+from graphql.schema.mappers.media import collection_to_gql
 from graphql.schema.types.media_collection import MediaCollectionType
 from graphql.services.media_collections import (
     add_member,
@@ -63,7 +63,7 @@ class AddMediaToCollectionMutation:
                 .first()
             )
             assert row is not None
-            return _collection_to_gql(row, include_members=True)
+            return collection_to_gql(row, include_members=True)
 
 
 @strawberry.type
@@ -110,4 +110,4 @@ class RemoveMediaFromCollectionMutation:
                 .first()
             )
             assert row is not None
-            return _collection_to_gql(row, include_members=True)
+            return collection_to_gql(row, include_members=True)

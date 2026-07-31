@@ -10,7 +10,7 @@ from strawberry.scalars import JSON
 from graphql.context import request_session_scope
 from graphql.data_sources import ImageAiFlow
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.queries.image_ai_flows import _flow_to_gql
+from graphql.schema.mappers.image_ai_flow import flow_to_gql
 from graphql.schema.types import ImageAiFlowType
 
 _SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -83,4 +83,4 @@ class CreateImageAiFlowMutation:
             session.add(row)
             session.commit()
             session.refresh(row)
-            return _flow_to_gql(row)
+            return flow_to_gql(row)
