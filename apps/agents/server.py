@@ -150,9 +150,11 @@ async def lifespan(app: FastAPI) -> Any:
     db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL", "").strip()
     # Sync PostgresSaver does not implement aget_tuple; FastAPI chat uses async graph APIs.
     if db_url:
-        async with _postgres_checkpointer(db_url) as checkpointer:
-            async with _chat_runtime(app, checkpointer):
-                yield
+        async with (
+            _postgres_checkpointer(db_url) as checkpointer,
+            _chat_runtime(app, checkpointer),
+        ):
+            yield
     else:
         async with _chat_runtime(app, InMemorySaver()):
             yield
