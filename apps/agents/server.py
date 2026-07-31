@@ -2,6 +2,7 @@
 
 import logging
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -15,6 +16,9 @@ from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from psycopg import AsyncConnection
+from psycopg.rows import DictRow, dict_row
+from psycopg_pool import AsyncConnectionPool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -109,13 +113,44 @@ async def _chat_runtime(app: FastAPI, checkpointer: BaseCheckpointSaver) -> Any:
 
 
 @asynccontextmanager
+async def _postgres_checkpointer(db_url: str) -> AsyncIterator[AsyncPostgresSaver]:
+    """Pool-backed checkpointer so idle DB/proxy timeouts do not leave a dead single conn.
+
+    ``AsyncPostgresSaver.from_conn_string`` holds one connection for the process lifetime;
+    after Postgres/proxy idle kill, ``/chat/history`` fails with ``the connection is closed``.
+    """
+    pool: AsyncConnectionPool[AsyncConnection[DictRow]] = AsyncConnectionPool(
+        conninfo=db_url,
+        min_size=1,
+        max_size=10,
+        # Recycle before typical cloud idle kills (~10m); check drops dead sockets.
+        max_idle=300.0,
+        max_lifetime=3600.0,
+        timeout=30.0,
+        kwargs={
+            "autocommit": True,
+            "prepare_threshold": 0,
+            "row_factory": dict_row,
+        },
+        open=False,
+        check=AsyncConnectionPool.check_connection,
+    )
+    await pool.open()
+    try:
+        checkpointer = AsyncPostgresSaver(conn=pool)
+        await checkpointer.setup()
+        yield checkpointer
+    finally:
+        await pool.close()
+
+
+@asynccontextmanager
 async def lifespan(app: FastAPI) -> Any:
     validate_startup_security()
     db_url = os.environ.get("LANGGRAPH_CHECKPOINT_DATABASE_URL", "").strip()
     # Sync PostgresSaver does not implement aget_tuple; FastAPI chat uses async graph APIs.
     if db_url:
-        async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
-            await checkpointer.setup()
+        async with _postgres_checkpointer(db_url) as checkpointer:
             async with _chat_runtime(app, checkpointer):
                 yield
     else:
