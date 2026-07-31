@@ -63,6 +63,7 @@ async def draft_style_spec_from_image_endpoint(
             image_url=image_url,
             intent=body.intent,
             gateway_model_id=gateway_model,
+            reporting_user=x_menuyukti_user_id.strip(),
         )
     except LLMInvokeError as exc:
         _logger.error("style_spec draft failed: %s", exc)

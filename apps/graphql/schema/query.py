@@ -1,6 +1,7 @@
 import strawberry
 
 from graphql.schema.queries import (
+    AiUsageQuery,
     AnalyticsBundleQuery,
     AnalyticsRunQuery,
     CategoryMixQuery,
@@ -53,5 +54,6 @@ class Query(
     RevenueTrendsQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
+    AiUsageQuery,
 ):
     pass

@@ -6,9 +6,11 @@ import asyncio
 import logging
 from typing import Any
 
+from agents_app.agents.core.ai_usage_client import record_ai_usage_event, usage_from_model_result
 from agents_app.agents.core.chat.generate_instagram_post_image import (
     generate_instagram_post_image,
 )
+from agents_app.agents.core.chat.http_context import chat_http_client_var
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.request_story_generate_confirmation import (
     request_story_generate_confirmation,
@@ -198,7 +200,19 @@ async def _select_chat_model_and_tools(request: ModelRequest, handler: Any) -> A
     conf_dict = conf if isinstance(conf, dict) else {}
     raw = conf_dict.get("chat_gateway_model")
     gateway: str | None = raw.strip() if isinstance(raw, str) and raw.strip() else None
-    llm = chat_llm_for_gateway_model(gateway, streaming=True)
+    user_raw = conf_dict.get("user_id")
+    reporting_user = (
+        user_raw.strip() if isinstance(user_raw, str) and user_raw.strip() else None
+    )
+    mode_raw = conf_dict.get("chat_mode")
+    mode = mode_raw.strip() if isinstance(mode_raw, str) and mode_raw.strip() else "general"
+    reporting_tags = ["feature:chat", f"mode:{mode}"]
+    llm = chat_llm_for_gateway_model(
+        gateway,
+        streaming=True,
+        reporting_user=reporting_user,
+        reporting_tags=reporting_tags,
+    )
     bound_tools = chat_tools_list_from_config(conf_dict)
     trimmed = _trim_chat_messages(list(request.messages))
     return await handler(request.override(model=llm, tools=bound_tools, messages=trimmed))
@@ -226,6 +240,42 @@ async def _retry_chat_model_call(request: ModelRequest, handler: Any) -> Any:
             await asyncio.sleep(delay)
     assert last is not None
     raise last
+
+
+@wrap_model_call  # type: ignore[arg-type]
+async def _record_chat_llm_usage(request: ModelRequest, handler: Any) -> Any:
+    """Append a best-effort ai_gateway usage row after each successful model call."""
+    result = await handler(request)
+    cfg = get_config() or {}
+    conf = cfg.get("configurable") or {}
+    conf_dict = conf if isinstance(conf, dict) else {}
+    user_raw = conf_dict.get("user_id")
+    user_id = user_raw.strip() if isinstance(user_raw, str) and user_raw.strip() else ""
+    client = chat_http_client_var.get(None)
+    if not user_id or client is None:
+        return result
+
+    model_raw = conf_dict.get("chat_gateway_model")
+    model = model_raw.strip() if isinstance(model_raw, str) and model_raw.strip() else None
+    mode_raw = conf_dict.get("chat_mode")
+    mode = mode_raw.strip() if isinstance(mode_raw, str) and mode_raw.strip() else "general"
+    tokens = usage_from_model_result(result)
+    await record_ai_usage_event(
+        client,
+        user_id=user_id,
+        provider="ai_gateway",
+        feature="chat",
+        status="succeeded",
+        model=model,
+        units=1,
+        metadata={
+            "mode": mode,
+            "input_tokens": tokens["input_tokens"],
+            "output_tokens": tokens["output_tokens"],
+            "total_tokens": tokens["total_tokens"],
+        },
+    )
+    return result
 
 
 @wrap_tool_call  # type: ignore[call-overload]
@@ -259,7 +309,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
     ]
     # Placeholder model — overridden per request by _select_chat_model_and_tools.
     placeholder_llm = chat_llm_for_gateway_model(None, streaming=True)
-    # Middleware order: prompt → select model/tools/trim → retry model → tool errors.
+    # Middleware order: prompt → select model/tools/trim → retry → record usage → tool errors.
     return create_agent(
         model=placeholder_llm,
         tools=all_tools,
@@ -267,6 +317,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
             _dynamic_chat_prompt,
             _select_chat_model_and_tools,
             _retry_chat_model_call,
+            _record_chat_llm_usage,
             _handle_tool_errors,
         ],
         state_schema=ChatAgentState,

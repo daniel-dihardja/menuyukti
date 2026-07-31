@@ -22,6 +22,10 @@ import {
   type WorkspaceMediaAccess,
 } from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  RECORD_AI_USAGE_EVENT_MUTATION,
+  type RecordAiUsageEventData,
+} from '@/lib/graphql/queries/ai-usage'
 import { STYLE_QUERY, type StyleData } from '@/lib/graphql/queries/styles'
 import { runTextToImageWithReferences } from '@/lib/leonardo'
 import {
@@ -324,6 +328,7 @@ export async function runInstagramImageGeneration(
   }
 
   let outBuffer: Buffer
+  let generationId: string | undefined
   try {
     const leonardoPrompt = buildInstagramPostPrompt({
       userPrompt: prompt,
@@ -333,13 +338,15 @@ export async function runInstagramImageGeneration(
       style: stylePack,
     })
 
-    outBuffer = await runTextToImageWithReferences(
+    const leonardoResult = await runTextToImageWithReferences(
       leonardoPrompt,
       outputWidth,
       outputHeight,
       referenceBuffers,
       model,
     )
+    outBuffer = leonardoResult.buffer
+    generationId = leonardoResult.generationId
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Processing failed'
     const stack = err instanceof Error ? err.stack : undefined
@@ -386,6 +393,28 @@ export async function runInstagramImageGeneration(
   }
 
   const url = await getPresignedGetUrl(outputKey)
+
+  try {
+    await graphqlQuery<RecordAiUsageEventData>(
+      RECORD_AI_USAGE_EVENT_MUTATION,
+      {
+        provider: 'leonardo',
+        feature: 'post_generate',
+        status: 'succeeded',
+        model,
+        externalId: generationId ?? null,
+        units: 1,
+        metadata: { format, quality },
+      },
+      userId,
+    )
+  } catch (err) {
+    console.error(`${logPrefix} recordAiUsageEvent failed`, {
+      userIdPrefix: userId.slice(0, 8),
+      message: err instanceof Error ? err.message : String(err),
+    })
+  }
+
   return {
     ok: true,
     data: {

@@ -142,17 +142,17 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <Users className="w-4 h-4" />,
     group: 'account',
   },
-]
-
-/** Platform tools; visibility keys listed in `config/admin-only-features.json`. */
-const NAV_ADMIN: NavItem[] = [
   {
     key: 'usage',
     labelKey: 'usage',
     href: routes.usage,
     icon: <BarChart3 className="w-4 h-4" />,
+    group: 'account',
   },
 ]
+
+/** Platform tools; visibility keys listed in `config/admin-only-features.json`. */
+const NAV_ADMIN: NavItem[] = []
 
 type NavMenuItemsProps = {
   items: NavItem[]

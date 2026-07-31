@@ -40,7 +40,6 @@ describe('feature-flags', () => {
   it('leaves unlisted paths enabled', () => {
     expect(isPathnameFeatureEnabled('/privacy')).toBe(true)
     expect(isPathnameFeatureEnabled('/login')).toBe(true)
-    // Admin-gated via admin-only-features.json, not feature-flags.
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
     expect(isNavKeyEnabled('usage')).toBe(true)
   })

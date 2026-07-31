@@ -22,13 +22,6 @@
       "actionMenuKeys": []
     },
     {
-      "id": "aiGatewayUsage",
-      "description": "Vercel AI Gateway usage and credits (admin).",
-      "routePrefixes": ["/usage"],
-      "navKeys": ["usage"],
-      "actionMenuKeys": []
-    },
-    {
       "id": "analyticsHeatmap",
       "description": "Menu sales heatmap report from the sales actions menu (admin).",
       "routePrefixes": [],

@@ -690,33 +690,39 @@
   "usage": {
     "title": "AI usage",
     "breadcrumb": "AI usage",
-    "heading": "Vercel AI Gateway usage",
-    "description": "Credit balance and per-model token spend from your AI Gateway account (last 30 days UTC for the model breakdown).",
-    "dateRange": "Model breakdown period: {start} → {end} (UTC).",
-    "credits": {
-      "sectionTitle": "Credits",
-      "balanceLabel": "Balance",
-      "totalUsedLabel": "Total used",
+    "heading": "Your AI usage",
+    "description": "Your LLM spend via AI Gateway and Leonardo image generations for the last 30 days (UTC).",
+    "dateRange": "Period: {start} → {end} (UTC).",
+    "llm": {
+      "sectionTitle": "Language models",
+      "sectionHint": "Token and cost data from the AI Gateway reporting API for your account when Custom Reporting is available.",
+      "sectionHintLedger": "Request and token counts from Menuyukti’s usage ledger (recorded on each chat / helper call).",
+      "ledgerCostNote": "USD cost requires Vercel AI Gateway Custom Reporting (Pro/Enterprise). Counts below still reflect your usage.",
       "missingKeyTitle": "AI Gateway key not configured",
       "missingKeyDescription": "Set AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN for the web app so usage can be loaded. See Vercel AI Gateway documentation.",
-      "errorTitle": "Could not load credits",
-      "httpError": "The credits request failed (HTTP {status}).",
-      "parseError": "The credits response could not be read."
-    },
-    "report": {
-      "sectionTitle": "Usage by model",
-      "sectionHint": "Per-model data uses the AI Gateway reporting API (Vercel Pro or Enterprise). Each page load runs one report query; on lower tiers you may see an access message instead of a table.",
-      "forbiddenTitle": "Model breakdown unavailable",
-      "forbiddenDescription": "Your plan or key may not include custom reporting, or the reporting API returned access denied. Credits above may still be accurate.",
+      "forbiddenTitle": "No language-model usage yet",
+      "forbiddenDescription": "Custom Reporting is unavailable on this Vercel plan. Send a chat message first — usage is recorded in Menuyukti and will appear here.",
       "errorTitle": "Could not load model breakdown",
       "httpError": "The report request failed (HTTP {status}).",
       "parseError": "The report response could not be read.",
-      "empty": "No usage rows for this period. Data can take a few minutes to appear after requests.",
+      "empty": "No language-model usage for this period yet. Chat once, then refresh.",
       "columnModel": "Model",
       "columnRequests": "Requests",
       "columnInputTokens": "Input tokens",
       "columnOutputTokens": "Output tokens",
       "columnCost": "Cost (USD)"
+    },
+    "leonardo": {
+      "sectionTitle": "Image generation (Leonardo)",
+      "sectionHint": "Successful Instagram image generations attributed to your account.",
+      "errorTitle": "Could not load image usage",
+      "errorDescription": "The usage summary could not be loaded from GraphQL. Try again later.",
+      "empty": "No Leonardo generations recorded for this period yet.",
+      "totalUnits": "Total generations: {count}",
+      "columnFeature": "Feature",
+      "columnModel": "Model",
+      "columnGenerations": "Generations",
+      "columnEvents": "Events"
     }
   },
   "platform": {

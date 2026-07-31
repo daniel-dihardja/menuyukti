@@ -120,6 +120,7 @@ def test_draft_http_success(mock_draft: AsyncMock, client: TestClient) -> None:
         image_url="data:image/png;base64,aaa",
         intent="Warm oat template; headline optional",
         gateway_model_id="openai/gpt-4o",
+        reporting_user="user_1",
     )
 
 
