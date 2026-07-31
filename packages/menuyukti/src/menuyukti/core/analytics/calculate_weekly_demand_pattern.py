@@ -3,9 +3,19 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, cast
 
+import numpy as np
 import pandas as pd
+
+from menuyukti.core.analytics.demand_labels import (
+    HIGH_DEMAND_THRESHOLD,
+    LOW_DEMAND_THRESHOLD,
+)
+from menuyukti.core.analytics.frame_contracts import (
+    require_columns,
+    weekly_demand_columns,
+)
 
 
 class OrderRowForWeeklyDemand(TypedDict):
@@ -33,11 +43,9 @@ def calculate_weekly_demand_pattern(df: pd.DataFrame) -> list[WeeklyDemandPatter
     if df.empty:
         return []
 
-    require = {"bill_number", "order_time", "total_after_bill_discount"}
-    missing = require - set(df.columns)
-    if missing:
-        msg = f"weekly demand pattern missing columns: {sorted(missing)}"
-        raise ValueError(msg)
+    require_columns(
+        df, weekly_demand_columns(), context="calculate_weekly_demand_pattern"
+    )
 
     work = df.copy()
     work["order_time"] = pd.to_datetime(work["order_time"], utc=True)
@@ -69,24 +77,28 @@ def calculate_weekly_demand_pattern(df: pd.DataFrame) -> list[WeeklyDemandPatter
     mean_rev = float(weekly["revenue"].mean()) or 1.0
     mean_tx = float(weekly["transactions"].mean()) or 1.0
 
+    weekly["revenue_index"] = weekly["revenue"] / mean_rev
+    weekly["tx_index"] = weekly["transactions"] / mean_tx
+    blend = (weekly["revenue_index"] + weekly["tx_index"]) / 2.0
+    # Shared 0.9 / 1.1 thresholds (see demand_labels).
+    weekly["relative_demand"] = np.select(
+        [blend < LOW_DEMAND_THRESHOLD, blend > HIGH_DEMAND_THRESHOLD],
+        ["low", "high"],
+        default="average",
+    )
+
     out: list[WeeklyDemandPatternRow] = []
-    for _, row in weekly.iterrows():
-        rev_idx = float(row["revenue"]) / mean_rev
-        tx_idx = float(row["transactions"]) / mean_tx
-        blend = (rev_idx + tx_idx) / 2.0
-        if blend < 0.9:
-            rel: Literal["low", "average", "high"] = "low"
-        elif blend > 1.1:
-            rel = "high"
-        else:
-            rel = "average"
+    for row in weekly.to_dict(orient="records"):
         out.append(
             WeeklyDemandPatternRow(
                 iso_week=str(row["iso_week_key"]),
                 week_label=str(row["iso_week_key"]),
-                revenue_index=round(rev_idx, 4),
-                tx_index=round(tx_idx, 4),
-                relative_demand=rel,
+                revenue_index=round(float(row["revenue_index"]), 4),
+                tx_index=round(float(row["tx_index"]), 4),
+                relative_demand=cast(
+                    Literal["low", "average", "high"],
+                    str(row["relative_demand"]),
+                ),
             )
         )
     return out

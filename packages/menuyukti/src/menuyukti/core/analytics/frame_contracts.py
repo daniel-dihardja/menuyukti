@@ -87,6 +87,26 @@ def menu_basket_affinities_columns() -> list[str]:
     return [_COL.BILL_NUMBER, _COL.MENU]
 
 
+def heatmap_columns() -> list[str]:
+    """Minimum columns for :func:`calculate_menu_heatmaps`."""
+    return [_COL.MENU, _COL.QTY, _COL.ORDER_TIME]
+
+
+def weekly_demand_columns() -> list[str]:
+    """Minimum columns for :func:`calculate_weekly_demand_pattern`."""
+    return [_COL.BILL_NUMBER, _COL.ORDER_TIME, _COL.TOTAL_AFTER_BILL_DISCOUNT]
+
+
+def slot_demand_columns() -> list[str]:
+    """Minimum columns for :func:`calculate_slot_demand_profile`."""
+    return [_COL.BILL_NUMBER, _COL.ORDER_TIME]
+
+
+def menu_engineering_columns() -> list[str]:
+    """Minimum columns for :func:`calculate_menu_engineering_matrix` (menu-level)."""
+    return ["menu", "quantity", "total_revenue"]
+
+
 def ensure_optional_category_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Ensure ``menu_category`` and ``menu_category_detail`` exist, filling with

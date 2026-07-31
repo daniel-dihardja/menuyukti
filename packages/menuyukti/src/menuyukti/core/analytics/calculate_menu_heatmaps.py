@@ -3,9 +3,26 @@ from typing import Literal, NotRequired, TypedDict, cast
 
 import pandas as pd
 
-WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+from menuyukti.core.analytics.frame_contracts import (
+    ensure_optional_category_columns,
+    heatmap_columns,
+    require_columns,
+)
+from menuyukti.core.analytics.meal_periods import WEEKDAY_ORDER
 
 Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+# Re-export for callers/tests that import WEEKDAY_ORDER from this module.
+__all__ = [
+    "WEEKDAY_ORDER",
+    "Weekday",
+    "OrderRowForHeatmap",
+    "DailyHeatmapRow",
+    "WeeklyHeatmapRow",
+    "MenuHeatmapPayload",
+    "calculate_menu_heatmaps",
+    "compute_menu_heatmaps_from_orders",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +64,13 @@ class MenuHeatmapPayload(TypedDict):
     reporting_period: str
 
 
+def _first_unique_or_none(series: pd.Series) -> object | None:
+    values = series.dropna().unique()
+    if len(values) == 0:
+        return None
+    return values[0]
+
+
 def calculate_menu_heatmaps(df: pd.DataFrame) -> list[MenuHeatmapPayload]:
     """
     Calculate daily (hourly) and weekly heatmaps per menu item.
@@ -55,77 +79,112 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> list[MenuHeatmapPayload]:
     - menu
     - qty
     - order_time (datetime)
-    - menu_category
-    - menu_category_detail
+    - menu_category (optional; filled with None when absent)
+    - menu_category_detail (optional; filled with None when absent)
     """
-
     if df.empty:
         return []
 
-    df = df.copy()
+    require_columns(df, heatmap_columns(), context="calculate_menu_heatmaps")
+    df = ensure_optional_category_columns(df).copy()
 
     df["hour"] = df["order_time"].dt.hour
     df["weekday"] = df["order_time"].dt.day_name().str.lower().str[:3]
     reporting_period = df["order_time"].min().strftime("%Y-%m")
 
-    heatmap_results: list[MenuHeatmapPayload] = []
-
-    for menu_item, group in df.groupby("menu", sort=False):
-
-        # -------------------------------------------------
-        # SAFELY EXTRACT SINGLE CATEGORY VALUES
-        # -------------------------------------------------
-        # We assume a menu item belongs to ONE category.
-        # If multiple appear, the data pipeline is broken.
-        menu_category_values = group["menu_category"].dropna().unique()
-        menu_category_detail_values = group["menu_category_detail"].dropna().unique()
-
-        if len(menu_category_values) > 1:
-            raise ValueError(
-                f"Menu '{menu_item}' has multiple categories: {menu_category_values}"
-            )
-
-        if len(menu_category_detail_values) > 1:
-            raise ValueError(
-                f"Menu '{menu_item}' has multiple category details: {menu_category_detail_values}"
-            )
-
-        menu_category = menu_category_values[0] if len(menu_category_values) else None
-        menu_category_detail = (
-            menu_category_detail_values[0] if len(menu_category_detail_values) else None
+    # One category / detail per menu; raise if the pipeline has conflicting values.
+    cat_nunique = df.groupby("menu", sort=False)["menu_category"].nunique(dropna=True)
+    detail_nunique = df.groupby("menu", sort=False)["menu_category_detail"].nunique(
+        dropna=True
+    )
+    multi_cat = cat_nunique[cat_nunique > 1]
+    if not multi_cat.empty:
+        menu_item = multi_cat.index[0]
+        values = df.loc[df["menu"] == menu_item, "menu_category"].dropna().unique()
+        raise ValueError(f"Menu '{menu_item}' has multiple categories: {values}")
+    multi_detail = detail_nunique[detail_nunique > 1]
+    if not multi_detail.empty:
+        menu_item = multi_detail.index[0]
+        values = (
+            df.loc[df["menu"] == menu_item, "menu_category_detail"].dropna().unique()
+        )
+        raise ValueError(
+            f"Menu '{menu_item}' has multiple category details: {values}"
         )
 
-        # -------- Daily (hourly) heatmap --------
-        hourly_qty = group.groupby("hour")["qty"].sum()
+    categories = (
+        df.groupby("menu", sort=False)
+        .agg(
+            menu_category=("menu_category", _first_unique_or_none),
+            menu_category_detail=("menu_category_detail", _first_unique_or_none),
+        )
+    )
+
+    hourly = (
+        df.pivot_table(
+            values="qty",
+            index="menu",
+            columns="hour",
+            aggfunc="sum",
+            fill_value=0,
+        )
+        .reindex(columns=range(24), fill_value=0)
+    )
+
+    df["weekday"] = pd.Categorical(
+        df["weekday"],
+        categories=WEEKDAY_ORDER,
+        ordered=True,
+    )
+    weekly = (
+        df.pivot_table(
+            values="qty",
+            index="menu",
+            columns="weekday",
+            aggfunc="sum",
+            fill_value=0,
+            observed=False,
+        )
+        .reindex(columns=WEEKDAY_ORDER, fill_value=0)
+    )
+
+    menus = categories.index.tolist()
+    heatmap_results: list[MenuHeatmapPayload] = []
+    for menu_item in menus:
+        hourly_row = hourly.loc[menu_item] if menu_item in hourly.index else None
+        weekly_row = weekly.loc[menu_item] if menu_item in weekly.index else None
+        cat_row = categories.loc[menu_item]
 
         daily_heatmap: list[DailyHeatmapRow] = [
-            {"hour": hour, "quantity": int(hourly_qty.get(hour, 0))}
+            {
+                "hour": hour,
+                "quantity": int(hourly_row[hour]) if hourly_row is not None else 0,
+            }
             for hour in range(24)
         ]
-
-        # -------- Weekly heatmap (ordered) --------
-        weekly_qty = (
-            group.assign(
-                weekday=pd.Categorical(
-                    group["weekday"],
-                    categories=WEEKDAY_ORDER,
-                    ordered=True,
-                )
-            )
-            .groupby("weekday")["qty"]
-            .sum()
-        )
-
         weekly_heatmap: list[WeeklyHeatmapRow] = [
-            {"day": cast(Weekday, day), "quantity": int(weekly_qty.get(day, 0))}
+            {
+                "day": cast(Weekday, day),
+                "quantity": int(weekly_row[day]) if weekly_row is not None else 0,
+            }
             for day in WEEKDAY_ORDER
         ]
 
+        menu_category = cat_row["menu_category"]
+        menu_category_detail = cat_row["menu_category_detail"]
+        if menu_category is not None and pd.isna(menu_category):
+            menu_category = None
+        if menu_category_detail is not None and pd.isna(menu_category_detail):
+            menu_category_detail = None
         heatmap_results.append(
             {
-                "menu": menu_item,
-                "menu_category": menu_category,
-                "menu_category_detail": menu_category_detail,
+                "menu": str(menu_item),
+                "menu_category": None if menu_category is None else str(menu_category),
+                "menu_category_detail": (
+                    None
+                    if menu_category_detail is None
+                    else str(menu_category_detail)
+                ),
                 "daily_heatmap": daily_heatmap,
                 "weekly_heatmap": weekly_heatmap,
                 "reporting_period": reporting_period,
@@ -166,8 +225,4 @@ def compute_menu_heatmaps_from_orders(
         return []
 
     df = pd.DataFrame(order_rows)
-    if "menu_category" not in df.columns:
-        df["menu_category"] = None
-    if "menu_category_detail" not in df.columns:
-        df["menu_category_detail"] = None
     return calculate_menu_heatmaps(df)

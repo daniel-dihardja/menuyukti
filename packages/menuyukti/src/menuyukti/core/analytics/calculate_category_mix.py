@@ -112,7 +112,7 @@ def calculate_category_mix(df: pd.DataFrame) -> CategoryMixResult:
             qty_share=round(float(r["qty_share"]), 6),
             top_item=str(r["top_item"]),
         )
-        for _, r in mix.iterrows()
+        for r in mix.to_dict(orient="records")
     ]
 
     top_revenue_category = rows[0]["category"] if rows else None

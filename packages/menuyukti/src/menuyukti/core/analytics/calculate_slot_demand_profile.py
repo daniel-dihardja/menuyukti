@@ -8,14 +8,22 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
-from typing import Literal, TypedDict
+from typing import TypedDict
 
 import pandas as pd
 
+from menuyukti.core.analytics.bill_aggregation import bill_min_order_times
 from menuyukti.core.analytics.calculate_combo_pair_timing import (
     ComboPairTimingCell,
     ComboPairTimingResult,
 )
+from menuyukti.core.analytics.demand_labels import (
+    PromoPosture,
+    RelativeDemand,
+    posture_from_relative,
+    relative_demand,
+)
+from menuyukti.core.analytics.frame_contracts import require_columns, slot_demand_columns
 from menuyukti.core.analytics.meal_periods import (
     MEAL_PERIODS,
     WEEKDAY_ORDER,
@@ -24,11 +32,6 @@ from menuyukti.core.analytics.meal_periods import (
 )
 from menuyukti.core.analytics.slot_keys import slot_key
 
-RelativeDemand = Literal["low", "average", "high"]
-PromoPosture = Literal["support", "promote", "maintain"]
-
-LOW_DEMAND_THRESHOLD = 0.9
-HIGH_DEMAND_THRESHOLD = 1.1
 SLOT_COUNT = len(WEEKDAY_ORDER) * len(MEAL_PERIODS)
 MEAN_SLOT_TRAFFIC_SHARE = 1.0 / SLOT_COUNT
 
@@ -77,22 +80,6 @@ class VenueSlotPerformanceSummary(TypedDict):
     strong_slots: list[str]
     slots_needing_promotion: list[str]
     summary: str
-
-
-def _relative_demand(demand_index: float) -> RelativeDemand:
-    if demand_index < LOW_DEMAND_THRESHOLD:
-        return "low"
-    if demand_index > HIGH_DEMAND_THRESHOLD:
-        return "high"
-    return "average"
-
-
-def _posture_from_relative(relative: RelativeDemand) -> PromoPosture:
-    if relative == "high":
-        return "support"
-    if relative == "low":
-        return "promote"
-    return "maintain"
 
 
 def _day_label(day: str) -> str:
@@ -154,23 +141,13 @@ def calculate_slot_demand_profile(df: pd.DataFrame) -> list[SlotDemandCell]:
     if df.empty:
         return []
 
-    require = {"bill_number", "order_time"}
-    missing = require - set(df.columns)
-    if missing:
-        msg = f"slot demand profile missing columns: {sorted(missing)}"
-        raise ValueError(msg)
+    require_columns(df, slot_demand_columns(), context="calculate_slot_demand_profile")
 
     work = df.copy()
     work["order_time"] = pd.to_datetime(work["order_time"], utc=True)
     work["bill_number"] = work["bill_number"].astype(str)
 
-    bill_time: dict[str, datetime] = {}
-    for row in work.itertuples(index=False):
-        bn = str(row.bill_number)
-        ot = row.order_time.to_pydatetime() if hasattr(row.order_time, "to_pydatetime") else row.order_time
-        if bn not in bill_time or ot < bill_time[bn]:
-            bill_time[bn] = ot
-
+    bill_time = bill_min_order_times(work)
     total_orders = len(bill_time)
     if total_orders == 0:
         return []
@@ -192,7 +169,7 @@ def calculate_slot_demand_profile(df: pd.DataFrame) -> list[SlotDemandCell]:
             demand_index = (
                 traffic_share / MEAN_SLOT_TRAFFIC_SHARE if MEAN_SLOT_TRAFFIC_SHARE > 0 else 0.0
             )
-            relative = _relative_demand(demand_index)
+            relative = relative_demand(demand_index)
 
             cells.append(
                 SlotDemandCell(
@@ -243,7 +220,7 @@ def summarize_venue_slot_performance(
                 order_count=cell["order_count"],
                 demand_index=cell["demand_index"],
                 relative_demand=relative,
-                posture=_posture_from_relative(relative),
+                posture=posture_from_relative(relative),
             )
         )
 
@@ -331,7 +308,7 @@ def derive_combo_promo_posture(
     venue_cell = _slot_profile_lookup(slot_profile).get((peak_day, peak_period))
     relative: RelativeDemand = venue_cell["relative_demand"] if venue_cell else "average"
     venue_index = venue_cell["demand_index"] if venue_cell else None
-    posture = _posture_from_relative(relative)
+    posture = posture_from_relative(relative)
     peak_window = _format_peak_window(peak_day, peak_label)
 
     return {

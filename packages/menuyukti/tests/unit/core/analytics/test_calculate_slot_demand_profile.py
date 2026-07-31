@@ -6,11 +6,11 @@ from menuyukti.core.analytics.calculate_combo_pair_timing import (
     compute_combo_pair_timing_from_orders,
 )
 from menuyukti.core.analytics.calculate_slot_demand_profile import (
-    LOW_DEMAND_THRESHOLD,
     compute_slot_demand_profile_from_orders,
     derive_combo_promo_posture,
     summarize_venue_slot_performance,
 )
+from menuyukti.core.analytics.demand_labels import LOW_DEMAND_THRESHOLD
 
 
 def _row(bill: str, menu: str, order_time: datetime) -> dict:

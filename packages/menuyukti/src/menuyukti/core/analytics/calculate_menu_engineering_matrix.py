@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import NotRequired, TypedDict
 
+import numpy as np
 import pandas as pd
+
+from menuyukti.core.analytics.frame_contracts import (
+    menu_engineering_columns,
+    require_columns,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -180,10 +186,9 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrix
     # --------------------------------------------------
     # Validation
     # --------------------------------------------------
-    required_cols = {"menu", "quantity", "total_revenue"}
-    missing = required_cols - set(df.columns)
-    if missing:
-        raise ValueError(f"Missing required columns: {missing}")
+    require_columns(
+        df, menu_engineering_columns(), context="calculate_menu_engineering_matrix"
+    )
 
     df = df.copy()
 
@@ -251,18 +256,19 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrix
     df.loc[~popular & profitable, "category"] = "puzzle"
 
     # --------------------------------------------------
-    # Action recommendation
+    # Action recommendation (vectorized; mirrors _classify_action)
     # --------------------------------------------------
-    df["action"] = df.apply(
-        lambda r: _classify_action(
-            str(r["category"]),
-            float(r["contribution_margin_percentage"]),
-            float(r["margin_per_unit"]),
-            float(r["quantity"]),
-            float(avg_margin),
-            float(avg_popularity),
-        ),
-        axis=1,
+    remove = (
+        (df["category"] == "low_end")
+        & (df["contribution_margin_percentage"] < 0.005)
+        & (df["quantity"] < avg_popularity)
+    )
+    reprice = (df["category"] == "low_end") & (df["margin_per_unit"] >= avg_margin) & ~remove
+    promote = (df["category"] == "puzzle") & ~remove & ~reprice
+    df["action"] = np.select(
+        [promote, reprice, remove],
+        ["promote", "reprice", "remove"],
+        default="keep",
     )
 
     # --------------------------------------------------
@@ -303,6 +309,33 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrix
     # --------------------------------------------------
     # Output (JSON-friendly)
     # --------------------------------------------------
+    sorted_df = df.sort_values(
+        by=["quantity", "total_revenue", "menu"],
+        ascending=[False, False, True],
+        kind="mergesort",
+    )
+    item_records = sorted_df.to_dict(orient="records")
+    items: list[MenuEngineeringMatrixItem] = [
+        {
+            "menu": row["menu"],
+            "quantity": int(row["quantity"]),
+            "total_revenue": round(float(row["total_revenue"]), 2),
+            "cogs": round(float(row["cogs"]), 2),
+            "total_cogs": round(float(row["total_cogs"]), 2),
+            "contribution_margin": round(float(row["contribution_margin"]), 2),
+            "contribution_margin_percentage": round(
+                float(row["contribution_margin_percentage"]), 4
+            ),
+            "margin_per_unit": round(float(row["margin_per_unit"]), 2),
+            "we_value": round(float(row["we_value"]), 4),
+            "category": row["category"],
+            "action": row["action"],
+            "menu_category": row.get("menu_category"),
+            "menu_category_detail": row.get("menu_category_detail"),
+        }
+        for row in item_records
+    ]
+
     return {
         "thresholds": {
             "avg_popularity": round(avg_popularity, 2),
@@ -315,28 +348,5 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrix
             "total_margin": round(total_margin_ratio, 4),  # (revenue − cogs) / revenue
         },
         "distribution": distribution,
-        "items": [
-            {
-                "menu": row["menu"],
-                "quantity": int(row["quantity"]),
-                "total_revenue": round(row["total_revenue"], 2),
-                "cogs": round(row["cogs"], 2),
-                "total_cogs": round(row["total_cogs"], 2),
-                "contribution_margin": round(row["contribution_margin"], 2),
-                "contribution_margin_percentage": round(
-                    row["contribution_margin_percentage"], 4
-                ),
-                "margin_per_unit": round(row["margin_per_unit"], 2),
-                "we_value": round(row["we_value"], 4),
-                "category": row["category"],
-                "action": row["action"],
-                "menu_category": row.get("menu_category"),
-                "menu_category_detail": row.get("menu_category_detail"),
-            }
-            for _, row in df.sort_values(
-                by=["quantity", "total_revenue", "menu"],
-                ascending=[False, False, True],
-                kind="mergesort",
-            ).iterrows()
-        ],
+        "items": items,
     }

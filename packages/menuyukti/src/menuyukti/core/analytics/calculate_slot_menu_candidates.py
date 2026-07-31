@@ -18,6 +18,7 @@ from menuyukti.core.analytics.calculate_slot_demand_profile import (
     SlotDemandCell,
     compute_slot_demand_profile_from_orders,
 )
+from menuyukti.core.analytics.demand_labels import posture_from_relative
 from menuyukti.core.analytics.meal_periods import MEAL_PERIODS, WEEKDAY_ORDER
 from menuyukti.core.analytics.slot_keys import slot_key
 
@@ -90,14 +91,6 @@ class SlotMenuCandidatesResult(TypedDict):
     matrix_available: bool
     coverage_notes: list[str]
     slots: list[SlotMenuCandidatesCell]
-
-
-def _posture_from_relative(relative: RelativeDemand) -> PromoPosture:
-    if relative == "high":
-        return "support"
-    if relative == "low":
-        return "promote"
-    return "maintain"
 
 
 def _recommended_categories(posture: PromoPosture) -> list[MatrixCategory]:
@@ -223,7 +216,7 @@ def _build_candidates_for_slot(
     matrix_by_menu: dict[str, MenuEngineeringMatrixItem],
     resolved: dict[str, object],
 ) -> SlotMenuCandidatesCell:
-    posture = _posture_from_relative(cell["relative_demand"])
+    posture = posture_from_relative(cell["relative_demand"])
     recommended = _recommended_categories(posture)
     min_venue_orders = int(resolved["min_venue_orders_in_slot"])
     min_item_qty = int(resolved["min_item_qty_in_slot"])

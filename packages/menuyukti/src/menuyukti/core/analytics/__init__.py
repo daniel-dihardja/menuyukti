@@ -7,12 +7,11 @@
 2. Implement ``calculate_<name>(df: pd.DataFrame)`` and call
    ``require_columns`` (from ``frame_contracts``) with the matching
    ``*_columns()`` helper (e.g. ``category_mix_columns``,
-   ``revenue_trends_columns``, ``line_item_columns_full``) so missing
-   columns fail with ``ValueError`` instead of ``KeyError``.
+   ``revenue_trends_columns``, ``heatmap_columns``, ``line_item_columns_full``)
+   so missing columns fail with ``ValueError`` instead of ``KeyError``.
 3. Expose ``compute_<name>_from_orders(rows: list[...])`` that builds
    ``pd.DataFrame(rows)`` and delegates to ``calculate_<name>``.
-4. Prefer vectorized groupby/merge/resample; avoid row loops except where the
-   output shape is inherently per-entity (e.g. heatmaps per menu).
+4. Prefer vectorized groupby/merge/resample; avoid row loops for aggregations.
 
 **Composition-only** (no ``DataFrame`` in the public API):
 
@@ -30,10 +29,16 @@
 Callers outside this package should prefer typed row lists and
 ``compute_*_from_orders`` over constructing ``DataFrame`` objects ad hoc.
 
-**Empty inputs:** ``compute_*_from_orders`` either returns an empty structured
-result (``[]`` / ``None``), or raises ``ValueError`` when the pipeline cannot
-run without rows — see each function's docstring. GraphQL services guard with
-``if not facts: return None`` before calling into the package.
+**Empty-input policy** (``compute_*_from_orders`` / empty frames):
+
+| Behavior | Pipelines |
+|----------|-----------|
+| Raise ``ValueError`` | sales analytics, category mix, popularity, revenue trends (empty current), menu engineering |
+| Return empty structure (``[]`` / empty TypedDict lists) | heatmaps, weekly demand, slot demand, basket affinities, combo pair timing |
+| Return ``None`` | operating profile / order metrics by day when no positive-revenue bills |
+
+GraphQL services typically guard with ``if not facts: return None`` before calling
+into the package.
 """
 
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
@@ -158,11 +163,15 @@ from menuyukti.core.analytics.frame_contracts import (
     category_mix_columns,
     ensure_optional_category_columns,
     extract_menu_items_required_columns,
+    heatmap_columns,
     line_item_columns_full,
     menu_basket_affinities_columns,
+    menu_engineering_columns,
     popularity_index_columns,
     require_columns,
     revenue_trends_columns,
+    slot_demand_columns,
+    weekly_demand_columns,
 )
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from menuyukti.core.analytics.registry import NORMALIZERS, get_normalizer
@@ -255,11 +264,15 @@ __all__ = [
     "ensure_optional_category_columns",
     "extract_menu_items",
     "extract_menu_items_required_columns",
+    "heatmap_columns",
     "line_item_columns_full",
     "menu_basket_affinities_columns",
+    "menu_engineering_columns",
     "popularity_index_columns",
     "require_columns",
     "revenue_trends_columns",
+    "slot_demand_columns",
+    "weekly_demand_columns",
     "detect_pos_from_excel_bytes",
     "get_normalizer",
     "NORMALIZERS",

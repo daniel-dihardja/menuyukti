@@ -204,30 +204,25 @@ def _compute_weekday_weekend_holiday(
     holiday_bill_numbers: set[str],
     total_orders: int,
 ) -> tuple[int, int, int, float, float, float, float, float, float]:
-    weekday_orders = sum(
-        1
-        for bn, dt in bill_time.items()
-        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
-    )
-    weekend_orders = sum(
-        1
-        for bn, dt in bill_time.items()
-        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
-    )
+    weekday_orders = 0
+    weekend_orders = 0
+    weekday_revenue = 0.0
+    weekend_revenue = 0.0
+    holiday_revenue = 0.0
+
+    for bn, dt in bill_time.items():
+        rev = bill_revenue[bn]
+        if bn in holiday_bill_numbers:
+            holiday_revenue += rev
+            continue
+        if _abbr(dt) in _WEEKEND_DAYS:
+            weekend_orders += 1
+            weekend_revenue += rev
+        else:
+            weekday_orders += 1
+            weekday_revenue += rev
+
     holiday_orders = len(holiday_bill_numbers)
-
-    weekday_revenue = sum(
-        bill_revenue[bn]
-        for bn, dt in bill_time.items()
-        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
-    )
-    weekend_revenue = sum(
-        bill_revenue[bn]
-        for bn, dt in bill_time.items()
-        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
-    )
-    holiday_revenue = sum(bill_revenue[bn] for bn in holiday_bill_numbers)
-
     weekday_share = weekday_orders / total_orders if total_orders else 0.0
     weekend_share = weekend_orders / total_orders if total_orders else 0.0
     holiday_share = holiday_orders / total_orders if total_orders else 0.0
