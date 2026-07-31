@@ -5,7 +5,6 @@ import { useFormatter } from 'next-intl'
 import {
   Check,
   Download,
-  Loader2,
   Maximize2,
   MoreHorizontal,
   Play,
@@ -30,6 +29,7 @@ import {
   EmptyTitle,
 } from '@workspace/ui/components/empty'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { formatBytes, formatDimensions, MEDIA_GRID_SKELETON_COUNT } from '@/lib/format-media'
@@ -260,7 +260,7 @@ function ContentMediaTileActions({
               disabled={isDeleting}
               onClick={(e) => e.stopPropagation()}
             >
-              {isDeleting ? <Loader2 className="animate-spin" /> : <MoreHorizontal />}
+              {isDeleting ? <Spinner /> : <MoreHorizontal />}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -319,7 +319,7 @@ function ContentMediaTileActions({
             onDeleteRequest(item.name)
           }}
         >
-          {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
+          {isDeleting ? <Spinner /> : <Trash2 />}
         </Button>
       </div>
     </>
@@ -364,13 +364,7 @@ function ContentMediaTile({ item }: { item: ContentCatalogItem }) {
     onSelect?.(item)
   }
 
-  const handleMediaKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      if (selectionEnabled) toggleSelect()
-      else openPreview()
-    }
-  }
+  const caption = item.displayName?.trim() || item.name
 
   return (
     <figure
@@ -383,44 +377,49 @@ function ContentMediaTile({ item }: { item: ContentCatalogItem }) {
       )}
       data-selected={isSelected ? 'true' : undefined}
     >
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={selectionEnabled ? selectLabel : previewLabel}
-        aria-pressed={selectionEnabled ? isSelected : undefined}
-        className="relative w-full cursor-pointer overflow-hidden outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        onClick={selectionEnabled ? toggleSelect : openPreview}
-        onKeyDown={handleMediaKeyDown}
-      >
-        <ContentMediaTileMedia item={item} />
-        {selectionEnabled ? (
-          <div
-            className={cn(
-              'absolute top-2 left-2 z-20 flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors',
-              isSelected
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-white/80 bg-black/45 text-white',
-            )}
-            aria-hidden
-          >
-            {isSelected ? <Check className="size-4" strokeWidth={3} /> : null}
-          </div>
-        ) : null}
-        <div
-          className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent ${contentTileOverlayReveal}`}
-        />
-        <div
-          className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end justify-between gap-2 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${contentTileOverlayReveal}`}
+      <figcaption className="sr-only">{caption}</figcaption>
+      <div className="relative w-full overflow-hidden">
+        <button
+          type="button"
+          aria-label={selectionEnabled ? selectLabel : previewLabel}
+          aria-pressed={selectionEnabled ? isSelected : undefined}
+          className="relative w-full cursor-pointer overflow-hidden outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          onClick={selectionEnabled ? toggleSelect : openPreview}
         >
-          {item.displayName?.trim() ? (
-            <figcaption className="min-w-0 flex-1 truncate text-left text-[10px] font-medium text-white drop-shadow sm:text-xs">
-              {item.displayName.trim()}
-            </figcaption>
-          ) : (
-            <figcaption className="hidden min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow sm:block">
-              {item.name}
-            </figcaption>
-          )}
+          <ContentMediaTileMedia item={item} />
+          {selectionEnabled ? (
+            <div
+              className={cn(
+                'absolute top-2 left-2 z-20 flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors',
+                isSelected
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-white/80 bg-black/45 text-white',
+              )}
+              aria-hidden
+            >
+              {isSelected ? <Check className="size-4" strokeWidth={3} /> : null}
+            </div>
+          ) : null}
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent ${contentTileOverlayReveal}`}
+          />
+          <div
+            className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pr-14 ${contentTileOverlayReveal}`}
+          >
+            {item.displayName?.trim() ? (
+              <span className="min-w-0 flex-1 truncate text-left text-[10px] font-medium text-white drop-shadow sm:text-xs">
+                {item.displayName.trim()}
+              </span>
+            ) : (
+              <span className="hidden min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow sm:block">
+                {item.name}
+              </span>
+            )}
+          </div>
+        </button>
+        <div
+          className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end justify-end gap-2 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${contentTileOverlayReveal}`}
+        >
           <div className="pointer-events-auto ml-auto flex shrink-0 items-center gap-1.5 sm:gap-1">
             <ContentMediaTileActions item={item} onOpenPreview={openPreview} />
           </div>

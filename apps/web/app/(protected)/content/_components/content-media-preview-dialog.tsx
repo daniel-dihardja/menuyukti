@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Loader2, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { contentMediaType, type ContentCatalogItem } from './content-catalog-types'
@@ -32,6 +33,7 @@ export function ContentMediaPreviewDialog({
   }
 
   const isVideo = item != null && contentMediaType(item) === 'video'
+  const previewAlt = item?.displayName?.trim() || item?.name || ''
 
   return (
     <Dialog
@@ -57,7 +59,7 @@ export function ContentMediaPreviewDialog({
             </DialogClose>
             {!previewMediaLoaded ? (
               <div className="absolute inset-0 z-0 flex items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" aria-hidden />
+                <Spinner className="h-10 w-10 text-muted-foreground" />
               </div>
             ) : null}
             {isVideo ? (
@@ -78,7 +80,7 @@ export function ContentMediaPreviewDialog({
               /* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */
               <img
                 src={item.url}
-                alt=""
+                alt={previewAlt}
                 width={1200}
                 height={900}
                 className={cn(

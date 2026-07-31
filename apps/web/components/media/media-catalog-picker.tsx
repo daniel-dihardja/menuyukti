@@ -14,10 +14,12 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@workspace/ui/components/popover'
-import { Button } from '@workspace/ui/components/button'
-import { cn } from '@workspace/ui/lib/utils'
-import { ImageIcon, LayoutTemplate, Loader2, X } from 'lucide-react'
+import { ImageIcon, LayoutTemplate, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+
+import { Button } from '@workspace/ui/components/button'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { loadMedia, type MediaCatalogItem } from '@/lib/media/client-api'
 
@@ -90,7 +92,11 @@ export function MediaCatalogPicker({
       <div className="flex items-center gap-2 rounded-md border border-border/60 p-2">
         <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted/20">
           {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
-          <img src={selectedImage.url} alt="" className="size-full object-cover" />
+          <img
+            src={selectedImage.url}
+            alt={selectedImage.name}
+            className="size-full object-cover"
+          />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{selectedImage.name}</p>
@@ -132,7 +138,7 @@ export function MediaCatalogPicker({
           <CommandList>
             {loading ? (
               <div className="flex items-center justify-center gap-2 px-3 py-6 text-muted-foreground text-sm">
-                <Loader2 className="size-4 animate-spin" aria-hidden />
+                <Spinner />
               </div>
             ) : mediaItems.length === 0 ? (
               <CommandEmpty className="px-3 py-6 text-center text-muted-foreground text-sm">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
@@ -42,6 +42,8 @@ import {
 } from '@/lib/calendar/client-api'
 import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 import { useCloseLabel } from '@/hooks/use-close-label'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
+import { useFieldIds } from '@/hooks/use-field-ids'
 
 import { CalendarMediaRefPicker } from './calendar-media-ref-picker'
 
@@ -224,6 +226,7 @@ function CalendarEntryFormFields({
   deleting,
   titleError,
   timeError,
+  focusErrorNonce,
   onTitleChange,
   onDescriptionChange,
   onTimeChange,
@@ -240,6 +243,7 @@ function CalendarEntryFormFields({
   deleting: boolean
   titleError: boolean
   timeError: boolean
+  focusErrorNonce: number
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
   onTimeChange: (value: string) => void
@@ -249,10 +253,24 @@ function CalendarEntryFormFields({
   onSubmit: () => void
 }) {
   const t = useTranslations('platform.calendar.createEntry')
-  const titleId = useId()
-  const timeId = useId()
-  const descriptionId = useId()
+  const isDesktop = useDesktopLayout()
+  const titleField = useFieldIds()
+  const timeField = useFieldIds()
+  const descriptionField = useFieldIds()
+  const titleRef = useRef<HTMLInputElement>(null)
+  const timeRef = useRef<HTMLInputElement>(null)
   const busy = pending || deleting
+
+  useLayoutEffect(() => {
+    if (focusErrorNonce === 0) return
+    if (titleError) {
+      titleRef.current?.focus()
+      return
+    }
+    if (timeError) {
+      timeRef.current?.focus()
+    }
+  }, [focusErrorNonce, titleError, timeError])
 
   return (
     <form
@@ -270,51 +288,66 @@ function CalendarEntryFormFields({
     >
       <FieldGroup className="gap-4">
         <Field data-invalid={titleError || undefined}>
-          <FieldLabel htmlFor={titleId}>{t('titleLabel')}</FieldLabel>
+          <FieldLabel htmlFor={titleField.id}>{t('titleLabel')}</FieldLabel>
           <Input
-            id={titleId}
-            autoFocus
+            ref={titleRef}
+            id={titleField.id}
+            name="title"
+            autoComplete="off"
+            autoFocus={isDesktop}
             value={title}
             disabled={busy}
             aria-invalid={titleError || undefined}
+            aria-describedby={titleField.describedBy(titleError)}
             placeholder={t('titlePlaceholder')}
             onChange={(event) => {
               onTitleChange(event.target.value)
               if (titleError) onClearTitleError()
             }}
           />
-          {titleError ? <FieldError>{t('titleRequired')}</FieldError> : null}
+          {titleError ? (
+            <FieldError id={titleField.errorId}>{t('titleRequired')}</FieldError>
+          ) : null}
         </Field>
 
         <Field data-invalid={timeError || undefined}>
-          <FieldLabel htmlFor={timeId}>{t('timeLabel')}</FieldLabel>
+          <FieldLabel htmlFor={timeField.id}>{t('timeLabel')}</FieldLabel>
           <Input
-            id={timeId}
+            ref={timeRef}
+            id={timeField.id}
+            name="time"
             type="time"
+            autoComplete="off"
             value={time}
             disabled={busy}
             aria-invalid={timeError || undefined}
+            aria-describedby={timeField.describedBy(timeError)}
             onChange={(event) => {
               onTimeChange(event.target.value)
               if (timeError) onClearTimeError()
             }}
           />
-          {timeError ? <FieldError>{t('timeRequired')}</FieldError> : null}
+          {timeError ? <FieldError id={timeField.errorId}>{t('timeRequired')}</FieldError> : null}
         </Field>
 
         <Field>
-          <FieldLabel htmlFor={descriptionId}>{t('descriptionLabel')}</FieldLabel>
+          <FieldLabel htmlFor={descriptionField.id}>{t('descriptionLabel')}</FieldLabel>
           <Textarea
-            id={descriptionId}
+            id={descriptionField.id}
+            name="description"
+            autoComplete="off"
             rows={4}
             value={description}
             disabled={busy}
+            aria-describedby={descriptionField.descriptionId}
             placeholder={t('descriptionPlaceholder')}
             onChange={(event) => {
               onDescriptionChange(event.target.value)
             }}
           />
-          <FieldDescription>{t('descriptionHint')}</FieldDescription>
+          <FieldDescription id={descriptionField.descriptionId}>
+            {t('descriptionHint')}
+          </FieldDescription>
         </Field>
 
         <CalendarMediaRefPicker value={mediaRefs} onChange={onMediaRefsChange} disabled={busy} />
@@ -455,11 +488,15 @@ export function CreateCalendarEntryDialog({
 }: CreateCalendarEntryDialogProps) {
   const t = useTranslations('platform.calendar.createEntry')
   const form = useCalendarEntryForm(open, initial)
+  const [focusErrorNonce, setFocusErrorNonce] = useState(0)
   const dateLabel = formatEntryDateLabel(form.dateIso, locale)
 
   const handleSubmit = async () => {
     const validated = form.validate()
-    if (!validated) return
+    if (!validated) {
+      setFocusErrorNonce((n) => n + 1)
+      return
+    }
 
     form.setPending(true)
     try {
@@ -508,6 +545,7 @@ export function CreateCalendarEntryDialog({
         deleting={form.deleting}
         titleError={form.titleError}
         timeError={form.timeError}
+        focusErrorNonce={focusErrorNonce}
         onTitleChange={form.setTitle}
         onDescriptionChange={form.setDescription}
         onTimeChange={form.setTime}
@@ -532,6 +570,7 @@ export function EditCalendarEntryDialog({
   const t = useTranslations('platform.calendar.createEntry')
   const form = useCalendarEntryForm(open, initial, initial.id)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [focusErrorNonce, setFocusErrorNonce] = useState(0)
   const dateLabel = formatEntryDateLabel(form.dateIso, locale)
 
   useEffect(() => {
@@ -541,7 +580,10 @@ export function EditCalendarEntryDialog({
 
   const handleSubmit = async () => {
     const validated = form.validate()
-    if (!validated) return
+    if (!validated) {
+      setFocusErrorNonce((n) => n + 1)
+      return
+    }
 
     form.setPending(true)
     try {
@@ -648,6 +690,7 @@ export function EditCalendarEntryDialog({
         deleting={form.deleting}
         titleError={form.titleError}
         timeError={form.timeError}
+        focusErrorNonce={focusErrorNonce}
         onTitleChange={form.setTitle}
         onDescriptionChange={form.setDescription}
         onTimeChange={form.setTime}

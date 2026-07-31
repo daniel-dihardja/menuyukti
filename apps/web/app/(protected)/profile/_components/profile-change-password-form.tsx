@@ -2,12 +2,14 @@
 
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { useTranslations } from 'next-intl'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
-import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
+
+import { useFieldIds } from '@/hooks/use-field-ids'
 
 import { buildProfilePasswordSchema } from './profile-password-schema'
 
@@ -23,6 +25,13 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
   const t = useTranslations('profile')
   const schema = useMemo(() => buildProfilePasswordSchema(t), [t])
 
+  const currentField = useFieldIds()
+  const newField = useFieldIds()
+  const confirmField = useFieldIds()
+  const currentRef = useRef<HTMLInputElement>(null)
+  const newRef = useRef<HTMLInputElement>(null)
+  const confirmRef = useRef<HTMLInputElement>(null)
+
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -30,6 +39,7 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
   const [formError, setFormError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [focusErrorNonce, setFocusErrorNonce] = useState(0)
 
   const resetForm = useCallback(() => {
     setCurrentPassword('')
@@ -37,6 +47,21 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
     setConfirmPassword('')
     setFieldErrors({})
   }, [])
+
+  useLayoutEffect(() => {
+    if (focusErrorNonce === 0) return
+    if (fieldErrors.currentPassword) {
+      currentRef.current?.focus()
+      return
+    }
+    if (fieldErrors.newPassword) {
+      newRef.current?.focus()
+      return
+    }
+    if (fieldErrors.confirmPassword) {
+      confirmRef.current?.focus()
+    }
+  }, [focusErrorNonce, fieldErrors])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -54,6 +79,7 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
         }
       }
       setFieldErrors(next)
+      setFocusErrorNonce((n) => n + 1)
       return
     }
 
@@ -96,10 +122,11 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
           </Alert>
         ) : null}
         <FieldGroup className="gap-4">
-          <Field>
-            <FieldLabel htmlFor="profile-current-password">{t('passwordCurrentLabel')}</FieldLabel>
+          <Field data-invalid={fieldErrors.currentPassword ? true : undefined}>
+            <FieldLabel htmlFor={currentField.id}>{t('passwordCurrentLabel')}</FieldLabel>
             <Input
-              id="profile-current-password"
+              ref={currentRef}
+              id={currentField.id}
               name="currentPassword"
               type="password"
               autoComplete="current-password"
@@ -110,20 +137,17 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
               }}
               disabled={submitting}
               aria-invalid={Boolean(fieldErrors.currentPassword)}
-              aria-describedby={
-                fieldErrors.currentPassword ? 'profile-current-password-error' : undefined
-              }
+              aria-describedby={currentField.describedBy(Boolean(fieldErrors.currentPassword))}
             />
             {fieldErrors.currentPassword ? (
-              <p id="profile-current-password-error" className="text-destructive text-sm">
-                {fieldErrors.currentPassword}
-              </p>
+              <FieldError id={currentField.errorId}>{fieldErrors.currentPassword}</FieldError>
             ) : null}
           </Field>
-          <Field>
-            <FieldLabel htmlFor="profile-new-password">{t('passwordNewLabel')}</FieldLabel>
+          <Field data-invalid={fieldErrors.newPassword ? true : undefined}>
+            <FieldLabel htmlFor={newField.id}>{t('passwordNewLabel')}</FieldLabel>
             <Input
-              id="profile-new-password"
+              ref={newRef}
+              id={newField.id}
               name="newPassword"
               type="password"
               autoComplete="new-password"
@@ -134,18 +158,17 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
               }}
               disabled={submitting}
               aria-invalid={Boolean(fieldErrors.newPassword)}
-              aria-describedby={fieldErrors.newPassword ? 'profile-new-password-error' : undefined}
+              aria-describedby={newField.describedBy(Boolean(fieldErrors.newPassword))}
             />
             {fieldErrors.newPassword ? (
-              <p id="profile-new-password-error" className="text-destructive text-sm">
-                {fieldErrors.newPassword}
-              </p>
+              <FieldError id={newField.errorId}>{fieldErrors.newPassword}</FieldError>
             ) : null}
           </Field>
-          <Field>
-            <FieldLabel htmlFor="profile-confirm-password">{t('passwordConfirmLabel')}</FieldLabel>
+          <Field data-invalid={fieldErrors.confirmPassword ? true : undefined}>
+            <FieldLabel htmlFor={confirmField.id}>{t('passwordConfirmLabel')}</FieldLabel>
             <Input
-              id="profile-confirm-password"
+              ref={confirmRef}
+              id={confirmField.id}
               name="confirmPassword"
               type="password"
               autoComplete="new-password"
@@ -156,14 +179,10 @@ export function ProfileChangePasswordForm({ user }: ProfileChangePasswordFormPro
               }}
               disabled={submitting}
               aria-invalid={Boolean(fieldErrors.confirmPassword)}
-              aria-describedby={
-                fieldErrors.confirmPassword ? 'profile-confirm-password-error' : undefined
-              }
+              aria-describedby={confirmField.describedBy(Boolean(fieldErrors.confirmPassword))}
             />
             {fieldErrors.confirmPassword ? (
-              <p id="profile-confirm-password-error" className="text-destructive text-sm">
-                {fieldErrors.confirmPassword}
-              </p>
+              <FieldError id={confirmField.errorId}>{fieldErrors.confirmPassword}</FieldError>
             ) : null}
           </Field>
         </FieldGroup>
