@@ -1,9 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
@@ -12,9 +11,19 @@ import {
   createAgentThread,
   listAgentThreads,
   removeAgentThread,
+  touchAgentThread,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
 import { routes } from '@/lib/routes'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
 import {
   Select,
@@ -32,6 +41,8 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+
+import { AgentThreadTitleEditor } from './agent-thread-title-editor'
 
 type Branch = {
   id: number
@@ -56,6 +67,34 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     const first = initialAnalyticsRuns[0]
     return first ? first.id : null
   })
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draftTitle, setDraftTitle] = useState('')
+  const editContainerRef = useRef<HTMLDivElement>(null)
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null)
+    setDraftTitle('')
+  }, [])
+
+  useEffect(() => {
+    if (editingId === null) return
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') cancelEdit()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [editingId, cancelEdit])
+
+  useEffect(() => {
+    if (editingId === null) return
+    const onPointerDown = (e: PointerEvent) => {
+      const el = editContainerRef.current
+      if (!el?.contains(e.target as Node)) cancelEdit()
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [editingId, cancelEdit])
 
   useEffect(() => {
     if (initialLocationId !== null) {
@@ -134,15 +173,60 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     router.push(routes.agentThread(record.id))
   }, [locationId, analyticsRunId, router])
 
-  const handleRemove = useCallback((id: string) => {
-    removeAgentThread(id)
-    setThreads(listAgentThreads())
-    void fetch(`/api/chat/history?agentThreadId=${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    }).catch(() => {
-      /* best-effort */
-    })
+  const handleRemove = useCallback(
+    (id: string) => {
+      removeAgentThread(id)
+      setThreads(listAgentThreads())
+      setPendingRemoveId(null)
+      if (editingId === id) cancelEdit()
+      void fetch(`/api/chat/history?agentThreadId=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      }).catch(() => {
+        /* best-effort */
+      })
+    },
+    [cancelEdit, editingId],
+  )
+
+  const confirmRemove = useCallback(() => {
+    if (!pendingRemoveId) return
+    handleRemove(pendingRemoveId)
+  }, [handleRemove, pendingRemoveId])
+
+  const startEdit = useCallback((thread: AgentThreadRecord) => {
+    setEditingId(thread.id)
+    setDraftTitle(thread.title?.trim() ?? '')
   }, [])
+
+  const saveEdit = useCallback(() => {
+    if (editingId === null) return
+    const trimmed = draftTitle.trim()
+    const current = threads.find((thread) => thread.id === editingId)
+    const currentTitle = current?.title?.trim() ?? ''
+    if (trimmed === currentTitle) {
+      cancelEdit()
+      return
+    }
+    touchAgentThread(editingId, { title: trimmed || null })
+    setThreads(listAgentThreads())
+    cancelEdit()
+  }, [cancelEdit, draftTitle, editingId, threads])
+
+  const onDraftKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        saveEdit()
+      }
+    },
+    [saveEdit],
+  )
+
+  const threadDisplayTitle = useCallback(
+    (thread: AgentThreadRecord) =>
+      thread.title?.trim() || t('untitledThread', { id: thread.id.slice(0, 8) }),
+    [t],
+  )
 
   return (
     <div className="flex flex-col gap-8">
@@ -198,17 +282,25 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
               <TableBody>
                 {visibleThreads.map((thread) => (
                   <TableRow key={thread.id}>
-                    <TableCell>
-                      <Link
-                        className="font-medium underline-offset-4 hover:underline"
-                        href={routes.agentThread(thread.id)}
-                      >
-                        {thread.title?.trim() || t('untitledThread', { id: thread.id.slice(0, 8) })}
-                      </Link>
+                    <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
+                      <AgentThreadTitleEditor
+                        threadId={thread.id}
+                        displayTitle={threadDisplayTitle(thread)}
+                        editing={editingId === thread.id}
+                        draftTitle={draftTitle}
+                        editContainerRef={editContainerRef}
+                        onDraftChange={setDraftTitle}
+                        onStartEdit={() => startEdit(thread)}
+                        onSaveEdit={saveEdit}
+                        onDraftKeyDown={onDraftKeyDown}
+                        editTitleAria={t('editThreadTitleAria')}
+                        saveTitleAria={t('saveThreadTitleAria')}
+                        titleLabel={t('threadTitleLabel')}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
-                        onClick={() => handleRemove(thread.id)}
+                        onClick={() => setPendingRemoveId(thread.id)}
                         size="sm"
                         type="button"
                         variant="ghost"
@@ -223,6 +315,26 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
           </div>
         )}
       </section>
+
+      <AlertDialog
+        open={pendingRemoveId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRemoveId(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('removeThreadConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('removeThreadConfirmDescription')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button">{t('removeThreadConfirmCancel')}</AlertDialogCancel>
+            <Button onClick={confirmRemove} type="button" variant="destructive">
+              {t('removeThreadConfirmAction')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
