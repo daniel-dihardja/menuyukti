@@ -3,12 +3,13 @@
 import { parseAsStringLiteral, useQueryState } from 'nuqs'
 import { useCallback, useEffect, useState } from 'react'
 
-const STORAGE_KEY = 'menuyukti:workflowPreview:v1'
+const STORAGE_KEY = 'menuyukti:chatPreview:v1'
+const LEGACY_STORAGE_KEY = 'menuyukti:workflowPreview:v1'
 
 function readLocalStorage(): boolean | null {
   if (typeof window === 'undefined') return null
   try {
-    const v = localStorage.getItem(STORAGE_KEY)
+    const v = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
     if (v === '0') return false
     if (v === '1') return true
   } catch {

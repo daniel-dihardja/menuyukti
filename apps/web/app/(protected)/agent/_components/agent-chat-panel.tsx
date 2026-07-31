@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 
-import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { useChatPreviewVisibility } from '@/components/chat/use-chat-preview-visibility'
 import { useChatComposerState } from '@/components/chat/chat-context'
 import { ChatLayout } from '@/components/chat/chat-layout'
@@ -38,7 +37,6 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
   const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
   const [chatBusy, setChatBusy] = useState(false)
   const { previewOpen, setPreviewOpen } = useChatPreviewVisibility()
-  const isDesktop = useDesktopLayout()
   const previewPanelRef = usePanelRef()
 
   const handleThreadRotated = useCallback(
@@ -63,7 +61,6 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
       >
         <ChatMentionProvider chatBusy={chatBusy}>
           <AgentChatPanelLayout
-            isDesktop={isDesktop}
             mobileArtifactOpen={mobileArtifactOpen}
             onMobileArtifactOpenChange={setMobileArtifactOpen}
             previewOpen={previewOpen}
@@ -79,7 +76,6 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
 }
 
 type AgentChatPanelLayoutProps = {
-  isDesktop: boolean
   mobileArtifactOpen: boolean
   onMobileArtifactOpenChange: (open: boolean) => void
   previewOpen: boolean
@@ -90,7 +86,6 @@ type AgentChatPanelLayoutProps = {
 }
 
 function AgentChatPanelLayout({
-  isDesktop,
   mobileArtifactOpen,
   onMobileArtifactOpenChange,
   previewOpen,
@@ -105,14 +100,12 @@ function AgentChatPanelLayout({
   useEffect(() => {
     if (showPreview) {
       setPreviewOpen(true)
-      if (!isDesktop) {
-        onMobileArtifactOpenChange(true)
-      }
+      // Mobile artifact opens on demand via the preview button — do not cover the composer.
       return
     }
     setPreviewOpen(false)
     onMobileArtifactOpenChange(false)
-  }, [showPreview, isDesktop, setPreviewOpen, onMobileArtifactOpenChange])
+  }, [showPreview, setPreviewOpen, onMobileArtifactOpenChange])
 
   return (
     <ChatLayout

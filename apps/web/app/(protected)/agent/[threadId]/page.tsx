@@ -45,7 +45,7 @@ export default async function AgentThreadPage({ params }: PageProps) {
       contentWidth="full"
       mainClassName={cn(
         ANALYTICS_REPORT_SHELL_MAIN_CLASS,
-        'flex min-h-0 min-h-[24rem] w-full flex-1 flex-col',
+        'flex min-h-0 w-full flex-1 flex-col overflow-hidden',
       )}
       title={title}
     >

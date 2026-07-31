@@ -76,14 +76,14 @@ export function ChatSavedStoryAssetsStrip({
               <button
                 aria-label={t('removeAriaLabel', { role: roleLabel })}
                 className={cn(
-                  'inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground',
+                  'inline-flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground lg:size-8',
                   disabled && 'pointer-events-none opacity-50',
                 )}
                 disabled={disabled}
                 onClick={() => onRemove(asset.name)}
                 type="button"
               >
-                <XIcon className="size-3.5" />
+                <XIcon />
               </button>
             </li>
           )
