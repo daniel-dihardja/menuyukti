@@ -26,8 +26,8 @@ Chat home public URL is **`/advisor`** (`routes.agent`); App Router pages live u
 ## Auth
 
 - **Clerk** (`@clerk/nextjs`) — do not introduce custom sessions or cookie-based auth.
-- **Middleware** (`middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects app shell routes (aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts`, plus `/advisor` / `/agent`). Uses `routes.ts` for URL constants.
-- **Server layouts/pages**: `auth()` from `@clerk/nextjs/server`; redirect if no `userId`. Protected layout does this as defense-in-depth after middleware.
+- **Proxy** (`proxy.ts`, Next.js 16 network boundary; formerly `middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects app shell routes (aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts`, plus `/advisor` / `/agent`). Uses `routes.ts` for URL constants.
+- **Server layouts/pages**: `auth()` from `@clerk/nextjs/server`; redirect if no `userId`. Protected layout does this as defense-in-depth after the proxy.
 - **Client components**: `useAuth`, `UserButton`, `SignInButton` from `@clerk/nextjs`.
 - Clerk config: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for the client; sign-in/up URLs in `lib/routes.ts`; optional `getClerkSecretKey()` in `lib/clerk-env.ts` for server tooling.
 
@@ -40,7 +40,7 @@ The web app **never accesses the database directly**. Data flows through the Gra
 const data = await graphqlQuery<ResponseType>(QUERY_STRING, variables, userId);
 ```
 
-- `graphqlQuery<T>` sends to `process.env.GRAPHQL_ENDPOINT`, sets `X-User-Id` and (when available) `X-Internal-Api-Key`.
+- `graphqlQuery<T>` sends to `process.env.GRAPHQL_ENDPOINT`, sets `X-User-Id` and (when available) `X-Internal-Api-Key`. Fetch uses `cache: 'no-store'`; cross-request caching is via `'use cache'` helpers in `lib/graphql/cached-queries.ts` (`cacheTag` / `cacheLife`). `React.cache` only dedupes within a single request.
 - Query/mutation strings and TypeScript response types live in `lib/graphql/queries.ts`.
 - Node `data` JSON is validated with **Zod** schemas from `lib/graphql/node-schemas.ts`; always use `parseNodeData` / `parseNodesData` rather than casting.
 - Server Components and `app/api/` route handlers call `graphqlQuery`; **no Apollo/React Query** in the browser for the main data path.
@@ -51,6 +51,12 @@ const data = await graphqlQuery<ResponseType>(QUERY_STRING, variables, userId);
 - App-level composites (sidebar, nav, page shells, markdown renderers, etc.) live under `components/`.
 - `components/clerk/` — branded auth forms and Clerk appearance config.
 - Extend UI with local components; avoid forking `@workspace/ui` primitives.
+
+## Images (`next/image` vs `<img>`)
+
+- Prefer **`next/image`** for stable remote hosts listed in `next.config.mjs` `images.remotePatterns` (and local assets). Always set `sizes` (and `priority` for LCP).
+- Use raw **`<img>`** (or `Image` with `unoptimized`) for **presigned / short-lived S3 download URLs**, `blob:` URLs, and other hosts the optimizer cannot reliably refetch (query signatures expire; eslint-disable with a short reason).
+- Keep `isNextImageRemoteHost` in `lib/clerk-profile-image.ts` in sync with `remotePatterns` when adding hosts.
 
 ## Styling (Tailwind v4)
 

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
@@ -11,6 +12,19 @@ import { LocationForm, type Weekday } from '../location-form'
 
 type PageProps = {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const t = await getTranslations('analytics.branches')
+  const description = t('description')
+  const { id } = await params
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    return { title: t('title'), description, openGraph: { title: t('title'), description } }
+  }
+  const data = await getCachedLocation(userId, id)
+  const title = data.location?.name ?? t('title')
+  return { title, description, openGraph: { title, description } }
 }
 
 export default async function Page({ params }: PageProps) {

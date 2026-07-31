@@ -61,7 +61,7 @@ export function ProfileOverviewCard({
             className="size-full object-cover"
           />
         ) : resolvedSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element -- host not in next/image remotePatterns
+          // eslint-disable-next-line @next/next/no-img-element -- host outside images.remotePatterns
           <img
             src={resolvedSrc}
             alt={avatarAlt}

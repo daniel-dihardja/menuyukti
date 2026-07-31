@@ -6,7 +6,7 @@ import { getDefaultAuthenticatedPath, isPathnameFeatureEnabled } from '@/lib/fea
 import { shouldRedirectPendingSession } from '@/lib/middleware-pending-session'
 import { routes } from '@/lib/routes'
 
-/** Keep route prefixes aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts` (MainHeader visibility). */
+/** Next.js 16 proxy (network boundary). Keep route prefixes aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts`. */
 const isProtectedRoute = createRouteMatcher([
   '/analytics(.*)',
   '/calendar(.*)',

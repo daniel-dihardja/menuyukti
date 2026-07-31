@@ -7,7 +7,7 @@
  *    `{ "menuyuktiRole": "admin" }` for staff. Omit or use `"user"` for customers.
  *
  * 2. **Customize session token** (Sessions → Customize session token) so `auth()`
- *    and middleware receive the role without an extra `users.getUser` call. Example
+ *    and the auth proxy receive the role without an extra `users.getUser` call. Example
  *    claims JSON (syntax may vary slightly by Clerk version—use the dashboard helper
  *    to insert user public metadata):
  *

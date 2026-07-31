@@ -20,7 +20,7 @@ describe('shouldRedirectPendingSession', () => {
     expect(shouldRedirectPendingSession('/sso-callback', 'pending')).toBe(false)
   })
 
-  it('redirects pending sessions on protected routes to login via middleware', () => {
+  it('redirects pending sessions on protected routes to login via proxy', () => {
     expect(shouldRedirectPendingSession('/advisor', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/advisor/abc', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/dashboard', 'pending')).toBe(true)

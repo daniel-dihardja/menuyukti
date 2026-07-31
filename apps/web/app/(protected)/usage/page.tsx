@@ -1,5 +1,6 @@
 import { AlertCircle } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -16,6 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('usage')
+  const title = t('title')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
 
 const intFmt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 })
 const usdFmt = new Intl.NumberFormat(undefined, {

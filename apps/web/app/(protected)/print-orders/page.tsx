@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { connection } from 'next/server'
 
@@ -9,6 +10,13 @@ import { Button } from '@workspace/ui/components/button'
 import { Package } from 'lucide-react'
 
 import { ShopPrintOrdersPreview } from '@/components/shop/shop-print-orders-preview'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('platform.printOrders')
+  const title = t('title')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
 
 export default async function Page() {
   await connection()
