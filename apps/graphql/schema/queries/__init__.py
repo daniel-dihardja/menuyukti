@@ -1,3 +1,4 @@
+from .ai_usage import AiUsageQuery
 from .analytics_bundle import AnalyticsBundleQuery
 from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
@@ -21,6 +22,7 @@ from .styles import StylesQuery
 from .workspace import WorkspaceQuery
 
 __all__ = [
+    "AiUsageQuery",
     "AnalyticsBundleQuery",
     "AnalyticsRunQuery",
     "CategoryMixQuery",

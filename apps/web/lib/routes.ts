@@ -102,7 +102,7 @@ export const routes = {
   dashboard: '/dashboard',
   /** Menuyukti staff-only console (platform role `admin`). */
   staff: '/staff',
-  /** Vercel AI Gateway credits and per-model usage (platform role `admin`). */
+  /** Personal AI usage (LLM via AI Gateway + Leonardo generations). */
   usage: '/usage',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',

@@ -584,7 +584,7 @@ export async function runTextToImageGeneration(
   width: number,
   height: number,
   model: string = TEXT_TO_IMAGE_MODEL,
-): Promise<Buffer> {
+): Promise<{ buffer: Buffer; generationId: string }> {
   const { width: w, height: h } = snapModelDimensions(model, width, height)
   logInfo('runTextToImageGeneration: start', {
     model,
@@ -604,7 +604,7 @@ export async function runTextToImageGeneration(
   const out = await normalizeToLeonardoCanvas(raw, w, h)
 
   logInfo('runTextToImageGeneration: done', { outputBytes: out.length, width: w, height: h })
-  return out
+  return { buffer: out, generationId }
 }
 
 /**
@@ -619,7 +619,7 @@ export async function runTextToImageWithReferences(
   referenceBuffers: Buffer[],
   model: string = TEXT_TO_IMAGE_MODEL,
   referenceStrengths?: ImageReferenceStrength[],
-): Promise<Buffer> {
+): Promise<{ buffer: Buffer; generationId: string }> {
   const { width: w, height: h } = snapModelDimensions(model, width, height)
 
   if (referenceBuffers.length === 0) {
@@ -670,7 +670,7 @@ export async function runTextToImageWithReferences(
   const out = await normalizeToLeonardoCanvas(raw, w, h)
 
   logInfo('runTextToImageWithReferences: done', { outputBytes: out.length, width: w, height: h })
-  return out
+  return { buffer: out, generationId }
 }
 
 /**

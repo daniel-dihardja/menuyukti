@@ -1,6 +1,7 @@
 """SQLAlchemy ORM models split by domain; imported by `database` for metadata registration."""
 
 from graphql.data_sources.models.analytics import AnalyticsRun, MenuItemCogs, OrderFact
+from graphql.data_sources.models.ai_usage_event import AiUsageEvent
 from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.data_sources.models.crm_app import CrmApp
 from graphql.data_sources.models.crm_audit_event import CrmAuditEvent
@@ -28,6 +29,7 @@ from graphql.data_sources.models.visual_style import VisualStyle
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
 
 __all__ = [
+    "AiUsageEvent",
     "AnalyticsRun",
     "CalendarEntry",
     "CrmApp",

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 
+import httpx
+from agents_app.agents.core.ai_usage_client import record_ai_usage_event
 from agents_app.agents.core.llm_invoke import (
     STRUCTURED_OUTPUT_FAILED,
     LLMInvokeError,
@@ -26,12 +28,18 @@ async def _structured_ainvoke_function_calling[T: BaseModel](
     messages: list,
     *,
     gateway_model_id: str | None = None,
+    reporting_user: str | None = None,
 ) -> T:
     """
     Use function_calling structured output — free-form dict schemas are rejected by
     OpenAI's strict json_schema method (see langchain-openai warning).
     """
-    llm = chat_llm_for_gateway_model(gateway_model_id, streaming=False)
+    llm = chat_llm_for_gateway_model(
+        gateway_model_id,
+        streaming=False,
+        reporting_user=reporting_user,
+        reporting_tags=["feature:style-spec"],
+    )
     structured = llm.with_structured_output(output_model, method="function_calling")
     try:
         result = await ainvoke_with_retry(structured, messages)
@@ -59,6 +67,7 @@ async def draft_style_spec_from_image(
     image_url: str,
     intent: str | None = None,
     gateway_model_id: str | None = None,
+    reporting_user: str | None = None,
 ) -> tuple[str, StyleSpec]:
     """
     Analyze ``image_url`` (data URL or https) and return ``(suggested_name, StyleSpec)``.
@@ -77,6 +86,7 @@ async def draft_style_spec_from_image(
             StyleSpecDraftOutput,
             messages,
             gateway_model_id=gateway_model_id,
+            reporting_user=reporting_user,
         )
     except LLMInvokeError:
         raise
@@ -90,4 +100,18 @@ async def draft_style_spec_from_image(
 
     name = draft.name.strip() or "Untitled style"
     spec = draft.to_style_spec()
+    if reporting_user:
+        try:
+            async with httpx.AsyncClient() as client:
+                await record_ai_usage_event(
+                    client,
+                    user_id=reporting_user,
+                    provider="ai_gateway",
+                    feature="style_spec",
+                    status="succeeded",
+                    model=gateway_model_id,
+                    units=1,
+                )
+        except Exception:  # noqa: BLE001
+            _logger.warning("style_spec usage record failed", exc_info=True)
     return name[:128], spec

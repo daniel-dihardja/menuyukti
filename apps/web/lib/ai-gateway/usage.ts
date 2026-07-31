@@ -5,11 +5,6 @@ import { z } from 'zod'
 const AI_GATEWAY_BASE = 'https://ai-gateway.vercel.sh/v1'
 const FETCH_TIMEOUT_MS = 12_000
 
-const creditsSchema = z.object({
-  balance: z.string(),
-  total_used: z.string(),
-})
-
 const reportRowSchema = z
   .object({
     model: z.string().optional(),
@@ -27,18 +22,6 @@ const reportResponseSchema = z.object({
 export type AiGatewayDateRange = {
   startDate: string
   endDate: string
-}
-
-export type CreditsOk = {
-  ok: true
-  balance: string
-  totalUsed: string
-}
-
-export type CreditsErr = {
-  ok: false
-  code: 'missing_key' | 'http_error' | 'parse_error'
-  status?: number
 }
 
 export type ModelUsageRow = {
@@ -60,9 +43,8 @@ export type ReportErr = {
   status?: number
 }
 
-export type AiGatewayUsagePayload = {
+export type AiGatewayPersonalUsagePayload = {
   dateRange: AiGatewayDateRange
-  credits: CreditsOk | CreditsErr
   report: ReportOk | ReportErr
 }
 
@@ -121,35 +103,16 @@ function aggregateByModel(rows: z.infer<typeof reportRowSchema>[]): ModelUsageRo
   return [...map.values()].sort((a, b) => b.totalCostUsd - a.totalCostUsd)
 }
 
-async function loadCredits(apiKey: string): Promise<CreditsOk | CreditsErr> {
-  try {
-    const res = await gatewayFetch('/credits', apiKey)
-    if (!res.ok) {
-      return { ok: false, code: 'http_error', status: res.status }
-    }
-    const json: unknown = await res.json()
-    const parsed = creditsSchema.safeParse(json)
-    if (!parsed.success) {
-      return { ok: false, code: 'parse_error' }
-    }
-    return {
-      ok: true,
-      balance: parsed.data.balance,
-      totalUsed: parsed.data.total_used,
-    }
-  } catch {
-    return { ok: false, code: 'http_error' }
-  }
-}
-
-async function loadModelReport(
+async function loadPersonalModelReport(
   apiKey: string,
   range: AiGatewayDateRange,
+  userId: string,
 ): Promise<ReportOk | ReportErr> {
   const qs = new URLSearchParams({
     start_date: range.startDate,
     end_date: range.endDate,
     group_by: 'model',
+    user_id: userId,
   })
   try {
     const res = await gatewayFetch(`/report?${qs.toString()}`, apiKey)
@@ -170,21 +133,19 @@ async function loadModelReport(
   }
 }
 
-export async function loadAiGatewayUsage(): Promise<AiGatewayUsagePayload> {
+/** Personal LLM usage for one Clerk user (AI Gateway Custom Reporting). */
+export async function loadAiGatewayPersonalUsage(
+  userId: string,
+): Promise<AiGatewayPersonalUsagePayload> {
   const dateRange = defaultReportDateRange()
   const apiKey = gatewayApiKey()
   if (!apiKey) {
     return {
       dateRange,
-      credits: { ok: false, code: 'missing_key' },
       report: { ok: false, code: 'missing_key' },
     }
   }
 
-  const [credits, report] = await Promise.all([
-    loadCredits(apiKey),
-    loadModelReport(apiKey, dateRange),
-  ])
-
-  return { dateRange, credits, report }
+  const report = await loadPersonalModelReport(apiKey, dateRange, userId)
+  return { dateRange, report }
 }
