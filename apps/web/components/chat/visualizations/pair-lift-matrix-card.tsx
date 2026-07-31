@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import useSWR from 'swr'
 
-import { HeatmapMatrixEmbedded } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
+import { HeatmapMatrixEmbeddedPlain } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
 import { buildLiftMatrixRows, formatLift } from '@/lib/analytics/menu-combos-page-adapter'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
@@ -105,14 +105,12 @@ export function PairLiftMatrixCard({ locationId, analyticsRunId }: PairLiftMatri
         <p className="text-muted-foreground text-xs">{t('fallbackRunHint')}</p>
       ) : null}
       <div className="overflow-x-auto">
-        <HeatmapMatrixEmbedded
+        <HeatmapMatrixEmbeddedPlain
           columnLabels={focusMenus}
           density="compact"
           labels={matrixLabels}
           maskDiagonal
           rows={matrixRows}
-          showExplanation={false}
-          showTotalsRow={false}
         />
       </div>
     </div>

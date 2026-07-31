@@ -40,17 +40,8 @@ import { Input } from '@workspace/ui/components/input'
 import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 
 import { useCompactLayout } from '@/hooks/use-desktop-layout'
-import type { MediaCollection } from '@/lib/media/client-api'
 
-export type MediaCollectionsBarProps = {
-  collections: MediaCollection[]
-  selectedKey: 'all' | number
-  onSelect: (key: 'all' | number) => void
-  onCreate: (name: string) => Promise<boolean>
-  onRename: (id: number, name: string) => Promise<boolean>
-  onDelete: (id: number) => Promise<boolean>
-  busy?: boolean
-}
+import { useMediaActions, useMediaState } from './media-context'
 
 function CollectionNameFormShell({
   open,
@@ -94,17 +85,12 @@ function CollectionNameFormShell({
   )
 }
 
-export function MediaCollectionsBar({
-  collections,
-  selectedKey,
-  onSelect,
-  onCreate,
-  onRename,
-  onDelete,
-  busy = false,
-}: MediaCollectionsBarProps) {
+export function MediaCollectionsBar() {
   const t = useTranslations('media.collections')
   const compact = useCompactLayout()
+  const { collections, collectionFilter, collectionsBusy } = useMediaState()
+  const { handleFilterChange, createCollection, renameCollection, deleteCollection } =
+    useMediaActions()
   const [createOpen, setCreateOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -112,9 +98,9 @@ export function MediaCollectionsBar({
   const [submitting, setSubmitting] = useState(false)
 
   const selectedCollection =
-    typeof selectedKey === 'number' ? collections.find((c) => c.id === selectedKey) : null
+    typeof collectionFilter === 'number' ? collections.find((c) => c.id === collectionFilter) : null
 
-  const toggleValue = selectedKey === 'all' ? 'all' : String(selectedKey)
+  const toggleValue = collectionFilter === 'all' ? 'all' : String(collectionFilter)
 
   return (
     <div className="flex flex-col gap-3">
@@ -125,11 +111,11 @@ export function MediaCollectionsBar({
             value={toggleValue}
             onValueChange={(value) => {
               if (!value) return
-              if (value === 'all') onSelect('all')
-              else onSelect(Number.parseInt(value, 10))
+              if (value === 'all') handleFilterChange('all')
+              else handleFilterChange(Number.parseInt(value, 10))
             }}
             className="inline-flex w-max flex-nowrap justify-start gap-1"
-            disabled={busy}
+            disabled={collectionsBusy}
           >
             <ToggleGroupItem value="all" className="h-11 shrink-0 touch-manipulation px-3 sm:h-9">
               {t('filterAll')}
@@ -152,7 +138,7 @@ export function MediaCollectionsBar({
             type="button"
             variant="outline"
             className="h-11 touch-manipulation sm:h-9"
-            disabled={busy}
+            disabled={collectionsBusy}
             onClick={() => {
               setNameDraft('')
               setCreateOpen(true)
@@ -169,7 +155,7 @@ export function MediaCollectionsBar({
                     type="button"
                     variant="outline"
                     className="h-11 touch-manipulation sm:h-9"
-                    disabled={busy}
+                    disabled={collectionsBusy}
                     aria-label={t('manage')}
                   >
                     <MoreHorizontal />
@@ -200,7 +186,7 @@ export function MediaCollectionsBar({
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={busy}
+                  disabled={collectionsBusy}
                   onClick={() => {
                     setNameDraft(selectedCollection.name)
                     setRenameOpen(true)
@@ -213,7 +199,7 @@ export function MediaCollectionsBar({
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={busy}
+                  disabled={collectionsBusy}
                   onClick={() => setDeleteOpen(true)}
                 >
                   <Trash2 />
@@ -242,7 +228,7 @@ export function MediaCollectionsBar({
                 void (async () => {
                   setSubmitting(true)
                   try {
-                    const ok = await onCreate(nameDraft.trim())
+                    const ok = await createCollection(nameDraft.trim())
                     if (ok) setCreateOpen(false)
                   } finally {
                     setSubmitting(false)
@@ -284,7 +270,7 @@ export function MediaCollectionsBar({
                 void (async () => {
                   setSubmitting(true)
                   try {
-                    const ok = await onRename(selectedCollection.id, nameDraft.trim())
+                    const ok = await renameCollection(selectedCollection.id, nameDraft.trim())
                     if (ok) setRenameOpen(false)
                   } finally {
                     setSubmitting(false)
@@ -326,7 +312,7 @@ export function MediaCollectionsBar({
                 void (async () => {
                   setSubmitting(true)
                   try {
-                    const ok = await onDelete(selectedCollection.id)
+                    const ok = await deleteCollection(selectedCollection.id)
                     if (ok) setDeleteOpen(false)
                   } finally {
                     setSubmitting(false)

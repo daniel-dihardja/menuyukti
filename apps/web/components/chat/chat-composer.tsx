@@ -45,7 +45,7 @@ import { LeonardoPostModelSelect } from '@/components/leonardo-post-model-select
 import { ChatModeSelect } from '@/components/chat-mode-select'
 import { MoreHorizontal, PanelsTopLeft, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 
 import { CHAT_MAX_IMAGES } from '@/lib/chat/chat-image-limits'
 import {
@@ -200,29 +200,27 @@ function ChatClearConfirmDialog({
   )
 }
 
-function ChatComposerOverflowMenu({
+function ChatModelOverflowMenu({
   compact,
-  chatMode,
-  selectedChatModel,
-  selectedGenerationModel,
   disabled,
+  selectedChatModel,
   onChatModelChange,
-  onGenerationModelChange,
   onRequestClear,
+  generationModel,
 }: {
   compact: boolean
-  chatMode: string
-  selectedChatModel: ChatGatewayModelId
-  selectedGenerationModel: LeonardoPostModelId
   disabled: boolean
+  selectedChatModel: ChatGatewayModelId
   onChatModelChange: (id: ChatGatewayModelId) => void
-  onGenerationModelChange: (id: LeonardoPostModelId) => void
   onRequestClear: () => void
+  generationModel?: {
+    selected: LeonardoPostModelId
+    onChange: (id: LeonardoPostModelId) => void
+  }
 }) {
   const t = useTranslations('chat')
   const tGateway = useTranslations('chatGatewayModels')
   const tLeonardo = useTranslations('postCreator.prompt')
-  const showImageModel = chatMode === 'image_assistant'
 
   return (
     <DropdownMenu>
@@ -256,14 +254,14 @@ function ChatComposerOverflowMenu({
               </DropdownMenuRadioGroup>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
-          {showImageModel ? (
+          {generationModel ? (
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>{tLeonardo('model.label')}</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 <DropdownMenuLabel>{tLeonardo('model.label')}</DropdownMenuLabel>
                 <DropdownMenuRadioGroup
-                  onValueChange={(v) => onGenerationModelChange(v as LeonardoPostModelId)}
-                  value={selectedGenerationModel}
+                  onValueChange={(v) => generationModel.onChange(v as LeonardoPostModelId)}
+                  value={generationModel.selected}
                 >
                   {LEONARDO_POST_MODEL_IDS.map((id) => (
                     <DropdownMenuRadioItem key={id} value={id}>
@@ -285,38 +283,35 @@ function ChatComposerOverflowMenu({
   )
 }
 
-export function ChatComposer() {
-  const t = useTranslations('chat')
+function ChatComposerFrame({
+  placeholder,
+  leading,
+  modelTools,
+}: {
+  placeholder: string
+  leading?: ReactNode
+  modelTools: (args: {
+    compact: boolean
+    disabled: boolean
+    onRequestClear: () => void
+  }) => ReactNode
+}) {
   const tSlash = useTranslations('chat.slashCommands')
   const tMention = useTranslations('chat.mentionMenu')
   const compact = useCompactLayout()
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
-  const {
-    text,
-    chatMode,
-    selectedChatModel,
-    selectedGenerationModel,
-    slashCommands,
-    savedStoryAssets,
-  } = useChatComposerState()
-  const { isChatBusy, visibleMessages } = useChatMessages()
+  const { text, chatMode, slashCommands } = useChatComposerState()
+  const { isChatBusy } = useChatMessages()
   const {
     setText,
     setChatMode,
-    setSelectedChatModel,
-    setSelectedGenerationModel,
     handleTextChange,
     handleSubmit,
     handleSelectSlashCommand,
     handleSelectVisualizationMention,
     handleSelectMediaMention,
-    handleRemoveSavedStoryAsset,
     handleClearChat,
   } = useChatActions()
-
-  const placeholder =
-    chatMode === 'image_assistant' ? t('placeholderImageAssistant') : t('placeholder')
-  const showImageModel = chatMode === 'image_assistant'
 
   return (
     <div className="shrink-0 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
@@ -327,14 +322,7 @@ export function ChatComposer() {
         multiple
         onSubmit={handleSubmit}
       >
-        {showImageModel ? (
-          <ChatSavedStoryAssetsStrip
-            assets={savedStoryAssets}
-            disabled={isChatBusy}
-            messages={visibleMessages}
-            onRemove={handleRemoveSavedStoryAsset}
-          />
-        ) : null}
+        {leading}
         <ChatAttachmentStrip />
         <ChatComposerMenus
           commands={slashCommands}
@@ -359,45 +347,11 @@ export function ChatComposer() {
           <PromptInputTools>
             <ChatMobilePreviewOpenButton compact={compact} />
             <ChatModeSelect disabled={isChatBusy} onValueChange={setChatMode} value={chatMode} />
-            {compact ? (
-              <ChatComposerOverflowMenu
-                chatMode={chatMode}
-                compact={compact}
-                disabled={isChatBusy}
-                onChatModelChange={setSelectedChatModel}
-                onGenerationModelChange={setSelectedGenerationModel}
-                onRequestClear={() => setClearConfirmOpen(true)}
-                selectedChatModel={selectedChatModel}
-                selectedGenerationModel={selectedGenerationModel}
-              />
-            ) : (
-              <>
-                <ChatGatewayModelSelect
-                  className="max-w-[min(100%,11rem)]"
-                  disabled={isChatBusy}
-                  onValueChange={setSelectedChatModel}
-                  value={selectedChatModel}
-                />
-                {showImageModel ? (
-                  <LeonardoPostModelSelect
-                    className="max-w-[min(100%,11rem)]"
-                    disabled={isChatBusy}
-                    onValueChange={setSelectedGenerationModel}
-                    value={selectedGenerationModel}
-                  />
-                ) : null}
-                <PromptInputButton
-                  aria-label={t('clearChatAriaLabel')}
-                  className="shrink-0 text-muted-foreground"
-                  onClick={() => setClearConfirmOpen(true)}
-                  tooltip={t('clearChatTooltip')}
-                  type="button"
-                  variant="ghost"
-                >
-                  <Trash2 />
-                </PromptInputButton>
-              </>
-            )}
+            {modelTools({
+              compact,
+              disabled: isChatBusy,
+              onRequestClear: () => setClearConfirmOpen(true),
+            })}
           </PromptInputTools>
           <ChatComposerSubmit compact={compact} />
         </PromptInputFooter>
@@ -409,4 +363,115 @@ export function ChatComposer() {
       />
     </div>
   )
+}
+
+function GatewayAndClearTools({
+  compact,
+  disabled,
+  onRequestClear,
+  generationModel,
+}: {
+  compact: boolean
+  disabled: boolean
+  onRequestClear: () => void
+  generationModel?: {
+    selected: LeonardoPostModelId
+    onChange: (id: LeonardoPostModelId) => void
+  }
+}) {
+  const t = useTranslations('chat')
+  const { selectedChatModel } = useChatComposerState()
+  const { setSelectedChatModel } = useChatActions()
+
+  if (compact) {
+    return (
+      <ChatModelOverflowMenu
+        compact={compact}
+        disabled={disabled}
+        generationModel={generationModel}
+        onChatModelChange={setSelectedChatModel}
+        onRequestClear={onRequestClear}
+        selectedChatModel={selectedChatModel}
+      />
+    )
+  }
+
+  return (
+    <>
+      <ChatGatewayModelSelect
+        className="max-w-[min(100%,11rem)]"
+        disabled={disabled}
+        onValueChange={setSelectedChatModel}
+        value={selectedChatModel}
+      />
+      {generationModel ? (
+        <LeonardoPostModelSelect
+          className="max-w-[min(100%,11rem)]"
+          disabled={disabled}
+          onValueChange={generationModel.onChange}
+          value={generationModel.selected}
+        />
+      ) : null}
+      <PromptInputButton
+        aria-label={t('clearChatAriaLabel')}
+        className="shrink-0 text-muted-foreground"
+        onClick={onRequestClear}
+        tooltip={t('clearChatTooltip')}
+        type="button"
+        variant="ghost"
+      >
+        <Trash2 />
+      </PromptInputButton>
+    </>
+  )
+}
+
+export function GeneralChatComposer() {
+  const t = useTranslations('chat')
+
+  return (
+    <ChatComposerFrame
+      placeholder={t('placeholder')}
+      modelTools={(args) => <GatewayAndClearTools {...args} />}
+    />
+  )
+}
+
+export function ImageAssistantComposer() {
+  const t = useTranslations('chat')
+  const { savedStoryAssets, selectedGenerationModel } = useChatComposerState()
+  const { isChatBusy, visibleMessages } = useChatMessages()
+  const { handleRemoveSavedStoryAsset, setSelectedGenerationModel } = useChatActions()
+
+  return (
+    <ChatComposerFrame
+      placeholder={t('placeholderImageAssistant')}
+      leading={
+        <ChatSavedStoryAssetsStrip
+          assets={savedStoryAssets}
+          disabled={isChatBusy}
+          messages={visibleMessages}
+          onRemove={handleRemoveSavedStoryAsset}
+        />
+      }
+      modelTools={(args) => (
+        <GatewayAndClearTools
+          {...args}
+          generationModel={{
+            selected: selectedGenerationModel,
+            onChange: setSelectedGenerationModel,
+          }}
+        />
+      )}
+    />
+  )
+}
+
+/** Selects the explicit composer variant for the active chat mode. */
+export function ChatComposer() {
+  const { chatMode } = useChatComposerState()
+  if (chatMode === 'image_assistant') {
+    return <ImageAssistantComposer />
+  }
+  return <GeneralChatComposer />
 }

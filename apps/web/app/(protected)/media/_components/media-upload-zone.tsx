@@ -1,6 +1,5 @@
 'use client'
 
-import type { ChangeEvent, DragEvent, RefObject } from 'react'
 import { ImageIcon, Loader2, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -8,26 +7,13 @@ import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { cn } from '@workspace/ui/lib/utils'
 
-export type MediaUploadZoneProps = {
-  inputRef: RefObject<HTMLInputElement | null>
-  uploading: boolean
-  dragActive: boolean
-  onSetDragActive: (active: boolean) => void
-  onInputChange: (e: ChangeEvent<HTMLInputElement>) => void
-  onDrop: (e: DragEvent) => void
-  onBrowse: () => void
-}
+import { useMediaActions, useMediaMeta, useMediaState } from './media-context'
 
-export function MediaUploadZone({
-  inputRef,
-  uploading,
-  dragActive,
-  onSetDragActive,
-  onInputChange,
-  onDrop,
-  onBrowse,
-}: MediaUploadZoneProps) {
+export function MediaUploadZone() {
   const t = useTranslations('media')
+  const { uploading, dragActive } = useMediaState()
+  const { setDragActive, onInputChange, onDrop, onBrowse } = useMediaActions()
+  const { inputRef } = useMediaMeta()
 
   return (
     <section>
@@ -50,15 +36,15 @@ export function MediaUploadZone({
         )}
         onDragEnter={(e) => {
           e.preventDefault()
-          onSetDragActive(true)
+          setDragActive(true)
         }}
         onDragLeave={(e) => {
           e.preventDefault()
-          if (e.currentTarget === e.target) onSetDragActive(false)
+          if (e.currentTarget === e.target) setDragActive(false)
         }}
         onDragOver={(e) => {
           e.preventDefault()
-          onSetDragActive(true)
+          setDragActive(true)
         }}
         onDrop={onDrop}
       >

@@ -14,46 +14,32 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 
-import type { MediaCatalogItem, MediaCollection } from '@/lib/media/client-api'
+import { useMediaActions, useMediaState } from './media-context'
 
-export type MediaOrganizeBarProps = {
-  selected: MediaCatalogItem
-  collections: MediaCollection[]
-  currentCollectionId: number | null
-  currentCollectionName: string | null
-  addCollectionId: string
-  onAddCollectionIdChange: (id: string) => void
-  onAdd: () => void
-  onRemoveFromCurrent: () => void
-  onClear: () => void
-  onHeightChange?: (height: number) => void
-  busy?: boolean
-}
-
-export function MediaOrganizeBar({
-  selected,
-  collections,
-  currentCollectionId,
-  currentCollectionName,
-  addCollectionId,
-  onAddCollectionIdChange,
-  onAdd,
-  onRemoveFromCurrent,
-  onClear,
-  onHeightChange,
-  busy = false,
-}: MediaOrganizeBarProps) {
+export function MediaOrganizeBar() {
   const t = useTranslations('media.collections')
+  const { selected, collections, currentCollection, addCollectionId, collectionsBusy } =
+    useMediaState()
+  const {
+    setAddCollectionId,
+    clearSelection,
+    addSelectedToCollection,
+    removeSelectedFromCurrent,
+    setOrganizeBarHeight,
+  } = useMediaActions()
   const rootRef = useRef<HTMLDivElement>(null)
+
+  const currentCollectionId = currentCollection?.id ?? null
+  const currentCollectionName = currentCollection?.name ?? null
   const canRemove = currentCollectionId != null
   const canAdd = collections.length > 0 && Boolean(addCollectionId)
 
   useEffect(() => {
     const el = rootRef.current
-    if (!el || !onHeightChange) return
+    if (!el || !selected) return
 
     const report = () => {
-      onHeightChange(el.getBoundingClientRect().height)
+      setOrganizeBarHeight(el.getBoundingClientRect().height)
     }
 
     report()
@@ -61,9 +47,11 @@ export function MediaOrganizeBar({
     observer.observe(el)
     return () => {
       observer.disconnect()
-      onHeightChange(0)
+      setOrganizeBarHeight(0)
     }
-  }, [onHeightChange])
+  }, [selected, setOrganizeBarHeight])
+
+  if (!selected) return null
 
   return (
     <div
@@ -90,8 +78,8 @@ export function MediaOrganizeBar({
             variant="ghost"
             className="size-11 shrink-0 touch-manipulation sm:size-9"
             aria-label={t('clearSelection')}
-            disabled={busy}
-            onClick={onClear}
+            disabled={collectionsBusy}
+            onClick={clearSelection}
           >
             <X />
           </Button>
@@ -102,8 +90,8 @@ export function MediaOrganizeBar({
             <>
               <Select
                 value={addCollectionId}
-                onValueChange={onAddCollectionIdChange}
-                disabled={busy}
+                onValueChange={setAddCollectionId}
+                disabled={collectionsBusy}
               >
                 <SelectTrigger className="h-11 w-full min-w-[11rem] touch-manipulation sm:h-9 sm:w-[13rem]">
                   <SelectValue placeholder={t('addPlaceholder')} />
@@ -121,8 +109,8 @@ export function MediaOrganizeBar({
               <Button
                 type="button"
                 className="h-11 touch-manipulation sm:h-9"
-                disabled={busy || !canAdd}
-                onClick={onAdd}
+                disabled={collectionsBusy || !canAdd}
+                onClick={addSelectedToCollection}
               >
                 {t('addToCollection')}
               </Button>
@@ -135,8 +123,8 @@ export function MediaOrganizeBar({
               type="button"
               variant="outline"
               className="h-11 touch-manipulation sm:h-9"
-              disabled={busy}
-              onClick={onRemoveFromCurrent}
+              disabled={collectionsBusy}
+              onClick={removeSelectedFromCurrent}
             >
               {currentCollectionName
                 ? t('removeFromNamed', { name: currentCollectionName })

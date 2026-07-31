@@ -2,7 +2,6 @@
 
 import type { ComponentProps, ReactNode } from 'react'
 
-import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -12,60 +11,27 @@ import {
 import { ChatMobileArtifactProvider } from '@/components/chat/chat-mobile-artifact-context'
 import { ChatMobileArtifactSheet } from '@/components/chat/chat-mobile-artifact-sheet'
 
-export type ChatLayoutProps = {
-  previewPanelRef: NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
-  /** When false, chat is full-width / centered with no artifact panel. */
-  showPreview: boolean
-  previewPane: ReactNode
-  chatPane: ReactNode
-  mobileArtifactOpen: boolean
-  onMobileArtifactOpenChange: (open: boolean) => void
-  mobileArtifactTitle?: string | null
-  mobileArtifactHint?: string | null
+type PreviewPanelRef = NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
+
+export function ChatOnlyLayout({ chatPane }: { chatPane: ReactNode }) {
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-background">
+        {chatPane}
+      </div>
+    </div>
+  )
 }
 
-export function ChatLayout({
-  previewPanelRef,
-  showPreview,
-  previewPane,
+export function ChatWithPreviewLayout({
   chatPane,
-  mobileArtifactOpen,
-  onMobileArtifactOpenChange,
-  mobileArtifactTitle,
-  mobileArtifactHint,
-}: ChatLayoutProps) {
-  const isDesktop = useDesktopLayout()
-
-  if (!showPreview) {
-    return (
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-background">
-          {chatPane}
-        </div>
-      </div>
-    )
-  }
-
-  if (!isDesktop) {
-    return (
-      <ChatMobileArtifactProvider
-        hint={mobileArtifactHint}
-        openArtifact={() => onMobileArtifactOpenChange(true)}
-      >
-        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
-          <ChatMobileArtifactSheet
-            onOpenChange={onMobileArtifactOpenChange}
-            open={mobileArtifactOpen}
-            title={mobileArtifactTitle}
-          >
-            {previewPane}
-          </ChatMobileArtifactSheet>
-        </div>
-      </ChatMobileArtifactProvider>
-    )
-  }
-
+  previewPane,
+  previewPanelRef,
+}: {
+  chatPane: ReactNode
+  previewPane: ReactNode
+  previewPanelRef: PreviewPanelRef
+}) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
@@ -91,4 +57,44 @@ export function ChatLayout({
       </div>
     </div>
   )
+}
+
+export function ChatWithMobileArtifactLayout({
+  chatPane,
+  previewPane,
+  mobileArtifactOpen,
+  onMobileArtifactOpenChange,
+  mobileArtifactTitle,
+  mobileArtifactHint,
+}: {
+  chatPane: ReactNode
+  previewPane: ReactNode
+  mobileArtifactOpen: boolean
+  onMobileArtifactOpenChange: (open: boolean) => void
+  mobileArtifactTitle?: string | null
+  mobileArtifactHint?: string | null
+}) {
+  return (
+    <ChatMobileArtifactProvider
+      hint={mobileArtifactHint}
+      openArtifact={() => onMobileArtifactOpenChange(true)}
+    >
+      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
+        <ChatMobileArtifactSheet
+          onOpenChange={onMobileArtifactOpenChange}
+          open={mobileArtifactOpen}
+          title={mobileArtifactTitle}
+        >
+          {previewPane}
+        </ChatMobileArtifactSheet>
+      </div>
+    </ChatMobileArtifactProvider>
+  )
+}
+
+export const ChatLayout = {
+  ChatOnly: ChatOnlyLayout,
+  WithPreview: ChatWithPreviewLayout,
+  WithMobileArtifact: ChatWithMobileArtifactLayout,
 }

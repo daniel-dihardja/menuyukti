@@ -16,7 +16,7 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { ContentMediaGrid } from '@/app/(protected)/content/_components/content-media-grid'
+import { ContentMediaGridParts } from '@/app/(protected)/content/_components/content-media-grid'
 import { ContentMediaPreviewDialog } from '@/app/(protected)/content/_components/content-media-preview-dialog'
 import type { ContentCatalogItem } from '@/app/(protected)/content/_components/content-catalog-types'
 import {
@@ -198,28 +198,38 @@ export function ReelsClient() {
         onBrowse={() => inputRef.current?.click()}
       />
 
-      <ContentMediaGrid
-        loading={loading}
-        items={items}
-        imageDimensionsByName={mediaDimensionsByName}
-        onImageNaturalSize={setMediaDimensions}
-        onVideoMetadata={setMediaDimensions}
-        deleting={deleting}
-        onPreview={setPreview}
-        onDeleteRequest={setPendingDeleteName}
-        getDownloadHref={reelDownloadHref}
-        emptyIcon={Film}
-        labels={{
-          previewImage: t('grid.viewLarge'),
-          previewVideo: t('grid.play'),
-          delete: t('grid.delete'),
-          download: t('grid.download'),
-          moreActions: t('grid.moreActions'),
-          emptyTitle: t('grid.empty.title'),
-          emptyDescription: t('grid.empty.description'),
+      <ContentMediaGridParts.Provider
+        actions={{
+          getDownloadHref: reelDownloadHref,
+          onDeleteRequest: setPendingDeleteName,
+          onImageNaturalSize: setMediaDimensions,
+          onPreview: setPreview,
+          onSelect: null,
+          onVideoMetadata: setMediaDimensions,
+        }}
+        state={{
+          defaultAspectRatio: '9 / 16',
+          deleting,
+          emptyIcon: Film,
+          imageDimensionsByName: mediaDimensionsByName,
+          items,
+          labels: {
+            previewImage: t('grid.viewLarge'),
+            previewVideo: t('grid.play'),
+            delete: t('grid.delete'),
+            download: t('grid.download'),
+            moreActions: t('grid.moreActions'),
+            emptyTitle: t('grid.empty.title'),
+            emptyDescription: t('grid.empty.description'),
+          },
+          loading,
+          selectedName: null,
+          skeletonCount: 8,
         }}
         tileMode="videoHoverPreview"
-      />
+      >
+        <ContentMediaGridParts.View />
+      </ContentMediaGridParts.Provider>
 
       <AlertDialog
         open={pendingDeleteName != null}

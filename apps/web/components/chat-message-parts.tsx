@@ -18,7 +18,7 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { CheckIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { memo } from 'react'
+import { memo, type ReactNode } from 'react'
 
 import {
   isReasoningStreaming,
@@ -89,13 +89,13 @@ function SearchWebToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolU
   )
 }
 
+type CompactToolStatusKind = 'running' | 'error' | 'done'
+
 function CompactToolStatus({
-  isInFlight,
-  isError,
+  status,
   message,
 }: {
-  isInFlight: boolean
-  isError: boolean
+  status: CompactToolStatusKind
   message: string
 }) {
   return (
@@ -104,20 +104,27 @@ function CompactToolStatus({
       className="flex items-center gap-2 text-muted-foreground text-sm"
       role="status"
     >
-      {isInFlight ? (
+      {status === 'running' ? (
         <Spinner className="size-3.5 shrink-0" />
-      ) : isError ? (
+      ) : status === 'error' ? (
         <XIcon aria-hidden className="size-3.5 shrink-0 text-destructive" />
       ) : (
         <CheckIcon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
       )}
-      {isInFlight ? (
+      {status === 'running' ? (
         <Shimmer className="text-sm">{message}</Shimmer>
       ) : (
-        <span className={isError ? 'text-destructive' : undefined}>{message}</span>
+        <span className={status === 'error' ? 'text-destructive' : undefined}>{message}</span>
       )}
     </div>
   )
+}
+
+function toolPartStatus(part: ToolUIPart<UITools> | DynamicToolUIPart): CompactToolStatusKind {
+  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  if (isInFlight) return 'running'
+  if (toolOutputLooksLikeError(part)) return 'error'
+  return 'done'
 }
 
 function GenerateInstagramPostImageToolBlock({
@@ -126,15 +133,15 @@ function GenerateInstagramPostImageToolBlock({
   part: ToolUIPart<UITools> | DynamicToolUIPart
 }) {
   const t = useTranslations('chatTools.generateInstagramPostImage')
-  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
-  const isError = toolOutputLooksLikeError(part)
+  const status = toolPartStatus(part)
   const output = 'output' in part ? part.output : undefined
-  const imageUrl = !isInFlight && !isError ? parseGeneratedImageUrlFromToolOutput(output) : null
-  const message = isError ? t('error') : isInFlight ? t('runningDetail') : t('done')
+  const imageUrl = status === 'done' ? parseGeneratedImageUrlFromToolOutput(output) : null
+  const message =
+    status === 'error' ? t('error') : status === 'running' ? t('runningDetail') : t('done')
 
   return (
     <div className="flex flex-col gap-2">
-      <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
+      <CompactToolStatus status={status} message={message} />
       {imageUrl ? (
         <div className="relative inline-block max-w-full">
           {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
@@ -151,30 +158,32 @@ function GenerateInstagramPostImageToolBlock({
 
 function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
   const t = useTranslations('chatTools.getChartData')
-  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
-  const isError = toolOutputLooksLikeError(part)
+  const status = toolPartStatus(part)
   const chartId = resolveChartIdFromToolInput('input' in part ? part.input : undefined)
 
   let message: string
-  if (isError) {
+  if (status === 'error') {
     message = t('error')
   } else if (chartId === 'venue_slot_strength_heatmap') {
-    message = isInFlight
-      ? t('charts.venue_slot_strength_heatmap.running')
-      : t('charts.venue_slot_strength_heatmap.done')
+    message =
+      status === 'running'
+        ? t('charts.venue_slot_strength_heatmap.running')
+        : t('charts.venue_slot_strength_heatmap.done')
   } else if (chartId === 'menu_item_heatmap') {
-    message = isInFlight
-      ? t('charts.menu_item_heatmap.running')
-      : t('charts.menu_item_heatmap.done')
+    message =
+      status === 'running'
+        ? t('charts.menu_item_heatmap.running')
+        : t('charts.menu_item_heatmap.done')
   } else if (chartId === 'pair_lift_matrix_heatmap') {
-    message = isInFlight
-      ? t('charts.pair_lift_matrix_heatmap.running')
-      : t('charts.pair_lift_matrix_heatmap.done')
+    message =
+      status === 'running'
+        ? t('charts.pair_lift_matrix_heatmap.running')
+        : t('charts.pair_lift_matrix_heatmap.done')
   } else {
-    message = isInFlight ? t('runningGeneric') : t('doneGeneric')
+    message = status === 'running' ? t('runningGeneric') : t('doneGeneric')
   }
 
-  return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
+  return <CompactToolStatus status={status} message={message} />
 }
 
 const COMPACT_TOOL_I18N = {
@@ -198,24 +207,48 @@ function CompactNamedToolBlock({
 }) {
   const t = useTranslations('chatTools')
   const key = COMPACT_TOOL_I18N[toolName]
-  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
+  const status = toolPartStatus(part)
   const output = 'output' in part ? part.output : undefined
   // Hide rejected speculative saves (invented / unattached names) — avoid alarming the user.
-  if (toolName === 'save_story_asset' && !isInFlight && isRejectedStoryAssetSaveOutput(output)) {
+  if (
+    toolName === 'save_story_asset' &&
+    status !== 'running' &&
+    isRejectedStoryAssetSaveOutput(output)
+  ) {
     return null
   }
-  const isError = toolOutputLooksLikeError(part)
-  const message = isError ? t(`${key}.error`) : isInFlight ? t(`${key}.running`) : t(`${key}.done`)
+  const message =
+    status === 'error'
+      ? t(`${key}.error`)
+      : status === 'running'
+        ? t(`${key}.running`)
+        : t(`${key}.done`)
 
-  return <CompactToolStatus isError={isError} isInFlight={isInFlight} message={message} />
+  return <CompactToolStatus status={status} message={message} />
 }
 
 export type StoryGenerateConfirmationActions = {
   actionsEnabled: boolean
-  /** When true, hide the confirmation tool UI entirely (e.g. generate already ran). */
-  hideToolUi?: boolean
   onConfirmGenerate: () => void
   onRequestChanges: () => void
+}
+
+function StoryGenerateConfirmationActionsBlock({
+  confirmation,
+}: {
+  confirmation: StoryGenerateConfirmationActions
+}) {
+  const t = useTranslations('chatTools.requestStoryGenerateConfirmation')
+  return (
+    <Suggestions>
+      <Suggestion
+        onClick={confirmation.onConfirmGenerate}
+        suggestion={t('generate')}
+        variant="default"
+      />
+      <Suggestion onClick={confirmation.onRequestChanges} suggestion={t('change')} />
+    </Suggestions>
+  )
 }
 
 function RequestStoryGenerateConfirmationToolBlock({
@@ -223,72 +256,58 @@ function RequestStoryGenerateConfirmationToolBlock({
   storyGenerateConfirmation,
 }: {
   part: ToolUIPart<UITools> | DynamicToolUIPart
-  storyGenerateConfirmation?: StoryGenerateConfirmationActions
+  storyGenerateConfirmation: StoryGenerateConfirmationActions
 }) {
   const t = useTranslations('chatTools.requestStoryGenerateConfirmation')
-  const isInFlight = part.state === 'input-streaming' || part.state === 'input-available'
-  const isError = toolOutputLooksLikeError(part)
-  const actionsEnabled =
-    Boolean(storyGenerateConfirmation?.actionsEnabled) && !isInFlight && !isError
+  const status = toolPartStatus(part)
+  const actionsEnabled = storyGenerateConfirmation.actionsEnabled && status === 'done'
 
-  if (storyGenerateConfirmation?.hideToolUi) {
-    return null
+  if (status === 'running') {
+    return <CompactToolStatus status="running" message={t('running')} />
   }
 
-  if (isInFlight) {
-    return <CompactToolStatus isError={false} isInFlight message={t('running')} />
-  }
-
-  if (isError) {
-    return <CompactToolStatus isError isInFlight={false} message={t('error')} />
+  if (status === 'error') {
+    return <CompactToolStatus status="error" message={t('error')} />
   }
 
   if (!actionsEnabled) {
-    return <CompactToolStatus isError={false} isInFlight={false} message={t('done')} />
+    return <CompactToolStatus status="done" message={t('done')} />
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <CompactToolStatus isError={false} isInFlight={false} message={t('ready')} />
-      <Suggestions>
-        <Suggestion
-          onClick={() => storyGenerateConfirmation?.onConfirmGenerate()}
-          suggestion={t('generate')}
-          variant="default"
-        />
-        <Suggestion
-          onClick={() => storyGenerateConfirmation?.onRequestChanges()}
-          suggestion={t('change')}
-        />
-      </Suggestions>
+      <CompactToolStatus status="done" message={t('ready')} />
+      <StoryGenerateConfirmationActionsBlock confirmation={storyGenerateConfirmation} />
     </div>
   )
 }
 
-function ToolPartBlock({
-  part,
-  storyGenerateConfirmation,
-}: {
+type ToolBlockProps = {
   part: ToolUIPart<UITools> | DynamicToolUIPart
   storyGenerateConfirmation?: StoryGenerateConfirmationActions
-}) {
-  const toolName = resolveToolName(part)
-  if (toolName === 'search_web') {
-    return <SearchWebToolBlock part={part} />
-  }
-  if (toolName === 'generate_instagram_post_image') {
-    return <GenerateInstagramPostImageToolBlock part={part} />
-  }
-  if (toolName === 'get_chart_data') {
-    return <GetChartDataToolBlock part={part} />
-  }
-  if (toolName === 'request_story_generate_confirmation') {
+}
+
+const TOOL_BLOCK_REGISTRY: Record<string, (props: ToolBlockProps) => ReactNode> = {
+  search_web: ({ part }) => <SearchWebToolBlock part={part} />,
+  generate_instagram_post_image: ({ part }) => <GenerateInstagramPostImageToolBlock part={part} />,
+  get_chart_data: ({ part }) => <GetChartDataToolBlock part={part} />,
+  request_story_generate_confirmation: ({ part, storyGenerateConfirmation }) => {
+    // Omit confirmation prop → don't render this tool UI (e.g. generate already ran).
+    if (!storyGenerateConfirmation) return null
     return (
       <RequestStoryGenerateConfirmationToolBlock
         part={part}
         storyGenerateConfirmation={storyGenerateConfirmation}
       />
     )
+  },
+}
+
+function ToolPartBlock({ part, storyGenerateConfirmation }: ToolBlockProps) {
+  const toolName = resolveToolName(part)
+  const registered = TOOL_BLOCK_REGISTRY[toolName]
+  if (registered) {
+    return registered({ part, storyGenerateConfirmation })
   }
   if (isCompactToolName(toolName)) {
     return <CompactNamedToolBlock part={part} toolName={toolName} />

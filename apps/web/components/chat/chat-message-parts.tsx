@@ -36,7 +36,7 @@ export function ChatThreadMessageParts({
   const { visibleMessages, status } = useChatMessages()
   const { sendQuickReply } = useChatActions()
 
-  const hideToolUi = messageHasGenerateInstagramPostImage(message)
+  const showConfirmationToolUi = !messageHasGenerateInstagramPostImage(message)
 
   const actionsEnabled = useMemo(
     () =>
@@ -61,15 +61,18 @@ export function ChatThreadMessageParts({
     void sendQuickReply(STORY_GENERATE_CHANGE_REPLY)
   }, [sendQuickReply])
 
+  // Compose confirmation only when the tool UI should appear; omit after generate ran.
   const storyGenerateConfirmation = useMemo(
-    () => ({
-      // Buttons render below the message; tool part only shows compact status / hide.
-      actionsEnabled: false,
-      hideToolUi,
-      onConfirmGenerate,
-      onRequestChanges,
-    }),
-    [hideToolUi, onConfirmGenerate, onRequestChanges],
+    () =>
+      showConfirmationToolUi
+        ? {
+            // Buttons render below the message; tool part only shows compact status.
+            actionsEnabled: false,
+            onConfirmGenerate,
+            onRequestChanges,
+          }
+        : undefined,
+    [showConfirmationToolUi, onConfirmGenerate, onRequestChanges],
   )
 
   return (
