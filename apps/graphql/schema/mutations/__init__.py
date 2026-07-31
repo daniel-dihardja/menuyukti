@@ -5,7 +5,6 @@ from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_location import CreateLocationMutation
 from .create_media_collection import CreateMediaCollectionMutation
-from .create_node import CreateNodeMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
 from .create_style import CreateStyleMutation
@@ -16,7 +15,6 @@ from .delete_crm_app import DeleteCrmAppMutation
 from .delete_crm_customer import DeleteCrmCustomerMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_media_collection import DeleteMediaCollectionMutation
-from .delete_node import DeleteNodeMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
@@ -35,8 +33,6 @@ from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_media_collection import UpdateMediaCollectionMutation
-from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
-from .update_node import UpdateNodeMutation
 from .update_post import UpdatePostMutation
 from .update_post_page import UpdatePostPageMutation
 from .update_style import UpdateStyleMutation
@@ -53,7 +49,6 @@ __all__ = [
     "CreateLocationMutation",
     "CreateMediaCollectionMutation",
     "CreateStyleMutation",
-    "CreateNodeMutation",
     "CreatePostMutation",
     "CreatePostPageMutation",
     "CreateWorkspaceMutation",
@@ -66,7 +61,6 @@ __all__ = [
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",
     "DeleteStyleMutation",
-    "DeleteNodeMutation",
     "DeletePostMutation",
     "DeletePostPageMutation",
     "DeletePostPageMediaVersionMutation",
@@ -81,10 +75,8 @@ __all__ = [
     "UpdateLocationManualBriefInputMutation",
     "UpdateMediaCollectionMutation",
     "UpdateStyleMutation",
-    "UpdateNodeMutation",
     "UpdatePostMutation",
     "UpdatePostPageMutation",
-    "UpdateMenuItemCogsBulkMutation",
     "UpsertMenuItemCogsBulkMutation",
     "UploadSalesReportMutation",
 ]

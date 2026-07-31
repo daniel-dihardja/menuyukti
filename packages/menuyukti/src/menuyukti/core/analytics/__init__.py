@@ -34,8 +34,8 @@ Callers outside this package should prefer typed row lists and
 | Behavior | Pipelines |
 |----------|-----------|
 | Raise ``ValueError`` | sales analytics, category mix, popularity, revenue trends (empty current), menu engineering |
-| Return empty structure (``[]`` / empty TypedDict lists) | heatmaps, weekly demand, slot demand, basket affinities, combo pair timing |
-| Return ``None`` | operating profile / order metrics by day when no positive-revenue bills |
+| Return empty structure (``[]`` / empty TypedDict lists) | heatmaps, slot demand, basket affinities, combo pair timing |
+| Return ``None`` | operating profile when no positive-revenue bills |
 
 GraphQL services typically guard with ``if not facts: return None`` before calling
 into the package.
@@ -80,24 +80,13 @@ from menuyukti.core.analytics.calculate_combo_pair_timing import (
     OrderRowForComboTiming,
     compute_combo_pair_timing_from_orders,
 )
-from menuyukti.core.analytics.calculate_slot_menu_candidates import (
-    OrderRowForSlotMenuCandidates,
-    SlotMenuCandidateItem,
-    SlotMenuCandidatesCell,
-    SlotMenuCandidatesOptions,
-    SlotMenuCandidatesResult,
-    compute_slot_menu_candidates,
-)
 from menuyukti.core.analytics.calculate_slot_demand_profile import (
     OrderRowForSlotDemand,
     PromoPostureResult,
     SlotDemandCell,
-    VenueSlotPerformanceCell,
-    VenueSlotPerformanceSummary,
     calculate_slot_demand_profile,
     compute_slot_demand_profile_from_orders,
     derive_combo_promo_posture,
-    summarize_venue_slot_performance,
 )
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
     WEEKDAY_ORDER,
@@ -113,26 +102,11 @@ from menuyukti.core.analytics.calculate_operating_profile import (
     DayTypeRow,
     MealPeriodRow,
     OperatingProfileResult,
-    OrderMetricsByDayRow,
     OrderRowForProfile,
     compute_operating_profile_from_orders,
-    compute_order_metrics_by_day_from_orders,
 )
 from menuyukti.core.analytics.calculate_popularity_index import (
     calculate_popularity_index,
-)
-from menuyukti.core.analytics.calculate_menu_engineering_promotion_candidates import (
-    compute_menu_engineering_promotion_candidates,
-)
-from menuyukti.core.analytics.calculate_promotion_candidates import (
-    BestPostingWindowInput,
-    InstagramSignalMenuItem,
-    PromotionCandidatesResult,
-    PromotionMenuItemForCandidates,
-    PromotionRankedCandidate,
-    PuzzleOpportunityPool,
-    PuzzleSelectedCandidate,
-    calculate_promotion_candidates,
 )
 from menuyukti.core.analytics.calculate_revenue_trends import (
     OrderRowForRevenueTrends,
@@ -152,12 +126,6 @@ from menuyukti.core.analytics.calculate_sales_analytics import (
     calculate_sales_analytics,
     compute_sales_analytics_from_orders,
 )
-from menuyukti.core.analytics.calculate_weekly_demand_pattern import (
-    OrderRowForWeeklyDemand,
-    WeeklyDemandPatternRow,
-    calculate_weekly_demand_pattern,
-    compute_weekly_demand_pattern_from_orders,
-)
 from menuyukti.core.analytics.extract_menu_items import extract_menu_items
 from menuyukti.core.analytics.frame_contracts import (
     category_mix_columns,
@@ -171,7 +139,6 @@ from menuyukti.core.analytics.frame_contracts import (
     require_columns,
     revenue_trends_columns,
     slot_demand_columns,
-    weekly_demand_columns,
 )
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from menuyukti.core.analytics.registry import NORMALIZERS, get_normalizer
@@ -195,7 +162,6 @@ __all__ = [
     "MenuBasketPair",
     "OrderRowForBasket",
     "OperatingProfileResult",
-    "OrderMetricsByDayRow",
     "OrderSignals",
     "OrderRowForCategoryMix",
     "OrderRowForMatrix",
@@ -209,14 +175,10 @@ __all__ = [
     "RevenueTrendsResult",
     "WeeklyHeatmapRow",
     "WEEKDAY_ORDER",
-    "WeeklyDemandPatternRow",
-    "OrderRowForWeeklyDemand",
     "calculate_category_mix",
     "calculate_instagram_signals",
     "calculate_revenue_trends",
     "calculate_sales_analytics",
-    "calculate_weekly_demand_pattern",
-    "compute_weekly_demand_pattern_from_orders",
     "compute_category_mix_from_orders",
     "compute_sales_analytics_from_orders",
     "calculate_menu_heatmaps",
@@ -231,33 +193,14 @@ __all__ = [
     "OrderRowForComboTiming",
     "compute_combo_pair_timing_from_orders",
     "OrderRowForSlotDemand",
-    "OrderRowForSlotMenuCandidates",
     "PromoPostureResult",
     "SlotDemandCell",
-    "SlotMenuCandidateItem",
-    "SlotMenuCandidatesCell",
-    "SlotMenuCandidatesOptions",
-    "SlotMenuCandidatesResult",
-    "VenueSlotPerformanceCell",
-    "VenueSlotPerformanceSummary",
     "calculate_slot_demand_profile",
     "compute_slot_demand_profile_from_orders",
-    "compute_slot_menu_candidates",
     "derive_combo_promo_posture",
-    "summarize_venue_slot_performance",
     "compute_operating_profile_from_orders",
-    "compute_order_metrics_by_day_from_orders",
     "compute_revenue_trends_from_orders",
     "calculate_popularity_index",
-    "BestPostingWindowInput",
-    "InstagramSignalMenuItem",
-    "PromotionCandidatesResult",
-    "PromotionMenuItemForCandidates",
-    "PromotionRankedCandidate",
-    "PuzzleOpportunityPool",
-    "PuzzleSelectedCandidate",
-    "calculate_promotion_candidates",
-    "compute_menu_engineering_promotion_candidates",
     "calculate_menu_engineering_matrix",
     "compute_menu_engineering_from_orders",
     "category_mix_columns",
@@ -272,7 +215,6 @@ __all__ = [
     "require_columns",
     "revenue_trends_columns",
     "slot_demand_columns",
-    "weekly_demand_columns",
     "detect_pos_from_excel_bytes",
     "get_normalizer",
     "NORMALIZERS",

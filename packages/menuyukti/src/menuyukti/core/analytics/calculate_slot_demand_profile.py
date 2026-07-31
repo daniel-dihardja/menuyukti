@@ -64,24 +64,6 @@ class PromoPostureResult(TypedDict):
     promo_reason: str
 
 
-class VenueSlotPerformanceCell(TypedDict):
-    day: str
-    meal_period: str
-    meal_period_label: str
-    meal_period_hours_label: str
-    order_count: int
-    demand_index: float
-    relative_demand: RelativeDemand
-    posture: PromoPosture
-
-
-class VenueSlotPerformanceSummary(TypedDict):
-    slots: list[VenueSlotPerformanceCell]
-    strong_slots: list[str]
-    slots_needing_promotion: list[str]
-    summary: str
-
-
 def _day_label(day: str) -> str:
     labels = {
         "mon": "Mon",
@@ -195,59 +177,6 @@ def compute_slot_demand_profile_from_orders(
         return []
     df = pd.DataFrame([dict(r) for r in rows])
     return calculate_slot_demand_profile(df)
-
-
-def _slot_performance_label(cell: SlotDemandCell) -> str:
-    return f"{_day_label(cell['day'])} {cell['meal_period_label']} ({cell['demand_index']:.2f}×)"
-
-
-def summarize_venue_slot_performance(
-    profile: list[SlotDemandCell],
-) -> VenueSlotPerformanceSummary | None:
-    """Summarize venue slot demand with posture labels for campaign planning."""
-    if not profile:
-        return None
-
-    slots: list[VenueSlotPerformanceCell] = []
-    for cell in profile:
-        relative = cell["relative_demand"]
-        slots.append(
-            VenueSlotPerformanceCell(
-                day=cell["day"],
-                meal_period=cell["meal_period"],
-                meal_period_label=cell["meal_period_label"],
-                meal_period_hours_label=cell["meal_period_hours_label"],
-                order_count=cell["order_count"],
-                demand_index=cell["demand_index"],
-                relative_demand=relative,
-                posture=posture_from_relative(relative),
-            )
-        )
-
-    strong_cells = sorted(
-        (cell for cell in profile if cell["relative_demand"] == "high"),
-        key=lambda cell: (-cell["demand_index"], WEEKDAY_ORDER.index(cell["day"])),
-    )
-    promote_cells = sorted(
-        (cell for cell in profile if cell["relative_demand"] == "low"),
-        key=lambda cell: (cell["demand_index"], WEEKDAY_ORDER.index(cell["day"])),
-    )
-    average_count = sum(1 for cell in profile if cell["relative_demand"] == "average")
-
-    strong_slots = [_slot_performance_label(cell) for cell in strong_cells]
-    slots_needing_promotion = [_slot_performance_label(cell) for cell in promote_cells]
-    summary = (
-        f"{len(strong_slots)} strong slot(s), "
-        f"{len(slots_needing_promotion)} slot(s) needing promotion, "
-        f"{average_count} average."
-    )
-
-    return VenueSlotPerformanceSummary(
-        slots=slots,
-        strong_slots=strong_slots,
-        slots_needing_promotion=slots_needing_promotion,
-        summary=summary,
-    )
 
 
 def _slot_profile_lookup(

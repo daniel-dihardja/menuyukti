@@ -12,7 +12,6 @@ from graphql.validation.validation_context import ValidationContext
 _HEAVY_ROOT_FIELDS: dict[str, int] = {
     "analyticsBundle": 40,
     "instagramSignals": 35,
-    "latestAnalyticsRunWithSignals": 35,
     "menuHeatmaps": 25,
     "menuEngineeringMatrix": 25,
     "menuCombos": 25,
@@ -21,10 +20,6 @@ _HEAVY_ROOT_FIELDS: dict[str, int] = {
     "revenueTrends": 20,
     "operatingProfile": 20,
     "promotionMenuItems": 20,
-    "promotionEngineeringCandidates": 20,
-    "igPlanInputs": 45,
-    "slotMenuCandidates": 30,
-    "weeklyDemandPattern": 15,
 }
 
 _DEFAULT_FIELD_COST = 1
@@ -40,7 +35,6 @@ _LIST_ROOT_FIELDS = frozenset(
         "imageAiFlows",
         "analyticsRuns",
         "workspaceMembers",
-        "nodes",
     }
 )
 

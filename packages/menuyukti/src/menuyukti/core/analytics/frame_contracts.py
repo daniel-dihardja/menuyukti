@@ -92,11 +92,6 @@ def heatmap_columns() -> list[str]:
     return [_COL.MENU, _COL.QTY, _COL.ORDER_TIME]
 
 
-def weekly_demand_columns() -> list[str]:
-    """Minimum columns for :func:`calculate_weekly_demand_pattern`."""
-    return [_COL.BILL_NUMBER, _COL.ORDER_TIME, _COL.TOTAL_AFTER_BILL_DISCOUNT]
-
-
 def slot_demand_columns() -> list[str]:
     """Minimum columns for :func:`calculate_slot_demand_profile`."""
     return [_COL.BILL_NUMBER, _COL.ORDER_TIME]
