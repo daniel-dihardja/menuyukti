@@ -228,7 +228,7 @@ async def _retry_chat_model_call(request: ModelRequest, handler: Any) -> Any:
     raise last
 
 
-@wrap_tool_call  # type: ignore[arg-type]
+@wrap_tool_call  # type: ignore[call-overload]
 async def _handle_tool_errors(
     request: ToolCallRequest,
     handler: Any,
