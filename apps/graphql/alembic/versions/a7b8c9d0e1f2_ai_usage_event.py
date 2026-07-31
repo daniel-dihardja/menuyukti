@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("feature", sa.String(length=64), nullable=False),
         sa.Column("model", sa.String(length=128), nullable=True),
         sa.Column("external_id", sa.String(length=256), nullable=True),
-        sa.Column("units", sa.Integer(), nullable=False, server_default="1"),
+        sa.Column("units", sa.Integer(), nullable=False, server_default=sa.text("1")),
         sa.Column("status", sa.String(length=32), nullable=False),
         sa.Column(
             "metadata",

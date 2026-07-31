@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Index, Integer, String, Uuid, func
+from sqlalchemy import DateTime, Index, Integer, String, Uuid, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
@@ -39,7 +39,12 @@ class AiUsageEvent(Base):
     feature: Mapped[str] = mapped_column(String(64), nullable=False)
     model: Mapped[str | None] = mapped_column(String(128), nullable=True)
     external_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
-    units: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    units: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+        server_default=text("1"),
+    )
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     event_metadata: Mapped[dict[str, Any] | None] = mapped_column(
         "metadata",
