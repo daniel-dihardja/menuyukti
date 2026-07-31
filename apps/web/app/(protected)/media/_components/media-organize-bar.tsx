@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { X } from 'lucide-react'
 
@@ -7,6 +8,7 @@ import { Button } from '@workspace/ui/components/button'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -24,6 +26,7 @@ export type MediaOrganizeBarProps = {
   onAdd: () => void
   onRemoveFromCurrent: () => void
   onClear: () => void
+  onHeightChange?: (height: number) => void
   busy?: boolean
 }
 
@@ -37,14 +40,34 @@ export function MediaOrganizeBar({
   onAdd,
   onRemoveFromCurrent,
   onClear,
+  onHeightChange,
   busy = false,
 }: MediaOrganizeBarProps) {
   const t = useTranslations('media.collections')
+  const rootRef = useRef<HTMLDivElement>(null)
   const canRemove = currentCollectionId != null
   const canAdd = collections.length > 0 && Boolean(addCollectionId)
 
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el || !onHeightChange) return
+
+    const report = () => {
+      onHeightChange(el.getBoundingClientRect().height)
+    }
+
+    report()
+    const observer = new ResizeObserver(report)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      onHeightChange(0)
+    }
+  }, [onHeightChange])
+
   return (
     <div
+      ref={rootRef}
       role="region"
       aria-label={t('organizeRegion')}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 p-3 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)] backdrop-blur supports-[backdrop-filter]:bg-background/85 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
@@ -65,12 +88,12 @@ export function MediaOrganizeBar({
             type="button"
             size="icon"
             variant="ghost"
-            className="shrink-0"
+            className="size-11 shrink-0 touch-manipulation sm:size-9"
             aria-label={t('clearSelection')}
             disabled={busy}
             onClick={onClear}
           >
-            <X className="size-4" />
+            <X />
           </Button>
         </div>
 
@@ -82,18 +105,25 @@ export function MediaOrganizeBar({
                 onValueChange={onAddCollectionIdChange}
                 disabled={busy}
               >
-                <SelectTrigger className="w-[11rem] sm:w-[13rem]">
+                <SelectTrigger className="h-11 w-full min-w-[11rem] touch-manipulation sm:h-9 sm:w-[13rem]">
                   <SelectValue placeholder={t('addPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {collections.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    {collections.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
-              <Button type="button" size="sm" disabled={busy || !canAdd} onClick={onAdd}>
+              <Button
+                type="button"
+                className="h-11 touch-manipulation sm:h-9"
+                disabled={busy || !canAdd}
+                onClick={onAdd}
+              >
                 {t('addToCollection')}
               </Button>
             </>
@@ -103,8 +133,8 @@ export function MediaOrganizeBar({
           {canRemove ? (
             <Button
               type="button"
-              size="sm"
               variant="outline"
+              className="h-11 touch-manipulation sm:h-9"
               disabled={busy}
               onClick={onRemoveFromCurrent}
             >

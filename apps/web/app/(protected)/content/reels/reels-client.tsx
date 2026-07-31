@@ -214,6 +214,7 @@ export function ReelsClient() {
           previewVideo: t('grid.play'),
           delete: t('grid.delete'),
           download: t('grid.download'),
+          moreActions: t('grid.moreActions'),
           emptyTitle: t('grid.empty.title'),
           emptyDescription: t('grid.empty.description'),
         }}

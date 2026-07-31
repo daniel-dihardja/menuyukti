@@ -67,19 +67,22 @@ export function MediaUploadZone({
           <div className="flex items-start gap-3 sm:items-center sm:gap-4">
             <div
               className={cn(
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background/80 shadow-sm transition-transform duration-300',
+                'flex size-10 shrink-0 items-center justify-center rounded-xl border bg-background/80 shadow-sm transition-transform duration-300',
                 dragActive ? 'scale-105 border-primary/50 text-primary' : 'text-muted-foreground',
               )}
             >
               {uploading ? (
-                <Loader2 className="size-5 animate-spin text-primary" aria-hidden />
+                <Loader2 className="animate-spin text-primary" aria-hidden />
               ) : (
-                <Upload className="size-5" aria-hidden />
+                <Upload aria-hidden />
               )}
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
               <h2 className="text-base font-semibold tracking-tight">{t('upload.title')}</h2>
-              <p className="text-pretty text-xs text-muted-foreground sm:text-sm">
+              <p className="text-pretty text-xs text-muted-foreground sm:hidden">
+                {t('upload.hintMobile')}
+              </p>
+              <p className="hidden text-pretty text-sm text-muted-foreground sm:block">
                 {t('upload.hint')}
               </p>
             </div>
@@ -87,18 +90,18 @@ export function MediaUploadZone({
 
           <Button
             type="button"
-            className="h-10 shrink-0 rounded-full px-6 shadow-sm sm:min-w-[9rem]"
+            className="h-11 shrink-0 touch-manipulation px-6 shadow-sm sm:h-10 sm:min-w-[9rem]"
             disabled={uploading}
             onClick={onBrowse}
           >
             {uploading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
                 {t('upload.uploading')}
               </>
             ) : (
               <>
-                <ImageIcon className="mr-2 h-4 w-4" />
+                <ImageIcon />
                 {t('upload.browse')}
               </>
             )}

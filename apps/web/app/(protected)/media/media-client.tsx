@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ImageIcon } from 'lucide-react'
+import { AlertCircle, ChevronDown, ImageIcon } from 'lucide-react'
+import { toast } from 'sonner'
 
 import {
   AlertDialog,
@@ -14,6 +15,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
+import { Button } from '@workspace/ui/components/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { ContentMediaGrid } from '@/app/(protected)/content/_components/content-media-grid'
@@ -36,7 +44,6 @@ import { MediaCollectionsBar } from './_components/media-collections-bar'
 import { MediaOrganizeBar } from './_components/media-organize-bar'
 import { MediaUploadZone } from './_components/media-upload-zone'
 
-type ToastState = { kind: 'success' | 'error'; message: string } | null
 type CollectionFilter = 'all' | number
 
 export function MediaClient() {
@@ -46,10 +53,10 @@ export function MediaClient() {
   const [collections, setCollections] = useState<MediaCollection[]>([])
   const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>('all')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [collectionsBusy, setCollectionsBusy] = useState(false)
   const [dragActive, setDragActive] = useState(false)
-  const [toast, setToast] = useState<ToastState>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [pendingDeleteName, setPendingDeleteName] = useState<string | null>(null)
   const [imageDimensionsByName, setImageDimensionsByName] = useState<
@@ -58,10 +65,15 @@ export function MediaClient() {
   const [preview, setPreview] = useState<ContentCatalogItem | null>(null)
   const [selected, setSelected] = useState<MediaCatalogItem | null>(null)
   const [addCollectionId, setAddCollectionId] = useState('')
+  const [organizeBarHeight, setOrganizeBarHeight] = useState(0)
 
   const showToast = useCallback((kind: 'success' | 'error', message: string) => {
-    setToast({ kind, message })
-    window.setTimeout(() => setToast(null), 4200)
+    if (kind === 'success') toast.success(message)
+    else toast.error(message)
+  }, [])
+
+  const handleOrganizeBarHeight = useCallback((height: number) => {
+    setOrganizeBarHeight(height)
   }, [])
 
   const refreshCollections = useCallback(
@@ -88,6 +100,7 @@ export function MediaClient() {
         })
         if (signal?.aborted) return
         setItems(list)
+        setLoadError(false)
         setSelected((prev) => {
           if (!prev) return null
           return list.find((item) => item.name === prev.name) ?? null
@@ -96,6 +109,7 @@ export function MediaClient() {
         if (e instanceof Error && e.name === 'AbortError') {
           return
         }
+        setLoadError(true)
         setItems([])
         showToast('error', t('toast.loadError'))
       } finally {
@@ -245,26 +259,33 @@ export function MediaClient() {
         }
 
   return (
-    <div className={cn('flex w-full flex-col gap-6', selected ? 'pb-28' : undefined)}>
-      {toast ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className={cn(
-            'fixed bottom-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg',
-            selected ? 'bottom-28' : 'bottom-4',
-            toast.kind === 'success'
-              ? 'border-border bg-background text-foreground'
-              : 'border-destructive/50 bg-destructive/10 text-destructive',
-          )}
-        >
-          {toast.message}
-        </div>
-      ) : null}
-
+    <div
+      className={cn('flex w-full flex-col gap-6')}
+      style={
+        selected && organizeBarHeight > 0
+          ? { paddingBottom: `calc(${organizeBarHeight}px + 0.75rem)` }
+          : undefined
+      }
+    >
       <div className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">{t('description')}</p>
-        <p className="text-sm text-muted-foreground">{t('collections.help')}</p>
+        <p className="text-pretty text-sm text-muted-foreground">{t('descriptionShort')}</p>
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto justify-start gap-1 px-0 py-0 text-sm text-muted-foreground hover:bg-transparent hover:text-foreground [&[data-state=open]>svg]:rotate-180"
+            >
+              {t('collections.helpToggle')}
+              <ChevronDown className="size-4 transition-transform" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <p className="pt-1 text-pretty text-sm text-muted-foreground">
+              {t('collections.help')}
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       <MediaCollectionsBar
@@ -320,7 +341,7 @@ export function MediaClient() {
         }}
       />
 
-      {!selected && items.length > 0 ? (
+      {!selected && items.length > 0 && !loadError ? (
         <p className="text-sm text-muted-foreground">{t('collections.selectHint')}</p>
       ) : null}
 
@@ -334,29 +355,48 @@ export function MediaClient() {
         onBrowse={() => inputRef.current?.click()}
       />
 
-      <ContentMediaGrid
-        loading={loading}
-        items={items}
-        imageDimensionsByName={imageDimensionsByName}
-        onImageNaturalSize={handleImageNaturalSize}
-        onVideoMetadata={handleImageNaturalSize}
-        deleting={deleting}
-        selectedName={selected?.name ?? null}
-        onSelect={handleSelect}
-        onPreview={setPreview}
-        onDeleteRequest={setPendingDeleteName}
-        getDownloadHref={mediaDownloadHref}
-        emptyIcon={ImageIcon}
-        labels={{
-          previewImage: t('grid.viewLarge'),
-          previewVideo: t('grid.viewLarge'),
-          delete: t('grid.delete'),
-          download: t('grid.download'),
-          select: t('grid.select'),
-          emptyTitle: emptyLabels.emptyTitle,
-          emptyDescription: emptyLabels.emptyDescription,
-        }}
-      />
+      {loadError && !loading ? (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>{t('grid.loadErrorTitle')}</AlertTitle>
+          <AlertDescription className="flex flex-col gap-3">
+            <span>{t('grid.loadErrorDescription')}</span>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-fit touch-manipulation border-destructive/40 sm:h-9"
+              onClick={() => void load(false)}
+            >
+              {t('grid.retry')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <ContentMediaGrid
+          loading={loading}
+          items={items}
+          imageDimensionsByName={imageDimensionsByName}
+          onImageNaturalSize={handleImageNaturalSize}
+          onVideoMetadata={handleImageNaturalSize}
+          deleting={deleting}
+          selectedName={selected?.name ?? null}
+          onSelect={handleSelect}
+          onPreview={setPreview}
+          onDeleteRequest={setPendingDeleteName}
+          getDownloadHref={mediaDownloadHref}
+          emptyIcon={ImageIcon}
+          labels={{
+            previewImage: t('grid.viewLarge'),
+            previewVideo: t('grid.viewLarge'),
+            delete: t('grid.delete'),
+            download: t('grid.download'),
+            select: t('grid.select'),
+            moreActions: t('grid.moreActions'),
+            emptyTitle: emptyLabels.emptyTitle,
+            emptyDescription: emptyLabels.emptyDescription,
+          }}
+        />
+      )}
 
       {selected ? (
         <MediaOrganizeBar
@@ -367,6 +407,7 @@ export function MediaClient() {
           addCollectionId={addCollectionId}
           onAddCollectionIdChange={setAddCollectionId}
           busy={collectionsBusy}
+          onHeightChange={handleOrganizeBarHeight}
           onClear={() => setSelected(null)}
           onAdd={() => {
             if (!addCollectionId || !selected) return
