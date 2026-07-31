@@ -3,6 +3,7 @@ import { ZodError } from 'zod'
 
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import {
   CREATE_MEDIA_COLLECTION_MUTATION,
   MEDIA_COLLECTIONS_QUERY,
@@ -28,7 +29,11 @@ export async function GET() {
     if (!authz.ok) return authz.response
     const { userId } = authz
 
-    const data = await graphqlQuery<MediaCollectionsData>(MEDIA_COLLECTIONS_QUERY, {}, userId)
+    const data = await graphqlQuery<MediaCollectionsData>(
+      MEDIA_COLLECTIONS_QUERY,
+      { first: DEFAULT_LIST_FIRST },
+      userId,
+    )
     return NextResponse.json({ collections: data.mediaCollections })
   } catch (error) {
     console.error('[media/collections] GET', error)

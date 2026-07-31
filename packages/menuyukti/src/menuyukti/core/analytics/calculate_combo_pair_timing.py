@@ -8,6 +8,7 @@ from typing import Literal, TypedDict
 
 import pandas as pd
 
+from menuyukti.core.analytics.bill_aggregation import bill_menus_and_min_times
 from menuyukti.core.analytics.meal_periods import (
     MEAL_PERIODS,
     WEEKDAY_ORDER,
@@ -91,22 +92,7 @@ def _confidence_tier(sample: int) -> ConfidenceTier:
 def _bill_menus_and_times(
     df: pd.DataFrame,
 ) -> tuple[dict[str, frozenset[str]], dict[str, datetime]]:
-    bill_menus: dict[str, set[str]] = defaultdict(set)
-    bill_time: dict[str, datetime] = {}
-
-    for row in df.itertuples(index=False):
-        bn = str(row.bill_number)
-        menu = str(row.menu).strip()
-        if menu:
-            bill_menus[bn].add(menu)
-        ot = row.order_time
-        if bn not in bill_time or ot < bill_time[bn]:
-            bill_time[bn] = ot
-
-    return (
-        {bn: frozenset(menus) for bn, menus in bill_menus.items()},
-        bill_time,
-    )
+    return bill_menus_and_min_times(df)
 
 
 def _compute_pair_timing(

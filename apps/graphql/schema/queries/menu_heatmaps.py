@@ -81,10 +81,14 @@ class MenuHeatmapsQuery:
     ) -> list[MenuHeatmapType]:
         user_id = user_id_from_info(info)
         with request_session_scope(info) as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
+            run = get_analytics_run_if_owner(
+                session,
+                int(analytics_run_id),
+                user_id,
+                info=info,
+                location_id=int(location_id) if location_id is not None else None,
+            )
             if run is None:
-                return []
-            if location_id is not None and run.location_id != int(location_id):
                 return []
             payloads = build_menu_heatmaps(session, run, info=info)
             return menu_heatmaps_to_gql(payloads)

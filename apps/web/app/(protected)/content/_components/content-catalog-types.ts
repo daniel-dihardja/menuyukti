@@ -4,6 +4,8 @@ export type ContentCatalogItem = {
   size: number
   createdAt: string
   mediaType?: 'image' | 'video'
+  /** Human-readable label when available; otherwise UI may hide the storage filename. */
+  displayName?: string | null
 }
 
 export function contentMediaType(item: ContentCatalogItem): 'image' | 'video' {

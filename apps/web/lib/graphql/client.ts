@@ -92,10 +92,13 @@ async function executeGraphQL<T>(
   const endpoint = getEndpoint()
   let res: Response
   try {
+    // Explicit no-store: cross-request caching lives in `'use cache'` helpers
+    // (`cached-queries.ts`). `React.cache` on `graphqlQuery` only dedupes within a request.
     res = await fetch(endpoint, {
       method: 'POST',
       headers: buildHeaders(userId),
       body: JSON.stringify(body),
+      cache: 'no-store',
     })
   } catch (err) {
     throw new Error(formatGraphqlFetchError(endpoint, err))

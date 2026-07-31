@@ -35,7 +35,7 @@ export type HeatmapMatrixRow = {
   values: number[]
 }
 
-type HeatmapMatrixLabels = {
+export type HeatmapMatrixLabels = {
   menuColumnLabel: string
   legendLow: string
   legendHigh: string
@@ -55,7 +55,7 @@ export type HeatmapHighlightCell = {
   columnIndex: number
 }
 
-type Props = {
+export type HeatmapMatrixCoreProps = {
   title?: string
   rows: HeatmapMatrixRow[]
   columnLabels: string[]
@@ -65,21 +65,24 @@ type Props = {
   /** When true, cells where row label matches column label render as an em dash. */
   maskDiagonal?: boolean
   labels: HeatmapMatrixLabels
-  /** `embedded` drops the Card wrapper for use inside a parent section. */
-  variant?: 'card' | 'embedded'
-  /** When false, hides the explanation alert below the table. Defaults to true for card, false for embedded. */
-  showExplanation?: boolean
   /** Sequential (chart-2) or venue demand (chart-4, light = weak, dark = strong). */
   colorScale?: 'sequential' | 'venue'
   /** Highlights a cell with a primary ring (e.g. pair peak slot). */
   highlightCell?: HeatmapHighlightCell | null
-  /** When false, hides the totals row. Defaults to true. */
-  showTotalsRow?: boolean
   /** When set, sorting the row label column uses this key order instead of alphabetical. */
   rowKeyOrder?: readonly string[]
   /** Menu item name → menu engineering quadrant; shows a compact badge on each row label. */
   matrixCategoryByRowKey?: ReadonlyMap<string, MatrixCategory>
   matrixCategoryLabel?: (category: MatrixCategory) => string
+}
+
+type HeatmapMatrixViewProps = HeatmapMatrixCoreProps & {
+  /** Card shell vs plain section embedding. */
+  layout: 'card' | 'embedded'
+  /** Include explanation block below the table. */
+  withExplanation: boolean
+  /** Include column totals row. */
+  withTotalsRow: boolean
 }
 
 const STICKY_EDGE =
@@ -139,7 +142,7 @@ function HeatmapRowLabel({
   )
 }
 
-export function HeatmapMatrix({
+function HeatmapMatrixView({
   title,
   rows,
   columnLabels,
@@ -148,17 +151,16 @@ export function HeatmapMatrix({
   defaultSortColumnIndex = 0,
   maskDiagonal = false,
   labels,
-  variant = 'card',
-  showExplanation,
+  layout,
+  withExplanation,
+  withTotalsRow,
   colorScale = 'sequential',
   highlightCell = null,
-  showTotalsRow = true,
   rowKeyOrder,
   matrixCategoryByRowKey,
   matrixCategoryLabel,
-}: Props) {
-  const isEmbedded = variant === 'embedded'
-  const showExplainBlock = showExplanation ?? !isEmbedded
+}: HeatmapMatrixViewProps) {
+  const isEmbedded = layout === 'embedded'
   const isMobile = useCompactLayout()
   const initialSortKey = String(defaultSortColumnIndex) as HeatmapSortKey
   const { sortKey, sortDirection, toggleSort } = useHeatmapSort(initialSortKey, 'desc')
@@ -321,7 +323,7 @@ export function HeatmapMatrix({
                 </TableRow>
               )
             })}
-            {showTotalsRow ? (
+            {withTotalsRow ? (
               <TableRow className="bg-muted hover:bg-muted">
                 <TableCell className={STICKY_TOTALS_LABEL}>{labels.totalsRowLabel}</TableCell>
                 {columnTotals.map((total, i) => {
@@ -346,7 +348,7 @@ export function HeatmapMatrix({
         </TooltipProvider>
       </div>
 
-      {showExplainBlock ? (
+      {withExplanation ? (
         isEmbedded ? (
           <div>
             <p className="text-xs font-medium">{labels.explainTitle}</p>
@@ -386,24 +388,24 @@ export function HeatmapMatrix({
   )
 }
 
-export type HeatmapMatrixCoreProps = Omit<Props, 'variant' | 'showExplanation' | 'showTotalsRow'>
-
-/** Card-wrapped heatmap with explanation and totals row enabled by default. */
+/** Card-wrapped heatmap with explanation and totals row. */
 export function HeatmapMatrixCard(props: HeatmapMatrixCoreProps) {
-  return <HeatmapMatrix {...props} showExplanation showTotalsRow variant="card" />
+  return <HeatmapMatrixView {...props} layout="card" withExplanation withTotalsRow />
 }
 
-/** Embedded heatmap for parent sections; explanation hidden by default. */
-export function HeatmapMatrixEmbedded(
-  props: HeatmapMatrixCoreProps & { showTotalsRow?: boolean; showExplanation?: boolean },
-) {
-  const { showTotalsRow = true, showExplanation = false, ...rest } = props
+/** Embedded heatmap with totals row (no explanation). */
+export function HeatmapMatrixEmbedded(props: HeatmapMatrixCoreProps) {
+  return <HeatmapMatrixView {...props} layout="embedded" withExplanation={false} withTotalsRow />
+}
+
+/** Embedded heatmap with explanation, without totals (e.g. venue demand). */
+export function HeatmapMatrixEmbeddedExplained(props: HeatmapMatrixCoreProps) {
+  return <HeatmapMatrixView {...props} layout="embedded" withExplanation withTotalsRow={false} />
+}
+
+/** Compact embedded matrix without explanation or totals (e.g. pair-lift). */
+export function HeatmapMatrixEmbeddedPlain(props: HeatmapMatrixCoreProps) {
   return (
-    <HeatmapMatrix
-      {...rest}
-      showExplanation={showExplanation}
-      showTotalsRow={showTotalsRow}
-      variant="embedded"
-    />
+    <HeatmapMatrixView {...props} layout="embedded" withExplanation={false} withTotalsRow={false} />
   )
 }

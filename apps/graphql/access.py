@@ -105,13 +105,20 @@ def get_analytics_run_if_owner(
     analytics_run_id: int,
     user_id: str,
     info: strawberry.Info | None = None,
+    *,
+    location_id: int | None = None,
 ) -> AnalyticsRun | None:
     if not user_id:
         return None
     if info is not None:
         cache = get_run_access_cache(info)
         if analytics_run_id in cache:
-            return cache[analytics_run_id]
+            run = cache[analytics_run_id]
+            if run is None:
+                return None
+            if location_id is not None and run.location_id != location_id:
+                return None
+            return run
     run = session.get(AnalyticsRun, analytics_run_id)
     if run is None:
         if info is not None:
@@ -123,4 +130,6 @@ def get_analytics_run_if_owner(
         return None
     if info is not None:
         get_run_access_cache(info)[analytics_run_id] = run
+    if location_id is not None and run.location_id != location_id:
+        return None
     return run

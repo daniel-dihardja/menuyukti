@@ -1,6 +1,5 @@
 'use client'
 
-import type { ChangeEvent, DragEvent, RefObject } from 'react'
 import { ImageIcon, Loader2, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -8,26 +7,13 @@ import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { cn } from '@workspace/ui/lib/utils'
 
-export type MediaUploadZoneProps = {
-  inputRef: RefObject<HTMLInputElement | null>
-  uploading: boolean
-  dragActive: boolean
-  onSetDragActive: (active: boolean) => void
-  onInputChange: (e: ChangeEvent<HTMLInputElement>) => void
-  onDrop: (e: DragEvent) => void
-  onBrowse: () => void
-}
+import { useMediaActions, useMediaMeta, useMediaState } from './media-context'
 
-export function MediaUploadZone({
-  inputRef,
-  uploading,
-  dragActive,
-  onSetDragActive,
-  onInputChange,
-  onDrop,
-  onBrowse,
-}: MediaUploadZoneProps) {
+export function MediaUploadZone() {
   const t = useTranslations('media')
+  const { uploading, dragActive } = useMediaState()
+  const { setDragActive, onInputChange, onDrop, onBrowse } = useMediaActions()
+  const { inputRef } = useMediaMeta()
 
   return (
     <section>
@@ -50,15 +36,15 @@ export function MediaUploadZone({
         )}
         onDragEnter={(e) => {
           e.preventDefault()
-          onSetDragActive(true)
+          setDragActive(true)
         }}
         onDragLeave={(e) => {
           e.preventDefault()
-          if (e.currentTarget === e.target) onSetDragActive(false)
+          if (e.currentTarget === e.target) setDragActive(false)
         }}
         onDragOver={(e) => {
           e.preventDefault()
-          onSetDragActive(true)
+          setDragActive(true)
         }}
         onDrop={onDrop}
       >
@@ -67,19 +53,22 @@ export function MediaUploadZone({
           <div className="flex items-start gap-3 sm:items-center sm:gap-4">
             <div
               className={cn(
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background/80 shadow-sm transition-transform duration-300',
+                'flex size-10 shrink-0 items-center justify-center rounded-xl border bg-background/80 shadow-sm transition-transform duration-300',
                 dragActive ? 'scale-105 border-primary/50 text-primary' : 'text-muted-foreground',
               )}
             >
               {uploading ? (
-                <Loader2 className="size-5 animate-spin text-primary" aria-hidden />
+                <Loader2 className="animate-spin text-primary" aria-hidden />
               ) : (
-                <Upload className="size-5" aria-hidden />
+                <Upload aria-hidden />
               )}
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
               <h2 className="text-base font-semibold tracking-tight">{t('upload.title')}</h2>
-              <p className="text-pretty text-xs text-muted-foreground sm:text-sm">
+              <p className="text-pretty text-xs text-muted-foreground sm:hidden">
+                {t('upload.hintMobile')}
+              </p>
+              <p className="hidden text-pretty text-sm text-muted-foreground sm:block">
                 {t('upload.hint')}
               </p>
             </div>
@@ -87,18 +76,18 @@ export function MediaUploadZone({
 
           <Button
             type="button"
-            className="h-10 shrink-0 rounded-full px-6 shadow-sm sm:min-w-[9rem]"
+            className="h-11 shrink-0 touch-manipulation px-6 shadow-sm sm:h-10 sm:min-w-[9rem]"
             disabled={uploading}
             onClick={onBrowse}
           >
             {uploading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
                 {t('upload.uploading')}
               </>
             ) : (
               <>
-                <ImageIcon className="mr-2 h-4 w-4" />
+                <ImageIcon />
                 {t('upload.browse')}
               </>
             )}

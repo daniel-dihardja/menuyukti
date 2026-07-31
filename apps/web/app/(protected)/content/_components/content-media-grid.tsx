@@ -2,12 +2,34 @@
 
 import { useRef, useState } from 'react'
 import { useFormatter } from 'next-intl'
-import { Check, Download, Loader2, Maximize2, Play, Trash2, type LucideIcon } from 'lucide-react'
+import {
+  Check,
+  Download,
+  Maximize2,
+  MoreHorizontal,
+  Play,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Button } from '@workspace/ui/components/button'
-import { Card } from '@workspace/ui/components/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@workspace/ui/components/dropdown-menu'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { formatBytes, formatDimensions, MEDIA_GRID_SKELETON_COUNT } from '@/lib/format-media'
@@ -60,15 +82,15 @@ function ContentMediaGridEmpty() {
   const { labels, emptyIcon: EmptyIcon } = useContentMediaGridState()
 
   return (
-    <Card className="border-dashed bg-muted/20 py-16 text-center">
-      <div className="mx-auto flex max-w-md flex-col items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-          <EmptyIcon className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <h3 className="text-lg font-medium">{labels.emptyTitle}</h3>
-        <p className="text-sm text-muted-foreground">{labels.emptyDescription}</p>
-      </div>
-    </Card>
+    <Empty className="border border-dashed bg-muted/20 py-16">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <EmptyIcon />
+        </EmptyMedia>
+        <EmptyTitle>{labels.emptyTitle}</EmptyTitle>
+        <EmptyDescription>{labels.emptyDescription}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   )
 }
 
@@ -189,6 +211,9 @@ function ContentMediaTileMedia({ item }: { item: ContentCatalogItem }) {
   )
 }
 
+const overlaySecondaryButtonClass = `${contentOverlayIconButtonBase} bg-background/95 text-foreground hover:bg-background hover:text-foreground`
+const overlayDestructiveButtonClass = `${contentOverlayIconButtonBase} bg-white/95 text-destructive hover:bg-white`
+
 function ContentMediaTileActions({
   item,
   onOpenPreview,
@@ -200,60 +225,103 @@ function ContentMediaTileActions({
   const { getDownloadHref, onDeleteRequest } = useContentMediaGridActions()
   const isVideo = contentMediaType(item) === 'video'
   const previewLabel = isVideo ? labels.previewVideo : labels.previewImage
+  const moreLabel = labels.moreActions ?? 'More'
+  const isDeleting = deleting === item.name
+
+  const renderPreviewButton = () => (
+    <Button
+      type="button"
+      size="icon"
+      variant="secondary"
+      className={overlaySecondaryButtonClass}
+      aria-label={previewLabel}
+      onClick={(e) => {
+        e.stopPropagation()
+        onOpenPreview()
+      }}
+    >
+      {isVideo ? <Play /> : <Maximize2 />}
+    </Button>
+  )
 
   return (
     <>
-      <Button
-        type="button"
-        size="icon"
-        variant="secondary"
-        className={`${contentOverlayIconButtonBase} bg-background/95 text-foreground hover:bg-background hover:text-foreground`}
-        aria-label={previewLabel}
-        onClick={(e) => {
-          e.stopPropagation()
-          onOpenPreview()
-        }}
-      >
-        {isVideo ? (
-          <Play className="h-5 w-5 sm:h-4 sm:w-4" />
-        ) : (
-          <Maximize2 className="h-5 w-5 sm:h-4 sm:w-4" />
-        )}
-      </Button>
-      <Button
-        type="button"
-        size="icon"
-        variant="secondary"
-        className={`${contentOverlayIconButtonBase} bg-background/95 text-foreground hover:bg-background hover:text-foreground`}
-        aria-label={labels.download}
-        asChild
-      >
-        <a
-          href={getDownloadHref(item.name)}
-          download={item.name}
-          onClick={(e) => e.stopPropagation()}
+      {/* Touch / coarse pointer: preview + overflow (max 2 controls) */}
+      <div className="flex items-center gap-1.5 [@media(hover:hover)_and_(pointer:fine)]:hidden">
+        {renderPreviewButton()}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              className={overlaySecondaryButtonClass}
+              aria-label={moreLabel}
+              disabled={isDeleting}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {isDeleting ? <Spinner /> : <MoreHorizontal />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="min-w-[10rem]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <a href={getDownloadHref(item.name)} download={item.name}>
+                  <Download />
+                  {labels.download}
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={isDeleting}
+                onSelect={() => onDeleteRequest(item.name)}
+              >
+                <Trash2 />
+                {labels.delete}
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Fine pointer desktop: full action row */}
+      <div className="hidden items-center gap-1 [@media(hover:hover)_and_(pointer:fine)]:flex">
+        {renderPreviewButton()}
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          className={overlaySecondaryButtonClass}
+          aria-label={labels.download}
+          asChild
         >
-          <Download className="h-5 w-5 sm:h-4 sm:w-4" />
-        </a>
-      </Button>
-      <Button
-        type="button"
-        size="icon"
-        variant="secondary"
-        className={`${contentOverlayIconButtonBase} bg-white/95 text-destructive hover:bg-white`}
-        disabled={deleting === item.name}
-        aria-label={labels.delete}
-        onClick={(e) => {
-          e.stopPropagation()
-          onDeleteRequest(item.name)
-        }}
-      >
-        {deleting === item.name ? (
-          <Loader2 className="h-5 w-5 animate-spin sm:h-4 sm:w-4" />
-        ) : (
-          <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
-        )}
-      </Button>
+          <a
+            href={getDownloadHref(item.name)}
+            download={item.name}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download />
+          </a>
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          className={overlayDestructiveButtonClass}
+          disabled={isDeleting}
+          aria-label={labels.delete}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDeleteRequest(item.name)
+          }}
+        >
+          {isDeleting ? <Spinner /> : <Trash2 />}
+        </Button>
+      </div>
     </>
   )
 }
@@ -296,18 +364,12 @@ function ContentMediaTile({ item }: { item: ContentCatalogItem }) {
     onSelect?.(item)
   }
 
-  const handleMediaKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      if (selectionEnabled) toggleSelect()
-      else openPreview()
-    }
-  }
+  const caption = item.displayName?.trim() || item.name
 
   return (
     <figure
       className={cn(
-        'group/tile w-full max-w-[11rem] min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm transition-[box-shadow,border-color,opacity]',
+        'group/tile w-full max-w-[11rem] min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm transition-[box-shadow,border-color,opacity] [content-visibility:auto] [contain-intrinsic-size:0_11rem]',
         isSelected
           ? 'border-primary ring-2 ring-primary/40 shadow-md'
           : 'border-border/60 hover:shadow-md',
@@ -315,39 +377,50 @@ function ContentMediaTile({ item }: { item: ContentCatalogItem }) {
       )}
       data-selected={isSelected ? 'true' : undefined}
     >
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={selectionEnabled ? selectLabel : previewLabel}
-        aria-pressed={selectionEnabled ? isSelected : undefined}
-        className="relative w-full cursor-pointer overflow-hidden outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        onClick={selectionEnabled ? toggleSelect : openPreview}
-        onKeyDown={handleMediaKeyDown}
-      >
-        <ContentMediaTileMedia item={item} />
-        {selectionEnabled ? (
-          <div
-            className={cn(
-              'absolute top-2 left-2 z-20 flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors',
-              isSelected
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-white/80 bg-black/45 text-white',
-            )}
-            aria-hidden
-          >
-            {isSelected ? <Check className="size-4" strokeWidth={3} /> : null}
-          </div>
-        ) : null}
-        <div
-          className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent ${contentTileOverlayReveal}`}
-        />
-        <div
-          className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end justify-between gap-2 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${contentTileOverlayReveal}`}
+      <figcaption className="sr-only">{caption}</figcaption>
+      <div className="relative w-full overflow-hidden">
+        <button
+          type="button"
+          aria-label={selectionEnabled ? selectLabel : previewLabel}
+          aria-pressed={selectionEnabled ? isSelected : undefined}
+          className="relative w-full cursor-pointer overflow-hidden outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          onClick={selectionEnabled ? toggleSelect : openPreview}
         >
-          <figcaption className="min-w-0 flex-1 truncate text-left text-[10px] font-medium text-white drop-shadow sm:text-xs">
-            {item.name}
-          </figcaption>
-          <div className="pointer-events-auto flex shrink-0 items-center gap-1.5 sm:gap-1">
+          <ContentMediaTileMedia item={item} />
+          {selectionEnabled ? (
+            <div
+              className={cn(
+                'absolute top-2 left-2 z-20 flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors',
+                isSelected
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-white/80 bg-black/45 text-white',
+              )}
+              aria-hidden
+            >
+              {isSelected ? <Check className="size-4" strokeWidth={3} /> : null}
+            </div>
+          ) : null}
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent ${contentTileOverlayReveal}`}
+          />
+          <div
+            className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pr-14 ${contentTileOverlayReveal}`}
+          >
+            {item.displayName?.trim() ? (
+              <span className="min-w-0 flex-1 truncate text-left text-[10px] font-medium text-white drop-shadow sm:text-xs">
+                {item.displayName.trim()}
+              </span>
+            ) : (
+              <span className="hidden min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow sm:block">
+                {item.name}
+              </span>
+            )}
+          </div>
+        </button>
+        <div
+          className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end justify-end gap-2 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${contentTileOverlayReveal}`}
+        >
+          <div className="pointer-events-auto ml-auto flex shrink-0 items-center gap-1.5 sm:gap-1">
             <ContentMediaTileActions item={item} onOpenPreview={openPreview} />
           </div>
         </div>

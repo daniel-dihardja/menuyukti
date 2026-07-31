@@ -23,27 +23,25 @@ const AgentChatPanel = dynamic(
   },
 )
 
-export function AgentThreadWorkspace({ threadId }: { threadId: string }) {
+function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   const t = useTranslations('agentChat')
   const router = useRouter()
-  const [record, setRecord] = useState<AgentThreadRecord | null | undefined>(undefined)
-
+  // Client-only gate: getAgentThread reads localStorage (unavailable during SSR).
+  const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
-    if (!isAgentThreadId(threadId)) {
-      setRecord(null)
-      return
-    }
-    const found = getAgentThread(threadId)
-    setRecord(found)
-  }, [threadId])
+    setHydrated(true)
+  }, [])
 
   if (!isAgentThreadId(threadId)) {
     notFound()
   }
 
-  if (record === undefined) {
+  if (!hydrated) {
     return <Skeleton className="min-h-[20rem] w-full flex-1 rounded-lg" />
   }
+
+  // Derive during render after hydration (no effect→setState sync for threadId).
+  const record: AgentThreadRecord | null = getAgentThread(threadId)
 
   if (record === null) {
     return (
@@ -69,4 +67,9 @@ export function AgentThreadWorkspace({ threadId }: { threadId: string }) {
       />
     </div>
   )
+}
+
+/** Remount on threadId so hydration + localStorage read re-run cleanly. */
+export function AgentThreadWorkspace({ threadId }: { threadId: string }) {
+  return <AgentThreadWorkspaceInner key={threadId} threadId={threadId} />
 }

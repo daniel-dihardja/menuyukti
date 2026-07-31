@@ -1,4 +1,4 @@
-"""Tests for locationManualBriefInput query and updateLocationManualBriefInput mutation."""
+"""Tests for nested location.manualBriefInput and updateLocationManualBriefInput mutation."""
 
 from __future__ import annotations
 
@@ -13,11 +13,14 @@ from graphql.services.manual_quick_profile import (
 )
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
-_QUERY = """
-query ManualBrief($locationId: Int!) {
-  locationManualBriefInput(locationId: $locationId) {
-    locationId
-    quickProfile
+_LOCATION_BRIEF_QUERY = """
+query LocationBrief($id: ID!) {
+  location(id: $id) {
+    id
+    manualBriefInput {
+      locationId
+      quickProfile
+    }
   }
 }
 """
@@ -184,13 +187,13 @@ def test_manual_quick_profile_drops_blank_text_fields():
 def test_query_returns_empty_when_no_row(manual_brief_location_id):
     result = asyncio.run(
         schema.execute(
-            _QUERY,
-            variable_values={"locationId": manual_brief_location_id},
+            _LOCATION_BRIEF_QUERY,
+            variable_values={"id": str(manual_brief_location_id)},
             context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
-    data = result.data["locationManualBriefInput"]
+    data = result.data["location"]["manualBriefInput"]
     assert data["locationId"] == manual_brief_location_id
     assert data["quickProfile"] == {}
 
@@ -219,13 +222,13 @@ def test_upsert_and_clear(manual_brief_location_id):
 
     r2 = asyncio.run(
         schema.execute(
-            _QUERY,
-            variable_values={"locationId": manual_brief_location_id},
+            _LOCATION_BRIEF_QUERY,
+            variable_values={"id": str(manual_brief_location_id)},
             context_value=graphql_auth_context(),
         )
     )
     assert not r2.errors
-    assert r2.data["locationManualBriefInput"]["quickProfile"]["socialGoals"] == [
+    assert r2.data["location"]["manualBriefInput"]["quickProfile"]["socialGoals"] == [
         "awareness",
         "walk_ins",
     ]

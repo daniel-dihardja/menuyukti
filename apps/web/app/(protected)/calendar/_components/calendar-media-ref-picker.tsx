@@ -27,11 +27,13 @@ function MediaThumbGrid({
   selectedNames,
   onToggle,
   emptyLabel,
+  toggleAriaLabel,
 }: {
   items: MediaCatalogItem[]
   selectedNames: Set<string>
   onToggle: (name: string) => void
   emptyLabel: string
+  toggleAriaLabel: (name: string) => string
 }) {
   if (items.length === 0) {
     return <p className="py-8 text-center text-sm text-muted-foreground">{emptyLabel}</p>
@@ -42,10 +44,13 @@ function MediaThumbGrid({
       {items.map((item) => {
         const selected = selectedNames.has(item.name)
         const href = mediaDownloadHref(item.name)
+        const label = item.displayName?.trim() || item.name
         return (
           <button
             key={item.name}
             type="button"
+            aria-label={toggleAriaLabel(label)}
+            aria-pressed={selected}
             className={cn(
               'relative aspect-square overflow-hidden rounded-md border border-border/80 bg-muted/30 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
               selected && 'ring-2 ring-primary',
@@ -182,6 +187,7 @@ export function CalendarMediaRefPicker({ value, onChange, disabled }: CalendarMe
                 selectedNames={selectedNames}
                 onToggle={toggleRef}
                 emptyLabel={t('mediaLibraryEmpty')}
+                toggleAriaLabel={(name) => t('mediaToggleAria', { name })}
               />
             )}
           </ScrollArea>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import {
   CREATE_STYLE_MUTATION,
   STYLES_QUERY,
@@ -19,7 +20,7 @@ export async function GET() {
     if (!authz.ok) return authz.response
     const { userId } = authz
 
-    const data = await graphqlQuery<StylesData>(STYLES_QUERY, {}, userId)
+    const data = await graphqlQuery<StylesData>(STYLES_QUERY, { first: DEFAULT_LIST_FIRST }, userId)
 
     return NextResponse.json({ styles: data.styles })
   } catch (error) {

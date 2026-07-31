@@ -10,13 +10,28 @@ import {
 } from '@/components/chat/visualizations/chat-visualization-catalog'
 
 function storageKey(storageKeyId: string): string {
-  return `chat-visualizations:${storageKeyId}`
+  return `chat-visualizations:v1:${storageKeyId}`
 }
+
+const LEGACY_STORAGE_KEY_PREFIX = 'chat-visualizations:'
 
 function readStored(storageKeyId: string): ChatVisualizationId[] {
   if (typeof window === 'undefined') return []
   try {
-    return parseStoredVisualizationIds(localStorage.getItem(storageKey(storageKeyId)))
+    const versioned = localStorage.getItem(storageKey(storageKeyId))
+    if (versioned !== null) {
+      return parseStoredVisualizationIds(versioned)
+    }
+    const legacy = localStorage.getItem(`${LEGACY_STORAGE_KEY_PREFIX}${storageKeyId}`)
+    if (legacy === null) return []
+    const parsed = parseStoredVisualizationIds(legacy)
+    try {
+      localStorage.setItem(storageKey(storageKeyId), JSON.stringify(parsed))
+      localStorage.removeItem(`${LEGACY_STORAGE_KEY_PREFIX}${storageKeyId}`)
+    } catch {
+      /* ignore quota / private mode */
+    }
+    return parsed
   } catch {
     return []
   }

@@ -8,53 +8,42 @@ from graphql.schema.queries import (
     CrmCustomersQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
-    LatestAnalyticsRunWithSignalsQuery,
-    LocationManualBriefInputQuery,
     LocationsQuery,
     MediaCollectionsQuery,
     MenuCatalogQuery,
     MenuCombosQuery,
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
-    NodesQuery,
     OperatingProfileQuery,
     PostsQuery,
-    PromotionEngineeringCandidatesQuery,
     PromotionMenuItemsQuery,
     PublicHolidaysQuery,
     RevenueTrendsQuery,
     SchedulerCalendarQuery,
-    SlotMenuCandidatesQuery,
     StylesQuery,
-    WeeklyDemandPatternQuery,
     WorkspaceQuery,
 )
 
 
 @strawberry.type(
     description=(
-        "Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, "
+        "Root query: locations, sales analytics runs, menu engineering, heatmaps, "
         "and workspace membership."
     )
 )
 class Query(
     AnalyticsBundleQuery,
-    LatestAnalyticsRunWithSignalsQuery,
     LocationsQuery,
-    LocationManualBriefInputQuery,
     StylesQuery,
     MediaCollectionsQuery,
     CrmAppsQuery,
     CrmCustomersQuery,
-    NodesQuery,
     AnalyticsRunQuery,
     MenuCombosQuery,
     MenuHeatmapsQuery,
     MenuEngineeringMatrixQuery,
     MenuCatalogQuery,
     PromotionMenuItemsQuery,
-    PromotionEngineeringCandidatesQuery,
-    SlotMenuCandidatesQuery,
     PublicHolidaysQuery,
     SchedulerCalendarQuery,
     OperatingProfileQuery,
@@ -62,7 +51,6 @@ class Query(
     InstagramSignalsQuery,
     CategoryMixQuery,
     RevenueTrendsQuery,
-    WeeklyDemandPatternQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
 ):

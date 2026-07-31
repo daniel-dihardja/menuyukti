@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from sqlalchemy import (
     Date,
     DateTime,
@@ -32,7 +34,7 @@ class AnalyticsRun(Base):
     pos_system: Mapped[str] = mapped_column(String(64))
     period_start: Mapped[Date | None] = mapped_column(Date, nullable=True)
     period_end: Mapped[Date | None] = mapped_column(Date, nullable=True)
-    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     location_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("location.id"),
@@ -55,7 +57,7 @@ class OrderFact(Base):
     qty: Mapped[int] = mapped_column(Integer)
     price: Mapped[float] = mapped_column(Float)
     total_after_bill_discount: Mapped[float] = mapped_column(Float)
-    order_time: Mapped[object] = mapped_column(DateTime(timezone=True), index=True)
+    order_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     menu_category: Mapped[str] = mapped_column(String(128))
     menu_category_detail: Mapped[str] = mapped_column(String(128))
     pos_system: Mapped[str] = mapped_column(String(64), default="unknown")
@@ -79,8 +81,8 @@ class MenuItemCogs(Base):
     menu_category_detail: Mapped[str | None] = mapped_column(String(128), nullable=True)
     cogs: Mapped[float] = mapped_column(Float)
     currency: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[object] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),

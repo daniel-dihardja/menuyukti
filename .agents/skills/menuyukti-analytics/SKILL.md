@@ -2,9 +2,9 @@
 name: menuyukti-analytics
 description: >-
   Author and consume analytics in packages/menuyukti: DataFrame contracts, calculate_*/compute_*_from_orders
-  pipelines, Instagram signal composition, weekly demand patterns, and boundaries with apps/graphql. Use when
+  pipelines, Instagram signal composition, and boundaries with apps/graphql. Use when
   adding or changing sales analytics, category mix, revenue trends, menu engineering, operating profile,
-  weekly demand, slot demand, promotion candidates, menu combos, or agent-facing analytics payloads. For pandas
+  slot demand, menu combos, or agent-facing analytics payloads. For pandas
   pipelines and Python structure, also use pandas-pro and python-design-patterns (see Companion skills).
 ---
 
@@ -34,32 +34,27 @@ When implementing in **`packages/menuyukti` analytics**, follow these skills in 
 
 ## Public pipelines (summary)
 
-| Function / entrypoint                           | Input                                           | Output idea                                          |
-| ----------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------- |
-| `calculate_sales_analytics`                     | Full line-item frame                            | Totals, popularity, heatmaps, period, tiered signals |
-| `compute_sales_analytics_from_orders`           | Typed order rows                                | Delegates to `calculate_sales_analytics`             |
-| `calculate_menu_heatmaps`                       | `menu`, `qty`, `order_time`, …                  | Per-menu hourly/weekly grids                         |
-| `compute_menu_heatmaps_from_orders`             | Typed order rows                                | Delegates to `calculate_menu_heatmaps`               |
-| `compute_operating_profile_from_orders`         | Bill-level rows + optional holidays             | Meal periods, DOW, labels                            |
-| `compute_order_metrics_by_day_from_orders`      | Bill-level rows                                 | Order metrics grouped by day                         |
-| `calculate_menu_engineering_matrix`             | Menu-level revenue + COGS                       | Star / plow_horse / puzzle / low_end                 |
-| `compute_menu_engineering_from_orders`          | Typed order rows                                | Delegates to `calculate_menu_engineering_matrix`     |
-| `compute_menu_engineering_promotion_candidates` | Engineering matrix + signals                    | Simplified promotion candidates for GraphQL / chat   |
-| `calculate_category_mix`                        | Line items with optional categories             | Revenue/qty share per category                       |
-| `calculate_revenue_trends`                      | Current vs previous period frames               | Deltas, ranks, trend labels                          |
-| `calculate_weekly_demand_pattern`               | Line-item frame (ISO week indices)              | Revenue/tx indices vs location mean                  |
-| `compute_weekly_demand_pattern_from_orders`     | Typed order rows                                | Delegates to `calculate_weekly_demand_pattern`       |
-| `calculate_popularity_index`                    | Frame per `popularity_index_columns`            | Popularity scoring where used                        |
-| `calculate_menu_basket_affinities`              | Line-item frame                                 | Co-purchase pair affinities                          |
-| `compute_menu_basket_affinities_from_orders`    | Typed order rows                                | Delegates to basket affinities                       |
-| `compute_combo_pair_timing_from_orders`         | Combo timing rows                               | Recommended windows per pair                         |
-| `calculate_slot_demand_profile`                 | Slot-level demand rows                          | Slot demand cells for scheduling/combos              |
-| `compute_slot_demand_profile_from_orders`       | Typed order rows                                | Delegates to slot demand profile                     |
-| `derive_combo_promo_posture`                    | Combo timing + slot profile                     | Promo posture per pair                               |
-| `calculate_promotion_candidates`                | Precomputed menu + signal inputs                | Ranked promotion candidates by category              |
-| `calculate_instagram_signals`                   | **Precomputed** dicts/results only              | Heroes, trending, avoid, posting window, headline    |
-| `extract_menu_items`                            | Line-item DataFrame (`menu`, `qty`, `price`, …) | Aggregated per-menu facts for analytics              |
-| `detect_pos_from_excel_bytes`                   | Raw bytes                                       | POS flavor hint for ingest                           |
+| Function / entrypoint                        | Input                                           | Output idea                                          |
+| -------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------- |
+| `calculate_sales_analytics`                  | Full line-item frame                            | Totals, popularity, heatmaps, period, tiered signals |
+| `compute_sales_analytics_from_orders`        | Typed order rows                                | Delegates to `calculate_sales_analytics`             |
+| `calculate_menu_heatmaps`                    | `menu`, `qty`, `order_time`, …                  | Per-menu hourly/weekly grids                         |
+| `compute_menu_heatmaps_from_orders`          | Typed order rows                                | Delegates to `calculate_menu_heatmaps`               |
+| `compute_operating_profile_from_orders`      | Bill-level rows + optional holidays             | Meal periods, DOW, labels                            |
+| `calculate_menu_engineering_matrix`          | Menu-level revenue + COGS                       | Star / plow_horse / puzzle / low_end                 |
+| `compute_menu_engineering_from_orders`       | Typed order rows                                | Delegates to `calculate_menu_engineering_matrix`     |
+| `calculate_category_mix`                     | Line items with optional categories             | Revenue/qty share per category                       |
+| `calculate_revenue_trends`                   | Current vs previous period frames               | Deltas, ranks, trend labels                          |
+| `calculate_popularity_index`                 | Frame per `popularity_index_columns`            | Popularity scoring where used                        |
+| `calculate_menu_basket_affinities`           | Line-item frame                                 | Co-purchase pair affinities                          |
+| `compute_menu_basket_affinities_from_orders` | Typed order rows                                | Delegates to basket affinities                       |
+| `compute_combo_pair_timing_from_orders`      | Combo timing rows                               | Recommended windows per pair                         |
+| `calculate_slot_demand_profile`              | Slot-level demand rows                          | Slot demand cells for scheduling/combos              |
+| `compute_slot_demand_profile_from_orders`    | Typed order rows                                | Delegates to slot demand profile                     |
+| `derive_combo_promo_posture`                 | Combo timing + slot profile                     | Promo posture per pair                               |
+| `calculate_instagram_signals`                | **Precomputed** dicts/results only              | Heroes, trending, avoid, posting window, headline    |
+| `extract_menu_items`                         | Line-item DataFrame (`menu`, `qty`, `price`, …) | Aggregated per-menu facts for analytics              |
+| `detect_pos_from_excel_bytes`                | Raw bytes                                       | POS flavor hint for ingest                           |
 
 Authoritative exports: [`analytics/__init__.py`](../../../packages/menuyukti/src/menuyukti/core/analytics/__init__.py) (`__all__`).
 
@@ -69,7 +64,7 @@ Authoritative exports: [`analytics/__init__.py`](../../../packages/menuyukti/src
 2. **`calculate_<name>(df)`** starts with **`require_columns(df, <name>_columns(), context="calculate_<name>")`** (or `line_item_columns_full()` / `ensure_optional_category_columns` where categories are optional).
 3. **`compute_<name>_from_orders(rows)`** builds `pd.DataFrame(rows)` and calls `calculate_<name>`; empty inputs: raise `ValueError` or return an empty structured result **consistently** with sibling modules.
 4. **Vectorized pandas** — groupby/merge/resample; avoid `iterrows` for aggregations (see Companion skills — [pandas-pro](../pandas-pro/SKILL.md)).
-5. **Composition-only** modules (e.g. `calculate_instagram_signals`, `calculate_promotion_candidates`) take **structured results**, not raw `DataFrame`s — no pandas inside those files.
+5. **Composition-only** modules (e.g. `calculate_instagram_signals`) take **structured results**, not raw `DataFrame`s — no pandas inside those files.
 
 Details: [`analytics/__init__.py`](../../../packages/menuyukti/src/menuyukti/core/analytics/__init__.py) module docstring and [`frame_contracts.py`](../../../packages/menuyukti/src/menuyukti/core/analytics/frame_contracts.py).
 

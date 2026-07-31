@@ -1,13 +1,18 @@
 """
 Platform-level Markdown formatting HTTP endpoint.
 
-Preset-driven LLM rewrite for arbitrary UI (campaign milestone fields are one consumer).
-Not a domain graph or milestone-specific workflow.
+Preset-driven LLM rewrite for arbitrary UI surfaces.
+Not a domain graph or campaign workflow.
 """
 
+import logging
+
 from agents_app.agents.core.format_markdown import UnknownPresetError, format_markdown
+from agents_app.agents.core.llm_invoke import LLMInvokeError
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+
+_logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -28,4 +33,7 @@ async def format_markdown_endpoint(body: FormatMarkdownRequest) -> FormatMarkdow
         formatted = await format_markdown(content=body.content, preset=body.preset)
     except UnknownPresetError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    except LLMInvokeError as exc:
+        _logger.error("format_markdown failed: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     return FormatMarkdownResponse(formatted=formatted)

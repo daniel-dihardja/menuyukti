@@ -7,7 +7,7 @@ import strawberry
 from graphql.context import request_session_scope
 from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.mutations.create_calendar_entry import calendar_entry_to_slot_fields
+from graphql.schema.mappers.calendar import calendar_entry_to_slot_fields
 from graphql.schema.types.calendar_entry import CalendarMediaRefType
 
 

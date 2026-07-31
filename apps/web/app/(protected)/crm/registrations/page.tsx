@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import { CRM_APPS_QUERY, type CrmAppsData } from '@/lib/graphql/queries/crm-apps'
 import { CRM_CUSTOMERS_QUERY, type CrmCustomersData } from '@/lib/graphql/queries/crm-registrations'
 import { routes } from '@/lib/routes'
@@ -44,7 +45,21 @@ async function RegistrationsData({ requestedAppId }: { requestedAppId: number | 
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await graphqlQuery<CrmAppsData>(CRM_APPS_QUERY, {}, userId)
+  const appsPromise = graphqlQuery<CrmAppsData>(
+    CRM_APPS_QUERY,
+    { first: DEFAULT_LIST_FIRST },
+    userId,
+  )
+  const requestedCustomersPromise =
+    requestedAppId !== null
+      ? graphqlQuery<CrmCustomersData>(
+          CRM_CUSTOMERS_QUERY,
+          { appId: requestedAppId, first: DEFAULT_LIST_FIRST },
+          userId,
+        )
+      : null
+
+  const data = await appsPromise
   const apps = data.crmApps.map((app) => ({
     id: app.id,
     appId: app.appId,
@@ -57,12 +72,17 @@ async function RegistrationsData({ requestedAppId }: { requestedAppId: number | 
 
   let initialCustomers: CrmCustomersData['crmCustomers'] = []
   if (initialAppId !== null) {
-    const customersData = await graphqlQuery<CrmCustomersData>(
-      CRM_CUSTOMERS_QUERY,
-      { appId: initialAppId },
-      userId,
-    )
-    initialCustomers = customersData.crmCustomers
+    if (requestedCustomersPromise !== null && initialAppId === requestedAppId) {
+      const customersData = await requestedCustomersPromise
+      initialCustomers = customersData.crmCustomers
+    } else {
+      const customersData = await graphqlQuery<CrmCustomersData>(
+        CRM_CUSTOMERS_QUERY,
+        { appId: initialAppId, first: DEFAULT_LIST_FIRST },
+        userId,
+      )
+      initialCustomers = customersData.crmCustomers
+    }
   }
 
   return (

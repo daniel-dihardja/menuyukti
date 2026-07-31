@@ -73,8 +73,8 @@ const CRM_CASHBACK_ENTRY_FIELDS = `
 `
 
 export const CRM_CUSTOMERS_QUERY = `
-  query CrmCustomers($appId: Int!, $search: String) {
-    crmCustomers(appId: $appId, search: $search) {
+  query CrmCustomers($appId: Int!, $search: String, $first: Int) {
+    crmCustomers(appId: $appId, search: $search, first: $first) {
       ${CRM_CUSTOMER_LIST_FIELDS}
     }
   }

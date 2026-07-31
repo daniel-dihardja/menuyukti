@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
 import { routes } from '@/lib/routes'
@@ -14,6 +15,13 @@ import {
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { cn } from '@workspace/ui/lib/utils'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.branches')
+  const title = t('title')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
 
 function LocationsPageSkeleton() {
   return (

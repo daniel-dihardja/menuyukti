@@ -1,10 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
 import { BarChart3 } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
@@ -50,6 +52,55 @@ function formatReportPeriod(
   return null
 }
 
+function OrderMetricsReportSkeleton() {
+  return <Skeleton className="min-h-[24rem] w-full rounded-lg" />
+}
+
+async function OrderMetricsReportContent({
+  analyticsId,
+  userId,
+}: {
+  analyticsId: number
+  userId: string
+}) {
+  const tOrderMetrics = await getTranslations('analytics.orderMetrics')
+  const tShared = await getTranslations('analytics.shared')
+  const id = String(analyticsId)
+  const orderMetricsData = await getCachedOrderMetrics(userId, id)
+  const orderMetrics = orderMetricsData.orderMetrics
+  const locale = getAppCurrencyLocale()
+  const currency = getAppCurrencyCode()
+
+  if (!orderMetrics) {
+    return (
+      <Empty className="border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <BarChart3 aria-hidden />
+          </EmptyMedia>
+          <EmptyTitle>{tOrderMetrics('emptyTitle')}</EmptyTitle>
+          <EmptyDescription>{tOrderMetrics('emptyDescription')}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild variant="outline" size="sm">
+            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  return (
+    <OrderMetricsView
+      avgOrderSize={orderMetrics.avgOrderSize}
+      avgOrderRevenue={orderMetrics.avgOrderRevenue}
+      slotDemandProfile={orderMetrics.slotDemandProfile}
+      locale={locale}
+      currency={currency}
+    />
+  )
+}
+
 export default async function Page({ params }: PageProps) {
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
@@ -67,18 +118,12 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const [runData, orderMetricsData] = await Promise.all([
-    getCachedAnalyticsRun(userId, id),
-    getCachedOrderMetrics(userId, id),
-  ])
-
+  const runData = await getCachedAnalyticsRun(userId, id)
   const run = runData.analyticsRun
   if (!run) notFound()
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const orderMetrics = orderMetricsData.orderMetrics
   const locale = getAppCurrencyLocale()
-  const currency = getAppCurrencyCode()
   const reportPeriod = formatReportPeriod(run.periodStart, run.periodEnd, locale)
   const showFilename = run.filename && run.filename !== analyticsName
 
@@ -119,30 +164,9 @@ export default async function Page({ params }: PageProps) {
           </Button>
         </div>
 
-        {!orderMetrics ? (
-          <Empty className="border border-dashed">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BarChart3 aria-hidden />
-              </EmptyMedia>
-              <EmptyTitle>{tOrderMetrics('emptyTitle')}</EmptyTitle>
-              <EmptyDescription>{tOrderMetrics('emptyDescription')}</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button asChild variant="outline" size="sm">
-                <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
-        ) : (
-          <OrderMetricsView
-            avgOrderSize={orderMetrics.avgOrderSize}
-            avgOrderRevenue={orderMetrics.avgOrderRevenue}
-            slotDemandProfile={orderMetrics.slotDemandProfile}
-            locale={locale}
-            currency={currency}
-          />
-        )}
+        <Suspense fallback={<OrderMetricsReportSkeleton />}>
+          <OrderMetricsReportContent analyticsId={analyticsId} userId={userId} />
+        </Suspense>
       </section>
     </AnalyticsPageShell>
   )

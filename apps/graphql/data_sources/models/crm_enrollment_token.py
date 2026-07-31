@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Uuid, func
@@ -39,9 +40,9 @@ class CrmEnrollmentToken(Base):
     )
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     created_by_clerk_user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    expires_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False)
-    used_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[object] = mapped_column(
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,

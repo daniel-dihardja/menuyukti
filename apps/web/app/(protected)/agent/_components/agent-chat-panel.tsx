@@ -4,16 +4,20 @@ import { usePanelRef } from '@workspace/ui/components/resizable'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
-import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { useChatPreviewVisibility } from '@/components/chat/use-chat-preview-visibility'
 import { useChatComposerState } from '@/components/chat/chat-context'
-import { ChatLayout } from '@/components/chat/chat-layout'
+import {
+  ChatOnlyLayout,
+  ChatWithMobileArtifactLayout,
+  ChatWithPreviewLayout,
+} from '@/components/chat/chat-layout'
 import { ChatMentionProvider } from '@/components/chat/chat-mention-context'
 import { ChatSidePanel } from '@/components/chat/chat-side-panel'
 import { ChatVisualizationsProvider } from '@/components/chat/visualizations/chat-visualizations-context'
 import { ChatPreviewPanelSkeleton } from '@/components/chat/chat-workspace-skeleton'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { routes } from '@/lib/routes'
 
 import { AgentChatHost } from './agent-chat-host'
@@ -36,9 +40,7 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
   const t = useTranslations('chat')
   const router = useRouter()
   const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
-  const [chatBusy, setChatBusy] = useState(false)
   const { previewOpen, setPreviewOpen } = useChatPreviewVisibility()
-  const isDesktop = useDesktopLayout()
   const previewPanelRef = usePanelRef()
 
   const handleThreadRotated = useCallback(
@@ -53,7 +55,6 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
       agentThreadId={agentThreadId}
       analyticsRunId={analyticsRunId}
       locationId={locationId}
-      onBusyChange={setChatBusy}
       onThreadRotated={handleThreadRotated}
     >
       <ChatVisualizationsProvider
@@ -61,9 +62,8 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
         locationId={locationId}
         storageKeyId={agentThreadId}
       >
-        <ChatMentionProvider chatBusy={chatBusy}>
+        <ChatMentionProvider>
           <AgentChatPanelLayout
-            isDesktop={isDesktop}
             mobileArtifactOpen={mobileArtifactOpen}
             onMobileArtifactOpenChange={setMobileArtifactOpen}
             previewOpen={previewOpen}
@@ -79,7 +79,6 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
 }
 
 type AgentChatPanelLayoutProps = {
-  isDesktop: boolean
   mobileArtifactOpen: boolean
   onMobileArtifactOpenChange: (open: boolean) => void
   previewOpen: boolean
@@ -90,7 +89,6 @@ type AgentChatPanelLayoutProps = {
 }
 
 function AgentChatPanelLayout({
-  isDesktop,
   mobileArtifactOpen,
   onMobileArtifactOpenChange,
   previewOpen,
@@ -100,30 +98,51 @@ function AgentChatPanelLayout({
   storyArtifactTitle,
 }: AgentChatPanelLayoutProps) {
   const { chatMode } = useChatComposerState()
-  const showPreview = chatMode === 'image_assistant'
+  const isDesktop = useDesktopLayout()
+  const isImageAssistant = chatMode === 'image_assistant'
+  const [prevMode, setPrevMode] = useState(chatMode)
 
-  useEffect(() => {
-    if (showPreview) {
+  // Adjust preview chrome when mode changes (render-time reset; not a sync effect).
+  if (chatMode !== prevMode) {
+    setPrevMode(chatMode)
+    if (chatMode === 'image_assistant') {
       setPreviewOpen(true)
-      if (!isDesktop) {
-        onMobileArtifactOpenChange(true)
-      }
-      return
+    } else {
+      setPreviewOpen(false)
+      onMobileArtifactOpenChange(false)
     }
-    setPreviewOpen(false)
-    onMobileArtifactOpenChange(false)
-  }, [showPreview, isDesktop, setPreviewOpen, onMobileArtifactOpenChange])
+  }
+
+  const chatPane = <ChatSidePanel />
+
+  if (!isImageAssistant) {
+    return <ChatOnlyLayout chatPane={chatPane} />
+  }
+
+  const previewPane = <ChatPreviewPanelBodyLazy />
+
+  if (!isDesktop) {
+    return (
+      <ChatWithMobileArtifactLayout
+        chatPane={chatPane}
+        mobileArtifactHint={storyArtifactHint}
+        mobileArtifactOpen={mobileArtifactOpen}
+        mobileArtifactTitle={storyArtifactTitle}
+        onMobileArtifactOpenChange={onMobileArtifactOpenChange}
+        previewPane={previewPane}
+      />
+    )
+  }
+
+  if (!previewOpen) {
+    return <ChatOnlyLayout chatPane={chatPane} />
+  }
 
   return (
-    <ChatLayout
-      chatPane={<ChatSidePanel />}
-      mobileArtifactHint={storyArtifactHint}
-      mobileArtifactOpen={mobileArtifactOpen}
-      mobileArtifactTitle={storyArtifactTitle}
-      onMobileArtifactOpenChange={onMobileArtifactOpenChange}
-      previewPane={showPreview ? <ChatPreviewPanelBodyLazy /> : null}
+    <ChatWithPreviewLayout
+      chatPane={chatPane}
+      previewPane={previewPane}
       previewPanelRef={previewPanelRef}
-      showPreview={showPreview && previewOpen}
     />
   )
 }

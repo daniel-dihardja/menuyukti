@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramPost, InstagramPostPage
 from graphql.schema.auth import is_workspace_member, user_id_from_info
-from graphql.schema.queries.posts import _post_to_gql
+from graphql.schema.mappers.post import post_to_gql
 from graphql.schema.types import PostType
 
 
@@ -52,4 +52,4 @@ class UpdatePostMutation:
             row.title = title_clean
             session.commit()
             session.refresh(row)
-            return _post_to_gql(row)
+            return post_to_gql(row)

@@ -20,7 +20,8 @@ import { Input } from '@workspace/ui/components/input'
 import { Switch } from '@workspace/ui/components/switch'
 import { TabsContent } from '@workspace/ui/components/tabs'
 
-import type { OpeningHourRow, Weekday } from './location-form-types'
+import { useLocationFormActions, useLocationFormState } from './location-form-context'
+import type { OpeningHourRow } from './location-form-types'
 
 function formatHoursSummary(row: OpeningHourRow, dayLabel: string, closedLabel: string): string {
   if (row.closed || !row.openTime || !row.closeTime) {
@@ -29,20 +30,10 @@ function formatHoursSummary(row: OpeningHourRow, dayLabel: string, closedLabel: 
   return `${dayLabel} · ${row.openTime}–${row.closeTime}`
 }
 
-function LocationOpeningHourRow({
-  row,
-  compact,
-  loading,
-  onSetRowClosed,
-  onUpdateOpeningHour,
-}: {
-  row: OpeningHourRow
-  compact?: boolean
-  loading: boolean
-  onSetRowClosed: (dayOfWeek: Weekday, closed: boolean) => void
-  onUpdateOpeningHour: (dayOfWeek: Weekday, field: 'openTime' | 'closeTime', value: string) => void
-}) {
+function LocationOpeningHourRow({ row, compact }: { row: OpeningHourRow; compact?: boolean }) {
   const t = useTranslations('analytics.branches.form')
+  const { loading } = useLocationFormState()
+  const { setRowClosed, updateOpeningHour } = useLocationFormActions()
   const switchId = `closed-${row.dayOfWeek}`
   const openId = `open-${row.dayOfWeek}`
   const closeId = `close-${row.dayOfWeek}`
@@ -55,7 +46,7 @@ function LocationOpeningHourRow({
           id={switchId}
           checked={!row.closed}
           disabled={loading}
-          onCheckedChange={(checked) => onSetRowClosed(row.dayOfWeek, checked !== true)}
+          onCheckedChange={(checked) => setRowClosed(row.dayOfWeek, checked !== true)}
           aria-label={t('openDaySwitchAria', { day: dayLabel })}
         />
         <FieldLabel htmlFor={switchId} className="cursor-pointer text-sm font-normal leading-none">
@@ -73,7 +64,7 @@ function LocationOpeningHourRow({
             value={row.openTime}
             disabled={loading || row.closed}
             aria-disabled={row.closed}
-            onChange={(e) => onUpdateOpeningHour(row.dayOfWeek, 'openTime', e.target.value)}
+            onChange={(e) => updateOpeningHour(row.dayOfWeek, 'openTime', e.target.value)}
           />
         </Field>
         <Field>
@@ -86,7 +77,7 @@ function LocationOpeningHourRow({
             value={row.closeTime}
             disabled={loading || row.closed}
             aria-disabled={row.closed}
-            onChange={(e) => onUpdateOpeningHour(row.dayOfWeek, 'closeTime', e.target.value)}
+            onChange={(e) => updateOpeningHour(row.dayOfWeek, 'closeTime', e.target.value)}
           />
         </Field>
       </div>
@@ -119,26 +110,11 @@ function LocationOpeningHourRow({
   )
 }
 
-export type LocationHoursSectionProps = {
-  loading: boolean
-  openingHours: OpeningHourRow[]
-  onSetRowClosed: (dayOfWeek: Weekday, closed: boolean) => void
-  onUpdateOpeningHour: (dayOfWeek: Weekday, field: 'openTime' | 'closeTime', value: string) => void
-  onPresetWeekdaysOnly: () => void
-  onPresetCopyMondayToWeekdays: () => void
-  onPresetAllClosed: () => void
-}
-
-export function LocationHoursSection({
-  loading,
-  openingHours,
-  onSetRowClosed,
-  onUpdateOpeningHour,
-  onPresetWeekdaysOnly,
-  onPresetCopyMondayToWeekdays,
-  onPresetAllClosed,
-}: LocationHoursSectionProps) {
+export function LocationHoursSection() {
   const t = useTranslations('analytics.branches.form')
+  const { loading, openingHours } = useLocationFormState()
+  const { presetWeekdaysOnly, presetCopyMondayToWeekdays, presetAllClosed } =
+    useLocationFormActions()
 
   return (
     <TabsContent value="hours" className="flex flex-col gap-4">
@@ -155,7 +131,7 @@ export function LocationHoursSection({
             variant="outline"
             size="sm"
             disabled={loading}
-            onClick={onPresetWeekdaysOnly}
+            onClick={presetWeekdaysOnly}
           >
             {t('presetWeekdays')}
           </Button>
@@ -164,7 +140,7 @@ export function LocationHoursSection({
             variant="outline"
             size="sm"
             disabled={loading}
-            onClick={onPresetCopyMondayToWeekdays}
+            onClick={presetCopyMondayToWeekdays}
           >
             {t('presetCopyMonday')}
           </Button>
@@ -173,7 +149,7 @@ export function LocationHoursSection({
             variant="outline"
             size="sm"
             disabled={loading}
-            onClick={onPresetAllClosed}
+            onClick={presetAllClosed}
           >
             {t('presetAllClosed')}
           </Button>
@@ -181,26 +157,13 @@ export function LocationHoursSection({
 
         <Accordion type="single" collapsible className="lg:hidden">
           {openingHours.map((row) => (
-            <LocationOpeningHourRow
-              compact
-              key={row.dayOfWeek}
-              loading={loading}
-              onSetRowClosed={onSetRowClosed}
-              onUpdateOpeningHour={onUpdateOpeningHour}
-              row={row}
-            />
+            <LocationOpeningHourRow compact key={row.dayOfWeek} row={row} />
           ))}
         </Accordion>
 
         <div className="hidden flex-col gap-3 lg:flex">
           {openingHours.map((row) => (
-            <LocationOpeningHourRow
-              key={row.dayOfWeek}
-              loading={loading}
-              onSetRowClosed={onSetRowClosed}
-              onUpdateOpeningHour={onUpdateOpeningHour}
-              row={row}
-            />
+            <LocationOpeningHourRow key={row.dayOfWeek} row={row} />
           ))}
         </div>
       </FieldSet>

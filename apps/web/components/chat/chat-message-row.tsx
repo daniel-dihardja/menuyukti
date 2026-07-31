@@ -19,7 +19,10 @@ function ChatMessageRowInner({ message, isActiveStream, thinkingLabel }: ChatMes
   const showFallbackSpinner = shouldShowAssistantThinkingFallback(message, isActiveStream)
 
   return (
-    <Message from={message.role}>
+    <Message
+      className="[content-visibility:auto] [contain-intrinsic-size:0_5rem]"
+      from={message.role}
+    >
       <MessageContent>
         {showFallbackSpinner ? (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">

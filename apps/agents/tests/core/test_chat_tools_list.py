@@ -90,24 +90,36 @@ def test_chat_tools_list_from_config_gates_by_context() -> None:
     assert "get_milestone" not in ig_names
 
 
-def test_compile_chat_graph_uses_tool_node_with_handle_tool_errors() -> None:
-    from agents_app.agents.core.chat.graph import compile_chat_graph
+def test_compile_chat_graph_registers_scratchpad_tools_and_tool_error_middleware() -> None:
+    from agents_app.agents.core.chat.graph import (
+        _handle_tool_errors,
+        _retry_chat_model_call,
+        _select_chat_model_and_tools,
+        compile_chat_graph,
+    )
     from agents_app.agents.core.chat.state import ChatAgentState
-    from langgraph.prebuilt.tool_node import ToolNode
 
     graph = compile_chat_graph(checkpointer=None)
     tools_node = graph.nodes.get("tools")
     assert tools_node is not None
-    # RunnableCallable / PregelNode wraps ToolNode; unwrap to the node instance.
+    # RunnableCallable / PregelNode wraps ToolNode; unwrap to inspect registered tools.
+    from langgraph.prebuilt.tool_node import ToolNode
+
     bound = getattr(tools_node, "bound", tools_node)
     node = getattr(bound, "afunc", None) or getattr(bound, "func", None) or bound
     tool_node = node.__self__ if hasattr(node, "__self__") else node
     if not isinstance(tool_node, ToolNode):
-        # LangGraph may nest differently by version — inspect known attributes.
         tool_node = getattr(tools_node, "tools_by_name", None) and tools_node
     assert isinstance(tool_node, ToolNode)
-    assert tool_node._handle_tool_errors is True
     assert "save_story_asset" in tool_node.tools_by_name
     assert "clear_story_assets" in tool_node.tools_by_name
     assert "request_story_generate_confirmation" in tool_node.tools_by_name
     assert "story_assets" in ChatAgentState.__annotations__
+    # Error handling is middleware-based (not private ToolNode._handle_tool_errors).
+    assert hasattr(_handle_tool_errors, "awrap_tool_call")
+    assert hasattr(_select_chat_model_and_tools, "awrap_model_call") or hasattr(
+        _select_chat_model_and_tools, "wrap_model_call"
+    )
+    assert hasattr(_retry_chat_model_call, "awrap_model_call") or hasattr(
+        _retry_chat_model_call, "wrap_model_call"
+    )

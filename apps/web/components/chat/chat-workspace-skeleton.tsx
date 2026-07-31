@@ -138,14 +138,14 @@ export function ChatWorkspaceSkeleton({ className }: { className?: string }) {
         className,
       )}
     >
-      {/* Mobile: chat main (milestones column hidden) */}
+      {/* Mobile: chat only */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:hidden">
         <div className="min-h-0 flex-1 overflow-hidden">
           <ChatSidePanelSkeleton />
         </div>
       </div>
 
-      {/* Desktop: preview + chat (milestones column hidden) */}
+      {/* Desktop: chat + preview split */}
       <div className="hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <div className="grid h-full min-h-0 flex-1 grid-cols-[1fr_2fr] gap-0 overflow-hidden">

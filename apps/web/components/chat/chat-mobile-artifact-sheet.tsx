@@ -3,22 +3,22 @@
 import type { ReactNode } from 'react'
 
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@workspace/ui/components/sheet'
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@workspace/ui/components/drawer'
 import { cn } from '@workspace/ui/lib/utils'
 import { useTranslations } from 'next-intl'
 
-import { useCloseLabel } from '@/hooks/use-close-label'
+export const CHAT_MOBILE_ARTIFACT_ID = 'chat-mobile-artifact'
 
 export type ChatMobileArtifactSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   children: ReactNode
-  /** Optional sheet title override (e.g. selected milestone title). */
+  /** Optional drawer title override. */
   title?: string | null
 }
 
@@ -29,34 +29,28 @@ export function ChatMobileArtifactSheet({
   title,
 }: ChatMobileArtifactSheetProps) {
   const t = useTranslations('chat')
-  const closeLabel = useCloseLabel()
-  const sheetTitle = title?.trim() || t('mobileArtifactSheetTitle')
+  const drawerTitle = title?.trim() || t('mobileArtifactSheetTitle')
 
   return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent
-        id="workflow-mobile-artifact"
-        side="bottom"
-        closeLabel={closeLabel}
+    <Drawer onOpenChange={onOpenChange} open={open}>
+      <DrawerContent
+        id={CHAT_MOBILE_ARTIFACT_ID}
         className={cn(
-          'flex h-[min(92dvh,900px)] flex-col gap-0 rounded-t-xl border-t p-0',
+          'flex h-[min(92dvh,900px)] max-h-[min(92dvh,900px)] flex-col gap-0',
           'pb-[max(0.5rem,env(safe-area-inset-bottom))]',
-          'data-[state=closed]:pointer-events-none',
+          'overscroll-contain',
         )}
       >
-        <div className="flex shrink-0 flex-col items-center gap-2 px-4 pt-3 pb-1">
-          <div aria-hidden className="h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
-          <SheetHeader className="w-full p-0 text-left">
-            <SheetTitle className="text-sm">{sheetTitle}</SheetTitle>
-            <SheetDescription className="sr-only">
-              {t('mobileArtifactSheetDescription')}
-            </SheetDescription>
-          </SheetHeader>
-        </div>
+        <DrawerHeader className="shrink-0 gap-1 px-4 pt-1 pb-2 text-left">
+          <DrawerTitle className="text-sm">{drawerTitle}</DrawerTitle>
+          <DrawerDescription className="sr-only">
+            {t('mobileArtifactSheetDescription')}
+          </DrawerDescription>
+        </DrawerHeader>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-0">
           {open ? children : null}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   )
 }

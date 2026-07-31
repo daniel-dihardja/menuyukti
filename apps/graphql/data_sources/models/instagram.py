@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -64,9 +65,9 @@ class InstagramPost(Base):
     created_by_clerk_user_id: Mapped[str | None] = mapped_column(
         String(128), nullable=True, index=True
     )
-    published_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[object] = mapped_column(
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
@@ -107,8 +108,8 @@ class InstagramPostPage(Base):
     image_format: Mapped[str | None] = mapped_column(String(32), nullable=True)
     image_quality: Mapped[str | None] = mapped_column(String(32), nullable=True)
     generation_model: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[object] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
@@ -144,7 +145,7 @@ class InstagramPostPageMediaVersion(Base):
     post_page: Mapped[InstagramPostPage] = relationship(back_populates="media_versions")
     media_s3_key: Mapped[str] = mapped_column(String(512), nullable=False)
     prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
         UniqueConstraint(

@@ -14,6 +14,8 @@ export type ContentMediaGridLabels = {
   emptyDescription: string
   /** When selection is enabled; defaults to “Select”. */
   select?: string
+  /** Overflow menu trigger on coarse/touch overlays; defaults to “More”. */
+  moreActions?: string
 }
 
 export type ContentMediaGridState = {

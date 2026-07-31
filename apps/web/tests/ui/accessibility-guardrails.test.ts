@@ -24,4 +24,25 @@ describe('UI accessibility guardrails', () => {
     expect(source).toContain('type="button"')
     expect(source).not.toContain('role="button"')
   })
+
+  it('uses semantic buttons instead of role=button for content media tiles', () => {
+    const source = readSource('app/(protected)/content/_components/content-media-grid.tsx')
+    expect(source).not.toContain('role="button"')
+    expect(source).toContain('type="button"')
+  })
+
+  it('uses semantic buttons instead of role=button for matrix distribution cards', () => {
+    const source = readSource(
+      'app/(protected)/analytics/[analyticsId]/matrix/matrix-distribution-grid.tsx',
+    )
+    expect(source).not.toContain('role="button"')
+    expect(source).toContain('type="button"')
+  })
+
+  it('navigates styles library cards with Link', () => {
+    const source = readSource('app/(protected)/ig-studio/styles/_components/styles-library.tsx')
+    expect(source).toContain("from 'next/link'")
+    expect(source).toContain('href={detailHref}')
+    expect(source).not.toContain('router.push(routes.igStudioStyleDetail')
+  })
 })

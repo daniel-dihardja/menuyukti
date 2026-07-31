@@ -9,7 +9,6 @@ from graphql.schema.mutations import (
     CreateImageAiFlowMutation,
     CreateLocationMutation,
     CreateMediaCollectionMutation,
-    CreateNodeMutation,
     CreatePostMutation,
     CreatePostPageMutation,
     CreateStyleMutation,
@@ -21,7 +20,6 @@ from graphql.schema.mutations import (
     DeleteImageAiFlowMutation,
     DeleteMediaAssetMutation,
     DeleteMediaCollectionMutation,
-    DeleteNodeMutation,
     DeletePostMutation,
     DeletePostPageMediaVersionMutation,
     DeletePostPageMutation,
@@ -37,8 +35,6 @@ from graphql.schema.mutations import (
     UpdateLocationManualBriefInputMutation,
     UpdateLocationMutation,
     UpdateMediaCollectionMutation,
-    UpdateMenuItemCogsBulkMutation,
-    UpdateNodeMutation,
     UpdatePostMutation,
     UpdatePostPageMutation,
     UpdateStyleMutation,
@@ -49,21 +45,17 @@ from graphql.schema.mutations import (
 
 @strawberry.type(
     description=(
-        "Root mutation: sales uploads, node CRUD, workspace invites, "
-        "and image AI flow configuration."
+        "Root mutation: sales uploads, workspace invites, and image AI flow configuration."
     )
 )
 class Mutation(
     UploadSalesReportMutation,
     AwardCrmCashbackMutation,
-    CreateNodeMutation,
     CreatePostMutation,
     CreatePostPageMutation,
-    DeleteNodeMutation,
     DeletePostMutation,
     DeletePostPageMutation,
     DeletePostPageMediaVersionMutation,
-    UpdateNodeMutation,
     UpdatePostMutation,
     UpdatePostPageMutation,
     CreateLocationMutation,
@@ -76,7 +68,6 @@ class Mutation(
     InviteWorkspaceMemberMutation,
     RemoveWorkspaceMemberMutation,
     UpsertMenuItemCogsBulkMutation,
-    UpdateMenuItemCogsBulkMutation,
     CreateImageAiFlowMutation,
     UpdateImageAiFlowMutation,
     DeleteAnalyticsRunMutation,

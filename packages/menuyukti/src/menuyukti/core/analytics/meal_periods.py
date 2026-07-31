@@ -51,16 +51,3 @@ def meal_period_hours_range(period: str) -> str:
                 return label.split(" (", 1)[1][:-1]
             return label
     return ""
-
-
-def meal_period_display_label(period: str) -> str:
-    """Short name with hour range, e.g. Lunch (11:00–14:59)."""
-    short = meal_period_short_label(period)
-    hours = meal_period_hours_range(period)
-    if hours:
-        return f"{short} ({hours})"
-    return short
-
-
-def meal_period_slugs() -> list[str]:
-    return [p for p, _, _ in MEAL_PERIODS]

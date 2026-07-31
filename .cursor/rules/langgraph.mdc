@@ -49,11 +49,10 @@ When you need **durable runs**, **resume**, or **HITL**, attach a **checkpointer
 
 ## 6. Streaming
 
-- **Token streaming:** `astream_events(version="v2")` and filter `on_chat_model_stream` (see agents conventions).
+- **Token streaming (product chat):** `astream(stream_mode=["messages", "updates"])` in `routers/chat.py` (see agents conventions). Prefer this over `astream_events` for the HTTP SSE path.
 - **Step / custom events:** `get_stream_writer()` inside nodes with `astream(..., stream_mode=[...])` as documented in agents conventions.
 
 Set SSE headers on HTTP responses: `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`.
-
 ## 7. Errors and side effects
 
 Keep **GraphQL and I/O** in dedicated nodes or injected callables; **do not** open DB connections from the agents app. Let exceptions propagate unless the product requires a **structured error** node; avoid silent `except: pass` in nodes.

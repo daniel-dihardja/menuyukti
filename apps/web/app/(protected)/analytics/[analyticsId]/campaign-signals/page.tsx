@@ -1,9 +1,12 @@
 import { auth } from '@clerk/nextjs/server'
 import { Radio } from 'lucide-react'
 import { Button } from '@workspace/ui/components/button'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
@@ -29,6 +32,13 @@ type PageProps = {
   params: Promise<{ analyticsId?: string }>
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.campaignSignals')
+  const title = t('reportTitle')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
+
 function formatReportPeriod(
   periodStart: string | null,
   periodEnd: string | null,
@@ -40,6 +50,54 @@ function formatReportPeriod(
   if (periodStart) return formatPreviewDateString(periodStart, locale)
   if (periodEnd) return formatPreviewDateString(periodEnd, locale)
   return null
+}
+
+function CampaignSignalsReportSkeleton() {
+  return <Skeleton className="min-h-[24rem] w-full rounded-lg" />
+}
+
+async function CampaignSignalsReportContent({
+  analyticsId,
+  userId,
+}: {
+  analyticsId: number
+  userId: string
+}) {
+  const tCampaignSignals = await getTranslations('analytics.campaignSignals')
+  const tShared = await getTranslations('analytics.shared')
+  const id = String(analyticsId)
+  const signalsData = await getCachedInstagramSignals(userId, id)
+  const signals = signalsData.instagramSignals
+  const locale = getAppCurrencyLocale()
+  const currency = getAppCurrencyCode()
+
+  if (!signals) {
+    return (
+      <Empty className="border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Radio aria-hidden />
+          </EmptyMedia>
+          <EmptyTitle>{tCampaignSignals('emptyTitle')}</EmptyTitle>
+          <EmptyDescription>{tCampaignSignals('emptyDescription')}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild variant="outline" size="sm">
+            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  return (
+    <CampaignSignalsView
+      signals={signals}
+      analyticsId={analyticsId}
+      locale={locale}
+      currency={currency}
+    />
+  )
 }
 
 export default async function Page({ params }: PageProps) {
@@ -59,18 +117,12 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const [runData, signalsData] = await Promise.all([
-    getCachedAnalyticsRun(userId, id),
-    getCachedInstagramSignals(userId, id),
-  ])
+  const runData = await getCachedAnalyticsRun(userId, id)
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const signals = signalsData.instagramSignals
-
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
   const locale = getAppCurrencyLocale()
-  const currency = getAppCurrencyCode()
   const reportPeriod = formatReportPeriod(run.periodStart, run.periodEnd, locale)
   const showFilename = run.filename && run.filename !== analyticsName
 
@@ -111,29 +163,9 @@ export default async function Page({ params }: PageProps) {
           </Button>
         </div>
 
-        {!signals ? (
-          <Empty className="border border-dashed">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Radio aria-hidden />
-              </EmptyMedia>
-              <EmptyTitle>{tCampaignSignals('emptyTitle')}</EmptyTitle>
-              <EmptyDescription>{tCampaignSignals('emptyDescription')}</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button asChild variant="outline" size="sm">
-                <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
-        ) : (
-          <CampaignSignalsView
-            signals={signals}
-            analyticsId={analyticsId}
-            locale={locale}
-            currency={currency}
-          />
-        )}
+        <Suspense fallback={<CampaignSignalsReportSkeleton />}>
+          <CampaignSignalsReportContent analyticsId={analyticsId} userId={userId} />
+        </Suspense>
       </section>
     </AnalyticsPageShell>
   )

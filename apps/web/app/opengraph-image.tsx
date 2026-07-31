@@ -24,9 +24,13 @@ async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
   return fetch(match[1]).then((res) => res.arrayBuffer())
 }
 
+/** Module-level promises — fonts load once per warm instance, not per OG request. */
+const fontBoldPromise = loadGoogleFont(800)
+const fontSemiboldPromise = loadGoogleFont(600)
+
 export default async function Image() {
   const t = await getTranslations('metadata')
-  const [fontBold, fontSemibold] = await Promise.all([loadGoogleFont(800), loadGoogleFont(600)])
+  const [fontBold, fontSemibold] = await Promise.all([fontBoldPromise, fontSemiboldPromise])
 
   return new ImageResponse(
     <div

@@ -18,41 +18,15 @@ import {
 } from '@workspace/ui/components/select'
 import { TabsContent } from '@workspace/ui/components/tabs'
 
+import { useLocationFormActions, useLocationFormState } from './location-form-context'
+
 const EMPTY_SELECT_VALUE = '__none__'
 
-export type LocationBasicsSectionProps = {
-  loading: boolean
-  name: string
-  street: string
-  city: string
-  countryId: string
-  currency: string
-  hasManualCurrencyOverride: boolean
-  showCurrencyAutoHint: boolean
-  onNameChange: (value: string) => void
-  onStreetChange: (value: string) => void
-  onCityChange: (value: string) => void
-  onCountryChange: (countryId: string) => void
-  onCurrencyChange: (currency: string, hasManualOverride: boolean) => void
-  onDirty: () => void
-}
-
-export function LocationBasicsSection({
-  loading,
-  name,
-  street,
-  city,
-  countryId,
-  currency,
-  showCurrencyAutoHint,
-  onNameChange,
-  onStreetChange,
-  onCityChange,
-  onCountryChange,
-  onCurrencyChange,
-  onDirty,
-}: LocationBasicsSectionProps) {
+export function LocationBasicsSection() {
   const t = useTranslations('analytics.branches.form')
+  const { loading, name, street, city, countryId, currency, showCurrencyAutoHint } =
+    useLocationFormState()
+  const { setName, setStreet, setCity, setCountryId, setCurrency } = useLocationFormActions()
 
   return (
     <TabsContent value="basics" className="flex flex-col gap-4">
@@ -67,10 +41,7 @@ export function LocationBasicsSection({
             required
             disabled={loading}
             value={name}
-            onChange={(e) => {
-              onDirty()
-              onNameChange(e.target.value)
-            }}
+            onChange={(e) => setName(e.target.value)}
           />
         </Field>
 
@@ -83,10 +54,7 @@ export function LocationBasicsSection({
             placeholder={t('streetPlaceholder')}
             disabled={loading}
             value={street}
-            onChange={(e) => {
-              onDirty()
-              onStreetChange(e.target.value)
-            }}
+            onChange={(e) => setStreet(e.target.value)}
           />
         </Field>
 
@@ -99,10 +67,7 @@ export function LocationBasicsSection({
             placeholder={t('cityPlaceholder')}
             disabled={loading}
             value={city}
-            onChange={(e) => {
-              onDirty()
-              onCityChange(e.target.value)
-            }}
+            onChange={(e) => setCity(e.target.value)}
           />
         </Field>
 
@@ -111,8 +76,7 @@ export function LocationBasicsSection({
           <Select
             value={countryId || EMPTY_SELECT_VALUE}
             onValueChange={(value) => {
-              onDirty()
-              onCountryChange(value === EMPTY_SELECT_VALUE ? '' : value)
+              setCountryId(value === EMPTY_SELECT_VALUE ? '' : value)
             }}
             disabled={loading}
           >
@@ -135,13 +99,9 @@ export function LocationBasicsSection({
           <Select
             value={currency || EMPTY_SELECT_VALUE}
             onValueChange={(value) => {
-              onDirty()
               const nextCurrency = value === EMPTY_SELECT_VALUE ? '' : value
               const defaultCurrency = countryId ? (countryIdToCurrency[countryId] ?? '') : ''
-              onCurrencyChange(
-                nextCurrency,
-                Boolean(nextCurrency) && nextCurrency !== defaultCurrency,
-              )
+              setCurrency(nextCurrency, Boolean(nextCurrency) && nextCurrency !== defaultCurrency)
             }}
             disabled={loading}
           >

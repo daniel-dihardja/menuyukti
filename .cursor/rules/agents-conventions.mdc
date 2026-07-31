@@ -17,11 +17,15 @@ alwaysApply: false
 
 ```
 agents/
-  graphql_base.py   # Shared GraphQL HTTP helpers (httpx + auth headers)
+  graphql_base.py        # Shared GraphQL HTTP helpers (httpx + auth headers)
+  graphql_operations.py  # GraphQL query/mutation documents used by tools
+  errors.py              # structured_error_payload for SSE / HTTP
+  tracing.py             # LangSmith / traceparent helpers
   core/
-    chat/             # ReAct chat graph (primary product surface)
-    format_markdown/  # POST /format-markdown helper
-    style_spec/       # IG Studio style draft helpers
+    chat/                # ReAct chat graph (primary product surface)
+    format_markdown/     # POST /format-markdown helper
+    style_spec/          # IG Studio style draft helpers
+    location_page_format.py
     llm_invoke.py
 models/
   llm_config.py
@@ -83,15 +87,23 @@ builder.add_edge("work_item", "finalize")
 
 ## Streaming patterns
 
-**Token streaming (chat):** use `astream_events(version="v2")` and filter for `on_chat_model_stream` events.
+**Token streaming (chat):** prefer `astream(stream_mode=["messages", "updates"])` — this is what [`routers/chat.py`](apps/agents/routers/chat.py) uses. Filter `messages` chunks for model tokens and derive tool start/end from `updates`.
 
 ```python
-async for event in graph.astream_events({"messages": lc_messages}, version="v2"):
-    if event["event"] != "on_chat_model_stream":
-        continue
-    text = event["data"]["chunk"].content
-    yield f"data: {json.dumps({'token': text})}\n\n"
+async for mode, chunk in graph.astream(
+    {"messages": lc_messages},
+    runnable_config,
+    stream_mode=["messages", "updates"],
+):
+    if mode == "messages":
+        # token / message chunks
+        ...
+    elif mode == "updates":
+        # tool_calls / ToolMessage status
+        ...
 ```
+
+`astream_events(version="v2")` filtering `on_chat_model_stream` remains valid for ad-hoc debugging, but is not the product chat path.
 
 **Step progress (multi-step flows):** use `astream(stream_mode=["custom", "values"])` + `get_stream_writer()` inside nodes.
 
@@ -102,7 +114,6 @@ writer({"step": "fetch_context"})
 ```
 
 Always set SSE response headers: `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`.
-
 ## LLM config
 
 - `get_llm()` — streaming `ChatOpenAI` (use for token streams and `astream`).

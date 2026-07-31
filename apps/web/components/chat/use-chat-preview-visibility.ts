@@ -3,12 +3,13 @@
 import { parseAsStringLiteral, useQueryState } from 'nuqs'
 import { useCallback, useEffect, useState } from 'react'
 
-const STORAGE_KEY = 'menuyukti:workflowPreview:v1'
+const STORAGE_KEY = 'menuyukti:chatPreview:v1'
+const LEGACY_STORAGE_KEY = 'menuyukti:workflowPreview:v1'
 
 function readLocalStorage(): boolean | null {
   if (typeof window === 'undefined') return null
   try {
-    const v = localStorage.getItem(STORAGE_KEY)
+    const v = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
     if (v === '0') return false
     if (v === '1') return true
   } catch {
@@ -17,43 +18,44 @@ function readLocalStorage(): boolean | null {
   return null
 }
 
+function previewOpenFromQuery(queryPreview: '0' | '1' | null): boolean | null {
+  if (queryPreview === '0') return false
+  if (queryPreview === '1') return true
+  return null
+}
+
 export function useChatPreviewVisibility() {
   const [queryPreview, setQueryPreview] = useQueryState(
     'preview',
     parseAsStringLiteral(['0', '1'] as const),
   )
-  const [previewOpen, setPreviewOpenState] = useState(true)
+  const fromQuery = previewOpenFromQuery(queryPreview)
+  const [localPreviewOpen, setLocalPreviewOpen] = useState(true)
 
+  // Only hydrate from localStorage when the URL does not already decide.
   useEffect(() => {
-    let open = true
-    if (queryPreview === '0') {
-      open = false
-    } else if (queryPreview === '1') {
-      open = true
-    } else {
-      open = readLocalStorage() ?? true
-    }
-    setPreviewOpenState(open)
-  }, [queryPreview])
+    if (fromQuery !== null) return
+    setLocalPreviewOpen(readLocalStorage() ?? true)
+  }, [fromQuery])
+
+  const previewOpen = fromQuery ?? localPreviewOpen
 
   const setPreviewOpen = useCallback(
     (next: boolean | ((prev: boolean) => boolean)) => {
-      setPreviewOpenState((prev) => {
-        const resolved = typeof next === 'function' ? (next as (p: boolean) => boolean)(prev) : next
-        // Avoid setQueryPreview (nuqs) inside this updater — it updates an ancestor during the same
-        // commit as this component and triggers "Cannot update a component while rendering a different component".
-        queueMicrotask(() => {
-          try {
-            localStorage.setItem(STORAGE_KEY, resolved ? '1' : '0')
-          } catch {
-            /* ignore */
-          }
-          void setQueryPreview(resolved ? '1' : '0')
-        })
-        return resolved
+      const resolved =
+        typeof next === 'function' ? (next as (p: boolean) => boolean)(previewOpen) : next
+      setLocalPreviewOpen(resolved)
+      // Avoid setQueryPreview (nuqs) during render — queue so ancestors update after commit.
+      queueMicrotask(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, resolved ? '1' : '0')
+        } catch {
+          /* ignore */
+        }
+        void setQueryPreview(resolved ? '1' : '0')
       })
     },
-    [setQueryPreview],
+    [previewOpen, setQueryPreview],
   )
 
   return { previewOpen, setPreviewOpen }

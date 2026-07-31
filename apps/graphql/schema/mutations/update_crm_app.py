@@ -7,7 +7,7 @@ import strawberry
 from graphql.context import request_session_scope
 from graphql.data_sources.models.crm_app import CrmApp
 from graphql.schema.auth import is_workspace_member, user_id_from_info
-from graphql.schema.queries.crm_apps import _crm_app_to_gql
+from graphql.schema.mappers.crm_app import crm_app_to_gql
 from graphql.schema.types.crm_app import CrmAppType
 
 
@@ -51,4 +51,4 @@ class UpdateCrmAppMutation:
                 row.cashback_percent = cashback_percent
             session.commit()
             session.refresh(row)
-            return _crm_app_to_gql(row)
+            return crm_app_to_gql(row)

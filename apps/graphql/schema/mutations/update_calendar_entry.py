@@ -8,8 +8,8 @@ from strawberry import UNSET
 from graphql.context import request_session_scope
 from graphql.data_sources.models.calendar_entry import CalendarEntry
 from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.mappers.calendar import entry_to_gql
 from graphql.schema.mutations.create_calendar_entry import (
-    _entry_to_gql,
     _normalize_media_refs,
     _validate_fields,
 )
@@ -63,4 +63,4 @@ class UpdateCalendarEntryMutation:
 
             session.commit()
             session.refresh(row)
-            return _entry_to_gql(row)
+            return entry_to_gql(row)

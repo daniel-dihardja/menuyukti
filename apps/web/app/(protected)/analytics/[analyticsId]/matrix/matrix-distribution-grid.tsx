@@ -49,39 +49,36 @@ export function MatrixDistributionGrid({
             <Card
               key={category}
               className={cn(
-                'cursor-pointer gap-3 py-4 shadow-none transition-colors',
+                'gap-0 overflow-hidden py-0 shadow-none transition-colors',
                 isSelected ? 'border-primary/40 bg-primary/5' : 'opacity-60 hover:opacity-100',
               )}
-              onClick={() => onToggleCategory(category)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault()
-                  onToggleCategory(category)
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-pressed={isSelected}
-              aria-label={tGrid('toggleAriaLabel', { category: tCategories(category) })}
             >
-              <CardHeader className="gap-2 px-4">
-                <Badge
-                  variant="outline"
-                  className={cn('w-fit', MATRIX_CATEGORY_BADGE_CLASS[category])}
-                >
-                  {tCategories(category)}
-                </Badge>
-                <CardTitle className="text-base">
-                  {tPortfolio('itemCount', { count: stats.itemCount })}
-                </CardTitle>
-                <CardDescription>
-                  {tDist('share')} {itemSharePct} · {tDist('margin')} {marginSharePct}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-4 pt-0">
-                <p className="mb-2 text-xs text-muted-foreground">{tGrid('marginShareLabel')}</p>
-                <Progress value={stats.marginShare * 100} aria-label={marginSharePct} />
-              </CardContent>
+              <button
+                type="button"
+                className="flex w-full flex-col gap-3 py-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onClick={() => onToggleCategory(category)}
+                aria-pressed={isSelected}
+                aria-label={tGrid('toggleAriaLabel', { category: tCategories(category) })}
+              >
+                <CardHeader className="gap-2 px-4">
+                  <Badge
+                    variant="outline"
+                    className={cn('w-fit', MATRIX_CATEGORY_BADGE_CLASS[category])}
+                  >
+                    {tCategories(category)}
+                  </Badge>
+                  <CardTitle className="text-base">
+                    {tPortfolio('itemCount', { count: stats.itemCount })}
+                  </CardTitle>
+                  <CardDescription>
+                    {tDist('share')} {itemSharePct} · {tDist('margin')} {marginSharePct}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-4 pt-0">
+                  <p className="mb-2 text-xs text-muted-foreground">{tGrid('marginShareLabel')}</p>
+                  <Progress value={stats.marginShare * 100} aria-label={marginSharePct} />
+                </CardContent>
+              </button>
             </Card>
           )
         })}

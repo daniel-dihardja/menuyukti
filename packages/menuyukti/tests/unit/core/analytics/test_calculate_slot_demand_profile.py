@@ -6,11 +6,10 @@ from menuyukti.core.analytics.calculate_combo_pair_timing import (
     compute_combo_pair_timing_from_orders,
 )
 from menuyukti.core.analytics.calculate_slot_demand_profile import (
-    LOW_DEMAND_THRESHOLD,
     compute_slot_demand_profile_from_orders,
     derive_combo_promo_posture,
-    summarize_venue_slot_performance,
 )
+from menuyukti.core.analytics.demand_labels import LOW_DEMAND_THRESHOLD
 
 
 def _row(bill: str, menu: str, order_time: datetime) -> dict:
@@ -160,31 +159,3 @@ def test_no_co_orders_returns_maintain_posture():
     assert timing["recommended_window"]["best_day"] is None
     assert posture["promo_posture"] == "maintain"
     assert "Not enough co-orders" not in posture["promo_reason"]
-
-
-def test_summarize_venue_slot_performance_empty():
-    assert summarize_venue_slot_performance([]) is None
-
-
-def test_summarize_venue_slot_performance_groups_strong_and_promote():
-    rows: list[dict] = []
-    for i in range(3):
-        rows.append(_slot_row(f"ML{i}", _dt(2024, 1, 1, 12)))
-    for i in range(200):
-        rows.append(_slot_row(f"FD{i}", _dt(2024, 1, 5, 19)))
-
-    profile = compute_slot_demand_profile_from_orders(rows)
-    summary = summarize_venue_slot_performance(profile)
-    assert summary is not None
-    assert len(summary["slots"]) == 35
-    assert summary["strong_slots"]
-    assert summary["slots_needing_promotion"]
-    assert "strong slot(s)" in summary["summary"]
-    fri_dinner = next(
-        slot for slot in summary["slots"] if slot["day"] == "fri" and slot["meal_period"] == "dinner"
-    )
-    assert fri_dinner["posture"] == "support"
-    mon_lunch = next(
-        slot for slot in summary["slots"] if slot["day"] == "mon" and slot["meal_period"] == "lunch"
-    )
-    assert mon_lunch["posture"] == "promote"

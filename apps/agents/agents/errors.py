@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from agents_app.agents.core.llm_invoke import LLMInvokeError
-from agents_app.agents.graphql_base import GraphQLFailure, classify_graphql_failure
+from agents_app.agents.graphql_base import GraphQLHttpError, classify_graphql_failure
 
 
 def structured_error_payload(
@@ -21,14 +21,14 @@ def structured_error_payload(
             "message": str(error),
             "retryable": error.retryable,
         }
-    if isinstance(error, GraphQLFailure):
+    if isinstance(error, GraphQLHttpError):
         return {
             "error": True,
             "code": error.code,
-            "message": error.message,
+            "message": str(error),
             "retryable": error.retryable,
         }
-    failure = classify_graphql_failure(error)
+    failure = classify_graphql_failure(error)  # type: ignore[arg-type]
     if failure.code != "INTERNAL_SERVER_ERROR" or failure.retryable:
         return {
             "error": True,

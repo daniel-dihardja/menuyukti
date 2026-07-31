@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import { CRM_CUSTOMERS_QUERY, type CrmCustomersData } from '@/lib/graphql/queries/crm-registrations'
 
 export async function GET(req: Request) {
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     const search = searchParams.get('search')?.trim() || undefined
     const data = await graphqlQuery<CrmCustomersData>(
       CRM_CUSTOMERS_QUERY,
-      { appId, ...(search ? { search } : {}) },
+      { appId, first: DEFAULT_LIST_FIRST, ...(search ? { search } : {}) },
       userId,
     )
 

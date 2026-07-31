@@ -1,6 +1,6 @@
 import strawberry
 
-from graphql.context import request_session_scope
+from graphql.context import get_manual_brief_cache, request_session_scope
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types.location_manual_brief_input import LocationManualBriefInputType
 
@@ -35,12 +35,13 @@ class LocationType:
         if not user_id:
             return None
         location_id = int(self.id)
+        cache = get_manual_brief_cache(info)
+        if location_id in cache:
+            return cache[location_id]
         with request_session_scope(info) as session:
             is_owner = is_location_owner(session, location_id, user_id, info=info)
             if not is_owner:
                 return None
             manual = load_manual_brief_type(session, location_id)
-            if isinstance(info.context, dict):
-                brief_cache = info.context.setdefault("_manual_brief_cache", {})
-                brief_cache[location_id] = manual
+            cache[location_id] = manual
             return manual

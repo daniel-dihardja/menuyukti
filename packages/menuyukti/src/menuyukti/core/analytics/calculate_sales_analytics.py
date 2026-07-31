@@ -150,14 +150,16 @@ def calculate_sales_analytics(
 
     order_signals: OrderSignals | None = None
     if has_order:
-        order_totals = df.groupby("bill_number")["total_after_bill_discount"].sum()
-        items_per_order = df.groupby("bill_number")["qty"].sum()
-        valid_orders = order_totals[order_totals > 0].index
-        if not valid_orders.empty:
-            order_totals_valid = order_totals.loc[valid_orders]
-            items_per_order_valid = items_per_order.loc[valid_orders]
+        order_agg = df.groupby("bill_number").agg(
+            total=("total_after_bill_discount", "sum"),
+            items=("qty", "sum"),
+        )
+        valid_orders = order_agg.index[order_agg["total"] > 0]
+        if len(valid_orders) > 0:
+            order_totals_valid = order_agg.loc[valid_orders, "total"]
+            items_per_order_valid = order_agg.loc[valid_orders, "items"]
             order_signals = OrderSignals(
-                total_orders=int(order_totals.size),
+                total_orders=int(order_agg.shape[0]),
                 avg_order_revenue=float(order_totals_valid.mean()),
                 max_order_revenue=float(order_totals_valid.max()),
                 min_order_revenue=float(order_totals_valid.min()),

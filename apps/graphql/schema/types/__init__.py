@@ -1,7 +1,6 @@
 from .image_ai_flow import ImageAiFlowType
 from .location import LocationType, OpeningHourType
 from .menu_item_cogs import MenuItemCogsType
-from .node import NodeType
 from .post import PostType
 from .post_page import PostPageType
 from .post_page_media_version import PostPageMediaVersionType
@@ -15,7 +14,6 @@ __all__ = [
     "OpeningHourType",
     "MenuItemCogsType",
     "PublicHolidayType",
-    "NodeType",
     "PostType",
     "PostPageType",
     "PostPageMediaVersionType",

@@ -10,7 +10,7 @@ from sqlalchemy.orm import joinedload
 from graphql.context import request_session_scope
 from graphql.data_sources import InstagramPost, InstagramPostPage
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.queries.posts import _load_post_for_user
+from graphql.services.posts import load_post_for_user as _load_post_for_user
 
 
 @strawberry.type

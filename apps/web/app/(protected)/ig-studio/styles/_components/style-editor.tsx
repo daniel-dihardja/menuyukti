@@ -1,7 +1,7 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
@@ -75,7 +75,6 @@ type StyleEditorProps = { mode: 'create' } | { mode: 'edit'; style: Style }
 export function StyleEditor(props: StyleEditorProps) {
   const t = useTranslations('igStudio.styles')
   const router = useRouter()
-  const searchParams = useSearchParams()
   const nameId = useId()
   const defaultId = useId()
 
@@ -146,7 +145,7 @@ export function StyleEditor(props: StyleEditorProps) {
         isDefault: form.isDefault,
       })
       toast.success(t('toast.created'))
-      const returnTo = searchParams.get('returnTo')
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo')
       if (returnTo?.startsWith('/ig-studio')) {
         const sep = returnTo.includes('?') ? '&' : '?'
         router.push(`${returnTo}${sep}styleId=${created.id}`)

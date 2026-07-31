@@ -7,7 +7,6 @@ import {
   BRIEF_PROFILE_FIELD_COUNT,
   BRIEF_TEXT_MAX_LENGTHS,
   briefHintsHasAnySelection,
-  type BriefHintsState,
 } from '@/lib/location-quick-profile'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -34,25 +33,13 @@ import { Progress } from '@workspace/ui/components/progress'
 import { TabsContent } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-export type LocationBriefSectionProps = {
-  loading: boolean
-  hints: BriefHintsState
-  profileFilledCount: number
-  profileProgress: number
-  onHintFieldChange: <K extends keyof BriefHintsState>(key: K, value: BriefHintsState[K]) => void
-  onResetHints: () => void
-}
+import { useLocationFormActions, useLocationFormState } from './location-form-context'
 
-export function LocationBriefSection({
-  loading,
-  hints,
-  profileFilledCount,
-  profileProgress,
-  onHintFieldChange,
-  onResetHints,
-}: LocationBriefSectionProps) {
+export function LocationBriefSection() {
   const t = useTranslations('analytics.branches.form')
   const tm = useTranslations('analytics.branches.form.manualBrief')
+  const { loading, hints, profileFilledCount, profileProgress } = useLocationFormState()
+  const { setHintField, resetHints } = useLocationFormActions()
 
   return (
     <TabsContent value="marketing" className="flex flex-col gap-4">
@@ -78,7 +65,7 @@ export function LocationBriefSection({
           disabled={loading}
           placeholder={tm('notesPlaceholder')}
           value={hints.notes}
-          onChange={(e) => onHintFieldChange('notes', e.target.value)}
+          onChange={(e) => setHintField('notes', e.target.value)}
         />
       </Field>
 
@@ -100,7 +87,7 @@ export function LocationBriefSection({
                 disabled={loading}
                 placeholder={tm('instagramHandlePlaceholder')}
                 value={hints.instagramHandle}
-                onChange={(e) => onHintFieldChange('instagramHandle', e.target.value)}
+                onChange={(e) => setHintField('instagramHandle', e.target.value)}
               />
             </InputGroup>
           </Field>
@@ -114,7 +101,7 @@ export function LocationBriefSection({
               disabled={loading}
               placeholder={tm('neighborhoodPlaceholder')}
               value={hints.neighborhood}
-              onChange={(e) => onHintFieldChange('neighborhood', e.target.value)}
+              onChange={(e) => setHintField('neighborhood', e.target.value)}
             />
           </Field>
 
@@ -129,7 +116,7 @@ export function LocationBriefSection({
               disabled={loading}
               placeholder={tm('phonePlaceholder')}
               value={hints.phone}
-              onChange={(e) => onHintFieldChange('phone', e.target.value)}
+              onChange={(e) => setHintField('phone', e.target.value)}
             />
           </Field>
 
@@ -145,7 +132,7 @@ export function LocationBriefSection({
               disabled={loading}
               placeholder={tm('contactEmailPlaceholder')}
               value={hints.contactEmail}
-              onChange={(e) => onHintFieldChange('contactEmail', e.target.value)}
+              onChange={(e) => setHintField('contactEmail', e.target.value)}
             />
           </Field>
 
@@ -160,7 +147,7 @@ export function LocationBriefSection({
               disabled={loading}
               placeholder={tm('websiteUrlPlaceholder')}
               value={hints.websiteUrl}
-              onChange={(e) => onHintFieldChange('websiteUrl', e.target.value)}
+              onChange={(e) => setHintField('websiteUrl', e.target.value)}
             />
           </Field>
         </FieldGroup>
@@ -189,7 +176,7 @@ export function LocationBriefSection({
                   disabled={loading}
                   placeholder={tm('reservationUrlPlaceholder')}
                   value={hints.reservationUrl}
-                  onChange={(e) => onHintFieldChange('reservationUrl', e.target.value)}
+                  onChange={(e) => setHintField('reservationUrl', e.target.value)}
                 />
               </Field>
               <Field>
@@ -203,7 +190,7 @@ export function LocationBriefSection({
                   disabled={loading}
                   placeholder={tm('onlineOrderUrlPlaceholder')}
                   value={hints.onlineOrderUrl}
-                  onChange={(e) => onHintFieldChange('onlineOrderUrl', e.target.value)}
+                  onChange={(e) => setHintField('onlineOrderUrl', e.target.value)}
                 />
               </Field>
               <Field className="sm:col-span-2">
@@ -217,7 +204,7 @@ export function LocationBriefSection({
                   disabled={loading}
                   placeholder={tm('menuUrlPlaceholder')}
                   value={hints.menuUrl}
-                  onChange={(e) => onHintFieldChange('menuUrl', e.target.value)}
+                  onChange={(e) => setHintField('menuUrl', e.target.value)}
                 />
               </Field>
             </FieldGroup>
@@ -247,7 +234,7 @@ export function LocationBriefSection({
                 disabled={loading}
                 placeholder={tm('googleMapsUrlPlaceholder')}
                 value={hints.googleMapsUrl}
-                onChange={(e) => onHintFieldChange('googleMapsUrl', e.target.value)}
+                onChange={(e) => setHintField('googleMapsUrl', e.target.value)}
               />
             </Field>
           </CollapsibleContent>
@@ -255,7 +242,7 @@ export function LocationBriefSection({
       </FieldSet>
 
       {briefHintsHasAnySelection(hints) ? (
-        <Button type="button" variant="outline" size="sm" disabled={loading} onClick={onResetHints}>
+        <Button type="button" variant="outline" size="sm" disabled={loading} onClick={resetHints}>
           {tm('resetHints')}
         </Button>
       ) : null}

@@ -47,7 +47,19 @@ const nextConfig = {
     ]
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', '@workspace/ui', '@ai-sdk/react', 'react-markdown'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@workspace/ui',
+      '@ai-sdk/react',
+      'react-markdown',
+      'remark-gfm',
+      'streamdown',
+      '@streamdown/cjk',
+      '@streamdown/code',
+      '@streamdown/math',
+      'motion',
+      'date-fns',
+    ],
     // Reel video uploads (up to 50 MB) pass through Clerk proxy; default buffer is 10 MB.
     proxyClientMaxBodySize: '52mb',
   },
@@ -73,6 +85,16 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '*.clerk.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.clerk.dev',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: '*.s3.*.amazonaws.com',
         pathname: '/**',
       },
@@ -82,6 +104,26 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+        ],
+      },
+    ]
   },
 }
 

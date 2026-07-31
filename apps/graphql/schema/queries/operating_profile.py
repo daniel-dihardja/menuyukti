@@ -118,8 +118,14 @@ class OperatingProfileQuery:
         """
         user_id = user_id_from_info(info)
         with request_session_scope(info) as session:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id, info=info)
-            if run is None or run.location_id != int(location_id):
+            run = get_analytics_run_if_owner(
+                session,
+                int(analytics_run_id),
+                user_id,
+                info=info,
+                location_id=int(location_id),
+            )
+            if run is None:
                 return None
 
             result = build_operating_profile(session, run, info=info)

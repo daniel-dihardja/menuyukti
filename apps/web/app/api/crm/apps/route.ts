@@ -3,6 +3,7 @@ import { ZodError } from 'zod'
 
 import { requireAuthenticatedApi } from '@/lib/authenticated-api'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import {
   CREATE_CRM_APP_MUTATION,
   CRM_APPS_QUERY,
@@ -18,7 +19,11 @@ export async function GET() {
     if (!authz.ok) return authz.response
     const { userId } = authz
 
-    const data = await graphqlQuery<CrmAppsData>(CRM_APPS_QUERY, {}, userId)
+    const data = await graphqlQuery<CrmAppsData>(
+      CRM_APPS_QUERY,
+      { first: DEFAULT_LIST_FIRST },
+      userId,
+    )
 
     return NextResponse.json({ apps: data.crmApps })
   } catch (error) {

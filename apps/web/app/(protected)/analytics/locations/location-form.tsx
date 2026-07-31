@@ -25,6 +25,14 @@ import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
+import {
+  LocationFormContextProvider,
+  useLocationFormActions,
+  useLocationFormMeta,
+  useLocationFormState,
+  type LocationFormActions,
+  type LocationFormState,
+} from './location-form-context'
 import { LocationBasicsSection } from './location-form-basics-section'
 import { LocationBriefSection } from './location-form-brief-section'
 import { LocationHoursSection } from './location-form-hours-section'
@@ -297,10 +305,85 @@ export function LocationForm({
           ? t('createAction')
           : t('saveAction')
 
+  const state: LocationFormState = {
+    mode,
+    loading,
+    error,
+    activeTab,
+    name,
+    street,
+    city,
+    countryId,
+    currency,
+    showCurrencyAutoHint,
+    openingHours,
+    hints,
+    profileFilledCount,
+    profileProgress,
+    submitLabel,
+  }
+
+  const actions: LocationFormActions = {
+    setActiveTab,
+    markDirty,
+    setName: (value) => {
+      markDirty()
+      setName(value)
+    },
+    setStreet: (value) => {
+      markDirty()
+      setStreet(value)
+    },
+    setCity: (value) => {
+      markDirty()
+      setCity(value)
+    },
+    setCountryId: (nextCountryId) => {
+      markDirty()
+      setCountryId(nextCountryId)
+      if (!hasManualCurrencyOverride && nextCountryId) {
+        setCurrency(countryIdToCurrency[nextCountryId] ?? '')
+      }
+    },
+    setCurrency: (nextCurrency, hasManualOverride) => {
+      markDirty()
+      setCurrency(nextCurrency)
+      setHasManualCurrencyOverride(hasManualOverride)
+    },
+    setRowClosed,
+    updateOpeningHour,
+    presetWeekdaysOnly,
+    presetCopyMondayToWeekdays,
+    presetAllClosed,
+    setHintField,
+    resetHints: () => {
+      markDirty()
+      setHints(defaultBriefHintsState())
+    },
+    onSubmit,
+  }
+
+  return (
+    <LocationFormContextProvider
+      state={state}
+      actions={actions}
+      meta={{ formId: FORM_ID, formRef }}
+    >
+      <LocationFormShell />
+    </LocationFormContextProvider>
+  )
+}
+
+function LocationFormShell() {
+  const t = useTranslations('analytics.branches.form')
+  const { mode, loading, error, activeTab, submitLabel } = useLocationFormState()
+  const { setActiveTab, onSubmit } = useLocationFormActions()
+  const { formId, formRef } = useLocationFormMeta()
+
   return (
     <>
       <form
-        id={FORM_ID}
+        id={formId}
         ref={formRef}
         className="flex flex-col gap-4 pb-24 sm:gap-6 sm:pb-0"
         onSubmit={onSubmit}
@@ -322,54 +405,9 @@ export function LocationForm({
               ) : null}
             </TabsList>
 
-            <LocationBasicsSection
-              loading={loading}
-              name={name}
-              street={street}
-              city={city}
-              countryId={countryId}
-              currency={currency}
-              hasManualCurrencyOverride={hasManualCurrencyOverride}
-              showCurrencyAutoHint={showCurrencyAutoHint}
-              onNameChange={setName}
-              onStreetChange={setStreet}
-              onCityChange={setCity}
-              onCountryChange={(nextCountryId) => {
-                setCountryId(nextCountryId)
-                if (!hasManualCurrencyOverride && nextCountryId) {
-                  setCurrency(countryIdToCurrency[nextCountryId] ?? '')
-                }
-              }}
-              onCurrencyChange={(nextCurrency, hasManualOverride) => {
-                setCurrency(nextCurrency)
-                setHasManualCurrencyOverride(hasManualOverride)
-              }}
-              onDirty={markDirty}
-            />
-
-            <LocationHoursSection
-              loading={loading}
-              openingHours={openingHours}
-              onSetRowClosed={setRowClosed}
-              onUpdateOpeningHour={updateOpeningHour}
-              onPresetWeekdaysOnly={presetWeekdaysOnly}
-              onPresetCopyMondayToWeekdays={presetCopyMondayToWeekdays}
-              onPresetAllClosed={presetAllClosed}
-            />
-
-            {mode === 'edit' ? (
-              <LocationBriefSection
-                loading={loading}
-                hints={hints}
-                profileFilledCount={profileFilledCount}
-                profileProgress={profileProgress}
-                onHintFieldChange={setHintField}
-                onResetHints={() => {
-                  markDirty()
-                  setHints(defaultBriefHintsState())
-                }}
-              />
-            ) : null}
+            <LocationBasicsSection />
+            <LocationHoursSection />
+            {mode === 'edit' ? <LocationBriefSection /> : null}
           </Tabs>
 
           {error ? (
@@ -401,7 +439,7 @@ export function LocationForm({
           type="submit"
           disabled={loading}
           className="w-full touch-manipulation"
-          form={FORM_ID}
+          form={formId}
         >
           {loading ? (
             <>

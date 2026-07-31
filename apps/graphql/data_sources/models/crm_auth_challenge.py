@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Index, String, Uuid, func
@@ -35,9 +36,9 @@ class CrmAuthChallenge(Base):
         nullable=False,
     )
     nonce: Mapped[str] = mapped_column(String(128), nullable=False)
-    expires_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False)
-    consumed_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[object] = mapped_column(
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,

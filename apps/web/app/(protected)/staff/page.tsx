@@ -1,7 +1,15 @@
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { requireMenuyuktiAdmin } from '@/lib/menuyukti-role-server'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('staff')
+  const title = t('title')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
 
 export default async function StaffPage() {
   await requireMenuyuktiAdmin()

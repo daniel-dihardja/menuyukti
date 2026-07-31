@@ -6,7 +6,7 @@ import strawberry
 
 from graphql.context import request_session_scope
 from graphql.schema.auth import user_id_from_info
-from graphql.schema.queries.media_collections import _asset_to_gql
+from graphql.schema.mappers.media import asset_to_gql
 from graphql.schema.types.media_collection import MediaAssetType
 from graphql.services.media_collections import (
     delete_media_asset_by_filename,
@@ -45,7 +45,7 @@ class EnsureMediaAssetMutation:
             )
             session.commit()
             session.refresh(row)
-            return _asset_to_gql(row)
+            return asset_to_gql(row)
 
 
 @strawberry.type

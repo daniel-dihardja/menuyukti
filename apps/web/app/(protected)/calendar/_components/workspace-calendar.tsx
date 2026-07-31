@@ -27,7 +27,12 @@ import {
 } from '@/lib/calendar/scheduler-calendar'
 import { parseIsoDateOnly } from '@/lib/calendar/scheduler-dates'
 
-import { CalendarEntryDialog, type CalendarEntryDialogValues } from './create-calendar-entry-dialog'
+import {
+  CreateCalendarEntryDialog,
+  EditCalendarEntryDialog,
+  type CreateCalendarEntryDialogValues,
+  type EditCalendarEntryDialogValues,
+} from './create-calendar-entry-dialog'
 
 export type WorkspaceCalendarProps = {
   locale: string
@@ -62,7 +67,11 @@ function defaultTime(): string {
   return `${hours}:${minutes}`
 }
 
-function createDraftValues(dateIso: string): CalendarEntryDialogValues {
+type CalendarDialogState =
+  | { mode: 'create'; values: CreateCalendarEntryDialogValues }
+  | { mode: 'edit'; values: EditCalendarEntryDialogValues }
+
+function createDraftValues(dateIso: string): CreateCalendarEntryDialogValues {
   return {
     title: '',
     description: '',
@@ -72,7 +81,7 @@ function createDraftValues(dateIso: string): CalendarEntryDialogValues {
   }
 }
 
-function slotToEditValues(slot: SchedulerSlot): CalendarEntryDialogValues | null {
+function slotToEditValues(slot: SchedulerSlot): EditCalendarEntryDialogValues | null {
   if (!slot.id) {
     return null
   }
@@ -109,7 +118,7 @@ export function WorkspaceCalendar({
   const router = useRouter()
   const isDesktop = useDesktopLayout()
   const [monthStartIso, setMonthStartIso] = useState(currentMonthStartIso)
-  const [dialogInitial, setDialogInitial] = useState<CalendarEntryDialogValues | null>(null)
+  const [dialogState, setDialogState] = useState<CalendarDialogState | null>(null)
 
   const { windowStart, windowEnd } = useMemo(() => monthViewWindow(monthStartIso), [monthStartIso])
   const monthLabel = useMemo(
@@ -129,7 +138,7 @@ export function WorkspaceCalendar({
       setMonthStartIso(dayMonthStart)
     }
     if (canCreate) {
-      setDialogInitial(createDraftValues(isoDate))
+      setDialogState({ mode: 'create', values: createDraftValues(isoDate) })
     }
   }
 
@@ -140,7 +149,7 @@ export function WorkspaceCalendar({
       return
     }
     if (canCreate) {
-      setDialogInitial(values)
+      setDialogState({ mode: 'edit', values })
     }
   }
 
@@ -217,19 +226,33 @@ export function WorkspaceCalendar({
         />
       )}
 
-      {locationId !== null && dialogInitial !== null ? (
-        <CalendarEntryDialog
-          open
-          locationId={locationId}
-          locale={locale}
-          initial={dialogInitial}
-          onOpenChange={(open) => {
-            if (!open) setDialogInitial(null)
-          }}
-          onSaved={() => {
-            router.refresh()
-          }}
-        />
+      {locationId !== null && dialogState !== null ? (
+        dialogState.mode === 'create' ? (
+          <CreateCalendarEntryDialog
+            open
+            locationId={locationId}
+            locale={locale}
+            initial={dialogState.values}
+            onOpenChange={(open) => {
+              if (!open) setDialogState(null)
+            }}
+            onSaved={() => {
+              router.refresh()
+            }}
+          />
+        ) : (
+          <EditCalendarEntryDialog
+            open
+            locale={locale}
+            initial={dialogState.values}
+            onOpenChange={(open) => {
+              if (!open) setDialogState(null)
+            }}
+            onSaved={() => {
+              router.refresh()
+            }}
+          />
+        )
       ) : null}
     </div>
   )

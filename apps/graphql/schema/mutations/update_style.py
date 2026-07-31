@@ -8,7 +8,7 @@ from strawberry.scalars import JSON
 from graphql.context import request_session_scope
 from graphql.data_sources.models.visual_style import VisualStyle
 from graphql.schema.auth import is_workspace_member, user_id_from_info
-from graphql.schema.queries.styles import _style_to_gql
+from graphql.schema.mappers.style import style_to_gql
 from graphql.schema.types.style import StyleType
 from graphql.services.visual_style import (
     clear_other_defaults,
@@ -71,4 +71,4 @@ class UpdateStyleMutation:
 
             session.commit()
             session.refresh(row)
-            return _style_to_gql(row)
+            return style_to_gql(row)

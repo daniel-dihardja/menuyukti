@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import useSWR from 'swr'
 
 import { OrderMetricsVenueHeatmap } from '@/app/(protected)/analytics/[analyticsId]/order-metrics/_components/order-metrics-venue-heatmap'
 import type { SlotDemandCell } from '@/lib/graphql/queries/analytics'
@@ -9,15 +9,12 @@ import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/al
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
-type LoadState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | {
-      status: 'ready'
-      slotDemandProfile: SlotDemandCell[]
-      usedFallbackRun: boolean
-    }
-  | { status: 'error' }
+import { chatVizJsonFetcher, chatVizQueryUrl } from './chat-viz-fetcher'
+
+type OrderMetricsResponse = {
+  slotDemandProfile?: SlotDemandCell[]
+  usedFallbackRun?: boolean
+}
 
 type VenueSlotStrengthCardProps = {
   locationId: number
@@ -27,41 +24,12 @@ type VenueSlotStrengthCardProps = {
 export function VenueSlotStrengthCard({ locationId, analyticsRunId }: VenueSlotStrengthCardProps) {
   const locale = useLocale()
   const t = useTranslations('chat.visualizations')
-  const [loadState, setLoadState] = useState<LoadState>({ status: 'idle' })
-  const [reloadToken, setReloadToken] = useState(0)
+  const url = chatVizQueryUrl('/api/analytics/order-metrics', locationId, analyticsRunId)
+  const { data, error, isLoading, mutate } = useSWR(url, chatVizJsonFetcher<OrderMetricsResponse>, {
+    revalidateOnFocus: false,
+  })
 
-  const fetchData = useCallback(async () => {
-    setLoadState({ status: 'loading' })
-    try {
-      const params = new URLSearchParams({ locationId: String(locationId) })
-      if (analyticsRunId !== null) {
-        params.set('analyticsRunId', String(analyticsRunId))
-      }
-      const res = await fetch(`/api/analytics/order-metrics?${params.toString()}`, {
-        cache: 'no-store',
-      })
-      if (!res.ok) {
-        throw new Error('fetch failed')
-      }
-      const body = (await res.json()) as {
-        slotDemandProfile?: SlotDemandCell[]
-        usedFallbackRun?: boolean
-      }
-      setLoadState({
-        status: 'ready',
-        slotDemandProfile: Array.isArray(body.slotDemandProfile) ? body.slotDemandProfile : [],
-        usedFallbackRun: body.usedFallbackRun === true,
-      })
-    } catch {
-      setLoadState({ status: 'error' })
-    }
-  }, [analyticsRunId, locationId])
-
-  useEffect(() => {
-    void fetchData()
-  }, [fetchData, reloadToken])
-
-  if (loadState.status === 'loading' || loadState.status === 'idle') {
+  if (isLoading || (!data && !error)) {
     return (
       <div className="flex flex-col gap-3">
         <Skeleton className="h-4 w-40" />
@@ -75,7 +43,7 @@ export function VenueSlotStrengthCard({ locationId, analyticsRunId }: VenueSlotS
     )
   }
 
-  if (loadState.status === 'error') {
+  if (error || !data) {
     return (
       <Alert variant="destructive">
         <AlertTitle>{t('loadErrorTitle')}</AlertTitle>
@@ -83,7 +51,7 @@ export function VenueSlotStrengthCard({ locationId, analyticsRunId }: VenueSlotS
           <p>{t('loadErrorDescription')}</p>
           <Button
             className="w-fit"
-            onClick={() => setReloadToken((token) => token + 1)}
+            onClick={() => void mutate()}
             size="sm"
             type="button"
             variant="outline"
@@ -95,17 +63,20 @@ export function VenueSlotStrengthCard({ locationId, analyticsRunId }: VenueSlotS
     )
   }
 
-  if (loadState.slotDemandProfile.length === 0) {
+  const slotDemandProfile = Array.isArray(data.slotDemandProfile) ? data.slotDemandProfile : []
+  const usedFallbackRun = data.usedFallbackRun === true
+
+  if (slotDemandProfile.length === 0) {
     return <p className="text-muted-foreground text-sm">{t('emptyDataDescription')}</p>
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {loadState.usedFallbackRun ? (
+      {usedFallbackRun ? (
         <p className="text-muted-foreground text-xs">{t('fallbackRunHint')}</p>
       ) : null}
       <div className="overflow-x-auto">
-        <OrderMetricsVenueHeatmap locale={locale} slotDemandProfile={loadState.slotDemandProfile} />
+        <OrderMetricsVenueHeatmap locale={locale} slotDemandProfile={slotDemandProfile} />
       </div>
     </div>
   )

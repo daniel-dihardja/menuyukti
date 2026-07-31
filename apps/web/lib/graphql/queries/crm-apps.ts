@@ -23,8 +23,8 @@ const CRM_APP_FIELDS = `
 `
 
 export const CRM_APPS_QUERY = `
-  query CrmApps {
-    crmApps {
+  query CrmApps($first: Int) {
+    crmApps(first: $first) {
       ${CRM_APP_FIELDS}
     }
   }

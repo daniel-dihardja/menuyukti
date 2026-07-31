@@ -39,8 +39,8 @@ const COLLECTION_WITH_MEMBERS_FIELDS = `
 `
 
 export const MEDIA_COLLECTIONS_QUERY = `
-  query MediaCollections {
-    mediaCollections {
+  query MediaCollections($first: Int) {
+    mediaCollections(first: $first) {
       ${COLLECTION_FIELDS}
     }
   }
@@ -63,8 +63,8 @@ export type MediaCollectionData = {
 }
 
 export const MEDIA_ASSETS_QUERY = `
-  query MediaAssets($collectionId: Int) {
-    mediaAssets(collectionId: $collectionId) {
+  query MediaAssets($collectionId: Int, $first: Int) {
+    mediaAssets(collectionId: $collectionId, first: $first) {
       ${ASSET_FIELDS}
     }
   }

@@ -142,7 +142,7 @@ def calculate_revenue_trends(
     )
 
     rows: list[RevenueTrendRow] = []
-    for menu, r in trends.iterrows():
+    for menu, r in trends.to_dict(orient="index").items():
         pct = r["pct_change"]
         rows.append(
             RevenueTrendRow(

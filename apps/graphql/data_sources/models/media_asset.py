@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, func
@@ -31,12 +32,12 @@ class MediaAsset(Base):
     filename: Mapped[str] = mapped_column(String(512), nullable=False)
     display_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
     created_by_clerk_user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    created_at: Mapped[object] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
-    updated_at: Mapped[object] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
@@ -71,12 +72,12 @@ class MediaCollection(Base):
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     created_by_clerk_user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    created_at: Mapped[object] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
-    updated_at: Mapped[object] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
@@ -119,7 +120,7 @@ class MediaCollectionMember(Base):
         ForeignKey("media_asset.id", ondelete="CASCADE"),
         nullable=False,
     )
-    created_at: Mapped[object] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,

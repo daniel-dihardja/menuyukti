@@ -5,12 +5,13 @@ from __future__ import annotations
 import uuid
 
 import strawberry
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, select
 
 from graphql.context import request_session_scope
 from graphql.data_sources.models.crm_app import CrmApp
 from graphql.data_sources.models.crm_customer import CrmCustomer
 from graphql.data_sources.models.crm_device import CrmDevice
+from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.crm_customer_map import customer_to_gql, load_customer_cashback
 from graphql.schema.types.crm_customer import CrmCustomerType
@@ -30,21 +31,23 @@ class CrmCustomersQuery:
         info: strawberry.Info,
         app_id: int,
         search: str | None = None,
+        first: int | None = None,
     ) -> list[CrmCustomerType]:
         user_id = user_id_from_info(info)
         if not user_id:
             return []
+        limit = clamp_page_size(first, default=DEFAULT_LIST_FIRST, maximum=MAX_LIST_FIRST)
         with request_session_scope(info) as session:
-            app = session.query(CrmApp).filter(CrmApp.id == app_id).first()
+            app = session.scalars(select(CrmApp).where(CrmApp.id == app_id)).first()
             if app is None:
                 return []
             if not is_workspace_member(session, app.workspace_id, user_id):
                 return []
 
-            q = session.query(CrmCustomer).filter(CrmCustomer.crm_app_id == app_id)
+            stmt = select(CrmCustomer).where(CrmCustomer.crm_app_id == app_id)
             if search is not None and search.strip():
                 needle = f"%{_escape_like(search.strip().lower())}%"
-                q = q.filter(
+                stmt = stmt.where(
                     or_(
                         func.lower(func.coalesce(CrmCustomer.phone_e164, "")).like(
                             needle, escape="\\"
@@ -57,12 +60,16 @@ class CrmCustomersQuery:
                         ),
                     )
                 )
-            customers = q.order_by(CrmCustomer.created_at.desc()).all()
+            customers = list(
+                session.scalars(stmt.order_by(CrmCustomer.created_at.desc()).limit(limit)).all()
+            )
             if not customers:
                 return []
 
             customer_ids = [c.id for c in customers]
-            devices = session.query(CrmDevice).filter(CrmDevice.customer_id.in_(customer_ids)).all()
+            devices = session.scalars(
+                select(CrmDevice).where(CrmDevice.customer_id.in_(customer_ids))
+            ).all()
             by_customer: dict[uuid.UUID, list[CrmDevice]] = {cid: [] for cid in customer_ids}
             for device in devices:
                 by_customer.setdefault(device.customer_id, []).append(device)
@@ -80,20 +87,21 @@ class CrmCustomersQuery:
         if not user_id:
             return None
         with request_session_scope(info) as session:
-            customer = session.query(CrmCustomer).filter(CrmCustomer.id == id).first()
+            customer = session.scalars(select(CrmCustomer).where(CrmCustomer.id == id)).first()
             if customer is None:
                 return None
-            app = session.query(CrmApp).filter(CrmApp.id == customer.crm_app_id).first()
+            app = session.scalars(select(CrmApp).where(CrmApp.id == customer.crm_app_id)).first()
             if app is None:
                 return None
             if not is_workspace_member(session, app.workspace_id, user_id):
                 return None
 
-            devices = (
-                session.query(CrmDevice)
-                .filter(CrmDevice.customer_id == customer.id)
-                .order_by(CrmDevice.created_at.desc())
-                .all()
+            devices = list(
+                session.scalars(
+                    select(CrmDevice)
+                    .where(CrmDevice.customer_id == customer.id)
+                    .order_by(CrmDevice.created_at.desc())
+                ).all()
             )
             balance, entries = load_customer_cashback(session, customer.id)
             return customer_to_gql(

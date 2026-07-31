@@ -1,8 +1,11 @@
 import { auth } from '@clerk/nextjs/server'
 import { Button } from '@workspace/ui/components/button'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getTranslations } from 'next-intl/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
@@ -16,6 +19,45 @@ import { MenuItemsTable } from './menu-items-table'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('analytics.menuItems')
+  const title = t('reportTitle')
+  const description = t('description')
+  return { title, description, openGraph: { title, description } }
+}
+
+function MenuItemsReportSkeleton() {
+  return <Skeleton className="min-h-[24rem] w-full rounded-lg" />
+}
+
+async function MenuItemsReportContent({
+  analyticsId,
+  userId,
+  locationId,
+}: {
+  analyticsId: number
+  userId: string
+  locationId: string
+}) {
+  const tMenuItems = await getTranslations('analytics.menuItems')
+  const id = String(analyticsId)
+  const promotionItemsData = await getCachedPromotionMenuItems(userId, id, locationId)
+  const locale = getAppCurrencyLocale()
+  const currency = getAppCurrencyCode()
+  const items = promotionItemsData.promotionMenuItems?.items ?? null
+  const rows = promotionItemsToTableRows(items, locale)
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
+        {tMenuItems('empty')}
+      </div>
+    )
+  }
+
+  return <MenuItemsTable rows={rows} locale={locale} currency={currency} />
 }
 
 export default async function Page({ params }: PageProps) {
@@ -39,14 +81,7 @@ export default async function Page({ params }: PageProps) {
   if (!run) notFound()
 
   const locationId = String(run.locationId)
-  const promotionItemsData = await getCachedPromotionMenuItems(userId, id, locationId)
-
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
-  const locale = getAppCurrencyLocale()
-  const currency = getAppCurrencyCode()
-
-  const items = promotionItemsData.promotionMenuItems?.items ?? null
-  const rows = promotionItemsToTableRows(items, locale)
 
   return (
     <AnalyticsPageShell
@@ -66,13 +101,13 @@ export default async function Page({ params }: PageProps) {
           </Button>
         </div>
 
-        {rows.length === 0 ? (
-          <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-            {tMenuItems('empty')}
-          </div>
-        ) : (
-          <MenuItemsTable rows={rows} locale={locale} currency={currency} />
-        )}
+        <Suspense fallback={<MenuItemsReportSkeleton />}>
+          <MenuItemsReportContent
+            analyticsId={analyticsId}
+            locationId={locationId}
+            userId={userId}
+          />
+        </Suspense>
       </section>
     </AnalyticsPageShell>
   )

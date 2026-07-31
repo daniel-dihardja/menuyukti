@@ -8,7 +8,6 @@ from datetime import datetime, date
 
 from menuyukti.core.analytics.calculate_operating_profile import (
     compute_operating_profile_from_orders,
-    compute_order_metrics_by_day_from_orders,
 )
 
 # ---------------------------------------------------------------------------
@@ -626,47 +625,3 @@ def test_early_morning_late_night_bucket():
     result = compute_operating_profile_from_orders(rows)
     assert result is not None
     assert result["primary_meal_period"] == "late_night"
-
-
-# ---------------------------------------------------------------------------
-# Per-day order metrics
-# ---------------------------------------------------------------------------
-
-
-def test_order_metrics_by_day_empty_returns_seven_zeros():
-    result = compute_order_metrics_by_day_from_orders([])
-    assert len(result) == 7
-    assert all(r["avg_order_size"] == 0.0 for r in result)
-    assert all(r["avg_order_revenue"] == 0.0 for r in result)
-    assert [r["day"] for r in result] == [
-        "mon", "tue", "wed", "thu", "fri", "sat", "sun",
-    ]
-
-
-def test_order_metrics_by_day_multiple_weekdays():
-    # Mon: bill A (4 items, 25 revenue), Tue: bill B (2 items, 20 revenue)
-    rows = [
-        _row("A", _BASE_MON.replace(hour=12), 10.0, qty=1),
-        _row("A", _BASE_MON.replace(hour=12), 15.0, qty=3),
-        _row("B", _BASE_TUE.replace(hour=12), 20.0, qty=2),
-    ]
-    result = compute_order_metrics_by_day_from_orders(rows)
-    by_day = {r["day"]: r for r in result}
-
-    assert abs(by_day["mon"]["avg_order_size"] - 4.0) < 1e-4
-    assert abs(by_day["mon"]["avg_order_revenue"] - 25.0) < 1e-4
-    assert abs(by_day["tue"]["avg_order_size"] - 2.0) < 1e-4
-    assert abs(by_day["tue"]["avg_order_revenue"] - 20.0) < 1e-4
-    assert by_day["wed"]["avg_order_size"] == 0.0
-    assert by_day["wed"]["avg_order_revenue"] == 0.0
-
-
-def test_order_metrics_by_day_zero_order_weekday():
-    rows = [_row("ONLY", _BASE_FRI.replace(hour=12), 30.0, qty=3)]
-    result = compute_order_metrics_by_day_from_orders(rows)
-    by_day = {r["day"]: r for r in result}
-
-    assert abs(by_day["fri"]["avg_order_size"] - 3.0) < 1e-4
-    assert abs(by_day["fri"]["avg_order_revenue"] - 30.0) < 1e-4
-    assert by_day["mon"]["avg_order_size"] == 0.0
-    assert by_day["sun"]["avg_order_revenue"] == 0.0

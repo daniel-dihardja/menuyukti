@@ -1,13 +1,13 @@
 'use client'
 
-import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@workspace/ui/components/button'
+import { Spinner } from '@workspace/ui/components/spinner'
 
 import { deleteStyle, listStyles, type Style } from '@/lib/styles/client-api'
 import { mediaDownloadHref } from '@/lib/media/client-api'
@@ -15,7 +15,6 @@ import { routes } from '@/lib/routes'
 
 export function StylesLibrary() {
   const t = useTranslations('igStudio.styles')
-  const router = useRouter()
   const [styles, setStyles] = useState<Style[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -50,7 +49,7 @@ export function StylesLibrary() {
   if (loading) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
-        <Loader2 className="size-4 animate-spin" aria-hidden />
+        <Spinner />
         {t('loading')}
       </div>
     )
@@ -76,16 +75,16 @@ export function StylesLibrary() {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {styles.map((style) => {
+        const detailHref = routes.igStudioStyleDetail(style.id)
         return (
           <li
             key={style.id}
             className="group flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card"
           >
-            <button
-              type="button"
-              className="relative aspect-square w-full overflow-hidden bg-muted/30 text-left"
-              onClick={() => router.push(routes.igStudioStyleDetail(style.id))}
-              aria-label={t('edit')}
+            <Link
+              href={detailHref}
+              className="relative aspect-square w-full overflow-hidden bg-muted/30 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={t('openNamed', { name: style.name })}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- media download URLs */}
               <img
@@ -93,7 +92,7 @@ export function StylesLibrary() {
                 alt=""
                 className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               />
-            </button>
+            </Link>
             <div className="flex items-start gap-2 p-3">
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="truncate text-sm font-medium">{style.name}</p>
@@ -106,10 +105,12 @@ export function StylesLibrary() {
                 variant="ghost"
                 size="icon"
                 className="size-8 shrink-0"
-                aria-label={t('edit')}
-                onClick={() => router.push(routes.igStudioStyleDetail(style.id))}
+                aria-label={t('editNamed', { name: style.name })}
+                asChild
               >
-                <Pencil className="size-4" aria-hidden />
+                <Link href={detailHref}>
+                  <Pencil className="size-4" aria-hidden />
+                </Link>
               </Button>
               <Button
                 type="button"

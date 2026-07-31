@@ -47,7 +47,11 @@ async function CalendarData({ requestedLocationId }: { requestedLocationId: numb
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocationsListData(userId)
+  const locationsPromise = getCachedLocationsListData(userId)
+  const requestedCalendarPromise =
+    requestedLocationId !== null ? getCachedSchedulerCalendar(userId, requestedLocationId) : null
+
+  const data = await locationsPromise
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
@@ -55,8 +59,14 @@ async function CalendarData({ requestedLocationId }: { requestedLocationId: numb
 
   const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
 
-  const calendar =
-    initialLocationId !== null ? await getCachedSchedulerCalendar(userId, initialLocationId) : null
+  let calendar = null
+  if (initialLocationId !== null) {
+    if (requestedCalendarPromise !== null && initialLocationId === requestedLocationId) {
+      calendar = await requestedCalendarPromise
+    } else {
+      calendar = await getCachedSchedulerCalendar(userId, initialLocationId)
+    }
+  }
 
   return (
     <CalendarClient

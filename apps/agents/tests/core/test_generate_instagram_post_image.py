@@ -22,6 +22,37 @@ def _config(**kwargs: Any) -> dict[str, Any]:
     return {"configurable": kwargs}
 
 
+def _confirmed_image_assistant_runtime(**state_extra: Any) -> Any:
+    """Runtime whose message history satisfies the confirm-before-generate gate."""
+    from agents_app.agents.core.chat.generate_confirmation_gate import (
+        STORY_GENERATE_CONFIRM_REPLY,
+    )
+    from langchain.tools import ToolRuntime
+    from langchain_core.messages import HumanMessage, ToolMessage
+
+    state: dict[str, Any] = {
+        "messages": [
+            HumanMessage(content="Make a story"),
+            ToolMessage(
+                content='{"ok": true, "action": "request_confirmation"}',
+                tool_call_id="c1",
+                name="request_story_generate_confirmation",
+            ),
+            HumanMessage(content=STORY_GENERATE_CONFIRM_REPLY),
+        ],
+        "story_assets": [],
+    }
+    state.update(state_extra)
+    return ToolRuntime(
+        state=state,
+        context=None,
+        config={},
+        stream_writer=lambda *_a: None,
+        tool_call_id="tc-gen",
+        store=None,
+    )
+
+
 @pytest.mark.asyncio
 async def test_missing_user_id(tool_under_test: Any) -> None:
     out = await tool_under_test.ainvoke(
@@ -199,7 +230,11 @@ async def test_image_assistant_uses_configurable_format(
         return_value=mock_client,
     ):
         await tool_under_test.ainvoke(
-            {"prompt": "Ice matcha feed", "format": "story"},
+            {
+                "prompt": "Ice matcha feed",
+                "format": "story",
+                "runtime": _confirmed_image_assistant_runtime(),
+            },
             config=_config(
                 user_id="user-1",
                 chat_mode="image_assistant",
@@ -230,7 +265,10 @@ async def test_image_assistant_defaults_format_story_when_unset(
         return_value=mock_client,
     ):
         await tool_under_test.ainvoke(
-            {"prompt": "Ice matcha story"},
+            {
+                "prompt": "Ice matcha story",
+                "runtime": _confirmed_image_assistant_runtime(),
+            },
             config=_config(
                 user_id="user-1",
                 chat_mode="image_assistant",

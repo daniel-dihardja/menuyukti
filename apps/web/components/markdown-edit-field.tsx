@@ -2,7 +2,17 @@
 
 import { useTranslations } from 'next-intl'
 import { Maximize2, WandSparkles, X } from 'lucide-react'
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  type RefObject,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   FieldSaveStatus,
@@ -41,19 +51,17 @@ export function markdownPreviewSurfaceClass(variant: MarkdownPreviewSurfaceVaria
 
 export type MarkdownPresentationLayout = 'embedded' | 'fill'
 
-export type MarkdownEditFieldPresentationProps = {
-  presentationOnly: true
+export type MarkdownPresentationFieldProps = {
   id: string
   value: string
   previewEmptyLabel: string
   /** `fill` uses available height (e.g. side panel); `embedded` matches in-card preview max height. */
-  presentationLayout?: MarkdownPresentationLayout
+  layout?: MarkdownPresentationLayout
   /** Optional id of a heading/label element (`aria-labelledby`). */
   ariaLabelledBy?: string
 }
 
-export type MarkdownEditFieldEditProps = {
-  presentationOnly?: false
+export type MarkdownEditFieldProps = {
   id: string
   value: string
   onChange: (value: string) => void
@@ -64,20 +72,16 @@ export type MarkdownEditFieldEditProps = {
   editTabLabel: string
   previewEmptyLabel: string
   textareaClassName?: string
-  /** When true, shows expand control and allows filling the milestones pane (requires PanelFullscreenProvider). */
-  enablePanelFullscreen?: boolean
-  /** Optional title shown in the fullscreen header (e.g. field label). */
-  fullscreenHeaderTitle?: string
   /**
    * `fill` makes preview/edit tabs use the container height (side panels).
    * Default `embedded` caps preview height for compact in-card layouts.
    */
-  embeddedHeight?: 'default' | 'fill'
+  layout?: 'embedded' | 'fill'
+  /** Optional slot after the format control (e.g. `MarkdownFullscreenExpandControl`). */
+  headerTrailing?: ReactNode
   /** Save button + status row below the editor; omit for fields without persistence. */
   manualSave?: MarkdownEditFieldManualSave
 }
-
-export type MarkdownEditFieldProps = MarkdownEditFieldPresentationProps | MarkdownEditFieldEditProps
 
 type MarkdownEditTabsPaneProps = {
   layout: 'embedded' | 'fullscreen' | 'fill'
@@ -101,21 +105,32 @@ type MarkdownEditTabsPaneProps = {
   headerTrailing?: ReactNode
 }
 
-function MarkdownPresentationPane({
+type MarkdownEditFullscreenContextValue = {
+  disabled: boolean
+  expandButtonRef: RefObject<HTMLButtonElement | null>
+  isPanelFullscreen: boolean
+  openFullscreen: (title?: string) => void
+  closeFullscreen: () => void
+}
+
+const MarkdownEditFullscreenContext = createContext<MarkdownEditFullscreenContextValue | null>(null)
+
+function useMarkdownEditFullscreen(): MarkdownEditFullscreenContextValue {
+  const value = use(MarkdownEditFullscreenContext)
+  if (!value) {
+    throw new Error('MarkdownFullscreenExpandControl must be used within MarkdownEditField')
+  }
+  return value
+}
+
+export function MarkdownPresentationField({
   id,
   value,
   previewEmptyLabel,
-  presentationLayout = 'embedded',
+  layout = 'embedded',
   ariaLabelledBy,
-}: {
-  id: string
-  value: string
-  previewEmptyLabel: string
-  presentationLayout?: MarkdownPresentationLayout
-  ariaLabelledBy?: string
-}) {
-  const surfaceVariant: MarkdownPreviewSurfaceVariant =
-    presentationLayout === 'fill' ? 'fill' : 'embedded'
+}: MarkdownPresentationFieldProps) {
+  const surfaceVariant: MarkdownPreviewSurfaceVariant = layout === 'fill' ? 'fill' : 'embedded'
 
   return (
     <div
@@ -354,7 +369,50 @@ function FullscreenMarkdownShell({
   )
 }
 
-function MarkdownEditFieldEditor({
+/**
+ * Expand control for `MarkdownEditField` headerTrailing.
+ * Requires a parent `PanelFullscreenProvider` and must be rendered inside `MarkdownEditField`.
+ */
+export function MarkdownFullscreenExpandControl({
+  title,
+  disabled: disabledProp,
+}: {
+  title?: string
+  disabled?: boolean
+}) {
+  const t = useTranslations('analytics.workflows.chat')
+  const panelCtx = usePanelFullscreen()
+  const { disabled: fieldDisabled, expandButtonRef, openFullscreen } = useMarkdownEditFullscreen()
+
+  if (!panelCtx) return null
+
+  const disabled = disabledProp ?? fieldDisabled
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          ref={expandButtonRef}
+          aria-label={t('milestoneDataFullscreen')}
+          disabled={disabled}
+          onClick={(e) => {
+            e.stopPropagation()
+            openFullscreen(title)
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <Maximize2 aria-hidden />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{t('milestoneDataFullscreen')}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+export function MarkdownEditField({
   id,
   value,
   onChange,
@@ -365,11 +423,10 @@ function MarkdownEditFieldEditor({
   editTabLabel,
   previewEmptyLabel,
   textareaClassName = 'min-h-[200px] resize-y whitespace-pre-wrap',
-  enablePanelFullscreen = false,
-  fullscreenHeaderTitle,
-  embeddedHeight = 'default',
+  layout = 'embedded',
+  headerTrailing,
   manualSave,
-}: MarkdownEditFieldEditProps) {
+}: MarkdownEditFieldProps) {
   const t = useTranslations('analytics.workflows.chat')
   const panelCtx = usePanelFullscreen()
   const expandButtonRef = useRef<HTMLButtonElement>(null)
@@ -381,15 +438,19 @@ function MarkdownEditFieldEditor({
   const [formatError, setFormatError] = useState<string | null>(null)
   /** Preview vs Edit — controlled so switching tabs does not depend on textarea blur order (Radix may hide content before blur). */
   const [innerTab, setInnerTab] = useState('preview')
-  const isPanelFullscreen = panelCtx?.isOpen ?? false
+  const [ownsFullscreen, setOwnsFullscreen] = useState(false)
+  const [fullscreenTitle, setFullscreenTitle] = useState<string | undefined>(undefined)
+  const ownsFullscreenRef = useRef(false)
+  ownsFullscreenRef.current = ownsFullscreen
+  const isPanelFullscreen = Boolean(panelCtx?.isOpen && ownsFullscreen)
 
   useEffect(() => {
     return () => {
-      if (enablePanelFullscreen) {
+      if (ownsFullscreenRef.current) {
         panelCtxRef.current?.clearContent()
       }
     }
-  }, [enablePanelFullscreen])
+  }, [])
 
   const handleFormat = useCallback(async () => {
     setFormatError(null)
@@ -417,22 +478,22 @@ function MarkdownEditFieldEditor({
     }
   }, [formatPreset, onChange, t, value])
 
-  const closePanelFullscreen = useCallback(() => {
+  const closeFullscreen = useCallback(() => {
+    setOwnsFullscreen(false)
+    setFullscreenTitle(undefined)
     panelCtx?.clearContent()
     requestAnimationFrame(() => {
       expandButtonRef.current?.focus()
     })
   }, [panelCtx])
 
-  const showExpandControl = Boolean(enablePanelFullscreen && panelCtx)
-
   const renderPanelFullscreenContent = useCallback(
-    () => (
+    (title?: string) => (
       <FullscreenMarkdownShell
         closeLabel={t('milestoneDataCloseFullscreen')}
-        regionAriaLabel={fullscreenHeaderTitle ?? t('milestoneDataLabel')}
-        title={fullscreenHeaderTitle}
-        onClose={closePanelFullscreen}
+        regionAriaLabel={title ?? t('milestoneDataLabel')}
+        title={title}
+        onClose={closeFullscreen}
       >
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <MarkdownEditTabsPane
@@ -465,12 +526,11 @@ function MarkdownEditFieldEditor({
       </FullscreenMarkdownShell>
     ),
     [
-      closePanelFullscreen,
+      closeFullscreen,
       disabled,
       editTabLabel,
       formatError,
       formatting,
-      fullscreenHeaderTitle,
       handleFormat,
       id,
       innerTab,
@@ -485,57 +545,57 @@ function MarkdownEditFieldEditor({
     ],
   )
 
+  const openFullscreen = useCallback(
+    (title?: string) => {
+      if (!panelCtx) return
+      setOwnsFullscreen(true)
+      setFullscreenTitle(title)
+      panelCtx.setContent(renderPanelFullscreenContent(title))
+    },
+    [panelCtx, renderPanelFullscreenContent],
+  )
+
   useEffect(() => {
-    if (!isPanelFullscreen || !panelCtx) {
+    if (!ownsFullscreen || !panelCtx?.isOpen) {
       return
     }
-    panelCtx.setContent(renderPanelFullscreenContent())
-  }, [isPanelFullscreen, panelCtx, renderPanelFullscreenContent])
+    panelCtx.setContent(renderPanelFullscreenContent(fullscreenTitle))
+  }, [fullscreenTitle, ownsFullscreen, panelCtx, renderPanelFullscreenContent])
 
-  const expandHeaderTrailing = showExpandControl ? (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          ref={expandButtonRef}
-          aria-label={t('milestoneDataFullscreen')}
-          disabled={disabled}
-          onClick={(e) => {
-            e.stopPropagation()
-            panelCtx?.setContent(renderPanelFullscreenContent())
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <Maximize2 aria-hidden />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{t('milestoneDataFullscreen')}</TooltipContent>
-    </Tooltip>
-  ) : null
+  // When panel is cleared externally, drop ownership so the inline editor returns.
+  useEffect(() => {
+    if (!panelCtx?.isOpen && ownsFullscreen) {
+      setOwnsFullscreen(false)
+      setFullscreenTitle(undefined)
+    }
+  }, [ownsFullscreen, panelCtx?.isOpen])
 
-  if (isPanelFullscreen) {
-    return <div aria-hidden className="min-h-px" />
-  }
+  const fullscreenContextValue = useMemo<MarkdownEditFullscreenContextValue>(
+    () => ({
+      disabled,
+      expandButtonRef,
+      isPanelFullscreen,
+      openFullscreen,
+      closeFullscreen,
+    }),
+    [closeFullscreen, disabled, isPanelFullscreen, openFullscreen],
+  )
 
-  const tabsLayout = embeddedHeight === 'fill' ? 'fill' : 'embedded'
-
-  return (
+  const body = isPanelFullscreen ? (
+    <div aria-hidden className="min-h-px" />
+  ) : (
     <div
-      className={
-        embeddedHeight === 'fill' ? 'flex min-h-0 flex-1 flex-col gap-3' : 'flex flex-col gap-3'
-      }
+      className={layout === 'fill' ? 'flex min-h-0 flex-1 flex-col gap-3' : 'flex flex-col gap-3'}
     >
       <MarkdownEditTabsPane
         formatButtonLabel={t('formatMarkdownButton')}
         formatError={formatError}
         formatFormattingLabel={t('formatMarkdownFormatting')}
         formatting={formatting}
-        headerTrailing={expandHeaderTrailing}
+        headerTrailing={headerTrailing}
         id={id}
         innerTab={innerTab}
-        layout={tabsLayout}
+        layout={layout}
         onChange={onChange}
         onFormatClick={handleFormat}
         onInnerTabChange={setInnerTab}
@@ -556,19 +616,10 @@ function MarkdownEditFieldEditor({
       ) : null}
     </div>
   )
-}
 
-export function MarkdownEditField(props: MarkdownEditFieldProps) {
-  if (props.presentationOnly === true) {
-    return (
-      <MarkdownPresentationPane
-        ariaLabelledBy={props.ariaLabelledBy}
-        id={props.id}
-        presentationLayout={props.presentationLayout}
-        previewEmptyLabel={props.previewEmptyLabel}
-        value={props.value}
-      />
-    )
-  }
-  return <MarkdownEditFieldEditor {...props} />
+  return (
+    <MarkdownEditFullscreenContext value={fullscreenContextValue}>
+      {body}
+    </MarkdownEditFullscreenContext>
+  )
 }

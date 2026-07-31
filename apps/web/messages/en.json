@@ -952,6 +952,7 @@
         "mediaPickerTitle": "Attach media",
         "mediaPickerDescription": "Choose files from your media library.",
         "mediaLibraryEmpty": "No files in your media library yet.",
+        "mediaToggleAria": "Select {name}",
         "mediaConfirm": "Attach ({count})",
         "cancel": "Cancel",
         "save": "Save entry",
@@ -1236,6 +1237,8 @@
       "emptyDescription": "Create a style with Style Spec JSON and a reference image from your media library.",
       "defaultBadge": "Default",
       "edit": "Edit style",
+      "editNamed": "Edit style {name}",
+      "openNamed": "Open style {name}",
       "delete": "Delete style",
       "deleteConfirm": "Delete style \"{name}\"? This cannot be undone.",
       "specJsonLabel": "Style Spec JSON",
@@ -1308,12 +1311,15 @@
   "media": {
     "title": "Media",
     "description": "Upload restaurant and campaign photos in their original format. Files stay in one library; use collections to group them (for example style references) without duplicating uploads.",
+    "descriptionShort": "Upload photos once, then group them into collections without duplicating files.",
     "collections": {
       "help": "Create a collection to group related photos (for example “Style references”). Select a photo in the grid, then add or remove it from a collection. The same photo can belong to more than one collection.",
+      "helpToggle": "How collections work",
       "selectHint": "Select a photo to add it to a collection. Use the expand control to view it larger.",
       "filterAll": "All",
       "create": "New collection",
       "createTitle": "Create collection",
+      "manage": "Manage",
       "rename": "Rename",
       "renameTitle": "Rename collection",
       "delete": "Delete",
@@ -1337,6 +1343,7 @@
     "upload": {
       "title": "Upload media",
       "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
+      "hintMobile": "Browse your library — PNG, JPEG, WebP, GIF, AVIF",
       "browse": "Browse files",
       "uploading": "Uploading…",
       "invalidType": "Please choose an image file."
@@ -1346,12 +1353,16 @@
         "title": "No media yet",
         "description": "Upload your first file to build your media library."
       },
+      "loadErrorTitle": "Couldn’t load media",
+      "loadErrorDescription": "Check your connection, then try again.",
+      "retry": "Try again",
       "delete": "Remove",
       "deleteConfirm": "Remove this file?",
       "deleteAction": "Remove",
       "cancel": "Cancel",
       "viewLarge": "View larger",
       "download": "Download",
+      "moreActions": "More actions",
       "select": "Select photo"
     },
     "preview": {
@@ -1361,7 +1372,7 @@
       "uploaded": "File uploaded",
       "uploadError": "Couldn’t upload that file. Try again.",
       "uploadPartial": "Some files couldn’t be uploaded. Check your files and try again.",
-      "loadError": "Couldn’t load your media. Refresh the page.",
+      "loadError": "Couldn’t load your media. Try again.",
       "deleted": "File removed",
       "deleteError": "Couldn’t remove that file. Try again.",
       "collectionsLoadError": "Couldn’t load collections. Refresh the page.",
@@ -1399,7 +1410,8 @@
       "cancel": "Cancel",
       "viewLarge": "View larger",
       "play": "Play reel",
-      "download": "Download"
+      "download": "Download",
+      "moreActions": "More actions"
     },
     "preview": {
       "close": "Close preview"
@@ -1435,7 +1447,8 @@
       "cancel": "Cancel",
       "viewLarge": "View larger",
       "play": "Play story",
-      "download": "Download"
+      "download": "Download",
+      "moreActions": "More actions"
     },
     "preview": {
       "close": "Close preview"
@@ -1880,7 +1893,7 @@
         "retry": "Retry",
         "clearChatAriaLabel": "Clear chat",
         "clearChatLabel": "Clear chat",
-        "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
+        "clearChatTooltip": "Clear messages and start a fresh chat thread",
         "stopChatAriaLabel": "Stop generating",
         "submitChatAriaLabel": "Send message",
         "attachImageAriaLabel": "Attach image",
@@ -1889,7 +1902,7 @@
         "mobileArtifactOpenLabel": "Preview",
         "mobileArtifactOpenAriaLabel": "Open preview",
         "mobileArtifactSheetTitle": "Preview",
-        "mobileArtifactSheetDescription": "View milestone results and generated Instagram content.",
+        "mobileArtifactSheetDescription": "View generated Instagram image preview.",
         "mobileArtifactEmptyHint": "View generated content",
         "modes": {
           "ariaLabel": "Chat mode",
@@ -3474,7 +3487,13 @@
     "retry": "Retry",
     "clearChatAriaLabel": "Clear chat",
     "clearChatLabel": "Clear chat",
-    "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
+    "clearChatTooltip": "Clear messages and start a fresh chat thread",
+    "clearChatConfirmTitle": "Clear this chat?",
+    "clearChatConfirmDescription": "Messages in this thread will be cleared and a new chat thread will start. This cannot be undone.",
+    "clearChatConfirmCancel": "Cancel",
+    "clearChatConfirmAction": "Clear chat",
+    "composerMoreAriaLabel": "More chat options",
+    "composerMoreTooltip": "Models and clear chat",
     "stopChatAriaLabel": "Stop generating",
     "submitChatAriaLabel": "Send message",
     "attachImageAriaLabel": "Attach image",
@@ -3483,7 +3502,7 @@
     "mobileArtifactOpenLabel": "Preview",
     "mobileArtifactOpenAriaLabel": "Open preview",
     "mobileArtifactSheetTitle": "Preview",
-    "mobileArtifactSheetDescription": "View milestone results and generated Instagram content.",
+    "mobileArtifactSheetDescription": "View generated Instagram image preview.",
     "mobileArtifactEmptyHint": "View generated content",
     "modes": {
       "ariaLabel": "Chat mode",

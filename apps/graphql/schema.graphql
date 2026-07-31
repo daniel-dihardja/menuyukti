@@ -329,19 +329,6 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
-"""Latest analytics run metadata for a location."""
-type LatestAnalyticsRunType {
-  id: ID!
-  name: String!
-}
-
-"""Latest run for a location with composite Instagram signals."""
-type LatestAnalyticsRunWithSignalsType {
-  analyticsRun: LatestAnalyticsRunType
-  instagramSignals: InstagramSignalsType
-  slotDemandProfile: [SlotDemandCellType!]!
-}
-
 """Summary of analytics runs for one location."""
 type LocationAnalyticsRunSummaryType {
   id: ID!
@@ -552,11 +539,6 @@ type MenuItemCogsType {
   updatedAt: DateTime!
 }
 
-input MenuItemCogsUpdateInput {
-  id: ID!
-  cogs: Float!
-}
-
 input MenuItemCogsUpsertInput {
   menuName: String!
   cogs: Float!
@@ -566,7 +548,7 @@ input MenuItemCogsUpsertInput {
 }
 
 """
-Root mutation: sales uploads, node CRUD, workspace invites, and image AI flow configuration.
+Root mutation: sales uploads, workspace invites, and image AI flow configuration.
 """
 type Mutation {
   """
@@ -578,14 +560,11 @@ type Mutation {
   Award cashback from a payment total (applies app threshold/percent) or redeem a positive amount from the customer's balance. Pass exactly one of paymentAmount or redeemAmount.
   """
   awardCrmCashback(customerId: UUID!, paymentAmount: Int = null, redeemAmount: Int = null, label: String = null): CrmCashbackEntryType!
-  createNode(locationId: Int!, nodeType: String!, name: String = null, parentId: ID = null, description: String = null, data: JSON = null): NodeType!
   createPost(title: String = null): PostType!
   createPostPage(postId: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
-  deleteNode(id: ID!): Boolean!
   deletePost(id: ID!): Boolean!
   deletePostPage(pageId: ID!): Boolean!
   deletePostPageMediaVersion(pageId: ID!, mediaS3Key: String!): PostPageType!
-  updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   updatePost(id: ID!, title: String!): PostType!
   updatePostPage(id: ID!, mediaS3Key: String, prompt: String, imageFormat: String, imageQuality: String, generationModel: String): PostPageType!
   createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String): LocationType!
@@ -610,7 +589,6 @@ type Mutation {
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
   upsertMenuItemCogsBulk(analyticsRunId: ID!, items: [MenuItemCogsUpsertInput!]!): [MenuItemCogsType!]!
-  updateMenuItemCogsBulk(updates: [MenuItemCogsUpdateInput!]!): [MenuItemCogsType!]!
   createImageAiFlow(slug: String!, displayName: String!, prompt: String!, model: String!, promptEnhance: String = null, imageReferenceStrength: String = null, styleIds: JSON = null, isActive: Boolean! = true, sortOrder: Int! = 0): ImageAiFlowType!
   updateImageAiFlow(slug: String!, newSlug: String, displayName: String, prompt: String, model: String, promptEnhance: String, imageReferenceStrength: String, styleIds: JSON, isActive: Boolean, sortOrder: Int): ImageAiFlowType!
   deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
@@ -669,18 +647,6 @@ type Mutation {
 
   """Rename a media collection by id."""
   updateMediaCollection(id: Int!, name: String!): MediaCollectionType!
-}
-
-"""A polymorphic row in the `node` table (generic hierarchy; e.g. notes)."""
-type NodeType {
-  id: ID!
-  name: String!
-  description: String
-  nodeType: String!
-  path: String!
-  parentId: ID
-  locationId: Int
-  data: JSON
 }
 
 type NormalizedLineItem {
@@ -845,18 +811,13 @@ type PublicHolidayType {
 }
 
 """
-Root query: locations, nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
+Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership.
 """
 type Query {
   """
   Return multiple analytics sections for one run using a shared OrderFact load. Use options to omit sections you do not need.
   """
   analyticsBundle(analyticsRunId: ID!, locationId: ID = null, options: AnalyticsBundleOptionsInput = null): AnalyticsBundleType
-
-  """
-  Resolve the newest analytics run for a location and return instagramSignals in one request (single OrderFact load path when signals are requested).
-  """
-  latestAnalyticsRunWithSignals(locationId: Int!): LatestAnalyticsRunWithSignalsType
 
   """
   All locations the current user can access (direct owner or workspace member).
@@ -871,19 +832,14 @@ type Query {
   """Fetch one location by id if the caller has access."""
   location(id: ID!): LocationType
 
-  """
-  Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated.
-  """
-  locationManualBriefInput(locationId: Int!): LocationManualBriefInputType
-
   """List visual style packs in workspaces the current user belongs to."""
-  styles: [StyleType!]!
+  styles(first: Int = null): [StyleType!]!
 
   """Fetch one visual style pack by id. Null when missing or access denied."""
   style(id: Int!): StyleType
 
   """List media collections in workspaces the current user belongs to."""
-  mediaCollections: [MediaCollectionType!]!
+  mediaCollections(first: Int = null): [MediaCollectionType!]!
 
   """
   Fetch one media collection by id, including member assets. Null when missing.
@@ -893,10 +849,10 @@ type Query {
   """
   List media assets (photos) in the caller's workspaces. When collectionId is set, only members of that collection.
   """
-  mediaAssets(collectionId: Int = null): [MediaAssetType!]!
+  mediaAssets(collectionId: Int = null, first: Int = null): [MediaAssetType!]!
 
   """List CRM apps in workspaces the current user belongs to."""
-  crmApps: [CrmAppType!]!
+  crmApps(first: Int = null): [CrmAppType!]!
 
   """Fetch one CRM app by id. Null when missing or access denied."""
   crmApp(id: Int!): CrmAppType
@@ -904,18 +860,10 @@ type Query {
   """
   List customers enrolled in a CRM app. Empty when missing or access denied.
   """
-  crmCustomers(appId: Int!, search: String = null): [CrmCustomerType!]!
+  crmCustomers(appId: Int!, search: String = null, first: Int = null): [CrmCustomerType!]!
 
   """CRM customer detail with devices. Null when missing or access denied."""
   crmCustomer(id: UUID!): CrmCustomerType
-
-  """
-  List nodes for a location, optionally filtered by nodeType and/or parentId. Results are paginated with `first` (default and max 500). When parentId is omitted, use `afterId` (last-seen node id) for cursor pagination in primary-key-desc order (aligned with creation order for autoincrement ids).
-  """
-  nodes(locationId: Int!, nodeType: String = null, parentId: ID = null, first: Int = null, afterId: ID = null): [NodeType!]!
-
-  """Fetch a single node by id if the caller owns its location."""
-  node(id: ID!): NodeType
 
   """Fetch metadata and COGS for a single analytics run by ID."""
   analyticsRun(id: ID!): AnalyticsRunType
@@ -959,16 +907,6 @@ type Query {
   Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null).
   """
   promotionMenuItems(analyticsRunId: ID!, locationId: ID = null): PromotionMenuItemsPayloadType
-
-  """
-  Top star and puzzle menu items derived from menu engineering. Each element in `starItems` / `puzzleItems` is an object with `menu`, `quantity` (units sold in the bucket), and `popularity` (share of bucket quantity, 0–1). When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` and `puzzleItems`. Optional `maxStarItems` / `maxPuzzleItems` default to 5 and 10; pass 0 or a negative value for unlimited. Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`.
-  """
-  promotionEngineeringCandidates(analyticsRunId: ID!, locationId: ID = null, maxStarItems: Int = null, maxPuzzleItems: Int = null): JSON
-
-  """
-  Rank menu promotion candidates per venue slot (day × meal_period). Combines slot demand profile, per-slot order-line sales, and global menu engineering classification. Returns null when the run has no order facts. When COGS are missing, matrixAvailable is false and candidates are ranked by slot sales only. When locationId is set, the run must belong to that location (otherwise returns null).
-  """
-  slotMenuCandidates(analyticsRunId: ID!, locationId: ID = null, options: SlotMenuCandidatesOptionsInput = null): SlotMenuCandidatesType
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
 
   """
@@ -997,14 +935,15 @@ type Query {
   Compare per-menu revenue for an analytics run against the previous run for the same location (or an explicit previousRunId). Returns null when the current run has no order lines.
   """
   revenueTrends(analyticsRunId: ID!, locationId: ID = null, previousRunId: ID = null): RevenueTrendsPayloadType
-
-  """
-  Bill-level revenue and transaction counts rolled up by ISO week for the latest analytics run. Indices are normalized to mean 1.0 within the series.
-  """
-  weeklyDemandPattern(locationId: Int!): WeeklyDemandPatternPayloadType
   myWorkspace: WorkspaceType
   workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
-  imageAiFlows(includeInactive: Boolean! = false): [ImageAiFlowType!]!
+
+  """
+  Image AI flows ordered for display. Default: active only (asset upload UI).
+  """
+  imageAiFlows(includeInactive: Boolean! = false, first: Int = null): [ImageAiFlowType!]!
+
+  """Single flow by slug (including inactive), for server-side processing."""
   imageAiFlow(slug: String!): ImageAiFlowType
 }
 
@@ -1074,63 +1013,6 @@ type SlotDemandCellType {
 }
 
 """
-A ranked menu item suitable for Instagram promotion in a specific day × meal-period slot.
-"""
-type SlotMenuCandidateItemType {
-  menu: String!
-  globalCategory: String
-  globalAction: String
-  slotQuantity: Int!
-  slotShare: Float!
-  slotAffinity: Float!
-  slotRevenue: Float
-  contributionMargin: Float
-  contributionMarginPercentage: Float
-  menuCategory: String
-  menuCategoryDetail: String
-  rank: Int!
-  score: Float!
-  recommendedUse: String!
-}
-
-"""
-Promotion candidates and venue demand metadata for one day × meal-period slot.
-"""
-type SlotMenuCandidatesCellType {
-  day: String!
-  mealPeriod: String!
-  mealPeriodLabel: String!
-  mealPeriodHoursLabel: String!
-  orderCount: Int!
-  demandIndex: Float!
-  relativeDemand: String!
-  posture: String!
-  recommendedCategories: [String!]!
-  totalItemQuantity: Int!
-  insufficientData: Boolean!
-  candidates: [SlotMenuCandidateItemType!]!
-}
-
-"""Options for per-slot menu promotion candidate ranking and filtering."""
-input SlotMenuCandidatesOptionsInput {
-  maxCandidatesPerSlot: Int = null
-  minVenueOrdersInSlot: Int = null
-  minItemQtyInSlot: Int = null
-  includeLowEnd: Boolean = null
-  slotsFilter: String = null
-}
-
-"""
-Per-slot menu promotion candidates for an analytics run, combining venue slot demand, per-slot sales, and global menu engineering classification.
-"""
-type SlotMenuCandidatesType {
-  reportingPeriod: String!
-  matrixAvailable: Boolean!
-  coverageNotes: [String!]!
-  slots: [SlotMenuCandidatesCellType!]!
-}
-
-"""
 Workspace-scoped visual style pack: Style Spec v2 JSON plus one media-library reference image used when generating Instagram posts.
 """
 type StyleType {
@@ -1159,19 +1041,6 @@ scalar UUID
 
 """Represents a file upload."""
 scalar Upload
-
-type WeeklyDemandPatternPayloadType {
-  analyticsRunId: ID!
-  rows: [WeeklyDemandPatternRowType!]!
-}
-
-type WeeklyDemandPatternRowType {
-  isoWeek: String!
-  weekLabel: String!
-  revenueIndex: Float!
-  txIndex: Float!
-  relativeDemand: String!
-}
 
 """Day-of-week demand distribution for a menu item."""
 type WeeklyHeatmapType {

@@ -46,12 +46,15 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
             "Open workflow chat for a campaign with a linked location."
         )
     client = get_chat_http_client()
-    loc_data = await graphql_post(
-        client,
-        LOCATION_QUERY,
-        {"id": str(location_id)},
-        str(user_id),
-    )
+    try:
+        loc_data = await graphql_post(
+            client,
+            LOCATION_QUERY,
+            {"id": str(location_id)},
+            str(user_id),
+        )
+    except Exception as exc:  # noqa: BLE001 — return to model; do not crash the ReAct turn
+        return f"Error loading location data: {exc}"
     raw_loc = loc_data.get("location")
     if not isinstance(raw_loc, dict):
         return "Location not found or access denied."

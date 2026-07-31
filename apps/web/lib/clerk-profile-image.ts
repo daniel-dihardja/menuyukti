@@ -15,15 +15,22 @@ export function isClerkImageUrl(url: string): boolean {
 
 /** Hostnames allowed in next.config images.remotePatterns (keep in sync when adding patterns). */
 export function isNextImageRemoteHost(hostname: string): boolean {
+  if (hostname === 'picsum.photos' || hostname === 'lh3.googleusercontent.com') {
+    return true
+  }
+  // Match next.config `*.clerk.com` / `*.clerk.dev` (and exact img/images hosts).
   if (
-    hostname === 'picsum.photos' ||
-    hostname === 'lh3.googleusercontent.com' ||
-    hostname === 'img.clerk.com' ||
-    hostname === 'images.clerk.dev'
+    CLERK_IMAGE_HOST_SUFFIXES.some(
+      (suffix) => hostname === suffix.slice(1) || hostname.endsWith(suffix),
+    )
   ) {
     return true
   }
-  if (hostname.endsWith('.amazonaws.com')) {
+  // Match next.config S3 wildcards (`*.s3.*.amazonaws.com`, `*.s3.amazonaws.com`).
+  if (
+    hostname.endsWith('.s3.amazonaws.com') ||
+    /\.s3\.[a-z0-9-]+\.amazonaws\.com$/i.test(hostname)
+  ) {
     return true
   }
   return false

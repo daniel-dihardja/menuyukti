@@ -37,9 +37,10 @@ Commands and ports: [AGENTS.md](../../../AGENTS.md).
 
 - **Identity:** `agent_thread_id` (required). Optional `location_id` for location/chart tools.
 - **Modes:** `general` (location, charts, media, optional web search) and `image_assistant` (media + story scratchpad + IG image generate; format from UI).
-- **Graph:** [`chat/graph.py`](../../../apps/agents/agents/core/chat/graph.py) — `build_chat_graph` / `create_agent`; tools in [`chat/tools.py`](../../../apps/agents/agents/core/chat/tools.py).
-- **History:** `GET` / `DELETE /chat/history` by `agent_thread_id` (Postgres checkpointer when configured).
+- **Graph:** [`chat/graph.py`](../../../apps/agents/agents/core/chat/graph.py) — `compile_chat_graph` / `create_agent`; tools in [`chat/tools.py`](../../../apps/agents/agents/core/chat/tools.py). Middleware: dynamic prompt, model/tool selection + history trim, model retry, `wrap_tool_call` error handling.
+- **History:** `GET` / `DELETE /chat/history` by `agent_thread_id` (Postgres checkpointer when configured; required in production).
 - **Web BFF:** `apps/web` `/api/chat` forwards to this service with Clerk user id.
+- **Image Assistant confirmation:** `request_story_generate_confirmation` is a **UI-signaling tool** (not LangGraph `interrupt()` HITL). The web UI shows Generate/Change; [`generate_confirmation_gate.py`](../../../apps/agents/agents/core/chat/generate_confirmation_gate.py) enforces confirm-before-first-generate in code. Refine after a successful generate is allowed.
 
 There is **no** live milestone-run / preset-registry API. Do not add `POST /milestones/.../run` or preset subgraphs as product features.
 
