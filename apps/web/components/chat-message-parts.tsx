@@ -2,11 +2,8 @@
 
 import type { DynamicToolUIPart, ToolUIPart, UIMessage, UITools } from 'ai'
 import { isToolUIPart } from 'ai'
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from '@workspace/ui/components/ai-elements/reasoning'
+import { Reasoning, ReasoningTrigger } from '@workspace/ui/components/ai-elements/reasoning'
+import { ReasoningContent } from '@workspace/ui/components/ai-elements/reasoning-content'
 import { Shimmer } from '@workspace/ui/components/ai-elements/shimmer'
 import {
   Tool,
@@ -16,7 +13,7 @@ import {
   ToolOutput,
 } from '@workspace/ui/components/ai-elements/tool'
 import { Suggestion, Suggestions } from '@workspace/ui/components/ai-elements/suggestion'
-import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
+import { MessageResponse } from '@workspace/ui/components/ai-elements/message-response'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { CheckIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'

@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { Plus, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -15,9 +16,19 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/
 
 import { useChatVisualizationsState } from './chat-visualizations-context'
 import { getAvailableCatalogEntries, type ChatVisualizationId } from './chat-visualization-catalog'
-import { MenuItemHeatmapCard } from './menu-item-heatmap-card'
-import { PairLiftMatrixCard } from './pair-lift-matrix-card'
-import { VenueSlotStrengthCard } from './venue-slot-strength-card'
+
+const MenuItemHeatmapCard = dynamic(
+  () => import('./menu-item-heatmap-card').then((m) => m.MenuItemHeatmapCard),
+  { ssr: false },
+)
+const PairLiftMatrixCard = dynamic(
+  () => import('./pair-lift-matrix-card').then((m) => m.PairLiftMatrixCard),
+  { ssr: false },
+)
+const VenueSlotStrengthCard = dynamic(
+  () => import('./venue-slot-strength-card').then((m) => m.VenueSlotStrengthCard),
+  { ssr: false },
+)
 
 function VisualizationCardBody({
   id,

@@ -96,7 +96,13 @@ async function SalesPageData({ requestedLocationId }: { requestedLocationId: num
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocationsListData(userId)
+  const locationsPromise = getCachedLocationsListData(userId)
+  const requestedRunsPromise =
+    requestedLocationId !== null
+      ? getCachedAnalyticsRunsByLocation(userId, requestedLocationId)
+      : null
+
+  const data = await locationsPromise
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
@@ -119,10 +125,14 @@ async function SalesPageData({ requestedLocationId }: { requestedLocationId: num
   }
 
   const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
-  const initialAnalytics =
-    initialLocationId === null
-      ? []
-      : await getCachedAnalyticsRunsByLocation(userId, initialLocationId)
+  let initialAnalytics: Awaited<ReturnType<typeof getCachedAnalyticsRunsByLocation>> = []
+  if (initialLocationId !== null) {
+    if (requestedRunsPromise !== null && initialLocationId === requestedLocationId) {
+      initialAnalytics = await requestedRunsPromise
+    } else {
+      initialAnalytics = await getCachedAnalyticsRunsByLocation(userId, initialLocationId)
+    }
+  }
 
   return (
     <section className="space-y-3">

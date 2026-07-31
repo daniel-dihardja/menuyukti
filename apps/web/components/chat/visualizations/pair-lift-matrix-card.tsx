@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import useSWR from 'swr'
 
 import { HeatmapMatrixEmbedded } from '@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap-matrix'
 import { buildLiftMatrixRows, formatLift } from '@/lib/analytics/menu-combos-page-adapter'
@@ -9,16 +10,13 @@ import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/al
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
-type LoadState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | {
-      status: 'ready'
-      focusMenus: string[]
-      matrixLift: Array<Array<number | null>>
-      usedFallbackRun: boolean
-    }
-  | { status: 'error' }
+import { chatVizJsonFetcher, chatVizQueryUrl } from './chat-viz-fetcher'
+
+type LiftMatrixResponse = {
+  focusMenus?: string[]
+  matrixLift?: Array<Array<number | null>>
+  usedFallbackRun?: boolean
+}
 
 type PairLiftMatrixCardProps = {
   locationId: number
@@ -29,46 +27,20 @@ export function PairLiftMatrixCard({ locationId, analyticsRunId }: PairLiftMatri
   const locale = useLocale()
   const t = useTranslations('chat.visualizations')
   const tMatrix = useTranslations('analytics.menuCombos.matrix')
-  const [loadState, setLoadState] = useState<LoadState>({ status: 'idle' })
-  const [reloadToken, setReloadToken] = useState(0)
+  const url = chatVizQueryUrl('/api/analytics/menu-combos-lift-matrix', locationId, analyticsRunId)
+  const { data, error, isLoading, mutate } = useSWR(url, chatVizJsonFetcher<LiftMatrixResponse>, {
+    revalidateOnFocus: false,
+  })
 
-  const fetchData = useCallback(async () => {
-    setLoadState({ status: 'loading' })
-    try {
-      const params = new URLSearchParams({ locationId: String(locationId) })
-      if (analyticsRunId !== null) {
-        params.set('analyticsRunId', String(analyticsRunId))
-      }
-      const res = await fetch(`/api/analytics/menu-combos-lift-matrix?${params.toString()}`, {
-        cache: 'no-store',
-      })
-      if (!res.ok) {
-        throw new Error('fetch failed')
-      }
-      const body = (await res.json()) as {
-        focusMenus?: string[]
-        matrixLift?: Array<Array<number | null>>
-        usedFallbackRun?: boolean
-      }
-      setLoadState({
-        status: 'ready',
-        focusMenus: Array.isArray(body.focusMenus) ? body.focusMenus : [],
-        matrixLift: Array.isArray(body.matrixLift) ? body.matrixLift : [],
-        usedFallbackRun: body.usedFallbackRun === true,
-      })
-    } catch {
-      setLoadState({ status: 'error' })
-    }
-  }, [analyticsRunId, locationId])
-
-  useEffect(() => {
-    void fetchData()
-  }, [fetchData, reloadToken])
+  const usedFallbackRun = data?.usedFallbackRun === true
 
   const matrixRows = useMemo(() => {
-    if (loadState.status !== 'ready') return []
-    return buildLiftMatrixRows(loadState.focusMenus, loadState.matrixLift)
-  }, [loadState])
+    const focusMenus = Array.isArray(data?.focusMenus) ? data.focusMenus : []
+    const matrixLift = Array.isArray(data?.matrixLift) ? data.matrixLift : []
+    return buildLiftMatrixRows(focusMenus, matrixLift)
+  }, [data?.focusMenus, data?.matrixLift])
+
+  const focusMenus = Array.isArray(data?.focusMenus) ? data.focusMenus : []
 
   const matrixLabels = useMemo(
     () => ({
@@ -89,7 +61,7 @@ export function PairLiftMatrixCard({ locationId, analyticsRunId }: PairLiftMatri
     [locale, tMatrix],
   )
 
-  if (loadState.status === 'loading' || loadState.status === 'idle') {
+  if (isLoading || (!data && !error)) {
     return (
       <div className="flex flex-col gap-3">
         <Skeleton className="h-4 w-40" />
@@ -103,7 +75,7 @@ export function PairLiftMatrixCard({ locationId, analyticsRunId }: PairLiftMatri
     )
   }
 
-  if (loadState.status === 'error') {
+  if (error || !data) {
     return (
       <Alert variant="destructive">
         <AlertTitle>{t('loadErrorTitle')}</AlertTitle>
@@ -111,7 +83,7 @@ export function PairLiftMatrixCard({ locationId, analyticsRunId }: PairLiftMatri
           <p>{t('loadErrorDescription')}</p>
           <Button
             className="w-fit"
-            onClick={() => setReloadToken((token) => token + 1)}
+            onClick={() => void mutate()}
             size="sm"
             type="button"
             variant="outline"
@@ -129,12 +101,12 @@ export function PairLiftMatrixCard({ locationId, analyticsRunId }: PairLiftMatri
 
   return (
     <div className="flex flex-col gap-3">
-      {loadState.usedFallbackRun ? (
+      {usedFallbackRun ? (
         <p className="text-muted-foreground text-xs">{t('fallbackRunHint')}</p>
       ) : null}
       <div className="overflow-x-auto">
         <HeatmapMatrixEmbedded
-          columnLabels={loadState.focusMenus}
+          columnLabels={focusMenus}
           density="compact"
           labels={matrixLabels}
           maskDiagonal

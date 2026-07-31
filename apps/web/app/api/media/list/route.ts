@@ -36,32 +36,39 @@ export async function GET(req: Request) {
   }
 
   try {
-    const objects = await listWorkspaceMediaObjects(
+    const objectsPromise = listWorkspaceMediaObjects(
       mediaAccess.access,
       'photos',
       isSafePhotoFilename,
     )
+    const catalogPromise = graphqlQuery<MediaAssetsData>(
+      MEDIA_ASSETS_QUERY,
+      { collectionId: collectionId ?? null },
+      userId,
+    )
+      .then((catalog) => ({ ok: true as const, catalog }))
+      .catch((err: unknown) => ({ ok: false as const, err }))
+
+    const [objects, catalogResult] = await Promise.all([objectsPromise, catalogPromise])
     const s3ByName = new Map(objects.map((obj) => [obj.name, obj]))
 
     let catalogFilenames: string[] | null = null
     const displayNameByFilename = new Map<string, string | null>()
 
-    try {
-      const catalog = await graphqlQuery<MediaAssetsData>(
-        MEDIA_ASSETS_QUERY,
-        { collectionId: collectionId ?? null },
-        userId,
-      )
-      for (const asset of catalog.mediaAssets) {
+    if (catalogResult.ok) {
+      for (const asset of catalogResult.catalog.mediaAssets) {
         displayNameByFilename.set(asset.filename, asset.displayName)
       }
       if (collectionId !== undefined) {
-        catalogFilenames = catalog.mediaAssets.map((a) => a.filename)
+        catalogFilenames = catalogResult.catalog.mediaAssets.map((a) => a.filename)
       }
-    } catch (err) {
+    } else {
       console.error('[media/list] mediaAssets query failed', {
         userIdPrefix: userId.slice(0, 8),
-        message: err instanceof Error ? err.message : String(err),
+        message:
+          catalogResult.err instanceof Error
+            ? catalogResult.err.message
+            : String(catalogResult.err),
       })
       if (collectionId !== undefined) {
         return NextResponse.json({ message: 'Failed to list collection media' }, { status: 502 })

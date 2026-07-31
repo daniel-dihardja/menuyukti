@@ -285,6 +285,15 @@
   }
 }
 
+@keyframes shimmer-sweep {
+  from {
+    background-position: 100% center;
+  }
+  to {
+    background-position: 0% center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

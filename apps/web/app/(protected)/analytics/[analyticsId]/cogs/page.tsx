@@ -1,7 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { UpdateCogsForm } from './update-cogs-form'
 import { getAppCurrencyCode } from '@/lib/app-currency'
@@ -22,6 +24,8 @@ type PageProps = {
   }>
 }
 
+type AnalyticsRun = NonNullable<AnalyticsRunData['analyticsRun']>
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('analytics.cogs')
   const title = t('title')
@@ -29,26 +33,20 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title, description, openGraph: { title, description } }
 }
 
-export default async function Page({ params }: PageProps) {
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated || !userId) {
-    throw new Error('Invariant: expected authenticated session under (protected) layout')
-  }
+function CogsReportSkeleton() {
+  return <Skeleton className="min-h-[24rem] w-full rounded-lg" />
+}
 
-  const t = await getTranslations('analytics')
-  const tSales = await getTranslations('analytics.sales')
-
-  const { analyticsId: analyticsIdParam } = await params
-  if (!analyticsIdParam) notFound()
-
-  const analyticsId = Number(analyticsIdParam)
-  if (!Number.isInteger(analyticsId)) notFound()
-
+async function CogsReportContent({
+  analyticsId,
+  userId,
+  run,
+}: {
+  analyticsId: number
+  userId: string
+  run: AnalyticsRun
+}) {
   const id = String(analyticsId)
-  const runData = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId)
-  const run = runData.analyticsRun
-  if (!run) notFound()
-
   const locationId = String(run.locationId)
   const [matrixData, menuCatalogData] = await Promise.all([
     getCachedMenuEngineeringMatrix(userId, id, locationId),
@@ -60,10 +58,8 @@ export default async function Page({ params }: PageProps) {
     ),
   ])
 
-  const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`
   const currencyCode = getAppCurrencyCode()
 
-  // Seed rows from matrix items (sales-extracted menus), then overlay existing COGS.
   const byMenu = new Map(
     matrixData.menuEngineeringMatrix?.items.map((row) => [
       row.menu,
@@ -83,7 +79,6 @@ export default async function Page({ params }: PageProps) {
     .map((row, index) => {
       const existing = cogsByMenu.get(row.menuName)
       return {
-        // Use stable synthetic negative IDs for rows that do not exist in menu_item_cogs yet.
         id: existing?.id ?? -(index + 1),
         menuName: row.menuName,
         cogs: existing?.cogs ?? null,
@@ -128,6 +123,38 @@ export default async function Page({ params }: PageProps) {
   const analyticsOptions: Array<{ id: number; name: string }> = []
 
   return (
+    <UpdateCogsForm
+      analyticsId={analyticsId}
+      menuItems={menuItems}
+      analyticsOptions={analyticsOptions}
+      currencyCode={currencyCode}
+    />
+  )
+}
+
+export default async function Page({ params }: PageProps) {
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
+  }
+
+  const t = await getTranslations('analytics')
+  const tSales = await getTranslations('analytics.sales')
+
+  const { analyticsId: analyticsIdParam } = await params
+  if (!analyticsIdParam) notFound()
+
+  const analyticsId = Number(analyticsIdParam)
+  if (!Number.isInteger(analyticsId)) notFound()
+
+  const id = String(analyticsId)
+  const runData = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId)
+  const run = runData.analyticsRun
+  if (!run) notFound()
+
+  const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`
+
+  return (
     <AnalyticsPageShell
       title={t('cogs.edit')}
       breadcrumbs={[
@@ -136,12 +163,9 @@ export default async function Page({ params }: PageProps) {
         { label: t('cogs.title') },
       ]}
     >
-      <UpdateCogsForm
-        analyticsId={analyticsId}
-        menuItems={menuItems}
-        analyticsOptions={analyticsOptions}
-        currencyCode={currencyCode}
-      />
+      <Suspense fallback={<CogsReportSkeleton />}>
+        <CogsReportContent analyticsId={analyticsId} run={run} userId={userId} />
+      </Suspense>
     </AnalyticsPageShell>
   )
 }

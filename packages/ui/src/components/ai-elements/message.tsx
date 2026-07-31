@@ -12,13 +12,8 @@ import {
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
-import { cjk } from '@streamdown/cjk'
-import { code } from '@streamdown/code'
-import { math } from '@streamdown/math'
-import { mermaid } from '@streamdown/mermaid'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
-import { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { Streamdown } from 'streamdown'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage['role']
@@ -270,23 +265,6 @@ export const MessageBranchPage = ({ className, ...props }: MessageBranchPageProp
     </ButtonGroupText>
   )
 }
-
-export type MessageResponseProps = ComponentProps<typeof Streamdown>
-
-const streamdownPlugins = { cjk, code, math, mermaid }
-
-export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn('size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0', className)}
-      plugins={streamdownPlugins}
-      {...props}
-    />
-  ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children,
-)
-
-MessageResponse.displayName = 'MessageResponse'
 
 export type MessageToolbarProps = ComponentProps<'div'>
 

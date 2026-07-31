@@ -307,7 +307,7 @@ function ContentMediaTile({ item }: { item: ContentCatalogItem }) {
   return (
     <figure
       className={cn(
-        'group/tile w-full max-w-[11rem] min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm transition-[box-shadow,border-color,opacity]',
+        'group/tile w-full max-w-[11rem] min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm transition-[box-shadow,border-color,opacity] [content-visibility:auto] [contain-intrinsic-size:0_11rem]',
         isSelected
           ? 'border-primary ring-2 ring-primary/40 shadow-md'
           : 'border-border/60 hover:shadow-md',

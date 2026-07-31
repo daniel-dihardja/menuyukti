@@ -200,17 +200,18 @@ async function parsePythonSSEAndForward(
 
 export async function POST(req: Request) {
   await connection()
-  const { isAuthenticated, userId } = await auth()
+  const authPromise = auth()
+  const bodyPromise = req.json().catch(() => null)
+
+  const { isAuthenticated, userId } = await authPromise
   if (!isAuthenticated) {
     return jsonError('Unauthorized', 401)
   }
 
   const baseUrl = getPythonAgentsUrl()
 
-  let json: unknown
-  try {
-    json = await req.json()
-  } catch {
+  const json = await bodyPromise
+  if (json === null) {
     return jsonError('Invalid JSON body', 400)
   }
 

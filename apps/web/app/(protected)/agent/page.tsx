@@ -65,7 +65,13 @@ async function AgentListData({ requestedLocationId }: { requestedLocationId: num
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocationsListData(userId)
+  const locationsPromise = getCachedLocationsListData(userId)
+  const requestedRunsPromise =
+    requestedLocationId !== null
+      ? getCachedAnalyticsRunsByLocation(userId, requestedLocationId)
+      : null
+
+  const data = await locationsPromise
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
@@ -86,10 +92,13 @@ async function AgentListData({ requestedLocationId }: { requestedLocationId: num
   }
 
   const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
-  const initialAnalyticsRuns: Array<{ id: number; name: string }> = []
+  let initialAnalyticsRuns: Array<{ id: number; name: string }> = []
   if (initialLocationId !== null) {
-    const runs = await getCachedAnalyticsRunsByLocation(userId, initialLocationId)
-    initialAnalyticsRuns.push(...runs)
+    if (requestedRunsPromise !== null && initialLocationId === requestedLocationId) {
+      initialAnalyticsRuns = await requestedRunsPromise
+    } else {
+      initialAnalyticsRuns = await getCachedAnalyticsRunsByLocation(userId, initialLocationId)
+    }
   }
 
   return (

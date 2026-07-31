@@ -44,7 +44,13 @@ async function RegistrationsData({ requestedAppId }: { requestedAppId: number | 
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await graphqlQuery<CrmAppsData>(CRM_APPS_QUERY, {}, userId)
+  const appsPromise = graphqlQuery<CrmAppsData>(CRM_APPS_QUERY, {}, userId)
+  const requestedCustomersPromise =
+    requestedAppId !== null
+      ? graphqlQuery<CrmCustomersData>(CRM_CUSTOMERS_QUERY, { appId: requestedAppId }, userId)
+      : null
+
+  const data = await appsPromise
   const apps = data.crmApps.map((app) => ({
     id: app.id,
     appId: app.appId,
@@ -57,12 +63,17 @@ async function RegistrationsData({ requestedAppId }: { requestedAppId: number | 
 
   let initialCustomers: CrmCustomersData['crmCustomers'] = []
   if (initialAppId !== null) {
-    const customersData = await graphqlQuery<CrmCustomersData>(
-      CRM_CUSTOMERS_QUERY,
-      { appId: initialAppId },
-      userId,
-    )
-    initialCustomers = customersData.crmCustomers
+    if (requestedCustomersPromise !== null && initialAppId === requestedAppId) {
+      const customersData = await requestedCustomersPromise
+      initialCustomers = customersData.crmCustomers
+    } else {
+      const customersData = await graphqlQuery<CrmCustomersData>(
+        CRM_CUSTOMERS_QUERY,
+        { appId: initialAppId },
+        userId,
+      )
+      initialCustomers = customersData.crmCustomers
+    }
   }
 
   return (

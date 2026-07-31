@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 
@@ -10,7 +11,22 @@ import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 
 import { ChatPane } from '@/components/chat/chat-pane'
-import { ChatVisualizationsPane } from '@/components/chat/visualizations/chat-visualizations-pane'
+
+const ChatVisualizationsPane = dynamic(
+  () =>
+    import('@/components/chat/visualizations/chat-visualizations-pane').then(
+      (m) => m.ChatVisualizationsPane,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+        <div className="bg-muted h-5 w-32 animate-pulse rounded" />
+        <div className="bg-muted h-48 animate-pulse rounded-lg border" />
+      </div>
+    ),
+  },
+)
 
 export type ChatSidePanelTab = 'chat' | 'visualizations'
 

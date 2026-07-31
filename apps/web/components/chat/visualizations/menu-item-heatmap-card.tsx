@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import useSWR from 'swr'
 
 import { MenuHeatmapContent } from '@/app/(protected)/analytics/[analyticsId]/heatmap/menu-heatmap-content'
 import type { MenuEngineeringMatrixData, MenuHeatmapsData } from '@/lib/graphql/queries/analytics'
@@ -9,20 +9,17 @@ import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/al
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
+import { chatVizJsonFetcher, chatVizQueryUrl } from './chat-viz-fetcher'
+
 type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items'][number]
 
-type LoadState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | {
-      status: 'ready'
-      menuHeatmaps: MenuHeatmapsData['menuHeatmaps']
-      matrixItems: MatrixItem[] | null
-      dailyStartHour: number
-      dailyEndHour: number
-      usedFallbackRun: boolean
-    }
-  | { status: 'error' }
+type MenuHeatmapsResponse = {
+  menuHeatmaps?: MenuHeatmapsData['menuHeatmaps']
+  matrixItems?: MatrixItem[] | null
+  dailyStartHour?: number
+  dailyEndHour?: number
+  usedFallbackRun?: boolean
+}
 
 type MenuItemHeatmapCardProps = {
   locationId: number
@@ -32,47 +29,12 @@ type MenuItemHeatmapCardProps = {
 export function MenuItemHeatmapCard({ locationId, analyticsRunId }: MenuItemHeatmapCardProps) {
   const locale = useLocale()
   const t = useTranslations('chat.visualizations')
-  const [loadState, setLoadState] = useState<LoadState>({ status: 'idle' })
-  const [reloadToken, setReloadToken] = useState(0)
+  const url = chatVizQueryUrl('/api/analytics/menu-heatmaps', locationId, analyticsRunId)
+  const { data, error, isLoading, mutate } = useSWR(url, chatVizJsonFetcher<MenuHeatmapsResponse>, {
+    revalidateOnFocus: false,
+  })
 
-  const fetchData = useCallback(async () => {
-    setLoadState({ status: 'loading' })
-    try {
-      const params = new URLSearchParams({ locationId: String(locationId) })
-      if (analyticsRunId !== null) {
-        params.set('analyticsRunId', String(analyticsRunId))
-      }
-      const res = await fetch(`/api/analytics/menu-heatmaps?${params.toString()}`, {
-        cache: 'no-store',
-      })
-      if (!res.ok) {
-        throw new Error('fetch failed')
-      }
-      const body = (await res.json()) as {
-        menuHeatmaps?: MenuHeatmapsData['menuHeatmaps']
-        matrixItems?: MatrixItem[] | null
-        dailyStartHour?: number
-        dailyEndHour?: number
-        usedFallbackRun?: boolean
-      }
-      setLoadState({
-        status: 'ready',
-        menuHeatmaps: Array.isArray(body.menuHeatmaps) ? body.menuHeatmaps : [],
-        matrixItems: Array.isArray(body.matrixItems) ? body.matrixItems : null,
-        dailyStartHour: typeof body.dailyStartHour === 'number' ? body.dailyStartHour : 8,
-        dailyEndHour: typeof body.dailyEndHour === 'number' ? body.dailyEndHour : 22,
-        usedFallbackRun: body.usedFallbackRun === true,
-      })
-    } catch {
-      setLoadState({ status: 'error' })
-    }
-  }, [analyticsRunId, locationId])
-
-  useEffect(() => {
-    void fetchData()
-  }, [fetchData, reloadToken])
-
-  if (loadState.status === 'loading' || loadState.status === 'idle') {
+  if (isLoading || (!data && !error)) {
     return (
       <div className="flex flex-col gap-3">
         <Skeleton className="h-9 w-full" />
@@ -86,7 +48,7 @@ export function MenuItemHeatmapCard({ locationId, analyticsRunId }: MenuItemHeat
     )
   }
 
-  if (loadState.status === 'error') {
+  if (error || !data) {
     return (
       <Alert variant="destructive">
         <AlertTitle>{t('loadErrorTitle')}</AlertTitle>
@@ -94,7 +56,7 @@ export function MenuItemHeatmapCard({ locationId, analyticsRunId }: MenuItemHeat
           <p>{t('loadErrorDescription')}</p>
           <Button
             className="w-fit"
-            onClick={() => setReloadToken((token) => token + 1)}
+            onClick={() => void mutate()}
             size="sm"
             type="button"
             variant="outline"
@@ -106,21 +68,27 @@ export function MenuItemHeatmapCard({ locationId, analyticsRunId }: MenuItemHeat
     )
   }
 
-  if (loadState.menuHeatmaps.length === 0) {
+  const menuHeatmaps = Array.isArray(data.menuHeatmaps) ? data.menuHeatmaps : []
+  const matrixItems = Array.isArray(data.matrixItems) ? data.matrixItems : null
+  const dailyStartHour = typeof data.dailyStartHour === 'number' ? data.dailyStartHour : 8
+  const dailyEndHour = typeof data.dailyEndHour === 'number' ? data.dailyEndHour : 22
+  const usedFallbackRun = data.usedFallbackRun === true
+
+  if (menuHeatmaps.length === 0) {
     return <p className="text-muted-foreground text-sm">{t('emptyMenuHeatmapDescription')}</p>
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {loadState.usedFallbackRun ? (
+      {usedFallbackRun ? (
         <p className="text-muted-foreground text-xs">{t('fallbackRunHint')}</p>
       ) : null}
       <MenuHeatmapContent
-        dailyEndHour={loadState.dailyEndHour}
-        dailyStartHour={loadState.dailyStartHour}
+        dailyEndHour={dailyEndHour}
+        dailyStartHour={dailyStartHour}
         locale={locale}
-        matrixItems={loadState.matrixItems}
-        menuHeatmaps={loadState.menuHeatmaps}
+        matrixItems={matrixItems}
+        menuHeatmaps={menuHeatmaps}
         variant="compact"
       />
     </div>
