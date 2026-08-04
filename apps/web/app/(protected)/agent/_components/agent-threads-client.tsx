@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
@@ -11,7 +11,6 @@ import {
   createAgentThread,
   listAgentThreads,
   removeAgentThread,
-  touchAgentThread,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
 import { routes } from '@/lib/routes'
@@ -43,6 +42,7 @@ import {
 } from '@workspace/ui/components/table'
 
 import { AgentThreadTitleEditor } from './agent-thread-title-editor'
+import { useAgentThreadTitleEdit } from './use-agent-thread-title-edit'
 
 type Branch = {
   id: number
@@ -68,33 +68,16 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     return first ? first.id : null
   })
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [draftTitle, setDraftTitle] = useState('')
-  const editContainerRef = useRef<HTMLDivElement>(null)
-
-  const cancelEdit = useCallback(() => {
-    setEditingId(null)
-    setDraftTitle('')
-  }, [])
-
-  useEffect(() => {
-    if (editingId === null) return
-    const onKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') cancelEdit()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [editingId, cancelEdit])
-
-  useEffect(() => {
-    if (editingId === null) return
-    const onPointerDown = (e: PointerEvent) => {
-      const el = editContainerRef.current
-      if (!el?.contains(e.target as Node)) cancelEdit()
-    }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    return () => document.removeEventListener('pointerdown', onPointerDown, true)
-  }, [editingId, cancelEdit])
+  const {
+    editingId,
+    draftTitle,
+    editContainerRef,
+    cancelEdit,
+    startEdit,
+    saveEdit,
+    onDraftKeyDown,
+    setDraftTitle,
+  } = useAgentThreadTitleEdit()
 
   useEffect(() => {
     if (initialLocationId !== null) {
@@ -193,33 +176,30 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     handleRemove(pendingRemoveId)
   }, [handleRemove, pendingRemoveId])
 
-  const startEdit = useCallback((thread: AgentThreadRecord) => {
-    setEditingId(thread.id)
-    setDraftTitle(thread.title?.trim() ?? '')
-  }, [])
+  const handleStartEdit = useCallback(
+    (thread: AgentThreadRecord) => {
+      startEdit(thread.id, thread.title)
+    },
+    [startEdit],
+  )
 
-  const saveEdit = useCallback(() => {
+  const handleSaveEdit = useCallback(() => {
     if (editingId === null) return
-    const trimmed = draftTitle.trim()
     const current = threads.find((thread) => thread.id === editingId)
-    const currentTitle = current?.title?.trim() ?? ''
-    if (trimmed === currentTitle) {
-      cancelEdit()
-      return
-    }
-    touchAgentThread(editingId, { title: trimmed || null })
+    saveEdit(current?.title)
     setThreads(listAgentThreads())
-    cancelEdit()
-  }, [cancelEdit, draftTitle, editingId, threads])
+  }, [editingId, saveEdit, threads])
 
-  const onDraftKeyDown = useCallback(
+  const handleDraftKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
+      if (editingId === null) return
+      const current = threads.find((thread) => thread.id === editingId)
+      onDraftKeyDown(e, current?.title)
       if (e.key === 'Enter') {
-        e.preventDefault()
-        saveEdit()
+        setThreads(listAgentThreads())
       }
     },
-    [saveEdit],
+    [editingId, onDraftKeyDown, threads],
   )
 
   const threadDisplayTitle = useCallback(
@@ -290,9 +270,9 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
                         draftTitle={draftTitle}
                         editContainerRef={editContainerRef}
                         onDraftChange={setDraftTitle}
-                        onStartEdit={() => startEdit(thread)}
-                        onSaveEdit={saveEdit}
-                        onDraftKeyDown={onDraftKeyDown}
+                        onStartEdit={() => handleStartEdit(thread)}
+                        onSaveEdit={handleSaveEdit}
+                        onDraftKeyDown={handleDraftKeyDown}
                         editTitleAria={t('editThreadTitleAria')}
                         saveTitleAria={t('saveThreadTitleAria')}
                         titleLabel={t('threadTitleLabel')}
