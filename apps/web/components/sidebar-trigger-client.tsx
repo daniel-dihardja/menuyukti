@@ -2,7 +2,7 @@
 
 import { Show } from '@clerk/nextjs'
 import Link from 'next/link'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { SidebarTrigger } from '@workspace/ui/components/sidebar'
 import { Separator } from '@workspace/ui/components/separator'
@@ -30,12 +30,15 @@ interface SidebarTriggerClientProps {
   title: string
   breadcrumbs?: Array<{ label: string; href?: string }>
   showBreadcrumb?: boolean
+  /** When set, renders as the current (last) crumb; `breadcrumbs` are ancestors only. */
+  breadcrumbCurrent?: ReactNode
 }
 
 export function SidebarTriggerClient({
   title: _title,
   breadcrumbs,
   showBreadcrumb,
+  breadcrumbCurrent,
 }: SidebarTriggerClientProps) {
   void _title
   const t = useTranslations('appShell')
@@ -45,10 +48,15 @@ export function SidebarTriggerClient({
   }, [])
 
   const items = breadcrumbs ?? []
-  const shouldShowBreadcrumb = showBreadcrumb ?? items.length > 0
-  const firstItem = items[0]
-  const currentItem = items[items.length - 1]
-  const middleItems = items.slice(1, -1)
+  const hasCurrentSlot = breadcrumbCurrent != null
+  const ancestorItems = hasCurrentSlot ? items : items.slice(0, -1)
+  const labelCurrent = hasCurrentSlot ? null : (items[items.length - 1] ?? null)
+  const firstItem = hasCurrentSlot ? items[0] : items[0]
+  const middleItems = hasCurrentSlot ? items.slice(1) : items.slice(1, -1)
+  const hasTrail = items.length > 0 || hasCurrentSlot
+  const shouldShowBreadcrumb = showBreadcrumb ?? hasTrail
+  const showMobileFirst =
+    firstItem != null && (hasCurrentSlot ? items.length >= 1 : items.length > 1)
 
   return (
     <div className="flex h-16 w-full min-w-0 shrink-0 items-center gap-2 border-b px-4">
@@ -56,11 +64,11 @@ export function SidebarTriggerClient({
 
       <Separator orientation="vertical" className="mr-2 shrink-0 data-[orientation=vertical]:h-4" />
 
-      {shouldShowBreadcrumb && items.length > 0 ? (
+      {shouldShowBreadcrumb && hasTrail ? (
         <div className="flex min-w-0 flex-1 items-center">
           <Breadcrumb className="hidden min-w-0 lg:block">
             <BreadcrumbList>
-              {items.map((item, index) => (
+              {ancestorItems.map((item, index) => (
                 <Fragment key={`${item.label}-${index}`}>
                   <BreadcrumbItem>
                     {item.href ? (
@@ -71,15 +79,28 @@ export function SidebarTriggerClient({
                       <BreadcrumbPage>{item.label}</BreadcrumbPage>
                     )}
                   </BreadcrumbItem>
-                  {index < items.length - 1 ? <BreadcrumbSeparator /> : null}
+                  <BreadcrumbSeparator />
                 </Fragment>
               ))}
+              <BreadcrumbItem className="min-w-0">
+                {hasCurrentSlot ? (
+                  breadcrumbCurrent
+                ) : labelCurrent ? (
+                  labelCurrent.href ? (
+                    <BreadcrumbLink asChild>
+                      <Link href={labelCurrent.href}>{labelCurrent.label}</Link>
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage>{labelCurrent.label}</BreadcrumbPage>
+                  )
+                ) : null}
+              </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
 
           <Breadcrumb className="block lg:hidden min-w-0">
             <BreadcrumbList className="flex-nowrap overflow-hidden">
-              {firstItem && items.length > 1 ? (
+              {showMobileFirst && firstItem ? (
                 <>
                   <BreadcrumbItem className="min-w-0">
                     {firstItem.href ? (
@@ -140,10 +161,12 @@ export function SidebarTriggerClient({
                 </>
               ) : null}
 
-              {currentItem ? (
+              {hasCurrentSlot ? (
+                <BreadcrumbItem className="min-w-0">{breadcrumbCurrent}</BreadcrumbItem>
+              ) : labelCurrent ? (
                 <BreadcrumbItem className="min-w-0">
-                  <BreadcrumbPage className="max-w-[160px] truncate" title={currentItem.label}>
-                    {currentItem.label}
+                  <BreadcrumbPage className="max-w-[160px] truncate" title={labelCurrent.label}>
+                    {labelCurrent.label}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               ) : null}

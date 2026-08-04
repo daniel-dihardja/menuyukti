@@ -23,6 +23,8 @@ type AnalyticsPageShellProps = {
   mainClassName?: string
   triggerWrapperClassName?: string
   beforeContent?: ReactNode
+  /** Replaces the last breadcrumb page; pass only ancestor crumbs in `breadcrumbs`. */
+  breadcrumbCurrent?: ReactNode
 }
 
 export function AnalyticsPageShell({
@@ -33,13 +35,18 @@ export function AnalyticsPageShell({
   mainClassName,
   triggerWrapperClassName,
   beforeContent,
+  breadcrumbCurrent,
 }: AnalyticsPageShellProps) {
   return (
     <>
       {beforeContent}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className={cn('shrink-0', triggerWrapperClassName)}>
-          <SidebarTriggerClient title={title} breadcrumbs={breadcrumbs} />
+          <SidebarTriggerClient
+            title={title}
+            breadcrumbs={breadcrumbs}
+            breadcrumbCurrent={breadcrumbCurrent}
+          />
         </header>
 
         <main

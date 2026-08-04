@@ -8,6 +8,7 @@ import { ANALYTICS_REPORT_SHELL_MAIN_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { AgentThreadBreadcrumbTitle } from '../_components/agent-thread-breadcrumb-title'
 import { AgentThreadWorkspace } from './agent-thread-workspace'
 
 const threadIdParamSchema = z.string().uuid()
@@ -41,7 +42,8 @@ export default async function AgentThreadPage({ params }: PageProps) {
 
   return (
     <AnalyticsPageShell
-      breadcrumbs={[{ label: t('metaTitle'), href: routes.agent }, { label: title }]}
+      breadcrumbs={[{ label: t('metaTitle'), href: routes.agent }]}
+      breadcrumbCurrent={<AgentThreadBreadcrumbTitle threadId={threadId} />}
       contentWidth="full"
       mainClassName={cn(
         ANALYTICS_REPORT_SHELL_MAIN_CLASS,
