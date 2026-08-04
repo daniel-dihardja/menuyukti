@@ -47,7 +47,7 @@ export function StoryImageArtifact({ imageUrl }: StoryImageArtifactProps) {
       aria-label={t('ariaLabel')}
       className="relative flex min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden"
     >
-      <div className="shrink-0 px-0.5">
+      <div className="shrink-0 px-1 pt-1.5">
         <ToggleGroup
           id={formatFieldId}
           type="single"
@@ -57,7 +57,7 @@ export function StoryImageArtifact({ imageUrl }: StoryImageArtifactProps) {
             setSelectedImageFormat(value as ChatImageAssistantFormatId)
           }}
           disabled={isChatBusy}
-          className="flex flex-wrap justify-center gap-1.5"
+          className="flex flex-wrap justify-center gap-2.5"
           aria-label={t('formatAriaLabel')}
         >
           {CHAT_IMAGE_ASSISTANT_FORMAT_IDS.map((formatId) => {

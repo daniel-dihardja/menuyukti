@@ -85,14 +85,17 @@ def test_build_system_prompt_image_assistant_mode() -> None:
     assert out == STORY_IMAGE_ASSISTANT_PROMPT.rstrip() + "\n"
     assert "768×1376" in out
     assert "Instagram image assistant" in out
-    assert "direction gathering" in out
-    assert "describe the wished look" in out
-    assert "reference image" in out
+    assert "image intent" in out.lower()
+    assert "what image" in out.lower()
+    assert "collect generation inputs" in out.lower()
+    assert "textual brief" in out.lower()
+    assert "style reference" in out.lower() or 'role="style"' in out
     assert "content" in out.lower()
     assert "on-image text" in out
     assert "skip" in out.lower() or "declines" in out
     assert "Phase 3" in out
     assert "confirm before generate" in out
+    assert "Image intent" in out or "image intent" in out.lower()
     assert "Phase 4" in out
     assert "generate and refine" in out
     assert "Generate" in out and "Change" in out
@@ -122,6 +125,7 @@ def test_build_system_prompt_image_assistant_mode() -> None:
     assert "Canva" in out
     assert "Operating loop for planning or content requests" not in out
     assert "get_chart_data" not in out
+    assert "Do **not** call `save_story_asset` or `generate_instagram_post_image` in this phase" in out
 
 
 def test_build_system_prompt_image_assistant_legacy_alias() -> None:
