@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Plan,
   PlanContent,
@@ -14,14 +15,16 @@ import {
   QueueItemDescription,
 } from '@workspace/ui/components/ai-elements/queue'
 import { Badge } from '@workspace/ui/components/badge'
+import { Button } from '@workspace/ui/components/button'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@workspace/ui/components/collapsible'
-import { ChevronDownIcon } from 'lucide-react'
+import { CalendarPlusIcon, ChevronDownIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { WeeklyInstagramScheduleExportDialog } from '@/components/chat/weekly-instagram-schedule-export-dialog'
 import { useCompactLayout } from '@/hooks/use-desktop-layout'
 import type {
   WeeklyInstagramScheduleDay,
@@ -39,27 +42,49 @@ export function WeeklyInstagramScheduleCard({
   isStreaming = false,
 }: WeeklyInstagramScheduleCardProps) {
   const t = useTranslations('chatTools.presentWeeklyInstagramSchedule')
+  const [exportOpen, setExportOpen] = useState(false)
 
   return (
-    <Plan className="w-full max-w-md" defaultOpen isStreaming={isStreaming}>
-      <PlanHeader className="w-full">
-        <div className="min-w-0 flex-1 pr-2">
-          <PlanTitle>{schedule.title || t('titleFallback')}</PlanTitle>
-          <PlanDescription>{schedule.summary}</PlanDescription>
-        </div>
-        <PlanTrigger />
-      </PlanHeader>
-      <PlanContent className="w-full pt-0">
-        <ul className="m-0 flex list-none flex-col gap-1 p-0">
-          {schedule.days.map((day, index) => (
-            <WeeklyScheduleDayItem
-              day={day}
-              key={`${day.day}-${day.format}-${day.time}-${index}`}
-            />
-          ))}
-        </ul>
-      </PlanContent>
-    </Plan>
+    <>
+      <Plan className="w-full max-w-md" defaultOpen isStreaming={isStreaming}>
+        <PlanHeader className="w-full">
+          <div className="min-w-0 flex-1 pr-2">
+            <PlanTitle>{schedule.title || t('titleFallback')}</PlanTitle>
+            <PlanDescription>{schedule.summary}</PlanDescription>
+          </div>
+          <PlanTrigger />
+        </PlanHeader>
+        <PlanContent className="w-full pt-0">
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
+            {schedule.days.map((day, index) => (
+              <WeeklyScheduleDayItem
+                day={day}
+                key={`${day.day}-${day.format}-${day.time}-${index}`}
+              />
+            ))}
+          </ul>
+          {!isStreaming ? (
+            <div className="mt-3 border-t border-border/60 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => setExportOpen(true)}
+              >
+                <CalendarPlusIcon className="size-4" />
+                {t('exportButton')}
+              </Button>
+            </div>
+          ) : null}
+        </PlanContent>
+      </Plan>
+      <WeeklyInstagramScheduleExportDialog
+        schedule={schedule}
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+      />
+    </>
   )
 }
 
