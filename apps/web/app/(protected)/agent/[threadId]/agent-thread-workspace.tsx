@@ -2,14 +2,16 @@
 
 import dynamic from 'next/dynamic'
 import { notFound, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
+import { fetchAnalyticsList, type AnalyticsRunListItem } from '@/lib/api/client-fetch'
 import {
   getAgentThread,
   isAgentThreadId,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
+import { resolveAnalyticsRunName } from '@/lib/chat/resolve-analytics-run-name'
 import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
@@ -22,6 +24,54 @@ const AgentChatPanel = dynamic(
     loading: () => <ChatWorkspaceSkeleton className="min-h-[min(420px,50vh)] flex-1" />,
   },
 )
+
+function AgentThreadSalesReportStrip({
+  locationId,
+  analyticsRunId,
+}: {
+  locationId: number
+  analyticsRunId: number | null
+}) {
+  const t = useTranslations('agentChat')
+  const [analyticsRuns, setAnalyticsRuns] = useState<AnalyticsRunListItem[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setAnalyticsRuns(null)
+    void fetchAnalyticsList(locationId)
+      .then((runs) => {
+        if (cancelled) return
+        setAnalyticsRuns(runs)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setAnalyticsRuns([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [locationId])
+
+  const salesReportFallbacks = useMemo(
+    () => ({
+      none: t('noSalesReport'),
+      unavailable: t('salesReportUnavailable'),
+    }),
+    [t],
+  )
+
+  const salesReportLabel =
+    analyticsRuns === null
+      ? t('salesReportLoading')
+      : resolveAnalyticsRunName(analyticsRuns, analyticsRunId, salesReportFallbacks)
+
+  return (
+    <p className="shrink-0 truncate text-muted-foreground text-sm">
+      <span className="font-medium text-foreground">{t('salesReportDetailLabel')}:</span>{' '}
+      <span title={salesReportLabel}>{salesReportLabel}</span>
+    </p>
+  )
+}
 
 function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   const t = useTranslations('agentChat')
@@ -59,7 +109,11 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+      <AgentThreadSalesReportStrip
+        analyticsRunId={record.analyticsRunId}
+        locationId={record.locationId}
+      />
       <AgentChatPanel
         agentThreadId={record.id}
         analyticsRunId={record.analyticsRunId}
