@@ -14,6 +14,7 @@ def test_present_weekly_instagram_schedule_returns_ok() -> None:
     days = [
         WeeklyInstagramScheduleDay(
             day="monday",
+            time="11:30",
             format="story",
             menu_items="Lunch set",
             caption_angle="Speed",
@@ -33,6 +34,45 @@ def test_present_weekly_instagram_schedule_returns_ok() -> None:
     assert payload["title"] == "Weekly plan"
     assert payload["summary"] == "Grounded in demand"
     assert payload["days"] == [d.model_dump() for d in days]
+
+
+def test_present_weekly_instagram_schedule_allows_multiple_slots_same_day() -> None:
+    from agents_app.agents.core.chat.present_weekly_instagram_schedule import (
+        WeeklyInstagramScheduleDay,
+        present_weekly_instagram_schedule,
+    )
+
+    days = [
+        WeeklyInstagramScheduleDay(
+            day="monday",
+            time="8:00 AM",
+            format="story",
+            menu_items="Breakfast set",
+            caption_angle="Morning rush",
+            why="Strong breakfast demand",
+        ),
+        WeeklyInstagramScheduleDay(
+            day="monday",
+            time="1:00 PM",
+            format="post",
+            menu_items="Lunch special",
+            caption_angle="Midday feature",
+            why="Peak lunch slot",
+        ),
+    ]
+    raw = present_weekly_instagram_schedule.invoke(
+        {
+            "title": "Multi-slot Monday",
+            "summary": "Two Monday posts",
+            "days": [d.model_dump() for d in days],
+        }
+    )
+    payload = json.loads(raw)
+    assert len(payload["days"]) == 2
+    assert payload["days"][0]["day"] == "monday"
+    assert payload["days"][1]["day"] == "monday"
+    assert payload["days"][0]["format"] == "story"
+    assert payload["days"][1]["format"] == "post"
 
 
 def test_chat_tools_list_includes_present_weekly_in_general_mode() -> None:
@@ -59,3 +99,9 @@ def test_system_prompt_mentions_weekly_schedule_tool() -> None:
     out = build_system_prompt()
     assert "present_weekly_instagram_schedule" in out
     assert "multi-column markdown tables" in out
+    assert "Do **not** call the tool for open-ended advice" in out
+    assert "normal markdown instead" in out
+    assert "Fewer than 7" in out
+    assert "entries is fine" in out
+    assert "repeat that weekday" in out
+    assert "per posting slot" in out

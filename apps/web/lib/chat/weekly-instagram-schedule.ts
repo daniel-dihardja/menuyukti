@@ -99,6 +99,29 @@ function normalizeText(raw: unknown): string {
   return ''
 }
 
+/** Leading clock time + separator, e.g. `8:00 AM — caption` or `11:30 - caption`. */
+const LEADING_TIME_IN_CAPTION_RE = /^(\d{1,2}(?::\d{2})?\s*(?:[AaPp][Mm])?)\s*[—–\-:]\s*(.+)$/s
+
+/**
+ * If caption starts with a clock time, move it into `time` and return the cleaned caption.
+ */
+export function splitLeadingTimeFromCaption(
+  time: string,
+  caption: string,
+): { time: string; caption: string } {
+  const match = LEADING_TIME_IN_CAPTION_RE.exec(caption.trim())
+  if (!match) {
+    return { time: time.trim(), caption: caption.trim() }
+  }
+  const extractedTime = match[1]?.trim() ?? ''
+  const rest = match[2]?.trim() ?? ''
+  const hasRealTime = Boolean(time.trim() && time.trim() !== '—')
+  return {
+    time: hasRealTime ? time.trim() : extractedTime,
+    caption: rest || '—',
+  }
+}
+
 function parseMaybeJson(raw: unknown): unknown {
   if (typeof raw !== 'string') return raw
   const trimmed = raw.trim()
@@ -120,16 +143,21 @@ function normalizeDayRecord(raw: unknown): WeeklyInstagramScheduleDay | null {
   const menu_items = normalizeMenuItems(
     row.menu_items ?? row.menuItems ?? row.menus ?? row.menu ?? row.dishes,
   )
-  const caption_angle = normalizeText(
+  const rawTime = normalizeText(
+    row.time ?? row.posting_time ?? row.postingTime ?? row.slot_time ?? row.slotTime ?? row.hour,
+  )
+  const rawCaption = normalizeText(
     row.caption_angle ?? row.captionAngle ?? row.caption ?? row.angle,
   )
+  const { time, caption } = splitLeadingTimeFromCaption(rawTime, rawCaption)
   const why = normalizeText(row.why ?? row.rationale ?? row.reason ?? row.because)
   if (!day) return null
   return {
     day,
+    time: time || '—',
     format,
     menu_items: menu_items || '—',
-    caption_angle: caption_angle || '—',
+    caption_angle: caption || '—',
     why: why || '—',
   }
 }
@@ -163,6 +191,7 @@ function coerceScheduleShape(input: unknown): unknown {
 
 export const weeklyInstagramScheduleDaySchema = z.object({
   day: z.enum(WEEKLY_INSTAGRAM_SCHEDULE_WEEKDAYS),
+  time: z.string().min(1),
   format: z.enum(WEEKLY_INSTAGRAM_SCHEDULE_FORMATS),
   menu_items: z.string().min(1),
   caption_angle: z.string().min(1),

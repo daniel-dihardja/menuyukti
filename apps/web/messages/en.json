@@ -72,6 +72,7 @@
       "running": "Building weekly Instagram plan…",
       "error": "Couldn’t show weekly schedule",
       "titleFallback": "Weekly Instagram plan",
+      "timeLabel": "Time",
       "menusLabel": "Feature",
       "captionLabel": "Caption",
       "whyLabel": "Why",
@@ -1914,7 +1915,7 @@
         "quickPrompts": {
           "weeklyPlan": {
             "label": "Weekly Instagram plan",
-            "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
+            "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
           },
           "featureTopDishes": {
             "label": "Feature top dishes",
@@ -3508,7 +3509,7 @@
     "quickPrompts": {
       "weeklyPlan": {
         "label": "Weekly Instagram plan",
-        "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
+        "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
       },
       "featureTopDishes": {
         "label": "Feature top dishes",

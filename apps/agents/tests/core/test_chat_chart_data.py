@@ -8,11 +8,15 @@ import pytest
 from agents_app.agents.core.chat.chart_data import (
     derive_daily_heatmap_hour_range,
     filter_heatmaps_for_chat,
+    find_day_specialties,
     format_chart_markdown_section,
+    format_daily_highlights,
+    format_day_specialties,
     format_menu_heatmap_summary,
     format_pair_lift_matrix,
     format_slot_demand_profile,
     load_chart_data_markdown,
+    weekday_quantity,
 )
 
 
@@ -120,6 +124,178 @@ def test_format_menu_heatmap_summary_includes_matrix_filter_note() -> None:
     )
     assert "Filtered to star, plow horse, and puzzle" in out
     assert "(Mains, star)" in out
+
+
+def test_weekday_quantity_normalizes_day_keys() -> None:
+    item = {
+        "menu": "Choipan",
+        "weeklyHeatmap": [{"day": "Thursday", "quantity": 42}],
+    }
+    assert weekday_quantity(item, "thu") == 42
+    assert weekday_quantity(item, "Thu") == 42
+    assert weekday_quantity(item, "fri") == 0
+
+
+def test_format_daily_highlights_empty_when_no_qty() -> None:
+    assert format_daily_highlights([{"menu": "A", "weeklyHeatmap": []}]) == ""
+    assert format_daily_highlights([]) == ""
+
+
+def test_format_daily_highlights_top_n_and_skips_empty_days() -> None:
+    heatmaps = [
+        {"menu": f"Dish {i}", "weeklyHeatmap": [{"day": "mon", "quantity": 10 - i}]}
+        for i in range(5)
+    ]
+    heatmaps.append({"menu": "OnlyTue", "weeklyHeatmap": [{"day": "tue", "quantity": 3}]})
+    out = format_daily_highlights(heatmaps, top_n=3)
+    assert "### Daily highlights" in out
+    assert "**mon:** Dish 0 (10 units), Dish 1 (9 units), Dish 2 (8 units)" in out
+    assert "Dish 3" not in out.split("**mon:**")[1].split("\n")[0]
+    assert "**tue:** OnlyTue (3 units)" in out
+    assert "**wed:**" not in out
+
+
+def test_format_menu_heatmap_summary_daily_highlights_includes_filtered_low_end() -> None:
+    """Thursday-only low_end specialty appears in Daily highlights, not the BCG main list."""
+    steak = {
+        "menu": "Steak",
+        "menuCategory": "Mains",
+        "weeklyHeatmap": [
+            {"day": "mon", "quantity": 20},
+            {"day": "thu", "quantity": 5},
+        ],
+        "dailyHeatmap": [{"hour": 19, "quantity": 8}],
+    }
+    choipan = {
+        "menu": "Choipan",
+        "menuCategory": "Specials",
+        "weeklyHeatmap": [{"day": "Thu", "quantity": 42}],
+        "dailyHeatmap": [{"hour": 12, "quantity": 42}],
+    }
+    all_items = [steak, choipan]
+    matrix = [
+        {"menu": "Steak", "category": "star"},
+        {"menu": "Choipan", "category": "low_end"},
+    ]
+    filtered, by_menu, applied = filter_heatmaps_for_chat(all_items, matrix)
+    assert applied is True
+    assert [h["menu"] for h in filtered] == ["Steak"]
+
+    out = format_menu_heatmap_summary(
+        filtered,
+        matrix_category_by_menu_map=by_menu,
+        matrix_filter_applied=True,
+        all_heatmaps_for_daily_highlights=all_items,
+    )
+    assert "**1. Steak**" in out
+    assert "Choipan" not in out.split("### Daily highlights")[0]
+    assert "### Daily highlights" in out
+    assert "**thu:** Choipan (low_end, 42 units)" in out
+    assert "### Day specialties" in out
+    assert "**Choipan** (low_end): thu, 42 units (100% of weekly)" in out
+
+
+def test_find_day_specialties_thresholds() -> None:
+    below_share = {
+        "menu": "Spread",
+        "weeklyHeatmap": [
+            {"day": "mon", "quantity": 6},
+            {"day": "tue", "quantity": 4},
+        ],
+    }
+    below_units = {
+        "menu": "Tiny",
+        "weeklyHeatmap": [{"day": "wed", "quantity": 5}],
+    }
+    ok = {
+        "menu": "Choipan",
+        "weeklyHeatmap": [{"day": "thu", "quantity": 42}],
+    }
+    found = find_day_specialties([below_share, below_units, ok])
+    assert [row["menu"] for row in found] == ["Choipan"]
+    assert found[0]["day"] == "thu"
+    assert found[0]["units"] == 42
+    assert found[0]["share"] == 1.0
+
+
+def test_format_daily_highlights_appends_specialty_outside_top_n() -> None:
+    heatmaps = [
+        {"menu": "A", "weeklyHeatmap": [{"day": "thu", "quantity": 100}]},
+        {"menu": "B", "weeklyHeatmap": [{"day": "thu", "quantity": 90}]},
+        {"menu": "C", "weeklyHeatmap": [{"day": "thu", "quantity": 80}]},
+        {"menu": "Choipan", "weeklyHeatmap": [{"day": "thu", "quantity": 42}]},
+    ]
+    specialties = find_day_specialties(heatmaps)
+    out = format_daily_highlights(
+        heatmaps,
+        {"Choipan": "low_end"},
+        top_n=3,
+        specialties=specialties,
+    )
+    thu_line = out.split("**thu:**")[1].split("\n")[0]
+    assert "A (100 units)" in thu_line
+    assert "B (90 units)" in thu_line
+    assert "C (80 units)" in thu_line
+    assert "Choipan (low_end, 42 units, day specialty)" in thu_line
+
+
+def test_format_daily_highlights_does_not_duplicate_specialty_in_top_n() -> None:
+    heatmaps = [
+        {"menu": "Choipan", "weeklyHeatmap": [{"day": "thu", "quantity": 42}]},
+        {"menu": "Other", "weeklyHeatmap": [{"day": "thu", "quantity": 10}]},
+    ]
+    specialties = find_day_specialties(heatmaps)
+    out = format_daily_highlights(
+        heatmaps,
+        {"Choipan": "low_end"},
+        specialties=specialties,
+    )
+    thu_line = out.split("**thu:**")[1].split("\n")[0]
+    assert thu_line.count("Choipan") == 1
+    assert "day specialty" not in thu_line
+
+
+def test_format_day_specialties_empty() -> None:
+    assert format_day_specialties([]) == ""
+
+
+def test_format_chart_markdown_section_menu_heatmap_daily_highlights() -> None:
+    out = format_chart_markdown_section(
+        chart_id="menu_item_heatmap",
+        payload={
+            "menuHeatmaps": [
+                {
+                    "menu": "Steak",
+                    "menuCategory": "Mains",
+                    "weeklyHeatmap": [{"day": "fri", "quantity": 10}],
+                    "dailyHeatmap": [{"hour": 19, "quantity": 4}],
+                }
+            ],
+            "allMenuHeatmaps": [
+                {
+                    "menu": "Steak",
+                    "menuCategory": "Mains",
+                    "weeklyHeatmap": [{"day": "fri", "quantity": 10}],
+                    "dailyHeatmap": [{"hour": 19, "quantity": 4}],
+                },
+                {
+                    "menu": "Choipan",
+                    "menuCategory": "Specials",
+                    "weeklyHeatmap": [{"day": "thu", "quantity": 42}],
+                    "dailyHeatmap": [{"hour": 12, "quantity": 42}],
+                },
+            ],
+            "matrixCategoryByMenu": {"Steak": "star", "Choipan": "low_end"},
+            "matrixFilterApplied": True,
+            "dailyStartHour": 8,
+            "dailyEndHour": 22,
+        },
+    )
+    assert "## Visualization data — Menu item heatmap" in out
+    assert "### Daily highlights" in out
+    assert "**thu:** Choipan (low_end, 42 units)" in out
+    assert "### Day specialties" in out
+    assert "**Choipan** (low_end): thu, 42 units (100% of weekly)" in out
 
 
 def test_format_chart_markdown_section_fallback_note() -> None:

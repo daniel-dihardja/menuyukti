@@ -194,22 +194,24 @@ function PresentWeeklyInstagramScheduleToolBlock({
   part: ToolUIPart<UITools> | DynamicToolUIPart
 }) {
   const t = useTranslations('chatTools.presentWeeklyInstagramSchedule')
-  const isInputStreaming = part.state === 'input-streaming'
+  const status = toolPartStatus(part)
   const schedule = parseWeeklyInstagramScheduleFromToolPart({
     input: 'input' in part ? part.input : undefined,
     output: 'output' in part ? part.output : undefined,
   })
+
+  // Keep a spinner until the tool finishes — do not flash a partial Plan card
+  // while args are still streaming.
+  if (status === 'running') {
+    return <CompactToolStatus status="running" message={t('running')} />
+  }
 
   if (toolOutputLooksLikeError(part) && !schedule) {
     return <CompactToolStatus status="error" message={t('error')} />
   }
 
   if (schedule) {
-    return <WeeklyInstagramScheduleCard isStreaming={isInputStreaming} schedule={schedule} />
-  }
-
-  if (isInputStreaming || part.state === 'input-available') {
-    return <CompactToolStatus status="running" message={t('running')} />
+    return <WeeklyInstagramScheduleCard schedule={schedule} />
   }
 
   return <CompactToolStatus status="error" message={t('error')} />

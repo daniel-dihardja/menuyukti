@@ -12,6 +12,7 @@ const VALID = {
   days: [
     {
       day: 'monday',
+      time: '11:30',
       format: 'story',
       menu_items: 'Chef lunch set',
       caption_angle: 'Speed + loyalty nudge',
@@ -19,6 +20,7 @@ const VALID = {
     },
     {
       day: 'tuesday',
+      time: '12:00',
       format: 'post',
       menu_items: 'Burger + fries',
       caption_angle: 'Midweek treat',
@@ -30,6 +32,32 @@ const VALID = {
 describe('parseWeeklyInstagramScheduleInput', () => {
   it('parses a valid schedule payload', () => {
     expect(parseWeeklyInstagramScheduleInput(VALID)).toEqual(VALID)
+  })
+
+  it('keeps multiple entries for the same weekday', () => {
+    const dualMonday = {
+      title: 'Multi-slot Monday',
+      summary: 'Story then feed post',
+      days: [
+        {
+          day: 'monday',
+          time: '8:00 AM',
+          format: 'story',
+          menu_items: 'Breakfast set',
+          caption_angle: 'Morning rush',
+          why: 'Strong breakfast demand',
+        },
+        {
+          day: 'monday',
+          time: '1:00 PM',
+          format: 'post',
+          menu_items: 'Lunch special',
+          caption_angle: 'Midday feature',
+          why: 'Peak lunch slot',
+        },
+      ],
+    }
+    expect(parseWeeklyInstagramScheduleInput(dualMonday)).toEqual(dualMonday)
   })
 
   it('returns null for missing days', () => {
@@ -68,6 +96,7 @@ describe('parseWeeklyInstagramScheduleInput', () => {
         days: [
           {
             day: 'Mon',
+            postingTime: '11:45 AM',
             format: 'IG Story',
             menuItems: ['A', 'B'],
             captionAngle: 'Angle',
@@ -81,6 +110,7 @@ describe('parseWeeklyInstagramScheduleInput', () => {
       days: [
         {
           day: 'monday',
+          time: '11:45 AM',
           format: 'story',
           menu_items: 'A, B',
           caption_angle: 'Angle',
@@ -98,6 +128,7 @@ describe('parseWeeklyInstagramScheduleInput', () => {
         days: [
           {
             day: 'Mittwoch',
+            time: '12:30',
             format: 'Reel',
             menu_items: 'Soup',
             caption_angle: 'Warm',
@@ -134,6 +165,7 @@ describe('parseWeeklyInstagramScheduleInput', () => {
         days: [
           {
             day: 'friday',
+            time: '',
             format: 'post',
             menu_items: '',
             caption_angle: '',
@@ -147,12 +179,71 @@ describe('parseWeeklyInstagramScheduleInput', () => {
       days: [
         {
           day: 'friday',
+          time: '—',
           format: 'post',
           menu_items: '—',
           caption_angle: '—',
           why: '—',
         },
       ],
+    })
+  })
+
+  it('splits a leading clock time out of caption_angle', () => {
+    expect(
+      parseWeeklyInstagramScheduleInput({
+        title: 'Plan',
+        summary: 'Summary',
+        days: [
+          {
+            day: 'monday',
+            time: '',
+            format: 'story',
+            menu_items: 'Fritters',
+            caption_angle: "8:00 AM — 'Start the week crispy and comforting' breakfast snack run.",
+            why: 'Peak breakfast',
+          },
+        ],
+      }),
+    ).toEqual({
+      title: 'Plan',
+      summary: 'Summary',
+      days: [
+        {
+          day: 'monday',
+          time: '8:00 AM',
+          format: 'story',
+          menu_items: 'Fritters',
+          caption_angle: "'Start the week crispy and comforting' breakfast snack run.",
+          why: 'Peak breakfast',
+        },
+      ],
+    })
+  })
+
+  it('strips a duplicated leading time from caption when time is already set', () => {
+    expect(
+      parseWeeklyInstagramScheduleInput({
+        title: 'Plan',
+        summary: 'Summary',
+        days: [
+          {
+            day: 'tuesday',
+            time: '8:00 AM',
+            format: 'post',
+            menu_items: 'Coffee',
+            caption_angle: '8:00 AM - Morning rush promo',
+            why: 'Foot traffic',
+          },
+        ],
+      })?.days[0],
+    ).toEqual({
+      day: 'tuesday',
+      time: '8:00 AM',
+      format: 'post',
+      menu_items: 'Coffee',
+      caption_angle: 'Morning rush promo',
+      why: 'Foot traffic',
     })
   })
 

@@ -12,7 +12,6 @@ import {
   QueueItem,
   QueueItemContent,
   QueueItemDescription,
-  QueueItemIndicator,
 } from '@workspace/ui/components/ai-elements/queue'
 import { Badge } from '@workspace/ui/components/badge'
 import { useTranslations } from 'next-intl'
@@ -49,12 +48,24 @@ export function WeeklyInstagramScheduleCard({
       </PlanHeader>
       <PlanContent className="w-full pt-0">
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
-          {schedule.days.map((day) => (
-            <WeeklyScheduleDayItem day={day} key={`${day.day}-${day.format}`} />
+          {schedule.days.map((day, index) => (
+            <WeeklyScheduleDayItem
+              day={day}
+              key={`${day.day}-${day.format}-${day.time}-${index}`}
+            />
           ))}
         </ul>
       </PlanContent>
     </Plan>
+  )
+}
+
+function FieldRow({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="text-foreground/90 text-xs leading-snug">
+      <span className="font-bold text-foreground">{label}: </span>
+      {value}
+    </p>
   )
 }
 
@@ -65,32 +76,21 @@ function WeeklyScheduleDayItem({ day }: { day: WeeklyInstagramScheduleDay }) {
 
   return (
     <QueueItem className="px-0 py-2">
-      <div className="flex gap-2">
-        <QueueItemIndicator className="mt-1.5 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <QueueItemContent className="line-clamp-none text-foreground font-medium">
-              {dayLabel}
-            </QueueItemContent>
-            <Badge className="shrink-0 font-normal" variant="secondary">
-              {formatLabel}
-            </Badge>
-          </div>
-          <QueueItemDescription className="ml-0 mt-1 space-y-1">
-            <p className="text-foreground/90 text-xs leading-snug">
-              <span className="font-medium">{t('menusLabel')}: </span>
-              {day.menu_items}
-            </p>
-            <p className="text-xs leading-snug">
-              <span className="font-medium text-foreground/80">{t('captionLabel')}: </span>
-              {day.caption_angle}
-            </p>
-            <p className="text-muted-foreground text-xs leading-snug">
-              <span className="font-medium">{t('whyLabel')}: </span>
-              {day.why}
-            </p>
-          </QueueItemDescription>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <QueueItemContent className="line-clamp-none text-foreground font-medium">
+            {dayLabel}
+          </QueueItemContent>
+          <Badge className="shrink-0 font-normal" variant="secondary">
+            {formatLabel}
+          </Badge>
         </div>
+        <QueueItemDescription className="ml-0 mt-1 space-y-1">
+          <FieldRow label={t('timeLabel')} value={day.time} />
+          <FieldRow label={t('menusLabel')} value={day.menu_items} />
+          <FieldRow label={t('captionLabel')} value={day.caption_angle} />
+          <FieldRow label={t('whyLabel')} value={day.why} />
+        </QueueItemDescription>
       </div>
     </QueueItem>
   )
