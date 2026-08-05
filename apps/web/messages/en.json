@@ -133,7 +133,9 @@
     "newChat": "New chat",
     "threadsHeading": "Recent chats",
     "threadsLoading": "Loading chats…",
+    "threadsEmptyTitle": "No chats yet",
     "threadsEmpty": "No chats for this location yet. Create one to get started.",
+    "selectLocationTitle": "Choose a location",
     "selectLocation": "Select a location to view chats.",
     "threadColumn": "Chat",
     "salesReportColumn": "Sales report",
@@ -151,6 +153,10 @@
     "removeThreadConfirmDescription": "This permanently removes the chat and its history. You can’t undo this action.",
     "removeThreadConfirmCancel": "Cancel",
     "removeThreadConfirmAction": "Remove chat",
+    "mobile": {
+      "actionsTrigger": "Actions",
+      "sheetDescription": "Rename or remove this chat."
+    },
     "threadPageTitle": "Chat {id}",
     "threadNotFound": "This chat is not on this device. Create a new chat from the list.",
     "backToList": "Back to chats",
