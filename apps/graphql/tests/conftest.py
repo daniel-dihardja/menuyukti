@@ -51,6 +51,7 @@ def analytics_run_with_qa_data(qa_sales_rows, qa_cogs_by_menu):
     from graphql.data_sources import (
         AnalyticsRun,
         Location,
+        LocationMenuItemCogs,
         MenuItemCogs,
         OrderFact,
         SessionLocal,
@@ -60,6 +61,7 @@ def analytics_run_with_qa_data(qa_sales_rows, qa_cogs_by_menu):
     session = SessionLocal()
     try:
         session.query(MenuItemCogs).delete()
+        session.query(LocationMenuItemCogs).delete()
         session.query(OrderFact).delete()
         session.query(AnalyticsRun).delete()
         session.query(Location).delete()
@@ -129,6 +131,7 @@ def analytics_run_with_qa_sales_only(qa_sales_rows):
     from graphql.data_sources import (
         AnalyticsRun,
         Location,
+        LocationMenuItemCogs,
         MenuItemCogs,
         OrderFact,
         SessionLocal,
@@ -138,6 +141,7 @@ def analytics_run_with_qa_sales_only(qa_sales_rows):
     session = SessionLocal()
     try:
         session.query(MenuItemCogs).delete()
+        session.query(LocationMenuItemCogs).delete()
         session.query(OrderFact).delete()
         session.query(AnalyticsRun).delete()
         session.query(Location).delete()

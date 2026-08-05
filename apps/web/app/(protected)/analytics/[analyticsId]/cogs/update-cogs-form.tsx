@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
@@ -15,6 +16,7 @@ import {
 } from '@workspace/ui/components/select'
 import { useSortableColumns, type SortableTableColumn } from '@/components/sortable-table'
 import { formatCurrencyInput, getCurrencyLocale, parseCurrencyInput } from '@/lib/currency'
+import { routes } from '@/lib/routes'
 
 import {
   COGS_UNCATEGORIZED_KEY,
@@ -31,18 +33,26 @@ function clampWe(value: number): number {
 
 type Props = {
   analyticsId: number
+  locationId: number
   menuItems: CogsMenuItem[]
   analyticsOptions: Array<{ id: number; name: string }>
   currencyCode: string
 }
 
-export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, currencyCode }: Props) {
+export function UpdateCogsForm({
+  analyticsId,
+  locationId,
+  menuItems,
+  analyticsOptions,
+  currencyCode,
+}: Props) {
   const router = useRouter()
   const t = useTranslations('analytics.cogsForm')
   const locale = getCurrencyLocale(currencyCode)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
   const [importId, setImportId] = useState<number | null>(() => {
     return analyticsOptions[0]?.id ?? null
   })
@@ -149,6 +159,32 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     }
     return initial
   })
+
+  async function syncWithLocation(action: 'applyFromLocation' | 'saveToLocation') {
+    setSyncing(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/analytics/${analyticsId}/cogs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { message?: string } | null
+        throw new Error(
+          data?.message ||
+            (action === 'applyFromLocation'
+              ? t('errors.loadFromLocationFailed')
+              : t('errors.saveToLocationFailed')),
+        )
+      }
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.unknown'))
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -295,7 +331,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
             <Select
               value={importId !== null ? String(importId) : undefined}
               onValueChange={(val) => setImportId(val ? Number(val) : null)}
-              disabled={loading || importing}
+              disabled={loading || importing || syncing}
             >
               <SelectTrigger id="import-analytics-select" className="w-full sm:w-[260px]">
                 <SelectValue placeholder={t('import.placeholder')} />
@@ -312,7 +348,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
             <Button
               type="button"
               variant="secondary"
-              disabled={!importId || importing || loading}
+              disabled={!importId || importing || loading || syncing}
               onClick={async () => {
                 if (!importId) return
                 setImporting(true)
@@ -363,6 +399,29 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
         </div>
       )}
 
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={loading || importing || syncing}
+          onClick={() => void syncWithLocation('applyFromLocation')}
+        >
+          {syncing ? t('locationSync.working') : t('locationSync.loadFromLocation')}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={loading || importing || syncing}
+          onClick={() => void syncWithLocation('saveToLocation')}
+        >
+          {t('locationSync.saveToLocation')}
+        </Button>
+        <Button asChild variant="link" className="px-0 sm:px-2">
+          <Link href={routes.analytics.branchesCogs(locationId)}>
+            {t('locationSync.manageCatalog')}
+          </Link>
+        </Button>
+      </div>
       <div className="flex flex-col gap-6">
         {sortedGroupedMenuItems.categorized.map((group) => {
           const section = (
@@ -423,7 +482,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+        <Button type="submit" disabled={loading || syncing} className="w-full sm:w-auto">
           {loading ? t('actions.saving') : t('actions.save')}
         </Button>
       </div>

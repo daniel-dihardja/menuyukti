@@ -7,6 +7,7 @@ __all__ = [
     "Location",
     "LocationOpeningHour",
     "LocationManualBriefInput",
+    "LocationMenuItemCogs",
     "VisualStyle",
     "MediaAsset",
     "MediaCollection",

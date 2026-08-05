@@ -9,7 +9,10 @@ import { UpdateCogsForm } from './update-cogs-form'
 import { getAppCurrencyCode } from '@/lib/app-currency'
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
+import {
+  getCachedAnalyticsRunsByLocation,
+  getCachedMenuEngineeringMatrix,
+} from '@/lib/graphql/cached-queries'
 import {
   ANALYTICS_RUN_QUERY,
   MENU_ITEMS_CATALOG_FOR_RUN_QUERY,
@@ -120,11 +123,13 @@ async function CogsReportContent({
   }
   menuItems = menuItems.toSorted((a, b) => a.menuName.localeCompare(b.menuName))
 
-  const analyticsOptions: Array<{ id: number; name: string }> = []
+  const otherRuns = await getCachedAnalyticsRunsByLocation(userId, Number(locationId))
+  const analyticsOptions = otherRuns.filter((option) => option.id !== analyticsId)
 
   return (
     <UpdateCogsForm
       analyticsId={analyticsId}
+      locationId={Number(locationId)}
       menuItems={menuItems}
       analyticsOptions={analyticsOptions}
       currencyCode={currencyCode}

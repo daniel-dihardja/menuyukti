@@ -32,6 +32,26 @@ const UPSERT_MENU_ITEM_COGS_BULK_MUTATION = `
   }
 `
 
+const APPLY_LOCATION_COGS_MUTATION = `
+  mutation ApplyLocationCogsToAnalyticsRun($analyticsRunId: ID!) {
+    applyLocationCogsToAnalyticsRun(analyticsRunId: $analyticsRunId) {
+      id
+      menu
+      cogs
+    }
+  }
+`
+
+const SAVE_RUN_COGS_TO_LOCATION_MUTATION = `
+  mutation SaveAnalyticsRunCogsToLocation($analyticsRunId: ID!) {
+    saveAnalyticsRunCogsToLocation(analyticsRunId: $analyticsRunId) {
+      id
+      menu
+      cogs
+    }
+  }
+`
+
 type AnalyticsRunCogsData = {
   analyticsRun: {
     id: string
@@ -109,12 +129,45 @@ export async function POST(req: Request, { params }: { params: Promise<{ analyti
     }
 
     const body = (await req.json().catch(() => null)) as {
+      action?: string
       items?: Array<{
         menuName?: string
         cogs?: number | null
         menuCategory?: string | null
       }>
     } | null
+
+    if (body?.action === 'applyFromLocation') {
+      const data = await graphqlQuery<{
+        applyLocationCogsToAnalyticsRun: Array<{ id: number }>
+      }>(
+        APPLY_LOCATION_COGS_MUTATION,
+        { analyticsRunId: String(runId) },
+        userId,
+        'ApplyLocationCogsToAnalyticsRun',
+      )
+      revalidateAnalyticsRunComputationsCache(userId, String(runId))
+      return NextResponse.json({
+        ok: true,
+        updated: data.applyLocationCogsToAnalyticsRun.length,
+      })
+    }
+
+    if (body?.action === 'saveToLocation') {
+      const data = await graphqlQuery<{
+        saveAnalyticsRunCogsToLocation: Array<{ id: number }>
+      }>(
+        SAVE_RUN_COGS_TO_LOCATION_MUTATION,
+        { analyticsRunId: String(runId) },
+        userId,
+        'SaveAnalyticsRunCogsToLocation',
+      )
+      return NextResponse.json({
+        ok: true,
+        updated: data.saveAnalyticsRunCogsToLocation.length,
+      })
+    }
+
     const inputItems = body?.items ?? []
     const items = inputItems
       .filter(

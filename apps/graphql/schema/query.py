@@ -9,6 +9,7 @@ from graphql.schema.queries import (
     CrmCustomersQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
+    LocationMenuItemCogsQuery,
     LocationsQuery,
     MediaCollectionsQuery,
     MenuCatalogQuery,
@@ -35,6 +36,7 @@ from graphql.schema.queries import (
 class Query(
     AnalyticsBundleQuery,
     LocationsQuery,
+    LocationMenuItemCogsQuery,
     StylesQuery,
     MediaCollectionsQuery,
     CrmAppsQuery,

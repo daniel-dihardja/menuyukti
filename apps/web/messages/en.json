@@ -1696,6 +1696,7 @@
         "salesCta": "Go to Sales Reports"
       },
       "create": "Create New Location",
+      "manageCogs": "Manage COGS",
       "form": {
         "createTitle": "Create Location",
         "nameLabel": "Location name",
@@ -1943,7 +1944,7 @@
         "quickPrompts": {
           "weeklyPlan": {
             "label": "Weekly Instagram plan",
-            "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
+            "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
           },
           "featureTopDishes": {
             "label": "Feature top dishes",
@@ -2842,9 +2843,43 @@
         "save": "Save COGS",
         "saving": "Saving…"
       },
+      "locationSync": {
+        "loadFromLocation": "Load from location catalog",
+        "saveToLocation": "Save to location catalog",
+        "manageCatalog": "Manage location COGS",
+        "working": "Syncing…"
+      },
       "errors": {
         "updateFailed": "Failed to update COGS",
         "loadImportFailed": "Failed to load COGS from analytics",
+        "loadFromLocationFailed": "Failed to load COGS from location catalog",
+        "saveToLocationFailed": "Failed to save COGS to location catalog",
+        "unknown": "Unknown error"
+      }
+    },
+    "locationCogs": {
+      "heading": "Location COGS",
+      "description": "Maintain menu costs for this location. New sales reports seed matching COGS from this catalog automatically.",
+      "currencyHint": "Amounts use this location’s currency ({currency}).",
+      "empty": "No COGS yet. Import from an analytics run or wait for a sales report to list menu items.",
+      "import": {
+        "label": "Import COGS from analytics run",
+        "placeholder": "Select analytics",
+        "action": "Import into catalog",
+        "importing": "Importing…"
+      },
+      "table": {
+        "menuName": "Menu item",
+        "cogs": "COGS",
+        "cogsWithCurrency": "COGS ({currency})"
+      },
+      "actions": {
+        "save": "Save catalog",
+        "saving": "Saving…"
+      },
+      "errors": {
+        "saveFailed": "Failed to save location COGS",
+        "importFailed": "Failed to import COGS from analytics",
         "unknown": "Unknown error"
       }
     },
@@ -3537,7 +3572,7 @@
     "quickPrompts": {
       "weeklyPlan": {
         "label": "Weekly Instagram plan",
-        "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
+        "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
       },
       "featureTopDishes": {
         "label": "Feature top dishes",
