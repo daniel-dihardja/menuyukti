@@ -12,6 +12,9 @@ from agents_app.agents.core.chat.generate_instagram_post_image import (
 )
 from agents_app.agents.core.chat.http_context import chat_http_client_var
 from agents_app.agents.core.chat.prompts import build_system_prompt
+from agents_app.agents.core.chat.present_weekly_instagram_schedule import (
+    present_weekly_instagram_schedule,
+)
 from agents_app.agents.core.chat.request_story_generate_confirmation import (
     request_story_generate_confirmation,
 )
@@ -110,6 +113,7 @@ def chat_tools_list(
     tools: list = []
     tools.append(list_media_collections)
     tools.append(list_media)
+    tools.append(present_weekly_instagram_schedule)
     if location_id:
         tools.append(get_location_data)
         tools.append(get_chart_data)

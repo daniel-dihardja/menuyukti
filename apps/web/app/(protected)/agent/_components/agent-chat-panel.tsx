@@ -4,7 +4,7 @@ import { usePanelRef } from '@workspace/ui/components/resizable'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useChatPreviewVisibility } from '@/components/chat/use-chat-preview-visibility'
 import { useChatComposerState } from '@/components/chat/chat-context'
@@ -100,18 +100,19 @@ function AgentChatPanelLayout({
   const { chatMode } = useChatComposerState()
   const isDesktop = useDesktopLayout()
   const isImageAssistant = chatMode === 'image_assistant'
-  const [prevMode, setPrevMode] = useState(chatMode)
+  const prevModeRef = useRef(chatMode)
 
-  // Adjust preview chrome when mode changes (render-time reset; not a sync effect).
-  if (chatMode !== prevMode) {
-    setPrevMode(chatMode)
+  // Preview / mobile artifact live in the parent — cannot setState them during this render.
+  useEffect(() => {
+    if (chatMode === prevModeRef.current) return
+    prevModeRef.current = chatMode
     if (chatMode === 'image_assistant') {
       setPreviewOpen(true)
     } else {
       setPreviewOpen(false)
       onMobileArtifactOpenChange(false)
     }
-  }
+  }, [chatMode, onMobileArtifactOpenChange, setPreviewOpen])
 
   const chatPane = <ChatSidePanel />
 

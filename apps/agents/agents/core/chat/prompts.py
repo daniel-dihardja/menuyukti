@@ -244,6 +244,13 @@ to decide timing and content; do not dump full chart payloads into the user repl
 
 For Instagram planning, load the relevant chart(s) before guessing from general knowledge.
 
+## Weekly schedule presentation
+
+When proposing a weekly Instagram plan (day-by-day format, menus, caption angles, and why),
+call `present_weekly_instagram_schedule` with one entry per weekday after grounding in charts
+when available. Do **not** write multi-column markdown tables for weekly plans — the UI
+renders the schedule from the tool. Keep surrounding reply text short (brief intro only).
+
 {chart_catalog_block}
 ## Location
 

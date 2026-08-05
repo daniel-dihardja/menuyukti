@@ -353,7 +353,13 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
                         "messages": [
                             AIMessage(
                                 content="",
-                                tool_calls=[{"name": "get_location_data", "id": "1", "args": {}}],
+                                tool_calls=[
+                                    {
+                                        "name": "get_location_data",
+                                        "id": "1",
+                                        "args": {"location_hint": "venue"},
+                                    }
+                                ],
                             ),
                         ],
                     },
@@ -390,6 +396,8 @@ def test_chat_stream_tool_status_sse(client: TestClient) -> None:
         assert "get_location_data" in text
         assert "tool_end" in text or '"status": "tool_end"' in text
         assert '"tool_call_id": "1"' in text
+        assert '"input"' in text
+        assert "location_hint" in text
         assert "Done" in text
 
 

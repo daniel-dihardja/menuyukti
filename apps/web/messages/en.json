@@ -67,6 +67,29 @@
       "error": "Couldn’t prepare confirmation",
       "generate": "Generate",
       "change": "Change"
+    },
+    "presentWeeklyInstagramSchedule": {
+      "running": "Building weekly Instagram plan…",
+      "error": "Couldn’t show weekly schedule",
+      "titleFallback": "Weekly Instagram plan",
+      "menusLabel": "Feature",
+      "captionLabel": "Caption",
+      "whyLabel": "Why",
+      "weekdays": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      },
+      "formats": {
+        "story": "Story",
+        "post": "Post",
+        "carousel": "Carousel",
+        "reel": "Reel"
+      }
     }
   },
   "appShell": {
@@ -1891,7 +1914,7 @@
         "quickPrompts": {
           "weeklyPlan": {
             "label": "Weekly Instagram plan",
-            "prompt": "Create a weekly Instagram plan for this venue. For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+            "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
           },
           "featureTopDishes": {
             "label": "Feature top dishes",
@@ -3485,7 +3508,7 @@
     "quickPrompts": {
       "weeklyPlan": {
         "label": "Weekly Instagram plan",
-        "prompt": "Create a weekly Instagram plan for this venue. For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+        "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
       },
       "featureTopDishes": {
         "label": "Feature top dishes",

@@ -169,3 +169,4 @@ def test_image_assistant_tools_include_generate() -> None:
     assert "create_instagram_items" not in names
     assert "get_milestone" not in names
     assert "get_chart_data" not in names
+    assert "present_weekly_instagram_schedule" not in names
