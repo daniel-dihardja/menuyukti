@@ -5,6 +5,7 @@ import {
   Plan,
   PlanContent,
   PlanDescription,
+  PlanFooter,
   PlanHeader,
   PlanTitle,
   PlanTrigger,
@@ -21,8 +22,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@workspace/ui/components/collapsible'
-import { CalendarPlusIcon, ChevronDownIcon } from 'lucide-react'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { CalendarPlusIcon, ChevronDownIcon, ShareIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 
 import { WeeklyInstagramScheduleExportDialog } from '@/components/chat/weekly-instagram-schedule-export-dialog'
 import { useCompactLayout } from '@/hooks/use-desktop-layout'
@@ -30,6 +33,11 @@ import type {
   WeeklyInstagramScheduleDay,
   WeeklyInstagramScheduleInput,
 } from '@/lib/chat/weekly-instagram-schedule'
+import {
+  formatWeeklyInstagramScheduleShareText,
+  ShareCancelledError,
+  shareOrCopyText,
+} from '@/lib/chat/weekly-instagram-schedule-share'
 import { cn } from '@workspace/ui/lib/utils'
 
 export type WeeklyInstagramScheduleCardProps = {
@@ -37,12 +45,50 @@ export type WeeklyInstagramScheduleCardProps = {
   isStreaming?: boolean
 }
 
+const ACTION_BUTTON_CLASS =
+  'h-11 min-w-0 flex-1 touch-manipulation justify-center gap-2 px-3 sm:h-9 sm:flex-initial sm:px-3'
+
 export function WeeklyInstagramScheduleCard({
   schedule,
   isStreaming = false,
 }: WeeklyInstagramScheduleCardProps) {
   const t = useTranslations('chatTools.presentWeeklyInstagramSchedule')
+  const compact = useCompactLayout()
   const [exportOpen, setExportOpen] = useState(false)
+  const [sharing, setSharing] = useState(false)
+
+  async function handleShare() {
+    if (sharing) return
+    setSharing(true)
+    try {
+      const text = formatWeeklyInstagramScheduleShareText(schedule, {
+        weekdays: {
+          monday: t('weekdays.monday'),
+          tuesday: t('weekdays.tuesday'),
+          wednesday: t('weekdays.wednesday'),
+          thursday: t('weekdays.thursday'),
+          friday: t('weekdays.friday'),
+          saturday: t('weekdays.saturday'),
+          sunday: t('weekdays.sunday'),
+        },
+        formats: {
+          story: t('formats.story'),
+          post: t('formats.post'),
+          carousel: t('formats.carousel'),
+          reel: t('formats.reel'),
+        },
+        captionLabel: t('captionLabel'),
+        whyLabel: t('whyLabel'),
+      })
+      const result = await shareOrCopyText(text)
+      toast.success(result === 'shared' ? t('shareShared') : t('shareCopied'))
+    } catch (error) {
+      if (error instanceof ShareCancelledError) return
+      toast.error(t('shareError'))
+    } finally {
+      setSharing(false)
+    }
+  }
 
   return (
     <>
@@ -63,21 +109,45 @@ export function WeeklyInstagramScheduleCard({
               />
             ))}
           </ul>
-          {!isStreaming ? (
-            <div className="mt-3 border-t border-border/60 pt-3">
+        </PlanContent>
+        {!isStreaming ? (
+          <PlanFooter className="w-full flex-col items-stretch gap-0 border-t border-border/60 px-6 py-3">
+            <div role="group" aria-label={t('actionsGroupAria')} className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className={ACTION_BUTTON_CLASS}
+                disabled={sharing}
+                aria-busy={sharing || undefined}
+                aria-label={sharing ? t('shareBusy') : t('shareButton')}
+                onClick={() => {
+                  void handleShare()
+                }}
+              >
+                {sharing ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <ShareIcon className="size-4 shrink-0" />
+                )}
+                <span className="truncate">{sharing ? t('shareBusy') : t('shareButton')}</span>
+              </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-full sm:w-auto"
+                className={ACTION_BUTTON_CLASS}
+                aria-label={t('exportButton')}
                 onClick={() => setExportOpen(true)}
               >
-                <CalendarPlusIcon className="size-4" />
-                {t('exportButton')}
+                <CalendarPlusIcon className="size-4 shrink-0" />
+                <span className="truncate">
+                  {compact ? t('exportButtonShort') : t('exportButton')}
+                </span>
               </Button>
             </div>
-          ) : null}
-        </PlanContent>
+          </PlanFooter>
+        ) : null}
       </Plan>
       <WeeklyInstagramScheduleExportDialog
         schedule={schedule}
