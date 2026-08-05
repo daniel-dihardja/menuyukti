@@ -46,7 +46,7 @@ export type WeeklyInstagramScheduleCardProps = {
 }
 
 const ACTION_BUTTON_CLASS =
-  'h-11 min-w-0 flex-1 touch-manipulation justify-center gap-2 px-3 sm:h-9 sm:flex-initial sm:px-3'
+  'h-11 min-w-0 flex-1 touch-manipulation justify-center gap-2 px-3 text-sm sm:h-9 sm:flex-initial sm:px-3'
 
 export function WeeklyInstagramScheduleCard({
   schedule,
@@ -95,13 +95,17 @@ export function WeeklyInstagramScheduleCard({
       <Plan className="w-full max-w-md" defaultOpen isStreaming={isStreaming}>
         <PlanHeader className="w-full">
           <div className="min-w-0 flex-1 pr-2">
-            <PlanTitle>{schedule.title || t('titleFallback')}</PlanTitle>
-            <PlanDescription>{schedule.summary}</PlanDescription>
+            <PlanTitle className="text-base leading-snug sm:text-base">
+              {schedule.title || t('titleFallback')}
+            </PlanTitle>
+            <PlanDescription className="mt-1 text-sm leading-relaxed sm:text-sm">
+              {schedule.summary}
+            </PlanDescription>
           </div>
           <PlanTrigger />
         </PlanHeader>
         <PlanContent className="w-full pt-0">
-          <ul className="m-0 flex list-none flex-col gap-1 p-0">
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0 sm:gap-1">
             {schedule.days.map((day, index) => (
               <WeeklyScheduleDayItem
                 day={day}
@@ -160,8 +164,8 @@ export function WeeklyInstagramScheduleCard({
 
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
-    <p className="text-foreground/90 text-xs leading-snug">
-      <span className="font-bold text-foreground">{label}: </span>
+    <p className="text-foreground/90 text-sm leading-relaxed">
+      <span className="font-semibold text-foreground">{label}: </span>
       {value}
     </p>
   )
@@ -171,7 +175,7 @@ function WeeklyScheduleDayFields({ day }: { day: WeeklyInstagramScheduleDay }) {
   const t = useTranslations('chatTools.presentWeeklyInstagramSchedule')
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <FieldRow label={t('timeLabel')} value={day.time} />
       <FieldRow label={t('menusLabel')} value={day.menu_items} />
       <FieldRow label={t('captionLabel')} value={day.caption_angle} />
@@ -188,17 +192,20 @@ function WeeklyScheduleDayItem({ day }: { day: WeeklyInstagramScheduleDay }) {
 
   if (!compact) {
     return (
-      <QueueItem className="px-0 py-2">
+      <QueueItem className="px-0 py-2.5 text-base">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <QueueItemContent className="line-clamp-none text-foreground font-medium">
+            <QueueItemContent className="line-clamp-none text-base font-medium text-foreground">
               {dayLabel}
             </QueueItemContent>
-            <Badge className="shrink-0 font-normal" variant="secondary">
+            <Badge
+              className="shrink-0 px-2 py-0.5 text-xs font-medium sm:text-xs"
+              variant="secondary"
+            >
               {formatLabel}
             </Badge>
           </div>
-          <QueueItemDescription className="ml-0 mt-1">
+          <QueueItemDescription className="ml-0 mt-1.5 text-sm text-foreground/90">
             <WeeklyScheduleDayFields day={day} />
           </QueueItemDescription>
         </div>
@@ -207,25 +214,25 @@ function WeeklyScheduleDayItem({ day }: { day: WeeklyInstagramScheduleDay }) {
   }
 
   return (
-    <QueueItem className="px-0 py-1">
+    <QueueItem className="px-0 py-1 text-base">
       <Collapsible className="min-w-0 w-full" defaultOpen={false}>
         <CollapsibleTrigger
           className={cn(
-            'flex w-full touch-manipulation items-center gap-2 rounded-md py-2 text-left',
+            'flex w-full touch-manipulation items-center gap-2 rounded-md py-2.5 text-left',
             'hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180',
           )}
         >
-          <QueueItemContent className="line-clamp-none min-w-0 flex-1 text-foreground font-medium">
+          <QueueItemContent className="line-clamp-none min-w-0 flex-1 text-base font-medium text-foreground">
             {dayLabel}
           </QueueItemContent>
-          <Badge className="shrink-0 font-normal" variant="secondary">
+          <Badge className="shrink-0 px-2 py-0.5 text-xs font-medium" variant="secondary">
             {formatLabel}
           </Badge>
-          <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform" />
+          <ChevronDownIcon className="size-5 shrink-0 text-muted-foreground transition-transform" />
           <span className="sr-only">{t('expandDayAria', { day: dayLabel })}</span>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <QueueItemDescription className="ml-0 mt-0 pb-2">
+          <QueueItemDescription className="ml-0 mt-0 pb-2.5 text-sm text-foreground/90">
             <WeeklyScheduleDayFields day={day} />
           </QueueItemDescription>
         </CollapsibleContent>
