@@ -33,7 +33,6 @@ import {
 import { Button } from '@workspace/ui/components/button'
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -372,15 +371,6 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
               <EmptyTitle>{t('threadsEmptyTitle')}</EmptyTitle>
               <EmptyDescription>{t('threadsEmpty')}</EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button
-                className="w-full touch-manipulation sm:w-auto"
-                onClick={handleNewChat}
-                size="lg"
-              >
-                {t('newChat')}
-              </Button>
-            </EmptyContent>
           </Empty>
         ) : (
           <>
