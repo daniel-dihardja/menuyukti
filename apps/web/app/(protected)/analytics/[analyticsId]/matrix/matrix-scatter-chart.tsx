@@ -167,7 +167,7 @@ export function MatrixScatterChart({ items, thresholds, locale, currency }: Prop
               key={`label-${zone.category}`}
               x={zone.x + 8}
               y={zone.y + 16}
-              className="fill-muted-foreground text-[10px] font-medium"
+              className="fill-muted-foreground text-xs font-medium"
             >
               {tCategories(zone.category)}
             </text>
@@ -225,7 +225,7 @@ export function MatrixScatterChart({ items, thresholds, locale, currency }: Prop
           {chart.xTicks.map((tick) => (
             <g key={`x-${tick}`} transform={`translate(${chart.xScale(tick)},${chart.plotHeight})`}>
               <line y2={6} stroke="currentColor" strokeOpacity={0.2} />
-              <text y={20} textAnchor="middle" className="fill-muted-foreground text-[10px]">
+              <text y={20} textAnchor="middle" className="fill-muted-foreground text-xs">
                 {numberFmt.format(tick)}
               </text>
             </g>
@@ -234,12 +234,7 @@ export function MatrixScatterChart({ items, thresholds, locale, currency }: Prop
           {chart.yTicks.map((tick) => (
             <g key={`y-${tick}`} transform={`translate(0,${chart.yScale(tick)})`}>
               <line x2={-6} stroke="currentColor" strokeOpacity={0.2} />
-              <text
-                x={-10}
-                dy="0.32em"
-                textAnchor="end"
-                className="fill-muted-foreground text-[10px]"
-              >
+              <text x={-10} dy="0.32em" textAnchor="end" className="fill-muted-foreground text-xs">
                 {formatCurrencyWithCode(tick, currency, locale)}
               </text>
             </g>

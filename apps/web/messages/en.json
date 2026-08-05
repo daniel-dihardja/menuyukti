@@ -67,6 +67,52 @@
       "error": "Couldn’t prepare confirmation",
       "generate": "Generate",
       "change": "Change"
+    },
+    "presentWeeklyInstagramSchedule": {
+      "running": "Building weekly Instagram plan…",
+      "error": "Couldn’t show weekly schedule",
+      "titleFallback": "Weekly Instagram plan",
+      "timeLabel": "Time",
+      "menusLabel": "Feature",
+      "captionLabel": "Caption",
+      "whyLabel": "Why",
+      "expandDayAria": "Expand {day} details",
+      "exportButton": "Export to calendar",
+      "exportButtonShort": "Calendar",
+      "shareButton": "Share",
+      "shareCopied": "Plan copied — paste into chat",
+      "shareShared": "Plan shared",
+      "shareError": "Couldn’t share this plan",
+      "shareBusy": "Sharing…",
+      "actionsGroupAria": "Plan actions",
+      "exportDialogTitle": "Export to calendar",
+      "exportDialogDescription": "Download an .ics file you can open in Google Calendar, Apple Calendar, or Outlook.",
+      "weekLabel": "Week",
+      "weekHint": "Events land on the weekdays of the week that contains this date.",
+      "repeatLabel": "Repeat",
+      "repeatOnce": "This week only",
+      "repeatWeekly": "Every week",
+      "timezoneLabel": "Timezone",
+      "timezoneHint": "Times use your browser timezone ({timeZone}).",
+      "downloadButton": "Download .ics",
+      "cancelButton": "Cancel",
+      "exportSuccess": "Calendar file downloaded",
+      "exportError": "Couldn’t build a calendar file from this plan",
+      "weekdays": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      },
+      "formats": {
+        "story": "Story",
+        "post": "Post",
+        "carousel": "Carousel",
+        "reel": "Reel"
+      }
     }
   },
   "appShell": {
@@ -108,7 +154,9 @@
     "newChat": "New chat",
     "threadsHeading": "Recent chats",
     "threadsLoading": "Loading chats…",
+    "threadsEmptyTitle": "No chats yet",
     "threadsEmpty": "No chats for this location yet. Create one to get started.",
+    "selectLocationTitle": "Choose a location",
     "selectLocation": "Select a location to view chats.",
     "threadColumn": "Chat",
     "salesReportColumn": "Sales report",
@@ -126,6 +174,10 @@
     "removeThreadConfirmDescription": "This permanently removes the chat and its history. You can’t undo this action.",
     "removeThreadConfirmCancel": "Cancel",
     "removeThreadConfirmAction": "Remove chat",
+    "mobile": {
+      "actionsTrigger": "Actions",
+      "sheetDescription": "Rename or remove this chat."
+    },
     "threadPageTitle": "Chat {id}",
     "threadNotFound": "This chat is not on this device. Create a new chat from the list.",
     "backToList": "Back to chats",
@@ -1885,13 +1937,13 @@
       "chat": {
         "pageLoadingTitle": "Loading chat…",
         "pageTitle": "Chat #{id}",
-        "emptyTitle": "Campaign assistant",
-        "emptyDescription": "Ask about venue slot strength, menu heatmap, pair lift, and campaign planning — or switch to Story mode for Instagram Stories.",
+        "emptyTitle": "Instagram assistant",
+        "emptyDescription": "Ask about busy hours, bestsellers, what dishes sell well together, and campaign ideas — or switch to Image assistant to create images.",
         "waitHint": "Usually takes about 30 seconds.",
         "quickPrompts": {
           "weeklyPlan": {
             "label": "Weekly Instagram plan",
-            "prompt": "Create a weekly Instagram plan for this venue. For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+            "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
           },
           "featureTopDishes": {
             "label": "Feature top dishes",
@@ -3479,13 +3531,13 @@
   "chat": {
     "pageLoadingTitle": "Loading chat…",
     "pageTitle": "Chat #{id}",
-    "emptyTitle": "Campaign assistant",
-    "emptyDescription": "Ask about venue slot strength, menu heatmap, pair lift, and campaign planning — or switch to Story mode for Instagram Stories.",
+    "emptyTitle": "Instagram assistant",
+    "emptyDescription": "Ask about busy hours, bestsellers, what dishes sell well together, and campaign ideas — or switch to Image assistant to create images.",
     "waitHint": "Usually takes about 30 seconds.",
     "quickPrompts": {
       "weeklyPlan": {
         "label": "Weekly Instagram plan",
-        "prompt": "Create a weekly Instagram plan for this venue. For each day include the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+        "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand. Do not use a markdown table."
       },
       "featureTopDishes": {
         "label": "Feature top dishes",
@@ -3511,7 +3563,7 @@
     "clearChatConfirmCancel": "Cancel",
     "clearChatConfirmAction": "Clear chat",
     "composerMoreAriaLabel": "More chat options",
-    "composerMoreTooltip": "Models and clear chat",
+    "composerMoreTooltip": "Mode, models, and clear chat",
     "stopChatAriaLabel": "Stop generating",
     "submitChatAriaLabel": "Send message",
     "attachImageAriaLabel": "Attach image",
@@ -3519,6 +3571,7 @@
     "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
     "mobileArtifactOpenLabel": "Preview",
     "mobileArtifactOpenAriaLabel": "Open preview",
+    "mobileArtifactCloseAriaLabel": "Close preview",
     "mobileArtifactSheetTitle": "Preview",
     "mobileArtifactSheetDescription": "View generated Instagram image preview.",
     "mobileArtifactEmptyHint": "View generated content",
@@ -4230,7 +4283,10 @@
     },
     "sidePanel": {
       "chatTab": "Chat",
-      "visualizationsTab": "Visualizations"
+      "visualizationsTab": "Visualizations",
+      "openVisualizationsAria": "Open visualizations",
+      "visualizationsDrawerDescription": "Explore sales analytics charts alongside your chat.",
+      "closeVisualizations": "Close"
     },
     "visualizations": {
       "panelTitle": "Charts",

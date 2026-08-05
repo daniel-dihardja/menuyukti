@@ -44,6 +44,8 @@ interface PythonStreamChunk {
   tool?: string
   /** LangChain tool call id — required when the same tool runs multiple times in one turn. */
   tool_call_id?: string
+  /** Tool-call args from the model (generative UI). Present on tool_start when available. */
+  input?: unknown
   output?: string
 }
 
@@ -69,12 +71,20 @@ function ensureTextStarted(
   controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_START, id: ctx.textPartId })))
 }
 
+function normalizeToolInput(input: unknown): Record<string, unknown> {
+  if (input && typeof input === 'object' && !Array.isArray(input)) {
+    return input as Record<string, unknown>
+  }
+  return {}
+}
+
 function forwardToolStart(
   controller: ReadableStreamDefaultController<Uint8Array>,
   encoder: TextEncoder,
   ctx: StreamForwardContext,
   toolName: string,
   toolCallIdFromAgents?: string,
+  toolInput?: unknown,
 ): void {
   const toolCallId =
     typeof toolCallIdFromAgents === 'string' && toolCallIdFromAgents.trim()
@@ -96,7 +106,7 @@ function forwardToolStart(
         type: SSE_EVENT.TOOL_INPUT_AVAILABLE,
         toolCallId,
         toolName,
-        input: {},
+        input: normalizeToolInput(toolInput),
       }),
     ),
   )
@@ -168,7 +178,7 @@ async function parsePythonSSEAndForward(
             typeof data.tool === 'string' &&
             data.tool.length > 0
           ) {
-            forwardToolStart(controller, encoder, ctx, data.tool, data.tool_call_id)
+            forwardToolStart(controller, encoder, ctx, data.tool, data.tool_call_id, data.input)
             continue
           }
           if (data.status === 'tool_end' && typeof data.tool === 'string' && data.tool.length > 0) {

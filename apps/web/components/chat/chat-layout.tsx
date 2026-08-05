@@ -1,6 +1,6 @@
 'use client'
 
-import type { ComponentProps, ReactNode } from 'react'
+import type { ComponentProps, CSSProperties, ReactNode } from 'react'
 
 import {
   ResizableHandle,
@@ -10,16 +10,40 @@ import {
 
 import { ChatMobileArtifactProvider } from '@/components/chat/chat-mobile-artifact-context'
 import { ChatMobileArtifactSheet } from '@/components/chat/chat-mobile-artifact-sheet'
+import {
+  ChatViewportInsetProvider,
+  useChatViewportInset,
+} from '@/components/chat/chat-viewport-inset-context'
 
 type PreviewPanelRef = NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
 
+function ChatColumnWithKeyboardInset({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  const { bottomInset } = useChatViewportInset()
+  const style: CSSProperties | undefined =
+    bottomInset > 0 ? { paddingBottom: bottomInset } : undefined
+
+  return (
+    <div className={className} style={style}>
+      {children}
+    </div>
+  )
+}
+
 export function ChatOnlyLayout({ chatPane }: { chatPane: ReactNode }) {
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      <div className="mx-auto flex h-full min-h-0 w-full max-w-3xl min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-background">
-        {chatPane}
+    <ChatViewportInsetProvider>
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <ChatColumnWithKeyboardInset className="mx-auto flex h-full min-h-0 w-full max-w-3xl min-w-0 flex-1 flex-col overflow-hidden bg-background lg:rounded-lg lg:border">
+          {chatPane}
+        </ChatColumnWithKeyboardInset>
       </div>
-    </div>
+    </ChatViewportInsetProvider>
   )
 }
 
@@ -75,21 +99,23 @@ export function ChatWithMobileArtifactLayout({
   mobileArtifactHint?: string | null
 }) {
   return (
-    <ChatMobileArtifactProvider
-      hint={mobileArtifactHint}
-      openArtifact={() => onMobileArtifactOpenChange(true)}
-    >
-      <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
-        <ChatMobileArtifactSheet
-          onOpenChange={onMobileArtifactOpenChange}
-          open={mobileArtifactOpen}
-          title={mobileArtifactTitle}
-        >
-          {previewPane}
-        </ChatMobileArtifactSheet>
-      </div>
-    </ChatMobileArtifactProvider>
+    <ChatViewportInsetProvider>
+      <ChatMobileArtifactProvider
+        hint={mobileArtifactHint}
+        openArtifact={() => onMobileArtifactOpenChange(true)}
+      >
+        <ChatColumnWithKeyboardInset className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
+          <ChatMobileArtifactSheet
+            onOpenChange={onMobileArtifactOpenChange}
+            open={mobileArtifactOpen}
+            title={mobileArtifactTitle}
+          >
+            {previewPane}
+          </ChatMobileArtifactSheet>
+        </ChatColumnWithKeyboardInset>
+      </ChatMobileArtifactProvider>
+    </ChatViewportInsetProvider>
   )
 }
 

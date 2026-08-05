@@ -23,6 +23,7 @@ import { useTranslations } from 'next-intl'
 
 import { useChatActions, useChatMessages } from '@/components/chat/chat-context'
 import { ChatMessageRow } from '@/components/chat/chat-message-row'
+import { useChatViewportInset } from '@/components/chat/chat-viewport-inset-context'
 
 const QUICK_PROMPT_KEYS = ['weeklyPlan', 'featureTopDishes', 'storiesAndReels'] as const
 
@@ -35,7 +36,7 @@ function ChatEmptyState() {
     <Empty className="min-h-full border-0 p-4 sm:p-8">
       <EmptyHeader className="max-w-md">
         <EmptyMedia variant="icon">
-          <CalendarDaysIcon />
+          <CalendarDaysIcon aria-hidden />
         </EmptyMedia>
         <EmptyTitle className="text-balance text-xl sm:text-lg">{t('emptyTitle')}</EmptyTitle>
         <EmptyDescription className="text-pretty">{t('emptyDescription')}</EmptyDescription>
@@ -66,10 +67,12 @@ export function ChatMessageList() {
   const t = useTranslations('chat')
   const { visibleMessages, error, status, isChatBusy } = useChatMessages()
   const { handleRetry } = useChatActions()
+  const { bottomInset } = useChatViewportInset()
+  const scrollButtonBottom = `max(1rem, calc(env(safe-area-inset-bottom) + ${bottomInset}px))`
 
   return (
     <Conversation aria-live="polite" className="min-h-0" resize={isChatBusy ? 'instant' : 'smooth'}>
-      <ConversationContent className="gap-5 px-3 py-3 sm:gap-8 sm:p-4">
+      <ConversationContent className="gap-5 px-4 py-3 sm:gap-8 sm:p-4">
         {error ? (
           <Alert aria-live="polite" className="items-start" variant="destructive">
             <AlertTitle>{t('errorTitle')}</AlertTitle>
@@ -113,9 +116,9 @@ export function ChatMessageList() {
               (status === 'submitted' || status === 'streaming') &&
               visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
                 <Message from="assistant">
-                  <MessageContent>
+                  <MessageContent className="w-full max-w-full">
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <Spinner />
+                      <Spinner aria-hidden />
                       <span>{t('thinking')}</span>
                     </div>
                   </MessageContent>
@@ -124,7 +127,7 @@ export function ChatMessageList() {
           </>
         )}
       </ConversationContent>
-      <ConversationScrollButton className="bottom-[max(1rem,env(safe-area-inset-bottom))]" />
+      <ConversationScrollButton style={{ bottom: scrollButtonBottom }} />
     </Conversation>
   )
 }

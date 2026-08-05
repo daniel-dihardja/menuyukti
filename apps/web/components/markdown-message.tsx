@@ -18,7 +18,7 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
   return (
     <div
       className={cn(
-        'prose prose-sm max-w-none min-w-0 overflow-x-auto dark:prose-invert prose-p:my-2 prose-headings:scroll-mt-20 prose-pre:bg-muted',
+        'prose max-w-none min-w-0 overflow-x-auto dark:prose-invert prose-p:my-2 prose-headings:scroll-mt-20 prose-pre:bg-muted',
         className,
       )}
     >

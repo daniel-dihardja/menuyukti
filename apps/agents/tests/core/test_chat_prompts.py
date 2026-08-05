@@ -19,6 +19,8 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "posting frequency" in SYSTEM_PROMPT_TEMPLATE
     assert "menu_item_heatmap" in SYSTEM_PROMPT_TEMPLATE
     assert "which menus to feature" in SYSTEM_PROMPT_TEMPLATE
+    assert "Daily highlights" in SYSTEM_PROMPT_TEMPLATE
+    assert "Day specialties" in SYSTEM_PROMPT_TEMPLATE
     assert "pair_lift_matrix_heatmap" in SYSTEM_PROMPT_TEMPLATE
     assert "menu combos" in SYSTEM_PROMPT_TEMPLATE
     assert "do not dump full chart payloads" in SYSTEM_PROMPT_TEMPLATE
@@ -58,6 +60,8 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     assert "venue_slot_strength_heatmap" in out
     assert "posting frequency and best timing" in out
     assert "interesting menu combos" in out
+    assert "Daily highlights" in out
+    assert "Day specialties" in out
     assert "get_chart_data" in out
 
 
@@ -125,7 +129,9 @@ def test_build_system_prompt_image_assistant_mode() -> None:
     assert "Canva" in out
     assert "Operating loop for planning or content requests" not in out
     assert "get_chart_data" not in out
-    assert "Do **not** call `save_story_asset` or `generate_instagram_post_image` in this phase" in out
+    assert (
+        "Do **not** call `save_story_asset` or `generate_instagram_post_image` in this phase" in out
+    )
 
 
 def test_build_system_prompt_image_assistant_legacy_alias() -> None:
@@ -169,3 +175,4 @@ def test_image_assistant_tools_include_generate() -> None:
     assert "create_instagram_items" not in names
     assert "get_milestone" not in names
     assert "get_chart_data" not in names
+    assert "present_weekly_instagram_schedule" not in names

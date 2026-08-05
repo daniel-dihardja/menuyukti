@@ -1,11 +1,17 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { MessageSquare, Pencil, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react'
 
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
+import {
+  ResponsiveActionMenu,
+  type ResponsiveActionMenuItem,
+} from '@/app/(protected)/analytics/_components/responsive-action-menu'
 import { fetchAnalyticsList } from '@/lib/api/client-fetch'
 import {
   createAgentThread,
@@ -26,6 +32,14 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
 import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -33,6 +47,7 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   Table,
   TableBody,
@@ -54,6 +69,30 @@ type Props = {
   branches: Branch[]
   initialLocationId: number | null
   initialAnalyticsRuns: Array<{ id: number; name: string }>
+}
+
+function buildThreadActionItems(args: {
+  onRename: () => void
+  onRemove: () => void
+  renameLabel: string
+  removeLabel: string
+}): ResponsiveActionMenuItem[] {
+  return [
+    {
+      id: 'rename',
+      label: args.renameLabel,
+      icon: Pencil,
+      onSelect: args.onRename,
+    },
+    {
+      id: 'remove',
+      label: args.removeLabel,
+      icon: Trash2,
+      onSelect: args.onRemove,
+      destructive: true,
+      separatorBefore: true,
+    },
+  ]
 }
 
 export function AgentThreadsClient({ branches, initialLocationId, initialAnalyticsRuns }: Props) {
@@ -144,7 +183,7 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
 
   const visibleThreads = useMemo(() => {
     if (locationId === null) return []
-    return threads.filter((t) => t.locationId === locationId)
+    return threads.filter((thread) => thread.locationId === locationId)
   }, [threads, locationId])
 
   const salesReportFallbacks = useMemo(
@@ -223,23 +262,67 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     [t],
   )
 
+  const actionMenuProps = useMemo(
+    () => ({
+      desktopTriggerAriaLabel: t('actionsColumn'),
+      mobileTriggerLabel: t('mobile.actionsTrigger'),
+      sheetDescription: t('mobile.sheetDescription'),
+    }),
+    [t],
+  )
+
+  const titleEditorProps = useCallback(
+    (thread: AgentThreadRecord, compactTouch: boolean) => ({
+      threadId: thread.id,
+      displayTitle: threadDisplayTitle(thread),
+      editing: editingId === thread.id,
+      draftTitle,
+      editContainerRef,
+      onDraftChange: setDraftTitle,
+      onStartEdit: () => handleStartEdit(thread),
+      onSaveEdit: handleSaveEdit,
+      onDraftKeyDown: handleDraftKeyDown,
+      editTitleAria: t('editThreadTitleAria'),
+      saveTitleAria: t('saveThreadTitleAria'),
+      titleLabel: t('threadTitleLabel'),
+      compactTouch,
+      hideEditButton: true,
+    }),
+    [
+      draftTitle,
+      editContainerRef,
+      editingId,
+      handleDraftKeyDown,
+      handleSaveEdit,
+      handleStartEdit,
+      setDraftTitle,
+      t,
+      threadDisplayTitle,
+    ],
+  )
+
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:flex-wrap">
+        <div className="flex min-w-0 w-full flex-1 flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap">
           <LocationSelect
             branches={branches}
+            className="w-full max-w-none sm:max-w-xs"
             label={t('locationLabel')}
             placeholder={t('locationPlaceholder')}
           />
-          <Field className="max-w-xs space-y-2">
+          <Field className="flex w-full max-w-none flex-col gap-2 sm:max-w-xs">
             <FieldLabel htmlFor="agent-analytics-run">{t('analyticsRunLabel')}</FieldLabel>
             <Select
               disabled={analyticsRuns.length === 0}
               onValueChange={(val) => setAnalyticsRunId(val ? Number(val) : null)}
               value={analyticsRunId !== null ? String(analyticsRunId) : undefined}
             >
-              <SelectTrigger aria-label={t('analyticsRunLabel')} id="agent-analytics-run">
+              <SelectTrigger
+                aria-label={t('analyticsRunLabel')}
+                className="w-full"
+                id="agent-analytics-run"
+              >
                 <SelectValue placeholder={t('analyticsRunPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
@@ -252,7 +335,12 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
             </Select>
           </Field>
         </div>
-        <Button disabled={locationId === null} onClick={handleNewChat} size="lg">
+        <Button
+          className="w-full touch-manipulation sm:w-auto"
+          disabled={locationId === null}
+          onClick={handleNewChat}
+          size="lg"
+        >
           {t('newChat')}
         </Button>
       </section>
@@ -260,58 +348,121 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-muted-foreground">{t('threadsHeading')}</h2>
         {!hydrated ? (
-          <p className="text-sm text-muted-foreground">{t('threadsLoading')}</p>
-        ) : locationId === null ? (
-          <p className="text-sm text-muted-foreground">{t('selectLocation')}</p>
-        ) : visibleThreads.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('threadsEmpty')}</p>
-        ) : (
-          <div className="-mx-4 w-[calc(100%+2rem)] border-y lg:mx-0 lg:w-full lg:rounded-md lg:border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('threadColumn')}</TableHead>
-                  <TableHead>{t('salesReportColumn')}</TableHead>
-                  <TableHead className="w-28 text-right">{t('actionsColumn')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visibleThreads.map((thread) => (
-                  <TableRow key={thread.id}>
-                    <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
-                      <AgentThreadTitleEditor
-                        threadId={thread.id}
-                        displayTitle={threadDisplayTitle(thread)}
-                        editing={editingId === thread.id}
-                        draftTitle={draftTitle}
-                        editContainerRef={editContainerRef}
-                        onDraftChange={setDraftTitle}
-                        onStartEdit={() => handleStartEdit(thread)}
-                        onSaveEdit={handleSaveEdit}
-                        onDraftKeyDown={handleDraftKeyDown}
-                        editTitleAria={t('editThreadTitleAria')}
-                        saveTitleAria={t('saveThreadTitleAria')}
-                        titleLabel={t('threadTitleLabel')}
-                      />
-                    </TableCell>
-                    <TableCell className="max-w-[min(100%,16rem)] truncate text-muted-foreground">
-                      {threadSalesReportLabel(thread)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        onClick={() => setPendingRemoveId(thread.id)}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        {t('removeThread')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="flex flex-col gap-3" aria-busy aria-label={t('threadsLoading')}>
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton className="h-24 w-full rounded-lg lg:h-12" key={`thread-skeleton-${i}`} />
+            ))}
           </div>
+        ) : locationId === null ? (
+          <Empty className="border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MessageSquare aria-hidden />
+              </EmptyMedia>
+              <EmptyTitle>{t('selectLocationTitle')}</EmptyTitle>
+              <EmptyDescription>{t('selectLocation')}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : visibleThreads.length === 0 ? (
+          <Empty className="border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MessageSquare aria-hidden />
+              </EmptyMedia>
+              <EmptyTitle>{t('threadsEmptyTitle')}</EmptyTitle>
+              <EmptyDescription>{t('threadsEmpty')}</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button
+                className="w-full touch-manipulation sm:w-auto"
+                onClick={handleNewChat}
+                size="lg"
+              >
+                {t('newChat')}
+              </Button>
+            </EmptyContent>
+          </Empty>
+        ) : (
+          <>
+            <ul className="flex flex-col gap-3 lg:hidden">
+              {visibleThreads.map((thread) => {
+                const title = threadDisplayTitle(thread)
+                const salesLabel = threadSalesReportLabel(thread)
+                const isEditing = editingId === thread.id
+
+                return (
+                  <li
+                    className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3"
+                    key={thread.id}
+                  >
+                    {isEditing ? (
+                      <AgentThreadTitleEditor {...titleEditorProps(thread, true)} />
+                    ) : (
+                      <Link
+                        className="flex min-h-11 min-w-0 touch-manipulation flex-col gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        href={routes.agentThread(thread.id)}
+                      >
+                        <span className="truncate font-medium" title={title}>
+                          {title}
+                        </span>
+                        <span className="truncate text-sm text-muted-foreground" title={salesLabel}>
+                          {salesLabel}
+                        </span>
+                      </Link>
+                    )}
+                    <ResponsiveActionMenu
+                      {...actionMenuProps}
+                      items={buildThreadActionItems({
+                        onRename: () => handleStartEdit(thread),
+                        onRemove: () => setPendingRemoveId(thread.id),
+                        renameLabel: t('editThreadTitleAria'),
+                        removeLabel: t('removeThread'),
+                      })}
+                      sheetId={`agent-thread-actions-${thread.id}`}
+                      sheetTitle={title}
+                    />
+                  </li>
+                )
+              })}
+            </ul>
+
+            <div className="-mx-4 hidden w-[calc(100%+2rem)] border-y lg:mx-0 lg:block lg:w-full lg:rounded-md lg:border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('threadColumn')}</TableHead>
+                    <TableHead>{t('salesReportColumn')}</TableHead>
+                    <TableHead className="w-28 text-right">{t('actionsColumn')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visibleThreads.map((thread) => (
+                    <TableRow key={thread.id}>
+                      <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
+                        <AgentThreadTitleEditor {...titleEditorProps(thread, false)} />
+                      </TableCell>
+                      <TableCell className="max-w-[min(100%,16rem)] truncate text-muted-foreground">
+                        {threadSalesReportLabel(thread)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <ResponsiveActionMenu
+                          {...actionMenuProps}
+                          items={buildThreadActionItems({
+                            onRename: () => handleStartEdit(thread),
+                            onRemove: () => setPendingRemoveId(thread.id),
+                            renameLabel: t('editThreadTitleAria'),
+                            removeLabel: t('removeThread'),
+                          })}
+                          sheetId={`agent-thread-actions-desktop-${thread.id}`}
+                          sheetTitle={threadDisplayTitle(thread)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </section>
 

@@ -38,7 +38,7 @@ export function LocationSelect({
   const descriptionId = description ? `${selectId}-description` : undefined
 
   return (
-    <Field className={cn('max-w-xs space-y-2', className)}>
+    <Field className={cn('flex max-w-xs flex-col gap-2', className)}>
       {label ? <FieldLabel htmlFor={selectId}>{label}</FieldLabel> : null}
       <Select
         value={locationId !== null ? String(locationId) : undefined}

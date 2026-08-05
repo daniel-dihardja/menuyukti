@@ -104,7 +104,7 @@ export function PairLiftMatrixCard({ locationId, analyticsRunId }: PairLiftMatri
       {usedFallbackRun ? (
         <p className="text-muted-foreground text-xs">{t('fallbackRunHint')}</p>
       ) : null}
-      <div className="overflow-x-auto">
+      <div className="min-w-0 overflow-x-auto [mask-image:linear-gradient(to_right,black_calc(100%-1.25rem),transparent)] sm:[mask-image:none]">
         <HeatmapMatrixEmbeddedPlain
           columnLabels={focusMenus}
           density="compact"

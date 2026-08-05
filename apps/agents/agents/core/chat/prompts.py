@@ -18,7 +18,10 @@ Use `get_chart_data(chart_id)` with one of these ids (do not invent ids):
 (orders, demand index). Primary source for posting frequency and best timing (`schedule`).
 - `menu_item_heatmap` — **Menu item heatmap**: which dishes sell when \
 (weekly/daily peaks; summary, not raw hourly grids). Primary source for which menus to \
-feature; combine with venue slot strength and pair lift when planning.
+feature; combine with venue slot strength and pair lift when planning. Use the main \
+ranked list for evergreen portfolio items (star / plow horse / puzzle). Use \
+**Daily highlights** for strong same-day volume. Use **Day specialties** for \
+limited-availability or single-day favorites (even if BCG low_end).
 - `pair_lift_matrix_heatmap` — **Pair lift matrix**: co-purchase lift between focus \
 menu items. Primary source for interesting menu combos.
 """
@@ -239,10 +242,29 @@ to decide timing and content; do not dump full chart payloads into the user repl
   slots are strong or weak.
 - **Menu item heatmap** (`menu_item_heatmap`): which menus to feature and when they sell.
   Call it when choosing dishes; combine with venue slot strength and pair lift as needed.
+  Use the main ranked list for evergreen portfolio items (star / plow horse / puzzle). Use
+  **Daily highlights** for strong same-day volume. Use **Day specialties** for
+  limited-availability or single-day favorites (even if BCG low_end).
 - **Pair lift matrix** (`pair_lift_matrix_heatmap`): interesting menu combos / co-purchase
   pairings. Call it when suggesting combos, multi-item captions, or pairing angles.
 
 For Instagram planning, load the relevant chart(s) before guessing from general knowledge.
+
+## Weekly schedule presentation
+
+Use `present_weekly_instagram_schedule` **only** when the user wants a day-by-day Instagram
+schedule (a full week or a multi-day slot list). Ground in charts when available, then call
+the tool with one entry **per posting slot**. If the same weekday needs multiple posts or
+stories (e.g. Monday story at 8:00 AM and Monday feed post at 1:00 PM), emit **separate
+entries that repeat that weekday** — do not merge them into one day row. Fewer than 7
+entries is fine for a partial week; more than 7 is fine when days have multiple slots.
+Each entry must set separate fields: **time** (clock time only, e.g. `8:00 AM`), **format**,
+**menu_items**, **caption_angle** (creative angle only — never include the posting time
+here), and **why**. Do **not** write multi-column markdown tables for that schedule — the UI
+renders it from the tool. Keep surrounding reply text short (brief intro only).
+
+Do **not** call the tool for open-ended advice, single-post or single-day ideas, caption
+variants, critiques, or general cadence guidance — answer those in normal markdown instead.
 
 {chart_catalog_block}
 ## Location

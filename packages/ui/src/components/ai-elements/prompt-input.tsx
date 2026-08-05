@@ -773,7 +773,7 @@ export const PromptInputTextarea = ({
   onChange,
   onKeyDown,
   className,
-  placeholder = 'What would you like to know?',
+  placeholder = 'What would you like to know…?',
   ...props
 }: PromptInputTextareaProps) => {
   const controller = useOptionalPromptInputController()
@@ -927,6 +927,13 @@ export const PromptInputButton = ({
 }: PromptInputButtonProps) => {
   const newSize = size ?? (Children.count(props.children) > 1 ? 'sm' : 'icon-sm')
 
+  const tooltipLabel =
+    typeof tooltip === 'string'
+      ? tooltip
+      : tooltip && typeof tooltip.content === 'string'
+        ? tooltip.content
+        : undefined
+
   const button = (
     <InputGroupButton
       className={cn(className)}
@@ -934,6 +941,7 @@ export const PromptInputButton = ({
       type="button"
       variant={variant}
       {...props}
+      aria-label={props['aria-label'] ?? tooltipLabel}
     />
   )
 
@@ -969,8 +977,12 @@ export const PromptInputActionMenuTrigger = ({
   ...props
 }: PromptInputActionMenuTriggerProps) => (
   <DropdownMenuTrigger asChild>
-    <PromptInputButton className={className} {...props}>
-      {children ?? <PlusIcon className="size-4" />}
+    <PromptInputButton
+      className={className}
+      {...props}
+      aria-label={props['aria-label'] ?? 'Add attachment'}
+    >
+      {children ?? <PlusIcon className="size-4" aria-hidden />}
     </PromptInputButton>
   </DropdownMenuTrigger>
 )
@@ -1129,7 +1141,10 @@ export type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>
 export const PromptInputTabLabel = ({ className, ...props }: PromptInputTabLabelProps) => (
   // Content provided via children in props
   // oxlint-disable-next-line eslint-plugin-jsx-a11y(heading-has-content)
-  <h3 className={cn('mb-2 px-3 font-medium text-muted-foreground text-xs', className)} {...props} />
+  <h3
+    className={cn('mb-2 px-3 text-balance font-medium text-muted-foreground text-xs', className)}
+    {...props}
+  />
 )
 
 export type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>

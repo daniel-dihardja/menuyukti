@@ -34,6 +34,11 @@ CHART_TITLES: dict[ChartId, str] = {
 }
 
 MENU_HEATMAP_CHAT_TOP_N = 25
+DAILY_HIGHLIGHTS_TOP_N = 3
+DAY_SPECIALTY_MIN_SHARE = 0.7
+DAY_SPECIALTY_MIN_UNITS = 10
+DAY_SPECIALTY_MAX_N = 15
+WEEKDAY_ORDER: tuple[str, ...] = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 # When menu-engineering matrix data exists, chat heatmaps keep only these BCG roles.
 HEATMAP_MATRIX_CHAT_CATEGORIES: frozenset[str] = frozenset({"star", "plow_horse", "puzzle"})
 _DEFAULT_DAILY_START_HOUR = 8
@@ -126,6 +131,183 @@ def _weekly_total(item: dict[str, Any]) -> int:
     return sum(_as_int(cell.get("quantity")) for cell in weekly if isinstance(cell, dict))
 
 
+def _normalize_weekday(raw: Any) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    value = raw.strip().lower()
+    if not value:
+        return None
+    short = value[:3]
+    if short in WEEKDAY_ORDER:
+        return short
+    return None
+
+
+def weekday_quantity(item: dict[str, Any], day: str) -> int:
+    """Quantity sold on a normalized weekday (``mon``…``sun``) from ``weeklyHeatmap``."""
+    target = _normalize_weekday(day)
+    if target is None:
+        return 0
+    weekly = item.get("weeklyHeatmap")
+    if not isinstance(weekly, list):
+        return 0
+    total = 0
+    for cell in weekly:
+        if not isinstance(cell, dict):
+            continue
+        if _normalize_weekday(cell.get("day")) == target:
+            total += _as_int(cell.get("quantity"))
+    return total
+
+
+def day_specialty(
+    item: dict[str, Any],
+    *,
+    min_share: float = DAY_SPECIALTY_MIN_SHARE,
+    min_units: int = DAY_SPECIALTY_MIN_UNITS,
+) -> tuple[str, int, int, float] | None:
+    """Return ``(day, peak_qty, weekly_total, share)`` when concentrated on one weekday."""
+    weekly_total = _weekly_total(item)
+    if weekly_total <= 0:
+        return None
+    best_day: str | None = None
+    best_qty = 0
+    for day in WEEKDAY_ORDER:
+        qty = weekday_quantity(item, day)
+        if qty > best_qty:
+            best_qty = qty
+            best_day = day
+    if best_day is None or best_qty < min_units:
+        return None
+    share = best_qty / weekly_total
+    if share < min_share:
+        return None
+    return best_day, best_qty, weekly_total, share
+
+
+def find_day_specialties(
+    heatmaps: list[dict[str, Any]],
+    *,
+    min_share: float = DAY_SPECIALTY_MIN_SHARE,
+    min_units: int = DAY_SPECIALTY_MIN_UNITS,
+    max_n: int = DAY_SPECIALTY_MAX_N,
+) -> list[dict[str, Any]]:
+    """Menus whose weekly volume is concentrated on one weekday (includes ``low_end``)."""
+    found: list[dict[str, Any]] = []
+    for item in heatmaps:
+        menu_raw = item.get("menu")
+        if not isinstance(menu_raw, str):
+            continue
+        menu = menu_raw.strip()
+        if not menu:
+            continue
+        result = day_specialty(item, min_share=min_share, min_units=min_units)
+        if result is None:
+            continue
+        day, units, weekly_total, share = result
+        found.append(
+            {
+                "menu": menu,
+                "day": day,
+                "units": units,
+                "weekly_total": weekly_total,
+                "share": share,
+            }
+        )
+    found.sort(key=lambda row: (-_as_int(row["units"]), str(row["menu"])))
+    return found[:max_n]
+
+
+def format_day_specialties(
+    specialties: list[dict[str, Any]],
+    category_by_menu: dict[str, str] | None = None,
+) -> str:
+    if not specialties:
+        return ""
+    category_map = category_by_menu or {}
+    lines = ["### Day specialties"]
+    for row in specialties:
+        menu = str(row.get("menu") or "Unknown")
+        day = str(row.get("day") or "unknown")
+        units = _as_int(row.get("units"))
+        share = _as_float(row.get("share"))
+        share_pct = int(round(share * 100))
+        role = category_map.get(menu)
+        role_part = f" ({role})" if role else ""
+        lines.append(f"- **{menu}**{role_part}: {day}, {units} units ({share_pct}% of weekly)")
+    return "\n".join(lines)
+
+
+def format_daily_highlights(
+    heatmaps: list[dict[str, Any]],
+    category_by_menu: dict[str, str] | None = None,
+    *,
+    top_n: int = DAILY_HIGHLIGHTS_TOP_N,
+    specialties: list[dict[str, Any]] | None = None,
+) -> str:
+    """Top dishes per weekday from unfiltered heatmaps (includes ``low_end``).
+
+    Appends day specialties for each weekday when missing from the absolute top-N.
+    Returns an empty string when no weekday has positive quantity.
+    """
+    if not heatmaps or top_n <= 0:
+        return ""
+
+    category_map = category_by_menu or {}
+    specialties_by_day: dict[str, list[dict[str, Any]]] = {day: [] for day in WEEKDAY_ORDER}
+    for row in specialties or []:
+        day = _normalize_weekday(row.get("day"))
+        if day is None:
+            continue
+        specialties_by_day[day].append(row)
+
+    day_lines: list[str] = []
+
+    for day in WEEKDAY_ORDER:
+        ranked: list[tuple[int, str]] = []
+        for item in heatmaps:
+            menu_raw = item.get("menu")
+            if not isinstance(menu_raw, str):
+                continue
+            menu = menu_raw.strip()
+            if not menu:
+                continue
+            qty = weekday_quantity(item, day)
+            if qty <= 0:
+                continue
+            ranked.append((qty, menu))
+        if not ranked and not specialties_by_day[day]:
+            continue
+        ranked.sort(key=lambda pair: (-pair[0], pair[1]))
+        parts: list[str] = []
+        seen: set[str] = set()
+        for qty, menu in ranked[:top_n]:
+            seen.add(menu)
+            role = category_map.get(menu)
+            if role:
+                parts.append(f"{menu} ({role}, {qty} units)")
+            else:
+                parts.append(f"{menu} ({qty} units)")
+        for row in specialties_by_day[day]:
+            menu = str(row.get("menu") or "").strip()
+            if not menu or menu in seen:
+                continue
+            units = _as_int(row.get("units"))
+            role = category_map.get(menu)
+            if role:
+                parts.append(f"{menu} ({role}, {units} units, day specialty)")
+            else:
+                parts.append(f"{menu} ({units} units, day specialty)")
+            seen.add(menu)
+        if not parts:
+            continue
+        day_lines.append(f"- **{day}:** {', '.join(parts)}")
+
+    if not day_lines:
+        return ""
+    return "\n".join(["### Daily highlights", *day_lines])
+
+
 def _peak_weekly_day(item: dict[str, Any]) -> tuple[str, int] | None:
     weekly = item.get("weeklyHeatmap")
     if not isinstance(weekly, list) or not weekly:
@@ -215,14 +397,38 @@ def format_menu_heatmap_summary(
     daily_end_hour: int | None = None,
     matrix_category_by_menu_map: dict[str, str] | None = None,
     matrix_filter_applied: bool = False,
+    all_heatmaps_for_daily_highlights: list[dict[str, Any]] | None = None,
 ) -> str:
+    category_map = matrix_category_by_menu_map or {}
+    highlights_source = (
+        all_heatmaps_for_daily_highlights
+        if all_heatmaps_for_daily_highlights is not None
+        else items
+    )
+    specialties = find_day_specialties(highlights_source)
+    highlights = format_daily_highlights(
+        highlights_source,
+        category_map,
+        specialties=specialties,
+    )
+    specialties_section = format_day_specialties(specialties, category_map)
+
+    def _append_sections(body: str) -> str:
+        parts = [body] if body else []
+        if highlights:
+            parts.append(highlights)
+        if specialties_section:
+            parts.append(specialties_section)
+        return "\n\n".join(parts)
+
     if not items:
+        if highlights or specialties_section:
+            return _append_sections("")
         return "(no menu heatmap data)"
 
     sorted_items = sorted(items, key=_weekly_total, reverse=True)
     top = sorted_items[:MENU_HEATMAP_CHAT_TOP_N]
     omitted = len(sorted_items) - len(top)
-    category_map = matrix_category_by_menu_map or {}
 
     lines: list[str] = []
     if daily_start_hour is not None and daily_end_hour is not None:
@@ -260,7 +466,7 @@ def format_menu_heatmap_summary(
             "menu items; hourly breakdown omitted.)*"
         )
 
-    return "\n".join(lines)
+    return _append_sections("\n".join(lines))
 
 
 def format_chart_markdown_section(
@@ -281,6 +487,10 @@ def format_chart_markdown_section(
     elif chart_id == "menu_item_heatmap":
         items_raw = payload.get("menuHeatmaps")
         items = items_raw if isinstance(items_raw, list) else []
+        all_raw = payload.get("allMenuHeatmaps")
+        all_items = (
+            [i for i in all_raw if isinstance(i, dict)] if isinstance(all_raw, list) else None
+        )
         start = payload.get("dailyStartHour")
         end = payload.get("dailyEndHour")
         category_map_raw = payload.get("matrixCategoryByMenu")
@@ -296,6 +506,7 @@ def format_chart_markdown_section(
                 daily_end_hour=_as_int(end) if end is not None else None,
                 matrix_category_by_menu_map=category_map,
                 matrix_filter_applied=bool(payload.get("matrixFilterApplied")),
+                all_heatmaps_for_daily_highlights=all_items,
             )
         )
     else:
@@ -521,6 +732,7 @@ async def load_chart_data_markdown(
             )
             return {
                 "menuHeatmaps": filtered,
+                "allMenuHeatmaps": items,
                 "dailyStartHour": start,
                 "dailyEndHour": end,
                 "matrixCategoryByMenu": category_map,

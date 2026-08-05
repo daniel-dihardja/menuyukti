@@ -282,6 +282,14 @@ def _tool_call_id_from_call(tool_call: object) -> str | None:
     return raw.strip() if isinstance(raw, str) and raw.strip() else None
 
 
+def _tool_call_args(tool_call: object) -> dict[str, Any]:
+    if isinstance(tool_call, dict):
+        args = tool_call.get("args")
+        return args if isinstance(args, dict) else {}
+    args = getattr(tool_call, "args", None)
+    return args if isinstance(args, dict) else {}
+
+
 def _tool_message_output(msg: ToolMessage) -> str:
     content = getattr(msg, "content", None)
     if isinstance(content, str):
@@ -296,8 +304,12 @@ def _tool_message_output(msg: ToolMessage) -> str:
 
 def _tool_events_from_update(
     update: object,
-) -> Iterator[tuple[str, str, str | None, str | None]]:
-    """Yield (tool_start|tool_end, tool_name, optional output, optional tool_call_id)."""
+) -> Iterator[tuple[str, str, str | None, str | None, dict[str, Any] | None]]:
+    """Yield (tool_start|tool_end, tool_name, output, tool_call_id, tool_input).
+
+    ``tool_input`` is the model tool-call args on ``tool_start`` (for generative UI);
+    ``None`` on ``tool_end``.
+    """
     if not isinstance(update, dict):
         return
     for state_delta in update.values():
@@ -309,7 +321,13 @@ def _tool_events_from_update(
                 for tool_call in msg.tool_calls or []:
                     name = _tool_name_from_call(tool_call)
                     if name:
-                        yield ("tool_start", name, None, _tool_call_id_from_call(tool_call))
+                        yield (
+                            "tool_start",
+                            name,
+                            None,
+                            _tool_call_id_from_call(tool_call),
+                            _tool_call_args(tool_call),
+                        )
             elif isinstance(msg, ToolMessage):
                 name = getattr(msg, "name", None)
                 tool_name = name if isinstance(name, str) and name else "tool"
@@ -317,7 +335,7 @@ def _tool_events_from_update(
                 tool_call_id = (
                     raw_id.strip() if isinstance(raw_id, str) and raw_id.strip() else None
                 )
-                yield ("tool_end", tool_name, _tool_message_output(msg), tool_call_id)
+                yield ("tool_end", tool_name, _tool_message_output(msg), tool_call_id, None)
 
 
 def _is_assistant_stream_chunk(msg_chunk: object) -> bool:
@@ -347,10 +365,14 @@ async def _stream_chat_events(
                 if text:
                     yield _sse_data_line({"token": text})
             elif mode == "updates":
-                for status, tool_name, output, tool_call_id in _tool_events_from_update(chunk):
+                for status, tool_name, output, tool_call_id, tool_input in _tool_events_from_update(
+                    chunk
+                ):
                     payload: dict[str, Any] = {"status": status, "tool": tool_name}
                     if tool_call_id:
                         payload["tool_call_id"] = tool_call_id
+                    if status == "tool_start" and tool_input is not None:
+                        payload["input"] = tool_input
                     if status == "tool_end" and output is not None:
                         payload["output"] = output
                     yield _sse_data_line(payload)

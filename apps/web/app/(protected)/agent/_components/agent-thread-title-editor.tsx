@@ -7,6 +7,7 @@ import { Check, Pencil } from 'lucide-react'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
+import { cn } from '@workspace/ui/lib/utils'
 
 type AgentThreadTitleEditorProps = {
   threadId: string
@@ -21,6 +22,10 @@ type AgentThreadTitleEditorProps = {
   editTitleAria: string
   saveTitleAria: string
   titleLabel: string
+  /** Larger touch targets for compact layouts. */
+  compactTouch?: boolean
+  /** Hide the pencil when rename is available via an action menu. */
+  hideEditButton?: boolean
 }
 
 export function AgentThreadTitleEditor({
@@ -36,6 +41,8 @@ export function AgentThreadTitleEditor({
   editTitleAria,
   saveTitleAria,
   titleLabel,
+  compactTouch = false,
+  hideEditButton = false,
 }: AgentThreadTitleEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -61,8 +68,9 @@ export function AgentThreadTitleEditor({
         />
         <Button
           aria-label={saveTitleAria}
+          className={cn(compactTouch && 'size-11 touch-manipulation')}
           onClick={onSaveEdit}
-          size="icon-sm"
+          size={compactTouch ? 'icon' : 'icon-sm'}
           type="button"
           variant="secondary"
         >
@@ -81,16 +89,18 @@ export function AgentThreadTitleEditor({
       >
         {displayTitle}
       </Link>
-      <Button
-        aria-label={editTitleAria}
-        className="shrink-0"
-        onClick={onStartEdit}
-        size="icon-sm"
-        type="button"
-        variant="ghost"
-      >
-        <Pencil aria-hidden />
-      </Button>
+      {hideEditButton ? null : (
+        <Button
+          aria-label={editTitleAria}
+          className={cn('shrink-0', compactTouch && 'size-11 touch-manipulation')}
+          onClick={onStartEdit}
+          size={compactTouch ? 'icon' : 'icon-sm'}
+          type="button"
+          variant="ghost"
+        >
+          <Pencil aria-hidden />
+        </Button>
+      )}
     </div>
   )
 }

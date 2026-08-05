@@ -90,7 +90,7 @@ export function LandingFeatureSpotlight({
             <ul className="mt-8 flex flex-col gap-5">
               {bullets.map((bullet) => (
                 <li key={bullet.title} className="min-w-0">
-                  <h3 className="text-base font-semibold leading-snug md:text-lg">
+                  <h3 className="text-balance text-base font-semibold leading-snug md:text-lg">
                     {bullet.title}
                   </h3>
                   <p className="mt-1 text-pretty text-base leading-relaxed text-muted-foreground">

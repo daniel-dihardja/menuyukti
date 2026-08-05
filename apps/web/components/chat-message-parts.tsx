@@ -34,7 +34,9 @@ import {
   stripDuplicateGeneratedImageMarkdown,
 } from '@/lib/chat/strip-duplicate-generated-image-markdown'
 import { isChatVisualizationId, type ChatVisualizationId } from '@/lib/chat/visualization-ids'
+import { parseWeeklyInstagramScheduleFromToolPart } from '@/lib/chat/weekly-instagram-schedule'
 import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
+import { WeeklyInstagramScheduleCard } from '@/components/chat/weekly-instagram-schedule-card'
 
 function resolveToolName(part: ToolUIPart<UITools> | DynamicToolUIPart): string {
   if (part.type === 'dynamic-tool') {
@@ -186,6 +188,35 @@ function GetChartDataToolBlock({ part }: { part: ToolUIPart<UITools> | DynamicTo
   return <CompactToolStatus status={status} message={message} />
 }
 
+function PresentWeeklyInstagramScheduleToolBlock({
+  part,
+}: {
+  part: ToolUIPart<UITools> | DynamicToolUIPart
+}) {
+  const t = useTranslations('chatTools.presentWeeklyInstagramSchedule')
+  const status = toolPartStatus(part)
+  const schedule = parseWeeklyInstagramScheduleFromToolPart({
+    input: 'input' in part ? part.input : undefined,
+    output: 'output' in part ? part.output : undefined,
+  })
+
+  // Keep a spinner until the tool finishes — do not flash a partial Plan card
+  // while args are still streaming.
+  if (status === 'running') {
+    return <CompactToolStatus status="running" message={t('running')} />
+  }
+
+  if (toolOutputLooksLikeError(part) && !schedule) {
+    return <CompactToolStatus status="error" message={t('error')} />
+  }
+
+  if (schedule) {
+    return <WeeklyInstagramScheduleCard schedule={schedule} />
+  }
+
+  return <CompactToolStatus status="error" message={t('error')} />
+}
+
 const COMPACT_TOOL_I18N = {
   get_location_data: 'getLocationData',
   save_story_asset: 'saveStoryAsset',
@@ -291,6 +322,9 @@ const TOOL_BLOCK_REGISTRY: Record<string, (props: ToolBlockProps) => ReactNode> 
   search_web: ({ part }) => <SearchWebToolBlock part={part} />,
   generate_instagram_post_image: ({ part }) => <GenerateInstagramPostImageToolBlock part={part} />,
   get_chart_data: ({ part }) => <GetChartDataToolBlock part={part} />,
+  present_weekly_instagram_schedule: ({ part }) => (
+    <PresentWeeklyInstagramScheduleToolBlock part={part} />
+  ),
   request_story_generate_confirmation: ({ part, storyGenerateConfirmation }) => {
     // Omit confirmation prop → don't render this tool UI (e.g. generate already ran).
     if (!storyGenerateConfirmation) return null

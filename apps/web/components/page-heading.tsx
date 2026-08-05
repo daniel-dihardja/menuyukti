@@ -17,9 +17,13 @@ export function PageHeading({
 }: PageHeadingProps) {
   return (
     <header className={cn('flex flex-col gap-1', className)}>
-      <h1 className={cn('text-2xl font-semibold', titleClassName)}>{title}</h1>
+      <h1 className={cn('text-pretty text-2xl font-semibold tracking-tight', titleClassName)}>
+        {title}
+      </h1>
       {description ? (
-        <p className={cn('text-sm text-muted-foreground', descriptionClassName)}>{description}</p>
+        <p className={cn('text-pretty text-sm text-muted-foreground', descriptionClassName)}>
+          {description}
+        </p>
       ) : null}
     </header>
   )

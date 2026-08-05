@@ -101,7 +101,7 @@ export function PostCreatorFormatControls({
               >
                 <FormatPreviewFrame format={formatId} />
                 <span className="leading-tight">{name}</span>
-                <span className="text-[10px] leading-none opacity-70">{ratio}</span>
+                <span className="text-xs leading-none opacity-70">{ratio}</span>
               </ToggleGroupItem>
             )
           })}

@@ -59,8 +59,10 @@ export const ConversationEmptyState = ({
       <>
         {icon && <div className="text-muted-foreground">{icon}</div>}
         <div className="space-y-1">
-          <h3 className="font-medium text-sm">{title}</h3>
-          {description && <p className="text-muted-foreground text-sm">{description}</p>}
+          <h3 className="text-balance font-medium text-sm">{title}</h3>
+          {description && (
+            <p className="text-pretty text-muted-foreground text-sm">{description}</p>
+          )}
         </div>
       </>
     )}
@@ -90,7 +92,7 @@ export const ConversationScrollButton = ({
         aria-label="Scroll to latest message"
         {...props}
       >
-        <ArrowDownIcon className="size-4" />
+        <ArrowDownIcon className="size-4" aria-hidden />
       </Button>
     )
   )
@@ -148,7 +150,7 @@ export const ConversationDownload = ({
       aria-label="Download conversation"
       {...props}
     >
-      {children ?? <DownloadIcon className="size-4" />}
+      {children ?? <DownloadIcon className="size-4" aria-hidden />}
     </Button>
   )
 }
