@@ -13,6 +13,7 @@ import {
   removeAgentThread,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
+import { resolveAnalyticsRunName } from '@/lib/chat/resolve-analytics-run-name'
 import { routes } from '@/lib/routes'
 import {
   AlertDialog,
@@ -146,6 +147,20 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     return threads.filter((t) => t.locationId === locationId)
   }, [threads, locationId])
 
+  const salesReportFallbacks = useMemo(
+    () => ({
+      none: t('noSalesReport'),
+      unavailable: t('salesReportUnavailable'),
+    }),
+    [t],
+  )
+
+  const threadSalesReportLabel = useCallback(
+    (thread: AgentThreadRecord) =>
+      resolveAnalyticsRunName(analyticsRuns, thread.analyticsRunId, salesReportFallbacks),
+    [analyticsRuns, salesReportFallbacks],
+  )
+
   const handleNewChat = useCallback(() => {
     if (locationId === null) return
     const record = createAgentThread({
@@ -256,6 +271,7 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('threadColumn')}</TableHead>
+                  <TableHead>{t('salesReportColumn')}</TableHead>
                   <TableHead className="w-28 text-right">{t('actionsColumn')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -277,6 +293,9 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
                         saveTitleAria={t('saveThreadTitleAria')}
                         titleLabel={t('threadTitleLabel')}
                       />
+                    </TableCell>
+                    <TableCell className="max-w-[min(100%,16rem)] truncate text-muted-foreground">
+                      {threadSalesReportLabel(thread)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
