@@ -1,13 +1,24 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { BarChart3 } from 'lucide-react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
+import { Button } from '@workspace/ui/components/button'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@workspace/ui/components/drawer'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { useCompactLayout } from '@/hooks/use-desktop-layout'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 
 import { ChatPane } from '@/components/chat/chat-pane'
@@ -38,7 +49,7 @@ function ChatOnlyPanel() {
   )
 }
 
-function ChatSidePanelAdminTabs() {
+function ChatSidePanelAdminDesktopTabs() {
   const t = useTranslations('chat.sidePanel')
   const [activeTab, setActiveTab] = useState<ChatSidePanelTab>('chat')
 
@@ -79,6 +90,71 @@ function ChatSidePanelAdminTabs() {
   )
 }
 
+function ChatSidePanelAdminCompact() {
+  const t = useTranslations('chat.sidePanel')
+  const [vizOpen, setVizOpen] = useState(false)
+  const openButtonRef = useRef<HTMLButtonElement>(null)
+
+  return (
+    <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
+      <ChatPane />
+      <Button
+        ref={openButtonRef}
+        aria-label={t('openVisualizationsAria')}
+        className="absolute top-3 right-3 z-10 size-11 touch-manipulation shadow-sm"
+        onClick={() => setVizOpen(true)}
+        size="icon"
+        type="button"
+        variant="outline"
+      >
+        <BarChart3 />
+      </Button>
+      <Drawer
+        onOpenChange={(open) => {
+          setVizOpen(open)
+          if (!open) {
+            openButtonRef.current?.focus()
+          }
+        }}
+        open={vizOpen}
+      >
+        <DrawerContent
+          className={cn(
+            'flex h-[min(92dvh,900px)] max-h-[min(92dvh,900px)] flex-col gap-0',
+            'pb-[max(0.5rem,env(safe-area-inset-bottom))]',
+            'overscroll-contain',
+          )}
+        >
+          <DrawerHeader className="shrink-0 gap-1 px-4 pt-1 pb-2 text-left">
+            <DrawerTitle className="text-sm">{t('visualizationsTab')}</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              {t('visualizationsDrawerDescription')}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {vizOpen ? <ChatVisualizationsPane /> : null}
+          </div>
+          <div className="shrink-0 border-t px-4 py-3">
+            <DrawerClose asChild>
+              <Button className="h-11 w-full touch-manipulation" type="button" variant="outline">
+                {t('closeVisualizations')}
+              </Button>
+            </DrawerClose>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  )
+}
+
+function ChatSidePanelAdmin() {
+  const compact = useCompactLayout()
+  if (compact) {
+    return <ChatSidePanelAdminCompact />
+  }
+  return <ChatSidePanelAdminDesktopTabs />
+}
+
 export function ChatSidePanel() {
   const { role, isLoaded } = useMenuyuktiRole()
   const showAdminTabs = isLoaded && isMenuyuktiAdmin(role)
@@ -87,5 +163,5 @@ export function ChatSidePanel() {
     return <ChatOnlyPanel />
   }
 
-  return <ChatSidePanelAdminTabs />
+  return <ChatSidePanelAdmin />
 }

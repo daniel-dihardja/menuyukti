@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl'
 import { Check, Pencil } from 'lucide-react'
 
 import { getAgentThread } from '@/lib/chat/agent-thread-registry'
+import { useCompactLayout } from '@/hooks/use-desktop-layout'
+import { useSalesReportLabel } from '@/hooks/use-sales-report-label'
 import { BreadcrumbPage } from '@workspace/ui/components/breadcrumb'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -22,17 +24,26 @@ type AgentThreadBreadcrumbTitleProps = {
 
 export function AgentThreadBreadcrumbTitle({ threadId }: AgentThreadBreadcrumbTitleProps) {
   const t = useTranslations('agentChat')
+  const compact = useCompactLayout()
   const [hydrated, setHydrated] = useState(false)
   const [storedTitle, setStoredTitle] = useState<string | null>(null)
+  const [locationId, setLocationId] = useState<number | null>(null)
+  const [analyticsRunId, setAnalyticsRunId] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const { editingId, draftTitle, editContainerRef, startEdit, saveEdit, setDraftTitle } =
     useAgentThreadTitleEdit()
 
   const editing = editingId === threadId
+  const salesReportLabel = useSalesReportLabel(
+    compact && hydrated ? locationId : null,
+    analyticsRunId,
+  )
 
   useEffect(() => {
     const record = getAgentThread(threadId)
     setStoredTitle(record?.title ?? null)
+    setLocationId(record?.locationId ?? null)
+    setAnalyticsRunId(record?.analyticsRunId ?? null)
     setHydrated(true)
   }, [threadId])
 
@@ -94,12 +105,22 @@ export function AgentThreadBreadcrumbTitle({ threadId }: AgentThreadBreadcrumbTi
 
   return (
     <div className="flex min-w-0 items-center gap-1">
-      <BreadcrumbPage
-        className="max-w-[120px] truncate sm:max-w-[160px] lg:max-w-[min(100%,24rem)]"
-        title={displayTitle}
-      >
-        {displayTitle}
-      </BreadcrumbPage>
+      <div className="min-w-0">
+        <BreadcrumbPage
+          className="max-w-[120px] truncate sm:max-w-[160px] lg:max-w-[min(100%,24rem)]"
+          title={displayTitle}
+        >
+          {displayTitle}
+        </BreadcrumbPage>
+        {compact ? (
+          <p
+            className="max-w-[140px] truncate text-muted-foreground text-xs sm:max-w-[180px]"
+            title={`${t('salesReportDetailLabel')}: ${salesReportLabel}`}
+          >
+            {salesReportLabel}
+          </p>
+        ) : null}
+      </div>
       <Button
         aria-label={t('editThreadTitleAria')}
         className="shrink-0"

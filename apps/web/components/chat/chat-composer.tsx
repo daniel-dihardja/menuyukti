@@ -53,6 +53,7 @@ import {
   gatewayModelToMessageKey,
   type ChatGatewayModelId,
 } from '@/lib/chat/gateway-chat-models'
+import { CHAT_MODE_IDS, type ChatModeId } from '@/lib/chat/chat-modes'
 import {
   getLeonardoPostModelMessageKey,
   LEONARDO_POST_MODEL_IDS,
@@ -64,7 +65,10 @@ import {
   useChatMessages,
 } from '@/components/chat/chat-context'
 import { ChatComposerMenus } from '@/components/chat/chat-composer-menus'
-import { CHAT_MOBILE_ARTIFACT_ID } from '@/components/chat/chat-mobile-artifact-sheet'
+import {
+  CHAT_MOBILE_ARTIFACT_ID,
+  CHAT_MOBILE_ARTIFACT_OPEN_ID,
+} from '@/components/chat/chat-mobile-artifact-sheet'
 import { ChatSavedStoryAssetsStrip } from '@/components/chat/chat-saved-story-assets-strip'
 import { useChatMobileArtifact } from '@/components/chat/chat-mobile-artifact-context'
 import { useCompactLayout } from '@/hooks/use-desktop-layout'
@@ -103,7 +107,7 @@ function ChatAttachmentStrip() {
     <Attachments className="ml-0 w-full justify-start px-3 pt-3" variant="grid">
       {items.map((item) => (
         <Attachment
-          className="size-20 lg:size-32"
+          className="size-16 lg:size-32"
           data={item.data}
           key={item.id}
           onRemove={item.onRemove}
@@ -154,6 +158,7 @@ function ChatMobilePreviewOpenButton({ compact }: { compact: boolean }) {
       aria-controls={CHAT_MOBILE_ARTIFACT_ID}
       aria-label={t('mobileArtifactOpenAriaLabel')}
       className={cn('shrink-0 text-muted-foreground', compact && COMPACT_ICON_BUTTON_CLASS)}
+      id={CHAT_MOBILE_ARTIFACT_OPEN_ID}
       onClick={mobileArtifact.openArtifact}
       tooltip={mobileArtifact.hint ?? t('mobileArtifactEmptyHint')}
       type="button"
@@ -203,6 +208,8 @@ function ChatClearConfirmDialog({
 function ChatModelOverflowMenu({
   compact,
   disabled,
+  chatMode,
+  onChatModeChange,
   selectedChatModel,
   onChatModelChange,
   onRequestClear,
@@ -210,6 +217,8 @@ function ChatModelOverflowMenu({
 }: {
   compact: boolean
   disabled: boolean
+  chatMode: ChatModeId
+  onChatModeChange: (id: ChatModeId) => void
   selectedChatModel: ChatGatewayModelId
   onChatModelChange: (id: ChatGatewayModelId) => void
   onRequestClear: () => void
@@ -219,6 +228,7 @@ function ChatModelOverflowMenu({
   }
 }) {
   const t = useTranslations('chat')
+  const tModes = useTranslations('chat.modes')
   const tGateway = useTranslations('chatGatewayModels')
   const tLeonardo = useTranslations('postCreator.prompt')
 
@@ -238,6 +248,22 @@ function ChatModelOverflowMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-52">
         <DropdownMenuGroup>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>{tModes('ariaLabel')}</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuLabel>{tModes('ariaLabel')}</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                onValueChange={(v) => onChatModeChange(v as ChatModeId)}
+                value={chatMode}
+              >
+                {CHAT_MODE_IDS.map((id) => (
+                  <DropdownMenuRadioItem key={id} value={id}>
+                    {tModes(id)}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>{tGateway('ariaLabel')}</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
@@ -314,7 +340,7 @@ function ChatComposerFrame({
   } = useChatActions()
 
   return (
-    <div className="shrink-0 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
+    <div className="shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
       <PromptInput
         accept="image/jpeg,image/png,image/webp,image/gif"
         globalDrop
@@ -337,6 +363,7 @@ function ChatComposerFrame({
         >
           <PromptInputBody>
             <PromptInputTextarea
+              className={cn(compact && 'min-h-12')}
               placeholder={placeholder}
               value={text}
               onChange={handleTextChange}
@@ -346,7 +373,9 @@ function ChatComposerFrame({
         <PromptInputFooter>
           <PromptInputTools>
             <ChatMobilePreviewOpenButton compact={compact} />
-            <ChatModeSelect disabled={isChatBusy} onValueChange={setChatMode} value={chatMode} />
+            {!compact ? (
+              <ChatModeSelect disabled={isChatBusy} onValueChange={setChatMode} value={chatMode} />
+            ) : null}
             {modelTools({
               compact,
               disabled: isChatBusy,
@@ -380,15 +409,17 @@ function GatewayAndClearTools({
   }
 }) {
   const t = useTranslations('chat')
-  const { selectedChatModel } = useChatComposerState()
-  const { setSelectedChatModel } = useChatActions()
+  const { selectedChatModel, chatMode } = useChatComposerState()
+  const { setSelectedChatModel, setChatMode } = useChatActions()
 
   if (compact) {
     return (
       <ChatModelOverflowMenu
+        chatMode={chatMode}
         compact={compact}
         disabled={disabled}
         generationModel={generationModel}
+        onChatModeChange={setChatMode}
         onChatModelChange={setSelectedChatModel}
         onRequestClear={onRequestClear}
         selectedChatModel={selectedChatModel}

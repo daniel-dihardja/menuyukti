@@ -2,18 +2,19 @@
 
 import dynamic from 'next/dynamic'
 import { notFound, useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
-import { fetchAnalyticsList, type AnalyticsRunListItem } from '@/lib/api/client-fetch'
 import {
   getAgentThread,
   isAgentThreadId,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
-import { resolveAnalyticsRunName } from '@/lib/chat/resolve-analytics-run-name'
 import { routes } from '@/lib/routes'
+import { useCompactLayout } from '@/hooks/use-desktop-layout'
+import { useSalesReportLabel } from '@/hooks/use-sales-report-label'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { ChatWorkspaceSkeleton } from '@/components/chat/chat-workspace-skeleton'
 
@@ -28,45 +29,17 @@ const AgentChatPanel = dynamic(
 function AgentThreadSalesReportStrip({
   locationId,
   analyticsRunId,
+  className,
 }: {
   locationId: number
   analyticsRunId: number | null
+  className?: string
 }) {
   const t = useTranslations('agentChat')
-  const [analyticsRuns, setAnalyticsRuns] = useState<AnalyticsRunListItem[] | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    setAnalyticsRuns(null)
-    void fetchAnalyticsList(locationId)
-      .then((runs) => {
-        if (cancelled) return
-        setAnalyticsRuns(runs)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setAnalyticsRuns([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [locationId])
-
-  const salesReportFallbacks = useMemo(
-    () => ({
-      none: t('noSalesReport'),
-      unavailable: t('salesReportUnavailable'),
-    }),
-    [t],
-  )
-
-  const salesReportLabel =
-    analyticsRuns === null
-      ? t('salesReportLoading')
-      : resolveAnalyticsRunName(analyticsRuns, analyticsRunId, salesReportFallbacks)
+  const salesReportLabel = useSalesReportLabel(locationId, analyticsRunId)
 
   return (
-    <p className="shrink-0 truncate text-muted-foreground text-sm">
+    <p className={cn('shrink-0 truncate text-muted-foreground text-sm', className)}>
       <span className="font-medium text-foreground">{t('salesReportDetailLabel')}:</span>{' '}
       <span title={salesReportLabel}>{salesReportLabel}</span>
     </p>
@@ -76,6 +49,7 @@ function AgentThreadSalesReportStrip({
 function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   const t = useTranslations('agentChat')
   const router = useRouter()
+  const compact = useCompactLayout()
   // Client-only gate: getAgentThread reads localStorage (unavailable during SSR).
   const [hydrated, setHydrated] = useState(false)
   useEffect(() => {
@@ -110,10 +84,12 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-      <AgentThreadSalesReportStrip
-        analyticsRunId={record.analyticsRunId}
-        locationId={record.locationId}
-      />
+      {!compact ? (
+        <AgentThreadSalesReportStrip
+          analyticsRunId={record.analyticsRunId}
+          locationId={record.locationId}
+        />
+      ) : null}
       <AgentChatPanel
         agentThreadId={record.id}
         analyticsRunId={record.analyticsRunId}

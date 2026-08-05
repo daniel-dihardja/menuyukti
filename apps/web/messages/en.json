@@ -76,6 +76,7 @@
       "menusLabel": "Feature",
       "captionLabel": "Caption",
       "whyLabel": "Why",
+      "expandDayAria": "Expand {day} details",
       "weekdays": {
         "monday": "Monday",
         "tuesday": "Tuesday",
@@ -3535,7 +3536,7 @@
     "clearChatConfirmCancel": "Cancel",
     "clearChatConfirmAction": "Clear chat",
     "composerMoreAriaLabel": "More chat options",
-    "composerMoreTooltip": "Models and clear chat",
+    "composerMoreTooltip": "Mode, models, and clear chat",
     "stopChatAriaLabel": "Stop generating",
     "submitChatAriaLabel": "Send message",
     "attachImageAriaLabel": "Attach image",
@@ -3543,6 +3544,7 @@
     "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
     "mobileArtifactOpenLabel": "Preview",
     "mobileArtifactOpenAriaLabel": "Open preview",
+    "mobileArtifactCloseAriaLabel": "Close preview",
     "mobileArtifactSheetTitle": "Preview",
     "mobileArtifactSheetDescription": "View generated Instagram image preview.",
     "mobileArtifactEmptyHint": "View generated content",
@@ -4254,7 +4256,10 @@
     },
     "sidePanel": {
       "chatTab": "Chat",
-      "visualizationsTab": "Visualizations"
+      "visualizationsTab": "Visualizations",
+      "openVisualizationsAria": "Open visualizations",
+      "visualizationsDrawerDescription": "Explore sales analytics charts alongside your chat.",
+      "closeVisualizations": "Close"
     },
     "visualizations": {
       "panelTitle": "Charts",
