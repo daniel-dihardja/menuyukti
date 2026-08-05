@@ -164,9 +164,53 @@
 }
 
 @layer utilities {
+  /**
+   * Semantic type roles (aligned with apps/mobile-app theme/tokens.ts):
+   * - type-body: 16px / lh 1.5 — long-form & readable content
+   * - type-chrome: 14px — dense SaaS UI (buttons, labels, descriptions)
+   * - type-caption: 12px — meta / secondary (readable UI floor)
+   * - type-label: 14px — form & control labels
+   * - type-page-title: 24px — protected-shell h1
+   * - type-section-title: 20px — section headings
+   * Hero display stays on .landing-hero-headline (fluid clamp).
+   */
+  .type-body {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .type-chrome {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .type-caption {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .type-label {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+  }
+
+  .type-page-title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  .type-section-title {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+  }
+
   .section-label {
     font-family: var(--font-mono), ui-monospace, monospace;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;

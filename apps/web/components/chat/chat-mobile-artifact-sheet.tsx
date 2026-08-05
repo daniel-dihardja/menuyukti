@@ -58,7 +58,7 @@ export function ChatMobileArtifactSheet({
         <DrawerHeader className="shrink-0 gap-1 px-4 pt-1 pb-2 text-left">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <DrawerTitle className="text-sm">{drawerTitle}</DrawerTitle>
+              <DrawerTitle className="truncate text-sm">{drawerTitle}</DrawerTitle>
               <DrawerDescription className="sr-only">
                 {t('mobileArtifactSheetDescription')}
               </DrawerDescription>
@@ -71,7 +71,7 @@ export function ChatMobileArtifactSheet({
                 type="button"
                 variant="ghost"
               >
-                <XIcon />
+                <XIcon aria-hidden />
               </Button>
             </DrawerClose>
           </div>

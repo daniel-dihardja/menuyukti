@@ -478,7 +478,7 @@ export function ChatComposerMenus({
                         {showCollectionMediaLoading ? (
                           <CommandGroup heading={mediaHeading}>
                             <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
-                              <Loader2 className="size-4 animate-spin" />
+                              <Loader2 className="size-4 animate-spin" aria-hidden />
                               {tMention('collectionLoading')}
                             </div>
                           </CommandGroup>
@@ -593,7 +593,7 @@ export function ChatComposerMenus({
                                   <span className="min-w-0 flex-1 truncate font-medium">
                                     {collection.name}
                                   </span>
-                                  <span className="shrink-0 text-muted-foreground text-xs">
+                                  <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
                                     {tMention('collectionMemberCount', {
                                       count: collection.memberCount,
                                     })}
@@ -606,7 +606,7 @@ export function ChatComposerMenus({
                         {showRootMediaLoading || collectionsLoading ? (
                           <CommandGroup heading={tMention('mediaGroup')}>
                             <div className="flex items-center gap-2 px-2 py-3 text-muted-foreground text-sm">
-                              <Loader2 className="size-4 animate-spin" />
+                              <Loader2 className="size-4 animate-spin" aria-hidden />
                               {tMention('mediaLoading')}
                             </div>
                           </CommandGroup>

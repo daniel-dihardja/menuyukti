@@ -1937,8 +1937,8 @@
       "chat": {
         "pageLoadingTitle": "Loading chat…",
         "pageTitle": "Chat #{id}",
-        "emptyTitle": "Campaign assistant",
-        "emptyDescription": "Ask about venue slot strength, menu heatmap, pair lift, and campaign planning — or switch to Story mode for Instagram Stories.",
+        "emptyTitle": "Instagram assistant",
+        "emptyDescription": "Ask about busy hours, bestsellers, what dishes sell well together, and campaign ideas — or switch to Image assistant to create images.",
         "waitHint": "Usually takes about 30 seconds.",
         "quickPrompts": {
           "weeklyPlan": {
@@ -3531,8 +3531,8 @@
   "chat": {
     "pageLoadingTitle": "Loading chat…",
     "pageTitle": "Chat #{id}",
-    "emptyTitle": "Campaign assistant",
-    "emptyDescription": "Ask about venue slot strength, menu heatmap, pair lift, and campaign planning — or switch to Story mode for Instagram Stories.",
+    "emptyTitle": "Instagram assistant",
+    "emptyDescription": "Ask about busy hours, bestsellers, what dishes sell well together, and campaign ideas — or switch to Image assistant to create images.",
     "waitHint": "Usually takes about 30 seconds.",
     "quickPrompts": {
       "weeklyPlan": {

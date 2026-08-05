@@ -67,10 +67,17 @@ export const MessageAction = ({
   size = 'icon-sm',
   ...props
 }: MessageActionProps) => {
+  const accessibleName = label || tooltip
   const button = (
-    <Button size={size} type="button" variant={variant} {...props}>
+    <Button
+      size={size}
+      type="button"
+      variant={variant}
+      {...props}
+      aria-label={props['aria-label'] ?? accessibleName}
+    >
       {children}
-      <span className="sr-only">{label || tooltip}</span>
+      {accessibleName ? <span className="sr-only">{accessibleName}</span> : null}
     </Button>
   )
 
@@ -226,7 +233,7 @@ export const MessageBranchPrevious = ({ children, ...props }: MessageBranchPrevi
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronLeftIcon size={14} />}
+      {children ?? <ChevronLeftIcon size={14} aria-hidden />}
     </Button>
   )
 }
@@ -246,7 +253,7 @@ export const MessageBranchNext = ({ children, ...props }: MessageBranchNextProps
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronRightIcon size={14} />}
+      {children ?? <ChevronRightIcon size={14} aria-hidden />}
     </Button>
   )
 }

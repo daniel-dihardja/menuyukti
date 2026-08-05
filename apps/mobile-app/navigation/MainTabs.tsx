@@ -31,7 +31,7 @@ export function MainTabs() {
         },
         tabBarLabelStyle: {
           fontFamily: fonts.sansMedium,
-          fontSize: 11,
+          fontSize: 12,
         },
         tabBarIcon: ({ color, size }) => {
           const name =

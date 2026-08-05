@@ -111,7 +111,7 @@ export function PostCreatorThumbnailsPane() {
             ) : (
               <div className="flex size-full flex-col items-center justify-center gap-1 bg-muted/30 p-1 text-muted-foreground">
                 <ImageIcon aria-hidden className="h-4 w-4" />
-                <span className="text-[10px] font-medium leading-none">{page.sortOrder + 1}</span>
+                <span className="text-xs font-medium leading-none">{page.sortOrder + 1}</span>
               </div>
             )}
           </button>

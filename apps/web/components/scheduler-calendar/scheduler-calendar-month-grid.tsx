@@ -199,7 +199,7 @@ export function SchedulerCalendarMonthGrid({
                         event.stopPropagation()
                       }}
                     >
-                      <span className="mb-0.5 text-[10px] font-semibold opacity-80">
+                      <span className="mb-0.5 text-xs font-semibold opacity-80">
                         {schedulerSlotDisplayTime(slot)}
                       </span>
                       <SchedulerSlotDisplayTitle slot={slot} className="w-full truncate" />

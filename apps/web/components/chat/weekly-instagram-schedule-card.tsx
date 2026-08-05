@@ -95,10 +95,10 @@ export function WeeklyInstagramScheduleCard({
       <Plan className="w-full max-w-md" defaultOpen isStreaming={isStreaming}>
         <PlanHeader className="w-full">
           <div className="min-w-0 flex-1 pr-2">
-            <PlanTitle className="text-base leading-snug sm:text-base">
+            <PlanTitle className="text-balance text-base leading-snug sm:text-base">
               {schedule.title || t('titleFallback')}
             </PlanTitle>
-            <PlanDescription className="mt-1 text-sm leading-relaxed sm:text-sm">
+            <PlanDescription className="mt-1 text-pretty text-sm leading-relaxed sm:text-sm">
               {schedule.summary}
             </PlanDescription>
           </div>
@@ -130,9 +130,9 @@ export function WeeklyInstagramScheduleCard({
                 }}
               >
                 {sharing ? (
-                  <Spinner className="size-4" />
+                  <Spinner className="size-4" aria-hidden />
                 ) : (
-                  <ShareIcon className="size-4 shrink-0" />
+                  <ShareIcon className="size-4 shrink-0" aria-hidden />
                 )}
                 <span className="truncate">{sharing ? t('shareBusy') : t('shareButton')}</span>
               </Button>
@@ -144,7 +144,7 @@ export function WeeklyInstagramScheduleCard({
                 aria-label={t('exportButton')}
                 onClick={() => setExportOpen(true)}
               >
-                <CalendarPlusIcon className="size-4 shrink-0" />
+                <CalendarPlusIcon className="size-4 shrink-0" aria-hidden />
                 <span className="truncate">
                   {compact ? t('exportButtonShort') : t('exportButton')}
                 </span>
@@ -162,11 +162,19 @@ export function WeeklyInstagramScheduleCard({
   )
 }
 
-function FieldRow({ label, value }: { label: string; value: string }) {
+function FieldRow({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string
+  value: string
+  valueClassName?: string
+}) {
   return (
-    <p className="text-foreground/90 text-sm leading-relaxed">
+    <p className="break-words text-foreground/90 text-sm leading-relaxed">
       <span className="font-semibold text-foreground">{label}: </span>
-      {value}
+      <span className={valueClassName}>{value}</span>
     </p>
   )
 }
@@ -176,7 +184,7 @@ function WeeklyScheduleDayFields({ day }: { day: WeeklyInstagramScheduleDay }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <FieldRow label={t('timeLabel')} value={day.time} />
+      <FieldRow label={t('timeLabel')} value={day.time} valueClassName="tabular-nums" />
       <FieldRow label={t('menusLabel')} value={day.menu_items} />
       <FieldRow label={t('captionLabel')} value={day.caption_angle} />
       <FieldRow label={t('whyLabel')} value={day.why} />
@@ -228,7 +236,10 @@ function WeeklyScheduleDayItem({ day }: { day: WeeklyInstagramScheduleDay }) {
           <Badge className="shrink-0 px-2 py-0.5 text-xs font-medium" variant="secondary">
             {formatLabel}
           </Badge>
-          <ChevronDownIcon className="size-5 shrink-0 text-muted-foreground transition-transform" />
+          <ChevronDownIcon
+            aria-hidden
+            className="size-5 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none"
+          />
           <span className="sr-only">{t('expandDayAria', { day: dayLabel })}</span>
         </CollapsibleTrigger>
         <CollapsibleContent>

@@ -145,7 +145,7 @@ export function SchedulerCalendarMonthList({
                   <div className="mb-1 flex flex-wrap items-center gap-1">
                     {isPublicHoliday ? (
                       <span
-                        className={cn(SCHEDULER_HOLIDAY_BADGE_CLASS, 'px-1.5 py-0.5 text-[10px]')}
+                        className={cn(SCHEDULER_HOLIDAY_BADGE_CLASS, 'px-1.5 py-0.5 text-xs')}
                         title={holidayName}
                       >
                         {t('milestoneSchedulerPreviewHolidayBadge')}
@@ -177,7 +177,7 @@ export function SchedulerCalendarMonthList({
                         event.stopPropagation()
                       }}
                     >
-                      <span className="mb-0.5 text-[10px] font-semibold opacity-80">
+                      <span className="mb-0.5 text-xs font-semibold opacity-80">
                         {schedulerSlotDisplayTime(slot)}
                       </span>
                       <SchedulerSlotDisplayTitle slot={slot} className="w-full" />

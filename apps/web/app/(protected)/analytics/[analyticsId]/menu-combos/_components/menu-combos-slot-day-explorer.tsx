@@ -136,14 +136,14 @@ export function MenuCombosSlotDayExplorer({
                     cell.isPeak && cell.promoPosture ? (
                       <Badge
                         className={cn(
-                          'shrink-0 text-[10px] uppercase',
+                          'shrink-0 text-xs uppercase',
                           postureBadgeClassName(cell.promoPosture),
                         )}
                       >
                         {postureLabel(cell.promoPosture, t)}
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="shrink-0 text-[10px] font-normal">
+                      <Badge variant="outline" className="shrink-0 text-xs font-normal">
                         {venueTierLabel(cell.venueRelativeDemand, t)}
                       </Badge>
                     )

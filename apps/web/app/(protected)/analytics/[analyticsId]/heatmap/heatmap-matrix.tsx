@@ -131,7 +131,7 @@ function HeatmapRowLabel({
         <Badge
           variant="outline"
           className={cn(
-            'h-4 shrink-0 px-1 py-0 text-[10px] font-normal leading-none',
+            'h-5 shrink-0 px-1 py-0 text-xs font-normal leading-none',
             MATRIX_CATEGORY_BADGE_CLASS[category],
           )}
         >

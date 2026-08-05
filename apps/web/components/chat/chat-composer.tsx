@@ -164,7 +164,7 @@ function ChatMobilePreviewOpenButton({ compact }: { compact: boolean }) {
       type="button"
       variant="ghost"
     >
-      <PanelsTopLeft />
+      <PanelsTopLeft aria-hidden />
     </PromptInputButton>
   )
 }
@@ -184,7 +184,7 @@ function ChatClearConfirmDialog({
     <AlertDialog onOpenChange={onOpenChange} open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t('clearChatConfirmTitle')}</AlertDialogTitle>
+          <AlertDialogTitle className="text-balance">{t('clearChatConfirmTitle')}</AlertDialogTitle>
           <AlertDialogDescription>{t('clearChatConfirmDescription')}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -243,7 +243,7 @@ function ChatModelOverflowMenu({
           type="button"
           variant="ghost"
         >
-          <MoreHorizontal />
+          <MoreHorizontal aria-hidden />
         </PromptInputButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-52">
@@ -301,7 +301,7 @@ function ChatModelOverflowMenu({
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={() => onRequestClear()}>
-          <Trash2 />
+          <Trash2 aria-hidden />
           {t('clearChatLabel')}
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -451,7 +451,7 @@ function GatewayAndClearTools({
         type="button"
         variant="ghost"
       >
-        <Trash2 />
+        <Trash2 aria-hidden />
       </PromptInputButton>
     </>
   )

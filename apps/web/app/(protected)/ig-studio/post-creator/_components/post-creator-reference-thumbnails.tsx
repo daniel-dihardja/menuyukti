@@ -57,7 +57,7 @@ export function PostCreatorReferenceThumbnails({
               className="size-full object-cover"
             />
             {badgeIndex !== null ? (
-              <span className="absolute bottom-0.5 left-0.5 rounded bg-background/90 px-1 py-0.5 text-[10px] font-medium leading-none text-foreground">
+              <span className="absolute bottom-0.5 left-0.5 rounded bg-background/90 px-1 py-0.5 text-xs font-medium leading-none text-foreground">
                 {indexLabel(badgeIndex)}
               </span>
             ) : null}

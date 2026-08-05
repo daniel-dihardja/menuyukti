@@ -83,7 +83,7 @@ export function ChatSavedStoryAssetsStrip({
                 onClick={() => onRemove(asset.name)}
                 type="button"
               >
-                <XIcon />
+                <XIcon aria-hidden />
               </button>
             </li>
           )

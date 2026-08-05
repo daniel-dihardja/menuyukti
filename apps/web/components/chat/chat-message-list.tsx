@@ -36,7 +36,7 @@ function ChatEmptyState() {
     <Empty className="min-h-full border-0 p-4 sm:p-8">
       <EmptyHeader className="max-w-md">
         <EmptyMedia variant="icon">
-          <CalendarDaysIcon />
+          <CalendarDaysIcon aria-hidden />
         </EmptyMedia>
         <EmptyTitle className="text-balance text-xl sm:text-lg">{t('emptyTitle')}</EmptyTitle>
         <EmptyDescription className="text-pretty">{t('emptyDescription')}</EmptyDescription>
@@ -118,7 +118,7 @@ export function ChatMessageList() {
                 <Message from="assistant">
                   <MessageContent className="w-full max-w-full">
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <Spinner />
+                      <Spinner aria-hidden />
                       <span>{t('thinking')}</span>
                     </div>
                   </MessageContent>

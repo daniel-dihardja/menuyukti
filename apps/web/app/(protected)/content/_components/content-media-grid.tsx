@@ -334,7 +334,7 @@ function ContentMediaTileMeta({ item }: { item: ContentCatalogItem }) {
   const sizeWithDimensions = `${formatBytes(item.size)}${dimensions ? ` - ${dimensions}` : ''}`
 
   return (
-    <div className="flex items-center justify-between border-t border-border/50 px-2 py-1.5 text-[10px] text-muted-foreground sm:px-3 sm:py-2 sm:text-xs">
+    <div className="flex items-center justify-between border-t border-border/50 px-2 py-1.5 text-xs text-muted-foreground sm:px-3 sm:py-2">
       <span className="truncate">{sizeWithDimensions}</span>
       <time dateTime={item.createdAt}>
         {format.dateTime(new Date(item.createdAt), {
@@ -407,7 +407,7 @@ function ContentMediaTile({ item }: { item: ContentCatalogItem }) {
             className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pr-14 ${contentTileOverlayReveal}`}
           >
             {item.displayName?.trim() ? (
-              <span className="min-w-0 flex-1 truncate text-left text-[10px] font-medium text-white drop-shadow sm:text-xs">
+              <span className="min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow">
                 {item.displayName.trim()}
               </span>
             ) : (

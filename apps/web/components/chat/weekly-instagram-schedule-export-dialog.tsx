@@ -82,7 +82,7 @@ export function WeeklyInstagramScheduleExportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('exportDialogTitle')}</DialogTitle>
+          <DialogTitle className="text-balance">{t('exportDialogTitle')}</DialogTitle>
           <DialogDescription>{t('exportDialogDescription')}</DialogDescription>
         </DialogHeader>
 

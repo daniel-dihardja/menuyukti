@@ -23,10 +23,10 @@ export function PointsBadge({ points, label = 'points' }: PointsBadgeProps) {
     >
       <Text
         style={{
-          fontSize: 36,
-          lineHeight: 42,
+          ...typography.hero,
           fontFamily: fonts.sansBold,
           color: colors.ink,
+          fontVariant: ['tabular-nums'],
         }}
       >
         {points}

@@ -23,9 +23,7 @@ export default async function Page() {
     >
       <div className="mx-auto flex w-full max-w-lg flex-col gap-8 sm:max-w-2xl sm:gap-10">
         <div className="space-y-2">
-          <h1 className="text-pretty text-xl font-semibold tracking-tight sm:text-2xl">
-            {t('headline')}
-          </h1>
+          <h1 className="text-pretty text-2xl font-semibold tracking-tight">{t('headline')}</h1>
           <p className="text-pretty text-base leading-relaxed text-muted-foreground sm:text-sm">
             {t('lead')}
           </p>

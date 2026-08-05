@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
-import { menuyuktiColors } from '../theme/tokens'
+import { fonts, menuyuktiColors, radius, spacing, typography } from '../theme/tokens'
 
 type Props = {
   children: ReactNode
@@ -33,21 +33,28 @@ export class AppErrorBoundary extends Component<Props, State> {
           style={{
             flex: 1,
             justifyContent: 'center',
-            padding: 24,
-            gap: 16,
+            padding: spacing.lg,
+            gap: spacing.md,
             backgroundColor: menuyuktiColors.canvas,
           }}
         >
           <Text
             style={{
-              fontSize: 22,
-              fontWeight: '600',
+              ...typography.pageTitle,
+              fontFamily: fonts.sansSemiBold,
               color: menuyuktiColors.ink,
             }}
           >
             Something went wrong
           </Text>
-          <Text style={{ fontSize: 16, color: menuyuktiColors.inkMuted, lineHeight: 22 }}>
+          <Text
+            style={{
+              ...typography.body,
+              fontFamily: fonts.sans,
+              color: menuyuktiColors.inkMuted,
+            }}
+            selectable
+          >
             {this.state.error.message || 'An unexpected error occurred.'}
           </Text>
           <Pressable
@@ -56,12 +63,20 @@ export class AppErrorBoundary extends Component<Props, State> {
             style={{
               alignSelf: 'flex-start',
               backgroundColor: menuyuktiColors.accent,
-              paddingHorizontal: 16,
+              paddingHorizontal: spacing.md,
               paddingVertical: 12,
-              borderRadius: 10,
+              borderRadius: radius.sm,
             }}
           >
-            <Text style={{ fontWeight: '600', color: menuyuktiColors.ink }}>Try again</Text>
+            <Text
+              style={{
+                ...typography.bodyMedium,
+                fontFamily: fonts.sansSemiBold,
+                color: menuyuktiColors.ink,
+              }}
+            >
+              Try again
+            </Text>
           </Pressable>
         </View>
       )

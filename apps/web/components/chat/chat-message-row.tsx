@@ -30,7 +30,7 @@ function ChatMessageRowInner({ message, isActiveStream, thinkingLabel }: ChatMes
       <MessageContent className={cn(isAssistant && 'w-full max-w-full')}>
         {showFallbackSpinner ? (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Spinner />
+            <Spinner aria-hidden />
             <span>{thinkingLabel}</span>
           </div>
         ) : (
@@ -42,7 +42,7 @@ function ChatMessageRowInner({ message, isActiveStream, thinkingLabel }: ChatMes
             />
             {showTrailingSpinner ? (
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Spinner />
+                <Spinner aria-hidden />
                 <span>{thinkingLabel}</span>
               </div>
             ) : null}

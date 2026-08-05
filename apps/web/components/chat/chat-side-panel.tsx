@@ -107,7 +107,7 @@ function ChatSidePanelAdminCompact() {
         type="button"
         variant="outline"
       >
-        <BarChart3 />
+        <BarChart3 aria-hidden />
       </Button>
       <Drawer
         onOpenChange={(open) => {
