@@ -34,9 +34,15 @@ export type AgentChatPanelProps = {
   agentThreadId: string
   locationId: number
   analyticsRunId: number | null
+  onAnalyticsRunIdChange: (analyticsRunId: number | null) => void
 }
 
-export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: AgentChatPanelProps) {
+export function AgentChatPanel({
+  agentThreadId,
+  locationId,
+  analyticsRunId,
+  onAnalyticsRunIdChange,
+}: AgentChatPanelProps) {
   const t = useTranslations('chat')
   const router = useRouter()
   const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
@@ -55,6 +61,7 @@ export function AgentChatPanel({ agentThreadId, locationId, analyticsRunId }: Ag
       agentThreadId={agentThreadId}
       analyticsRunId={analyticsRunId}
       locationId={locationId}
+      onAnalyticsRunIdChange={onAnalyticsRunIdChange}
       onThreadRotated={handleThreadRotated}
     >
       <ChatVisualizationsProvider

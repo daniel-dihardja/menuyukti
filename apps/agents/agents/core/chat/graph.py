@@ -80,6 +80,10 @@ def _has_location_id(conf: dict[str, Any]) -> bool:
     return conf.get("location_id") is not None
 
 
+def _has_analytics_run_id(conf: dict[str, Any]) -> bool:
+    return conf.get("analytics_run_id") is not None
+
+
 def _is_image_assistant_mode(conf: dict[str, Any]) -> bool:
     mode = conf.get("chat_mode")
     return mode in ("image_assistant", "story_image_assistant")
@@ -89,13 +93,14 @@ def chat_tools_list(
     *,
     include_post_image: bool = False,
     location_id: bool = True,
+    analytics_run: bool = False,
     image_assistant: bool = False,
 ) -> list:
     """Build chat ReAct tools for the given request context.
 
-    When ``location_id`` is False, location/chart tools are omitted. The ToolNode still
-    registers the full union via ``chat_tools_list(include_post_image=True)`` plus
-    Story scratchpad tools.
+    When ``location_id`` is False, location tools are omitted. Chart tools require
+    ``analytics_run`` (pinned sales report). The ToolNode still registers the full
+    union via ``chat_tools_list(include_post_image=True)`` plus Story scratchpad tools.
 
     In ``image_assistant`` mode only media-library tools, Story scratchpad tools,
     confirmation UI, and ``generate_instagram_post_image`` are bound.
@@ -116,6 +121,7 @@ def chat_tools_list(
     tools.append(present_weekly_instagram_schedule)
     if location_id:
         tools.append(get_location_data)
+    if analytics_run:
         tools.append(get_chart_data)
     web = make_search_web_tool()
     if web is not None:
@@ -142,6 +148,7 @@ def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
     return chat_tools_list(
         include_post_image=_has_leonardo_image_generation(conf),
         location_id=_has_location_id(conf),
+        analytics_run=_has_analytics_run_id(conf),
     )
 
 
@@ -157,7 +164,7 @@ def _chat_system_prompt_from_config() -> str:
     return build_system_prompt(
         ig_studio_post_image=_has_ig_studio_post_context(conf_dict),
         leonardo_image_generation=_has_leonardo_image_generation(conf_dict),
-        include_chart_catalog=_has_location_id(conf_dict),
+        include_chart_catalog=_has_analytics_run_id(conf_dict),
         chat_mode=chat_mode,
         image_format=image_format,
     )
@@ -308,6 +315,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
         *chat_tools_list(
             include_post_image=True,
             location_id=True,
+            analytics_run=True,
         ),
         *_STORY_SCRATCHPAD_TOOLS,
     ]

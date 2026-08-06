@@ -2,12 +2,13 @@
 
 import dynamic from 'next/dynamic'
 import { notFound, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import {
   getAgentThread,
   isAgentThreadId,
+  touchAgentThread,
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
 import { routes } from '@/lib/routes'
@@ -52,9 +53,25 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   const compact = useCompactLayout()
   // Client-only gate: getAgentThread reads localStorage (unavailable during SSR).
   const [hydrated, setHydrated] = useState(false)
+  const [analyticsRunId, setAnalyticsRunIdState] = useState<number | null>(null)
+
   useEffect(() => {
     setHydrated(true)
   }, [])
+
+  useEffect(() => {
+    if (!hydrated || !isAgentThreadId(threadId)) return
+    const next = getAgentThread(threadId)
+    setAnalyticsRunIdState(next?.analyticsRunId ?? null)
+  }, [hydrated, threadId])
+
+  const handleAnalyticsRunIdChange = useCallback(
+    (next: number | null) => {
+      setAnalyticsRunIdState(next)
+      touchAgentThread(threadId, { analyticsRunId: next })
+    },
+    [threadId],
+  )
 
   if (!isAgentThreadId(threadId)) {
     notFound()
@@ -64,7 +81,6 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
     return <Skeleton className="min-h-[20rem] w-full flex-1 rounded-lg" />
   }
 
-  // Derive during render after hydration (no effect→setState sync for threadId).
   const record: AgentThreadRecord | null = getAgentThread(threadId)
 
   if (record === null) {
@@ -86,14 +102,15 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
       {!compact ? (
         <AgentThreadSalesReportStrip
-          analyticsRunId={record.analyticsRunId}
+          analyticsRunId={analyticsRunId}
           locationId={record.locationId}
         />
       ) : null}
       <AgentChatPanel
         agentThreadId={record.id}
-        analyticsRunId={record.analyticsRunId}
+        analyticsRunId={analyticsRunId}
         locationId={record.locationId}
+        onAnalyticsRunIdChange={handleAnalyticsRunIdChange}
       />
     </div>
   )

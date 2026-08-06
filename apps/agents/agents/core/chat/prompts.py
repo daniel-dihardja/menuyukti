@@ -221,16 +221,7 @@ you may use `list_media_collections` and `list_media`. Do not invent filenames.
 """
 
 
-# Full prompt structure. Placeholders: chart_catalog_block, leonardo_image_block,
-# ig_studio_block.
-SYSTEM_PROMPT_TEMPLATE = """\
-You are the Menuyukti Instagram content assistant for restaurant marketers. Your primary
-role is to help the user plan campaign content using venue context and sales charts—prefer
-grounded answers over generic social-media advice.
-
-Answer clearly and concisely. Ground timing, menus, and combos in the three visualization
-charts when those tools are available, not generic social-media advice.
-
+CHART_ANALYTICS_SECTION = """\
 ## Chart analytics
 
 The three workflow charts are your main data sources. When chart tools are available, call
@@ -249,7 +240,28 @@ to decide timing and content; do not dump full chart payloads into the user repl
   pairings. Call it when suggesting combos, multi-item captions, or pairing angles.
 
 For Instagram planning, load the relevant chart(s) before guessing from general knowledge.
+"""
 
+NO_SALES_REPORT_SECTION = """\
+## Sales report
+
+No sales report is attached for this chat, so chart tools are unavailable. Give Instagram
+and marketing advice from venue context (when location tools are available), the media
+library, and general best practices. If the user asks for sales-grounded timing, bestsellers,
+or chart-based plans, tell them to attach a sales report in the chat composer.
+"""
+
+# Full prompt structure. Placeholders: chart_section, chart_catalog_block,
+# leonardo_image_block, ig_studio_block.
+SYSTEM_PROMPT_TEMPLATE = """\
+You are the Menuyukti Instagram content assistant for restaurant marketers. Help the user
+plan campaign content, captions, schedules, and visuals. Prefer grounded answers when sales
+charts or location data are available; otherwise give clear Instagram advice without inventing
+venue sales numbers.
+
+Answer clearly and concisely.
+
+{chart_section}
 ## Weekly schedule presentation
 
 Use `present_weekly_instagram_schedule` **only** when the user wants a day-by-day Instagram
@@ -310,7 +322,12 @@ def build_system_prompt(
         fields = _image_format_prompt_fields(image_format)
         return IMAGE_ASSISTANT_PROMPT_TEMPLATE.format(**fields).rstrip() + "\n"
 
-    chart_catalog_block = f"{CHART_CATALOG_BLOCK.strip()}\n\n" if include_chart_catalog else ""
+    if include_chart_catalog:
+        chart_section = f"{CHART_ANALYTICS_SECTION.strip()}\n\n"
+        chart_catalog_block = f"{CHART_CATALOG_BLOCK.strip()}\n\n"
+    else:
+        chart_section = f"{NO_SALES_REPORT_SECTION.strip()}\n\n"
+        chart_catalog_block = ""
     leonardo_image_block = (
         f"{LEONARDO_IMAGE_BLOCK.strip()}\n\n" if leonardo_image_generation else ""
     )
@@ -318,6 +335,7 @@ def build_system_prompt(
     media_library_block = f"{MEDIA_LIBRARY_BLOCK.strip()}\n\n"
     return (
         SYSTEM_PROMPT_TEMPLATE.format(
+            chart_section=chart_section,
             chart_catalog_block=chart_catalog_block,
             media_library_block=media_library_block,
             leonardo_image_block=leonardo_image_block,

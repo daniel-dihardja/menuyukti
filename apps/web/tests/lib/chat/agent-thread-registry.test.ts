@@ -48,4 +48,13 @@ describe('agent-thread-registry', () => {
     expect(getAgentThread(a.id)).toBeNull()
     expect(listAgentThreads()).toEqual([])
   })
+
+  it('persists clearing and setting analyticsRunId on touch', () => {
+    const a = createAgentThread({ locationId: 3, analyticsRunId: 42 })
+    expect(getAgentThread(a.id)?.analyticsRunId).toBe(42)
+    touchAgentThread(a.id, { analyticsRunId: null })
+    expect(getAgentThread(a.id)?.analyticsRunId).toBeNull()
+    touchAgentThread(a.id, { analyticsRunId: 7 })
+    expect(getAgentThread(a.id)?.analyticsRunId).toBe(7)
+  })
 })

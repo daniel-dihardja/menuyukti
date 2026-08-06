@@ -9,16 +9,17 @@ import { useChatVisualizationsState } from '@/components/chat/visualizations/cha
 const ChatMentionContext = createContext<string[] | null>(null)
 
 export function ChatMentionProvider({ children }: { children: ReactNode }) {
-  const { addedIds } = useChatVisualizationsState()
+  const { addedIds, analyticsRunId } = useChatVisualizationsState()
   const { isChatBusy } = useChatMessages()
   const tViz = useTranslations('chat.visualizations.catalog')
 
   const mentionTitles = useMemo(() => {
+    if (analyticsRunId === null) return []
     return addedIds.map((id) => tViz(`${id}.title`))
-  }, [addedIds, tViz])
+  }, [addedIds, analyticsRunId, tViz])
 
   return (
-    <ChatMentionBusyContext value={isChatBusy}>
+    <ChatMentionBusyContext value={isChatBusy || analyticsRunId === null}>
       <ChatMentionContext value={mentionTitles}>{children}</ChatMentionContext>
     </ChatMentionBusyContext>
   )
@@ -37,20 +38,19 @@ export type VisualizationMentionItem = {
 
 export function useChatMentionItems() {
   const mentionMenusDisabled = use(ChatMentionBusyContext)
-  const { addedIds } = useChatVisualizationsState()
+  const { addedIds, analyticsRunId } = useChatVisualizationsState()
   const tViz = useTranslations('chat.visualizations.catalog')
 
-  const visualizations = useMemo(
-    (): VisualizationMentionItem[] =>
-      addedIds.map((id) => ({
-        id,
-        title: tViz(`${id}.title`),
-      })),
-    [addedIds, tViz],
-  )
+  const visualizations = useMemo((): VisualizationMentionItem[] => {
+    if (analyticsRunId === null) return []
+    return addedIds.map((id) => ({
+      id,
+      title: tViz(`${id}.title`),
+    }))
+  }, [addedIds, analyticsRunId, tViz])
 
   return {
     visualizations,
-    mentionMenusDisabled,
+    mentionMenusDisabled: mentionMenusDisabled || analyticsRunId === null,
   }
 }

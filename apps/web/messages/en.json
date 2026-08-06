@@ -160,7 +160,7 @@
     "selectLocation": "Select a location to view chats.",
     "threadColumn": "Chat",
     "salesReportColumn": "Sales report",
-    "noSalesReport": "None",
+    "noSalesReport": "No sales report",
     "salesReportUnavailable": "Unavailable",
     "salesReportDetailLabel": "Sales report",
     "salesReportLoading": "Loading…",
@@ -3615,6 +3615,12 @@
       "general": "General chat",
       "image_assistant": "Image assistant"
     },
+    "salesReport": {
+      "ariaLabel": "Sales report",
+      "placeholder": "Sales report",
+      "none": "No sales report",
+      "attachHint": "Attach a sales report to use charts and sales-grounded advice."
+    },
     "storyArtifact": {
       "ariaLabel": "Instagram image preview",
       "placeholderLabel": "No image yet",
@@ -4331,7 +4337,7 @@
       "addMenuAriaLabel": "Add visualization",
       "removeAriaLabel": "Remove {title}",
       "noAnalyticsRunTitle": "Link a sales report",
-      "noAnalyticsRunDescription": "This workflow needs a linked sales report before charts can load. Create a new workflow with a sales report selected, or update the workflow when that option is available.",
+      "noAnalyticsRunDescription": "Attach a sales report in the chat composer to explore charts and sales-grounded advice.",
       "loadErrorTitle": "Could not load chart",
       "loadErrorDescription": "The chart data could not be loaded. Please try again.",
       "retry": "Retry",
