@@ -105,3 +105,6 @@ def test_system_prompt_mentions_weekly_schedule_tool() -> None:
     assert "entries is fine" in out
     assert "repeat that weekday" in out
     assert "per posting slot" in out
+    assert "get_location_data" in out
+    assert "Opening hours" in out
+    assert "open" in out.lower() and "closed" in out.lower()

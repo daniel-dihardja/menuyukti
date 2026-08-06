@@ -76,7 +76,8 @@
       "menusLabel": "Feature",
       "captionLabel": "Caption",
       "whyLabel": "Why",
-      "expandDayAria": "Expand {day} details",
+      "expandDayAria": "Expand {day} at {time} details",
+      "slotHeadingAria": "{day} at {time}",
       "exportButton": "Export to calendar",
       "exportButtonShort": "Calendar",
       "shareButton": "Share",
@@ -1944,7 +1945,7 @@
         "quickPrompts": {
           "weeklyPlan": {
             "label": "Weekly Instagram plan",
-            "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+            "prompt": "Create a weekly Instagram plan for this venue. First load location opening hours, then present the plan with the weekly schedule tool (one entry per posting slot). Prefer open days and posting times during or shortly before service. For each slot include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on open hours and sales or demand when available."
           },
           "featureTopDishes": {
             "label": "Feature top dishes",
@@ -3572,7 +3573,7 @@
     "quickPrompts": {
       "weeklyPlan": {
         "label": "Weekly Instagram plan",
-        "prompt": "Create a weekly Instagram plan for this venue. Present it with the weekly schedule tool (one day per weekday). For each day include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on sales or demand."
+        "prompt": "Create a weekly Instagram plan for this venue. First load location opening hours, then present the plan with the weekly schedule tool (one entry per posting slot). Prefer open days and posting times during or shortly before service. For each slot include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on open hours and sales or demand when available."
       },
       "featureTopDishes": {
         "label": "Feature top dishes",
