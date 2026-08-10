@@ -43,6 +43,7 @@ import {
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { LeonardoPostModelSelect } from '@/components/leonardo-post-model-select'
 import { ChatModeSelect } from '@/components/chat-mode-select'
+import { ChatSalesReportSelect } from '@/components/chat/chat-sales-report-select'
 import { MoreHorizontal, PanelsTopLeft, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useMemo, useState, type ReactNode } from 'react'
@@ -326,11 +327,12 @@ function ChatComposerFrame({
   const tMention = useTranslations('chat.mentionMenu')
   const compact = useCompactLayout()
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
-  const { text, chatMode, slashCommands } = useChatComposerState()
+  const { text, chatMode, slashCommands, locationId, analyticsRunId } = useChatComposerState()
   const { isChatBusy } = useChatMessages()
   const {
     setText,
     setChatMode,
+    setAnalyticsRunId,
     handleTextChange,
     handleSubmit,
     handleSelectSlashCommand,
@@ -373,6 +375,12 @@ function ChatComposerFrame({
         <PromptInputFooter>
           <PromptInputTools>
             <ChatMobilePreviewOpenButton compact={compact} />
+            <ChatSalesReportSelect
+              disabled={isChatBusy}
+              locationId={locationId}
+              onValueChange={setAnalyticsRunId}
+              value={analyticsRunId}
+            />
             {!compact ? (
               <ChatModeSelect disabled={isChatBusy} onValueChange={setChatMode} value={chatMode} />
             ) : null}

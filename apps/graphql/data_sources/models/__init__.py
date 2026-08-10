@@ -18,6 +18,7 @@ from graphql.data_sources.models.instagram import (
 )
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
+from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
 from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
 from graphql.data_sources.models.media_asset import (
     MediaAsset,
@@ -46,6 +47,7 @@ __all__ = [
     "Location",
     "LocationOpeningHour",
     "LocationManualBriefInput",
+    "LocationMenuItemCogs",
     "MediaAsset",
     "MediaCollection",
     "MediaCollectionMember",

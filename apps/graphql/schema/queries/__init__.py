@@ -6,6 +6,7 @@ from .crm_apps import CrmAppsQuery
 from .crm_customers import CrmCustomersQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
+from .location_menu_item_cogs import LocationMenuItemCogsQuery
 from .locations import LocationsQuery
 from .media_collections import MediaCollectionsQuery
 from .menu_catalog import MenuCatalogQuery
@@ -31,6 +32,7 @@ __all__ = [
     "ImageAiFlowsQuery",
     "InstagramSignalsQuery",
     "LocationsQuery",
+    "LocationMenuItemCogsQuery",
     "StylesQuery",
     "MediaCollectionsQuery",
     "MenuCatalogQuery",

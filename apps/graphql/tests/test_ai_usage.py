@@ -161,9 +161,7 @@ def test_record_and_summarize_ai_usage() -> None:
     session = SessionLocal()
     try:
         rows = (
-            session.query(AiUsageEvent)
-            .filter(AiUsageEvent.user_id == GRAPHQL_TEST_USER_ID)
-            .all()
+            session.query(AiUsageEvent).filter(AiUsageEvent.user_id == GRAPHQL_TEST_USER_ID).all()
         )
         assert len(rows) == 2
     finally:

@@ -36,7 +36,8 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
     """Load location-page data for the campaign venue: basics, opening hours, owner quick profile.
 
     Call when the user asks about venue hours, address, cuisine, contact links, or other
-    location settings configured on the location page."""
+    location settings — and before proposing a weekly Instagram schedule so posting days
+    and times respect opening hours."""
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
     user_id = c.get("user_id")

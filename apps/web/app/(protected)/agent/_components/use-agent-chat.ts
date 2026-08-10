@@ -124,6 +124,8 @@ export type UseAgentChatOptions = {
   agentThreadId: string
   locationId: number
   analyticsRunId: number | null
+  /** Persist sales-report selection on the thread (parent owns state). */
+  onAnalyticsRunIdChange: (analyticsRunId: number | null) => void
   /** Called when clear chat creates a new thread id (caller should navigate). */
   onThreadRotated?: (nextThreadId: string) => void
 }
@@ -132,6 +134,7 @@ export function useAgentChat({
   agentThreadId,
   locationId,
   analyticsRunId,
+  onAnalyticsRunIdChange,
   onThreadRotated,
 }: UseAgentChatOptions) {
   const tSlash = useTranslations('chat.slashCommands')
@@ -143,6 +146,12 @@ export function useAgentChat({
   const storyAssetsClearInFlightRef = useRef(false)
   const onThreadRotatedRef = useRef(onThreadRotated)
   onThreadRotatedRef.current = onThreadRotated
+  const onAnalyticsRunIdChangeRef = useRef(onAnalyticsRunIdChange)
+  onAnalyticsRunIdChangeRef.current = onAnalyticsRunIdChange
+
+  const setAnalyticsRunId = useCallback((next: number | null) => {
+    onAnalyticsRunIdChangeRef.current(next)
+  }, [])
 
   const chatApiContextRef = useRef({
     agentThreadId,
@@ -642,6 +651,8 @@ export function useAgentChat({
       selectedChatModel,
       selectedGenerationModel,
       selectedImageFormat,
+      locationId,
+      analyticsRunId,
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
@@ -653,6 +664,8 @@ export function useAgentChat({
       selectedChatModel,
       selectedGenerationModel,
       selectedImageFormat,
+      locationId,
+      analyticsRunId,
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
@@ -667,6 +680,7 @@ export function useAgentChat({
       setSelectedChatModel,
       setSelectedGenerationModel,
       setSelectedImageFormat,
+      setAnalyticsRunId,
       handleTextChange,
       handleSubmit,
       sendQuickReply,
@@ -683,6 +697,7 @@ export function useAgentChat({
       setChatMode,
       setSelectedGenerationModel,
       setSelectedImageFormat,
+      setAnalyticsRunId,
       handleTextChange,
       handleSubmit,
       sendQuickReply,

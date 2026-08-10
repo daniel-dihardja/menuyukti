@@ -36,6 +36,41 @@ export type AdditionalSignalsType = {
   signalConfidence: SignalConfidenceType
 }
 
+/** Aggregated usage for one provider+feature+model bucket. */
+export type AiUsageBucketType = {
+  __typename?: 'AiUsageBucketType'
+  eventCount: Scalars['Int']['output']
+  feature: Scalars['String']['output']
+  inputTokens: Scalars['Int']['output']
+  model?: Maybe<Scalars['String']['output']>
+  outputTokens: Scalars['Int']['output']
+  provider: Scalars['String']['output']
+  units: Scalars['Int']['output']
+}
+
+/** One recorded AI usage event for the authenticated user. */
+export type AiUsageEventType = {
+  __typename?: 'AiUsageEventType'
+  createdAt: Scalars['String']['output']
+  externalId?: Maybe<Scalars['String']['output']>
+  feature: Scalars['String']['output']
+  id: Scalars['String']['output']
+  model?: Maybe<Scalars['String']['output']>
+  provider: Scalars['String']['output']
+  status: Scalars['String']['output']
+  units: Scalars['Int']['output']
+}
+
+/** Personal AI usage summary for a date range. */
+export type AiUsageSummaryType = {
+  __typename?: 'AiUsageSummaryType'
+  buckets: Array<AiUsageBucketType>
+  endDate: Scalars['String']['output']
+  recentEvents: Array<AiUsageEventType>
+  startDate: Scalars['String']['output']
+  totalUnits: Scalars['Int']['output']
+}
+
 /** Select which analytics sections to include in the bundle. */
 export type AnalyticsBundleOptionsInput = {
   includeCategoryMix?: Scalars['Boolean']['input']
@@ -383,6 +418,27 @@ export type LocationManualBriefInputType = {
   quickProfile: Scalars['JSON']['output']
 }
 
+export type LocationMenuItemCogsType = {
+  __typename?: 'LocationMenuItemCogsType'
+  cogs: Scalars['Float']['output']
+  createdAt: Scalars['DateTime']['output']
+  currency?: Maybe<Scalars['String']['output']>
+  id: Scalars['ID']['output']
+  locationId: Scalars['Int']['output']
+  menu: Scalars['String']['output']
+  menuCategory?: Maybe<Scalars['String']['output']>
+  menuCategoryDetail?: Maybe<Scalars['String']['output']>
+  updatedAt: Scalars['DateTime']['output']
+}
+
+export type LocationMenuItemCogsUpsertInput = {
+  cogs: Scalars['Float']['input']
+  currency?: InputMaybe<Scalars['String']['input']>
+  menuCategory?: InputMaybe<Scalars['String']['input']>
+  menuCategoryDetail?: InputMaybe<Scalars['String']['input']>
+  menuName: Scalars['String']['input']
+}
+
 /** A restaurant location; ties POS data and product entities to a workspace or legacy owner. */
 export type LocationType = {
   __typename?: 'LocationType'
@@ -587,6 +643,8 @@ export type Mutation = {
   __typename?: 'Mutation'
   /** Add a photo (by filename) to a media collection. */
   addMediaToCollection: MediaCollectionType
+  /** Refresh an analytics run's COGS snapshot from its location catalog. */
+  applyLocationCogsToAnalyticsRun: Array<MenuItemCogsType>
   /** Award cashback from a payment total (applies app threshold/percent) or redeem a positive amount from the customer's balance. Pass exactly one of paymentAmount or redeemAmount. */
   awardCrmCashback: CrmCashbackEntryType
   /** Create a manual calendar entry for a location. */
@@ -624,11 +682,15 @@ export type Mutation = {
   /** Idempotently create or update a media asset catalog row for a workspace photo filename. */
   ensureMediaAsset: MediaAssetType
   inviteWorkspaceMember: WorkspaceMembershipType
+  /** Append an AI usage ledger row for the authenticated user (Leonardo generations and similar). */
+  recordAiUsageEvent: AiUsageEventType
   /** Remove a photo (by filename) from a media collection. */
   removeMediaFromCollection: MediaCollectionType
   removeWorkspaceMember: Scalars['Boolean']['output']
   /** Revoke a CRM device so it can no longer authenticate. Clears refresh token hash. Idempotent if already revoked. */
   revokeCrmDevice: CrmDeviceType
+  /** Promote an analytics run's COGS snapshot into the location catalog. */
+  saveAnalyticsRunCogsToLocation: Array<LocationMenuItemCogsType>
   /** Update a manual calendar entry. */
   updateCalendarEntry: CalendarEntryType
   /** Update a CRM app by id. */
@@ -645,6 +707,7 @@ export type Mutation = {
   updateStyle: StyleType
   /** Upload and normalize a POS sales Excel file, persist order facts, and return metadata and sales analytics. Set includeLineItems to receive normalizedRows and orders (large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB). */
   uploadSalesReport: ExcelUploadResult
+  upsertLocationMenuItemCogsBulk: Array<LocationMenuItemCogsType>
   upsertMenuItemCogsBulk: Array<MenuItemCogsType>
 }
 
@@ -652,6 +715,11 @@ export type Mutation = {
 export type MutationAddMediaToCollectionArgs = {
   collectionId: Scalars['Int']['input']
   filename: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+export type MutationApplyLocationCogsToAnalyticsRunArgs = {
+  analyticsRunId: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
@@ -807,6 +875,17 @@ export type MutationInviteWorkspaceMemberArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+export type MutationRecordAiUsageEventArgs = {
+  externalId?: InputMaybe<Scalars['String']['input']>
+  feature: Scalars['String']['input']
+  metadata?: InputMaybe<Scalars['JSON']['input']>
+  model?: InputMaybe<Scalars['String']['input']>
+  provider: Scalars['String']['input']
+  status: Scalars['String']['input']
+  units?: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
 export type MutationRemoveMediaFromCollectionArgs = {
   collectionId: Scalars['Int']['input']
   filename: Scalars['String']['input']
@@ -821,6 +900,11 @@ export type MutationRemoveWorkspaceMemberArgs = {
 /** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
 export type MutationRevokeCrmDeviceArgs = {
   deviceId: Scalars['UUID']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+export type MutationSaveAnalyticsRunCogsToLocationArgs = {
+  analyticsRunId: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
@@ -907,6 +991,12 @@ export type MutationUpdateStyleArgs = {
 export type MutationUploadSalesReportArgs = {
   file: Scalars['Upload']['input']
   includeLineItems?: Scalars['Boolean']['input']
+  locationId: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+export type MutationUpsertLocationMenuItemCogsBulkArgs = {
+  items: Array<LocationMenuItemCogsUpsertInput>
   locationId: Scalars['ID']['input']
 }
 
@@ -1109,6 +1199,8 @@ export type Query = {
   location?: Maybe<LocationType>
   /** Analytics run counts and latest run per location in one query. Only returns summaries for locations the caller can access. */
   locationAnalyticsSummaries: Array<LocationAnalyticsSummaryType>
+  /** Location-scoped COGS catalog. Empty when unauthenticated or not an owner. */
+  locationMenuItemCogs: Array<LocationMenuItemCogsType>
   /** All locations the current user can access (direct owner or workspace member). */
   locations: Array<LocationType>
   /** List media assets (photos) in the caller's workspaces. When collectionId is set, only members of that collection. */
@@ -1127,6 +1219,8 @@ export type Query = {
   menuItemsCatalog?: Maybe<MenuCatalogPayloadType>
   /** Distinct menu items from a specific analytics run: aggregated from order lines (quantity, category, avg unit price). Returns null when run is missing/unauthorized or has no order data. */
   menuItemsCatalogForRun?: Maybe<MenuCatalogPayloadType>
+  /** Aggregated AI usage for the authenticated user in [startDate, endDate] (UTC dates). */
+  myAiUsageSummary?: Maybe<AiUsageSummaryType>
   myWorkspace?: Maybe<WorkspaceType>
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
@@ -1223,6 +1317,11 @@ export type QueryLocationAnalyticsSummariesArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryLocationMenuItemCogsArgs = {
+  locationId: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
 }
@@ -1270,6 +1369,12 @@ export type QueryMenuItemsCatalogArgs = {
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryMenuItemsCatalogForRunArgs = {
   analyticsRunId: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryMyAiUsageSummaryArgs = {
+  endDate?: InputMaybe<Scalars['String']['input']>
+  startDate?: InputMaybe<Scalars['String']['input']>
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */

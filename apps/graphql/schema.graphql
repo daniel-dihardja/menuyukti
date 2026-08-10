@@ -6,6 +6,38 @@ type AdditionalSignalsType {
   signalConfidence: SignalConfidenceType!
 }
 
+"""Aggregated usage for one provider+feature+model bucket."""
+type AiUsageBucketType {
+  provider: String!
+  feature: String!
+  model: String
+  units: Int!
+  eventCount: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+}
+
+"""One recorded AI usage event for the authenticated user."""
+type AiUsageEventType {
+  id: String!
+  provider: String!
+  feature: String!
+  model: String
+  externalId: String
+  units: Int!
+  status: String!
+  createdAt: String!
+}
+
+"""Personal AI usage summary for a date range."""
+type AiUsageSummaryType {
+  startDate: String!
+  endDate: String!
+  buckets: [AiUsageBucketType!]!
+  totalUnits: Int!
+  recentEvents: [AiUsageEventType!]!
+}
+
 """Select which analytics sections to include in the bundle."""
 input AnalyticsBundleOptionsInput {
   includeOrderMetrics: Boolean! = true
@@ -348,6 +380,26 @@ type LocationManualBriefInputType {
   quickProfile: JSON!
 }
 
+type LocationMenuItemCogsType {
+  id: ID!
+  locationId: Int!
+  menu: String!
+  menuCategory: String
+  menuCategoryDetail: String
+  cogs: Float!
+  currency: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input LocationMenuItemCogsUpsertInput {
+  menuName: String!
+  cogs: Float!
+  menuCategory: String = null
+  menuCategoryDetail: String = null
+  currency: String = null
+}
+
 """
 A restaurant location; ties POS data and product entities to a workspace or legacy owner.
 """
@@ -589,6 +641,13 @@ type Mutation {
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
   upsertMenuItemCogsBulk(analyticsRunId: ID!, items: [MenuItemCogsUpsertInput!]!): [MenuItemCogsType!]!
+  upsertLocationMenuItemCogsBulk(locationId: ID!, items: [LocationMenuItemCogsUpsertInput!]!): [LocationMenuItemCogsType!]!
+
+  """Refresh an analytics run's COGS snapshot from its location catalog."""
+  applyLocationCogsToAnalyticsRun(analyticsRunId: ID!): [MenuItemCogsType!]!
+
+  """Promote an analytics run's COGS snapshot into the location catalog."""
+  saveAnalyticsRunCogsToLocation(analyticsRunId: ID!): [LocationMenuItemCogsType!]!
   createImageAiFlow(slug: String!, displayName: String!, prompt: String!, model: String!, promptEnhance: String = null, imageReferenceStrength: String = null, styleIds: JSON = null, isActive: Boolean! = true, sortOrder: Int! = 0): ImageAiFlowType!
   updateImageAiFlow(slug: String!, newSlug: String, displayName: String, prompt: String, model: String, promptEnhance: String, imageReferenceStrength: String, styleIds: JSON, isActive: Boolean, sortOrder: Int): ImageAiFlowType!
   deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
@@ -629,6 +688,11 @@ type Mutation {
   Revoke a CRM device so it can no longer authenticate. Clears refresh token hash. Idempotent if already revoked.
   """
   revokeCrmDevice(deviceId: UUID!): CrmDeviceType!
+
+  """
+  Append an AI usage ledger row for the authenticated user (Leonardo generations and similar).
+  """
+  recordAiUsageEvent(provider: String!, feature: String!, status: String!, model: String = null, externalId: String = null, units: Int! = 1, metadata: JSON = null): AiUsageEventType!
 
   """Update a manual calendar entry."""
   updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!]): CalendarEntryType!
@@ -832,6 +896,11 @@ type Query {
   """Fetch one location by id if the caller has access."""
   location(id: ID!): LocationType
 
+  """
+  Location-scoped COGS catalog. Empty when unauthenticated or not an owner.
+  """
+  locationMenuItemCogs(locationId: ID!): [LocationMenuItemCogsType!]!
+
   """List visual style packs in workspaces the current user belongs to."""
   styles(first: Int = null): [StyleType!]!
 
@@ -945,6 +1014,11 @@ type Query {
 
   """Single flow by slug (including inactive), for server-side processing."""
   imageAiFlow(slug: String!): ImageAiFlowType
+
+  """
+  Aggregated AI usage for the authenticated user in [startDate, endDate] (UTC dates).
+  """
+  myAiUsageSummary(startDate: String = null, endDate: String = null): AiUsageSummaryType
 }
 
 """Per-menu revenue comparison between two analytics periods."""

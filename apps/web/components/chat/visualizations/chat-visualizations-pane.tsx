@@ -53,14 +53,30 @@ function VisualizationCardBody({
 
 export function ChatVisualizationsPane() {
   const t = useTranslations('chat.visualizations')
+  const tSales = useTranslations('chat.salesReport')
   const { analyticsRunId, locationId } = useChatVisualizationsState()
   const { addedIds, addVisualization, removeVisualization, hydrated } = useChatVisualizationsState()
 
-  const availableEntries = getAvailableCatalogEntries(addedIds)
+  const hasSalesReport = analyticsRunId !== null
+  const availableEntries = hasSalesReport ? getAvailableCatalogEntries(addedIds) : []
   const canAdd = availableEntries.length > 0
 
   if (!hydrated) {
     return null
+  }
+
+  if (!hasSalesReport) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+        <h2 className="text-balance font-medium text-sm">{t('panelTitle')}</h2>
+        <Empty className="flex-1 border border-dashed">
+          <EmptyHeader>
+            <EmptyTitle>{t('noAnalyticsRunTitle')}</EmptyTitle>
+            <EmptyDescription>{tSales('attachHint')}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    )
   }
 
   return (

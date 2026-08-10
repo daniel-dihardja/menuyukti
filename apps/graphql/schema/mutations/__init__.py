@@ -20,6 +20,11 @@ from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .delete_style import DeleteStyleMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
+from .location_menu_item_cogs import (
+    ApplyLocationCogsToAnalyticsRunMutation,
+    SaveAnalyticsRunCogsToLocationMutation,
+    UpsertLocationMenuItemCogsBulkMutation,
+)
 from .media_asset_catalog import DeleteMediaAssetMutation, EnsureMediaAssetMutation
 from .media_collection_members import (
     AddMediaToCollectionMutation,
@@ -80,5 +85,8 @@ __all__ = [
     "UpdatePostMutation",
     "UpdatePostPageMutation",
     "UpsertMenuItemCogsBulkMutation",
+    "UpsertLocationMenuItemCogsBulkMutation",
+    "ApplyLocationCogsToAnalyticsRunMutation",
+    "SaveAnalyticsRunCogsToLocationMutation",
     "UploadSalesReportMutation",
 ]

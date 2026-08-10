@@ -19,6 +19,7 @@ from graphql.reports import (
     run_sales_analytics,
 )
 from graphql.reports.ingest import NormalizedLineItemData
+from graphql.services.location_cogs import seed_run_cogs_from_location
 
 
 @dataclass
@@ -79,6 +80,15 @@ def ingest_sales_report_upload(
             detected_pos,
             analytics_run_id=analytics_run.id,
         )
+
+        menus = {row.menu for row in normalized_rows_data if row.menu}
+        seed_run_cogs_from_location(
+            session,
+            analytics_run_id=analytics_run.id,
+            location_id=loc.id,
+            menus=menus,
+        )
+        session.commit()
 
     orders_data = line_items_to_orders(normalized_rows_data)
     sales_analytics_dict: dict[str, Any] = run_sales_analytics(normalized_rows_data)

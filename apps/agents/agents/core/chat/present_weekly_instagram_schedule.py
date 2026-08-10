@@ -24,6 +24,7 @@ class WeeklyInstagramScheduleDay(BaseModel):
     time: str = Field(
         description=(
             "Suggested local posting clock time ONLY (e.g. '8:00 AM', '11:30', '12:00 PM'). "
+            "Prefer times during or shortly before the venue's open hours for that weekday. "
             "Do not put the caption or any other text in this field."
         ),
     )
@@ -37,7 +38,11 @@ class WeeklyInstagramScheduleDay(BaseModel):
             "no '8:00 AM —' prefixes."
         ),
     )
-    why: str = Field(description="One-line rationale grounded in sales, demand, or venue rhythm.")
+    why: str = Field(
+        description=(
+            "One-line rationale grounded in opening hours, sales/demand, and/or venue rhythm."
+        ),
+    )
 
 
 def _day_to_dict(day: WeeklyInstagramScheduleDay | dict[str, Any] | Any) -> dict[str, Any]:
@@ -74,11 +79,13 @@ def present_weekly_instagram_schedule(
     """Present a weekly Instagram content schedule in the chat UI.
 
     Call this whenever you propose a weekly Instagram plan (posting slots with time,
-    format, menus, caption angle, and why). Use one list entry per slot. When the same
-    weekday needs multiple posts or stories, add multiple entries with that same ``day``
-    (do not collapse them). The UI renders the schedule from these arguments — do **not**
-    also write a multi-column markdown table for the same plan. Keep any surrounding
-    assistant text short (brief intro only).
+    format, menus, caption angle, and why). When location tools are available, load
+    opening hours with ``get_location_data`` first and choose days/times that fit when
+    the venue is open. Use one list entry per slot. When the same weekday needs multiple
+    posts or stories, add multiple entries with that same ``day`` (do not collapse them).
+    The UI renders the schedule from these arguments — do **not** also write a
+    multi-column markdown table for the same plan. Keep any surrounding assistant text
+    short (brief intro only).
     """
     # Echo schedule in output so the web UI can render even if tool-call args are not
     # forwarded on the live SSE path (history always has args; live stream also sends them).

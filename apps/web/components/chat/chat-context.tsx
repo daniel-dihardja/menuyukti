@@ -29,6 +29,10 @@ export type ChatComposerState = {
   selectedChatModel: ChatGatewayModelId
   selectedGenerationModel: LeonardoPostModelId
   selectedImageFormat: ChatImageAssistantFormatId
+  /** Thread location (venue); used by composer tools such as sales report. */
+  locationId: number
+  /** Pinned sales report for chart tools; null means no sales data. */
+  analyticsRunId: number | null
   isSubmitDisabled: boolean
   slashCommands: ChatSlashCommand[]
   pendingMediaAttachments: PendingMediaAttachment[]
@@ -47,6 +51,7 @@ export type ChatActions = {
   setSelectedChatModel: (model: ChatGatewayModelId) => void
   setSelectedGenerationModel: (model: LeonardoPostModelId) => void
   setSelectedImageFormat: (format: ChatImageAssistantFormatId) => void
+  setAnalyticsRunId: (analyticsRunId: number | null) => void
   handleTextChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   handleSubmit: (message: PromptInputMessage) => Promise<void>
   /** Send a short text-only user message (e.g. Story Generate / Change confirm buttons). */

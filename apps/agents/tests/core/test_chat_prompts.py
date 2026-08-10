@@ -2,10 +2,12 @@
 
 from agents_app.agents.core.chat.graph import chat_tools_list_from_config
 from agents_app.agents.core.chat.prompts import (
+    CHART_ANALYTICS_SECTION,
     CHART_CATALOG_BLOCK,
     IG_STUDIO_BLOCK,
     LEONARDO_IMAGE_BLOCK,
     MEDIA_LIBRARY_BLOCK,
+    NO_SALES_REPORT_SECTION,
     STORY_IMAGE_ASSISTANT_PROMPT,
     SYSTEM_PROMPT_TEMPLATE,
     build_system_prompt,
@@ -14,16 +16,7 @@ from agents_app.agents.core.chat.prompts import (
 
 def test_system_prompt_template_has_complete_structure() -> None:
     assert "Instagram content assistant" in SYSTEM_PROMPT_TEMPLATE
-    assert "prefer grounded answers" in SYSTEM_PROMPT_TEMPLATE.replace("\n", " ")
-    assert "venue_slot_strength_heatmap" in SYSTEM_PROMPT_TEMPLATE
-    assert "posting frequency" in SYSTEM_PROMPT_TEMPLATE
-    assert "menu_item_heatmap" in SYSTEM_PROMPT_TEMPLATE
-    assert "which menus to feature" in SYSTEM_PROMPT_TEMPLATE
-    assert "Daily highlights" in SYSTEM_PROMPT_TEMPLATE
-    assert "Day specialties" in SYSTEM_PROMPT_TEMPLATE
-    assert "pair_lift_matrix_heatmap" in SYSTEM_PROMPT_TEMPLATE
-    assert "menu combos" in SYSTEM_PROMPT_TEMPLATE
-    assert "do not dump full chart payloads" in SYSTEM_PROMPT_TEMPLATE
+    assert "{chart_section}" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{workflow_catalog_block}" not in SYSTEM_PROMPT_TEMPLATE
     assert "{leonardo_image_block}" in SYSTEM_PROMPT_TEMPLATE
@@ -33,20 +26,25 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "list_media" in MEDIA_LIBRARY_BLOCK
     assert "get_milestone" not in SYSTEM_PROMPT_TEMPLATE
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
+    assert "venue_slot_strength_heatmap" in CHART_ANALYTICS_SECTION
+    assert "posting frequency" in CHART_ANALYTICS_SECTION
+    assert "No sales report is attached" in NO_SALES_REPORT_SECTION
 
 
 def test_build_system_prompt_without_optional_blocks() -> None:
     out = build_system_prompt()
     assert "Instagram content assistant" in out
-    assert "posting frequency" in out
+    assert "## Sales report" in out
+    assert "No sales report is attached" in out
     assert "## Workflow chart catalog" not in out
+    assert "## Chart analytics" not in out
     assert "## Workflow milestone catalog" not in out
     assert "IG Studio Post Creator" not in out
     assert "Image generation (Leonardo)" not in out
     assert "get_workflow_overview" not in out
-    assert "get_chart_data" in out
     assert "get_milestone" not in out
     assert "{chart_catalog_block}" not in out
+    assert "{chart_section}" not in out
     assert "{leonardo_image_block}" not in out
     assert "{ig_studio_block}" not in out
     assert "list_media_collections" in out
@@ -56,13 +54,16 @@ def test_build_system_prompt_without_optional_blocks() -> None:
 def test_build_system_prompt_with_chart_catalog() -> None:
     out = build_system_prompt(include_chart_catalog=True)
     assert CHART_CATALOG_BLOCK.strip() in out
+    assert CHART_ANALYTICS_SECTION.strip() in out
     assert "## Workflow chart catalog" in out
+    assert "## Chart analytics" in out
     assert "venue_slot_strength_heatmap" in out
     assert "posting frequency and best timing" in out
     assert "interesting menu combos" in out
     assert "Daily highlights" in out
     assert "Day specialties" in out
     assert "get_chart_data" in out
+    assert "No sales report is attached" not in out
 
 
 def test_build_system_prompt_with_leonardo_image_generation() -> None:

@@ -38,14 +38,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@workspace/ui/components/select'
-import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   Table,
@@ -102,10 +94,6 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
   const [hydrated, setHydrated] = useState(false)
   const [analyticsRuns, setAnalyticsRuns] =
     useState<Array<{ id: number; name: string }>>(initialAnalyticsRuns)
-  const [analyticsRunId, setAnalyticsRunId] = useState<number | null>(() => {
-    const first = initialAnalyticsRuns[0]
-    return first ? first.id : null
-  })
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const {
     editingId,
@@ -152,15 +140,10 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
   useEffect(() => {
     if (locationId === null) {
       setAnalyticsRuns([])
-      setAnalyticsRunId(null)
       return
     }
     if (locationId === initialLocationId) {
       setAnalyticsRuns(initialAnalyticsRuns)
-      setAnalyticsRunId((prev) => {
-        if (prev !== null && initialAnalyticsRuns.some((r) => r.id === prev)) return prev
-        return initialAnalyticsRuns[0]?.id ?? null
-      })
       return
     }
     let cancelled = false
@@ -168,12 +151,10 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
       .then((runs) => {
         if (cancelled) return
         setAnalyticsRuns(runs)
-        setAnalyticsRunId(runs[0]?.id ?? null)
       })
       .catch(() => {
         if (cancelled) return
         setAnalyticsRuns([])
-        setAnalyticsRunId(null)
       })
     return () => {
       cancelled = true
@@ -203,11 +184,11 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     if (locationId === null) return
     const record = createAgentThread({
       locationId,
-      analyticsRunId,
+      analyticsRunId: null,
     })
     setThreads(listAgentThreads())
     router.push(routes.agentThread(record.id))
-  }, [locationId, analyticsRunId, router])
+  }, [locationId, router])
 
   const handleRemove = useCallback(
     (id: string) => {
@@ -303,37 +284,12 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div className="flex min-w-0 w-full flex-1 flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap">
-          <LocationSelect
-            branches={branches}
-            className="w-full max-w-none sm:max-w-xs"
-            label={t('locationLabel')}
-            placeholder={t('locationPlaceholder')}
-          />
-          <Field className="flex w-full max-w-none flex-col gap-2 sm:max-w-xs">
-            <FieldLabel htmlFor="agent-analytics-run">{t('analyticsRunLabel')}</FieldLabel>
-            <Select
-              disabled={analyticsRuns.length === 0}
-              onValueChange={(val) => setAnalyticsRunId(val ? Number(val) : null)}
-              value={analyticsRunId !== null ? String(analyticsRunId) : undefined}
-            >
-              <SelectTrigger
-                aria-label={t('analyticsRunLabel')}
-                className="w-full"
-                id="agent-analytics-run"
-              >
-                <SelectValue placeholder={t('analyticsRunPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {analyticsRuns.map((run) => (
-                  <SelectItem key={run.id} value={String(run.id)}>
-                    {run.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
+        <LocationSelect
+          branches={branches}
+          className="w-full max-w-none sm:max-w-xs"
+          label={t('locationLabel')}
+          placeholder={t('locationPlaceholder')}
+        />
         <Button
           className="w-full touch-manipulation sm:w-auto"
           disabled={locationId === null}

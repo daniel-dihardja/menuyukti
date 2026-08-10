@@ -162,20 +162,35 @@ export function WeeklyInstagramScheduleCard({
   )
 }
 
-function FieldRow({
-  label,
-  value,
-  valueClassName,
-}: {
-  label: string
-  value: string
-  valueClassName?: string
-}) {
+function FieldRow({ label, value }: { label: string; value: string }) {
   return (
     <p className="break-words text-foreground/90 text-sm leading-relaxed">
       <span className="font-semibold text-foreground">{label}: </span>
-      <span className={valueClassName}>{value}</span>
+      <span>{value}</span>
     </p>
+  )
+}
+
+function WeeklyScheduleSlotHeading({ dayLabel, time }: { dayLabel: string; time: string }) {
+  const t = useTranslations('chatTools.presentWeeklyInstagramSchedule')
+
+  return (
+    <div
+      aria-label={t('slotHeadingAria', { day: dayLabel, time })}
+      className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
+    >
+      <QueueItemContent className="line-clamp-none min-w-0 truncate text-base font-medium text-foreground">
+        {dayLabel}
+      </QueueItemContent>
+      {time ? (
+        <Badge
+          className="shrink-0 px-2 py-0.5 font-medium tabular-nums sm:text-xs"
+          variant="outline"
+        >
+          {time}
+        </Badge>
+      ) : null}
+    </div>
   )
 }
 
@@ -184,7 +199,6 @@ function WeeklyScheduleDayFields({ day }: { day: WeeklyInstagramScheduleDay }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <FieldRow label={t('timeLabel')} value={day.time} valueClassName="tabular-nums" />
       <FieldRow label={t('menusLabel')} value={day.menu_items} />
       <FieldRow label={t('captionLabel')} value={day.caption_angle} />
       <FieldRow label={t('whyLabel')} value={day.why} />
@@ -197,15 +211,14 @@ function WeeklyScheduleDayItem({ day }: { day: WeeklyInstagramScheduleDay }) {
   const compact = useCompactLayout()
   const dayLabel = t(`weekdays.${day.day}`)
   const formatLabel = t(`formats.${day.format}`)
+  const time = day.time.trim()
 
   if (!compact) {
     return (
       <QueueItem className="px-0 py-2.5 text-base">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <QueueItemContent className="line-clamp-none text-base font-medium text-foreground">
-              {dayLabel}
-            </QueueItemContent>
+            <WeeklyScheduleSlotHeading dayLabel={dayLabel} time={time} />
             <Badge
               className="shrink-0 px-2 py-0.5 text-xs font-medium sm:text-xs"
               variant="secondary"
@@ -225,14 +238,13 @@ function WeeklyScheduleDayItem({ day }: { day: WeeklyInstagramScheduleDay }) {
     <QueueItem className="px-0 py-1 text-base">
       <Collapsible className="min-w-0 w-full" defaultOpen={false}>
         <CollapsibleTrigger
+          aria-label={t('expandDayAria', { day: dayLabel, time: time || dayLabel })}
           className={cn(
             'flex w-full touch-manipulation items-center gap-2 rounded-md py-2.5 text-left',
             'hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180',
           )}
         >
-          <QueueItemContent className="line-clamp-none min-w-0 flex-1 text-base font-medium text-foreground">
-            {dayLabel}
-          </QueueItemContent>
+          <WeeklyScheduleSlotHeading dayLabel={dayLabel} time={time} />
           <Badge className="shrink-0 px-2 py-0.5 text-xs font-medium" variant="secondary">
             {formatLabel}
           </Badge>
@@ -240,7 +252,6 @@ function WeeklyScheduleDayItem({ day }: { day: WeeklyInstagramScheduleDay }) {
             aria-hidden
             className="size-5 shrink-0 text-muted-foreground transition-transform motion-reduce:transition-none"
           />
-          <span className="sr-only">{t('expandDayAria', { day: dayLabel })}</span>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <QueueItemDescription className="ml-0 mt-0 pb-2.5 text-sm text-foreground/90">
