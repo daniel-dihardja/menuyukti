@@ -84,8 +84,9 @@ def present_weekly_instagram_schedule(
     the venue is open. Use one list entry per slot. When the same weekday needs multiple
     posts or stories, add multiple entries with that same ``day`` (do not collapse them).
     The UI renders the schedule from these arguments — do **not** also write a
-    multi-column markdown table for the same plan. Keep any surrounding assistant text
-    short (brief intro only).
+    multi-column markdown table for the same plan. After data tools return, call this tool
+    immediately; do not emit status-recap prose before it (no "I loaded…", "Done —", or
+    summaries of hours / sales in text). At most one short sentence after the card if needed.
     """
     # Echo schedule in output so the web UI can render even if tool-call args are not
     # forwarded on the live SSE path (history always has args; live stream also sends them).

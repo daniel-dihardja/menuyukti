@@ -108,7 +108,7 @@ export function ChatMessageList() {
                   isActiveStream={isActiveStream}
                   key={msg.id}
                   message={msg}
-                  thinkingLabel={t('thinking')}
+                  visibleMessages={visibleMessages}
                 />
               )
             })}
