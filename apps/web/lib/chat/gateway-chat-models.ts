@@ -4,7 +4,7 @@
  * Keep in sync with apps/agents/agents/core/chat/allowed_models.py (CHAT_GATEWAY_MODEL_ALLOWLIST).
  * Verified against https://ai-gateway.vercel.sh/v1/models (May 2026).
  */
-export const DEFAULT_CHAT_GATEWAY_MODEL = 'openai/gpt-4o-mini' as const
+export const DEFAULT_CHAT_GATEWAY_MODEL = 'openai/gpt-5.4' as const
 
 export const CHAT_GATEWAY_MODEL_IDS = [
   'openai/gpt-4o-mini',
@@ -25,7 +25,7 @@ export type ChatGatewayModelId = (typeof CHAT_GATEWAY_MODEL_IDS)[number]
  * Subset of CHAT_GATEWAY_MODEL_IDS. Keep in sync with
  * apps/agents/agents/core/chat/allowed_models.py (VISION_GATEWAY_MODEL_ALLOWLIST).
  */
-export const DEFAULT_VISION_GATEWAY_MODEL = 'openai/gpt-4o-mini' as const
+export const DEFAULT_VISION_GATEWAY_MODEL = 'openai/gpt-5.4' as const
 
 export const VISION_GATEWAY_MODEL_IDS = [
   'openai/gpt-4o-mini',
