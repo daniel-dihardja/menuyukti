@@ -7,6 +7,8 @@ import {
   graphqlAnalyticsRunCacheTag,
   graphqlAnalyticsRunComputationsCacheTag,
   graphqlLocationsDataCacheTag,
+  graphqlInventoryCatalogCacheTag,
+  graphqlInventoryStockCacheTag,
   graphqlSchedulerCalendarCacheTag,
 } from '@/lib/graphql/cache-tags'
 import {
@@ -41,6 +43,14 @@ import {
   type PublicHolidaysData,
   type SchedulerCalendarData,
 } from '@/lib/graphql/queries'
+import {
+  INVENTORY_CATALOG_ITEMS_QUERY,
+  type InventoryCatalogItemsData,
+} from '@/lib/graphql/queries/inventory-catalog'
+import {
+  INVENTORY_STOCK_QUERY,
+  type InventoryStockData,
+} from '@/lib/graphql/queries/inventory-stock'
 
 /** Cached per user; list view without opening hours payload. */
 export async function getCachedLocationsListData(userId: string): Promise<LocationsListData> {
@@ -283,4 +293,38 @@ export async function getCachedSchedulerCalendar(
     'SchedulerCalendar',
   )
   return data.schedulerCalendar
+}
+
+/** Pantry catalog for a workspace. */
+export async function getCachedInventoryCatalog(
+  userId: string,
+  workspaceId: number,
+): Promise<InventoryCatalogItemsData['inventoryCatalogItems']> {
+  'use cache'
+  cacheTag(graphqlInventoryCatalogCacheTag(userId, workspaceId))
+  cacheLife({ revalidate: 60 })
+  const data = await graphqlQuery<InventoryCatalogItemsData>(
+    INVENTORY_CATALOG_ITEMS_QUERY,
+    { workspaceId: String(workspaceId) },
+    userId,
+    'InventoryCatalogItems',
+  )
+  return data.inventoryCatalogItems
+}
+
+/** Stock levels at a location. */
+export async function getCachedInventoryStock(
+  userId: string,
+  locationId: number,
+): Promise<InventoryStockData['inventoryStock']> {
+  'use cache'
+  cacheTag(graphqlInventoryStockCacheTag(userId, locationId))
+  cacheLife({ revalidate: 60 })
+  const data = await graphqlQuery<InventoryStockData>(
+    INVENTORY_STOCK_QUERY,
+    { locationId: String(locationId) },
+    userId,
+    'InventoryStock',
+  )
+  return data.inventoryStock
 }

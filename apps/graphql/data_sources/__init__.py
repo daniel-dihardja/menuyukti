@@ -28,6 +28,8 @@ __all__ = [
     "InstagramPostPageMediaVersion",
     "Node",
     "ImageAiFlow",
+    "InventoryCatalogItem",
+    "InventoryStock",
     "SessionLocal",
     "engine",
     "init_db",

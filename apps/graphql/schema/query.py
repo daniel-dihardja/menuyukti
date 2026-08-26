@@ -9,6 +9,8 @@ from graphql.schema.queries import (
     CrmCustomersQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
+    InventoryCatalogQuery,
+    InventoryStockQuery,
     LocationMenuItemCogsQuery,
     LocationsQuery,
     MediaCollectionsQuery,
@@ -56,6 +58,8 @@ class Query(
     RevenueTrendsQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
+    InventoryCatalogQuery,
+    InventoryStockQuery,
     AiUsageQuery,
 ):
     pass

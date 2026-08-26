@@ -108,6 +108,9 @@ export const routes = {
   usage: '/usage',
   /** Inventory (Inventar) placeholder. */
   inventar: '/inventar',
+  inventarWithLocation: (locationId: string | number) =>
+    `/inventar?locationId=${encodeURIComponent(String(locationId))}`,
+  inventarCatalog: '/inventar/catalog',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Workspace team management (invite existing users). */
