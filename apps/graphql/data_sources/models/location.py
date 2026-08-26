@@ -12,6 +12,7 @@ from graphql.data_sources.database import Base
 if TYPE_CHECKING:
     from graphql.data_sources.models.calendar_entry import CalendarEntry
     from graphql.data_sources.models.instagram import InstagramPost
+    from graphql.data_sources.models.inventory_stock import InventoryStock
     from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
     from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -83,4 +84,9 @@ class Location(Base):
         back_populates="location",
         cascade="all, delete-orphan",
         order_by="CalendarEntry.entry_date",
+    )
+    inventory_stock: Mapped[list[InventoryStock]] = relationship(
+        "InventoryStock",
+        back_populates="location",
+        cascade="all, delete-orphan",
     )

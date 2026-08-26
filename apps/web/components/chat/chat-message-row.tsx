@@ -1,25 +1,34 @@
 'use client'
 
 import type { UIMessage } from 'ai'
+import { useTranslations } from 'next-intl'
 import { memo } from 'react'
 import { Message, MessageContent } from '@workspace/ui/components/ai-elements/message'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { shouldShowAssistantThinkingFallback } from '@/lib/chat/should-show-assistant-thinking-fallback'
-import { shouldShowAssistantTrailingThinking } from '@/lib/chat/should-show-assistant-trailing-thinking'
+import { getAssistantTrailingThinkingState } from '@/lib/chat/should-show-assistant-trailing-thinking'
 
 import { ChatThreadMessageParts } from '@/components/chat/chat-message-parts'
 
 export type ChatMessageRowProps = {
   message: UIMessage
   isActiveStream: boolean
-  thinkingLabel: string
+  visibleMessages: readonly UIMessage[]
 }
 
-function ChatMessageRowInner({ message, isActiveStream, thinkingLabel }: ChatMessageRowProps) {
+function ChatMessageRowInner({ message, isActiveStream, visibleMessages }: ChatMessageRowProps) {
+  const tChat = useTranslations('chat')
+  const tWeeklySchedule = useTranslations('chatTools.presentWeeklyInstagramSchedule')
   const showFallbackSpinner = shouldShowAssistantThinkingFallback(message, isActiveStream)
-  const showTrailingSpinner = shouldShowAssistantTrailingThinking(message, isActiveStream)
+  const trailingThinking = getAssistantTrailingThinkingState(message, isActiveStream, {
+    visibleMessages,
+  })
+  const trailingLabel =
+    trailingThinking.labelKey === 'buildingWeeklyPlan'
+      ? tWeeklySchedule('running')
+      : tChat('thinking')
   const isAssistant = message.role === 'assistant'
 
   return (
@@ -31,7 +40,7 @@ function ChatMessageRowInner({ message, isActiveStream, thinkingLabel }: ChatMes
         {showFallbackSpinner ? (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Spinner aria-hidden />
-            <span>{thinkingLabel}</span>
+            <span>{tChat('thinking')}</span>
           </div>
         ) : (
           <>
@@ -40,10 +49,10 @@ function ChatMessageRowInner({ message, isActiveStream, thinkingLabel }: ChatMes
               message={message}
               role={message.role}
             />
-            {showTrailingSpinner ? (
+            {trailingThinking.show ? (
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Spinner aria-hidden />
-                <span>{thinkingLabel}</span>
+                <span>{trailingLabel}</span>
               </div>
             ) : null}
           </>
@@ -58,5 +67,5 @@ export const ChatMessageRow = memo(
   (prev, next) =>
     prev.message === next.message &&
     prev.isActiveStream === next.isActiveStream &&
-    prev.thinkingLabel === next.thinkingLabel,
+    prev.visibleMessages === next.visibleMessages,
 )

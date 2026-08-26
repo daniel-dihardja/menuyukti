@@ -280,8 +280,13 @@ entries is fine for a partial week; more than 7 is fine when days have multiple 
 Each entry must set separate fields: **time** (clock time only, e.g. `8:00 AM`), **format**,
 **menu_items**, **caption_angle** (creative angle only — never include the posting time
 here), and **why** (mention open hours and/or demand when relevant). Do **not** write
-multi-column markdown tables for that schedule — the UI renders it from the tool. Keep
-surrounding reply text short (brief intro only).
+multi-column markdown tables for that schedule — the UI renders it from the tool.
+
+After data tools return, call `present_weekly_instagram_schedule` **immediately**. Do **not**
+emit status-recap prose between tools and the schedule tool (no "I loaded…", "Done —",
+or summaries of opening hours / sales signals in text — the schedule tool carries that).
+At most **one short sentence after** the schedule card if needed; never duplicate the plan
+in markdown.
 
 Do **not** call the tool for open-ended advice, single-post or single-day ideas, caption
 variants, critiques, or general cadence guidance — answer those in normal markdown instead.

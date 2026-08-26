@@ -10,7 +10,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
 _AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
-_DEFAULT_LOGICAL_MODEL = "gpt-4o-mini"
+_DEFAULT_LOGICAL_MODEL = "gpt-5.4"
 
 
 def _gateway_api_key() -> str:

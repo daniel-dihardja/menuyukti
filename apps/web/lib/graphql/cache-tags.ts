@@ -37,3 +37,11 @@ export function graphqlAnalyticsRunComputationsCacheTag(
 export function graphqlSchedulerCalendarCacheTag(userId: string, locationId: number): string {
   return `graphql-scheduler-calendar-${userId}-${locationId}`
 }
+
+export function graphqlInventoryCatalogCacheTag(userId: string, workspaceId: number): string {
+  return `graphql-inventory-catalog-${userId}-${workspaceId}`
+}
+
+export function graphqlInventoryStockCacheTag(userId: string, locationId: number): string {
+  return `graphql-inventory-stock-${userId}-${locationId}`
+}

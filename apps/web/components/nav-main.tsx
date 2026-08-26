@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   MapPin,
   Megaphone,
+  Package,
   SquarePen,
   Store,
   Users,
@@ -133,6 +134,13 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'printShop',
     href: routes.shop,
     icon: <Store className="w-4 h-4" />,
+    group: 'commerce',
+  },
+  {
+    key: 'inventar',
+    labelKey: 'inventar',
+    href: routes.inventar,
+    icon: <Package className="w-4 h-4" />,
     group: 'commerce',
   },
   {

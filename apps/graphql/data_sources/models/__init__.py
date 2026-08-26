@@ -16,6 +16,8 @@ from graphql.data_sources.models.instagram import (
     InstagramPostPage,
     InstagramPostPageMediaVersion,
 )
+from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
+from graphql.data_sources.models.inventory_stock import InventoryStock
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
@@ -41,6 +43,8 @@ __all__ = [
     "CrmDevice",
     "CrmEnrollmentToken",
     "ImageAiFlow",
+    "InventoryCatalogItem",
+    "InventoryStock",
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",

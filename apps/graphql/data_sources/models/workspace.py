@@ -13,6 +13,7 @@ from graphql.data_sources.database import Base
 if TYPE_CHECKING:
     from graphql.data_sources.models.crm_app import CrmApp
     from graphql.data_sources.models.instagram import InstagramPost
+    from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
     from graphql.data_sources.models.location import Location
     from graphql.data_sources.models.media_asset import MediaAsset, MediaCollection
     from graphql.data_sources.models.visual_style import VisualStyle
@@ -57,6 +58,11 @@ class Workspace(Base):
         back_populates="workspace",
         cascade="all, delete-orphan",
         order_by="CrmApp.title",
+    )
+    inventory_catalog_items: Mapped[list[InventoryCatalogItem]] = relationship(
+        back_populates="workspace",
+        cascade="all, delete-orphan",
+        order_by="InventoryCatalogItem.name",
     )
 
 
