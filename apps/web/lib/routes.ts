@@ -19,6 +19,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/staff',
   '/usage',
   '/profile',
+  '/inventar',
 ] as const
 
 export function isProtectedAppShellPath(pathname: string | null): boolean {
@@ -105,6 +106,8 @@ export const routes = {
   staff: '/staff',
   /** Personal AI usage (LLM via AI Gateway + Leonardo generations). */
   usage: '/usage',
+  /** Inventory (Inventar) placeholder. */
+  inventar: '/inventar',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Workspace team management (invite existing users). */

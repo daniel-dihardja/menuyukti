@@ -716,6 +716,7 @@
     "igReels": "IG Reels",
     "igStories": "IG Stories",
     "printShop": "Print shop",
+    "inventar": "Inventar",
     "crm": "CRM",
     "crmApps": "Apps",
     "crmRegistrations": "Registrations",
@@ -744,6 +745,12 @@
   "staff": {
     "title": "Staff console",
     "description": "Menuyukti platform tools for team members. Customers do not see this area."
+  },
+  "inventar": {
+    "title": "Inventar",
+    "description": "Track restaurant inventory and stock levels.",
+    "headline": "Inventar",
+    "empty": "Inventory management will appear here. Nothing to show yet."
   },
   "usage": {
     "title": "AI usage",

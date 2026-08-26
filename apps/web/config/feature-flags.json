@@ -8,6 +8,7 @@
     "branches": true,
     "crm": true,
     "printShop": false,
+    "inventar": true,
     "team": true,
     "chat": true
   },
@@ -20,6 +21,7 @@
     "/crm": true,
     "/shop": false,
     "/print-orders": false,
+    "/inventar": true,
     "/profile": true,
     "/advisor": true,
     "/staff": true
