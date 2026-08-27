@@ -26,6 +26,7 @@ mutation CreateWithStock(
   $packageSize: Float!
   $packageUnit: String!
   $onHand: Float!
+  $storageZone: InventoryStorageZone
 ) {
   createInventoryCatalogItemWithStock(
     locationId: $locationId
@@ -33,6 +34,7 @@ mutation CreateWithStock(
     packageSize: $packageSize
     packageUnit: $packageUnit
     onHand: $onHand
+    storageZone: $storageZone
   ) {
     id
     locationId
@@ -42,7 +44,39 @@ mutation CreateWithStock(
       name
       packageSize
       packageUnit
+      storageZone
     }
+  }
+}
+"""
+
+_CREATE_CATALOG = """
+mutation CreateCatalog(
+  $workspaceId: Int!
+  $name: String!
+  $packageSize: Float!
+  $packageUnit: String!
+  $storageZone: InventoryStorageZone
+) {
+  createInventoryCatalogItem(
+    workspaceId: $workspaceId
+    name: $name
+    packageSize: $packageSize
+    packageUnit: $packageUnit
+    storageZone: $storageZone
+  ) {
+    id
+    name
+    storageZone
+  }
+}
+"""
+
+_UPDATE_CATALOG = """
+mutation UpdateCatalog($id: Int!, $storageZone: InventoryStorageZone) {
+  updateInventoryCatalogItem(id: $id, storageZone: $storageZone) {
+    id
+    storageZone
   }
 }
 """
@@ -54,6 +88,7 @@ query Catalog($workspaceId: ID!) {
     name
     packageSize
     packageUnit
+    storageZone
   }
 }
 """
@@ -63,7 +98,7 @@ query Stock($locationId: ID!) {
   inventoryStock(locationId: $locationId) {
     id
     onHand
-    catalogItem { name packageSize packageUnit }
+    catalogItem { name packageSize packageUnit storageZone }
   }
 }
 """
@@ -173,15 +208,43 @@ def test_create_with_stock_and_list(inventar_workspace_and_location):
     stock = result.data["createInventoryCatalogItemWithStock"]
     assert stock["onHand"] == 2.0
     assert stock["catalogItem"]["name"] == "Sugar"
+    assert stock["catalogItem"]["storageZone"] == "dry"
 
     stock_list = _execute(_STOCK_QUERY, {"locationId": str(loc_id)})
     assert not stock_list.errors, stock_list.errors
     assert len(stock_list.data["inventoryStock"]) == 1
     assert stock_list.data["inventoryStock"][0]["catalogItem"]["name"] == "Sugar"
+    assert stock_list.data["inventoryStock"][0]["catalogItem"]["storageZone"] == "dry"
 
     catalog_list = _execute(_CATALOG_QUERY, {"workspaceId": str(ws_id)})
     assert not catalog_list.errors, catalog_list.errors
     assert len(catalog_list.data["inventoryCatalogItems"]) == 1
+    assert catalog_list.data["inventoryCatalogItems"][0]["storageZone"] == "dry"
+
+
+def test_storage_zone_create_and_update(inventar_workspace_and_location):
+    ws_id = inventar_workspace_and_location["workspace_id"]
+
+    created = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Ice cream",
+            "packageSize": 2.0,
+            "packageUnit": "L",
+            "storageZone": "freezer",
+        },
+    )
+    assert not created.errors, created.errors
+    item = created.data["createInventoryCatalogItem"]
+    assert item["storageZone"] == "freezer"
+
+    updated = _execute(
+        _UPDATE_CATALOG,
+        {"id": item["id"], "storageZone": "cooler"},
+    )
+    assert not updated.errors, updated.errors
+    assert updated.data["updateInventoryCatalogItem"]["storageZone"] == "cooler"
 
 
 def test_upsert_and_delete_stock(inventar_workspace_and_location):

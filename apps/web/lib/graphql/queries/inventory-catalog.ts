@@ -1,9 +1,14 @@
+import type { InventoryStorageZone } from '@/lib/inventar/storage-zones'
+
+export type { InventoryStorageZone }
+
 export type InventoryCatalogItem = {
   id: number
   workspaceId: number
   name: string
   packageSize: number
   packageUnit: string
+  storageZone: InventoryStorageZone
   createdAt: string
   updatedAt: string
 }
@@ -14,6 +19,7 @@ const CATALOG_FIELDS = `
   name
   packageSize
   packageUnit
+  storageZone
   createdAt
   updatedAt
 `
@@ -36,12 +42,14 @@ export const CREATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $name: String!
     $packageSize: Float!
     $packageUnit: String!
+    $storageZone: InventoryStorageZone
   ) {
     createInventoryCatalogItem(
       workspaceId: $workspaceId
       name: $name
       packageSize: $packageSize
       packageUnit: $packageUnit
+      storageZone: $storageZone
     ) {
       ${CATALOG_FIELDS}
     }
@@ -58,12 +66,14 @@ export const UPDATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $name: String
     $packageSize: Float
     $packageUnit: String
+    $storageZone: InventoryStorageZone
   ) {
     updateInventoryCatalogItem(
       id: $id
       name: $name
       packageSize: $packageSize
       packageUnit: $packageUnit
+      storageZone: $storageZone
     ) {
       ${CATALOG_FIELDS}
     }

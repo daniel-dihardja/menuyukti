@@ -8,6 +8,21 @@ from sqlalchemy.orm import Session, joinedload
 from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
 from graphql.data_sources.models.inventory_stock import InventoryStock
 from graphql.data_sources.models.location import Location
+from graphql.schema.types.inventory_catalog_item import InventoryStorageZone
+
+_ALLOWED_STORAGE_ZONES = {zone.value for zone in InventoryStorageZone}
+_DEFAULT_STORAGE_ZONE = InventoryStorageZone.dry.value
+
+
+def validate_storage_zone(storage_zone: str | InventoryStorageZone | None) -> str:
+    if storage_zone is None:
+        return _DEFAULT_STORAGE_ZONE
+    if isinstance(storage_zone, InventoryStorageZone):
+        return storage_zone.value
+    zone_clean = storage_zone.strip().lower()
+    if zone_clean not in _ALLOWED_STORAGE_ZONES:
+        raise ValueError("storageZone must be freezer, cooler, or dry")
+    return zone_clean
 
 
 def validate_catalog_fields(
@@ -15,7 +30,8 @@ def validate_catalog_fields(
     name: str,
     package_size: float,
     package_unit: str,
-) -> tuple[str, float, str]:
+    storage_zone: str | InventoryStorageZone | None = None,
+) -> tuple[str, float, str, str]:
     name_clean = name.strip()
     if not name_clean:
         raise ValueError("Name cannot be empty")
@@ -28,7 +44,8 @@ def validate_catalog_fields(
         raise ValueError("packageUnit cannot be empty")
     if len(unit_clean) > 32:
         raise ValueError("packageUnit is too long")
-    return name_clean, float(package_size), unit_clean
+    zone_clean = validate_storage_zone(storage_zone)
+    return name_clean, float(package_size), unit_clean, zone_clean
 
 
 def validate_on_hand(on_hand: float) -> float:

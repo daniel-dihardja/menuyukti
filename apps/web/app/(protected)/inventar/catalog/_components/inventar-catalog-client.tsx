@@ -7,6 +7,11 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catalog'
+import {
+  DEFAULT_INVENTORY_STORAGE_ZONE,
+  INVENTORY_STORAGE_ZONES,
+  type InventoryStorageZone,
+} from '@/lib/inventar/storage-zones'
 import { routes } from '@/lib/routes'
 import {
   AlertDialog,
@@ -29,6 +34,13 @@ import {
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -48,12 +60,14 @@ type CatalogForm = {
   name: string
   packageSize: string
   packageUnit: string
+  storageZone: InventoryStorageZone
 }
 
 const emptyForm: CatalogForm = {
   name: '',
   packageSize: '',
   packageUnit: 'kg',
+  storageZone: DEFAULT_INVENTORY_STORAGE_ZONE,
 }
 
 export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
@@ -72,6 +86,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
       name: item.name,
       packageSize: String(item.packageSize),
       packageUnit: item.packageUnit,
+      storageZone: item.storageZone,
     })
   }
 
@@ -109,6 +124,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
           name: form.name.trim(),
           packageSize: validated.packageSize,
           packageUnit: form.packageUnit.trim(),
+          storageZone: form.storageZone,
         }),
       })
       if (!res.ok) {
@@ -139,6 +155,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
           name: form.name.trim(),
           packageSize: validated.packageSize,
           packageUnit: form.packageUnit.trim(),
+          storageZone: form.storageZone,
         }),
       })
       if (!res.ok) {
@@ -203,6 +220,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>{t('name')}</TableHead>
+              <TableHead>{t('storageZone')}</TableHead>
               <TableHead>{t('pack')}</TableHead>
               <TableHead className="w-[1%]" />
             </TableRow>
@@ -211,6 +229,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
             {catalogItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell>{t(`storageZones.${item.storageZone}`)}</TableCell>
                 <TableCell>{formatPackLabel(item.packageSize, item.packageUnit)}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
@@ -320,6 +339,26 @@ function CatalogFormFields({
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`${idPrefix}-zone`}>{t('storageZone')}</FieldLabel>
+        <Select
+          value={form.storageZone}
+          onValueChange={(value) =>
+            setForm((f) => ({ ...f, storageZone: value as InventoryStorageZone }))
+          }
+        >
+          <SelectTrigger id={`${idPrefix}-zone`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {INVENTORY_STORAGE_ZONES.map((zone) => (
+              <SelectItem key={zone} value={zone}>
+                {t(`storageZones.${zone}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field>

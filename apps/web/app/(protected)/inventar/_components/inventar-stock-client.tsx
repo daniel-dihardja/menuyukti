@@ -10,6 +10,7 @@ import { LocationSelect } from '@/app/(protected)/analytics/sales/location-selec
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catalog'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
+import { INVENTORY_STORAGE_ZONE_SORT_ORDER } from '@/lib/inventar/storage-zones'
 import { routes } from '@/lib/routes'
 import {
   AlertDialog,
@@ -112,6 +113,14 @@ export function InventarStockClient({
   }, [locationId, initialLocationId, router])
 
   const activeLocationId = locationId ?? initialLocationId
+
+  const sortedStockRows = [...stockRows].toSorted((a, b) => {
+    const zoneDiff =
+      INVENTORY_STORAGE_ZONE_SORT_ORDER[a.catalogItem.storageZone] -
+      INVENTORY_STORAGE_ZONE_SORT_ORDER[b.catalogItem.storageZone]
+    if (zoneDiff !== 0) return zoneDiff
+    return a.catalogItem.name.localeCompare(b.catalogItem.name)
+  })
 
   const editSubtractAmount = Number(editSubtract)
   const editNewStock =
@@ -294,15 +303,17 @@ export function InventarStockClient({
           <TableHeader>
             <TableRow>
               <TableHead>{t('name')}</TableHead>
+              <TableHead>{t('storageZone')}</TableHead>
               <TableHead>{t('pack')}</TableHead>
               <TableHead className="text-right">{t('currentStock')}</TableHead>
               <TableHead className="w-[1%]" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {stockRows.map((row) => (
+            {sortedStockRows.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="font-medium">{row.catalogItem.name}</TableCell>
+                <TableCell>{t(`storageZones.${row.catalogItem.storageZone}`)}</TableCell>
                 <TableCell>
                   {formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)}
                 </TableCell>

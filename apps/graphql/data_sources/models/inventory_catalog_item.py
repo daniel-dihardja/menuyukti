@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class InventoryCatalogItem(Base):
-    """Pantry item definition: name and package label (no recipes)."""
+    """Pantry item definition: name, package label, and primary storage zone."""
 
     __tablename__ = "inventory_catalog_item"
     __table_args__ = (
@@ -39,6 +39,12 @@ class InventoryCatalogItem(Base):
     name: Mapped[str] = mapped_column(String(256), nullable=False)
     package_size: Mapped[float] = mapped_column(Float, nullable=False)
     package_unit: Mapped[str] = mapped_column(String(32), nullable=False)
+    storage_zone: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        server_default="dry",
+        default="dry",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
