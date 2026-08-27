@@ -45,6 +45,7 @@ export async function PATCH(req: Request, context: RouteContext) {
         ...(body.name !== undefined ? { name: body.name } : {}),
         ...(body.packageSize !== undefined ? { packageSize: body.packageSize } : {}),
         ...(body.packageUnit !== undefined ? { packageUnit: body.packageUnit } : {}),
+        ...(body.storageZone !== undefined ? { storageZone: body.storageZone } : {}),
       },
       userId,
     )

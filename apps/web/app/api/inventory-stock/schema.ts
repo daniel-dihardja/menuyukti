@@ -1,11 +1,16 @@
 import { z } from 'zod'
 
+import { INVENTORY_STORAGE_ZONES } from '@/lib/inventar/storage-zones'
+
+const storageZoneSchema = z.enum(INVENTORY_STORAGE_ZONES)
+
 export const createInventoryCatalogItemWithStockBodySchema = z.object({
   locationId: z.number().int().positive(),
   name: z.string().trim().min(1).max(256),
   packageSize: z.number().positive(),
   packageUnit: z.string().trim().min(1).max(32),
   onHand: z.number().min(0),
+  storageZone: storageZoneSchema.optional().default('dry'),
 })
 
 export const upsertInventoryStockBodySchema = z.object({

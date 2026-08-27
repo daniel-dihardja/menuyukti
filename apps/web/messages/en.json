@@ -759,6 +759,12 @@
     "subtract": "Subtract",
     "pack": "Pack",
     "name": "Name",
+    "storageZone": "Storage",
+    "storageZones": {
+      "cooler": "Cooler",
+      "freezer": "Freezer",
+      "dry": "Dry"
+    },
     "packageSize": "Package size",
     "packageUnit": "Unit",
     "addItem": "Track pantry item",

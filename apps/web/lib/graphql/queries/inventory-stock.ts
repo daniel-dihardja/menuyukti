@@ -5,7 +5,10 @@ export type InventoryStockRow = {
   locationId: number
   catalogItemId: number
   onHand: number
-  catalogItem: Pick<InventoryCatalogItem, 'id' | 'name' | 'packageSize' | 'packageUnit'>
+  catalogItem: Pick<
+    InventoryCatalogItem,
+    'id' | 'name' | 'packageSize' | 'packageUnit' | 'storageZone'
+  >
   createdAt: string
   updatedAt: string
 }
@@ -22,6 +25,7 @@ const STOCK_FIELDS = `
     name
     packageSize
     packageUnit
+    storageZone
   }
 `
 
@@ -44,6 +48,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
     $packageSize: Float!
     $packageUnit: String!
     $onHand: Float!
+    $storageZone: InventoryStorageZone
   ) {
     createInventoryCatalogItemWithStock(
       locationId: $locationId
@@ -51,6 +56,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
       packageSize: $packageSize
       packageUnit: $packageUnit
       onHand: $onHand
+      storageZone: $storageZone
     ) {
       ${STOCK_FIELDS}
     }

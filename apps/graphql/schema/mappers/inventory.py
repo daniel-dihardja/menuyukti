@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
 from graphql.data_sources.models.inventory_stock import InventoryStock
-from graphql.schema.types.inventory_catalog_item import InventoryCatalogItemType
+from graphql.schema.types.inventory_catalog_item import (
+    InventoryCatalogItemType,
+    InventoryStorageZone,
+)
 from graphql.schema.types.inventory_stock import InventoryStockType
 
 
@@ -15,6 +18,7 @@ def catalog_item_to_gql(row: InventoryCatalogItem) -> InventoryCatalogItemType:
         name=row.name,
         packageSize=row.package_size,
         packageUnit=row.package_unit,
+        storageZone=InventoryStorageZone(row.storage_zone),
         createdAt=row.created_at,
         updatedAt=row.updated_at,
     )
