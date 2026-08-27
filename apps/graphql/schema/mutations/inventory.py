@@ -18,7 +18,10 @@ from graphql.schema.types.inventory_catalog_item import (
     InventoryCatalogItemType,
     InventoryStorageZone,
 )
-from graphql.schema.types.inventory_stock import InventoryStockType
+from graphql.schema.types.inventory_stock import (
+    InventoryStockTransferResult,
+    InventoryStockType,
+)
 from graphql.services.inventory import (
     assert_catalog_matches_location_workspace,
     get_catalog_item_or_raise,
@@ -26,6 +29,7 @@ from graphql.services.inventory import (
     load_stock_with_catalog,
     validate_catalog_fields,
     validate_on_hand,
+    validate_transfer_quantity,
 )
 
 
@@ -112,9 +116,7 @@ class InventoryCatalogMutations:
             session.refresh(row)
             return catalog_item_to_gql(row)
 
-    @strawberry.mutation(
-        description="Delete a pantry catalog item and all location stock rows."
-    )
+    @strawberry.mutation(description="Delete a pantry catalog item and all location stock rows.")
     def delete_inventory_catalog_item(self, info: strawberry.Info, id: int) -> bool:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -186,6 +188,86 @@ class InventoryStockMutations:
             session.delete(row)
             session.commit()
             return True
+
+    @strawberry.mutation(
+        description="Move packages of a tracked item from one location to another."
+    )
+    def transfer_inventory_stock(
+        self,
+        info: strawberry.Info,
+        from_stock_id: int,
+        to_location_id: int,
+        quantity: float,
+    ) -> InventoryStockTransferResult:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for transferInventoryStock")
+
+        with request_session_scope(info) as session:
+            source = session.get(InventoryStock, from_stock_id)
+            if source is None:
+                raise ValueError("Stock row not found")
+
+            require_location_owner(session, source.location_id, user_id, info=info)
+            require_location_owner(session, to_location_id, user_id, info=info)
+
+            if source.location_id == to_location_id:
+                raise ValueError("Cannot transfer to the same location")
+
+            from_location_id = source.location_id
+            catalog_item = get_catalog_item_or_raise(session, source.catalog_item_id)
+            destination = get_location_or_raise(session, to_location_id)
+            assert_catalog_matches_location_workspace(session, catalog_item, destination)
+
+            source_location = get_location_or_raise(session, from_location_id)
+            if source_location.workspace_id is None or destination.workspace_id is None:
+                raise ValueError("Location is not linked to a workspace")
+            if source_location.workspace_id != destination.workspace_id:
+                raise ValueError("Locations must belong to the same workspace")
+
+            qty = validate_transfer_quantity(quantity, source.on_hand)
+            remaining = source.on_hand - qty
+
+            dest_row = (
+                session.query(InventoryStock)
+                .filter(
+                    InventoryStock.location_id == to_location_id,
+                    InventoryStock.catalog_item_id == source.catalog_item_id,
+                )
+                .first()
+            )
+            if dest_row is None:
+                dest_row = InventoryStock(
+                    location_id=to_location_id,
+                    catalog_item_id=source.catalog_item_id,
+                    on_hand=qty,
+                )
+                session.add(dest_row)
+            else:
+                dest_row.on_hand = dest_row.on_hand + qty
+
+            if remaining <= 0:
+                session.delete(source)
+                keep_from_stock_id: int | None = None
+            else:
+                source.on_hand = remaining
+                keep_from_stock_id = source.id
+
+            session.commit()
+
+            to_stock = load_stock_with_catalog(session, dest_row.id)
+            from_stock_gql = (
+                stock_to_gql(load_stock_with_catalog(session, keep_from_stock_id))
+                if keep_from_stock_id is not None
+                else None
+            )
+
+            return InventoryStockTransferResult(
+                fromStock=from_stock_gql,
+                toStock=stock_to_gql(to_stock),
+                fromLocationId=from_location_id,
+                toLocationId=to_location_id,
+            )
 
     @strawberry.mutation(
         description="Create a catalog item and initial stock at a location in one step."

@@ -87,6 +87,40 @@ export type UpsertInventoryStockData = {
   upsertInventoryStock: InventoryStockRow
 }
 
+export const TRANSFER_INVENTORY_STOCK_MUTATION = `
+  mutation TransferInventoryStock(
+    $fromStockId: Int!
+    $toLocationId: Int!
+    $quantity: Float!
+  ) {
+    transferInventoryStock(
+      fromStockId: $fromStockId
+      toLocationId: $toLocationId
+      quantity: $quantity
+    ) {
+      fromLocationId
+      toLocationId
+      fromStock {
+        ${STOCK_FIELDS}
+      }
+      toStock {
+        ${STOCK_FIELDS}
+      }
+    }
+  }
+`
+
+export type InventoryStockTransferResult = {
+  fromLocationId: number
+  toLocationId: number
+  fromStock: InventoryStockRow | null
+  toStock: InventoryStockRow
+}
+
+export type TransferInventoryStockData = {
+  transferInventoryStock: InventoryStockTransferResult
+}
+
 export const DELETE_INVENTORY_STOCK_MUTATION = `
   mutation DeleteInventoryStock($id: Int!) {
     deleteInventoryStock(id: $id)

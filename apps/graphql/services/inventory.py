@@ -54,6 +54,15 @@ def validate_on_hand(on_hand: float) -> float:
     return float(on_hand)
 
 
+def validate_transfer_quantity(quantity: float, source_on_hand: float) -> float:
+    if not isinstance(quantity, (int, float)) or quantity <= 0:
+        raise ValueError("quantity must be greater than 0")
+    qty = float(quantity)
+    if qty > source_on_hand:
+        raise ValueError("quantity cannot exceed current stock")
+    return qty
+
+
 def assert_catalog_matches_location_workspace(
     session: Session,
     catalog_item: InventoryCatalogItem,

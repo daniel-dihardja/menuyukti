@@ -19,6 +19,12 @@ export const upsertInventoryStockBodySchema = z.object({
   onHand: z.number().min(0),
 })
 
+export const transferInventoryStockBodySchema = z.object({
+  fromStockId: z.number().int().positive(),
+  toLocationId: z.number().int().positive(),
+  quantity: z.number().positive(),
+})
+
 export const patchInventoryStockBodySchema = z.object({
   onHand: z.number().min(0),
 })
@@ -27,4 +33,5 @@ export type CreateInventoryCatalogItemWithStockBody = z.infer<
   typeof createInventoryCatalogItemWithStockBodySchema
 >
 export type UpsertInventoryStockBody = z.infer<typeof upsertInventoryStockBodySchema>
+export type TransferInventoryStockBody = z.infer<typeof transferInventoryStockBodySchema>
 export type PatchInventoryStockBody = z.infer<typeof patchInventoryStockBodySchema>

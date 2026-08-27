@@ -14,3 +14,11 @@ class InventoryStockType:
     catalogItem: InventoryCatalogItemType
     createdAt: datetime
     updatedAt: datetime
+
+
+@strawberry.type(description="Result of moving packages between locations.")
+class InventoryStockTransferResult:
+    fromStock: InventoryStockType | None
+    toStock: InventoryStockType
+    fromLocationId: int
+    toLocationId: int

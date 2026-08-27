@@ -11,14 +11,17 @@ import {
 } from '@/lib/graphql/cache-tags'
 import {
   CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION,
+  TRANSFER_INVENTORY_STOCK_MUTATION,
   UPSERT_INVENTORY_STOCK_MUTATION,
   type CreateInventoryCatalogItemWithStockData,
+  type TransferInventoryStockData,
   type UpsertInventoryStockData,
 } from '@/lib/graphql/queries/inventory-stock'
 import { MY_WORKSPACE_QUERY, type MyWorkspaceData } from '@/lib/graphql/queries/locations'
 
 import {
   createInventoryCatalogItemWithStockBodySchema,
+  transferInventoryStockBodySchema,
   upsertInventoryStockBodySchema,
 } from './schema'
 
@@ -63,6 +66,25 @@ export async function POST(req: Request) {
       const workspaceId = await resolveWorkspaceId(userId)
       await revalidateInventarTags(userId, body.locationId, workspaceId)
       return NextResponse.json({ stock: data.upsertInventoryStock })
+    }
+
+    if (mode === 'transfer') {
+      const body = transferInventoryStockBodySchema.parse(json)
+      const data = await graphqlQuery<TransferInventoryStockData>(
+        TRANSFER_INVENTORY_STOCK_MUTATION,
+        body,
+        userId,
+      )
+      const transfer = data.transferInventoryStock
+      revalidateTag(
+        graphqlInventoryStockCacheTag(userId, transfer.fromLocationId),
+        revalidateTagAfterMutation,
+      )
+      revalidateTag(
+        graphqlInventoryStockCacheTag(userId, transfer.toLocationId),
+        revalidateTagAfterMutation,
+      )
+      return NextResponse.json({ transfer })
     }
 
     const body = createInventoryCatalogItemWithStockBodySchema.parse(json)
