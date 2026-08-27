@@ -771,6 +771,12 @@
     "editStock": "Edit stock",
     "removeFromLocation": "Remove from location",
     "removeFromLocationConfirm": "Stop tracking this item at this location? The pantry item stays in your catalog.",
+    "transfer": "Transfer",
+    "transferStock": "Transfer stock",
+    "destinationLocation": "Destination",
+    "destinationPlaceholder": "Select a location",
+    "quantity": "Quantity",
+    "remainingAfterTransfer": "Remaining here",
     "stockEmpty": "Nothing on the shelf yet at this location.",
     "stockEmptyHint": "Choose a pantry item and set how many packages you have on the shelf.",
     "catalogEmptyOnStock": "Add pantry items to your catalog before tracking stock here.",
@@ -800,7 +806,10 @@
       "onHandMin": "Stock must be zero or greater",
       "subtractMin": "Subtract must be zero or greater",
       "subtractTooMuch": "Cannot subtract more than current stock",
-      "pantryItemRequired": "Choose a pantry item"
+      "pantryItemRequired": "Choose a pantry item",
+      "quantityPositive": "Quantity must be greater than zero",
+      "quantityTooMuch": "Cannot transfer more than current stock",
+      "destinationRequired": "Choose a destination location"
     }
   },
   "usage": {

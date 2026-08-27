@@ -27,15 +27,17 @@ import { Badge } from '@workspace/ui/components/badge'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@workspace/ui/components/dialog'
-import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -81,11 +83,14 @@ export function InventarStockClient({
 
   const [addOpen, setAddOpen] = useState(false)
   const [editRow, setEditRow] = useState<InventoryStockRow | null>(null)
+  const [transferRow, setTransferRow] = useState<InventoryStockRow | null>(null)
   const [removeRow, setRemoveRow] = useState<InventoryStockRow | null>(null)
   const [pending, setPending] = useState(false)
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>('')
   const [addOnHand, setAddOnHand] = useState('0')
   const [editSubtract, setEditSubtract] = useState('0')
+  const [transferDestinationId, setTransferDestinationId] = useState('')
+  const [transferQuantity, setTransferQuantity] = useState('')
 
   useEffect(() => {
     if (initialLocationId !== null) {
@@ -131,6 +136,17 @@ export function InventarStockClient({
       ? editRow.onHand - editSubtractAmount
       : null
 
+  const transferDestinations = branches.filter((b) => b.id !== activeLocationId)
+  const canTransfer = transferDestinations.length > 0
+  const transferQtyAmount = Number(transferQuantity)
+  const transferRemaining =
+    transferRow != null &&
+    Number.isFinite(transferQtyAmount) &&
+    transferQtyAmount > 0 &&
+    transferQtyAmount <= transferRow.onHand
+      ? transferRow.onHand - transferQtyAmount
+      : null
+
   const trackedCatalogIds = new Set(stockRows.map((row) => row.catalogItemId))
   const untrackedCatalog = catalogItems.filter((item) => !trackedCatalogIds.has(item.id))
   const canAddStock =
@@ -141,6 +157,13 @@ export function InventarStockClient({
     setSelectedCatalogId(first ? String(first.id) : '')
     setAddOnHand('0')
     setAddOpen(true)
+  }
+
+  function openTransferDialog(row: InventoryStockRow) {
+    const [firstDest] = transferDestinations
+    setTransferRow(row)
+    setTransferDestinationId(firstDest ? String(firstDest.id) : '')
+    setTransferQuantity(String(row.onHand))
   }
 
   async function refresh() {
@@ -243,6 +266,48 @@ export function InventarStockClient({
     }
   }
 
+  async function handleTransferStock() {
+    if (transferRow == null) return
+    if (!transferDestinationId) {
+      toast.error(t('validation.destinationRequired'))
+      return
+    }
+    const quantity = Number(transferQuantity)
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      toast.error(t('validation.quantityPositive'))
+      return
+    }
+    if (quantity > transferRow.onHand) {
+      toast.error(t('validation.quantityTooMuch'))
+      return
+    }
+    setPending(true)
+    try {
+      const res = await fetch('/api/inventory-stock?mode=transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromStockId: transferRow.id,
+          toLocationId: Number(transferDestinationId),
+          quantity,
+        }),
+      })
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { message?: string } | null
+        throw new Error(payload?.message ?? t('errorGeneric'))
+      }
+      setTransferRow(null)
+      setTransferDestinationId('')
+      setTransferQuantity('')
+      toast.success(t('transferStock'))
+      await refresh()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('errorGeneric'))
+    } finally {
+      setPending(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <p className="text-pretty text-sm text-muted-foreground">{t('trustLine')}</p>
@@ -335,6 +400,16 @@ export function InventarStockClient({
                     >
                       {t('editStock')}
                     </Button>
+                    {canTransfer ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openTransferDialog(row)}
+                      >
+                        {t('transfer')}
+                      </Button>
+                    ) : null}
                     <Button
                       type="button"
                       variant="ghost"
@@ -371,11 +446,13 @@ export function InventarStockClient({
                   <SelectValue placeholder={t('selectPantryItemPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {untrackedCatalog.map((item) => (
-                    <SelectItem key={item.id} value={String(item.id)}>
-                      {item.name} ({formatPackLabel(item.packageSize, item.packageUnit)})
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    {untrackedCatalog.map((item) => (
+                      <SelectItem key={item.id} value={String(item.id)}>
+                        {item.name} ({formatPackLabel(item.packageSize, item.packageUnit)})
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </Field>
@@ -456,6 +533,86 @@ export function InventarStockClient({
             </Button>
             <Button type="button" disabled={pending} onClick={() => void handleEditStock()}>
               {t('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={transferRow != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTransferRow(null)
+            setTransferDestinationId('')
+            setTransferQuantity('')
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('transferStock')}</DialogTitle>
+            {transferRow ? (
+              <DialogDescription>
+                {transferRow.catalogItem.name} (
+                {formatPackLabel(
+                  transferRow.catalogItem.packageSize,
+                  transferRow.catalogItem.packageUnit,
+                )}
+                )
+              </DialogDescription>
+            ) : null}
+          </DialogHeader>
+          {transferRow ? (
+            <FieldGroup>
+              <Field>
+                <FieldLabel>{t('currentStock')}</FieldLabel>
+                <StockBadge onHand={transferRow.onHand} packagesLabel={t('packages')} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="inventar-transfer-destination">
+                  {t('destinationLocation')}
+                </FieldLabel>
+                <Select value={transferDestinationId} onValueChange={setTransferDestinationId}>
+                  <SelectTrigger id="inventar-transfer-destination">
+                    <SelectValue placeholder={t('destinationPlaceholder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {transferDestinations.map((branch) => (
+                        <SelectItem key={branch.id} value={String(branch.id)}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="inventar-transfer-quantity">{t('quantity')}</FieldLabel>
+                <Input
+                  id="inventar-transfer-quantity"
+                  inputMode="decimal"
+                  min={0}
+                  value={transferQuantity}
+                  onChange={(e) => setTransferQuantity(e.target.value)}
+                />
+                {transferRemaining != null ? (
+                  <FieldDescription>
+                    {t('remainingAfterTransfer')}:{' '}
+                    <span className="font-medium tabular-nums text-foreground">
+                      {transferRemaining} {t('packages')}
+                    </span>
+                  </FieldDescription>
+                ) : null}
+              </Field>
+            </FieldGroup>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setTransferRow(null)}>
+              {t('cancel')}
+            </Button>
+            <Button type="button" disabled={pending} onClick={() => void handleTransferStock()}>
+              {t('transfer')}
             </Button>
           </DialogFooter>
         </DialogContent>

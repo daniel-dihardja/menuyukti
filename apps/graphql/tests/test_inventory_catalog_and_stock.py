@@ -364,3 +364,203 @@ def test_validation_negative_on_hand(inventar_workspace_and_location):
         },
     )
     assert result.errors
+
+
+_TRANSFER_STOCK = """
+mutation TransferStock($fromStockId: Int!, $toLocationId: Int!, $quantity: Float!) {
+  transferInventoryStock(
+    fromStockId: $fromStockId
+    toLocationId: $toLocationId
+    quantity: $quantity
+  ) {
+    fromLocationId
+    toLocationId
+    fromStock { id onHand locationId }
+    toStock { id onHand locationId catalogItem { id name } }
+  }
+}
+"""
+
+
+@pytest.fixture
+def inventar_two_locations(inventar_workspace_and_location):
+    session = SessionLocal()
+    try:
+        second = Location(
+            name="Second cafe",
+            workspace_id=inventar_workspace_and_location["workspace_id"],
+            clerk_user_id=GRAPHQL_TEST_USER_ID,
+        )
+        session.add(second)
+        session.commit()
+        session.refresh(second)
+        second_id = second.id
+    finally:
+        session.close()
+    yield {
+        **inventar_workspace_and_location,
+        "location_id_b": second_id,
+    }
+    session = SessionLocal()
+    try:
+        session.query(InventoryStock).filter(InventoryStock.location_id == second_id).delete()
+        session.query(Location).filter(Location.id == second_id).delete()
+        session.commit()
+    finally:
+        session.close()
+
+
+def test_transfer_partial_creates_destination(inventar_two_locations):
+    loc_a = inventar_two_locations["location_id"]
+    loc_b = inventar_two_locations["location_id_b"]
+
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_a,
+            "name": "Sugar",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 4.0,
+        },
+    )
+    assert not created.errors, created.errors
+    from_stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+
+    transferred = _execute(
+        _TRANSFER_STOCK,
+        {"fromStockId": from_stock_id, "toLocationId": loc_b, "quantity": 1.5},
+    )
+    assert not transferred.errors, transferred.errors
+    payload = transferred.data["transferInventoryStock"]
+    assert payload["fromLocationId"] == loc_a
+    assert payload["toLocationId"] == loc_b
+    assert payload["fromStock"]["onHand"] == 2.5
+    assert payload["toStock"]["onHand"] == 1.5
+    assert payload["toStock"]["locationId"] == loc_b
+    assert payload["toStock"]["catalogItem"]["name"] == "Sugar"
+
+    stock_a = _execute(_STOCK_QUERY, {"locationId": str(loc_a)})
+    stock_b = _execute(_STOCK_QUERY, {"locationId": str(loc_b)})
+    assert stock_a.data["inventoryStock"][0]["onHand"] == 2.5
+    assert stock_b.data["inventoryStock"][0]["onHand"] == 1.5
+
+
+def test_transfer_full_deletes_source_and_increments_dest(inventar_two_locations):
+    loc_a = inventar_two_locations["location_id"]
+    loc_b = inventar_two_locations["location_id_b"]
+
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_a,
+            "name": "Flour",
+            "packageSize": 1.0,
+            "packageUnit": "kg",
+            "onHand": 3.0,
+        },
+    )
+    from_stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    catalog_id = created.data["createInventoryCatalogItemWithStock"]["catalogItem"]["id"]
+
+    seeded_b = _execute(
+        _UPSERT_STOCK,
+        {"locationId": loc_b, "catalogItemId": catalog_id, "onHand": 2.0},
+    )
+    assert not seeded_b.errors, seeded_b.errors
+
+    transferred = _execute(
+        _TRANSFER_STOCK,
+        {"fromStockId": from_stock_id, "toLocationId": loc_b, "quantity": 3.0},
+    )
+    assert not transferred.errors, transferred.errors
+    payload = transferred.data["transferInventoryStock"]
+    assert payload["fromStock"] is None
+    assert payload["toStock"]["onHand"] == 5.0
+
+    stock_a = _execute(_STOCK_QUERY, {"locationId": str(loc_a)})
+    assert stock_a.data["inventoryStock"] == []
+
+
+def test_transfer_rejects_over_quantity(inventar_two_locations):
+    loc_a = inventar_two_locations["location_id"]
+    loc_b = inventar_two_locations["location_id_b"]
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_a,
+            "name": "Salt",
+            "packageSize": 1.0,
+            "packageUnit": "kg",
+            "onHand": 2.0,
+        },
+    )
+    from_stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    result = _execute(
+        _TRANSFER_STOCK,
+        {"fromStockId": from_stock_id, "toLocationId": loc_b, "quantity": 5.0},
+    )
+    assert result.errors
+    assert "exceed" in str(result.errors[0].message).lower()
+
+
+def test_transfer_rejects_same_location(inventar_two_locations):
+    loc_a = inventar_two_locations["location_id"]
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_a,
+            "name": "Oil",
+            "packageSize": 1.0,
+            "packageUnit": "L",
+            "onHand": 2.0,
+        },
+    )
+    from_stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    result = _execute(
+        _TRANSFER_STOCK,
+        {"fromStockId": from_stock_id, "toLocationId": loc_a, "quantity": 1.0},
+    )
+    assert result.errors
+    assert "same location" in str(result.errors[0].message).lower()
+
+
+def test_transfer_rejects_unauthorized_destination(inventar_two_locations):
+    loc_a = inventar_two_locations["location_id"]
+    session = SessionLocal()
+    try:
+        foreign = Location(
+            name="Foreign cafe",
+            workspace_id=None,
+            clerk_user_id=OTHER_USER_ID,
+        )
+        session.add(foreign)
+        session.commit()
+        session.refresh(foreign)
+        foreign_id = foreign.id
+    finally:
+        session.close()
+
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_a,
+            "name": "Rice",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 2.0,
+        },
+    )
+    from_stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    result = _execute(
+        _TRANSFER_STOCK,
+        {"fromStockId": from_stock_id, "toLocationId": foreign_id, "quantity": 1.0},
+    )
+    assert result.errors
+
+    session = SessionLocal()
+    try:
+        session.query(Location).filter(Location.id == foreign_id).delete()
+        session.commit()
+    finally:
+        session.close()
