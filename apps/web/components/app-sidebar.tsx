@@ -3,8 +3,8 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
+  SidebarRail,
   useSidebar,
 } from '@workspace/ui/components/sidebar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
@@ -15,6 +15,7 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { useCloseMobileSidebarOnNavigate } from '@/hooks/use-close-mobile-sidebar-on-navigate'
+import { routes } from '@/lib/routes'
 
 import { NavMain } from './nav-main'
 
@@ -27,7 +28,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const brandLink = (
     <Link
-      href="/"
+      href={routes.agent}
       aria-label={state === 'collapsed' ? brandLabel : undefined}
       className={cn(
         'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-sidebar-foreground',
@@ -45,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className={cn('h-16 min-h-16 border-b', 'flex flex-row items-center gap-0')}>
+      <SidebarHeader className={cn('flex h-16 min-h-16 flex-row items-center gap-0 border-b')}>
         {state === 'collapsed' ? (
           <Tooltip>
             <TooltipTrigger asChild>{brandLink}</TooltipTrigger>
@@ -62,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain />
       </SidebarContent>
 
-      <SidebarFooter className="pb-2" />
+      <SidebarRail />
     </Sidebar>
   )
 }

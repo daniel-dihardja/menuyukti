@@ -3,14 +3,14 @@
 import {
   BarChart3,
   CalendarDays,
+  ChartColumn,
   ChevronRight,
   Contact,
-  FileUp,
   Image,
   LayoutDashboard,
   MapPin,
-  Megaphone,
   Package,
+  Sparkles,
   SquarePen,
   Store,
   Users,
@@ -22,13 +22,15 @@ import {
 } from '@workspace/ui/components/collapsible'
 import {
   SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarSeparator,
 } from '@workspace/ui/components/sidebar'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -38,7 +40,9 @@ import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
 import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
-import { Fragment, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+
+type NavGroupId = 'overview' | 'create' | 'analytics' | 'operations' | 'account'
 
 type NavItem = {
   key: string
@@ -46,18 +50,22 @@ type NavItem = {
   href?: string
   icon?: ReactNode
   children?: NavItem[]
-  /**
-   * Logical sidebar section. A divider is rendered between consecutive visible
-   * items that belong to different groups (so disabled flags don’t leave
-   * orphan single-item sections from hard-coded separators).
-   * Optional for admin items that live in their own SidebarGroup.
-   */
-  group?: 'overview' | 'create' | 'analytics' | 'crm' | 'commerce' | 'account'
+  group: NavGroupId
+}
+
+const NAV_GROUP_ORDER: NavGroupId[] = ['overview', 'create', 'analytics', 'operations', 'account']
+
+const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
+  overview: 'groupOverview',
+  create: 'groupCreate',
+  analytics: 'groupAnalytics',
+  operations: 'groupOperations',
+  account: 'groupAccount',
 }
 
 /**
  * Sidebar order follows daily product flow:
- * overview → create/plan → measure → crm → commerce → account.
+ * overview → create/plan → measure → operations → account.
  * Chat leads create (default authenticated home is `/advisor`).
  */
 const NAV_WORKSPACE: NavItem[] = [
@@ -65,41 +73,41 @@ const NAV_WORKSPACE: NavItem[] = [
     key: 'dashboard',
     labelKey: 'dashboard',
     href: routes.dashboard,
-    icon: <LayoutDashboard className="w-4 h-4" />,
+    icon: <LayoutDashboard />,
     group: 'overview',
   },
   {
     key: 'chat',
     labelKey: 'chat',
     href: routes.agent,
-    icon: <Megaphone className="w-4 h-4" />,
+    icon: <Sparkles />,
     group: 'create',
   },
   {
     key: 'posts',
     labelKey: 'posts',
     href: routes.igStudio,
-    icon: <SquarePen className="w-4 h-4" />,
+    icon: <SquarePen />,
     group: 'create',
   },
   {
     key: 'media',
     labelKey: 'media',
     href: routes.media,
-    icon: <Image className="w-4 h-4" />,
+    icon: <Image />,
     group: 'create',
   },
   {
     key: 'calendar',
     labelKey: 'calendar',
     href: routes.calendar,
-    icon: <CalendarDays className="w-4 h-4" />,
+    icon: <CalendarDays />,
     group: 'create',
   },
   {
     key: 'reports',
     labelKey: 'reports',
-    icon: <FileUp className="w-4 h-4" />,
+    icon: <ChartColumn />,
     href: routes.analytics.sales,
     group: 'analytics',
   },
@@ -107,25 +115,27 @@ const NAV_WORKSPACE: NavItem[] = [
     key: 'branches',
     labelKey: 'branches',
     href: routes.analytics.branches,
-    icon: <MapPin className="w-4 h-4" />,
+    icon: <MapPin />,
     group: 'analytics',
   },
   {
     key: 'crm',
     labelKey: 'crm',
     href: routes.crm,
-    icon: <Contact className="w-4 h-4" />,
-    group: 'crm',
+    icon: <Contact />,
+    group: 'operations',
     children: [
       {
         key: 'crmApps',
         labelKey: 'crmApps',
         href: routes.crmApps,
+        group: 'operations',
       },
       {
         key: 'crmRegistrations',
         labelKey: 'crmRegistrations',
         href: routes.crmRegistrations,
+        group: 'operations',
       },
     ],
   },
@@ -133,34 +143,31 @@ const NAV_WORKSPACE: NavItem[] = [
     key: 'printShop',
     labelKey: 'printShop',
     href: routes.shop,
-    icon: <Store className="w-4 h-4" />,
-    group: 'commerce',
+    icon: <Store />,
+    group: 'operations',
   },
   {
     key: 'inventar',
     labelKey: 'inventar',
     href: routes.inventar,
-    icon: <Package className="w-4 h-4" />,
-    group: 'commerce',
+    icon: <Package />,
+    group: 'operations',
   },
   {
     key: 'team',
     labelKey: 'team',
     href: routes.profileTeam,
-    icon: <Users className="w-4 h-4" />,
+    icon: <Users />,
     group: 'account',
   },
   {
     key: 'usage',
     labelKey: 'usage',
     href: routes.usage,
-    icon: <BarChart3 className="w-4 h-4" />,
+    icon: <BarChart3 />,
     group: 'account',
   },
 ]
-
-/** Platform tools; visibility keys listed in `config/admin-only-features.json`. */
-const NAV_ADMIN: NavItem[] = []
 
 type NavMenuItemsProps = {
   items: NavItem[]
@@ -169,96 +176,53 @@ type NavMenuItemsProps = {
 }
 
 function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
-  return items.map((item, index) => {
+  return items.map((item) => {
     const active = isActive(item.href) || item.children?.some((c) => isActive(c.href))
-    const prev = index > 0 ? items[index - 1] : null
-    const showSeparator =
-      prev != null && prev.group != null && item.group != null && prev.group !== item.group
-    const separatorRow = showSeparator ? (
-      <SidebarMenuItem key={`${item.key}__sep`} className="list-none p-0" aria-hidden>
-        <SidebarSeparator className="my-1" />
-      </SidebarMenuItem>
-    ) : null
 
     if (item.children) {
       return (
-        <Fragment key={item.key}>
-          {separatorRow}
-          <Collapsible asChild defaultOpen={active} className="group/collapsible">
-            <SidebarMenuItem>
-              <div className="flex items-center">
-                <SidebarMenuButton
-                  asChild
-                  tooltip={t(item.labelKey)}
-                  className={`flex items-center gap-2 flex-1 ${
-                    active
-                      ? 'bg-sidebar-accent/60 text-sidebar-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Link href={item.href!} className="flex items-center gap-2 w-full">
-                    {item.icon}
-                    <span>{t(item.labelKey)}</span>
-                  </Link>
-                </SidebarMenuButton>
+        <Collapsible key={item.key} asChild defaultOpen={active} className="group/collapsible">
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={t(item.labelKey)} isActive={active}>
+              <Link href={item.href!}>
+                {item.icon}
+                <span>{t(item.labelKey)}</span>
+              </Link>
+            </SidebarMenuButton>
 
-                <CollapsibleTrigger asChild>
-                  <button
-                    type="button"
-                    className="px-2 text-muted-foreground hover:text-foreground"
-                    aria-label={`Toggle ${item.key}`}
-                  >
-                    <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                  </button>
-                </CollapsibleTrigger>
-              </div>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuAction aria-label={t('toggleSectionAria', { section: t(item.labelKey) })}>
+                <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+              </SidebarMenuAction>
+            </CollapsibleTrigger>
 
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {item.children.map((child) => (
-                    <SidebarMenuSubItem key={child.key}>
-                      <SidebarMenuSubButton
-                        asChild
-                        className={`transition-colors ${
-                          isActive(child.href)
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        <Link href={child.href!}>
-                          <span>{t(child.labelKey)}</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        </Fragment>
+            <CollapsibleContent>
+              <SidebarMenuSub>
+                {item.children.map((child) => (
+                  <SidebarMenuSubItem key={child.key}>
+                    <SidebarMenuSubButton asChild isActive={isActive(child.href)}>
+                      <Link href={child.href!}>
+                        <span>{t(child.labelKey)}</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                ))}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          </SidebarMenuItem>
+        </Collapsible>
       )
     }
+
     return (
-      <Fragment key={item.key}>
-        {separatorRow}
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            tooltip={t(item.labelKey)}
-            data-active={isActive(item.href)}
-            className={`text-sm transition-colors rounded-none ${
-              isActive(item.href)
-                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Link href={item.href!} className="flex items-center gap-2">
-              {item.icon}
-              <span>{t(item.labelKey)}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </Fragment>
+      <SidebarMenuItem key={item.key}>
+        <SidebarMenuButton asChild tooltip={t(item.labelKey)} isActive={isActive(item.href)}>
+          <Link href={item.href!}>
+            {item.icon}
+            <span>{t(item.labelKey)}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     )
   })
 }
@@ -268,6 +232,13 @@ function visibleNavItemsForRole(items: NavItem[], showAdminNav: boolean): NavIte
   return items.filter(
     (item) => isNavKeyEnabled(item.key) && (!isNavItemHiddenFromNonAdmin(item.key) || showAdminNav),
   )
+}
+
+function groupVisibleItems(items: NavItem[]): Array<{ id: NavGroupId; items: NavItem[] }> {
+  return NAV_GROUP_ORDER.flatMap((id) => {
+    const groupItems = items.filter((item) => item.group === id)
+    return groupItems.length > 0 ? [{ id, items: groupItems }] : []
+  })
 }
 
 export function NavMain() {
@@ -288,26 +259,20 @@ export function NavMain() {
   }
 
   const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
-  const visibleAdminItems = visibleNavItemsForRole(NAV_ADMIN, showAdminNav)
+  const groups = groupVisibleItems(visibleWorkspaceItems)
 
   return (
     <>
-      <SidebarGroup>
-        <SidebarMenu>
-          <NavMenuItems items={visibleWorkspaceItems} t={t} isActive={isActive} />
-        </SidebarMenu>
-      </SidebarGroup>
-
-      {visibleAdminItems.length > 0 ? (
-        <>
-          <SidebarSeparator />
-          <SidebarGroup>
+      {groups.map((group) => (
+        <SidebarGroup key={group.id}>
+          <SidebarGroupLabel>{t(NAV_GROUP_LABEL_KEYS[group.id])}</SidebarGroupLabel>
+          <SidebarGroupContent>
             <SidebarMenu>
-              <NavMenuItems items={visibleAdminItems} t={t} isActive={isActive} />
+              <NavMenuItems items={group.items} t={t} isActive={isActive} />
             </SidebarMenu>
-          </SidebarGroup>
-        </>
-      ) : null}
+          </SidebarGroupContent>
+        </SidebarGroup>
+      ))}
     </>
   )
 }
