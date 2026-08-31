@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, UniqueConstraint, func
+from sqlalchemy import (
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
     from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
+    from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
     from graphql.data_sources.models.location import Location
 
 
@@ -40,6 +50,8 @@ class InventoryStock(Base):
         nullable=False,
     )
     on_hand: Mapped[float] = mapped_column(Float, nullable=False)
+    last_in_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    last_out_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -59,4 +71,9 @@ class InventoryStock(Base):
     catalog_item: Mapped[InventoryCatalogItem] = relationship(
         "InventoryCatalogItem",
         back_populates="stock_rows",
+    )
+    movements: Mapped[list[InventoryStockMovement]] = relationship(
+        "InventoryStockMovement",
+        back_populates="stock",
+        foreign_keys="InventoryStockMovement.stock_id",
     )

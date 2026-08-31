@@ -7,13 +7,18 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import {
   graphqlInventoryCatalogCacheTag,
   graphqlInventoryStockCacheTag,
+  graphqlInventoryStockMovementsCacheTag,
   revalidateTagAfterMutation,
 } from '@/lib/graphql/cache-tags'
 import {
   CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION,
+  INVENTORY_STOCK_MOVEMENTS_QUERY,
+  RECEIVE_INVENTORY_STOCK_MUTATION,
   TRANSFER_INVENTORY_STOCK_MUTATION,
   UPSERT_INVENTORY_STOCK_MUTATION,
   type CreateInventoryCatalogItemWithStockData,
+  type InventoryStockMovementsData,
+  type ReceiveInventoryStockData,
   type TransferInventoryStockData,
   type UpsertInventoryStockData,
 } from '@/lib/graphql/queries/inventory-stock'
@@ -21,6 +26,7 @@ import { MY_WORKSPACE_QUERY, type MyWorkspaceData } from '@/lib/graphql/queries/
 
 import {
   createInventoryCatalogItemWithStockBodySchema,
+  receiveInventoryStockBodySchema,
   transferInventoryStockBodySchema,
   upsertInventoryStockBodySchema,
 } from './schema'
@@ -29,8 +35,15 @@ async function revalidateInventarTags(
   userId: string,
   locationId: number,
   workspaceId: number | null,
+  catalogItemId?: number,
 ) {
   revalidateTag(graphqlInventoryStockCacheTag(userId, locationId), revalidateTagAfterMutation)
+  if (catalogItemId != null) {
+    revalidateTag(
+      graphqlInventoryStockMovementsCacheTag(userId, locationId, catalogItemId),
+      revalidateTagAfterMutation,
+    )
+  }
   if (workspaceId != null) {
     revalidateTag(graphqlInventoryCatalogCacheTag(userId, workspaceId), revalidateTagAfterMutation)
   }
@@ -42,6 +55,54 @@ async function resolveWorkspaceId(userId: string): Promise<number | null> {
   if (id == null) return null
   const parsed = Number(id)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+}
+
+export async function GET(req: Request) {
+  try {
+    await connection()
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated || !userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const searchParams = new URL(req.url).searchParams
+    const locationId = Number(searchParams.get('locationId'))
+    const catalogItemId = Number(searchParams.get('catalogItemId'))
+    const stockIdRaw = searchParams.get('stockId')
+    const stockId = stockIdRaw != null ? Number(stockIdRaw) : null
+    const limitRaw = searchParams.get('limit')
+    const limit = limitRaw != null ? Number(limitRaw) : 50
+
+    if (!Number.isInteger(locationId) || locationId < 1) {
+      return NextResponse.json({ message: 'locationId query param is required' }, { status: 400 })
+    }
+    if (!Number.isInteger(catalogItemId) || catalogItemId < 1) {
+      return NextResponse.json(
+        { message: 'catalogItemId query param is required' },
+        { status: 400 },
+      )
+    }
+    if (stockIdRaw != null && (!Number.isInteger(stockId) || stockId! < 1)) {
+      return NextResponse.json({ message: 'stockId must be a positive integer' }, { status: 400 })
+    }
+
+    const data = await graphqlQuery<InventoryStockMovementsData>(
+      INVENTORY_STOCK_MOVEMENTS_QUERY,
+      {
+        locationId: String(locationId),
+        catalogItemId: String(catalogItemId),
+        ...(stockId != null ? { stockId: String(stockId) } : {}),
+        limit: Number.isInteger(limit) && limit > 0 ? limit : 50,
+      },
+      userId,
+    )
+
+    return NextResponse.json({ movements: data.inventoryStockMovements })
+  } catch (error) {
+    console.error('[inventory-stock] GET', error)
+    const message = error instanceof Error ? error.message : 'Failed to load movements'
+    return NextResponse.json({ message }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
@@ -64,24 +125,55 @@ export async function POST(req: Request) {
         userId,
       )
       const workspaceId = await resolveWorkspaceId(userId)
-      await revalidateInventarTags(userId, body.locationId, workspaceId)
+      await revalidateInventarTags(userId, body.locationId, workspaceId, body.catalogItemId)
       return NextResponse.json({ stock: data.upsertInventoryStock })
+    }
+
+    if (mode === 'receive') {
+      const body = receiveInventoryStockBodySchema.parse(json)
+      const data = await graphqlQuery<ReceiveInventoryStockData>(
+        RECEIVE_INVENTORY_STOCK_MUTATION,
+        {
+          locationId: body.locationId,
+          catalogItemId: body.catalogItemId,
+          quantity: body.quantity,
+          occurredOn: body.occurredOn ?? null,
+        },
+        userId,
+      )
+      const workspaceId = await resolveWorkspaceId(userId)
+      await revalidateInventarTags(userId, body.locationId, workspaceId, body.catalogItemId)
+      return NextResponse.json({ stock: data.receiveInventoryStock })
     }
 
     if (mode === 'transfer') {
       const body = transferInventoryStockBodySchema.parse(json)
       const data = await graphqlQuery<TransferInventoryStockData>(
         TRANSFER_INVENTORY_STOCK_MUTATION,
-        body,
+        {
+          fromStockId: body.fromStockId,
+          toLocationId: body.toLocationId,
+          quantity: body.quantity,
+          occurredOn: body.occurredOn ?? null,
+        },
         userId,
       )
       const transfer = data.transferInventoryStock
+      const catalogItemId = transfer.toStock.catalogItemId
       revalidateTag(
         graphqlInventoryStockCacheTag(userId, transfer.fromLocationId),
         revalidateTagAfterMutation,
       )
       revalidateTag(
         graphqlInventoryStockCacheTag(userId, transfer.toLocationId),
+        revalidateTagAfterMutation,
+      )
+      revalidateTag(
+        graphqlInventoryStockMovementsCacheTag(userId, transfer.fromLocationId, catalogItemId),
+        revalidateTagAfterMutation,
+      )
+      revalidateTag(
+        graphqlInventoryStockMovementsCacheTag(userId, transfer.toLocationId, catalogItemId),
         revalidateTagAfterMutation,
       )
       return NextResponse.json({ transfer })
@@ -94,7 +186,12 @@ export async function POST(req: Request) {
       userId,
     )
     const workspaceId = await resolveWorkspaceId(userId)
-    await revalidateInventarTags(userId, body.locationId, workspaceId)
+    await revalidateInventarTags(
+      userId,
+      body.locationId,
+      workspaceId,
+      data.createInventoryCatalogItemWithStock.catalogItemId,
+    )
     return NextResponse.json({ stock: data.createInventoryCatalogItemWithStock }, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {

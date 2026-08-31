@@ -8,6 +8,7 @@ from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .inventory_catalog import InventoryCatalogQuery
 from .inventory_stock import InventoryStockQuery
+from .inventory_stock_movement import InventoryStockMovementQuery
 from .location_menu_item_cogs import LocationMenuItemCogsQuery
 from .locations import LocationsQuery
 from .media_collections import MediaCollectionsQuery
@@ -35,6 +36,7 @@ __all__ = [
     "InstagramSignalsQuery",
     "InventoryCatalogQuery",
     "InventoryStockQuery",
+    "InventoryStockMovementQuery",
     "LocationsQuery",
     "LocationMenuItemCogsQuery",
     "StylesQuery",

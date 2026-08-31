@@ -1,10 +1,27 @@
 import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catalog'
 
+export type InventoryStockMovementDirection = 'in' | 'out' | 'transfer_in' | 'transfer_out'
+
+export type InventoryStockMovement = {
+  id: number
+  locationId: number
+  catalogItemId: number
+  stockId: number | null
+  direction: InventoryStockMovementDirection
+  quantity: number
+  occurredOn: string
+  note: string | null
+  relatedMovementId: number | null
+  createdAt: string
+}
+
 export type InventoryStockRow = {
   id: number
   locationId: number
   catalogItemId: number
   onHand: number
+  lastInOn: string | null
+  lastOutOn: string | null
   catalogItem: Pick<
     InventoryCatalogItem,
     'id' | 'name' | 'packageSize' | 'packageUnit' | 'storageZone'
@@ -18,6 +35,8 @@ const STOCK_FIELDS = `
   locationId
   catalogItemId
   onHand
+  lastInOn
+  lastOutOn
   createdAt
   updatedAt
   catalogItem {
@@ -27,6 +46,19 @@ const STOCK_FIELDS = `
     packageUnit
     storageZone
   }
+`
+
+const MOVEMENT_FIELDS = `
+  id
+  locationId
+  catalogItemId
+  stockId
+  direction
+  quantity
+  occurredOn
+  note
+  relatedMovementId
+  createdAt
 `
 
 export const INVENTORY_STOCK_QUERY = `
@@ -39,6 +71,28 @@ export const INVENTORY_STOCK_QUERY = `
 
 export type InventoryStockData = {
   inventoryStock: InventoryStockRow[]
+}
+
+export const INVENTORY_STOCK_MOVEMENTS_QUERY = `
+  query InventoryStockMovements(
+    $locationId: ID!
+    $catalogItemId: ID!
+    $stockId: ID
+    $limit: Int
+  ) {
+    inventoryStockMovements(
+      locationId: $locationId
+      catalogItemId: $catalogItemId
+      stockId: $stockId
+      limit: $limit
+    ) {
+      ${MOVEMENT_FIELDS}
+    }
+  }
+`
+
+export type InventoryStockMovementsData = {
+  inventoryStockMovements: InventoryStockMovement[]
 }
 
 export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
@@ -87,16 +141,60 @@ export type UpsertInventoryStockData = {
   upsertInventoryStock: InventoryStockRow
 }
 
+export const RECEIVE_INVENTORY_STOCK_MUTATION = `
+  mutation ReceiveInventoryStock(
+    $locationId: Int!
+    $catalogItemId: Int!
+    $quantity: Float!
+    $occurredOn: Date
+  ) {
+    receiveInventoryStock(
+      locationId: $locationId
+      catalogItemId: $catalogItemId
+      quantity: $quantity
+      occurredOn: $occurredOn
+    ) {
+      ${STOCK_FIELDS}
+    }
+  }
+`
+
+export type ReceiveInventoryStockData = {
+  receiveInventoryStock: InventoryStockRow
+}
+
+export const CONSUME_INVENTORY_STOCK_MUTATION = `
+  mutation ConsumeInventoryStock(
+    $stockId: Int!
+    $quantity: Float!
+    $occurredOn: Date
+  ) {
+    consumeInventoryStock(
+      stockId: $stockId
+      quantity: $quantity
+      occurredOn: $occurredOn
+    ) {
+      ${STOCK_FIELDS}
+    }
+  }
+`
+
+export type ConsumeInventoryStockData = {
+  consumeInventoryStock: InventoryStockRow
+}
+
 export const TRANSFER_INVENTORY_STOCK_MUTATION = `
   mutation TransferInventoryStock(
     $fromStockId: Int!
     $toLocationId: Int!
     $quantity: Float!
+    $occurredOn: Date
   ) {
     transferInventoryStock(
       fromStockId: $fromStockId
       toLocationId: $toLocationId
       quantity: $quantity
+      occurredOn: $occurredOn
     ) {
       fromLocationId
       toLocationId

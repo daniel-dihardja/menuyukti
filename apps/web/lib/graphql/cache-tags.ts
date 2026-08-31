@@ -45,3 +45,11 @@ export function graphqlInventoryCatalogCacheTag(userId: string, workspaceId: num
 export function graphqlInventoryStockCacheTag(userId: string, locationId: number): string {
   return `graphql-inventory-stock-${userId}-${locationId}`
 }
+
+export function graphqlInventoryStockMovementsCacheTag(
+  userId: string,
+  locationId: number,
+  catalogItemId: number,
+): string {
+  return `graphql-inventory-stock-movements-${userId}-${locationId}-${catalogItemId}`
+}
