@@ -12,6 +12,7 @@ export type InventoryStockMovement = {
   occurredOn: string
   note: string | null
   relatedMovementId: number | null
+  relatedLocationId: number | null
   createdAt: string
 }
 
@@ -58,6 +59,7 @@ const MOVEMENT_FIELDS = `
   occurredOn
   note
   relatedMovementId
+  relatedLocationId
   createdAt
 `
 

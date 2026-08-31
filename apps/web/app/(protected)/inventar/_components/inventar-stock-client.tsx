@@ -533,18 +533,27 @@ export function InventarStockClient({
     }
   }
 
-  function directionLabel(direction: InventoryStockMovement['direction']): string {
-    switch (direction) {
+  function directionLabel(movement: InventoryStockMovement): string {
+    const relatedName =
+      movement.relatedLocationId != null
+        ? branches.find((branch) => branch.id === movement.relatedLocationId)?.name
+        : undefined
+
+    switch (movement.direction) {
       case 'in':
         return t('directionIn')
       case 'out':
         return t('directionOut')
       case 'transfer_in':
-        return t('directionTransferIn')
+        return relatedName
+          ? t('directionTransferInFrom', { location: relatedName })
+          : t('directionTransferIn')
       case 'transfer_out':
-        return t('directionTransferOut')
+        return relatedName
+          ? t('directionTransferOutTo', { location: relatedName })
+          : t('directionTransferOut')
       default:
-        return direction
+        return movement.direction
     }
   }
 
@@ -612,7 +621,7 @@ export function InventarStockClient({
               <div className="min-w-0">
                 <p className="font-medium">
                   {formatActivityDate(movement.occurredOn, locale)} ·{' '}
-                  {directionLabel(movement.direction)}
+                  {directionLabel(movement)}
                 </p>
               </div>
               <span className="shrink-0 tabular-nums font-medium">

@@ -786,6 +786,8 @@
     "directionOut": "Out",
     "directionTransferIn": "Transfer in",
     "directionTransferOut": "Transfer out",
+    "directionTransferInFrom": "Transfer in from {location}",
+    "directionTransferOutTo": "Transfer out to {location}",
     "storageZones": {
       "cooler": "Cooler",
       "freezer": "Freezer",

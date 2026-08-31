@@ -618,6 +618,7 @@ query Movements($locationId: ID!, $catalogItemId: ID!, $stockId: ID) {
     occurredOn
     stockId
     relatedMovementId
+    relatedLocationId
   }
 }
 """
@@ -707,10 +708,13 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert rows[0]["direction"] == "out"
     assert rows[0]["quantity"] == 1.5
     assert rows[0]["occurredOn"] == "2026-08-31"
+    assert rows[0]["relatedLocationId"] is None
     assert rows[1]["direction"] == "in"
     assert rows[1]["occurredOn"] == "2026-08-30"
+    assert rows[1]["relatedLocationId"] is None
     assert rows[2]["direction"] == "in"
     assert rows[2]["occurredOn"] == "2026-08-28"
+    assert rows[2]["relatedLocationId"] is None
 
 
 def test_consume_rejects_over_quantity(inventar_workspace_and_location):
@@ -866,6 +870,8 @@ def test_transfer_writes_paired_movements(inventar_two_locations):
     assert len(in_rows) == 1
     assert out_rows[0]["relatedMovementId"] == in_rows[0]["id"]
     assert in_rows[0]["relatedMovementId"] == out_rows[0]["id"]
+    assert out_rows[0]["relatedLocationId"] == loc_b
+    assert in_rows[0]["relatedLocationId"] == loc_a
 
 
 def test_movements_query_unauthorized_returns_empty(inventar_workspace_and_location):
