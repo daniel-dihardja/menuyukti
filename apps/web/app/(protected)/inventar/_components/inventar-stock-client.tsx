@@ -57,6 +57,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { DatePicker } from '@workspace/ui/components/date-picker'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import {
@@ -716,13 +717,12 @@ export function InventarStockClient({
           />
         </Field>
         <Field>
-          <FieldLabel htmlFor="inventar-use-date">{t('usedOn')}</FieldLabel>
-          <Input
-            id="inventar-use-date"
-            className="min-h-11 touch-manipulation lg:min-h-9"
-            type="date"
+          <FieldLabel>{t('usedOn')}</FieldLabel>
+          <DatePicker
             value={useDate}
-            onChange={(e) => setUseDate(e.target.value)}
+            onChange={setUseDate}
+            disabled={pending}
+            placeholder={t('datePlaceholder')}
           />
         </Field>
         {useNewStock != null ? (
