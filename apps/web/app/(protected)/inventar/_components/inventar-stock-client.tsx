@@ -548,7 +548,10 @@ export function InventarStockClient({
     }
   }
 
-  function signedQuantity(direction: InventoryStockMovement['direction'], quantity: number): string {
+  function signedQuantity(
+    direction: InventoryStockMovement['direction'],
+    quantity: number,
+  ): string {
     const isOut = direction === 'out' || direction === 'transfer_out'
     return `${isOut ? '−' : '+'}${quantity}`
   }
@@ -733,7 +736,9 @@ export function InventarStockClient({
           <StockBadge onHand={transferRow.onHand} packagesLabel={t('packages')} />
         </Field>
         <Field>
-          <FieldLabel htmlFor="inventar-transfer-destination">{t('destinationLocation')}</FieldLabel>
+          <FieldLabel htmlFor="inventar-transfer-destination">
+            {t('destinationLocation')}
+          </FieldLabel>
           <Select value={transferDestinationId} onValueChange={setTransferDestinationId}>
             <SelectTrigger
               id="inventar-transfer-destination"
@@ -857,7 +862,10 @@ export function InventarStockClient({
                       <p className="truncate font-medium" title={row.catalogItem.name}>
                         {row.catalogItem.name}
                       </p>
-                      <p className="truncate text-sm text-muted-foreground" title={`${zoneLabel} · ${packLabel}`}>
+                      <p
+                        className="truncate text-sm text-muted-foreground"
+                        title={`${zoneLabel} · ${packLabel}`}
+                      >
                         {zoneLabel} · {packLabel}
                       </p>
                       <p className="mt-1 truncate text-xs text-muted-foreground">
