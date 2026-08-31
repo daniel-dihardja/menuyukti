@@ -89,6 +89,7 @@ import {
 import { cn } from '@workspace/ui/lib/utils'
 
 import { formatPackLabel } from './format-pack'
+import { PantryItemCombobox } from './pantry-item-combobox'
 
 function todayIsoDate(): string {
   const now = new Date()
@@ -638,20 +639,14 @@ export function InventarStockClient({
     <FieldGroup>
       <Field>
         <FieldLabel>{t('selectPantryItem')}</FieldLabel>
-        <Select value={selectedCatalogId} onValueChange={setSelectedCatalogId}>
-          <SelectTrigger className="min-h-11 touch-manipulation lg:min-h-9">
-            <SelectValue placeholder={t('selectPantryItemPlaceholder')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {sortedCatalogItems.map((item) => (
-                <SelectItem key={item.id} value={String(item.id)}>
-                  {item.name} ({formatPackLabel(item.packageSize, item.packageUnit)})
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <PantryItemCombobox
+          items={sortedCatalogItems}
+          value={selectedCatalogId}
+          onValueChange={setSelectedCatalogId}
+          placeholder={t('selectPantryItemPlaceholder')}
+          searchPlaceholder={t('searchPantryItem')}
+          emptyLabel={t('noPantryItemMatches')}
+        />
       </Field>
       <Field>
         <FieldLabel htmlFor="inventar-receive-qty">{t('packagesIn')}</FieldLabel>
