@@ -817,6 +817,8 @@
     "packages": "packages",
     "selectPantryItem": "Pantry item",
     "selectPantryItemPlaceholder": "Choose an item",
+    "searchPantryItem": "Search pantry items…",
+    "noPantryItemMatches": "No pantry item matches",
     "catalogTitle": "Pantry items",
     "catalogDescription": "Workspace-wide list of what you stock. Edit names and pack sizes here.",
     "pantryItems": "Pantry items",
