@@ -53,13 +53,7 @@ type NavItem = {
   group: NavGroupId
 }
 
-const NAV_GROUP_ORDER: NavGroupId[] = [
-  'overview',
-  'create',
-  'analytics',
-  'operations',
-  'account',
-]
+const NAV_GROUP_ORDER: NavGroupId[] = ['overview', 'create', 'analytics', 'operations', 'account']
 
 const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
   overview: 'groupOverview',
@@ -197,9 +191,7 @@ function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
             </SidebarMenuButton>
 
             <CollapsibleTrigger asChild>
-              <SidebarMenuAction
-                aria-label={t('toggleSectionAria', { section: t(item.labelKey) })}
-              >
+              <SidebarMenuAction aria-label={t('toggleSectionAria', { section: t(item.labelKey) })}>
                 <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
               </SidebarMenuAction>
             </CollapsibleTrigger>
@@ -224,11 +216,7 @@ function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
 
     return (
       <SidebarMenuItem key={item.key}>
-        <SidebarMenuButton
-          asChild
-          tooltip={t(item.labelKey)}
-          isActive={isActive(item.href)}
-        >
+        <SidebarMenuButton asChild tooltip={t(item.labelKey)} isActive={isActive(item.href)}>
           <Link href={item.href!}>
             {item.icon}
             <span>{t(item.labelKey)}</span>
