@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import strawberry
 from sqlalchemy.exc import IntegrityError
 
@@ -23,11 +25,18 @@ from graphql.schema.types.inventory_stock import (
     InventoryStockType,
 )
 from graphql.services.inventory import (
+    DIRECTION_IN,
+    DIRECTION_OUT,
+    DIRECTION_TRANSFER_IN,
+    DIRECTION_TRANSFER_OUT,
+    add_movement,
     assert_catalog_matches_location_workspace,
     get_catalog_item_or_raise,
     get_location_or_raise,
     load_stock_with_catalog,
+    resolve_occurred_on,
     validate_catalog_fields,
+    validate_movement_quantity,
     validate_on_hand,
     validate_transfer_quantity,
 )
@@ -174,6 +183,104 @@ class InventoryStockMutations:
             row = load_stock_with_catalog(session, row.id)
             return stock_to_gql(row)
 
+    @strawberry.mutation(
+        description="Receive packages at a location (increases stock and records an in movement)."
+    )
+    def receive_inventory_stock(
+        self,
+        info: strawberry.Info,
+        location_id: int,
+        catalog_item_id: int,
+        quantity: float,
+        occurred_on: date | None = None,
+    ) -> InventoryStockType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for receiveInventoryStock")
+
+        qty = validate_movement_quantity(quantity)
+        day = resolve_occurred_on(occurred_on)
+
+        with request_session_scope(info) as session:
+            require_location_owner(session, location_id, user_id, info=info)
+            location = get_location_or_raise(session, location_id)
+            catalog_item = get_catalog_item_or_raise(session, catalog_item_id)
+            assert_catalog_matches_location_workspace(session, catalog_item, location)
+
+            row = (
+                session.query(InventoryStock)
+                .filter(
+                    InventoryStock.location_id == location_id,
+                    InventoryStock.catalog_item_id == catalog_item_id,
+                )
+                .first()
+            )
+            if row is None:
+                row = InventoryStock(
+                    location_id=location_id,
+                    catalog_item_id=catalog_item_id,
+                    on_hand=qty,
+                    last_in_on=day,
+                )
+                session.add(row)
+                session.flush()
+            else:
+                row.on_hand = row.on_hand + qty
+                row.last_in_on = day
+
+            add_movement(
+                session,
+                location_id=location_id,
+                catalog_item_id=catalog_item_id,
+                stock_id=row.id,
+                direction=DIRECTION_IN,
+                quantity=qty,
+                occurred_on=day,
+            )
+            session.commit()
+            row = load_stock_with_catalog(session, row.id)
+            return stock_to_gql(row)
+
+    @strawberry.mutation(
+        description="Use packages from stock (decreases stock and records an out movement)."
+    )
+    def consume_inventory_stock(
+        self,
+        info: strawberry.Info,
+        stock_id: int,
+        quantity: float,
+        occurred_on: date | None = None,
+    ) -> InventoryStockType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for consumeInventoryStock")
+
+        qty = validate_movement_quantity(quantity)
+        day = resolve_occurred_on(occurred_on)
+
+        with request_session_scope(info) as session:
+            row = session.get(InventoryStock, stock_id)
+            if row is None:
+                raise ValueError("Stock row not found")
+            require_location_owner(session, row.location_id, user_id, info=info)
+            if qty > row.on_hand:
+                raise ValueError("quantity cannot exceed current stock")
+
+            row.on_hand = row.on_hand - qty
+            row.last_out_on = day
+            add_movement(
+                session,
+                location_id=row.location_id,
+                catalog_item_id=row.catalog_item_id,
+                stock_id=row.id,
+                direction=DIRECTION_OUT,
+                quantity=qty,
+                occurred_on=day,
+            )
+            session.commit()
+            row = load_stock_with_catalog(session, row.id)
+            return stock_to_gql(row)
+
     @strawberry.mutation(description="Stop tracking a catalog item at a location.")
     def delete_inventory_stock(self, info: strawberry.Info, id: int) -> bool:
         user_id = user_id_from_info(info)
@@ -198,10 +305,13 @@ class InventoryStockMutations:
         from_stock_id: int,
         to_location_id: int,
         quantity: float,
+        occurred_on: date | None = None,
     ) -> InventoryStockTransferResult:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for transferInventoryStock")
+
+        day = resolve_occurred_on(occurred_on)
 
         with request_session_scope(info) as session:
             source = session.get(InventoryStock, from_stock_id)
@@ -215,7 +325,8 @@ class InventoryStockMutations:
                 raise ValueError("Cannot transfer to the same location")
 
             from_location_id = source.location_id
-            catalog_item = get_catalog_item_or_raise(session, source.catalog_item_id)
+            catalog_item_id = source.catalog_item_id
+            catalog_item = get_catalog_item_or_raise(session, catalog_item_id)
             destination = get_location_or_raise(session, to_location_id)
             assert_catalog_matches_location_workspace(session, catalog_item, destination)
 
@@ -232,19 +343,48 @@ class InventoryStockMutations:
                 session.query(InventoryStock)
                 .filter(
                     InventoryStock.location_id == to_location_id,
-                    InventoryStock.catalog_item_id == source.catalog_item_id,
+                    InventoryStock.catalog_item_id == catalog_item_id,
                 )
                 .first()
             )
             if dest_row is None:
                 dest_row = InventoryStock(
                     location_id=to_location_id,
-                    catalog_item_id=source.catalog_item_id,
+                    catalog_item_id=catalog_item_id,
                     on_hand=qty,
+                    last_in_on=day,
                 )
                 session.add(dest_row)
+                session.flush()
             else:
                 dest_row.on_hand = dest_row.on_hand + qty
+                dest_row.last_in_on = day
+
+            source.last_out_on = day
+
+            out_movement = add_movement(
+                session,
+                location_id=from_location_id,
+                catalog_item_id=catalog_item_id,
+                stock_id=source.id,
+                direction=DIRECTION_TRANSFER_OUT,
+                quantity=qty,
+                occurred_on=day,
+            )
+            session.flush()
+
+            in_movement = add_movement(
+                session,
+                location_id=to_location_id,
+                catalog_item_id=catalog_item_id,
+                stock_id=dest_row.id,
+                direction=DIRECTION_TRANSFER_IN,
+                quantity=qty,
+                occurred_on=day,
+                related_movement_id=out_movement.id,
+            )
+            session.flush()
+            out_movement.related_movement_id = in_movement.id
 
             if remaining <= 0:
                 session.delete(source)
@@ -293,6 +433,7 @@ class InventoryStockMutations:
             storage_zone=storage_zone,
         )
         on_hand_clean = validate_on_hand(on_hand)
+        day = resolve_occurred_on(None)
 
         with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id, info=info)
@@ -320,8 +461,26 @@ class InventoryStockMutations:
                 location_id=location_id,
                 catalog_item_id=catalog_row.id,
                 on_hand=on_hand_clean,
+                last_in_on=day if on_hand_clean > 0 else None,
             )
             session.add(stock_row)
+            try:
+                session.flush()
+            except IntegrityError as exc:
+                session.rollback()
+                raise ValueError("This item is already tracked at this location") from exc
+
+            if on_hand_clean > 0:
+                add_movement(
+                    session,
+                    location_id=location_id,
+                    catalog_item_id=catalog_row.id,
+                    stock_id=stock_row.id,
+                    direction=DIRECTION_IN,
+                    quantity=on_hand_clean,
+                    occurred_on=day,
+                )
+
             try:
                 session.commit()
             except IntegrityError as exc:

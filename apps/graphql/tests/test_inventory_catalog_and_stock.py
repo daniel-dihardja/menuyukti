@@ -9,6 +9,7 @@ import pytest
 from graphql.data_sources import (
     InventoryCatalogItem,
     InventoryStock,
+    InventoryStockMovement,
     Location,
     SessionLocal,
     Workspace,
@@ -133,6 +134,7 @@ mutation DeleteCatalog($id: Int!) {
 def inventar_workspace_and_location():
     session = SessionLocal()
     try:
+        session.query(InventoryStockMovement).delete()
         session.query(InventoryStock).delete()
         session.query(InventoryCatalogItem).delete()
         session.query(Location).delete()
@@ -168,6 +170,7 @@ def inventar_workspace_and_location():
     yield payload
     session = SessionLocal()
     try:
+        session.query(InventoryStockMovement).delete()
         session.query(InventoryStock).delete()
         session.query(InventoryCatalogItem).delete()
         session.query(Location).filter(Location.workspace_id == payload["workspace_id"]).delete()
@@ -403,6 +406,9 @@ def inventar_two_locations(inventar_workspace_and_location):
     }
     session = SessionLocal()
     try:
+        session.query(InventoryStockMovement).filter(
+            InventoryStockMovement.location_id == second_id
+        ).delete()
         session.query(InventoryStock).filter(InventoryStock.location_id == second_id).delete()
         session.query(Location).filter(Location.id == second_id).delete()
         session.commit()
@@ -564,3 +570,321 @@ def test_transfer_rejects_unauthorized_destination(inventar_two_locations):
         session.commit()
     finally:
         session.close()
+
+
+_RECEIVE_STOCK = """
+mutation ReceiveStock(
+  $locationId: Int!
+  $catalogItemId: Int!
+  $quantity: Float!
+  $occurredOn: Date
+) {
+  receiveInventoryStock(
+    locationId: $locationId
+    catalogItemId: $catalogItemId
+    quantity: $quantity
+    occurredOn: $occurredOn
+  ) {
+    id
+    onHand
+    lastInOn
+    lastOutOn
+    catalogItemId
+  }
+}
+"""
+
+_CONSUME_STOCK = """
+mutation ConsumeStock($stockId: Int!, $quantity: Float!, $occurredOn: Date) {
+  consumeInventoryStock(stockId: $stockId, quantity: $quantity, occurredOn: $occurredOn) {
+    id
+    onHand
+    lastInOn
+    lastOutOn
+  }
+}
+"""
+
+_MOVEMENTS_QUERY = """
+query Movements($locationId: ID!, $catalogItemId: ID!, $stockId: ID) {
+  inventoryStockMovements(
+    locationId: $locationId
+    catalogItemId: $catalogItemId
+    stockId: $stockId
+  ) {
+    id
+    direction
+    quantity
+    occurredOn
+    stockId
+    relatedMovementId
+  }
+}
+"""
+
+_TRANSFER_STOCK_DATED = """
+mutation TransferStockDated(
+  $fromStockId: Int!
+  $toLocationId: Int!
+  $quantity: Float!
+  $occurredOn: Date
+) {
+  transferInventoryStock(
+    fromStockId: $fromStockId
+    toLocationId: $toLocationId
+    quantity: $quantity
+    occurredOn: $occurredOn
+  ) {
+    fromLocationId
+    toLocationId
+    fromStock { id onHand lastOutOn }
+    toStock { id onHand lastInOn catalogItem { id } }
+  }
+}
+"""
+
+
+def test_receive_and_consume_record_movements(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+    ws_id = inventar_workspace_and_location["workspace_id"]
+
+    catalog = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Sugar",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+        },
+    )
+    assert not catalog.errors, catalog.errors
+    catalog_id = catalog.data["createInventoryCatalogItem"]["id"]
+
+    received = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 3.0,
+            "occurredOn": "2026-08-28",
+        },
+    )
+    assert not received.errors, received.errors
+    stock = received.data["receiveInventoryStock"]
+    assert stock["onHand"] == 3.0
+    assert stock["lastInOn"] == "2026-08-28"
+    assert stock["lastOutOn"] is None
+    stock_id = stock["id"]
+
+    received_again = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 2.0,
+            "occurredOn": "2026-08-30",
+        },
+    )
+    assert not received_again.errors, received_again.errors
+    assert received_again.data["receiveInventoryStock"]["onHand"] == 5.0
+    assert received_again.data["receiveInventoryStock"]["lastInOn"] == "2026-08-30"
+
+    consumed = _execute(
+        _CONSUME_STOCK,
+        {"stockId": stock_id, "quantity": 1.5, "occurredOn": "2026-08-31"},
+    )
+    assert not consumed.errors, consumed.errors
+    assert consumed.data["consumeInventoryStock"]["onHand"] == 3.5
+    assert consumed.data["consumeInventoryStock"]["lastOutOn"] == "2026-08-31"
+
+    movements = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+    )
+    assert not movements.errors, movements.errors
+    rows = movements.data["inventoryStockMovements"]
+    assert len(rows) == 3
+    assert rows[0]["direction"] == "out"
+    assert rows[0]["quantity"] == 1.5
+    assert rows[0]["occurredOn"] == "2026-08-31"
+    assert rows[1]["direction"] == "in"
+    assert rows[1]["occurredOn"] == "2026-08-30"
+    assert rows[2]["direction"] == "in"
+    assert rows[2]["occurredOn"] == "2026-08-28"
+
+
+def test_consume_rejects_over_quantity(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_id,
+            "name": "Sugar",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 2.0,
+        },
+    )
+    stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    result = _execute(_CONSUME_STOCK, {"stockId": stock_id, "quantity": 5.0})
+    assert result.errors
+    assert "exceed" in str(result.errors[0].message).lower()
+
+
+def test_movements_survive_stock_delete(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_id,
+            "name": "Sugar",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 2.0,
+        },
+    )
+    stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    catalog_id = created.data["createInventoryCatalogItemWithStock"]["catalogItem"]["id"]
+
+    deleted = _execute(_DELETE_STOCK, {"id": stock_id})
+    assert not deleted.errors, deleted.errors
+
+    movements = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+    )
+    assert not movements.errors, movements.errors
+    rows = movements.data["inventoryStockMovements"]
+    assert len(rows) == 1
+    assert rows[0]["direction"] == "in"
+    assert rows[0]["stockId"] is None
+
+
+def test_movements_scoped_to_current_stock_after_retrack(inventar_workspace_and_location):
+    """History for a stock row excludes orphaned movements from a prior track."""
+    loc_id = inventar_workspace_and_location["location_id"]
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_id,
+            "name": "Sugar",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 5.0,
+        },
+    )
+    old_stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    catalog_id = created.data["createInventoryCatalogItemWithStock"]["catalogItem"]["id"]
+
+    _execute(_CONSUME_STOCK, {"stockId": old_stock_id, "quantity": 2.0})
+    deleted = _execute(_DELETE_STOCK, {"id": old_stock_id})
+    assert not deleted.errors, deleted.errors
+
+    received = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": int(catalog_id),
+            "quantity": 4.0,
+            "occurredOn": "2026-08-31",
+        },
+    )
+    assert not received.errors, received.errors
+    new_stock_id = received.data["receiveInventoryStock"]["id"]
+    assert received.data["receiveInventoryStock"]["onHand"] == 4.0
+
+    all_rows = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+    ).data["inventoryStockMovements"]
+    assert len(all_rows) == 3  # old in, old out, new in
+    linked = [r for r in all_rows if r["stockId"] is not None]
+    orphaned = [r for r in all_rows if r["stockId"] is None]
+    assert len(orphaned) == 2
+    assert len(linked) == 1
+    assert str(linked[0]["stockId"]) == str(new_stock_id)
+    assert linked[0]["quantity"] == 4.0
+
+    scoped = _execute(
+        _MOVEMENTS_QUERY,
+        {
+            "locationId": str(loc_id),
+            "catalogItemId": str(catalog_id),
+            "stockId": str(new_stock_id),
+        },
+    )
+    assert not scoped.errors, scoped.errors
+    rows = scoped.data["inventoryStockMovements"]
+    assert len(rows) == 1
+    assert rows[0]["direction"] == "in"
+    assert rows[0]["quantity"] == 4.0
+    assert str(rows[0]["stockId"]) == str(new_stock_id)
+
+
+def test_transfer_writes_paired_movements(inventar_two_locations):
+    loc_a = inventar_two_locations["location_id"]
+    loc_b = inventar_two_locations["location_id_b"]
+
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_a,
+            "name": "Sugar",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 4.0,
+        },
+    )
+    from_stock_id = created.data["createInventoryCatalogItemWithStock"]["id"]
+    catalog_id = created.data["createInventoryCatalogItemWithStock"]["catalogItem"]["id"]
+
+    transferred = _execute(
+        _TRANSFER_STOCK_DATED,
+        {
+            "fromStockId": from_stock_id,
+            "toLocationId": loc_b,
+            "quantity": 1.5,
+            "occurredOn": "2026-08-29",
+        },
+    )
+    assert not transferred.errors, transferred.errors
+    payload = transferred.data["transferInventoryStock"]
+    assert payload["fromStock"]["lastOutOn"] == "2026-08-29"
+    assert payload["toStock"]["lastInOn"] == "2026-08-29"
+
+    mov_a = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_a), "catalogItemId": str(catalog_id)},
+    )
+    mov_b = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_b), "catalogItemId": str(catalog_id)},
+    )
+    out_rows = [r for r in mov_a.data["inventoryStockMovements"] if r["direction"] == "transfer_out"]
+    in_rows = [r for r in mov_b.data["inventoryStockMovements"] if r["direction"] == "transfer_in"]
+    assert len(out_rows) == 1
+    assert len(in_rows) == 1
+    assert out_rows[0]["relatedMovementId"] == in_rows[0]["id"]
+    assert in_rows[0]["relatedMovementId"] == out_rows[0]["id"]
+
+
+def test_movements_query_unauthorized_returns_empty(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_id,
+            "name": "Sugar",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 1.0,
+        },
+    )
+    catalog_id = created.data["createInventoryCatalogItemWithStock"]["catalogItem"]["id"]
+    result = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+        context_value={"user_id": OTHER_USER_ID},
+    )
+    assert not result.errors, result.errors
+    assert result.data["inventoryStockMovements"] == []

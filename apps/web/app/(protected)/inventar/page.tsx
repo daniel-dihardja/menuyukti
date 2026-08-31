@@ -106,7 +106,7 @@ export default async function InventarPage({
       breadcrumbs={[{ label: t('title') }]}
       mainClassName="min-h-0"
     >
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-2">
         <h1 className="text-pretty text-2xl font-semibold tracking-tight">{t('headline')}</h1>
         <Suspense fallback={<InventarSkeleton />}>
           <InventarData requestedLocationId={requestedLocationId} />

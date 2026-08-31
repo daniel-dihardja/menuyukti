@@ -10,6 +10,7 @@ from graphql.schema.queries import (
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
     InventoryCatalogQuery,
+    InventoryStockMovementQuery,
     InventoryStockQuery,
     LocationMenuItemCogsQuery,
     LocationsQuery,
@@ -60,6 +61,7 @@ class Query(
     ImageAiFlowsQuery,
     InventoryCatalogQuery,
     InventoryStockQuery,
+    InventoryStockMovementQuery,
     AiUsageQuery,
 ):
     pass

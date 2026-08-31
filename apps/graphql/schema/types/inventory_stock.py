@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 import strawberry
 
@@ -11,6 +11,8 @@ class InventoryStockType:
     locationId: int
     catalogItemId: int
     onHand: float
+    lastInOn: date | None
+    lastOutOn: date | None
     catalogItem: InventoryCatalogItemType
     createdAt: datetime
     updatedAt: datetime

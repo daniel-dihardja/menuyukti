@@ -5,30 +5,21 @@ import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  graphqlInventoryCatalogCacheTag,
   graphqlInventoryStockCacheTag,
+  graphqlInventoryStockMovementsCacheTag,
   revalidateTagAfterMutation,
 } from '@/lib/graphql/cache-tags'
 import {
+  CONSUME_INVENTORY_STOCK_MUTATION,
   DELETE_INVENTORY_STOCK_MUTATION,
-  UPSERT_INVENTORY_STOCK_MUTATION,
+  type ConsumeInventoryStockData,
   type DeleteInventoryStockData,
-  type UpsertInventoryStockData,
 } from '@/lib/graphql/queries/inventory-stock'
-import { MY_WORKSPACE_QUERY, type MyWorkspaceData } from '@/lib/graphql/queries/locations'
 
-import { patchInventoryStockBodySchema } from '../schema'
+import { consumeInventoryStockBodySchema } from '../schema'
 
 type RouteContext = {
   params: Promise<{ id: string }>
-}
-
-async function resolveWorkspaceId(userId: string): Promise<number | null> {
-  const data = await graphqlQuery<MyWorkspaceData>(MY_WORKSPACE_QUERY, {}, userId)
-  const id = data.myWorkspace?.id
-  if (id == null) return null
-  const parsed = Number(id)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
 }
 
 export async function PATCH(req: Request, context: RouteContext) {
@@ -59,24 +50,25 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     const json = await req.json()
-    const body = patchInventoryStockBodySchema.parse(json)
+    const body = consumeInventoryStockBodySchema.parse(json)
 
-    const data = await graphqlQuery<UpsertInventoryStockData>(
-      UPSERT_INVENTORY_STOCK_MUTATION,
-      { locationId, catalogItemId, onHand: body.onHand },
+    const data = await graphqlQuery<ConsumeInventoryStockData>(
+      CONSUME_INVENTORY_STOCK_MUTATION,
+      {
+        stockId,
+        quantity: body.quantity,
+        occurredOn: body.occurredOn ?? null,
+      },
       userId,
     )
 
-    const workspaceId = await resolveWorkspaceId(userId)
     revalidateTag(graphqlInventoryStockCacheTag(userId, locationId), revalidateTagAfterMutation)
-    if (workspaceId != null) {
-      revalidateTag(
-        graphqlInventoryCatalogCacheTag(userId, workspaceId),
-        revalidateTagAfterMutation,
-      )
-    }
+    revalidateTag(
+      graphqlInventoryStockMovementsCacheTag(userId, locationId, catalogItemId),
+      revalidateTagAfterMutation,
+    )
 
-    return NextResponse.json({ stock: data.upsertInventoryStock })
+    return NextResponse.json({ stock: data.consumeInventoryStock })
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
@@ -85,6 +77,9 @@ export async function PATCH(req: Request, context: RouteContext) {
     const message = error instanceof Error ? error.message : 'Failed to update stock'
     if (message.toLowerCase().includes('not allowed') || message.toLowerCase().includes('owner')) {
       return NextResponse.json({ message }, { status: 403 })
+    }
+    if (message.toLowerCase().includes('exceed')) {
+      return NextResponse.json({ message }, { status: 400 })
     }
     return NextResponse.json({ message }, { status: 500 })
   }
@@ -106,6 +101,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
 
     const searchParams = new URL(_req.url).searchParams
     const locationId = Number(searchParams.get('locationId'))
+    const catalogItemId = Number(searchParams.get('catalogItemId'))
     if (!Number.isInteger(locationId) || locationId < 1) {
       return NextResponse.json({ message: 'locationId query param is required' }, { status: 400 })
     }
@@ -113,6 +109,12 @@ export async function DELETE(_req: Request, context: RouteContext) {
     await graphqlQuery<DeleteInventoryStockData>(DELETE_INVENTORY_STOCK_MUTATION, { id }, userId)
 
     revalidateTag(graphqlInventoryStockCacheTag(userId, locationId), revalidateTagAfterMutation)
+    if (Number.isInteger(catalogItemId) && catalogItemId > 0) {
+      revalidateTag(
+        graphqlInventoryStockMovementsCacheTag(userId, locationId, catalogItemId),
+        revalidateTagAfterMutation,
+      )
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error) {

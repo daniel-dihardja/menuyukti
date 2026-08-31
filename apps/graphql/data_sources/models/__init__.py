@@ -18,6 +18,7 @@ from graphql.data_sources.models.instagram import (
 )
 from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
 from graphql.data_sources.models.inventory_stock import InventoryStock
+from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
@@ -45,6 +46,7 @@ __all__ = [
     "ImageAiFlow",
     "InventoryCatalogItem",
     "InventoryStock",
+    "InventoryStockMovement",
     "InstagramPost",
     "InstagramPostPage",
     "InstagramPostPageMediaVersion",

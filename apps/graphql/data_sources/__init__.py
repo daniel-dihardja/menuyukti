@@ -30,6 +30,7 @@ __all__ = [
     "ImageAiFlow",
     "InventoryCatalogItem",
     "InventoryStock",
+    "InventoryStockMovement",
     "SessionLocal",
     "engine",
     "init_db",

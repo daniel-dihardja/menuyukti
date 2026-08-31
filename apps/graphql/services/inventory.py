@@ -2,16 +2,24 @@
 
 from __future__ import annotations
 
+from datetime import UTC, date, datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
 from graphql.data_sources.models.inventory_stock import InventoryStock
+from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
 from graphql.data_sources.models.location import Location
 from graphql.schema.types.inventory_catalog_item import InventoryStorageZone
 
 _ALLOWED_STORAGE_ZONES = {zone.value for zone in InventoryStorageZone}
 _DEFAULT_STORAGE_ZONE = InventoryStorageZone.dry.value
+
+DIRECTION_IN = "in"
+DIRECTION_OUT = "out"
+DIRECTION_TRANSFER_IN = "transfer_in"
+DIRECTION_TRANSFER_OUT = "transfer_out"
 
 
 def validate_storage_zone(storage_zone: str | InventoryStorageZone | None) -> str:
@@ -54,13 +62,23 @@ def validate_on_hand(on_hand: float) -> float:
     return float(on_hand)
 
 
-def validate_transfer_quantity(quantity: float, source_on_hand: float) -> float:
+def validate_movement_quantity(quantity: float) -> float:
     if not isinstance(quantity, (int, float)) or quantity <= 0:
         raise ValueError("quantity must be greater than 0")
-    qty = float(quantity)
+    return float(quantity)
+
+
+def validate_transfer_quantity(quantity: float, source_on_hand: float) -> float:
+    qty = validate_movement_quantity(quantity)
     if qty > source_on_hand:
         raise ValueError("quantity cannot exceed current stock")
     return qty
+
+
+def resolve_occurred_on(occurred_on: date | None) -> date:
+    if occurred_on is None:
+        return datetime.now(tz=UTC).date()
+    return occurred_on
 
 
 def assert_catalog_matches_location_workspace(
@@ -94,4 +112,30 @@ def load_stock_with_catalog(session: Session, stock_id: int) -> InventoryStock:
         .options(joinedload(InventoryStock.catalog_item))
         .where(InventoryStock.id == stock_id)
     ).one()
+    return row
+
+
+def add_movement(
+    session: Session,
+    *,
+    location_id: int,
+    catalog_item_id: int,
+    stock_id: int | None,
+    direction: str,
+    quantity: float,
+    occurred_on: date,
+    related_movement_id: int | None = None,
+    note: str | None = None,
+) -> InventoryStockMovement:
+    row = InventoryStockMovement(
+        location_id=location_id,
+        catalog_item_id=catalog_item_id,
+        stock_id=stock_id,
+        direction=direction,
+        quantity=quantity,
+        occurred_on=occurred_on,
+        related_movement_id=related_movement_id,
+        note=note,
+    )
+    session.add(row)
     return row
