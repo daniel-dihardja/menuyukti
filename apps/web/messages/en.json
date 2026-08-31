@@ -775,6 +775,7 @@
     "useStock": "Use stock",
     "arrivedOn": "Arrived on",
     "usedOn": "Used on",
+    "datePlaceholder": "Pick a date",
     "packagesIn": "Packages in",
     "packagesOut": "Packages out",
     "history": "History",
