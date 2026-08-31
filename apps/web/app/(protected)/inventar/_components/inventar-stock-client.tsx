@@ -620,8 +620,7 @@ export function InventarStockClient({
             >
               <div className="min-w-0">
                 <p className="font-medium">
-                  {formatActivityDate(movement.occurredOn, locale)} ·{' '}
-                  {directionLabel(movement)}
+                  {formatActivityDate(movement.occurredOn, locale)} · {directionLabel(movement)}
                 </p>
               </div>
               <span className="shrink-0 tabular-nums font-medium">
