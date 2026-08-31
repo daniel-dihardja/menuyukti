@@ -23,4 +23,5 @@ class InventoryStockMovementType:
     occurredOn: date
     note: str | None
     relatedMovementId: int | None
+    relatedLocationId: int | None
     createdAt: datetime

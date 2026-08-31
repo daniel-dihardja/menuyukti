@@ -44,6 +44,7 @@ def stock_to_gql(row: InventoryStock) -> InventoryStockType:
 
 
 def movement_to_gql(row: InventoryStockMovement) -> InventoryStockMovementType:
+    related = row.related_movement
     return InventoryStockMovementType(
         id=row.id,
         locationId=row.location_id,
@@ -54,5 +55,6 @@ def movement_to_gql(row: InventoryStockMovement) -> InventoryStockMovementType:
         occurredOn=row.occurred_on,
         note=row.note,
         relatedMovementId=row.related_movement_id,
+        relatedLocationId=related.location_id if related is not None else None,
         createdAt=row.created_at,
     )

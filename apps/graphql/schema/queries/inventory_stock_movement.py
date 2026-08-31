@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import strawberry
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from graphql.context import request_session_scope
 from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
@@ -55,6 +56,7 @@ class InventoryStockMovementQuery:
                 filters.append(InventoryStockMovement.stock_id == stock_pk)
             rows = session.scalars(
                 select(InventoryStockMovement)
+                .options(selectinload(InventoryStockMovement.related_movement))
                 .where(*filters)
                 .order_by(
                     InventoryStockMovement.occurred_on.desc(),
