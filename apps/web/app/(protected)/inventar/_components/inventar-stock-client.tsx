@@ -1,14 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { MoreHorizontal, Package } from 'lucide-react'
+import { ArrowLeftRight, History, Package, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import {
+  ResponsiveActionMenu,
+  type ResponsiveActionMenuItem,
+} from '@/app/(protected)/analytics/_components/responsive-action-menu'
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catalog'
 import type {
   InventoryStockMovement,
@@ -37,13 +42,13 @@ import {
   DialogTitle,
 } from '@workspace/ui/components/dialog'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@workspace/ui/components/dropdown-menu'
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@workspace/ui/components/drawer'
 import {
   Empty,
   EmptyContent,
@@ -80,6 +85,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import { cn } from '@workspace/ui/lib/utils'
 
 import { formatPackLabel } from './format-pack'
 
@@ -110,6 +116,74 @@ function StockBadge({ onHand, packagesLabel }: { onHand: number; packagesLabel: 
   )
 }
 
+function cardActivitySummary(
+  row: InventoryStockRow,
+  t: (key: string, values?: Record<string, string>) => string,
+  locale: string,
+): string {
+  const lastIn = row.lastInOn
+  const lastOut = row.lastOutOn
+  if (lastIn && lastOut) {
+    if (lastOut >= lastIn) {
+      return t('activityOut', { date: formatActivityDate(lastOut, locale) })
+    }
+    return t('activityIn', { date: formatActivityDate(lastIn, locale) })
+  }
+  if (lastOut) return t('activityOut', { date: formatActivityDate(lastOut, locale) })
+  if (lastIn) return t('activityIn', { date: formatActivityDate(lastIn, locale) })
+  return t('activityInEmpty')
+}
+
+function FormSurface({
+  isDesktop,
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+}: {
+  isDesktop: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description?: string
+  children: ReactNode
+  footer: ReactNode
+}) {
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            {description ? <DialogDescription>{description}</DialogDescription> : null}
+          </DialogHeader>
+          {children}
+          <DialogFooter>{footer}</DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="flex max-h-[min(92dvh,640px)] flex-col gap-0">
+        <DrawerHeader className="shrink-0 gap-1 text-left">
+          <DrawerTitle>{title}</DrawerTitle>
+          <DrawerDescription className={description ? undefined : 'sr-only'}>
+            {description ?? title}
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4">{children}</div>
+        <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {footer}
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
 type Branch = { id: number; name: string }
 
 type Props = {
@@ -129,6 +203,7 @@ export function InventarStockClient({
   const locale = useLocale()
   const router = useRouter()
   const { locationId, setLocationId } = useAnalytics()
+  const isDesktop = useDesktopLayout()
 
   const [receiveOpen, setReceiveOpen] = useState(false)
   const [useRow, setUseRow] = useState<InventoryStockRow | null>(null)
@@ -141,7 +216,7 @@ export function InventarStockClient({
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>('')
   const [receiveQty, setReceiveQty] = useState('1')
   const [receiveDate, setReceiveDate] = useState(todayIsoDate)
-  const [useQty, setUseQty] = useState('0')
+  const [useQty, setUseQty] = useState('1')
   const [useDate, setUseDate] = useState(todayIsoDate)
   const [transferDestinationId, setTransferDestinationId] = useState('')
   const [transferQuantity, setTransferQuantity] = useState('')
@@ -263,7 +338,7 @@ export function InventarStockClient({
 
   function openUseDialog(row: InventoryStockRow) {
     setUseRow(row)
-    setUseQty('0')
+    setUseQty('1')
     setUseDate(todayIsoDate())
   }
 
@@ -272,6 +347,34 @@ export function InventarStockClient({
     setTransferRow(row)
     setTransferDestinationId(firstDest ? String(firstDest.id) : '')
     setTransferQuantity(String(row.onHand))
+  }
+
+  function buildRowActionItems(row: InventoryStockRow): ResponsiveActionMenuItem[] {
+    const items: ResponsiveActionMenuItem[] = [
+      {
+        id: 'history',
+        label: t('history'),
+        icon: History,
+        onSelect: () => setHistoryRow(row),
+      },
+    ]
+    if (canTransfer) {
+      items.push({
+        id: 'transfer',
+        label: t('transfer'),
+        icon: ArrowLeftRight,
+        onSelect: () => openTransferDialog(row),
+      })
+    }
+    items.push({
+      id: 'remove',
+      label: t('removeFromLocation'),
+      icon: Trash2,
+      destructive: true,
+      separatorBefore: true,
+      onSelect: () => setRemoveRow(row),
+    })
+    return items
   }
 
   async function refresh() {
@@ -450,25 +553,258 @@ export function InventarStockClient({
     return `${isOut ? '−' : '+'}${quantity}`
   }
 
+  function renderRowActions(row: InventoryStockRow) {
+    return (
+      <ResponsiveActionMenu
+        items={buildRowActionItems(row)}
+        sheetTitle={row.catalogItem.name}
+        desktopTriggerAriaLabel={t('rowActionsMenu')}
+        mobileTriggerLabel={t('actionsTrigger')}
+        sheetDescription={t('actionsSheetDescription')}
+        sheetId={`inventar-actions-${row.id}`}
+      />
+    )
+  }
+
+  const historyHeaderMeta = historyRow ? (
+    <>
+      <p
+        className="truncate text-sm text-muted-foreground"
+        title={`${historyRow.catalogItem.name} (${formatPackLabel(historyRow.catalogItem.packageSize, historyRow.catalogItem.packageUnit)})`}
+      >
+        {historyRow.catalogItem.name} (
+        {formatPackLabel(historyRow.catalogItem.packageSize, historyRow.catalogItem.packageUnit)})
+      </p>
+      <div className="pt-1">
+        <StockBadge onHand={historyRow.onHand} packagesLabel={t('packages')} />
+      </div>
+    </>
+  ) : null
+
+  const historyBody = (
+    <div className="flex flex-col gap-3 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      {historyLoading ? (
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="flex items-center justify-between gap-3">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-10" />
+            </div>
+          ))}
+        </div>
+      ) : movements == null || movements.length === 0 ? (
+        <Empty className="border-0 p-0 md:p-4">
+          <EmptyHeader>
+            <EmptyTitle>{t('historyEmptyTitle')}</EmptyTitle>
+            <EmptyDescription>{t('historyEmpty')}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <ul className="divide-y">
+          {movements.map((movement) => (
+            <li
+              key={movement.id}
+              className="flex items-baseline justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
+            >
+              <div className="min-w-0">
+                <p className="font-medium">
+                  {formatActivityDate(movement.occurredOn, locale)} ·{' '}
+                  {directionLabel(movement.direction)}
+                </p>
+              </div>
+              <span className="shrink-0 tabular-nums font-medium">
+                {signedQuantity(movement.direction, movement.quantity)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+
+  const receiveFields = (
+    <FieldGroup>
+      <Field>
+        <FieldLabel>{t('selectPantryItem')}</FieldLabel>
+        <Select value={selectedCatalogId} onValueChange={setSelectedCatalogId}>
+          <SelectTrigger className="min-h-11 touch-manipulation lg:min-h-9">
+            <SelectValue placeholder={t('selectPantryItemPlaceholder')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {sortedCatalogItems.map((item) => (
+                <SelectItem key={item.id} value={String(item.id)}>
+                  {item.name} ({formatPackLabel(item.packageSize, item.packageUnit)})
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="inventar-receive-qty">{t('packagesIn')}</FieldLabel>
+        <Input
+          id="inventar-receive-qty"
+          className="min-h-11 touch-manipulation lg:min-h-9"
+          inputMode="decimal"
+          value={receiveQty}
+          onChange={(e) => setReceiveQty(e.target.value)}
+        />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="inventar-receive-date">{t('arrivedOn')}</FieldLabel>
+        <Input
+          id="inventar-receive-date"
+          className="min-h-11 touch-manipulation lg:min-h-9"
+          type="date"
+          value={receiveDate}
+          onChange={(e) => setReceiveDate(e.target.value)}
+        />
+      </Field>
+      {receiveNewStock != null ? (
+        <p className="text-sm text-muted-foreground">
+          {t('newStock')}:{' '}
+          <span className="font-medium tabular-nums text-foreground">
+            {receiveNewStock} {t('packages')}
+          </span>
+        </p>
+      ) : null}
+      <p className="text-sm text-muted-foreground">
+        {t('addNewPantryItemPrompt')}{' '}
+        <Link
+          href={routes.inventarCatalog}
+          className="font-medium text-primary underline-offset-4 hover:underline"
+          onClick={() => setReceiveOpen(false)}
+        >
+          {t('addPantryItem')}
+        </Link>
+      </p>
+    </FieldGroup>
+  )
+
+  const useFields =
+    useRow != null ? (
+      <FieldGroup>
+        <p className="text-sm text-muted-foreground">
+          {useRow.catalogItem.name} (
+          {formatPackLabel(useRow.catalogItem.packageSize, useRow.catalogItem.packageUnit)})
+        </p>
+        <Field>
+          <FieldLabel>{t('currentStock')}</FieldLabel>
+          <StockBadge onHand={useRow.onHand} packagesLabel={t('packages')} />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="inventar-use-qty">{t('packagesOut')}</FieldLabel>
+          <Input
+            id="inventar-use-qty"
+            className="min-h-11 touch-manipulation lg:min-h-9"
+            inputMode="decimal"
+            min={0}
+            value={useQty}
+            onChange={(e) => setUseQty(e.target.value)}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="inventar-use-date">{t('usedOn')}</FieldLabel>
+          <Input
+            id="inventar-use-date"
+            className="min-h-11 touch-manipulation lg:min-h-9"
+            type="date"
+            value={useDate}
+            onChange={(e) => setUseDate(e.target.value)}
+          />
+        </Field>
+        {useNewStock != null ? (
+          <p className="text-sm text-muted-foreground">
+            {t('newStock')}:{' '}
+            <span className="font-medium tabular-nums text-foreground">
+              {useNewStock} {t('packages')}
+            </span>
+          </p>
+        ) : null}
+      </FieldGroup>
+    ) : null
+
+  const transferFields =
+    transferRow != null ? (
+      <FieldGroup>
+        <Field>
+          <FieldLabel>{t('currentStock')}</FieldLabel>
+          <StockBadge onHand={transferRow.onHand} packagesLabel={t('packages')} />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="inventar-transfer-destination">{t('destinationLocation')}</FieldLabel>
+          <Select value={transferDestinationId} onValueChange={setTransferDestinationId}>
+            <SelectTrigger
+              id="inventar-transfer-destination"
+              className="min-h-11 touch-manipulation lg:min-h-9"
+            >
+              <SelectValue placeholder={t('destinationPlaceholder')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {transferDestinations.map((branch) => (
+                  <SelectItem key={branch.id} value={String(branch.id)}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="inventar-transfer-quantity">{t('quantity')}</FieldLabel>
+          <Input
+            id="inventar-transfer-quantity"
+            className="min-h-11 touch-manipulation lg:min-h-9"
+            inputMode="decimal"
+            min={0}
+            value={transferQuantity}
+            onChange={(e) => setTransferQuantity(e.target.value)}
+          />
+          {transferRemaining != null ? (
+            <FieldDescription>
+              {t('remainingAfterTransfer')}:{' '}
+              <span className="font-medium tabular-nums text-foreground">
+                {transferRemaining} {t('packages')}
+              </span>
+            </FieldDescription>
+          ) : null}
+        </Field>
+      </FieldGroup>
+    ) : null
+
   return (
     <div className="flex flex-col gap-6">
-      <p className="text-pretty text-sm text-muted-foreground">{t('trustLine')}</p>
+      <p className="hidden text-pretty text-sm text-muted-foreground sm:block">{t('trustLine')}</p>
 
-      {branches.length > 0 ? (
-        <LocationSelect
-          branches={branches}
-          id="inventar-location-select"
-          label={t('branchLabel')}
-          placeholder={branches.length > 1 ? t('branchPlaceholder') : undefined}
-          description={t('branchDescription')}
-          className="w-full max-w-none sm:max-w-xs"
-        />
-      ) : null}
+      <div
+        className={cn(
+          'sticky top-0 z-10 -mx-4 flex flex-col gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur',
+          'lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none',
+        )}
+      >
+        {branches.length > 0 ? (
+          <LocationSelect
+            branches={branches}
+            id="inventar-location-select"
+            label={t('branchLabel')}
+            placeholder={branches.length > 1 ? t('branchPlaceholder') : undefined}
+            description={t('branchDescription')}
+            className="w-full max-w-none sm:max-w-xs"
+          />
+        ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" disabled={!canBookDelivery} onClick={openBookDeliveryDialog}>
-          {t('bookDelivery')}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            className="min-h-11 w-full touch-manipulation sm:w-auto lg:min-h-9"
+            disabled={!canBookDelivery}
+            onClick={openBookDeliveryDialog}
+          >
+            {t('bookDelivery')}
+          </Button>
+        </div>
       </div>
 
       {activeLocationId == null ? (
@@ -488,104 +824,124 @@ export function InventarStockClient({
           </EmptyHeader>
           <EmptyContent>
             {catalogItems.length === 0 ? (
-              <Button asChild>
+              <Button asChild className="min-h-11 touch-manipulation lg:min-h-9">
                 <Link href={routes.inventarCatalog}>{t('addPantryItem')}</Link>
               </Button>
             ) : (
-              <Button type="button" onClick={openBookDeliveryDialog}>
+              <Button
+                type="button"
+                className="min-h-11 touch-manipulation lg:min-h-9"
+                onClick={openBookDeliveryDialog}
+              >
                 {t('bookDelivery')}
               </Button>
             )}
           </EmptyContent>
         </Empty>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('name')}</TableHead>
-              <TableHead>{t('storageZone')}</TableHead>
-              <TableHead>{t('pack')}</TableHead>
-              <TableHead className="text-right">{t('currentStock')}</TableHead>
-              <TableHead>{t('activity')}</TableHead>
-              <TableHead className="w-[1%]" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedStockRows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell className="font-medium">{row.catalogItem.name}</TableCell>
-                <TableCell>{t(`storageZones.${row.catalogItem.storageZone}`)}</TableCell>
-                <TableCell>
-                  {formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end">
+        <>
+          <ul className="flex flex-col gap-3 lg:hidden">
+            {sortedStockRows.map((row) => {
+              const packLabel = formatPackLabel(
+                row.catalogItem.packageSize,
+                row.catalogItem.packageUnit,
+              )
+              const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
+              return (
+                <li
+                  key={row.id}
+                  className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3"
+                >
+                  <div className="flex min-w-0 items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium" title={row.catalogItem.name}>
+                        {row.catalogItem.name}
+                      </p>
+                      <p className="truncate text-sm text-muted-foreground" title={`${zoneLabel} · ${packLabel}`}>
+                        {zoneLabel} · {packLabel}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {cardActivitySummary(row, t, locale)}
+                      </p>
+                    </div>
                     <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
                   </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-0.5 text-sm">
-                    <span className={row.lastInOn ? undefined : 'text-muted-foreground'}>
-                      {row.lastInOn
-                        ? t('activityIn', { date: formatActivityDate(row.lastInOn, locale) })
-                        : t('activityInEmpty')}
-                    </span>
-                    <span className={row.lastOutOn ? undefined : 'text-muted-foreground'}>
-                      {row.lastOutOn
-                        ? t('activityOut', { date: formatActivityDate(row.lastOutOn, locale) })
-                        : t('activityOutEmpty')}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openUseDialog(row)}
-                    >
-                      {t('use')}
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 w-full touch-manipulation"
+                    onClick={() => openUseDialog(row)}
+                  >
+                    {t('use')}
+                  </Button>
+                  {renderRowActions(row)}
+                </li>
+              )
+            })}
+          </ul>
+
+          <div className="hidden lg:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('name')}</TableHead>
+                  <TableHead>{t('storageZone')}</TableHead>
+                  <TableHead>{t('pack')}</TableHead>
+                  <TableHead className="text-right">{t('currentStock')}</TableHead>
+                  <TableHead>{t('activity')}</TableHead>
+                  <TableHead className="w-[1%]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedStockRows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="font-medium">
+                      <span className="truncate" title={row.catalogItem.name}>
+                        {row.catalogItem.name}
+                      </span>
+                    </TableCell>
+                    <TableCell>{t(`storageZones.${row.catalogItem.storageZone}`)}</TableCell>
+                    <TableCell>
+                      {formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end">
+                        <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5 text-sm">
+                        <span className={row.lastInOn ? undefined : 'text-muted-foreground'}>
+                          {row.lastInOn
+                            ? t('activityIn', { date: formatActivityDate(row.lastInOn, locale) })
+                            : t('activityInEmpty')}
+                        </span>
+                        <span className={row.lastOutOn ? undefined : 'text-muted-foreground'}>
+                          {row.lastOutOn
+                            ? t('activityOut', { date: formatActivityDate(row.lastOutOn, locale) })
+                            : t('activityOutEmpty')}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t('rowActionsMenu')}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openUseDialog(row)}
                         >
-                          <MoreHorizontal aria-hidden />
+                          {t('use')}
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem onSelect={() => setHistoryRow(row)}>
-                            {t('history')}
-                          </DropdownMenuItem>
-                          {canTransfer ? (
-                            <DropdownMenuItem onSelect={() => openTransferDialog(row)}>
-                              {t('transfer')}
-                            </DropdownMenuItem>
-                          ) : null}
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onSelect={() => setRemoveRow(row)}
-                          >
-                            {t('removeFromLocation')}
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                        {renderRowActions(row)}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       <Link
@@ -595,72 +951,13 @@ export function InventarStockClient({
         {t('managePantryItems')} →
       </Link>
 
-      <Dialog
+      <FormSurface
+        isDesktop={isDesktop}
         open={receiveOpen}
-        onOpenChange={(open) => {
-          setReceiveOpen(open)
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('bookDeliveryTitle')}</DialogTitle>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel>{t('selectPantryItem')}</FieldLabel>
-              <Select value={selectedCatalogId} onValueChange={setSelectedCatalogId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('selectPantryItemPlaceholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {sortedCatalogItems.map((item) => (
-                      <SelectItem key={item.id} value={String(item.id)}>
-                        {item.name} ({formatPackLabel(item.packageSize, item.packageUnit)})
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inventar-receive-qty">{t('packagesIn')}</FieldLabel>
-              <Input
-                id="inventar-receive-qty"
-                inputMode="decimal"
-                value={receiveQty}
-                onChange={(e) => setReceiveQty(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="inventar-receive-date">{t('arrivedOn')}</FieldLabel>
-              <Input
-                id="inventar-receive-date"
-                type="date"
-                value={receiveDate}
-                onChange={(e) => setReceiveDate(e.target.value)}
-              />
-            </Field>
-            {receiveNewStock != null ? (
-              <p className="text-sm text-muted-foreground">
-                {t('newStock')}:{' '}
-                <span className="font-medium tabular-nums text-foreground">
-                  {receiveNewStock} {t('packages')}
-                </span>
-              </p>
-            ) : null}
-          </FieldGroup>
-          <p className="text-sm text-muted-foreground">
-            {t('addNewPantryItemPrompt')}{' '}
-            <Link
-              href={routes.inventarCatalog}
-              className="font-medium text-primary underline-offset-4 hover:underline"
-              onClick={() => setReceiveOpen(false)}
-            >
-              {t('addPantryItem')}
-            </Link>
-          </p>
-          <DialogFooter>
+        onOpenChange={setReceiveOpen}
+        title={t('bookDeliveryTitle')}
+        footer={
+          <>
             <Button type="button" variant="outline" onClick={() => setReceiveOpen(false)}>
               {t('cancel')}
             </Button>
@@ -668,60 +965,21 @@ export function InventarStockClient({
               {pending ? <Spinner data-icon="inline-start" /> : null}
               {t('bookDelivery')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        {receiveFields}
+      </FormSurface>
 
-      <Dialog
+      <FormSurface
+        isDesktop={isDesktop}
         open={useRow != null}
         onOpenChange={(open) => {
           if (!open) setUseRow(null)
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('useStock')}</DialogTitle>
-          </DialogHeader>
-          {useRow ? (
-            <FieldGroup>
-              <p className="text-sm text-muted-foreground">
-                {useRow.catalogItem.name} (
-                {formatPackLabel(useRow.catalogItem.packageSize, useRow.catalogItem.packageUnit)})
-              </p>
-              <Field>
-                <FieldLabel>{t('currentStock')}</FieldLabel>
-                <StockBadge onHand={useRow.onHand} packagesLabel={t('packages')} />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventar-use-qty">{t('packagesOut')}</FieldLabel>
-                <Input
-                  id="inventar-use-qty"
-                  inputMode="decimal"
-                  min={0}
-                  value={useQty}
-                  onChange={(e) => setUseQty(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventar-use-date">{t('usedOn')}</FieldLabel>
-                <Input
-                  id="inventar-use-date"
-                  type="date"
-                  value={useDate}
-                  onChange={(e) => setUseDate(e.target.value)}
-                />
-              </Field>
-              {useNewStock != null ? (
-                <p className="text-sm text-muted-foreground">
-                  {t('newStock')}:{' '}
-                  <span className="font-medium tabular-nums text-foreground">
-                    {useNewStock} {t('packages')}
-                  </span>
-                </p>
-              ) : null}
-            </FieldGroup>
-          ) : null}
-          <DialogFooter>
+        title={t('useStock')}
+        footer={
+          <>
             <Button type="button" variant="outline" onClick={() => setUseRow(null)}>
               {t('cancel')}
             </Button>
@@ -729,11 +987,14 @@ export function InventarStockClient({
               {pending ? <Spinner data-icon="inline-start" /> : null}
               {t('use')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        {useFields}
+      </FormSurface>
 
-      <Dialog
+      <FormSurface
+        isDesktop={isDesktop}
         open={transferRow != null}
         onOpenChange={(open) => {
           if (!open) {
@@ -742,67 +1003,17 @@ export function InventarStockClient({
             setTransferQuantity('')
           }
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('transferStock')}</DialogTitle>
-            {transferRow ? (
-              <DialogDescription>
-                {transferRow.catalogItem.name} (
-                {formatPackLabel(
-                  transferRow.catalogItem.packageSize,
-                  transferRow.catalogItem.packageUnit,
-                )}
-                )
-              </DialogDescription>
-            ) : null}
-          </DialogHeader>
-          {transferRow ? (
-            <FieldGroup>
-              <Field>
-                <FieldLabel>{t('currentStock')}</FieldLabel>
-                <StockBadge onHand={transferRow.onHand} packagesLabel={t('packages')} />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventar-transfer-destination">
-                  {t('destinationLocation')}
-                </FieldLabel>
-                <Select value={transferDestinationId} onValueChange={setTransferDestinationId}>
-                  <SelectTrigger id="inventar-transfer-destination">
-                    <SelectValue placeholder={t('destinationPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {transferDestinations.map((branch) => (
-                        <SelectItem key={branch.id} value={String(branch.id)}>
-                          {branch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="inventar-transfer-quantity">{t('quantity')}</FieldLabel>
-                <Input
-                  id="inventar-transfer-quantity"
-                  inputMode="decimal"
-                  min={0}
-                  value={transferQuantity}
-                  onChange={(e) => setTransferQuantity(e.target.value)}
-                />
-                {transferRemaining != null ? (
-                  <FieldDescription>
-                    {t('remainingAfterTransfer')}:{' '}
-                    <span className="font-medium tabular-nums text-foreground">
-                      {transferRemaining} {t('packages')}
-                    </span>
-                  </FieldDescription>
-                ) : null}
-              </Field>
-            </FieldGroup>
-          ) : null}
-          <DialogFooter>
+        title={t('transferStock')}
+        description={
+          transferRow
+            ? `${transferRow.catalogItem.name} (${formatPackLabel(
+                transferRow.catalogItem.packageSize,
+                transferRow.catalogItem.packageUnit,
+              )})`
+            : undefined
+        }
+        footer={
+          <>
             <Button type="button" variant="outline" onClick={() => setTransferRow(null)}>
               {t('cancel')}
             </Button>
@@ -810,80 +1021,61 @@ export function InventarStockClient({
               {pending ? <Spinner data-icon="inline-start" /> : null}
               {t('transfer')}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Sheet
-        open={historyRow != null}
-        onOpenChange={(open) => {
-          if (!open) setHistoryRow(null)
-        }}
+          </>
+        }
       >
-        <SheetContent
-          closeLabel={t('close')}
-          className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
+        {transferFields}
+      </FormSurface>
+
+      {isDesktop ? (
+        <Sheet
+          open={historyRow != null}
+          onOpenChange={(open) => {
+            if (!open) setHistoryRow(null)
+          }}
         >
-          <SheetHeader className="shrink-0 border-b pr-12">
-            <SheetTitle>{t('historyTitle')}</SheetTitle>
-            {historyRow ? (
-              <>
-                <SheetDescription>
-                  {historyRow.catalogItem.name} (
-                  {formatPackLabel(
-                    historyRow.catalogItem.packageSize,
-                    historyRow.catalogItem.packageUnit,
-                  )}
-                  )
-                </SheetDescription>
-                <div className="pt-1">
-                  <StockBadge onHand={historyRow.onHand} packagesLabel={t('packages')} />
-                </div>
-              </>
-            ) : null}
-          </SheetHeader>
-          <ScrollArea className="min-h-0 flex-1">
-            <div className="flex flex-col gap-3 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              {historyLoading ? (
-                <div className="flex flex-col gap-3">
-                  {Array.from({ length: 4 }, (_, index) => (
-                    <div key={index} className="flex items-center justify-between gap-3">
-                      <Skeleton className="h-4 w-40" />
-                      <Skeleton className="h-4 w-10" />
-                    </div>
-                  ))}
-                </div>
-              ) : movements == null || movements.length === 0 ? (
-                <Empty className="border-0 p-0 md:p-4">
-                  <EmptyHeader>
-                    <EmptyTitle>{t('historyEmptyTitle')}</EmptyTitle>
-                    <EmptyDescription>{t('historyEmpty')}</EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              ) : (
-                <ul className="divide-y">
-                  {movements.map((movement) => (
-                    <li
-                      key={movement.id}
-                      className="flex items-baseline justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium">
-                          {formatActivityDate(movement.occurredOn, locale)} ·{' '}
-                          {directionLabel(movement.direction)}
-                        </p>
-                      </div>
-                      <span className="shrink-0 tabular-nums font-medium">
-                        {signedQuantity(movement.direction, movement.quantity)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
+          <SheetContent
+            closeLabel={t('close')}
+            className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
+          >
+            <SheetHeader className="shrink-0 border-b pr-12">
+              <SheetTitle>{t('historyTitle')}</SheetTitle>
+              {historyRow ? (
+                <>
+                  <SheetDescription className="truncate" title={historyRow.catalogItem.name}>
+                    {historyRow.catalogItem.name} (
+                    {formatPackLabel(
+                      historyRow.catalogItem.packageSize,
+                      historyRow.catalogItem.packageUnit,
+                    )}
+                    )
+                  </SheetDescription>
+                  <div className="pt-1">
+                    <StockBadge onHand={historyRow.onHand} packagesLabel={t('packages')} />
+                  </div>
+                </>
+              ) : null}
+            </SheetHeader>
+            <ScrollArea className="min-h-0 flex-1">{historyBody}</ScrollArea>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Drawer
+          open={historyRow != null}
+          onOpenChange={(open) => {
+            if (!open) setHistoryRow(null)
+          }}
+        >
+          <DrawerContent className="flex max-h-[min(85dvh,640px)] flex-col gap-0">
+            <DrawerHeader className="shrink-0 gap-1 border-b text-left">
+              <DrawerTitle>{t('historyTitle')}</DrawerTitle>
+              <DrawerDescription className="sr-only">{t('historyTitle')}</DrawerDescription>
+              {historyHeaderMeta}
+            </DrawerHeader>
+            <ScrollArea className="min-h-0 flex-1">{historyBody}</ScrollArea>
+          </DrawerContent>
+        </Drawer>
+      )}
 
       <AlertDialog
         open={removeRow != null}

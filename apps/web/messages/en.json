@@ -769,6 +769,8 @@
     "bookDeliveryTitle": "Book delivery",
     "bookDeliverySuccess": "Delivery booked",
     "rowActionsMenu": "Item actions",
+    "actionsTrigger": "Actions",
+    "actionsSheetDescription": "Choose an action for this stock item.",
     "use": "Use",
     "useStock": "Use stock",
     "arrivedOn": "Arrived on",
