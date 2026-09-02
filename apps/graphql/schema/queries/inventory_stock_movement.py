@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import strawberry
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -19,7 +21,8 @@ class InventoryStockMovementQuery:
         description=(
             "Stock movements for a catalog item at a location, newest first. "
             "When stockId is set, only movements for that stock row (current track). "
-            "Empty when not authorized."
+            "Optional fromDate/toDate filter occurredOn inclusively. "
+            "Empty when not authorized or fromDate is after toDate."
         )
     )
     def inventory_stock_movements(
@@ -28,6 +31,8 @@ class InventoryStockMovementQuery:
         location_id: strawberry.ID,
         catalog_item_id: strawberry.ID,
         stock_id: strawberry.ID | None = None,
+        from_date: date | None = None,
+        to_date: date | None = None,
         limit: int = 50,
     ) -> list[InventoryStockMovementType]:
         user_id = user_id_from_info(info)
@@ -43,6 +48,8 @@ class InventoryStockMovementQuery:
             return []
         if stock_pk is not None and stock_pk < 1:
             return []
+        if from_date is not None and to_date is not None and from_date > to_date:
+            return []
         cap = max(1, min(limit, 200))
 
         with request_session_scope(info) as session:
@@ -54,6 +61,10 @@ class InventoryStockMovementQuery:
             ]
             if stock_pk is not None:
                 filters.append(InventoryStockMovement.stock_id == stock_pk)
+            if from_date is not None:
+                filters.append(InventoryStockMovement.occurred_on >= from_date)
+            if to_date is not None:
+                filters.append(InventoryStockMovement.occurred_on <= to_date)
             rows = session.scalars(
                 select(InventoryStockMovement)
                 .options(selectinload(InventoryStockMovement.related_movement))

@@ -72,6 +72,8 @@ export async function GET(req: Request) {
     const stockId = stockIdRaw != null ? Number(stockIdRaw) : null
     const limitRaw = searchParams.get('limit')
     const limit = limitRaw != null ? Number(limitRaw) : 50
+    const fromDateRaw = searchParams.get('fromDate')
+    const toDateRaw = searchParams.get('toDate')
 
     if (!Number.isInteger(locationId) || locationId < 1) {
       return NextResponse.json({ message: 'locationId query param is required' }, { status: 400 })
@@ -86,12 +88,28 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'stockId must be a positive integer' }, { status: 400 })
     }
 
+    const isoDateRe = /^\d{4}-\d{2}-\d{2}$/
+    if (fromDateRaw != null && !isoDateRe.test(fromDateRaw)) {
+      return NextResponse.json({ message: 'fromDate must be YYYY-MM-DD' }, { status: 400 })
+    }
+    if (toDateRaw != null && !isoDateRe.test(toDateRaw)) {
+      return NextResponse.json({ message: 'toDate must be YYYY-MM-DD' }, { status: 400 })
+    }
+    if (fromDateRaw != null && toDateRaw != null && fromDateRaw > toDateRaw) {
+      return NextResponse.json(
+        { message: 'fromDate must be on or before toDate' },
+        { status: 400 },
+      )
+    }
+
     const data = await graphqlQuery<InventoryStockMovementsData>(
       INVENTORY_STOCK_MOVEMENTS_QUERY,
       {
         locationId: String(locationId),
         catalogItemId: String(catalogItemId),
         ...(stockId != null ? { stockId: String(stockId) } : {}),
+        ...(fromDateRaw != null ? { fromDate: fromDateRaw } : {}),
+        ...(toDateRaw != null ? { toDate: toDateRaw } : {}),
         limit: Number.isInteger(limit) && limit > 0 ? limit : 50,
       },
       userId,

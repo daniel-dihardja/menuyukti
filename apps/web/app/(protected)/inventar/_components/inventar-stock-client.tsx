@@ -101,6 +101,23 @@ function todayIsoDate(): string {
   return `${y}-${m}-${d}`
 }
 
+function isoDateDaysAgo(daysAgo: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+type HistoryDatePreset = '7d' | '30d' | 'all' | 'custom'
+
+function rangeForPreset(preset: '7d' | '30d'): { fromDate: string; toDate: string } {
+  const toDate = todayIsoDate()
+  const daysBack = preset === '7d' ? 6 : 29
+  return { fromDate: isoDateDaysAgo(daysBack), toDate }
+}
+
 function formatActivityDate(isoDate: string, locale: string): string {
   const [y, m, d] = isoDate.split('-').map(Number)
   if (!y || !m || !d) return isoDate
@@ -237,6 +254,9 @@ export function InventarStockClient({
   const [transferRow, setTransferRow] = useState<InventoryStockRow | null>(null)
   const [removeRow, setRemoveRow] = useState<InventoryStockRow | null>(null)
   const [historyRow, setHistoryRow] = useState<InventoryStockRow | null>(null)
+  const [historyPreset, setHistoryPreset] = useState<HistoryDatePreset>('30d')
+  const [historyFrom, setHistoryFrom] = useState(() => rangeForPreset('30d').fromDate)
+  const [historyTo, setHistoryTo] = useState(() => rangeForPreset('30d').toDate)
   const [movements, setMovements] = useState<InventoryStockMovement[] | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [pending, setPending] = useState(false)
@@ -280,6 +300,23 @@ export function InventarStockClient({
       setMovements(null)
       return
     }
+
+    let fromDate: string | undefined
+    let toDate: string | undefined
+    if (historyPreset === '7d' || historyPreset === '30d') {
+      const range = rangeForPreset(historyPreset)
+      fromDate = range.fromDate
+      toDate = range.toDate
+    } else if (historyPreset === 'custom') {
+      if (!historyFrom || !historyTo || historyFrom > historyTo) {
+        setMovements([])
+        setHistoryLoading(false)
+        return
+      }
+      fromDate = historyFrom
+      toDate = historyTo
+    }
+
     let cancelled = false
     setHistoryLoading(true)
     setMovements(null)
@@ -290,6 +327,8 @@ export function InventarStockClient({
           catalogItemId: String(historyRow.catalogItemId),
           stockId: String(historyRow.id),
         })
+        if (fromDate != null) params.set('fromDate', fromDate)
+        if (toDate != null) params.set('toDate', toDate)
         const res = await fetch(`/api/inventory-stock?${params}`)
         if (!res.ok) {
           const payload = (await res.json().catch(() => null)) as { message?: string } | null
@@ -309,7 +348,7 @@ export function InventarStockClient({
     return () => {
       cancelled = true
     }
-  }, [historyRow, activeLocationId, t])
+  }, [historyRow, activeLocationId, historyPreset, historyFrom, historyTo, t])
 
   const sortedStockRows = [...stockRows].toSorted((a, b) => {
     const zoneDiff =
@@ -385,13 +424,33 @@ export function InventarStockClient({
     setTransferQuantity(String(row.onHand))
   }
 
+  function openHistory(row: InventoryStockRow) {
+    const range = rangeForPreset('30d')
+    setHistoryPreset('30d')
+    setHistoryFrom(range.fromDate)
+    setHistoryTo(range.toDate)
+    setHistoryRow(row)
+  }
+
+  function applyHistoryPreset(preset: '7d' | '30d' | 'all') {
+    setHistoryPreset(preset)
+    if (preset === 'all') {
+      setHistoryFrom('')
+      setHistoryTo('')
+      return
+    }
+    const range = rangeForPreset(preset)
+    setHistoryFrom(range.fromDate)
+    setHistoryTo(range.toDate)
+  }
+
   function buildRowActionItems(row: InventoryStockRow): ResponsiveActionMenuItem[] {
     const items: ResponsiveActionMenuItem[] = [
       {
         id: 'history',
         label: t('history'),
         icon: History,
-        onSelect: () => setHistoryRow(row),
+        onSelect: () => openHistory(row),
       },
     ]
     if (canTransfer) {
@@ -643,8 +702,12 @@ export function InventarStockClient({
       ) : movements == null || movements.length === 0 ? (
         <Empty className="border-0 p-0 md:p-4">
           <EmptyHeader>
-            <EmptyTitle>{t('historyEmptyTitle')}</EmptyTitle>
-            <EmptyDescription>{t('historyEmpty')}</EmptyDescription>
+            <EmptyTitle>
+              {historyPreset === 'all' ? t('historyEmptyTitle') : t('historyEmptyFilteredTitle')}
+            </EmptyTitle>
+            <EmptyDescription>
+              {historyPreset === 'all' ? t('historyEmpty') : t('historyEmptyFiltered')}
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (
@@ -666,6 +729,55 @@ export function InventarStockClient({
           ))}
         </ul>
       )}
+    </div>
+  )
+
+  const historyFilters = (
+    <div className="flex shrink-0 flex-col gap-3 border-b px-4 py-3">
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            { id: '7d' as const, label: t('historyPreset7d') },
+            { id: '30d' as const, label: t('historyPreset30d') },
+            { id: 'all' as const, label: t('historyPresetAll') },
+          ] as const
+        ).map((preset) => (
+          <Button
+            key={preset.id}
+            type="button"
+            size="sm"
+            variant={historyPreset === preset.id ? 'secondary' : 'outline'}
+            className="touch-manipulation"
+            onClick={() => applyHistoryPreset(preset.id)}
+          >
+            {preset.label}
+          </Button>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field>
+          <FieldLabel>{t('historyFrom')}</FieldLabel>
+          <DatePicker
+            value={historyFrom || undefined}
+            onChange={(date) => {
+              setHistoryPreset('custom')
+              setHistoryFrom(date)
+            }}
+            placeholder={t('datePlaceholder')}
+          />
+        </Field>
+        <Field>
+          <FieldLabel>{t('historyTo')}</FieldLabel>
+          <DatePicker
+            value={historyTo || undefined}
+            onChange={(date) => {
+              setHistoryPreset('custom')
+              setHistoryTo(date)
+            }}
+            placeholder={t('datePlaceholder')}
+          />
+        </Field>
+      </div>
     </div>
   )
 
@@ -1124,6 +1236,7 @@ export function InventarStockClient({
                 </>
               ) : null}
             </SheetHeader>
+            {historyFilters}
             <ScrollArea className="min-h-0 flex-1">{historyBody}</ScrollArea>
           </SheetContent>
         </Sheet>
@@ -1140,6 +1253,7 @@ export function InventarStockClient({
               <DrawerDescription className="sr-only">{t('historyTitle')}</DrawerDescription>
               {historyHeaderMeta}
             </DrawerHeader>
+            {historyFilters}
             <ScrollArea className="min-h-0 flex-1">{historyBody}</ScrollArea>
           </DrawerContent>
         </Drawer>

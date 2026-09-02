@@ -81,12 +81,16 @@ export const INVENTORY_STOCK_MOVEMENTS_QUERY = `
     $locationId: ID!
     $catalogItemId: ID!
     $stockId: ID
+    $fromDate: Date
+    $toDate: Date
     $limit: Int
   ) {
     inventoryStockMovements(
       locationId: $locationId
       catalogItemId: $catalogItemId
       stockId: $stockId
+      fromDate: $fromDate
+      toDate: $toDate
       limit: $limit
     ) {
       ${MOVEMENT_FIELDS}

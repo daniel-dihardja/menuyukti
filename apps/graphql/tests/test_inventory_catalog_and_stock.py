@@ -683,11 +683,21 @@ mutation ConsumeStock($stockId: Int!, $quantity: Float!, $occurredOn: Date) {
 """
 
 _MOVEMENTS_QUERY = """
-query Movements($locationId: ID!, $catalogItemId: ID!, $stockId: ID) {
+query Movements(
+  $locationId: ID!
+  $catalogItemId: ID!
+  $stockId: ID
+  $fromDate: Date
+  $toDate: Date
+  $limit: Int
+) {
   inventoryStockMovements(
     locationId: $locationId
     catalogItemId: $catalogItemId
     stockId: $stockId
+    fromDate: $fromDate
+    toDate: $toDate
+    limit: $limit
   ) {
     id
     direction
@@ -792,6 +802,94 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert rows[2]["direction"] == "in"
     assert rows[2]["occurredOn"] == "2026-08-28"
     assert rows[2]["relatedLocationId"] is None
+
+
+def test_movements_filter_by_occurred_on_date_range(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+    ws_id = inventar_workspace_and_location["workspace_id"]
+
+    catalog = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Flour",
+            "packageSize": 1.0,
+            "packageUnit": "kg",
+        },
+    )
+    assert not catalog.errors, catalog.errors
+    catalog_id = catalog.data["createInventoryCatalogItem"]["id"]
+
+    for day, qty in (
+        ("2026-08-01", 1.0),
+        ("2026-08-15", 2.0),
+        ("2026-08-31", 3.0),
+    ):
+        received = _execute(
+            _RECEIVE_STOCK,
+            {
+                "locationId": loc_id,
+                "catalogItemId": catalog_id,
+                "quantity": qty,
+                "occurredOn": day,
+            },
+        )
+        assert not received.errors, received.errors
+
+    mid = _execute(
+        _MOVEMENTS_QUERY,
+        {
+            "locationId": str(loc_id),
+            "catalogItemId": str(catalog_id),
+            "fromDate": "2026-08-10",
+            "toDate": "2026-08-20",
+        },
+    )
+    assert not mid.errors, mid.errors
+    mid_rows = mid.data["inventoryStockMovements"]
+    assert len(mid_rows) == 1
+    assert mid_rows[0]["occurredOn"] == "2026-08-15"
+    assert mid_rows[0]["quantity"] == 2.0
+
+    inclusive = _execute(
+        _MOVEMENTS_QUERY,
+        {
+            "locationId": str(loc_id),
+            "catalogItemId": str(catalog_id),
+            "fromDate": "2026-08-15",
+            "toDate": "2026-08-31",
+        },
+    )
+    assert not inclusive.errors, inclusive.errors
+    inclusive_rows = inclusive.data["inventoryStockMovements"]
+    assert [r["occurredOn"] for r in inclusive_rows] == ["2026-08-31", "2026-08-15"]
+
+    inverted = _execute(
+        _MOVEMENTS_QUERY,
+        {
+            "locationId": str(loc_id),
+            "catalogItemId": str(catalog_id),
+            "fromDate": "2026-08-31",
+            "toDate": "2026-08-01",
+        },
+    )
+    assert not inverted.errors, inverted.errors
+    assert inverted.data["inventoryStockMovements"] == []
+
+    limited = _execute(
+        _MOVEMENTS_QUERY,
+        {
+            "locationId": str(loc_id),
+            "catalogItemId": str(catalog_id),
+            "fromDate": "2026-08-01",
+            "toDate": "2026-08-31",
+            "limit": 1,
+        },
+    )
+    assert not limited.errors, limited.errors
+    limited_rows = limited.data["inventoryStockMovements"]
+    assert len(limited_rows) == 1
+    assert limited_rows[0]["occurredOn"] == "2026-08-31"
 
 
 def test_consume_rejects_over_quantity(inventar_workspace_and_location):
