@@ -8,23 +8,35 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { shouldShowAssistantThinkingFallback } from '@/lib/chat/should-show-assistant-thinking-fallback'
-import { getAssistantTrailingThinkingState } from '@/lib/chat/should-show-assistant-trailing-thinking'
+import type { AssistantTrailingThinkingState } from '@/lib/chat/should-show-assistant-trailing-thinking'
+import type { StoryAssetRef } from '@/lib/chat/story-assets-from-messages'
 
 import { ChatThreadMessageParts } from '@/components/chat/chat-message-parts'
+
+const HIDDEN_TRAILING: AssistantTrailingThinkingState = { show: false, labelKey: 'thinking' }
+const EMPTY_STORY_ASSETS: StoryAssetRef[] = []
 
 export type ChatMessageRowProps = {
   message: UIMessage
   isActiveStream: boolean
-  visibleMessages: readonly UIMessage[]
+  trailingThinking: AssistantTrailingThinkingState
+  actionsEnabled: boolean
+  confirmAssets: readonly StoryAssetRef[]
+  /** Full thread only for the active stream row (image URL dedupe across messages). */
+  threadMessages?: readonly UIMessage[]
 }
 
-function ChatMessageRowInner({ message, isActiveStream, visibleMessages }: ChatMessageRowProps) {
+function ChatMessageRowInner({
+  message,
+  isActiveStream,
+  trailingThinking,
+  actionsEnabled,
+  confirmAssets,
+  threadMessages,
+}: ChatMessageRowProps) {
   const tChat = useTranslations('chat')
   const tWeeklySchedule = useTranslations('chatTools.presentWeeklyInstagramSchedule')
   const showFallbackSpinner = shouldShowAssistantThinkingFallback(message, isActiveStream)
-  const trailingThinking = getAssistantTrailingThinkingState(message, isActiveStream, {
-    visibleMessages,
-  })
   const trailingLabel =
     trailingThinking.labelKey === 'buildingWeeklyPlan'
       ? tWeeklySchedule('running')
@@ -45,9 +57,12 @@ function ChatMessageRowInner({ message, isActiveStream, visibleMessages }: ChatM
         ) : (
           <>
             <ChatThreadMessageParts
+              actionsEnabled={actionsEnabled}
+              confirmAssets={confirmAssets}
               isStreaming={isActiveStream}
               message={message}
               role={message.role}
+              threadMessages={threadMessages}
             />
             {trailingThinking.show ? (
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -62,10 +77,24 @@ function ChatMessageRowInner({ message, isActiveStream, visibleMessages }: ChatM
   )
 }
 
-export const ChatMessageRow = memo(
-  ChatMessageRowInner,
-  (prev, next) =>
-    prev.message === next.message &&
-    prev.isActiveStream === next.isActiveStream &&
-    prev.visibleMessages === next.visibleMessages,
-)
+export const ChatMessageRow = memo(ChatMessageRowInner, (prev, next) => {
+  if (
+    prev.message !== next.message ||
+    prev.isActiveStream !== next.isActiveStream ||
+    prev.trailingThinking.show !== next.trailingThinking.show ||
+    prev.trailingThinking.labelKey !== next.trailingThinking.labelKey ||
+    prev.actionsEnabled !== next.actionsEnabled ||
+    prev.threadMessages !== next.threadMessages
+  ) {
+    return false
+  }
+  if (prev.confirmAssets === next.confirmAssets) return true
+  if (prev.confirmAssets.length !== next.confirmAssets.length) return false
+  return prev.confirmAssets.every(
+    (asset, index) =>
+      asset.name === next.confirmAssets[index]?.name &&
+      asset.role === next.confirmAssets[index]?.role,
+  )
+})
+
+export { EMPTY_STORY_ASSETS, HIDDEN_TRAILING }

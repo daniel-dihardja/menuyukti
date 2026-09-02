@@ -7,7 +7,7 @@ import { mediaDownloadHref } from '@/lib/media/client-api'
 import { formatMediaMentionLabel } from '@/lib/chat/chat-media-mention'
 
 type ChatStoryConfirmAssetsProps = {
-  assets: StoryAssetRef[]
+  assets: readonly StoryAssetRef[]
 }
 
 function roleLabelKey(role: 'style' | 'content'): 'roleStyle' | 'roleContent' {

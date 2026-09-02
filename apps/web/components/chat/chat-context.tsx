@@ -23,6 +23,13 @@ export type ChatMessagesState = {
   hasMessages: boolean
 }
 
+export type ChatMetaState = {
+  status: ChatStatus
+  isChatBusy: boolean
+  hasMessages: boolean
+  error: Error | undefined
+}
+
 export type ChatComposerState = {
   text: string
   chatMode: ChatModeId
@@ -36,13 +43,18 @@ export type ChatComposerState = {
   isSubmitDisabled: boolean
   slashCommands: ChatSlashCommand[]
   pendingMediaAttachments: PendingMediaAttachment[]
-  savedStoryAssets: StoryAssetRef[]
+}
+
+export type ChatStoryAssetsState = {
+  assets: StoryAssetRef[]
+  onRemove: (name: string) => void
 }
 
 /** @deprecated Prefer useChatMessages + useChatComposerState */
 export type ChatState = ChatMessagesState &
   ChatComposerState & {
     messages: UIMessage[]
+    savedStoryAssets: StoryAssetRef[]
   }
 
 export type ChatActions = {
@@ -67,25 +79,35 @@ export type ChatActions = {
 }
 
 const ChatMessagesContext = createContext<ChatMessagesState | null>(null)
+const ChatMetaContext = createContext<ChatMetaState | null>(null)
 const ChatComposerContext = createContext<ChatComposerState | null>(null)
+const ChatStoryAssetsContext = createContext<ChatStoryAssetsState | null>(null)
 const ChatActionsContext = createContext<ChatActions | null>(null)
 
 export function ChatProvider({
   children,
   messagesState,
+  metaState,
   composerState,
+  storyAssetsState,
   actions,
 }: {
   children: ReactNode
   messagesState: ChatMessagesState
+  metaState: ChatMetaState
   composerState: ChatComposerState
+  storyAssetsState: ChatStoryAssetsState
   actions: ChatActions
 }) {
   return (
     <ChatMessagesContext value={messagesState}>
-      <ChatComposerContext value={composerState}>
-        <ChatActionsContext value={actions}>{children}</ChatActionsContext>
-      </ChatComposerContext>
+      <ChatMetaContext value={metaState}>
+        <ChatComposerContext value={composerState}>
+          <ChatStoryAssetsContext value={storyAssetsState}>
+            <ChatActionsContext value={actions}>{children}</ChatActionsContext>
+          </ChatStoryAssetsContext>
+        </ChatComposerContext>
+      </ChatMetaContext>
     </ChatMessagesContext>
   )
 }
@@ -106,16 +128,21 @@ export function useChatComposerState(): ChatComposerState {
   return ctx
 }
 
-/** Status and busy flags for mobile chrome — no message bodies. */
-export function useChatMeta(): Pick<
-  ChatMessagesState,
-  'status' | 'isChatBusy' | 'hasMessages' | 'error'
-> {
-  const { status, isChatBusy, hasMessages, error } = useChatMessages()
-  return useMemo(
-    () => ({ status, isChatBusy, hasMessages, error }),
-    [status, isChatBusy, hasMessages, error],
-  )
+/** Status and busy flags — does not subscribe to message bodies. */
+export function useChatMeta(): ChatMetaState {
+  const ctx = use(ChatMetaContext)
+  if (!ctx) {
+    throw new Error('useChatMeta must be used within ChatProvider')
+  }
+  return ctx
+}
+
+export function useChatStoryAssets(): ChatStoryAssetsState {
+  const ctx = use(ChatStoryAssetsContext)
+  if (!ctx) {
+    throw new Error('useChatStoryAssets must be used within ChatProvider')
+  }
+  return ctx
 }
 
 export function useChatActions(): ChatActions {
@@ -130,13 +157,15 @@ export function useChatActions(): ChatActions {
 export function useChatState(): ChatState {
   const messagesState = useChatMessages()
   const composerState = useChatComposerState()
+  const { assets: savedStoryAssets } = useChatStoryAssets()
   return useMemo(
     () => ({
       ...messagesState,
       ...composerState,
+      savedStoryAssets,
       messages: messagesState.visibleMessages,
     }),
-    [messagesState, composerState],
+    [messagesState, composerState, savedStoryAssets],
   )
 }
 

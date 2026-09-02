@@ -650,6 +650,16 @@ export function useAgentChat({
     [visibleMessages, status, error, isChatBusy, messages.length],
   )
 
+  const metaState = useMemo(
+    () => ({
+      status,
+      isChatBusy,
+      hasMessages: messages.length > 0,
+      error,
+    }),
+    [status, isChatBusy, messages.length, error],
+  )
+
   const composerState = useMemo(
     () => ({
       text,
@@ -662,7 +672,6 @@ export function useAgentChat({
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
-      savedStoryAssets,
     }),
     [
       text,
@@ -675,8 +684,15 @@ export function useAgentChat({
       isSubmitDisabled,
       slashCommands,
       pendingMediaAttachments,
-      savedStoryAssets,
     ],
+  )
+
+  const storyAssetsState = useMemo(
+    () => ({
+      assets: savedStoryAssets,
+      onRemove: handleRemoveSavedStoryAsset,
+    }),
+    [savedStoryAssets, handleRemoveSavedStoryAsset],
   )
 
   const actions = useMemo(
@@ -720,7 +736,9 @@ export function useAgentChat({
 
   return {
     messagesState,
+    metaState,
     composerState,
+    storyAssetsState,
     actions,
   }
 }

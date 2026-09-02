@@ -17,6 +17,7 @@ import {
 import { cn } from '@workspace/ui/lib/utils'
 import { ChevronLeft, Folder, Loader2 } from 'lucide-react'
 import { useChatMentionItems } from '@/components/chat/chat-mention-context'
+import { useChatActions, useChatComposerState } from '@/components/chat/chat-context'
 import {
   useCallback,
   useEffect,
@@ -54,32 +55,35 @@ type MentionMenuEntry =
   | { kind: 'media'; item: MediaCatalogItem }
 
 export type ChatComposerMenusProps = {
-  value: string
-  onValueChange: (next: string) => void
-  commands: SlashCommandDefinition[]
-  onSelectSlashCommand: (command: string) => void
-  slashAriaLabel: string
-  onSelectVisualizationMention: (visualizationId: ChatVisualizationId, title: string) => void
-  onSelectMediaMention: (item: MediaCatalogItem) => void
-  mentionAriaLabel: string
-  mentionEmptyLabel: string
   children: ReactNode
 }
 
-export function ChatComposerMenus({
-  value,
-  onValueChange,
-  commands,
-  onSelectSlashCommand,
-  slashAriaLabel,
-  onSelectVisualizationMention,
-  onSelectMediaMention,
-  mentionAriaLabel,
-  mentionEmptyLabel,
-  children,
-}: ChatComposerMenusProps) {
+export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
+  const tSlash = useTranslations('chat.slashCommands')
   const tMention = useTranslations('chat.mentionMenu')
+  const { text, slashCommands } = useChatComposerState()
+  const {
+    setText,
+    handleSelectSlashCommand,
+    handleSelectVisualizationMention,
+    handleSelectMediaMention,
+  } = useChatActions()
   const { visualizations, mentionMenusDisabled } = useChatMentionItems()
+
+  const value = text
+  const onValueChange = setText
+  const commands = slashCommands
+  const onSelectSlashCommand = useCallback(
+    (command: string) => {
+      void handleSelectSlashCommand(command)
+    },
+    [handleSelectSlashCommand],
+  )
+  const slashAriaLabel = tSlash('ariaLabel')
+  const onSelectVisualizationMention = handleSelectVisualizationMention
+  const onSelectMediaMention = handleSelectMediaMention
+  const mentionAriaLabel = tMention('ariaLabel')
+  const mentionEmptyLabel = tMention('empty')
 
   const [mediaItems, setMediaItems] = useState<MediaCatalogItem[]>([])
   const [mediaLoading, setMediaLoading] = useState(false)

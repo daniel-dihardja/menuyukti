@@ -3,14 +3,14 @@
 import { createContext, use, useMemo, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 
-import { useChatMessages } from '@/components/chat/chat-context'
+import { useChatMeta } from '@/components/chat/chat-context'
 import { useChatVisualizationsState } from '@/components/chat/visualizations/chat-visualizations-context'
 
 const ChatMentionContext = createContext<string[] | null>(null)
 
 export function ChatMentionProvider({ children }: { children: ReactNode }) {
   const { addedIds, analyticsRunId } = useChatVisualizationsState()
-  const { isChatBusy } = useChatMessages()
+  const { isChatBusy } = useChatMeta()
   const tViz = useTranslations('chat.visualizations.catalog')
 
   const mentionTitles = useMemo(() => {
