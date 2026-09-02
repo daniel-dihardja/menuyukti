@@ -195,7 +195,12 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
         {formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)})
       </p>
       <div className="pt-1">
-        <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+        <StockBadge
+          onHand={row.onHand}
+          packagesLabel={t('packages')}
+          minOnHand={row.catalogItem.minOnHand}
+          maxOnHand={row.catalogItem.maxOnHand}
+        />
       </div>
     </>
   )
@@ -312,7 +317,12 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
               {formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)})
             </SheetDescription>
             <div className="pt-1">
-              <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+              <StockBadge
+                onHand={row.onHand}
+                packagesLabel={t('packages')}
+                minOnHand={row.catalogItem.minOnHand}
+                maxOnHand={row.catalogItem.maxOnHand}
+              />
             </div>
           </SheetHeader>
           {historyFilters}

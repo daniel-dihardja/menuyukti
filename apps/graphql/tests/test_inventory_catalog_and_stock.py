@@ -29,6 +29,8 @@ mutation CreateWithStock(
   $onHand: Float!
   $storageZone: InventoryStorageZone
   $price: Float
+  $minOnHand: Float
+  $maxOnHand: Float
 ) {
   createInventoryCatalogItemWithStock(
     locationId: $locationId
@@ -38,6 +40,8 @@ mutation CreateWithStock(
     onHand: $onHand
     storageZone: $storageZone
     price: $price
+    minOnHand: $minOnHand
+    maxOnHand: $maxOnHand
   ) {
     id
     locationId
@@ -49,6 +53,8 @@ mutation CreateWithStock(
       packageUnit
       storageZone
       price
+      minOnHand
+      maxOnHand
     }
   }
 }
@@ -62,6 +68,8 @@ mutation CreateCatalog(
   $packageUnit: String!
   $storageZone: InventoryStorageZone
   $price: Float
+  $minOnHand: Float
+  $maxOnHand: Float
 ) {
   createInventoryCatalogItem(
     workspaceId: $workspaceId
@@ -70,21 +78,39 @@ mutation CreateCatalog(
     packageUnit: $packageUnit
     storageZone: $storageZone
     price: $price
+    minOnHand: $minOnHand
+    maxOnHand: $maxOnHand
   ) {
     id
     name
     storageZone
     price
+    minOnHand
+    maxOnHand
   }
 }
 """
 
 _UPDATE_CATALOG = """
-mutation UpdateCatalog($id: Int!, $storageZone: InventoryStorageZone, $price: Float) {
-  updateInventoryCatalogItem(id: $id, storageZone: $storageZone, price: $price) {
+mutation UpdateCatalog(
+  $id: Int!
+  $storageZone: InventoryStorageZone
+  $price: Float
+  $minOnHand: Float
+  $maxOnHand: Float
+) {
+  updateInventoryCatalogItem(
+    id: $id
+    storageZone: $storageZone
+    price: $price
+    minOnHand: $minOnHand
+    maxOnHand: $maxOnHand
+  ) {
     id
     storageZone
     price
+    minOnHand
+    maxOnHand
   }
 }
 """
@@ -98,6 +124,8 @@ query Catalog($workspaceId: ID!) {
     packageUnit
     storageZone
     price
+    minOnHand
+    maxOnHand
   }
 }
 """
@@ -107,7 +135,7 @@ query Stock($locationId: ID!) {
   inventoryStock(locationId: $locationId) {
     id
     onHand
-    catalogItem { name packageSize packageUnit storageZone price }
+    catalogItem { name packageSize packageUnit storageZone price minOnHand maxOnHand }
   }
 }
 """
@@ -325,6 +353,95 @@ def test_catalog_price_create_update_and_reject_negative(inventar_workspace_and_
     )
     assert flour["catalogItem"]["price"] == 25000.0
     assert flour["onHand"] == 3.0
+
+
+def test_catalog_on_hand_limits_create_update_and_validation(inventar_workspace_and_location):
+    ws_id = inventar_workspace_and_location["workspace_id"]
+    loc_id = inventar_workspace_and_location["location_id"]
+
+    created = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Rice",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "minOnHand": 2.0,
+            "maxOnHand": 10.0,
+        },
+    )
+    assert not created.errors, created.errors
+    item = created.data["createInventoryCatalogItem"]
+    assert item["minOnHand"] == 2.0
+    assert item["maxOnHand"] == 10.0
+
+    updated = _execute(
+        _UPDATE_CATALOG,
+        {"id": item["id"], "minOnHand": 3.0, "maxOnHand": 12.0},
+    )
+    assert not updated.errors, updated.errors
+    assert updated.data["updateInventoryCatalogItem"]["minOnHand"] == 3.0
+    assert updated.data["updateInventoryCatalogItem"]["maxOnHand"] == 12.0
+
+    cleared = _execute(
+        _UPDATE_CATALOG,
+        {"id": item["id"], "minOnHand": None, "maxOnHand": None},
+    )
+    assert not cleared.errors, cleared.errors
+    assert cleared.data["updateInventoryCatalogItem"]["minOnHand"] is None
+    assert cleared.data["updateInventoryCatalogItem"]["maxOnHand"] is None
+
+    inverted = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Bad limits",
+            "packageSize": 1.0,
+            "packageUnit": "kg",
+            "minOnHand": 5.0,
+            "maxOnHand": 2.0,
+        },
+    )
+    assert inverted.errors
+
+    negative = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Negative min",
+            "packageSize": 1.0,
+            "packageUnit": "kg",
+            "minOnHand": -1.0,
+        },
+    )
+    assert negative.errors
+
+    with_stock = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_id,
+            "name": "Oil",
+            "packageSize": 1.0,
+            "packageUnit": "L",
+            "onHand": 4.0,
+            "minOnHand": 1.0,
+            "maxOnHand": 8.0,
+        },
+    )
+    assert not with_stock.errors, with_stock.errors
+    catalog = with_stock.data["createInventoryCatalogItemWithStock"]["catalogItem"]
+    assert catalog["minOnHand"] == 1.0
+    assert catalog["maxOnHand"] == 8.0
+
+    stock_list = _execute(_STOCK_QUERY, {"locationId": str(loc_id)})
+    assert not stock_list.errors, stock_list.errors
+    oil = next(
+        row
+        for row in stock_list.data["inventoryStock"]
+        if row["catalogItem"]["name"] == "Oil"
+    )
+    assert oil["catalogItem"]["minOnHand"] == 1.0
+    assert oil["catalogItem"]["maxOnHand"] == 8.0
 
 
 def test_upsert_and_delete_stock(inventar_workspace_and_location):

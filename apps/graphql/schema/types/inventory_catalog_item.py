@@ -19,6 +19,8 @@ class InventoryCatalogItemType:
     packageSize: float
     packageUnit: str
     price: float | None
+    minOnHand: float | None
+    maxOnHand: float | None
     storageZone: InventoryStorageZone
     createdAt: datetime
     updatedAt: datetime

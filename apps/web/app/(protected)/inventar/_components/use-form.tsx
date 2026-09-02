@@ -100,7 +100,12 @@ export function UseForm({ row, locationId, onClose, onSuccess }: Props) {
         </p>
         <Field>
           <FieldLabel>{t('currentStock')}</FieldLabel>
-          <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+          <StockBadge
+            onHand={row.onHand}
+            packagesLabel={t('packages')}
+            minOnHand={row.catalogItem.minOnHand}
+            maxOnHand={row.catalogItem.maxOnHand}
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="inventar-use-qty">{t('packagesOut')}</FieldLabel>
