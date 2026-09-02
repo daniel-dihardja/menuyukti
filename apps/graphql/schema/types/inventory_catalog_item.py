@@ -18,6 +18,7 @@ class InventoryCatalogItemType:
     name: str
     packageSize: float
     packageUnit: str
+    price: float | None
     storageZone: InventoryStorageZone
     createdAt: datetime
     updatedAt: datetime

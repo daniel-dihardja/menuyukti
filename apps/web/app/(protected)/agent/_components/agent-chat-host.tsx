@@ -10,10 +10,17 @@ export type AgentChatHostProps = UseAgentChatOptions & {
 }
 
 export function AgentChatHost({ children, ...chatOptions }: AgentChatHostProps) {
-  const { messagesState, composerState, actions } = useAgentChat(chatOptions)
+  const { messagesState, metaState, composerState, storyAssetsState, actions } =
+    useAgentChat(chatOptions)
 
   return (
-    <ChatProvider messagesState={messagesState} composerState={composerState} actions={actions}>
+    <ChatProvider
+      actions={actions}
+      composerState={composerState}
+      messagesState={messagesState}
+      metaState={metaState}
+      storyAssetsState={storyAssetsState}
+    >
       {children}
     </ChatProvider>
   )

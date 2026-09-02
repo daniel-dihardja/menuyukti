@@ -20,16 +20,31 @@ import {
 import { Spinner } from '@workspace/ui/components/spinner'
 import { CalendarDaysIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useMemo } from 'react'
 
-import { useChatActions, useChatMessages } from '@/components/chat/chat-context'
-import { ChatMessageRow } from '@/components/chat/chat-message-row'
+import { useChatActions, useChatMessages, useChatMeta } from '@/components/chat/chat-context'
+import {
+  ChatMessageRow,
+  EMPTY_STORY_ASSETS,
+  HIDDEN_TRAILING,
+} from '@/components/chat/chat-message-row'
 import { useChatViewportInset } from '@/components/chat/chat-viewport-inset-context'
+import { getAssistantTrailingThinkingState } from '@/lib/chat/should-show-assistant-trailing-thinking'
+import {
+  storyAssetsAsOfMessage,
+  styleAndContentStoryAssets,
+} from '@/lib/chat/story-assets-from-messages'
+import {
+  isStoryGenerateConfirmationActionable,
+  messageHasCompletedStoryGenerateConfirmation,
+  messageHasGenerateInstagramPostImage,
+} from '@/lib/chat/story-generate-confirmation'
 
 const QUICK_PROMPT_KEYS = ['weeklyPlan', 'featureTopDishes', 'storiesAndReels'] as const
 
 function ChatEmptyState() {
   const t = useTranslations('chat')
-  const { isChatBusy } = useChatMessages()
+  const { isChatBusy } = useChatMeta()
   const { handleSelectSlashCommand } = useChatActions()
 
   return (
@@ -70,6 +85,44 @@ export function ChatMessageList() {
   const { bottomInset } = useChatViewportInset()
   const scrollButtonBottom = `max(1rem, calc(env(safe-area-inset-bottom) + ${bottomInset}px))`
 
+  const rowMetaById = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        trailingThinking: ReturnType<typeof getAssistantTrailingThinkingState>
+        actionsEnabled: boolean
+        confirmAssets: ReturnType<typeof styleAndContentStoryAssets>
+      }
+    >()
+
+    for (let index = 0; index < visibleMessages.length; index += 1) {
+      const msg = visibleMessages[index]
+      if (!msg) continue
+      const isLast = index === visibleMessages.length - 1
+      const isActiveStream = isLast && (status === 'submitted' || status === 'streaming')
+
+      const trailingThinking = isActiveStream
+        ? getAssistantTrailingThinkingState(msg, true, { visibleMessages })
+        : HIDDEN_TRAILING
+
+      const actionsEnabled = isStoryGenerateConfirmationActionable({
+        message: msg,
+        messages: visibleMessages,
+        status,
+      })
+
+      const confirmAssets =
+        messageHasCompletedStoryGenerateConfirmation(msg) &&
+        !messageHasGenerateInstagramPostImage(msg)
+          ? styleAndContentStoryAssets(storyAssetsAsOfMessage(visibleMessages, msg.id))
+          : EMPTY_STORY_ASSETS
+
+      map.set(msg.id, { trailingThinking, actionsEnabled, confirmAssets })
+    }
+
+    return map
+  }, [visibleMessages, status])
+
   return (
     <Conversation aria-live="polite" className="min-h-0" resize={isChatBusy ? 'instant' : 'smooth'}>
       <ConversationContent className="gap-5 px-4 py-3 sm:gap-8 sm:p-4">
@@ -102,13 +155,17 @@ export function ChatMessageList() {
             {visibleMessages.map((msg: UIMessage, index: number) => {
               const isLast = index === visibleMessages.length - 1
               const isActiveStream = isLast && (status === 'submitted' || status === 'streaming')
+              const meta = rowMetaById.get(msg.id)
 
               return (
                 <ChatMessageRow
+                  actionsEnabled={meta?.actionsEnabled ?? false}
+                  confirmAssets={meta?.confirmAssets ?? EMPTY_STORY_ASSETS}
                   isActiveStream={isActiveStream}
                   key={msg.id}
                   message={msg}
-                  visibleMessages={visibleMessages}
+                  threadMessages={isActiveStream ? visibleMessages : undefined}
+                  trailingThinking={meta?.trailingThinking ?? HIDDEN_TRAILING}
                 />
               )
             })}

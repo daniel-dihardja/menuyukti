@@ -58,6 +58,7 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
   const branches = locationsData.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
+    currency: loc.currency,
   }))
 
   const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
@@ -79,7 +80,12 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
       branches={branches}
       initialLocationId={initialLocationId}
       stockRows={stockRows}
-      catalogItems={catalogItems}
+      catalogItems={catalogItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        packageSize: item.packageSize,
+        packageUnit: item.packageUnit,
+      }))}
     />
   )
 }
@@ -106,7 +112,7 @@ export default async function InventarPage({
       breadcrumbs={[{ label: t('title') }]}
       mainClassName="min-h-0"
     >
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-2">
+      <div className="flex w-full flex-col gap-2">
         <h1 className="text-pretty text-2xl font-semibold tracking-tight">{t('headline')}</h1>
         <Suspense fallback={<InventarSkeleton />}>
           <InventarData requestedLocationId={requestedLocationId} />

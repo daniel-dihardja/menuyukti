@@ -8,6 +8,7 @@ export type InventoryCatalogItem = {
   name: string
   packageSize: number
   packageUnit: string
+  price: number | null
   storageZone: InventoryStorageZone
   createdAt: string
   updatedAt: string
@@ -19,6 +20,7 @@ const CATALOG_FIELDS = `
   name
   packageSize
   packageUnit
+  price
   storageZone
   createdAt
   updatedAt
@@ -43,6 +45,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $packageSize: Float!
     $packageUnit: String!
     $storageZone: InventoryStorageZone
+    $price: Float
   ) {
     createInventoryCatalogItem(
       workspaceId: $workspaceId
@@ -50,6 +53,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_MUTATION = `
       packageSize: $packageSize
       packageUnit: $packageUnit
       storageZone: $storageZone
+      price: $price
     ) {
       ${CATALOG_FIELDS}
     }
@@ -67,6 +71,7 @@ export const UPDATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $packageSize: Float
     $packageUnit: String
     $storageZone: InventoryStorageZone
+    $price: Float
   ) {
     updateInventoryCatalogItem(
       id: $id
@@ -74,6 +79,7 @@ export const UPDATE_INVENTORY_CATALOG_ITEM_MUTATION = `
       packageSize: $packageSize
       packageUnit: $packageUnit
       storageZone: $storageZone
+      price: $price
     ) {
       ${CATALOG_FIELDS}
     }

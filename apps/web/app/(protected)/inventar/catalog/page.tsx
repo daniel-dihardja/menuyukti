@@ -55,7 +55,7 @@ export default async function InventarCatalogPage() {
       breadcrumbs={[{ label: t('title'), href: routes.inventar }, { label: t('catalogTitle') }]}
       mainClassName="min-h-0"
     >
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+      <div className="flex w-full flex-col gap-2">
         <h1 className="text-pretty text-2xl font-semibold tracking-tight">{t('pantryItems')}</h1>
         <Suspense fallback={<CatalogSkeleton />}>
           <CatalogData />

@@ -23,6 +23,9 @@ interface LocationSelectProps {
   label?: string
   description?: string
   className?: string
+  /** When set, controls the select instead of AnalyticsProvider location state. */
+  value?: number | null
+  onValueChange?: (id: number | null) => void
 }
 
 export function LocationSelect({
@@ -32,8 +35,12 @@ export function LocationSelect({
   label,
   description,
   className,
+  value,
+  onValueChange,
 }: LocationSelectProps) {
-  const { locationId, setLocationId } = useAnalytics()
+  const analytics = useAnalytics()
+  const locationId = value !== undefined ? value : analytics.locationId
+  const setLocationId = onValueChange ?? analytics.setLocationId
   const selectId = id ?? 'location-select'
   const descriptionId = description ? `${selectId}-description` : undefined
 

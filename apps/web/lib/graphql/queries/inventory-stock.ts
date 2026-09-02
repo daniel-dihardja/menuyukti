@@ -25,7 +25,7 @@ export type InventoryStockRow = {
   lastOutOn: string | null
   catalogItem: Pick<
     InventoryCatalogItem,
-    'id' | 'name' | 'packageSize' | 'packageUnit' | 'storageZone'
+    'id' | 'name' | 'packageSize' | 'packageUnit' | 'storageZone' | 'price'
   >
   createdAt: string
   updatedAt: string
@@ -46,6 +46,7 @@ const STOCK_FIELDS = `
     packageSize
     packageUnit
     storageZone
+    price
   }
 `
 
@@ -80,12 +81,16 @@ export const INVENTORY_STOCK_MOVEMENTS_QUERY = `
     $locationId: ID!
     $catalogItemId: ID!
     $stockId: ID
+    $fromDate: Date
+    $toDate: Date
     $limit: Int
   ) {
     inventoryStockMovements(
       locationId: $locationId
       catalogItemId: $catalogItemId
       stockId: $stockId
+      fromDate: $fromDate
+      toDate: $toDate
       limit: $limit
     ) {
       ${MOVEMENT_FIELDS}
@@ -105,6 +110,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
     $packageUnit: String!
     $onHand: Float!
     $storageZone: InventoryStorageZone
+    $price: Float
   ) {
     createInventoryCatalogItemWithStock(
       locationId: $locationId
@@ -113,6 +119,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
       packageUnit: $packageUnit
       onHand: $onHand
       storageZone: $storageZone
+      price: $price
     ) {
       ${STOCK_FIELDS}
     }

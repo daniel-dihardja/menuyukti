@@ -6,6 +6,7 @@ from datetime import date
 
 import strawberry
 from sqlalchemy.exc import IntegrityError
+from strawberry import UNSET
 
 from graphql.context import request_session_scope
 from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
@@ -36,6 +37,7 @@ from graphql.services.inventory import (
     load_stock_with_catalog,
     resolve_occurred_on,
     validate_catalog_fields,
+    validate_catalog_price,
     validate_movement_quantity,
     validate_on_hand,
     validate_transfer_quantity,
@@ -53,6 +55,7 @@ class InventoryCatalogMutations:
         package_size: float,
         package_unit: str,
         storage_zone: InventoryStorageZone | None = None,
+        price: float | None = None,
     ) -> InventoryCatalogItemType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -64,6 +67,7 @@ class InventoryCatalogMutations:
             package_unit=package_unit,
             storage_zone=storage_zone,
         )
+        price_clean = validate_catalog_price(price)
 
         with request_session_scope(info) as session:
             if not is_workspace_member(session, workspace_id, user_id):
@@ -74,6 +78,7 @@ class InventoryCatalogMutations:
                 package_size=size_clean,
                 package_unit=unit_clean,
                 storage_zone=zone_clean,
+                price=price_clean,
             )
             session.add(row)
             try:
@@ -93,6 +98,7 @@ class InventoryCatalogMutations:
         package_size: float | None = None,
         package_unit: str | None = None,
         storage_zone: InventoryStorageZone | None = None,
+        price: float | None = UNSET,
     ) -> InventoryCatalogItemType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -117,6 +123,8 @@ class InventoryCatalogMutations:
             row.package_size = size_clean
             row.package_unit = unit_clean
             row.storage_zone = zone_clean
+            if price is not UNSET:
+                row.price = validate_catalog_price(price)
             try:
                 session.commit()
             except IntegrityError as exc:
@@ -421,6 +429,7 @@ class InventoryStockMutations:
         package_unit: str,
         on_hand: float,
         storage_zone: InventoryStorageZone | None = None,
+        price: float | None = None,
     ) -> InventoryStockType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -432,6 +441,7 @@ class InventoryStockMutations:
             package_unit=package_unit,
             storage_zone=storage_zone,
         )
+        price_clean = validate_catalog_price(price)
         on_hand_clean = validate_on_hand(on_hand)
         day = resolve_occurred_on(None)
 
@@ -449,6 +459,7 @@ class InventoryStockMutations:
                 package_size=size_clean,
                 package_unit=unit_clean,
                 storage_zone=zone_clean,
+                price=price_clean,
             )
             session.add(catalog_row)
             try:

@@ -39,6 +39,7 @@ class InventoryCatalogItem(Base):
     name: Mapped[str] = mapped_column(String(256), nullable=False)
     package_size: Mapped[float] = mapped_column(Float, nullable=False)
     package_unit: Mapped[str] = mapped_column(String(32), nullable=False)
+    price: Mapped[float | None] = mapped_column(Float, nullable=True)
     storage_zone: Mapped[str] = mapped_column(
         String(32),
         nullable=False,

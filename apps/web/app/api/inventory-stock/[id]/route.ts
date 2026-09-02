@@ -22,6 +22,10 @@ type RouteContext = {
   params: Promise<{ id: string }>
 }
 
+function errorJson(code: string, status: number, extra?: Record<string, unknown>) {
+  return NextResponse.json({ code, ...extra }, { status })
+}
+
 export async function PATCH(req: Request, context: RouteContext) {
   try {
     await connection()
@@ -33,20 +37,17 @@ export async function PATCH(req: Request, context: RouteContext) {
     const { id: idParam } = await context.params
     const stockId = Number(idParam)
     if (!Number.isInteger(stockId) || stockId < 1) {
-      return NextResponse.json({ message: 'Invalid stock id' }, { status: 400 })
+      return errorJson('STOCK_ID_INVALID', 400)
     }
 
     const searchParams = new URL(req.url).searchParams
     const locationId = Number(searchParams.get('locationId'))
     const catalogItemId = Number(searchParams.get('catalogItemId'))
     if (!Number.isInteger(locationId) || locationId < 1) {
-      return NextResponse.json({ message: 'locationId query param is required' }, { status: 400 })
+      return errorJson('LOCATION_REQUIRED', 400)
     }
     if (!Number.isInteger(catalogItemId) || catalogItemId < 1) {
-      return NextResponse.json(
-        { message: 'catalogItemId query param is required' },
-        { status: 400 },
-      )
+      return errorJson('CATALOG_ITEM_REQUIRED', 400)
     }
 
     const json = await req.json()
@@ -71,17 +72,17 @@ export async function PATCH(req: Request, context: RouteContext) {
     return NextResponse.json({ stock: data.consumeInventoryStock })
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
+      return errorJson('INVALID_INPUT', 400, { issues: error.issues })
     }
     console.error('[inventory-stock] PATCH', error)
-    const message = error instanceof Error ? error.message : 'Failed to update stock'
+    const message = error instanceof Error ? error.message : ''
     if (message.toLowerCase().includes('not allowed') || message.toLowerCase().includes('owner')) {
-      return NextResponse.json({ message }, { status: 403 })
+      return errorJson('FORBIDDEN', 403)
     }
     if (message.toLowerCase().includes('exceed')) {
-      return NextResponse.json({ message }, { status: 400 })
+      return errorJson('QUANTITY_EXCEEDED', 400)
     }
-    return NextResponse.json({ message }, { status: 500 })
+    return errorJson('INVALID_INPUT', 500)
   }
 }
 
@@ -96,14 +97,14 @@ export async function DELETE(_req: Request, context: RouteContext) {
     const { id: idParam } = await context.params
     const id = Number(idParam)
     if (!Number.isInteger(id) || id < 1) {
-      return NextResponse.json({ message: 'Invalid stock id' }, { status: 400 })
+      return errorJson('STOCK_ID_INVALID', 400)
     }
 
     const searchParams = new URL(_req.url).searchParams
     const locationId = Number(searchParams.get('locationId'))
     const catalogItemId = Number(searchParams.get('catalogItemId'))
     if (!Number.isInteger(locationId) || locationId < 1) {
-      return NextResponse.json({ message: 'locationId query param is required' }, { status: 400 })
+      return errorJson('LOCATION_REQUIRED', 400)
     }
 
     await graphqlQuery<DeleteInventoryStockData>(DELETE_INVENTORY_STOCK_MUTATION, { id }, userId)
@@ -119,13 +120,13 @@ export async function DELETE(_req: Request, context: RouteContext) {
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[inventory-stock] DELETE', error)
-    const message = error instanceof Error ? error.message : 'Failed to remove stock'
+    const message = error instanceof Error ? error.message : ''
     if (message.toLowerCase().includes('not found')) {
-      return NextResponse.json({ message }, { status: 404 })
+      return errorJson('NOT_FOUND', 404)
     }
     if (message.toLowerCase().includes('not allowed') || message.toLowerCase().includes('owner')) {
-      return NextResponse.json({ message }, { status: 403 })
+      return errorJson('FORBIDDEN', 403)
     }
-    return NextResponse.json({ message }, { status: 500 })
+    return errorJson('INVALID_INPUT', 500)
   }
 }

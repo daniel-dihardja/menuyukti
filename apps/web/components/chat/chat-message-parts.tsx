@@ -6,19 +6,14 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useMemo } from 'react'
 
 import { ChatMessageParts as SharedChatMessageParts } from '@/components/chat-message-parts'
+import type { StoryAssetRef } from '@/lib/chat/story-assets-from-messages'
 import {
-  storyAssetsAsOfMessage,
-  styleAndContentStoryAssets,
-} from '@/lib/chat/story-assets-from-messages'
-import {
-  isStoryGenerateConfirmationActionable,
-  messageHasCompletedStoryGenerateConfirmation,
   messageHasGenerateInstagramPostImage,
   STORY_GENERATE_CHANGE_REPLY,
   STORY_GENERATE_CONFIRM_REPLY,
 } from '@/lib/chat/story-generate-confirmation'
 
-import { useChatActions, useChatMessages } from '@/components/chat/chat-context'
+import { useChatActions } from '@/components/chat/chat-context'
 import { useChatMentionTitles } from '@/components/chat/chat-mention-context'
 import { ChatStoryConfirmAssets } from '@/components/chat/chat-story-confirm-assets'
 
@@ -26,32 +21,23 @@ export function ChatThreadMessageParts({
   message,
   role,
   isStreaming,
+  actionsEnabled,
+  confirmAssets,
+  threadMessages,
 }: {
   message: UIMessage
   role: UIMessage['role']
   isStreaming?: boolean
+  actionsEnabled: boolean
+  confirmAssets: readonly StoryAssetRef[]
+  /** When set, enables cross-message generated-image URL stripping. */
+  threadMessages?: readonly UIMessage[]
 }) {
   const t = useTranslations('chatTools.requestStoryGenerateConfirmation')
   const mentionTitles = useChatMentionTitles()
-  const { visibleMessages, status } = useChatMessages()
   const { sendQuickReply } = useChatActions()
 
   const showConfirmationToolUi = !messageHasGenerateInstagramPostImage(message)
-
-  const actionsEnabled = useMemo(
-    () =>
-      isStoryGenerateConfirmationActionable({
-        message,
-        messages: visibleMessages,
-        status,
-      }),
-    [message, visibleMessages, status],
-  )
-
-  const confirmAssets = useMemo(() => {
-    if (!messageHasCompletedStoryGenerateConfirmation(message)) return []
-    return styleAndContentStoryAssets(storyAssetsAsOfMessage(visibleMessages, message.id))
-  }, [message, visibleMessages])
 
   const onConfirmGenerate = useCallback(() => {
     void sendQuickReply(STORY_GENERATE_CONFIRM_REPLY)
@@ -61,12 +47,10 @@ export function ChatThreadMessageParts({
     void sendQuickReply(STORY_GENERATE_CHANGE_REPLY)
   }, [sendQuickReply])
 
-  // Compose confirmation only when the tool UI should appear; omit after generate ran.
   const storyGenerateConfirmation = useMemo(
     () =>
       showConfirmationToolUi
         ? {
-            // Buttons render below the message; tool part only shows compact status.
             actionsEnabled: false,
             onConfirmGenerate,
             onRequestChanges,
@@ -83,7 +67,7 @@ export function ChatThreadMessageParts({
         message={message}
         role={role}
         storyGenerateConfirmation={storyGenerateConfirmation}
-        threadMessages={visibleMessages}
+        threadMessages={threadMessages}
       />
       {confirmAssets.length > 0 ? <ChatStoryConfirmAssets assets={confirmAssets} /> : null}
       {actionsEnabled ? (

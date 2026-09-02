@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 
-import { fetchAnalyticsList, type AnalyticsRunListItem } from '@/lib/api/client-fetch'
+import { useAnalyticsList } from '@/hooks/use-analytics-list'
 import { resolveAnalyticsRunName } from '@/lib/chat/resolve-analytics-run-name'
 
 /** Resolves the display label for a thread's linked sales report (loading / name / fallbacks). */
@@ -12,28 +12,7 @@ export function useSalesReportLabel(
   analyticsRunId: number | null,
 ): string {
   const t = useTranslations('agentChat')
-  const [analyticsRuns, setAnalyticsRuns] = useState<AnalyticsRunListItem[] | null>(null)
-
-  useEffect(() => {
-    if (locationId == null) {
-      setAnalyticsRuns([])
-      return
-    }
-    let cancelled = false
-    setAnalyticsRuns(null)
-    void fetchAnalyticsList(locationId)
-      .then((runs) => {
-        if (cancelled) return
-        setAnalyticsRuns(runs)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setAnalyticsRuns([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [locationId])
+  const { runs, isLoading } = useAnalyticsList(locationId)
 
   const salesReportFallbacks = useMemo(
     () => ({
@@ -43,8 +22,8 @@ export function useSalesReportLabel(
     [t],
   )
 
-  if (analyticsRuns === null) {
+  if (locationId != null && isLoading) {
     return t('salesReportLoading')
   }
-  return resolveAnalyticsRunName(analyticsRuns, analyticsRunId, salesReportFallbacks)
+  return resolveAnalyticsRunName(runs, analyticsRunId, salesReportFallbacks)
 }

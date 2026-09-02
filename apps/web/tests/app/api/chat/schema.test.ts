@@ -4,7 +4,7 @@ import { chatRequestBodySchema } from '@/app/api/chat/schema'
 import { CHAT_VISUALIZATION_ID_VALUES } from '@/lib/chat/visualization-ids'
 
 const VALID_MEDIA = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee.webp'
-const AGENT_THREAD = 'thread-1'
+const AGENT_THREAD = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
 
 describe('chatRequestBodySchema', () => {
   it('accepts visualization reference and analyticsRunId', () => {
@@ -42,6 +42,15 @@ describe('chatRequestBodySchema', () => {
   it('requires agentThreadId', () => {
     const parsed = chatRequestBodySchema.safeParse({
       messages: [],
+      locationId: '10',
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects non-UUID agentThreadId', () => {
+    const parsed = chatRequestBodySchema.safeParse({
+      messages: [],
+      agentThreadId: 'thread-1',
       locationId: '10',
     })
     expect(parsed.success).toBe(false)

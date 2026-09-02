@@ -66,8 +66,8 @@ export const chatRequestBodySchema = z.object({
   referencedMediaNames: z.array(mediaFilenameSchema).max(CHAT_MAX_IMAGES).optional(),
   /** Post creator media filenames (`users/<id>/posts/…`) to load as vision inputs (max 4). */
   referencedPostMediaNames: z.array(postMediaFilenameSchema).max(CHAT_MAX_IMAGES).optional(),
-  /** Opaque thread id for `/advisor` chat. */
-  agentThreadId: z.string().min(1),
+  /** Opaque thread id for `/advisor` chat (UUID). */
+  agentThreadId: z.string().uuid(),
   /** Opt-in chat mode (general vs focused assistants). Legacy story alias is normalized. */
   chatMode: z
     .union([z.enum(CHAT_MODE_IDS), z.literal(LEGACY_STORY_IMAGE_ASSISTANT_MODE)])

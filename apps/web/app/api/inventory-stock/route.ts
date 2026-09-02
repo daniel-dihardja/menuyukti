@@ -31,6 +31,10 @@ import {
   upsertInventoryStockBodySchema,
 } from './schema'
 
+function errorJson(code: string, status: number, extra?: Record<string, unknown>) {
+  return NextResponse.json({ code, ...extra }, { status })
+}
+
 async function revalidateInventarTags(
   userId: string,
   locationId: number,
@@ -72,18 +76,28 @@ export async function GET(req: Request) {
     const stockId = stockIdRaw != null ? Number(stockIdRaw) : null
     const limitRaw = searchParams.get('limit')
     const limit = limitRaw != null ? Number(limitRaw) : 50
+    const fromDateRaw = searchParams.get('fromDate')
+    const toDateRaw = searchParams.get('toDate')
 
     if (!Number.isInteger(locationId) || locationId < 1) {
-      return NextResponse.json({ message: 'locationId query param is required' }, { status: 400 })
+      return errorJson('LOCATION_REQUIRED', 400)
     }
     if (!Number.isInteger(catalogItemId) || catalogItemId < 1) {
-      return NextResponse.json(
-        { message: 'catalogItemId query param is required' },
-        { status: 400 },
-      )
+      return errorJson('CATALOG_ITEM_REQUIRED', 400)
     }
     if (stockIdRaw != null && (!Number.isInteger(stockId) || stockId! < 1)) {
-      return NextResponse.json({ message: 'stockId must be a positive integer' }, { status: 400 })
+      return errorJson('STOCK_ID_INVALID', 400)
+    }
+
+    const isoDateRe = /^\d{4}-\d{2}-\d{2}$/
+    if (fromDateRaw != null && !isoDateRe.test(fromDateRaw)) {
+      return errorJson('INVALID_DATE', 400)
+    }
+    if (toDateRaw != null && !isoDateRe.test(toDateRaw)) {
+      return errorJson('INVALID_DATE', 400)
+    }
+    if (fromDateRaw != null && toDateRaw != null && fromDateRaw > toDateRaw) {
+      return errorJson('DATE_RANGE_INVALID', 400)
     }
 
     const data = await graphqlQuery<InventoryStockMovementsData>(
@@ -92,6 +106,8 @@ export async function GET(req: Request) {
         locationId: String(locationId),
         catalogItemId: String(catalogItemId),
         ...(stockId != null ? { stockId: String(stockId) } : {}),
+        ...(fromDateRaw != null ? { fromDate: fromDateRaw } : {}),
+        ...(toDateRaw != null ? { toDate: toDateRaw } : {}),
         limit: Number.isInteger(limit) && limit > 0 ? limit : 50,
       },
       userId,
@@ -100,8 +116,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ movements: data.inventoryStockMovements })
   } catch (error) {
     console.error('[inventory-stock] GET', error)
-    const message = error instanceof Error ? error.message : 'Failed to load movements'
-    return NextResponse.json({ message }, { status: 500 })
+    return errorJson('INVALID_INPUT', 500)
   }
 }
 
@@ -119,29 +134,31 @@ export async function POST(req: Request) {
 
     if (mode === 'upsert') {
       const body = upsertInventoryStockBodySchema.parse(json)
-      const data = await graphqlQuery<UpsertInventoryStockData>(
-        UPSERT_INVENTORY_STOCK_MUTATION,
-        body,
-        userId,
-      )
-      const workspaceId = await resolveWorkspaceId(userId)
+      const workspacePromise = resolveWorkspaceId(userId)
+      const [data, workspaceId] = await Promise.all([
+        graphqlQuery<UpsertInventoryStockData>(UPSERT_INVENTORY_STOCK_MUTATION, body, userId),
+        workspacePromise,
+      ])
       await revalidateInventarTags(userId, body.locationId, workspaceId, body.catalogItemId)
       return NextResponse.json({ stock: data.upsertInventoryStock })
     }
 
     if (mode === 'receive') {
       const body = receiveInventoryStockBodySchema.parse(json)
-      const data = await graphqlQuery<ReceiveInventoryStockData>(
-        RECEIVE_INVENTORY_STOCK_MUTATION,
-        {
-          locationId: body.locationId,
-          catalogItemId: body.catalogItemId,
-          quantity: body.quantity,
-          occurredOn: body.occurredOn ?? null,
-        },
-        userId,
-      )
-      const workspaceId = await resolveWorkspaceId(userId)
+      const workspacePromise = resolveWorkspaceId(userId)
+      const [data, workspaceId] = await Promise.all([
+        graphqlQuery<ReceiveInventoryStockData>(
+          RECEIVE_INVENTORY_STOCK_MUTATION,
+          {
+            locationId: body.locationId,
+            catalogItemId: body.catalogItemId,
+            quantity: body.quantity,
+            occurredOn: body.occurredOn ?? null,
+          },
+          userId,
+        ),
+        workspacePromise,
+      ])
       await revalidateInventarTags(userId, body.locationId, workspaceId, body.catalogItemId)
       return NextResponse.json({ stock: data.receiveInventoryStock })
     }
@@ -180,12 +197,15 @@ export async function POST(req: Request) {
     }
 
     const body = createInventoryCatalogItemWithStockBodySchema.parse(json)
-    const data = await graphqlQuery<CreateInventoryCatalogItemWithStockData>(
-      CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION,
-      body,
-      userId,
-    )
-    const workspaceId = await resolveWorkspaceId(userId)
+    const workspacePromise = resolveWorkspaceId(userId)
+    const [data, workspaceId] = await Promise.all([
+      graphqlQuery<CreateInventoryCatalogItemWithStockData>(
+        CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION,
+        body,
+        userId,
+      ),
+      workspacePromise,
+    ])
     await revalidateInventarTags(
       userId,
       body.locationId,
@@ -195,13 +215,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ stock: data.createInventoryCatalogItemWithStock }, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
+      return errorJson('INVALID_INPUT', 400, { issues: error.issues })
     }
     console.error('[inventory-stock] POST', error)
-    const message = error instanceof Error ? error.message : 'Failed to update stock'
+    const message = error instanceof Error ? error.message : ''
     if (message.toLowerCase().includes('not allowed') || message.toLowerCase().includes('owner')) {
-      return NextResponse.json({ message }, { status: 403 })
+      return errorJson('FORBIDDEN', 403)
     }
-    return NextResponse.json({ message }, { status: 500 })
+    return errorJson('INVALID_INPUT', 500)
   }
 }

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { notFound, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
 
 import {
@@ -14,7 +14,6 @@ import {
 import { routes } from '@/lib/routes'
 import { useCompactLayout } from '@/hooks/use-desktop-layout'
 import { useSalesReportLabel } from '@/hooks/use-sales-report-label'
-import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { ChatWorkspaceSkeleton } from '@/components/chat/chat-workspace-skeleton'
@@ -26,6 +25,17 @@ const AgentChatPanel = dynamic(
     loading: () => <ChatWorkspaceSkeleton className="min-h-[min(420px,50vh)] flex-1" />,
   },
 )
+
+const emptySubscribe = () => () => {}
+
+/** True after client hydration; false on server / during hydrate (uses getServerSnapshot). */
+function useIsClient(): boolean {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  )
+}
 
 function AgentThreadSalesReportStrip({
   locationId,
@@ -51,19 +61,13 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   const t = useTranslations('agentChat')
   const router = useRouter()
   const compact = useCompactLayout()
-  // Client-only gate: getAgentThread reads localStorage (unavailable during SSR).
-  const [hydrated, setHydrated] = useState(false)
+  const isClient = useIsClient()
   const [analyticsRunId, setAnalyticsRunIdState] = useState<number | null>(null)
 
   useEffect(() => {
-    setHydrated(true)
-  }, [])
-
-  useEffect(() => {
-    if (!hydrated || !isAgentThreadId(threadId)) return
-    const next = getAgentThread(threadId)
-    setAnalyticsRunIdState(next?.analyticsRunId ?? null)
-  }, [hydrated, threadId])
+    if (!isClient || !isAgentThreadId(threadId)) return
+    setAnalyticsRunIdState(getAgentThread(threadId)?.analyticsRunId ?? null)
+  }, [isClient, threadId])
 
   const handleAnalyticsRunIdChange = useCallback(
     (next: number | null) => {
@@ -77,8 +81,9 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
     notFound()
   }
 
-  if (!hydrated) {
-    return <Skeleton className="min-h-[20rem] w-full flex-1 rounded-lg" />
+  // Avoid localStorage during SSR/hydrate; start dynamic panel on first client paint.
+  if (!isClient) {
+    return <ChatWorkspaceSkeleton className="min-h-[min(420px,50vh)] flex-1" />
   }
 
   const record: AgentThreadRecord | null = getAgentThread(threadId)
@@ -116,7 +121,7 @@ function AgentThreadWorkspaceInner({ threadId }: { threadId: string }) {
   )
 }
 
-/** Remount on threadId so hydration + localStorage read re-run cleanly. */
+/** Remount on threadId so localStorage read re-runs cleanly. */
 export function AgentThreadWorkspace({ threadId }: { threadId: string }) {
   return <AgentThreadWorkspaceInner key={threadId} threadId={threadId} />
 }

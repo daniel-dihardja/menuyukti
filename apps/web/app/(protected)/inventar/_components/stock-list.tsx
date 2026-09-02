@@ -1,0 +1,262 @@
+'use client'
+
+import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
+import { ArrowLeftRight, History, Package, Trash2 } from 'lucide-react'
+
+import {
+  ResponsiveActionMenu,
+  type ResponsiveActionMenuItem,
+} from '@/app/(protected)/analytics/_components/responsive-action-menu'
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
+import { formatCurrencyWithCode } from '@/lib/currency'
+import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
+import { routes } from '@/lib/routes'
+import { Button } from '@workspace/ui/components/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@workspace/ui/components/table'
+import { cn } from '@workspace/ui/lib/utils'
+
+import { formatPackLabel } from './format-pack'
+import { StockBadge } from './stock-badge'
+import { cardActivitySummary, stockLineValue } from './stock-utils'
+
+type Props = {
+  activeLocationId: number | null
+  sortedStockRows: InventoryStockRow[]
+  catalogCount: number
+  currencyCode: string
+  onUse: (row: InventoryStockRow) => void
+  onHistory: (row: InventoryStockRow) => void
+  onTransfer?: (row: InventoryStockRow) => void
+  onRemove: (row: InventoryStockRow) => void
+  onBookDelivery: () => void
+}
+
+export function StockList({
+  activeLocationId,
+  sortedStockRows,
+  catalogCount,
+  currencyCode,
+  onUse,
+  onHistory,
+  onTransfer,
+  onRemove,
+  onBookDelivery,
+}: Props) {
+  const t = useTranslations('inventar')
+  const locale = useLocale()
+  const isDesktop = useDesktopLayout()
+
+  function formatMoney(amount: number | null): string {
+    if (amount == null) return t('priceEmpty')
+    return formatCurrencyWithCode(amount, currencyCode, locale)
+  }
+
+  if (activeLocationId == null) {
+    return <p className="text-sm text-muted-foreground">{t('branchPlaceholder')}</p>
+  }
+
+  if (sortedStockRows.length === 0) {
+    return (
+      <Empty className="border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Package aria-hidden />
+          </EmptyMedia>
+          <EmptyTitle>
+            {catalogCount === 0 ? t('catalogEmptyOnStockTitle') : t('stockEmpty')}
+          </EmptyTitle>
+          <EmptyDescription>
+            {catalogCount === 0 ? t('catalogEmptyOnStock') : t('stockEmptyHint')}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          {catalogCount === 0 ? (
+            <Button asChild className="min-h-11 touch-manipulation lg:min-h-9">
+              <Link href={routes.inventarCatalog}>{t('addPantryItem')}</Link>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className="min-h-11 touch-manipulation lg:min-h-9"
+              onClick={onBookDelivery}
+            >
+              {t('bookDelivery')}
+            </Button>
+          )}
+        </EmptyContent>
+      </Empty>
+    )
+  }
+
+  function buildRowActionItems(row: InventoryStockRow): ResponsiveActionMenuItem[] {
+    const items: ResponsiveActionMenuItem[] = [
+      {
+        id: 'history',
+        label: t('history'),
+        icon: History,
+        onSelect: () => onHistory(row),
+      },
+    ]
+    if (onTransfer) {
+      items.push({
+        id: 'transfer',
+        label: t('transfer'),
+        icon: ArrowLeftRight,
+        onSelect: () => onTransfer(row),
+      })
+    }
+    items.push({
+      id: 'remove',
+      label: t('removeFromLocation'),
+      icon: Trash2,
+      destructive: true,
+      separatorBefore: true,
+      onSelect: () => onRemove(row),
+    })
+    return items
+  }
+
+  function renderRowActions(row: InventoryStockRow) {
+    return (
+      <ResponsiveActionMenu
+        items={buildRowActionItems(row)}
+        sheetTitle={row.catalogItem.name}
+        desktopTriggerAriaLabel={t('rowActionsMenu')}
+        mobileTriggerLabel={t('actionsTrigger')}
+        sheetDescription={t('actionsSheetDescription')}
+        sheetId={`inventar-actions-${row.id}`}
+      />
+    )
+  }
+
+  if (isDesktop) {
+    return (
+      <Table className="table-fixed">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[18%]">{t('name')}</TableHead>
+            <TableHead className="w-[14%]">{t('storageZone')}</TableHead>
+            <TableHead className="w-[14%]">{t('pack')}</TableHead>
+            <TableHead className="w-[14%] text-right">{t('currentStock')}</TableHead>
+            <TableHead className="w-[14%] text-right">{t('value')}</TableHead>
+            <TableHead className="w-[16%]">{t('activity')}</TableHead>
+            <TableHead className="w-[10%]" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sortedStockRows.map((row) => {
+            const activityText = cardActivitySummary(row, t, locale)
+            return (
+              <TableRow key={row.id}>
+                <TableCell className="max-w-0 font-medium">
+                  <span className="block truncate" title={row.catalogItem.name}>
+                    {row.catalogItem.name}
+                  </span>
+                </TableCell>
+                <TableCell className="max-w-0 whitespace-nowrap">
+                  <span className="block truncate">
+                    {t(`storageZones.${row.catalogItem.storageZone}`)}
+                  </span>
+                </TableCell>
+                <TableCell className="max-w-0 whitespace-nowrap">
+                  <span className="block truncate">
+                    {formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)}
+                  </span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-right">
+                  <div className="flex justify-end">
+                    <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+                  </div>
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">
+                  {formatMoney(stockLineValue(row))}
+                </TableCell>
+                <TableCell className="max-w-0 whitespace-nowrap text-sm">
+                  <span
+                    className={cn(
+                      'block truncate',
+                      row.lastInOn || row.lastOutOn ? undefined : 'text-muted-foreground',
+                    )}
+                    title={activityText}
+                  >
+                    {activityText}
+                  </span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => onUse(row)}>
+                      {t('use')}
+                    </Button>
+                    {renderRowActions(row)}
+                  </div>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
+    )
+  }
+
+  return (
+    <ul className="flex flex-col gap-3">
+      {sortedStockRows.map((row) => {
+        const packLabel = formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)
+        const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
+        const lineValue = stockLineValue(row)
+        return (
+          <li
+            key={row.id}
+            className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3"
+          >
+            <div className="flex min-w-0 items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium" title={row.catalogItem.name}>
+                  {row.catalogItem.name}
+                </p>
+                <p
+                  className="truncate text-sm text-muted-foreground"
+                  title={`${zoneLabel} · ${packLabel}`}
+                >
+                  {zoneLabel} · {packLabel}
+                </p>
+                <p className="mt-1 truncate text-xs text-muted-foreground">
+                  {cardActivitySummary(row, t, locale)}
+                </p>
+                <p className="mt-1 text-sm tabular-nums">
+                  {t('value')}: {formatMoney(lineValue)}
+                </p>
+              </div>
+              <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full touch-manipulation"
+              onClick={() => onUse(row)}
+            >
+              {t('use')}
+            </Button>
+            {renderRowActions(row)}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
