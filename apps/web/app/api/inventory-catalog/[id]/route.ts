@@ -6,6 +6,7 @@ import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   graphqlInventoryCatalogCacheTag,
+  graphqlInventoryStockCacheTag,
   revalidateTagAfterMutation,
 } from '@/lib/graphql/cache-tags'
 import {
@@ -14,11 +15,22 @@ import {
   type DeleteInventoryCatalogItemData,
   type UpdateInventoryCatalogItemData,
 } from '@/lib/graphql/queries/inventory-catalog'
+import { LOCATIONS_LIST_QUERY, type LocationsListData } from '@/lib/graphql/queries/locations'
 
 import { updateInventoryCatalogBodySchema } from '../schema'
 
 type RouteContext = {
   params: Promise<{ id: string }>
+}
+
+async function revalidateCatalogAndStock(userId: string, workspaceId: number) {
+  revalidateTag(graphqlInventoryCatalogCacheTag(userId, workspaceId), revalidateTagAfterMutation)
+  const locationsData = await graphqlQuery<LocationsListData>(LOCATIONS_LIST_QUERY, {}, userId)
+  for (const loc of locationsData.locations) {
+    const locationId = Number(loc.id)
+    if (!Number.isInteger(locationId) || locationId < 1) continue
+    revalidateTag(graphqlInventoryStockCacheTag(userId, locationId), revalidateTagAfterMutation)
+  }
 }
 
 export async function PATCH(req: Request, context: RouteContext) {
@@ -46,14 +58,12 @@ export async function PATCH(req: Request, context: RouteContext) {
         ...(body.packageSize !== undefined ? { packageSize: body.packageSize } : {}),
         ...(body.packageUnit !== undefined ? { packageUnit: body.packageUnit } : {}),
         ...(body.storageZone !== undefined ? { storageZone: body.storageZone } : {}),
+        ...(body.price !== undefined ? { price: body.price } : {}),
       },
       userId,
     )
 
-    revalidateTag(
-      graphqlInventoryCatalogCacheTag(userId, data.updateInventoryCatalogItem.workspaceId),
-      revalidateTagAfterMutation,
-    )
+    await revalidateCatalogAndStock(userId, data.updateInventoryCatalogItem.workspaceId)
 
     return NextResponse.json({ item: data.updateInventoryCatalogItem })
   } catch (error) {
@@ -98,7 +108,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
       userId,
     )
 
-    revalidateTag(graphqlInventoryCatalogCacheTag(userId, workspaceId), revalidateTagAfterMutation)
+    await revalidateCatalogAndStock(userId, workspaceId)
 
     return NextResponse.json({ ok: true })
   } catch (error) {
@@ -113,3 +123,4 @@ export async function DELETE(_req: Request, context: RouteContext) {
     return NextResponse.json({ message }, { status: 500 })
   }
 }
+

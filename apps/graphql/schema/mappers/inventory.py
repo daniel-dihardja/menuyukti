@@ -23,6 +23,7 @@ def catalog_item_to_gql(row: InventoryCatalogItem) -> InventoryCatalogItemType:
         name=row.name,
         packageSize=row.package_size,
         packageUnit=row.package_unit,
+        price=row.price,
         storageZone=InventoryStorageZone(row.storage_zone),
         createdAt=row.created_at,
         updatedAt=row.updated_at,

@@ -14,6 +14,8 @@ import {
 import { LocationSelect } from '@/app/(protected)/analytics/sales/location-select'
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
+import { getAppCurrencyCode } from '@/lib/app-currency'
+import { formatCurrencyWithCode } from '@/lib/currency'
 import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catalog'
 import type {
   InventoryStockMovement,
@@ -118,6 +120,29 @@ function StockBadge({ onHand, packagesLabel }: { onHand: number; packagesLabel: 
   )
 }
 
+function stockLineValue(row: InventoryStockRow): number | null {
+  if (row.catalogItem.price == null) return null
+  return row.onHand * row.catalogItem.price
+}
+
+function totalStockValue(rows: InventoryStockRow[]): number | null {
+  let total = 0
+  let hasPricedRow = false
+  for (const row of rows) {
+    const value = stockLineValue(row)
+    if (value == null) continue
+    total += value
+    hasPricedRow = true
+  }
+  return hasPricedRow ? total : null
+}
+
+function resolveLocationCurrency(currency: string | null | undefined): string {
+  const trimmed = currency?.trim()
+  if (trimmed) return trimmed.toUpperCase()
+  return getAppCurrencyCode()
+}
+
 function cardActivitySummary(
   row: InventoryStockRow,
   t: (key: string, values?: Record<string, string>) => string,
@@ -186,7 +211,7 @@ function FormSurface({
   )
 }
 
-type Branch = { id: number; name: string }
+type Branch = { id: number; name: string; currency: string | null }
 
 type Props = {
   branches: Branch[]
@@ -293,6 +318,15 @@ export function InventarStockClient({
     if (zoneDiff !== 0) return zoneDiff
     return a.catalogItem.name.localeCompare(b.catalogItem.name)
   })
+
+  const activeBranch = branches.find((b) => b.id === activeLocationId)
+  const currencyCode = resolveLocationCurrency(activeBranch?.currency)
+  const inventoryTotal = totalStockValue(sortedStockRows)
+
+  function formatMoney(amount: number | null): string {
+    if (amount == null) return t('priceEmpty')
+    return formatCurrencyWithCode(amount, currencyCode, locale)
+  }
 
   const useQtyAmount = Number(useQty)
   const useNewStock =
@@ -812,6 +846,12 @@ export function InventarStockClient({
           >
             {t('bookDelivery')}
           </Button>
+          {stockRows.length > 0 ? (
+            <p className="w-full text-sm tabular-nums text-muted-foreground sm:ml-auto sm:w-auto">
+              {t('totalValue')}:{' '}
+              <span className="font-medium text-foreground">{formatMoney(inventoryTotal)}</span>
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -855,6 +895,7 @@ export function InventarStockClient({
                 row.catalogItem.packageUnit,
               )
               const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
+              const lineValue = stockLineValue(row)
               return (
                 <li
                   key={row.id}
@@ -874,6 +915,9 @@ export function InventarStockClient({
                       <p className="mt-1 truncate text-xs text-muted-foreground">
                         {cardActivitySummary(row, t, locale)}
                       </p>
+                      <p className="mt-1 text-sm tabular-nums">
+                        {t('value')}: {formatMoney(lineValue)}
+                      </p>
                     </div>
                     <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
                   </div>
@@ -892,63 +936,76 @@ export function InventarStockClient({
           </ul>
 
           <div className="hidden lg:block">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('name')}</TableHead>
-                  <TableHead>{t('storageZone')}</TableHead>
-                  <TableHead>{t('pack')}</TableHead>
-                  <TableHead className="text-right">{t('currentStock')}</TableHead>
-                  <TableHead>{t('activity')}</TableHead>
-                  <TableHead className="w-[1%]" />
+                  <TableHead className="w-[18%]">{t('name')}</TableHead>
+                  <TableHead className="w-[14%]">{t('storageZone')}</TableHead>
+                  <TableHead className="w-[14%]">{t('pack')}</TableHead>
+                  <TableHead className="w-[14%] text-right">{t('currentStock')}</TableHead>
+                  <TableHead className="w-[14%] text-right">{t('value')}</TableHead>
+                  <TableHead className="w-[16%]">{t('activity')}</TableHead>
+                  <TableHead className="w-[10%]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedStockRows.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">
-                      <span className="truncate" title={row.catalogItem.name}>
-                        {row.catalogItem.name}
-                      </span>
-                    </TableCell>
-                    <TableCell>{t(`storageZones.${row.catalogItem.storageZone}`)}</TableCell>
-                    <TableCell>
-                      {formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end">
-                        <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5 text-sm">
-                        <span className={row.lastInOn ? undefined : 'text-muted-foreground'}>
-                          {row.lastInOn
-                            ? t('activityIn', { date: formatActivityDate(row.lastInOn, locale) })
-                            : t('activityInEmpty')}
+                {sortedStockRows.map((row) => {
+                  const activityText = cardActivitySummary(row, t, locale)
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell className="max-w-0 font-medium">
+                        <span className="block truncate" title={row.catalogItem.name}>
+                          {row.catalogItem.name}
                         </span>
-                        <span className={row.lastOutOn ? undefined : 'text-muted-foreground'}>
-                          {row.lastOutOn
-                            ? t('activityOut', { date: formatActivityDate(row.lastOutOn, locale) })
-                            : t('activityOutEmpty')}
+                      </TableCell>
+                      <TableCell className="max-w-0 whitespace-nowrap">
+                        <span className="block truncate">
+                          {t(`storageZones.${row.catalogItem.storageZone}`)}
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openUseDialog(row)}
+                      </TableCell>
+                      <TableCell className="max-w-0 whitespace-nowrap">
+                        <span className="block truncate">
+                          {formatPackLabel(
+                            row.catalogItem.packageSize,
+                            row.catalogItem.packageUnit,
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right">
+                        <div className="flex justify-end">
+                          <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums">
+                        {formatMoney(stockLineValue(row))}
+                      </TableCell>
+                      <TableCell className="max-w-0 whitespace-nowrap text-sm">
+                        <span
+                          className={cn(
+                            'block truncate',
+                            row.lastInOn || row.lastOutOn ? undefined : 'text-muted-foreground',
+                          )}
+                          title={activityText}
                         >
-                          {t('use')}
-                        </Button>
-                        {renderRowActions(row)}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {activityText}
+                        </span>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openUseDialog(row)}
+                          >
+                            {t('use')}
+                          </Button>
+                          {renderRowActions(row)}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

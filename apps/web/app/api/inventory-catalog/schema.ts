@@ -10,6 +10,7 @@ export const createInventoryCatalogBodySchema = z.object({
   packageSize: z.number().positive(),
   packageUnit: z.string().trim().min(1).max(32),
   storageZone: storageZoneSchema.optional().default('dry'),
+  price: z.number().nonnegative().nullable().optional(),
 })
 
 export const updateInventoryCatalogBodySchema = z.object({
@@ -17,6 +18,7 @@ export const updateInventoryCatalogBodySchema = z.object({
   packageSize: z.number().positive().optional(),
   packageUnit: z.string().trim().min(1).max(32).optional(),
   storageZone: storageZoneSchema.optional(),
+  price: z.number().nonnegative().nullable().optional(),
 })
 
 export type CreateInventoryCatalogBody = z.infer<typeof createInventoryCatalogBodySchema>

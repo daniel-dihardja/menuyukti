@@ -3,10 +3,12 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catalog'
+import { getAppCurrencyCode } from '@/lib/app-currency'
+import { formatCurrencyWithCode } from '@/lib/currency'
 import {
   DEFAULT_INVENTORY_STORAGE_ZONE,
   INVENTORY_STORAGE_ZONES,
@@ -61,6 +63,7 @@ type CatalogForm = {
   packageSize: string
   packageUnit: string
   storageZone: InventoryStorageZone
+  price: string
 }
 
 const emptyForm: CatalogForm = {
@@ -68,11 +71,22 @@ const emptyForm: CatalogForm = {
   packageSize: '',
   packageUnit: 'kg',
   storageZone: DEFAULT_INVENTORY_STORAGE_ZONE,
+  price: '',
+}
+
+function parseOptionalPrice(raw: string): { ok: true; price: number | null } | { ok: false } {
+  const trimmed = raw.trim()
+  if (!trimmed) return { ok: true, price: null }
+  const price = Number(trimmed)
+  if (!Number.isFinite(price) || price < 0) return { ok: false }
+  return { ok: true, price }
 }
 
 export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
   const t = useTranslations('inventar')
+  const locale = useLocale()
   const router = useRouter()
+  const currencyCode = getAppCurrencyCode()
 
   const [addOpen, setAddOpen] = useState(false)
   const [editItem, setEditItem] = useState<InventoryCatalogItem | null>(null)
@@ -87,6 +101,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
       packageSize: String(item.packageSize),
       packageUnit: item.packageUnit,
       storageZone: item.storageZone,
+      price: item.price != null ? String(item.price) : '',
     })
   }
 
@@ -94,7 +109,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
     router.refresh()
   }
 
-  function validateForm(): { packageSize: number } | null {
+  function validateForm(): { packageSize: number; price: number | null } | null {
     const packageSize = Number(form.packageSize)
     if (!form.name.trim()) {
       toast.error(t('validation.nameRequired'))
@@ -108,7 +123,12 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
       toast.error(t('validation.unitRequired'))
       return null
     }
-    return { packageSize }
+    const parsedPrice = parseOptionalPrice(form.price)
+    if (!parsedPrice.ok) {
+      toast.error(t('validation.priceMin'))
+      return null
+    }
+    return { packageSize, price: parsedPrice.price }
   }
 
   async function handleCreate() {
@@ -125,6 +145,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
           packageSize: validated.packageSize,
           packageUnit: form.packageUnit.trim(),
           storageZone: form.storageZone,
+          price: validated.price,
         }),
       })
       if (!res.ok) {
@@ -156,6 +177,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
           packageSize: validated.packageSize,
           packageUnit: form.packageUnit.trim(),
           storageZone: form.storageZone,
+          price: validated.price,
         }),
       })
       if (!res.ok) {
@@ -195,6 +217,11 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
     }
   }
 
+  function formatPrice(price: number | null): string {
+    if (price == null) return t('priceEmpty')
+    return formatCurrencyWithCode(price, currencyCode, locale)
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <Link
@@ -222,6 +249,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
               <TableHead>{t('name')}</TableHead>
               <TableHead>{t('storageZone')}</TableHead>
               <TableHead>{t('pack')}</TableHead>
+              <TableHead className="text-right">{t('price')}</TableHead>
               <TableHead className="w-[1%]" />
             </TableRow>
           </TableHeader>
@@ -231,6 +259,7 @@ export function InventarCatalogClient({ workspaceId, catalogItems }: Props) {
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{t(`storageZones.${item.storageZone}`)}</TableCell>
                 <TableCell>{formatPackLabel(item.packageSize, item.packageUnit)}</TableCell>
+                <TableCell className="text-right tabular-nums">{formatPrice(item.price)}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <Button
@@ -379,6 +408,15 @@ function CatalogFormFields({
           />
         </Field>
       </div>
+      <Field>
+        <FieldLabel htmlFor={`${idPrefix}-price`}>{t('price')}</FieldLabel>
+        <Input
+          id={`${idPrefix}-price`}
+          inputMode="decimal"
+          value={form.price}
+          onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+        />
+      </Field>
     </FieldGroup>
   )
 }

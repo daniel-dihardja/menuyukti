@@ -33,6 +33,14 @@ def validate_storage_zone(storage_zone: str | InventoryStorageZone | None) -> st
     return zone_clean
 
 
+def validate_catalog_price(price: float | None) -> float | None:
+    if price is None:
+        return None
+    if not isinstance(price, (int, float)) or price < 0:
+        raise ValueError("price must be zero or greater")
+    return float(price)
+
+
 def validate_catalog_fields(
     *,
     name: str,
