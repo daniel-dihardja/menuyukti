@@ -70,11 +70,7 @@ export function catalogFormValidationError(
   if (!parsedMin.ok) return t('validation.minOnHandMin')
   const parsedMax = parseOptionalOnHandLimit(form.maxOnHand)
   if (!parsedMax.ok) return t('validation.maxOnHandMin')
-  if (
-    parsedMin.value != null &&
-    parsedMax.value != null &&
-    parsedMin.value > parsedMax.value
-  ) {
+  if (parsedMin.value != null && parsedMax.value != null && parsedMin.value > parsedMax.value) {
     return t('validation.minMaxOrder')
   }
   return null

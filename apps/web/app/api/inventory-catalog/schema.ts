@@ -6,9 +6,9 @@ const storageZoneSchema = z.enum(INVENTORY_STORAGE_ZONES)
 
 const optionalOnHandLimitSchema = z.number().nonnegative().nullable().optional()
 
-function refineOnHandLimits<
-  T extends { minOnHand?: number | null; maxOnHand?: number | null },
->(data: T): boolean {
+function refineOnHandLimits<T extends { minOnHand?: number | null; maxOnHand?: number | null }>(
+  data: T,
+): boolean {
   if (data.minOnHand == null || data.maxOnHand == null) return true
   return data.minOnHand <= data.maxOnHand
 }

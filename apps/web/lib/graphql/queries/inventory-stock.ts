@@ -25,7 +25,14 @@ export type InventoryStockRow = {
   lastOutOn: string | null
   catalogItem: Pick<
     InventoryCatalogItem,
-    'id' | 'name' | 'packageSize' | 'packageUnit' | 'storageZone' | 'price' | 'minOnHand' | 'maxOnHand'
+    | 'id'
+    | 'name'
+    | 'packageSize'
+    | 'packageUnit'
+    | 'storageZone'
+    | 'price'
+    | 'minOnHand'
+    | 'maxOnHand'
   >
   createdAt: string
   updatedAt: string
