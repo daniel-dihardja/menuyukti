@@ -3703,6 +3703,7 @@
     "errorTitle": "Something went wrong",
     "errorDescription": "The request could not be completed. Please try again.",
     "retry": "Retry",
+    "sentWithAttachments": "Sent with attachments",
     "clearChatAriaLabel": "Clear chat",
     "clearChatLabel": "Clear chat",
     "clearChatTooltip": "Clear messages and start a fresh chat thread",

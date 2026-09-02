@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import {
@@ -12,7 +11,7 @@ import {
 } from '@workspace/ui/components/ai-elements/prompt-input'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { fetchAnalyticsList, type AnalyticsRunListItem } from '@/lib/api/client-fetch'
+import { useAnalyticsList } from '@/hooks/use-analytics-list'
 
 const NONE_VALUE = 'none'
 
@@ -32,21 +31,7 @@ export function ChatSalesReportSelect({
   className,
 }: ChatSalesReportSelectProps) {
   const t = useTranslations('chat.salesReport')
-  const [runs, setRuns] = useState<AnalyticsRunListItem[]>([])
-
-  useEffect(() => {
-    let cancelled = false
-    void fetchAnalyticsList(locationId)
-      .then((list) => {
-        if (!cancelled) setRuns(list)
-      })
-      .catch(() => {
-        if (!cancelled) setRuns([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [locationId])
+  const { runs } = useAnalyticsList(locationId)
 
   return (
     <PromptInputSelect

@@ -63,6 +63,7 @@ import {
 import {
   useChatActions,
   useChatComposerState,
+  useChatMeta,
   useChatMessages,
 } from '@/components/chat/chat-context'
 import { ChatComposerMenus } from '@/components/chat/chat-composer-menus'
@@ -124,7 +125,7 @@ function ChatAttachmentStrip() {
 function ChatComposerSubmit({ compact }: { compact: boolean }) {
   const t = useTranslations('chat')
   const { text, pendingMediaAttachments } = useChatComposerState()
-  const { isChatBusy, status } = useChatMessages()
+  const { isChatBusy, status } = useChatMeta()
   const { stop } = useChatActions()
   const attachments = usePromptInputAttachments()
 
@@ -328,7 +329,7 @@ function ChatComposerFrame({
   const compact = useCompactLayout()
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
   const { text, chatMode, slashCommands, locationId, analyticsRunId } = useChatComposerState()
-  const { isChatBusy } = useChatMessages()
+  const { isChatBusy } = useChatMeta()
   const {
     setText,
     setChatMode,

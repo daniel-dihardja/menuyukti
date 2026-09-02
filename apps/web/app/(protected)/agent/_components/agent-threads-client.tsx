@@ -12,7 +12,6 @@ import {
   ResponsiveActionMenu,
   type ResponsiveActionMenuItem,
 } from '@/app/(protected)/analytics/_components/responsive-action-menu'
-import { fetchAnalyticsList } from '@/lib/api/client-fetch'
 import {
   createAgentThread,
   listAgentThreads,
@@ -20,6 +19,7 @@ import {
   type AgentThreadRecord,
 } from '@/lib/chat/agent-thread-registry'
 import { resolveAnalyticsRunName } from '@/lib/chat/resolve-analytics-run-name'
+import { useAnalyticsList } from '@/hooks/use-analytics-list'
 import { routes } from '@/lib/routes'
 import {
   AlertDialog,
@@ -92,8 +92,10 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
   const { locationId, setLocationId } = useAnalytics()
   const [threads, setThreads] = useState<AgentThreadRecord[]>([])
   const [hydrated, setHydrated] = useState(false)
-  const [analyticsRuns, setAnalyticsRuns] =
-    useState<Array<{ id: number; name: string }>>(initialAnalyticsRuns)
+  const { runs: analyticsRuns } = useAnalyticsList(locationId, {
+    fallbackData:
+      locationId !== null && locationId === initialLocationId ? initialAnalyticsRuns : undefined,
+  })
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const {
     editingId,
@@ -136,30 +138,6 @@ export function AgentThreadsClient({ branches, initialLocationId, initialAnalyti
     setThreads(listAgentThreads())
     setHydrated(true)
   }, [])
-
-  useEffect(() => {
-    if (locationId === null) {
-      setAnalyticsRuns([])
-      return
-    }
-    if (locationId === initialLocationId) {
-      setAnalyticsRuns(initialAnalyticsRuns)
-      return
-    }
-    let cancelled = false
-    void fetchAnalyticsList(locationId)
-      .then((runs) => {
-        if (cancelled) return
-        setAnalyticsRuns(runs)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setAnalyticsRuns([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [locationId, initialLocationId, initialAnalyticsRuns])
 
   const visibleThreads = useMemo(() => {
     if (locationId === null) return []

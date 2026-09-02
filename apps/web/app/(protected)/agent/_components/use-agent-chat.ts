@@ -138,6 +138,7 @@ export function useAgentChat({
   onThreadRotated,
 }: UseAgentChatOptions) {
   const tSlash = useTranslations('chat.slashCommands')
+  const tChat = useTranslations('chat')
   const [text, setText] = useState('')
   const [pendingMediaAttachments, setPendingMediaAttachments] = useState<PendingMediaAttachment[]>(
     [],
@@ -366,11 +367,16 @@ export function useAgentChat({
         writeAgentChatMessages(agentThreadId, historyMessages)
         messagesToRefresh = historyMessages
       }
-      await refreshGeneratedImageUrls(messagesToRefresh)
+      if (history.ok && Array.isArray(history.data.storyAssets)) {
+        setStoryAssetsOverride(history.data.storyAssets)
+      }
+      await Promise.all([
+        refreshGeneratedImageUrls(messagesToRefresh),
+        refreshAttachedPhotoUrls(messagesToRefresh),
+      ])
       if (cancelled) {
         return
       }
-      await refreshAttachedPhotoUrls(messagesToRefresh)
     })()
 
     return () => {
@@ -507,7 +513,7 @@ export function useAgentChat({
         return
       }
 
-      const content = message.text?.trim() || 'Sent with attachments'
+      const content = message.text?.trim() || tChat('sentWithAttachments')
       const body = buildSendBody()
       setText('')
       setPendingMediaAttachments([])
@@ -519,7 +525,7 @@ export function useAgentChat({
         { body },
       )
     },
-    [sendMessage, buildSendBody],
+    [sendMessage, buildSendBody, tChat],
   )
 
   const sendQuickReply = useCallback(
