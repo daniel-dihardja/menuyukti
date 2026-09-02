@@ -120,7 +120,12 @@ export function TransferForm({
       <FieldGroup>
         <Field>
           <FieldLabel>{t('currentStock')}</FieldLabel>
-          <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+          <StockBadge
+            onHand={row.onHand}
+            packagesLabel={t('packages')}
+            minOnHand={row.catalogItem.minOnHand}
+            maxOnHand={row.catalogItem.maxOnHand}
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="inventar-transfer-destination">

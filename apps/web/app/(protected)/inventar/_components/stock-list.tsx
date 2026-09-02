@@ -181,7 +181,12 @@ export function StockList({
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right">
                   <div className="flex justify-end">
-                    <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+                    <StockBadge
+                      onHand={row.onHand}
+                      packagesLabel={t('packages')}
+                      minOnHand={row.catalogItem.minOnHand}
+                      maxOnHand={row.catalogItem.maxOnHand}
+                    />
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">
@@ -243,7 +248,12 @@ export function StockList({
                   {t('value')}: {formatMoney(lineValue)}
                 </p>
               </div>
-              <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
+              <StockBadge
+                onHand={row.onHand}
+                packagesLabel={t('packages')}
+                minOnHand={row.catalogItem.minOnHand}
+                maxOnHand={row.catalogItem.maxOnHand}
+              />
             </div>
             <Button
               type="button"

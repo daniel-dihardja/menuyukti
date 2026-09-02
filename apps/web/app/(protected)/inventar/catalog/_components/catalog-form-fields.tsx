@@ -86,6 +86,30 @@ export function CatalogFormFields({ value, onChange, idPrefix, disabled }: Props
           onChange={(e) => onChange({ price: e.target.value })}
         />
       </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-min`}>{t('minOnHand')}</FieldLabel>
+          <Input
+            id={`${idPrefix}-min`}
+            inputMode="decimal"
+            value={value.minOnHand}
+            disabled={disabled}
+            placeholder={t('onHandLimitOptional')}
+            onChange={(e) => onChange({ minOnHand: e.target.value })}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-max`}>{t('maxOnHand')}</FieldLabel>
+          <Input
+            id={`${idPrefix}-max`}
+            inputMode="decimal"
+            value={value.maxOnHand}
+            disabled={disabled}
+            placeholder={t('onHandLimitOptional')}
+            onChange={(e) => onChange({ maxOnHand: e.target.value })}
+          />
+        </Field>
+      </div>
     </FieldGroup>
   )
 }

@@ -41,6 +41,30 @@ def validate_catalog_price(price: float | None) -> float | None:
     return float(price)
 
 
+def validate_catalog_on_hand_limits(
+    min_on_hand: float | None,
+    max_on_hand: float | None,
+) -> tuple[float | None, float | None]:
+    """Validate optional package-count limits; both may be null."""
+    min_clean: float | None
+    max_clean: float | None
+    if min_on_hand is None:
+        min_clean = None
+    else:
+        if not isinstance(min_on_hand, (int, float)) or min_on_hand < 0:
+            raise ValueError("minOnHand must be zero or greater")
+        min_clean = float(min_on_hand)
+    if max_on_hand is None:
+        max_clean = None
+    else:
+        if not isinstance(max_on_hand, (int, float)) or max_on_hand < 0:
+            raise ValueError("maxOnHand must be zero or greater")
+        max_clean = float(max_on_hand)
+    if min_clean is not None and max_clean is not None and min_clean > max_clean:
+        raise ValueError("minOnHand cannot be greater than maxOnHand")
+    return min_clean, max_clean
+
+
 def validate_catalog_fields(
     *,
     name: str,

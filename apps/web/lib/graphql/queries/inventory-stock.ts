@@ -25,7 +25,14 @@ export type InventoryStockRow = {
   lastOutOn: string | null
   catalogItem: Pick<
     InventoryCatalogItem,
-    'id' | 'name' | 'packageSize' | 'packageUnit' | 'storageZone' | 'price'
+    | 'id'
+    | 'name'
+    | 'packageSize'
+    | 'packageUnit'
+    | 'storageZone'
+    | 'price'
+    | 'minOnHand'
+    | 'maxOnHand'
   >
   createdAt: string
   updatedAt: string
@@ -47,6 +54,8 @@ const STOCK_FIELDS = `
     packageUnit
     storageZone
     price
+    minOnHand
+    maxOnHand
   }
 `
 
@@ -111,6 +120,8 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
     $onHand: Float!
     $storageZone: InventoryStorageZone
     $price: Float
+    $minOnHand: Float
+    $maxOnHand: Float
   ) {
     createInventoryCatalogItemWithStock(
       locationId: $locationId
@@ -120,6 +131,8 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
       onHand: $onHand
       storageZone: $storageZone
       price: $price
+      minOnHand: $minOnHand
+      maxOnHand: $maxOnHand
     ) {
       ${STOCK_FIELDS}
     }
