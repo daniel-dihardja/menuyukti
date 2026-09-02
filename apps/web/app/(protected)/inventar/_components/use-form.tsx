@@ -14,11 +14,7 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { formatPackLabel } from './format-pack'
 import { FormSurface } from './form-surface'
 import { StockBadge } from './stock-badge'
-import {
-  inventarErrorMessage,
-  todayIsoDate,
-  type InventarApiErrorPayload,
-} from './stock-utils'
+import { inventarErrorMessage, todayIsoDate, type InventarApiErrorPayload } from './stock-utils'
 
 type Props = {
   row: InventoryStockRow

@@ -50,9 +50,7 @@ export function TransferForm({
 
   const transferQtyAmount = Number(transferQuantity)
   const transferRemaining =
-    Number.isFinite(transferQtyAmount) &&
-    transferQtyAmount > 0 &&
-    transferQtyAmount <= row.onHand
+    Number.isFinite(transferQtyAmount) && transferQtyAmount > 0 && transferQtyAmount <= row.onHand
       ? row.onHand - transferQtyAmount
       : null
 
@@ -125,7 +123,9 @@ export function TransferForm({
           <StockBadge onHand={row.onHand} packagesLabel={t('packages')} />
         </Field>
         <Field>
-          <FieldLabel htmlFor="inventar-transfer-destination">{t('destinationLocation')}</FieldLabel>
+          <FieldLabel htmlFor="inventar-transfer-destination">
+            {t('destinationLocation')}
+          </FieldLabel>
           <Select value={transferDestinationId} onValueChange={setTransferDestinationId}>
             <SelectTrigger
               id="inventar-transfer-destination"

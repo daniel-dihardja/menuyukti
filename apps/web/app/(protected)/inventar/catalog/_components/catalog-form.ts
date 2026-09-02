@@ -30,7 +30,9 @@ export function catalogFormFromItem(item: InventoryCatalogItem): CatalogForm {
   }
 }
 
-export function parseOptionalPrice(raw: string): { ok: true; price: number | null } | { ok: false } {
+export function parseOptionalPrice(
+  raw: string,
+): { ok: true; price: number | null } | { ok: false } {
   const trimmed = raw.trim()
   if (!trimmed) return { ok: true, price: null }
   const price = Number(trimmed)

@@ -8,10 +8,9 @@ export function analyticsListKey(locationId: number | null | undefined) {
   return locationId == null ? null : (['analytics-list', locationId] as const)
 }
 
-async function analyticsListFetcher([, locationId]: readonly [
-  'analytics-list',
-  number,
-]): Promise<AnalyticsRunListItem[]> {
+async function analyticsListFetcher([, locationId]: readonly ['analytics-list', number]): Promise<
+  AnalyticsRunListItem[]
+> {
   return fetchAnalyticsList(locationId)
 }
 

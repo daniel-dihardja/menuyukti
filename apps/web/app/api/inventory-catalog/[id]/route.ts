@@ -123,4 +123,3 @@ export async function DELETE(_req: Request, context: RouteContext) {
     return NextResponse.json({ message }, { status: 500 })
   }
 }
-

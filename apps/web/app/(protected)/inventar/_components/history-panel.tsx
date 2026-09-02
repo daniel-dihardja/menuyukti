@@ -18,12 +18,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@workspace/ui/components/drawer'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '@workspace/ui/components/empty'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import {
@@ -306,7 +301,10 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
           if (!open) onClose()
         }}
       >
-        <SheetContent closeLabel={t('close')} className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+        <SheetContent
+          closeLabel={t('close')}
+          className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
+        >
           <SheetHeader className="shrink-0 border-b pr-12">
             <SheetTitle>{t('historyTitle')}</SheetTitle>
             <SheetDescription className="truncate" title={row.catalogItem.name}>
