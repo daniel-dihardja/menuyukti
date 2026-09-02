@@ -22,24 +22,20 @@ import {
 } from './stock-utils'
 
 type Props = {
-  isDesktop: boolean
-  open: boolean
-  onOpenChange: (open: boolean) => void
   locationId: number
   catalogItems: InventarCatalogOption[]
   stockRows: InventoryStockRow[]
   initialCatalogId: string
+  onClose: () => void
   onSuccess: () => void
 }
 
 export function ReceiveForm({
-  isDesktop,
-  open,
-  onOpenChange,
   locationId,
   catalogItems,
   stockRows,
   initialCatalogId,
+  onClose,
   onSuccess,
 }: Props) {
   const t = useTranslations('inventar')
@@ -90,7 +86,7 @@ export function ReceiveForm({
         const payload = (await res.json().catch(() => null)) as InventarApiErrorPayload | null
         throw new Error(inventarErrorMessage(payload, t))
       }
-      onOpenChange(false)
+      onClose()
       toast.success(t('bookDeliverySuccess'))
       onSuccess()
     } catch (error) {
@@ -102,13 +98,14 @@ export function ReceiveForm({
 
   return (
     <FormSurface
-      isDesktop={isDesktop}
-      open={open}
-      onOpenChange={onOpenChange}
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
       title={t('bookDeliveryTitle')}
       footer={
         <>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={onClose}>
             {t('cancel')}
           </Button>
           <Button type="button" disabled={pending} onClick={() => void handleBookDelivery()}>
@@ -163,7 +160,7 @@ export function ReceiveForm({
           <Link
             href={routes.inventarCatalog}
             className="font-medium text-primary underline-offset-4 hover:underline"
-            onClick={() => onOpenChange(false)}
+            onClick={onClose}
           >
             {t('addPantryItem')}
           </Link>

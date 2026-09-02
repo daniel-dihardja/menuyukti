@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { Package } from 'lucide-react'
+import { ArrowLeftRight, History, Package, Trash2 } from 'lucide-react'
 
 import {
   ResponsiveActionMenu,
   type ResponsiveActionMenuItem,
 } from '@/app/(protected)/analytics/_components/responsive-action-menu'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
+import { formatCurrencyWithCode } from '@/lib/currency'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
@@ -38,9 +39,11 @@ type Props = {
   activeLocationId: number | null
   sortedStockRows: InventoryStockRow[]
   catalogCount: number
-  formatMoney: (amount: number | null) => string
-  buildRowActionItems: (row: InventoryStockRow) => ResponsiveActionMenuItem[]
+  currencyCode: string
   onUse: (row: InventoryStockRow) => void
+  onHistory: (row: InventoryStockRow) => void
+  onTransfer?: (row: InventoryStockRow) => void
+  onRemove: (row: InventoryStockRow) => void
   onBookDelivery: () => void
 }
 
@@ -48,14 +51,21 @@ export function StockList({
   activeLocationId,
   sortedStockRows,
   catalogCount,
-  formatMoney,
-  buildRowActionItems,
+  currencyCode,
   onUse,
+  onHistory,
+  onTransfer,
+  onRemove,
   onBookDelivery,
 }: Props) {
   const t = useTranslations('inventar')
   const locale = useLocale()
   const isDesktop = useDesktopLayout()
+
+  function formatMoney(amount: number | null): string {
+    if (amount == null) return t('priceEmpty')
+    return formatCurrencyWithCode(amount, currencyCode, locale)
+  }
 
   if (activeLocationId == null) {
     return <p className="text-sm text-muted-foreground">{t('branchPlaceholder')}</p>
@@ -92,6 +102,34 @@ export function StockList({
         </EmptyContent>
       </Empty>
     )
+  }
+
+  function buildRowActionItems(row: InventoryStockRow): ResponsiveActionMenuItem[] {
+    const items: ResponsiveActionMenuItem[] = [
+      {
+        id: 'history',
+        label: t('history'),
+        icon: History,
+        onSelect: () => onHistory(row),
+      },
+    ]
+    if (onTransfer) {
+      items.push({
+        id: 'transfer',
+        label: t('transfer'),
+        icon: ArrowLeftRight,
+        onSelect: () => onTransfer(row),
+      })
+    }
+    items.push({
+      id: 'remove',
+      label: t('removeFromLocation'),
+      icon: Trash2,
+      destructive: true,
+      separatorBefore: true,
+      onSelect: () => onRemove(row),
+    })
+    return items
   }
 
   function renderRowActions(row: InventoryStockRow) {

@@ -4,11 +4,8 @@ import { startTransition, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { ArrowLeftRight, History, Trash2 } from 'lucide-react'
 
-import type { ResponsiveActionMenuItem } from '@/app/(protected)/analytics/_components/responsive-action-menu'
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
-import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
 import { INVENTORY_STORAGE_ZONE_SORT_ORDER } from '@/lib/inventar/storage-zones'
@@ -45,7 +42,6 @@ export function InventarStockClient({
   const locale = useLocale()
   const router = useRouter()
   const { setLocationId } = useAnalytics()
-  const isDesktop = useDesktopLayout()
 
   const [receiveOpen, setReceiveOpen] = useState(false)
   const [receiveInitialCatalogId, setReceiveInitialCatalogId] = useState('')
@@ -107,34 +103,6 @@ export function InventarStockClient({
     setTransferRow(row)
   }
 
-  function buildRowActionItems(row: InventoryStockRow): ResponsiveActionMenuItem[] {
-    const items: ResponsiveActionMenuItem[] = [
-      {
-        id: 'history',
-        label: t('history'),
-        icon: History,
-        onSelect: () => setHistoryRow(row),
-      },
-    ]
-    if (canTransfer) {
-      items.push({
-        id: 'transfer',
-        label: t('transfer'),
-        icon: ArrowLeftRight,
-        onSelect: () => openTransferDialog(row),
-      })
-    }
-    items.push({
-      id: 'remove',
-      label: t('removeFromLocation'),
-      icon: Trash2,
-      destructive: true,
-      separatorBefore: true,
-      onSelect: () => setRemoveRow(row),
-    })
-    return items
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <StockToolbar
@@ -150,9 +118,11 @@ export function InventarStockClient({
         activeLocationId={activeLocationId}
         sortedStockRows={sortedStockRows}
         catalogCount={catalogItems.length}
-        formatMoney={formatMoney}
-        buildRowActionItems={buildRowActionItems}
+        currencyCode={currencyCode}
         onUse={setUseRow}
+        onHistory={setHistoryRow}
+        onTransfer={canTransfer ? openTransferDialog : undefined}
+        onRemove={setRemoveRow}
         onBookDelivery={openBookDeliveryDialog}
       />
 
@@ -166,13 +136,11 @@ export function InventarStockClient({
       {receiveOpen && activeLocationId != null ? (
         <ReceiveForm
           key={receiveInitialCatalogId}
-          isDesktop={isDesktop}
-          open={receiveOpen}
-          onOpenChange={setReceiveOpen}
           locationId={activeLocationId}
           catalogItems={catalogItems}
           stockRows={stockRows}
           initialCatalogId={receiveInitialCatalogId}
+          onClose={() => setReceiveOpen(false)}
           onSuccess={refresh}
         />
       ) : null}
@@ -180,7 +148,6 @@ export function InventarStockClient({
       {useRow != null && activeLocationId != null ? (
         <UseForm
           key={useRow.id}
-          isDesktop={isDesktop}
           row={useRow}
           locationId={activeLocationId}
           onClose={() => setUseRow(null)}
@@ -191,7 +158,6 @@ export function InventarStockClient({
       {transferRow != null ? (
         <TransferForm
           key={transferRow.id}
-          isDesktop={isDesktop}
           row={transferRow}
           destinations={transferDestinations}
           initialDestinationId={transferInitialDestId}

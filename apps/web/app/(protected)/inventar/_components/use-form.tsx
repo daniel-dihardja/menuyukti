@@ -21,14 +21,13 @@ import {
 } from './stock-utils'
 
 type Props = {
-  isDesktop: boolean
   row: InventoryStockRow
   locationId: number
   onClose: () => void
   onSuccess: () => void
 }
 
-export function UseForm({ isDesktop, row, locationId, onClose, onSuccess }: Props) {
+export function UseForm({ row, locationId, onClose, onSuccess }: Props) {
   const t = useTranslations('inventar')
   const [pending, setPending] = useState(false)
   const [useQty, setUseQty] = useState('1')
@@ -81,7 +80,6 @@ export function UseForm({ isDesktop, row, locationId, onClose, onSuccess }: Prop
 
   return (
     <FormSurface
-      isDesktop={isDesktop}
       open
       onOpenChange={(open) => {
         if (!open) onClose()

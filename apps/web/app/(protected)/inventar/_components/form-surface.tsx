@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 
+import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,6 @@ import {
 } from '@workspace/ui/components/drawer'
 
 export function FormSurface({
-  isDesktop,
   open,
   onOpenChange,
   title,
@@ -28,7 +28,6 @@ export function FormSurface({
   children,
   footer,
 }: {
-  isDesktop: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
@@ -36,6 +35,8 @@ export function FormSurface({
   children: ReactNode
   footer: ReactNode
 }) {
+  const isDesktop = useDesktopLayout()
+
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>

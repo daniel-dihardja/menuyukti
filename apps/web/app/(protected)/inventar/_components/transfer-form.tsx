@@ -29,7 +29,6 @@ import {
 } from './stock-utils'
 
 type Props = {
-  isDesktop: boolean
   row: InventoryStockRow
   destinations: InventarBranch[]
   initialDestinationId: string
@@ -38,7 +37,6 @@ type Props = {
 }
 
 export function TransferForm({
-  isDesktop,
   row,
   destinations,
   initialDestinationId,
@@ -100,7 +98,6 @@ export function TransferForm({
 
   return (
     <FormSurface
-      isDesktop={isDesktop}
       open
       onOpenChange={(open) => {
         if (!open) onClose()
