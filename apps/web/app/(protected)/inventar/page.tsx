@@ -80,7 +80,12 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
       branches={branches}
       initialLocationId={initialLocationId}
       stockRows={stockRows}
-      catalogItems={catalogItems}
+      catalogItems={catalogItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        packageSize: item.packageSize,
+        packageUnit: item.packageUnit,
+      }))}
     />
   )
 }

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Check, ChevronsUpDown } from 'lucide-react'
 
-import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catalog'
 import { Button } from '@workspace/ui/components/button'
 import {
   Command,
@@ -17,9 +16,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/component
 import { cn } from '@workspace/ui/lib/utils'
 
 import { formatPackLabel } from './format-pack'
+import type { InventarCatalogOption } from './stock-utils'
 
 export type PantryItemComboboxProps = {
-  items: InventoryCatalogItem[]
+  items: InventarCatalogOption[]
   value: string
   onValueChange: (id: string) => void
   placeholder: string
@@ -28,11 +28,11 @@ export type PantryItemComboboxProps = {
   disabled?: boolean
 }
 
-function itemLabel(item: InventoryCatalogItem): string {
+function itemLabel(item: InventarCatalogOption): string {
   return `${item.name} (${formatPackLabel(item.packageSize, item.packageUnit)})`
 }
 
-function itemSearchValue(item: InventoryCatalogItem): string {
+function itemSearchValue(item: InventarCatalogOption): string {
   return `${item.name} ${formatPackLabel(item.packageSize, item.packageUnit)}`
 }
 
