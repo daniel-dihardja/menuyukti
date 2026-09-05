@@ -83,11 +83,12 @@ class ChatRequest(BaseModel):
     location_id: int | None = Field(default=None, ge=1)
     analytics_run_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str = Field(min_length=1)
-    chat_mode: Literal["general", "image_assistant", "story_image_assistant"] | None = Field(
+    chat_mode: Literal["general", "image_assistant", "story_image_assistant", "inventar"] | None = Field(
         default=None,
         description=(
             "Opt-in chat mode; branches system prompt and tools "
             "(image_assistant = Instagram image direction gathering; "
+            "inventar = pantry refill forecast; "
             "story_image_assistant is a legacy alias)."
         ),
     )

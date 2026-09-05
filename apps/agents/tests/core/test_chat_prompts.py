@@ -135,6 +135,15 @@ def test_build_system_prompt_image_assistant_mode() -> None:
     )
 
 
+def test_build_system_prompt_inventar_mode() -> None:
+    out = build_system_prompt(chat_mode="inventar")
+    assert "inventar" in out.lower()
+    assert "get_inventory_refill_forecast" in out
+    assert "insufficient_history" in out
+    assert "get_chart_data" not in out
+    assert "Instagram content assistant" not in out
+
+
 def test_build_system_prompt_image_assistant_legacy_alias() -> None:
     assert build_system_prompt(chat_mode="story_image_assistant") == build_system_prompt(
         chat_mode="image_assistant"

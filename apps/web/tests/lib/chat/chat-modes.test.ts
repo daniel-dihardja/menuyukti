@@ -11,12 +11,14 @@ describe('chat-modes', () => {
   it('accepts canonical mode ids', () => {
     expect(isChatModeId('general')).toBe(true)
     expect(isChatModeId('image_assistant')).toBe(true)
+    expect(isChatModeId('inventar')).toBe(true)
     expect(isChatModeId(LEGACY_STORY_IMAGE_ASSISTANT_MODE)).toBe(false)
   })
 
   it('normalizes the legacy story alias', () => {
     expect(normalizeChatModeId(LEGACY_STORY_IMAGE_ASSISTANT_MODE)).toBe('image_assistant')
     expect(normalizeChatModeId('image_assistant')).toBe('image_assistant')
+    expect(normalizeChatModeId('inventar')).toBe('inventar')
     expect(normalizeChatModeId('general')).toBe(DEFAULT_CHAT_MODE)
     expect(normalizeChatModeId('nope')).toBeNull()
   })

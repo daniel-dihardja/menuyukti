@@ -20,6 +20,9 @@ DIRECTION_TRANSFER_OUT = "transfer_out"
 
 _ALLOWED_STORAGE_ZONES = frozenset({"freezer", "cooler", "dry"})
 
+# Inclusive burn window used by inventoryRefillForecast default.
+_FORECAST_WINDOW_DAYS = 14
+
 
 @dataclass(frozen=True)
 class _CatalogSeed:
@@ -43,7 +46,8 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         price=45000.0,
         min_on_hand=2.0,
         max_on_hand=12.0,
-        primary_on_hand=6.0,
+        # After 14×0.5 outs: ~2 days to min (urgent refill demo).
+        primary_on_hand=3.0,
         branch_on_hand=2.0,
     ),
     _CatalogSeed(
@@ -54,6 +58,7 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         price=180000.0,
         min_on_hand=1.0,
         max_on_hand=8.0,
+        # After 3×1.0 outs over 14d: ~2 weeks to min (medium).
         primary_on_hand=4.0,
         branch_on_hand=0.0,
     ),
@@ -65,7 +70,8 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         price=65000.0,
         min_on_hand=1.0,
         max_on_hand=6.0,
-        primary_on_hand=3.0,
+        # At min with burn + transfer → top/urgent priority.
+        primary_on_hand=1.0,
         branch_on_hand=1.0,
     ),
     _CatalogSeed(
@@ -76,6 +82,7 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         price=None,
         min_on_hand=None,
         max_on_hand=None,
+        # Receive only → insufficient_history in forecast.
         primary_on_hand=2.0,
         branch_on_hand=1.0,
     ),
@@ -114,12 +121,13 @@ def seed_inventar(
     """
     Insert a small pantry catalog, stock at primary + branch, and sample movements.
 
+    Primary location includes ~14 days of outs so inventoryRefillForecast demos
+    clear refill priority (oat milk urgent, beans medium, berries at min, soap no history).
+
     Returns counts: catalog_items, stock_rows, movements.
     """
     today = datetime.now(tz=UTC).date()
-    receive_day = today - timedelta(days=5)
-    consume_day = today - timedelta(days=2)
-    transfer_day = today - timedelta(days=1)
+    receive_day = today - timedelta(days=_FORECAST_WINDOW_DAYS)
 
     workspace = session.merge(workspace)
     primary_location = session.merge(primary_location)
@@ -152,12 +160,9 @@ def seed_inventar(
         session.flush()
         catalog_count += 1
 
-        # Receive enough to cover final primary level plus any consume/transfer.
-        primary_received = item.primary_on_hand
-        if item.name == "Espresso beans":
-            primary_received += 1.0
-        if item.name == "Frozen berries":
-            primary_received += 1.0
+        primary_burn = _primary_burn_total(item.name)
+        transfer_qty = 1.0 if item.name == "Frozen berries" else 0.0
+        primary_received = item.primary_on_hand + primary_burn + transfer_qty
 
         primary_stock = _ensure_stock(
             session,
@@ -174,14 +179,12 @@ def seed_inventar(
             note="Dev seed receive",
         )
 
-        if item.name == "Espresso beans":
-            movement_count += _consume(
-                session,
-                stock=primary_stock,
-                quantity=1.0,
-                occurred_on=consume_day,
-                note="Dev seed use",
-            )
+        movement_count += _seed_primary_burn(
+            session,
+            stock=primary_stock,
+            item_name=item.name,
+            today=today,
+        )
 
         if item.name == "Frozen berries":
             branch_stock = _ensure_stock(
@@ -195,8 +198,8 @@ def seed_inventar(
                 session,
                 source=primary_stock,
                 dest=branch_stock,
-                quantity=1.0,
-                occurred_on=transfer_day,
+                quantity=transfer_qty,
+                occurred_on=today - timedelta(days=1),
                 note="Dev seed transfer",
             )
         elif item.branch_on_hand > 0:
@@ -233,6 +236,55 @@ def seed_inventar(
         "stock_rows": stock_count,
         "movements": movement_count,
     }
+
+
+def _primary_burn_total(item_name: str) -> float:
+    if item_name == "Oat milk":
+        return 0.5 * float(_FORECAST_WINDOW_DAYS)
+    if item_name == "Espresso beans":
+        return 3.0
+    if item_name == "Frozen berries":
+        return 1.0  # outs only; transfer counted separately
+    return 0.0
+
+
+def _seed_primary_burn(
+    session: Session,
+    *,
+    stock: InventoryStock,
+    item_name: str,
+    today: date,
+) -> int:
+    """Write ~14d of primary outs for forecast demos. Returns movement count."""
+    count = 0
+    if item_name == "Oat milk":
+        for offset in range(_FORECAST_WINDOW_DAYS):
+            count += _consume(
+                session,
+                stock=stock,
+                quantity=0.5,
+                occurred_on=today - timedelta(days=offset),
+                note="Dev seed use",
+            )
+    elif item_name == "Espresso beans":
+        for offset in (0, 5, 10):
+            count += _consume(
+                session,
+                stock=stock,
+                quantity=1.0,
+                occurred_on=today - timedelta(days=offset),
+                note="Dev seed use",
+            )
+    elif item_name == "Frozen berries":
+        for offset in (2, 6, 11, 13):
+            count += _consume(
+                session,
+                stock=stock,
+                quantity=0.25,
+                occurred_on=today - timedelta(days=offset),
+                note="Dev seed use",
+            )
+    return count
 
 
 def _validate_catalog_fields(

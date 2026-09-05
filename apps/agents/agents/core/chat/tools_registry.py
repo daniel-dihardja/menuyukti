@@ -7,6 +7,9 @@ from typing import Any
 from agents_app.agents.core.chat.generate_instagram_post_image import (
     generate_instagram_post_image,
 )
+from agents_app.agents.core.chat.inventory_refill_forecast import (
+    get_inventory_refill_forecast,
+)
 from agents_app.agents.core.chat.present_weekly_instagram_schedule import (
     present_weekly_instagram_schedule,
 )
@@ -53,6 +56,10 @@ def is_image_assistant_mode(conf: dict[str, Any]) -> bool:
     return mode in ("image_assistant", "story_image_assistant")
 
 
+def is_inventar_mode(conf: dict[str, Any]) -> bool:
+    return conf.get("chat_mode") == "inventar"
+
+
 def has_agent_thread_id(conf: dict[str, Any]) -> bool:
     raw = conf.get("agent_thread_id")
     return isinstance(raw, str) and bool(raw.strip())
@@ -69,6 +76,7 @@ def chat_tools_list(
     location_id: bool = True,
     analytics_run: bool = False,
     image_assistant: bool = False,
+    inventar: bool = False,
 ) -> list:
     """Build chat ReAct tools for the given request context.
 
@@ -78,6 +86,8 @@ def chat_tools_list(
 
     In ``image_assistant`` mode only media-library tools, Story scratchpad tools,
     confirmation UI, and ``generate_instagram_post_image`` are bound.
+
+    In ``inventar`` mode only refill forecast (+ location data when available).
     """
     if image_assistant:
         return [
@@ -89,7 +99,13 @@ def chat_tools_list(
             generate_instagram_post_image,
         ]
 
-    tools: list = []
+    if inventar:
+        tools: list = [get_inventory_refill_forecast]
+        if location_id:
+            tools.append(get_location_data)
+        return tools
+
+    tools = []
     tools.append(list_media_collections)
     tools.append(list_media)
     tools.append(present_weekly_instagram_schedule)
@@ -109,6 +125,8 @@ def chat_tools_list_from_config(conf: dict[str, Any]) -> list:
     """Resolve request-scoped tools from RunnableConfig.configurable."""
     if is_image_assistant_mode(conf):
         return chat_tools_list(image_assistant=True)
+    if is_inventar_mode(conf):
+        return chat_tools_list(inventar=True, location_id=has_location_id(conf))
     return chat_tools_list(
         include_post_image=has_leonardo_image_generation(conf),
         location_id=has_location_id(conf),

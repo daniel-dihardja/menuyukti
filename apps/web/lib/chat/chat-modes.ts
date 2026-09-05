@@ -1,8 +1,13 @@
-/** Chat session modes (general vs focused image assistant). */
+/** Chat session modes (general vs focused assistants). */
 
-export const CHAT_MODE_IDS = ['general', 'image_assistant'] as const
+/** Modes shown in the advisor composer mode picker. */
+export const ADVISOR_CHAT_MODE_IDS = ['general', 'image_assistant'] as const
+
+/** All modes accepted by `/api/chat` (includes inventar-only surface). */
+export const CHAT_MODE_IDS = [...ADVISOR_CHAT_MODE_IDS, 'inventar'] as const
 
 export type ChatModeId = (typeof CHAT_MODE_IDS)[number]
+export type AdvisorChatModeId = (typeof ADVISOR_CHAT_MODE_IDS)[number]
 
 export const DEFAULT_CHAT_MODE: ChatModeId = 'general'
 

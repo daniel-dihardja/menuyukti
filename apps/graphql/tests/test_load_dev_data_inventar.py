@@ -124,7 +124,8 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
         assert first["movements"] == movement_n
         assert catalog_n == 4
         assert stock_n >= 4
-        assert movement_n >= 1
+        # Oat 14 outs + beans 3 outs + berries 4 outs + 1 transfer pair + receives
+        assert movement_n >= 20
 
         oat = (
             session.query(InventoryCatalogItem)
@@ -137,6 +138,45 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
         assert oat.storage_zone == "cooler"
         assert oat.min_on_hand == 2.0
         assert oat.max_on_hand == 12.0
+
+        oat_stock = (
+            session.query(InventoryStock)
+            .filter(
+                InventoryStock.location_id == inventar_seed_workspace["primary_id"],
+                InventoryStock.catalog_item_id == oat.id,
+            )
+            .one()
+        )
+        assert oat_stock.on_hand == 3.0
+
+        oat_outs = (
+            session.query(InventoryStockMovement)
+            .filter(
+                InventoryStockMovement.location_id == inventar_seed_workspace["primary_id"],
+                InventoryStockMovement.catalog_item_id == oat.id,
+                InventoryStockMovement.direction == "out",
+            )
+            .count()
+        )
+        assert oat_outs == 14
+
+        soap = (
+            session.query(InventoryCatalogItem)
+            .filter(
+                InventoryCatalogItem.workspace_id == inventar_seed_workspace["workspace_id"],
+                InventoryCatalogItem.name == "Dish soap",
+            )
+            .one()
+        )
+        soap_outs = (
+            session.query(InventoryStockMovement)
+            .filter(
+                InventoryStockMovement.catalog_item_id == soap.id,
+                InventoryStockMovement.direction.in_(("out", "transfer_out")),
+            )
+            .count()
+        )
+        assert soap_outs == 0
 
         reset_inventar(session, inventar_seed_workspace["workspace_id"])
         ws = session.get(Workspace, inventar_seed_workspace["workspace_id"])

@@ -54,7 +54,7 @@ import {
   gatewayModelToMessageKey,
   type ChatGatewayModelId,
 } from '@/lib/chat/gateway-chat-models'
-import { CHAT_MODE_IDS, type ChatModeId } from '@/lib/chat/chat-modes'
+import { ADVISOR_CHAT_MODE_IDS, type ChatModeId } from '@/lib/chat/chat-modes'
 import {
   getLeonardoPostModelMessageKey,
   LEONARDO_POST_MODEL_IDS,
@@ -342,7 +342,7 @@ function GeneralOverflowMenu({ onRequestClear }: { onRequestClear: () => void })
                 onValueChange={(v) => setChatMode(v as ChatModeId)}
                 value={chatMode}
               >
-                {CHAT_MODE_IDS.map((id) => (
+                {ADVISOR_CHAT_MODE_IDS.map((id) => (
                   <DropdownMenuRadioItem key={id} value={id}>
                     {tModes(id)}
                   </DropdownMenuRadioItem>
@@ -410,7 +410,7 @@ function ImageOverflowMenu({ onRequestClear }: { onRequestClear: () => void }) {
                 onValueChange={(v) => setChatMode(v as ChatModeId)}
                 value={chatMode}
               >
-                {CHAT_MODE_IDS.map((id) => (
+                {ADVISOR_CHAT_MODE_IDS.map((id) => (
                   <DropdownMenuRadioItem key={id} value={id}>
                     {tModes(id)}
                   </DropdownMenuRadioItem>

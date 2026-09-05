@@ -358,6 +358,26 @@ type InventoryCatalogItemType {
   updatedAt: DateTime!
 }
 
+"""Confidence of a refill forecast row."""
+enum InventoryRefillForecastConfidence {
+  ok
+  insufficient_history
+}
+
+"""One catalog item ranked by estimated days until refill."""
+type InventoryRefillForecastItem {
+  catalogItemId: Int!
+  name: String!
+  storageZone: InventoryStorageZone!
+  onHand: Float!
+  minOnHand: Float
+  avgDailyOut: Float!
+  daysUntilRefill: Float
+  priorityRank: Int!
+  confidence: InventoryRefillForecastConfidence!
+  windowDays: Int!
+}
+
 """Direction of an inventar stock movement."""
 enum InventoryStockMovementDirection {
   in
@@ -1098,6 +1118,11 @@ type Query {
   Stock movements for a catalog item at a location, newest first. When stockId is set, only movements for that stock row (current track). Optional fromDate/toDate filter occurredOn inclusively. Empty when not authorized or fromDate is after toDate.
   """
   inventoryStockMovements(locationId: ID!, catalogItemId: ID!, stockId: ID = null, fromDate: Date = null, toDate: Date = null, limit: Int! = 50): [InventoryStockMovementType!]!
+
+  """
+  Ranked refill forecast for stock at a location from recent out / transfer_out burn. Empty when not authorized. windowDays defaults to 14 and is clamped between 7 and 90.
+  """
+  inventoryRefillForecast(locationId: ID!, windowDays: Int! = 14): [InventoryRefillForecastItem!]!
 
   """
   Aggregated AI usage for the authenticated user in [startDate, endDate] (UTC dates).

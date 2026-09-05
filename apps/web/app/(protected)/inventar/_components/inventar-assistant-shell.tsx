@@ -21,10 +21,11 @@ import {
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  locationId: number | null
   children: ReactNode
 }
 
-export function InventarAssistantShell({ open, onOpenChange, children }: Props) {
+export function InventarAssistantShell({ open, onOpenChange, locationId, children }: Props) {
   const t = useTranslations('inventar')
   const isDesktop = useDesktopLayout()
 
@@ -67,7 +68,11 @@ export function InventarAssistantShell({ open, onOpenChange, children }: Props) 
             )}
             aria-label={t('assistantTitle')}
           >
-            <InventarAssistantPanel active={open} onClose={closeAssistant} />
+            <InventarAssistantPanel
+              active={open}
+              onClose={closeAssistant}
+              locationId={locationId}
+            />
           </aside>
         ) : null}
         <div className="min-w-0 flex-1">{children}</div>
@@ -98,7 +103,12 @@ export function InventarAssistantShell({ open, onOpenChange, children }: Props) 
           </DrawerHeader>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {open ? (
-              <InventarAssistantPanel active={open} onClose={closeAssistant} />
+              <InventarAssistantPanel
+                active={open}
+                onClose={closeAssistant}
+                locationId={locationId}
+                showCloseButton={false}
+              />
             ) : null}
           </div>
         </DrawerContent>

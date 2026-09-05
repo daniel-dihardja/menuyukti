@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from agents_app.agents.core.chat.inventory_refill_forecast import (
+    get_inventory_refill_forecast,
+)
 from agents_app.agents.core.chat.limits import CHAT_RECURSION_LIMIT
 from agents_app.agents.core.chat.middleware import (
     _chat_system_prompt_from_config,
@@ -51,6 +54,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
             location_id=True,
             analytics_run=True,
         ),
+        get_inventory_refill_forecast,
         *STORY_SCRATCHPAD_TOOLS,
     ]
     # Placeholder model — overridden per request by select_chat_model_and_tools.

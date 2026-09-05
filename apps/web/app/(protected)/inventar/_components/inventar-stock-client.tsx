@@ -106,7 +106,11 @@ export function InventarStockClient({
   }
 
   return (
-    <InventarAssistantShell open={assistantOpen} onOpenChange={setAssistantOpen}>
+    <InventarAssistantShell
+      open={assistantOpen}
+      onOpenChange={setAssistantOpen}
+      locationId={activeLocationId}
+    >
       <div className="flex flex-col gap-6">
         <StockToolbar
           branches={branches}

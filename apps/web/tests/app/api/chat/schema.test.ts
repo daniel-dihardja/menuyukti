@@ -201,7 +201,7 @@ describe('chatRequestBodySchema', () => {
   })
 
   it('accepts valid chatMode values and normalizes legacy alias', () => {
-    for (const chatMode of ['general', 'image_assistant'] as const) {
+    for (const chatMode of ['general', 'image_assistant', 'inventar'] as const) {
       const parsed = chatRequestBodySchema.safeParse({
         messages: [],
         agentThreadId: AGENT_THREAD,

@@ -111,3 +111,43 @@ async def test_get_chart_data_soft_fails_on_load_error(
     )
     assert out.startswith("Error loading chart data for venue_slot_strength_heatmap:")
     assert "graphql boom" in out
+
+
+@pytest.mark.asyncio
+async def test_get_inventory_refill_forecast_returns_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from agents_app.agents.core.chat import inventory_refill_forecast as forecast_mod
+
+    rows = [
+        {
+            "name": "Oat milk",
+            "daysUntilRefill": 2.0,
+            "priorityRank": 1,
+            "confidence": "ok",
+            "windowDays": 14,
+        }
+    ]
+    graphql_mock = AsyncMock(return_value={"inventoryRefillForecast": rows})
+    monkeypatch.setattr(forecast_mod, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(forecast_mod, "graphql_post", graphql_mock)
+
+    out = await forecast_mod.get_inventory_refill_forecast.ainvoke(
+        {"window_days": 14},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "Oat milk" in out
+    assert "daysUntilRefill" in out
+    graphql_mock.assert_awaited_once()
+    assert graphql_mock.await_args.args[2] == {"locationId": "7", "windowDays": 14}
+
+
+@pytest.mark.asyncio
+async def test_get_inventory_refill_forecast_missing_location() -> None:
+    from agents_app.agents.core.chat import inventory_refill_forecast as forecast_mod
+
+    out = await forecast_mod.get_inventory_refill_forecast.ainvoke(
+        {},
+        config={"configurable": {"user_id": "u1"}},
+    )
+    assert "Location context is not available" in out
