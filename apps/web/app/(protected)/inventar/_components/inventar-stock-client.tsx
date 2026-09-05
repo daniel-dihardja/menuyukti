@@ -57,9 +57,7 @@ export function InventarStockClient({
 
   const activeLocationId = initialLocationId
 
-  const refillByCatalogId = new Map(
-    refillForecast.map((row) => [row.catalogItemId, row] as const),
-  )
+  const refillByCatalogId = new Map(refillForecast.map((row) => [row.catalogItemId, row] as const))
 
   const activeBranch = branches.find((b) => b.id === activeLocationId)
   const currencyCode = resolveLocationCurrency(activeBranch?.currency)

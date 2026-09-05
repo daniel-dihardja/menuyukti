@@ -13,10 +13,7 @@ import {
 } from '@workspace/ui/components/drawer'
 import { cn } from '@workspace/ui/lib/utils'
 
-import {
-  InventarAssistantPanel,
-  INVENTAR_ASSISTANT_OPEN_ID,
-} from './inventar-assistant-panel'
+import { InventarAssistantPanel, INVENTAR_ASSISTANT_OPEN_ID } from './inventar-assistant-panel'
 
 type Props = {
   open: boolean

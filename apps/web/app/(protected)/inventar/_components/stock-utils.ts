@@ -90,7 +90,11 @@ export function cardActivitySummary(
   return t('activityInEmpty')
 }
 
-export function formatAvgDailyOut(value: number | undefined, locale: string, empty: string): string {
+export function formatAvgDailyOut(
+  value: number | undefined,
+  locale: string,
+  empty: string,
+): string {
   if (value == null || !Number.isFinite(value)) return empty
   return new Intl.NumberFormat(locale, {
     maximumFractionDigits: value < 10 ? 2 : 1,

@@ -9,7 +9,11 @@ import {
 } from '@workspace/ui/components/ai-elements/prompt-input'
 import { useTranslations } from 'next-intl'
 
-import { ADVISOR_CHAT_MODE_IDS, type AdvisorChatModeId, type ChatModeId } from '@/lib/chat/chat-modes'
+import {
+  ADVISOR_CHAT_MODE_IDS,
+  type AdvisorChatModeId,
+  type ChatModeId,
+} from '@/lib/chat/chat-modes'
 import { cn } from '@workspace/ui/lib/utils'
 
 type ChatModeSelectProps = {

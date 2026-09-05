@@ -148,8 +148,7 @@ export function InventarAssistantPanel({
 
   const hasUserMessages = messages.some((message) => message.role === 'user')
   const lastMessage = messages[messages.length - 1]
-  const showPendingAssistantThinking =
-    busy && messages.length > 0 && lastMessage?.role === 'user'
+  const showPendingAssistantThinking = busy && messages.length > 0 && lastMessage?.role === 'user'
 
   return (
     <div className={cn('flex h-full min-h-0 min-w-0 flex-col bg-background', className)}>
@@ -228,9 +227,7 @@ export function InventarAssistantPanel({
 
             return (
               <Message from={message.role} key={message.id}>
-                <MessageContent
-                  className={cn(message.role === 'assistant' && 'w-full max-w-full')}
-                >
+                <MessageContent className={cn(message.role === 'assistant' && 'w-full max-w-full')}>
                   <div className="whitespace-pre-wrap">{content}</div>
                   {trailingThinking.show ? (
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
