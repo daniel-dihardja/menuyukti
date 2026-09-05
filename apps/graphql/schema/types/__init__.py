@@ -1,4 +1,3 @@
-from .image_ai_flow import ImageAiFlowType
 from .location import LocationType, OpeningHourType
 from .location_menu_item_cogs import LocationMenuItemCogsType
 from .menu_item_cogs import MenuItemCogsType
@@ -10,7 +9,6 @@ from .workspace import WorkspaceType
 from .workspace_membership import WorkspaceMembershipType
 
 __all__ = [
-    "ImageAiFlowType",
     "LocationType",
     "OpeningHourType",
     "LocationMenuItemCogsType",

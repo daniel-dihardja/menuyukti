@@ -335,25 +335,78 @@ type FundamentalSignalsType {
   trendingItems: [TrendingItemType!]!
 }
 
-type ImageAiFlowType {
-  id: Int!
-  slug: String!
-  displayName: String!
-  prompt: String!
-  model: String!
-  promptEnhance: String
-  imageReferenceStrength: String
-  styleIds: JSON
-  isActive: Boolean!
-  sortOrder: Int!
-}
-
 """Tiered analytics payload for campaign_brief and growth agents."""
 type InstagramSignalsType {
   analyticsRunId: ID!
   capabilities: CampaignBriefSignalCapabilitiesType!
   fundamentalSignals: FundamentalSignalsType!
   additionalSignals: AdditionalSignalsType!
+}
+
+"""Workspace pantry catalog item (name and package label)."""
+type InventoryCatalogItemType {
+  id: Int!
+  workspaceId: Int!
+  name: String!
+  packageSize: Float!
+  packageUnit: String!
+  price: Float
+  minOnHand: Float
+  maxOnHand: Float
+  storageZone: InventoryStorageZone!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Direction of an inventar stock movement."""
+enum InventoryStockMovementDirection {
+  in
+  out
+  transfer_in
+  transfer_out
+}
+
+"""One receive, use, or transfer leg for pantry stock."""
+type InventoryStockMovementType {
+  id: Int!
+  locationId: Int!
+  catalogItemId: Int!
+  stockId: Int
+  direction: InventoryStockMovementDirection!
+  quantity: Float!
+  occurredOn: Date!
+  note: String
+  relatedMovementId: Int
+  relatedLocationId: Int
+  createdAt: DateTime!
+}
+
+"""Result of moving packages between locations."""
+type InventoryStockTransferResult {
+  fromStock: InventoryStockType
+  toStock: InventoryStockType!
+  fromLocationId: Int!
+  toLocationId: Int!
+}
+
+"""Location stock level for a pantry catalog item."""
+type InventoryStockType {
+  id: Int!
+  locationId: Int!
+  catalogItemId: Int!
+  onHand: Float!
+  lastInOn: Date
+  lastOutOn: Date
+  catalogItem: InventoryCatalogItemType!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Primary storage area for a pantry item."""
+enum InventoryStorageZone {
+  freezer
+  cooler
+  dry
 }
 
 """
@@ -599,9 +652,7 @@ input MenuItemCogsUpsertInput {
   currency: String = null
 }
 
-"""
-Root mutation: sales uploads, workspace invites, and image AI flow configuration.
-"""
+"""Root mutation: sales uploads, workspace invites, and catalog writes."""
 type Mutation {
   """
   Upload and normalize a POS sales Excel file, persist order facts, and return metadata and sales analytics. Set includeLineItems to receive normalizedRows and orders (large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB).
@@ -648,8 +699,35 @@ type Mutation {
 
   """Promote an analytics run's COGS snapshot into the location catalog."""
   saveAnalyticsRunCogsToLocation(analyticsRunId: ID!): [LocationMenuItemCogsType!]!
-  createImageAiFlow(slug: String!, displayName: String!, prompt: String!, model: String!, promptEnhance: String = null, imageReferenceStrength: String = null, styleIds: JSON = null, isActive: Boolean! = true, sortOrder: Int! = 0): ImageAiFlowType!
-  updateImageAiFlow(slug: String!, newSlug: String, displayName: String, prompt: String, model: String, promptEnhance: String, imageReferenceStrength: String, styleIds: JSON, isActive: Boolean, sortOrder: Int): ImageAiFlowType!
+
+  """Add a pantry item to the workspace catalog."""
+  createInventoryCatalogItem(workspaceId: Int!, name: String!, packageSize: Float!, packageUnit: String!, storageZone: InventoryStorageZone = null, price: Float = null, minOnHand: Float = null, maxOnHand: Float = null): InventoryCatalogItemType!
+
+  """Update a pantry catalog item."""
+  updateInventoryCatalogItem(id: Int!, name: String = null, packageSize: Float = null, packageUnit: String = null, storageZone: InventoryStorageZone = null, price: Float, minOnHand: Float, maxOnHand: Float): InventoryCatalogItemType!
+
+  """Delete a pantry catalog item and all location stock rows."""
+  deleteInventoryCatalogItem(id: Int!): Boolean!
+
+  """Set current stock for a catalog item at a location."""
+  upsertInventoryStock(locationId: Int!, catalogItemId: Int!, onHand: Float!): InventoryStockType!
+
+  """
+  Receive packages at a location (increases stock and records an in movement).
+  """
+  receiveInventoryStock(locationId: Int!, catalogItemId: Int!, quantity: Float!, occurredOn: Date = null): InventoryStockType!
+
+  """Use packages from stock (decreases stock and records an out movement)."""
+  consumeInventoryStock(stockId: Int!, quantity: Float!, occurredOn: Date = null): InventoryStockType!
+
+  """Stop tracking a catalog item at a location."""
+  deleteInventoryStock(id: Int!): Boolean!
+
+  """Move packages of a tracked item from one location to another."""
+  transferInventoryStock(fromStockId: Int!, toLocationId: Int!, quantity: Float!, occurredOn: Date = null): InventoryStockTransferResult!
+
+  """Create a catalog item and initial stock at a location in one step."""
+  createInventoryCatalogItemWithStock(locationId: Int!, name: String!, packageSize: Float!, packageUnit: String!, onHand: Float!, storageZone: InventoryStorageZone = null, price: Float = null, minOnHand: Float = null, maxOnHand: Float = null): InventoryStockType!
   deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
 
   """Delete a manual calendar entry."""
@@ -660,7 +738,6 @@ type Mutation {
 
   """Delete a CRM customer registration by id. Cascades enrolled devices."""
   deleteCrmCustomer(id: UUID!): Boolean!
-  deleteImageAiFlow(slug: String!): Boolean!
 
   """Delete a visual style pack by id."""
   deleteStyle(id: Int!): Boolean!
@@ -1008,12 +1085,19 @@ type Query {
   workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
 
   """
-  Image AI flows ordered for display. Default: active only (asset upload UI).
+  Pantry catalog for a workspace. Empty when unauthenticated or not a member.
   """
-  imageAiFlows(includeInactive: Boolean! = false, first: Int = null): [ImageAiFlowType!]!
+  inventoryCatalogItems(workspaceId: ID!): [InventoryCatalogItemType!]!
 
-  """Single flow by slug (including inactive), for server-side processing."""
-  imageAiFlow(slug: String!): ImageAiFlowType
+  """
+  Stock levels at a location (joined with catalog). Empty when not authorized.
+  """
+  inventoryStock(locationId: ID!): [InventoryStockType!]!
+
+  """
+  Stock movements for a catalog item at a location, newest first. When stockId is set, only movements for that stock row (current track). Optional fromDate/toDate filter occurredOn inclusively. Empty when not authorized or fromDate is after toDate.
+  """
+  inventoryStockMovements(locationId: ID!, catalogItemId: ID!, stockId: ID = null, fromDate: Date = null, toDate: Date = null, limit: Int! = 50): [InventoryStockMovementType!]!
 
   """
   Aggregated AI usage for the authenticated user in [startDate, endDate] (UTC dates).

@@ -2,7 +2,6 @@ from .award_crm_cashback import AwardCrmCashbackMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
 from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
-from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_location import CreateLocationMutation
 from .create_media_collection import CreateMediaCollectionMutation
 from .create_post import CreatePostMutation
@@ -13,7 +12,6 @@ from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_crm_app import DeleteCrmAppMutation
 from .delete_crm_customer import DeleteCrmCustomerMutation
-from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_media_collection import DeleteMediaCollectionMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
@@ -36,7 +34,6 @@ from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .revoke_crm_device import RevokeCrmDeviceMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
-from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_media_collection import UpdateMediaCollectionMutation
@@ -49,7 +46,6 @@ from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 __all__ = [
     "AwardCrmCashbackMutation",
     "AddMediaToCollectionMutation",
-    "CreateImageAiFlowMutation",
     "InventoryCatalogMutations",
     "InventoryStockMutations",
     "CreateCalendarEntryMutation",
@@ -66,7 +62,6 @@ __all__ = [
     "DeleteCrmAppMutation",
     "DeleteCrmCustomerMutation",
     "RevokeCrmDeviceMutation",
-    "DeleteImageAiFlowMutation",
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",
     "DeleteStyleMutation",
@@ -80,7 +75,6 @@ __all__ = [
     "RemoveWorkspaceMemberMutation",
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
-    "UpdateImageAiFlowMutation",
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateMediaCollectionMutation",

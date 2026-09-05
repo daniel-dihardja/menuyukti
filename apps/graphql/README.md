@@ -7,7 +7,7 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 **Trust model.** The API is intended for **server-to-server** use from the Next.js app (or other trusted callers). When `INTERNAL_API_KEY` (or `GRAPHQL_INTERNAL_API_KEY`) is set in the environment, [`server.py`](./server.py) requires matching header `X-Internal-Api-Key` on every request **except** CRM customer routes under `/crm/v1/` (passwordless enroll + device auth). In **production** (`GRAPHQL_ENV` / `ENV` / `VERCEL_ENV` / `NODE_ENV=production`, or `GRAPHQL_REQUIRE_INTERNAL_API_KEY=1`), startup **fails** if neither key is set. The authenticated Clerk user is passed as **`X-User-Id`**; the GraphQL layer **trusts** that value after the internal key gate. Do not expose this endpoint directly to browsers without a gateway that validates callers. Rotate `INTERNAL_API_KEY` if it may have leaked.
 
-**Platform admin mutations.** Global catalog writes (`createImageAiFlow` / `updateImageAiFlow` / `deleteImageAiFlow`) require the caller’s `X-User-Id` to appear in **`MENUYUKTI_ADMIN_USER_IDS`** (comma-separated Clerk user ids). Keep that list aligned with Clerk `publicMetadata.menuyuktiRole = "admin"`. Reads of `imageAiFlows` / `imageAiFlow` remain public product catalog.
+**Public catalog reads.** `publicHolidays` is intentionally unauthenticated (static holiday JSON).
 
 **CRM customer JWT.** Device access tokens are HS256 JWTs signed with **`CRM_JWT_SECRET`** (required, at least 32 characters). Set it in `apps/graphql/.env` for local runs. Claims: `sub` (customer UUID), `did` (device UUID), `app_id` (public CRM app UUID), `exp` (~15 minutes). Refresh tokens are opaque secrets stored as SHA-256 hashes on `crm_device`.
 

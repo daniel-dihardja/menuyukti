@@ -4,7 +4,6 @@ from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
 from .crm_apps import CrmAppsQuery
 from .crm_customers import CrmCustomersQuery
-from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .inventory_catalog import InventoryCatalogQuery
 from .inventory_stock import InventoryStockQuery
@@ -32,7 +31,6 @@ __all__ = [
     "CategoryMixQuery",
     "CrmAppsQuery",
     "CrmCustomersQuery",
-    "ImageAiFlowsQuery",
     "InstagramSignalsQuery",
     "InventoryCatalogQuery",
     "InventoryStockQuery",
