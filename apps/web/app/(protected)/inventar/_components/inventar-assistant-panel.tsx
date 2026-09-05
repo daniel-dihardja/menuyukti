@@ -6,11 +6,15 @@ import { DefaultChatTransport, type UIMessage } from 'ai'
 import { ArrowUpIcon, XIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { Message, MessageContent } from '@workspace/ui/components/ai-elements/message'
 import { Button } from '@workspace/ui/components/button'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 import { isAgentThreadId } from '@/lib/chat/agent-thread-registry'
+import { shouldShowAssistantThinkingFallback } from '@/lib/chat/should-show-assistant-thinking-fallback'
+import { getAssistantTrailingThinkingState } from '@/lib/chat/should-show-assistant-trailing-thinking'
 
 export const INVENTAR_ASSISTANT_OPEN_ID = 'inventar-assistant-open'
 
@@ -143,6 +147,9 @@ export function InventarAssistantPanel({
   }
 
   const hasUserMessages = messages.some((message) => message.role === 'user')
+  const lastMessage = messages[messages.length - 1]
+  const showPendingAssistantThinking =
+    busy && messages.length > 0 && lastMessage?.role === 'user'
 
   return (
     <div className={cn('flex h-full min-h-0 min-w-0 flex-col bg-background', className)}>
@@ -190,33 +197,61 @@ export function InventarAssistantPanel({
               </Button>
             </div>
           ) : null}
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             const content = messagePlainText(message)
-            if (!content.trim() && message.role === 'assistant' && busy) {
+            const isLast = index === messages.length - 1
+            const isActiveStream = isLast && busy
+            const showFallbackSpinner = shouldShowAssistantThinkingFallback(message, isActiveStream)
+            // This panel only renders text; keep a spinner visible while tools run with no reply yet.
+            const showToolGapSpinner =
+              isActiveStream &&
+              message.role === 'assistant' &&
+              !content.trim() &&
+              !showFallbackSpinner
+            const trailingThinking = getAssistantTrailingThinkingState(message, isActiveStream)
+            const showThinking = showFallbackSpinner || showToolGapSpinner
+
+            if (showThinking) {
               return (
-                <div
-                  key={message.id}
-                  className="mr-auto max-w-[92%] rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground"
-                >
-                  {t('assistantThinking')}
-                </div>
+                <Message from="assistant" key={message.id}>
+                  <MessageContent className="w-full max-w-full">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Spinner aria-hidden />
+                      <span>{t('assistantThinking')}</span>
+                    </div>
+                  </MessageContent>
+                </Message>
               )
             }
+
             if (!content.trim()) return null
+
             return (
-              <div
-                key={message.id}
-                className={cn(
-                  'max-w-[92%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap',
-                  message.role === 'user'
-                    ? 'ml-auto bg-primary text-primary-foreground'
-                    : 'mr-auto bg-muted text-foreground',
-                )}
-              >
-                {content}
-              </div>
+              <Message from={message.role} key={message.id}>
+                <MessageContent
+                  className={cn(message.role === 'assistant' && 'w-full max-w-full')}
+                >
+                  <div className="whitespace-pre-wrap">{content}</div>
+                  {trailingThinking.show ? (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Spinner aria-hidden />
+                      <span>{t('assistantThinking')}</span>
+                    </div>
+                  ) : null}
+                </MessageContent>
+              </Message>
             )
           })}
+          {showPendingAssistantThinking ? (
+            <Message from="assistant">
+              <MessageContent className="w-full max-w-full">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Spinner aria-hidden />
+                  <span>{t('assistantThinking')}</span>
+                </div>
+              </MessageContent>
+            </Message>
+          ) : null}
           {error ? (
             <p className="text-pretty text-sm text-destructive" role="alert">
               {t('assistantError')}
