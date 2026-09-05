@@ -61,13 +61,25 @@ The polymorphic **`node`** table (`type` + JSON `data`) remains for entities tha
 Need a clean slate on PostgreSQL? Run `make drop-db` (destructive: drops `public` schema), then `make db-upgrade`. For local SQLite only, you can also use `uv run python -m graphql.data_sources.database` for `create_all` (not used for production Postgres).  
 To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
 
-### Dev data (Excel + COGS)
+### Dev data (selective seed)
 
-To populate the dev database with the Jun 2026 ESB report and menu COGS for manual or explorative testing, run `make dev-data` from `apps/graphql`. This uses `reports/SalesRecapitulationDetailReport_JUN_2026.xlsx` and `notebooks/data/menu_cogs.json` by default; ensure those files exist, or pass `--excel` / `--cogs` when running the script directly. From the repo root: `make -C apps/graphql dev-data`.
+`make dev-data` **does not wipe the database**. It seeds into the workspace for your Clerk user and leaves CRM, media, styles, and other tables alone.
 
-The seeded `Location` row gets `clerk_user_id` from, in order: **`USER_ID` on the make command** (e.g. `make dev-data USER_ID=user_2abc…`), then the **`DEV_CLERK_USER_ID`** environment variable, then the default `dev_local_user`. Use your real Clerk user id (same as the web app’s `X-User-Id`) so ownership checks work when signed in. Examples: `make dev-data USER_ID=user_xxx` or `DEV_CLERK_USER_ID=user_xxx make dev-data`.
+**Clerk user id is required:** pass `USER_ID=...` on the make command, or export `DEV_CLERK_USER_ID`. Use the same id as the signed-in web user (`X-User-Id`).
 
-It also seeds a sample **`location_manual_brief_input`** row (owner click-first brief hints) on the dev location so the location edit UI and `get_location_profile` have realistic manual context without extra clicks.
+| Command | What it does |
+| -------- | ------------- |
+| `make dev-data USER_ID=user_xxx` | Default `SCOPE=inventar`: reset inventar for that workspace, seed catalog/stock/movements, ensure `SNABB` + `SNABB Branch` |
+| `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Replace only `dev-seed-*` analytics runs; upsert location COGS; load order facts |
+| `make dev-data SCOPE=all USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Inventar + analytics |
+| `make db-reset-dev` | Destructive: `drop-db` + `db-upgrade` (Alembic) |
+| `make db-reset-dev SEED=1 USER_ID=user_xxx` | Hard schema reset, then inventar seed |
+
+Optional: `COGS=/path/to/menu_cogs.json` (defaults to `notebooks/data/menu_cogs.json` when present). The default Excel under `reports/` is **gitignored** — pass `EXCEL=` for analytics scopes.
+
+When a primary location is created for the first time, the script also adds weekday opening hours and a sample `location_manual_brief_input` (not overwritten on later runs).
+
+From the repo root: `make -C apps/graphql dev-data USER_ID=user_xxx`.
 
 ## Orders fact schema (next step)
 
