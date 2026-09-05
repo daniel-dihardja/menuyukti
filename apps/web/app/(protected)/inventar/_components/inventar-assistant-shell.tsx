@@ -47,6 +47,7 @@ export function InventarAssistantShell({ open, onOpenChange, locationId, childre
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- closeAssistant is useEffectEvent
   }, [open, isDesktop])
 
   if (isDesktop) {
