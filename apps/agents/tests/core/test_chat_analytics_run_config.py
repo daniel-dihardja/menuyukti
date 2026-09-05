@@ -1,6 +1,7 @@
 """ChatRequest / runnable config includes analytics_run_id for chart tools."""
 
-from agents_app.routers.chat import ChatRequest, _runnable_config
+from agents_app.agents.core.chat.chat_run_config import runnable_config as _runnable_config
+from agents_app.routers.chat import ChatRequest
 
 AGENT_THREAD_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 

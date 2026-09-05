@@ -37,7 +37,7 @@ When implementing in **`apps/agents`**, follow these skills in addition to this 
 | LLM config     | [`apps/agents/models/llm_config.py`](../../../apps/agents/models/llm_config.py)                 | AI Gateway `ChatOpenAI` factories + reporting extras.                                        |
 | Tests          | [`apps/agents/tests/core/`](../../../apps/agents/tests/core/)                                   | Pytest for chat graph, tools, routers.                                                       |
 
-Chat helpers under `core/chat/` also include `allowed_models.py`, `story_assets.py`, `history_messages.py`, `http_context.py`, `chart_data.py`, `present_weekly_instagram_schedule.py`, `generate_instagram_post_image.py`, and `generate_confirmation_gate.py`.
+Chat helpers under `core/chat/` also include `tools_registry.py`, `middleware.py`, `sse_stream.py`, `chat_run_config.py`, `limits.py`, `allowed_models.py`, `story_assets.py`, `history_messages.py`, `http_context.py`, `chart_data.py`, `present_weekly_instagram_schedule.py`, `generate_instagram_post_image.py`, and `generate_confirmation_gate.py`.
 
 Commands and ports: [AGENTS.md](../../../AGENTS.md).
 

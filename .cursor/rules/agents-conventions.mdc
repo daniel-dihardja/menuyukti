@@ -23,6 +23,11 @@ agents/
   tracing.py             # LangSmith / traceparent helpers
   core/
     chat/                # ReAct chat graph (primary product surface)
+      graph.py           # compile_chat_graph + incremental_user_message
+      tools_registry.py  # chat_tools_list / mode gates
+      middleware.py      # prompt, model/tools, retry, usage, tool errors
+      sse_stream.py      # astream → SSE lines
+      chat_run_config.py # thread_id + RunnableConfig builders
     format_markdown/     # POST /format-markdown helper
     style_spec/          # IG Studio style draft helpers
     ai_usage_client.py

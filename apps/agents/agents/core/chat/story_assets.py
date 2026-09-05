@@ -1,4 +1,9 @@
-"""Story image assistant scratchpad: labeled style/content/result refs in graph state."""
+"""Story image assistant scratchpad: labeled style/content/result refs in graph state.
+
+Tools that mutate ``story_assets`` must return
+``Command(update={"story_assets": next_list, "messages": [ToolMessage(...)]})``
+(not a bare string) so LangGraph ToolNode merges state and the checkpointer persists it.
+"""
 
 from __future__ import annotations
 

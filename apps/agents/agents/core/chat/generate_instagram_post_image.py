@@ -255,6 +255,7 @@ async def generate_instagram_post_image(
         if next_list is not None:
             result["action"] = "save_result"
             result["story_assets"] = next_list
+            # Mutating story_assets requires Command(update=...) for ToolNode + checkpointer.
             return Command(
                 update={
                     "story_assets": next_list,
