@@ -7,8 +7,8 @@ import { useLocale, useTranslations } from 'next-intl'
 
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import { formatCurrencyWithCode } from '@/lib/currency'
+import type { InventoryRefillForecastItem } from '@/lib/graphql/queries/inventory-refill-forecast'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
-import { INVENTORY_STORAGE_ZONE_SORT_ORDER } from '@/lib/inventar/storage-zones'
 import { routes } from '@/lib/routes'
 
 import { HistoryPanel } from './history-panel'
@@ -30,6 +30,7 @@ type Props = {
   branches: InventarBranch[]
   initialLocationId: number | null
   stockRows: InventoryStockRow[]
+  refillForecast: InventoryRefillForecastItem[]
   catalogItems: InventarCatalogOption[]
 }
 
@@ -37,6 +38,7 @@ export function InventarStockClient({
   branches,
   initialLocationId,
   stockRows,
+  refillForecast,
   catalogItems,
 }: Props) {
   const t = useTranslations('inventar')
@@ -55,17 +57,13 @@ export function InventarStockClient({
 
   const activeLocationId = initialLocationId
 
-  const sortedStockRows = [...stockRows].toSorted((a, b) => {
-    const zoneDiff =
-      INVENTORY_STORAGE_ZONE_SORT_ORDER[a.catalogItem.storageZone] -
-      INVENTORY_STORAGE_ZONE_SORT_ORDER[b.catalogItem.storageZone]
-    if (zoneDiff !== 0) return zoneDiff
-    return a.catalogItem.name.localeCompare(b.catalogItem.name)
-  })
+  const refillByCatalogId = new Map(
+    refillForecast.map((row) => [row.catalogItemId, row] as const),
+  )
 
   const activeBranch = branches.find((b) => b.id === activeLocationId)
   const currencyCode = resolveLocationCurrency(activeBranch?.currency)
-  const inventoryTotal = totalStockValue(sortedStockRows)
+  const inventoryTotal = totalStockValue(stockRows)
 
   function formatMoney(amount: number | null): string {
     if (amount == null) return t('priceEmpty')
@@ -124,7 +122,8 @@ export function InventarStockClient({
 
         <StockList
           activeLocationId={activeLocationId}
-          sortedStockRows={sortedStockRows}
+          stockRows={stockRows}
+          refillByCatalogId={refillByCatalogId}
           catalogCount={catalogItems.length}
           currencyCode={currencyCode}
           onUse={setUseRow}

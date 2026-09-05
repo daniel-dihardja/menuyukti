@@ -6,6 +6,7 @@ import { auth } from '@clerk/nextjs/server'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import {
   getCachedInventoryCatalog,
+  getCachedInventoryRefillForecast,
   getCachedInventoryStock,
   getCachedLocationsListData,
 } from '@/lib/graphql/cached-queries'
@@ -68,11 +69,14 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
       ? Number(workspaceIdRaw)
       : null
 
-  const [stockRows, catalogItems] = await Promise.all([
+  const [stockRows, catalogItems, refillForecast] = await Promise.all([
     initialLocationId != null
       ? getCachedInventoryStock(userId, initialLocationId)
       : Promise.resolve([]),
     workspaceId != null ? getCachedInventoryCatalog(userId, workspaceId) : Promise.resolve([]),
+    initialLocationId != null
+      ? getCachedInventoryRefillForecast(userId, initialLocationId)
+      : Promise.resolve([]),
   ])
 
   return (
@@ -80,6 +84,7 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
       branches={branches}
       initialLocationId={initialLocationId}
       stockRows={stockRows}
+      refillForecast={refillForecast}
       catalogItems={catalogItems.map((item) => ({
         id: item.id,
         name: item.name,
