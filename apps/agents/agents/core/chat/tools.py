@@ -33,7 +33,7 @@ def _user_id_from_config(config: RunnableConfig | None) -> str | None:
 
 @tool
 async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
-    """Load location-page data for the campaign venue: basics, opening hours, owner quick profile.
+    """Load location-page data for the venue: basics, opening hours, owner quick profile.
 
     Call when the user asks about venue hours, address, cuisine, contact links, or other
     location settings — and before proposing a weekly Instagram schedule so posting days
@@ -44,7 +44,7 @@ async def get_location_data(config: Annotated[RunnableConfig, InjectedToolArg()]
     if location_id is None or not user_id:
         return (
             "Location context is not available (missing location). "
-            "Open workflow chat for a campaign with a linked location."
+            "Open advisor chat with a linked location."
         )
     client = get_chat_http_client()
     try:
@@ -71,13 +71,13 @@ async def get_chart_data(
     ],
     config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
-    """Load analytics data for a workflow visualization chart (main Instagram planning sources).
+    """Load analytics data for a visualization chart (main Instagram planning sources).
 
     - ``venue_slot_strength_heatmap``: posting frequency and best timing (``schedule``).
     - ``menu_item_heatmap``: which menus to feature, with timing context.
     - ``pair_lift_matrix_heatmap``: interesting menu combos / co-purchase pairings.
 
-    Pass a chart_id from the workflow chart catalog exactly — do not invent ids.
+    Pass a chart_id from the chart catalog exactly — do not invent ids.
     """
     c = (config or {}).get("configurable") or {}
     location_id = c.get("location_id")
@@ -86,7 +86,7 @@ async def get_chart_data(
     if location_id is None or not user_id:
         return (
             "Location context is not available (missing location). "
-            "Open workflow chat for a campaign with a linked location."
+            "Open advisor chat with a linked location."
         )
     if not is_chart_id(chart_id):
         allowed = ", ".join(CHART_IDS)

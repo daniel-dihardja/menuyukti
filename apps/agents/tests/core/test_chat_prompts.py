@@ -1,4 +1,4 @@
-"""Tests for workflow chat system prompt template assembly."""
+"""Tests for advisor chat system prompt template assembly."""
 
 from agents_app.agents.core.chat.graph import chat_tools_list_from_config
 from agents_app.agents.core.chat.prompts import (

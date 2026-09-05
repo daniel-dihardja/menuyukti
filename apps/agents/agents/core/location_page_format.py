@@ -40,7 +40,7 @@ def fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
 
     Renders the full Instagram-readiness profile so downstream graphs can use the
     venue's stable facts (cuisine, positioning, service modes, links, guardrails)
-    without re-asking the owner for them per-campaign. Keys mirror the validator
+    without re-asking the owner for them on every chat. Keys mirror the validator
     in ``graphql.services.manual_quick_profile``.
     """
     mb = raw_loc.get("manualBriefInput")
@@ -51,7 +51,7 @@ def fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
         return ""
     lines: list[str] = [
         "## Owner-provided brief hints (manual)",
-        "_Declared by the venue owner in settings — stable across campaigns._",
+        "_Declared by the venue owner in settings — stable venue defaults._",
     ]
 
     line = _str_list_line(qp, "venueConcepts", "Venue types")
@@ -85,7 +85,7 @@ def fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
     for spec in (
         ("guestTags", "Guest context"),
         ("locationFocus", "Location focus (meal periods)"),
-        ("socialGoals", "Default social goals (overridable per campaign)"),
+        ("socialGoals", "Default social goals (overridable per chat)"),
         ("tonePresets", "Tone presets"),
     ):
         line = _str_list_line(qp, spec[0], spec[1])

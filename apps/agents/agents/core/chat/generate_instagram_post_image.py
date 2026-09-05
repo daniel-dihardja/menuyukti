@@ -45,7 +45,10 @@ def _web_app_url() -> str | None:
 
 
 def _internal_api_key() -> str | None:
-    key = os.environ.get("GRAPHQL_INTERNAL_API_KEY", "").strip()
+    key = (
+        os.environ.get("INTERNAL_API_KEY", "").strip()
+        or os.environ.get("GRAPHQL_INTERNAL_API_KEY", "").strip()
+    )
     return key or None
 
 
@@ -92,7 +95,7 @@ async def generate_instagram_post_image(
 ) -> Command | str:
     """Generate an image with Leonardo using a composed prompt.
 
-    Use when the user asks to generate, create, or regenerate an image (workflow chat or
+    Use when the user asks to generate, create, or regenerate an image (advisor chat or
     IG Studio Post Creator). Compose a clear image-generation prompt from the conversation
     (subject, layout, text on image, mood). Optional ``format`` (feed|tall|square|story|wide),
     ``model``, and ``quality`` (standard|high|ultra) override UI/context defaults when set.
@@ -137,8 +140,10 @@ async def generate_instagram_post_image(
     if not base:
         return "Error: WEB_APP_URL is not configured on the agents service."
     if not api_key:
-        return "Error: GRAPHQL_INTERNAL_API_KEY is not configured on the agents service."
-
+        return (
+            "Error: INTERNAL_API_KEY or GRAPHQL_INTERNAL_API_KEY is not configured "
+            "on the agents service."
+        )
     body: dict[str, Any] = {"prompt": trimmed}
     if post_id and page_id:
         body["postId"] = post_id

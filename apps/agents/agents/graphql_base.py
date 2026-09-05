@@ -44,7 +44,11 @@ def graphql_endpoint() -> str:
 
 def graphql_headers(user_id: str) -> dict[str, str]:
     headers: dict[str, str] = {"Content-Type": "application/json"}
-    key = os.environ.get("GRAPHQL_INTERNAL_API_KEY", "").strip()
+    # Same shared-secret resolution as inbound InternalApiKeyMiddleware / web generate.
+    key = (
+        os.environ.get("INTERNAL_API_KEY", "").strip()
+        or os.environ.get("GRAPHQL_INTERNAL_API_KEY", "").strip()
+    )
     if key:
         headers["X-Internal-Api-Key"] = key
     headers["X-User-Id"] = user_id

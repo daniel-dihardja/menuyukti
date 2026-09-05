@@ -1,4 +1,4 @@
-"""Allowlisted gateway model ids for workflow/agent chat.
+"""Allowlisted gateway model ids for advisor/agent chat.
 
 Keep in sync with apps/web/lib/chat/gateway-chat-models.ts (CHAT_GATEWAY_MODEL_IDS).
 Verified against https://ai-gateway.vercel.sh/v1/models (May 2026).

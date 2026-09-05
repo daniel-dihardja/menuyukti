@@ -17,8 +17,8 @@ _SEARCH_DEPTH = "basic"
 def make_search_web_tool() -> BaseTool | None:
     """Return a LangChain tool named ``search_web`` when ``TAVILY_API_KEY`` is set; else ``None``.
 
-    Uses Tavily's hosted search API (bounded egress). Prefer milestone context and
-    ``read_prior_milestones_data`` before calling the open web.
+    Uses Tavily's hosted search API (bounded egress). Prefer internal GraphQL-backed
+    tools (location, charts, media) before calling the open web.
     """
     key = os.environ.get("TAVILY_API_KEY", "").strip()
     if not key:
@@ -36,9 +36,8 @@ def make_search_web_tool() -> BaseTool | None:
     async def search_web(query: str) -> str:
         """Search the public web for current facts, trends, competitors, or regulations.
 
-        Prefer milestone goal, criteria, prior milestones data, and internal GraphQL-backed
-        tools first. Use when fresh external sources with citations (URLs and snippets) are
-        required. Keep the query focused (one topic per call).
+        Prefer location, chart, and media tools first. Use when fresh external sources with
+        citations (URLs and snippets) are required. Keep the query focused (one topic per call).
         """
         stripped = query.strip()
         if not stripped:

@@ -21,7 +21,7 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing**. Op
 ## Agentic patterns in use
 
 - **LangChain / LangGraph (`apps/agents`)** — chat ReAct via `create_agent`, checkpointer threads, async streaming (`astream` with `messages`/`updates`), tools that call GraphQL. Prefer modular layout: **`agents/core/chat/`**, **`models/`**, **`routers/`**, **`server.py`**. See `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
-- **Mode-driven tools** — general vs story assistant bind different tool sets (location/charts vs story scratchpad / IG image).
+- **Mode-driven tools** — general vs image assistant bind different tool sets (location/charts vs story scratchpad / IG image).
 - **Reflect** — generate → critique → revise remains useful for draft helpers (e.g. style specs) with iteration bounds when those flows exist.
 
 ## Layering and boundaries

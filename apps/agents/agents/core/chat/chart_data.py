@@ -1,4 +1,4 @@
-"""Load and format workflow visualization chart data for chat tools."""
+"""Load and format analytics visualization chart data for chat tools."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ _DEFAULT_DAILY_START_HOUR = 8
 _DEFAULT_DAILY_END_HOUR = 22
 _FALLBACK_NOTE = (
     "*(Data from a newer sales report for this location because the "
-    "workflow-linked report had no data for this chart.)*"
+    "selected analytics report had no data for this chart.)*"
 )
 _HEATMAP_MATRIX_FILTER_NOTE = "*(Filtered to star, plow horse, and puzzle menu-engineering items.)*"
 
