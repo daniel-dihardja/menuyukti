@@ -64,6 +64,34 @@ def test_chat_tools_list_omits_location_without_location_id() -> None:
     assert "present_weekly_instagram_schedule" in names
 
 
+def test_chat_tools_list_inventar_mode() -> None:
+    from agents_app.agents.core.chat.graph import chat_tools_list
+
+    names = [getattr(t, "name", "") for t in chat_tools_list(inventar=True, location_id=True)]
+    assert names == ["get_inventory_refill_forecast", "get_location_data"]
+    assert "present_weekly_instagram_schedule" not in names
+    assert "generate_instagram_post_image" not in names
+
+
+def test_chat_tools_list_from_config_inventar_mode() -> None:
+    from agents_app.agents.core.chat.graph import chat_tools_list_from_config
+
+    inventar = chat_tools_list_from_config(
+        {"chat_mode": "inventar", "location_id": 7, "user_id": "u1"}
+    )
+    names = [getattr(t, "name", "") for t in inventar]
+    assert "get_inventory_refill_forecast" in names
+    assert "get_location_data" in names
+    assert "present_weekly_instagram_schedule" not in names
+    assert "list_media" not in names
+
+    inventar_no_loc = chat_tools_list_from_config(
+        {"chat_mode": "inventar", "user_id": "u1"}
+    )
+    inventar_no_loc_names = [getattr(t, "name", "") for t in inventar_no_loc]
+    assert inventar_no_loc_names == ["get_inventory_refill_forecast"]
+
+
 def test_chat_tools_list_from_config_gates_by_context() -> None:
     from agents_app.agents.core.chat.graph import chat_tools_list_from_config
 
@@ -137,6 +165,7 @@ def test_compile_chat_graph_registers_scratchpad_tools_and_tool_error_middleware
     assert "save_story_asset" in tool_node.tools_by_name
     assert "clear_story_assets" in tool_node.tools_by_name
     assert "request_story_generate_confirmation" in tool_node.tools_by_name
+    assert "get_inventory_refill_forecast" in tool_node.tools_by_name
     assert "story_assets" in ChatAgentState.__annotations__
     # Error handling is middleware-based (not private ToolNode._handle_tool_errors).
     assert hasattr(_handle_tool_errors, "awrap_tool_call")

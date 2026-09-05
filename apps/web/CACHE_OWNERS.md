@@ -14,7 +14,6 @@ This maps cached read functions to the mutation routes that must invalidate them
 | `getCachedMenuHeatmaps(userId, analyticsRunId, locationId)`          | `graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId)` | `app/api/analytics/[analyticsId]/cogs/route.ts` via `revalidateAnalyticsRunComputationsCache`                  |
 | `getCachedMenuCombos(userId, analyticsRunId, locationId)`            | `graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId)` | `app/api/analytics/[analyticsId]/cogs/route.ts` via `revalidateAnalyticsRunComputationsCache`                  |
 | `getCachedPromotionMenuItems(userId, analyticsRunId, locationId)`    | `graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId)` | `app/api/analytics/[analyticsId]/cogs/route.ts` via `revalidateAnalyticsRunComputationsCache`                  |
-| `getCachedImageAiFlows(userId)`                                      | `graphqlImageAiFlowsCacheTag(userId)`                             | `app/api/image-ai-flows/route.ts`, `app/api/image-ai-flows/[slug]/route.ts`                                    |
 
 ## Notes
 

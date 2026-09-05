@@ -23,14 +23,21 @@ agents/
   tracing.py             # LangSmith / traceparent helpers
   core/
     chat/                # ReAct chat graph (primary product surface)
+      graph.py           # compile_chat_graph + incremental_user_message
+      tools_registry.py  # chat_tools_list / mode gates
+      middleware.py      # prompt, model/tools, retry, usage, tool errors
+      sse_stream.py      # astream → SSE lines
+      chat_run_config.py # thread_id + RunnableConfig builders
     format_markdown/     # POST /format-markdown helper
     style_spec/          # IG Studio style draft helpers
+    ai_usage_client.py
+    tavily_search_tool.py
     location_page_format.py
     llm_invoke.py
 models/
   llm_config.py
 routers/
-  chat.py
+  chat.py                # SSE chat + history (orchestration lives here today)
   format_markdown.py
   style_specs.py
 server.py
@@ -38,19 +45,19 @@ tests/
   core/
 ```
 
-**Convention:** product work belongs in **`agents/core/chat/`** (`graph.py`, `tools.py`, `prompts.py`, mode-gated tools). Expose HTTP via thin routers that call `build_chat_graph(...)`. Do **not** add milestone-run / preset-registry layout as live product.
+**Convention:** product work belongs in **`agents/core/chat/`** (`graph.py`, `tools.py`, `prompts.py`, mode-gated tools). Expose HTTP via routers that call **`compile_chat_graph(...)`** (and other `compile_*` / `build_*` factories). Keep **graph topology** out of routers; prefer extracting SSE/history helpers when `routers/chat.py` grows. Do **not** add milestone-run / preset-registry layout as live product.
 
 ## Graph factory pattern
 
-Compile graphs in a `build_*_graph(...)` factory function — do not import compiled graph instances directly. This keeps FastAPI routers thin and allows dependency injection (e.g. an `httpx.AsyncClient`).
+Compile graphs in a factory function (`compile_chat_graph` for product chat) — do not import compiled graph instances at module import time. This keeps FastAPI routers free of topology and allows dependency injection (e.g. an `httpx.AsyncClient`).
 
 ```python
 # agents/core/chat/graph.py
-def build_chat_graph(*, checkpointer: BaseCheckpointSaver | None = None):
+def compile_chat_graph(checkpointer: BaseCheckpointSaver | None):
     return create_agent(...)  # ReAct + tools; see chat/graph.py
 
-# routers/chat.py — thin; never embeds graph topology
-graph = build_chat_graph(checkpointer=...)
+# server.py / routers — use the compiled graph from app state
+graph = compile_chat_graph(checkpointer)
 ```
 
 ## State design
@@ -138,14 +145,14 @@ verdict: CriterionVerdict = await llm.ainvoke([...])
 
 Agents call the GraphQL API over HTTP (`GRAPHQL_ENDPOINT`) via dedicated helpers — never import `data_sources` or open a DB session from the agents app.
 
-Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL calls use **`graphql_headers()`** in `agents/graphql_base.py`: **`X-User-Id`**, plus **`X-Internal-Api-Key`** when `GRAPHQL_INTERNAL_API_KEY` is set (same header names as the web app’s `graphqlQuery`).
+Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL / web-generate calls use **`graphql_headers()`** (and the same key helper for image generate): **`X-User-Id`**, plus **`X-Internal-Api-Key`** when **`INTERNAL_API_KEY`** or **`GRAPHQL_INTERNAL_API_KEY`** is set (inbound middleware uses the same shared-secret resolution).
 
 ## Router conventions
 
 - One `APIRouter` per domain feature file under `routers/`.
 - Validate input with Pydantic request bodies; raise `HTTPException` for 4xx errors.
 - Require `X-Menuyukti-User-Id` header for authenticated endpoints (extract from `Request` headers).
-- Delegate all graph logic to `build_*_graph()` factories; keep handlers < 30 lines.
+- Delegate graph topology to `compile_chat_graph` / other factories; keep topology out of route handlers. Prefer extracting SSE streaming and history helpers when a router grows large.
 
 ## Environment
 
@@ -153,10 +160,10 @@ Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL calls use **`graphq
 |---|---|---|
 | `AI_GATEWAY_API_KEY` | Yes (unless `VERCEL_OIDC_TOKEN`) | LLM calls via Vercel AI Gateway |
 | `VERCEL_OIDC_TOKEN` | No | On Vercel; alternative to `AI_GATEWAY_API_KEY` |
-| `OPENAI_MODEL` | No | Override model (`gpt-4o-mini` → `openai/gpt-4o-mini`, or full `provider/model`) |
+| `OPENAI_MODEL` | No | Override model (`gpt-5.4` → `openai/gpt-5.4`, or full `provider/model`) |
 | `GRAPHQL_ENDPOINT` | Yes (for tools that call GraphQL) | GraphQL API base URL |
-| `GRAPHQL_INTERNAL_API_KEY` | No | Server-to-server auth header |
-| `LANGGRAPH_CHECKPOINT_DATABASE_URL` | No | Durable Postgres checkpoints for chat threads |
+| `INTERNAL_API_KEY` / `GRAPHQL_INTERNAL_API_KEY` | No (required in production) | Shared secret for inbound middleware and outbound GraphQL / web generate |
+| `LANGGRAPH_CHECKPOINT_DATABASE_URL` | No (required in production) | Durable Postgres checkpoints for chat threads |
 
 Load with `load_dotenv()` at server startup (`server.py`); `.env.example` documents all variables.
 

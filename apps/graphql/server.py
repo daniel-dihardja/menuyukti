@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -20,8 +21,6 @@ from .crm_auth.revoke import revoke_endpoint
 from .crm_auth.verify import verify_endpoint
 from .schema import schema
 
-INTERNAL_API_KEY = os.environ.get("INTERNAL_API_KEY", "")
-
 # Local Expo web (and similar) call CRM REST from the browser; override via CRM_CORS_ORIGINS.
 _DEFAULT_CRM_CORS_ORIGINS = (
     "http://localhost:8081",
@@ -29,6 +28,41 @@ _DEFAULT_CRM_CORS_ORIGINS = (
     "http://127.0.0.1:8081",
     "http://127.0.0.1:8082",
 )
+
+
+def _env_flag_true(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def is_production_runtime() -> bool:
+    """True when deployed production-like (or explicit GRAPHQL_ENV=production)."""
+    for key in ("GRAPHQL_ENV", "ENV", "VERCEL_ENV", "NODE_ENV"):
+        if os.environ.get(key, "").strip().lower() == "production":
+            return True
+    return False
+
+
+def expected_internal_api_key() -> str:
+    """Shared secret with web BFF / agents (``INTERNAL_API_KEY`` or ``GRAPHQL_INTERNAL_API_KEY``)."""
+    return (
+        os.environ.get("INTERNAL_API_KEY", "").strip()
+        or os.environ.get("GRAPHQL_INTERNAL_API_KEY", "").strip()
+    )
+
+
+# Kept for tests that monkeypatch ``server.INTERNAL_API_KEY`` directly.
+INTERNAL_API_KEY = expected_internal_api_key()
+
+
+def validate_startup_security() -> None:
+    """Fail fast in production when the GraphQL internal API key is missing."""
+    require_key = is_production_runtime() or _env_flag_true("GRAPHQL_REQUIRE_INTERNAL_API_KEY")
+    if require_key and not expected_internal_api_key():
+        msg = (
+            "INTERNAL_API_KEY or GRAPHQL_INTERNAL_API_KEY must be set in production "
+            "(or set GRAPHQL_REQUIRE_INTERNAL_API_KEY=0 only for local dev)."
+        )
+        raise RuntimeError(msg)
 
 
 def _cors_allow_origins() -> list[str]:
@@ -45,7 +79,8 @@ class InternalApiKeyMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         if path.startswith("/crm/v1/"):
             return await call_next(request)
-        if INTERNAL_API_KEY and request.headers.get("X-Internal-Api-Key", "") != INTERNAL_API_KEY:
+        expected = INTERNAL_API_KEY or expected_internal_api_key()
+        if expected and request.headers.get("X-Internal-Api-Key", "") != expected:
             return Response(status_code=403)
         return await call_next(request)
 
@@ -90,6 +125,12 @@ class GraphQLWithUserContext(GraphQL):
         return response
 
 
+@asynccontextmanager
+async def _lifespan(_app: Starlette):
+    validate_startup_security()
+    yield
+
+
 # uploadSalesReport uses GraphQL Upload scalar; enable multipart handling.
 _graphql_app = GraphQLWithUserContext(schema, multipart_uploads_enabled=True)
 
@@ -102,7 +143,8 @@ _starlette_app = Starlette(
         Route("/crm/v1/auth/revoke", revoke_endpoint, methods=["POST"]),
         Route("/crm/v1/me/cashback", me_cashback_endpoint, methods=["GET"]),
         Mount("/", app=_graphql_app),
-    ]
+    ],
+    lifespan=_lifespan,
 )
 app = CORSMiddleware(
     InternalApiKeyMiddleware(_starlette_app),

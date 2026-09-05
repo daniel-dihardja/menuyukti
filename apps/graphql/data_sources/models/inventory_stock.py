@@ -12,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    String,
     UniqueConstraint,
     func,
 )
@@ -52,6 +53,11 @@ class InventoryStock(Base):
     on_hand: Mapped[float] = mapped_column(Float, nullable=False)
     last_in_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     last_out_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    last_updated_by_clerk_user_id: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

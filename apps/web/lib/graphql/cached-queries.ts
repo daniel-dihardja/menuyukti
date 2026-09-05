@@ -48,6 +48,10 @@ import {
   type InventoryCatalogItemsData,
 } from '@/lib/graphql/queries/inventory-catalog'
 import {
+  INVENTORY_REFILL_FORECAST_QUERY,
+  type InventoryRefillForecastData,
+} from '@/lib/graphql/queries/inventory-refill-forecast'
+import {
   INVENTORY_STOCK_QUERY,
   type InventoryStockData,
 } from '@/lib/graphql/queries/inventory-stock'
@@ -327,4 +331,28 @@ export async function getCachedInventoryStock(
     'InventoryStock',
   )
   return data.inventoryStock
+}
+
+/**
+ * Refill forecast (avg daily out + days until refill) for a location.
+ * Shares the stock cache tag so stock mutations refresh both.
+ */
+export async function getCachedInventoryRefillForecast(
+  userId: string,
+  locationId: number,
+  windowDays?: number,
+): Promise<InventoryRefillForecastData['inventoryRefillForecast']> {
+  'use cache'
+  cacheTag(graphqlInventoryStockCacheTag(userId, locationId))
+  cacheLife({ revalidate: 60 })
+  const data = await graphqlQuery<InventoryRefillForecastData>(
+    INVENTORY_REFILL_FORECAST_QUERY,
+    {
+      locationId: String(locationId),
+      ...(windowDays != null ? { windowDays } : {}),
+    },
+    userId,
+    'InventoryRefillForecast',
+  )
+  return data.inventoryRefillForecast
 }

@@ -46,35 +46,9 @@ import graphql.data_sources.models  # noqa: F401, E402
 
 
 def seed_db(target_engine=None) -> None:
-    """Insert default image AI flows when missing (idempotent)."""
+    """No-op placeholder kept for ``init_db`` callers (legacy seed removed)."""
 
-    resolved_engine = target_engine or engine
-    Session = sessionmaker(bind=resolved_engine, expire_on_commit=False)
-    from graphql.data_sources import ImageAiFlow
-
-    with Session() as session:
-        existing = (
-            session.query(ImageAiFlow).filter(ImageAiFlow.slug == "remove-background").first()
-        )
-        if existing is None:
-            session.add(
-                ImageAiFlow(
-                    slug="remove-background",
-                    display_name="Prepare product for ads",
-                    prompt=(
-                        "Remove the background completely. Keep only the main subject "
-                        "centered on a solid white background (opaque, not transparent). "
-                        "Preserve edges and fine details of the subject."
-                    ),
-                    model="gemini-2.5-flash-image",
-                    prompt_enhance="OFF",
-                    image_reference_strength="MID",
-                    style_ids=["556c1ee5-ec38-42e8-955a-1e82dad0ffa1"],
-                    is_active=True,
-                    sort_order=0,
-                )
-            )
-            session.commit()
+    del target_engine
 
 
 def init_db(target_engine=None) -> None:

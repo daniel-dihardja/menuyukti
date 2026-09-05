@@ -11,6 +11,10 @@ from pathlib import Path
 TEST_DB = Path(__file__).resolve().parent.parent / "test.db"
 os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{TEST_DB}"
 os.environ.setdefault("CRM_JWT_SECRET", "test-crm-jwt-secret-at-least-32-chars!!")
+# Avoid production startup hard-fails when TestClient mounts the ASGI app.
+os.environ.setdefault("GRAPHQL_REQUIRE_INTERNAL_API_KEY", "")
+os.environ.setdefault("GRAPHQL_ENV", "")
+os.environ.setdefault("NODE_ENV", "test")
 
 import pytest
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID

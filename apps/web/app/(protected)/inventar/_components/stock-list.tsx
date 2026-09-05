@@ -8,8 +8,14 @@ import {
   ResponsiveActionMenu,
   type ResponsiveActionMenuItem,
 } from '@/app/(protected)/analytics/_components/responsive-action-menu'
+import {
+  SortableTable,
+  useSortableColumns,
+  type SortableTableColumn,
+} from '@/components/sortable-table'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import { formatCurrencyWithCode } from '@/lib/currency'
+import type { InventoryRefillForecastItem } from '@/lib/graphql/queries/inventory-refill-forecast'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
@@ -21,23 +27,25 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table'
+import { TableCell, TableRow } from '@workspace/ui/components/table'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { formatPackLabel } from './format-pack'
 import { StockBadge } from './stock-badge'
-import { cardActivitySummary, stockLineValue } from './stock-utils'
+import {
+  cardActivitySummary,
+  compareInventarStockRows,
+  formatAvgDailyOut,
+  formatDaysUntilRefill,
+  stockLineValue,
+  type InventarStockSortKey,
+} from './stock-utils'
+import { UpdatedByCell } from './updated-by-cell'
 
 type Props = {
   activeLocationId: number | null
-  sortedStockRows: InventoryStockRow[]
+  stockRows: InventoryStockRow[]
+  refillByCatalogId: ReadonlyMap<number, InventoryRefillForecastItem>
   catalogCount: number
   currencyCode: string
   onUse: (row: InventoryStockRow) => void
@@ -49,7 +57,8 @@ type Props = {
 
 export function StockList({
   activeLocationId,
-  sortedStockRows,
+  stockRows,
+  refillByCatalogId,
   catalogCount,
   currencyCode,
   onUse,
@@ -61,17 +70,34 @@ export function StockList({
   const t = useTranslations('inventar')
   const locale = useLocale()
   const isDesktop = useDesktopLayout()
+  const forecastEmpty = t('forecastEmpty')
+  const { sortKey, sortDirection, toggleSort } = useSortableColumns<InventarStockSortKey>(
+    'storageZone',
+    'asc',
+  )
+
+  const displayRows = [...stockRows].toSorted((a, b) =>
+    compareInventarStockRows(a, b, sortKey, sortDirection, locale, refillByCatalogId),
+  )
 
   function formatMoney(amount: number | null): string {
     if (amount == null) return t('priceEmpty')
     return formatCurrencyWithCode(amount, currencyCode, locale)
   }
 
+  function forecastCells(row: InventoryStockRow) {
+    const forecast = refillByCatalogId.get(row.catalogItemId)
+    return {
+      avgDailyOut: formatAvgDailyOut(forecast?.avgDailyOut, locale, forecastEmpty),
+      daysUntilRefill: formatDaysUntilRefill(forecast?.daysUntilRefill, locale, forecastEmpty),
+    }
+  }
+
   if (activeLocationId == null) {
     return <p className="text-sm text-muted-foreground">{t('branchPlaceholder')}</p>
   }
 
-  if (sortedStockRows.length === 0) {
+  if (stockRows.length === 0) {
     return (
       <Empty className="border border-dashed">
         <EmptyHeader>
@@ -146,22 +172,39 @@ export function StockList({
   }
 
   if (isDesktop) {
+    const columns: SortableTableColumn<InventarStockSortKey | 'actions' | 'updatedBy'>[] = [
+      { id: 'name', label: t('name'), align: 'left', className: 'w-[14%]' },
+      { id: 'storageZone', label: t('storageZone'), align: 'left', className: 'w-[9%]' },
+      { id: 'pack', label: t('pack'), align: 'left', className: 'w-[9%]' },
+      { id: 'onHand', label: t('currentStock'), align: 'right', className: 'w-[11%]' },
+      { id: 'avgDailyOut', label: t('avgDailyOut'), align: 'right', className: 'w-[9%]' },
+      { id: 'daysUntilRefill', label: t('daysUntilRefill'), align: 'right', className: 'w-[9%]' },
+      { id: 'value', label: t('value'), align: 'right', className: 'w-[9%]' },
+      { id: 'activity', label: t('activity'), align: 'left', className: 'w-[10%]' },
+      {
+        id: 'updatedBy',
+        label: t('updatedBy'),
+        align: 'left',
+        sortable: false,
+        className: 'w-[12%]',
+      },
+      { id: 'actions', label: '', sortable: false, className: 'w-[8%]' },
+    ]
+
     return (
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[18%]">{t('name')}</TableHead>
-            <TableHead className="w-[14%]">{t('storageZone')}</TableHead>
-            <TableHead className="w-[14%]">{t('pack')}</TableHead>
-            <TableHead className="w-[14%] text-right">{t('currentStock')}</TableHead>
-            <TableHead className="w-[14%] text-right">{t('value')}</TableHead>
-            <TableHead className="w-[16%]">{t('activity')}</TableHead>
-            <TableHead className="w-[10%]" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sortedStockRows.map((row) => {
+      <div className="[&_table]:table-fixed">
+        <SortableTable
+          columns={columns}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={(key) => {
+            if (key === 'actions' || key === 'updatedBy') return
+            toggleSort(key)
+          }}
+        >
+          {displayRows.map((row) => {
             const activityText = cardActivitySummary(row, t, locale)
+            const { avgDailyOut, daysUntilRefill } = forecastCells(row)
             return (
               <TableRow key={row.id}>
                 <TableCell className="max-w-0 font-medium">
@@ -190,6 +233,12 @@ export function StockList({
                   </div>
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">
+                  {avgDailyOut}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">
+                  {daysUntilRefill}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-right tabular-nums">
                   {formatMoney(stockLineValue(row))}
                 </TableCell>
                 <TableCell className="max-w-0 whitespace-nowrap text-sm">
@@ -203,6 +252,9 @@ export function StockList({
                     {activityText}
                   </span>
                 </TableCell>
+                <TableCell className="max-w-0">
+                  <UpdatedByCell actor={row.updatedBy} emptyLabel={t('updatedByEmpty')} />
+                </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => onUse(row)}>
@@ -214,17 +266,18 @@ export function StockList({
               </TableRow>
             )
           })}
-        </TableBody>
-      </Table>
+        </SortableTable>
+      </div>
     )
   }
 
   return (
     <ul className="flex flex-col gap-3">
-      {sortedStockRows.map((row) => {
+      {displayRows.map((row) => {
         const packLabel = formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)
         const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
         const lineValue = stockLineValue(row)
+        const { avgDailyOut, daysUntilRefill } = forecastCells(row)
         return (
           <li
             key={row.id}
@@ -243,6 +296,14 @@ export function StockList({
                 </p>
                 <p className="mt-1 truncate text-xs text-muted-foreground">
                   {cardActivitySummary(row, t, locale)}
+                </p>
+                <div className="mt-1">
+                  <UpdatedByCell actor={row.updatedBy} emptyLabel={t('updatedByEmpty')} />
+                </div>
+                <p className="mt-1 text-sm tabular-nums">
+                  {t('avgDailyOut')}: {avgDailyOut}
+                  <span className="text-muted-foreground"> · </span>
+                  {t('daysUntilRefill')}: {daysUntilRefill}
                 </p>
                 <p className="mt-1 text-sm tabular-nums">
                   {t('value')}: {formatMoney(lineValue)}

@@ -10,7 +10,6 @@ from graphql.data_sources.models.crm_cashback_entry import CrmCashbackEntry
 from graphql.data_sources.models.crm_customer import CrmCustomer
 from graphql.data_sources.models.crm_device import CrmDevice
 from graphql.data_sources.models.crm_enrollment_token import CrmEnrollmentToken
-from graphql.data_sources.models.image_ai_flow import ImageAiFlow
 from graphql.data_sources.models.instagram import (
     InstagramPost,
     InstagramPostPage,
@@ -43,7 +42,6 @@ __all__ = [
     "CrmCustomer",
     "CrmDevice",
     "CrmEnrollmentToken",
-    "ImageAiFlow",
     "InventoryCatalogItem",
     "InventoryStock",
     "InventoryStockMovement",

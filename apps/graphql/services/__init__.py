@@ -14,13 +14,10 @@ __all__ = [
     "SalesReportIngestResult",
     "build_promotion_menu_items",
     "compute_menu_engineering_matrix",
-    "image_ai_flow",
     "ingest_sales_report_upload",
-    "update_image_ai_flow",
 ]
 
 _LAZY: dict[str, tuple[str, str | None]] = {
-    "update_image_ai_flow": ("graphql.services.image_ai_flow", "update_image_ai_flow"),
     "MenuEngineeringMatrixData": ("graphql.services.menu_engineering", "MenuEngineeringMatrixData"),
     "compute_menu_engineering_matrix": (
         "graphql.services.menu_engineering",
@@ -32,7 +29,6 @@ _LAZY: dict[str, tuple[str, str | None]] = {
     ),
     "SalesReportIngestResult": ("graphql.services.sales_report", "SalesReportIngestResult"),
     "ingest_sales_report_upload": ("graphql.services.sales_report", "ingest_sales_report_upload"),
-    "image_ai_flow": ("graphql.services.image_ai_flow", None),
 }
 
 _cache: dict[str, Any] = {}

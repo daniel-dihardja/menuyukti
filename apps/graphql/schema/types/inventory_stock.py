@@ -13,6 +13,7 @@ class InventoryStockType:
     onHand: float
     lastInOn: date | None
     lastOutOn: date | None
+    lastUpdatedByClerkUserId: str | None
     catalogItem: InventoryCatalogItemType
     createdAt: datetime
     updatedAt: datetime

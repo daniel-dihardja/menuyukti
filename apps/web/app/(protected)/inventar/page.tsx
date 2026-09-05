@@ -4,8 +4,10 @@ import type { Metadata } from 'next'
 import { auth } from '@clerk/nextjs/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { actorFromProfileMap, getClerkUserProfilesByIds } from '@/lib/clerk/user-profiles'
 import {
   getCachedInventoryCatalog,
+  getCachedInventoryRefillForecast,
   getCachedInventoryStock,
   getCachedLocationsListData,
 } from '@/lib/graphql/cached-queries'
@@ -68,18 +70,30 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
       ? Number(workspaceIdRaw)
       : null
 
-  const [stockRows, catalogItems] = await Promise.all([
+  const [stockRowsRaw, catalogItems, refillForecast] = await Promise.all([
     initialLocationId != null
       ? getCachedInventoryStock(userId, initialLocationId)
       : Promise.resolve([]),
     workspaceId != null ? getCachedInventoryCatalog(userId, workspaceId) : Promise.resolve([]),
+    initialLocationId != null
+      ? getCachedInventoryRefillForecast(userId, initialLocationId)
+      : Promise.resolve([]),
   ])
+
+  const profiles = await getClerkUserProfilesByIds(
+    stockRowsRaw.map((row) => row.lastUpdatedByClerkUserId),
+  )
+  const stockRows = stockRowsRaw.map((row) => ({
+    ...row,
+    updatedBy: actorFromProfileMap(row.lastUpdatedByClerkUserId, profiles),
+  }))
 
   return (
     <InventarStockClient
       branches={branches}
       initialLocationId={initialLocationId}
       stockRows={stockRows}
+      refillForecast={refillForecast}
       catalogItems={catalogItems.map((item) => ({
         id: item.id,
         name: item.name,
@@ -110,6 +124,7 @@ export default async function InventarPage({
     <AnalyticsPageShell
       title={t('title')}
       breadcrumbs={[{ label: t('title') }]}
+      contentWidth="full"
       mainClassName="min-h-0"
     >
       <div className="flex w-full flex-col gap-2">

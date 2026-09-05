@@ -217,3 +217,37 @@ def test_duplicate_collection_name(media_workspace_id: int):
     assert first.errors is None
     second = _execute(_CREATE_COLLECTION, {"name": "Menu"})
     assert second.errors is not None
+
+
+_GET_COLLECTION = """
+query MediaCollection($id: Int!) {
+  mediaCollection(id: $id) {
+    id
+    name
+  }
+}
+"""
+
+OTHER_USER_ID = "clerk_other_media_user"
+
+
+def test_media_collection_null_for_non_member(media_workspace_id: int):
+    created = _execute(_CREATE_COLLECTION, {"name": "Private refs"})
+    assert created.errors is None
+    collection_id = created.data["createMediaCollection"]["id"]
+
+    outsider = _execute(
+        _GET_COLLECTION,
+        {"id": collection_id},
+        context_value={"user_id": OTHER_USER_ID},
+    )
+    assert outsider.errors is None
+    assert outsider.data["mediaCollection"] is None
+
+    outsider_assets = _execute(
+        _LIST_ASSETS,
+        {"collectionId": collection_id},
+        context_value={"user_id": OTHER_USER_ID},
+    )
+    assert outsider_assets.errors is None
+    assert outsider_assets.data["mediaAssets"] == []

@@ -40,6 +40,7 @@ packages = [
     "graphql.data_sources.models",
     "graphql.reports",
     "graphql.services",
+    "graphql.scripts",
 ]
 
 [tool.setuptools.package-dir]
@@ -51,6 +52,7 @@ packages = [
 "graphql.data_sources.models" = "data_sources/models"
 "graphql.reports" = "reports"
 "graphql.services" = "services"
+"graphql.scripts" = "scripts"
 
 [tool.ruff]
 line-length = 100

@@ -6,7 +6,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
-from agents_app.agents.graphql_base import GraphQLHttpError, classify_graphql_failure, graphql_post
+from agents_app.agents.graphql_base import (
+    GraphQLHttpError,
+    classify_graphql_failure,
+    graphql_headers,
+    graphql_post,
+)
 
 
 def test_classify_graphql_http_error() -> None:
@@ -20,6 +25,31 @@ def test_classify_timeout_retryable() -> None:
     failure = classify_graphql_failure(httpx.TimeoutException("slow"))
     assert failure.code == "UPSTREAM_TIMEOUT"
     assert failure.retryable is True
+
+
+def test_graphql_headers_prefer_internal_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("INTERNAL_API_KEY", "from-internal")
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "from-graphql")
+    headers = graphql_headers("user-1")
+    assert headers["X-Internal-Api-Key"] == "from-internal"
+    assert headers["X-User-Id"] == "user-1"
+
+
+def test_graphql_headers_fallback_graphql_internal_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("INTERNAL_API_KEY", raising=False)
+    monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "from-graphql")
+    headers = graphql_headers("user-1")
+    assert headers["X-Internal-Api-Key"] == "from-graphql"
+
+
+def test_graphql_headers_omit_key_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("INTERNAL_API_KEY", raising=False)
+    monkeypatch.delenv("GRAPHQL_INTERNAL_API_KEY", raising=False)
+    headers = graphql_headers("user-1")
+    assert "X-Internal-Api-Key" not in headers
+    assert headers["X-User-Id"] == "user-1"
 
 
 @pytest.mark.asyncio

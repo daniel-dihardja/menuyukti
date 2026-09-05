@@ -139,3 +139,20 @@ query MediaAssets($collectionId: Int) {
   }
 }
 """
+
+INVENTORY_REFILL_FORECAST_QUERY = """
+query InventoryRefillForecast($locationId: ID!, $windowDays: Int) {
+  inventoryRefillForecast(locationId: $locationId, windowDays: $windowDays) {
+    catalogItemId
+    name
+    storageZone
+    onHand
+    minOnHand
+    avgDailyOut
+    daysUntilRefill
+    priorityRank
+    confidence
+    windowDays
+  }
+}
+"""

@@ -1,4 +1,4 @@
-"""Tests for workflow chat system prompt template assembly."""
+"""Tests for advisor chat system prompt template assembly."""
 
 from agents_app.agents.core.chat.graph import chat_tools_list_from_config
 from agents_app.agents.core.chat.prompts import (
@@ -133,6 +133,15 @@ def test_build_system_prompt_image_assistant_mode() -> None:
     assert (
         "Do **not** call `save_story_asset` or `generate_instagram_post_image` in this phase" in out
     )
+
+
+def test_build_system_prompt_inventar_mode() -> None:
+    out = build_system_prompt(chat_mode="inventar")
+    assert "inventar" in out.lower()
+    assert "get_inventory_refill_forecast" in out
+    assert "insufficient_history" in out
+    assert "get_chart_data" not in out
+    assert "Instagram content assistant" not in out
 
 
 def test_build_system_prompt_image_assistant_legacy_alias() -> None:

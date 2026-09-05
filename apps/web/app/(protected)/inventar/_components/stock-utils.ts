@@ -1,5 +1,8 @@
 import { getAppCurrencyCode } from '@/lib/app-currency'
+import type { InventoryRefillForecastItem } from '@/lib/graphql/queries/inventory-refill-forecast'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
+import { INVENTORY_STORAGE_ZONE_SORT_ORDER } from '@/lib/inventar/storage-zones'
+import type { SortDirection } from '@/components/sortable-table'
 
 export type InventarBranch = { id: number; name: string; currency: string | null }
 
@@ -85,6 +88,135 @@ export function cardActivitySummary(
   if (lastOut) return t('activityOut', { date: formatActivityDate(lastOut, locale) })
   if (lastIn) return t('activityIn', { date: formatActivityDate(lastIn, locale) })
   return t('activityInEmpty')
+}
+
+export function formatAvgDailyOut(
+  value: number | undefined,
+  locale: string,
+  empty: string,
+): string {
+  if (value == null || !Number.isFinite(value)) return empty
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: value < 10 ? 2 : 1,
+    minimumFractionDigits: 0,
+  }).format(value)
+}
+
+export function formatDaysUntilRefill(
+  value: number | null | undefined,
+  locale: string,
+  empty: string,
+): string {
+  if (value == null || !Number.isFinite(value)) return empty
+  if (value <= 0) {
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(0)
+  }
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: value < 10 ? 1 : 0,
+    minimumFractionDigits: 0,
+  }).format(value)
+}
+
+export type InventarStockSortKey =
+  | 'name'
+  | 'storageZone'
+  | 'pack'
+  | 'onHand'
+  | 'avgDailyOut'
+  | 'daysUntilRefill'
+  | 'value'
+  | 'activity'
+
+function compareNullableNumber(
+  a: number | null | undefined,
+  b: number | null | undefined,
+  direction: SortDirection,
+): number {
+  const aMissing = a == null || !Number.isFinite(a)
+  const bMissing = b == null || !Number.isFinite(b)
+  if (aMissing && bMissing) return 0
+  if (aMissing) return 1
+  if (bMissing) return -1
+  const diff = a - b
+  return direction === 'asc' ? diff : -diff
+}
+
+function latestActivityIso(row: InventoryStockRow): string | null {
+  const { lastInOn, lastOutOn } = row
+  if (lastInOn && lastOutOn) return lastOutOn >= lastInOn ? lastOutOn : lastInOn
+  return lastOutOn ?? lastInOn
+}
+
+export function compareInventarStockRows(
+  a: InventoryStockRow,
+  b: InventoryStockRow,
+  sortKey: InventarStockSortKey,
+  sortDirection: SortDirection,
+  locale: string,
+  refillByCatalogId: ReadonlyMap<number, InventoryRefillForecastItem>,
+): number {
+  let cmp = 0
+
+  switch (sortKey) {
+    case 'name':
+      cmp = a.catalogItem.name.localeCompare(b.catalogItem.name, locale)
+      cmp = sortDirection === 'asc' ? cmp : -cmp
+      break
+    case 'storageZone': {
+      const zoneDiff =
+        INVENTORY_STORAGE_ZONE_SORT_ORDER[a.catalogItem.storageZone] -
+        INVENTORY_STORAGE_ZONE_SORT_ORDER[b.catalogItem.storageZone]
+      cmp = sortDirection === 'asc' ? zoneDiff : -zoneDiff
+      break
+    }
+    case 'pack': {
+      const sizeDiff = a.catalogItem.packageSize - b.catalogItem.packageSize
+      if (sizeDiff !== 0) {
+        cmp = sortDirection === 'asc' ? sizeDiff : -sizeDiff
+      } else {
+        const unitCmp = a.catalogItem.packageUnit.localeCompare(b.catalogItem.packageUnit, locale)
+        cmp = sortDirection === 'asc' ? unitCmp : -unitCmp
+      }
+      break
+    }
+    case 'onHand':
+      cmp = compareNullableNumber(a.onHand, b.onHand, sortDirection)
+      break
+    case 'avgDailyOut':
+      cmp = compareNullableNumber(
+        refillByCatalogId.get(a.catalogItemId)?.avgDailyOut,
+        refillByCatalogId.get(b.catalogItemId)?.avgDailyOut,
+        sortDirection,
+      )
+      break
+    case 'daysUntilRefill':
+      cmp = compareNullableNumber(
+        refillByCatalogId.get(a.catalogItemId)?.daysUntilRefill,
+        refillByCatalogId.get(b.catalogItemId)?.daysUntilRefill,
+        sortDirection,
+      )
+      break
+    case 'value':
+      cmp = compareNullableNumber(stockLineValue(a), stockLineValue(b), sortDirection)
+      break
+    case 'activity': {
+      const aIso = latestActivityIso(a)
+      const bIso = latestActivityIso(b)
+      if (!aIso && !bIso) cmp = 0
+      else if (!aIso) cmp = 1
+      else if (!bIso) cmp = -1
+      else {
+        const isoCmp = aIso.localeCompare(bIso)
+        cmp = sortDirection === 'asc' ? isoCmp : -isoCmp
+      }
+      break
+    }
+    default:
+      cmp = 0
+  }
+
+  if (cmp !== 0) return cmp
+  return a.catalogItem.name.localeCompare(b.catalogItem.name, locale)
 }
 
 export type InventarApiErrorPayload = {

@@ -7,6 +7,7 @@ import {
   type MyWorkspaceData,
   type WorkspaceMembersData,
 } from '@/lib/graphql/queries'
+import { displayNameFromClerkUser, primaryEmailFromClerkUser } from '@/lib/clerk/user-profiles'
 
 export type WorkspaceMemberResponse = {
   id: string
@@ -26,34 +27,6 @@ export type WorkspaceTeamData = {
   }
   isOwner: boolean
   members: WorkspaceMemberResponse[]
-}
-
-function displayNameFromClerkUser(user: {
-  fullName: string | null
-  firstName: string | null
-  lastName: string | null
-  username: string | null
-  primaryEmailAddress?: { emailAddress: string } | null
-  emailAddresses: Array<{ emailAddress: string }>
-}): string | null {
-  const full = user.fullName?.trim()
-  if (full) return full
-  const combined = `${user.firstName?.trim() ?? ''} ${user.lastName?.trim() ?? ''}`.trim()
-  if (combined) return combined
-  if (user.username) return user.username
-  const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress
-  if (email) {
-    const local = email.split('@')[0]
-    if (local) return local
-  }
-  return null
-}
-
-function primaryEmailFromClerkUser(user: {
-  primaryEmailAddress?: { emailAddress: string } | null
-  emailAddresses: Array<{ emailAddress: string }>
-}): string | null {
-  return user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? null
 }
 
 async function enrichMembers(

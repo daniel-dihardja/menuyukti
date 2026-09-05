@@ -40,6 +40,7 @@ def stock_to_gql(row: InventoryStock) -> InventoryStockType:
         onHand=row.on_hand,
         lastInOn=row.last_in_on,
         lastOutOn=row.last_out_on,
+        lastUpdatedByClerkUserId=row.last_updated_by_clerk_user_id,
         catalogItem=catalog_item_to_gql(row.catalog_item),
         createdAt=row.created_at,
         updatedAt=row.updated_at,
@@ -59,5 +60,6 @@ def movement_to_gql(row: InventoryStockMovement) -> InventoryStockMovementType:
         note=row.note,
         relatedMovementId=row.related_movement_id,
         relatedLocationId=related.location_id if related is not None else None,
+        createdByClerkUserId=row.created_by_clerk_user_id,
         createdAt=row.created_at,
     )

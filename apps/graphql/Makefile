@@ -3,7 +3,7 @@ UV=uv run
 UVICORN=uv run uvicorn
 ALEMBIC=PYTHONPATH=../.. uv run alembic
 
-.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
+.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
 
 install:
 	uv sync --all-groups
@@ -72,10 +72,21 @@ load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
 
-# Seeds Workspace + Location. Clerk user id: USER_ID=... (this run only), or DEV_CLERK_USER_ID env, else dev_local_user.
+# Selective seed (default SCOPE=inventar). Requires USER_ID=... or DEV_CLERK_USER_ID.
+# Examples:
+#   make dev-data USER_ID=user_xxx
+#   make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx
+#   make db-reset-dev SEED=1 USER_ID=user_xxx
 dev-data:
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_dev_data \
-		$(if $(USER_ID),--clerk-user-id "$(USER_ID)",)
+		--scope "$(or $(SCOPE),inventar)" \
+		$(if $(USER_ID),--clerk-user-id "$(USER_ID)",) \
+		$(if $(EXCEL),--excel "$(EXCEL)",) \
+		$(if $(COGS),--cogs "$(COGS)",)
+
+# Destructive schema reset via Alembic, then optional seed when SEED=1.
+db-reset-dev: drop-db db-upgrade
+	$(if $(SEED),$(MAKE) dev-data SCOPE="$(or $(SCOPE),inventar)" USER_ID="$(USER_ID)" EXCEL="$(EXCEL)" COGS="$(COGS)",)
 
 lint:
 	uv run --group dev ruff check .

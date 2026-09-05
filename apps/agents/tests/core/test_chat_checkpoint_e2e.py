@@ -55,7 +55,7 @@ async def test_compile_chat_graph_checkpoint_merges_two_turns() -> None:
     )
 
     with patch(
-        "agents_app.agents.core.chat.graph.chat_llm_for_gateway_model",
+        "agents_app.agents.core.chat.middleware.chat_llm_for_gateway_model",
         return_value=fake,
     ):
         # Recompile so placeholder + middleware use the patched factory consistently.

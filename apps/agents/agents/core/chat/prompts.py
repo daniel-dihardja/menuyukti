@@ -220,11 +220,37 @@ If the user wants to pick a style reference or content image from the workspace 
 you may use `list_media_collections` and `list_media`. Do not invent filenames.
 """
 
+INVENTAR_ASSISTANT_PROMPT = """\
+You are the Menuyukti inventar (pantry stock) assistant for restaurant operators.
+Help the user understand what to refill or reorder, based on stock levels and recent
+usage — not Instagram marketing.
+
+Answer clearly and concisely.
+
+## Refill forecast
+
+When the user asks what to refill, reorder, or restock first, how many days of stock
+remain, or which items are running low, call `get_inventory_refill_forecast` before
+answering. The tool returns ranked items with on-hand, min on-hand, average daily out,
+days until refill, priority rank, and confidence.
+
+- Prefer items with lower ``daysUntilRefill`` (and ``priorityRank`` 1 first).
+- Items already at or below min on-hand have ``daysUntilRefill`` of 0 — call those out.
+- When ``confidence`` is ``insufficient_history``, say there is not enough out history
+  to estimate days — do not invent a burn rate.
+- Cite the window (``windowDays``) briefly when summarizing.
+- Never invent burn rates, days-until-refill, or stock numbers that are not in the tool
+  result.
+
+You may optionally call `get_location_data` if venue name/hours help context. Do not
+mutate stock, create orders, or claim you placed a purchase.
+"""
+
 
 CHART_ANALYTICS_SECTION = """\
 ## Chart analytics
 
-The three workflow charts are your main data sources. When chart tools are available, call
+The three analytics charts are your main data sources. When chart tools are available, call
 `get_chart_data` with a catalog chart_id. Do not invent chart ids. Use chart data privately
 to decide timing and content; do not dump full chart payloads into the user reply.
 
@@ -255,7 +281,7 @@ or chart-based plans, tell them to attach a sales report in the chat composer.
 # leonardo_image_block, ig_studio_block.
 SYSTEM_PROMPT_TEMPLATE = """\
 You are the Menuyukti Instagram content assistant for restaurant marketers. Help the user
-plan campaign content, captions, schedules, and visuals. Prefer grounded answers when sales
+plan content, captions, schedules, and visuals. Prefer grounded answers when sales
 charts or location data are available; otherwise give clear Instagram advice without inventing
 venue sales numbers.
 
@@ -335,6 +361,8 @@ def build_system_prompt(
     if mode == "image_assistant":
         fields = _image_format_prompt_fields(image_format)
         return IMAGE_ASSISTANT_PROMPT_TEMPLATE.format(**fields).rstrip() + "\n"
+    if mode == "inventar":
+        return INVENTAR_ASSISTANT_PROMPT.rstrip() + "\n"
 
     if include_chart_catalog:
         chart_section = f"{CHART_ANALYTICS_SECTION.strip()}\n\n"

@@ -135,6 +135,7 @@ query Stock($locationId: ID!) {
   inventoryStock(locationId: $locationId) {
     id
     onHand
+    lastUpdatedByClerkUserId
     catalogItem { name packageSize packageUnit storageZone price minOnHand maxOnHand }
   }
 }
@@ -149,6 +150,7 @@ mutation UpsertStock($locationId: Int!, $catalogItemId: Int!, $onHand: Float!) {
   ) {
     id
     onHand
+    lastUpdatedByClerkUserId
   }
 }
 """
@@ -783,6 +785,7 @@ mutation ReceiveStock(
     onHand
     lastInOn
     lastOutOn
+    lastUpdatedByClerkUserId
     catalogItemId
   }
 }
@@ -795,6 +798,7 @@ mutation ConsumeStock($stockId: Int!, $quantity: Float!, $occurredOn: Date) {
     onHand
     lastInOn
     lastOutOn
+    lastUpdatedByClerkUserId
   }
 }
 """
@@ -823,6 +827,7 @@ query Movements(
     stockId
     relatedMovementId
     relatedLocationId
+    createdByClerkUserId
   }
 }
 """
@@ -842,8 +847,8 @@ mutation TransferStockDated(
   ) {
     fromLocationId
     toLocationId
-    fromStock { id onHand lastOutOn }
-    toStock { id onHand lastInOn catalogItem { id } }
+    fromStock { id onHand lastOutOn lastUpdatedByClerkUserId }
+    toStock { id onHand lastInOn lastUpdatedByClerkUserId catalogItem { id } }
   }
 }
 """
@@ -879,6 +884,7 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert stock["onHand"] == 3.0
     assert stock["lastInOn"] == "2026-08-28"
     assert stock["lastOutOn"] is None
+    assert stock["lastUpdatedByClerkUserId"] == GRAPHQL_TEST_USER_ID
     stock_id = stock["id"]
 
     received_again = _execute(
@@ -893,6 +899,10 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert not received_again.errors, received_again.errors
     assert received_again.data["receiveInventoryStock"]["onHand"] == 5.0
     assert received_again.data["receiveInventoryStock"]["lastInOn"] == "2026-08-30"
+    assert (
+        received_again.data["receiveInventoryStock"]["lastUpdatedByClerkUserId"]
+        == GRAPHQL_TEST_USER_ID
+    )
 
     consumed = _execute(
         _CONSUME_STOCK,
@@ -901,6 +911,9 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert not consumed.errors, consumed.errors
     assert consumed.data["consumeInventoryStock"]["onHand"] == 3.5
     assert consumed.data["consumeInventoryStock"]["lastOutOn"] == "2026-08-31"
+    assert (
+        consumed.data["consumeInventoryStock"]["lastUpdatedByClerkUserId"] == GRAPHQL_TEST_USER_ID
+    )
 
     movements = _execute(
         _MOVEMENTS_QUERY,
@@ -913,12 +926,15 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert rows[0]["quantity"] == 1.5
     assert rows[0]["occurredOn"] == "2026-08-31"
     assert rows[0]["relatedLocationId"] is None
+    assert rows[0]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert rows[1]["direction"] == "in"
     assert rows[1]["occurredOn"] == "2026-08-30"
     assert rows[1]["relatedLocationId"] is None
+    assert rows[1]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert rows[2]["direction"] == "in"
     assert rows[2]["occurredOn"] == "2026-08-28"
     assert rows[2]["relatedLocationId"] is None
+    assert rows[2]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
 
 
 def test_movements_filter_by_occurred_on_date_range(inventar_workspace_and_location):
@@ -1147,6 +1163,8 @@ def test_transfer_writes_paired_movements(inventar_two_locations):
     payload = transferred.data["transferInventoryStock"]
     assert payload["fromStock"]["lastOutOn"] == "2026-08-29"
     assert payload["toStock"]["lastInOn"] == "2026-08-29"
+    assert payload["fromStock"]["lastUpdatedByClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert payload["toStock"]["lastUpdatedByClerkUserId"] == GRAPHQL_TEST_USER_ID
 
     mov_a = _execute(
         _MOVEMENTS_QUERY,
@@ -1164,6 +1182,9 @@ def test_transfer_writes_paired_movements(inventar_two_locations):
     assert in_rows[0]["relatedMovementId"] == out_rows[0]["id"]
     assert out_rows[0]["relatedLocationId"] == loc_b
     assert in_rows[0]["relatedLocationId"] == loc_a
+    assert out_rows[0]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert in_rows[0]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert out_rows[0]["createdByClerkUserId"] == in_rows[0]["createdByClerkUserId"]
 
 
 def test_movements_query_unauthorized_returns_empty(inventar_workspace_and_location):

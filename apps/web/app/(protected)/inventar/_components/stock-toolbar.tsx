@@ -6,6 +6,7 @@ import { LocationSelect } from '@/app/(protected)/analytics/sales/location-selec
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { INVENTAR_ASSISTANT_OPEN_ID } from './inventar-assistant-panel'
 import type { InventarBranch } from './stock-utils'
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
   onLocationChange: (id: number | null) => void
   canBookDelivery: boolean
   onBookDelivery: () => void
+  onOpenAssistant: () => void
   totalValueLabel: string | null
 }
 
@@ -23,6 +25,7 @@ export function StockToolbar({
   onLocationChange,
   canBookDelivery,
   onBookDelivery,
+  onOpenAssistant,
   totalValueLabel,
 }: Props) {
   const t = useTranslations('inventar')
@@ -58,6 +61,15 @@ export function StockToolbar({
             onClick={onBookDelivery}
           >
             {t('bookDelivery')}
+          </Button>
+          <Button
+            type="button"
+            id={INVENTAR_ASSISTANT_OPEN_ID}
+            variant="outline"
+            className="min-h-11 w-full touch-manipulation sm:w-auto lg:min-h-9"
+            onClick={onOpenAssistant}
+          >
+            {t('assistantOpen')}
           </Button>
           {totalValueLabel != null ? (
             <p className="w-full text-sm tabular-nums text-muted-foreground sm:ml-auto sm:w-auto">

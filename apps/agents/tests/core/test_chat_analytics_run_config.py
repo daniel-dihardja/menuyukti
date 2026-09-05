@@ -1,6 +1,7 @@
 """ChatRequest / runnable config includes analytics_run_id for chart tools."""
 
-from agents_app.routers.chat import ChatRequest, _runnable_config
+from agents_app.agents.core.chat.chat_run_config import runnable_config as _runnable_config
+from agents_app.routers.chat import ChatRequest
 
 AGENT_THREAD_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
@@ -51,6 +52,18 @@ def test_chat_request_accepts_chat_mode() -> None:
         }
     )
     assert body.chat_mode == "image_assistant"
+
+
+def test_chat_request_accepts_inventar_mode() -> None:
+    body = ChatRequest.model_validate(
+        {
+            "messages": [{"role": "user", "content": "What should I refill?"}],
+            "agent_thread_id": AGENT_THREAD_ID,
+            "chat_mode": "inventar",
+            "location_id": 7,
+        }
+    )
+    assert body.chat_mode == "inventar"
 
 
 def test_chat_request_accepts_legacy_story_mode_alias() -> None:

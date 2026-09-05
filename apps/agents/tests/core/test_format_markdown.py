@@ -38,6 +38,24 @@ async def test_format_markdown_invokes_llm(
     assert mock_ainvoke.await_args.args[0] is mock_llm
 
 
+@pytest.mark.asyncio
+@patch("agents_app.agents.core.format_markdown.format.ainvoke_with_retry", new_callable=AsyncMock)
+@patch("agents_app.agents.core.format_markdown.format.get_llm_structured")
+async def test_format_markdown_notes_preset_alias(
+    mock_get_llm: MagicMock,
+    mock_ainvoke: AsyncMock,
+) -> None:
+    mock_get_llm.return_value = MagicMock()
+    mock_ainvoke.return_value = AIMessage(content="ok")
+    out = await format_markdown(content="raw", preset="notes")
+    assert out == "ok"
+    # Legacy alias must resolve to the same prompt family.
+    from agents_app.agents.core.format_markdown.presets import get_preset_system_prompt
+
+    assert get_preset_system_prompt("notes") == get_preset_system_prompt("milestone-data")
+    assert get_preset_system_prompt("notes") is not None
+
+
 @patch("agents_app.routers.format_markdown.format_markdown", new_callable=AsyncMock)
 def test_format_markdown_http_llm_error(mock_fmt: AsyncMock, client: TestClient) -> None:
     from agents_app.agents.core.llm_invoke import LLMInvokeError

@@ -7,11 +7,12 @@ import { useLocale, useTranslations } from 'next-intl'
 
 import { useAnalytics } from '@/app/(protected)/analytics/use-analytics'
 import { formatCurrencyWithCode } from '@/lib/currency'
+import type { InventoryRefillForecastItem } from '@/lib/graphql/queries/inventory-refill-forecast'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
-import { INVENTORY_STORAGE_ZONE_SORT_ORDER } from '@/lib/inventar/storage-zones'
 import { routes } from '@/lib/routes'
 
 import { HistoryPanel } from './history-panel'
+import { InventarAssistantShell } from './inventar-assistant-shell'
 import { ReceiveForm } from './receive-form'
 import { RemoveConfirm } from './remove-confirm'
 import { StockList } from './stock-list'
@@ -29,6 +30,7 @@ type Props = {
   branches: InventarBranch[]
   initialLocationId: number | null
   stockRows: InventoryStockRow[]
+  refillForecast: InventoryRefillForecastItem[]
   catalogItems: InventarCatalogOption[]
 }
 
@@ -36,6 +38,7 @@ export function InventarStockClient({
   branches,
   initialLocationId,
   stockRows,
+  refillForecast,
   catalogItems,
 }: Props) {
   const t = useTranslations('inventar')
@@ -50,20 +53,15 @@ export function InventarStockClient({
   const [transferInitialDestId, setTransferInitialDestId] = useState('')
   const [removeRow, setRemoveRow] = useState<InventoryStockRow | null>(null)
   const [historyRow, setHistoryRow] = useState<InventoryStockRow | null>(null)
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   const activeLocationId = initialLocationId
 
-  const sortedStockRows = [...stockRows].toSorted((a, b) => {
-    const zoneDiff =
-      INVENTORY_STORAGE_ZONE_SORT_ORDER[a.catalogItem.storageZone] -
-      INVENTORY_STORAGE_ZONE_SORT_ORDER[b.catalogItem.storageZone]
-    if (zoneDiff !== 0) return zoneDiff
-    return a.catalogItem.name.localeCompare(b.catalogItem.name)
-  })
+  const refillByCatalogId = new Map(refillForecast.map((row) => [row.catalogItemId, row] as const))
 
   const activeBranch = branches.find((b) => b.id === activeLocationId)
   const currencyCode = resolveLocationCurrency(activeBranch?.currency)
-  const inventoryTotal = totalStockValue(sortedStockRows)
+  const inventoryTotal = totalStockValue(stockRows)
 
   function formatMoney(amount: number | null): string {
     if (amount == null) return t('priceEmpty')
@@ -104,87 +102,95 @@ export function InventarStockClient({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <StockToolbar
-        branches={branches}
-        locationId={activeLocationId}
-        onLocationChange={handleLocationChange}
-        canBookDelivery={canBookDelivery}
-        onBookDelivery={openBookDeliveryDialog}
-        totalValueLabel={stockRows.length > 0 ? formatMoney(inventoryTotal) : null}
-      />
-
-      <StockList
-        activeLocationId={activeLocationId}
-        sortedStockRows={sortedStockRows}
-        catalogCount={catalogItems.length}
-        currencyCode={currencyCode}
-        onUse={setUseRow}
-        onHistory={setHistoryRow}
-        onTransfer={canTransfer ? openTransferDialog : undefined}
-        onRemove={setRemoveRow}
-        onBookDelivery={openBookDeliveryDialog}
-      />
-
-      <Link
-        href={routes.inventarCatalog}
-        className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-      >
-        {t('managePantryItems')} →
-      </Link>
-
-      {receiveOpen && activeLocationId != null ? (
-        <ReceiveForm
-          key={receiveInitialCatalogId}
-          locationId={activeLocationId}
-          catalogItems={catalogItems}
-          stockRows={stockRows}
-          initialCatalogId={receiveInitialCatalogId}
-          onClose={() => setReceiveOpen(false)}
-          onSuccess={refresh}
-        />
-      ) : null}
-
-      {useRow != null && activeLocationId != null ? (
-        <UseForm
-          key={useRow.id}
-          row={useRow}
-          locationId={activeLocationId}
-          onClose={() => setUseRow(null)}
-          onSuccess={refresh}
-        />
-      ) : null}
-
-      {transferRow != null ? (
-        <TransferForm
-          key={transferRow.id}
-          row={transferRow}
-          destinations={transferDestinations}
-          initialDestinationId={transferInitialDestId}
-          onClose={() => setTransferRow(null)}
-          onSuccess={refresh}
-        />
-      ) : null}
-
-      {historyRow != null && activeLocationId != null ? (
-        <HistoryPanel
-          key={historyRow.id}
-          row={historyRow}
-          locationId={activeLocationId}
+    <InventarAssistantShell
+      open={assistantOpen}
+      onOpenChange={setAssistantOpen}
+      locationId={activeLocationId}
+    >
+      <div className="flex flex-col gap-6">
+        <StockToolbar
           branches={branches}
-          onClose={() => setHistoryRow(null)}
-        />
-      ) : null}
-
-      {removeRow != null && activeLocationId != null ? (
-        <RemoveConfirm
-          key={removeRow.id}
-          row={removeRow}
           locationId={activeLocationId}
-          onClose={() => setRemoveRow(null)}
-          onSuccess={refresh}
+          onLocationChange={handleLocationChange}
+          canBookDelivery={canBookDelivery}
+          onBookDelivery={openBookDeliveryDialog}
+          onOpenAssistant={() => setAssistantOpen(true)}
+          totalValueLabel={stockRows.length > 0 ? formatMoney(inventoryTotal) : null}
         />
-      ) : null}
-    </div>
+
+        <StockList
+          activeLocationId={activeLocationId}
+          stockRows={stockRows}
+          refillByCatalogId={refillByCatalogId}
+          catalogCount={catalogItems.length}
+          currencyCode={currencyCode}
+          onUse={setUseRow}
+          onHistory={setHistoryRow}
+          onTransfer={canTransfer ? openTransferDialog : undefined}
+          onRemove={setRemoveRow}
+          onBookDelivery={openBookDeliveryDialog}
+        />
+
+        <Link
+          href={routes.inventarCatalog}
+          className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {t('managePantryItems')} →
+        </Link>
+
+        {receiveOpen && activeLocationId != null ? (
+          <ReceiveForm
+            key={receiveInitialCatalogId}
+            locationId={activeLocationId}
+            catalogItems={catalogItems}
+            stockRows={stockRows}
+            initialCatalogId={receiveInitialCatalogId}
+            onClose={() => setReceiveOpen(false)}
+            onSuccess={refresh}
+          />
+        ) : null}
+
+        {useRow != null && activeLocationId != null ? (
+          <UseForm
+            key={useRow.id}
+            row={useRow}
+            locationId={activeLocationId}
+            onClose={() => setUseRow(null)}
+            onSuccess={refresh}
+          />
+        ) : null}
+
+        {transferRow != null ? (
+          <TransferForm
+            key={transferRow.id}
+            row={transferRow}
+            destinations={transferDestinations}
+            initialDestinationId={transferInitialDestId}
+            onClose={() => setTransferRow(null)}
+            onSuccess={refresh}
+          />
+        ) : null}
+
+        {historyRow != null && activeLocationId != null ? (
+          <HistoryPanel
+            key={historyRow.id}
+            row={historyRow}
+            locationId={activeLocationId}
+            branches={branches}
+            onClose={() => setHistoryRow(null)}
+          />
+        ) : null}
+
+        {removeRow != null && activeLocationId != null ? (
+          <RemoveConfirm
+            key={removeRow.id}
+            row={removeRow}
+            locationId={activeLocationId}
+            onClose={() => setRemoveRow(null)}
+            onSuccess={refresh}
+          />
+        ) : null}
+      </div>
+    </InventarAssistantShell>
   )
 }

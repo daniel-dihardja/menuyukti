@@ -72,6 +72,40 @@ async def test_empty_prompt(tool_under_test: Any) -> None:
 
 
 @pytest.mark.asyncio
+async def test_accepts_internal_api_key_alone(tool_under_test: Any, monkeypatch: Any) -> None:
+    """Outbound generate should honor INTERNAL_API_KEY like inbound middleware."""
+    monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
+    monkeypatch.delenv("GRAPHQL_INTERNAL_API_KEY", raising=False)
+    monkeypatch.setenv("INTERNAL_API_KEY", "from-internal")
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = "{}"
+    mock_response.json.return_value = {
+        "url": "https://example.com/img.webp",
+        "name": "abc.webp",
+        "mediaS3Key": "users/u/posts/abc.webp",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+    }
+    mock_client = MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with patch(
+        "agents_app.agents.core.chat.generate_instagram_post_image.get_chat_http_client",
+        return_value=mock_client,
+    ):
+        out = await tool_under_test.ainvoke(
+            {"prompt": "A sunny brunch plate"},
+            config=_config(user_id="user-1", agent_thread_id="t1"),
+        )
+
+    payload = json.loads(out)
+    assert payload["url"] == "https://example.com/img.webp"
+    headers = mock_client.post.await_args.kwargs["headers"]
+    assert headers["X-Internal-Api-Key"] == "from-internal"
+
+
+@pytest.mark.asyncio
 async def test_success_without_post_page(tool_under_test: Any, monkeypatch: Any) -> None:
     monkeypatch.setenv("WEB_APP_URL", "http://127.0.0.1:3000")
     monkeypatch.setenv("GRAPHQL_INTERNAL_API_KEY", "secret")

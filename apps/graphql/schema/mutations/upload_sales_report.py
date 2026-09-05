@@ -91,6 +91,8 @@ class UploadSalesReportMutation:
         include_line_items: bool = False,
     ) -> ExcelUploadResult:
         user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for uploadSalesReport")
         payload = await file.read()
         if len(payload) > MAX_SALES_REPORT_UPLOAD_BYTES:
             mb = MAX_SALES_REPORT_UPLOAD_BYTES / (1024 * 1024)

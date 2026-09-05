@@ -373,20 +373,6 @@ export type FundamentalSignalsType = {
   trendingItems: Array<TrendingItemType>
 }
 
-export type ImageAiFlowType = {
-  __typename?: 'ImageAiFlowType'
-  displayName: Scalars['String']['output']
-  id: Scalars['Int']['output']
-  imageReferenceStrength?: Maybe<Scalars['String']['output']>
-  isActive: Scalars['Boolean']['output']
-  model: Scalars['String']['output']
-  prompt: Scalars['String']['output']
-  promptEnhance?: Maybe<Scalars['String']['output']>
-  slug: Scalars['String']['output']
-  sortOrder: Scalars['Int']['output']
-  styleIds?: Maybe<Scalars['JSON']['output']>
-}
-
 /** Tiered analytics payload for campaign_brief and growth agents. */
 export type InstagramSignalsType = {
   __typename?: 'InstagramSignalsType'
@@ -394,6 +380,78 @@ export type InstagramSignalsType = {
   analyticsRunId: Scalars['ID']['output']
   capabilities: CampaignBriefSignalCapabilitiesType
   fundamentalSignals: FundamentalSignalsType
+}
+
+/** Workspace pantry catalog item (name and package label). */
+export type InventoryCatalogItemType = {
+  __typename?: 'InventoryCatalogItemType'
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['Int']['output']
+  maxOnHand?: Maybe<Scalars['Float']['output']>
+  minOnHand?: Maybe<Scalars['Float']['output']>
+  name: Scalars['String']['output']
+  packageSize: Scalars['Float']['output']
+  packageUnit: Scalars['String']['output']
+  price?: Maybe<Scalars['Float']['output']>
+  storageZone: InventoryStorageZone
+  updatedAt: Scalars['DateTime']['output']
+  workspaceId: Scalars['Int']['output']
+}
+
+/** Direction of an inventar stock movement. */
+export enum InventoryStockMovementDirection {
+  In = 'in',
+  Out = 'out',
+  TransferIn = 'transfer_in',
+  TransferOut = 'transfer_out',
+}
+
+/** One receive, use, or transfer leg for pantry stock. */
+export type InventoryStockMovementType = {
+  __typename?: 'InventoryStockMovementType'
+  catalogItemId: Scalars['Int']['output']
+  createdAt: Scalars['DateTime']['output']
+  createdByClerkUserId?: Maybe<Scalars['String']['output']>
+  direction: InventoryStockMovementDirection
+  id: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  note?: Maybe<Scalars['String']['output']>
+  occurredOn: Scalars['Date']['output']
+  quantity: Scalars['Float']['output']
+  relatedLocationId?: Maybe<Scalars['Int']['output']>
+  relatedMovementId?: Maybe<Scalars['Int']['output']>
+  stockId?: Maybe<Scalars['Int']['output']>
+}
+
+/** Result of moving packages between locations. */
+export type InventoryStockTransferResult = {
+  __typename?: 'InventoryStockTransferResult'
+  fromLocationId: Scalars['Int']['output']
+  fromStock?: Maybe<InventoryStockType>
+  toLocationId: Scalars['Int']['output']
+  toStock: InventoryStockType
+}
+
+/** Location stock level for a pantry catalog item. */
+export type InventoryStockType = {
+  __typename?: 'InventoryStockType'
+  catalogItem: InventoryCatalogItemType
+  catalogItemId: Scalars['Int']['output']
+  createdAt: Scalars['DateTime']['output']
+  id: Scalars['Int']['output']
+  lastInOn?: Maybe<Scalars['Date']['output']>
+  lastOutOn?: Maybe<Scalars['Date']['output']>
+  lastUpdatedByClerkUserId?: Maybe<Scalars['String']['output']>
+  locationId: Scalars['Int']['output']
+  onHand: Scalars['Float']['output']
+  updatedAt: Scalars['DateTime']['output']
+}
+
+/** Primary storage area for a pantry item. */
+export enum InventoryStorageZone {
+  Cooler = 'cooler',
+  Dry = 'dry',
+  Freezer = 'freezer',
 }
 
 /** Summary of analytics runs for one location. */
@@ -638,7 +696,7 @@ export type MenuItemCogsUpsertInput = {
   menuName: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type Mutation = {
   __typename?: 'Mutation'
   /** Add a photo (by filename) to a media collection. */
@@ -647,13 +705,18 @@ export type Mutation = {
   applyLocationCogsToAnalyticsRun: Array<MenuItemCogsType>
   /** Award cashback from a payment total (applies app threshold/percent) or redeem a positive amount from the customer's balance. Pass exactly one of paymentAmount or redeemAmount. */
   awardCrmCashback: CrmCashbackEntryType
+  /** Use packages from stock (decreases stock and records an out movement). */
+  consumeInventoryStock: InventoryStockType
   /** Create a manual calendar entry for a location. */
   createCalendarEntry: CalendarEntryType
   /** Create a CRM app in the caller's primary workspace. */
   createCrmApp: CrmAppType
   /** Create a single-use enrollment token for a CRM app. Returns the raw token once; expires in 5 minutes. */
   createCrmEnrollmentToken: CrmEnrollmentTokenCreatedType
-  createImageAiFlow: ImageAiFlowType
+  /** Add a pantry item to the workspace catalog. */
+  createInventoryCatalogItem: InventoryCatalogItemType
+  /** Create a catalog item and initial stock at a location in one step. */
+  createInventoryCatalogItemWithStock: InventoryStockType
   createLocation: LocationType
   /** Create a named media collection in the caller's workspace. */
   createMediaCollection: MediaCollectionType
@@ -669,7 +732,10 @@ export type Mutation = {
   deleteCrmApp: Scalars['Boolean']['output']
   /** Delete a CRM customer registration by id. Cascades enrolled devices. */
   deleteCrmCustomer: Scalars['Boolean']['output']
-  deleteImageAiFlow: Scalars['Boolean']['output']
+  /** Delete a pantry catalog item and all location stock rows. */
+  deleteInventoryCatalogItem: Scalars['Boolean']['output']
+  /** Stop tracking a catalog item at a location. */
+  deleteInventoryStock: Scalars['Boolean']['output']
   /** Delete a media asset catalog row by filename (memberships cascade). Returns true when a row was removed; false when already absent. */
   deleteMediaAsset: Scalars['Boolean']['output']
   /** Delete a media collection by id (memberships cascade). */
@@ -682,6 +748,8 @@ export type Mutation = {
   /** Idempotently create or update a media asset catalog row for a workspace photo filename. */
   ensureMediaAsset: MediaAssetType
   inviteWorkspaceMember: WorkspaceMembershipType
+  /** Receive packages at a location (increases stock and records an in movement). */
+  receiveInventoryStock: InventoryStockType
   /** Append an AI usage ledger row for the authenticated user (Leonardo generations and similar). */
   recordAiUsageEvent: AiUsageEventType
   /** Remove a photo (by filename) from a media collection. */
@@ -691,11 +759,14 @@ export type Mutation = {
   revokeCrmDevice: CrmDeviceType
   /** Promote an analytics run's COGS snapshot into the location catalog. */
   saveAnalyticsRunCogsToLocation: Array<LocationMenuItemCogsType>
+  /** Move packages of a tracked item from one location to another. */
+  transferInventoryStock: InventoryStockTransferResult
   /** Update a manual calendar entry. */
   updateCalendarEntry: CalendarEntryType
   /** Update a CRM app by id. */
   updateCrmApp: CrmAppType
-  updateImageAiFlow: ImageAiFlowType
+  /** Update a pantry catalog item. */
+  updateInventoryCatalogItem: InventoryCatalogItemType
   updateLocation: LocationType
   /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
   updateLocationManualBriefInput: LocationManualBriefInputType
@@ -707,22 +778,24 @@ export type Mutation = {
   updateStyle: StyleType
   /** Upload and normalize a POS sales Excel file, persist order facts, and return metadata and sales analytics. Set includeLineItems to receive normalizedRows and orders (large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB). */
   uploadSalesReport: ExcelUploadResult
+  /** Set current stock for a catalog item at a location. */
+  upsertInventoryStock: InventoryStockType
   upsertLocationMenuItemCogsBulk: Array<LocationMenuItemCogsType>
   upsertMenuItemCogsBulk: Array<MenuItemCogsType>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationAddMediaToCollectionArgs = {
   collectionId: Scalars['Int']['input']
   filename: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationApplyLocationCogsToAnalyticsRunArgs = {
   analyticsRunId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationAwardCrmCashbackArgs = {
   customerId: Scalars['UUID']['input']
   label?: InputMaybe<Scalars['String']['input']>
@@ -730,7 +803,14 @@ export type MutationAwardCrmCashbackArgs = {
   redeemAmount?: InputMaybe<Scalars['Int']['input']>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationConsumeInventoryStockArgs = {
+  occurredOn?: InputMaybe<Scalars['Date']['input']>
+  quantity: Scalars['Float']['input']
+  stockId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateCalendarEntryArgs = {
   date: Scalars['String']['input']
   description?: InputMaybe<Scalars['String']['input']>
@@ -740,30 +820,42 @@ export type MutationCreateCalendarEntryArgs = {
   title: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateCrmAppArgs = {
   title: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateCrmEnrollmentTokenArgs = {
   appId: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
-export type MutationCreateImageAiFlowArgs = {
-  displayName: Scalars['String']['input']
-  imageReferenceStrength?: InputMaybe<Scalars['String']['input']>
-  isActive?: Scalars['Boolean']['input']
-  model: Scalars['String']['input']
-  prompt: Scalars['String']['input']
-  promptEnhance?: InputMaybe<Scalars['String']['input']>
-  slug: Scalars['String']['input']
-  sortOrder?: Scalars['Int']['input']
-  styleIds?: InputMaybe<Scalars['JSON']['input']>
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCreateInventoryCatalogItemArgs = {
+  maxOnHand?: InputMaybe<Scalars['Float']['input']>
+  minOnHand?: InputMaybe<Scalars['Float']['input']>
+  name: Scalars['String']['input']
+  packageSize: Scalars['Float']['input']
+  packageUnit: Scalars['String']['input']
+  price?: InputMaybe<Scalars['Float']['input']>
+  storageZone?: InputMaybe<InventoryStorageZone>
+  workspaceId: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCreateInventoryCatalogItemWithStockArgs = {
+  locationId: Scalars['Int']['input']
+  maxOnHand?: InputMaybe<Scalars['Float']['input']>
+  minOnHand?: InputMaybe<Scalars['Float']['input']>
+  name: Scalars['String']['input']
+  onHand: Scalars['Float']['input']
+  packageSize: Scalars['Float']['input']
+  packageUnit: Scalars['String']['input']
+  price?: InputMaybe<Scalars['Float']['input']>
+  storageZone?: InputMaybe<InventoryStorageZone>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateLocationArgs = {
   city?: InputMaybe<Scalars['String']['input']>
   country?: InputMaybe<Scalars['String']['input']>
@@ -773,17 +865,17 @@ export type MutationCreateLocationArgs = {
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateMediaCollectionArgs = {
   name: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreatePostArgs = {
   title?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreatePostPageArgs = {
   generationModel?: InputMaybe<Scalars['String']['input']>
   imageFormat?: InputMaybe<Scalars['String']['input']>
@@ -793,7 +885,7 @@ export type MutationCreatePostPageArgs = {
   prompt?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateStyleArgs = {
   isDefault?: Scalars['Boolean']['input']
   name: Scalars['String']['input']
@@ -801,80 +893,93 @@ export type MutationCreateStyleArgs = {
   spec: Scalars['JSON']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateWorkspaceArgs = {
   name: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteAnalyticsRunArgs = {
   analyticsRunId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteCalendarEntryArgs = {
   id: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteCrmAppArgs = {
   id: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteCrmCustomerArgs = {
   id: Scalars['UUID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
-export type MutationDeleteImageAiFlowArgs = {
-  slug: Scalars['String']['input']
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationDeleteInventoryCatalogItemArgs = {
+  id: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationDeleteInventoryStockArgs = {
+  id: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteMediaAssetArgs = {
   filename: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteMediaCollectionArgs = {
   id: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeletePostArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeletePostPageArgs = {
   pageId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeletePostPageMediaVersionArgs = {
   mediaS3Key: Scalars['String']['input']
   pageId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteStyleArgs = {
   id: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationEnsureMediaAssetArgs = {
   displayName?: InputMaybe<Scalars['String']['input']>
   filename: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationInviteWorkspaceMemberArgs = {
   clerkUserId: Scalars['String']['input']
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationReceiveInventoryStockArgs = {
+  catalogItemId: Scalars['Int']['input']
+  locationId: Scalars['Int']['input']
+  occurredOn?: InputMaybe<Scalars['Date']['input']>
+  quantity: Scalars['Float']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationRecordAiUsageEventArgs = {
   externalId?: InputMaybe<Scalars['String']['input']>
   feature: Scalars['String']['input']
@@ -885,29 +990,37 @@ export type MutationRecordAiUsageEventArgs = {
   units?: Scalars['Int']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationRemoveMediaFromCollectionArgs = {
   collectionId: Scalars['Int']['input']
   filename: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationRemoveWorkspaceMemberArgs = {
   clerkUserId: Scalars['String']['input']
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationRevokeCrmDeviceArgs = {
   deviceId: Scalars['UUID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationSaveAnalyticsRunCogsToLocationArgs = {
   analyticsRunId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationTransferInventoryStockArgs = {
+  fromStockId: Scalars['Int']['input']
+  occurredOn?: InputMaybe<Scalars['Date']['input']>
+  quantity: Scalars['Float']['input']
+  toLocationId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateCalendarEntryArgs = {
   date?: InputMaybe<Scalars['String']['input']>
   description?: InputMaybe<Scalars['String']['input']>
@@ -917,7 +1030,7 @@ export type MutationUpdateCalendarEntryArgs = {
   title?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateCrmAppArgs = {
   cashbackPercent?: InputMaybe<Scalars['Int']['input']>
   cashbackThresholdAmount?: InputMaybe<Scalars['Int']['input']>
@@ -925,21 +1038,19 @@ export type MutationUpdateCrmAppArgs = {
   title: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
-export type MutationUpdateImageAiFlowArgs = {
-  displayName?: InputMaybe<Scalars['String']['input']>
-  imageReferenceStrength?: InputMaybe<Scalars['String']['input']>
-  isActive?: InputMaybe<Scalars['Boolean']['input']>
-  model?: InputMaybe<Scalars['String']['input']>
-  newSlug?: InputMaybe<Scalars['String']['input']>
-  prompt?: InputMaybe<Scalars['String']['input']>
-  promptEnhance?: InputMaybe<Scalars['String']['input']>
-  slug: Scalars['String']['input']
-  sortOrder?: InputMaybe<Scalars['Int']['input']>
-  styleIds?: InputMaybe<Scalars['JSON']['input']>
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateInventoryCatalogItemArgs = {
+  id: Scalars['Int']['input']
+  maxOnHand?: InputMaybe<Scalars['Float']['input']>
+  minOnHand?: InputMaybe<Scalars['Float']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+  packageSize?: InputMaybe<Scalars['Float']['input']>
+  packageUnit?: InputMaybe<Scalars['String']['input']>
+  price?: InputMaybe<Scalars['Float']['input']>
+  storageZone?: InputMaybe<InventoryStorageZone>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationArgs = {
   city?: InputMaybe<Scalars['String']['input']>
   country?: InputMaybe<Scalars['String']['input']>
@@ -950,25 +1061,25 @@ export type MutationUpdateLocationArgs = {
   street?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationManualBriefInputArgs = {
   locationId: Scalars['Int']['input']
   quickProfile: Scalars['JSON']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateMediaCollectionArgs = {
   id: Scalars['Int']['input']
   name: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdatePostArgs = {
   id: Scalars['ID']['input']
   title: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdatePostPageArgs = {
   generationModel?: InputMaybe<Scalars['String']['input']>
   id: Scalars['ID']['input']
@@ -978,7 +1089,7 @@ export type MutationUpdatePostPageArgs = {
   prompt?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateStyleArgs = {
   id: Scalars['Int']['input']
   isDefault?: InputMaybe<Scalars['Boolean']['input']>
@@ -987,20 +1098,27 @@ export type MutationUpdateStyleArgs = {
   spec?: InputMaybe<Scalars['JSON']['input']>
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUploadSalesReportArgs = {
   file: Scalars['Upload']['input']
   includeLineItems?: Scalars['Boolean']['input']
   locationId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpsertInventoryStockArgs = {
+  catalogItemId: Scalars['Int']['input']
+  locationId: Scalars['Int']['input']
+  onHand: Scalars['Float']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpsertLocationMenuItemCogsBulkArgs = {
   items: Array<LocationMenuItemCogsUpsertInput>
   locationId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpsertMenuItemCogsBulkArgs = {
   analyticsRunId: Scalars['ID']['input']
   items: Array<MenuItemCogsUpsertInput>
@@ -1189,12 +1307,14 @@ export type Query = {
   crmCustomer?: Maybe<CrmCustomerType>
   /** List customers enrolled in a CRM app. Empty when missing or access denied. */
   crmCustomers: Array<CrmCustomerType>
-  /** Single flow by slug (including inactive), for server-side processing. */
-  imageAiFlow?: Maybe<ImageAiFlowType>
-  /** Image AI flows ordered for display. Default: active only (asset upload UI). */
-  imageAiFlows: Array<ImageAiFlowType>
   /** Composite Instagram signals for an analytics run: content heroes, trending items, avoid list, category focus, best posting window, and period headline. Requires order facts; returns null if none. */
   instagramSignals?: Maybe<InstagramSignalsType>
+  /** Pantry catalog for a workspace. Empty when unauthenticated or not a member. */
+  inventoryCatalogItems: Array<InventoryCatalogItemType>
+  /** Stock levels at a location (joined with catalog). Empty when not authorized. */
+  inventoryStock: Array<InventoryStockType>
+  /** Stock movements for a catalog item at a location, newest first. When stockId is set, only movements for that stock row (current track). Optional fromDate/toDate filter occurredOn inclusively. Empty when not authorized or fromDate is after toDate. */
+  inventoryStockMovements: Array<InventoryStockMovementType>
   /** Fetch one location by id if the caller has access. */
   location?: Maybe<LocationType>
   /** Analytics run counts and latest run per location in one query. Only returns summaries for locations the caller can access. */
@@ -1290,20 +1410,29 @@ export type QueryCrmCustomersArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryImageAiFlowArgs = {
-  slug: Scalars['String']['input']
-}
-
-/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryImageAiFlowsArgs = {
-  first?: InputMaybe<Scalars['Int']['input']>
-  includeInactive?: Scalars['Boolean']['input']
-}
-
-/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryInstagramSignalsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryInventoryCatalogItemsArgs = {
+  workspaceId: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryInventoryStockArgs = {
+  locationId: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryInventoryStockMovementsArgs = {
+  catalogItemId: Scalars['ID']['input']
+  fromDate?: InputMaybe<Scalars['Date']['input']>
+  limit?: Scalars['Int']['input']
+  locationId: Scalars['ID']['input']
+  stockId?: InputMaybe<Scalars['ID']['input']>
+  toDate?: InputMaybe<Scalars['Date']['input']>
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */

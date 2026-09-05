@@ -57,19 +57,6 @@ def test_styles_respects_first_clamp():
     assert len(result.data["styles"]) <= 1
 
 
-def test_image_ai_flows_respects_first_clamp():
-    result = schema.execute_sync(
-        """
-        query {
-          imageAiFlows(first: 1) { slug }
-        }
-        """
-    )
-    assert result.errors is None
-    assert result.data is not None
-    assert len(result.data["imageAiFlows"]) <= 1
-
-
 def test_locations_manual_brief_uses_prefetch_cache(two_brief_locations):
     """Nested manualBriefInput should not call load_manual_brief_type per location."""
     with mock.patch(

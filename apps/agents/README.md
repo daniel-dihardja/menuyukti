@@ -1,6 +1,6 @@
 # Menuyukti Agents (`apps/agents`)
 
-FastAPI service for **LangChain / LangGraph streaming chat** via **[Vercel AI Gateway](https://vercel.com/docs/ai-gateway)** (OpenAI-compatible; default model `openai/gpt-4o-mini`). Chat-only product surface — no milestone-run API.
+FastAPI service for **LangChain / LangGraph streaming chat** via **[Vercel AI Gateway](https://vercel.com/docs/ai-gateway)** (OpenAI-compatible; default model `openai/gpt-5.4`). Chat-only product surface — no milestone-run API.
 
 ## Setup
 
@@ -20,9 +20,15 @@ make dev
 
 - API: `http://127.0.0.1:8001`
 - Health: `GET /health`
-- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`agent_thread_id`** is required and selects the thread (`{user_id}:agent:{agent_thread_id}`); **`location_id`** is optional and passed into tools via run config. Modes: `general` | `image_assistant`. ReAct uses **`CHAT_RECURSION_LIMIT`** (20). Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints via **`AsyncPostgresSaver`** over an **`AsyncConnectionPool`** (see `.env.example`). Optional **`TAVILY_API_KEY`** enables **`search_web`** in chat.
+- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`agent_thread_id`** is required and selects the thread (`{user_id}:agent:{agent_thread_id}`); **`location_id`** is optional and passed into tools via run config. Modes: `general` | `image_assistant` (legacy alias `story_image_assistant`). Graph factory: **`compile_chat_graph`**. ReAct uses **`CHAT_RECURSION_LIMIT`** (20). Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints via **`AsyncPostgresSaver`** over an **`AsyncConnectionPool`** (see `.env.example`). Optional **`TAVILY_API_KEY`** enables **`search_web`** in chat.
 - Chat history: `GET /chat/history` — returns checkpoint messages as UIMessage-shaped JSON (`messages`, `story_assets`, `thread_id`). Requires **`agent_thread_id`**. Durable across restarts only when Postgres checkpoints are configured. `DELETE /chat/history` removes that agent thread’s checkpoints.
-- **Helper:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-data"}` returns `{"formatted":"..."}`. Preset name is a leftover label for free-form notes cleanup (`agents/core/format_markdown/`); not a campaign pipeline.
+- **Helper:** `POST /format-markdown` — JSON body `{"content":"...","preset":"notes"}` returns `{"formatted":"..."}`. Legacy preset id `milestone-data` is an alias of `notes` (`agents/core/format_markdown/`); not a campaign pipeline.
+- **Style draft:** `POST /style-specs/draft-from-image` — IG Studio vision helper.
+
+## Auth
+
+- Chat / style endpoints require **`X-Menuyukti-User-Id`**.
+- When **`INTERNAL_API_KEY`** or **`GRAPHQL_INTERNAL_API_KEY`** is set, inbound requests (except `GET /health`) must send matching **`X-Internal-Api-Key`**. The same shared-secret resolution is used for outbound GraphQL and web image-generate calls.
 
 ## Quality
 

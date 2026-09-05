@@ -32,7 +32,6 @@ _LIST_ROOT_FIELDS = frozenset(
         "crmCustomers",
         "mediaCollections",
         "mediaAssets",
-        "imageAiFlows",
         "analyticsRuns",
         "workspaceMembers",
     }

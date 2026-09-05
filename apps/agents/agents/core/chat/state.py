@@ -16,6 +16,13 @@ class StoryAssetRef(TypedDict):
 
 
 class ChatAgentState(AgentState):
-    """Chat ReAct state with optional Story asset scratchpad."""
+    """Chat ReAct state with optional Story asset scratchpad.
+
+    ``messages`` use the AgentState ``add_messages`` reducer. ``story_assets`` has no
+    reducer (last write wins). Tools that mutate the scratchpad must return
+    ``Command(update={"story_assets": ..., "messages": [ToolMessage(...)]})`` so the
+    ToolNode and checkpointer stay consistent — do not rely on returning only a string
+    when state must change.
+    """
 
     story_assets: NotRequired[list[StoryAssetRef]]

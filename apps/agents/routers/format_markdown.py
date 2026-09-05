@@ -2,7 +2,6 @@
 Platform-level Markdown formatting HTTP endpoint.
 
 Preset-driven LLM rewrite for arbitrary UI surfaces.
-Not a domain graph or campaign workflow.
 """
 
 import logging

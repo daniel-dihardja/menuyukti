@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { revalidateTag } from 'next/cache'
 import { ZodError } from 'zod'
 
+import { actorFromProfileMap, getClerkUserProfilesByIds } from '@/lib/clerk/user-profiles'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   graphqlInventoryCatalogCacheTag,
@@ -113,7 +114,16 @@ export async function GET(req: Request) {
       userId,
     )
 
-    return NextResponse.json({ movements: data.inventoryStockMovements })
+    const movementsRaw = data.inventoryStockMovements
+    const profiles = await getClerkUserProfilesByIds(
+      movementsRaw.map((movement) => movement.createdByClerkUserId),
+    )
+    const movements = movementsRaw.map((movement) => ({
+      ...movement,
+      createdBy: actorFromProfileMap(movement.createdByClerkUserId, profiles),
+    }))
+
+    return NextResponse.json({ movements })
   } catch (error) {
     console.error('[inventory-stock] GET', error)
     return errorJson('INVALID_INPUT', 500)
