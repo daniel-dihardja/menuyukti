@@ -6,7 +6,7 @@ import strawberry
 
 from graphql.context import request_session_scope
 from graphql.data_sources import ImageAiFlow
-from graphql.schema.auth import user_id_from_info
+from graphql.schema.auth import require_platform_admin, user_id_from_info
 
 
 @strawberry.type
@@ -16,6 +16,7 @@ class DeleteImageAiFlowMutation:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for deleteImageAiFlow")
+        require_platform_admin(user_id)
 
         slug_key = slug.strip().lower()
         if not slug_key:

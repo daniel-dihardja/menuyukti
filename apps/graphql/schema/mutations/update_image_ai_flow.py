@@ -7,7 +7,7 @@ from strawberry import UNSET
 from strawberry.scalars import JSON
 
 from graphql.context import request_session_scope
-from graphql.schema.auth import user_id_from_info
+from graphql.schema.auth import require_platform_admin, user_id_from_info
 from graphql.schema.mappers.image_ai_flow import flow_to_gql
 from graphql.schema.types import ImageAiFlowType
 from graphql.services.image_ai_flow import update_image_ai_flow
@@ -33,6 +33,7 @@ class UpdateImageAiFlowMutation:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for updateImageAiFlow")
+        require_platform_admin(user_id)
 
         with request_session_scope(info) as session:
             row = update_image_ai_flow(

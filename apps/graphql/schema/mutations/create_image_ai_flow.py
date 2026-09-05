@@ -9,7 +9,7 @@ from strawberry.scalars import JSON
 
 from graphql.context import request_session_scope
 from graphql.data_sources import ImageAiFlow
-from graphql.schema.auth import user_id_from_info
+from graphql.schema.auth import require_platform_admin, user_id_from_info
 from graphql.schema.mappers.image_ai_flow import flow_to_gql
 from graphql.schema.types import ImageAiFlowType
 
@@ -50,6 +50,7 @@ class CreateImageAiFlowMutation:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for createImageAiFlow")
+        require_platform_admin(user_id)
 
         slug_clean = _validate_slug(slug)
         display = display_name.strip()
