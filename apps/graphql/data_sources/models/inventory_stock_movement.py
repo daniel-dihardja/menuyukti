@@ -64,6 +64,11 @@ class InventoryStockMovement(Base):
         ForeignKey("inventory_stock_movement.id", ondelete="SET NULL"),
         nullable=True,
     )
+    created_by_clerk_user_id: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

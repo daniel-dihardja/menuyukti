@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { auth } from '@clerk/nextjs/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { actorFromProfileMap, getClerkUserProfilesByIds } from '@/lib/clerk/user-profiles'
 import {
   getCachedInventoryCatalog,
   getCachedInventoryRefillForecast,
@@ -69,7 +70,7 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
       ? Number(workspaceIdRaw)
       : null
 
-  const [stockRows, catalogItems, refillForecast] = await Promise.all([
+  const [stockRowsRaw, catalogItems, refillForecast] = await Promise.all([
     initialLocationId != null
       ? getCachedInventoryStock(userId, initialLocationId)
       : Promise.resolve([]),
@@ -78,6 +79,14 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
       ? getCachedInventoryRefillForecast(userId, initialLocationId)
       : Promise.resolve([]),
   ])
+
+  const profiles = await getClerkUserProfilesByIds(
+    stockRowsRaw.map((row) => row.lastUpdatedByClerkUserId),
+  )
+  const stockRows = stockRowsRaw.map((row) => ({
+    ...row,
+    updatedBy: actorFromProfileMap(row.lastUpdatedByClerkUserId, profiles),
+  }))
 
   return (
     <InventarStockClient

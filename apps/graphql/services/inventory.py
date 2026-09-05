@@ -156,6 +156,7 @@ def add_movement(
     direction: str,
     quantity: float,
     occurred_on: date,
+    created_by_clerk_user_id: str,
     related_movement_id: int | None = None,
     note: str | None = None,
 ) -> InventoryStockMovement:
@@ -168,6 +169,7 @@ def add_movement(
         occurred_on=occurred_on,
         related_movement_id=related_movement_id,
         note=note,
+        created_by_clerk_user_id=created_by_clerk_user_id,
     )
     session.add(row)
     return row

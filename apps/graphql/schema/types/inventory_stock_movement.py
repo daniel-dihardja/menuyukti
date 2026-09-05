@@ -24,4 +24,5 @@ class InventoryStockMovementType:
     note: str | None
     relatedMovementId: int | None
     relatedLocationId: int | None
+    createdByClerkUserId: str | None
     createdAt: datetime

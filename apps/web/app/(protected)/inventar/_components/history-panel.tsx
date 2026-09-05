@@ -40,6 +40,7 @@ import {
   type InventarApiErrorPayload,
   type InventarBranch,
 } from './stock-utils'
+import { UpdatedByCell } from './updated-by-cell'
 
 const CUSTOM_DATE_DEBOUNCE_MS = 300
 
@@ -232,12 +233,15 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
           {movements.map((movement) => (
             <li
               key={movement.id}
-              className="flex items-baseline justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
+              className="flex items-start justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-medium">
                   {formatActivityDate(movement.occurredOn, locale)} · {directionLabel(movement)}
                 </p>
+                <div className="mt-1.5">
+                  <UpdatedByCell actor={movement.createdBy} emptyLabel={t('updatedByEmpty')} />
+                </div>
               </div>
               <span className="shrink-0 tabular-nums font-medium">
                 {signedQuantity(movement.direction, movement.quantity)}

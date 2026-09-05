@@ -755,6 +755,8 @@
     "name": "Name",
     "storageZone": "Storage",
     "activity": "Activity",
+    "updatedBy": "Updated by",
+    "updatedByEmpty": "—",
     "activityIn": "In · {date}",
     "activityOut": "Out · {date}",
     "activityInEmpty": "No in yet",

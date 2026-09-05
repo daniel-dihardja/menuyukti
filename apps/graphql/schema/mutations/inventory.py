@@ -197,10 +197,12 @@ class InventoryStockMutations:
                     location_id=location_id,
                     catalog_item_id=catalog_item_id,
                     on_hand=on_hand_clean,
+                    last_updated_by_clerk_user_id=user_id,
                 )
                 session.add(row)
             else:
                 row.on_hand = on_hand_clean
+                row.last_updated_by_clerk_user_id = user_id
             session.commit()
             row = load_stock_with_catalog(session, row.id)
             return stock_to_gql(row)
@@ -243,12 +245,14 @@ class InventoryStockMutations:
                     catalog_item_id=catalog_item_id,
                     on_hand=qty,
                     last_in_on=day,
+                    last_updated_by_clerk_user_id=user_id,
                 )
                 session.add(row)
                 session.flush()
             else:
                 row.on_hand = row.on_hand + qty
                 row.last_in_on = day
+                row.last_updated_by_clerk_user_id = user_id
 
             add_movement(
                 session,
@@ -258,6 +262,7 @@ class InventoryStockMutations:
                 direction=DIRECTION_IN,
                 quantity=qty,
                 occurred_on=day,
+                created_by_clerk_user_id=user_id,
             )
             session.commit()
             row = load_stock_with_catalog(session, row.id)
@@ -290,6 +295,7 @@ class InventoryStockMutations:
 
             row.on_hand = row.on_hand - qty
             row.last_out_on = day
+            row.last_updated_by_clerk_user_id = user_id
             add_movement(
                 session,
                 location_id=row.location_id,
@@ -298,6 +304,7 @@ class InventoryStockMutations:
                 direction=DIRECTION_OUT,
                 quantity=qty,
                 occurred_on=day,
+                created_by_clerk_user_id=user_id,
             )
             session.commit()
             row = load_stock_with_catalog(session, row.id)
@@ -375,14 +382,17 @@ class InventoryStockMutations:
                     catalog_item_id=catalog_item_id,
                     on_hand=qty,
                     last_in_on=day,
+                    last_updated_by_clerk_user_id=user_id,
                 )
                 session.add(dest_row)
                 session.flush()
             else:
                 dest_row.on_hand = dest_row.on_hand + qty
                 dest_row.last_in_on = day
+                dest_row.last_updated_by_clerk_user_id = user_id
 
             source.last_out_on = day
+            source.last_updated_by_clerk_user_id = user_id
 
             out_movement = add_movement(
                 session,
@@ -392,6 +402,7 @@ class InventoryStockMutations:
                 direction=DIRECTION_TRANSFER_OUT,
                 quantity=qty,
                 occurred_on=day,
+                created_by_clerk_user_id=user_id,
             )
             session.flush()
 
@@ -404,6 +415,7 @@ class InventoryStockMutations:
                 quantity=qty,
                 occurred_on=day,
                 related_movement_id=out_movement.id,
+                created_by_clerk_user_id=user_id,
             )
             session.flush()
             out_movement.related_movement_id = in_movement.id
@@ -492,6 +504,7 @@ class InventoryStockMutations:
                 catalog_item_id=catalog_row.id,
                 on_hand=on_hand_clean,
                 last_in_on=day if on_hand_clean > 0 else None,
+                last_updated_by_clerk_user_id=user_id if on_hand_clean > 0 else None,
             )
             session.add(stock_row)
             try:
@@ -509,6 +522,7 @@ class InventoryStockMutations:
                     direction=DIRECTION_IN,
                     quantity=on_hand_clean,
                     occurred_on=day,
+                    created_by_clerk_user_id=user_id,
                 )
 
             try:

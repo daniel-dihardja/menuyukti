@@ -407,6 +407,7 @@ export type InventoryStockMovementType = {
   __typename?: 'InventoryStockMovementType';
   catalogItemId: Scalars['Int']['output'];
   createdAt: Scalars['DateTime']['output'];
+  createdByClerkUserId?: Maybe<Scalars['String']['output']>;
   direction: InventoryStockMovementDirection;
   id: Scalars['Int']['output'];
   locationId: Scalars['Int']['output'];
@@ -436,6 +437,7 @@ export type InventoryStockType = {
   id: Scalars['Int']['output'];
   lastInOn?: Maybe<Scalars['Date']['output']>;
   lastOutOn?: Maybe<Scalars['Date']['output']>;
+  lastUpdatedByClerkUserId?: Maybe<Scalars['String']['output']>;
   locationId: Scalars['Int']['output'];
   onHand: Scalars['Float']['output'];
   updatedAt: Scalars['DateTime']['output'];

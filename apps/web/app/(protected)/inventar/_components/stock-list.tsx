@@ -40,6 +40,7 @@ import {
   stockLineValue,
   type InventarStockSortKey,
 } from './stock-utils'
+import { UpdatedByCell } from './updated-by-cell'
 
 type Props = {
   activeLocationId: number | null
@@ -171,16 +172,23 @@ export function StockList({
   }
 
   if (isDesktop) {
-    const columns: SortableTableColumn<InventarStockSortKey | 'actions'>[] = [
-      { id: 'name', label: t('name'), align: 'left', className: 'w-[16%]' },
-      { id: 'storageZone', label: t('storageZone'), align: 'left', className: 'w-[10%]' },
-      { id: 'pack', label: t('pack'), align: 'left', className: 'w-[10%]' },
-      { id: 'onHand', label: t('currentStock'), align: 'right', className: 'w-[12%]' },
-      { id: 'avgDailyOut', label: t('avgDailyOut'), align: 'right', className: 'w-[10%]' },
-      { id: 'daysUntilRefill', label: t('daysUntilRefill'), align: 'right', className: 'w-[10%]' },
-      { id: 'value', label: t('value'), align: 'right', className: 'w-[10%]' },
-      { id: 'activity', label: t('activity'), align: 'left', className: 'w-[12%]' },
-      { id: 'actions', label: '', sortable: false, className: 'w-[10%]' },
+    const columns: SortableTableColumn<InventarStockSortKey | 'actions' | 'updatedBy'>[] = [
+      { id: 'name', label: t('name'), align: 'left', className: 'w-[14%]' },
+      { id: 'storageZone', label: t('storageZone'), align: 'left', className: 'w-[9%]' },
+      { id: 'pack', label: t('pack'), align: 'left', className: 'w-[9%]' },
+      { id: 'onHand', label: t('currentStock'), align: 'right', className: 'w-[11%]' },
+      { id: 'avgDailyOut', label: t('avgDailyOut'), align: 'right', className: 'w-[9%]' },
+      { id: 'daysUntilRefill', label: t('daysUntilRefill'), align: 'right', className: 'w-[9%]' },
+      { id: 'value', label: t('value'), align: 'right', className: 'w-[9%]' },
+      { id: 'activity', label: t('activity'), align: 'left', className: 'w-[10%]' },
+      {
+        id: 'updatedBy',
+        label: t('updatedBy'),
+        align: 'left',
+        sortable: false,
+        className: 'w-[12%]',
+      },
+      { id: 'actions', label: '', sortable: false, className: 'w-[8%]' },
     ]
 
     return (
@@ -190,7 +198,7 @@ export function StockList({
           sortKey={sortKey}
           sortDirection={sortDirection}
           onSort={(key) => {
-            if (key === 'actions') return
+            if (key === 'actions' || key === 'updatedBy') return
             toggleSort(key)
           }}
         >
@@ -244,6 +252,9 @@ export function StockList({
                     {activityText}
                   </span>
                 </TableCell>
+                <TableCell className="max-w-0">
+                  <UpdatedByCell actor={row.updatedBy} emptyLabel={t('updatedByEmpty')} />
+                </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => onUse(row)}>
@@ -286,6 +297,9 @@ export function StockList({
                 <p className="mt-1 truncate text-xs text-muted-foreground">
                   {cardActivitySummary(row, t, locale)}
                 </p>
+                <div className="mt-1">
+                  <UpdatedByCell actor={row.updatedBy} emptyLabel={t('updatedByEmpty')} />
+                </div>
                 <p className="mt-1 text-sm tabular-nums">
                   {t('avgDailyOut')}: {avgDailyOut}
                   <span className="text-muted-foreground"> · </span>

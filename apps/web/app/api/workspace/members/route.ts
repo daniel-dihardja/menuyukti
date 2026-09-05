@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse, connection } from 'next/server'
 
 import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
+import { displayNameFromClerkUser, primaryEmailFromClerkUser } from '@/lib/clerk/user-profiles'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   INVITE_WORKSPACE_MEMBER_MUTATION,
@@ -18,34 +19,6 @@ export type { WorkspaceMemberResponse }
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
-}
-
-function displayNameFromClerkUser(user: {
-  fullName: string | null
-  firstName: string | null
-  lastName: string | null
-  username: string | null
-  primaryEmailAddress?: { emailAddress: string } | null
-  emailAddresses: Array<{ emailAddress: string }>
-}): string | null {
-  const full = user.fullName?.trim()
-  if (full) return full
-  const combined = `${user.firstName?.trim() ?? ''} ${user.lastName?.trim() ?? ''}`.trim()
-  if (combined) return combined
-  if (user.username) return user.username
-  const email = user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress
-  if (email) {
-    const local = email.split('@')[0]
-    if (local) return local
-  }
-  return null
-}
-
-function primaryEmailFromClerkUser(user: {
-  primaryEmailAddress?: { emailAddress: string } | null
-  emailAddresses: Array<{ emailAddress: string }>
-}): string | null {
-  return user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? null
 }
 
 function assertWorkspaceOwner(workspace: { ownerClerkUserId: string }, userId: string) {

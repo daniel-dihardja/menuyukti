@@ -2,6 +2,12 @@ import type { InventoryCatalogItem } from '@/lib/graphql/queries/inventory-catal
 
 export type InventoryStockMovementDirection = 'in' | 'out' | 'transfer_in' | 'transfer_out'
 
+export type InventoryActor = {
+  clerkUserId: string
+  name: string | null
+  imageUrl: string | null
+}
+
 export type InventoryStockMovement = {
   id: number
   locationId: number
@@ -13,7 +19,9 @@ export type InventoryStockMovement = {
   note: string | null
   relatedMovementId: number | null
   relatedLocationId: number | null
+  createdByClerkUserId: string | null
   createdAt: string
+  createdBy?: InventoryActor | null
 }
 
 export type InventoryStockRow = {
@@ -23,6 +31,7 @@ export type InventoryStockRow = {
   onHand: number
   lastInOn: string | null
   lastOutOn: string | null
+  lastUpdatedByClerkUserId: string | null
   catalogItem: Pick<
     InventoryCatalogItem,
     | 'id'
@@ -36,6 +45,7 @@ export type InventoryStockRow = {
   >
   createdAt: string
   updatedAt: string
+  updatedBy?: InventoryActor | null
 }
 
 const STOCK_FIELDS = `
@@ -45,6 +55,7 @@ const STOCK_FIELDS = `
   onHand
   lastInOn
   lastOutOn
+  lastUpdatedByClerkUserId
   createdAt
   updatedAt
   catalogItem {
@@ -70,6 +81,7 @@ const MOVEMENT_FIELDS = `
   note
   relatedMovementId
   relatedLocationId
+  createdByClerkUserId
   createdAt
 `
 
