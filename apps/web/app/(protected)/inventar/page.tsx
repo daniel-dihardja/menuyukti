@@ -110,6 +110,7 @@ export default async function InventarPage({
     <AnalyticsPageShell
       title={t('title')}
       breadcrumbs={[{ label: t('title') }]}
+      contentWidth="full"
       mainClassName="min-h-0"
     >
       <div className="flex w-full flex-col gap-2">
