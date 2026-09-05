@@ -7,6 +7,7 @@ import { ArrowUpIcon, XIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Message, MessageContent } from '@workspace/ui/components/ai-elements/message'
+import { MessageResponse } from '@workspace/ui/components/ai-elements/message-response'
 import { Button } from '@workspace/ui/components/button'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { Spinner } from '@workspace/ui/components/spinner'
@@ -201,7 +202,7 @@ export function InventarAssistantPanel({
             const isLast = index === messages.length - 1
             const isActiveStream = isLast && busy
             const showFallbackSpinner = shouldShowAssistantThinkingFallback(message, isActiveStream)
-            // This panel only renders text; keep a spinner visible while tools run with no reply yet.
+            // Keep a spinner visible while tools run with no reply yet.
             const showToolGapSpinner =
               isActiveStream &&
               message.role === 'assistant' &&
@@ -228,7 +229,11 @@ export function InventarAssistantPanel({
             return (
               <Message from={message.role} key={message.id}>
                 <MessageContent className={cn(message.role === 'assistant' && 'w-full max-w-full')}>
-                  <div className="whitespace-pre-wrap">{content}</div>
+                  {message.role === 'assistant' ? (
+                    <MessageResponse>{content}</MessageResponse>
+                  ) : (
+                    <div className="whitespace-pre-wrap">{content}</div>
+                  )}
                   {trailingThinking.show ? (
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                       <Spinner aria-hidden />
