@@ -15,6 +15,7 @@ import { HistoryPanel } from './history-panel'
 import { InventarAssistantShell } from './inventar-assistant-shell'
 import { ReceiveForm } from './receive-form'
 import { RemoveConfirm } from './remove-confirm'
+import { StockLimitsForm } from './stock-limits-form'
 import { StockList } from './stock-list'
 import { StockToolbar } from './stock-toolbar'
 import {
@@ -53,6 +54,7 @@ export function InventarStockClient({
   const [transferInitialDestId, setTransferInitialDestId] = useState('')
   const [removeRow, setRemoveRow] = useState<InventoryStockRow | null>(null)
   const [historyRow, setHistoryRow] = useState<InventoryStockRow | null>(null)
+  const [limitsRow, setLimitsRow] = useState<InventoryStockRow | null>(null)
   const [assistantOpen, setAssistantOpen] = useState(false)
 
   const activeLocationId = initialLocationId
@@ -126,6 +128,7 @@ export function InventarStockClient({
           currencyCode={currencyCode}
           onUse={setUseRow}
           onHistory={setHistoryRow}
+          onEditLimits={setLimitsRow}
           onTransfer={canTransfer ? openTransferDialog : undefined}
           onRemove={setRemoveRow}
           onBookDelivery={openBookDeliveryDialog}
@@ -179,6 +182,16 @@ export function InventarStockClient({
             locationId={activeLocationId}
             branches={branches}
             onClose={() => setHistoryRow(null)}
+          />
+        ) : null}
+
+        {limitsRow != null && activeLocationId != null ? (
+          <StockLimitsForm
+            key={limitsRow.id}
+            row={limitsRow}
+            locationId={activeLocationId}
+            onClose={() => setLimitsRow(null)}
+            onSuccess={refresh}
           />
         ) : null}
 

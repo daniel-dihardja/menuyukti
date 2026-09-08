@@ -199,8 +199,8 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
         <StockBadge
           onHand={row.onHand}
           packagesLabel={t('packages')}
-          minOnHand={row.catalogItem.minOnHand}
-          maxOnHand={row.catalogItem.maxOnHand}
+          minOnHand={row.minOnHand}
+          maxOnHand={row.maxOnHand}
         />
       </div>
     </>
@@ -329,8 +329,8 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
               <StockBadge
                 onHand={row.onHand}
                 packagesLabel={t('packages')}
-                minOnHand={row.catalogItem.minOnHand}
-                maxOnHand={row.catalogItem.maxOnHand}
+                minOnHand={row.minOnHand}
+                maxOnHand={row.maxOnHand}
               />
             </div>
           </SheetHeader>

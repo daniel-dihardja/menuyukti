@@ -10,8 +10,6 @@ export type InventoryCatalogItem = {
   packageSize: number
   packageUnit: string
   price: number | null
-  minOnHand: number | null
-  maxOnHand: number | null
   storageZone: InventoryStorageZone
   category: InventoryCategory
   createdAt: string
@@ -25,8 +23,6 @@ const CATALOG_FIELDS = `
   packageSize
   packageUnit
   price
-  minOnHand
-  maxOnHand
   storageZone
   category
   createdAt
@@ -54,8 +50,6 @@ export const CREATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $storageZone: InventoryStorageZone
     $category: InventoryCategory
     $price: Float
-    $minOnHand: Float
-    $maxOnHand: Float
   ) {
     createInventoryCatalogItem(
       workspaceId: $workspaceId
@@ -65,8 +59,6 @@ export const CREATE_INVENTORY_CATALOG_ITEM_MUTATION = `
       storageZone: $storageZone
       category: $category
       price: $price
-      minOnHand: $minOnHand
-      maxOnHand: $maxOnHand
     ) {
       ${CATALOG_FIELDS}
     }
@@ -86,8 +78,6 @@ export const UPDATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $storageZone: InventoryStorageZone
     $category: InventoryCategory
     $price: Float
-    $minOnHand: Float
-    $maxOnHand: Float
   ) {
     updateInventoryCatalogItem(
       id: $id
@@ -97,8 +87,6 @@ export const UPDATE_INVENTORY_CATALOG_ITEM_MUTATION = `
       storageZone: $storageZone
       category: $category
       price: $price
-      minOnHand: $minOnHand
-      maxOnHand: $maxOnHand
     ) {
       ${CATALOG_FIELDS}
     }

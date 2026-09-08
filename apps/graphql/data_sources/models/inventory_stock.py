@@ -51,6 +51,8 @@ class InventoryStock(Base):
         nullable=False,
     )
     on_hand: Mapped[float] = mapped_column(Float, nullable=False)
+    min_on_hand: Mapped[float | None] = mapped_column(Float, nullable=True)
+    max_on_hand: Mapped[float | None] = mapped_column(Float, nullable=True)
     last_in_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     last_out_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     last_updated_by_clerk_user_id: Mapped[str | None] = mapped_column(

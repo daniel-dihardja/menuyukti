@@ -388,8 +388,6 @@ export type InventoryCatalogItemType = {
   category: InventoryCategory
   createdAt: Scalars['DateTime']['output']
   id: Scalars['Int']['output']
-  maxOnHand?: Maybe<Scalars['Float']['output']>
-  minOnHand?: Maybe<Scalars['Float']['output']>
   name: Scalars['String']['output']
   packageSize: Scalars['Float']['output']
   packageUnit: Scalars['String']['output']
@@ -479,6 +477,8 @@ export type InventoryStockType = {
   lastOutOn?: Maybe<Scalars['Date']['output']>
   lastUpdatedByClerkUserId?: Maybe<Scalars['String']['output']>
   locationId: Scalars['Int']['output']
+  maxOnHand?: Maybe<Scalars['Float']['output']>
+  minOnHand?: Maybe<Scalars['Float']['output']>
   onHand: Scalars['Float']['output']
   updatedAt: Scalars['DateTime']['output']
 }
@@ -805,6 +805,8 @@ export type Mutation = {
   updateCrmApp: CrmAppType
   /** Update a pantry catalog item. */
   updateInventoryCatalogItem: InventoryCatalogItemType
+  /** Update lower/upper on-hand limits for location stock. */
+  updateInventoryStockLimits: InventoryStockType
   updateLocation: LocationType
   /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
   updateLocationManualBriefInput: LocationManualBriefInputType
@@ -871,8 +873,6 @@ export type MutationCreateCrmEnrollmentTokenArgs = {
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateInventoryCatalogItemArgs = {
   category?: InputMaybe<InventoryCategory>
-  maxOnHand?: InputMaybe<Scalars['Float']['input']>
-  minOnHand?: InputMaybe<Scalars['Float']['input']>
   name: Scalars['String']['input']
   packageSize: Scalars['Float']['input']
   packageUnit: Scalars['String']['input']
@@ -1087,13 +1087,18 @@ export type MutationUpdateCrmAppArgs = {
 export type MutationUpdateInventoryCatalogItemArgs = {
   category?: InputMaybe<InventoryCategory>
   id: Scalars['Int']['input']
-  maxOnHand?: InputMaybe<Scalars['Float']['input']>
-  minOnHand?: InputMaybe<Scalars['Float']['input']>
   name?: InputMaybe<Scalars['String']['input']>
   packageSize?: InputMaybe<Scalars['Float']['input']>
   packageUnit?: InputMaybe<Scalars['String']['input']>
   price?: InputMaybe<Scalars['Float']['input']>
   storageZone?: InputMaybe<InventoryStorageZone>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateInventoryStockLimitsArgs = {
+  id: Scalars['Int']['input']
+  maxOnHand?: InputMaybe<Scalars['Float']['input']>
+  minOnHand?: InputMaybe<Scalars['Float']['input']>
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */

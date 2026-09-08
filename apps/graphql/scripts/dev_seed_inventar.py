@@ -174,8 +174,6 @@ def seed_inventar(
             storage_zone=zone,
             category=category,
             price=price,
-            min_on_hand=min_on_hand,
-            max_on_hand=max_on_hand,
         )
         session.add(catalog)
         session.flush()
@@ -190,6 +188,8 @@ def seed_inventar(
             location_id=primary_location.id,
             catalog_item_id=catalog.id,
             on_hand=0.0,
+            min_on_hand=min_on_hand,
+            max_on_hand=max_on_hand,
         )
         stock_count += 1
         movement_count += _receive(
@@ -213,6 +213,8 @@ def seed_inventar(
                 location_id=branch_location.id,
                 catalog_item_id=catalog.id,
                 on_hand=0.0,
+                min_on_hand=min_on_hand,
+                max_on_hand=max_on_hand,
             )
             stock_count += 1
             movement_count += _transfer(
@@ -229,6 +231,8 @@ def seed_inventar(
                 location_id=branch_location.id,
                 catalog_item_id=catalog.id,
                 on_hand=0.0,
+                min_on_hand=min_on_hand,
+                max_on_hand=max_on_hand,
             )
             stock_count += 1
             movement_count += _receive(
@@ -368,11 +372,15 @@ def _ensure_stock(
     location_id: int,
     catalog_item_id: int,
     on_hand: float,
+    min_on_hand: float | None = None,
+    max_on_hand: float | None = None,
 ) -> InventoryStock:
     row = InventoryStock(
         location_id=location_id,
         catalog_item_id=catalog_item_id,
         on_hand=_validate_on_hand(on_hand),
+        min_on_hand=min_on_hand,
+        max_on_hand=max_on_hand,
     )
     session.add(row)
     session.flush()

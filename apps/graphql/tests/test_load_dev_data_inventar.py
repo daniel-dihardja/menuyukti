@@ -137,8 +137,6 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
         )
         assert oat.storage_zone == "cooler"
         assert oat.category == "dairy"
-        assert oat.min_on_hand == 2.0
-        assert oat.max_on_hand == 12.0
 
         oat_stock = (
             session.query(InventoryStock)
@@ -149,6 +147,8 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
             .one()
         )
         assert oat_stock.on_hand == 3.0
+        assert oat_stock.min_on_hand == 2.0
+        assert oat_stock.max_on_hand == 12.0
 
         oat_outs = (
             session.query(InventoryStockMovement)

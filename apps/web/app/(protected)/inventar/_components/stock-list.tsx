@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { ArrowLeftRight, History, Package, Trash2 } from 'lucide-react'
+import { ArrowLeftRight, Gauge, History, Package, Trash2 } from 'lucide-react'
 
 import {
   ResponsiveActionMenu,
@@ -50,6 +50,7 @@ type Props = {
   currencyCode: string
   onUse: (row: InventoryStockRow) => void
   onHistory: (row: InventoryStockRow) => void
+  onEditLimits: (row: InventoryStockRow) => void
   onTransfer?: (row: InventoryStockRow) => void
   onRemove: (row: InventoryStockRow) => void
   onBookDelivery: () => void
@@ -63,6 +64,7 @@ export function StockList({
   currencyCode,
   onUse,
   onHistory,
+  onEditLimits,
   onTransfer,
   onRemove,
   onBookDelivery,
@@ -137,6 +139,12 @@ export function StockList({
         label: t('history'),
         icon: History,
         onSelect: () => onHistory(row),
+      },
+      {
+        id: 'limits',
+        label: t('editLimits'),
+        icon: Gauge,
+        onSelect: () => onEditLimits(row),
       },
     ]
     if (onTransfer) {
@@ -241,8 +249,8 @@ export function StockList({
                     <StockBadge
                       onHand={row.onHand}
                       packagesLabel={t('packages')}
-                      minOnHand={row.catalogItem.minOnHand}
-                      maxOnHand={row.catalogItem.maxOnHand}
+                      minOnHand={row.minOnHand}
+                      maxOnHand={row.maxOnHand}
                     />
                   </div>
                 </TableCell>
@@ -327,8 +335,8 @@ export function StockList({
               <StockBadge
                 onHand={row.onHand}
                 packagesLabel={t('packages')}
-                minOnHand={row.catalogItem.minOnHand}
-                maxOnHand={row.catalogItem.maxOnHand}
+                minOnHand={row.minOnHand}
+                maxOnHand={row.maxOnHand}
               />
             </div>
             <Button

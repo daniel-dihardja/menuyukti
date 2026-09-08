@@ -57,7 +57,7 @@ def validate_catalog_price(price: float | None) -> float | None:
     return float(price)
 
 
-def validate_catalog_on_hand_limits(
+def validate_on_hand_limits(
     min_on_hand: float | None,
     max_on_hand: float | None,
 ) -> tuple[float | None, float | None]:

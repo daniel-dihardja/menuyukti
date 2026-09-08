@@ -52,6 +52,25 @@ export const patchInventoryStockBodySchema = z.object({
   onHand: z.number().min(0),
 })
 
+const optionalOnHandLimitSchema = z.number().nonnegative().nullable()
+
+function refineOnHandLimits<T extends { minOnHand?: number | null; maxOnHand?: number | null }>(
+  data: T,
+): boolean {
+  if (data.minOnHand == null || data.maxOnHand == null) return true
+  return data.minOnHand <= data.maxOnHand
+}
+
+export const updateInventoryStockLimitsBodySchema = z
+  .object({
+    minOnHand: optionalOnHandLimitSchema,
+    maxOnHand: optionalOnHandLimitSchema,
+  })
+  .refine(refineOnHandLimits, {
+    message: 'minOnHand cannot be greater than maxOnHand',
+    path: ['minOnHand'],
+  })
+
 export type CreateInventoryCatalogItemWithStockBody = z.infer<
   typeof createInventoryCatalogItemWithStockBodySchema
 >
@@ -60,3 +79,4 @@ export type ReceiveInventoryStockBody = z.infer<typeof receiveInventoryStockBody
 export type ConsumeInventoryStockBody = z.infer<typeof consumeInventoryStockBodySchema>
 export type TransferInventoryStockBody = z.infer<typeof transferInventoryStockBodySchema>
 export type PatchInventoryStockBody = z.infer<typeof patchInventoryStockBodySchema>
+export type UpdateInventoryStockLimitsBody = z.infer<typeof updateInventoryStockLimitsBodySchema>
