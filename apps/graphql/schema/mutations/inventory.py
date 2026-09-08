@@ -47,7 +47,6 @@ from graphql.services.inventory import (
 from graphql.services.location_area import assert_area_belongs_to_location
 
 
-
 @strawberry.type
 class InventoryCatalogMutations:
     @strawberry.mutation(description="Add a pantry item to the workspace catalog.")
