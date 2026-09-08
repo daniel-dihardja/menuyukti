@@ -178,6 +178,7 @@ def add_movement(
     related_movement_id: int | None = None,
     note: str | None = None,
     location_area_id: int | None = None,
+    unit_cost: float | None = None,
 ) -> InventoryStockMovement:
     row = InventoryStockMovement(
         location_id=location_id,
@@ -185,6 +186,7 @@ def add_movement(
         stock_id=stock_id,
         direction=direction,
         quantity=quantity,
+        unit_cost=unit_cost,
         occurred_on=occurred_on,
         related_movement_id=related_movement_id,
         note=note,

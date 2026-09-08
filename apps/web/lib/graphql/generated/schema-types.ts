@@ -443,6 +443,8 @@ export enum InventoryStockMovementDirection {
 /** One receive, use, or transfer leg for pantry stock. */
 export type InventoryStockMovementType = {
   __typename?: 'InventoryStockMovementType'
+  areaId?: Maybe<Scalars['Int']['output']>
+  areaName?: Maybe<Scalars['String']['output']>
   catalogItemId: Scalars['Int']['output']
   createdAt: Scalars['DateTime']['output']
   createdByClerkUserId?: Maybe<Scalars['String']['output']>
@@ -455,6 +457,7 @@ export type InventoryStockMovementType = {
   relatedLocationId?: Maybe<Scalars['Int']['output']>
   relatedMovementId?: Maybe<Scalars['Int']['output']>
   stockId?: Maybe<Scalars['Int']['output']>
+  unitCost?: Maybe<Scalars['Float']['output']>
 }
 
 /** Result of moving packages between locations. */
@@ -1022,6 +1025,7 @@ export type MutationReceiveInventoryStockArgs = {
   locationId: Scalars['Int']['input']
   occurredOn?: InputMaybe<Scalars['Date']['input']>
   quantity: Scalars['Float']['input']
+  unitCost?: InputMaybe<Scalars['Float']['input']>
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */

@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
+import { formatCurrencyWithCode } from '@/lib/currency'
 import { useDesktopLayout } from '@/hooks/use-desktop-layout'
 import type {
   InventoryStockMovement,
@@ -36,6 +37,7 @@ import {
   formatActivityDate,
   inventarErrorMessage,
   rangeForPreset,
+  resolveLocationCurrency,
   type HistoryDatePreset,
   type InventarApiErrorPayload,
   type InventarBranch,
@@ -65,6 +67,13 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
   const [historyLoading, setHistoryLoading] = useState(false)
 
   const locationNameById = new Map(branches.map((branch) => [branch.id, branch.name]))
+  const currencyCode = resolveLocationCurrency(
+    branches.find((branch) => branch.id === locationId)?.currency,
+  )
+
+  function formatUnitCost(amount: number): string {
+    return formatCurrencyWithCode(amount, currencyCode, locale)
+  }
 
   useEffect(() => {
     if (historyPreset !== 'custom') {
@@ -242,6 +251,11 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
                 {movement.direction === 'out' && movement.areaName ? (
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {t('historyArea', { name: movement.areaName })}
+                  </p>
+                ) : null}
+                {movement.direction === 'in' && movement.unitCost != null ? (
+                  <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                    {t('historyUnitCost', { amount: formatUnitCost(movement.unitCost) })}
                   </p>
                 ) : null}
                 <div className="mt-1.5">

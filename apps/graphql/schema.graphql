@@ -407,6 +407,7 @@ type InventoryStockMovementType {
   stockId: Int
   direction: InventoryStockMovementDirection!
   quantity: Float!
+  unitCost: Float
   occurredOn: Date!
   note: String
   areaId: Int
@@ -763,7 +764,7 @@ type Mutation {
   """
   Receive packages at a location (increases stock and records an in movement).
   """
-  receiveInventoryStock(locationId: Int!, catalogItemId: Int!, quantity: Float!, occurredOn: Date = null): InventoryStockType!
+  receiveInventoryStock(locationId: Int!, catalogItemId: Int!, quantity: Float!, occurredOn: Date = null, unitCost: Float = null): InventoryStockType!
 
   """Use packages from stock (decreases stock and records an out movement)."""
   consumeInventoryStock(stockId: Int!, quantity: Float!, occurredOn: Date = null, areaId: Int = null): InventoryStockType!

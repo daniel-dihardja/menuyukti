@@ -17,6 +17,7 @@ export type InventarCatalogOption = {
   name: string
   packageSize: number
   packageUnit: string
+  price: number | null
 }
 
 export type HistoryDatePreset = '7d' | '30d' | 'all' | 'custom'

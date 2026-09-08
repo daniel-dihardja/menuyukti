@@ -107,6 +107,7 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
         name: item.name,
         packageSize: item.packageSize,
         packageUnit: item.packageUnit,
+        price: item.price,
       }))}
     />
   )

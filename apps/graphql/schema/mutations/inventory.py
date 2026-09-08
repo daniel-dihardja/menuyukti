@@ -215,6 +215,7 @@ class InventoryStockMutations:
         catalog_item_id: int,
         quantity: float,
         occurred_on: date | None = None,
+        unit_cost: float | None = None,
     ) -> InventoryStockType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -222,6 +223,7 @@ class InventoryStockMutations:
 
         qty = validate_movement_quantity(quantity)
         day = resolve_occurred_on(occurred_on)
+        unit_cost_clean = validate_catalog_price(unit_cost)
 
         with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id, info=info)
@@ -252,6 +254,9 @@ class InventoryStockMutations:
                 row.last_in_on = day
                 row.last_updated_by_clerk_user_id = user_id
 
+            if unit_cost_clean is not None:
+                catalog_item.price = unit_cost_clean
+
             add_movement(
                 session,
                 location_id=location_id,
@@ -261,6 +266,7 @@ class InventoryStockMutations:
                 quantity=qty,
                 occurred_on=day,
                 created_by_clerk_user_id=user_id,
+                unit_cost=unit_cost_clean,
             )
             session.commit()
             row = load_stock_with_catalog(session, row.id)
@@ -560,6 +566,7 @@ class InventoryStockMutations:
                     quantity=on_hand_clean,
                     occurred_on=day,
                     created_by_clerk_user_id=user_id,
+                    unit_cost=price_clean,
                 )
 
             try:

@@ -33,6 +33,7 @@ export const receiveInventoryStockBodySchema = z.object({
   catalogItemId: z.number().int().positive(),
   quantity: z.number().positive(),
   occurredOn: occurredOnSchema,
+  unitCost: z.number().nonnegative().nullable().optional(),
 })
 
 export const consumeInventoryStockBodySchema = z.object({

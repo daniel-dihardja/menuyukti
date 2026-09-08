@@ -59,6 +59,7 @@ def movement_to_gql(row: InventoryStockMovement) -> InventoryStockMovementType:
         stockId=row.stock_id,
         direction=InventoryStockMovementDirection(row.direction),
         quantity=row.quantity,
+        unitCost=row.unit_cost,
         occurredOn=row.occurred_on,
         note=row.note,
         areaId=row.location_area_id,

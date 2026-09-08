@@ -721,12 +721,14 @@ mutation ReceiveStock(
   $catalogItemId: Int!
   $quantity: Float!
   $occurredOn: Date
+  $unitCost: Float
 ) {
   receiveInventoryStock(
     locationId: $locationId
     catalogItemId: $catalogItemId
     quantity: $quantity
     occurredOn: $occurredOn
+    unitCost: $unitCost
   ) {
     id
     onHand
@@ -734,6 +736,10 @@ mutation ReceiveStock(
     lastOutOn
     lastUpdatedByClerkUserId
     catalogItemId
+    catalogItem {
+      id
+      price
+    }
   }
 }
 """
@@ -770,6 +776,7 @@ query Movements(
     id
     direction
     quantity
+    unitCost
     occurredOn
     stockId
     relatedMovementId
@@ -871,17 +878,119 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert len(rows) == 3
     assert rows[0]["direction"] == "out"
     assert rows[0]["quantity"] == 1.5
+    assert rows[0]["unitCost"] is None
     assert rows[0]["occurredOn"] == "2026-08-31"
     assert rows[0]["relatedLocationId"] is None
     assert rows[0]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert rows[1]["direction"] == "in"
+    assert rows[1]["unitCost"] is None
     assert rows[1]["occurredOn"] == "2026-08-30"
     assert rows[1]["relatedLocationId"] is None
     assert rows[1]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert rows[2]["direction"] == "in"
+    assert rows[2]["unitCost"] is None
     assert rows[2]["occurredOn"] == "2026-08-28"
     assert rows[2]["relatedLocationId"] is None
     assert rows[2]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
+
+
+def test_receive_unit_cost_updates_catalog_and_movement(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+    ws_id = inventar_workspace_and_location["workspace_id"]
+
+    catalog = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Olive oil",
+            "packageSize": 1.0,
+            "packageUnit": "L",
+            "price": 10.0,
+        },
+    )
+    assert not catalog.errors, catalog.errors
+    catalog_id = catalog.data["createInventoryCatalogItem"]["id"]
+    assert catalog.data["createInventoryCatalogItem"]["price"] == 10.0
+
+    without_cost = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 2.0,
+            "occurredOn": "2026-09-01",
+        },
+    )
+    assert not without_cost.errors, without_cost.errors
+    assert without_cost.data["receiveInventoryStock"]["catalogItem"]["price"] == 10.0
+
+    with_cost = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 1.0,
+            "occurredOn": "2026-09-02",
+            "unitCost": 12.5,
+        },
+    )
+    assert not with_cost.errors, with_cost.errors
+    assert with_cost.data["receiveInventoryStock"]["catalogItem"]["price"] == 12.5
+
+    negative = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 1.0,
+            "unitCost": -1.0,
+        },
+    )
+    assert negative.errors
+    assert "price must be zero or greater" in str(negative.errors)
+
+    movements = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+    )
+    assert not movements.errors, movements.errors
+    rows = movements.data["inventoryStockMovements"]
+    assert len(rows) == 2
+    assert rows[0]["direction"] == "in"
+    assert rows[0]["unitCost"] == 12.5
+    assert rows[0]["occurredOn"] == "2026-09-02"
+    assert rows[1]["direction"] == "in"
+    assert rows[1]["unitCost"] is None
+    assert rows[1]["occurredOn"] == "2026-09-01"
+
+
+def test_create_with_stock_copies_price_to_movement_unit_cost(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_id,
+            "name": "Rice bags",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 4.0,
+            "price": 18.0,
+        },
+    )
+    assert not created.errors, created.errors
+    catalog_id = created.data["createInventoryCatalogItemWithStock"]["catalogItem"]["id"]
+
+    movements = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+    )
+    assert not movements.errors, movements.errors
+    rows = movements.data["inventoryStockMovements"]
+    assert len(rows) == 1
+    assert rows[0]["direction"] == "in"
+    assert rows[0]["quantity"] == 4.0
+    assert rows[0]["unitCost"] == 18.0
 
 
 def test_movements_filter_by_occurred_on_date_range(inventar_workspace_and_location):

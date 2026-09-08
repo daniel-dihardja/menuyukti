@@ -15,6 +15,7 @@ export type InventoryStockMovement = {
   stockId: number | null
   direction: InventoryStockMovementDirection
   quantity: number
+  unitCost: number | null
   occurredOn: string
   note: string | null
   areaId: number | null
@@ -75,6 +76,7 @@ const MOVEMENT_FIELDS = `
   stockId
   direction
   quantity
+  unitCost
   occurredOn
   note
   areaId
@@ -179,12 +181,14 @@ export const RECEIVE_INVENTORY_STOCK_MUTATION = `
     $catalogItemId: Int!
     $quantity: Float!
     $occurredOn: Date
+    $unitCost: Float
   ) {
     receiveInventoryStock(
       locationId: $locationId
       catalogItemId: $catalogItemId
       quantity: $quantity
       occurredOn: $occurredOn
+      unitCost: $unitCost
     ) {
       ${STOCK_FIELDS}
     }

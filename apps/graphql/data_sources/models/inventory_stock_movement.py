@@ -58,6 +58,7 @@ class InventoryStockMovement(Base):
     )
     direction: Mapped[str] = mapped_column(String(32), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
+    unit_cost: Mapped[float | None] = mapped_column(Float, nullable=True)
     occurred_on: Mapped[date] = mapped_column(Date, nullable=False)
     note: Mapped[str | None] = mapped_column(String(512), nullable=True)
     location_area_id: Mapped[int | None] = mapped_column(
