@@ -19,6 +19,8 @@ os.environ.setdefault("NODE_ENV", "test")
 import pytest
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID
 
+pytest_plugins = ("graphql.tests.inventar_fixtures",)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def _graphql_test_db():

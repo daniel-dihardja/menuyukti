@@ -754,6 +754,7 @@
     "pack": "Pack",
     "name": "Name",
     "storageZone": "Storage",
+    "category": "Category",
     "activity": "Activity",
     "updatedBy": "Updated by",
     "updatedByEmpty": "—",
@@ -781,6 +782,9 @@
     "actionsSheetDescription": "Choose an action for this stock item.",
     "use": "Use",
     "useStock": "Use stock",
+    "area": "Area",
+    "areaUnassigned": "Unassigned",
+    "historyArea": "Area · {name}",
     "arrivedOn": "Arrived on",
     "usedOn": "Used on",
     "datePlaceholder": "Pick a date",
@@ -809,15 +813,32 @@
       "freezer": "Freezer",
       "dry": "Dry"
     },
+    "categories": {
+      "dry_goods": "Dry goods",
+      "dairy": "Dairy",
+      "produce": "Produce",
+      "proteins": "Proteins",
+      "frozen": "Frozen",
+      "beverages": "Beverages",
+      "spices_condiments": "Spices & condiments",
+      "cleaning": "Cleaning",
+      "packaging": "Packaging",
+      "other": "Other"
+    },
     "packageSize": "Package size",
     "packageUnit": "Unit",
     "price": "Price",
+    "unitCost": "Unit cost",
+    "unitCostPlaceholder": "Optional",
+    "unitCostHint": "Leave empty to keep the catalog price. When set, updates the catalog to this last purchase cost.",
+    "historyUnitCost": "Cost {amount}",
     "value": "Value",
     "totalValue": "Total value",
     "priceEmpty": "—",
     "minOnHand": "Lower limit",
     "maxOnHand": "Upper limit",
     "onHandLimitOptional": "Packages (optional)",
+    "editLimits": "Edit limits",
     "stockStatusLow": "Low stock",
     "stockStatusOver": "Over stock",
     "editStock": "Edit stock",
@@ -844,7 +865,7 @@
     "searchPantryItem": "Search pantry items…",
     "noPantryItemMatches": "No pantry item matches",
     "catalogTitle": "Pantry items",
-    "catalogDescription": "Workspace-wide list of what you stock. Edit names and pack sizes here.",
+    "catalogDescription": "Workspace-wide list of what you stock. Edit names and pack sizes here. Set lower and upper limits per location on the stock screen.",
     "pantryItems": "Pantry items",
     "addPantryItem": "Add pantry item",
     "editPantryItem": "Edit pantry item",
@@ -879,7 +900,8 @@
       "quantityTooMuch": "Cannot use or transfer more than current stock",
       "pantryItemRequired": "Choose a pantry item",
       "destinationRequired": "Choose a destination location",
-      "occurredOnRequired": "Choose a date"
+      "occurredOnRequired": "Choose a date",
+      "areaInvalid": "Choose a valid area"
     }
   },
   "usage": {
@@ -1815,6 +1837,13 @@
         "viewAnalytics": "View Latest Analytics",
         "uploadSales": "Upload Sales Report",
         "delete": "Delete",
+        "deleteConfirmTitle": "Delete this location?",
+        "deleteConfirmDescription": "This permanently removes “{name}” and its sales analytics, inventory stock, and calendar entries. This cannot be undone.",
+        "deleteConfirmCancel": "Cancel",
+        "deleteConfirmAction": "Delete location",
+        "deleting": "Deleting…",
+        "deleteSuccessToast": "Location deleted",
+        "deleteErrorToast": "Could not delete location",
         "empty": "No locations available yet.",
         "mobile": {
           "actionsTrigger": "Actions",
@@ -1865,7 +1894,32 @@
         "tabs": {
           "basics": "Basics",
           "hours": "Hours",
+          "areas": "Areas",
           "marketing": "Marketing profile"
+        },
+        "areas": {
+          "title": "Areas",
+          "description": "Optional rooms or stations (e.g. Main room, Bar). When you use stock, you can tag which area consumed it.",
+          "empty": "No areas yet. Add one if you want to track where stock is used.",
+          "nameLabel": "Area name",
+          "namePlaceholder": "Bar",
+          "addAction": "Add area",
+          "saveName": "Save",
+          "cancelEdit": "Cancel",
+          "deleteConfirm": "Delete area “{name}”? Past stock uses keep their history without this area.",
+          "moveUpAria": "Move {name} up",
+          "moveDownAria": "Move {name} down",
+          "deleteAria": "Delete {name}",
+          "toast": {
+            "created": "Area added",
+            "updated": "Area updated",
+            "deleted": "Area deleted"
+          },
+          "errors": {
+            "nameRequired": "Enter an area name",
+            "saveFailed": "Could not save area",
+            "deleteFailed": "Could not delete area"
+          }
         },
         "currencyAutoHint": "Currency is set from country — change if needed.",
         "toast": {

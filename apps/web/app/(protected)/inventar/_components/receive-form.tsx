@@ -8,10 +8,11 @@ import { toast } from 'sonner'
 import { routes } from '@/lib/routes'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
 import { Button } from '@workspace/ui/components/button'
-import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { Spinner } from '@workspace/ui/components/spinner'
 
+import { parseOptionalPrice } from '../catalog/_components/catalog-form'
 import { FormSurface } from './form-surface'
 import { PantryItemCombobox } from './pantry-item-combobox'
 import {
@@ -30,6 +31,13 @@ type Props = {
   onSuccess: () => void
 }
 
+function unitCostPrefill(items: InventarCatalogOption[], catalogId: string): string {
+  const id = Number(catalogId)
+  if (!Number.isInteger(id) || id < 1) return ''
+  const item = items.find((row) => row.id === id)
+  return item?.price != null ? String(item.price) : ''
+}
+
 export function ReceiveForm({
   locationId,
   catalogItems,
@@ -43,6 +51,7 @@ export function ReceiveForm({
   const [selectedCatalogId, setSelectedCatalogId] = useState(initialCatalogId)
   const [receiveQty, setReceiveQty] = useState('1')
   const [receiveDate, setReceiveDate] = useState(todayIsoDate)
+  const [unitCost, setUnitCost] = useState(() => unitCostPrefill(catalogItems, initialCatalogId))
 
   const sortedCatalogItems = [...catalogItems].toSorted((a, b) => a.name.localeCompare(b.name))
   const receivePreviewCatalogId = Number(selectedCatalogId)
@@ -54,6 +63,11 @@ export function ReceiveForm({
     Number.isFinite(receiveQtyAmount) && receiveQtyAmount > 0
       ? (receivePreviewRow?.onHand ?? 0) + receiveQtyAmount
       : null
+
+  function handleCatalogChange(nextId: string) {
+    setSelectedCatalogId(nextId)
+    setUnitCost(unitCostPrefill(catalogItems, nextId))
+  }
 
   async function handleBookDelivery() {
     const catalogItemId = Number(selectedCatalogId)
@@ -70,6 +84,11 @@ export function ReceiveForm({
       toast.error(t('validation.occurredOnRequired'))
       return
     }
+    const parsedCost = parseOptionalPrice(unitCost)
+    if (!parsedCost.ok) {
+      toast.error(t('validation.priceMin'))
+      return
+    }
     setPending(true)
     try {
       const res = await fetch('/api/inventory-stock?mode=receive', {
@@ -80,6 +99,7 @@ export function ReceiveForm({
           catalogItemId,
           quantity,
           occurredOn: receiveDate,
+          ...(parsedCost.price != null ? { unitCost: parsedCost.price } : {}),
         }),
       })
       if (!res.ok) {
@@ -121,7 +141,7 @@ export function ReceiveForm({
           <PantryItemCombobox
             items={sortedCatalogItems}
             value={selectedCatalogId}
-            onValueChange={setSelectedCatalogId}
+            onValueChange={handleCatalogChange}
             placeholder={t('selectPantryItemPlaceholder')}
             searchPlaceholder={t('searchPantryItem')}
             emptyLabel={t('noPantryItemMatches')}
@@ -136,6 +156,18 @@ export function ReceiveForm({
             value={receiveQty}
             onChange={(e) => setReceiveQty(e.target.value)}
           />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="inventar-receive-unit-cost">{t('unitCost')}</FieldLabel>
+          <Input
+            id="inventar-receive-unit-cost"
+            className="min-h-11 touch-manipulation lg:min-h-9"
+            inputMode="decimal"
+            value={unitCost}
+            onChange={(e) => setUnitCost(e.target.value)}
+            placeholder={t('unitCostPlaceholder')}
+          />
+          <FieldDescription>{t('unitCostHint')}</FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="inventar-receive-date">{t('arrivedOn')}</FieldLabel>

@@ -1,3 +1,4 @@
+import { DEFAULT_INVENTORY_CATEGORY, type InventoryCategory } from '@/lib/inventar/categories'
 import {
   DEFAULT_INVENTORY_STORAGE_ZONE,
   type InventoryStorageZone,
@@ -9,9 +10,8 @@ export type CatalogForm = {
   packageSize: string
   packageUnit: string
   storageZone: InventoryStorageZone
+  category: InventoryCategory
   price: string
-  minOnHand: string
-  maxOnHand: string
 }
 
 export const emptyCatalogForm: CatalogForm = {
@@ -19,9 +19,8 @@ export const emptyCatalogForm: CatalogForm = {
   packageSize: '',
   packageUnit: 'kg',
   storageZone: DEFAULT_INVENTORY_STORAGE_ZONE,
+  category: DEFAULT_INVENTORY_CATEGORY,
   price: '',
-  minOnHand: '',
-  maxOnHand: '',
 }
 
 export function catalogFormFromItem(item: InventoryCatalogItem): CatalogForm {
@@ -30,9 +29,8 @@ export function catalogFormFromItem(item: InventoryCatalogItem): CatalogForm {
     packageSize: String(item.packageSize),
     packageUnit: item.packageUnit,
     storageZone: item.storageZone,
+    category: item.category,
     price: item.price != null ? String(item.price) : '',
-    minOnHand: item.minOnHand != null ? String(item.minOnHand) : '',
-    maxOnHand: item.maxOnHand != null ? String(item.maxOnHand) : '',
   }
 }
 
@@ -66,12 +64,5 @@ export function catalogFormValidationError(
   if (!form.packageUnit.trim()) return t('validation.unitRequired')
   const parsedPrice = parseOptionalPrice(form.price)
   if (!parsedPrice.ok) return t('validation.priceMin')
-  const parsedMin = parseOptionalOnHandLimit(form.minOnHand)
-  if (!parsedMin.ok) return t('validation.minOnHandMin')
-  const parsedMax = parseOptionalOnHandLimit(form.maxOnHand)
-  if (!parsedMax.ok) return t('validation.maxOnHandMin')
-  if (parsedMin.value != null && parsedMax.value != null && parsedMin.value > parsedMax.value) {
-    return t('validation.minMaxOrder')
-  }
   return null
 }

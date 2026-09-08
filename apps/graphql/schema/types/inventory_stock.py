@@ -11,6 +11,8 @@ class InventoryStockType:
     locationId: int
     catalogItemId: int
     onHand: float
+    minOnHand: float | None
+    maxOnHand: float | None
     lastInOn: date | None
     lastOutOn: date | None
     lastUpdatedByClerkUserId: str | None

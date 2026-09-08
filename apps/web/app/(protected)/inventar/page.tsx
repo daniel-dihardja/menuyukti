@@ -61,6 +61,14 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
     id: Number(loc.id),
     name: loc.name,
     currency: loc.currency,
+    areas: (loc.areas ?? [])
+      .map((area) => ({
+        id: Number(area.id),
+        name: area.name,
+        sortOrder: area.sortOrder,
+      }))
+      .filter((area) => Number.isInteger(area.id) && area.id > 0)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
   }))
 
   const initialLocationId = resolveInitialLocationId(branches, requestedLocationId)
@@ -99,6 +107,7 @@ async function InventarData({ requestedLocationId }: { requestedLocationId: numb
         name: item.name,
         packageSize: item.packageSize,
         packageUnit: item.packageUnit,
+        price: item.price,
       }))}
     />
   )

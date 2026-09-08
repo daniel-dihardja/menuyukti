@@ -69,4 +69,5 @@ class UpdateLocationMutation:
 
             session.commit()
             session.refresh(row)
+            session.refresh(row, attribute_names=["opening_hours", "areas"])
             return location_to_gql(row)

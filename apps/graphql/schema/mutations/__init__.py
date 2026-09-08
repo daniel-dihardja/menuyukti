@@ -12,6 +12,7 @@ from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_crm_app import DeleteCrmAppMutation
 from .delete_crm_customer import DeleteCrmCustomerMutation
+from .delete_location import DeleteLocationMutation
 from .delete_media_collection import DeleteMediaCollectionMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
@@ -19,6 +20,7 @@ from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .delete_style import DeleteStyleMutation
 from .inventory import InventoryCatalogMutations, InventoryStockMutations
 from .invite_workspace_member import InviteWorkspaceMemberMutation
+from .location_area import LocationAreaMutations
 from .location_menu_item_cogs import (
     ApplyLocationCogsToAnalyticsRunMutation,
     SaveAnalyticsRunCogsToLocationMutation,
@@ -48,6 +50,7 @@ __all__ = [
     "AddMediaToCollectionMutation",
     "InventoryCatalogMutations",
     "InventoryStockMutations",
+    "LocationAreaMutations",
     "CreateCalendarEntryMutation",
     "CreateCrmAppMutation",
     "CreateCrmEnrollmentTokenMutation",
@@ -61,6 +64,7 @@ __all__ = [
     "DeleteCalendarEntryMutation",
     "DeleteCrmAppMutation",
     "DeleteCrmCustomerMutation",
+    "DeleteLocationMutation",
     "RevokeCrmDeviceMutation",
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",

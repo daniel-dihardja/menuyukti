@@ -42,7 +42,7 @@ PRIMARY_LOCATION_NAME = "SNABB"
 BRANCH_LOCATION_NAME = "SNABB Branch"
 DEV_WORKSPACE_NAME = "Dev Workspace"
 
-SCOPES = ("inventar", "analytics", "all")
+SCOPES = ("inventar", "analytics", "all", "clear-inventar")
 
 
 @dataclass(frozen=True)
@@ -362,7 +362,15 @@ def main(
         ctx = ensure_workspace_context(session, clerk_user_id)
         session.commit()
 
-        if scope in ("inventar", "all"):
+        if scope == "clear-inventar":
+            workspace_id = ctx.workspace.id
+            reset_inventar(session, workspace_id)
+            session.commit()
+            print(
+                f"Cleared inventar: workspace_id={workspace_id} "
+                "(catalog, stock, movements). Locations left intact."
+            )
+        elif scope in ("inventar", "all"):
             workspace_id = ctx.workspace.id
             primary_id = ctx.primary_location.id
             branch_id = ctx.branch_location.id
@@ -423,15 +431,15 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "Selective local seed for inventar (default) and/or analytics. "
-            "Does not wipe the database."
+            "Selective local seed for inventar (default) and/or analytics, "
+            "or clear inventar only. Does not wipe the database."
         )
     )
     parser.add_argument(
         "--scope",
         choices=SCOPES,
         default="inventar",
-        help="What to seed (default: inventar)",
+        help="What to seed or clear (default: inventar)",
     )
     parser.add_argument(
         "--excel",

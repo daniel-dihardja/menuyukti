@@ -19,6 +19,7 @@ from graphql.schema.auth import (
 from graphql.schema.mappers.inventory import catalog_item_to_gql, stock_to_gql
 from graphql.schema.types.inventory_catalog_item import (
     InventoryCatalogItemType,
+    InventoryCategory,
     InventoryStorageZone,
 )
 from graphql.schema.types.inventory_stock import (
@@ -37,12 +38,13 @@ from graphql.services.inventory import (
     load_stock_with_catalog,
     resolve_occurred_on,
     validate_catalog_fields,
-    validate_catalog_on_hand_limits,
     validate_catalog_price,
     validate_movement_quantity,
     validate_on_hand,
+    validate_on_hand_limits,
     validate_transfer_quantity,
 )
+from graphql.services.location_area import assert_area_belongs_to_location
 
 
 @strawberry.type
@@ -56,22 +58,21 @@ class InventoryCatalogMutations:
         package_size: float,
         package_unit: str,
         storage_zone: InventoryStorageZone | None = None,
+        category: InventoryCategory | None = None,
         price: float | None = None,
-        min_on_hand: float | None = None,
-        max_on_hand: float | None = None,
     ) -> InventoryCatalogItemType:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for createInventoryCatalogItem")
 
-        name_clean, size_clean, unit_clean, zone_clean = validate_catalog_fields(
+        name_clean, size_clean, unit_clean, zone_clean, category_clean = validate_catalog_fields(
             name=name,
             package_size=package_size,
             package_unit=package_unit,
             storage_zone=storage_zone,
+            category=category,
         )
         price_clean = validate_catalog_price(price)
-        min_clean, max_clean = validate_catalog_on_hand_limits(min_on_hand, max_on_hand)
 
         with request_session_scope(info) as session:
             if not is_workspace_member(session, workspace_id, user_id):
@@ -82,9 +83,8 @@ class InventoryCatalogMutations:
                 package_size=size_clean,
                 package_unit=unit_clean,
                 storage_zone=zone_clean,
+                category=category_clean,
                 price=price_clean,
-                min_on_hand=min_clean,
-                max_on_hand=max_clean,
             )
             session.add(row)
             try:
@@ -104,9 +104,8 @@ class InventoryCatalogMutations:
         package_size: float | None = None,
         package_unit: str | None = None,
         storage_zone: InventoryStorageZone | None = None,
+        category: InventoryCategory | None = None,
         price: float | None = UNSET,
-        min_on_hand: float | None = UNSET,
-        max_on_hand: float | None = UNSET,
     ) -> InventoryCatalogItemType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -121,24 +120,23 @@ class InventoryCatalogMutations:
             next_size = row.package_size if package_size is None else package_size
             next_unit = row.package_unit if package_unit is None else package_unit
             next_zone = row.storage_zone if storage_zone is None else storage_zone
-            name_clean, size_clean, unit_clean, zone_clean = validate_catalog_fields(
-                name=next_name,
-                package_size=next_size,
-                package_unit=next_unit,
-                storage_zone=next_zone,
+            next_category = row.category if category is None else category
+            name_clean, size_clean, unit_clean, zone_clean, category_clean = (
+                validate_catalog_fields(
+                    name=next_name,
+                    package_size=next_size,
+                    package_unit=next_unit,
+                    storage_zone=next_zone,
+                    category=next_category,
+                )
             )
             row.name = name_clean
             row.package_size = size_clean
             row.package_unit = unit_clean
             row.storage_zone = zone_clean
+            row.category = category_clean
             if price is not UNSET:
                 row.price = validate_catalog_price(price)
-            next_min = row.min_on_hand if min_on_hand is UNSET else min_on_hand
-            next_max = row.max_on_hand if max_on_hand is UNSET else max_on_hand
-            if min_on_hand is not UNSET or max_on_hand is not UNSET:
-                min_clean, max_clean = validate_catalog_on_hand_limits(next_min, next_max)
-                row.min_on_hand = min_clean
-                row.max_on_hand = max_clean
             try:
                 session.commit()
             except IntegrityError as exc:
@@ -217,6 +215,7 @@ class InventoryStockMutations:
         catalog_item_id: int,
         quantity: float,
         occurred_on: date | None = None,
+        unit_cost: float | None = None,
     ) -> InventoryStockType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -224,6 +223,7 @@ class InventoryStockMutations:
 
         qty = validate_movement_quantity(quantity)
         day = resolve_occurred_on(occurred_on)
+        unit_cost_clean = validate_catalog_price(unit_cost)
 
         with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id, info=info)
@@ -254,6 +254,9 @@ class InventoryStockMutations:
                 row.last_in_on = day
                 row.last_updated_by_clerk_user_id = user_id
 
+            if unit_cost_clean is not None:
+                catalog_item.price = unit_cost_clean
+
             add_movement(
                 session,
                 location_id=location_id,
@@ -263,6 +266,7 @@ class InventoryStockMutations:
                 quantity=qty,
                 occurred_on=day,
                 created_by_clerk_user_id=user_id,
+                unit_cost=unit_cost_clean,
             )
             session.commit()
             row = load_stock_with_catalog(session, row.id)
@@ -277,6 +281,7 @@ class InventoryStockMutations:
         stock_id: int,
         quantity: float,
         occurred_on: date | None = None,
+        area_id: int | None = None,
     ) -> InventoryStockType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -293,6 +298,15 @@ class InventoryStockMutations:
             if qty > row.on_hand:
                 raise ValueError("quantity cannot exceed current stock")
 
+            resolved_area_id: int | None = None
+            if area_id is not None:
+                assert_area_belongs_to_location(
+                    session,
+                    area_id=area_id,
+                    location_id=row.location_id,
+                )
+                resolved_area_id = area_id
+
             row.on_hand = row.on_hand - qty
             row.last_out_on = day
             row.last_updated_by_clerk_user_id = user_id
@@ -305,7 +319,33 @@ class InventoryStockMutations:
                 quantity=qty,
                 occurred_on=day,
                 created_by_clerk_user_id=user_id,
+                location_area_id=resolved_area_id,
             )
+            session.commit()
+            row = load_stock_with_catalog(session, row.id)
+            return stock_to_gql(row)
+
+    @strawberry.mutation(description="Update lower/upper on-hand limits for location stock.")
+    def update_inventory_stock_limits(
+        self,
+        info: strawberry.Info,
+        id: int,
+        min_on_hand: float | None = UNSET,
+        max_on_hand: float | None = UNSET,
+    ) -> InventoryStockType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for updateInventoryStockLimits")
+
+        with request_session_scope(info) as session:
+            row = load_stock_with_catalog(session, id)
+            require_location_owner(session, row.location_id, user_id, info=info)
+            next_min = row.min_on_hand if min_on_hand is UNSET else min_on_hand
+            next_max = row.max_on_hand if max_on_hand is UNSET else max_on_hand
+            if min_on_hand is not UNSET or max_on_hand is not UNSET:
+                min_clean, max_clean = validate_on_hand_limits(next_min, next_max)
+                row.min_on_hand = min_clean
+                row.max_on_hand = max_clean
             session.commit()
             row = load_stock_with_catalog(session, row.id)
             return stock_to_gql(row)
@@ -455,6 +495,7 @@ class InventoryStockMutations:
         package_unit: str,
         on_hand: float,
         storage_zone: InventoryStorageZone | None = None,
+        category: InventoryCategory | None = None,
         price: float | None = None,
         min_on_hand: float | None = None,
         max_on_hand: float | None = None,
@@ -463,14 +504,15 @@ class InventoryStockMutations:
         if not user_id:
             raise ValueError("Missing authenticated user for createInventoryCatalogItemWithStock")
 
-        name_clean, size_clean, unit_clean, zone_clean = validate_catalog_fields(
+        name_clean, size_clean, unit_clean, zone_clean, category_clean = validate_catalog_fields(
             name=name,
             package_size=package_size,
             package_unit=package_unit,
             storage_zone=storage_zone,
+            category=category,
         )
         price_clean = validate_catalog_price(price)
-        min_clean, max_clean = validate_catalog_on_hand_limits(min_on_hand, max_on_hand)
+        min_clean, max_clean = validate_on_hand_limits(min_on_hand, max_on_hand)
         on_hand_clean = validate_on_hand(on_hand)
         day = resolve_occurred_on(None)
 
@@ -488,9 +530,8 @@ class InventoryStockMutations:
                 package_size=size_clean,
                 package_unit=unit_clean,
                 storage_zone=zone_clean,
+                category=category_clean,
                 price=price_clean,
-                min_on_hand=min_clean,
-                max_on_hand=max_clean,
             )
             session.add(catalog_row)
             try:
@@ -503,6 +544,8 @@ class InventoryStockMutations:
                 location_id=location_id,
                 catalog_item_id=catalog_row.id,
                 on_hand=on_hand_clean,
+                min_on_hand=min_clean,
+                max_on_hand=max_clean,
                 last_in_on=day if on_hand_clean > 0 else None,
                 last_updated_by_clerk_user_id=user_id if on_hand_clean > 0 else None,
             )
@@ -523,6 +566,7 @@ class InventoryStockMutations:
                     quantity=on_hand_clean,
                     occurred_on=day,
                     created_by_clerk_user_id=user_id,
+                    unit_cost=price_clean,
                 )
 
             try:

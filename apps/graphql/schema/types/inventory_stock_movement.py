@@ -20,8 +20,11 @@ class InventoryStockMovementType:
     stockId: int | None
     direction: InventoryStockMovementDirection
     quantity: float
+    unitCost: float | None
     occurredOn: date
     note: str | None
+    areaId: int | None
+    areaName: str | None
     relatedMovementId: int | None
     relatedLocationId: int | None
     createdByClerkUserId: str | None

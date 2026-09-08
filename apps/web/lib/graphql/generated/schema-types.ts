@@ -385,10 +385,9 @@ export type InstagramSignalsType = {
 /** Workspace pantry catalog item (name and package label). */
 export type InventoryCatalogItemType = {
   __typename?: 'InventoryCatalogItemType'
+  category: InventoryCategory
   createdAt: Scalars['DateTime']['output']
   id: Scalars['Int']['output']
-  maxOnHand?: Maybe<Scalars['Float']['output']>
-  minOnHand?: Maybe<Scalars['Float']['output']>
   name: Scalars['String']['output']
   packageSize: Scalars['Float']['output']
   packageUnit: Scalars['String']['output']
@@ -396,6 +395,41 @@ export type InventoryCatalogItemType = {
   storageZone: InventoryStorageZone
   updatedAt: Scalars['DateTime']['output']
   workspaceId: Scalars['Int']['output']
+}
+
+/** Product category for a pantry item. */
+export enum InventoryCategory {
+  Beverages = 'beverages',
+  Cleaning = 'cleaning',
+  Dairy = 'dairy',
+  DryGoods = 'dry_goods',
+  Frozen = 'frozen',
+  Other = 'other',
+  Packaging = 'packaging',
+  Produce = 'produce',
+  Proteins = 'proteins',
+  SpicesCondiments = 'spices_condiments',
+}
+
+/** Confidence of a refill forecast row. */
+export enum InventoryRefillForecastConfidence {
+  InsufficientHistory = 'insufficient_history',
+  Ok = 'ok',
+}
+
+/** One catalog item ranked by estimated days until refill. */
+export type InventoryRefillForecastItem = {
+  __typename?: 'InventoryRefillForecastItem'
+  avgDailyOut: Scalars['Float']['output']
+  catalogItemId: Scalars['Int']['output']
+  confidence: InventoryRefillForecastConfidence
+  daysUntilRefill?: Maybe<Scalars['Float']['output']>
+  minOnHand?: Maybe<Scalars['Float']['output']>
+  name: Scalars['String']['output']
+  onHand: Scalars['Float']['output']
+  priorityRank: Scalars['Int']['output']
+  storageZone: InventoryStorageZone
+  windowDays: Scalars['Int']['output']
 }
 
 /** Direction of an inventar stock movement. */
@@ -409,6 +443,8 @@ export enum InventoryStockMovementDirection {
 /** One receive, use, or transfer leg for pantry stock. */
 export type InventoryStockMovementType = {
   __typename?: 'InventoryStockMovementType'
+  areaId?: Maybe<Scalars['Int']['output']>
+  areaName?: Maybe<Scalars['String']['output']>
   catalogItemId: Scalars['Int']['output']
   createdAt: Scalars['DateTime']['output']
   createdByClerkUserId?: Maybe<Scalars['String']['output']>
@@ -421,6 +457,7 @@ export type InventoryStockMovementType = {
   relatedLocationId?: Maybe<Scalars['Int']['output']>
   relatedMovementId?: Maybe<Scalars['Int']['output']>
   stockId?: Maybe<Scalars['Int']['output']>
+  unitCost?: Maybe<Scalars['Float']['output']>
 }
 
 /** Result of moving packages between locations. */
@@ -443,6 +480,8 @@ export type InventoryStockType = {
   lastOutOn?: Maybe<Scalars['Date']['output']>
   lastUpdatedByClerkUserId?: Maybe<Scalars['String']['output']>
   locationId: Scalars['Int']['output']
+  maxOnHand?: Maybe<Scalars['Float']['output']>
+  minOnHand?: Maybe<Scalars['Float']['output']>
   onHand: Scalars['Float']['output']
   updatedAt: Scalars['DateTime']['output']
 }
@@ -736,6 +775,8 @@ export type Mutation = {
   deleteInventoryCatalogItem: Scalars['Boolean']['output']
   /** Stop tracking a catalog item at a location. */
   deleteInventoryStock: Scalars['Boolean']['output']
+  /** Delete a location and its analytics, stock, and calendar data. */
+  deleteLocation: Scalars['Boolean']['output']
   /** Delete a media asset catalog row by filename (memberships cascade). Returns true when a row was removed; false when already absent. */
   deleteMediaAsset: Scalars['Boolean']['output']
   /** Delete a media collection by id (memberships cascade). */
@@ -767,6 +808,8 @@ export type Mutation = {
   updateCrmApp: CrmAppType
   /** Update a pantry catalog item. */
   updateInventoryCatalogItem: InventoryCatalogItemType
+  /** Update lower/upper on-hand limits for location stock. */
+  updateInventoryStockLimits: InventoryStockType
   updateLocation: LocationType
   /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
   updateLocationManualBriefInput: LocationManualBriefInputType
@@ -832,8 +875,7 @@ export type MutationCreateCrmEnrollmentTokenArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateInventoryCatalogItemArgs = {
-  maxOnHand?: InputMaybe<Scalars['Float']['input']>
-  minOnHand?: InputMaybe<Scalars['Float']['input']>
+  category?: InputMaybe<InventoryCategory>
   name: Scalars['String']['input']
   packageSize: Scalars['Float']['input']
   packageUnit: Scalars['String']['input']
@@ -844,6 +886,7 @@ export type MutationCreateInventoryCatalogItemArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateInventoryCatalogItemWithStockArgs = {
+  category?: InputMaybe<InventoryCategory>
   locationId: Scalars['Int']['input']
   maxOnHand?: InputMaybe<Scalars['Float']['input']>
   minOnHand?: InputMaybe<Scalars['Float']['input']>
@@ -929,6 +972,11 @@ export type MutationDeleteInventoryStockArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationDeleteLocationArgs = {
+  id: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteMediaAssetArgs = {
   filename: Scalars['String']['input']
 }
@@ -977,6 +1025,7 @@ export type MutationReceiveInventoryStockArgs = {
   locationId: Scalars['Int']['input']
   occurredOn?: InputMaybe<Scalars['Date']['input']>
   quantity: Scalars['Float']['input']
+  unitCost?: InputMaybe<Scalars['Float']['input']>
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1040,14 +1089,20 @@ export type MutationUpdateCrmAppArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateInventoryCatalogItemArgs = {
+  category?: InputMaybe<InventoryCategory>
   id: Scalars['Int']['input']
-  maxOnHand?: InputMaybe<Scalars['Float']['input']>
-  minOnHand?: InputMaybe<Scalars['Float']['input']>
   name?: InputMaybe<Scalars['String']['input']>
   packageSize?: InputMaybe<Scalars['Float']['input']>
   packageUnit?: InputMaybe<Scalars['String']['input']>
   price?: InputMaybe<Scalars['Float']['input']>
   storageZone?: InputMaybe<InventoryStorageZone>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateInventoryStockLimitsArgs = {
+  id: Scalars['Int']['input']
+  maxOnHand?: InputMaybe<Scalars['Float']['input']>
+  minOnHand?: InputMaybe<Scalars['Float']['input']>
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1311,6 +1366,8 @@ export type Query = {
   instagramSignals?: Maybe<InstagramSignalsType>
   /** Pantry catalog for a workspace. Empty when unauthenticated or not a member. */
   inventoryCatalogItems: Array<InventoryCatalogItemType>
+  /** Ranked refill forecast for stock at a location from recent out / transfer_out burn. Empty when not authorized. windowDays defaults to 14 and is clamped between 7 and 90. */
+  inventoryRefillForecast: Array<InventoryRefillForecastItem>
   /** Stock levels at a location (joined with catalog). Empty when not authorized. */
   inventoryStock: Array<InventoryStockType>
   /** Stock movements for a catalog item at a location, newest first. When stockId is set, only movements for that stock row (current track). Optional fromDate/toDate filter occurredOn inclusively. Empty when not authorized or fromDate is after toDate. */
@@ -1418,6 +1475,12 @@ export type QueryInstagramSignalsArgs = {
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryInventoryCatalogItemsArgs = {
   workspaceId: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryInventoryRefillForecastArgs = {
+  locationId: Scalars['ID']['input']
+  windowDays?: Scalars['Int']['input']
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */

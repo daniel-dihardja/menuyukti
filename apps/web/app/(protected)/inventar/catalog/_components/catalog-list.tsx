@@ -33,11 +33,6 @@ export function CatalogList({ catalogItems, currencyCode, onAdd, onEdit, onDelet
     return formatCurrencyWithCode(price, currencyCode, locale)
   }
 
-  function formatLimit(value: number | null): string {
-    if (value == null) return t('priceEmpty')
-    return String(value)
-  }
-
   return (
     <>
       <p className="text-pretty text-sm text-muted-foreground">{t('catalogDescription')}</p>
@@ -56,11 +51,10 @@ export function CatalogList({ catalogItems, currencyCode, onAdd, onEdit, onDelet
           <TableHeader>
             <TableRow>
               <TableHead>{t('name')}</TableHead>
+              <TableHead>{t('category')}</TableHead>
               <TableHead>{t('storageZone')}</TableHead>
               <TableHead>{t('pack')}</TableHead>
               <TableHead className="text-right">{t('price')}</TableHead>
-              <TableHead className="text-right">{t('minOnHand')}</TableHead>
-              <TableHead className="text-right">{t('maxOnHand')}</TableHead>
               <TableHead className="w-[1%]" />
             </TableRow>
           </TableHeader>
@@ -68,15 +62,10 @@ export function CatalogList({ catalogItems, currencyCode, onAdd, onEdit, onDelet
             {catalogItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell>{t(`categories.${item.category}`)}</TableCell>
                 <TableCell>{t(`storageZones.${item.storageZone}`)}</TableCell>
                 <TableCell>{formatPackLabel(item.packageSize, item.packageUnit)}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatPrice(item.price)}</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatLimit(item.minOnHand)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatLimit(item.maxOnHand)}
-                </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => onEdit(item)}>

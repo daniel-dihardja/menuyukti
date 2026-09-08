@@ -15,8 +15,11 @@ export type InventoryStockMovement = {
   stockId: number | null
   direction: InventoryStockMovementDirection
   quantity: number
+  unitCost: number | null
   occurredOn: string
   note: string | null
+  areaId: number | null
+  areaName: string | null
   relatedMovementId: number | null
   relatedLocationId: number | null
   createdByClerkUserId: string | null
@@ -29,19 +32,14 @@ export type InventoryStockRow = {
   locationId: number
   catalogItemId: number
   onHand: number
+  minOnHand: number | null
+  maxOnHand: number | null
   lastInOn: string | null
   lastOutOn: string | null
   lastUpdatedByClerkUserId: string | null
   catalogItem: Pick<
     InventoryCatalogItem,
-    | 'id'
-    | 'name'
-    | 'packageSize'
-    | 'packageUnit'
-    | 'storageZone'
-    | 'price'
-    | 'minOnHand'
-    | 'maxOnHand'
+    'id' | 'name' | 'packageSize' | 'packageUnit' | 'storageZone' | 'category' | 'price'
   >
   createdAt: string
   updatedAt: string
@@ -53,6 +51,8 @@ const STOCK_FIELDS = `
   locationId
   catalogItemId
   onHand
+  minOnHand
+  maxOnHand
   lastInOn
   lastOutOn
   lastUpdatedByClerkUserId
@@ -64,9 +64,8 @@ const STOCK_FIELDS = `
     packageSize
     packageUnit
     storageZone
+    category
     price
-    minOnHand
-    maxOnHand
   }
 `
 
@@ -77,8 +76,11 @@ const MOVEMENT_FIELDS = `
   stockId
   direction
   quantity
+  unitCost
   occurredOn
   note
+  areaId
+  areaName
   relatedMovementId
   relatedLocationId
   createdByClerkUserId
@@ -131,9 +133,8 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
     $packageUnit: String!
     $onHand: Float!
     $storageZone: InventoryStorageZone
+    $category: InventoryCategory
     $price: Float
-    $minOnHand: Float
-    $maxOnHand: Float
   ) {
     createInventoryCatalogItemWithStock(
       locationId: $locationId
@@ -142,9 +143,8 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
       packageUnit: $packageUnit
       onHand: $onHand
       storageZone: $storageZone
+      category: $category
       price: $price
-      minOnHand: $minOnHand
-      maxOnHand: $maxOnHand
     ) {
       ${STOCK_FIELDS}
     }
@@ -181,12 +181,14 @@ export const RECEIVE_INVENTORY_STOCK_MUTATION = `
     $catalogItemId: Int!
     $quantity: Float!
     $occurredOn: Date
+    $unitCost: Float
   ) {
     receiveInventoryStock(
       locationId: $locationId
       catalogItemId: $catalogItemId
       quantity: $quantity
       occurredOn: $occurredOn
+      unitCost: $unitCost
     ) {
       ${STOCK_FIELDS}
     }
@@ -202,11 +204,13 @@ export const CONSUME_INVENTORY_STOCK_MUTATION = `
     $stockId: Int!
     $quantity: Float!
     $occurredOn: Date
+    $areaId: Int
   ) {
     consumeInventoryStock(
       stockId: $stockId
       quantity: $quantity
       occurredOn: $occurredOn
+      areaId: $areaId
     ) {
       ${STOCK_FIELDS}
     }
@@ -261,4 +265,16 @@ export const DELETE_INVENTORY_STOCK_MUTATION = `
 
 export type DeleteInventoryStockData = {
   deleteInventoryStock: boolean
+}
+
+export const UPDATE_INVENTORY_STOCK_LIMITS_MUTATION = `
+  mutation UpdateInventoryStockLimits($id: Int!, $minOnHand: Float, $maxOnHand: Float) {
+    updateInventoryStockLimits(id: $id, minOnHand: $minOnHand, maxOnHand: $maxOnHand) {
+      ${STOCK_FIELDS}
+    }
+  }
+`
+
+export type UpdateInventoryStockLimitsData = {
+  updateInventoryStockLimits: InventoryStockRow
 }

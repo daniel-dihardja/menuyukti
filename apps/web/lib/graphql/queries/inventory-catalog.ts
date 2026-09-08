@@ -1,6 +1,7 @@
+import type { InventoryCategory } from '@/lib/inventar/categories'
 import type { InventoryStorageZone } from '@/lib/inventar/storage-zones'
 
-export type { InventoryStorageZone }
+export type { InventoryCategory, InventoryStorageZone }
 
 export type InventoryCatalogItem = {
   id: number
@@ -9,9 +10,8 @@ export type InventoryCatalogItem = {
   packageSize: number
   packageUnit: string
   price: number | null
-  minOnHand: number | null
-  maxOnHand: number | null
   storageZone: InventoryStorageZone
+  category: InventoryCategory
   createdAt: string
   updatedAt: string
 }
@@ -23,9 +23,8 @@ const CATALOG_FIELDS = `
   packageSize
   packageUnit
   price
-  minOnHand
-  maxOnHand
   storageZone
+  category
   createdAt
   updatedAt
 `
@@ -49,9 +48,8 @@ export const CREATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $packageSize: Float!
     $packageUnit: String!
     $storageZone: InventoryStorageZone
+    $category: InventoryCategory
     $price: Float
-    $minOnHand: Float
-    $maxOnHand: Float
   ) {
     createInventoryCatalogItem(
       workspaceId: $workspaceId
@@ -59,9 +57,8 @@ export const CREATE_INVENTORY_CATALOG_ITEM_MUTATION = `
       packageSize: $packageSize
       packageUnit: $packageUnit
       storageZone: $storageZone
+      category: $category
       price: $price
-      minOnHand: $minOnHand
-      maxOnHand: $maxOnHand
     ) {
       ${CATALOG_FIELDS}
     }
@@ -79,9 +76,8 @@ export const UPDATE_INVENTORY_CATALOG_ITEM_MUTATION = `
     $packageSize: Float
     $packageUnit: String
     $storageZone: InventoryStorageZone
+    $category: InventoryCategory
     $price: Float
-    $minOnHand: Float
-    $maxOnHand: Float
   ) {
     updateInventoryCatalogItem(
       id: $id
@@ -89,9 +85,8 @@ export const UPDATE_INVENTORY_CATALOG_ITEM_MUTATION = `
       packageSize: $packageSize
       packageUnit: $packageUnit
       storageZone: $storageZone
+      category: $category
       price: $price
-      minOnHand: $minOnHand
-      maxOnHand: $maxOnHand
     ) {
       ${CATALOG_FIELDS}
     }

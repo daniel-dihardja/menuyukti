@@ -123,8 +123,8 @@ export function TransferForm({
           <StockBadge
             onHand={row.onHand}
             packagesLabel={t('packages')}
-            minOnHand={row.catalogItem.minOnHand}
-            maxOnHand={row.catalogItem.maxOnHand}
+            minOnHand={row.minOnHand}
+            maxOnHand={row.maxOnHand}
           />
         </Field>
         <Field>

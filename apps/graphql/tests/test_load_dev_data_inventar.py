@@ -136,8 +136,7 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
             .one()
         )
         assert oat.storage_zone == "cooler"
-        assert oat.min_on_hand == 2.0
-        assert oat.max_on_hand == 12.0
+        assert oat.category == "dairy"
 
         oat_stock = (
             session.query(InventoryStock)
@@ -148,6 +147,8 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
             .one()
         )
         assert oat_stock.on_hand == 3.0
+        assert oat_stock.min_on_hand == 2.0
+        assert oat_stock.max_on_hand == 12.0
 
         oat_outs = (
             session.query(InventoryStockMovement)
@@ -219,5 +220,66 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
             .count()
             == movement_n
         )
+    finally:
+        session.close()
+
+
+def test_clear_inventar_removes_rows_keeps_locations(inventar_seed_workspace):
+    from graphql.scripts.load_dev_data import main as load_dev_data_main
+
+    session = SessionLocal()
+    try:
+        ws = session.get(Workspace, inventar_seed_workspace["workspace_id"])
+        primary = session.get(Location, inventar_seed_workspace["primary_id"])
+        branch = session.get(Location, inventar_seed_workspace["branch_id"])
+        assert ws is not None and primary is not None and branch is not None
+
+        reset_inventar(session, ws.id)
+        seed_inventar(session, ws, primary, branch)
+        session.commit()
+
+        assert (
+            session.query(InventoryCatalogItem)
+            .filter(InventoryCatalogItem.workspace_id == inventar_seed_workspace["workspace_id"])
+            .count()
+            == 4
+        )
+    finally:
+        session.close()
+
+    assert load_dev_data_main(
+        scope="clear-inventar",
+        clerk_user_id=SEED_USER,
+        excel_path=None,
+        cogs_path=None,
+    ) == 0
+
+    session = SessionLocal()
+    try:
+        location_ids = [
+            inventar_seed_workspace["primary_id"],
+            inventar_seed_workspace["branch_id"],
+        ]
+        assert (
+            session.query(InventoryCatalogItem)
+            .filter(InventoryCatalogItem.workspace_id == inventar_seed_workspace["workspace_id"])
+            .count()
+            == 0
+        )
+        assert (
+            session.query(InventoryStock)
+            .filter(InventoryStock.location_id.in_(location_ids))
+            .count()
+            == 0
+        )
+        assert (
+            session.query(InventoryStockMovement)
+            .filter(InventoryStockMovement.location_id.in_(location_ids))
+            .count()
+            == 0
+        )
+        assert session.get(Location, inventar_seed_workspace["primary_id"]) is not None
+        assert session.get(Location, inventar_seed_workspace["branch_id"]) is not None
+        assert session.get(Workspace, inventar_seed_workspace["workspace_id"]) is not None
     finally:
         session.close()

@@ -3,17 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
 
-import pytest
 from graphql.data_sources import (
     InventoryCatalogItem,
-    InventoryStock,
-    InventoryStockMovement,
     Location,
     SessionLocal,
     Workspace,
-    WorkspaceMembership,
 )
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
@@ -28,6 +23,7 @@ mutation CreateWithStock(
   $packageUnit: String!
   $onHand: Float!
   $storageZone: InventoryStorageZone
+  $category: InventoryCategory
   $price: Float
   $minOnHand: Float
   $maxOnHand: Float
@@ -39,6 +35,7 @@ mutation CreateWithStock(
     packageUnit: $packageUnit
     onHand: $onHand
     storageZone: $storageZone
+    category: $category
     price: $price
     minOnHand: $minOnHand
     maxOnHand: $maxOnHand
@@ -46,15 +43,16 @@ mutation CreateWithStock(
     id
     locationId
     onHand
+    minOnHand
+    maxOnHand
     catalogItem {
       id
       name
       packageSize
       packageUnit
       storageZone
+      category
       price
-      minOnHand
-      maxOnHand
     }
   }
 }
@@ -67,9 +65,8 @@ mutation CreateCatalog(
   $packageSize: Float!
   $packageUnit: String!
   $storageZone: InventoryStorageZone
+  $category: InventoryCategory
   $price: Float
-  $minOnHand: Float
-  $maxOnHand: Float
 ) {
   createInventoryCatalogItem(
     workspaceId: $workspaceId
@@ -77,16 +74,14 @@ mutation CreateCatalog(
     packageSize: $packageSize
     packageUnit: $packageUnit
     storageZone: $storageZone
+    category: $category
     price: $price
-    minOnHand: $minOnHand
-    maxOnHand: $maxOnHand
   ) {
     id
     name
     storageZone
+    category
     price
-    minOnHand
-    maxOnHand
   }
 }
 """
@@ -95,20 +90,27 @@ _UPDATE_CATALOG = """
 mutation UpdateCatalog(
   $id: Int!
   $storageZone: InventoryStorageZone
+  $category: InventoryCategory
   $price: Float
-  $minOnHand: Float
-  $maxOnHand: Float
 ) {
   updateInventoryCatalogItem(
     id: $id
     storageZone: $storageZone
+    category: $category
     price: $price
-    minOnHand: $minOnHand
-    maxOnHand: $maxOnHand
   ) {
     id
     storageZone
+    category
     price
+  }
+}
+"""
+
+_UPDATE_STOCK_LIMITS = """
+mutation UpdateStockLimits($id: Int!, $minOnHand: Float, $maxOnHand: Float) {
+  updateInventoryStockLimits(id: $id, minOnHand: $minOnHand, maxOnHand: $maxOnHand) {
+    id
     minOnHand
     maxOnHand
   }
@@ -123,9 +125,8 @@ query Catalog($workspaceId: ID!) {
     packageSize
     packageUnit
     storageZone
+    category
     price
-    minOnHand
-    maxOnHand
   }
 }
 """
@@ -135,8 +136,10 @@ query Stock($locationId: ID!) {
   inventoryStock(locationId: $locationId) {
     id
     onHand
+    minOnHand
+    maxOnHand
     lastUpdatedByClerkUserId
-    catalogItem { name packageSize packageUnit storageZone price minOnHand maxOnHand }
+    catalogItem { name packageSize packageUnit storageZone category price }
   }
 }
 """
@@ -166,59 +169,6 @@ mutation DeleteCatalog($id: Int!) {
   deleteInventoryCatalogItem(id: $id)
 }
 """
-
-
-@pytest.fixture
-def inventar_workspace_and_location():
-    session = SessionLocal()
-    try:
-        session.query(InventoryStockMovement).delete()
-        session.query(InventoryStock).delete()
-        session.query(InventoryCatalogItem).delete()
-        session.query(Location).delete()
-        session.query(WorkspaceMembership).delete()
-        session.query(Workspace).delete()
-        session.commit()
-
-        now = datetime.now(tz=UTC)
-        ws = Workspace(name="Inventar WS", owner_clerk_user_id=GRAPHQL_TEST_USER_ID)
-        session.add(ws)
-        session.flush()
-        session.add(
-            WorkspaceMembership(
-                workspace_id=ws.id,
-                clerk_user_id=GRAPHQL_TEST_USER_ID,
-                role="owner",
-                invited_at=now,
-                accepted_at=now,
-            )
-        )
-        location = Location(
-            name="Main cafe",
-            workspace_id=ws.id,
-            clerk_user_id=GRAPHQL_TEST_USER_ID,
-        )
-        session.add(location)
-        session.commit()
-        session.refresh(ws)
-        session.refresh(location)
-        payload = {"workspace_id": ws.id, "location_id": location.id}
-    finally:
-        session.close()
-    yield payload
-    session = SessionLocal()
-    try:
-        session.query(InventoryStockMovement).delete()
-        session.query(InventoryStock).delete()
-        session.query(InventoryCatalogItem).delete()
-        session.query(Location).filter(Location.workspace_id == payload["workspace_id"]).delete()
-        session.query(WorkspaceMembership).filter(
-            WorkspaceMembership.workspace_id == payload["workspace_id"]
-        ).delete()
-        session.query(Workspace).filter(Workspace.id == payload["workspace_id"]).delete()
-        session.commit()
-    finally:
-        session.close()
 
 
 def _execute(query: str, variable_values: dict | None = None, context_value: dict | None = None):
@@ -279,6 +229,7 @@ def test_storage_zone_create_and_update(inventar_workspace_and_location):
     assert not created.errors, created.errors
     item = created.data["createInventoryCatalogItem"]
     assert item["storageZone"] == "freezer"
+    assert item["category"] == "other"
 
     updated = _execute(
         _UPDATE_CATALOG,
@@ -286,6 +237,32 @@ def test_storage_zone_create_and_update(inventar_workspace_and_location):
     )
     assert not updated.errors, updated.errors
     assert updated.data["updateInventoryCatalogItem"]["storageZone"] == "cooler"
+
+
+def test_category_create_and_update(inventar_workspace_and_location):
+    ws_id = inventar_workspace_and_location["workspace_id"]
+
+    created = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Oat milk",
+            "packageSize": 1.0,
+            "packageUnit": "L",
+            "category": "dairy",
+        },
+    )
+    assert not created.errors, created.errors
+    item = created.data["createInventoryCatalogItem"]
+    assert item["category"] == "dairy"
+    assert item["storageZone"] == "dry"
+
+    updated = _execute(
+        _UPDATE_CATALOG,
+        {"id": item["id"], "category": "beverages"},
+    )
+    assert not updated.errors, updated.errors
+    assert updated.data["updateInventoryCatalogItem"]["category"] == "beverages"
 
 
 def test_catalog_price_create_update_and_reject_negative(inventar_workspace_and_location):
@@ -357,49 +334,50 @@ def test_catalog_price_create_update_and_reject_negative(inventar_workspace_and_
     assert flour["onHand"] == 3.0
 
 
-def test_catalog_on_hand_limits_create_update_and_validation(inventar_workspace_and_location):
-    ws_id = inventar_workspace_and_location["workspace_id"]
+def test_stock_on_hand_limits_create_update_and_validation(inventar_workspace_and_location):
     loc_id = inventar_workspace_and_location["location_id"]
 
-    created = _execute(
-        _CREATE_CATALOG,
+    with_stock = _execute(
+        _CREATE_WITH_STOCK,
         {
-            "workspaceId": ws_id,
+            "locationId": loc_id,
             "name": "Rice",
             "packageSize": 5.0,
             "packageUnit": "kg",
+            "onHand": 4.0,
             "minOnHand": 2.0,
             "maxOnHand": 10.0,
         },
     )
-    assert not created.errors, created.errors
-    item = created.data["createInventoryCatalogItem"]
-    assert item["minOnHand"] == 2.0
-    assert item["maxOnHand"] == 10.0
+    assert not with_stock.errors, with_stock.errors
+    stock = with_stock.data["createInventoryCatalogItemWithStock"]
+    assert stock["minOnHand"] == 2.0
+    assert stock["maxOnHand"] == 10.0
 
     updated = _execute(
-        _UPDATE_CATALOG,
-        {"id": item["id"], "minOnHand": 3.0, "maxOnHand": 12.0},
+        _UPDATE_STOCK_LIMITS,
+        {"id": stock["id"], "minOnHand": 3.0, "maxOnHand": 12.0},
     )
     assert not updated.errors, updated.errors
-    assert updated.data["updateInventoryCatalogItem"]["minOnHand"] == 3.0
-    assert updated.data["updateInventoryCatalogItem"]["maxOnHand"] == 12.0
+    assert updated.data["updateInventoryStockLimits"]["minOnHand"] == 3.0
+    assert updated.data["updateInventoryStockLimits"]["maxOnHand"] == 12.0
 
     cleared = _execute(
-        _UPDATE_CATALOG,
-        {"id": item["id"], "minOnHand": None, "maxOnHand": None},
+        _UPDATE_STOCK_LIMITS,
+        {"id": stock["id"], "minOnHand": None, "maxOnHand": None},
     )
     assert not cleared.errors, cleared.errors
-    assert cleared.data["updateInventoryCatalogItem"]["minOnHand"] is None
-    assert cleared.data["updateInventoryCatalogItem"]["maxOnHand"] is None
+    assert cleared.data["updateInventoryStockLimits"]["minOnHand"] is None
+    assert cleared.data["updateInventoryStockLimits"]["maxOnHand"] is None
 
     inverted = _execute(
-        _CREATE_CATALOG,
+        _CREATE_WITH_STOCK,
         {
-            "workspaceId": ws_id,
+            "locationId": loc_id,
             "name": "Bad limits",
             "packageSize": 1.0,
             "packageUnit": "kg",
+            "onHand": 1.0,
             "minOnHand": 5.0,
             "maxOnHand": 2.0,
         },
@@ -407,18 +385,19 @@ def test_catalog_on_hand_limits_create_update_and_validation(inventar_workspace_
     assert inverted.errors
 
     negative = _execute(
-        _CREATE_CATALOG,
+        _CREATE_WITH_STOCK,
         {
-            "workspaceId": ws_id,
+            "locationId": loc_id,
             "name": "Negative min",
             "packageSize": 1.0,
             "packageUnit": "kg",
+            "onHand": 1.0,
             "minOnHand": -1.0,
         },
     )
     assert negative.errors
 
-    with_stock = _execute(
+    oil = _execute(
         _CREATE_WITH_STOCK,
         {
             "locationId": loc_id,
@@ -430,20 +409,19 @@ def test_catalog_on_hand_limits_create_update_and_validation(inventar_workspace_
             "maxOnHand": 8.0,
         },
     )
-    assert not with_stock.errors, with_stock.errors
-    catalog = with_stock.data["createInventoryCatalogItemWithStock"]["catalogItem"]
-    assert catalog["minOnHand"] == 1.0
-    assert catalog["maxOnHand"] == 8.0
+    assert not oil.errors, oil.errors
+    assert oil.data["createInventoryCatalogItemWithStock"]["minOnHand"] == 1.0
+    assert oil.data["createInventoryCatalogItemWithStock"]["maxOnHand"] == 8.0
 
     stock_list = _execute(_STOCK_QUERY, {"locationId": str(loc_id)})
     assert not stock_list.errors, stock_list.errors
-    oil = next(
+    oil_row = next(
         row
         for row in stock_list.data["inventoryStock"]
         if row["catalogItem"]["name"] == "Oil"
     )
-    assert oil["catalogItem"]["minOnHand"] == 1.0
-    assert oil["catalogItem"]["maxOnHand"] == 8.0
+    assert oil_row["minOnHand"] == 1.0
+    assert oil_row["maxOnHand"] == 8.0
 
 
 def test_upsert_and_delete_stock(inventar_workspace_and_location):
@@ -579,37 +557,6 @@ mutation TransferStock($fromStockId: Int!, $toLocationId: Int!, $quantity: Float
   }
 }
 """
-
-
-@pytest.fixture
-def inventar_two_locations(inventar_workspace_and_location):
-    session = SessionLocal()
-    try:
-        second = Location(
-            name="Second cafe",
-            workspace_id=inventar_workspace_and_location["workspace_id"],
-            clerk_user_id=GRAPHQL_TEST_USER_ID,
-        )
-        session.add(second)
-        session.commit()
-        session.refresh(second)
-        second_id = second.id
-    finally:
-        session.close()
-    yield {
-        **inventar_workspace_and_location,
-        "location_id_b": second_id,
-    }
-    session = SessionLocal()
-    try:
-        session.query(InventoryStockMovement).filter(
-            InventoryStockMovement.location_id == second_id
-        ).delete()
-        session.query(InventoryStock).filter(InventoryStock.location_id == second_id).delete()
-        session.query(Location).filter(Location.id == second_id).delete()
-        session.commit()
-    finally:
-        session.close()
 
 
 def test_transfer_partial_creates_destination(inventar_two_locations):
@@ -774,12 +721,14 @@ mutation ReceiveStock(
   $catalogItemId: Int!
   $quantity: Float!
   $occurredOn: Date
+  $unitCost: Float
 ) {
   receiveInventoryStock(
     locationId: $locationId
     catalogItemId: $catalogItemId
     quantity: $quantity
     occurredOn: $occurredOn
+    unitCost: $unitCost
   ) {
     id
     onHand
@@ -787,6 +736,10 @@ mutation ReceiveStock(
     lastOutOn
     lastUpdatedByClerkUserId
     catalogItemId
+    catalogItem {
+      id
+      price
+    }
   }
 }
 """
@@ -823,6 +776,7 @@ query Movements(
     id
     direction
     quantity
+    unitCost
     occurredOn
     stockId
     relatedMovementId
@@ -924,17 +878,119 @@ def test_receive_and_consume_record_movements(inventar_workspace_and_location):
     assert len(rows) == 3
     assert rows[0]["direction"] == "out"
     assert rows[0]["quantity"] == 1.5
+    assert rows[0]["unitCost"] is None
     assert rows[0]["occurredOn"] == "2026-08-31"
     assert rows[0]["relatedLocationId"] is None
     assert rows[0]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert rows[1]["direction"] == "in"
+    assert rows[1]["unitCost"] is None
     assert rows[1]["occurredOn"] == "2026-08-30"
     assert rows[1]["relatedLocationId"] is None
     assert rows[1]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert rows[2]["direction"] == "in"
+    assert rows[2]["unitCost"] is None
     assert rows[2]["occurredOn"] == "2026-08-28"
     assert rows[2]["relatedLocationId"] is None
     assert rows[2]["createdByClerkUserId"] == GRAPHQL_TEST_USER_ID
+
+
+def test_receive_unit_cost_updates_catalog_and_movement(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+    ws_id = inventar_workspace_and_location["workspace_id"]
+
+    catalog = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Olive oil",
+            "packageSize": 1.0,
+            "packageUnit": "L",
+            "price": 10.0,
+        },
+    )
+    assert not catalog.errors, catalog.errors
+    catalog_id = catalog.data["createInventoryCatalogItem"]["id"]
+    assert catalog.data["createInventoryCatalogItem"]["price"] == 10.0
+
+    without_cost = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 2.0,
+            "occurredOn": "2026-09-01",
+        },
+    )
+    assert not without_cost.errors, without_cost.errors
+    assert without_cost.data["receiveInventoryStock"]["catalogItem"]["price"] == 10.0
+
+    with_cost = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 1.0,
+            "occurredOn": "2026-09-02",
+            "unitCost": 12.5,
+        },
+    )
+    assert not with_cost.errors, with_cost.errors
+    assert with_cost.data["receiveInventoryStock"]["catalogItem"]["price"] == 12.5
+
+    negative = _execute(
+        _RECEIVE_STOCK,
+        {
+            "locationId": loc_id,
+            "catalogItemId": catalog_id,
+            "quantity": 1.0,
+            "unitCost": -1.0,
+        },
+    )
+    assert negative.errors
+    assert "price must be zero or greater" in str(negative.errors)
+
+    movements = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+    )
+    assert not movements.errors, movements.errors
+    rows = movements.data["inventoryStockMovements"]
+    assert len(rows) == 2
+    assert rows[0]["direction"] == "in"
+    assert rows[0]["unitCost"] == 12.5
+    assert rows[0]["occurredOn"] == "2026-09-02"
+    assert rows[1]["direction"] == "in"
+    assert rows[1]["unitCost"] is None
+    assert rows[1]["occurredOn"] == "2026-09-01"
+
+
+def test_create_with_stock_copies_price_to_movement_unit_cost(inventar_workspace_and_location):
+    loc_id = inventar_workspace_and_location["location_id"]
+
+    created = _execute(
+        _CREATE_WITH_STOCK,
+        {
+            "locationId": loc_id,
+            "name": "Rice bags",
+            "packageSize": 5.0,
+            "packageUnit": "kg",
+            "onHand": 4.0,
+            "price": 18.0,
+        },
+    )
+    assert not created.errors, created.errors
+    catalog_id = created.data["createInventoryCatalogItemWithStock"]["catalogItem"]["id"]
+
+    movements = _execute(
+        _MOVEMENTS_QUERY,
+        {"locationId": str(loc_id), "catalogItemId": str(catalog_id)},
+    )
+    assert not movements.errors, movements.errors
+    rows = movements.data["inventoryStockMovements"]
+    assert len(rows) == 1
+    assert rows[0]["direction"] == "in"
+    assert rows[0]["quantity"] == 4.0
+    assert rows[0]["unitCost"] == 18.0
 
 
 def test_movements_filter_by_occurred_on_date_range(inventar_workspace_and_location):

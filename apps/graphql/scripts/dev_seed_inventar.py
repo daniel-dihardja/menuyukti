@@ -19,6 +19,20 @@ DIRECTION_TRANSFER_IN = "transfer_in"
 DIRECTION_TRANSFER_OUT = "transfer_out"
 
 _ALLOWED_STORAGE_ZONES = frozenset({"freezer", "cooler", "dry"})
+_ALLOWED_CATEGORIES = frozenset(
+    {
+        "dry_goods",
+        "dairy",
+        "produce",
+        "proteins",
+        "frozen",
+        "beverages",
+        "spices_condiments",
+        "cleaning",
+        "packaging",
+        "other",
+    }
+)
 
 # Inclusive burn window used by inventoryRefillForecast default.
 _FORECAST_WINDOW_DAYS = 14
@@ -30,6 +44,7 @@ class _CatalogSeed:
     package_size: float
     package_unit: str
     storage_zone: str
+    category: str
     price: float | None
     min_on_hand: float | None
     max_on_hand: float | None
@@ -43,6 +58,7 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         package_size=1.0,
         package_unit="L",
         storage_zone="cooler",
+        category="dairy",
         price=45000.0,
         min_on_hand=2.0,
         max_on_hand=12.0,
@@ -55,6 +71,7 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         package_size=1.0,
         package_unit="kg",
         storage_zone="dry",
+        category="beverages",
         price=180000.0,
         min_on_hand=1.0,
         max_on_hand=8.0,
@@ -67,6 +84,7 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         package_size=500.0,
         package_unit="g",
         storage_zone="freezer",
+        category="frozen",
         price=65000.0,
         min_on_hand=1.0,
         max_on_hand=6.0,
@@ -79,6 +97,7 @@ _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
         package_size=1.0,
         package_unit="L",
         storage_zone="dry",
+        category="cleaning",
         price=None,
         min_on_hand=None,
         max_on_hand=None,
@@ -138,11 +157,12 @@ def seed_inventar(
     movement_count = 0
 
     for item in _CATALOG_SEEDS:
-        name, size, unit, zone = _validate_catalog_fields(
+        name, size, unit, zone, category = _validate_catalog_fields(
             name=item.name,
             package_size=item.package_size,
             package_unit=item.package_unit,
             storage_zone=item.storage_zone,
+            category=item.category,
         )
         price = _validate_price(item.price)
         min_on_hand, max_on_hand = _validate_limits(item.min_on_hand, item.max_on_hand)
@@ -152,9 +172,8 @@ def seed_inventar(
             package_size=size,
             package_unit=unit,
             storage_zone=zone,
+            category=category,
             price=price,
-            min_on_hand=min_on_hand,
-            max_on_hand=max_on_hand,
         )
         session.add(catalog)
         session.flush()
@@ -169,6 +188,8 @@ def seed_inventar(
             location_id=primary_location.id,
             catalog_item_id=catalog.id,
             on_hand=0.0,
+            min_on_hand=min_on_hand,
+            max_on_hand=max_on_hand,
         )
         stock_count += 1
         movement_count += _receive(
@@ -192,6 +213,8 @@ def seed_inventar(
                 location_id=branch_location.id,
                 catalog_item_id=catalog.id,
                 on_hand=0.0,
+                min_on_hand=min_on_hand,
+                max_on_hand=max_on_hand,
             )
             stock_count += 1
             movement_count += _transfer(
@@ -208,6 +231,8 @@ def seed_inventar(
                 location_id=branch_location.id,
                 catalog_item_id=catalog.id,
                 on_hand=0.0,
+                min_on_hand=min_on_hand,
+                max_on_hand=max_on_hand,
             )
             stock_count += 1
             movement_count += _receive(
@@ -293,7 +318,8 @@ def _validate_catalog_fields(
     package_size: float,
     package_unit: str,
     storage_zone: str,
-) -> tuple[str, float, str, str]:
+    category: str,
+) -> tuple[str, float, str, str, str]:
     name_clean = name.strip()
     if not name_clean:
         raise ValueError("Name cannot be empty")
@@ -305,7 +331,10 @@ def _validate_catalog_fields(
     zone_clean = storage_zone.strip().lower()
     if zone_clean not in _ALLOWED_STORAGE_ZONES:
         raise ValueError("storageZone must be freezer, cooler, or dry")
-    return name_clean, float(package_size), unit_clean, zone_clean
+    category_clean = category.strip().lower()
+    if category_clean not in _ALLOWED_CATEGORIES:
+        raise ValueError("category is invalid")
+    return name_clean, float(package_size), unit_clean, zone_clean, category_clean
 
 
 def _validate_price(price: float | None) -> float | None:
@@ -343,11 +372,15 @@ def _ensure_stock(
     location_id: int,
     catalog_item_id: int,
     on_hand: float,
+    min_on_hand: float | None = None,
+    max_on_hand: float | None = None,
 ) -> InventoryStock:
     row = InventoryStock(
         location_id=location_id,
         catalog_item_id=catalog_item_id,
         on_hand=_validate_on_hand(on_hand),
+        min_on_hand=min_on_hand,
+        max_on_hand=max_on_hand,
     )
     session.add(row)
     session.flush()

@@ -1,4 +1,4 @@
-"""Location create/update and opening-hours orchestration."""
+"""Location create/update/delete and opening-hours orchestration."""
 
 from __future__ import annotations
 
@@ -7,7 +7,21 @@ from datetime import time
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import Location, LocationOpeningHour
+from graphql.data_sources import (
+    AnalyticsRun,
+    CalendarEntry,
+    InstagramPost,
+    InventoryStock,
+    InventoryStockMovement,
+    Location,
+    LocationArea,
+    LocationManualBriefInput,
+    LocationMenuItemCogs,
+    LocationOpeningHour,
+    MenuItemCogs,
+    Node,
+    OrderFact,
+)
 
 VALID_WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
@@ -94,3 +108,88 @@ def create_location_row(
     session.add(loc)
     session.flush()
     return loc
+
+
+def delete_location_row(session: Session, location_id: int) -> bool:
+    """
+    Delete a location and location-scoped dependents.
+
+    Idempotent: returns True when the location is already gone.
+    Instagram posts keep their rows but lose the location link.
+    Workspace-scoped inventar catalog items are left intact.
+    """
+    loc = session.get(Location, location_id)
+    if loc is None:
+        return True
+
+    # Break circular Location.node_id ↔ Node.id before other cleanup.
+    if loc.node_id is not None:
+        loc.node_id = None
+        session.flush()
+
+    session.query(InstagramPost).filter(InstagramPost.location_id == location_id).update(
+        {InstagramPost.location_id: None},
+        synchronize_session=False,
+    )
+    session.query(Node).filter(Node.location_id == location_id).update(
+        {Node.location_id: None},
+        synchronize_session=False,
+    )
+
+    run_ids = [
+        rid
+        for (rid,) in session.query(AnalyticsRun.id)
+        .filter(AnalyticsRun.location_id == location_id)
+        .all()
+    ]
+    if run_ids:
+        session.query(MenuItemCogs).filter(MenuItemCogs.analytics_run_id.in_(run_ids)).delete(
+            synchronize_session=False
+        )
+        session.query(OrderFact).filter(OrderFact.analytics_run_id.in_(run_ids)).delete(
+            synchronize_session=False
+        )
+        session.query(AnalyticsRun).filter(AnalyticsRun.location_id == location_id).delete(
+            synchronize_session=False
+        )
+
+    movement_ids = [
+        mid
+        for (mid,) in session.query(InventoryStockMovement.id)
+        .filter(InventoryStockMovement.location_id == location_id)
+        .all()
+    ]
+    if movement_ids:
+        # Transfer pairs may point at this location from another location.
+        session.query(InventoryStockMovement).filter(
+            InventoryStockMovement.related_movement_id.in_(movement_ids)
+        ).update(
+            {InventoryStockMovement.related_movement_id: None},
+            synchronize_session=False,
+        )
+        session.query(InventoryStockMovement).filter(
+            InventoryStockMovement.location_id == location_id
+        ).delete(synchronize_session=False)
+
+    session.query(InventoryStock).filter(InventoryStock.location_id == location_id).delete(
+        synchronize_session=False
+    )
+    session.query(LocationMenuItemCogs).filter(
+        LocationMenuItemCogs.location_id == location_id
+    ).delete(synchronize_session=False)
+    session.query(CalendarEntry).filter(CalendarEntry.location_id == location_id).delete(
+        synchronize_session=False
+    )
+    session.query(LocationOpeningHour).filter(
+        LocationOpeningHour.location_id == location_id
+    ).delete(synchronize_session=False)
+    session.query(LocationArea).filter(LocationArea.location_id == location_id).delete(
+        synchronize_session=False
+    )
+    session.query(LocationManualBriefInput).filter(
+        LocationManualBriefInput.location_id == location_id
+    ).delete(synchronize_session=False)
+
+    session.delete(loc)
+    session.flush()
+    return True

@@ -7,8 +7,10 @@ import { openingHoursWeekToMutationInput, updateLocationParsedSchema } from '../
 import { GraphQLRequestError, graphqlQuery } from '@/lib/graphql/client'
 import { graphqlLocationsDataCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 import {
+  DELETE_LOCATION_MUTATION,
   UPDATE_LOCATION_MANUAL_BRIEF_MUTATION,
   UPDATE_LOCATION_MUTATION,
+  type DeleteLocationData,
   type UpdateLocationData,
   type UpdateLocationManualBriefData,
 } from '@/lib/graphql/queries'
@@ -76,5 +78,41 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     console.error(error)
     return NextResponse.json({ message: 'Failed to update location' }, { status: 500 })
+  }
+}
+
+export async function DELETE(_req: Request, context: RouteContext) {
+  try {
+    await connection()
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated || !userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: idParam } = await context.params
+    const id = Number(idParam)
+    if (!Number.isInteger(id) || id < 1) {
+      return NextResponse.json({ message: 'Invalid location id' }, { status: 400 })
+    }
+
+    const data = await graphqlQuery<DeleteLocationData>(
+      DELETE_LOCATION_MUTATION,
+      { id: String(id) },
+      userId,
+    )
+
+    revalidateTag(graphqlLocationsDataCacheTag(userId), revalidateTagAfterMutation)
+    return NextResponse.json({ ok: data.deleteLocation }, { status: 200 })
+  } catch (error) {
+    if (error instanceof GraphQLRequestError) {
+      const message = error.message
+      if (message.toLowerCase().includes('access denied')) {
+        return NextResponse.json({ message }, { status: 403 })
+      }
+      return NextResponse.json({ message }, { status: 400 })
+    }
+
+    console.error('[locations] DELETE', error)
+    return NextResponse.json({ message: 'Failed to delete location' }, { status: 500 })
   }
 }

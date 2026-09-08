@@ -12,7 +12,6 @@ import { FormSurface } from '../../_components/form-surface'
 import {
   catalogFormFromItem,
   catalogFormValidationError,
-  parseOptionalOnHandLimit,
   parseOptionalPrice,
   type CatalogForm,
 } from './catalog-form'
@@ -45,16 +44,6 @@ export function CatalogEditDialog({ item, onClose, onSuccess }: Props) {
       toast.error(t('validation.priceMin'))
       return
     }
-    const parsedMin = parseOptionalOnHandLimit(form.minOnHand)
-    if (!parsedMin.ok) {
-      toast.error(t('validation.minOnHandMin'))
-      return
-    }
-    const parsedMax = parseOptionalOnHandLimit(form.maxOnHand)
-    if (!parsedMax.ok) {
-      toast.error(t('validation.maxOnHandMin'))
-      return
-    }
 
     setPending(true)
     try {
@@ -66,9 +55,8 @@ export function CatalogEditDialog({ item, onClose, onSuccess }: Props) {
           packageSize,
           packageUnit: form.packageUnit.trim(),
           storageZone: form.storageZone,
+          category: form.category,
           price: parsedPrice.price,
-          minOnHand: parsedMin.value,
-          maxOnHand: parsedMax.value,
         }),
       })
       if (!res.ok) {

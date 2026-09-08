@@ -11,10 +11,12 @@ from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogI
 from graphql.data_sources.models.inventory_stock import InventoryStock
 from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
 from graphql.data_sources.models.location import Location
-from graphql.schema.types.inventory_catalog_item import InventoryStorageZone
+from graphql.schema.types.inventory_catalog_item import InventoryCategory, InventoryStorageZone
 
 _ALLOWED_STORAGE_ZONES = {zone.value for zone in InventoryStorageZone}
 _DEFAULT_STORAGE_ZONE = InventoryStorageZone.dry.value
+_ALLOWED_CATEGORIES = {category.value for category in InventoryCategory}
+_DEFAULT_CATEGORY = InventoryCategory.other.value
 
 DIRECTION_IN = "in"
 DIRECTION_OUT = "out"
@@ -33,6 +35,20 @@ def validate_storage_zone(storage_zone: str | InventoryStorageZone | None) -> st
     return zone_clean
 
 
+def validate_category(category: str | InventoryCategory | None) -> str:
+    if category is None:
+        return _DEFAULT_CATEGORY
+    if isinstance(category, InventoryCategory):
+        return category.value
+    category_clean = category.strip().lower()
+    if category_clean not in _ALLOWED_CATEGORIES:
+        raise ValueError(
+            "category must be dry_goods, dairy, produce, proteins, frozen, "
+            "beverages, spices_condiments, cleaning, packaging, or other"
+        )
+    return category_clean
+
+
 def validate_catalog_price(price: float | None) -> float | None:
     if price is None:
         return None
@@ -41,7 +57,7 @@ def validate_catalog_price(price: float | None) -> float | None:
     return float(price)
 
 
-def validate_catalog_on_hand_limits(
+def validate_on_hand_limits(
     min_on_hand: float | None,
     max_on_hand: float | None,
 ) -> tuple[float | None, float | None]:
@@ -71,7 +87,8 @@ def validate_catalog_fields(
     package_size: float,
     package_unit: str,
     storage_zone: str | InventoryStorageZone | None = None,
-) -> tuple[str, float, str, str]:
+    category: str | InventoryCategory | None = None,
+) -> tuple[str, float, str, str, str]:
     name_clean = name.strip()
     if not name_clean:
         raise ValueError("Name cannot be empty")
@@ -85,7 +102,8 @@ def validate_catalog_fields(
     if len(unit_clean) > 32:
         raise ValueError("packageUnit is too long")
     zone_clean = validate_storage_zone(storage_zone)
-    return name_clean, float(package_size), unit_clean, zone_clean
+    category_clean = validate_category(category)
+    return name_clean, float(package_size), unit_clean, zone_clean, category_clean
 
 
 def validate_on_hand(on_hand: float) -> float:
@@ -159,6 +177,8 @@ def add_movement(
     created_by_clerk_user_id: str,
     related_movement_id: int | None = None,
     note: str | None = None,
+    location_area_id: int | None = None,
+    unit_cost: float | None = None,
 ) -> InventoryStockMovement:
     row = InventoryStockMovement(
         location_id=location_id,
@@ -166,9 +186,11 @@ def add_movement(
         stock_id=stock_id,
         direction=direction,
         quantity=quantity,
+        unit_cost=unit_cost,
         occurred_on=occurred_on,
         related_movement_id=related_movement_id,
         note=note,
+        location_area_id=location_area_id,
         created_by_clerk_user_id=created_by_clerk_user_id,
     )
     session.add(row)

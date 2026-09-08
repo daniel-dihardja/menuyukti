@@ -35,6 +35,7 @@ import {
 } from './location-form-context'
 import { LocationBasicsSection } from './location-form-basics-section'
 import { LocationBriefSection } from './location-form-brief-section'
+import { LocationAreasSection } from './location-form-areas-section'
 import { LocationHoursSection } from './location-form-hours-section'
 import {
   defaultLocationOpeningHours,
@@ -44,6 +45,7 @@ import {
   type OpeningHourRow,
   type Weekday,
 } from './location-form-types'
+import type { LocationArea } from '@/lib/graphql/queries/locations'
 
 export type { LocationFormValues, OpeningHourRow, Weekday } from './location-form-types'
 
@@ -52,6 +54,7 @@ type LocationFormProps = {
   locationId?: string
   initialValues?: LocationFormValues
   initialManualQuickProfile?: Record<string, unknown> | null
+  initialAreas?: LocationArea[]
 }
 
 const FORM_ID = 'location-form'
@@ -61,6 +64,7 @@ export function LocationForm({
   locationId,
   initialValues,
   initialManualQuickProfile,
+  initialAreas = [],
 }: LocationFormProps) {
   const t = useTranslations('analytics.branches.form')
   const router = useRouter()
@@ -369,12 +373,18 @@ export function LocationForm({
       actions={actions}
       meta={{ formId: FORM_ID, formRef }}
     >
-      <LocationFormShell />
+      <LocationFormShell locationId={locationId} initialAreas={initialAreas} />
     </LocationFormContextProvider>
   )
 }
 
-function LocationFormShell() {
+function LocationFormShell({
+  locationId,
+  initialAreas,
+}: {
+  locationId?: string
+  initialAreas: LocationArea[]
+}) {
   const t = useTranslations('analytics.branches.form')
   const { mode, loading, error, activeTab, submitLabel } = useLocationFormState()
   const { setActiveTab, onSubmit } = useLocationFormActions()
@@ -400,6 +410,7 @@ function LocationFormShell() {
             <TabsList className="mb-4 w-full justify-start">
               <TabsTrigger value="basics">{t('tabs.basics')}</TabsTrigger>
               <TabsTrigger value="hours">{t('tabs.hours')}</TabsTrigger>
+              {mode === 'edit' ? <TabsTrigger value="areas">{t('tabs.areas')}</TabsTrigger> : null}
               {mode === 'edit' ? (
                 <TabsTrigger value="marketing">{t('tabs.marketing')}</TabsTrigger>
               ) : null}
@@ -407,6 +418,13 @@ function LocationFormShell() {
 
             <LocationBasicsSection />
             <LocationHoursSection />
+            {mode === 'edit' && locationId ? (
+              <LocationAreasSection
+                key={`${locationId}-${initialAreas.map((a) => a.id).join(',')}`}
+                locationId={locationId}
+                initialAreas={initialAreas}
+              />
+            ) : null}
             {mode === 'edit' ? <LocationBriefSection /> : null}
           </Tabs>
 

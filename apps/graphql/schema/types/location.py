@@ -2,6 +2,7 @@ import strawberry
 
 from graphql.context import get_manual_brief_cache, request_session_scope
 from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.types.location_area import LocationAreaType
 from graphql.schema.types.location_manual_brief_input import LocationManualBriefInputType
 
 
@@ -25,6 +26,7 @@ class LocationType:
     node_id: strawberry.ID | None
     workspace_id: strawberry.ID | None
     opening_hours: list[OpeningHourType]
+    areas: list[LocationAreaType]
 
     @strawberry.field(description=("Owner-provided click-first brief hints. Not AI-generated."))
     def manual_brief_input(self, info: strawberry.Info) -> LocationManualBriefInputType | None:

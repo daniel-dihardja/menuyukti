@@ -93,7 +93,7 @@ def compute_inventory_refill_forecast(
         catalog = stock.catalog_item
         total_out = burn_by_catalog.get(stock.catalog_item_id, 0.0)
         avg_daily_out = total_out / float(days)
-        target = catalog.min_on_hand if catalog.min_on_hand is not None else 0.0
+        target = stock.min_on_hand if stock.min_on_hand is not None else 0.0
         below_or_at_min = stock.on_hand <= target
 
         if avg_daily_out <= 0.0:
@@ -115,7 +115,7 @@ def compute_inventory_refill_forecast(
                     name=catalog.name,
                     storage_zone=catalog.storage_zone,
                     on_hand=stock.on_hand,
-                    min_on_hand=catalog.min_on_hand,
+                    min_on_hand=stock.min_on_hand,
                     avg_daily_out=avg_daily_out,
                     days_until_refill=days_until,
                     priority_rank=0,

@@ -39,7 +39,8 @@ mutation CreateWithStock(
   ) {
     id
     onHand
-    catalogItem { id name minOnHand }
+    minOnHand
+    catalogItem { id name }
   }
 }
 """

@@ -164,6 +164,7 @@ export async function POST(req: Request) {
             catalogItemId: body.catalogItemId,
             quantity: body.quantity,
             occurredOn: body.occurredOn ?? null,
+            unitCost: body.unitCost ?? null,
           },
           userId,
         ),

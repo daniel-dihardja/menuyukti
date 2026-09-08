@@ -40,13 +40,17 @@ class InventoryCatalogItem(Base):
     package_size: Mapped[float] = mapped_column(Float, nullable=False)
     package_unit: Mapped[str] = mapped_column(String(32), nullable=False)
     price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    min_on_hand: Mapped[float | None] = mapped_column(Float, nullable=True)
-    max_on_hand: Mapped[float | None] = mapped_column(Float, nullable=True)
     storage_zone: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
         server_default="dry",
         default="dry",
+    )
+    category: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        server_default="other",
+        default="other",
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

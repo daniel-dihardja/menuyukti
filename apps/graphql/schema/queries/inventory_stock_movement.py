@@ -67,7 +67,10 @@ class InventoryStockMovementQuery:
                 filters.append(InventoryStockMovement.occurred_on <= to_date)
             rows = session.scalars(
                 select(InventoryStockMovement)
-                .options(selectinload(InventoryStockMovement.related_movement))
+                .options(
+                    selectinload(InventoryStockMovement.related_movement),
+                    selectinload(InventoryStockMovement.location_area),
+                )
                 .where(*filters)
                 .order_by(
                     InventoryStockMovement.occurred_on.desc(),
