@@ -4,10 +4,7 @@ import { revalidateTag } from 'next/cache'
 import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
-import {
-  graphqlInventoryStockCacheTag,
-  revalidateTagAfterMutation,
-} from '@/lib/graphql/cache-tags'
+import { graphqlInventoryStockCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 import {
   UPDATE_INVENTORY_STOCK_LIMITS_MUTATION,
   type UpdateInventoryStockLimitsData,

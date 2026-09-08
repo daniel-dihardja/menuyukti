@@ -38,28 +38,21 @@ export function StockLimitsForm({ row, locationId, onClose, onSuccess }: Props) 
       toast.error(t('validation.maxOnHandMin'))
       return
     }
-    if (
-      parsedMin.value != null &&
-      parsedMax.value != null &&
-      parsedMin.value > parsedMax.value
-    ) {
+    if (parsedMin.value != null && parsedMax.value != null && parsedMin.value > parsedMax.value) {
       toast.error(t('validation.minMaxOrder'))
       return
     }
 
     setPending(true)
     try {
-      const res = await fetch(
-        `/api/inventory-stock/${row.id}/limits?locationId=${locationId}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            minOnHand: parsedMin.value,
-            maxOnHand: parsedMax.value,
-          }),
-        },
-      )
+      const res = await fetch(`/api/inventory-stock/${row.id}/limits?locationId=${locationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          minOnHand: parsedMin.value,
+          maxOnHand: parsedMax.value,
+        }),
+      })
       if (!res.ok) {
         const payload = (await res.json().catch(() => null)) as InventarApiErrorPayload | null
         throw new Error(inventarErrorMessage(payload, t))
