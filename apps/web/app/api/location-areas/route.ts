@@ -36,10 +36,7 @@ export async function POST(req: Request) {
     return NextResponse.json(data.createLocationArea, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json(
-        { message: 'Invalid input', issues: error.issues },
-        { status: 400 },
-      )
+      return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
     }
     if (error instanceof GraphQLRequestError) {
       return NextResponse.json({ message: error.message }, { status: 400 })

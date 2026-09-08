@@ -48,10 +48,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     return NextResponse.json(data.updateLocationArea, { status: 200 })
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json(
-        { message: 'Invalid input', issues: error.issues },
-        { status: 400 },
-      )
+      return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
     }
     if (error instanceof GraphQLRequestError) {
       return NextResponse.json({ message: error.message }, { status: 400 })

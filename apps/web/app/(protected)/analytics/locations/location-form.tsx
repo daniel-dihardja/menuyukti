@@ -410,9 +410,7 @@ function LocationFormShell({
             <TabsList className="mb-4 w-full justify-start">
               <TabsTrigger value="basics">{t('tabs.basics')}</TabsTrigger>
               <TabsTrigger value="hours">{t('tabs.hours')}</TabsTrigger>
-              {mode === 'edit' ? (
-                <TabsTrigger value="areas">{t('tabs.areas')}</TabsTrigger>
-              ) : null}
+              {mode === 'edit' ? <TabsTrigger value="areas">{t('tabs.areas')}</TabsTrigger> : null}
               {mode === 'edit' ? (
                 <TabsTrigger value="marketing">{t('tabs.marketing')}</TabsTrigger>
               ) : null}

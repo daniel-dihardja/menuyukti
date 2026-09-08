@@ -305,9 +305,7 @@ export function LocationsTable({
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete
-                ? t('deleteConfirmDescription', { name: pendingDelete.name })
-                : null}
+              {pendingDelete ? t('deleteConfirmDescription', { name: pendingDelete.name }) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -21,11 +21,7 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { formatPackLabel } from './format-pack'
 import { FormSurface } from './form-surface'
 import { StockBadge } from './stock-badge'
-import {
-  inventarErrorMessage,
-  todayIsoDate,
-  type InventarApiErrorPayload,
-} from './stock-utils'
+import { inventarErrorMessage, todayIsoDate, type InventarApiErrorPayload } from './stock-utils'
 
 const UNASSIGNED_AREA = '__unassigned__'
 const LAST_AREA_STORAGE_PREFIX = 'inventar:lastArea:'
@@ -100,8 +96,7 @@ export function UseForm({ row, locationId, areas, onClose, onSuccess }: Props) {
       toast.error(t('validation.occurredOnRequired'))
       return
     }
-    const areaId =
-      areaValue === UNASSIGNED_AREA || areas.length === 0 ? null : Number(areaValue)
+    const areaId = areaValue === UNASSIGNED_AREA || areas.length === 0 ? null : Number(areaValue)
     if (areaId != null && (!Number.isInteger(areaId) || areaId < 1)) {
       toast.error(t('validation.areaInvalid'))
       return
