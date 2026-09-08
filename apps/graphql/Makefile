@@ -75,6 +75,7 @@ load-report:
 # Selective seed (default SCOPE=inventar). Requires USER_ID=... or DEV_CLERK_USER_ID.
 # Examples:
 #   make dev-data USER_ID=user_xxx
+#   make dev-data SCOPE=clear-inventar USER_ID=user_xxx
 #   make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx
 #   make db-reset-dev SEED=1 USER_ID=user_xxx
 dev-data:

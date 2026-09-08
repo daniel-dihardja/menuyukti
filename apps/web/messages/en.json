@@ -1815,6 +1815,13 @@
         "viewAnalytics": "View Latest Analytics",
         "uploadSales": "Upload Sales Report",
         "delete": "Delete",
+        "deleteConfirmTitle": "Delete this location?",
+        "deleteConfirmDescription": "This permanently removes “{name}” and its sales analytics, inventory stock, and calendar entries. This cannot be undone.",
+        "deleteConfirmCancel": "Cancel",
+        "deleteConfirmAction": "Delete location",
+        "deleting": "Deleting…",
+        "deleteSuccessToast": "Location deleted",
+        "deleteErrorToast": "Could not delete location",
         "empty": "No locations available yet.",
         "mobile": {
           "actionsTrigger": "Actions",

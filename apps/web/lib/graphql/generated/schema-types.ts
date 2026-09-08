@@ -736,6 +736,8 @@ export type Mutation = {
   deleteInventoryCatalogItem: Scalars['Boolean']['output']
   /** Stop tracking a catalog item at a location. */
   deleteInventoryStock: Scalars['Boolean']['output']
+  /** Delete a location and its analytics, stock, and calendar data. */
+  deleteLocation: Scalars['Boolean']['output']
   /** Delete a media asset catalog row by filename (memberships cascade). Returns true when a row was removed; false when already absent. */
   deleteMediaAsset: Scalars['Boolean']['output']
   /** Delete a media collection by id (memberships cascade). */

@@ -256,3 +256,13 @@ export type UpdateLocationData = {
     }>
   }
 }
+
+export const DELETE_LOCATION_MUTATION = `
+  mutation DeleteLocation($id: ID!) {
+    deleteLocation(id: $id)
+  }
+`
+
+export type DeleteLocationData = {
+  deleteLocation: boolean
+}

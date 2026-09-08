@@ -12,6 +12,7 @@ from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_calendar_entry import DeleteCalendarEntryMutation
 from .delete_crm_app import DeleteCrmAppMutation
 from .delete_crm_customer import DeleteCrmCustomerMutation
+from .delete_location import DeleteLocationMutation
 from .delete_media_collection import DeleteMediaCollectionMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
@@ -61,6 +62,7 @@ __all__ = [
     "DeleteCalendarEntryMutation",
     "DeleteCrmAppMutation",
     "DeleteCrmCustomerMutation",
+    "DeleteLocationMutation",
     "RevokeCrmDeviceMutation",
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",

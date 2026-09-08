@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo } from 'react'
-import { BarChart3, MapPin, Pencil, Upload } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useMemo, useState } from 'react'
+import { BarChart3, Loader2, MapPin, Pencil, Trash2, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 
 import {
   ResponsiveActionMenu,
@@ -15,6 +17,15 @@ import {
   getLocationSetupStatus,
   type LocationListItem,
 } from '@/lib/locations/list-utils'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -57,6 +68,7 @@ function statusBadgeVariant(
 function buildActionItems(
   row: LocationRow,
   t: ReturnType<typeof useTranslations<'analytics.branches.table'>>,
+  onDelete: (row: LocationRow) => void,
 ): ResponsiveActionMenuItem[] {
   const items: ResponsiveActionMenuItem[] = [
     {
@@ -82,6 +94,15 @@ function buildActionItems(
       separatorBefore: true,
     })
   }
+
+  items.push({
+    id: 'delete',
+    label: t('delete'),
+    icon: Trash2,
+    destructive: true,
+    separatorBefore: true,
+    onSelect: () => onDelete(row),
+  })
 
   return items
 }
@@ -136,6 +157,9 @@ export function LocationsTable({
 }: LocationsTableProps) {
   const t = useTranslations('analytics.branches.table')
   const tMobile = useTranslations('analytics.branches.table.mobile')
+  const router = useRouter()
+  const [pendingDelete, setPendingDelete] = useState<LocationRow | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const actionMenuProps = useMemo(
     () => ({
@@ -145,6 +169,28 @@ export function LocationsTable({
     }),
     [t, tMobile],
   )
+
+  const confirmDelete = () => {
+    if (pendingDelete === null || isDeleting) return
+    const row = pendingDelete
+    setIsDeleting(true)
+    void (async () => {
+      try {
+        const res = await fetch(`/api/locations/${row.id}`, { method: 'DELETE' })
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { message?: string } | null
+          throw new Error(body?.message || t('deleteErrorToast'))
+        }
+        setPendingDelete(null)
+        toast.success(t('deleteSuccessToast'))
+        router.refresh()
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t('deleteErrorToast'))
+      } finally {
+        setIsDeleting(false)
+      }
+    })()
+  }
 
   if (branches.length === 0) {
     return <LocationsEmptyState createHref={createHref} />
@@ -178,7 +224,7 @@ export function LocationsTable({
               </Link>
               <ResponsiveActionMenu
                 {...actionMenuProps}
-                items={buildActionItems(branch, t)}
+                items={buildActionItems(branch, t, setPendingDelete)}
                 sheetId={`location-actions-${branch.id}`}
                 sheetTitle={branch.name}
               />
@@ -235,7 +281,7 @@ export function LocationsTable({
                   <TableCell className="text-right">
                     <ResponsiveActionMenu
                       {...actionMenuProps}
-                      items={buildActionItems(branch, t)}
+                      items={buildActionItems(branch, t, setPendingDelete)}
                       sheetId={`location-actions-desktop-${branch.id}`}
                       sheetTitle={branch.name}
                     />
@@ -246,6 +292,47 @@ export function LocationsTable({
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setPendingDelete(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete
+                ? t('deleteConfirmDescription', { name: pendingDelete.name })
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} type="button">
+              {t('deleteConfirmCancel')}
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeleting || pendingDelete === null}
+              onClick={confirmDelete}
+              className="gap-2"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                  {t('deleting')}
+                </>
+              ) : (
+                t('deleteConfirmAction')
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
