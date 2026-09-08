@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
     from graphql.data_sources.models.inventory_stock import InventoryStock
     from graphql.data_sources.models.location import Location
+    from graphql.data_sources.models.location_area import LocationArea
 
 
 class InventoryStockMovement(Base):
@@ -59,6 +60,12 @@ class InventoryStockMovement(Base):
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
     occurred_on: Mapped[date] = mapped_column(Date, nullable=False)
     note: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    location_area_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("location_area.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     related_movement_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("inventory_stock_movement.id", ondelete="SET NULL"),
@@ -77,6 +84,7 @@ class InventoryStockMovement(Base):
 
     location: Mapped[Location] = relationship("Location")
     catalog_item: Mapped[InventoryCatalogItem] = relationship("InventoryCatalogItem")
+    location_area: Mapped[LocationArea | None] = relationship("LocationArea")
     stock: Mapped[InventoryStock | None] = relationship(
         "InventoryStock",
         back_populates="movements",

@@ -44,6 +44,8 @@ from graphql.services.inventory import (
     validate_on_hand,
     validate_transfer_quantity,
 )
+from graphql.services.location_area import assert_area_belongs_to_location
+
 
 
 @strawberry.type
@@ -287,6 +289,7 @@ class InventoryStockMutations:
         stock_id: int,
         quantity: float,
         occurred_on: date | None = None,
+        area_id: int | None = None,
     ) -> InventoryStockType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -303,6 +306,15 @@ class InventoryStockMutations:
             if qty > row.on_hand:
                 raise ValueError("quantity cannot exceed current stock")
 
+            resolved_area_id: int | None = None
+            if area_id is not None:
+                assert_area_belongs_to_location(
+                    session,
+                    area_id=area_id,
+                    location_id=row.location_id,
+                )
+                resolved_area_id = area_id
+
             row.on_hand = row.on_hand - qty
             row.last_out_on = day
             row.last_updated_by_clerk_user_id = user_id
@@ -315,6 +327,7 @@ class InventoryStockMutations:
                 quantity=qty,
                 occurred_on=day,
                 created_by_clerk_user_id=user_id,
+                location_area_id=resolved_area_id,
             )
             session.commit()
             row = load_stock_with_catalog(session, row.id)

@@ -9,25 +9,76 @@ import { Button } from '@workspace/ui/components/button'
 import { DatePicker } from '@workspace/ui/components/date-picker'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
 
 import { formatPackLabel } from './format-pack'
 import { FormSurface } from './form-surface'
 import { StockBadge } from './stock-badge'
-import { inventarErrorMessage, todayIsoDate, type InventarApiErrorPayload } from './stock-utils'
+import {
+  inventarErrorMessage,
+  todayIsoDate,
+  type InventarApiErrorPayload,
+} from './stock-utils'
+
+const UNASSIGNED_AREA = '__unassigned__'
+const LAST_AREA_STORAGE_PREFIX = 'inventar:lastArea:'
+
+type AreaOption = { id: number; name: string; sortOrder: number }
 
 type Props = {
   row: InventoryStockRow
   locationId: number
+  areas: AreaOption[]
   onClose: () => void
   onSuccess: () => void
 }
 
-export function UseForm({ row, locationId, onClose, onSuccess }: Props) {
+function readLastAreaId(locationId: number): number | null {
+  try {
+    const raw = window.localStorage.getItem(`${LAST_AREA_STORAGE_PREFIX}${locationId}`)
+    if (!raw) return null
+    const parsed = Number(raw)
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function writeLastAreaId(locationId: number, areaId: number | null) {
+  try {
+    const key = `${LAST_AREA_STORAGE_PREFIX}${locationId}`
+    if (areaId == null) {
+      window.localStorage.removeItem(key)
+    } else {
+      window.localStorage.setItem(key, String(areaId))
+    }
+  } catch {
+    // ignore storage failures
+  }
+}
+
+function initialAreaValue(locationId: number, areas: AreaOption[]): string {
+  if (areas.length === 0) return UNASSIGNED_AREA
+  const last = readLastAreaId(locationId)
+  if (last != null && areas.some((area) => area.id === last)) {
+    return String(last)
+  }
+  return UNASSIGNED_AREA
+}
+
+export function UseForm({ row, locationId, areas, onClose, onSuccess }: Props) {
   const t = useTranslations('inventar')
   const [pending, setPending] = useState(false)
   const [useQty, setUseQty] = useState('1')
   const [useDate, setUseDate] = useState(todayIsoDate)
+  const [areaValue, setAreaValue] = useState(() => initialAreaValue(locationId, areas))
 
   const useQtyAmount = Number(useQty)
   const useNewStock =
@@ -49,6 +100,12 @@ export function UseForm({ row, locationId, onClose, onSuccess }: Props) {
       toast.error(t('validation.occurredOnRequired'))
       return
     }
+    const areaId =
+      areaValue === UNASSIGNED_AREA || areas.length === 0 ? null : Number(areaValue)
+    if (areaId != null && (!Number.isInteger(areaId) || areaId < 1)) {
+      toast.error(t('validation.areaInvalid'))
+      return
+    }
     setPending(true)
     try {
       const params = new URLSearchParams({
@@ -58,12 +115,17 @@ export function UseForm({ row, locationId, onClose, onSuccess }: Props) {
       const res = await fetch(`/api/inventory-stock/${row.id}?${params}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity, occurredOn: useDate }),
+        body: JSON.stringify({
+          quantity,
+          occurredOn: useDate,
+          areaId,
+        }),
       })
       if (!res.ok) {
         const payload = (await res.json().catch(() => null)) as InventarApiErrorPayload | null
         throw new Error(inventarErrorMessage(payload, t))
       }
+      writeLastAreaId(locationId, areaId)
       onClose()
       toast.success(t('useStock'))
       onSuccess()
@@ -118,6 +180,24 @@ export function UseForm({ row, locationId, onClose, onSuccess }: Props) {
             onChange={(e) => setUseQty(e.target.value)}
           />
         </Field>
+        {areas.length > 0 ? (
+          <Field>
+            <FieldLabel>{t('area')}</FieldLabel>
+            <Select value={areaValue} onValueChange={setAreaValue} disabled={pending}>
+              <SelectTrigger className="min-h-11 touch-manipulation lg:min-h-9">
+                <SelectValue placeholder={t('areaUnassigned')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED_AREA}>{t('areaUnassigned')}</SelectItem>
+                {areas.map((area) => (
+                  <SelectItem key={area.id} value={String(area.id)}>
+                    {area.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        ) : null}
         <Field>
           <FieldLabel>{t('usedOn')}</FieldLabel>
           <DatePicker

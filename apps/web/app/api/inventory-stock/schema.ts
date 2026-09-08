@@ -38,6 +38,7 @@ export const receiveInventoryStockBodySchema = z.object({
 export const consumeInventoryStockBodySchema = z.object({
   quantity: z.number().positive(),
   occurredOn: occurredOnSchema,
+  areaId: z.number().int().positive().nullable().optional(),
 })
 
 export const transferInventoryStockBodySchema = z.object({

@@ -7,9 +7,20 @@ export const LOCATIONS_LIST_QUERY = `
       city
       country
       currency
+      areas {
+        id
+        name
+        sortOrder
+      }
     }
   }
 `
+
+export type LocationArea = {
+  id: string
+  name: string
+  sortOrder: number
+}
 
 export const LOCATIONS_QUERY = `
   query Locations($first: Int) {
@@ -25,6 +36,11 @@ export const LOCATIONS_QUERY = `
         openTime
         closeTime
       }
+      areas {
+        id
+        name
+        sortOrder
+      }
     }
   }
 `
@@ -37,6 +53,7 @@ export type LocationsListData = {
     city: string | null
     country: string | null
     currency: string | null
+    areas: LocationArea[]
   }>
 }
 
@@ -74,6 +91,7 @@ export type LocationsData = {
       openTime: string
       closeTime: string
     }>
+    areas: LocationArea[]
   }>
 }
 
@@ -91,6 +109,11 @@ export const LOCATION_QUERY = `
         dayOfWeek
         openTime
         closeTime
+      }
+      areas {
+        id
+        name
+        sortOrder
       }
       manualBriefInput {
         locationId
@@ -114,6 +137,7 @@ export type LocationData = {
       openTime: string
       closeTime: string
     }>
+    areas: LocationArea[]
     manualBriefInput: {
       locationId: number
       quickProfile: Record<string, unknown>
@@ -265,4 +289,54 @@ export const DELETE_LOCATION_MUTATION = `
 
 export type DeleteLocationData = {
   deleteLocation: boolean
+}
+
+export const CREATE_LOCATION_AREA_MUTATION = `
+  mutation CreateLocationArea($locationId: Int!, $name: String!, $sortOrder: Int) {
+    createLocationArea(locationId: $locationId, name: $name, sortOrder: $sortOrder) {
+      id
+      locationId
+      name
+      sortOrder
+    }
+  }
+`
+
+export type CreateLocationAreaData = {
+  createLocationArea: {
+    id: string
+    locationId: string
+    name: string
+    sortOrder: number
+  }
+}
+
+export const UPDATE_LOCATION_AREA_MUTATION = `
+  mutation UpdateLocationArea($id: Int!, $name: String, $sortOrder: Int) {
+    updateLocationArea(id: $id, name: $name, sortOrder: $sortOrder) {
+      id
+      locationId
+      name
+      sortOrder
+    }
+  }
+`
+
+export type UpdateLocationAreaData = {
+  updateLocationArea: {
+    id: string
+    locationId: string
+    name: string
+    sortOrder: number
+  }
+}
+
+export const DELETE_LOCATION_AREA_MUTATION = `
+  mutation DeleteLocationArea($id: Int!) {
+    deleteLocationArea(id: $id)
+  }
+`
+
+export type DeleteLocationAreaData = {
+  deleteLocationArea: boolean
 }

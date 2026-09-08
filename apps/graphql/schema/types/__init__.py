@@ -1,4 +1,5 @@
 from .location import LocationType, OpeningHourType
+from .location_area import LocationAreaType
 from .location_menu_item_cogs import LocationMenuItemCogsType
 from .menu_item_cogs import MenuItemCogsType
 from .post import PostType
@@ -10,6 +11,7 @@ from .workspace_membership import WorkspaceMembershipType
 
 __all__ = [
     "LocationType",
+    "LocationAreaType",
     "OpeningHourType",
     "LocationMenuItemCogsType",
     "MenuItemCogsType",

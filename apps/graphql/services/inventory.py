@@ -177,6 +177,7 @@ def add_movement(
     created_by_clerk_user_id: str,
     related_movement_id: int | None = None,
     note: str | None = None,
+    location_area_id: int | None = None,
 ) -> InventoryStockMovement:
     row = InventoryStockMovement(
         location_id=location_id,
@@ -187,6 +188,7 @@ def add_movement(
         occurred_on=occurred_on,
         related_movement_id=related_movement_id,
         note=note,
+        location_area_id=location_area_id,
         created_by_clerk_user_id=created_by_clerk_user_id,
     )
     session.add(row)

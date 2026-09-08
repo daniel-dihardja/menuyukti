@@ -20,6 +20,7 @@ from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .delete_style import DeleteStyleMutation
 from .inventory import InventoryCatalogMutations, InventoryStockMutations
 from .invite_workspace_member import InviteWorkspaceMemberMutation
+from .location_area import LocationAreaMutations
 from .location_menu_item_cogs import (
     ApplyLocationCogsToAnalyticsRunMutation,
     SaveAnalyticsRunCogsToLocationMutation,
@@ -49,6 +50,7 @@ __all__ = [
     "AddMediaToCollectionMutation",
     "InventoryCatalogMutations",
     "InventoryStockMutations",
+    "LocationAreaMutations",
     "CreateCalendarEntryMutation",
     "CreateCrmAppMutation",
     "CreateCrmEnrollmentTokenMutation",

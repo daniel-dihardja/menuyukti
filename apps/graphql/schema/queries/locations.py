@@ -52,7 +52,10 @@ class LocationsQuery:
             rows = list(
                 session.scalars(
                     select(Location)
-                    .options(selectinload(Location.opening_hours))
+                    .options(
+                        selectinload(Location.opening_hours),
+                        selectinload(Location.areas),
+                    )
                     .where(or_(*access))
                     .order_by(Location.id.desc())
                     .limit(limit)
@@ -128,7 +131,10 @@ class LocationsQuery:
         with request_session_scope(info) as session:
             row = session.scalars(
                 select(Location)
-                .options(selectinload(Location.opening_hours))
+                .options(
+                    selectinload(Location.opening_hours),
+                    selectinload(Location.areas),
+                )
                 .where(Location.id == int(id))
             ).one_or_none()
             if row is None or not is_location_owner(session, row.id, user_id, info=info):

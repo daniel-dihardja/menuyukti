@@ -80,6 +80,7 @@ export default async function Page({ params }: PageProps) {
           mode="edit"
           locationId={location.id}
           initialManualQuickProfile={location.manualBriefInput?.quickProfile ?? null}
+          initialAreas={location.areas ?? []}
           initialValues={{
             name: location.name,
             street: location.street ?? '',

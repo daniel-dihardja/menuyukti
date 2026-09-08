@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.calendar_entry import CalendarEntry
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.inventory_stock import InventoryStock
+    from graphql.data_sources.models.location_area import LocationArea
     from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
     from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -72,6 +73,12 @@ class Location(Base):
         back_populates="location",
         cascade="all, delete-orphan",
         order_by="LocationOpeningHour.day_of_week",
+    )
+    areas: Mapped[list[LocationArea]] = relationship(
+        "LocationArea",
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="LocationArea.sort_order, LocationArea.id",
     )
     menu_item_cogs: Mapped[list[LocationMenuItemCogs]] = relationship(
         "LocationMenuItemCogs",

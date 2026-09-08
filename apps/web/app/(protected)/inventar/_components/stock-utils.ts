@@ -4,7 +4,12 @@ import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
 import { INVENTORY_STORAGE_ZONE_SORT_ORDER } from '@/lib/inventar/storage-zones'
 import type { SortDirection } from '@/components/sortable-table'
 
-export type InventarBranch = { id: number; name: string; currency: string | null }
+export type InventarBranch = {
+  id: number
+  name: string
+  currency: string | null
+  areas: Array<{ id: number; name: string; sortOrder: number }>
+}
 
 /** Slim catalog row for receive combobox (RSC → client). */
 export type InventarCatalogOption = {

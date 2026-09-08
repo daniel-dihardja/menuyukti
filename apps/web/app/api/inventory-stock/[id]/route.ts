@@ -59,6 +59,7 @@ export async function PATCH(req: Request, context: RouteContext) {
         stockId,
         quantity: body.quantity,
         occurredOn: body.occurredOn ?? null,
+        areaId: body.areaId ?? null,
       },
       userId,
     )

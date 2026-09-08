@@ -155,6 +155,7 @@ export function InventarStockClient({
             key={useRow.id}
             row={useRow}
             locationId={activeLocationId}
+            areas={activeBranch?.areas ?? []}
             onClose={() => setUseRow(null)}
             onSuccess={refresh}
           />

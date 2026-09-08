@@ -782,6 +782,9 @@
     "actionsSheetDescription": "Choose an action for this stock item.",
     "use": "Use",
     "useStock": "Use stock",
+    "area": "Area",
+    "areaUnassigned": "Unassigned",
+    "historyArea": "Area · {name}",
     "arrivedOn": "Arrived on",
     "usedOn": "Used on",
     "datePlaceholder": "Pick a date",
@@ -892,7 +895,8 @@
       "quantityTooMuch": "Cannot use or transfer more than current stock",
       "pantryItemRequired": "Choose a pantry item",
       "destinationRequired": "Choose a destination location",
-      "occurredOnRequired": "Choose a date"
+      "occurredOnRequired": "Choose a date",
+      "areaInvalid": "Choose a valid area"
     }
   },
   "usage": {
@@ -1885,7 +1889,32 @@
         "tabs": {
           "basics": "Basics",
           "hours": "Hours",
+          "areas": "Areas",
           "marketing": "Marketing profile"
+        },
+        "areas": {
+          "title": "Areas",
+          "description": "Optional rooms or stations (e.g. Main room, Bar). When you use stock, you can tag which area consumed it.",
+          "empty": "No areas yet. Add one if you want to track where stock is used.",
+          "nameLabel": "Area name",
+          "namePlaceholder": "Bar",
+          "addAction": "Add area",
+          "saveName": "Save",
+          "cancelEdit": "Cancel",
+          "deleteConfirm": "Delete area “{name}”? Past stock uses keep their history without this area.",
+          "moveUpAria": "Move {name} up",
+          "moveDownAria": "Move {name} down",
+          "deleteAria": "Delete {name}",
+          "toast": {
+            "created": "Area added",
+            "updated": "Area updated",
+            "deleted": "Area deleted"
+          },
+          "errors": {
+            "nameRequired": "Enter an area name",
+            "saveFailed": "Could not save area",
+            "deleteFailed": "Could not delete area"
+          }
         },
         "currencyAutoHint": "Currency is set from country — change if needed.",
         "toast": {

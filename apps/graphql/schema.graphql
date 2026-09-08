@@ -411,6 +411,8 @@ type InventoryStockMovementType {
   quantity: Float!
   occurredOn: Date!
   note: String
+  areaId: Int
+  areaName: String
   relatedMovementId: Int
   relatedLocationId: Int
   createdByClerkUserId: String
@@ -464,6 +466,14 @@ type LocationAnalyticsSummaryType {
   latestRun: LocationAnalyticsRunSummaryType
 }
 
+"""Named area within a location (e.g. Main room, Bar)."""
+type LocationAreaType {
+  id: ID!
+  locationId: ID!
+  name: String!
+  sortOrder: Int!
+}
+
 """Owner-provided click-first brief hints; not AI-generated."""
 type LocationManualBriefInputType {
   locationId: Int!
@@ -503,6 +513,7 @@ type LocationType {
   nodeId: ID
   workspaceId: ID
   openingHours: [OpeningHourType!]!
+  areas: [LocationAreaType!]!
 
   """Owner-provided click-first brief hints. Not AI-generated."""
   manualBriefInput: LocationManualBriefInputType
@@ -755,7 +766,7 @@ type Mutation {
   receiveInventoryStock(locationId: Int!, catalogItemId: Int!, quantity: Float!, occurredOn: Date = null): InventoryStockType!
 
   """Use packages from stock (decreases stock and records an out movement)."""
-  consumeInventoryStock(stockId: Int!, quantity: Float!, occurredOn: Date = null): InventoryStockType!
+  consumeInventoryStock(stockId: Int!, quantity: Float!, occurredOn: Date = null, areaId: Int = null): InventoryStockType!
 
   """Stop tracking a catalog item at a location."""
   deleteInventoryStock(id: Int!): Boolean!
@@ -765,6 +776,17 @@ type Mutation {
 
   """Create a catalog item and initial stock at a location in one step."""
   createInventoryCatalogItemWithStock(locationId: Int!, name: String!, packageSize: Float!, packageUnit: String!, onHand: Float!, storageZone: InventoryStorageZone = null, category: InventoryCategory = null, price: Float = null, minOnHand: Float = null, maxOnHand: Float = null): InventoryStockType!
+
+  """Create a named area at a location."""
+  createLocationArea(locationId: Int!, name: String!, sortOrder: Int = null): LocationAreaType!
+
+  """Rename or reorder a location area."""
+  updateLocationArea(id: Int!, name: String, sortOrder: Int): LocationAreaType!
+
+  """
+  Delete a location area. Prior stock movements keep history with a null area.
+  """
+  deleteLocationArea(id: Int!): Boolean!
   deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
 
   """Delete a manual calendar entry."""

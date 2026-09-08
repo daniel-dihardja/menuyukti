@@ -239,6 +239,11 @@ export function HistoryPanel({ row, locationId, branches, onClose }: Props) {
                 <p className="font-medium">
                   {formatActivityDate(movement.occurredOn, locale)} · {directionLabel(movement)}
                 </p>
+                {movement.direction === 'out' && movement.areaName ? (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {t('historyArea', { name: movement.areaName })}
+                  </p>
+                ) : null}
                 <div className="mt-1.5">
                   <UpdatedByCell actor={movement.createdBy} emptyLabel={t('updatedByEmpty')} />
                 </div>

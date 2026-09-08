@@ -3,7 +3,17 @@
 from __future__ import annotations
 
 from graphql.data_sources import Location
-from graphql.schema.types import LocationType, OpeningHourType
+from graphql.data_sources.models.location_area import LocationArea
+from graphql.schema.types import LocationAreaType, LocationType, OpeningHourType
+
+
+def location_area_to_gql(row: LocationArea) -> LocationAreaType:
+    return LocationAreaType(
+        id=str(row.id),
+        location_id=str(row.location_id),
+        name=row.name,
+        sort_order=row.sort_order,
+    )
 
 
 def location_to_gql(row: Location) -> LocationType:
@@ -15,6 +25,7 @@ def location_to_gql(row: Location) -> LocationType:
         )
         for hour in (row.opening_hours or [])
     ]
+    areas = [location_area_to_gql(area) for area in (row.areas or [])]
     return LocationType(
         id=row.id,
         name=row.name,
@@ -25,4 +36,5 @@ def location_to_gql(row: Location) -> LocationType:
         node_id=str(row.node_id) if row.node_id is not None else None,
         workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
         opening_hours=opening_hours,
+        areas=areas,
     )

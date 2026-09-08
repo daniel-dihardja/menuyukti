@@ -17,6 +17,8 @@ export type InventoryStockMovement = {
   quantity: number
   occurredOn: string
   note: string | null
+  areaId: number | null
+  areaName: string | null
   relatedMovementId: number | null
   relatedLocationId: number | null
   createdByClerkUserId: string | null
@@ -81,6 +83,8 @@ const MOVEMENT_FIELDS = `
   quantity
   occurredOn
   note
+  areaId
+  areaName
   relatedMovementId
   relatedLocationId
   createdByClerkUserId
@@ -206,11 +210,13 @@ export const CONSUME_INVENTORY_STOCK_MUTATION = `
     $stockId: Int!
     $quantity: Float!
     $occurredOn: Date
+    $areaId: Int
   ) {
     consumeInventoryStock(
       stockId: $stockId
       quantity: $quantity
       occurredOn: $occurredOn
+      areaId: $areaId
     ) {
       ${STOCK_FIELDS}
     }
