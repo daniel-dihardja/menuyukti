@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
+import { INVENTORY_CATEGORIES, type InventoryCategory } from '@/lib/inventar/categories'
 import { INVENTORY_STORAGE_ZONES, type InventoryStorageZone } from '@/lib/inventar/storage-zones'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
@@ -35,6 +36,25 @@ export function CatalogFormFields({ value, onChange, idPrefix, disabled }: Props
           disabled={disabled}
           onChange={(e) => onChange({ name: e.target.value })}
         />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`${idPrefix}-category`}>{t('category')}</FieldLabel>
+        <Select
+          value={value.category}
+          disabled={disabled}
+          onValueChange={(category) => onChange({ category: category as InventoryCategory })}
+        >
+          <SelectTrigger id={`${idPrefix}-category`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {INVENTORY_CATEGORIES.map((category) => (
+              <SelectItem key={category} value={category}>
+                {t(`categories.${category}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field>
         <FieldLabel htmlFor={`${idPrefix}-zone`}>{t('storageZone')}</FieldLabel>

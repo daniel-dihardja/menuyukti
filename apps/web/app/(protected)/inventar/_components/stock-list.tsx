@@ -172,21 +172,30 @@ export function StockList({
   }
 
   if (isDesktop) {
-    const columns: SortableTableColumn<InventarStockSortKey | 'actions' | 'updatedBy'>[] = [
-      { id: 'name', label: t('name'), align: 'left', className: 'w-[14%]' },
-      { id: 'storageZone', label: t('storageZone'), align: 'left', className: 'w-[9%]' },
-      { id: 'pack', label: t('pack'), align: 'left', className: 'w-[9%]' },
-      { id: 'onHand', label: t('currentStock'), align: 'right', className: 'w-[11%]' },
-      { id: 'avgDailyOut', label: t('avgDailyOut'), align: 'right', className: 'w-[9%]' },
-      { id: 'daysUntilRefill', label: t('daysUntilRefill'), align: 'right', className: 'w-[9%]' },
-      { id: 'value', label: t('value'), align: 'right', className: 'w-[9%]' },
-      { id: 'activity', label: t('activity'), align: 'left', className: 'w-[10%]' },
+    const columns: SortableTableColumn<
+      InventarStockSortKey | 'actions' | 'updatedBy' | 'category'
+    >[] = [
+      { id: 'name', label: t('name'), align: 'left', className: 'w-[12%]' },
+      {
+        id: 'category',
+        label: t('category'),
+        align: 'left',
+        sortable: false,
+        className: 'w-[10%]',
+      },
+      { id: 'storageZone', label: t('storageZone'), align: 'left', className: 'w-[8%]' },
+      { id: 'pack', label: t('pack'), align: 'left', className: 'w-[8%]' },
+      { id: 'onHand', label: t('currentStock'), align: 'right', className: 'w-[10%]' },
+      { id: 'avgDailyOut', label: t('avgDailyOut'), align: 'right', className: 'w-[8%]' },
+      { id: 'daysUntilRefill', label: t('daysUntilRefill'), align: 'right', className: 'w-[8%]' },
+      { id: 'value', label: t('value'), align: 'right', className: 'w-[8%]' },
+      { id: 'activity', label: t('activity'), align: 'left', className: 'w-[9%]' },
       {
         id: 'updatedBy',
         label: t('updatedBy'),
         align: 'left',
         sortable: false,
-        className: 'w-[12%]',
+        className: 'w-[11%]',
       },
       { id: 'actions', label: '', sortable: false, className: 'w-[8%]' },
     ]
@@ -198,7 +207,7 @@ export function StockList({
           sortKey={sortKey}
           sortDirection={sortDirection}
           onSort={(key) => {
-            if (key === 'actions' || key === 'updatedBy') return
+            if (key === 'actions' || key === 'updatedBy' || key === 'category') return
             toggleSort(key)
           }}
         >
@@ -210,6 +219,11 @@ export function StockList({
                 <TableCell className="max-w-0 font-medium">
                   <span className="block truncate" title={row.catalogItem.name}>
                     {row.catalogItem.name}
+                  </span>
+                </TableCell>
+                <TableCell className="max-w-0 whitespace-nowrap">
+                  <span className="block truncate">
+                    {t(`categories.${row.catalogItem.category}`)}
                   </span>
                 </TableCell>
                 <TableCell className="max-w-0 whitespace-nowrap">
@@ -275,6 +289,7 @@ export function StockList({
     <ul className="flex flex-col gap-3">
       {displayRows.map((row) => {
         const packLabel = formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)
+        const categoryLabel = t(`categories.${row.catalogItem.category}`)
         const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
         const lineValue = stockLineValue(row)
         const { avgDailyOut, daysUntilRefill } = forecastCells(row)
@@ -290,9 +305,9 @@ export function StockList({
                 </p>
                 <p
                   className="truncate text-sm text-muted-foreground"
-                  title={`${zoneLabel} · ${packLabel}`}
+                  title={`${categoryLabel} · ${zoneLabel} · ${packLabel}`}
                 >
-                  {zoneLabel} · {packLabel}
+                  {categoryLabel} · {zoneLabel} · {packLabel}
                 </p>
                 <p className="mt-1 truncate text-xs text-muted-foreground">
                   {cardActivitySummary(row, t, locale)}

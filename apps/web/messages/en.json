@@ -754,6 +754,7 @@
     "pack": "Pack",
     "name": "Name",
     "storageZone": "Storage",
+    "category": "Category",
     "activity": "Activity",
     "updatedBy": "Updated by",
     "updatedByEmpty": "—",
@@ -808,6 +809,18 @@
       "cooler": "Cooler",
       "freezer": "Freezer",
       "dry": "Dry"
+    },
+    "categories": {
+      "dry_goods": "Dry goods",
+      "dairy": "Dairy",
+      "produce": "Produce",
+      "proteins": "Proteins",
+      "frozen": "Frozen",
+      "beverages": "Beverages",
+      "spices_condiments": "Spices & condiments",
+      "cleaning": "Cleaning",
+      "packaging": "Packaging",
+      "other": "Other"
     },
     "packageSize": "Package size",
     "packageUnit": "Unit",

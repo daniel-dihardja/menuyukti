@@ -7,6 +7,7 @@ from graphql.data_sources.models.inventory_stock import InventoryStock
 from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
 from graphql.schema.types.inventory_catalog_item import (
     InventoryCatalogItemType,
+    InventoryCategory,
     InventoryStorageZone,
 )
 from graphql.schema.types.inventory_stock import InventoryStockType
@@ -27,6 +28,7 @@ def catalog_item_to_gql(row: InventoryCatalogItem) -> InventoryCatalogItemType:
         minOnHand=row.min_on_hand,
         maxOnHand=row.max_on_hand,
         storageZone=InventoryStorageZone(row.storage_zone),
+        category=InventoryCategory(row.category),
         createdAt=row.created_at,
         updatedAt=row.updated_at,
     )

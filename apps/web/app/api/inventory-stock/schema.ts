@@ -1,8 +1,10 @@
 import { z } from 'zod'
 
+import { INVENTORY_CATEGORIES } from '@/lib/inventar/categories'
 import { INVENTORY_STORAGE_ZONES } from '@/lib/inventar/storage-zones'
 
 const storageZoneSchema = z.enum(INVENTORY_STORAGE_ZONES)
+const categorySchema = z.enum(INVENTORY_CATEGORIES)
 
 /** ISO calendar date YYYY-MM-DD */
 const occurredOnSchema = z
@@ -17,6 +19,7 @@ export const createInventoryCatalogItemWithStockBodySchema = z.object({
   packageUnit: z.string().trim().min(1).max(32),
   onHand: z.number().min(0),
   storageZone: storageZoneSchema.optional().default('dry'),
+  category: categorySchema.optional().default('other'),
 })
 
 export const upsertInventoryStockBodySchema = z.object({

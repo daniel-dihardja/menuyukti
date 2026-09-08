@@ -56,6 +56,7 @@ export function CatalogList({ catalogItems, currencyCode, onAdd, onEdit, onDelet
           <TableHeader>
             <TableRow>
               <TableHead>{t('name')}</TableHead>
+              <TableHead>{t('category')}</TableHead>
               <TableHead>{t('storageZone')}</TableHead>
               <TableHead>{t('pack')}</TableHead>
               <TableHead className="text-right">{t('price')}</TableHead>
@@ -68,6 +69,7 @@ export function CatalogList({ catalogItems, currencyCode, onAdd, onEdit, onDelet
             {catalogItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell>{t(`categories.${item.category}`)}</TableCell>
                 <TableCell>{t(`storageZones.${item.storageZone}`)}</TableCell>
                 <TableCell>{formatPackLabel(item.packageSize, item.packageUnit)}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatPrice(item.price)}</TableCell>

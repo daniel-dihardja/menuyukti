@@ -19,6 +19,7 @@ from graphql.schema.auth import (
 from graphql.schema.mappers.inventory import catalog_item_to_gql, stock_to_gql
 from graphql.schema.types.inventory_catalog_item import (
     InventoryCatalogItemType,
+    InventoryCategory,
     InventoryStorageZone,
 )
 from graphql.schema.types.inventory_stock import (
@@ -56,6 +57,7 @@ class InventoryCatalogMutations:
         package_size: float,
         package_unit: str,
         storage_zone: InventoryStorageZone | None = None,
+        category: InventoryCategory | None = None,
         price: float | None = None,
         min_on_hand: float | None = None,
         max_on_hand: float | None = None,
@@ -64,11 +66,12 @@ class InventoryCatalogMutations:
         if not user_id:
             raise ValueError("Missing authenticated user for createInventoryCatalogItem")
 
-        name_clean, size_clean, unit_clean, zone_clean = validate_catalog_fields(
+        name_clean, size_clean, unit_clean, zone_clean, category_clean = validate_catalog_fields(
             name=name,
             package_size=package_size,
             package_unit=package_unit,
             storage_zone=storage_zone,
+            category=category,
         )
         price_clean = validate_catalog_price(price)
         min_clean, max_clean = validate_catalog_on_hand_limits(min_on_hand, max_on_hand)
@@ -82,6 +85,7 @@ class InventoryCatalogMutations:
                 package_size=size_clean,
                 package_unit=unit_clean,
                 storage_zone=zone_clean,
+                category=category_clean,
                 price=price_clean,
                 min_on_hand=min_clean,
                 max_on_hand=max_clean,
@@ -104,6 +108,7 @@ class InventoryCatalogMutations:
         package_size: float | None = None,
         package_unit: str | None = None,
         storage_zone: InventoryStorageZone | None = None,
+        category: InventoryCategory | None = None,
         price: float | None = UNSET,
         min_on_hand: float | None = UNSET,
         max_on_hand: float | None = UNSET,
@@ -121,16 +126,21 @@ class InventoryCatalogMutations:
             next_size = row.package_size if package_size is None else package_size
             next_unit = row.package_unit if package_unit is None else package_unit
             next_zone = row.storage_zone if storage_zone is None else storage_zone
-            name_clean, size_clean, unit_clean, zone_clean = validate_catalog_fields(
-                name=next_name,
-                package_size=next_size,
-                package_unit=next_unit,
-                storage_zone=next_zone,
+            next_category = row.category if category is None else category
+            name_clean, size_clean, unit_clean, zone_clean, category_clean = (
+                validate_catalog_fields(
+                    name=next_name,
+                    package_size=next_size,
+                    package_unit=next_unit,
+                    storage_zone=next_zone,
+                    category=next_category,
+                )
             )
             row.name = name_clean
             row.package_size = size_clean
             row.package_unit = unit_clean
             row.storage_zone = zone_clean
+            row.category = category_clean
             if price is not UNSET:
                 row.price = validate_catalog_price(price)
             next_min = row.min_on_hand if min_on_hand is UNSET else min_on_hand
@@ -455,6 +465,7 @@ class InventoryStockMutations:
         package_unit: str,
         on_hand: float,
         storage_zone: InventoryStorageZone | None = None,
+        category: InventoryCategory | None = None,
         price: float | None = None,
         min_on_hand: float | None = None,
         max_on_hand: float | None = None,
@@ -463,11 +474,12 @@ class InventoryStockMutations:
         if not user_id:
             raise ValueError("Missing authenticated user for createInventoryCatalogItemWithStock")
 
-        name_clean, size_clean, unit_clean, zone_clean = validate_catalog_fields(
+        name_clean, size_clean, unit_clean, zone_clean, category_clean = validate_catalog_fields(
             name=name,
             package_size=package_size,
             package_unit=package_unit,
             storage_zone=storage_zone,
+            category=category,
         )
         price_clean = validate_catalog_price(price)
         min_clean, max_clean = validate_catalog_on_hand_limits(min_on_hand, max_on_hand)
@@ -488,6 +500,7 @@ class InventoryStockMutations:
                 package_size=size_clean,
                 package_unit=unit_clean,
                 storage_zone=zone_clean,
+                category=category_clean,
                 price=price_clean,
                 min_on_hand=min_clean,
                 max_on_hand=max_clean,

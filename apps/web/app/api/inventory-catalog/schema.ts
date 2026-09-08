@@ -1,8 +1,10 @@
 import { z } from 'zod'
 
+import { INVENTORY_CATEGORIES } from '@/lib/inventar/categories'
 import { INVENTORY_STORAGE_ZONES } from '@/lib/inventar/storage-zones'
 
 const storageZoneSchema = z.enum(INVENTORY_STORAGE_ZONES)
+const categorySchema = z.enum(INVENTORY_CATEGORIES)
 
 const optionalOnHandLimitSchema = z.number().nonnegative().nullable().optional()
 
@@ -20,6 +22,7 @@ export const createInventoryCatalogBodySchema = z
     packageSize: z.number().positive(),
     packageUnit: z.string().trim().min(1).max(32),
     storageZone: storageZoneSchema.optional().default('dry'),
+    category: categorySchema.optional().default('other'),
     price: z.number().nonnegative().nullable().optional(),
     minOnHand: optionalOnHandLimitSchema,
     maxOnHand: optionalOnHandLimitSchema,
@@ -35,6 +38,7 @@ export const updateInventoryCatalogBodySchema = z
     packageSize: z.number().positive().optional(),
     packageUnit: z.string().trim().min(1).max(32).optional(),
     storageZone: storageZoneSchema.optional(),
+    category: categorySchema.optional(),
     price: z.number().nonnegative().nullable().optional(),
     minOnHand: optionalOnHandLimitSchema,
     maxOnHand: optionalOnHandLimitSchema,

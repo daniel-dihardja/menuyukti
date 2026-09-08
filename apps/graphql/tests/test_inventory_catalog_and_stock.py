@@ -28,6 +28,7 @@ mutation CreateWithStock(
   $packageUnit: String!
   $onHand: Float!
   $storageZone: InventoryStorageZone
+  $category: InventoryCategory
   $price: Float
   $minOnHand: Float
   $maxOnHand: Float
@@ -39,6 +40,7 @@ mutation CreateWithStock(
     packageUnit: $packageUnit
     onHand: $onHand
     storageZone: $storageZone
+    category: $category
     price: $price
     minOnHand: $minOnHand
     maxOnHand: $maxOnHand
@@ -52,6 +54,7 @@ mutation CreateWithStock(
       packageSize
       packageUnit
       storageZone
+      category
       price
       minOnHand
       maxOnHand
@@ -67,6 +70,7 @@ mutation CreateCatalog(
   $packageSize: Float!
   $packageUnit: String!
   $storageZone: InventoryStorageZone
+  $category: InventoryCategory
   $price: Float
   $minOnHand: Float
   $maxOnHand: Float
@@ -77,6 +81,7 @@ mutation CreateCatalog(
     packageSize: $packageSize
     packageUnit: $packageUnit
     storageZone: $storageZone
+    category: $category
     price: $price
     minOnHand: $minOnHand
     maxOnHand: $maxOnHand
@@ -84,6 +89,7 @@ mutation CreateCatalog(
     id
     name
     storageZone
+    category
     price
     minOnHand
     maxOnHand
@@ -95,6 +101,7 @@ _UPDATE_CATALOG = """
 mutation UpdateCatalog(
   $id: Int!
   $storageZone: InventoryStorageZone
+  $category: InventoryCategory
   $price: Float
   $minOnHand: Float
   $maxOnHand: Float
@@ -102,12 +109,14 @@ mutation UpdateCatalog(
   updateInventoryCatalogItem(
     id: $id
     storageZone: $storageZone
+    category: $category
     price: $price
     minOnHand: $minOnHand
     maxOnHand: $maxOnHand
   ) {
     id
     storageZone
+    category
     price
     minOnHand
     maxOnHand
@@ -123,6 +132,7 @@ query Catalog($workspaceId: ID!) {
     packageSize
     packageUnit
     storageZone
+    category
     price
     minOnHand
     maxOnHand
@@ -136,7 +146,7 @@ query Stock($locationId: ID!) {
     id
     onHand
     lastUpdatedByClerkUserId
-    catalogItem { name packageSize packageUnit storageZone price minOnHand maxOnHand }
+    catalogItem { name packageSize packageUnit storageZone category price minOnHand maxOnHand }
   }
 }
 """
@@ -279,6 +289,7 @@ def test_storage_zone_create_and_update(inventar_workspace_and_location):
     assert not created.errors, created.errors
     item = created.data["createInventoryCatalogItem"]
     assert item["storageZone"] == "freezer"
+    assert item["category"] == "other"
 
     updated = _execute(
         _UPDATE_CATALOG,
@@ -286,6 +297,32 @@ def test_storage_zone_create_and_update(inventar_workspace_and_location):
     )
     assert not updated.errors, updated.errors
     assert updated.data["updateInventoryCatalogItem"]["storageZone"] == "cooler"
+
+
+def test_category_create_and_update(inventar_workspace_and_location):
+    ws_id = inventar_workspace_and_location["workspace_id"]
+
+    created = _execute(
+        _CREATE_CATALOG,
+        {
+            "workspaceId": ws_id,
+            "name": "Oat milk",
+            "packageSize": 1.0,
+            "packageUnit": "L",
+            "category": "dairy",
+        },
+    )
+    assert not created.errors, created.errors
+    item = created.data["createInventoryCatalogItem"]
+    assert item["category"] == "dairy"
+    assert item["storageZone"] == "dry"
+
+    updated = _execute(
+        _UPDATE_CATALOG,
+        {"id": item["id"], "category": "beverages"},
+    )
+    assert not updated.errors, updated.errors
+    assert updated.data["updateInventoryCatalogItem"]["category"] == "beverages"
 
 
 def test_catalog_price_create_update_and_reject_negative(inventar_workspace_and_location):

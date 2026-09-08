@@ -48,6 +48,12 @@ class InventoryCatalogItem(Base):
         server_default="dry",
         default="dry",
     )
+    category: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        server_default="other",
+        default="other",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

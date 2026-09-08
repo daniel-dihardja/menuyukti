@@ -136,6 +136,7 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
             .one()
         )
         assert oat.storage_zone == "cooler"
+        assert oat.category == "dairy"
         assert oat.min_on_hand == 2.0
         assert oat.max_on_hand == 12.0
 

@@ -39,6 +39,7 @@ export type InventoryStockRow = {
     | 'packageSize'
     | 'packageUnit'
     | 'storageZone'
+    | 'category'
     | 'price'
     | 'minOnHand'
     | 'maxOnHand'
@@ -64,6 +65,7 @@ const STOCK_FIELDS = `
     packageSize
     packageUnit
     storageZone
+    category
     price
     minOnHand
     maxOnHand
@@ -131,6 +133,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
     $packageUnit: String!
     $onHand: Float!
     $storageZone: InventoryStorageZone
+    $category: InventoryCategory
     $price: Float
     $minOnHand: Float
     $maxOnHand: Float
@@ -142,6 +145,7 @@ export const CREATE_INVENTORY_CATALOG_ITEM_WITH_STOCK_MUTATION = `
       packageUnit: $packageUnit
       onHand: $onHand
       storageZone: $storageZone
+      category: $category
       price: $price
       minOnHand: $minOnHand
       maxOnHand: $maxOnHand

@@ -1,3 +1,4 @@
+import { DEFAULT_INVENTORY_CATEGORY, type InventoryCategory } from '@/lib/inventar/categories'
 import {
   DEFAULT_INVENTORY_STORAGE_ZONE,
   type InventoryStorageZone,
@@ -9,6 +10,7 @@ export type CatalogForm = {
   packageSize: string
   packageUnit: string
   storageZone: InventoryStorageZone
+  category: InventoryCategory
   price: string
   minOnHand: string
   maxOnHand: string
@@ -19,6 +21,7 @@ export const emptyCatalogForm: CatalogForm = {
   packageSize: '',
   packageUnit: 'kg',
   storageZone: DEFAULT_INVENTORY_STORAGE_ZONE,
+  category: DEFAULT_INVENTORY_CATEGORY,
   price: '',
   minOnHand: '',
   maxOnHand: '',
@@ -30,6 +33,7 @@ export function catalogFormFromItem(item: InventoryCatalogItem): CatalogForm {
     packageSize: String(item.packageSize),
     packageUnit: item.packageUnit,
     storageZone: item.storageZone,
+    category: item.category,
     price: item.price != null ? String(item.price) : '',
     minOnHand: item.minOnHand != null ? String(item.minOnHand) : '',
     maxOnHand: item.maxOnHand != null ? String(item.maxOnHand) : '',

@@ -58,6 +58,7 @@ export async function PATCH(req: Request, context: RouteContext) {
         ...(body.packageSize !== undefined ? { packageSize: body.packageSize } : {}),
         ...(body.packageUnit !== undefined ? { packageUnit: body.packageUnit } : {}),
         ...(body.storageZone !== undefined ? { storageZone: body.storageZone } : {}),
+        ...(body.category !== undefined ? { category: body.category } : {}),
         ...(body.price !== undefined ? { price: body.price } : {}),
         ...(body.minOnHand !== undefined ? { minOnHand: body.minOnHand } : {}),
         ...(body.maxOnHand !== undefined ? { maxOnHand: body.maxOnHand } : {}),

@@ -354,8 +354,23 @@ type InventoryCatalogItemType {
   minOnHand: Float
   maxOnHand: Float
   storageZone: InventoryStorageZone!
+  category: InventoryCategory!
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+"""Product category for a pantry item."""
+enum InventoryCategory {
+  dry_goods
+  dairy
+  produce
+  proteins
+  frozen
+  beverages
+  spices_condiments
+  cleaning
+  packaging
+  other
 }
 
 """Confidence of a refill forecast row."""
@@ -398,6 +413,7 @@ type InventoryStockMovementType {
   note: String
   relatedMovementId: Int
   relatedLocationId: Int
+  createdByClerkUserId: String
   createdAt: DateTime!
 }
 
@@ -417,6 +433,7 @@ type InventoryStockType {
   onHand: Float!
   lastInOn: Date
   lastOutOn: Date
+  lastUpdatedByClerkUserId: String
   catalogItem: InventoryCatalogItemType!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -721,10 +738,10 @@ type Mutation {
   saveAnalyticsRunCogsToLocation(analyticsRunId: ID!): [LocationMenuItemCogsType!]!
 
   """Add a pantry item to the workspace catalog."""
-  createInventoryCatalogItem(workspaceId: Int!, name: String!, packageSize: Float!, packageUnit: String!, storageZone: InventoryStorageZone = null, price: Float = null, minOnHand: Float = null, maxOnHand: Float = null): InventoryCatalogItemType!
+  createInventoryCatalogItem(workspaceId: Int!, name: String!, packageSize: Float!, packageUnit: String!, storageZone: InventoryStorageZone = null, category: InventoryCategory = null, price: Float = null, minOnHand: Float = null, maxOnHand: Float = null): InventoryCatalogItemType!
 
   """Update a pantry catalog item."""
-  updateInventoryCatalogItem(id: Int!, name: String = null, packageSize: Float = null, packageUnit: String = null, storageZone: InventoryStorageZone = null, price: Float, minOnHand: Float, maxOnHand: Float): InventoryCatalogItemType!
+  updateInventoryCatalogItem(id: Int!, name: String = null, packageSize: Float = null, packageUnit: String = null, storageZone: InventoryStorageZone = null, category: InventoryCategory = null, price: Float, minOnHand: Float, maxOnHand: Float): InventoryCatalogItemType!
 
   """Delete a pantry catalog item and all location stock rows."""
   deleteInventoryCatalogItem(id: Int!): Boolean!
@@ -747,7 +764,7 @@ type Mutation {
   transferInventoryStock(fromStockId: Int!, toLocationId: Int!, quantity: Float!, occurredOn: Date = null): InventoryStockTransferResult!
 
   """Create a catalog item and initial stock at a location in one step."""
-  createInventoryCatalogItemWithStock(locationId: Int!, name: String!, packageSize: Float!, packageUnit: String!, onHand: Float!, storageZone: InventoryStorageZone = null, price: Float = null, minOnHand: Float = null, maxOnHand: Float = null): InventoryStockType!
+  createInventoryCatalogItemWithStock(locationId: Int!, name: String!, packageSize: Float!, packageUnit: String!, onHand: Float!, storageZone: InventoryStorageZone = null, category: InventoryCategory = null, price: Float = null, minOnHand: Float = null, maxOnHand: Float = null): InventoryStockType!
   deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
 
   """Delete a manual calendar entry."""
@@ -758,6 +775,9 @@ type Mutation {
 
   """Delete a CRM customer registration by id. Cascades enrolled devices."""
   deleteCrmCustomer(id: UUID!): Boolean!
+
+  """Delete a location and its analytics, stock, and calendar data."""
+  deleteLocation(id: ID!): Boolean!
 
   """Delete a visual style pack by id."""
   deleteStyle(id: Int!): Boolean!

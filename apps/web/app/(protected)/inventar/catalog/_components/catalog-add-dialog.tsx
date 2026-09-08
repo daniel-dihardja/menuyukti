@@ -66,6 +66,7 @@ export function CatalogAddDialog({ workspaceId, onClose, onSuccess }: Props) {
           packageSize,
           packageUnit: form.packageUnit.trim(),
           storageZone: form.storageZone,
+          category: form.category,
           price: parsedPrice.price,
           minOnHand: parsedMin.value,
           maxOnHand: parsedMax.value,
