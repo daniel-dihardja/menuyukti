@@ -33,6 +33,11 @@ class LocationArea(Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False)
-    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    sort_order: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
 
     location: Mapped[Location] = relationship("Location", back_populates="areas")
