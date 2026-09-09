@@ -79,6 +79,7 @@ export const routes = {
   /** Reusable Instagram strategy components (playbook library). */
   playbooks: '/playbooks',
   playbookDetail: (slug: string) => `/playbooks/${encodeURIComponent(slug)}`,
+  playbookNew: (slug: string) => `/playbooks/${encodeURIComponent(slug)}/new`,
 
   /** Restaurant CRM (customer registrations, programs). */
   crm: '/crm',

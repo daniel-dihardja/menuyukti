@@ -743,10 +743,15 @@
     "description": "Reusable Instagram strategy components—like holiday stories or menu posts—that you configure and run.",
     "catalogAria": "Available playbooks",
     "start": "Start",
+    "createPlaybook": "Create Playbook",
     "items": {
       "publicHolidays": {
         "title": "Public Holidays",
-        "description": "Generate Instagram stories for public holidays in an upcoming date window."
+        "description": "Generate Instagram stories for public holidays in an upcoming date window.",
+        "emptyTitle": "No playbook yet",
+        "emptyDescription": "Create a Public Holidays playbook to generate Instagram stories for upcoming holidays.",
+        "createTitle": "New Public Holidays playbook",
+        "createDescription": "Configure the date window and generate Instagram stories for the holidays in that range."
       }
     }
   },
