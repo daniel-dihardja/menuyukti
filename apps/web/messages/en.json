@@ -742,6 +742,7 @@
     "title": "Playbooks",
     "description": "Reusable Instagram strategy components—like holiday stories or menu posts—that you configure and run.",
     "catalogAria": "Available playbooks",
+    "start": "Start",
     "items": {
       "publicHolidays": {
         "title": "Public Holidays",
