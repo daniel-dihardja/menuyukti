@@ -379,7 +379,12 @@ def main(
             workspace = session.get(Workspace, workspace_id)
             inventar = session.get(Location, inventar_id)
             assert workspace is not None and inventar is not None
-            counts = seed_inventar(session, workspace, inventar)
+            counts = seed_inventar(
+                session,
+                workspace,
+                inventar,
+                clerk_user_id=clerk_user_id,
+            )
             session.commit()
             print(
                 f"Inventar seed: workspace_id={workspace.id} "

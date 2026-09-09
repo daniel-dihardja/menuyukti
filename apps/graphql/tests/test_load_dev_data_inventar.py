@@ -77,7 +77,7 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
         assert ws is not None and inventar is not None
 
         reset_inventar(session, ws.id)
-        first = seed_inventar(session, ws, inventar)
+        first = seed_inventar(session, ws, inventar, clerk_user_id=SEED_USER)
         session.commit()
 
         catalog_n = (
@@ -126,6 +126,7 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
         assert beras_stock.on_hand == 4.0
         assert beras_stock.min_on_hand == 2.0
         assert beras_stock.max_on_hand == 10.0
+        assert beras_stock.last_updated_by_clerk_user_id == SEED_USER
 
         beras_outs = (
             session.query(InventoryStockMovement)
@@ -137,6 +138,15 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
             .count()
         )
         assert beras_outs == 14
+        assert (
+            session.query(InventoryStockMovement)
+            .filter(
+                InventoryStockMovement.location_id == inventar_seed_workspace["inventar_id"],
+                InventoryStockMovement.created_by_clerk_user_id == SEED_USER,
+            )
+            .count()
+            == movement_n
+        )
 
         gula = (
             session.query(InventoryCatalogItem)
@@ -160,7 +170,7 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
         ws = session.get(Workspace, inventar_seed_workspace["workspace_id"])
         inventar = session.get(Location, inventar_seed_workspace["inventar_id"])
         assert ws is not None and inventar is not None
-        second = seed_inventar(session, ws, inventar)
+        second = seed_inventar(session, ws, inventar, clerk_user_id=SEED_USER)
         session.commit()
 
         assert second == first
@@ -196,7 +206,7 @@ def test_clear_inventar_removes_rows_keeps_locations(inventar_seed_workspace):
         assert ws is not None and inventar is not None
 
         reset_inventar(session, ws.id)
-        seed_inventar(session, ws, inventar)
+        seed_inventar(session, ws, inventar, clerk_user_id=SEED_USER)
         session.commit()
 
         assert (

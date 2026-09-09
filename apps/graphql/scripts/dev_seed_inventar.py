@@ -148,17 +148,23 @@ def seed_inventar(
     session: Session,
     workspace: Workspace,
     location: Location,
+    *,
+    clerk_user_id: str,
 ) -> dict[str, int]:
     """
     Insert Sundanese pantry catalog, stock at one location, and sample movements.
 
     Includes ~14 days of outs so avg-daily / days-remaining math has burn data
-    (Gula Aren is receive-only → no outs).
+    (Gula Aren is receive-only → no outs). Stock and movements are attributed to
+    ``clerk_user_id`` (same id passed to ``make dev-data USER_ID=...``).
 
     Returns counts: catalog_items, stock_rows, movements.
     """
     today = datetime.now(tz=UTC).date()
     receive_day = today - timedelta(days=_FORECAST_WINDOW_DAYS)
+    actor_id = clerk_user_id.strip()
+    if not actor_id:
+        raise ValueError("clerk_user_id is required for inventar seed attribution")
 
     workspace = session.merge(workspace)
     location = session.merge(location)
@@ -200,6 +206,7 @@ def seed_inventar(
             on_hand=0.0,
             min_on_hand=min_on_hand,
             max_on_hand=max_on_hand,
+            last_updated_by_clerk_user_id=actor_id,
         )
         stock_count += 1
         movement_count += _receive(
@@ -208,6 +215,7 @@ def seed_inventar(
             quantity=received,
             occurred_on=receive_day,
             note="Dev seed receive",
+            clerk_user_id=actor_id,
         )
 
         movement_count += _seed_burn(
@@ -215,9 +223,11 @@ def seed_inventar(
             stock=stock,
             item_name=item.name,
             today=today,
+            clerk_user_id=actor_id,
         )
 
         stock.on_hand = _validate_on_hand(item.on_hand)
+        stock.last_updated_by_clerk_user_id = actor_id
 
     session.flush()
     return {
@@ -247,6 +257,7 @@ def _seed_burn(
     stock: InventoryStock,
     item_name: str,
     today: date,
+    clerk_user_id: str,
 ) -> int:
     """Write sample outs for burn history. Returns movement count."""
     count = 0
@@ -258,6 +269,7 @@ def _seed_burn(
                 quantity=0.25,
                 occurred_on=today - timedelta(days=offset),
                 note="Dev seed use",
+                clerk_user_id=clerk_user_id,
             )
     elif item_name == "Tahu Bandung":
         for offset in (0, 5, 10):
@@ -267,6 +279,7 @@ def _seed_burn(
                 quantity=2.0,
                 occurred_on=today - timedelta(days=offset),
                 note="Dev seed use",
+                clerk_user_id=clerk_user_id,
             )
     elif item_name == "Kangkung":
         for offset in range(_FORECAST_WINDOW_DAYS):
@@ -276,6 +289,7 @@ def _seed_burn(
                 quantity=0.5,
                 occurred_on=today - timedelta(days=offset),
                 note="Dev seed use",
+                clerk_user_id=clerk_user_id,
             )
     elif item_name == "Bumbu Pecel":
         for offset in (3, 9):
@@ -285,6 +299,7 @@ def _seed_burn(
                 quantity=0.5,
                 occurred_on=today - timedelta(days=offset),
                 note="Dev seed use",
+                clerk_user_id=clerk_user_id,
             )
     elif item_name == "Santan Kelapa":
         for offset in (1, 4, 8, 12):
@@ -294,6 +309,7 @@ def _seed_burn(
                 quantity=0.25,
                 occurred_on=today - timedelta(days=offset),
                 note="Dev seed use",
+                clerk_user_id=clerk_user_id,
             )
     return count
 
@@ -360,6 +376,7 @@ def _ensure_stock(
     on_hand: float,
     min_on_hand: float | None = None,
     max_on_hand: float | None = None,
+    last_updated_by_clerk_user_id: str | None = None,
 ) -> InventoryStock:
     row = InventoryStock(
         location_id=location_id,
@@ -367,6 +384,7 @@ def _ensure_stock(
         on_hand=_validate_on_hand(on_hand),
         min_on_hand=min_on_hand,
         max_on_hand=max_on_hand,
+        last_updated_by_clerk_user_id=last_updated_by_clerk_user_id,
     )
     session.add(row)
     session.flush()
@@ -384,6 +402,7 @@ def _add_movement(
     occurred_on: date,
     related_movement_id: int | None = None,
     note: str | None = None,
+    clerk_user_id: str | None = None,
 ) -> InventoryStockMovement:
     row = InventoryStockMovement(
         location_id=location_id,
@@ -394,6 +413,7 @@ def _add_movement(
         occurred_on=occurred_on,
         related_movement_id=related_movement_id,
         note=note,
+        created_by_clerk_user_id=clerk_user_id,
     )
     session.add(row)
     return row
@@ -406,9 +426,11 @@ def _receive(
     quantity: float,
     occurred_on: date,
     note: str,
+    clerk_user_id: str,
 ) -> int:
     stock.on_hand = _validate_on_hand(stock.on_hand + quantity)
     stock.last_in_on = occurred_on
+    stock.last_updated_by_clerk_user_id = clerk_user_id
     _add_movement(
         session,
         location_id=stock.location_id,
@@ -418,6 +440,7 @@ def _receive(
         quantity=quantity,
         occurred_on=occurred_on,
         note=note,
+        clerk_user_id=clerk_user_id,
     )
     return 1
 
@@ -429,9 +452,11 @@ def _consume(
     quantity: float,
     occurred_on: date,
     note: str,
+    clerk_user_id: str,
 ) -> int:
     stock.on_hand = _validate_on_hand(stock.on_hand - quantity)
     stock.last_out_on = occurred_on
+    stock.last_updated_by_clerk_user_id = clerk_user_id
     _add_movement(
         session,
         location_id=stock.location_id,
@@ -441,5 +466,6 @@ def _consume(
         quantity=quantity,
         occurred_on=occurred_on,
         note=note,
+        clerk_user_id=clerk_user_id,
     )
     return 1
