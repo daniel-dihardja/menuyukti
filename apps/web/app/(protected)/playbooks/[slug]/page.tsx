@@ -58,11 +58,7 @@ export default async function PlaybookOverviewPage({ params }: PlaybookOverviewP
 
   const [locationsData, playbooksData] = await Promise.all([
     getCachedLocationsListData(userId),
-    graphqlQuery<PlaybooksData>(
-      PLAYBOOKS_QUERY,
-      { playbookType: catalog.playbookType },
-      userId,
-    ),
+    graphqlQuery<PlaybooksData>(PLAYBOOKS_QUERY, { playbookType: catalog.playbookType }, userId),
   ])
 
   const branches = locationsData.locations.map((loc) => ({
