@@ -714,6 +714,7 @@
     "reports": "Reports",
     "chat": "AI",
     "calendar": "Calendar",
+    "playbooks": "Playbooks",
     "posts": "IG Studio",
     "media": "Media",
     "printShop": "Print shop",
@@ -736,6 +737,17 @@
   "staff": {
     "title": "Staff console",
     "description": "Menuyukti platform tools for team members. Customers do not see this area."
+  },
+  "playbooks": {
+    "title": "Playbooks",
+    "description": "Reusable Instagram strategy components—like holiday stories or menu posts—that you configure and run.",
+    "catalogAria": "Available playbooks",
+    "items": {
+      "publicHolidays": {
+        "title": "Public Holidays",
+        "description": "Generate Instagram stories for public holidays in an upcoming date window."
+      }
+    }
   },
   "inventar": {
     "title": "Inventar",

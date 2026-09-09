@@ -9,6 +9,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflow',
   '/calendar',
+  '/playbooks',
   '/ig-studio',
   '/media',
   '/content',
@@ -74,6 +75,9 @@ export const routes = {
   calendar: '/calendar',
   calendarWithLocation: (locationId: string | number) =>
     `/calendar?locationId=${encodeURIComponent(String(locationId))}`,
+
+  /** Reusable Instagram strategy components (playbook library). */
+  playbooks: '/playbooks',
 
   /** Restaurant CRM (customer registrations, programs). */
   crm: '/crm',
