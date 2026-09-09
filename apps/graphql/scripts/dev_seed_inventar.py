@@ -48,62 +48,75 @@ class _CatalogSeed:
     price: float | None
     min_on_hand: float | None
     max_on_hand: float | None
-    primary_on_hand: float
-    branch_on_hand: float
+    on_hand: float
 
 
 _CATALOG_SEEDS: tuple[_CatalogSeed, ...] = (
     _CatalogSeed(
-        name="Oat milk",
+        name="Beras Cianjur",
+        package_size=5.0,
+        package_unit="kg",
+        storage_zone="dry",
+        category="dry_goods",
+        price=85000.0,
+        min_on_hand=2.0,
+        max_on_hand=10.0,
+        on_hand=4.0,
+    ),
+    _CatalogSeed(
+        name="Tahu Bandung",
+        package_size=10.0,
+        package_unit="pcs",
+        storage_zone="cooler",
+        category="proteins",
+        price=25000.0,
+        min_on_hand=3.0,
+        max_on_hand=20.0,
+        on_hand=6.0,
+    ),
+    _CatalogSeed(
+        name="Kangkung",
+        package_size=1.0,
+        package_unit="ikat",
+        storage_zone="cooler",
+        category="produce",
+        price=8000.0,
+        min_on_hand=1.0,
+        max_on_hand=8.0,
+        on_hand=2.0,
+    ),
+    _CatalogSeed(
+        name="Bumbu Pecel",
+        package_size=500.0,
+        package_unit="g",
+        storage_zone="dry",
+        category="spices_condiments",
+        price=35000.0,
+        min_on_hand=1.0,
+        max_on_hand=6.0,
+        on_hand=3.0,
+    ),
+    _CatalogSeed(
+        name="Santan Kelapa",
         package_size=1.0,
         package_unit="L",
         storage_zone="cooler",
         category="dairy",
-        price=45000.0,
-        min_on_hand=2.0,
-        max_on_hand=12.0,
-        # After 14×0.5 outs: ~2 days to min (urgent refill demo).
-        primary_on_hand=3.0,
-        branch_on_hand=2.0,
+        price=18000.0,
+        min_on_hand=1.0,
+        max_on_hand=8.0,
+        on_hand=3.0,
     ),
     _CatalogSeed(
-        name="Espresso beans",
+        name="Gula Aren",
         package_size=1.0,
         package_unit="kg",
         storage_zone="dry",
-        category="beverages",
-        price=180000.0,
-        min_on_hand=1.0,
-        max_on_hand=8.0,
-        # After 3×1.0 outs over 14d: ~2 weeks to min (medium).
-        primary_on_hand=4.0,
-        branch_on_hand=0.0,
-    ),
-    _CatalogSeed(
-        name="Frozen berries",
-        package_size=500.0,
-        package_unit="g",
-        storage_zone="freezer",
-        category="frozen",
-        price=65000.0,
-        min_on_hand=1.0,
-        max_on_hand=6.0,
-        # At min with burn + transfer → top/urgent priority.
-        primary_on_hand=1.0,
-        branch_on_hand=1.0,
-    ),
-    _CatalogSeed(
-        name="Dish soap",
-        package_size=1.0,
-        package_unit="L",
-        storage_zone="dry",
-        category="cleaning",
-        price=None,
+        category="dry_goods",
+        price=42000.0,
         min_on_hand=None,
         max_on_hand=None,
-        # Receive only → insufficient_history in forecast.
-        primary_on_hand=2.0,
-        branch_on_hand=1.0,
+        on_hand=2.0,
     ),
 )
 
@@ -134,14 +147,13 @@ def reset_inventar(session: Session, workspace_id: int) -> None:
 def seed_inventar(
     session: Session,
     workspace: Workspace,
-    primary_location: Location,
-    branch_location: Location,
+    location: Location,
 ) -> dict[str, int]:
     """
-    Insert a small pantry catalog, stock at primary + branch, and sample movements.
+    Insert Sundanese pantry catalog, stock at one location, and sample movements.
 
-    Primary location includes ~14 days of outs so inventoryRefillForecast demos
-    clear refill priority (oat milk urgent, beans medium, berries at min, soap no history).
+    Includes ~14 days of outs so avg-daily / days-remaining math has burn data
+    (Gula Aren is receive-only → no outs).
 
     Returns counts: catalog_items, stock_rows, movements.
     """
@@ -149,8 +161,7 @@ def seed_inventar(
     receive_day = today - timedelta(days=_FORECAST_WINDOW_DAYS)
 
     workspace = session.merge(workspace)
-    primary_location = session.merge(primary_location)
-    branch_location = session.merge(branch_location)
+    location = session.merge(location)
 
     catalog_count = 0
     stock_count = 0
@@ -179,13 +190,12 @@ def seed_inventar(
         session.flush()
         catalog_count += 1
 
-        primary_burn = _primary_burn_total(item.name)
-        transfer_qty = 1.0 if item.name == "Frozen berries" else 0.0
-        primary_received = item.primary_on_hand + primary_burn + transfer_qty
+        burn_total = _burn_total(item.name)
+        received = item.on_hand + burn_total
 
-        primary_stock = _ensure_stock(
+        stock = _ensure_stock(
             session,
-            location_id=primary_location.id,
+            location_id=location.id,
             catalog_item_id=catalog.id,
             on_hand=0.0,
             min_on_hand=min_on_hand,
@@ -194,66 +204,20 @@ def seed_inventar(
         stock_count += 1
         movement_count += _receive(
             session,
-            stock=primary_stock,
-            quantity=primary_received,
+            stock=stock,
+            quantity=received,
             occurred_on=receive_day,
             note="Dev seed receive",
         )
 
-        movement_count += _seed_primary_burn(
+        movement_count += _seed_burn(
             session,
-            stock=primary_stock,
+            stock=stock,
             item_name=item.name,
             today=today,
         )
 
-        if item.name == "Frozen berries":
-            branch_stock = _ensure_stock(
-                session,
-                location_id=branch_location.id,
-                catalog_item_id=catalog.id,
-                on_hand=0.0,
-                min_on_hand=min_on_hand,
-                max_on_hand=max_on_hand,
-            )
-            stock_count += 1
-            movement_count += _transfer(
-                session,
-                source=primary_stock,
-                dest=branch_stock,
-                quantity=transfer_qty,
-                occurred_on=today - timedelta(days=1),
-                note="Dev seed transfer",
-            )
-        elif item.branch_on_hand > 0:
-            branch_stock = _ensure_stock(
-                session,
-                location_id=branch_location.id,
-                catalog_item_id=catalog.id,
-                on_hand=0.0,
-                min_on_hand=min_on_hand,
-                max_on_hand=max_on_hand,
-            )
-            stock_count += 1
-            movement_count += _receive(
-                session,
-                stock=branch_stock,
-                quantity=item.branch_on_hand,
-                occurred_on=receive_day,
-                note="Dev seed receive (branch)",
-            )
-
-        primary_stock.on_hand = _validate_on_hand(item.primary_on_hand)
-        if item.branch_on_hand > 0 or item.name == "Frozen berries":
-            branch_row = (
-                session.query(InventoryStock)
-                .filter(
-                    InventoryStock.location_id == branch_location.id,
-                    InventoryStock.catalog_item_id == catalog.id,
-                )
-                .one()
-            )
-            branch_row.on_hand = _validate_on_hand(item.branch_on_hand)
+        stock.on_hand = _validate_on_hand(item.on_hand)
 
     session.flush()
     return {
@@ -263,26 +227,48 @@ def seed_inventar(
     }
 
 
-def _primary_burn_total(item_name: str) -> float:
-    if item_name == "Oat milk":
+def _burn_total(item_name: str) -> float:
+    if item_name == "Beras Cianjur":
+        return 0.25 * float(_FORECAST_WINDOW_DAYS)
+    if item_name == "Tahu Bandung":
+        return 6.0
+    if item_name == "Kangkung":
         return 0.5 * float(_FORECAST_WINDOW_DAYS)
-    if item_name == "Espresso beans":
-        return 3.0
-    if item_name == "Frozen berries":
-        return 1.0  # outs only; transfer counted separately
+    if item_name == "Bumbu Pecel":
+        return 1.0
+    if item_name == "Santan Kelapa":
+        return 1.0
     return 0.0
 
 
-def _seed_primary_burn(
+def _seed_burn(
     session: Session,
     *,
     stock: InventoryStock,
     item_name: str,
     today: date,
 ) -> int:
-    """Write ~14d of primary outs for forecast demos. Returns movement count."""
+    """Write sample outs for burn history. Returns movement count."""
     count = 0
-    if item_name == "Oat milk":
+    if item_name == "Beras Cianjur":
+        for offset in range(_FORECAST_WINDOW_DAYS):
+            count += _consume(
+                session,
+                stock=stock,
+                quantity=0.25,
+                occurred_on=today - timedelta(days=offset),
+                note="Dev seed use",
+            )
+    elif item_name == "Tahu Bandung":
+        for offset in (0, 5, 10):
+            count += _consume(
+                session,
+                stock=stock,
+                quantity=2.0,
+                occurred_on=today - timedelta(days=offset),
+                note="Dev seed use",
+            )
+    elif item_name == "Kangkung":
         for offset in range(_FORECAST_WINDOW_DAYS):
             count += _consume(
                 session,
@@ -291,17 +277,17 @@ def _seed_primary_burn(
                 occurred_on=today - timedelta(days=offset),
                 note="Dev seed use",
             )
-    elif item_name == "Espresso beans":
-        for offset in (0, 5, 10):
+    elif item_name == "Bumbu Pecel":
+        for offset in (3, 9):
             count += _consume(
                 session,
                 stock=stock,
-                quantity=1.0,
+                quantity=0.5,
                 occurred_on=today - timedelta(days=offset),
                 note="Dev seed use",
             )
-    elif item_name == "Frozen berries":
-        for offset in (2, 6, 11, 13):
+    elif item_name == "Santan Kelapa":
+        for offset in (1, 4, 8, 12):
             count += _consume(
                 session,
                 stock=stock,
@@ -457,41 +443,3 @@ def _consume(
         note=note,
     )
     return 1
-
-
-def _transfer(
-    session: Session,
-    *,
-    source: InventoryStock,
-    dest: InventoryStock,
-    quantity: float,
-    occurred_on: date,
-    note: str,
-) -> int:
-    source.on_hand = _validate_on_hand(source.on_hand - quantity)
-    source.last_out_on = occurred_on
-    dest.on_hand = _validate_on_hand(dest.on_hand + quantity)
-    dest.last_in_on = occurred_on
-    out_row = _add_movement(
-        session,
-        location_id=source.location_id,
-        catalog_item_id=source.catalog_item_id,
-        stock_id=source.id,
-        direction=DIRECTION_TRANSFER_OUT,
-        quantity=quantity,
-        occurred_on=occurred_on,
-        note=note,
-    )
-    session.flush()
-    _add_movement(
-        session,
-        location_id=dest.location_id,
-        catalog_item_id=dest.catalog_item_id,
-        stock_id=dest.id,
-        direction=DIRECTION_TRANSFER_IN,
-        quantity=quantity,
-        occurred_on=occurred_on,
-        related_movement_id=out_row.id,
-        note=note,
-    )
-    return 2
