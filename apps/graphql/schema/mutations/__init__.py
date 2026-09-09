@@ -4,6 +4,7 @@ from .create_crm_app import CreateCrmAppMutation
 from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_location import CreateLocationMutation
 from .create_media_collection import CreateMediaCollectionMutation
+from .create_playbook import CreatePlaybookMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
 from .create_style import CreateStyleMutation
@@ -14,6 +15,7 @@ from .delete_crm_app import DeleteCrmAppMutation
 from .delete_crm_customer import DeleteCrmCustomerMutation
 from .delete_location import DeleteLocationMutation
 from .delete_media_collection import DeleteMediaCollectionMutation
+from .delete_playbook import DeletePlaybookMutation
 from .delete_post import DeletePostMutation
 from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
@@ -39,6 +41,7 @@ from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_media_collection import UpdateMediaCollectionMutation
+from .update_playbook import UpdatePlaybookMutation
 from .update_post import UpdatePostMutation
 from .update_post_page import UpdatePostPageMutation
 from .update_style import UpdateStyleMutation
@@ -56,6 +59,7 @@ __all__ = [
     "CreateCrmEnrollmentTokenMutation",
     "CreateLocationMutation",
     "CreateMediaCollectionMutation",
+    "CreatePlaybookMutation",
     "CreateStyleMutation",
     "CreatePostMutation",
     "CreatePostPageMutation",
@@ -65,6 +69,7 @@ __all__ = [
     "DeleteCrmAppMutation",
     "DeleteCrmCustomerMutation",
     "DeleteLocationMutation",
+    "DeletePlaybookMutation",
     "RevokeCrmDeviceMutation",
     "DeleteMediaAssetMutation",
     "DeleteMediaCollectionMutation",
@@ -82,6 +87,7 @@ __all__ = [
     "UpdateLocationMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateMediaCollectionMutation",
+    "UpdatePlaybookMutation",
     "UpdateStyleMutation",
     "UpdatePostMutation",
     "UpdatePostPageMutation",

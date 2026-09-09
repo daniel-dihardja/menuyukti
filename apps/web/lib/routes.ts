@@ -80,6 +80,8 @@ export const routes = {
   playbooks: '/playbooks',
   playbookDetail: (slug: string) => `/playbooks/${encodeURIComponent(slug)}`,
   playbookNew: (slug: string) => `/playbooks/${encodeURIComponent(slug)}/new`,
+  playbookInstance: (slug: string, id: string | number) =>
+    `/playbooks/${encodeURIComponent(slug)}/${encodeURIComponent(String(id))}`,
 
   /** Restaurant CRM (customer registrations, programs). */
   crm: '/crm',

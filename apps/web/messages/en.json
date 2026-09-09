@@ -744,6 +744,48 @@
     "catalogAria": "Available playbooks",
     "start": "Start",
     "createPlaybook": "Create Playbook",
+    "save": "Save",
+    "saving": "Saving…",
+    "open": "Open",
+    "remove": "Remove",
+    "actionsAria": "Playbook actions",
+    "actionsMobile": "Actions",
+    "actionsSheetDescription": "Choose an action for this playbook.",
+    "instancesAria": "Saved playbooks",
+    "dateRange": "{start} → {end}",
+    "columns": {
+      "name": "Name",
+      "location": "Location",
+      "period": "Period"
+    },
+    "toast": {
+      "created": "Playbook saved",
+      "createError": "Could not save playbook",
+      "updated": "Playbook updated",
+      "updateError": "Could not update playbook",
+      "deleted": "Playbook removed",
+      "deleteError": "Could not remove playbook"
+    },
+    "validation": {
+      "nameRequired": "Enter a playbook name",
+      "locationRequired": "Select a location",
+      "startRequired": "Select a start date",
+      "endRequired": "Select an end date",
+      "endBeforeStart": "End date must be on or after the start date"
+    },
+    "deleteDialog": {
+      "title": "Remove playbook?",
+      "description": "“{name}” will be removed. This cannot be undone.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
+    },
+    "detail": {
+      "nameLabel": "Playbook name",
+      "locationLabel": "Location",
+      "startDateLabel": "Start date",
+      "endDateLabel": "End date",
+      "unknownLocation": "Unknown location"
+    },
     "items": {
       "publicHolidays": {
         "title": "Public Holidays",
@@ -751,7 +793,19 @@
         "emptyTitle": "No playbook yet",
         "emptyDescription": "Create a Public Holidays playbook to generate Instagram stories for upcoming holidays.",
         "createTitle": "New Public Holidays playbook",
-        "createDescription": "Configure the date window and generate Instagram stories for the holidays in that range."
+        "createDescription": "Configure the date window and generate Instagram stories for the holidays in that range.",
+        "form": {
+          "nameLabel": "Playbook name",
+          "namePlaceholder": "e.g. Holiday stories · next 3 months",
+          "locationLabel": "Location",
+          "locationPlaceholder": "Select a location",
+          "locationDescription": "Stories will be scoped to this restaurant location.",
+          "startDateLabel": "Start date",
+          "endDateLabel": "End date",
+          "noLocationsTitle": "Create a location first",
+          "noLocationsDescription": "Add a location before creating a Public Holidays playbook.",
+          "noLocationsCta": "Add location"
+        }
       }
     }
   },
