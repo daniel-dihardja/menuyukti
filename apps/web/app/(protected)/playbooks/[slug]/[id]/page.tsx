@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { PlaybookForm } from '@/app/(protected)/playbooks/_components/playbook-form'
+import { PublicHolidaysWorkspace } from '@/app/(protected)/playbooks/_components/public-holidays-workspace'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
@@ -98,6 +99,7 @@ export default async function PlaybookInstancePage({ params }: PlaybookInstanceP
             endDate: playbook.endDate,
           }}
         />
+        {catalog.id === 'publicHolidays' ? <PublicHolidaysWorkspace /> : null}
       </div>
     </AnalyticsPageShell>
   )

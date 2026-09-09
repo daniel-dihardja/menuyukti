@@ -805,6 +805,36 @@
           "noLocationsTitle": "Create a location first",
           "noLocationsDescription": "Add a location before creating a Public Holidays playbook.",
           "noLocationsCta": "Add location"
+        },
+        "workspace": {
+          "prototypeHint": "UI prototype — not saved. Refresh clears this workspace.",
+          "stepsAria": "Playbook steps",
+          "steps": {
+            "fetchDates": "Fetch dates",
+            "draftStories": "Draft stories",
+            "artwork": "Artwork"
+          },
+          "regionOverrideLabel": "Region override (optional)",
+          "regionOverridePlaceholder": "e.g. BY, NW — mock only",
+          "run": "Run",
+          "running": "Running…",
+          "candidatesTitle": "Candidates",
+          "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
+          "confirmSelected": "Confirm selected ({count})",
+          "candidatesEmptyTitle": "No candidates yet",
+          "candidatesEmptyDescription": "Run this step to load mock public holidays for review.",
+          "candidatesClearedTitle": "Nothing left to review",
+          "candidatesClearedDescription": "All holidays were kept or skipped. Run again to reload the mock list.",
+          "selectItem": "Select {name}",
+          "keep": "Keep",
+          "skip": "Skip",
+          "confirmedTitle": "Confirmed",
+          "confirmedCount": "{count}",
+          "confirmedEmptyTitle": "No confirmed holidays",
+          "confirmedEmptyDescription": "Keep candidates here after you review them.",
+          "remove": "Remove",
+          "stepUnavailableTitle": "Step not available yet",
+          "stepUnavailableDescription": "This step is a placeholder for the playbook experiment."
         }
       }
     }
