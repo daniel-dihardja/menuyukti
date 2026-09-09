@@ -126,11 +126,7 @@ export function PublicHolidaysWorkspace() {
     <div className="flex flex-col gap-4">
       <p className="text-muted-foreground text-sm">{t('prototypeHint')}</p>
 
-      <div
-        className="flex flex-wrap gap-2"
-        role="tablist"
-        aria-label={t('stepsAria')}
-      >
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('stepsAria')}>
         {STEPS.map((step) => {
           const isActive = activeStepId === step.id
           return (
@@ -298,10 +294,7 @@ export function PublicHolidaysWorkspace() {
             ) : (
               <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
                 {confirmed.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 px-3 py-3"
-                  >
+                  <li key={item.id} className="flex items-center justify-between gap-3 px-3 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{item.name}</p>
                       <p className="text-muted-foreground text-xs tabular-nums">{item.date}</p>
