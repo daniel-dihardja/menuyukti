@@ -23,7 +23,11 @@
   --color-orange: #f2b75a;
   --color-lavender: #b69dff;
   --color-card-warm: #fffcf8;
-  --color-sidebar-accent-wash: color-mix(in srgb, var(--color-accent-soft) 55%, var(--color-surface));
+  --color-sidebar-accent-wash: color-mix(
+    in srgb,
+    var(--color-accent-soft) 55%,
+    var(--color-surface)
+  );
 
   /* Warm shadows */
   --shadow-warm-sm: 0 2px 8px rgba(82, 56, 30, 0.06);
