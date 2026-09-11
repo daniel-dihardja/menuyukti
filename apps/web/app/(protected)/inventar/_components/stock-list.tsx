@@ -41,7 +41,7 @@ import { TableCell, TableRow } from '@workspace/ui/components/table'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { formatPackLabel } from './format-pack'
-import { StockBadge } from './stock-badge'
+import { StockBadge, stockLevelStatus } from './stock-badge'
 import {
   cardActivitySummary,
   compareInventarStockRows,
@@ -51,6 +51,17 @@ import {
   type InventarStockSortKey,
 } from './stock-utils'
 import { UpdatedByCell } from './updated-by-cell'
+
+/** Soft surface by default; light washes only when stock needs attention. */
+function mobileStockCardTone(
+  status: ReturnType<typeof stockLevelStatus>,
+  urgentRefill: boolean,
+): string {
+  if (status === 'low') return 'border-destructive/30 bg-destructive/10'
+  if (status === 'over') return 'border-orange-500/30 bg-orange-500/10'
+  if (urgentRefill) return 'border-warning/40 bg-warning/15'
+  return 'bg-secondary'
+}
 
 type Props = {
   activeLocationId: number | null
@@ -317,10 +328,16 @@ export function StockList({
         const urgentRefillLabel = showUrgentRefill
           ? formatDaysUntilRefill(daysUntilRefillRaw, locale, forecastEmpty)
           : null
+        const levelStatus = stockLevelStatus(row.onHand, row.minOnHand, row.maxOnHand)
 
         return (
           <li key={row.id}>
-            <Card className="gap-3 py-3">
+            <Card
+              className={cn(
+                'gap-3 py-3 shadow-none',
+                mobileStockCardTone(levelStatus, showUrgentRefill),
+              )}
+            >
               <CardHeader className="px-4">
                 <CardTitle className="truncate text-base font-medium" title={row.catalogItem.name}>
                   {row.catalogItem.name}
