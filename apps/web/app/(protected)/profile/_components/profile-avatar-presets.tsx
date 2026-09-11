@@ -5,10 +5,7 @@ import { useTranslations } from 'next-intl'
 
 import { cn } from '@workspace/ui/lib/utils'
 
-import {
-  PROFILE_AVATAR_PRESETS,
-  type ProfileAvatarPreset,
-} from '@/lib/profile-avatar-presets'
+import { PROFILE_AVATAR_PRESETS, type ProfileAvatarPreset } from '@/lib/profile-avatar-presets'
 
 const PRESET_THUMB_PX = 56
 
