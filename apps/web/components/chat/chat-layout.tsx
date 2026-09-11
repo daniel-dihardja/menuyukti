@@ -39,7 +39,7 @@ export function ChatOnlyLayout({ chatPane }: { chatPane: ReactNode }) {
   return (
     <ChatViewportInsetProvider>
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <ChatColumnWithKeyboardInset className="mx-auto flex h-full min-h-0 w-full max-w-3xl min-w-0 flex-1 flex-col overflow-hidden bg-background lg:rounded-lg lg:border">
+        <ChatColumnWithKeyboardInset className="mx-auto flex h-full min-h-0 w-full max-w-3xl min-w-0 flex-1 flex-col overflow-hidden bg-background lg:rounded-xl lg:border lg:border-border lg:bg-card lg:shadow-[var(--shadow-warm-sm)]">
           {chatPane}
         </ChatColumnWithKeyboardInset>
       </div>

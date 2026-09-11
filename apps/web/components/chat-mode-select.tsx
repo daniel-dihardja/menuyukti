@@ -25,10 +25,10 @@ type ChatModeSelectProps = {
 
 /** Trigger chrome so active mode is visible without a separate banner.
  *  PromptInputSelectTrigger uses `border-none` (border-style); override with `border-solid`.
- *  Image assistant uses editorial amber (not red) so focus reads as “locked in”, not an error. */
+ *  Image assistant uses creative lavender tone (not warning amber). */
 const CHAT_MODE_TRIGGER_CLASS: Partial<Record<ChatModeId, string | undefined>> = {
   general: undefined,
-  image_assistant: 'border-2 border-solid border-warning bg-warning/20',
+  image_assistant: 'border-2 border-solid tone-creative',
 }
 
 export function ChatModeSelect({ value, onValueChange, disabled, className }: ChatModeSelectProps) {

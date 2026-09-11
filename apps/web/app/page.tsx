@@ -33,6 +33,7 @@ export default async function LandingPage() {
           )}
         >
           <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 landing-atmosphere" aria-hidden />
           <div className="relative mx-auto flex w-full min-w-0 max-w-6xl flex-col items-center text-center">
             <Badge
               variant="secondary"
