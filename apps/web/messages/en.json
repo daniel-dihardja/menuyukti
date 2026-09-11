@@ -647,6 +647,21 @@
     "accountBreadcrumb": "Account settings",
     "accountDescription": "Update security, email, passwords, and connected accounts.",
     "avatarAlt": "Profile photo of {name}",
+    "avatarChangeAria": "Change profile photo",
+    "avatarChangeHint": "JPG, PNG, WebP, or GIF up to 10 MB.",
+    "avatarUploading": "Uploading…",
+    "avatarChangeSuccess": "Your profile photo was updated.",
+    "avatarChangeError": "Could not update your profile photo. Please try again.",
+    "avatarInvalidType": "Choose a JPG, PNG, WebP, or GIF image.",
+    "avatarTooLarge": "Image must be 10 MB or smaller.",
+    "avatarRemove": "Remove photo",
+    "avatarRemoving": "Removing…",
+    "avatarRemoveSuccess": "Your profile photo was removed.",
+    "avatarRemoveError": "Could not remove your profile photo. Please try again.",
+    "avatarPresetsHeading": "Choose a portrait",
+    "avatarPresetSunda": "Sunda portrait",
+    "avatarPresetMajapahit": "Majapahit portrait",
+    "avatarPresetBali": "Bali portrait",
     "noEmail": "No email on file",
     "passwordSectionTitle": "Password",
     "passwordSectionDescription": "Use a strong password you do not reuse elsewhere.",
@@ -714,6 +729,7 @@
     "reports": "Reports",
     "chat": "AI",
     "calendar": "Calendar",
+    "playbooks": "Playbooks",
     "posts": "IG Studio",
     "media": "Media",
     "printShop": "Print shop",
@@ -736,6 +752,107 @@
   "staff": {
     "title": "Staff console",
     "description": "Menuyukti platform tools for team members. Customers do not see this area."
+  },
+  "playbooks": {
+    "title": "Playbooks",
+    "description": "Reusable Instagram strategy components—like holiday stories or menu posts—that you configure and run.",
+    "catalogAria": "Available playbooks",
+    "start": "Start",
+    "createPlaybook": "Create Playbook",
+    "save": "Save",
+    "saving": "Saving…",
+    "open": "Open",
+    "remove": "Remove",
+    "actionsAria": "Playbook actions",
+    "actionsMobile": "Actions",
+    "actionsSheetDescription": "Choose an action for this playbook.",
+    "instancesAria": "Saved playbooks",
+    "dateRange": "{start} → {end}",
+    "columns": {
+      "name": "Name",
+      "location": "Location",
+      "period": "Period"
+    },
+    "toast": {
+      "created": "Playbook saved",
+      "createError": "Could not save playbook",
+      "updated": "Playbook updated",
+      "updateError": "Could not update playbook",
+      "deleted": "Playbook removed",
+      "deleteError": "Could not remove playbook"
+    },
+    "validation": {
+      "nameRequired": "Enter a playbook name",
+      "locationRequired": "Select a location",
+      "startRequired": "Select a start date",
+      "endRequired": "Select an end date",
+      "endBeforeStart": "End date must be on or after the start date"
+    },
+    "deleteDialog": {
+      "title": "Remove playbook?",
+      "description": "“{name}” will be removed. This cannot be undone.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
+    },
+    "detail": {
+      "nameLabel": "Playbook name",
+      "locationLabel": "Location",
+      "startDateLabel": "Start date",
+      "endDateLabel": "End date",
+      "unknownLocation": "Unknown location"
+    },
+    "items": {
+      "publicHolidays": {
+        "title": "Public Holidays",
+        "description": "Generate Instagram stories for public holidays in an upcoming date window.",
+        "emptyTitle": "No playbook yet",
+        "emptyDescription": "Create a Public Holidays playbook to generate Instagram stories for upcoming holidays.",
+        "createTitle": "New Public Holidays playbook",
+        "createDescription": "Configure the date window and generate Instagram stories for the holidays in that range.",
+        "form": {
+          "nameLabel": "Playbook name",
+          "namePlaceholder": "e.g. Holiday stories · next 3 months",
+          "locationLabel": "Location",
+          "locationPlaceholder": "Select a location",
+          "locationDescription": "Stories will be scoped to this restaurant location.",
+          "startDateLabel": "Start date",
+          "endDateLabel": "End date",
+          "noLocationsTitle": "Create a location first",
+          "noLocationsDescription": "Add a location before creating a Public Holidays playbook.",
+          "noLocationsCta": "Add location"
+        },
+        "workspace": {
+          "prototypeHint": "UI prototype — not saved. Refresh clears this workspace.",
+          "stepsAria": "Playbook steps",
+          "steps": {
+            "fetchDates": "Fetch dates",
+            "draftStories": "Draft stories",
+            "artwork": "Artwork"
+          },
+          "regionOverrideLabel": "Region override (optional)",
+          "regionOverridePlaceholder": "e.g. BY, NW — mock only",
+          "run": "Run",
+          "running": "Running…",
+          "candidatesTitle": "Candidates",
+          "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
+          "confirmSelected": "Confirm selected ({count})",
+          "candidatesEmptyTitle": "No candidates yet",
+          "candidatesEmptyDescription": "Run this step to load mock public holidays for review.",
+          "candidatesClearedTitle": "Nothing left to review",
+          "candidatesClearedDescription": "All holidays were kept or skipped. Run again to reload the mock list.",
+          "selectItem": "Select {name}",
+          "keep": "Keep",
+          "skip": "Skip",
+          "confirmedTitle": "Confirmed",
+          "confirmedCount": "{count}",
+          "confirmedEmptyTitle": "No confirmed holidays",
+          "confirmedEmptyDescription": "Keep candidates here after you review them.",
+          "remove": "Remove",
+          "stepUnavailableTitle": "Step not available yet",
+          "stepUnavailableDescription": "This step is a placeholder for the playbook experiment."
+        }
+      }
+    }
   },
   "inventar": {
     "title": "Inventar",
@@ -863,6 +980,10 @@
     "selectPantryItem": "Pantry item",
     "selectPantryItemPlaceholder": "Choose an item",
     "searchPantryItem": "Search pantry items…",
+    "searchStock": "Search stock…",
+    "clearStockSearch": "Clear search",
+    "stockEmptyFilteredTitle": "No matching stock",
+    "stockEmptyFiltered": "Try another name, category, or storage zone.",
     "noPantryItemMatches": "No pantry item matches",
     "catalogTitle": "Pantry items",
     "catalogDescription": "Workspace-wide list of what you stock. Edit names and pack sizes here. Set lower and upper limits per location on the stock screen.",

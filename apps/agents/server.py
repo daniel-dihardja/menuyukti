@@ -15,10 +15,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from psycopg import AsyncConnection
-from psycopg.rows import DictRow, dict_row
-from psycopg_pool import AsyncConnectionPool
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -113,12 +109,28 @@ async def _chat_runtime(app: FastAPI, checkpointer: BaseCheckpointSaver) -> Any:
 
 
 @asynccontextmanager
-async def _postgres_checkpointer(db_url: str) -> AsyncIterator[AsyncPostgresSaver]:
+async def _postgres_checkpointer(db_url: str) -> AsyncIterator[BaseCheckpointSaver]:
     """Pool-backed checkpointer so idle DB/proxy timeouts do not leave a dead single conn.
 
     ``AsyncPostgresSaver.from_conn_string`` holds one connection for the process lifetime;
     after Postgres/proxy idle kill, ``/chat/history`` fails with ``the connection is closed``.
+
+    Imports are deferred so InMemorySaver local runs do not require ``psycopg`` / libpq at
+    module import time.
     """
+    try:
+        from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+        from psycopg import AsyncConnection
+        from psycopg.rows import DictRow, dict_row
+        from psycopg_pool import AsyncConnectionPool
+    except ImportError as exc:
+        msg = (
+            "LANGGRAPH_CHECKPOINT_DATABASE_URL is set but psycopg (with binary wheels) "
+            "could not be imported. Run `uv sync --all-groups` from the repo root, or "
+            "unset the URL to use InMemorySaver for local chat."
+        )
+        raise RuntimeError(msg) from exc
+
     pool: AsyncConnectionPool[AsyncConnection[DictRow]] = AsyncConnectionPool(
         conninfo=db_url,
         min_size=1,

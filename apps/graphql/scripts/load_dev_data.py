@@ -39,7 +39,7 @@ DEFAULT_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
 
 DEV_SEED_PREFIX = "dev-seed-"
 PRIMARY_LOCATION_NAME = "SNABB"
-BRANCH_LOCATION_NAME = "SNABB Branch"
+DEV_INVENTAR_LOCATION_NAME = "Warung Sunda Lembur"
 DEV_WORKSPACE_NAME = "Dev Workspace"
 
 SCOPES = ("inventar", "analytics", "all", "clear-inventar")
@@ -49,7 +49,7 @@ SCOPES = ("inventar", "analytics", "all", "clear-inventar")
 class WorkspaceContext:
     workspace: Workspace
     primary_location: Location
-    branch_location: Location
+    inventar_location: Location
     created_primary: bool
 
 
@@ -107,7 +107,7 @@ def _add_sample_manual_brief(session: Session, location_id: int) -> None:
 
 
 def ensure_workspace_context(session: Session, clerk_user_id: str) -> WorkspaceContext:
-    """Find or create workspace + primary location; always ensure inventar branch location."""
+    """Find or create workspace, SNABB primary, and inventar seed location."""
     now = datetime.now(tz=UTC)
 
     workspace = (
@@ -198,32 +198,34 @@ def ensure_workspace_context(session: Session, clerk_user_id: str) -> WorkspaceC
         if not primary.clerk_user_id:
             primary.clerk_user_id = clerk_user_id
 
-    branch = (
+    inventar = (
         session.query(Location)
         .filter(
             Location.workspace_id == workspace.id,
-            Location.name == BRANCH_LOCATION_NAME,
+            Location.name == DEV_INVENTAR_LOCATION_NAME,
         )
         .first()
     )
-    if branch is None:
-        branch = Location(
-            name=BRANCH_LOCATION_NAME,
+    if inventar is None:
+        inventar = Location(
+            name=DEV_INVENTAR_LOCATION_NAME,
             city="Jakarta",
             country="Indonesia",
             currency="IDR",
             workspace_id=workspace.id,
             clerk_user_id=clerk_user_id,
         )
-        session.add(branch)
+        session.add(inventar)
         session.flush()
-        _add_default_opening_hours(session, branch.id)
+        _add_default_opening_hours(session, inventar.id)
+    elif not inventar.clerk_user_id:
+        inventar.clerk_user_id = clerk_user_id
 
     session.flush()
     return WorkspaceContext(
         workspace=workspace,
         primary_location=primary,
-        branch_location=branch,
+        inventar_location=inventar,
         created_primary=created_primary,
     )
 
@@ -372,19 +374,22 @@ def main(
             )
         elif scope in ("inventar", "all"):
             workspace_id = ctx.workspace.id
-            primary_id = ctx.primary_location.id
-            branch_id = ctx.branch_location.id
+            inventar_id = ctx.inventar_location.id
             reset_inventar(session, workspace_id)
             workspace = session.get(Workspace, workspace_id)
-            primary = session.get(Location, primary_id)
-            branch = session.get(Location, branch_id)
-            assert workspace is not None and primary is not None and branch is not None
-            counts = seed_inventar(session, workspace, primary, branch)
+            inventar = session.get(Location, inventar_id)
+            assert workspace is not None and inventar is not None
+            counts = seed_inventar(
+                session,
+                workspace,
+                inventar,
+                clerk_user_id=clerk_user_id,
+            )
             session.commit()
             print(
                 f"Inventar seed: workspace_id={workspace.id} "
-                f"primary_location_id={primary.id} "
-                f"branch_location_id={branch.id} "
+                f"inventar_location_id={inventar.id} "
+                f"inventar_location_name={inventar.name!r} "
                 f"catalog={counts['catalog_items']} stock={counts['stock_rows']} "
                 f"movements={counts['movements']}"
             )

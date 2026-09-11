@@ -1,10 +1,10 @@
 export const menuyuktiClerkAppearance = {
   variables: {
     colorPrimary: '#2fd4c7',
-    colorText: '#171717',
+    colorText: '#1a1614',
     colorTextSecondary: '#6b655f',
     colorBackground: '#f8f5f0',
-    colorInputBackground: '#ffffff',
+    colorInputBackground: '#fffcf8',
     colorInput: '#e7ded2',
     borderRadius: '0.75rem',
   },

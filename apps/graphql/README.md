@@ -69,7 +69,7 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 
 | Command | What it does |
 | -------- | ------------- |
-| `make dev-data USER_ID=user_xxx` | Default `SCOPE=inventar`: reset inventar for that workspace, seed catalog/stock/movements, ensure `SNABB` + `SNABB Branch` |
+| `make dev-data USER_ID=user_xxx` | Default `SCOPE=inventar`: reset inventar for that workspace, ensure `Warung Sunda Lembur`, seed Sundanese catalog/stock/movements (also ensures `SNABB` for analytics compat) |
 | `make dev-data SCOPE=clear-inventar USER_ID=user_xxx` | Delete inventar catalog/stock/movements for that workspace only (locations left intact; no reseed) |
 | `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Replace only `dev-seed-*` analytics runs; upsert location COGS; load order facts |
 | `make dev-data SCOPE=all USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Inventar + analytics |

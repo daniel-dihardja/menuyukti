@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  BookOpen,
   CalendarDays,
   ChartColumn,
   ChevronRight,
@@ -81,6 +82,13 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'chat',
     href: routes.agent,
     icon: <Sparkles />,
+    group: 'create',
+  },
+  {
+    key: 'playbooks',
+    labelKey: 'playbooks',
+    href: routes.playbooks,
+    icon: <BookOpen />,
     group: 'create',
   },
   {

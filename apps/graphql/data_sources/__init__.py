@@ -21,6 +21,7 @@ __all__ = [
     "CrmDevice",
     "CrmEnrollmentToken",
     "CalendarEntry",
+    "Playbook",
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",

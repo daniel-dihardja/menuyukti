@@ -12,7 +12,7 @@
   --color-surface: #f3eee7;
   --color-border-token: #e7ded2;
   --color-border-strong: #d9cfc3;
-  --color-ink: #171717;
+  --color-ink: #1a1614;
   --color-ink-muted: #6b655f;
   --color-ink-faint: #9c968f;
   --color-accent: #2fd4c7;
@@ -22,6 +22,12 @@
   --color-sky: #87c9ff;
   --color-orange: #f2b75a;
   --color-lavender: #b69dff;
+  --color-card-warm: #fffcf8;
+  --color-sidebar-accent-wash: color-mix(
+    in srgb,
+    var(--color-accent-soft) 55%,
+    var(--color-surface)
+  );
 
   /* Warm shadows */
   --shadow-warm-sm: 0 2px 8px rgba(82, 56, 30, 0.06);
@@ -35,9 +41,9 @@
   /* shadcn semantic tokens (mapped to editorial palette) */
   --background: var(--color-canvas);
   --foreground: var(--color-ink);
-  --card: #ffffff;
+  --card: var(--color-card-warm);
   --card-foreground: var(--color-ink);
-  --popover: #ffffff;
+  --popover: var(--color-card-warm);
   --popover-foreground: var(--color-ink);
   --primary: var(--color-accent);
   --primary-foreground: var(--color-ink);
@@ -63,11 +69,11 @@
   --chart-3: var(--color-orange);
   --chart-4: var(--color-lavender);
   --chart-5: var(--color-mint);
-  --sidebar: var(--color-canvas);
+  --sidebar: var(--color-surface);
   --sidebar-foreground: var(--color-ink);
   --sidebar-primary: var(--color-accent);
   --sidebar-primary-foreground: var(--color-ink);
-  --sidebar-accent: var(--color-surface);
+  --sidebar-accent: var(--color-sidebar-accent-wash);
   --sidebar-accent-foreground: var(--color-ink);
   --sidebar-border: var(--color-border-token);
   --sidebar-ring: var(--color-accent);
@@ -199,7 +205,40 @@
     font-size: 1.5rem;
     line-height: 2rem;
     font-weight: 600;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
+  }
+
+  /**
+   * Semantic tone washes for mode chips / status punctuation.
+   * Mint stays on --primary; these map secondary chart accents into UI chrome.
+   */
+  .tone-analytics {
+    border-color: color-mix(in srgb, var(--color-sky) 42%, transparent);
+    background: color-mix(in srgb, var(--color-sky) 16%, var(--color-canvas));
+    color: var(--color-ink);
+  }
+
+  .tone-creative {
+    border-color: color-mix(in srgb, var(--color-lavender) 42%, transparent);
+    background: color-mix(in srgb, var(--color-lavender) 16%, var(--color-canvas));
+    color: var(--color-ink);
+  }
+
+  .tone-schedule {
+    border-color: color-mix(in srgb, var(--color-orange) 42%, transparent);
+    background: color-mix(in srgb, var(--color-orange) 16%, var(--color-canvas));
+    color: var(--color-ink);
+  }
+
+  /** Soft warm vignette — layer with .bg-grid-light (separate absolute layers). */
+  .landing-atmosphere {
+    background-image:
+      radial-gradient(
+        ellipse 85% 55% at 50% -10%,
+        color-mix(in srgb, var(--color-accent-soft) 42%, transparent),
+        transparent 68%
+      ),
+      radial-gradient(ellipse 75% 45% at 50% 110%, rgba(82, 56, 30, 0.07), transparent 62%);
   }
 
   .type-section-title {

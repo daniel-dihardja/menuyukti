@@ -21,6 +21,7 @@ export default async function PrivacyPage() {
   return (
     <div className="relative min-h-svh bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 landing-atmosphere" aria-hidden />
       <div className="relative mx-auto max-w-2xl px-6 py-12">
         <Button variant="ghost" className="mb-8 -ml-2 gap-2 text-muted-foreground" asChild>
           <Link href="/">

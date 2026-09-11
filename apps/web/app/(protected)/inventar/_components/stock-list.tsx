@@ -1,8 +1,9 @@
 'use client'
 
+import { useDeferredValue, useState } from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { ArrowLeftRight, Gauge, History, Package, Trash2 } from 'lucide-react'
+import { ArrowLeftRight, Gauge, History, Package, Search, Trash2, X } from 'lucide-react'
 
 import {
   ResponsiveActionMenu,
@@ -18,7 +19,17 @@ import { formatCurrencyWithCode } from '@/lib/currency'
 import type { InventoryRefillForecastItem } from '@/lib/graphql/queries/inventory-refill-forecast'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
 import { routes } from '@/lib/routes'
+import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card'
 import {
   Empty,
   EmptyContent,
@@ -27,11 +38,12 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { Input } from '@workspace/ui/components/input'
 import { TableCell, TableRow } from '@workspace/ui/components/table'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { formatPackLabel } from './format-pack'
-import { StockBadge } from './stock-badge'
+import { StockBadge, stockLevelStatus } from './stock-badge'
 import {
   cardActivitySummary,
   compareInventarStockRows,
@@ -41,6 +53,34 @@ import {
   type InventarStockSortKey,
 } from './stock-utils'
 import { UpdatedByCell } from './updated-by-cell'
+
+/** Soft surface by default; light washes only when stock needs attention. */
+function mobileStockCardTone(
+  status: ReturnType<typeof stockLevelStatus>,
+  urgentRefill: boolean,
+): string {
+  if (status === 'low') return 'border-destructive/30 bg-destructive/10'
+  if (status === 'over') return 'border-orange-500/30 bg-orange-500/10'
+  if (urgentRefill) return 'border-warning/40 bg-warning/15'
+  return 'bg-secondary'
+}
+
+function stockRowMatchesQuery(
+  row: InventoryStockRow,
+  query: string,
+  labelFor: (key: string) => string,
+): boolean {
+  const pack = formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)
+  const haystack = [
+    row.catalogItem.name,
+    pack,
+    labelFor(`categories.${row.catalogItem.category}`),
+    labelFor(`storageZones.${row.catalogItem.storageZone}`),
+  ]
+    .join(' ')
+    .toLowerCase()
+  return haystack.includes(query)
+}
 
 type Props = {
   activeLocationId: number | null
@@ -73,14 +113,23 @@ export function StockList({
   const locale = useLocale()
   const isDesktop = useDesktopLayout()
   const forecastEmpty = t('forecastEmpty')
+  const [searchQuery, setSearchQuery] = useState('')
+  const deferredSearchQuery = useDeferredValue(searchQuery)
+  const normalizedQuery = deferredSearchQuery.trim().toLowerCase()
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<InventarStockSortKey>(
     'storageZone',
     'asc',
   )
 
-  const displayRows = [...stockRows].toSorted((a, b) =>
+  const filteredRows =
+    normalizedQuery.length === 0
+      ? stockRows
+      : stockRows.filter((row) => stockRowMatchesQuery(row, normalizedQuery, (key) => t(key)))
+
+  const displayRows = [...filteredRows].toSorted((a, b) =>
     compareInventarStockRows(a, b, sortKey, sortDirection, locale, refillByCatalogId),
   )
+  const hasActiveSearch = searchQuery.trim().length > 0
 
   function formatMoney(amount: number | null): string {
     if (amount == null) return t('priceEmpty')
@@ -179,6 +228,68 @@ export function StockList({
     )
   }
 
+  function renderSearchField() {
+    return (
+      <div className={cn('w-full', isDesktop && 'flex justify-end')}>
+        <div className={cn('relative w-full', isDesktop && 'max-w-xs')}>
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            id="inventar-stock-search"
+            type="text"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={t('searchStock')}
+            aria-label={t('searchStock')}
+            autoComplete="off"
+            className="min-h-11 touch-manipulation pr-10 pl-9 lg:min-h-9"
+          />
+          {hasActiveSearch ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute top-1/2 right-1 size-8 -translate-y-1/2 text-muted-foreground"
+              onClick={() => setSearchQuery('')}
+              aria-label={t('clearStockSearch')}
+            >
+              <X className="size-4" />
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
+
+  if (hasActiveSearch && displayRows.length === 0) {
+    return (
+      <div className="flex flex-col gap-3">
+        {renderSearchField()}
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Search aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle>{t('stockEmptyFilteredTitle')}</EmptyTitle>
+            <EmptyDescription>{t('stockEmptyFiltered')}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 touch-manipulation lg:min-h-9"
+              onClick={() => setSearchQuery('')}
+            >
+              {t('clearStockSearch')}
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </div>
+    )
+  }
+
   if (isDesktop) {
     const columns: SortableTableColumn<
       InventarStockSortKey | 'actions' | 'updatedBy' | 'category'
@@ -209,7 +320,8 @@ export function StockList({
     ]
 
     return (
-      <div className="[&_table]:table-fixed">
+      <div className="flex flex-col gap-3 [&_table]:table-fixed">
+        {renderSearchField()}
         <SortableTable
           columns={columns}
           sortKey={sortKey}
@@ -294,63 +406,76 @@ export function StockList({
   }
 
   return (
-    <ul className="flex flex-col gap-3">
-      {displayRows.map((row) => {
-        const packLabel = formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)
-        const categoryLabel = t(`categories.${row.catalogItem.category}`)
-        const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
-        const lineValue = stockLineValue(row)
-        const { avgDailyOut, daysUntilRefill } = forecastCells(row)
-        return (
-          <li
-            key={row.id}
-            className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3"
-          >
-            <div className="flex min-w-0 items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium" title={row.catalogItem.name}>
-                  {row.catalogItem.name}
-                </p>
-                <p
-                  className="truncate text-sm text-muted-foreground"
-                  title={`${categoryLabel} · ${zoneLabel} · ${packLabel}`}
-                >
-                  {categoryLabel} · {zoneLabel} · {packLabel}
-                </p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
-                  {cardActivitySummary(row, t, locale)}
-                </p>
-                <div className="mt-1">
-                  <UpdatedByCell actor={row.updatedBy} emptyLabel={t('updatedByEmpty')} />
-                </div>
-                <p className="mt-1 text-sm tabular-nums">
-                  {t('avgDailyOut')}: {avgDailyOut}
-                  <span className="text-muted-foreground"> · </span>
-                  {t('daysUntilRefill')}: {daysUntilRefill}
-                </p>
-                <p className="mt-1 text-sm tabular-nums">
-                  {t('value')}: {formatMoney(lineValue)}
-                </p>
-              </div>
-              <StockBadge
-                onHand={row.onHand}
-                packagesLabel={t('packages')}
-                minOnHand={row.minOnHand}
-                maxOnHand={row.maxOnHand}
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11 w-full touch-manipulation"
-              onClick={() => onUse(row)}
-            >
-              {t('use')}
-            </Button>
-            {renderRowActions(row)}
-          </li>
-        )
-      })}
-    </ul>
+    <div className="flex flex-col gap-3">
+      {renderSearchField()}
+      <ul className="flex flex-col gap-3">
+        {displayRows.map((row) => {
+          const packLabel = formatPackLabel(
+            row.catalogItem.packageSize,
+            row.catalogItem.packageUnit,
+          )
+          const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
+          const metaLabel = `${zoneLabel} · ${packLabel}`
+          const daysUntilRefillRaw = refillByCatalogId.get(row.catalogItemId)?.daysUntilRefill
+          const showUrgentRefill =
+            daysUntilRefillRaw != null &&
+            Number.isFinite(daysUntilRefillRaw) &&
+            daysUntilRefillRaw <= 3
+          const urgentRefillLabel = showUrgentRefill
+            ? formatDaysUntilRefill(daysUntilRefillRaw, locale, forecastEmpty)
+            : null
+          const levelStatus = stockLevelStatus(row.onHand, row.minOnHand, row.maxOnHand)
+
+          return (
+            <li key={row.id}>
+              <Card
+                className={cn(
+                  'gap-3 py-3 shadow-none',
+                  mobileStockCardTone(levelStatus, showUrgentRefill),
+                )}
+              >
+                <CardHeader className="px-4">
+                  <CardTitle
+                    className="truncate text-base font-medium"
+                    title={row.catalogItem.name}
+                  >
+                    {row.catalogItem.name}
+                  </CardTitle>
+                  <CardDescription className="truncate" title={metaLabel}>
+                    {metaLabel}
+                  </CardDescription>
+                  <CardAction>
+                    <StockBadge
+                      onHand={row.onHand}
+                      packagesLabel={t('packages')}
+                      minOnHand={row.minOnHand}
+                      maxOnHand={row.maxOnHand}
+                    />
+                  </CardAction>
+                </CardHeader>
+                {urgentRefillLabel != null ? (
+                  <CardContent className="px-4">
+                    <Badge variant="outline" className="tabular-nums">
+                      {t('daysUntilRefill')}: {urgentRefillLabel}
+                    </Badge>
+                  </CardContent>
+                ) : null}
+                <CardFooter className="flex-col items-stretch gap-2 px-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 w-full touch-manipulation"
+                    onClick={() => onUse(row)}
+                  >
+                    {t('use')}
+                  </Button>
+                  {renderRowActions(row)}
+                </CardFooter>
+              </Card>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }

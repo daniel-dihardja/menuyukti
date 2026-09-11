@@ -42,7 +42,7 @@ export default async function Image() {
         justifyContent: 'space-between',
         padding: '64px 72px',
         background: '#f8f5f0',
-        color: '#171717',
+        color: '#1a1614',
         fontFamily: 'Plus Jakarta Sans',
       }}
     >
@@ -56,7 +56,7 @@ export default async function Image() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#171717',
+            color: '#1a1614',
             fontSize: 28,
             fontWeight: 800,
           }}

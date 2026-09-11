@@ -49,17 +49,21 @@ export function AnalyticsPageShell({
           />
         </header>
 
-        <main
-          id="main-content"
-          className={cn(
-            'mx-auto flex w-full min-h-0 min-w-0 max-w-full flex-1 flex-col gap-6 overflow-y-auto',
-            ANALYTICS_PAGE_SHELL_PADDING_CLASS,
-            contentWidth === 'container' && APP_INSET_CONTENT_MAX_WIDTH_CLASS,
-            mainClassName,
-          )}
-        >
-          {children}
-        </main>
+        {/* Scroll on full inset width so the scrollbar stays at the right edge;
+            keep max-width on the inner main so content stays ~1440px centered. */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+          <main
+            id="main-content"
+            className={cn(
+              'mx-auto flex w-full min-h-0 min-w-0 max-w-full flex-1 flex-col gap-6',
+              ANALYTICS_PAGE_SHELL_PADDING_CLASS,
+              contentWidth === 'container' && APP_INSET_CONTENT_MAX_WIDTH_CLASS,
+              mainClassName,
+            )}
+          >
+            {children}
+          </main>
+        </div>
       </div>
     </>
   )

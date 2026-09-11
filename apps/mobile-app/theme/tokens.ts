@@ -21,8 +21,8 @@ export type BrandColors = {
 export const menuyuktiColors: BrandColors = {
   canvas: '#f8f5f0',
   surface: '#f3eee7',
-  card: '#ffffff',
-  ink: '#171717',
+  card: '#fffcf8',
+  ink: '#1a1614',
   inkMuted: '#6b655f',
   inkFaint: '#9c968f',
   border: '#e7ded2',
@@ -33,7 +33,7 @@ export const menuyuktiColors: BrandColors = {
   destructive: '#dc2626',
   success: '#16a34a',
   warning: '#f2b75a',
-  primaryForeground: '#171717',
+  primaryForeground: '#1a1614',
 }
 
 export const spacing = {

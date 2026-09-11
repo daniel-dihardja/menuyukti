@@ -507,6 +507,7 @@ function ComposerShell({
     <div className="shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-4 lg:pb-4">
       <PromptInput
         accept="image/jpeg,image/png,image/webp,image/gif"
+        className="[&_[data-slot=input-group]]:rounded-xl [&_[data-slot=input-group]]:border-border [&_[data-slot=input-group]]:bg-card [&_[data-slot=input-group]]:shadow-[var(--shadow-warm-sm)]"
         globalDrop
         maxFiles={CHAT_MAX_IMAGES}
         multiple

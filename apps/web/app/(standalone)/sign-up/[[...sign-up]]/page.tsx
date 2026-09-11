@@ -15,6 +15,7 @@ export default async function SignUpPage() {
   return (
     <div className="relative flex min-h-[calc(100svh-3.5rem)] w-full flex-col items-center justify-center bg-background p-6">
       <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 landing-atmosphere" aria-hidden />
       <div className="relative mx-auto w-full max-w-md space-y-8">
         <header className="space-y-3 text-center sm:text-left">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
