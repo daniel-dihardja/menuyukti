@@ -410,7 +410,10 @@ export function StockList({
       {renderSearchField()}
       <ul className="flex flex-col gap-3">
         {displayRows.map((row) => {
-          const packLabel = formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)
+          const packLabel = formatPackLabel(
+            row.catalogItem.packageSize,
+            row.catalogItem.packageUnit,
+          )
           const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
           const metaLabel = `${zoneLabel} · ${packLabel}`
           const daysUntilRefillRaw = refillByCatalogId.get(row.catalogItemId)?.daysUntilRefill
@@ -432,7 +435,10 @@ export function StockList({
                 )}
               >
                 <CardHeader className="px-4">
-                  <CardTitle className="truncate text-base font-medium" title={row.catalogItem.name}>
+                  <CardTitle
+                    className="truncate text-base font-medium"
+                    title={row.catalogItem.name}
+                  >
                     {row.catalogItem.name}
                   </CardTitle>
                   <CardDescription className="truncate" title={metaLabel}>
