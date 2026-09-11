@@ -238,7 +238,7 @@ export function StockList({
           />
           <Input
             id="inventar-stock-search"
-            type="search"
+            type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder={t('searchStock')}
