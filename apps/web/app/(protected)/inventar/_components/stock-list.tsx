@@ -18,7 +18,17 @@ import { formatCurrencyWithCode } from '@/lib/currency'
 import type { InventoryRefillForecastItem } from '@/lib/graphql/queries/inventory-refill-forecast'
 import type { InventoryStockRow } from '@/lib/graphql/queries/inventory-stock'
 import { routes } from '@/lib/routes'
+import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card'
 import {
   Empty,
   EmptyContent,
@@ -297,57 +307,55 @@ export function StockList({
     <ul className="flex flex-col gap-3">
       {displayRows.map((row) => {
         const packLabel = formatPackLabel(row.catalogItem.packageSize, row.catalogItem.packageUnit)
-        const categoryLabel = t(`categories.${row.catalogItem.category}`)
         const zoneLabel = t(`storageZones.${row.catalogItem.storageZone}`)
-        const lineValue = stockLineValue(row)
-        const { avgDailyOut, daysUntilRefill } = forecastCells(row)
+        const metaLabel = `${zoneLabel} · ${packLabel}`
+        const daysUntilRefillRaw = refillByCatalogId.get(row.catalogItemId)?.daysUntilRefill
+        const showUrgentRefill =
+          daysUntilRefillRaw != null &&
+          Number.isFinite(daysUntilRefillRaw) &&
+          daysUntilRefillRaw <= 3
+        const urgentRefillLabel = showUrgentRefill
+          ? formatDaysUntilRefill(daysUntilRefillRaw, locale, forecastEmpty)
+          : null
+
         return (
-          <li
-            key={row.id}
-            className="flex flex-col gap-3 rounded-lg border border-border px-4 py-3"
-          >
-            <div className="flex min-w-0 items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium" title={row.catalogItem.name}>
+          <li key={row.id}>
+            <Card className="gap-3 py-3">
+              <CardHeader className="px-4">
+                <CardTitle className="truncate text-base font-medium" title={row.catalogItem.name}>
                   {row.catalogItem.name}
-                </p>
-                <p
-                  className="truncate text-sm text-muted-foreground"
-                  title={`${categoryLabel} · ${zoneLabel} · ${packLabel}`}
+                </CardTitle>
+                <CardDescription className="truncate" title={metaLabel}>
+                  {metaLabel}
+                </CardDescription>
+                <CardAction>
+                  <StockBadge
+                    onHand={row.onHand}
+                    packagesLabel={t('packages')}
+                    minOnHand={row.minOnHand}
+                    maxOnHand={row.maxOnHand}
+                  />
+                </CardAction>
+              </CardHeader>
+              {urgentRefillLabel != null ? (
+                <CardContent className="px-4">
+                  <Badge variant="outline" className="tabular-nums">
+                    {t('daysUntilRefill')}: {urgentRefillLabel}
+                  </Badge>
+                </CardContent>
+              ) : null}
+              <CardFooter className="flex-col items-stretch gap-2 px-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full touch-manipulation"
+                  onClick={() => onUse(row)}
                 >
-                  {categoryLabel} · {zoneLabel} · {packLabel}
-                </p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
-                  {cardActivitySummary(row, t, locale)}
-                </p>
-                <div className="mt-1">
-                  <UpdatedByCell actor={row.updatedBy} emptyLabel={t('updatedByEmpty')} />
-                </div>
-                <p className="mt-1 text-sm tabular-nums">
-                  {t('avgDailyOut')}: {avgDailyOut}
-                  <span className="text-muted-foreground"> · </span>
-                  {t('daysUntilRefill')}: {daysUntilRefill}
-                </p>
-                <p className="mt-1 text-sm tabular-nums">
-                  {t('value')}: {formatMoney(lineValue)}
-                </p>
-              </div>
-              <StockBadge
-                onHand={row.onHand}
-                packagesLabel={t('packages')}
-                minOnHand={row.minOnHand}
-                maxOnHand={row.maxOnHand}
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11 w-full touch-manipulation"
-              onClick={() => onUse(row)}
-            >
-              {t('use')}
-            </Button>
-            {renderRowActions(row)}
+                  {t('use')}
+                </Button>
+                {renderRowActions(row)}
+              </CardFooter>
+            </Card>
           </li>
         )
       })}
