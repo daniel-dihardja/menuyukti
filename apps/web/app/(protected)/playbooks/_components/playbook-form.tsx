@@ -59,7 +59,10 @@ function plusMonthsIsoDate(months: number): string {
   return `${y}-${m}-${d}`
 }
 
-function defaultValues(initialValues: PlaybookFormValues | undefined, branches: Branch[]): PlaybookFormValues {
+function defaultValues(
+  initialValues: PlaybookFormValues | undefined,
+  branches: Branch[],
+): PlaybookFormValues {
   return {
     name: initialValues?.name ?? '',
     locationId:

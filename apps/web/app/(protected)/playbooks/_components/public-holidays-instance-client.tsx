@@ -96,10 +96,7 @@ export function PublicHolidaysInstanceClient({
         onValueChange={setValues}
         disabled={fieldsDisabled}
       />
-      <PublicHolidaysWorkspace
-        prepareRun={prepareRun}
-        onRunningChange={setFieldsDisabled}
-      />
+      <PublicHolidaysWorkspace prepareRun={prepareRun} onRunningChange={setFieldsDisabled} />
     </div>
   )
 }
