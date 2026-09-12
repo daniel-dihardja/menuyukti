@@ -1,7 +1,29 @@
 import { apiFetch } from '@/lib/api/client-fetch'
+import type { PublicHolidayItem } from '@/lib/graphql/queries/analytics'
 import type { Playbook } from '@/lib/graphql/queries/playbooks'
 
 export type { Playbook }
+
+export async function fetchHolidays(params: {
+  locationId: number
+  dateStart: string
+  dateEnd: string
+}): Promise<PublicHolidayItem[]> {
+  const searchParams = new URLSearchParams({
+    locationId: String(params.locationId),
+    dateStart: params.dateStart,
+    dateEnd: params.dateEnd,
+  })
+  const result = await apiFetch<{ holidays: PublicHolidayItem[] }>(
+    `/api/holidays?${searchParams.toString()}`,
+    { method: 'GET' },
+    'Failed to load holidays',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.holidays
+}
 
 export async function listPlaybooks(playbookType: string): Promise<Playbook[]> {
   const params = new URLSearchParams({ playbookType })

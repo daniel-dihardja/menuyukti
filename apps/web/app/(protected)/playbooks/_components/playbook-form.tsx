@@ -11,6 +11,7 @@ import { createPlaybook, updatePlaybook } from '@/lib/playbooks/client-api'
 import type { PlaybookCatalogEntry } from '@/lib/playbooks/catalog'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
+import { DatePicker } from '@workspace/ui/components/date-picker'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { Spinner } from '@workspace/ui/components/spinner'
@@ -33,6 +34,12 @@ type PlaybookFormProps = {
   mode: 'create' | 'edit'
   playbookId?: number
   initialValues?: PlaybookFormValues
+  /** Hide the Save button (e.g. when Run persists settings). */
+  hideSubmit?: boolean
+  /** Controlled values — when set with onValueChange, fields are controlled by the parent. */
+  value?: PlaybookFormValues
+  onValueChange?: (next: PlaybookFormValues) => void
+  disabled?: boolean
 }
 
 function todayIsoDate(): string {
@@ -52,23 +59,44 @@ function plusMonthsIsoDate(months: number): string {
   return `${y}-${m}-${d}`
 }
 
+function defaultValues(initialValues: PlaybookFormValues | undefined, branches: Branch[]): PlaybookFormValues {
+  return {
+    name: initialValues?.name ?? '',
+    locationId:
+      initialValues?.locationId ?? (branches.length === 1 ? (branches[0]?.id ?? null) : null),
+    startDate: initialValues?.startDate ?? todayIsoDate(),
+    endDate: initialValues?.endDate ?? plusMonthsIsoDate(3),
+  }
+}
+
 export function PlaybookForm({
   branches,
   catalog,
   mode,
   playbookId,
   initialValues,
+  hideSubmit = false,
+  value: controlledValue,
+  onValueChange,
+  disabled = false,
 }: PlaybookFormProps) {
   const t = useTranslations(`playbooks.items.${catalog.id}.form`)
   const tPlaybooks = useTranslations('playbooks')
   const router = useRouter()
-  const [name, setName] = useState(initialValues?.name ?? '')
-  const [locationId, setLocationId] = useState<number | null>(
-    initialValues?.locationId ?? (branches.length === 1 ? (branches[0]?.id ?? null) : null),
-  )
-  const [startDate, setStartDate] = useState(initialValues?.startDate ?? todayIsoDate)
-  const [endDate, setEndDate] = useState(initialValues?.endDate ?? (() => plusMonthsIsoDate(3)))
+  const isControlled = controlledValue !== undefined && onValueChange !== undefined
+  const [uncontrolled, setUncontrolled] = useState(() => defaultValues(initialValues, branches))
+  const values = isControlled ? controlledValue : uncontrolled
   const [pending, setPending] = useState(false)
+
+  function setValues(next: PlaybookFormValues) {
+    if (isControlled) {
+      onValueChange(next)
+    } else {
+      setUncontrolled(next)
+    }
+  }
+
+  const fieldsLocked = pending || disabled
 
   if (branches.length === 0) {
     return (
@@ -86,26 +114,26 @@ export function PlaybookForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (pending) return
+    if (pending || hideSubmit) return
 
-    const nameClean = name.trim()
+    const nameClean = values.name.trim()
     if (!nameClean) {
       toast.error(tPlaybooks('validation.nameRequired'))
       return
     }
-    if (locationId === null) {
+    if (values.locationId === null) {
       toast.error(tPlaybooks('validation.locationRequired'))
       return
     }
-    if (!startDate) {
+    if (!values.startDate) {
       toast.error(tPlaybooks('validation.startRequired'))
       return
     }
-    if (!endDate) {
+    if (!values.endDate) {
       toast.error(tPlaybooks('validation.endRequired'))
       return
     }
-    if (endDate < startDate) {
+    if (values.endDate < values.startDate) {
       toast.error(tPlaybooks('validation.endBeforeStart'))
       return
     }
@@ -114,11 +142,11 @@ export function PlaybookForm({
     try {
       if (mode === 'create') {
         await createPlaybook({
-          locationId,
+          locationId: values.locationId,
           name: nameClean,
           playbookType: catalog.playbookType,
-          startDate,
-          endDate,
+          startDate: values.startDate,
+          endDate: values.endDate,
         })
         toast.success(tPlaybooks('toast.created'))
         router.push(routes.playbookDetail(catalog.slug))
@@ -130,15 +158,17 @@ export function PlaybookForm({
         throw new Error('Missing playbook id')
       }
       const updated = await updatePlaybook(playbookId, {
-        locationId,
+        locationId: values.locationId,
         name: nameClean,
-        startDate,
-        endDate,
+        startDate: values.startDate,
+        endDate: values.endDate,
       })
-      setName(updated.name)
-      setLocationId(updated.locationId)
-      setStartDate(updated.startDate)
-      setEndDate(updated.endDate)
+      setValues({
+        name: updated.name,
+        locationId: updated.locationId,
+        startDate: updated.startDate,
+        endDate: updated.endDate,
+      })
       toast.success(tPlaybooks('toast.updated'))
       router.refresh()
     } catch (err) {
@@ -164,9 +194,9 @@ export function PlaybookForm({
             name="name"
             autoComplete="off"
             placeholder={t('namePlaceholder')}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={pending}
+            value={values.name}
+            onChange={(e) => setValues({ ...values, name: e.target.value })}
+            disabled={fieldsLocked}
             required
           />
         </Field>
@@ -178,45 +208,50 @@ export function PlaybookForm({
           placeholder={t('locationPlaceholder')}
           description={t('locationDescription')}
           className="w-full max-w-none"
-          value={locationId}
-          onValueChange={setLocationId}
+          value={values.locationId}
+          onValueChange={(locationId) => setValues({ ...values, locationId })}
+          disabled={fieldsLocked}
         />
 
         <FieldGroup className="gap-4 sm:grid sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="playbook-start-date">{t('startDateLabel')}</FieldLabel>
-            <Input
+            <DatePicker
               id="playbook-start-date"
-              name="startDate"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              disabled={pending}
-              required
+              value={values.startDate || undefined}
+              onChange={(startDate) => {
+                const next = { ...values, startDate }
+                if (values.endDate && values.endDate < startDate) {
+                  next.endDate = startDate
+                }
+                setValues(next)
+              }}
+              disabled={fieldsLocked}
+              placeholder={t('datePlaceholder')}
             />
           </Field>
           <Field>
             <FieldLabel htmlFor="playbook-end-date">{t('endDateLabel')}</FieldLabel>
-            <Input
+            <DatePicker
               id="playbook-end-date"
-              name="endDate"
-              type="date"
-              value={endDate}
-              min={startDate || undefined}
-              onChange={(e) => setEndDate(e.target.value)}
-              disabled={pending}
-              required
+              value={values.endDate || undefined}
+              onChange={(endDate) => setValues({ ...values, endDate })}
+              disabled={fieldsLocked}
+              min={values.startDate || undefined}
+              placeholder={t('datePlaceholder')}
             />
           </Field>
         </FieldGroup>
       </FieldGroup>
 
-      <div>
-        <Button type="submit" disabled={pending}>
-          {pending ? <Spinner data-icon="inline-start" /> : null}
-          {pending ? tPlaybooks('saving') : tPlaybooks('save')}
-        </Button>
-      </div>
+      {!hideSubmit ? (
+        <div>
+          <Button type="submit" disabled={fieldsLocked}>
+            {pending ? <Spinner data-icon="inline-start" /> : null}
+            {pending ? tPlaybooks('saving') : tPlaybooks('save')}
+          </Button>
+        </div>
+      ) : null}
     </form>
   )
 }

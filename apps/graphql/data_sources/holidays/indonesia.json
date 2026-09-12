@@ -8,20 +8,20 @@
     "isTentative": false
   },
   {
-    "id": "CHINESE_NEW_YEAR_2026",
-    "date": "2026-01-29",
-    "name": "Chinese New Year",
-    "localName": "Tahun Baru Imlek",
+    "id": "ISRA_MIRAJ_2026",
+    "date": "2026-01-16",
+    "name": "Isra Mi'raj",
+    "localName": "Isra Mi'raj Nabi Muhammad SAW",
     "holidayType": "public",
     "isTentative": false
   },
   {
-    "id": "ISRA_MIRAJ_2026",
-    "date": "2026-02-18",
-    "name": "Isra Mi'raj",
-    "localName": "Isra Mi'raj Nabi Muhammad SAW",
+    "id": "CHINESE_NEW_YEAR_2026",
+    "date": "2026-02-17",
+    "name": "Chinese New Year",
+    "localName": "Tahun Baru Imlek",
     "holidayType": "public",
-    "isTentative": true
+    "isTentative": false
   },
   {
     "id": "NYEPI_2026",
