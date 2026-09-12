@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { PlaybookForm } from '@/app/(protected)/playbooks/_components/playbook-form'
-import { PublicHolidaysWorkspace } from '@/app/(protected)/playbooks/_components/public-holidays-workspace'
+import { PublicHolidaysInstanceClient } from '@/app/(protected)/playbooks/_components/public-holidays-instance-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
@@ -87,19 +87,32 @@ export default async function PlaybookInstancePage({ params }: PlaybookInstanceP
     >
       <div className="flex flex-col gap-6">
         <PageHeading title={playbook.name} description={t(`items.${catalog.id}.description`)} />
-        <PlaybookForm
-          mode="edit"
-          playbookId={playbook.id}
-          catalog={catalog}
-          branches={branches}
-          initialValues={{
-            name: playbook.name,
-            locationId: playbook.locationId,
-            startDate: playbook.startDate,
-            endDate: playbook.endDate,
-          }}
-        />
-        {catalog.id === 'publicHolidays' ? <PublicHolidaysWorkspace /> : null}
+        {catalog.id === 'publicHolidays' ? (
+          <PublicHolidaysInstanceClient
+            playbookId={playbook.id}
+            catalog={catalog}
+            branches={branches}
+            initialValues={{
+              name: playbook.name,
+              locationId: playbook.locationId,
+              startDate: playbook.startDate,
+              endDate: playbook.endDate,
+            }}
+          />
+        ) : (
+          <PlaybookForm
+            mode="edit"
+            playbookId={playbook.id}
+            catalog={catalog}
+            branches={branches}
+            initialValues={{
+              name: playbook.name,
+              locationId: playbook.locationId,
+              startDate: playbook.startDate,
+              endDate: playbook.endDate,
+            }}
+          />
+        )}
       </div>
     </AnalyticsPageShell>
   )

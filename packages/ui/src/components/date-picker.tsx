@@ -10,10 +10,15 @@ import { Calendar } from '@workspace/ui/components/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
 
 type DatePickerProps = {
+  id?: string
   value?: string
   onChange: (date: string) => void
   disabled?: boolean
   placeholder?: string
+  /** Inclusive ISO date (`yyyy-MM-dd`) — days before are disabled. */
+  min?: string
+  /** Inclusive ISO date (`yyyy-MM-dd`) — days after are disabled. */
+  max?: string
 }
 
 function toDate(value: string | undefined): Date | undefined {
@@ -32,9 +37,19 @@ function toISODate(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-function DatePicker({ value, onChange, disabled, placeholder = 'Pick a date' }: DatePickerProps) {
+function DatePicker({
+  id,
+  value,
+  onChange,
+  disabled,
+  placeholder = 'Pick a date',
+  min,
+  max,
+}: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const selected = toDate(value)
+  const minDate = toDate(min)
+  const maxDate = toDate(max)
 
   function handleSelect(date: Date | undefined) {
     if (date) {
@@ -43,10 +58,17 @@ function DatePicker({ value, onChange, disabled, placeholder = 'Pick a date' }: 
     }
   }
 
+  const disabledMatchers = [
+    ...(minDate ? [{ before: minDate }] : []),
+    ...(maxDate ? [{ after: maxDate }] : []),
+  ]
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
+          type="button"
           variant="outline"
           disabled={disabled}
           className={cn(
@@ -54,7 +76,7 @@ function DatePicker({ value, onChange, disabled, placeholder = 'Pick a date' }: 
             !selected && 'text-muted-foreground',
           )}
         >
-          <CalendarIcon className="mr-2 size-4 shrink-0" />
+          <CalendarIcon data-icon="inline-start" />
           {selected ? format(selected, 'PPP') : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
@@ -62,8 +84,9 @@ function DatePicker({ value, onChange, disabled, placeholder = 'Pick a date' }: 
         <Calendar
           mode="single"
           selected={selected}
-          defaultMonth={selected}
+          defaultMonth={selected ?? minDate}
           onSelect={handleSelect}
+          disabled={disabledMatchers.length > 0 ? disabledMatchers : undefined}
           initialFocus
         />
       </PopoverContent>

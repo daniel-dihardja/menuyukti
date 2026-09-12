@@ -26,6 +26,7 @@ interface LocationSelectProps {
   /** When set, controls the select instead of AnalyticsProvider location state. */
   value?: number | null
   onValueChange?: (id: number | null) => void
+  disabled?: boolean
 }
 
 export function LocationSelect({
@@ -37,6 +38,7 @@ export function LocationSelect({
   className,
   value,
   onValueChange,
+  disabled = false,
 }: LocationSelectProps) {
   const analytics = useAnalytics()
   const locationId = value !== undefined ? value : analytics.locationId
@@ -50,6 +52,7 @@ export function LocationSelect({
       <Select
         value={locationId !== null ? String(locationId) : undefined}
         onValueChange={(val) => setLocationId(val ? Number(val) : null)}
+        disabled={disabled}
       >
         <SelectTrigger
           id={selectId}

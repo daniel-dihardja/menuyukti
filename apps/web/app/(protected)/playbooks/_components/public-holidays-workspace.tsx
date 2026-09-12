@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Play } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
@@ -14,10 +15,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
-import { Field, FieldLabel } from '@workspace/ui/components/field'
-import { Input } from '@workspace/ui/components/input'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
+
+import { fetchHolidays } from '@/lib/playbooks/client-api'
 
 type HolidayItem = {
   id: string
@@ -33,34 +34,38 @@ const STEPS: { id: StepId; enabled: boolean }[] = [
   { id: 'artwork', enabled: false },
 ]
 
-const MOCK_HOLIDAYS: HolidayItem[] = [
-  { id: 'mock-1', date: '2026-01-01', name: 'New Year’s Day' },
-  { id: 'mock-2', date: '2026-01-06', name: 'Epiphany' },
-  { id: 'mock-3', date: '2026-04-03', name: 'Good Friday' },
-  { id: 'mock-4', date: '2026-04-06', name: 'Easter Monday' },
-  { id: 'mock-5', date: '2026-05-01', name: 'Labour Day' },
-  { id: 'mock-6', date: '2026-05-14', name: 'Ascension Day' },
-  { id: 'mock-7', date: '2026-05-25', name: 'Whit Monday' },
-  { id: 'mock-8', date: '2026-10-03', name: 'German Unity Day' },
-  { id: 'mock-9', date: '2026-12-25', name: 'Christmas Day' },
-  { id: 'mock-10', date: '2026-12-26', name: 'Boxing Day' },
-]
-
-const RUN_DELAY_MS = 400
-
 function sortByDate(items: HolidayItem[]): HolidayItem[] {
   return [...items].toSorted((a, b) => a.date.localeCompare(b.date))
 }
 
-export function PublicHolidaysWorkspace() {
+type PublicHolidaysWorkspaceProps = {
+  /** Validate + persist form fields, then return the window to fetch. */
+  prepareRun: () => Promise<{
+    locationId: number
+    startDate: string
+    endDate: string
+  }>
+  onRunningChange?: (running: boolean) => void
+}
+
+export function PublicHolidaysWorkspace({
+  prepareRun,
+  onRunningChange,
+}: PublicHolidaysWorkspaceProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace')
   const [activeStepId, setActiveStepId] = useState<StepId>('fetchDates')
-  const [regionOverride, setRegionOverride] = useState('')
   const [candidates, setCandidates] = useState<HolidayItem[]>([])
   const [confirmed, setConfirmed] = useState<HolidayItem[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [hasRun, setHasRun] = useState(false)
+  const [lastFetchEmpty, setLastFetchEmpty] = useState(false)
   const [running, setRunning] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
+  function setRunningState(next: boolean) {
+    setRunning(next)
+    onRunningChange?.(next)
+  }
 
   function toggleSelected(id: string) {
     setSelectedIds((prev) => {
@@ -107,15 +112,33 @@ export function PublicHolidaysWorkspace() {
 
   async function handleRun() {
     if (running) return
-    setRunning(true)
+    setRunningState(true)
+    setFetchError(null)
     try {
-      await new Promise((resolve) => setTimeout(resolve, RUN_DELAY_MS))
+      const ctx = await prepareRun()
+      const holidays = await fetchHolidays({
+        locationId: ctx.locationId,
+        dateStart: ctx.startDate,
+        dateEnd: ctx.endDate,
+      })
       const confirmedIds = new Set(confirmed.map((h) => h.id))
-      setCandidates(MOCK_HOLIDAYS.filter((h) => !confirmedIds.has(h.id)))
+      const nextCandidates = sortByDate(
+        holidays
+          .filter((h) => !confirmedIds.has(h.id))
+          .map((h) => ({ id: h.id, date: h.date, name: h.name })),
+      )
+      setCandidates(nextCandidates)
       setSelectedIds(new Set())
       setHasRun(true)
+      setLastFetchEmpty(holidays.length === 0)
+    } catch (err) {
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      setFetchError(t('fetchError'))
+      toast.error(err instanceof Error ? err.message : t('fetchError'))
     } finally {
-      setRunning(false)
+      setRunningState(false)
     }
   }
 
@@ -124,7 +147,7 @@ export function PublicHolidaysWorkspace() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-muted-foreground text-sm">{t('prototypeHint')}</p>
+      <p className="text-muted-foreground text-sm">{t('workspaceHint')}</p>
 
       <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('stepsAria')}>
         {STEPS.map((step) => {
@@ -167,24 +190,18 @@ export function PublicHolidaysWorkspace() {
             className="flex min-w-0 flex-col gap-4 rounded-xl border border-border/70 p-4"
             aria-labelledby="ph-candidates-heading"
           >
-            <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-end sm:justify-between">
-              <Field className="min-w-0 flex-1">
-                <FieldLabel htmlFor="ph-region-override">{t('regionOverrideLabel')}</FieldLabel>
-                <Input
-                  id="ph-region-override"
-                  name="regionOverride"
-                  autoComplete="off"
-                  placeholder={t('regionOverridePlaceholder')}
-                  value={regionOverride}
-                  onChange={(e) => setRegionOverride(e.target.value)}
-                  disabled={running}
-                />
-              </Field>
+            <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-end">
               <Button type="button" onClick={() => void handleRun()} disabled={running}>
                 {running ? <Spinner data-icon="inline-start" /> : <Play data-icon="inline-start" />}
                 {running ? t('running') : t('run')}
               </Button>
             </div>
+
+            {fetchError ? (
+              <p className="text-destructive text-sm" role="alert">
+                {fetchError}
+              </p>
+            ) : null}
 
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -221,8 +238,14 @@ export function PublicHolidaysWorkspace() {
             ) : candidates.length === 0 ? (
               <Empty className="border border-dashed border-border/70 py-10 md:py-12">
                 <EmptyHeader>
-                  <EmptyTitle>{t('candidatesClearedTitle')}</EmptyTitle>
-                  <EmptyDescription>{t('candidatesClearedDescription')}</EmptyDescription>
+                  <EmptyTitle>
+                    {lastFetchEmpty ? t('candidatesNoneTitle') : t('candidatesClearedTitle')}
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {lastFetchEmpty
+                      ? t('candidatesNoneDescription')
+                      : t('candidatesClearedDescription')}
+                  </EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : (
