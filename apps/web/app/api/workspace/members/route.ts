@@ -90,6 +90,7 @@ export async function POST(req: Request) {
           acceptedAt: membership.acceptedAt,
           email: primaryEmailFromClerkUser(invitee),
           name: displayNameFromClerkUser(invitee),
+          imageUrl: invitee.imageUrl || null,
         },
       },
       { status: 201 },

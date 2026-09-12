@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import {
   AlertDialog,
@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
+import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
@@ -23,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import { withProfileImageParams } from '@/lib/clerk-profile-image'
 import type { WorkspaceTeamData } from '@/lib/workspace/members'
 
 type WorkspaceMember = WorkspaceTeamData['members'][number]
@@ -32,11 +34,20 @@ type ApiErrorPayload = {
   message?: string
 }
 
-function formatInvitedAt(value: string | null): string {
+const AVATAR_PX = 28
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
+  return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
+}
+
+function formatInvitedAt(value: string | null, locale: string): string {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date)
 }
 
 function mapApiErrorToMessage(
@@ -62,6 +73,7 @@ type Props = {
 
 export function WorkspaceTeamClient({ initialData }: Props) {
   const t = useTranslations('workspaceTeam')
+  const locale = useLocale()
   const [data, setData] = useState<WorkspaceTeamData>(initialData)
   const [email, setEmail] = useState('')
   const [inviteError, setInviteError] = useState<string | null>(null)
@@ -191,33 +203,47 @@ export function WorkspaceTeamClient({ initialData }: Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.members.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>{member.name ?? t('unknownName')}</TableCell>
-                  <TableCell>{member.email ?? t('noEmail')}</TableCell>
-                  <TableCell>
-                    {member.role === 'owner' ? t('roleOwner') : t('roleMember')}
-                  </TableCell>
-                  <TableCell>{formatInvitedAt(member.invitedAt)}</TableCell>
-                  {data.isOwner ? (
+              {data.members.map((member) => {
+                const displayName = member.name ?? t('unknownName')
+                const imageUrl = member.imageUrl
+                  ? withProfileImageParams(member.imageUrl, AVATAR_PX)
+                  : undefined
+                return (
+                  <TableRow key={member.id}>
                     <TableCell>
-                      {member.role !== 'owner' ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={removingId === member.clerkUserId}
-                          onClick={() => setMemberToRemove(member)}
-                        >
-                          {removingId === member.clerkUserId
-                            ? t('removeMemberSubmitting')
-                            : t('removeMember')}
-                        </Button>
-                      ) : null}
+                      <div className="flex min-w-0 items-center gap-2.5" title={displayName}>
+                        <Avatar size="sm" className="size-7">
+                          {imageUrl ? <AvatarImage src={imageUrl} alt="" /> : null}
+                          <AvatarFallback>{initialsFromName(displayName)}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">{displayName}</span>
+                      </div>
                     </TableCell>
-                  ) : null}
-                </TableRow>
-              ))}
+                    <TableCell>{member.email ?? t('noEmail')}</TableCell>
+                    <TableCell>
+                      {member.role === 'owner' ? t('roleOwner') : t('roleMember')}
+                    </TableCell>
+                    <TableCell>{formatInvitedAt(member.invitedAt, locale)}</TableCell>
+                    {data.isOwner ? (
+                      <TableCell>
+                        {member.role !== 'owner' ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={removingId === member.clerkUserId}
+                            onClick={() => setMemberToRemove(member)}
+                          >
+                            {removingId === member.clerkUserId
+                              ? t('removeMemberSubmitting')
+                              : t('removeMember')}
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         )}

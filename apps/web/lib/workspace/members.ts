@@ -17,6 +17,7 @@ export type WorkspaceMemberResponse = {
   acceptedAt: string | null
   email: string | null
   name: string | null
+  imageUrl: string | null
 }
 
 export type WorkspaceTeamData = {
@@ -45,6 +46,7 @@ async function enrichMembers(
           acceptedAt: member.acceptedAt,
           email: primaryEmailFromClerkUser(user),
           name: displayNameFromClerkUser(user),
+          imageUrl: user.imageUrl || null,
         }
       } catch {
         return {
@@ -55,6 +57,7 @@ async function enrichMembers(
           acceptedAt: member.acceptedAt,
           email: null,
           name: null,
+          imageUrl: null,
         }
       }
     }),
