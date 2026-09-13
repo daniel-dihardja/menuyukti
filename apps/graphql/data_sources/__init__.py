@@ -22,6 +22,8 @@ __all__ = [
     "CrmEnrollmentToken",
     "CalendarEntry",
     "Playbook",
+    "Menu",
+    "MenuItem",
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",

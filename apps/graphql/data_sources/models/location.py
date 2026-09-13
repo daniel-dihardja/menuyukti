@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
     from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
+    from graphql.data_sources.models.menu import Menu
     from graphql.data_sources.models.node import Node
     from graphql.data_sources.models.playbook import Playbook
     from graphql.data_sources.models.workspace import Workspace
@@ -98,6 +99,12 @@ class Location(Base):
         back_populates="location",
         cascade="all, delete-orphan",
         order_by="Playbook.created_at.desc()",
+    )
+    menu: Mapped[Menu | None] = relationship(
+        "Menu",
+        back_populates="location",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
     inventory_stock: Mapped[list[InventoryStock]] = relationship(
         "InventoryStock",

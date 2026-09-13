@@ -43,6 +43,7 @@ export const routes = {
     branchesCreate: '/analytics/locations/create',
     branchesDetail: (id: string | number) => `/analytics/locations/${id}`,
     branchesCogs: (id: string | number) => `/analytics/locations/${id}/cogs`,
+    branchesMenu: (id: string | number) => `/analytics/locations/${id}/menu`,
     sales: '/analytics/sales',
     salesWithLocation: (locationId: string | number) =>
       `/analytics/sales?locationId=${encodeURIComponent(String(locationId))}`,

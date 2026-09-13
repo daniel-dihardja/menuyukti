@@ -28,6 +28,7 @@ from graphql.data_sources.models.media_asset import (
     MediaCollection,
     MediaCollectionMember,
 )
+from graphql.data_sources.models.menu import Menu, MenuItem
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.playbook import Playbook
 from graphql.data_sources.models.visual_style import VisualStyle
@@ -58,6 +59,8 @@ __all__ = [
     "MediaAsset",
     "MediaCollection",
     "MediaCollectionMember",
+    "Menu",
+    "MenuItem",
     "MenuItemCogs",
     "Node",
     "OrderFact",

@@ -381,12 +381,20 @@ def test_forecast_ranks_urgent_before_medium(inventar_workspace_and_location):
     for offset in range(14):
         _execute(
             _CONSUME_STOCK,
-            {"stockId": oat_id, "quantity": 0.5, "occurredOn": _iso(today - timedelta(days=offset))},
+            {
+                "stockId": oat_id,
+                "quantity": 0.5,
+                "occurredOn": _iso(today - timedelta(days=offset)),
+            },
         )
     for offset in (0, 5, 10):
         _execute(
             _CONSUME_STOCK,
-            {"stockId": bean_id, "quantity": 1.0, "occurredOn": _iso(today - timedelta(days=offset))},
+            {
+                "stockId": bean_id,
+                "quantity": 1.0,
+                "occurredOn": _iso(today - timedelta(days=offset)),
+            },
         )
 
     result = _execute(_FORECAST_QUERY, {"locationId": str(loc_id), "windowDays": 14})

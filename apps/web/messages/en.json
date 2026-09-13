@@ -1986,6 +1986,7 @@
         "salesCta": "Go to Sales Reports"
       },
       "create": "Create New Location",
+      "manageMenu": "Manage menu",
       "manageCogs": "Manage COGS",
       "form": {
         "createTitle": "Create Location",
@@ -3195,6 +3196,38 @@
       "errors": {
         "saveFailed": "Failed to save location COGS",
         "importFailed": "Failed to import COGS from analytics",
+        "unknown": "Unknown error"
+      }
+    },
+    "locationMenu": {
+      "heading": "Menu",
+      "description": "Create and edit the guest menu for this location. Add dish names, prices, and optional descriptions.",
+      "currencyHint": "Prices use this location’s currency ({currency}).",
+      "itemLabel": "Item {number}",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "Espresso",
+        "priceWithCurrency": "Price ({currency})",
+        "pricePlaceholder": "0.00",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional short description",
+        "image": "Image",
+        "pickImage": "Choose from media",
+        "pickerAria": "Select a photo from your media library",
+        "emptyMedia": "No photos in your media library yet.",
+        "removeImage": "Remove image",
+        "fromMedia": "From media library"
+      },
+      "actions": {
+        "add": "Add item",
+        "remove": "Remove item",
+        "save": "Save menu",
+        "saving": "Saving…"
+      },
+      "errors": {
+        "nameRequired": "Each item needs a name",
+        "invalidPrice": "Enter a valid non-negative price",
+        "saveFailed": "Failed to save menu",
         "unknown": "Unknown error"
       }
     },

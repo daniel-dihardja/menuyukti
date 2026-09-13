@@ -35,6 +35,7 @@ from .media_collection_members import (
 )
 from .record_ai_usage_event import RecordAiUsageEventMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
+from .replace_location_menu_items import ReplaceLocationMenuItemsMutation
 from .revoke_crm_device import RevokeCrmDeviceMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
@@ -82,6 +83,7 @@ __all__ = [
     "RemoveMediaFromCollectionMutation",
     "RecordAiUsageEventMutation",
     "RemoveWorkspaceMemberMutation",
+    "ReplaceLocationMenuItemsMutation",
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateLocationMutation",
