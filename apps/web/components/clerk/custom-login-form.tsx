@@ -5,12 +5,14 @@ import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
+import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type Step = 'password' | 'second_factor' | 'client_trust'
+type Step = 'email' | 'code' | 'second_factor' | 'client_trust'
 
 /** Primary MFA strategy to drive send + verify (Clerk custom MFA flow). */
 function getPrimarySecondFactor(signIn: {
@@ -33,9 +35,10 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const t = useTranslations('login')
   const router = useRouter()
   const { signIn, errors, fetchStatus } = useSignIn()
-  const [step, setStep] = useState<Step>('password')
+  const [step, setStep] = useState<Step>('email')
   const [busy, setBusy] = useState(false)
   const [mfaLoading, setMfaLoading] = useState(false)
+  const [emailAddress, setEmailAddress] = useState('')
   const [primarySecondFactor, setPrimarySecondFactor] = useState<string | null>(null)
   const preparingSignInIdRef = useRef<string | null>(null)
   const preparedSignInIdRef = useRef<string | null>(null)
@@ -99,7 +102,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
     const status = signIn.status
     const isPendingVerification =
       status === 'needs_second_factor' || status === 'needs_client_trust'
-    if (!isPendingVerification || step !== 'password') return
+    if (!isPendingVerification || (step !== 'email' && step !== 'code')) return
 
     setMfaLoading(true)
     void (async () => {
@@ -118,17 +121,60 @@ export function CustomLoginForm({ className }: { className?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- ensureVerificationCodeSentRef always calls latest callback
   }, [signIn?.id, signIn?.status, step])
 
-  const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!signIn || busy) return
 
     const form = e.currentTarget
-    const emailAddress = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
-    const password = (form.elements.namedItem('password') as HTMLInputElement).value
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
 
     setBusy(true)
     try {
-      const { error } = await signIn.password({ emailAddress, password })
+      const { error: createError } = await signIn.create({ identifier: email })
+      if (createError) {
+        return
+      }
+
+      const { error: sendError } = await signIn.emailCode.sendCode({ emailAddress: email })
+      if (sendError) {
+        return
+      }
+
+      setEmailAddress(email)
+
+      if (signIn.status === 'complete') {
+        await finalizeAndRedirect()
+        return
+      }
+
+      if (signIn.status === 'needs_second_factor') {
+        await ensureVerificationCodeSent()
+        setStep('second_factor')
+        return
+      }
+
+      if (signIn.status === 'needs_client_trust') {
+        await ensureVerificationCodeSent()
+        setStep('client_trust')
+        return
+      }
+
+      setStep('code')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleCodeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!signIn || busy) return
+
+    const form = e.currentTarget
+    const code = (form.elements.namedItem('verification-code') as HTMLInputElement).value.trim()
+
+    setBusy(true)
+    try {
+      const { error } = await signIn.emailCode.verifyCode({ code })
       if (error) {
         return
       }
@@ -207,7 +253,8 @@ export function CustomLoginForm({ className }: { className?: string }) {
       preparingSignInIdRef.current = null
       preparedSignInIdRef.current = null
       setPrimarySecondFactor(null)
-      setStep('password')
+      setEmailAddress('')
+      setStep('email')
     } finally {
       setBusy(false)
     }
@@ -383,9 +430,75 @@ export function CustomLoginForm({ className }: { className?: string }) {
     )
   }
 
+  if (step === 'code') {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <p className="text-sm text-muted-foreground" role="status">
+          {t('otpHintEmail', { email: emailAddress })}
+        </p>
+        <form onSubmit={handleCodeSubmit} className="space-y-4">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="verification-code">{t('verificationCodeLabel')}</FieldLabel>
+              <Input
+                key="sign-in-code"
+                id="verification-code"
+                name="verification-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                enterKeyHint="done"
+                placeholder={t('verificationCodePlaceholder')}
+                required
+                disabled={busy}
+                className="text-base py-2"
+              />
+              {errors?.fields?.code?.message ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {errors.fields.code.message}
+                </p>
+              ) : null}
+            </Field>
+            <Field>
+              <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
+                {isSigningIn ? t('signingIn') : t('verify')}
+              </Button>
+            </Field>
+          </FieldGroup>
+        </form>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            disabled={isSigningIn}
+            onClick={() => signIn.emailCode.sendCode({ emailAddress })}
+          >
+            {t('resendCode')}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            disabled={isSigningIn}
+            onClick={handleStartOver}
+          >
+            {t('startOver')}
+          </Button>
+        </div>
+        <div id="clerk-captcha" />
+      </div>
+    )
+  }
+
   return (
     <div className={cn('space-y-6', className)}>
-      <form onSubmit={handlePasswordSubmit} className="space-y-8">
+      <form onSubmit={handleEmailSubmit} className="space-y-8">
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="email" className="text-base font-medium text-foreground">
@@ -410,32 +523,22 @@ export function CustomLoginForm({ className }: { className?: string }) {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="password" className="text-base font-medium text-foreground">
-              {t('passwordLabel')}
-            </FieldLabel>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              disabled={isSigningIn}
-              className="text-base py-2"
-            />
-            {errors?.fields?.password?.message ? (
-              <p className="text-sm text-destructive" role="alert">
-                {errors.fields.password.message}
-              </p>
-            ) : null}
-          </Field>
-
-          <Field>
             <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
-              {isSigningIn ? t('signingIn') : t('loginButton')}
+              {isSigningIn ? t('sendingCode') : t('continueWithEmail')}
             </Button>
           </Field>
         </FieldGroup>
       </form>
+
+      <p className="text-center text-sm text-muted-foreground">
+        {t('signupDescription')}{' '}
+        <Link
+          href={routes.signUp}
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          {t('signupLink')}
+        </Link>
+      </p>
 
       <div id="clerk-captcha" />
     </div>
