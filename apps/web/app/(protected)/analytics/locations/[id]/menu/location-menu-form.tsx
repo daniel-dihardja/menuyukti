@@ -3,14 +3,20 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, Plus, Trash2 } from 'lucide-react'
 
 import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { Textarea } from '@workspace/ui/components/textarea'
+import { cn } from '@workspace/ui/lib/utils'
 
 export type LocationMenuFormItem = {
   key: string
@@ -61,6 +67,132 @@ function newCategory(): LocationMenuFormCategory {
     name: '',
     items: [newItem()],
   }
+}
+
+function isBlankItem(item: LocationMenuFormItem): boolean {
+  return !item.name && !item.price && !item.description && !item.imageFilename
+}
+
+type MenuItemRowProps = {
+  item: LocationMenuFormItem
+  currencyCode: string
+  loading: boolean
+  defaultOpen: boolean
+  onUpdate: (patch: Partial<LocationMenuFormItem>) => void
+  onRemove: () => void
+}
+
+function LocationMenuItemRow({
+  item,
+  currencyCode,
+  loading,
+  defaultOpen,
+  onUpdate,
+  onRemove,
+}: MenuItemRowProps) {
+  const t = useTranslations('analytics.locationMenu')
+  const [open, setOpen] = useState(defaultOpen)
+  const displayName = item.name.trim() || t('untitledItem')
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="rounded-md border border-border/70 p-3"
+    >
+      <div className="flex items-center gap-2">
+        <CollapsibleTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={loading}
+            className="h-auto min-w-0 flex-1 justify-start gap-2 px-2 py-1.5 text-left font-medium"
+            aria-label={open ? t('actions.collapseItem') : t('actions.expandItem')}
+          >
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                'size-4 shrink-0 text-muted-foreground transition-transform',
+                open && 'rotate-180',
+              )}
+            />
+            <span className="truncate">{displayName}</span>
+          </Button>
+        </CollapsibleTrigger>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={loading}
+          onClick={onRemove}
+          aria-label={t('actions.remove')}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+
+      <CollapsibleContent className="flex flex-col gap-3 pt-3">
+        <FieldGroup className="grid gap-3 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor={`menu-name-${item.key}`}>{t('fields.name')}</FieldLabel>
+            <Input
+              id={`menu-name-${item.key}`}
+              value={item.name}
+              disabled={loading}
+              onChange={(e) => onUpdate({ name: e.target.value })}
+              placeholder={t('fields.namePlaceholder')}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`menu-price-${item.key}`}>
+              {t('fields.priceWithCurrency', { currency: currencyCode })}
+            </FieldLabel>
+            <Input
+              id={`menu-price-${item.key}`}
+              inputMode="decimal"
+              value={item.price}
+              disabled={loading}
+              onChange={(e) => onUpdate({ price: e.target.value })}
+              placeholder={t('fields.pricePlaceholder')}
+              className="tabular-nums"
+            />
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor={`menu-desc-${item.key}`}>{t('fields.description')}</FieldLabel>
+            <Textarea
+              id={`menu-desc-${item.key}`}
+              value={item.description}
+              disabled={loading}
+              onChange={(e) => onUpdate({ description: e.target.value })}
+              placeholder={t('fields.descriptionPlaceholder')}
+              rows={2}
+            />
+          </Field>
+          <Field className="sm:col-span-2 gap-1.5">
+            <FieldLabel>{t('fields.image')}</FieldLabel>
+            <MediaCatalogPicker
+              selectedImage={
+                item.imageFilename
+                  ? {
+                      name: item.imageFilename,
+                      url: mediaDownloadHref(item.imageFilename),
+                    }
+                  : null
+              }
+              onSelect={(media: MediaCatalogItem) => onUpdate({ imageFilename: media.name })}
+              onClear={() => onUpdate({ imageFilename: null })}
+              disabled={loading}
+              pickLabel={t('fields.pickImage')}
+              pickerAriaLabel={t('fields.pickerAria')}
+              emptyLabel={t('fields.emptyMedia')}
+              removeLabel={t('fields.removeImage')}
+              fromMediaLabel={t('fields.fromMedia')}
+            />
+          </Field>
+        </FieldGroup>
+      </CollapsibleContent>
+    </Collapsible>
+  )
 }
 
 export function LocationMenuForm({ locationId, currencyCode, initialCategories }: Props) {
@@ -214,95 +346,16 @@ export function LocationMenuForm({ locationId, currencyCode, initialCategories }
             </div>
 
             <div className="flex flex-col gap-4">
-              {category.items.map((item, itemIndex) => (
-                <div
+              {category.items.map((item) => (
+                <LocationMenuItemRow
                   key={item.key}
-                  className="flex flex-col gap-3 rounded-md border border-border/70 p-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">
-                      {t('itemLabel', { number: itemIndex + 1 })}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={loading}
-                      onClick={() => removeItem(category.key, item.key)}
-                      aria-label={t('actions.remove')}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                  <FieldGroup className="grid gap-3 sm:grid-cols-2">
-                    <Field>
-                      <FieldLabel htmlFor={`menu-name-${item.key}`}>{t('fields.name')}</FieldLabel>
-                      <Input
-                        id={`menu-name-${item.key}`}
-                        value={item.name}
-                        disabled={loading}
-                        onChange={(e) =>
-                          updateItem(category.key, item.key, { name: e.target.value })
-                        }
-                        placeholder={t('fields.namePlaceholder')}
-                      />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor={`menu-price-${item.key}`}>
-                        {t('fields.priceWithCurrency', { currency: currencyCode })}
-                      </FieldLabel>
-                      <Input
-                        id={`menu-price-${item.key}`}
-                        inputMode="decimal"
-                        value={item.price}
-                        disabled={loading}
-                        onChange={(e) =>
-                          updateItem(category.key, item.key, { price: e.target.value })
-                        }
-                        placeholder={t('fields.pricePlaceholder')}
-                        className="tabular-nums"
-                      />
-                    </Field>
-                    <Field className="sm:col-span-2">
-                      <FieldLabel htmlFor={`menu-desc-${item.key}`}>
-                        {t('fields.description')}
-                      </FieldLabel>
-                      <Textarea
-                        id={`menu-desc-${item.key}`}
-                        value={item.description}
-                        disabled={loading}
-                        onChange={(e) =>
-                          updateItem(category.key, item.key, { description: e.target.value })
-                        }
-                        placeholder={t('fields.descriptionPlaceholder')}
-                        rows={2}
-                      />
-                    </Field>
-                    <Field className="sm:col-span-2 gap-1.5">
-                      <FieldLabel>{t('fields.image')}</FieldLabel>
-                      <MediaCatalogPicker
-                        selectedImage={
-                          item.imageFilename
-                            ? {
-                                name: item.imageFilename,
-                                url: mediaDownloadHref(item.imageFilename),
-                              }
-                            : null
-                        }
-                        onSelect={(media: MediaCatalogItem) =>
-                          updateItem(category.key, item.key, { imageFilename: media.name })
-                        }
-                        onClear={() => updateItem(category.key, item.key, { imageFilename: null })}
-                        disabled={loading}
-                        pickLabel={t('fields.pickImage')}
-                        pickerAriaLabel={t('fields.pickerAria')}
-                        emptyLabel={t('fields.emptyMedia')}
-                        removeLabel={t('fields.removeImage')}
-                        fromMediaLabel={t('fields.fromMedia')}
-                      />
-                    </Field>
-                  </FieldGroup>
-                </div>
+                  item={item}
+                  currencyCode={currencyCode}
+                  loading={loading}
+                  defaultOpen={isBlankItem(item)}
+                  onUpdate={(patch) => updateItem(category.key, item.key, patch)}
+                  onRemove={() => removeItem(category.key, item.key)}
+                />
               ))}
             </div>
 

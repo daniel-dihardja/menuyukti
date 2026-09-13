@@ -3226,9 +3226,12 @@
         "addCategory": "Add category",
         "remove": "Remove item",
         "removeCategory": "Remove category",
+        "expandItem": "Expand item",
+        "collapseItem": "Collapse item",
         "save": "Save menu",
         "saving": "Saving…"
       },
+      "untitledItem": "Untitled item",
       "errors": {
         "nameRequired": "Each item needs a name",
         "categoryNameRequired": "Each category needs a name",
