@@ -76,11 +76,7 @@ export function LocationMenuForm({ locationId, currencyCode, initialCategories }
     setCategories((prev) => prev.map((cat) => (cat.key === key ? { ...cat, ...patch } : cat)))
   }
 
-  function updateItem(
-    categoryKey: string,
-    itemKey: string,
-    patch: Partial<LocationMenuFormItem>,
-  ) {
+  function updateItem(categoryKey: string, itemKey: string, patch: Partial<LocationMenuFormItem>) {
     setCategories((prev) =>
       prev.map((cat) =>
         cat.key === categoryKey
@@ -296,9 +292,7 @@ export function LocationMenuForm({ locationId, currencyCode, initialCategories }
                         onSelect={(media: MediaCatalogItem) =>
                           updateItem(category.key, item.key, { imageFilename: media.name })
                         }
-                        onClear={() =>
-                          updateItem(category.key, item.key, { imageFilename: null })
-                        }
+                        onClear={() => updateItem(category.key, item.key, { imageFilename: null })}
                         disabled={loading}
                         pickLabel={t('fields.pickImage')}
                         pickerAriaLabel={t('fields.pickerAria')}

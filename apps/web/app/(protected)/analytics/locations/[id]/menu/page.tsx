@@ -42,12 +42,7 @@ export default async function Page({ params }: PageProps) {
 
   const [locationData, menuData] = await Promise.all([
     getCachedLocation(userId, id),
-    graphqlQuery<LocationMenuData>(
-      LOCATION_MENU_QUERY,
-      { locationId },
-      userId,
-      'LocationMenu',
-    ),
+    graphqlQuery<LocationMenuData>(LOCATION_MENU_QUERY, { locationId }, userId, 'LocationMenu'),
   ])
 
   const location = locationData.location
