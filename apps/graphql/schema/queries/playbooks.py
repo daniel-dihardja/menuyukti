@@ -17,9 +17,7 @@ from graphql.services.playbook import KNOWN_PLAYBOOK_TYPES
 @strawberry.type
 class PlaybooksQuery:
     @strawberry.field(
-        description=(
-            "Playbook instances of a given type for all locations the caller can access."
-        )
+        description=("Playbook instances of a given type for all locations the caller can access.")
     )
     def playbooks(self, info: strawberry.Info, playbook_type: str) -> list[PlaybookType]:
         user_id = user_id_from_info(info)
@@ -41,9 +39,7 @@ class PlaybooksQuery:
             access = [Location.clerk_user_id == user_id]
             if workspace_ids:
                 access.append(Location.workspace_id.in_(workspace_ids))
-            location_ids = list(
-                session.scalars(select(Location.id).where(or_(*access))).all()
-            )
+            location_ids = list(session.scalars(select(Location.id).where(or_(*access))).all())
             if not location_ids:
                 return []
 

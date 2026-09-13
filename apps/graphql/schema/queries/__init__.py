@@ -9,6 +9,7 @@ from .inventory_catalog import InventoryCatalogQuery
 from .inventory_refill_forecast import InventoryRefillForecastQuery
 from .inventory_stock import InventoryStockQuery
 from .inventory_stock_movement import InventoryStockMovementQuery
+from .location_menu import LocationMenuQuery
 from .location_menu_item_cogs import LocationMenuItemCogsQuery
 from .locations import LocationsQuery
 from .media_collections import MediaCollectionsQuery
@@ -39,6 +40,7 @@ __all__ = [
     "InventoryStockQuery",
     "InventoryStockMovementQuery",
     "LocationsQuery",
+    "LocationMenuQuery",
     "LocationMenuItemCogsQuery",
     "StylesQuery",
     "MediaCollectionsQuery",

@@ -326,9 +326,7 @@ def test_catalog_price_create_update_and_reject_negative(inventar_workspace_and_
     stock_list = _execute(_STOCK_QUERY, {"locationId": str(loc_id)})
     assert not stock_list.errors, stock_list.errors
     flour = next(
-        row
-        for row in stock_list.data["inventoryStock"]
-        if row["catalogItem"]["name"] == "Flour"
+        row for row in stock_list.data["inventoryStock"] if row["catalogItem"]["name"] == "Flour"
     )
     assert flour["catalogItem"]["price"] == 25000.0
     assert flour["onHand"] == 3.0
@@ -416,9 +414,7 @@ def test_stock_on_hand_limits_create_update_and_validation(inventar_workspace_an
     stock_list = _execute(_STOCK_QUERY, {"locationId": str(loc_id)})
     assert not stock_list.errors, stock_list.errors
     oil_row = next(
-        row
-        for row in stock_list.data["inventoryStock"]
-        if row["catalogItem"]["name"] == "Oil"
+        row for row in stock_list.data["inventoryStock"] if row["catalogItem"]["name"] == "Oil"
     )
     assert oil_row["minOnHand"] == 1.0
     assert oil_row["maxOnHand"] == 8.0
@@ -1230,7 +1226,9 @@ def test_transfer_writes_paired_movements(inventar_two_locations):
         _MOVEMENTS_QUERY,
         {"locationId": str(loc_b), "catalogItemId": str(catalog_id)},
     )
-    out_rows = [r for r in mov_a.data["inventoryStockMovements"] if r["direction"] == "transfer_out"]
+    out_rows = [
+        r for r in mov_a.data["inventoryStockMovements"] if r["direction"] == "transfer_out"
+    ]
     in_rows = [r for r in mov_b.data["inventoryStockMovements"] if r["direction"] == "transfer_in"]
     assert len(out_rows) == 1
     assert len(in_rows) == 1

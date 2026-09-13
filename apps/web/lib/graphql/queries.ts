@@ -3,6 +3,7 @@
  */
 
 export * from './queries/locations'
+export * from './queries/location-menu'
 export * from './queries/styles'
 export * from './queries/crm-apps'
 export * from './queries/calendar-entries'

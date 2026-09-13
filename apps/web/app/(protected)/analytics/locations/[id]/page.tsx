@@ -71,9 +71,14 @@ export default async function Page({ params }: PageProps) {
       <section className={LOCATION_DETAIL_SECTION_CLASS}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <PageHeading title={location.name} />
-          <Button asChild variant="outline">
-            <Link href={routes.analytics.branchesCogs(location.id)}>{t('manageCogs')}</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href={routes.analytics.branchesMenu(location.id)}>{t('manageMenu')}</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={routes.analytics.branchesCogs(location.id)}>{t('manageCogs')}</Link>
+            </Button>
+          </div>
         </div>
         <LocationForm
           key={`${location.id}-${JSON.stringify(location.manualBriefInput?.quickProfile ?? {})}`}
