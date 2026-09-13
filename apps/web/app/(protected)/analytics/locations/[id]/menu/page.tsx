@@ -58,13 +58,28 @@ export default async function Page({ params }: PageProps) {
   const appCurrency = getAppCurrencyCode()
   const currencyCode = (location.currency?.trim() || appCurrency).toUpperCase() || appCurrency
 
-  const initialItems =
-    menuData.locationMenu?.items.map((item) => ({
-      key: `item-${item.id}`,
-      name: item.name,
-      price: String(item.price),
-      description: item.description ?? '',
-      imageFilename: item.imageFilename ?? null,
+  const initialCategories =
+    menuData.locationMenu?.categories.map((category) => ({
+      key: `cat-${category.id}`,
+      name: category.name,
+      items:
+        category.items.length > 0
+          ? category.items.map((item) => ({
+              key: `item-${item.id}`,
+              name: item.name,
+              price: String(item.price),
+              description: item.description ?? '',
+              imageFilename: item.imageFilename ?? null,
+            }))
+          : [
+              {
+                key: `item-empty-${category.id}`,
+                name: '',
+                price: '',
+                description: '',
+                imageFilename: null,
+              },
+            ],
     })) ?? []
 
   return (
@@ -81,7 +96,7 @@ export default async function Page({ params }: PageProps) {
         <LocationMenuForm
           locationId={locationId}
           currencyCode={currencyCode}
-          initialItems={initialItems}
+          initialCategories={initialCategories}
         />
       </section>
     </AnalyticsPageShell>

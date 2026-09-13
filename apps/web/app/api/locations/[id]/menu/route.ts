@@ -22,34 +22,34 @@ type MenuItemBody = {
   imageFilename?: unknown
 }
 
-function parseItems(raw: unknown): Array<{
+type MenuCategoryBody = {
+  name?: unknown
+  items?: unknown
+}
+
+type ParsedItem = {
   name: string
   price: number
   description?: string
   isAvailable?: boolean
   imageFilename?: string | null
-}> | null {
+}
+
+type ParsedCategory = {
+  name: string
+  items: ParsedItem[]
+}
+
+function parseItems(raw: unknown): ParsedItem[] | null {
   if (!Array.isArray(raw)) return null
-  const items: Array<{
-    name: string
-    price: number
-    description?: string
-    isAvailable?: boolean
-    imageFilename?: string | null
-  }> = []
+  const items: ParsedItem[] = []
   for (const entry of raw) {
     if (!entry || typeof entry !== 'object') return null
     const row = entry as MenuItemBody
     if (typeof row.name !== 'string') return null
     const price = typeof row.price === 'number' ? row.price : Number(row.price)
     if (!Number.isFinite(price)) return null
-    const item: {
-      name: string
-      price: number
-      description?: string
-      isAvailable?: boolean
-      imageFilename?: string | null
-    } = { name: row.name, price }
+    const item: ParsedItem = { name: row.name, price }
     if (typeof row.description === 'string') item.description = row.description
     if (typeof row.isAvailable === 'boolean') item.isAvailable = row.isAvailable
     if (row.imageFilename === null) {
@@ -60,6 +60,20 @@ function parseItems(raw: unknown): Array<{
     items.push(item)
   }
   return items
+}
+
+function parseCategories(raw: unknown): ParsedCategory[] | null {
+  if (!Array.isArray(raw)) return null
+  const categories: ParsedCategory[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') return null
+    const row = entry as MenuCategoryBody
+    if (typeof row.name !== 'string') return null
+    const items = parseItems(row.items)
+    if (!items) return null
+    categories.push({ name: row.name, items })
+  }
+  return categories
 }
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -104,15 +118,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ message: 'Invalid locationId' }, { status: 400 })
     }
 
-    const body = (await req.json().catch(() => null)) as { items?: unknown } | null
-    const items = parseItems(body?.items)
-    if (!items) {
-      return NextResponse.json({ message: 'Invalid items payload' }, { status: 400 })
+    const body = (await req.json().catch(() => null)) as { categories?: unknown } | null
+    const categories = parseCategories(body?.categories)
+    if (!categories) {
+      return NextResponse.json({ message: 'Invalid categories payload' }, { status: 400 })
     }
 
     const data = await graphqlQuery<ReplaceLocationMenuItemsData>(
       REPLACE_LOCATION_MENU_ITEMS_MUTATION,
-      { locationId: locId, items },
+      { locationId: locId, categories },
       userId,
       'ReplaceLocationMenuItems',
     )

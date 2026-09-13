@@ -23,6 +23,7 @@ __all__ = [
     "CalendarEntry",
     "Playbook",
     "Menu",
+    "MenuCategory",
     "MenuItem",
     "AnalyticsRun",
     "OrderFact",

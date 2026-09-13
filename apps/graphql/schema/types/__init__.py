@@ -1,7 +1,7 @@
 from .location import LocationType, OpeningHourType
 from .location_area import LocationAreaType
 from .location_menu_item_cogs import LocationMenuItemCogsType
-from .menu import MenuItemType, MenuType
+from .menu import MenuCategoryType, MenuItemType, MenuType
 from .menu_item_cogs import MenuItemCogsType
 from .post import PostType
 from .post_page import PostPageType
@@ -16,6 +16,7 @@ __all__ = [
     "OpeningHourType",
     "LocationMenuItemCogsType",
     "MenuType",
+    "MenuCategoryType",
     "MenuItemType",
     "MenuItemCogsType",
     "PublicHolidayType",

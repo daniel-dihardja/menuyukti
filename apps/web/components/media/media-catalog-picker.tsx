@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@workspace/ui/components/dialog'
-import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
@@ -138,14 +137,14 @@ export function MediaCatalogPicker({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="flex max-h-[min(90vh,40rem)] flex-col gap-4 sm:max-w-2xl"
+          className="flex max-h-[min(90vh,40rem)] flex-col gap-4 overflow-hidden sm:max-w-2xl"
           closeLabel={closeLabel}
         >
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle>{pickerAriaLabel}</DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="min-h-0 flex-1 pr-3">
+          <div className="max-h-[min(70vh,32rem)] overflow-y-auto overscroll-contain pr-1">
             {loading ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -194,7 +193,7 @@ export function MediaCatalogPicker({
                 })}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

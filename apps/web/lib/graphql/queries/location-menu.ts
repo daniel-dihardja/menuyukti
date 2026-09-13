@@ -1,6 +1,7 @@
 export type LocationMenuItem = {
   id: number
   menuId: number
+  categoryId: number
   name: string
   description: string
   price: number
@@ -9,11 +10,19 @@ export type LocationMenuItem = {
   imageFilename: string | null
 }
 
+export type LocationMenuCategory = {
+  id: number
+  menuId: number
+  name: string
+  sortOrder: number
+  items: LocationMenuItem[]
+}
+
 export type LocationMenu = {
   id: number
   locationId: number
   title: string
-  items: LocationMenuItem[]
+  categories: LocationMenuCategory[]
 }
 
 export const LOCATION_MENU_QUERY = `
@@ -22,15 +31,22 @@ export const LOCATION_MENU_QUERY = `
       id
       locationId
       title
-      items {
+      categories {
         id
         menuId
         name
-        description
-        price
         sortOrder
-        isAvailable
-        imageFilename
+        items {
+          id
+          menuId
+          categoryId
+          name
+          description
+          price
+          sortOrder
+          isAvailable
+          imageFilename
+        }
       }
     }
   }
@@ -41,20 +57,27 @@ export type LocationMenuData = {
 }
 
 export const REPLACE_LOCATION_MENU_ITEMS_MUTATION = `
-  mutation ReplaceLocationMenuItems($locationId: Int!, $items: [MenuItemInput!]!) {
-    replaceLocationMenuItems(locationId: $locationId, items: $items) {
+  mutation ReplaceLocationMenuItems($locationId: Int!, $categories: [MenuCategoryInput!]!) {
+    replaceLocationMenuItems(locationId: $locationId, categories: $categories) {
       id
       locationId
       title
-      items {
+      categories {
         id
         menuId
         name
-        description
-        price
         sortOrder
-        isAvailable
-        imageFilename
+        items {
+          id
+          menuId
+          categoryId
+          name
+          description
+          price
+          sortOrder
+          isAvailable
+          imageFilename
+        }
       }
     }
   }

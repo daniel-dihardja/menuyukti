@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import isfinite
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from graphql.data_sources.models.menu import Menu, MenuItem
+from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 
 NAME_MAX_LEN = 256
 DESCRIPTION_MAX_LEN = 4000
 TITLE_MAX_LEN = 256
+CATEGORY_NAME_MAX_LEN = 256
 IMAGE_FILENAME_MAX_LEN = 512
 
 
@@ -23,6 +24,12 @@ class MenuItemReplaceInput:
     description: str = ""
     is_available: bool = True
     image_filename: str | None = None
+
+
+@dataclass(frozen=True)
+class MenuCategoryReplaceInput:
+    name: str
+    items: list[MenuItemReplaceInput] = field(default_factory=list)
 
 
 def validate_menu_item_fields(
@@ -61,6 +68,19 @@ def validate_menu_item_fields(
     )
 
 
+def validate_menu_category_fields(
+    *,
+    name: str,
+    items: list[MenuItemReplaceInput],
+) -> MenuCategoryReplaceInput:
+    name_clean = name.strip()
+    if not name_clean:
+        raise ValueError("Menu category name cannot be empty")
+    if len(name_clean) > CATEGORY_NAME_MAX_LEN:
+        raise ValueError("Menu category name is too long")
+    return MenuCategoryReplaceInput(name=name_clean, items=list(items))
+
+
 def get_menu_for_location(session: Session, location_id: int) -> Menu | None:
     return session.scalar(select(Menu).where(Menu.location_id == location_id))
 
@@ -80,36 +100,58 @@ def get_or_create_menu(session: Session, location_id: int, *, title: str = "") -
     return menu
 
 
-def replace_menu_items(
+def replace_menu_categories(
     session: Session,
     menu: Menu,
-    items: list[MenuItemReplaceInput],
+    categories: list[MenuCategoryReplaceInput],
 ) -> Menu:
-    """Replace all items on ``menu`` with ``items`` (order preserved as sort_order)."""
-    validated = [
-        validate_menu_item_fields(
-            name=item.name,
-            price=item.price,
-            description=item.description,
-            is_available=item.is_available,
-            image_filename=item.image_filename,
-        )
-        for item in items
-    ]
-
-    menu.items.clear()
-    session.flush()
-
-    for index, item in enumerate(validated):
-        menu.items.append(
-            MenuItem(
+    """Replace all categories (and nested items) on ``menu`` (order preserved as sort_order)."""
+    validated: list[MenuCategoryReplaceInput] = []
+    seen_names: set[str] = set()
+    for category in categories:
+        validated_items = [
+            validate_menu_item_fields(
                 name=item.name,
-                description=item.description,
                 price=item.price,
-                sort_order=index,
+                description=item.description,
                 is_available=item.is_available,
                 image_filename=item.image_filename,
             )
+            for item in category.items
+        ]
+        validated_category = validate_menu_category_fields(
+            name=category.name,
+            items=validated_items,
         )
+        key = validated_category.name.casefold()
+        if key in seen_names:
+            raise ValueError("Menu category names must be unique")
+        seen_names.add(key)
+        validated.append(validated_category)
+
+    menu.categories.clear()
+    session.flush()
+
+    for cat_index, category in enumerate(validated):
+        cat_row = MenuCategory(
+            menu_id=menu.id,
+            name=category.name,
+            sort_order=cat_index,
+        )
+        menu.categories.append(cat_row)
+        session.flush()
+        for item_index, item in enumerate(category.items):
+            cat_row.items.append(
+                MenuItem(
+                    menu_id=menu.id,
+                    category_id=cat_row.id,
+                    name=item.name,
+                    description=item.description,
+                    price=item.price,
+                    sort_order=item_index,
+                    is_available=item.is_available,
+                    image_filename=item.image_filename,
+                )
+            )
     session.flush()
     return menu

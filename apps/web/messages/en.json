@@ -3201,10 +3201,13 @@
     },
     "locationMenu": {
       "heading": "Menu",
-      "description": "Create and edit the guest menu for this location. Add dish names, prices, and optional descriptions.",
+      "description": "Create and edit the guest menu for this location. Organize dishes into categories like Food and Drink, then add names, prices, and optional descriptions.",
       "currencyHint": "Prices use this location’s currency ({currency}).",
+      "categoryLabel": "Category {number}",
       "itemLabel": "Item {number}",
       "fields": {
+        "categoryName": "Category",
+        "categoryNamePlaceholder": "Food",
         "name": "Name",
         "namePlaceholder": "Espresso",
         "priceWithCurrency": "Price ({currency})",
@@ -3220,12 +3223,15 @@
       },
       "actions": {
         "add": "Add item",
+        "addCategory": "Add category",
         "remove": "Remove item",
+        "removeCategory": "Remove category",
         "save": "Save menu",
         "saving": "Saving…"
       },
       "errors": {
         "nameRequired": "Each item needs a name",
+        "categoryNameRequired": "Each category needs a name",
         "invalidPrice": "Enter a valid non-negative price",
         "saveFailed": "Failed to save menu",
         "unknown": "Unknown error"

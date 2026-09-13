@@ -5,27 +5,34 @@ from __future__ import annotations
 import asyncio
 
 from graphql.data_sources import Location, Node, SessionLocal
-from graphql.data_sources.models.menu import Menu, MenuItem
+from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
 OTHER_USER_ID = "clerk_other_user"
 
 REPLACE_MENU = """
-mutation ReplaceLocationMenuItems($locationId: Int!, $items: [MenuItemInput!]!) {
-  replaceLocationMenuItems(locationId: $locationId, items: $items) {
+mutation ReplaceLocationMenuItems($locationId: Int!, $categories: [MenuCategoryInput!]!) {
+  replaceLocationMenuItems(locationId: $locationId, categories: $categories) {
     id
     locationId
     title
-    items {
+    categories {
       id
       menuId
       name
-      description
-      price
       sortOrder
-      isAvailable
-      imageFilename
+      items {
+        id
+        menuId
+        categoryId
+        name
+        description
+        price
+        sortOrder
+        isAvailable
+        imageFilename
+      }
     }
   }
 }
@@ -36,13 +43,18 @@ query LocationMenu($locationId: Int!) {
   locationMenu(locationId: $locationId) {
     id
     locationId
-    items {
+    categories {
       name
-      description
-      price
       sortOrder
-      isAvailable
-      imageFilename
+      items {
+        name
+        description
+        price
+        sortOrder
+        isAvailable
+        imageFilename
+        categoryId
+      }
     }
   }
 }
@@ -53,6 +65,7 @@ def _create_location(name: str, *, clerk_user_id: str = GRAPHQL_TEST_USER_ID) ->
     session = SessionLocal()
     try:
         session.query(MenuItem).delete()
+        session.query(MenuCategory).delete()
         session.query(Menu).delete()
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == clerk_user_id).delete()
@@ -76,14 +89,22 @@ def test_replace_and_query_location_menu():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [
+                "categories": [
                     {
-                        "name": "Espresso",
-                        "price": 3.5,
-                        "description": "Single shot",
-                        "isAvailable": True,
+                        "name": "Drinks",
+                        "items": [
+                            {
+                                "name": "Espresso",
+                                "price": 3.5,
+                                "description": "Single shot",
+                                "isAvailable": True,
+                            },
+                        ],
                     },
-                    {"name": "Croissant", "price": 4.0},
+                    {
+                        "name": "Food",
+                        "items": [{"name": "Croissant", "price": 4.0}],
+                    },
                 ],
             },
             context_value=graphql_auth_context(),
@@ -92,14 +113,18 @@ def test_replace_and_query_location_menu():
     assert not replace_result.errors, replace_result.errors
     menu = replace_result.data["replaceLocationMenuItems"]
     assert menu["locationId"] == location_id
-    assert len(menu["items"]) == 2
-    assert menu["items"][0]["name"] == "Espresso"
-    assert menu["items"][0]["description"] == "Single shot"
-    assert menu["items"][0]["price"] == 3.5
-    assert menu["items"][0]["sortOrder"] == 0
-    assert menu["items"][0]["isAvailable"] is True
-    assert menu["items"][1]["name"] == "Croissant"
-    assert menu["items"][1]["sortOrder"] == 1
+    assert len(menu["categories"]) == 2
+    assert menu["categories"][0]["name"] == "Drinks"
+    assert menu["categories"][0]["sortOrder"] == 0
+    assert len(menu["categories"][0]["items"]) == 1
+    assert menu["categories"][0]["items"][0]["name"] == "Espresso"
+    assert menu["categories"][0]["items"][0]["description"] == "Single shot"
+    assert menu["categories"][0]["items"][0]["price"] == 3.5
+    assert menu["categories"][0]["items"][0]["sortOrder"] == 0
+    assert menu["categories"][0]["items"][0]["isAvailable"] is True
+    assert menu["categories"][0]["items"][0]["categoryId"] == menu["categories"][0]["id"]
+    assert menu["categories"][1]["name"] == "Food"
+    assert menu["categories"][1]["items"][0]["name"] == "Croissant"
 
     query_result = asyncio.run(
         schema.execute(
@@ -111,18 +136,19 @@ def test_replace_and_query_location_menu():
     assert not query_result.errors, query_result.errors
     loaded = query_result.data["locationMenu"]
     assert loaded is not None
-    assert len(loaded["items"]) == 2
-    assert loaded["items"][0]["name"] == "Espresso"
+    assert len(loaded["categories"]) == 2
+    assert loaded["categories"][0]["name"] == "Drinks"
+    assert loaded["categories"][0]["items"][0]["name"] == "Espresso"
 
 
-def test_replace_clears_items_with_empty_list():
+def test_replace_clears_categories_with_empty_list():
     location_id = _create_location("Clear Menu Location")
     asyncio.run(
         schema.execute(
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [{"name": "Soup", "price": 8.0}],
+                "categories": [{"name": "Mains", "items": [{"name": "Soup", "price": 8.0}]}],
             },
             context_value=graphql_auth_context(),
         )
@@ -130,12 +156,50 @@ def test_replace_clears_items_with_empty_list():
     clear_result = asyncio.run(
         schema.execute(
             REPLACE_MENU,
-            variable_values={"locationId": location_id, "items": []},
+            variable_values={"locationId": location_id, "categories": []},
             context_value=graphql_auth_context(),
         )
     )
     assert not clear_result.errors, clear_result.errors
-    assert clear_result.data["replaceLocationMenuItems"]["items"] == []
+    assert clear_result.data["replaceLocationMenuItems"]["categories"] == []
+
+
+def test_empty_items_under_category_allowed():
+    location_id = _create_location("Empty Category Menu")
+    result = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [{"name": "Coming Soon", "items": []}],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors, result.errors
+    categories = result.data["replaceLocationMenuItems"]["categories"]
+    assert len(categories) == 1
+    assert categories[0]["name"] == "Coming Soon"
+    assert categories[0]["items"] == []
+
+
+def test_duplicate_category_names_rejected():
+    location_id = _create_location("Dup Category Menu")
+    result = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [
+                    {"name": "Food", "items": []},
+                    {"name": "food", "items": []},
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert any("unique" in str(err).lower() for err in result.errors)
 
 
 def test_unauthenticated_replace_fails():
@@ -145,7 +209,7 @@ def test_unauthenticated_replace_fails():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [{"name": "Tea", "price": 2.0}],
+                "categories": [{"name": "Drinks", "items": [{"name": "Tea", "price": 2.0}]}],
             },
             context_value={},
         )
@@ -161,7 +225,9 @@ def test_non_owner_denied():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [{"name": "Denied", "price": 1.0}],
+                "categories": [
+                    {"name": "Denied", "items": [{"name": "Denied", "price": 1.0}]}
+                ],
             },
             context_value=graphql_auth_context(),
         )
@@ -186,7 +252,7 @@ def test_validation_empty_name_and_negative_price():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [{"name": "  ", "price": 1.0}],
+                "categories": [{"name": "Drinks", "items": [{"name": "  ", "price": 1.0}]}],
             },
             context_value=graphql_auth_context(),
         )
@@ -194,12 +260,27 @@ def test_validation_empty_name_and_negative_price():
     assert empty_name.errors
     assert any("name" in str(err).lower() for err in empty_name.errors)
 
+    empty_category = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [{"name": "  ", "items": []}],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert empty_category.errors
+    assert any("category" in str(err).lower() for err in empty_category.errors)
+
     negative_price = asyncio.run(
         schema.execute(
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [{"name": "Bad Price", "price": -1.0}],
+                "categories": [
+                    {"name": "Drinks", "items": [{"name": "Bad Price", "price": -1.0}]}
+                ],
             },
             context_value=graphql_auth_context(),
         )
@@ -228,11 +309,16 @@ def test_replace_and_query_with_image_filename():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [
+                "categories": [
                     {
-                        "name": "Latte",
-                        "price": 4.5,
-                        "imageFilename": "latte.jpg",
+                        "name": "Drinks",
+                        "items": [
+                            {
+                                "name": "Latte",
+                                "price": 4.5,
+                                "imageFilename": "latte.jpg",
+                            }
+                        ],
                     }
                 ],
             },
@@ -240,7 +326,7 @@ def test_replace_and_query_with_image_filename():
         )
     )
     assert not replace_result.errors, replace_result.errors
-    item = replace_result.data["replaceLocationMenuItems"]["items"][0]
+    item = replace_result.data["replaceLocationMenuItems"]["categories"][0]["items"][0]
     assert item["imageFilename"] == "latte.jpg"
 
     query_result = asyncio.run(
@@ -251,7 +337,10 @@ def test_replace_and_query_with_image_filename():
         )
     )
     assert not query_result.errors, query_result.errors
-    assert query_result.data["locationMenu"]["items"][0]["imageFilename"] == "latte.jpg"
+    assert (
+        query_result.data["locationMenu"]["categories"][0]["items"][0]["imageFilename"]
+        == "latte.jpg"
+    )
 
 
 def test_replace_clears_image_filename():
@@ -261,7 +350,12 @@ def test_replace_clears_image_filename():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [{"name": "Cake", "price": 6.0, "imageFilename": "cake.png"}],
+                "categories": [
+                    {
+                        "name": "Dessert",
+                        "items": [{"name": "Cake", "price": 6.0, "imageFilename": "cake.png"}],
+                    }
+                ],
             },
             context_value=graphql_auth_context(),
         )
@@ -271,13 +365,23 @@ def test_replace_clears_image_filename():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [{"name": "Cake", "price": 6.0, "imageFilename": ""}],
+                "categories": [
+                    {
+                        "name": "Dessert",
+                        "items": [{"name": "Cake", "price": 6.0, "imageFilename": ""}],
+                    }
+                ],
             },
             context_value=graphql_auth_context(),
         )
     )
     assert not clear_result.errors, clear_result.errors
-    assert clear_result.data["replaceLocationMenuItems"]["items"][0]["imageFilename"] is None
+    assert (
+        clear_result.data["replaceLocationMenuItems"]["categories"][0]["items"][0][
+            "imageFilename"
+        ]
+        is None
+    )
 
 
 def test_validation_image_filename_too_long():
@@ -287,11 +391,16 @@ def test_validation_image_filename_too_long():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "items": [
+                "categories": [
                     {
-                        "name": "Too Long",
-                        "price": 1.0,
-                        "imageFilename": "a" * 513,
+                        "name": "Drinks",
+                        "items": [
+                            {
+                                "name": "Too Long",
+                                "price": 1.0,
+                                "imageFilename": "a" * 513,
+                            }
+                        ],
                     }
                 ],
             },
