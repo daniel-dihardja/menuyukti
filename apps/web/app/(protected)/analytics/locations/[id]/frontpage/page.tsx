@@ -52,9 +52,7 @@ function pickFavorites(
 }
 
 function pickCombos(
-  pairs:
-    | Array<{ menuA: string; menuB: string; lift: number; coOrderCount: number }>
-    | undefined,
+  pairs: Array<{ menuA: string; menuB: string; lift: number; coOrderCount: number }> | undefined,
 ): FrontpageComboPreview[] {
   if (!pairs?.length) return []
   return pairs

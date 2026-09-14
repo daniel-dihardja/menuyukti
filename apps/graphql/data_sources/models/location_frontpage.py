@@ -5,7 +5,17 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from graphql.data_sources.database import Base
@@ -30,8 +40,18 @@ class LocationFrontpage(Base):
         nullable=False,
     )
     tagline: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    show_guest_favorites: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    show_popular_combos: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    show_guest_favorites: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("true"),
+    )
+    show_popular_combos: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=text("true"),
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

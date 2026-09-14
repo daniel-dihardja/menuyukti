@@ -143,7 +143,9 @@ export function LocationFrontpageForm({
           <div className="border-border bg-muted/30 flex flex-col gap-3 rounded-lg border p-4">
             <p className="text-sm">{t('empty.noAnalytics')}</p>
             <Button asChild variant="outline" className="w-fit">
-              <Link href={routes.analytics.salesWithLocation(locationId)}>{t('empty.uploadCta')}</Link>
+              <Link href={routes.analytics.salesWithLocation(locationId)}>
+                {t('empty.uploadCta')}
+              </Link>
             </Button>
           </div>
         ) : (
@@ -178,10 +180,7 @@ export function LocationFrontpageForm({
                       <span className="font-medium">
                         {pair.menuA} + {pair.menuB}
                       </span>
-                      <span className="text-muted-foreground">
-                        {' '}
-                        · {t('preview.oftenTogether')}
-                      </span>
+                      <span className="text-muted-foreground"> · {t('preview.oftenTogether')}</span>
                     </li>
                   ))}
                 </ul>
