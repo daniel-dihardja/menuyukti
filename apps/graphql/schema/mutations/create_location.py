@@ -6,6 +6,7 @@ from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.mappers.location import location_to_gql
 from graphql.schema.types import LocationType
 from graphql.services.location import create_location_row
+from graphql.services.workspace_plan import assert_can_create_location
 
 
 @strawberry.type
@@ -28,6 +29,7 @@ class CreateLocationMutation:
         with request_session_scope(info) as session:
             if not is_workspace_member(session, wid, user_id):
                 raise PermissionError("Access denied")
+            assert_can_create_location(session, wid)
             loc = create_location_row(
                 session,
                 workspace_id=wid,

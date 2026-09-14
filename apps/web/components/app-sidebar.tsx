@@ -15,20 +15,23 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
 import { useCloseMobileSidebarOnNavigate } from '@/hooks/use-close-mobile-sidebar-on-navigate'
-import { routes } from '@/lib/routes'
+import { useWorkspacePlan } from '@/hooks/use-workspace-plan'
+import { getDefaultPathForPlan } from '@/lib/workspace-plan'
 
 import { NavMain } from './nav-main'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('sidebar')
   const { state } = useSidebar()
+  const { plan } = useWorkspacePlan()
   useCloseMobileSidebarOnNavigate()
 
   const brandLabel = t('groupLabel')
+  const homeHref = getDefaultPathForPlan(plan)
 
   const brandLink = (
     <Link
-      href={routes.agent}
+      href={homeHref}
       aria-label={state === 'collapsed' ? brandLabel : undefined}
       className={cn(
         'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold text-sidebar-foreground',

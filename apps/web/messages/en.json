@@ -742,7 +742,8 @@
     "crmApps": "Apps",
     "crmRegistrations": "Registrations",
     "team": "Team",
-    "usage": "AI usage"
+    "usage": "AI usage",
+    "staff": "Staff"
   },
   "wayfinding": {
     "shopFromWorkflow": {
@@ -755,7 +756,23 @@
   },
   "staff": {
     "title": "Staff console",
-    "description": "Menuyukti platform tools for team members. Customers do not see this area."
+    "description": "Menuyukti platform tools for team members. Customers do not see this area.",
+    "workspacePlan": {
+      "title": "Workspace plan",
+      "description": "Manually set a workspace to free or pro. Free workspaces are limited to one location and a reduced product surface.",
+      "workspaceIdLabel": "Workspace ID",
+      "workspaceIdPlaceholder": "e.g. 42",
+      "yourWorkspaceId": "Your workspace ID: {id}",
+      "useYourWorkspaceId": "Use this ID",
+      "noWorkspaceYet": "You do not have a workspace yet. Create a location first, then return here.",
+      "planLabel": "Plan",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Update plan",
+      "saving": "Updating…",
+      "success": "Workspace plan updated to {plan}.",
+      "error": "Could not update workspace plan."
+    }
   },
   "playbooks": {
     "title": "Playbooks",
@@ -1990,6 +2007,7 @@
         "salesCta": "Go to Sales Reports"
       },
       "create": "Create New Location",
+      "freePlanLocationLimit": "Free plan includes one location. Upgrade to Pro to add more.",
       "manageMenu": "Manage menu",
       "manageCogs": "Manage COGS",
       "form": {

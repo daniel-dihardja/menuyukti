@@ -18,7 +18,7 @@
       "id": "staff",
       "description": "Menuyukti staff console.",
       "routePrefixes": ["/staff"],
-      "navKeys": [],
+      "navKeys": ["staff"],
       "actionMenuKeys": []
     },
     {

@@ -819,6 +819,8 @@ export type Mutation = {
   updatePostPage: PostPageType
   /** Update a visual style pack in the caller's workspace. */
   updateStyle: StyleType
+  /** Set workspace.plan to free or pro. Intended for staff BFF only; not a customer self-serve upgrade path. */
+  updateWorkspacePlan: WorkspaceType
   /** Upload and normalize a POS sales Excel file, persist order facts, and return metadata and sales analytics. Set includeLineItems to receive normalizedRows and orders (large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB). */
   uploadSalesReport: ExcelUploadResult
   /** Set current stock for a catalog item at a location. */
@@ -1151,6 +1153,12 @@ export type MutationUpdateStyleArgs = {
   name?: InputMaybe<Scalars['String']['input']>
   referenceImageName?: InputMaybe<Scalars['String']['input']>
   spec?: InputMaybe<Scalars['JSON']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateWorkspacePlanArgs = {
+  plan: Scalars['String']['input']
+  workspaceId: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1750,4 +1758,5 @@ export type WorkspaceType = {
   id: Scalars['ID']['output']
   name: Scalars['String']['output']
   ownerClerkUserId: Scalars['String']['output']
+  plan: Scalars['String']['output']
 }

@@ -10,4 +10,5 @@ class WorkspaceType:
     id: strawberry.ID
     name: str
     owner_clerk_user_id: str
+    plan: str
     created_at: datetime | None

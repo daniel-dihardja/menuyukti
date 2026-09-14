@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   MapPin,
   Package,
+  Shield,
   Sparkles,
   SquarePen,
   Store,
@@ -37,10 +38,12 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { useWorkspacePlan } from '@/hooks/use-workspace-plan'
 import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
 import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
+import { isNavKeyAllowedForPlan } from '@/lib/workspace-plan'
 import type { ReactNode } from 'react'
 
 type NavGroupId = 'overview' | 'create' | 'analytics' | 'operations' | 'account'
@@ -175,6 +178,13 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <BarChart3 />,
     group: 'account',
   },
+  {
+    key: 'staff',
+    labelKey: 'staff',
+    href: routes.staff,
+    icon: <Shield />,
+    group: 'account',
+  },
 ]
 
 type NavMenuItemsProps = {
@@ -235,11 +245,19 @@ function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
   })
 }
 
-/** Feature flag first, then admin-only role gate. */
-function visibleNavItemsForRole(items: NavItem[], showAdminNav: boolean): NavItem[] {
-  return items.filter(
-    (item) => isNavKeyEnabled(item.key) && (!isNavItemHiddenFromNonAdmin(item.key) || showAdminNav),
-  )
+/** Feature flag first, then admin-only role gate, then workspace plan. */
+function visibleNavItemsForRole(
+  items: NavItem[],
+  showAdminNav: boolean,
+  plan: string | null | undefined,
+): NavItem[] {
+  return items.filter((item) => {
+    if (!isNavKeyEnabled(item.key)) return false
+    if (isNavItemHiddenFromNonAdmin(item.key) && !showAdminNav) return false
+    // Platform admins keep admin-only items regardless of workspace free/pro plan.
+    if (showAdminNav && isNavItemHiddenFromNonAdmin(item.key)) return true
+    return isNavKeyAllowedForPlan(item.key, plan)
+  })
 }
 
 function groupVisibleItems(items: NavItem[]): Array<{ id: NavGroupId; items: NavItem[] }> {
@@ -253,6 +271,7 @@ export function NavMain() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
   const { role, isLoaded } = useMenuyuktiRole()
+  const { plan } = useWorkspacePlan()
   const showAdminNav = isLoaded && isMenuyuktiAdmin(role)
 
   const isActive = (url?: string) => {
@@ -266,7 +285,7 @@ export function NavMain() {
     return pathname.startsWith(url)
   }
 
-  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
+  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav, plan)
   const groups = groupVisibleItems(visibleWorkspaceItems)
 
   return (

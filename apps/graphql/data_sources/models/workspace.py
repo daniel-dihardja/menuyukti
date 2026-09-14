@@ -29,6 +29,13 @@ class Workspace(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(256))
     owner_clerk_user_id: Mapped[str] = mapped_column(String(128), index=True)
+    # Product tier: "free" | "pro". New workspaces default to free; migration backfills existing to pro.
+    plan: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="free",
+        server_default="free",
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
