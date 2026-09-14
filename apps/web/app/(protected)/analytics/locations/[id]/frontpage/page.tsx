@@ -120,6 +120,8 @@ export default async function Page({ params }: PageProps) {
           initialTagline={frontpage?.tagline ?? ''}
           initialShowGuestFavorites={frontpage?.showGuestFavorites ?? true}
           initialShowPopularCombos={frontpage?.showPopularCombos ?? true}
+          initialFavoriteImages={frontpage?.favoriteImages ?? []}
+          initialComboImages={frontpage?.comboImages ?? []}
           latestRunName={latestRun?.name ?? null}
           favorites={favorites}
           combos={combos}

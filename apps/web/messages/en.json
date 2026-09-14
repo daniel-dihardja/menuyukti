@@ -3230,12 +3230,22 @@
         "tagline": "Tagline",
         "taglinePlaceholder": "What guests should feel when they arrive",
         "showGuestFavorites": "Show guest favorites",
-        "showPopularCombos": "Show popular combos"
+        "showPopularCombos": "Show popular combos",
+        "itemDescription": "Description",
+        "itemDescriptionPlaceholder": "Optional short guest-facing description",
+        "publish": "Publish",
+        "pickImage": "Choose from media",
+        "pickerAria": "Select a photo from your media library",
+        "emptyMedia": "No photos in your media library yet.",
+        "removeImage": "Remove image",
+        "fromMedia": "From media library"
       },
       "actions": {
         "save": "Save frontpage",
         "saving": "Saving…",
-        "saved": "Saved"
+        "saved": "Saved",
+        "expandItem": "Expand item",
+        "collapseItem": "Collapse item"
       },
       "errors": {
         "saveFailed": "Could not save frontpage settings"

@@ -124,16 +124,46 @@ export const LOCATION_QUERY = `
         tagline
         showGuestFavorites
         showPopularCombos
+        favoriteImages {
+          menu
+          imageFilename
+          description
+          published
+        }
+        comboImages {
+          menuA
+          menuB
+          imageFilename
+          description
+          published
+        }
       }
     }
   }
 `
+
+export type FrontpageFavoriteImage = {
+  menu: string
+  imageFilename: string | null
+  description: string | null
+  published: boolean
+}
+
+export type FrontpageComboImage = {
+  menuA: string
+  menuB: string
+  imageFilename: string | null
+  description: string | null
+  published: boolean
+}
 
 export type LocationFrontpageConfig = {
   locationId: number
   tagline: string | null
   showGuestFavorites: boolean
   showPopularCombos: boolean
+  favoriteImages: FrontpageFavoriteImage[]
+  comboImages: FrontpageComboImage[]
 }
 
 export type LocationData = {
@@ -181,17 +211,34 @@ export const UPDATE_LOCATION_FRONTPAGE_MUTATION = `
     $tagline: String
     $showGuestFavorites: Boolean!
     $showPopularCombos: Boolean!
+    $favoriteImages: [FrontpageFavoriteImageInput!]
+    $comboImages: [FrontpageComboImageInput!]
   ) {
     updateLocationFrontpage(
       locationId: $locationId
       tagline: $tagline
       showGuestFavorites: $showGuestFavorites
       showPopularCombos: $showPopularCombos
+      favoriteImages: $favoriteImages
+      comboImages: $comboImages
     ) {
       locationId
       tagline
       showGuestFavorites
       showPopularCombos
+      favoriteImages {
+        menu
+        imageFilename
+        description
+        published
+      }
+      comboImages {
+        menuA
+        menuB
+        imageFilename
+        description
+        published
+      }
     }
   }
 `

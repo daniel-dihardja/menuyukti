@@ -18,6 +18,19 @@ query LocationFrontpage($id: ID!) {
       tagline
       showGuestFavorites
       showPopularCombos
+      favoriteImages {
+        menu
+        imageFilename
+        description
+        published
+      }
+      comboImages {
+        menuA
+        menuB
+        imageFilename
+        description
+        published
+      }
     }
   }
 }
@@ -29,17 +42,34 @@ mutation UpdateFrontpage(
   $tagline: String
   $showGuestFavorites: Boolean!
   $showPopularCombos: Boolean!
+  $favoriteImages: [FrontpageFavoriteImageInput!]
+  $comboImages: [FrontpageComboImageInput!]
 ) {
   updateLocationFrontpage(
     locationId: $locationId
     tagline: $tagline
     showGuestFavorites: $showGuestFavorites
     showPopularCombos: $showPopularCombos
+    favoriteImages: $favoriteImages
+    comboImages: $comboImages
   ) {
     locationId
     tagline
     showGuestFavorites
     showPopularCombos
+    favoriteImages {
+      menu
+      imageFilename
+      description
+      published
+    }
+    comboImages {
+      menuA
+      menuB
+      imageFilename
+      description
+      published
+    }
   }
 }
 """
@@ -80,6 +110,8 @@ def test_query_returns_defaults_when_no_row(frontpage_location_id):
     assert data["tagline"] is None
     assert data["showGuestFavorites"] is True
     assert data["showPopularCombos"] is True
+    assert data["favoriteImages"] == []
+    assert data["comboImages"] == []
 
 
 def test_upsert_and_round_trip(frontpage_location_id):
@@ -100,6 +132,8 @@ def test_upsert_and_round_trip(frontpage_location_id):
     assert updated["tagline"] == "Guest favorites tonight"
     assert updated["showGuestFavorites"] is True
     assert updated["showPopularCombos"] is False
+    assert updated["favoriteImages"] == []
+    assert updated["comboImages"] == []
 
     r2 = asyncio.run(
         schema.execute(
@@ -130,6 +164,252 @@ def test_upsert_and_round_trip(frontpage_location_id):
     assert cleared["tagline"] is None
     assert cleared["showGuestFavorites"] is False
     assert cleared["showPopularCombos"] is True
+
+
+def test_upsert_image_overrides_round_trip(frontpage_location_id):
+    r1 = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": frontpage_location_id,
+                "tagline": "Tonight",
+                "showGuestFavorites": True,
+                "showPopularCombos": True,
+                "favoriteImages": [
+                    {"menu": "Burger", "imageFilename": "burger.jpg"},
+                    {"menu": "  Burger  ", "imageFilename": "burger-v2.jpg"},
+                    {"menu": "Fries", "imageFilename": "fries.png"},
+                ],
+                "comboImages": [
+                    {
+                        "menuA": "Burger",
+                        "menuB": "Fries",
+                        "imageFilename": "combo-1.jpg",
+                    },
+                    {
+                        "menuA": "Fries",
+                        "menuB": "Burger",
+                        "imageFilename": "combo-2.jpg",
+                    },
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not r1.errors
+    updated = r1.data["updateLocationFrontpage"]
+    assert updated["favoriteImages"] == [
+        {
+            "menu": "Burger",
+            "imageFilename": "burger-v2.jpg",
+            "description": None,
+            "published": True,
+        },
+        {
+            "menu": "Fries",
+            "imageFilename": "fries.png",
+            "description": None,
+            "published": True,
+        },
+    ]
+    assert updated["comboImages"] == [
+        {
+            "menuA": "Burger",
+            "menuB": "Fries",
+            "imageFilename": "combo-2.jpg",
+            "description": None,
+            "published": True,
+        },
+    ]
+
+    r2 = asyncio.run(
+        schema.execute(
+            _LOCATION_FRONTPAGE_QUERY,
+            variable_values={"id": str(frontpage_location_id)},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not r2.errors
+    data = r2.data["location"]["frontpage"]
+    assert data["favoriteImages"] == updated["favoriteImages"]
+    assert data["comboImages"] == updated["comboImages"]
+
+    # Omitting image args must not wipe existing overrides.
+    r3 = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": frontpage_location_id,
+                "tagline": "Updated",
+                "showGuestFavorites": True,
+                "showPopularCombos": True,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not r3.errors
+    kept = r3.data["updateLocationFrontpage"]
+    assert kept["tagline"] == "Updated"
+    assert kept["favoriteImages"] == updated["favoriteImages"]
+    assert kept["comboImages"] == updated["comboImages"]
+
+    # Empty lists clear overrides.
+    r4 = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": frontpage_location_id,
+                "tagline": "Updated",
+                "showGuestFavorites": True,
+                "showPopularCombos": True,
+                "favoriteImages": [],
+                "comboImages": [],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not r4.errors
+    cleared = r4.data["updateLocationFrontpage"]
+    assert cleared["favoriteImages"] == []
+    assert cleared["comboImages"] == []
+
+
+def test_upsert_description_overrides_round_trip(frontpage_location_id):
+    r1 = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": frontpage_location_id,
+                "tagline": "Tonight",
+                "showGuestFavorites": True,
+                "showPopularCombos": True,
+                "favoriteImages": [
+                    {
+                        "menu": "Burger",
+                        "imageFilename": "burger.jpg",
+                        "description": "  Our classic smash  ",
+                    },
+                    {"menu": "Salad", "description": "Description only"},
+                ],
+                "comboImages": [
+                    {
+                        "menuA": "Burger",
+                        "menuB": "Fries",
+                        "description": "Guest favorite pair",
+                    },
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not r1.errors
+    updated = r1.data["updateLocationFrontpage"]
+    assert updated["favoriteImages"] == [
+        {
+            "menu": "Burger",
+            "imageFilename": "burger.jpg",
+            "description": "Our classic smash",
+            "published": True,
+        },
+        {
+            "menu": "Salad",
+            "imageFilename": None,
+            "description": "Description only",
+            "published": True,
+        },
+    ]
+    assert updated["comboImages"] == [
+        {
+            "menuA": "Burger",
+            "menuB": "Fries",
+            "imageFilename": None,
+            "description": "Guest favorite pair",
+            "published": True,
+        },
+    ]
+
+
+def test_upsert_unpublished_overrides_round_trip(frontpage_location_id):
+    r1 = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": frontpage_location_id,
+                "tagline": "Tonight",
+                "showGuestFavorites": True,
+                "showPopularCombos": True,
+                "favoriteImages": [
+                    {"menu": "Burger", "published": False},
+                    {"menu": "Fries", "imageFilename": "fries.png", "published": False},
+                ],
+                "comboImages": [
+                    {"menuA": "Burger", "menuB": "Fries", "published": False},
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not r1.errors
+    updated = r1.data["updateLocationFrontpage"]
+    assert updated["favoriteImages"] == [
+        {
+            "menu": "Burger",
+            "imageFilename": None,
+            "description": None,
+            "published": False,
+        },
+        {
+            "menu": "Fries",
+            "imageFilename": "fries.png",
+            "description": None,
+            "published": False,
+        },
+    ]
+    assert updated["comboImages"] == [
+        {
+            "menuA": "Burger",
+            "menuB": "Fries",
+            "imageFilename": None,
+            "description": None,
+            "published": False,
+        },
+    ]
+
+
+def test_mutation_drops_empty_favorite_override(frontpage_location_id):
+    result = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": frontpage_location_id,
+                "tagline": "Hello",
+                "showGuestFavorites": True,
+                "showPopularCombos": True,
+                "favoriteImages": [{"menu": "Burger", "imageFilename": "  "}],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors
+    assert result.data["updateLocationFrontpage"]["favoriteImages"] == []
+
+
+def test_mutation_rejects_long_description(frontpage_location_id):
+    result = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": frontpage_location_id,
+                "tagline": "Hello",
+                "showGuestFavorites": True,
+                "showPopularCombos": True,
+                "favoriteImages": [{"menu": "Burger", "description": "x" * 513}],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert "description must be at most 512" in result.errors[0].message
 
 
 def test_mutation_rejects_long_tagline(frontpage_location_id):

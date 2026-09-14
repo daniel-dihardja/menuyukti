@@ -520,10 +520,48 @@ export type LocationAreaType = {
 /** Operator settings for the location guest frontpage: tagline and which sales-driven sections to show. */
 export type LocationFrontpageType = {
   __typename?: 'LocationFrontpageType'
+  comboImages: Array<FrontpageComboImageType>
+  favoriteImages: Array<FrontpageFavoriteImageType>
   locationId: Scalars['Int']['output']
   showGuestFavorites: Scalars['Boolean']['output']
   showPopularCombos: Scalars['Boolean']['output']
   tagline?: Maybe<Scalars['String']['output']>
+}
+
+/** Media image override for a guest-favorite dish. */
+export type FrontpageFavoriteImageType = {
+  __typename?: 'FrontpageFavoriteImageType'
+  description?: Maybe<Scalars['String']['output']>
+  imageFilename?: Maybe<Scalars['String']['output']>
+  menu: Scalars['String']['output']
+  published: Scalars['Boolean']['output']
+}
+
+/** Input for attaching a media image to a guest favorite. */
+export type FrontpageFavoriteImageInput = {
+  description?: InputMaybe<Scalars['String']['input']>
+  imageFilename?: InputMaybe<Scalars['String']['input']>
+  menu: Scalars['String']['input']
+  published?: Scalars['Boolean']['input']
+}
+
+/** Media image override for an often-ordered-together combo. */
+export type FrontpageComboImageType = {
+  __typename?: 'FrontpageComboImageType'
+  description?: Maybe<Scalars['String']['output']>
+  imageFilename?: Maybe<Scalars['String']['output']>
+  menuA: Scalars['String']['output']
+  menuB: Scalars['String']['output']
+  published: Scalars['Boolean']['output']
+}
+
+/** Input for attaching a media image to a popular combo. */
+export type FrontpageComboImageInput = {
+  description?: InputMaybe<Scalars['String']['input']>
+  imageFilename?: InputMaybe<Scalars['String']['input']>
+  menuA: Scalars['String']['input']
+  menuB: Scalars['String']['input']
+  published?: Scalars['Boolean']['input']
 }
 
 /** Owner-provided click-first brief hints; not AI-generated. */
@@ -1245,6 +1283,8 @@ export type MutationUpdateLocationAreaArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationFrontpageArgs = {
+  comboImages?: InputMaybe<Array<FrontpageComboImageInput>>
+  favoriteImages?: InputMaybe<Array<FrontpageFavoriteImageInput>>
   locationId: Scalars['Int']['input']
   showGuestFavorites?: Scalars['Boolean']['input']
   showPopularCombos?: Scalars['Boolean']['input']

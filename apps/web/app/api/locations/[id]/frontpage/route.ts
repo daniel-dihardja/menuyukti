@@ -39,6 +39,8 @@ export async function PATCH(req: Request, context: RouteContext) {
         tagline: payload.tagline ?? null,
         showGuestFavorites: payload.showGuestFavorites,
         showPopularCombos: payload.showPopularCombos,
+        favoriteImages: payload.favoriteImages ?? [],
+        comboImages: payload.comboImages ?? [],
       },
       userId,
     )

@@ -3,14 +3,24 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
+import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { PageHeading } from '@/components/page-heading'
+import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { Switch } from '@workspace/ui/components/switch'
+import { Textarea } from '@workspace/ui/components/textarea'
+import { cn } from '@workspace/ui/lib/utils'
 
 export type FrontpageFavoritePreview = {
   menu: string
@@ -21,16 +31,354 @@ export type FrontpageComboPreview = {
   menuB: string
 }
 
+export type FrontpageFavoriteImageOverride = {
+  menu: string
+  imageFilename: string | null
+  description: string | null
+  published: boolean
+}
+
+export type FrontpageComboImageOverride = {
+  menuA: string
+  menuB: string
+  imageFilename: string | null
+  description: string | null
+  published: boolean
+}
+
+type FavoritePatch = {
+  imageFilename?: string | null
+  description?: string | null
+  published?: boolean
+}
+
+type ComboPatch = FavoritePatch
+
 type Props = {
   locationId: number
   locationName: string
   initialTagline: string
   initialShowGuestFavorites: boolean
   initialShowPopularCombos: boolean
+  initialFavoriteImages: FrontpageFavoriteImageOverride[]
+  initialComboImages: FrontpageComboImageOverride[]
   latestRunName: string | null
   favorites: FrontpageFavoritePreview[]
   combos: FrontpageComboPreview[]
   hasAnalyticsRun: boolean
+}
+
+function comboKey(menuA: string, menuB: string): string {
+  return menuA <= menuB ? `${menuA}::${menuB}` : `${menuB}::${menuA}`
+}
+
+function findFavoriteOverride(
+  overrides: FrontpageFavoriteImageOverride[],
+  menu: string,
+): FrontpageFavoriteImageOverride | null {
+  return overrides.find((row) => row.menu === menu) ?? null
+}
+
+function findComboOverride(
+  overrides: FrontpageComboImageOverride[],
+  menuA: string,
+  menuB: string,
+): FrontpageComboImageOverride | null {
+  const key = comboKey(menuA, menuB)
+  return overrides.find((row) => comboKey(row.menuA, row.menuB) === key) ?? null
+}
+
+function upsertFavoriteOverride(
+  overrides: FrontpageFavoriteImageOverride[],
+  menu: string,
+  patch: FavoritePatch,
+): FrontpageFavoriteImageOverride[] {
+  const existing = findFavoriteOverride(overrides, menu)
+  const imageFilename =
+    patch.imageFilename !== undefined
+      ? patch.imageFilename?.trim()
+        ? patch.imageFilename.trim()
+        : null
+      : (existing?.imageFilename ?? null)
+  const description =
+    patch.description !== undefined ? patch.description : (existing?.description ?? null)
+  const published = patch.published !== undefined ? patch.published : (existing?.published ?? true)
+  const without = overrides.filter((row) => row.menu !== menu)
+  const hasDescription = Boolean(description && description.length > 0)
+  if (!imageFilename && !hasDescription && published) return without
+  return [
+    ...without,
+    {
+      menu,
+      imageFilename,
+      description: hasDescription ? description : null,
+      published,
+    },
+  ]
+}
+
+function upsertComboOverride(
+  overrides: FrontpageComboImageOverride[],
+  menuA: string,
+  menuB: string,
+  patch: ComboPatch,
+): FrontpageComboImageOverride[] {
+  const existing = findComboOverride(overrides, menuA, menuB)
+  const imageFilename =
+    patch.imageFilename !== undefined
+      ? patch.imageFilename?.trim()
+        ? patch.imageFilename.trim()
+        : null
+      : (existing?.imageFilename ?? null)
+  const description =
+    patch.description !== undefined ? patch.description : (existing?.description ?? null)
+  const published = patch.published !== undefined ? patch.published : (existing?.published ?? true)
+  const key = comboKey(menuA, menuB)
+  const without = overrides.filter((row) => comboKey(row.menuA, row.menuB) !== key)
+  const hasDescription = Boolean(description && description.length > 0)
+  if (!imageFilename && !hasDescription && published) return without
+  const [canonicalA, canonicalB] = menuA <= menuB ? [menuA, menuB] : [menuB, menuA]
+  return [
+    ...without,
+    {
+      menuA: canonicalA,
+      menuB: canonicalB,
+      imageFilename,
+      description: hasDescription ? description : null,
+      published,
+    },
+  ]
+}
+
+function serializeOverridesForSave(
+  favoriteImages: FrontpageFavoriteImageOverride[],
+  comboImages: FrontpageComboImageOverride[],
+) {
+  return {
+    favoriteImages: favoriteImages
+      .map((row) => ({
+        menu: row.menu,
+        imageFilename: row.imageFilename?.trim() || null,
+        description: row.description?.trim() || null,
+        published: row.published,
+      }))
+      .filter((row) => row.imageFilename || row.description || !row.published),
+    comboImages: comboImages
+      .map((row) => ({
+        menuA: row.menuA,
+        menuB: row.menuB,
+        imageFilename: row.imageFilename?.trim() || null,
+        description: row.description?.trim() || null,
+        published: row.published,
+      }))
+      .filter((row) => row.imageFilename || row.description || !row.published),
+  }
+}
+
+type FavoriteItemRowProps = {
+  menu: string
+  subtitle: string
+  imageFilename: string | null
+  description: string
+  published: boolean
+  disabled: boolean
+  onPatch: (patch: FavoritePatch) => void
+}
+
+function FavoriteItemRow({
+  menu,
+  subtitle,
+  imageFilename,
+  description,
+  published,
+  disabled,
+  onPatch,
+}: FavoriteItemRowProps) {
+  const t = useTranslations('analytics.locationFrontpage')
+  const [open, setOpen] = useState(false)
+  const publishId = `favorite-publish-${menu}`
+  const descId = `favorite-desc-${menu}`
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="border-border/70 rounded-md border p-3"
+    >
+      <div className="flex items-center gap-2">
+        <CollapsibleTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={disabled}
+            className="h-auto min-w-0 flex-1 justify-start gap-2 px-2 py-1.5 text-left font-medium"
+            aria-label={open ? t('actions.collapseItem') : t('actions.expandItem')}
+          >
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                'text-muted-foreground size-4 shrink-0 transition-transform',
+                open && 'rotate-180',
+              )}
+            />
+            <span className="min-w-0 truncate">
+              <span className="font-medium">{menu}</span>
+              <span className="text-muted-foreground font-normal"> · {subtitle}</span>
+            </span>
+          </Button>
+        </CollapsibleTrigger>
+        <div className="flex shrink-0 items-center gap-2 pr-1">
+          <FieldLabel htmlFor={publishId} className="text-muted-foreground font-normal">
+            {t('fields.publish')}
+          </FieldLabel>
+          <Switch
+            id={publishId}
+            checked={published}
+            onCheckedChange={(checked) => onPatch({ published: checked })}
+            disabled={disabled}
+          />
+        </div>
+      </div>
+
+      <CollapsibleContent className="flex flex-col gap-3 pt-3">
+        <MediaCatalogPicker
+          selectedImage={
+            imageFilename
+              ? {
+                  name: imageFilename,
+                  url: mediaDownloadHref(imageFilename),
+                }
+              : null
+          }
+          onSelect={(media: MediaCatalogItem) => onPatch({ imageFilename: media.name })}
+          onClear={() => onPatch({ imageFilename: null })}
+          disabled={disabled}
+          pickLabel={t('fields.pickImage')}
+          pickerAriaLabel={t('fields.pickerAria')}
+          emptyLabel={t('fields.emptyMedia')}
+          removeLabel={t('fields.removeImage')}
+          fromMediaLabel={t('fields.fromMedia')}
+        />
+        <Field className="gap-1.5">
+          <FieldLabel htmlFor={descId}>{t('fields.itemDescription')}</FieldLabel>
+          <Textarea
+            id={descId}
+            value={description}
+            onChange={(e) => onPatch({ description: e.target.value })}
+            placeholder={t('fields.itemDescriptionPlaceholder')}
+            maxLength={512}
+            rows={2}
+            disabled={disabled}
+          />
+        </Field>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+type ComboItemRowProps = {
+  menuA: string
+  menuB: string
+  subtitle: string
+  imageFilename: string | null
+  description: string
+  published: boolean
+  disabled: boolean
+  onPatch: (patch: ComboPatch) => void
+}
+
+function ComboItemRow({
+  menuA,
+  menuB,
+  subtitle,
+  imageFilename,
+  description,
+  published,
+  disabled,
+  onPatch,
+}: ComboItemRowProps) {
+  const t = useTranslations('analytics.locationFrontpage')
+  const [open, setOpen] = useState(false)
+  const publishId = `combo-publish-${menuA}-${menuB}`
+  const descId = `combo-desc-${menuA}-${menuB}`
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="border-border/70 rounded-md border p-3"
+    >
+      <div className="flex items-center gap-2">
+        <CollapsibleTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={disabled}
+            className="h-auto min-w-0 flex-1 justify-start gap-2 px-2 py-1.5 text-left font-medium"
+            aria-label={open ? t('actions.collapseItem') : t('actions.expandItem')}
+          >
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                'text-muted-foreground size-4 shrink-0 transition-transform',
+                open && 'rotate-180',
+              )}
+            />
+            <span className="min-w-0 truncate">
+              <span className="font-medium">
+                {menuA} + {menuB}
+              </span>
+              <span className="text-muted-foreground font-normal"> · {subtitle}</span>
+            </span>
+          </Button>
+        </CollapsibleTrigger>
+        <div className="flex shrink-0 items-center gap-2 pr-1">
+          <FieldLabel htmlFor={publishId} className="text-muted-foreground font-normal">
+            {t('fields.publish')}
+          </FieldLabel>
+          <Switch
+            id={publishId}
+            checked={published}
+            onCheckedChange={(checked) => onPatch({ published: checked })}
+            disabled={disabled}
+          />
+        </div>
+      </div>
+
+      <CollapsibleContent className="flex flex-col gap-3 pt-3">
+        <MediaCatalogPicker
+          selectedImage={
+            imageFilename
+              ? {
+                  name: imageFilename,
+                  url: mediaDownloadHref(imageFilename),
+                }
+              : null
+          }
+          onSelect={(media: MediaCatalogItem) => onPatch({ imageFilename: media.name })}
+          onClear={() => onPatch({ imageFilename: null })}
+          disabled={disabled}
+          pickLabel={t('fields.pickImage')}
+          pickerAriaLabel={t('fields.pickerAria')}
+          emptyLabel={t('fields.emptyMedia')}
+          removeLabel={t('fields.removeImage')}
+          fromMediaLabel={t('fields.fromMedia')}
+        />
+        <Field className="gap-1.5">
+          <FieldLabel htmlFor={descId}>{t('fields.itemDescription')}</FieldLabel>
+          <Textarea
+            id={descId}
+            value={description}
+            onChange={(e) => onPatch({ description: e.target.value })}
+            placeholder={t('fields.itemDescriptionPlaceholder')}
+            maxLength={512}
+            rows={2}
+            disabled={disabled}
+          />
+        </Field>
+      </CollapsibleContent>
+    </Collapsible>
+  )
 }
 
 export function LocationFrontpageForm({
@@ -39,6 +387,8 @@ export function LocationFrontpageForm({
   initialTagline,
   initialShowGuestFavorites,
   initialShowPopularCombos,
+  initialFavoriteImages,
+  initialComboImages,
   latestRunName,
   favorites,
   combos,
@@ -49,6 +399,10 @@ export function LocationFrontpageForm({
   const [tagline, setTagline] = useState(initialTagline)
   const [showGuestFavorites, setShowGuestFavorites] = useState(initialShowGuestFavorites)
   const [showPopularCombos, setShowPopularCombos] = useState(initialShowPopularCombos)
+  const [favoriteImages, setFavoriteImages] =
+    useState<FrontpageFavoriteImageOverride[]>(initialFavoriteImages)
+  const [comboImages, setComboImages] =
+    useState<FrontpageComboImageOverride[]>(initialComboImages)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -58,6 +412,7 @@ export function LocationFrontpageForm({
     setSaved(false)
     startTransition(async () => {
       try {
+        const overrides = serializeOverridesForSave(favoriteImages, comboImages)
         const res = await fetch(`/api/locations/${locationId}/frontpage`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -65,6 +420,7 @@ export function LocationFrontpageForm({
             tagline: tagline.trim() ? tagline.trim() : null,
             showGuestFavorites,
             showPopularCombos,
+            ...overrides,
           }),
         })
         if (!res.ok) {
@@ -157,13 +513,27 @@ export function LocationFrontpageForm({
               ) : favorites.length === 0 ? (
                 <p className="text-muted-foreground text-sm">{t('preview.favoritesEmpty')}</p>
               ) : (
-                <ul className="flex flex-col gap-2">
-                  {favorites.map((item) => (
-                    <li key={item.menu} className="text-sm">
-                      <span className="font-medium">{item.menu}</span>
-                      <span className="text-muted-foreground"> · {t('preview.guestFavorite')}</span>
-                    </li>
-                  ))}
+                <ul className="flex flex-col gap-3">
+                  {favorites.map((item) => {
+                    const override = findFavoriteOverride(favoriteImages, item.menu)
+                    return (
+                      <li key={item.menu}>
+                        <FavoriteItemRow
+                          menu={item.menu}
+                          subtitle={t('preview.guestFavorite')}
+                          imageFilename={override?.imageFilename ?? null}
+                          description={override?.description ?? ''}
+                          published={override?.published ?? true}
+                          disabled={isPending}
+                          onPatch={(patch) =>
+                            setFavoriteImages((prev) =>
+                              upsertFavoriteOverride(prev, item.menu, patch),
+                            )
+                          }
+                        />
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </div>
@@ -174,15 +544,28 @@ export function LocationFrontpageForm({
               ) : combos.length === 0 ? (
                 <p className="text-muted-foreground text-sm">{t('preview.combosEmpty')}</p>
               ) : (
-                <ul className="flex flex-col gap-2">
-                  {combos.map((pair) => (
-                    <li key={`${pair.menuA}::${pair.menuB}`} className="text-sm">
-                      <span className="font-medium">
-                        {pair.menuA} + {pair.menuB}
-                      </span>
-                      <span className="text-muted-foreground"> · {t('preview.oftenTogether')}</span>
-                    </li>
-                  ))}
+                <ul className="flex flex-col gap-3">
+                  {combos.map((pair) => {
+                    const override = findComboOverride(comboImages, pair.menuA, pair.menuB)
+                    return (
+                      <li key={`${pair.menuA}::${pair.menuB}`}>
+                        <ComboItemRow
+                          menuA={pair.menuA}
+                          menuB={pair.menuB}
+                          subtitle={t('preview.oftenTogether')}
+                          imageFilename={override?.imageFilename ?? null}
+                          description={override?.description ?? ''}
+                          published={override?.published ?? true}
+                          disabled={isPending}
+                          onPatch={(patch) =>
+                            setComboImages((prev) =>
+                              upsertComboOverride(prev, pair.menuA, pair.menuB, patch),
+                            )
+                          }
+                        />
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </div>
