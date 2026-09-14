@@ -74,13 +74,13 @@ block = df.iloc[1:3, 0:2]  # Rows 1-2, columns 0-1
 
 ### When to Use `.loc[]` vs `.iloc[]`
 
-| Scenario | Use | Example |
-|----------|-----|---------|
-| Known column names | `.loc[]` | `df.loc[:, 'name']` |
-| Filter by condition | `.loc[]` | `df.loc[df['age'] > 25]` |
-| First/last N rows | `.iloc[]` | `df.iloc[:5]` or `df.iloc[-5:]` |
-| Specific row positions | `.iloc[]` | `df.iloc[[0, 5, 10]]` |
-| Unknown column order | `.iloc[]` | `df.iloc[:, 0]` |
+| Scenario               | Use       | Example                         |
+| ---------------------- | --------- | ------------------------------- |
+| Known column names     | `.loc[]`  | `df.loc[:, 'name']`             |
+| Filter by condition    | `.loc[]`  | `df.loc[df['age'] > 25]`        |
+| First/last N rows      | `.iloc[]` | `df.iloc[:5]` or `df.iloc[-5:]` |
+| Specific row positions | `.iloc[]` | `df.iloc[[0, 5, 10]]`           |
+| Unknown column order   | `.iloc[]` | `df.iloc[:, 0]`                 |
 
 ---
 

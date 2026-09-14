@@ -578,15 +578,15 @@ Before deploying pandas code:
 
 ## Anti-Patterns Summary
 
-| Anti-Pattern | Alternative |
-|--------------|-------------|
-| `iterrows()` for computation | Vectorized operations |
-| `apply(lambda)` for simple ops | Built-in methods |
-| Loading entire large file | Chunked reading |
-| String columns with low cardinality | Category dtype |
-| int64 for small integers | int32/int16 |
-| Multiple separate filters | Combined boolean mask |
-| Repeated groupby calls | Single groupby with multiple aggs |
+| Anti-Pattern                        | Alternative                       |
+| ----------------------------------- | --------------------------------- |
+| `iterrows()` for computation        | Vectorized operations             |
+| `apply(lambda)` for simple ops      | Built-in methods                  |
+| Loading entire large file           | Chunked reading                   |
+| String columns with low cardinality | Category dtype                    |
+| int64 for small integers            | int32/int16                       |
+| Multiple separate filters           | Combined boolean mask             |
+| Repeated groupby calls              | Single groupby with multiple aggs |
 
 ---
 

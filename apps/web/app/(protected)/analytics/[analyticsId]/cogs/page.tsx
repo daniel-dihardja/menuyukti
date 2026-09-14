@@ -157,13 +157,15 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
+  const salesHref = routes.analytics.salesWithLocation(run.locationId)
+
   const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`
 
   return (
     <AnalyticsPageShell
       title={t('cogs.edit')}
       breadcrumbs={[
-        { label: tSales('title'), href: routes.analytics.sales },
+        { label: tSales('title'), href: salesHref },
         { label: analyticsName },
         { label: t('cogs.title') },
       ]}

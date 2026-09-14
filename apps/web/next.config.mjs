@@ -38,6 +38,7 @@ const nextConfig = {
       { source: '/canvas/post-creator/:path*', destination: '/ig-studio/post-creator/:path*', permanent: true },
       { source: '/canvas', destination: '/ig-studio', permanent: true },
       { source: '/canvas/:path*', destination: '/ig-studio', permanent: true },
+      { source: '/analytics/sales', destination: '/analytics/locations/reports', permanent: true },
     ]
   },
   async rewrites() {

@@ -90,6 +90,8 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
+  const salesHref = routes.analytics.salesWithLocation(run.locationId)
+
   const locationId = String(run.locationId)
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
 
@@ -98,7 +100,7 @@ export default async function Page({ params }: PageProps) {
       title={tHeatmap('reportTitle')}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
-        { label: tSales('title'), href: routes.analytics.sales },
+        { label: tSales('title'), href: salesHref },
         { label: analyticsName },
         { label: tHeatmap('breadcrumb') },
       ]}
@@ -107,7 +109,7 @@ export default async function Page({ params }: PageProps) {
         <PageHeading title={tHeatmap('heading')} description={tHeatmap('description')} />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
-            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+            <Link href={salesHref}>{tShared('backToSales')}</Link>
           </Button>
         </div>
 

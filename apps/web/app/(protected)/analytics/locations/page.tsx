@@ -15,6 +15,8 @@ import {
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, ANALYTICS_REPORT_SECTION_CLASS } from '@/lib/app-layout'
 import { cn } from '@workspace/ui/lib/utils'
+import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
+import { isProPlan } from '@/lib/workspace-plan'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('analytics.branches')
@@ -86,6 +88,14 @@ async function LocationsPageData() {
 
 export default async function Page() {
   const t = await getTranslations('analytics.branches')
+  const { userId } = await auth()
+  const { plan } = await getWorkspacePlanForUser()
+  let locationCount = 0
+  if (userId) {
+    const data = await getCachedLocationsData(userId)
+    locationCount = data.locations.length
+  }
+  const canCreateLocation = isProPlan(plan) || locationCount < 1
 
   return (
     <AnalyticsPageShell
@@ -96,9 +106,15 @@ export default async function Page() {
       <section className={cn('flex flex-col gap-4', ANALYTICS_REPORT_SECTION_CLASS)}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <PageHeading title={t('title')} description={t('description')} />
-          <Button asChild className="w-full shrink-0 sm:w-auto" size="sm">
-            <Link href={routes.analytics.branchesCreate}>{t('create')}</Link>
-          </Button>
+          {canCreateLocation ? (
+            <Button asChild className="w-full shrink-0 sm:w-auto" size="sm">
+              <Link href={routes.analytics.branchesCreate}>{t('create')}</Link>
+            </Button>
+          ) : (
+            <p className="text-muted-foreground text-sm sm:max-w-xs sm:text-right">
+              {t('freePlanLocationLimit')}
+            </p>
+          )}
         </div>
         <Suspense fallback={<LocationsPageSkeleton />}>
           <LocationsPageData />

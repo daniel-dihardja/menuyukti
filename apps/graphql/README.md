@@ -67,14 +67,14 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 
 **Clerk user id is required:** pass `USER_ID=...` on the make command, or export `DEV_CLERK_USER_ID`. Use the same id as the signed-in web user (`X-User-Id`).
 
-| Command | What it does |
-| -------- | ------------- |
-| `make dev-data USER_ID=user_xxx` | Default `SCOPE=inventar`: reset inventar for that workspace, ensure `Warung Sunda Lembur`, seed Sundanese catalog/stock/movements (also ensures `SNABB` for analytics compat) |
-| `make dev-data SCOPE=clear-inventar USER_ID=user_xxx` | Delete inventar catalog/stock/movements for that workspace only (locations left intact; no reseed) |
-| `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Replace only `dev-seed-*` analytics runs; upsert location COGS; load order facts |
-| `make dev-data SCOPE=all USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Inventar + analytics |
-| `make db-reset-dev` | Destructive: `drop-db` + `db-upgrade` (Alembic) |
-| `make db-reset-dev SEED=1 USER_ID=user_xxx` | Hard schema reset, then inventar seed |
+| Command                                                                     | What it does                                                                                                                                                                  |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `make dev-data USER_ID=user_xxx`                                            | Default `SCOPE=inventar`: reset inventar for that workspace, ensure `Warung Sunda Lembur`, seed Sundanese catalog/stock/movements (also ensures `SNABB` for analytics compat) |
+| `make dev-data SCOPE=clear-inventar USER_ID=user_xxx`                       | Delete inventar catalog/stock/movements for that workspace only (locations left intact; no reseed)                                                                            |
+| `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Replace only `dev-seed-*` analytics runs; upsert location COGS; load order facts                                                                                              |
+| `make dev-data SCOPE=all USER_ID=user_xxx EXCEL=/path/to/report.xlsx`       | Inventar + analytics                                                                                                                                                          |
+| `make db-reset-dev`                                                         | Destructive: `drop-db` + `db-upgrade` (Alembic)                                                                                                                               |
+| `make db-reset-dev SEED=1 USER_ID=user_xxx`                                 | Hard schema reset, then inventar seed                                                                                                                                         |
 
 Optional: `COGS=/path/to/menu_cogs.json` (defaults to `notebooks/data/menu_cogs.json` when present). The default Excel under `reports/` is **gitignored** — pass `EXCEL=` for analytics scopes.
 

@@ -222,19 +222,23 @@
   "login": {
     "title": "Menuyukti",
     "slogan": "Agentic restaurant marketing",
-    "accessNote": "Sign-in is for existing customers and early partners only. Public access is opening soon.",
+    "accessNote": "We’ll email you a one-time code to sign in—no password needed.",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
-    "signUpDescription": "Create an account for Chat campaigns, sales Reports, Locations, and Team—restaurant marketing grounded in your order data.",
+    "signUpDescription": "Create an account for Chat campaigns, sales Reports, Locations, and Team—restaurant marketing grounded in your order data. You can add a location after you sign up.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
-    "passwordLabel": "Password",
-    "forgotPassword": "Forgot password?",
+    "continueWithEmail": "Continue with email",
+    "sendingCode": "Sending code…",
+    "otpHintEmail": "Enter the code we sent to {email}.",
     "loginButton": "Log In",
-    "loginWithGoogle": "Log in with Google",
     "signupDescription": "Don’t have an account?",
     "signupLink": "Sign up now",
+    "loginDescription": "Already have an account?",
+    "loginLink": "Log in",
     "signingIn": "Signing in…",
+    "signingUp": "Creating your account…",
+    "signUpPasswordStillRequired": "Email verified, but Clerk still requires a password. In the Clerk Dashboard, disable Password and enable Email verification code for sign-up.",
     "verificationCodeLabel": "Verification code",
     "verificationCodePlaceholder": "Enter the code sent to your email",
     "verify": "Verify",
@@ -676,7 +680,7 @@
     "passwordMinLength": "New password must be at least 8 characters.",
     "passwordMismatch": "New password and confirmation do not match.",
     "passwordSameAsCurrent": "New password must be different from your current password.",
-    "passwordOAuthOnly": "Your account does not use a password for sign-in, or you have not set one yet. You can add or manage a password in account settings.",
+    "passwordOAuthOnly": "Your account signs in with an email code (or another passwordless method), so there is no password to change here. You can manage sign-in options in account settings.",
     "passwordOpenAccountSettings": "Open account settings"
   },
   "workspaceTeam": {
@@ -726,7 +730,6 @@
     "toggleSectionAria": "Toggle {section}",
     "dashboard": "Dashboard",
     "branches": "Locations",
-    "reports": "Reports",
     "chat": "AI",
     "calendar": "Calendar",
     "playbooks": "Playbooks",
@@ -738,7 +741,8 @@
     "crmApps": "Apps",
     "crmRegistrations": "Registrations",
     "team": "Team",
-    "usage": "AI usage"
+    "usage": "AI usage",
+    "staff": "Staff"
   },
   "wayfinding": {
     "shopFromWorkflow": {
@@ -751,7 +755,23 @@
   },
   "staff": {
     "title": "Staff console",
-    "description": "Menuyukti platform tools for team members. Customers do not see this area."
+    "description": "Menuyukti platform tools for team members. Customers do not see this area.",
+    "workspacePlan": {
+      "title": "Workspace plan",
+      "description": "Manually set a workspace to free or pro. Free workspaces are limited to one location and a reduced product surface.",
+      "workspaceIdLabel": "Workspace ID",
+      "workspaceIdPlaceholder": "e.g. 42",
+      "yourWorkspaceId": "Your workspace ID: {id}",
+      "useYourWorkspaceId": "Use this ID",
+      "noWorkspaceYet": "You do not have a workspace yet. Create a location first, then return here.",
+      "planLabel": "Plan",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Update plan",
+      "saving": "Updating…",
+      "success": "Workspace plan updated to {plan}.",
+      "error": "Could not update workspace plan."
+    }
   },
   "playbooks": {
     "title": "Playbooks",
@@ -1986,8 +2006,10 @@
         "salesCta": "Go to Sales Reports"
       },
       "create": "Create New Location",
+      "freePlanLocationLimit": "Free plan includes one location. Upgrade to Pro to add more.",
       "manageMenu": "Manage menu",
       "manageCogs": "Manage COGS",
+      "manageReports": "Sales reports",
       "form": {
         "createTitle": "Create Location",
         "nameLabel": "Location name",

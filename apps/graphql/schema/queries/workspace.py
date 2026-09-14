@@ -13,6 +13,7 @@ def _workspace_to_gql(row: Workspace) -> WorkspaceType:
         id=str(row.id),
         name=row.name,
         owner_clerk_user_id=row.owner_clerk_user_id,
+        plan=row.plan,
         created_at=row.created_at,
     )
 

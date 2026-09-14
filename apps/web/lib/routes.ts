@@ -44,9 +44,17 @@ export const routes = {
     branchesDetail: (id: string | number) => `/analytics/locations/${id}`,
     branchesCogs: (id: string | number) => `/analytics/locations/${id}/cogs`,
     branchesMenu: (id: string | number) => `/analytics/locations/${id}/menu`,
-    sales: '/analytics/sales',
+    /** Sales reports for a single location (Locations → venue → Reports). */
+    branchesReports: (id: string | number) => `/analytics/locations/${id}/reports`,
+    /**
+     * Reports hub under Locations. Prefer `branchesReports(id)` / `salesWithLocation`
+     * when a venue is known; this path redirects into a location when possible.
+     */
+    sales: '/analytics/locations/reports',
     salesWithLocation: (locationId: string | number) =>
-      `/analytics/sales?locationId=${encodeURIComponent(String(locationId))}`,
+      `/analytics/locations/${encodeURIComponent(String(locationId))}/reports`,
+    /** @deprecated Legacy path; redirects to `sales`. */
+    salesLegacy: '/analytics/sales',
 
     matrix: (analyticsId: string | number) => `/analytics/${analyticsId}/matrix`,
     attribution: (analyticsId: string | number) => `/analytics/${analyticsId}/attribution`,

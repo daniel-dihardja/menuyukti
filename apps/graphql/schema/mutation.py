@@ -46,6 +46,7 @@ from graphql.schema.mutations import (
     UpdatePostMutation,
     UpdatePostPageMutation,
     UpdateStyleMutation,
+    UpdateWorkspacePlanMutation,
     UploadSalesReportMutation,
     UpsertLocationMenuItemCogsBulkMutation,
     UpsertMenuItemCogsBulkMutation,
@@ -104,5 +105,6 @@ class Mutation(
     UpdateLocationManualBriefInputMutation,
     UpdateStyleMutation,
     UpdateMediaCollectionMutation,
+    UpdateWorkspacePlanMutation,
 ):
     pass

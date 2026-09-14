@@ -46,6 +46,7 @@ from .update_playbook import UpdatePlaybookMutation
 from .update_post import UpdatePostMutation
 from .update_post_page import UpdatePostPageMutation
 from .update_style import UpdateStyleMutation
+from .update_workspace_plan import UpdateWorkspacePlanMutation
 from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
@@ -93,6 +94,7 @@ __all__ = [
     "UpdateStyleMutation",
     "UpdatePostMutation",
     "UpdatePostPageMutation",
+    "UpdateWorkspacePlanMutation",
     "UpsertMenuItemCogsBulkMutation",
     "UpsertLocationMenuItemCogsBulkMutation",
     "ApplyLocationCogsToAnalyticsRunMutation",

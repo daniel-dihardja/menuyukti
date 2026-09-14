@@ -25,6 +25,14 @@ const isProtectedRoute = createRouteMatcher([
   '/inventar(.*)',
 ])
 
+function nextWithPathname(req: Request, pathname: string): NextResponse {
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('x-pathname', pathname)
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  })
+}
+
 // Use default env resolution (CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY). Do not pass
 // secretKey/publishableKey via the dynamic-keys callback unless CLERK_ENCRYPTION_KEY is set — see
 // https://clerk.com/docs/references/nextjs/clerk-middleware#dynamic-keys
@@ -46,7 +54,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (userId && !isPathnameFeatureEnabled(pathname) && pathname !== homePath) {
       return NextResponse.redirect(new URL(homePath, req.url))
     }
-    return
+    return nextWithPathname(req, pathname)
   }
 
   const signInUrl = new URL(routes.login, req.url).href
@@ -55,6 +63,8 @@ export default clerkMiddleware(async (auth, req) => {
   if (!isPathnameFeatureEnabled(pathname) && pathname !== homePath) {
     return NextResponse.redirect(new URL(homePath, req.url))
   }
+
+  return nextWithPathname(req, pathname)
 })
 
 export const config = {

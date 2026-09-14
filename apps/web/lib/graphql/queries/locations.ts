@@ -167,6 +167,7 @@ export const MY_WORKSPACE_QUERY = `
       id
       name
       ownerClerkUserId
+      plan
       createdAt
     }
   }
@@ -177,6 +178,7 @@ export type MyWorkspaceData = {
     id: string
     name: string
     ownerClerkUserId: string
+    plan: string
     createdAt: string | null
   } | null
 }
@@ -187,6 +189,7 @@ export const CREATE_WORKSPACE_MUTATION = `
       id
       name
       ownerClerkUserId
+      plan
       createdAt
     }
   }
@@ -197,6 +200,7 @@ export type CreateWorkspaceData = {
     id: string
     name: string
     ownerClerkUserId: string
+    plan: string
     createdAt: string | null
   }
 }

@@ -6,6 +6,7 @@ from graphql.context import request_session_scope
 from graphql.data_sources import Workspace, WorkspaceMembership
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.types import WorkspaceType
+from graphql.services.workspace_plan import WORKSPACE_PLAN_FREE
 
 
 @strawberry.type
@@ -17,7 +18,7 @@ class CreateWorkspaceMutation:
             raise ValueError("Missing authenticated user for createWorkspace")
         now = datetime.now(tz=UTC)
         with request_session_scope(info) as session:
-            ws = Workspace(name=name, owner_clerk_user_id=user_id)
+            ws = Workspace(name=name, owner_clerk_user_id=user_id, plan=WORKSPACE_PLAN_FREE)
             session.add(ws)
             session.flush()
             session.add(
@@ -35,5 +36,6 @@ class CreateWorkspaceMutation:
                 id=str(ws.id),
                 name=ws.name,
                 owner_clerk_user_id=ws.owner_clerk_user_id,
+                plan=ws.plan,
                 created_at=ws.created_at,
             )
