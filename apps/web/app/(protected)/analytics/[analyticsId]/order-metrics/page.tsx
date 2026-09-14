@@ -59,9 +59,11 @@ function OrderMetricsReportSkeleton() {
 async function OrderMetricsReportContent({
   analyticsId,
   userId,
+  salesHref,
 }: {
   analyticsId: number
   userId: string
+  salesHref: string
 }) {
   const tOrderMetrics = await getTranslations('analytics.orderMetrics')
   const tShared = await getTranslations('analytics.shared')
@@ -167,7 +169,11 @@ export default async function Page({ params }: PageProps) {
         </div>
 
         <Suspense fallback={<OrderMetricsReportSkeleton />}>
-          <OrderMetricsReportContent analyticsId={analyticsId} userId={userId} />
+          <OrderMetricsReportContent
+            analyticsId={analyticsId}
+            userId={userId}
+            salesHref={salesHref}
+          />
         </Suspense>
       </section>
     </AnalyticsPageShell>

@@ -62,10 +62,12 @@ async function MenuCombosReportContent({
   analyticsId,
   userId,
   locationId,
+  salesHref,
 }: {
   analyticsId: number
   userId: string
   locationId: string
+  salesHref: string
 }) {
   const tMenuCombos = await getTranslations('analytics.menuCombos')
   const tShared = await getTranslations('analytics.shared')
@@ -178,6 +180,7 @@ export default async function Page({ params }: PageProps) {
             analyticsId={analyticsId}
             userId={userId}
             locationId={locationId}
+            salesHref={salesHref}
           />
         </Suspense>
       </section>

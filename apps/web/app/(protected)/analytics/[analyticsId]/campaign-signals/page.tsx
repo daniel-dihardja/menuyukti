@@ -59,9 +59,11 @@ function CampaignSignalsReportSkeleton() {
 async function CampaignSignalsReportContent({
   analyticsId,
   userId,
+  salesHref,
 }: {
   analyticsId: number
   userId: string
+  salesHref: string
 }) {
   const tCampaignSignals = await getTranslations('analytics.campaignSignals')
   const tShared = await getTranslations('analytics.shared')
@@ -166,7 +168,11 @@ export default async function Page({ params }: PageProps) {
         </div>
 
         <Suspense fallback={<CampaignSignalsReportSkeleton />}>
-          <CampaignSignalsReportContent analyticsId={analyticsId} userId={userId} />
+          <CampaignSignalsReportContent
+            analyticsId={analyticsId}
+            userId={userId}
+            salesHref={salesHref}
+          />
         </Suspense>
       </section>
     </AnalyticsPageShell>
