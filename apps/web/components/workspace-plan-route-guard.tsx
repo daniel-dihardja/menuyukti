@@ -7,11 +7,7 @@ import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
 import { useWorkspacePlan } from '@/hooks/use-workspace-plan'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
-import {
-  getDefaultPathForPlan,
-  isPathnameAllowedForPlan,
-  isProPlan,
-} from '@/lib/workspace-plan'
+import { getDefaultPathForPlan, isPathnameAllowedForPlan, isProPlan } from '@/lib/workspace-plan'
 
 /**
  * Redirects free-plan users off gated product routes.

@@ -155,7 +155,6 @@ export const colors = {
 
 ```tsx
 import { colors } from '@/theme/colors'
-
 ;<View style={{ backgroundColor: colors.systemBackground }}>
   <Text style={{ color: colors.label }}>Title</Text>
 </View>

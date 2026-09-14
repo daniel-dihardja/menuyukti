@@ -17,33 +17,35 @@ For basic setup, see `clerk-setup` skill.
 
 ## What Do You Need?
 
-| Task | Reference |
-|------|-----------|
-| Server vs client auth (`auth()` vs hooks) | references/server-vs-client.md |
+| Task                                                   | Reference                           |
+| ------------------------------------------------------ | ----------------------------------- |
+| Server vs client auth (`auth()` vs hooks)              | references/server-vs-client.md      |
 | Configure middleware (public-first vs protected-first) | references/middleware-strategies.md |
-| Protect Server Actions | references/server-actions.md |
-| API route auth (401 vs 403) | references/api-routes.md |
-| Cache auth data (user-scoped caching) | references/caching-auth.md |
+| Protect Server Actions                                 | references/server-actions.md        |
+| API route auth (401 vs 403)                            | references/api-routes.md            |
+| Cache auth data (user-scoped caching)                  | references/caching-auth.md          |
 
 ## References
 
-| Reference | Description |
-|-----------|-------------|
-| `references/server-vs-client.md` | `await auth()` vs hooks |
+| Reference                             | Description                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| `references/server-vs-client.md`      | `await auth()` vs hooks                                                     |
 | `references/middleware-strategies.md` | Public-first vs protected-first, `proxy.ts` (Next.js <=15: `middleware.ts`) |
-| `references/server-actions.md` | Protect mutations |
-| `references/api-routes.md` | 401 vs 403 |
-| `references/caching-auth.md` | User-scoped caching |
+| `references/server-actions.md`        | Protect mutations                                                           |
+| `references/api-routes.md`            | 401 vs 403                                                                  |
+| `references/caching-auth.md`          | User-scoped caching                                                         |
 
 ## Mental Model
 
 Server vs Client = different auth APIs:
+
 - **Server**: `await auth()` from `@clerk/nextjs/server` (async!)
 - **Client**: `useAuth()` hook from `@clerk/nextjs` (sync)
 
 Never mix them. Server Components use server imports, Client Components use hooks.
 
 Key properties from `auth()`:
+
 - `isAuthenticated` — boolean, replaces the `!!userId` pattern
 - `sessionStatus` — `'active'` | `'pending'`, for detecting incomplete session tasks
 - `userId`, `orgId`, `orgSlug`, `has()`, `protect()` — unchanged
@@ -72,7 +74,7 @@ For client-side conditional rendering based on auth state:
 ```tsx
 import { Show } from '@clerk/nextjs'
 
-<Show when="signed-in" fallback={<p>Please sign in</p>}>
+;<Show when="signed-in" fallback={<p>Please sign in</p>}>
   <Dashboard />
 </Show>
 ```
@@ -81,13 +83,13 @@ import { Show } from '@clerk/nextjs'
 
 ## Common Pitfalls
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| `undefined` userId in Server Component | Missing `await` | `await auth()` not `auth()` |
-| Auth not working on API routes | Missing matcher | Add `'/(api|trpc)(.*)'` to `proxy.ts` (Next.js <=15: `middleware.ts`) |
-| Cache returns wrong user's data | Missing userId in key | Include `userId` in `unstable_cache` key |
-| Mutations bypass auth | Unprotected Server Action | Check `auth()` at start of action |
-| Wrong HTTP error code | Confused 401/403 | 401 = not signed in, 403 = no permission |
+| Symptom                                | Cause                     | Fix                                      |
+| -------------------------------------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| `undefined` userId in Server Component | Missing `await`           | `await auth()` not `auth()`              |
+| Auth not working on API routes         | Missing matcher           | Add `'/(api                              | trpc)(.\*)'`to`proxy.ts`(Next.js <=15:`middleware.ts`) |
+| Cache returns wrong user's data        | Missing userId in key     | Include `userId` in `unstable_cache` key |
+| Mutations bypass auth                  | Unprotected Server Action | Check `auth()` at start of action        |
+| Wrong HTTP error code                  | Confused 401/403          | 401 = not signed in, 403 = no permission |
 
 ## Session Tokens & Custom JWTs
 
@@ -199,6 +201,7 @@ try {
 ```
 
 Token sources:
+
 - **Same-origin requests**: `__session` cookie (Clerk sets this automatically)
 - **Cross-origin / mobile / API-to-API**: `Authorization: Bearer <token>` header
 

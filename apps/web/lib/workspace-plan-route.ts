@@ -5,11 +5,7 @@ import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
 import { routes } from '@/lib/routes'
 import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
-import {
-  getDefaultPathForPlan,
-  isPathnameAllowedForPlan,
-  isProPlan,
-} from '@/lib/workspace-plan'
+import { getDefaultPathForPlan, isPathnameAllowedForPlan, isProPlan } from '@/lib/workspace-plan'
 
 /** Server-side free-plan route gate using `x-pathname` from proxy. */
 export async function enforceWorkspacePlanRoute(): Promise<void> {

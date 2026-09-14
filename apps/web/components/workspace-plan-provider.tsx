@@ -19,11 +19,7 @@ type WorkspacePlanProviderProps = {
 }
 
 /** Server-seeded plan so sidenav/route guards filter correctly on first paint. */
-export function WorkspacePlanProvider({
-  children,
-  plan,
-  workspaceId,
-}: WorkspacePlanProviderProps) {
+export function WorkspacePlanProvider({ children, plan, workspaceId }: WorkspacePlanProviderProps) {
   const value = useMemo<WorkspacePlanContextValue>(
     () => ({ plan, isLoaded: true, workspaceId }),
     [plan, workspaceId],

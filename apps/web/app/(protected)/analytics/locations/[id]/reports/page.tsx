@@ -5,10 +5,7 @@ import { notFound } from 'next/navigation'
 import { Badge } from '@workspace/ui/components/badge'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
-import {
-  getCachedAnalyticsRunsByLocation,
-  getCachedLocation,
-} from '@/lib/graphql/cached-queries'
+import { getCachedAnalyticsRunsByLocation, getCachedLocation } from '@/lib/graphql/cached-queries'
 import { AnalyticsSalesClient } from '@/app/(protected)/analytics/sales/analytics-sales-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'

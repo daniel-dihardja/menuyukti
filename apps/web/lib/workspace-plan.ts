@@ -6,12 +6,7 @@ export const WORKSPACE_PLAN_PRO = 'pro' as const
 export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_PRO
 
 /** Sidebar `NavItem.key` values visible on the free plan. */
-export const FREE_NAV_KEYS = new Set([
-  'branches',
-  'inventar',
-  'team',
-  'usage',
-])
+export const FREE_NAV_KEYS = new Set(['branches', 'inventar', 'team', 'usage'])
 
 /**
  * Path prefixes allowed for free workspaces.

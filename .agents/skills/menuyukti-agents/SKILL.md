@@ -22,20 +22,20 @@ When implementing in **`apps/agents`**, follow these skills in addition to this 
 
 ## Layout
 
-| Area           | Path                                                                                            | Role                                                                                         |
-| -------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Chat           | [`apps/agents/agents/core/chat/`](../../../apps/agents/agents/core/chat/)                       | `compile_chat_graph` / `create_agent` ReAct + checkpointer; modes, tools, story scratchpad. |
-| Format MD      | [`apps/agents/agents/core/format_markdown/`](../../../apps/agents/agents/core/format_markdown/) | Preset-driven Markdown cleanup (`POST /format-markdown`).                                    |
-| Style spec     | [`apps/agents/agents/core/style_spec/`](../../../apps/agents/agents/core/style_spec/)           | Vision draft helpers for IG Studio styles.                                                   |
-| LLM helpers    | [`apps/agents/agents/core/llm_invoke.py`](../../../apps/agents/agents/core/llm_invoke.py)       | Retries + structured-output errors.                                                          |
-| AI usage       | [`apps/agents/agents/core/ai_usage_client.py`](../../../apps/agents/agents/core/ai_usage_client.py) | GraphQL metering for LLM / feature usage.                                               |
-| Web search     | [`apps/agents/agents/core/tavily_search_tool.py`](../../../apps/agents/agents/core/tavily_search_tool.py) | Optional `search_web` when `TAVILY_API_KEY` is set.                                 |
-| Routers        | [`apps/agents/routers/`](../../../apps/agents/routers/)                                         | FastAPI routes (`chat`, `format-markdown`, `style_specs`).                                   |
-| GraphQL helper | [`apps/agents/agents/graphql_base.py`](../../../apps/agents/agents/graphql_base.py)             | `graphql_post` (retry on transient failures).                                                |
-| GraphQL ops    | [`apps/agents/agents/graphql_operations.py`](../../../apps/agents/agents/graphql_operations.py) | Query/mutation documents used by tools.                                                      |
-| Errors / trace | [`errors.py`](../../../apps/agents/agents/errors.py), [`tracing.py`](../../../apps/agents/agents/tracing.py) | SSE error payloads; LangSmith / `traceparent`.                                      |
-| LLM config     | [`apps/agents/models/llm_config.py`](../../../apps/agents/models/llm_config.py)                 | AI Gateway `ChatOpenAI` factories + reporting extras.                                        |
-| Tests          | [`apps/agents/tests/core/`](../../../apps/agents/tests/core/)                                   | Pytest for chat graph, tools, routers.                                                       |
+| Area           | Path                                                                                                         | Role                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Chat           | [`apps/agents/agents/core/chat/`](../../../apps/agents/agents/core/chat/)                                    | `compile_chat_graph` / `create_agent` ReAct + checkpointer; modes, tools, story scratchpad. |
+| Format MD      | [`apps/agents/agents/core/format_markdown/`](../../../apps/agents/agents/core/format_markdown/)              | Preset-driven Markdown cleanup (`POST /format-markdown`).                                   |
+| Style spec     | [`apps/agents/agents/core/style_spec/`](../../../apps/agents/agents/core/style_spec/)                        | Vision draft helpers for IG Studio styles.                                                  |
+| LLM helpers    | [`apps/agents/agents/core/llm_invoke.py`](../../../apps/agents/agents/core/llm_invoke.py)                    | Retries + structured-output errors.                                                         |
+| AI usage       | [`apps/agents/agents/core/ai_usage_client.py`](../../../apps/agents/agents/core/ai_usage_client.py)          | GraphQL metering for LLM / feature usage.                                                   |
+| Web search     | [`apps/agents/agents/core/tavily_search_tool.py`](../../../apps/agents/agents/core/tavily_search_tool.py)    | Optional `search_web` when `TAVILY_API_KEY` is set.                                         |
+| Routers        | [`apps/agents/routers/`](../../../apps/agents/routers/)                                                      | FastAPI routes (`chat`, `format-markdown`, `style_specs`).                                  |
+| GraphQL helper | [`apps/agents/agents/graphql_base.py`](../../../apps/agents/agents/graphql_base.py)                          | `graphql_post` (retry on transient failures).                                               |
+| GraphQL ops    | [`apps/agents/agents/graphql_operations.py`](../../../apps/agents/agents/graphql_operations.py)              | Query/mutation documents used by tools.                                                     |
+| Errors / trace | [`errors.py`](../../../apps/agents/agents/errors.py), [`tracing.py`](../../../apps/agents/agents/tracing.py) | SSE error payloads; LangSmith / `traceparent`.                                              |
+| LLM config     | [`apps/agents/models/llm_config.py`](../../../apps/agents/models/llm_config.py)                              | AI Gateway `ChatOpenAI` factories + reporting extras.                                       |
+| Tests          | [`apps/agents/tests/core/`](../../../apps/agents/tests/core/)                                                | Pytest for chat graph, tools, routers.                                                      |
 
 Chat helpers under `core/chat/` also include `tools_registry.py`, `middleware.py`, `sse_stream.py`, `chat_run_config.py`, `limits.py`, `allowed_models.py`, `story_assets.py`, `history_messages.py`, `http_context.py`, `chart_data.py`, `present_weekly_instagram_schedule.py`, `generate_instagram_post_image.py`, and `generate_confirmation_gate.py`.
 

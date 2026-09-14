@@ -4,7 +4,7 @@ description: Performs pandas DataFrame operations for data analysis, manipulatio
 license: MIT
 metadata:
   author: https://github.com/Jeffallan
-  version: "1.1.0"
+  version: '1.1.0'
   domain: data-ml
   triggers: pandas, DataFrame, data manipulation, data cleaning, aggregation, groupby, merge, join, time series, data wrangling, pivot table, data transformation
   role: expert
@@ -40,13 +40,13 @@ Expert pandas developer specializing in efficient data manipulation, analysis, a
 
 Load detailed guidance based on context:
 
-| Topic | Reference | Load When |
-|-------|-----------|-----------|
-| DataFrame Operations | `references/dataframe-operations.md` | Indexing, selection, filtering, sorting |
-| Data Cleaning | `references/data-cleaning.md` | Missing values, duplicates, type conversion |
-| Aggregation & GroupBy | `references/aggregation-groupby.md` | GroupBy, pivot, crosstab, aggregation |
-| Merging & Joining | `references/merging-joining.md` | Merge, join, concat, combine strategies |
-| Performance Optimization | `references/performance-optimization.md` | Memory usage, vectorization, chunking |
+| Topic                    | Reference                                | Load When                                   |
+| ------------------------ | ---------------------------------------- | ------------------------------------------- |
+| DataFrame Operations     | `references/dataframe-operations.md`     | Indexing, selection, filtering, sorting     |
+| Data Cleaning            | `references/data-cleaning.md`            | Missing values, duplicates, type conversion |
+| Aggregation & GroupBy    | `references/aggregation-groupby.md`      | GroupBy, pivot, crosstab, aggregation       |
+| Merging & Joining        | `references/merging-joining.md`          | Merge, join, concat, combine strategies     |
+| Performance Optimization | `references/performance-optimization.md` | Memory usage, vectorization, chunking       |
 
 ## Code Patterns
 
@@ -151,6 +151,7 @@ print(df.memory_usage(deep=True).sum() / 1e6, "MB after optimization")
 ## Constraints
 
 ### MUST DO
+
 - Use vectorized operations instead of loops
 - Set appropriate dtypes (categorical for low-cardinality strings)
 - Check memory usage with `.memory_usage(deep=True)`
@@ -161,6 +162,7 @@ print(df.memory_usage(deep=True).sum() / 1e6, "MB after optimization")
 - Use `.copy()` when modifying subsets to avoid SettingWithCopyWarning
 
 ### MUST NOT DO
+
 - Iterate over DataFrame rows with `.iterrows()` unless absolutely necessary
 - Use chained indexing (`df['A']['B']`) — use `.loc[]` or `.iloc[]`
 - Ignore SettingWithCopyWarning messages
@@ -172,6 +174,7 @@ print(df.memory_usage(deep=True).sum() / 1e6, "MB after optimization")
 ## Output Templates
 
 When implementing pandas solutions, provide:
+
 1. Code with vectorized operations and proper indexing
 2. Comments explaining complex transformations
 3. Memory/performance considerations if dataset is large

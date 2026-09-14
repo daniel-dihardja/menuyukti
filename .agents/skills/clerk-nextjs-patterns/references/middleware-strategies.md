@@ -7,24 +7,20 @@
 Protect specific routes, allow everything else:
 
 ```typescript
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
-  '/settings(.*)',
-  '/api/private(.*)',
-]);
+const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/settings(.*)', '/api/private(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) await auth.protect();
-});
+  if (isProtectedRoute(req)) await auth.protect()
+})
 
 export const config = {
   matcher: [
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     '/(api|trpc)(.*)',
   ],
-};
+}
 ```
 
 ## Protected-First (internal tools, dashboards)
@@ -32,18 +28,13 @@ export const config = {
 Block everything, allow specific public routes:
 
 ```typescript
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/api/public(.*)',
-]);
+const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)', '/api/public(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) await auth.protect();
-});
+  if (!isPublicRoute(req)) await auth.protect()
+})
 ```
 
 ## Session Tasks
@@ -52,15 +43,15 @@ When session tasks are enabled (e.g., forced password reset, MFA setup), users m
 
 ```typescript
 export default clerkMiddleware(async (auth, req) => {
-  const { sessionStatus } = await auth();
+  const { sessionStatus } = await auth()
 
   // Redirect pending sessions to task completion page
   if (sessionStatus === 'pending') {
-    return NextResponse.redirect(new URL('/sign-in/tasks', req.url));
+    return NextResponse.redirect(new URL('/sign-in/tasks', req.url))
   }
 
-  if (isProtectedRoute(req)) await auth.protect();
-});
+  if (isProtectedRoute(req)) await auth.protect()
+})
 ```
 
 > **Core 2 ONLY (skip if current SDK):** `sessionStatus` is not available. Session tasks do not exist in Core 2.
