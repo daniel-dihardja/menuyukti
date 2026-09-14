@@ -93,7 +93,7 @@ async function MenuCombosReportContent({
         </EmptyHeader>
         <EmptyContent>
           <Button asChild variant="outline" size="sm">
-            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+            <Link href={salesHref}>{tShared('backToSales')}</Link>
           </Button>
         </EmptyContent>
       </Empty>
@@ -131,6 +131,8 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
+  const salesHref = routes.analytics.salesWithLocation(run.locationId)
+
   const locationId = String(run.locationId)
   const locale = getAppCurrencyLocale()
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
@@ -142,7 +144,7 @@ export default async function Page({ params }: PageProps) {
       title={tMenuCombos('reportTitle')}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
       breadcrumbs={[
-        { label: tSales('title'), href: routes.analytics.sales },
+        { label: tSales('title'), href: salesHref },
         { label: analyticsName },
         { label: tMenuCombos('breadcrumb') },
       ]}
@@ -167,7 +169,7 @@ export default async function Page({ params }: PageProps) {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+            <Link href={salesHref}>{tShared('backToSales')}</Link>
           </Button>
         </div>
 

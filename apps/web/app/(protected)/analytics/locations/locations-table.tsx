@@ -141,9 +141,6 @@ function LocationsEmptyState({ createHref }: { createHref: string }) {
           <Link href={createHref}>{t('createCta')}</Link>
         </Button>
         <p className="text-sm text-muted-foreground">{t('salesHint')}</p>
-        <Button asChild variant="outline" size="sm">
-          <Link href={routes.analytics.sales}>{t('salesCta')}</Link>
-        </Button>
       </EmptyContent>
     </Empty>
   )

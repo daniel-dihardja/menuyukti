@@ -21,9 +21,16 @@ type Props = {
   branches: Branch[]
   initialLocationId: number | null
   initialAnalytics: Array<{ id: number; name: string }>
+  /** Location is fixed by the route — hide picker and skip URL sync. */
+  lockLocation?: boolean
 }
 
-export function AnalyticsSalesClient({ branches, initialLocationId, initialAnalytics }: Props) {
+export function AnalyticsSalesClient({
+  branches,
+  initialLocationId,
+  initialAnalytics,
+  lockLocation = false,
+}: Props) {
   const t = useTranslations('analytics.sales')
   const router = useRouter()
 
@@ -38,7 +45,7 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
 
   // No URL: keep a valid stored selection, or auto-select the only branch.
   useEffect(() => {
-    if (initialLocationId !== null) return
+    if (lockLocation || initialLocationId !== null) return
     if (locationId !== null) {
       if (branches.length > 0 && !branches.some((b) => b.id === locationId)) {
         setLocationId(null)
@@ -49,15 +56,16 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
     const [onlyBranch] = branches
     if (!onlyBranch) return
     setLocationId(onlyBranch.id)
-  }, [initialLocationId, locationId, branches, setLocationId])
+  }, [lockLocation, initialLocationId, locationId, branches, setLocationId])
 
   useEffect(() => {
+    if (lockLocation) return
     if (locationId === null) return
     if (locationId === initialLocationId) return
     router.replace(routes.analytics.salesWithLocation(locationId))
-  }, [locationId, initialLocationId, router])
+  }, [lockLocation, locationId, initialLocationId, router])
 
-  const isNavigating = locationId !== null && locationId !== initialLocationId
+  const isNavigating = !lockLocation && locationId !== null && locationId !== initialLocationId
 
   const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, () =>
     router.refresh(),
@@ -73,13 +81,15 @@ export function AnalyticsSalesClient({ branches, initialLocationId, initialAnaly
   return (
     <div className="space-y-6">
       <section className="space-y-4">
-        <LocationSelect
-          branches={branches}
-          id="sales-location-select"
-          label={t('branchLabel')}
-          placeholder={branches.length > 1 ? t('branchPlaceholder') : undefined}
-          className="w-full max-w-none sm:max-w-xs"
-        />
+        {lockLocation ? null : (
+          <LocationSelect
+            branches={branches}
+            id="sales-location-select"
+            label={t('branchLabel')}
+            placeholder={branches.length > 1 ? t('branchPlaceholder') : undefined}
+            className="w-full max-w-none sm:max-w-xs"
+          />
+        )}
         <UploadExcelClient
           disabled={!locationId}
           uploading={uploading}

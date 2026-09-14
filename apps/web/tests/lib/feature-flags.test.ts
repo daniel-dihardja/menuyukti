@@ -7,14 +7,13 @@ import {
 } from '@/lib/feature-flags'
 
 describe('feature-flags', () => {
-  it('reports release-aligned nav surface (chat/reports/branches/crm/team/media/calendar on)', () => {
+  it('reports release-aligned nav surface (chat/branches/crm/team/media/calendar on)', () => {
     expect(isNavKeyEnabled('dashboard')).toBe(false)
     expect(isNavKeyEnabled('media')).toBe(true)
     expect(isNavKeyEnabled('posts')).toBe(false)
     expect(isNavKeyEnabled('calendar')).toBe(true)
     expect(isNavKeyEnabled('printShop')).toBe(false)
     expect(isNavKeyEnabled('chat')).toBe(true)
-    expect(isNavKeyEnabled('reports')).toBe(true)
     expect(isNavKeyEnabled('branches')).toBe(true)
     expect(isNavKeyEnabled('crm')).toBe(true)
     expect(isNavKeyEnabled('team')).toBe(true)
@@ -34,7 +33,8 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/shop')).toBe(false)
     expect(isPathnameFeatureEnabled('/advisor')).toBe(true)
     expect(isPathnameFeatureEnabled('/advisor/abc')).toBe(true)
-    expect(isPathnameFeatureEnabled('/analytics/sales')).toBe(true)
+    expect(isPathnameFeatureEnabled('/analytics/locations/reports')).toBe(true)
+    expect(isPathnameFeatureEnabled('/analytics/locations/1/reports')).toBe(true)
   })
 
   it('leaves unlisted paths enabled', () => {

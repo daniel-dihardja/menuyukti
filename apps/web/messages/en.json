@@ -730,7 +730,6 @@
     "toggleSectionAria": "Toggle {section}",
     "dashboard": "Dashboard",
     "branches": "Locations",
-    "reports": "Reports",
     "chat": "AI",
     "calendar": "Calendar",
     "playbooks": "Playbooks",
@@ -2010,6 +2009,7 @@
       "freePlanLocationLimit": "Free plan includes one location. Upgrade to Pro to add more.",
       "manageMenu": "Manage menu",
       "manageCogs": "Manage COGS",
+      "manageReports": "Sales reports",
       "form": {
         "createTitle": "Create Location",
         "nameLabel": "Location name",

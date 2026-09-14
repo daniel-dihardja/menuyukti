@@ -4,7 +4,6 @@ import {
   BarChart3,
   BookOpen,
   CalendarDays,
-  ChartColumn,
   ChevronRight,
   Contact,
   Image,
@@ -114,13 +113,6 @@ const NAV_WORKSPACE: NavItem[] = [
     href: routes.calendar,
     icon: <CalendarDays />,
     group: 'create',
-  },
-  {
-    key: 'reports',
-    labelKey: 'reports',
-    icon: <ChartColumn />,
-    href: routes.analytics.sales,
-    group: 'analytics',
   },
   {
     key: 'branches',

@@ -73,6 +73,9 @@ export default async function Page({ params }: PageProps) {
           <PageHeading title={location.name} />
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
+              <Link href={routes.analytics.branchesReports(location.id)}>{t('manageReports')}</Link>
+            </Button>
+            <Button asChild variant="outline">
               <Link href={routes.analytics.branchesMenu(location.id)}>{t('manageMenu')}</Link>
             </Button>
             <Button asChild variant="outline">

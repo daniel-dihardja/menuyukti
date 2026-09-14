@@ -7,7 +7,6 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
 
 /** Sidebar `NavItem.key` values visible on the free plan. */
 export const FREE_NAV_KEYS = new Set([
-  'reports',
   'branches',
   'inventar',
   'team',
@@ -20,7 +19,6 @@ export const FREE_NAV_KEYS = new Set([
  */
 export const FREE_ROUTE_PREFIXES = [
   '/analytics/locations',
-  '/analytics/sales',
   '/inventar',
   '/profile',
   '/usage',

@@ -5,7 +5,6 @@
     "posts": false,
     "calendar": true,
     "playbooks": true,
-    "reports": true,
     "branches": true,
     "crm": true,
     "printShop": false,
