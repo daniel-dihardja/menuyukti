@@ -76,6 +76,11 @@ export default async function Page({ params }: PageProps) {
               <Link href={routes.analytics.branchesReports(location.id)}>{t('manageReports')}</Link>
             </Button>
             <Button asChild variant="outline">
+              <Link href={routes.analytics.branchesFrontpage(location.id)}>
+                {t('manageFrontpage')}
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
               <Link href={routes.analytics.branchesMenu(location.id)}>{t('manageMenu')}</Link>
             </Button>
             <Button asChild variant="outline">

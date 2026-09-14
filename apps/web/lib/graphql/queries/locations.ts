@@ -119,9 +119,22 @@ export const LOCATION_QUERY = `
         locationId
         quickProfile
       }
+      frontpage {
+        locationId
+        tagline
+        showGuestFavorites
+        showPopularCombos
+      }
     }
   }
 `
+
+export type LocationFrontpageConfig = {
+  locationId: number
+  tagline: string | null
+  showGuestFavorites: boolean
+  showPopularCombos: boolean
+}
 
 export type LocationData = {
   location: {
@@ -142,6 +155,7 @@ export type LocationData = {
       locationId: number
       quickProfile: Record<string, unknown>
     } | null
+    frontpage: LocationFrontpageConfig | null
   } | null
 }
 
@@ -159,6 +173,31 @@ export type UpdateLocationManualBriefData = {
     locationId: number
     quickProfile: Record<string, unknown>
   }
+}
+
+export const UPDATE_LOCATION_FRONTPAGE_MUTATION = `
+  mutation UpdateLocationFrontpage(
+    $locationId: Int!
+    $tagline: String
+    $showGuestFavorites: Boolean!
+    $showPopularCombos: Boolean!
+  ) {
+    updateLocationFrontpage(
+      locationId: $locationId
+      tagline: $tagline
+      showGuestFavorites: $showGuestFavorites
+      showPopularCombos: $showPopularCombos
+    ) {
+      locationId
+      tagline
+      showGuestFavorites
+      showPopularCombos
+    }
+  }
+`
+
+export type UpdateLocationFrontpageData = {
+  updateLocationFrontpage: LocationFrontpageConfig
 }
 
 export const MY_WORKSPACE_QUERY = `

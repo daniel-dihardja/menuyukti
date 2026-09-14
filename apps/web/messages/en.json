@@ -2010,6 +2010,7 @@
       "manageMenu": "Manage menu",
       "manageCogs": "Manage COGS",
       "manageReports": "Sales reports",
+      "manageFrontpage": "Frontpage",
       "form": {
         "createTitle": "Create Location",
         "nameLabel": "Location name",
@@ -3219,6 +3220,42 @@
         "saveFailed": "Failed to save location COGS",
         "importFailed": "Failed to import COGS from analytics",
         "unknown": "Unknown error"
+      }
+    },
+    "locationFrontpage": {
+      "heading": "Frontpage",
+      "description": "Configure the guest-facing home for this location and preview what sales data will highlight.",
+      "configTitle": "Display settings",
+      "fields": {
+        "tagline": "Tagline",
+        "taglinePlaceholder": "What guests should feel when they arrive",
+        "showGuestFavorites": "Show guest favorites",
+        "showPopularCombos": "Show popular combos"
+      },
+      "actions": {
+        "save": "Save frontpage",
+        "saving": "Saving…",
+        "saved": "Saved"
+      },
+      "errors": {
+        "saveFailed": "Could not save frontpage settings"
+      },
+      "previewTitle": "Guest preview",
+      "previewFromRun": "Based on latest analytics: {runName}",
+      "previewNoRun": "Upload a sales report to preview favorites and combos.",
+      "preview": {
+        "favoritesHeading": "Guest favorites",
+        "combosHeading": "Often ordered together",
+        "guestFavorite": "Guest favorite",
+        "oftenTogether": "Often ordered together",
+        "favoritesEmpty": "No star dishes in the latest run yet.",
+        "combosEmpty": "No strong combos in the latest run yet.",
+        "sectionHidden": "Hidden by your settings above.",
+        "venueNote": "Preview for {name}"
+      },
+      "empty": {
+        "noAnalytics": "This location has no sales analytics yet. Upload a POS report to power guest favorites and popular combos.",
+        "uploadCta": "Go to sales reports"
       }
     },
     "locationMenu": {

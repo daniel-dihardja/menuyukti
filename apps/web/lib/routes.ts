@@ -44,6 +44,7 @@ export const routes = {
     branchesDetail: (id: string | number) => `/analytics/locations/${id}`,
     branchesCogs: (id: string | number) => `/analytics/locations/${id}/cogs`,
     branchesMenu: (id: string | number) => `/analytics/locations/${id}/menu`,
+    branchesFrontpage: (id: string | number) => `/analytics/locations/${id}/frontpage`,
     /** Sales reports for a single location (Locations → venue → Reports). */
     branchesReports: (id: string | number) => `/analytics/locations/${id}/reports`,
     /**
