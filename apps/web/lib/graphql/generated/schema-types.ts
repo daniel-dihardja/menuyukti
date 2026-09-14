@@ -526,6 +526,7 @@ export type LocationFrontpageType = {
   showGuestFavorites: Scalars['Boolean']['output']
   showPopularCombos: Scalars['Boolean']['output']
   tagline?: Maybe<Scalars['String']['output']>
+  wallEnabled: Scalars['Boolean']['output']
 }
 
 /** Media image override for a guest-favorite dish. */
@@ -607,6 +608,7 @@ export type LocationType = {
   name: Scalars['String']['output']
   nodeId?: Maybe<Scalars['ID']['output']>
   openingHours: Array<OpeningHourType>
+  publicSlug?: Maybe<Scalars['String']['output']>
   street?: Maybe<Scalars['String']['output']>
   workspaceId?: Maybe<Scalars['ID']['output']>
 }
@@ -1286,9 +1288,11 @@ export type MutationUpdateLocationFrontpageArgs = {
   comboImages?: InputMaybe<Array<FrontpageComboImageInput>>
   favoriteImages?: InputMaybe<Array<FrontpageFavoriteImageInput>>
   locationId: Scalars['Int']['input']
+  publicSlug?: InputMaybe<Scalars['String']['input']>
   showGuestFavorites?: Scalars['Boolean']['input']
   showPopularCombos?: Scalars['Boolean']['input']
   tagline?: InputMaybe<Scalars['String']['input']>
+  wallEnabled?: InputMaybe<Scalars['Boolean']['input']>
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */

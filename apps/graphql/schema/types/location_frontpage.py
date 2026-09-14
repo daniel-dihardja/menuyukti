@@ -70,5 +70,6 @@ class LocationFrontpageType:
     tagline: str | None
     show_guest_favorites: bool
     show_popular_combos: bool
+    wall_enabled: bool
     favorite_images: list[FrontpageFavoriteImageType]
     combo_images: list[FrontpageComboImageType]

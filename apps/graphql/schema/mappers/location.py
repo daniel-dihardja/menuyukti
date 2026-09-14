@@ -29,6 +29,7 @@ def location_to_gql(row: Location) -> LocationType:
     return LocationType(
         id=row.id,
         name=row.name,
+        public_slug=row.public_slug,
         street=row.street,
         city=row.city,
         country=row.country,

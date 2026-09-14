@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import strawberry
 from strawberry import UNSET
 
 from graphql.context import request_session_scope
-from graphql.data_sources import LocationFrontpage
+from graphql.data_sources import Location, LocationFrontpage
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.queries.location_frontpage import _row_to_frontpage_type
 from graphql.schema.types.location_frontpage import (
@@ -20,6 +21,8 @@ from graphql.schema.types.location_frontpage import (
 _TAGLINE_MAX_LEN = 512
 _IMAGE_FILENAME_MAX_LEN = 512
 _DESCRIPTION_MAX_LEN = 512
+_PUBLIC_SLUG_MAX_LEN = 128
+_PUBLIC_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def _normalize_tagline(tagline: str | None) -> str | None:
@@ -53,6 +56,25 @@ def _normalize_optional_description(raw: str | None, *, field: str) -> str | Non
     if len(stripped) > _DESCRIPTION_MAX_LEN:
         raise ValueError(f"{field} must be at most {_DESCRIPTION_MAX_LEN} characters")
     return stripped
+
+
+def normalize_public_slug(raw: str | None) -> str | None:
+    """Normalize a public wall slug to lowercase kebab-case, or None if empty."""
+    if raw is None:
+        return None
+    stripped = raw.strip().lower()
+    if not stripped:
+        return None
+    # Allow operators to paste spaced names; coerce to kebab-case.
+    coerced = re.sub(r"[^a-z0-9]+", "-", stripped)
+    coerced = re.sub(r"-+", "-", coerced).strip("-")
+    if not coerced:
+        return None
+    if len(coerced) > _PUBLIC_SLUG_MAX_LEN:
+        raise ValueError(f"publicSlug must be at most {_PUBLIC_SLUG_MAX_LEN} characters")
+    if not _PUBLIC_SLUG_RE.fullmatch(coerced):
+        raise ValueError("publicSlug must be lowercase letters, numbers, and hyphens")
+    return coerced
 
 
 def _normalize_favorite_images(
@@ -124,7 +146,7 @@ class UpdateLocationFrontpageMutation:
     @strawberry.mutation(
         description=(
             "Upsert guest frontpage settings for a location (tagline, section toggles, "
-            "and optional media image / description / publish overrides)."
+            "wall publish settings, and optional media image / description / publish overrides)."
         )
     )
     def update_location_frontpage(
@@ -134,6 +156,8 @@ class UpdateLocationFrontpageMutation:
         show_guest_favorites: bool = True,
         show_popular_combos: bool = True,
         tagline: str | None = None,
+        wall_enabled: bool | None = UNSET,
+        public_slug: str | None = UNSET,
         favorite_images: list[FrontpageFavoriteImageInput] | None = UNSET,
         combo_images: list[FrontpageComboImageInput] | None = UNSET,
     ) -> LocationFrontpageType:
@@ -151,16 +175,49 @@ class UpdateLocationFrontpageMutation:
             normalized_combos = (
                 _normalize_combo_images(combo_images) if combo_images is not UNSET else None
             )
+            normalized_slug = (
+                normalize_public_slug(public_slug) if public_slug is not UNSET else UNSET
+            )
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
 
         with request_session_scope(info) as session:
             require_location_owner(session, location_id, user_id)
+            location = session.get(Location, location_id)
+            if location is None:
+                raise ValueError("Location not found")
+
             row = (
                 session.query(LocationFrontpage)
                 .filter(LocationFrontpage.location_id == location_id)
                 .first()
             )
+
+            next_wall_enabled = (
+                bool(wall_enabled)
+                if wall_enabled is not UNSET
+                else (bool(row.wall_enabled) if row is not None else False)
+            )
+
+            if normalized_slug is not UNSET:
+                if normalized_slug is not None:
+                    clash = (
+                        session.query(Location)
+                        .filter(
+                            Location.public_slug == normalized_slug,
+                            Location.id != location_id,
+                        )
+                        .first()
+                    )
+                    if clash is not None:
+                        raise ValueError("publicSlug is already in use")
+                    location.public_slug = normalized_slug
+                else:
+                    location.public_slug = None
+
+            effective_slug = location.public_slug
+            if next_wall_enabled and not effective_slug:
+                raise ValueError("publicSlug is required when wallEnabled is true")
 
             if row is None:
                 row = LocationFrontpage(
@@ -168,6 +225,7 @@ class UpdateLocationFrontpageMutation:
                     tagline=normalized_tagline,
                     show_guest_favorites=show_guest_favorites,
                     show_popular_combos=show_popular_combos,
+                    wall_enabled=next_wall_enabled,
                     favorite_images=normalized_favorites
                     if normalized_favorites is not None
                     else [],
@@ -178,6 +236,7 @@ class UpdateLocationFrontpageMutation:
                 row.tagline = normalized_tagline
                 row.show_guest_favorites = show_guest_favorites
                 row.show_popular_combos = show_popular_combos
+                row.wall_enabled = next_wall_enabled
                 if normalized_favorites is not None:
                     row.favorite_images = normalized_favorites
                 if normalized_combos is not None:

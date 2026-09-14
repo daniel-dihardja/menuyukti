@@ -60,12 +60,24 @@ type Props = {
   initialTagline: string
   initialShowGuestFavorites: boolean
   initialShowPopularCombos: boolean
+  initialWallEnabled: boolean
+  initialPublicSlug: string
   initialFavoriteImages: FrontpageFavoriteImageOverride[]
   initialComboImages: FrontpageComboImageOverride[]
   latestRunName: string | null
   favorites: FrontpageFavoritePreview[]
   combos: FrontpageComboPreview[]
   hasAnalyticsRun: boolean
+}
+
+function suggestSlugFromName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 128)
 }
 
 function comboKey(menuA: string, menuB: string): string {
@@ -387,6 +399,8 @@ export function LocationFrontpageForm({
   initialTagline,
   initialShowGuestFavorites,
   initialShowPopularCombos,
+  initialWallEnabled,
+  initialPublicSlug,
   initialFavoriteImages,
   initialComboImages,
   latestRunName,
@@ -399,6 +413,11 @@ export function LocationFrontpageForm({
   const [tagline, setTagline] = useState(initialTagline)
   const [showGuestFavorites, setShowGuestFavorites] = useState(initialShowGuestFavorites)
   const [showPopularCombos, setShowPopularCombos] = useState(initialShowPopularCombos)
+  const [wallEnabled, setWallEnabled] = useState(initialWallEnabled)
+  const [publicSlug, setPublicSlug] = useState(
+    () => initialPublicSlug || suggestSlugFromName(locationName),
+  )
+  const [copied, setCopied] = useState(false)
   const [favoriteImages, setFavoriteImages] =
     useState<FrontpageFavoriteImageOverride[]>(initialFavoriteImages)
   const [comboImages, setComboImages] =
@@ -407,9 +426,16 @@ export function LocationFrontpageForm({
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
 
+  const publicPath = publicSlug.trim() ? routes.public.locationWall(publicSlug.trim()) : null
+
   function handleSave() {
     setError(null)
     setSaved(false)
+    const slug = publicSlug.trim()
+    if (wallEnabled && !slug) {
+      setError(t('errors.slugRequired'))
+      return
+    }
     startTransition(async () => {
       try {
         const overrides = serializeOverridesForSave(favoriteImages, comboImages)
@@ -420,6 +446,8 @@ export function LocationFrontpageForm({
             tagline: tagline.trim() ? tagline.trim() : null,
             showGuestFavorites,
             showPopularCombos,
+            wallEnabled,
+            publicSlug: slug || null,
             ...overrides,
           }),
         })
@@ -434,6 +462,18 @@ export function LocationFrontpageForm({
         setError(t('errors.saveFailed'))
       }
     })
+  }
+
+  async function handleCopyUrl() {
+    if (!publicPath) return
+    try {
+      const absolute = `${window.location.origin}${publicPath}`
+      await navigator.clipboard.writeText(absolute)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
   }
 
   return (
@@ -475,6 +515,54 @@ export function LocationFrontpageForm({
               disabled={isPending}
             />
           </Field>
+          <Field orientation="horizontal" className="items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <FieldLabel htmlFor="frontpage-wall">{t('fields.wallEnabled')}</FieldLabel>
+              <p className="text-muted-foreground text-xs">{t('fields.wallEnabledHint')}</p>
+            </div>
+            <Switch
+              id="frontpage-wall"
+              checked={wallEnabled}
+              onCheckedChange={setWallEnabled}
+              disabled={isPending}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="frontpage-slug">{t('fields.publicSlug')}</FieldLabel>
+            <Input
+              id="frontpage-slug"
+              value={publicSlug}
+              onChange={(e) => setPublicSlug(e.target.value)}
+              placeholder={t('fields.publicSlugPlaceholder')}
+              maxLength={128}
+              disabled={isPending}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            <p className="text-muted-foreground text-xs">{t('fields.publicSlugHint')}</p>
+          </Field>
+          {wallEnabled && publicPath ? (
+            <Field>
+              <FieldLabel htmlFor="frontpage-public-url">{t('fields.publicUrl')}</FieldLabel>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  id="frontpage-public-url"
+                  value={publicPath}
+                  readOnly
+                  className="font-mono text-xs"
+                />
+                <Button type="button" variant="outline" onClick={handleCopyUrl} disabled={isPending}>
+                  {copied ? t('fields.copiedPublicUrl') : t('fields.copyPublicUrl')}
+                </Button>
+                <Button asChild type="button" variant="ghost">
+                  <Link href={publicPath} target="_blank" rel="noreferrer">
+                    {publicPath}
+                  </Link>
+                </Button>
+              </div>
+            </Field>
+          ) : null}
         </FieldGroup>
         <div className="flex flex-wrap items-center gap-3">
           <Button type="button" onClick={handleSave} disabled={isPending}>

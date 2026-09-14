@@ -20,6 +20,7 @@ class OpeningHourType:
 class LocationType:
     id: strawberry.ID
     name: str
+    public_slug: str | None
     street: str | None
     city: str | None
     country: str | None

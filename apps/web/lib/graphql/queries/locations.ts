@@ -100,6 +100,7 @@ export const LOCATION_QUERY = `
     location(id: $id) {
       id
       name
+      publicSlug
       street
       city
       country
@@ -124,6 +125,7 @@ export const LOCATION_QUERY = `
         tagline
         showGuestFavorites
         showPopularCombos
+        wallEnabled
         favoriteImages {
           menu
           imageFilename
@@ -162,6 +164,7 @@ export type LocationFrontpageConfig = {
   tagline: string | null
   showGuestFavorites: boolean
   showPopularCombos: boolean
+  wallEnabled: boolean
   favoriteImages: FrontpageFavoriteImage[]
   comboImages: FrontpageComboImage[]
 }
@@ -170,6 +173,7 @@ export type LocationData = {
   location: {
     id: string
     name: string
+    publicSlug: string | null
     street: string | null
     city: string | null
     country: string | null
@@ -211,6 +215,8 @@ export const UPDATE_LOCATION_FRONTPAGE_MUTATION = `
     $tagline: String
     $showGuestFavorites: Boolean!
     $showPopularCombos: Boolean!
+    $wallEnabled: Boolean
+    $publicSlug: String
     $favoriteImages: [FrontpageFavoriteImageInput!]
     $comboImages: [FrontpageComboImageInput!]
   ) {
@@ -219,6 +225,8 @@ export const UPDATE_LOCATION_FRONTPAGE_MUTATION = `
       tagline: $tagline
       showGuestFavorites: $showGuestFavorites
       showPopularCombos: $showPopularCombos
+      wallEnabled: $wallEnabled
+      publicSlug: $publicSlug
       favoriteImages: $favoriteImages
       comboImages: $comboImages
     ) {
@@ -226,6 +234,7 @@ export const UPDATE_LOCATION_FRONTPAGE_MUTATION = `
       tagline
       showGuestFavorites
       showPopularCombos
+      wallEnabled
       favoriteImages {
         menu
         imageFilename
@@ -245,6 +254,48 @@ export const UPDATE_LOCATION_FRONTPAGE_MUTATION = `
 
 export type UpdateLocationFrontpageData = {
   updateLocationFrontpage: LocationFrontpageConfig
+}
+
+export const PUBLIC_LOCATION_WALL_QUERY = `
+  query PublicLocationWall($slug: String!) {
+    publicLocationWall(slug: $slug) {
+      locationId
+      name
+      tagline
+      publicSlug
+      workspaceId
+      mediaOwnerClerkUserId
+      tiles {
+        kind
+        key
+        title
+        description
+        imageFilename
+      }
+    }
+  }
+`
+
+export type PublicWallTile = {
+  kind: string
+  key: string
+  title: string
+  description: string | null
+  imageFilename: string | null
+}
+
+export type PublicLocationWallPayload = {
+  locationId: number
+  name: string
+  tagline: string | null
+  publicSlug: string
+  workspaceId: string | null
+  mediaOwnerClerkUserId: string | null
+  tiles: PublicWallTile[]
+}
+
+export type PublicLocationWallData = {
+  publicLocationWall: PublicLocationWallPayload | null
 }
 
 export const MY_WORKSPACE_QUERY = `

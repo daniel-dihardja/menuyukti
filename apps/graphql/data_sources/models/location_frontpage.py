@@ -54,6 +54,12 @@ class LocationFrontpage(Base):
         default=True,
         server_default=text("true"),
     )
+    wall_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+    )
     favorite_images: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONB().with_variant(JSON(), "sqlite"),
         nullable=False,

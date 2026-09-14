@@ -500,6 +500,16 @@
       "essentialAria": "Essential cookies (always on)"
     }
   },
+  "public": {
+    "wall": {
+      "eyebrow": "Tonight’s wall",
+      "favoritesHeading": "Guest favorites",
+      "combosHeading": "Often ordered together",
+      "empty": "Nothing on the wall yet — check back soon.",
+      "notFoundTitle": "Wall not found",
+      "metaDescription": "Guest favorites and popular picks at {name}."
+    }
+  },
   "shop": {
     "listPageLoadingTitle": "Loading shop…",
     "listMetaTitle": "The Digital Curator | Free Wall Art for Restaurants, Bars & Cafés",
@@ -3231,6 +3241,14 @@
         "taglinePlaceholder": "What guests should feel when they arrive",
         "showGuestFavorites": "Show guest favorites",
         "showPopularCombos": "Show popular combos",
+        "wallEnabled": "Publish guest wall",
+        "wallEnabledHint": "When on, guests can open the public wall at the link below.",
+        "publicSlug": "Public URL slug",
+        "publicSlugPlaceholder": "my-restaurant",
+        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required to publish.",
+        "publicUrl": "Public wall URL",
+        "copyPublicUrl": "Copy link",
+        "copiedPublicUrl": "Copied",
         "itemDescription": "Description",
         "itemDescriptionPlaceholder": "Optional short guest-facing description",
         "publish": "Publish",
@@ -3248,7 +3266,8 @@
         "collapseItem": "Collapse item"
       },
       "errors": {
-        "saveFailed": "Could not save frontpage settings"
+        "saveFailed": "Could not save frontpage settings",
+        "slugRequired": "Add a public URL slug before publishing the guest wall"
       },
       "previewTitle": "Guest preview",
       "previewFromRun": "Based on latest analytics: {runName}",

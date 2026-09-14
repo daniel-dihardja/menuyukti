@@ -33,6 +33,12 @@ class Location(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(256))
+    public_slug: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        unique=True,
+        index=True,
+    )
     street: Mapped[str | None] = mapped_column(String(512), nullable=True)
     city: Mapped[str | None] = mapped_column(String(128), nullable=True)
     country: Mapped[str | None] = mapped_column(String(128), nullable=True)

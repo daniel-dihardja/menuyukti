@@ -43,6 +43,8 @@ export const updateLocationFrontpageSchema = z.object({
   tagline: z.string().max(512).nullable().optional(),
   showGuestFavorites: z.boolean(),
   showPopularCombos: z.boolean(),
+  wallEnabled: z.boolean().optional(),
+  publicSlug: z.string().max(128).nullable().optional(),
   favoriteImages: z.array(frontpageFavoriteImageSchema).optional(),
   comboImages: z.array(frontpageComboImageSchema).optional(),
 })

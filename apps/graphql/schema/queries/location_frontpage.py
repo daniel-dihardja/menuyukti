@@ -101,6 +101,7 @@ def _defaults(location_id: int) -> LocationFrontpageType:
         tagline=None,
         show_guest_favorites=True,
         show_popular_combos=True,
+        wall_enabled=False,
         favorite_images=[],
         combo_images=[],
     )
@@ -116,6 +117,7 @@ def _row_to_frontpage_type(
         tagline=row.tagline,
         show_guest_favorites=bool(row.show_guest_favorites),
         show_popular_combos=bool(row.show_popular_combos),
+        wall_enabled=bool(row.wall_enabled),
         favorite_images=_parse_favorite_images(row.favorite_images),
         combo_images=_parse_combo_images(row.combo_images),
     )
