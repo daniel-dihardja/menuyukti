@@ -420,8 +420,7 @@ export function LocationFrontpageForm({
   const [copied, setCopied] = useState(false)
   const [favoriteImages, setFavoriteImages] =
     useState<FrontpageFavoriteImageOverride[]>(initialFavoriteImages)
-  const [comboImages, setComboImages] =
-    useState<FrontpageComboImageOverride[]>(initialComboImages)
+  const [comboImages, setComboImages] = useState<FrontpageComboImageOverride[]>(initialComboImages)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -552,7 +551,12 @@ export function LocationFrontpageForm({
                   readOnly
                   className="font-mono text-xs"
                 />
-                <Button type="button" variant="outline" onClick={handleCopyUrl} disabled={isPending}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCopyUrl}
+                  disabled={isPending}
+                >
                   {copied ? t('fields.copiedPublicUrl') : t('fields.copyPublicUrl')}
                 </Button>
                 <Button asChild type="button" variant="ghost">

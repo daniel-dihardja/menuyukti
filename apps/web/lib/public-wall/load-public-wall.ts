@@ -4,10 +4,7 @@ import {
   userPhotosObjectKey,
   workspacePhotosObjectKey,
 } from '@/lib/assets/storage'
-import {
-  resolveObjectKey,
-  type WorkspaceMediaAccess,
-} from '@/lib/assets/workspace-media-access'
+import { resolveObjectKey, type WorkspaceMediaAccess } from '@/lib/assets/workspace-media-access'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   PUBLIC_LOCATION_WALL_QUERY,
@@ -102,11 +99,9 @@ export async function loadPublicLocationWall(
       .map((tile) => tile.imageFilename?.trim())
       .filter((name): name is string => Boolean(name)),
   )
-  const urlByName = await presignTileImages(
-    wall.workspaceId,
-    wall.mediaOwnerClerkUserId,
-    [...allowedNames],
-  )
+  const urlByName = await presignTileImages(wall.workspaceId, wall.mediaOwnerClerkUserId, [
+    ...allowedNames,
+  ])
 
   return {
     name: wall.name,
@@ -114,8 +109,7 @@ export async function loadPublicLocationWall(
     publicSlug: wall.publicSlug,
     tiles: wall.tiles.map((tile) => {
       const filename = tile.imageFilename?.trim() || null
-      const imageUrl =
-        filename && allowedNames.has(filename) ? (urlByName[filename] ?? null) : null
+      const imageUrl = filename && allowedNames.has(filename) ? (urlByName[filename] ?? null) : null
       return {
         kind: tile.kind,
         key: tile.key,

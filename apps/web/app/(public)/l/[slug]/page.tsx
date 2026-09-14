@@ -71,7 +71,10 @@ export default async function PublicLocationWallPage({ params }: PageProps) {
           <div className="flex flex-col gap-14">
             {favorites.length > 0 ? (
               <section aria-labelledby="favorites-heading">
-                <h2 id="favorites-heading" className="mb-6 text-sm font-semibold tracking-wide uppercase">
+                <h2
+                  id="favorites-heading"
+                  className="mb-6 text-sm font-semibold tracking-wide uppercase"
+                >
                   {t('favoritesHeading')}
                 </h2>
                 <ul className="columns-1 gap-4 sm:columns-2">
@@ -84,7 +87,10 @@ export default async function PublicLocationWallPage({ params }: PageProps) {
 
             {combos.length > 0 ? (
               <section aria-labelledby="combos-heading">
-                <h2 id="combos-heading" className="mb-6 text-sm font-semibold tracking-wide uppercase">
+                <h2
+                  id="combos-heading"
+                  className="mb-6 text-sm font-semibold tracking-wide uppercase"
+                >
                   {t('combosHeading')}
                 </h2>
                 <ul className="columns-1 gap-4 sm:columns-2">
