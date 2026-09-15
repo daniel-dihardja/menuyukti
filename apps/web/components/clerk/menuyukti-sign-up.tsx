@@ -6,6 +6,7 @@ import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
+import { GoogleMark } from '@/components/clerk/google-mark'
 import { cn } from '@workspace/ui/lib/utils'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -28,6 +29,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
   const [busy, setBusy] = useState(false)
   const [emailAddress, setEmailAddress] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [oauthBusy, setOauthBusy] = useState(false)
   const finalizingRef = useRef(false)
 
   const finalizeAndRedirect = useCallback(async () => {
@@ -130,6 +132,26 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
     }
   }
 
+  const handleGoogleSignUp = async () => {
+    if (!signUp || busy || oauthBusy) return
+    setOauthBusy(true)
+    setFormError(null)
+    try {
+      const { error } = await signUp.sso({
+        strategy: 'oauth_google',
+        redirectUrl: getDefaultAuthenticatedPath(),
+        redirectCallbackUrl: routes.ssoCallback,
+      })
+      if (error) {
+        setFormError(t('genericError'))
+      }
+    } catch {
+      setFormError(t('genericError'))
+    } finally {
+      setOauthBusy(false)
+    }
+  }
+
   const handleStartOver = async () => {
     if (!signUp) return
     setBusy(true)
@@ -144,7 +166,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
     }
   }
 
-  const loading = busy || fetchStatus === 'fetching' || finalizingRef.current
+  const loading = busy || fetchStatus === 'fetching' || finalizingRef.current || oauthBusy
 
   if (!clerk.loaded || !signUp) {
     return (
@@ -235,6 +257,33 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
 
   return (
     <div className={cn('space-y-6', className)}>
+      <div className="space-y-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full"
+          disabled={loading}
+          onClick={() => void handleGoogleSignUp()}
+        >
+          <GoogleMark />
+          {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
+        </Button>
+        {formError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {formError}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="relative flex items-center gap-3" role="separator" aria-label={t('orContinueWithEmail')}>
+        <div className="bg-border h-px flex-1" />
+        <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
+          {t('orContinueWithEmail')}
+        </span>
+        <div className="bg-border h-px flex-1" />
+      </div>
+
       <form onSubmit={handleEmailSubmit} className="space-y-8">
         <FieldGroup>
           <Field>
@@ -257,16 +306,11 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
                 {errors.fields.emailAddress.message}
               </p>
             ) : null}
-            {formError ? (
-              <p className="text-sm text-destructive" role="alert">
-                {formError}
-              </p>
-            ) : null}
           </Field>
 
           <Field>
             <Button type="submit" size="lg" className="w-full" disabled={loading}>
-              {loading ? t('sendingCode') : t('continueWithEmail')}
+              {busy ? t('sendingCode') : t('continueWithEmail')}
             </Button>
           </Field>
         </FieldGroup>

@@ -6,6 +6,7 @@ import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
+import { GoogleMark } from '@/components/clerk/google-mark'
 import { cn } from '@workspace/ui/lib/utils'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -40,6 +41,8 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const [mfaLoading, setMfaLoading] = useState(false)
   const [emailAddress, setEmailAddress] = useState('')
   const [primarySecondFactor, setPrimarySecondFactor] = useState<string | null>(null)
+  const [oauthError, setOauthError] = useState<string | null>(null)
+  const [oauthBusy, setOauthBusy] = useState(false)
   const preparingSignInIdRef = useRef<string | null>(null)
   const preparedSignInIdRef = useRef<string | null>(null)
 
@@ -245,6 +248,26 @@ export function CustomLoginForm({ className }: { className?: string }) {
     }
   }
 
+  const handleGoogleSignIn = async () => {
+    if (!signIn || busy || oauthBusy) return
+    setOauthBusy(true)
+    setOauthError(null)
+    try {
+      const { error } = await signIn.sso({
+        strategy: 'oauth_google',
+        redirectUrl: getDefaultAuthenticatedPath(),
+        redirectCallbackUrl: routes.ssoCallback,
+      })
+      if (error) {
+        setOauthError(t('genericError'))
+      }
+    } catch {
+      setOauthError(t('genericError'))
+    } finally {
+      setOauthBusy(false)
+    }
+  }
+
   const handleStartOver = async () => {
     if (!signIn) return
     setBusy(true)
@@ -254,13 +277,14 @@ export function CustomLoginForm({ className }: { className?: string }) {
       preparedSignInIdRef.current = null
       setPrimarySecondFactor(null)
       setEmailAddress('')
+      setOauthError(null)
       setStep('email')
     } finally {
       setBusy(false)
     }
   }
 
-  const loading = busy || fetchStatus === 'fetching' || mfaLoading
+  const loading = busy || fetchStatus === 'fetching' || mfaLoading || oauthBusy
   const isSigningIn = loading
 
   const mfaHint =
@@ -498,6 +522,33 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
   return (
     <div className={cn('space-y-6', className)}>
+      <div className="space-y-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full"
+          disabled={isSigningIn}
+          onClick={() => void handleGoogleSignIn()}
+        >
+          <GoogleMark />
+          {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
+        </Button>
+        {oauthError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {oauthError}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="relative flex items-center gap-3" role="separator" aria-label={t('orContinueWithEmail')}>
+        <div className="bg-border h-px flex-1" />
+        <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
+          {t('orContinueWithEmail')}
+        </span>
+        <div className="bg-border h-px flex-1" />
+      </div>
+
       <form onSubmit={handleEmailSubmit} className="space-y-8">
         <FieldGroup>
           <Field>
@@ -524,7 +575,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
           <Field>
             <Button type="submit" size="lg" className="w-full" disabled={isSigningIn}>
-              {isSigningIn ? t('sendingCode') : t('continueWithEmail')}
+              {busy ? t('sendingCode') : t('continueWithEmail')}
             </Button>
           </Field>
         </FieldGroup>

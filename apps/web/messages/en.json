@@ -126,7 +126,7 @@
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
     "navStudio": "IG Studio",
-    "navChat": "Chat",
+    "navChat": "Advisor",
     "navShop": "Print Shop",
     "landingNav": {
       "services": "Services",
@@ -135,7 +135,7 @@
     },
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Chat for agentic campaign planning and Studio for AI brand visuals.",
+    "mobileMenuDescription": "Studio for AI brand visuals and Print Shop for merch.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -221,13 +221,16 @@
   },
   "login": {
     "title": "Menuyukti",
-    "slogan": "Agentic restaurant marketing",
+    "slogan": "Inventory and Instagram",
     "accessNote": "We’ll email you a one-time code to sign in—no password needed.",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
     "signUpDescription": "Create an account for Chat campaigns, sales Reports, Locations, and Team—restaurant marketing grounded in your order data. You can add a location after you sign up.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
+    "continueWithGoogle": "Continue with Google",
+    "signingInWithGoogle": "Continuing with Google…",
+    "orContinueWithEmail": "or continue with email",
     "continueWithEmail": "Continue with email",
     "sendingCode": "Sending code…",
     "otpHintEmail": "Enter the code we sent to {email}.",
