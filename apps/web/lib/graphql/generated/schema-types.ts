@@ -508,6 +508,63 @@ export type LocationAnalyticsSummaryType = {
   runCount: Scalars['Int']['output']
 }
 
+/** Named area within a location (e.g. Main room, Bar). */
+export type LocationAreaType = {
+  __typename?: 'LocationAreaType'
+  id: Scalars['ID']['output']
+  locationId: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  sortOrder: Scalars['Int']['output']
+}
+
+/** Operator settings for the location guest frontpage: tagline and which sales-driven sections to show. */
+export type LocationFrontpageType = {
+  __typename?: 'LocationFrontpageType'
+  comboImages: Array<FrontpageComboImageType>
+  favoriteImages: Array<FrontpageFavoriteImageType>
+  locationId: Scalars['Int']['output']
+  showGuestFavorites: Scalars['Boolean']['output']
+  showPopularCombos: Scalars['Boolean']['output']
+  tagline?: Maybe<Scalars['String']['output']>
+  wallEnabled: Scalars['Boolean']['output']
+}
+
+/** Media image override for a guest-favorite dish. */
+export type FrontpageFavoriteImageType = {
+  __typename?: 'FrontpageFavoriteImageType'
+  description?: Maybe<Scalars['String']['output']>
+  imageFilename?: Maybe<Scalars['String']['output']>
+  menu: Scalars['String']['output']
+  published: Scalars['Boolean']['output']
+}
+
+/** Input for attaching a media image to a guest favorite. */
+export type FrontpageFavoriteImageInput = {
+  description?: InputMaybe<Scalars['String']['input']>
+  imageFilename?: InputMaybe<Scalars['String']['input']>
+  menu: Scalars['String']['input']
+  published?: Scalars['Boolean']['input']
+}
+
+/** Media image override for an often-ordered-together combo. */
+export type FrontpageComboImageType = {
+  __typename?: 'FrontpageComboImageType'
+  description?: Maybe<Scalars['String']['output']>
+  imageFilename?: Maybe<Scalars['String']['output']>
+  menuA: Scalars['String']['output']
+  menuB: Scalars['String']['output']
+  published: Scalars['Boolean']['output']
+}
+
+/** Input for attaching a media image to a popular combo. */
+export type FrontpageComboImageInput = {
+  description?: InputMaybe<Scalars['String']['input']>
+  imageFilename?: InputMaybe<Scalars['String']['input']>
+  menuA: Scalars['String']['input']
+  menuB: Scalars['String']['input']
+  published?: Scalars['Boolean']['input']
+}
+
 /** Owner-provided click-first brief hints; not AI-generated. */
 export type LocationManualBriefInputType = {
   __typename?: 'LocationManualBriefInputType'
@@ -539,15 +596,19 @@ export type LocationMenuItemCogsUpsertInput = {
 /** A restaurant location; ties POS data and product entities to a workspace or legacy owner. */
 export type LocationType = {
   __typename?: 'LocationType'
+  areas: Array<LocationAreaType>
   city?: Maybe<Scalars['String']['output']>
   country?: Maybe<Scalars['String']['output']>
   currency?: Maybe<Scalars['String']['output']>
+  /** Guest frontpage settings (tagline and sales-driven section toggles). Defaults when no row is stored. */
+  frontpage?: Maybe<LocationFrontpageType>
   id: Scalars['ID']['output']
   /** Owner-provided click-first brief hints. Not AI-generated. */
   manualBriefInput?: Maybe<LocationManualBriefInputType>
   name: Scalars['String']['output']
   nodeId?: Maybe<Scalars['ID']['output']>
   openingHours: Array<OpeningHourType>
+  publicSlug?: Maybe<Scalars['String']['output']>
   street?: Maybe<Scalars['String']['output']>
   workspaceId?: Maybe<Scalars['ID']['output']>
 }
@@ -615,6 +676,22 @@ export type MenuCatalogPayloadType = {
   __typename?: 'MenuCatalogPayloadType'
   analyticsRunId: Scalars['ID']['output']
   items: Array<MenuCatalogItemType>
+}
+
+/** Category payload for replaceLocationMenuItems. */
+export type MenuCategoryInput = {
+  items: Array<MenuItemInput>
+  name: Scalars['String']['input']
+}
+
+/** Named section on a location menu (e.g. Food, Drink). */
+export type MenuCategoryType = {
+  __typename?: 'MenuCategoryType'
+  id: Scalars['Int']['output']
+  items: Array<MenuItemType>
+  menuId: Scalars['Int']['output']
+  name: Scalars['String']['output']
+  sortOrder: Scalars['Int']['output']
 }
 
 /** Timing analytics for when a combo pair is ordered together. */
@@ -735,6 +812,38 @@ export type MenuItemCogsUpsertInput = {
   menuName: Scalars['String']['input']
 }
 
+/** Item payload for replaceLocationMenuItems. */
+export type MenuItemInput = {
+  description?: InputMaybe<Scalars['String']['input']>
+  imageFilename?: InputMaybe<Scalars['String']['input']>
+  isAvailable?: InputMaybe<Scalars['Boolean']['input']>
+  name: Scalars['String']['input']
+  price: Scalars['Float']['input']
+}
+
+/** One dish line on a location menu. */
+export type MenuItemType = {
+  __typename?: 'MenuItemType'
+  categoryId: Scalars['Int']['output']
+  description: Scalars['String']['output']
+  id: Scalars['Int']['output']
+  imageFilename?: Maybe<Scalars['String']['output']>
+  isAvailable: Scalars['Boolean']['output']
+  menuId: Scalars['Int']['output']
+  name: Scalars['String']['output']
+  price: Scalars['Float']['output']
+  sortOrder: Scalars['Int']['output']
+}
+
+/** Curated menu catalog for a location (one per location). */
+export type MenuType = {
+  __typename?: 'MenuType'
+  categories: Array<MenuCategoryType>
+  id: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  title: Scalars['String']['output']
+}
+
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type Mutation = {
   __typename?: 'Mutation'
@@ -757,8 +866,12 @@ export type Mutation = {
   /** Create a catalog item and initial stock at a location in one step. */
   createInventoryCatalogItemWithStock: InventoryStockType
   createLocation: LocationType
+  /** Create a named area at a location. */
+  createLocationArea: LocationAreaType
   /** Create a named media collection in the caller's workspace. */
   createMediaCollection: MediaCollectionType
+  /** Create a playbook instance for a location. */
+  createPlaybook: PlaybookType
   createPost: PostType
   createPostPage: PostPageType
   /** Create a named visual style pack in the caller's workspace. */
@@ -777,10 +890,14 @@ export type Mutation = {
   deleteInventoryStock: Scalars['Boolean']['output']
   /** Delete a location and its analytics, stock, and calendar data. */
   deleteLocation: Scalars['Boolean']['output']
+  /** Delete a location area. Prior stock movements keep history with a null area. */
+  deleteLocationArea: Scalars['Boolean']['output']
   /** Delete a media asset catalog row by filename (memberships cascade). Returns true when a row was removed; false when already absent. */
   deleteMediaAsset: Scalars['Boolean']['output']
   /** Delete a media collection by id (memberships cascade). */
   deleteMediaCollection: Scalars['Boolean']['output']
+  /** Delete a playbook instance. */
+  deletePlaybook: Scalars['Boolean']['output']
   deletePost: Scalars['Boolean']['output']
   deletePostPage: Scalars['Boolean']['output']
   deletePostPageMediaVersion: PostPageType
@@ -796,6 +913,8 @@ export type Mutation = {
   /** Remove a photo (by filename) from a media collection. */
   removeMediaFromCollection: MediaCollectionType
   removeWorkspaceMember: Scalars['Boolean']['output']
+  /** Replace all categories and items on the location's curated menu (creates the menu if needed). Pass an empty list to clear categories. */
+  replaceLocationMenuItems: MenuType
   /** Revoke a CRM device so it can no longer authenticate. Clears refresh token hash. Idempotent if already revoked. */
   revokeCrmDevice: CrmDeviceType
   /** Promote an analytics run's COGS snapshot into the location catalog. */
@@ -811,10 +930,16 @@ export type Mutation = {
   /** Update lower/upper on-hand limits for location stock. */
   updateInventoryStockLimits: InventoryStockType
   updateLocation: LocationType
+  /** Rename or reorder a location area. */
+  updateLocationArea: LocationAreaType
+  /** Upsert guest frontpage settings for a location (tagline and section toggles). */
+  updateLocationFrontpage: LocationFrontpageType
   /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
   updateLocationManualBriefInput: LocationManualBriefInputType
   /** Rename a media collection by id. */
   updateMediaCollection: MediaCollectionType
+  /** Update a playbook instance. */
+  updatePlaybook: PlaybookType
   updatePost: PostType
   updatePostPage: PostPageType
   /** Update a visual style pack in the caller's workspace. */
@@ -850,6 +975,7 @@ export type MutationAwardCrmCashbackArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationConsumeInventoryStockArgs = {
+  areaId?: InputMaybe<Scalars['Int']['input']>
   occurredOn?: InputMaybe<Scalars['Date']['input']>
   quantity: Scalars['Float']['input']
   stockId: Scalars['Int']['input']
@@ -911,8 +1037,24 @@ export type MutationCreateLocationArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCreateLocationAreaArgs = {
+  locationId: Scalars['Int']['input']
+  name: Scalars['String']['input']
+  sortOrder?: InputMaybe<Scalars['Int']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationCreateMediaCollectionArgs = {
   name: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationCreatePlaybookArgs = {
+  endDate: Scalars['String']['input']
+  locationId: Scalars['Int']['input']
+  name: Scalars['String']['input']
+  playbookType: Scalars['String']['input']
+  startDate: Scalars['String']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -979,12 +1121,22 @@ export type MutationDeleteLocationArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationDeleteLocationAreaArgs = {
+  id: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteMediaAssetArgs = {
   filename: Scalars['String']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationDeleteMediaCollectionArgs = {
+  id: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationDeletePlaybookArgs = {
   id: Scalars['Int']['input']
 }
 
@@ -1054,6 +1206,12 @@ export type MutationRemoveWorkspaceMemberArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationReplaceLocationMenuItemsArgs = {
+  categories: Array<MenuCategoryInput>
+  locationId: Scalars['Int']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationRevokeCrmDeviceArgs = {
   deviceId: Scalars['UUID']['input']
 }
@@ -1119,6 +1277,25 @@ export type MutationUpdateLocationArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateLocationAreaArgs = {
+  id: Scalars['Int']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  sortOrder?: InputMaybe<Scalars['Int']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdateLocationFrontpageArgs = {
+  comboImages?: InputMaybe<Array<FrontpageComboImageInput>>
+  favoriteImages?: InputMaybe<Array<FrontpageFavoriteImageInput>>
+  locationId: Scalars['Int']['input']
+  publicSlug?: InputMaybe<Scalars['String']['input']>
+  showGuestFavorites?: Scalars['Boolean']['input']
+  showPopularCombos?: Scalars['Boolean']['input']
+  tagline?: InputMaybe<Scalars['String']['input']>
+  wallEnabled?: InputMaybe<Scalars['Boolean']['input']>
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationManualBriefInputArgs = {
   locationId: Scalars['Int']['input']
   quickProfile: Scalars['JSON']['input']
@@ -1128,6 +1305,15 @@ export type MutationUpdateLocationManualBriefInputArgs = {
 export type MutationUpdateMediaCollectionArgs = {
   id: Scalars['Int']['input']
   name: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, workspace invites, and catalog writes. */
+export type MutationUpdatePlaybookArgs = {
+  endDate: Scalars['String']['input']
+  id: Scalars['Int']['input']
+  locationId: Scalars['Int']['input']
+  name: Scalars['String']['input']
+  startDate: Scalars['String']['input']
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
@@ -1269,6 +1455,17 @@ export type PeriodHeadlineType = {
   totalRevenue: Scalars['Float']['output']
 }
 
+/** A saved playbook instance for a location and date window. */
+export type PlaybookType = {
+  __typename?: 'PlaybookType'
+  endDate: Scalars['String']['output']
+  id: Scalars['Int']['output']
+  locationId: Scalars['Int']['output']
+  name: Scalars['String']['output']
+  playbookType: Scalars['String']['output']
+  startDate: Scalars['String']['output']
+}
+
 /** A single generated image version for a post page. */
 export type PostPageMediaVersionType = {
   __typename?: 'PostPageMediaVersionType'
@@ -1384,6 +1581,8 @@ export type Query = {
   location?: Maybe<LocationType>
   /** Analytics run counts and latest run per location in one query. Only returns summaries for locations the caller can access. */
   locationAnalyticsSummaries: Array<LocationAnalyticsSummaryType>
+  /** Curated guest menu for a location. Null when missing, unauthenticated, or the caller is not an owner. */
+  locationMenu?: Maybe<MenuType>
   /** Location-scoped COGS catalog. Empty when unauthenticated or not an owner. */
   locationMenuItemCogs: Array<LocationMenuItemCogsType>
   /** All locations the current user can access (direct owner or workspace member). */
@@ -1410,6 +1609,10 @@ export type Query = {
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
+  /** A single playbook instance by id, if the caller can access it. */
+  playbook?: Maybe<PlaybookType>
+  /** Playbook instances of a given type for all locations the caller can access. */
+  playbooks: Array<PlaybookType>
   /** A single post in the caller's workspace, with pages. */
   post?: Maybe<PostType>
   /** Posts in workspaces the current user belongs to, newest first. */
@@ -1517,6 +1720,11 @@ export type QueryLocationAnalyticsSummariesArgs = {
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryLocationMenuArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryLocationMenuItemCogsArgs = {
   locationId: Scalars['ID']['input']
 }
@@ -1586,6 +1794,16 @@ export type QueryOperatingProfileArgs = {
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryOrderMetricsArgs = {
   analyticsRunId: Scalars['ID']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPlaybookArgs = {
+  id: Scalars['Int']['input']
+}
+
+/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+export type QueryPlaybooksArgs = {
+  playbookType: Scalars['String']['input']
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */

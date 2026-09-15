@@ -185,16 +185,27 @@ export function InventarAssistantPanel({
           ) : !hasUserMessages ? (
             <div className="flex flex-col gap-3">
               <p className="text-pretty text-sm text-muted-foreground">{t('assistantWelcome')}</p>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="w-fit touch-manipulation"
-                disabled={!canSend}
-                onClick={() => sendSuggestion(t('assistantSuggestRefill'))}
-              >
-                {t('assistantSuggestRefill')}
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                {(
+                  [
+                    'assistantSuggestSummary',
+                    'assistantSuggestUrgent',
+                    'assistantSuggestRefill',
+                  ] as const
+                ).map((key) => (
+                  <Button
+                    key={key}
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-fit touch-manipulation"
+                    disabled={!canSend}
+                    onClick={() => sendSuggestion(t(key))}
+                  >
+                    {t(key)}
+                  </Button>
+                ))}
+              </div>
             </div>
           ) : null}
           {messages.map((message, index) => {
@@ -228,7 +239,13 @@ export function InventarAssistantPanel({
 
             return (
               <Message from={message.role} key={message.id}>
-                <MessageContent className={cn(message.role === 'assistant' && 'w-full max-w-full')}>
+                <MessageContent
+                  className={cn(
+                    message.role === 'assistant' && 'w-full max-w-full',
+                    message.role === 'user' &&
+                      'group-[.is-user]:border-0 group-[.is-user]:shadow-none',
+                  )}
+                >
                   {message.role === 'assistant' ? (
                     <MessageResponse>{content}</MessageResponse>
                   ) : (

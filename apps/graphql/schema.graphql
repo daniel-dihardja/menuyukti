@@ -475,6 +475,16 @@ type LocationAreaType {
   sortOrder: Int!
 }
 
+"""
+Operator settings for the location guest frontpage: tagline and which sales-driven sections to show.
+"""
+type LocationFrontpageType {
+  locationId: Int!
+  tagline: String
+  showGuestFavorites: Boolean!
+  showPopularCombos: Boolean!
+}
+
 """Owner-provided click-first brief hints; not AI-generated."""
 type LocationManualBriefInputType {
   locationId: Int!
@@ -518,6 +528,11 @@ type LocationType {
 
   """Owner-provided click-first brief hints. Not AI-generated."""
   manualBriefInput: LocationManualBriefInputType
+
+  """
+  Guest frontpage settings (tagline and sales-driven section toggles). Defaults when no row is stored.
+  """
+  frontpage: LocationFrontpageType
 }
 
 type MatrixSignalItemType {
@@ -578,6 +593,21 @@ type MenuCatalogItemType {
 type MenuCatalogPayloadType {
   analyticsRunId: ID!
   items: [MenuCatalogItemType!]!
+}
+
+"""Category payload for replaceLocationMenuItems."""
+input MenuCategoryInput {
+  name: String!
+  items: [MenuItemInput!]!
+}
+
+"""Named section on a location menu (e.g. Food, Drink)."""
+type MenuCategoryType {
+  id: Int!
+  menuId: Int!
+  name: String!
+  sortOrder: Int!
+  items: [MenuItemType!]!
 }
 
 """Timing analytics for when a combo pair is ordered together."""
@@ -701,6 +731,36 @@ input MenuItemCogsUpsertInput {
   currency: String = null
 }
 
+"""Item payload for replaceLocationMenuItems."""
+input MenuItemInput {
+  name: String!
+  price: Float!
+  description: String = null
+  isAvailable: Boolean = null
+  imageFilename: String = null
+}
+
+"""One dish line on a location menu."""
+type MenuItemType {
+  id: Int!
+  menuId: Int!
+  categoryId: Int!
+  name: String!
+  description: String!
+  price: Float!
+  sortOrder: Int!
+  isAvailable: Boolean!
+  imageFilename: String
+}
+
+"""Curated menu catalog for a location (one per location)."""
+type MenuType {
+  id: Int!
+  locationId: Int!
+  title: String!
+  categories: [MenuCategoryType!]!
+}
+
 """Root mutation: sales uploads, workspace invites, and catalog writes."""
 type Mutation {
   """
@@ -737,6 +797,9 @@ type Mutation {
 
   """Create a manual calendar entry for a location."""
   createCalendarEntry(locationId: Int!, title: String!, date: String!, time: String!, description: String = null, mediaRefs: [CalendarMediaRefInput!] = null): CalendarEntryType!
+
+  """Create a playbook instance for a location."""
+  createPlaybook(locationId: Int!, name: String!, playbookType: String!, startDate: String!, endDate: String!): PlaybookType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
@@ -748,6 +811,11 @@ type Mutation {
 
   """Promote an analytics run's COGS snapshot into the location catalog."""
   saveAnalyticsRunCogsToLocation(analyticsRunId: ID!): [LocationMenuItemCogsType!]!
+
+  """
+  Replace all categories and items on the location's curated menu (creates the menu if needed). Pass an empty list to clear categories.
+  """
+  replaceLocationMenuItems(locationId: Int!, categories: [MenuCategoryInput!]!): MenuType!
 
   """Add a pantry item to the workspace catalog."""
   createInventoryCatalogItem(workspaceId: Int!, name: String!, packageSize: Float!, packageUnit: String!, storageZone: InventoryStorageZone = null, category: InventoryCategory = null, price: Float = null): InventoryCatalogItemType!
@@ -796,6 +864,9 @@ type Mutation {
   """Delete a manual calendar entry."""
   deleteCalendarEntry(id: Int!): CalendarEntryType!
 
+  """Delete a playbook instance."""
+  deletePlaybook(id: Int!): Boolean!
+
   """Delete a CRM app by id."""
   deleteCrmApp(id: Int!): Boolean!
 
@@ -840,9 +911,17 @@ type Mutation {
   """Update a manual calendar entry."""
   updateCalendarEntry(id: Int!, title: String = null, date: String = null, time: String = null, description: String, mediaRefs: [CalendarMediaRefInput!]): CalendarEntryType!
 
+  """Update a playbook instance."""
+  updatePlaybook(id: Int!, name: String!, locationId: Int!, startDate: String!, endDate: String!): PlaybookType!
+
   """Update a CRM app by id."""
   updateCrmApp(id: Int!, title: String!, cashbackThresholdAmount: Int = null, cashbackPercent: Int = null): CrmAppType!
   updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
+
+  """
+  Upsert guest frontpage settings for a location (tagline and section toggles).
+  """
+  updateLocationFrontpage(locationId: Int!, showGuestFavorites: Boolean! = true, showPopularCombos: Boolean! = true, tagline: String = null): LocationFrontpageType!
 
   """
   Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings.
@@ -854,6 +933,11 @@ type Mutation {
 
   """Rename a media collection by id."""
   updateMediaCollection(id: Int!, name: String!): MediaCollectionType!
+
+  """
+  Set workspace.plan to free or pro. Intended for staff BFF only; not a customer self-serve upgrade path.
+  """
+  updateWorkspacePlan(workspaceId: ID!, plan: String!): WorkspaceType!
 }
 
 type NormalizedLineItem {
@@ -929,6 +1013,16 @@ type PeriodHeadlineType {
   totalRevenue: Float!
   previousPeriodTotalRevenue: Float!
   revenueVsPreviousPct: Float
+}
+
+"""A saved playbook instance for a location and date window."""
+type PlaybookType {
+  id: Int!
+  locationId: Int!
+  name: String!
+  playbookType: String!
+  startDate: String!
+  endDate: String!
 }
 
 """A single generated image version for a post page."""
@@ -1044,6 +1138,11 @@ type Query {
   """
   locationMenuItemCogs(locationId: ID!): [LocationMenuItemCogsType!]!
 
+  """
+  Curated guest menu for a location. Null when missing, unauthenticated, or the caller is not an owner.
+  """
+  locationMenu(locationId: Int!): MenuType
+
   """List visual style packs in workspaces the current user belongs to."""
   styles(first: Int = null): [StyleType!]!
 
@@ -1120,6 +1219,14 @@ type Query {
   """
   promotionMenuItems(analyticsRunId: ID!, locationId: ID = null): PromotionMenuItemsPayloadType
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
+
+  """
+  Playbook instances of a given type for all locations the caller can access.
+  """
+  playbooks(playbookType: String!): [PlaybookType!]!
+
+  """A single playbook instance by id, if the caller can access it."""
+  playbook(id: Int!): PlaybookType
 
   """
   Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries.
@@ -1293,5 +1400,6 @@ type WorkspaceType {
   id: ID!
   name: String!
   ownerClerkUserId: String!
+  plan: String!
   createdAt: DateTime
 }

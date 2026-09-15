@@ -20,6 +20,7 @@ from graphql.data_sources.models.inventory_stock import InventoryStock
 from graphql.data_sources.models.inventory_stock_movement import InventoryStockMovement
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_area import LocationArea
+from graphql.data_sources.models.location_frontpage import LocationFrontpage
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
 from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -54,6 +55,7 @@ __all__ = [
     "Location",
     "LocationArea",
     "LocationOpeningHour",
+    "LocationFrontpage",
     "LocationManualBriefInput",
     "LocationMenuItemCogs",
     "MediaAsset",

@@ -138,8 +138,13 @@ def test_build_system_prompt_image_assistant_mode() -> None:
 def test_build_system_prompt_inventar_mode() -> None:
     out = build_system_prompt(chat_mode="inventar")
     assert "inventar" in out.lower()
+    assert "15-second stock brief" in out
     assert "get_inventory_refill_forecast" in out
     assert "insufficient_history" in out
+    assert "## Urgent now" in out
+    assert "## Soon" in out
+    assert "## Notes" in out
+    assert "summary" in out.lower()
     assert "get_chart_data" not in out
     assert "Instagram content assistant" not in out
 

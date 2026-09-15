@@ -44,6 +44,7 @@ export const routes = {
     branchesDetail: (id: string | number) => `/analytics/locations/${id}`,
     branchesCogs: (id: string | number) => `/analytics/locations/${id}/cogs`,
     branchesMenu: (id: string | number) => `/analytics/locations/${id}/menu`,
+    branchesFrontpage: (id: string | number) => `/analytics/locations/${id}/frontpage`,
     /** Sales reports for a single location (Locations → venue → Reports). */
     branchesReports: (id: string | number) => `/analytics/locations/${id}/reports`,
     /**
@@ -138,4 +139,9 @@ export const routes = {
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
+
+  /** Public guest wall (curated location frontpage). */
+  public: {
+    locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
+  },
 }

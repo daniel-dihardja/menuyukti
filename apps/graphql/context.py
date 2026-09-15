@@ -21,6 +21,7 @@ _RUN_ACCESS_CACHE_KEY = "_analytics_run_access_cache"
 _ORDER_FACTS_CACHE_KEY = "_order_facts_cache"
 _ORDER_FACTS_LOAD_COUNT_KEY = "_order_facts_load_count"
 _MANUAL_BRIEF_CACHE_KEY = "_manual_brief_cache"
+_FRONTPAGE_CACHE_KEY = "_frontpage_cache"
 
 
 def init_request_context(ctx: dict[str, Any]) -> dict[str, Any]:
@@ -30,6 +31,7 @@ def init_request_context(ctx: dict[str, Any]) -> dict[str, Any]:
     ctx.setdefault(_ORDER_FACTS_CACHE_KEY, {})
     ctx.setdefault(_ORDER_FACTS_LOAD_COUNT_KEY, 0)
     ctx.setdefault(_MANUAL_BRIEF_CACHE_KEY, {})
+    ctx.setdefault(_FRONTPAGE_CACHE_KEY, {})
     return ctx
 
 
@@ -112,6 +114,14 @@ def get_manual_brief_cache(info: strawberry.Info) -> dict[int, Any]:
     if ctx is None:
         return {}
     return ctx.setdefault(_MANUAL_BRIEF_CACHE_KEY, {})
+
+
+def get_frontpage_cache(info: strawberry.Info) -> dict[int, Any]:
+    """Maps location_id -> LocationFrontpageType (or defaults stand-in)."""
+    ctx = _context_dict(info)
+    if ctx is None:
+        return {}
+    return ctx.setdefault(_FRONTPAGE_CACHE_KEY, {})
 
 
 def record_order_facts_load(info: strawberry.Info | None) -> None:

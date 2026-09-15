@@ -22,6 +22,7 @@ from .playbooks import PlaybooksQuery
 from .posts import PostsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
+from .public_location_wall import PublicLocationWallQuery
 from .revenue_trends import RevenueTrendsQuery
 from .scheduler_calendar import SchedulerCalendarQuery
 from .styles import StylesQuery
@@ -52,6 +53,7 @@ __all__ = [
     "PlaybooksQuery",
     "SchedulerCalendarQuery",
     "PublicHolidaysQuery",
+    "PublicLocationWallQuery",
     "OperatingProfileQuery",
     "PostsQuery",
     "RevenueTrendsQuery",

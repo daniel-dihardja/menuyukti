@@ -100,6 +100,7 @@ export const LOCATION_QUERY = `
     location(id: $id) {
       id
       name
+      publicSlug
       street
       city
       country
@@ -119,14 +120,60 @@ export const LOCATION_QUERY = `
         locationId
         quickProfile
       }
+      frontpage {
+        locationId
+        tagline
+        showGuestFavorites
+        showPopularCombos
+        wallEnabled
+        favoriteImages {
+          menu
+          imageFilename
+          description
+          published
+        }
+        comboImages {
+          menuA
+          menuB
+          imageFilename
+          description
+          published
+        }
+      }
     }
   }
 `
+
+export type FrontpageFavoriteImage = {
+  menu: string
+  imageFilename: string | null
+  description: string | null
+  published: boolean
+}
+
+export type FrontpageComboImage = {
+  menuA: string
+  menuB: string
+  imageFilename: string | null
+  description: string | null
+  published: boolean
+}
+
+export type LocationFrontpageConfig = {
+  locationId: number
+  tagline: string | null
+  showGuestFavorites: boolean
+  showPopularCombos: boolean
+  wallEnabled: boolean
+  favoriteImages: FrontpageFavoriteImage[]
+  comboImages: FrontpageComboImage[]
+}
 
 export type LocationData = {
   location: {
     id: string
     name: string
+    publicSlug: string | null
     street: string | null
     city: string | null
     country: string | null
@@ -142,6 +189,7 @@ export type LocationData = {
       locationId: number
       quickProfile: Record<string, unknown>
     } | null
+    frontpage: LocationFrontpageConfig | null
   } | null
 }
 
@@ -159,6 +207,95 @@ export type UpdateLocationManualBriefData = {
     locationId: number
     quickProfile: Record<string, unknown>
   }
+}
+
+export const UPDATE_LOCATION_FRONTPAGE_MUTATION = `
+  mutation UpdateLocationFrontpage(
+    $locationId: Int!
+    $tagline: String
+    $showGuestFavorites: Boolean!
+    $showPopularCombos: Boolean!
+    $wallEnabled: Boolean
+    $publicSlug: String
+    $favoriteImages: [FrontpageFavoriteImageInput!]
+    $comboImages: [FrontpageComboImageInput!]
+  ) {
+    updateLocationFrontpage(
+      locationId: $locationId
+      tagline: $tagline
+      showGuestFavorites: $showGuestFavorites
+      showPopularCombos: $showPopularCombos
+      wallEnabled: $wallEnabled
+      publicSlug: $publicSlug
+      favoriteImages: $favoriteImages
+      comboImages: $comboImages
+    ) {
+      locationId
+      tagline
+      showGuestFavorites
+      showPopularCombos
+      wallEnabled
+      favoriteImages {
+        menu
+        imageFilename
+        description
+        published
+      }
+      comboImages {
+        menuA
+        menuB
+        imageFilename
+        description
+        published
+      }
+    }
+  }
+`
+
+export type UpdateLocationFrontpageData = {
+  updateLocationFrontpage: LocationFrontpageConfig
+}
+
+export const PUBLIC_LOCATION_WALL_QUERY = `
+  query PublicLocationWall($slug: String!) {
+    publicLocationWall(slug: $slug) {
+      locationId
+      name
+      tagline
+      publicSlug
+      workspaceId
+      mediaOwnerClerkUserId
+      tiles {
+        kind
+        key
+        title
+        description
+        imageFilename
+      }
+    }
+  }
+`
+
+export type PublicWallTile = {
+  kind: string
+  key: string
+  title: string
+  description: string | null
+  imageFilename: string | null
+}
+
+export type PublicLocationWallPayload = {
+  locationId: number
+  name: string
+  tagline: string | null
+  publicSlug: string
+  workspaceId: string | null
+  mediaOwnerClerkUserId: string | null
+  tiles: PublicWallTile[]
+}
+
+export type PublicLocationWallData = {
+  publicLocationWall: PublicLocationWallPayload | null
 }
 
 export const MY_WORKSPACE_QUERY = `
