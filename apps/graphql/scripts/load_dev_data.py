@@ -34,8 +34,11 @@ from graphql.services.location_cogs import (
 from graphql.services.manual_quick_profile import validate_and_normalize_quick_profile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
-DEFAULT_EXCEL = ROOT_DIR / "reports" / "SalesRecapitulationDetailReport_JUN_2026.xlsx"
-DEFAULT_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
+DEFAULT_EXCEL = (
+    ROOT_DIR / "apps" / "graphql" / "fixtures" / "dev_mock_SalesRecapitulationDetailReport_1mo.xlsx"
+)
+DEFAULT_COGS = ROOT_DIR / "apps" / "graphql" / "fixtures" / "dev_mock_menu_cogs.json"
+LEGACY_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
 
 DEV_SEED_PREFIX = "dev-seed-"
 PRIMARY_LOCATION_NAME = "SNABB"
@@ -268,8 +271,8 @@ def seed_analytics(
     if not excel_path.exists():
         raise SystemExit(
             f"ERROR: Excel file not found: {excel_path}. "
-            "Pass --excel / EXCEL= for SCOPE=analytics|all "
-            "(reports/ is gitignored and may be missing locally)."
+            "Pass --excel / EXCEL= for SCOPE=analytics|all, or run "
+            "`make generate-dev-mock-excel` to rebuild the default fixture."
         )
 
     deleted = _delete_dev_seed_analytics_runs(session, location.id)
@@ -401,17 +404,21 @@ def main(
                 cogs_file = Path(cogs_path)
             elif DEFAULT_COGS.exists():
                 cogs_file = DEFAULT_COGS
+            elif LEGACY_COGS.exists():
+                cogs_file = LEGACY_COGS
             else:
                 cogs_file = None
             result = seed_analytics(
                 session,
-                location=ctx.primary_location,
+                location=ctx.inventar_location,
                 excel_path=excel,
                 cogs_path=cogs_file,
             )
             session.commit()
             print(
-                f"Analytics seed: run_id={result['analytics_run_id']} "
+                f"Analytics seed: location_id={ctx.inventar_location.id} "
+                f"location_name={ctx.inventar_location.name!r} "
+                f"run_id={result['analytics_run_id']} "
                 f"orders={result['order_rows']} location_cogs={result['location_cogs']} "
                 f"replaced_seed_runs={result['deleted_seed_runs']} "
                 f"pos={result['pos_system']}"

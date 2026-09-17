@@ -3,7 +3,7 @@ UV=uv run
 UVICORN=uv run uvicorn
 ALEMBIC=PYTHONPATH=../.. uv run alembic
 
-.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
+.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp db-stamp-head db-check drop-db db-reset-dev test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report generate-dev-mock-excel dev-data lint format typecheck clean
 
 install:
 	uv sync --all-groups
@@ -72,10 +72,20 @@ load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
 
+# Regenerate Warung Sunda analytics mock (ESB shell from SNABB; inventar-aligned dishes).
+#   make generate-dev-mock-excel
+#   make generate-dev-mock-excel SOURCE=/path/to/snabb.xlsx
+generate-dev-mock-excel:
+	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.generate_dev_mock_sales_excel \
+		$(if $(SOURCE),--source "$(SOURCE)",) \
+		$(if $(OUTPUT),--output "$(OUTPUT)",) \
+		$(if $(COGS_OUTPUT),--cogs-output "$(COGS_OUTPUT)",)
+
 # Selective seed (default SCOPE=inventar). Requires USER_ID=... or DEV_CLERK_USER_ID.
 # Examples:
 #   make dev-data USER_ID=user_xxx
 #   make dev-data SCOPE=clear-inventar USER_ID=user_xxx
+#   make dev-data SCOPE=analytics USER_ID=user_xxx
 #   make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx
 #   make db-reset-dev SEED=1 USER_ID=user_xxx
 dev-data:
