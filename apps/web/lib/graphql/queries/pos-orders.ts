@@ -24,6 +24,7 @@ export type PosOrder = {
   openedByClerkUserId: string
   paymentMethod: PosPaymentMethod | null
   discountAmount: number
+  tableLabel: string | null
   note: string | null
   lines: PosOrderLine[]
 }
@@ -38,6 +39,7 @@ const POS_ORDER_FIELDS = `
   openedByClerkUserId
   paymentMethod
   discountAmount
+  tableLabel
   note
   lines {
     id
@@ -123,6 +125,18 @@ export const SET_POS_ORDER_DISCOUNT_MUTATION = `
 
 export type SetPosOrderDiscountData = {
   setPosOrderDiscount: PosOrder
+}
+
+export const SET_POS_ORDER_TABLE_LABEL_MUTATION = `
+  mutation SetPosOrderTableLabel($orderId: Int!, $tableLabel: String) {
+    setPosOrderTableLabel(orderId: $orderId, tableLabel: $tableLabel) {
+      ${POS_ORDER_FIELDS}
+    }
+  }
+`
+
+export type SetPosOrderTableLabelData = {
+  setPosOrderTableLabel: PosOrder
 }
 
 export const CLOSE_POS_ORDER_MUTATION = `

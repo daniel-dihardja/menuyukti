@@ -27,7 +27,15 @@
     "remove": "Remove",
     "subtotal": "Subtotal",
     "discount": "Discount",
+    "discountAmount": "Amount",
+    "discountPercent": "%",
+    "discountPercentHint": "≈ {amount}",
     "applyDiscount": "Apply",
+    "tableLabel": "Table",
+    "tableLabelPlaceholder": "e.g. 3 or Patio 2",
+    "applyTableLabel": "Apply",
+    "clearTableLabel": "Clear",
+    "tableLabelReadOnly": "Table · {label}",
     "total": "Total",
     "pay": "Pay",
     "void": "Void ticket",
@@ -50,7 +58,8 @@
     },
     "errors": {
       "generic": "Something went wrong",
-      "invalidDiscount": "Enter a valid discount amount"
+      "invalidDiscount": "Enter a valid discount amount",
+      "invalidDiscountPercent": "Enter a percent between 0 and 100"
     }
   },
   "chatTools": {

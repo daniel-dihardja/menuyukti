@@ -17,8 +17,13 @@ import type {
 import { formatCurrency } from '@/lib/currency'
 
 type TodayFilter = 'all' | PosOrderStatus
+type DiscountMode = 'amount' | 'percent'
 
 const TODAY_FILTERS: TodayFilter[] = ['all', 'OPEN', 'PAID', 'VOID']
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100
+}
 
 type PosCashierProps = {
   locationId: number
@@ -55,6 +60,8 @@ export function PosCashier({
   const [todayOrders, setTodayOrders] = useState<PosOrder[]>(initialOrders)
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all')
   const [discountInput, setDiscountInput] = useState('0')
+  const [discountMode, setDiscountMode] = useState<DiscountMode>('amount')
+  const [tableLabelInput, setTableLabelInput] = useState('')
   const [payOpen, setPayOpen] = useState(false)
   const [todayFilter, setTodayFilter] = useState<TodayFilter>('all')
 
@@ -77,11 +84,38 @@ export function PosCashier({
   const subtotal = currentOrder?.lines.reduce((sum, line) => sum + line.lineTotal, 0) ?? 0
   const discount = currentOrder?.discountAmount ?? 0
   const total = Math.max(0, subtotal - discount)
+  const discountInputValue = Number(discountInput)
+  const percentPreviewAmount =
+    discountMode === 'percent' &&
+    Number.isFinite(discountInputValue) &&
+    discountInputValue >= 0 &&
+    discountInputValue <= 100
+      ? roundMoney((subtotal * discountInputValue) / 100)
+      : null
 
   const showOrder = (order: PosOrder | null) => {
     setCurrentOrder(order)
+    setDiscountMode('amount')
     setDiscountInput(String(order?.discountAmount ?? 0))
+    setTableLabelInput(order?.tableLabel ?? '')
     setPayOpen(false)
+  }
+
+  const handleDiscountModeChange = (mode: DiscountMode) => {
+    if (mode === discountMode) return
+    const current = Number(discountInput)
+    if (mode === 'percent') {
+      if (Number.isFinite(current) && current >= 0 && subtotal > 0) {
+        setDiscountInput(String(roundMoney((current / subtotal) * 100)))
+      } else {
+        setDiscountInput('0')
+      }
+    } else if (Number.isFinite(current) && current >= 0 && current <= 100) {
+      setDiscountInput(String(roundMoney((subtotal * current) / 100)))
+    } else {
+      setDiscountInput('0')
+    }
+    setDiscountMode(mode)
   }
 
   const refreshToday = async (preferredOrderId?: number | null) => {
@@ -162,16 +196,52 @@ export function PosCashier({
 
   const handleApplyDiscount = () => {
     if (!currentOrder || !isEditable) return
-    const amount = Number(discountInput)
-    if (!Number.isFinite(amount) || amount < 0) {
-      toast.error(t('errors.invalidDiscount'))
+    const raw = Number(discountInput)
+    if (!Number.isFinite(raw) || raw < 0) {
+      toast.error(
+        discountMode === 'percent' ? t('errors.invalidDiscountPercent') : t('errors.invalidDiscount'),
+      )
       return
+    }
+    let amount = raw
+    if (discountMode === 'percent') {
+      if (raw > 100) {
+        toast.error(t('errors.invalidDiscountPercent'))
+        return
+      }
+      amount = roundMoney((subtotal * raw) / 100)
     }
     run(async () => {
       const updated = await posAction(locationId, {
         action: 'setDiscount',
         orderId: currentOrder.id,
         amount,
+      })
+      showOrder(updated)
+      await refreshToday(updated.id)
+    })
+  }
+
+  const handleApplyTableLabel = () => {
+    if (!currentOrder || !isEditable) return
+    run(async () => {
+      const updated = await posAction(locationId, {
+        action: 'setTableLabel',
+        orderId: currentOrder.id,
+        tableLabel: tableLabelInput,
+      })
+      showOrder(updated)
+      await refreshToday(updated.id)
+    })
+  }
+
+  const handleClearTableLabel = () => {
+    if (!currentOrder || !isEditable) return
+    run(async () => {
+      const updated = await posAction(locationId, {
+        action: 'setTableLabel',
+        orderId: currentOrder.id,
+        tableLabel: null,
       })
       showOrder(updated)
       await refreshToday(updated.id)
@@ -290,6 +360,48 @@ export function PosCashier({
           </Button>
         </div>
 
+        {currentOrder && isEditable ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t('tableLabel')}</span>
+            <Input
+              type="text"
+              maxLength={64}
+              value={tableLabelInput}
+              onChange={(e) => setTableLabelInput(e.target.value)}
+              disabled={pending}
+              placeholder={t('tableLabelPlaceholder')}
+              aria-label={t('tableLabel')}
+              className="h-8 max-w-[10rem]"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8"
+              disabled={pending}
+              onClick={handleApplyTableLabel}
+            >
+              {t('applyTableLabel')}
+            </Button>
+            {currentOrder.tableLabel ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-8"
+                disabled={pending}
+                onClick={handleClearTableLabel}
+              >
+                {t('clearTableLabel')}
+              </Button>
+            ) : null}
+          </div>
+        ) : currentOrder?.tableLabel ? (
+          <p className="text-xs text-muted-foreground">
+            {t('tableLabelReadOnly', { label: currentOrder.tableLabel })}
+          </p>
+        ) : null}
+
         {currentOrder && currentOrder.status !== 'OPEN' ? (
           <p className="text-xs text-muted-foreground">{t('readOnlyHint')}</p>
         ) : null}
@@ -360,26 +472,61 @@ export function PosCashier({
             <span className="tabular-nums">{formatCurrency(subtotal, currencyCode)}</span>
           </div>
           {isEditable ? (
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
-                value={discountInput}
-                onChange={(e) => setDiscountInput(e.target.value)}
-                disabled={!currentOrder || pending}
-                aria-label={t('discount')}
-                className="h-9"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={!currentOrder || pending}
-                onClick={handleApplyDiscount}
-              >
-                {t('applyDiscount')}
-              </Button>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="shrink-0">{t('discount')}</span>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <div className="flex rounded-md border p-0.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={discountMode === 'amount' ? 'secondary' : 'ghost'}
+                      className="h-7 px-2 text-xs"
+                      disabled={!currentOrder || pending}
+                      onClick={() => handleDiscountModeChange('amount')}
+                    >
+                      {t('discountAmount')}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={discountMode === 'percent' ? 'secondary' : 'ghost'}
+                      className="h-7 px-2 text-xs"
+                      disabled={!currentOrder || pending}
+                      onClick={() => handleDiscountModeChange('percent')}
+                    >
+                      {t('discountPercent')}
+                    </Button>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={discountMode === 'percent' ? 100 : undefined}
+                    step={discountMode === 'percent' ? '0.1' : '0.01'}
+                    value={discountInput}
+                    onChange={(e) => setDiscountInput(e.target.value)}
+                    disabled={!currentOrder || pending}
+                    aria-label={t('discount')}
+                    className="h-9 w-24 text-right tabular-nums"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!currentOrder || pending}
+                    onClick={handleApplyDiscount}
+                  >
+                    {t('applyDiscount')}
+                  </Button>
+                </div>
+              </div>
+              {discountMode === 'percent' && percentPreviewAmount != null ? (
+                <p className="text-right text-xs text-muted-foreground">
+                  {t('discountPercentHint', {
+                    amount: formatCurrency(percentPreviewAmount, currencyCode),
+                  })}
+                </p>
+              ) : null}
             </div>
           ) : discount > 0 ? (
             <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -463,7 +610,17 @@ export function PosCashier({
                         'disabled:opacity-50',
                       )}
                     >
-                      <span className="truncate font-medium">{order.billNumber}</span>
+                      <span className="truncate font-medium">
+                        {order.billNumber}
+                        {order.tableLabel ? (
+                          <span className="font-normal text-muted-foreground">
+                            {' '}
+                            · {order.tableLabel.length > 12
+                              ? `${order.tableLabel.slice(0, 12)}…`
+                              : order.tableLabel}
+                          </span>
+                        ) : null}
+                      </span>
                       <span className="shrink-0 text-muted-foreground">
                         {t(`status.${order.status.toLowerCase()}`)}
                       </span>

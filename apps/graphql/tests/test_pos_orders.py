@@ -61,6 +61,16 @@ mutation SetPosOrderDiscount($orderId: Int!, $amount: Float!) {
 }
 """
 
+SET_TABLE_LABEL = """
+mutation SetPosOrderTableLabel($orderId: Int!, $tableLabel: String) {
+  setPosOrderTableLabel(orderId: $orderId, tableLabel: $tableLabel) {
+    id
+    tableLabel
+    status
+  }
+}
+"""
+
 CLOSE = """
 mutation ClosePosOrder($orderId: Int!, $paymentMethod: PosPaymentMethod!) {
   closePosOrder(orderId: $orderId, paymentMethod: $paymentMethod) {
@@ -69,6 +79,7 @@ mutation ClosePosOrder($orderId: Int!, $paymentMethod: PosPaymentMethod!) {
     paymentMethod
     closedAt
     billNumber
+    tableLabel
   }
 }
 """
@@ -286,6 +297,93 @@ def test_unavailable_item_rejected():
     )
     assert result.errors
     assert "not available" in str(result.errors[0]).lower()
+
+
+def test_set_and_clear_table_label_on_open():
+    location_id, _, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+
+    set_result = asyncio.run(
+        schema.execute(
+            SET_TABLE_LABEL,
+            variable_values={"orderId": order_id, "tableLabel": "  Patio 2  "},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not set_result.errors, set_result.errors
+    assert set_result.data["setPosOrderTableLabel"]["tableLabel"] == "Patio 2"
+
+    clear_result = asyncio.run(
+        schema.execute(
+            SET_TABLE_LABEL,
+            variable_values={"orderId": order_id, "tableLabel": "   "},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not clear_result.errors, clear_result.errors
+    assert clear_result.data["setPosOrderTableLabel"]["tableLabel"] is None
+
+    null_result = asyncio.run(
+        schema.execute(
+            SET_TABLE_LABEL,
+            variable_values={"orderId": order_id, "tableLabel": None},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not null_result.errors, null_result.errors
+    assert null_result.data["setPosOrderTableLabel"]["tableLabel"] is None
+
+
+def test_set_table_label_rejected_when_paid():
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            SET_TABLE_LABEL,
+            variable_values={"orderId": order_id, "tableLabel": "3"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not closed.errors, closed.errors
+    assert closed.data["closePosOrder"]["tableLabel"] == "3"
+
+    rejected = asyncio.run(
+        schema.execute(
+            SET_TABLE_LABEL,
+            variable_values={"orderId": order_id, "tableLabel": "4"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert rejected.errors
+    assert "not open" in str(rejected.errors[0]).lower()
 
 
 def test_discount_that_zeros_line_rejected():

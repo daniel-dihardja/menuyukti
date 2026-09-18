@@ -23,7 +23,12 @@ def _load_owned_order(session, order_id: int, user_id: str, info: strawberry.Inf
 @strawberry.type
 class PosOrderMutations:
     @strawberry.mutation(description="Open a new POS ticket for a location.")
-    def open_pos_order(self, info: strawberry.Info, location_id: int) -> PosOrderType:
+    def open_pos_order(
+        self,
+        info: strawberry.Info,
+        location_id: int,
+        table_label: str | None = None,
+    ) -> PosOrderType:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for openPosOrder")
@@ -32,7 +37,12 @@ class PosOrderMutations:
             if loc is None:
                 raise ValueError("Location not found")
             require_location_owner(session, location_id, user_id, info=info)
-            order = pos_svc.open_order(session, location_id=location_id, clerk_user_id=user_id)
+            order = pos_svc.open_order(
+                session,
+                location_id=location_id,
+                clerk_user_id=user_id,
+                table_label=table_label,
+            )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -107,6 +117,28 @@ class PosOrderMutations:
         with request_session_scope(info) as session:
             _load_owned_order(session, order_id, user_id, info)
             order = pos_svc.set_discount(session, order_id=order_id, amount=amount)
+            session.commit()
+            refreshed = pos_svc.get_order(session, order.id)
+            return pos_order_to_gql(refreshed or order)
+
+    @strawberry.mutation(
+        description=(
+            "Set or clear the optional table label on an open POS ticket. "
+            "Pass null or blank to clear."
+        )
+    )
+    def set_pos_order_table_label(
+        self,
+        info: strawberry.Info,
+        order_id: int,
+        table_label: str | None = None,
+    ) -> PosOrderType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for setPosOrderTableLabel")
+        with request_session_scope(info) as session:
+            _load_owned_order(session, order_id, user_id, info)
+            order = pos_svc.set_table_label(session, order_id=order_id, label=table_label)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)

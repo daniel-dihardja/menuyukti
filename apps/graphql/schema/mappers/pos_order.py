@@ -41,6 +41,7 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
         opened_by_clerk_user_id=row.opened_by_clerk_user_id,
         payment_method=payment,
         discount_amount=float(row.discount_amount or 0),
+        table_label=row.table_label,
         note=row.note,
         lines=[pos_order_line_to_gql(line) for line in lines],
     )

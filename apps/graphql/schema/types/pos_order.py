@@ -47,5 +47,6 @@ class PosOrderType:
     opened_by_clerk_user_id: str
     payment_method: PosPaymentMethod | None
     discount_amount: float
+    table_label: str | None
     note: str | None
     lines: list[PosOrderLineType]

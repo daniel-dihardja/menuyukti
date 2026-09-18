@@ -9,6 +9,7 @@ import {
   POS_ORDERS_QUERY,
   REMOVE_POS_ORDER_LINE_MUTATION,
   SET_POS_ORDER_DISCOUNT_MUTATION,
+  SET_POS_ORDER_TABLE_LABEL_MUTATION,
   UPDATE_POS_ORDER_LINE_MUTATION,
   VOID_POS_ORDER_MUTATION,
   type AddPosOrderLineData,
@@ -18,6 +19,7 @@ import {
   type PosPaymentMethod,
   type RemovePosOrderLineData,
   type SetPosOrderDiscountData,
+  type SetPosOrderTableLabelData,
   type UpdatePosOrderLineData,
   type VoidPosOrderData,
 } from '@/lib/graphql/queries/pos-orders'
@@ -62,6 +64,7 @@ type PosActionBody = {
   qty?: unknown
   amount?: unknown
   paymentMethod?: unknown
+  tableLabel?: unknown
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -161,6 +164,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         'SetPosOrderDiscount',
       )
       return NextResponse.json({ order: data.setPosOrderDiscount })
+    }
+
+    if (action === 'setTableLabel') {
+      const orderId = Number(body.orderId)
+      if (!Number.isInteger(orderId) || orderId < 1) {
+        return NextResponse.json({ error: 'Invalid orderId' }, { status: 400 })
+      }
+      let tableLabel: string | null = null
+      if (body.tableLabel != null) {
+        if (typeof body.tableLabel !== 'string') {
+          return NextResponse.json({ error: 'Invalid tableLabel' }, { status: 400 })
+        }
+        tableLabel = body.tableLabel
+      }
+      const data = await graphqlQuery<SetPosOrderTableLabelData>(
+        SET_POS_ORDER_TABLE_LABEL_MUTATION,
+        { orderId, tableLabel },
+        userId,
+        'SetPosOrderTableLabel',
+      )
+      return NextResponse.json({ order: data.setPosOrderTableLabel })
     }
 
     if (action === 'close') {

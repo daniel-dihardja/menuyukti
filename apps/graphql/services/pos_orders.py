@@ -18,10 +18,23 @@ POS_STATUS_OPEN = "open"
 POS_STATUS_PAID = "paid"
 POS_STATUS_VOID = "void"
 PAYMENT_METHODS = frozenset({"cash", "card", "other"})
+TABLE_LABEL_MAX_LEN = 64
 
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+def normalize_table_label(label: str | None) -> str | None:
+    """Trim and empty→None; raise if longer than TABLE_LABEL_MAX_LEN."""
+    if label is None:
+        return None
+    cleaned = label.strip()
+    if not cleaned:
+        return None
+    if len(cleaned) > TABLE_LABEL_MAX_LEN:
+        raise ValueError(f"table_label must be at most {TABLE_LABEL_MAX_LEN} characters")
+    return cleaned
 
 
 def next_bill_number(session: Session, location_id: int, when: datetime) -> str:
@@ -79,7 +92,13 @@ def list_orders(
     return list(session.execute(stmt).unique().scalars().all())
 
 
-def open_order(session: Session, *, location_id: int, clerk_user_id: str) -> PosOrder:
+def open_order(
+    session: Session,
+    *,
+    location_id: int,
+    clerk_user_id: str,
+    table_label: str | None = None,
+) -> PosOrder:
     now = _utcnow()
     order = PosOrder(
         location_id=location_id,
@@ -88,6 +107,7 @@ def open_order(session: Session, *, location_id: int, clerk_user_id: str) -> Pos
         opened_at=now,
         opened_by_clerk_user_id=clerk_user_id,
         discount_amount=0.0,
+        table_label=normalize_table_label(table_label),
     )
     session.add(order)
     session.flush()
@@ -186,6 +206,16 @@ def set_discount(session: Session, *, order_id: int, amount: float) -> PosOrder:
         raise ValueError("Order not found")
     _require_open(order)
     order.discount_amount = float(amount)
+    session.flush()
+    return get_order(session, order.id) or order
+
+
+def set_table_label(session: Session, *, order_id: int, label: str | None) -> PosOrder:
+    order = get_order(session, order_id)
+    if order is None:
+        raise ValueError("Order not found")
+    _require_open(order)
+    order.table_label = normalize_table_label(label)
     session.flush()
     return get_order(session, order.id) or order
 
