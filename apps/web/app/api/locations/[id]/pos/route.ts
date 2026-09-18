@@ -7,6 +7,7 @@ import {
   CLOSE_POS_ORDER_MUTATION,
   OPEN_POS_ORDER_MUTATION,
   POS_ORDERS_QUERY,
+  REFUND_POS_ORDER_MUTATION,
   REMOVE_POS_ORDER_LINE_MUTATION,
   SET_POS_ORDER_DISCOUNT_MUTATION,
   SET_POS_ORDER_TABLE_LABEL_MUTATION,
@@ -17,6 +18,7 @@ import {
   type OpenPosOrderData,
   type PosOrdersData,
   type PosPaymentMethod,
+  type RefundPosOrderData,
   type RemovePosOrderLineData,
   type SetPosOrderDiscountData,
   type SetPosOrderTableLabelData,
@@ -217,6 +219,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         'VoidPosOrder',
       )
       return NextResponse.json({ order: data.voidPosOrder })
+    }
+
+    if (action === 'refund') {
+      const orderId = Number(body.orderId)
+      if (!Number.isInteger(orderId) || orderId < 1) {
+        return NextResponse.json({ error: 'Invalid orderId' }, { status: 400 })
+      }
+      const data = await graphqlQuery<RefundPosOrderData>(
+        REFUND_POS_ORDER_MUTATION,
+        { orderId },
+        userId,
+        'RefundPosOrder',
+      )
+      return NextResponse.json({ order: data.refundPosOrder })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

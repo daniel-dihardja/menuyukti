@@ -6,7 +6,7 @@ import calendar
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
 
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.orm import Session, joinedload
 
 from graphql.data_sources import AnalyticsRun, OrderFact
@@ -17,6 +17,7 @@ POS_SYSTEM = "menuyukti"
 POS_STATUS_OPEN = "open"
 POS_STATUS_PAID = "paid"
 POS_STATUS_VOID = "void"
+POS_STATUS_REFUNDED = "refunded"
 PAYMENT_METHODS = frozenset({"cash", "card", "other"})
 TABLE_LABEL_MAX_LEN = 64
 
@@ -227,6 +228,71 @@ def void_order(session: Session, *, order_id: int) -> PosOrder:
     _require_open(order)
     order.status = POS_STATUS_VOID
     order.closed_at = _utcnow()
+    session.flush()
+    return get_order(session, order.id) or order
+
+
+def refund_order(session: Session, *, order_id: int) -> PosOrder:
+    """Full post-pay refund: delete projected OrderFacts and mark ticket refunded."""
+    order = get_order(session, order_id)
+    if order is None:
+        raise ValueError("Order not found")
+    if order.status == POS_STATUS_REFUNDED:
+        raise ValueError(f"Order {order.id} is already refunded")
+    if order.status != POS_STATUS_PAID:
+        raise ValueError(f"Order {order.id} is not paid (status={order.status})")
+
+    run_ids: list[int] = []
+    if order.closed_at is not None:
+        closed_on = order.closed_at.astimezone(UTC).date()
+        year, month = closed_on.year, closed_on.month
+        period_start = date(year, month, 1)
+        period_end = date(year, month, calendar.monthrange(year, month)[1])
+        run = (
+            session.execute(
+                select(AnalyticsRun).where(
+                    AnalyticsRun.location_id == order.location_id,
+                    AnalyticsRun.pos_system == POS_SYSTEM,
+                    AnalyticsRun.period_start == period_start,
+                    AnalyticsRun.period_end == period_end,
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if run is not None:
+            run_ids.append(run.id)
+
+    if not run_ids:
+        run_ids = list(
+            session.execute(
+                select(AnalyticsRun.id).where(
+                    AnalyticsRun.location_id == order.location_id,
+                    AnalyticsRun.pos_system == POS_SYSTEM,
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    if run_ids:
+        session.execute(
+            delete(OrderFact).where(
+                OrderFact.bill_number == order.bill_number,
+                OrderFact.pos_system == POS_SYSTEM,
+                OrderFact.analytics_run_id.in_(run_ids),
+            )
+        )
+    else:
+        session.execute(
+            delete(OrderFact).where(
+                OrderFact.bill_number == order.bill_number,
+                OrderFact.pos_system == POS_SYSTEM,
+            )
+        )
+
+    order.status = POS_STATUS_REFUNDED
+    order.refunded_at = _utcnow()
     session.flush()
     return get_order(session, order.id) or order
 

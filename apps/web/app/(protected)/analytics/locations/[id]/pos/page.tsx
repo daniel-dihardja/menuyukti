@@ -70,6 +70,7 @@ export default async function Page({ params }: PageProps) {
         <PageHeading title={t('title')} description={t('description')} />
         <PosCashier
           locationId={locationId}
+          locationName={location.name}
           currencyCode={currencyCode}
           initialMenu={menuData.locationMenu}
           initialOrders={ordersData.posOrders}

@@ -4,7 +4,23 @@ import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@workspace/ui/components/dialog'
 import { Input } from '@workspace/ui/components/input'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -16,10 +32,12 @@ import type {
 } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
 
+import { PosReceipt } from './pos-receipt'
+
 type TodayFilter = 'all' | PosOrderStatus
 type DiscountMode = 'amount' | 'percent'
 
-const TODAY_FILTERS: TodayFilter[] = ['all', 'OPEN', 'PAID', 'VOID']
+const TODAY_FILTERS: TodayFilter[] = ['all', 'OPEN', 'PAID', 'VOID', 'REFUNDED']
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100
@@ -27,6 +45,7 @@ function roundMoney(value: number): number {
 
 type PosCashierProps = {
   locationId: number
+  locationName: string
   currencyCode: string
   initialMenu: LocationMenu | null
   initialOrders: PosOrder[]
@@ -50,6 +69,7 @@ async function posAction(
 
 export function PosCashier({
   locationId,
+  locationName,
   currencyCode,
   initialMenu,
   initialOrders,
@@ -64,8 +84,13 @@ export function PosCashier({
   const [tableLabelInput, setTableLabelInput] = useState('')
   const [payOpen, setPayOpen] = useState(false)
   const [todayFilter, setTodayFilter] = useState<TodayFilter>('all')
+  const [receiptOpen, setReceiptOpen] = useState(false)
+  const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
 
   const isEditable = currentOrder?.status === 'OPEN'
+  const canShowReceipt =
+    currentOrder != null && (currentOrder.status === 'PAID' || currentOrder.status === 'REFUNDED')
+  const canRefund = currentOrder?.status === 'PAID'
   const categories = initialMenu?.categories ?? []
   const availableItems = categories.flatMap((category) =>
     category.items
@@ -259,6 +284,7 @@ export function PosCashier({
       toast.success(t('paidToast', { bill: paid.billNumber }))
       showOrder(paid)
       await refreshToday(paid.id)
+      setReceiptOpen(true)
     })
   }
 
@@ -272,6 +298,20 @@ export function PosCashier({
       toast.success(t('voidedToast'))
       showOrder(voided)
       await refreshToday(voided.id)
+    })
+  }
+
+  const handleRefund = () => {
+    if (!currentOrder || !canRefund) return
+    run(async () => {
+      const refunded = await posAction(locationId, {
+        action: 'refund',
+        orderId: currentOrder.id,
+      })
+      toast.success(t('refundedToast'))
+      setRefundConfirmOpen(false)
+      showOrder(refunded)
+      await refreshToday(refunded.id)
     })
   }
 
@@ -568,6 +608,22 @@ export function PosCashier({
               {t('void')}
             </Button>
           </div>
+        ) : canShowReceipt ? (
+          <div className="flex flex-col gap-2">
+            <Button type="button" disabled={pending} onClick={() => setReceiptOpen(true)}>
+              {t('receipt')}
+            </Button>
+            {canRefund ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => setRefundConfirmOpen(true)}
+              >
+                {t('refund')}
+              </Button>
+            ) : null}
+          </div>
         ) : null}
 
         <div className="border-t pt-3">
@@ -632,6 +688,75 @@ export function PosCashier({
           </ul>
         </div>
       </aside>
+
+      <Dialog open={receiptOpen && canShowReceipt} onOpenChange={setReceiptOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md print:fixed print:inset-0 print:max-h-none print:max-w-none print:translate-x-0 print:translate-y-0 print:rounded-none print:border-0 print:shadow-none">
+          <DialogHeader className="print:hidden">
+            <DialogTitle>{t('receiptTitle')}</DialogTitle>
+          </DialogHeader>
+          {currentOrder && canShowReceipt ? (
+            <PosReceipt
+              order={currentOrder}
+              locationName={locationName}
+              currencyCode={currencyCode}
+            />
+          ) : null}
+          <DialogFooter className="print:hidden sm:justify-between">
+            <Button type="button" variant="outline" onClick={() => setReceiptOpen(false)}>
+              {t('receiptClose')}
+            </Button>
+            <Button type="button" onClick={() => window.print()}>
+              {t('receiptPrint')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={refundConfirmOpen} onOpenChange={setRefundConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('refundConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {currentOrder
+                ? t('refundConfirmDescription', { bill: currentOrder.billNumber })
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button" disabled={pending}>
+              {t('refundCancel')}
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={pending || !canRefund}
+              onClick={handleRefund}
+            >
+              {t('refundConfirm')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          .pos-receipt-print,
+          .pos-receipt-print * {
+            visibility: visible !important;
+          }
+          .pos-receipt-print {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 1rem !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

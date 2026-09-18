@@ -180,3 +180,20 @@ class PosOrderMutations:
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
+
+    @strawberry.mutation(
+        description=(
+            "Fully refund a paid POS ticket: delete projected OrderFact rows and "
+            "set status to refunded. Open/void tickets cannot be refunded."
+        )
+    )
+    def refund_pos_order(self, info: strawberry.Info, order_id: int) -> PosOrderType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for refundPosOrder")
+        with request_session_scope(info) as session:
+            _load_owned_order(session, order_id, user_id, info)
+            order = pos_svc.refund_order(session, order_id=order_id)
+            session.commit()
+            refreshed = pos_svc.get_order(session, order.id)
+            return pos_order_to_gql(refreshed or order)

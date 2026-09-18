@@ -43,5 +43,6 @@ def pos_order_to_gql(row: PosOrder) -> PosOrderType:
         discount_amount=float(row.discount_amount or 0),
         table_label=row.table_label,
         note=row.note,
+        refunded_at=row.refunded_at,
         lines=[pos_order_line_to_gql(line) for line in lines],
     )

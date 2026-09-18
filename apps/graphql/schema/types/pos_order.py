@@ -13,6 +13,7 @@ class PosOrderStatus(Enum):
     OPEN = "open"
     PAID = "paid"
     VOID = "void"
+    REFUNDED = "refunded"
 
 
 @strawberry.enum(description="Recorded payment method on close (no processor in v1).")
@@ -49,4 +50,5 @@ class PosOrderType:
     discount_amount: float
     table_label: str | None
     note: str | None
+    refunded_at: datetime | None
     lines: list[PosOrderLineType]

@@ -1,4 +1,4 @@
-export type PosOrderStatus = 'OPEN' | 'PAID' | 'VOID'
+export type PosOrderStatus = 'OPEN' | 'PAID' | 'VOID' | 'REFUNDED'
 export type PosPaymentMethod = 'CASH' | 'CARD' | 'OTHER'
 
 export type PosOrderLine = {
@@ -26,6 +26,7 @@ export type PosOrder = {
   discountAmount: number
   tableLabel: string | null
   note: string | null
+  refundedAt: string | null
   lines: PosOrderLine[]
 }
 
@@ -41,6 +42,7 @@ const POS_ORDER_FIELDS = `
   discountAmount
   tableLabel
   note
+  refundedAt
   lines {
     id
     posOrderId
@@ -161,4 +163,16 @@ export const VOID_POS_ORDER_MUTATION = `
 
 export type VoidPosOrderData = {
   voidPosOrder: PosOrder
+}
+
+export const REFUND_POS_ORDER_MUTATION = `
+  mutation RefundPosOrder($orderId: Int!) {
+    refundPosOrder(orderId: $orderId) {
+      ${POS_ORDER_FIELDS}
+    }
+  }
+`
+
+export type RefundPosOrderData = {
+  refundPosOrder: PosOrder
 }

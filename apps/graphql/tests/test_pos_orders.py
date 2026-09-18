@@ -94,6 +94,18 @@ mutation VoidPosOrder($orderId: Int!) {
 }
 """
 
+REFUND = """
+mutation RefundPosOrder($orderId: Int!) {
+  refundPosOrder(orderId: $orderId) {
+    id
+    status
+    refundedAt
+    billNumber
+    paymentMethod
+  }
+}
+"""
+
 
 def _cleanup() -> None:
     session = SessionLocal()
@@ -272,6 +284,114 @@ def test_void_writes_no_facts():
         assert session.query(OrderFact).count() == 0
     finally:
         session.close()
+
+
+def test_refund_paid_deletes_order_facts():
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"orderId": order_id, "paymentMethod": "CARD"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not closed.errors, closed.errors
+    bill = closed.data["closePosOrder"]["billNumber"]
+
+    session = SessionLocal()
+    try:
+        assert session.query(OrderFact).filter(OrderFact.bill_number == bill).count() == 1
+    finally:
+        session.close()
+
+    refunded = asyncio.run(
+        schema.execute(
+            REFUND,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not refunded.errors, refunded.errors
+    assert refunded.data["refundPosOrder"]["status"] == "REFUNDED"
+    assert refunded.data["refundPosOrder"]["refundedAt"] is not None
+    assert refunded.data["refundPosOrder"]["paymentMethod"] == "CARD"
+
+    session = SessionLocal()
+    try:
+        assert session.query(OrderFact).filter(OrderFact.bill_number == bill).count() == 0
+    finally:
+        session.close()
+
+    again = asyncio.run(
+        schema.execute(
+            REFUND,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert again.errors
+    assert "already refunded" in str(again.errors[0]).lower()
+
+
+def test_refund_rejected_when_not_paid():
+    location_id, item_id, _ = _create_location_with_menu()
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+
+    open_reject = asyncio.run(
+        schema.execute(
+            REFUND,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert open_reject.errors
+    assert "not paid" in str(open_reject.errors[0]).lower()
+
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            VOID,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    void_reject = asyncio.run(
+        schema.execute(
+            REFUND,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert void_reject.errors
+    assert "not paid" in str(void_reject.errors[0]).lower()
 
 
 def test_unavailable_item_rejected():

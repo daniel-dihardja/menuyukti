@@ -46,6 +46,21 @@
     },
     "paidToast": "Paid {bill}",
     "voidedToast": "Ticket voided",
+    "refundedToast": "Ticket refunded",
+    "receipt": "Receipt",
+    "receiptTitle": "Receipt",
+    "receiptPrint": "Print",
+    "receiptClose": "Close",
+    "receiptRefundedNote": "This ticket was refunded.",
+    "receiptOpened": "Opened",
+    "receiptClosed": "Closed",
+    "receiptPayment": "Payment",
+    "receiptStatus": "Status",
+    "refund": "Refund",
+    "refundConfirmTitle": "Refund this ticket?",
+    "refundConfirmDescription": "This fully refunds bill {bill} and removes it from sales analytics. This cannot be undone.",
+    "refundConfirm": "Refund ticket",
+    "refundCancel": "Cancel",
     "todayTitle": "Today",
     "todayEmpty": "No tickets yet today",
     "todayFilterAll": "All",
@@ -54,7 +69,8 @@
     "status": {
       "open": "Open",
       "paid": "Paid",
-      "void": "Void"
+      "void": "Void",
+      "refunded": "Refunded"
     },
     "errors": {
       "generic": "Something went wrong",
