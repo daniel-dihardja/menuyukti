@@ -11,9 +11,14 @@ import { cn } from '@workspace/ui/lib/utils'
 import type { LocationMenu, LocationMenuItem } from '@/lib/graphql/queries/location-menu'
 import type {
   PosOrder,
+  PosOrderStatus,
   PosPaymentMethod,
 } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
+
+type TodayFilter = 'all' | PosOrderStatus
+
+const TODAY_FILTERS: TodayFilter[] = ['all', 'OPEN', 'PAID', 'VOID']
 
 type PosCashierProps = {
   locationId: number
@@ -51,7 +56,9 @@ export function PosCashier({
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | 'all'>('all')
   const [discountInput, setDiscountInput] = useState('0')
   const [payOpen, setPayOpen] = useState(false)
+  const [todayFilter, setTodayFilter] = useState<TodayFilter>('all')
 
+  const isEditable = currentOrder?.status === 'OPEN'
   const categories = initialMenu?.categories ?? []
   const availableItems = categories.flatMap((category) =>
     category.items
@@ -62,17 +69,29 @@ export function PosCashier({
     selectedCategoryId === 'all'
       ? availableItems
       : availableItems.filter((item) => item.categoryId === selectedCategoryId)
+  const filteredTodayOrders =
+    todayFilter === 'all'
+      ? todayOrders
+      : todayOrders.filter((order) => order.status === todayFilter)
 
-  const subtotal =
-    currentOrder?.lines.reduce((sum, line) => sum + line.lineTotal, 0) ?? 0
+  const subtotal = currentOrder?.lines.reduce((sum, line) => sum + line.lineTotal, 0) ?? 0
   const discount = currentOrder?.discountAmount ?? 0
   const total = Math.max(0, subtotal - discount)
 
-  const refreshToday = async () => {
+  const showOrder = (order: PosOrder | null) => {
+    setCurrentOrder(order)
+    setDiscountInput(String(order?.discountAmount ?? 0))
+    setPayOpen(false)
+  }
+
+  const refreshToday = async (preferredOrderId?: number | null) => {
     const res = await fetch(`/api/locations/${locationId}/pos`)
     const payload = (await res.json()) as { orders?: PosOrder[]; error?: string }
-    if (res.ok && payload.orders) {
-      setTodayOrders(payload.orders)
+    if (!res.ok || !payload.orders) return
+    setTodayOrders(payload.orders)
+    if (preferredOrderId != null) {
+      const match = payload.orders.find((order) => order.id === preferredOrderId)
+      if (match) showOrder(match)
     }
   }
 
@@ -93,9 +112,13 @@ export function PosCashier({
       return currentOrder
     }
     const order = await posAction(locationId, { action: 'open' })
-    setCurrentOrder(order)
-    setDiscountInput(String(order.discountAmount ?? 0))
+    showOrder(order)
+    await refreshToday(order.id)
     return order
+  }
+
+  const handleSelectTicket = (order: PosOrder) => {
+    showOrder(order)
   }
 
   const handleAddItem = (item: LocationMenuItem) => {
@@ -107,34 +130,38 @@ export function PosCashier({
         menuItemId: item.id,
         qty: 1,
       })
-      setCurrentOrder(updated)
+      showOrder(updated)
+      await refreshToday(updated.id)
     })
   }
 
   const handleUpdateQty = (lineId: number, qty: number) => {
-    if (qty < 1) return
+    if (qty < 1 || !isEditable) return
     run(async () => {
       const updated = await posAction(locationId, {
         action: 'updateLine',
         lineId,
         qty,
       })
-      setCurrentOrder(updated)
+      showOrder(updated)
+      await refreshToday(updated.id)
     })
   }
 
   const handleRemoveLine = (lineId: number) => {
+    if (!isEditable) return
     run(async () => {
       const updated = await posAction(locationId, {
         action: 'removeLine',
         lineId,
       })
-      setCurrentOrder(updated)
+      showOrder(updated)
+      await refreshToday(updated.id)
     })
   }
 
   const handleApplyDiscount = () => {
-    if (!currentOrder) return
+    if (!currentOrder || !isEditable) return
     const amount = Number(discountInput)
     if (!Number.isFinite(amount) || amount < 0) {
       toast.error(t('errors.invalidDiscount'))
@@ -146,13 +173,13 @@ export function PosCashier({
         orderId: currentOrder.id,
         amount,
       })
-      setCurrentOrder(updated)
-      setDiscountInput(String(updated.discountAmount))
+      showOrder(updated)
+      await refreshToday(updated.id)
     })
   }
 
   const handlePay = (paymentMethod: PosPaymentMethod) => {
-    if (!currentOrder) return
+    if (!currentOrder || !isEditable) return
     run(async () => {
       const paid = await posAction(locationId, {
         action: 'close',
@@ -160,32 +187,29 @@ export function PosCashier({
         paymentMethod,
       })
       toast.success(t('paidToast', { bill: paid.billNumber }))
-      setCurrentOrder(null)
-      setDiscountInput('0')
-      setPayOpen(false)
-      await refreshToday()
+      showOrder(paid)
+      await refreshToday(paid.id)
     })
   }
 
   const handleVoid = () => {
-    if (!currentOrder) return
+    if (!currentOrder || !isEditable) return
     run(async () => {
-      await posAction(locationId, {
+      const voided = await posAction(locationId, {
         action: 'void',
         orderId: currentOrder.id,
       })
       toast.success(t('voidedToast'))
-      setCurrentOrder(null)
-      setDiscountInput('0')
-      await refreshToday()
+      showOrder(voided)
+      await refreshToday(voided.id)
     })
   }
 
   const handleNewTicket = () => {
     run(async () => {
       const order = await posAction(locationId, { action: 'open' })
-      setCurrentOrder(order)
-      setDiscountInput('0')
+      showOrder(order)
+      await refreshToday(order.id)
     })
   }
 
@@ -245,15 +269,30 @@ export function PosCashier({
           <div>
             <h2 className="text-base font-semibold">{t('currentTicket')}</h2>
             {currentOrder ? (
-              <p className="text-xs text-muted-foreground">{currentOrder.billNumber}</p>
+              <p className="text-xs text-muted-foreground">
+                {currentOrder.billNumber}
+                {currentOrder.status !== 'OPEN'
+                  ? ` · ${t(`status.${currentOrder.status.toLowerCase()}`)}`
+                  : null}
+              </p>
             ) : (
               <p className="text-xs text-muted-foreground">{t('noOpenTicket')}</p>
             )}
           </div>
-          <Button type="button" size="sm" variant="secondary" disabled={pending} onClick={handleNewTicket}>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={pending}
+            onClick={handleNewTicket}
+          >
             {t('newTicket')}
           </Button>
         </div>
+
+        {currentOrder && currentOrder.status !== 'OPEN' ? (
+          <p className="text-xs text-muted-foreground">{t('readOnlyHint')}</p>
+        ) : null}
 
         <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
           {(currentOrder?.lines ?? []).map((line) => (
@@ -265,42 +304,49 @@ export function PosCashier({
                 <p className="truncate text-sm font-medium">{line.nameSnapshot}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatCurrency(line.unitPrice, currencyCode)}
+                  {!isEditable ? ` × ${line.qty}` : null}
                 </p>
               </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="size-8"
-                  disabled={pending || line.qty <= 1}
-                  onClick={() => handleUpdateQty(line.id, line.qty - 1)}
-                  aria-label={t('decreaseQty')}
-                >
-                  −
-                </Button>
-                <span className="w-6 text-center text-sm tabular-nums">{line.qty}</span>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="size-8"
-                  disabled={pending}
-                  onClick={() => handleUpdateQty(line.id, line.qty + 1)}
-                  aria-label={t('increaseQty')}
-                >
-                  +
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={pending}
-                  onClick={() => handleRemoveLine(line.id)}
-                >
-                  {t('remove')}
-                </Button>
-              </div>
+              {isEditable ? (
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="size-8"
+                    disabled={pending || line.qty <= 1}
+                    onClick={() => handleUpdateQty(line.id, line.qty - 1)}
+                    aria-label={t('decreaseQty')}
+                  >
+                    −
+                  </Button>
+                  <span className="w-6 text-center text-sm tabular-nums">{line.qty}</span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="size-8"
+                    disabled={pending}
+                    onClick={() => handleUpdateQty(line.id, line.qty + 1)}
+                    aria-label={t('increaseQty')}
+                  >
+                    +
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={pending}
+                    onClick={() => handleRemoveLine(line.id)}
+                  >
+                    {t('remove')}
+                  </Button>
+                </div>
+              ) : (
+                <span className="shrink-0 text-sm tabular-nums">
+                  {formatCurrency(line.lineTotal, currencyCode)}
+                </span>
+              )}
             </li>
           ))}
           {!currentOrder?.lines?.length ? (
@@ -313,78 +359,118 @@ export function PosCashier({
             <span>{t('subtotal')}</span>
             <span className="tabular-nums">{formatCurrency(subtotal, currencyCode)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={discountInput}
-              onChange={(e) => setDiscountInput(e.target.value)}
-              disabled={!currentOrder || pending}
-              aria-label={t('discount')}
-              className="h-9"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={!currentOrder || pending}
-              onClick={handleApplyDiscount}
-            >
-              {t('applyDiscount')}
-            </Button>
-          </div>
+          {isEditable ? (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={discountInput}
+                onChange={(e) => setDiscountInput(e.target.value)}
+                disabled={!currentOrder || pending}
+                aria-label={t('discount')}
+                className="h-9"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!currentOrder || pending}
+                onClick={handleApplyDiscount}
+              >
+                {t('applyDiscount')}
+              </Button>
+            </div>
+          ) : discount > 0 ? (
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>{t('discount')}</span>
+              <span className="tabular-nums">−{formatCurrency(discount, currencyCode)}</span>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between text-base font-semibold">
             <span>{t('total')}</span>
             <span className="tabular-nums">{formatCurrency(total, currencyCode)}</span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          {!payOpen ? (
-            <Button
-              type="button"
-              disabled={!currentOrder?.lines.length || pending}
-              onClick={() => setPayOpen(true)}
-            >
-              {t('pay')}
+        {isEditable ? (
+          <div className="flex flex-col gap-2">
+            {!payOpen ? (
+              <Button
+                type="button"
+                disabled={!currentOrder?.lines.length || pending}
+                onClick={() => setPayOpen(true)}
+              >
+                {t('pay')}
+              </Button>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {(['CASH', 'CARD', 'OTHER'] as const).map((method) => (
+                  <Button
+                    key={method}
+                    type="button"
+                    disabled={pending}
+                    onClick={() => handlePay(method)}
+                  >
+                    {t(`payment.${method.toLowerCase()}`)}
+                  </Button>
+                ))}
+              </div>
+            )}
+            <Button type="button" variant="outline" disabled={!currentOrder || pending} onClick={handleVoid}>
+              {t('void')}
             </Button>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {(['CASH', 'CARD', 'OTHER'] as const).map((method) => (
-                <Button
-                  key={method}
-                  type="button"
-                  disabled={pending}
-                  onClick={() => handlePay(method)}
-                >
-                  {t(`payment.${method.toLowerCase()}`)}
-                </Button>
-              ))}
-            </div>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!currentOrder || currentOrder.status !== 'OPEN' || pending}
-            onClick={handleVoid}
-          >
-            {t('void')}
-          </Button>
-        </div>
+          </div>
+        ) : null}
 
         <div className="border-t pt-3">
           <h3 className="mb-2 text-sm font-semibold">{t('todayTitle')}</h3>
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {TODAY_FILTERS.map((filter) => (
+              <Button
+                key={filter}
+                type="button"
+                size="sm"
+                variant={todayFilter === filter ? 'default' : 'outline'}
+                className="h-7 px-2 text-xs"
+                onClick={() => setTodayFilter(filter)}
+              >
+                {filter === 'all'
+                  ? t('todayFilterAll')
+                  : t(`status.${filter.toLowerCase()}`)}
+              </Button>
+            ))}
+          </div>
           <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto text-sm">
-            {todayOrders.length === 0 ? (
-              <li className="text-muted-foreground">{t('todayEmpty')}</li>
+            {filteredTodayOrders.length === 0 ? (
+              <li className="text-muted-foreground">
+                {todayOrders.length === 0 ? t('todayEmpty') : t('todayFilterEmpty')}
+              </li>
             ) : (
-              todayOrders.map((order) => (
-                <li key={order.id} className="flex justify-between gap-2">
-                  <span className="truncate">{order.billNumber}</span>
-                  <span className="shrink-0 text-muted-foreground">{order.status}</span>
-                </li>
-              ))
+              filteredTodayOrders.map((order) => {
+                const selected = currentOrder?.id === order.id
+                return (
+                  <li key={order.id}>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => handleSelectTicket(order)}
+                      aria-pressed={selected}
+                      className={cn(
+                        'flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
+                        'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        selected && 'bg-muted',
+                        'disabled:opacity-50',
+                      )}
+                    >
+                      <span className="truncate font-medium">{order.billNumber}</span>
+                      <span className="shrink-0 text-muted-foreground">
+                        {t(`status.${order.status.toLowerCase()}`)}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })
             )}
           </ul>
         </div>

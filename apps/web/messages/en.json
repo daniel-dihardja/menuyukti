@@ -40,6 +40,14 @@
     "voidedToast": "Ticket voided",
     "todayTitle": "Today",
     "todayEmpty": "No tickets yet today",
+    "todayFilterAll": "All",
+    "todayFilterEmpty": "No tickets match this filter",
+    "readOnlyHint": "This ticket is closed. Start a new ticket or tap a menu item to continue selling.",
+    "status": {
+      "open": "Open",
+      "paid": "Paid",
+      "void": "Void"
+    },
     "errors": {
       "generic": "Something went wrong",
       "invalidDiscount": "Enter a valid discount amount"
