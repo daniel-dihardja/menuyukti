@@ -24,14 +24,22 @@ from graphql.data_sources import (
     Workspace,
     WorkspaceMembership,
 )
+from graphql.data_sources.models.pos_order import PosOrder
 from graphql.reports import normalize_sales_report, persist_sales_report
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
+from graphql.scripts.generate_dev_mock_sales_excel import MOCK_CATALOG
 from graphql.services.location_cogs import (
     LocationCogsUpsertItem,
     seed_run_cogs_from_location,
     upsert_location_cogs_bulk,
 )
 from graphql.services.manual_quick_profile import validate_and_normalize_quick_profile
+from graphql.services.menu import (
+    MenuCategoryReplaceInput,
+    MenuItemReplaceInput,
+    get_or_create_menu,
+    replace_menu_categories,
+)
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_EXCEL = (
@@ -107,6 +115,57 @@ def _add_sample_manual_brief(session: Session, location_id: int) -> None:
             ),
         )
     )
+
+
+_CATEGORY_LABELS: dict[str, str] = {
+    "MAKANAN": "Makanan",
+    "MINUMAN": "Minuman",
+}
+
+
+def seed_warung_sunda_menu(session: Session, location: Location) -> dict[str, int]:
+    """Replace the curated location menu with the Warung Sunda mock catalog (POS + guest menu).
+
+    Clears POS tickets for this location first: ``replace_menu_categories`` deletes
+    ``menu_item`` rows, and ``pos_order_line.menu_item_id`` is ON DELETE RESTRICT.
+    """
+    deleted_orders = (
+        session.query(PosOrder).filter(PosOrder.location_id == location.id).delete(
+            synchronize_session=False
+        )
+    )
+
+    by_category: dict[str, list[MenuItemReplaceInput]] = {}
+    for item in MOCK_CATALOG:
+        label = _CATEGORY_LABELS.get(item.menu_category, item.menu_category.title())
+        by_category.setdefault(label, []).append(
+            MenuItemReplaceInput(
+                name=item.menu,
+                price=float(item.price),
+                description=item.menu_category_detail.title() if item.menu_category_detail else "",
+                is_available=True,
+            )
+        )
+
+    # Prefer Makanan then Minuman; any other keys follow alphabetically.
+    preferred = ["Makanan", "Minuman"]
+    ordered_names = [name for name in preferred if name in by_category] + sorted(
+        name for name in by_category if name not in preferred
+    )
+    categories = [
+        MenuCategoryReplaceInput(name=name, items=by_category[name]) for name in ordered_names
+    ]
+
+    menu = get_or_create_menu(session, location.id, title=DEV_INVENTAR_LOCATION_NAME)
+    menu.title = DEV_INVENTAR_LOCATION_NAME
+    replace_menu_categories(session, menu, categories)
+    session.flush()
+    item_count = sum(len(cat.items) for cat in categories)
+    return {
+        "categories": len(categories),
+        "items": item_count,
+        "cleared_pos_orders": int(deleted_orders or 0),
+    }
 
 
 def ensure_workspace_context(session: Session, clerk_user_id: str) -> WorkspaceContext:
@@ -388,6 +447,7 @@ def main(
                 inventar,
                 clerk_user_id=clerk_user_id,
             )
+            menu_counts = seed_warung_sunda_menu(session, inventar)
             session.commit()
             print(
                 f"Inventar seed: workspace_id={workspace.id} "
@@ -395,6 +455,11 @@ def main(
                 f"inventar_location_name={inventar.name!r} "
                 f"catalog={counts['catalog_items']} stock={counts['stock_rows']} "
                 f"movements={counts['movements']}"
+            )
+            print(
+                f"Menu seed: location_id={inventar.id} "
+                f"categories={menu_counts['categories']} items={menu_counts['items']} "
+                f"cleared_pos_orders={menu_counts['cleared_pos_orders']}"
             )
 
         if scope in ("analytics", "all"):

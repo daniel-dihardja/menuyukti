@@ -50,9 +50,7 @@ class ReplaceLocationMenuItemsMutation:
                             name=item.name,
                             price=item.price,
                             description=item.description or "",
-                            is_available=(
-                                True if item.is_available is None else item.is_available
-                            ),
+                            is_available=(True if item.is_available is None else item.is_available),
                             image_filename=item.image_filename,
                         )
                         for item in category.items

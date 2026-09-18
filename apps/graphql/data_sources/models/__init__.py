@@ -32,6 +32,7 @@ from graphql.data_sources.models.media_asset import (
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.playbook import Playbook
+from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
 from graphql.data_sources.models.visual_style import VisualStyle
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
 
@@ -68,6 +69,8 @@ __all__ = [
     "Node",
     "OrderFact",
     "Playbook",
+    "PosOrder",
+    "PosOrderLine",
     "VisualStyle",
     "Workspace",
     "WorkspaceMembership",

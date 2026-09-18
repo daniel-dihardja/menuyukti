@@ -13,6 +13,38 @@
   "common": {
     "close": "Close"
   },
+  "pos": {
+    "title": "POS",
+    "description": "Take counter orders and record payments. Paid tickets feed your location sales analytics.",
+    "allCategories": "All",
+    "emptyMenu": "No available menu items. Add items under Manage menu first.",
+    "currentTicket": "Current ticket",
+    "noOpenTicket": "Tap an item or New ticket to start",
+    "newTicket": "New ticket",
+    "emptyCart": "Cart is empty",
+    "decreaseQty": "Decrease quantity",
+    "increaseQty": "Increase quantity",
+    "remove": "Remove",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "applyDiscount": "Apply",
+    "total": "Total",
+    "pay": "Pay",
+    "void": "Void ticket",
+    "payment": {
+      "cash": "Cash",
+      "card": "Card",
+      "other": "Other"
+    },
+    "paidToast": "Paid {bill}",
+    "voidedToast": "Ticket voided",
+    "todayTitle": "Today",
+    "todayEmpty": "No tickets yet today",
+    "errors": {
+      "generic": "Something went wrong",
+      "invalidDiscount": "Enter a valid discount amount"
+    }
+  },
   "chatTools": {
     "searchWeb": {
       "running": "Searching the web…",
@@ -2023,6 +2055,7 @@
       "create": "Create New Location",
       "freePlanLocationLimit": "Free plan includes one location. Upgrade to Pro to add more.",
       "manageMenu": "Manage menu",
+      "managePos": "POS",
       "manageCogs": "Manage COGS",
       "manageReports": "Sales reports",
       "manageFrontpage": "Frontpage",
