@@ -65,6 +65,17 @@ export default async function Page({ params }: PageProps) {
               price: String(item.price),
               description: item.description ?? '',
               imageFilename: item.imageFilename ?? null,
+              modifierGroups: (item.modifierGroups ?? []).map((group) => ({
+                key: `grp-${group.id}`,
+                name: group.name,
+                minSelect: String(group.minSelect),
+                maxSelect: String(group.maxSelect),
+                options: group.options.map((option) => ({
+                  key: `opt-${option.id}`,
+                  name: option.name,
+                  priceDelta: String(option.priceDelta),
+                })),
+              })),
             }))
           : [
               {
@@ -73,10 +84,10 @@ export default async function Page({ params }: PageProps) {
                 price: '',
                 description: '',
                 imageFilename: null,
+                modifierGroups: [],
               },
             ],
     })) ?? []
-
   return (
     <AnalyticsPageShell
       title={t('heading')}

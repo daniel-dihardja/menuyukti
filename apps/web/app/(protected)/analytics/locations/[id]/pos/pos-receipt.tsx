@@ -68,6 +68,23 @@ export function PosReceipt({ order, locationName, currencyCode }: PosReceiptProp
           <li key={line.id} className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-medium leading-snug">{line.nameSnapshot}</p>
+              {(line.modifiers ?? []).length > 0 ? (
+                <ul className="mt-0.5 space-y-0.5 text-xs text-neutral-600">
+                  {(line.modifiers ?? []).map((modifier) => (
+                    <li key={modifier.id}>
+                      + {modifier.nameSnapshot}
+                      {modifier.priceDeltaSnapshot !== 0
+                        ? ` (${formatCurrency(modifier.priceDeltaSnapshot, currencyCode)})`
+                        : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {line.note ? (
+                <p className="mt-0.5 text-xs italic text-neutral-600">
+                  {t('lineNote')}: {line.note}
+                </p>
+              ) : null}
               <p className="text-xs text-neutral-600 tabular-nums">
                 {line.qty} × {formatCurrency(line.unitPrice, currencyCode)}
               </p>

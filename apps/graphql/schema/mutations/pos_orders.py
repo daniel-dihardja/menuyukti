@@ -7,7 +7,11 @@ import strawberry
 import graphql.services.pos_orders as pos_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
-from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.auth import (
+    require_location_owner,
+    require_location_refund_manager,
+    user_id_from_info,
+)
 from graphql.schema.mappers.pos_order import pos_order_to_gql
 from graphql.schema.types.pos_order import PosOrderType, PosPaymentMethod
 
@@ -54,13 +58,22 @@ class PosOrderMutations:
         order_id: int,
         menu_item_id: int,
         qty: int = 1,
+        modifier_option_ids: list[int] | None = None,
+        note: str | None = None,
     ) -> PosOrderType:
         user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for addPosOrderLine")
         with request_session_scope(info) as session:
             _load_owned_order(session, order_id, user_id, info)
-            order = pos_svc.add_line(session, order_id=order_id, menu_item_id=menu_item_id, qty=qty)
+            order = pos_svc.add_line(
+                session,
+                order_id=order_id,
+                menu_item_id=menu_item_id,
+                qty=qty,
+                modifier_option_ids=modifier_option_ids,
+                note=note,
+            )
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -83,6 +96,28 @@ class PosOrderMutations:
                 raise ValueError("Order line not found")
             _load_owned_order(session, line.pos_order_id, user_id, info)
             order = pos_svc.update_line_qty(session, line_id=line_id, qty=qty)
+            session.commit()
+            refreshed = pos_svc.get_order(session, order.id)
+            return pos_order_to_gql(refreshed or order)
+
+    @strawberry.mutation(description="Set or clear the note on an open POS ticket line.")
+    def set_pos_order_line_note(
+        self,
+        info: strawberry.Info,
+        line_id: int,
+        note: str | None = None,
+    ) -> PosOrderType:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            raise ValueError("Missing authenticated user for setPosOrderLineNote")
+        with request_session_scope(info) as session:
+            from graphql.data_sources.models.pos_order import PosOrderLine
+
+            line = session.get(PosOrderLine, line_id)
+            if line is None:
+                raise ValueError("Order line not found")
+            _load_owned_order(session, line.pos_order_id, user_id, info)
+            order = pos_svc.set_line_note(session, line_id=line_id, note=note)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)
             return pos_order_to_gql(refreshed or order)
@@ -192,7 +227,8 @@ class PosOrderMutations:
         if not user_id:
             raise ValueError("Missing authenticated user for refundPosOrder")
         with request_session_scope(info) as session:
-            _load_owned_order(session, order_id, user_id, info)
+            order = _load_owned_order(session, order_id, user_id, info)
+            require_location_refund_manager(session, order.location_id, user_id, info=info)
             order = pos_svc.refund_order(session, order_id=order_id)
             session.commit()
             refreshed = pos_svc.get_order(session, order.id)

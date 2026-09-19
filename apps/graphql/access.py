@@ -100,6 +100,26 @@ def require_location_owner(
         raise PermissionError("Access denied")
 
 
+def require_location_refund_manager(
+    session: Session,
+    location_id: int,
+    user_id: str,
+    info: strawberry.Info | None = None,
+) -> None:
+    """Refunds require workspace owner role (or sole location owner without workspace)."""
+    if not user_id:
+        raise PermissionError("Access denied")
+    loc = session.get(Location, location_id)
+    if loc is None:
+        raise PermissionError("Access denied")
+    if loc.workspace_id is None:
+        if loc.clerk_user_id != user_id:
+            raise PermissionError("Access denied")
+        return
+    if not is_workspace_owner_role(session, loc.workspace_id, user_id):
+        raise PermissionError("Access denied")
+
+
 def get_analytics_run_if_owner(
     session: Session,
     analytics_run_id: int,

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.schema.types.pos_order import (
+    PosOrderLineModifierType,
     PosOrderLineType,
     PosOrderStatus,
     PosOrderType,
@@ -11,7 +12,19 @@ from graphql.schema.types.pos_order import (
 )
 
 
+def pos_order_line_modifier_to_gql(row: PosOrderLineModifier) -> PosOrderLineModifierType:
+    return PosOrderLineModifierType(
+        id=row.id,
+        pos_order_line_id=row.pos_order_line_id,
+        group_name_snapshot=row.group_name_snapshot,
+        name_snapshot=row.name_snapshot,
+        price_delta_snapshot=float(row.price_delta_snapshot or 0),
+        sort_order=row.sort_order,
+    )
+
+
 def pos_order_line_to_gql(row: PosOrderLine) -> PosOrderLineType:
+    modifiers = sorted(row.modifiers, key=lambda m: (m.sort_order, m.id))
     return PosOrderLineType(
         id=row.id,
         pos_order_id=row.pos_order_id,
@@ -22,7 +35,9 @@ def pos_order_line_to_gql(row: PosOrderLine) -> PosOrderLineType:
         qty=row.qty,
         unit_price=row.unit_price,
         line_total=row.line_total,
+        note=row.note,
         sort_order=row.sort_order,
+        modifiers=[pos_order_line_modifier_to_gql(m) for m in modifiers],
     )
 
 

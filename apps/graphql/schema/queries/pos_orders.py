@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, time
+from datetime import UTC, date, datetime, time
 
 import strawberry
 
@@ -11,7 +11,13 @@ from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.mappers.pos_order import pos_order_to_gql
-from graphql.schema.types.pos_order import PosOrderStatus, PosOrderType
+from graphql.schema.types.pos_order import (
+    PosDayPaymentTotalType,
+    PosDaySummaryType,
+    PosOrderStatus,
+    PosOrderType,
+    PosPaymentMethod,
+)
 
 
 def _start_of_utc_day(when: datetime | None = None) -> datetime:
@@ -68,3 +74,42 @@ class PosOrdersQuery:
                 since=since_dt,
             )
             return [pos_order_to_gql(order) for order in orders]
+
+    @strawberry.field(description="Day close / Z-lite summary for native POS tickets.")
+    def pos_day_summary(
+        self,
+        info: strawberry.Info,
+        location_id: int,
+        on_date: str | None = None,
+    ) -> PosDaySummaryType | None:
+        user_id = user_id_from_info(info)
+        if not user_id:
+            return None
+        with request_session_scope(info) as session:
+            loc = session.get(Location, location_id)
+            if loc is None:
+                return None
+            if not is_location_owner(session, location_id, user_id, info=info):
+                return None
+            day = date.fromisoformat(on_date) if on_date else datetime.now(UTC).date()
+            summary = pos_svc.day_summary(session, location_id=location_id, on_date=day)
+            paid = [
+                PosDayPaymentTotalType(
+                    payment_method=PosPaymentMethod(row["payment_method"]),
+                    ticket_count=int(row["ticket_count"]),
+                    gross_total=float(row["gross_total"]),
+                )
+                for row in summary["paid_by_payment_method"]  # type: ignore[index]
+            ]
+            return PosDaySummaryType(
+                location_id=int(summary["location_id"]),  # type: ignore[arg-type]
+                on_date=str(summary["on_date"]),
+                open_count=int(summary["open_count"]),  # type: ignore[arg-type]
+                paid_count=int(summary["paid_count"]),  # type: ignore[arg-type]
+                void_count=int(summary["void_count"]),  # type: ignore[arg-type]
+                refunded_count=int(summary["refunded_count"]),  # type: ignore[arg-type]
+                paid_discount_total=float(summary["paid_discount_total"]),  # type: ignore[arg-type]
+                paid_by_payment_method=paid,
+                refunded_gross_total=float(summary["refunded_gross_total"]),  # type: ignore[arg-type]
+                open_tickets_remaining=int(summary["open_tickets_remaining"]),  # type: ignore[arg-type]
+            )

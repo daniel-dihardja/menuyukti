@@ -18,12 +18,27 @@ import { Input } from '@workspace/ui/components/input'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
+export type LocationMenuFormModifierOption = {
+  key: string
+  name: string
+  priceDelta: string
+}
+
+export type LocationMenuFormModifierGroup = {
+  key: string
+  name: string
+  minSelect: string
+  maxSelect: string
+  options: LocationMenuFormModifierOption[]
+}
+
 export type LocationMenuFormItem = {
   key: string
   name: string
   price: string
   description: string
   imageFilename: string | null
+  modifierGroups: LocationMenuFormModifierGroup[]
 }
 
 export type LocationMenuFormCategory = {
@@ -38,17 +53,49 @@ type Props = {
   initialCategories: LocationMenuFormCategory[]
 }
 
+type SavePayloadModifierOption = {
+  name: string
+  priceDelta: number
+  isAvailable: true
+}
+
+type SavePayloadModifierGroup = {
+  name: string
+  minSelect: number
+  maxSelect: number
+  options: SavePayloadModifierOption[]
+}
+
 type SavePayloadItem = {
   name: string
   price: number
   description: string
   isAvailable: true
   imageFilename: string | null
+  modifierGroups: SavePayloadModifierGroup[]
 }
 
 type SavePayloadCategory = {
   name: string
   items: SavePayloadItem[]
+}
+
+function newModifierOption(): LocationMenuFormModifierOption {
+  return {
+    key: `opt-${crypto.randomUUID()}`,
+    name: '',
+    priceDelta: '0',
+  }
+}
+
+function newModifierGroup(): LocationMenuFormModifierGroup {
+  return {
+    key: `grp-${crypto.randomUUID()}`,
+    name: '',
+    minSelect: '0',
+    maxSelect: '1',
+    options: [newModifierOption()],
+  }
 }
 
 function newItem(): LocationMenuFormItem {
@@ -58,6 +105,7 @@ function newItem(): LocationMenuFormItem {
     price: '',
     description: '',
     imageFilename: null,
+    modifierGroups: [],
   }
 }
 
@@ -70,7 +118,13 @@ function newCategory(): LocationMenuFormCategory {
 }
 
 function isBlankItem(item: LocationMenuFormItem): boolean {
-  return !item.name && !item.price && !item.description && !item.imageFilename
+  return (
+    !item.name &&
+    !item.price &&
+    !item.description &&
+    !item.imageFilename &&
+    item.modifierGroups.length === 0
+  )
 }
 
 type MenuItemRowProps = {
@@ -93,6 +147,66 @@ function LocationMenuItemRow({
   const t = useTranslations('analytics.locationMenu')
   const [open, setOpen] = useState(defaultOpen)
   const displayName = item.name.trim() || t('untitledItem')
+
+  function updateGroup(groupKey: string, patch: Partial<LocationMenuFormModifierGroup>) {
+    onUpdate({
+      modifierGroups: item.modifierGroups.map((group) =>
+        group.key === groupKey ? { ...group, ...patch } : group,
+      ),
+    })
+  }
+
+  function updateOption(
+    groupKey: string,
+    optionKey: string,
+    patch: Partial<LocationMenuFormModifierOption>,
+  ) {
+    onUpdate({
+      modifierGroups: item.modifierGroups.map((group) =>
+        group.key === groupKey
+          ? {
+              ...group,
+              options: group.options.map((option) =>
+                option.key === optionKey ? { ...option, ...patch } : option,
+              ),
+            }
+          : group,
+      ),
+    })
+  }
+
+  function addGroup() {
+    onUpdate({ modifierGroups: [...item.modifierGroups, newModifierGroup()] })
+  }
+
+  function removeGroup(groupKey: string) {
+    onUpdate({
+      modifierGroups: item.modifierGroups.filter((group) => group.key !== groupKey),
+    })
+  }
+
+  function addOption(groupKey: string) {
+    onUpdate({
+      modifierGroups: item.modifierGroups.map((group) =>
+        group.key === groupKey
+          ? { ...group, options: [...group.options, newModifierOption()] }
+          : group,
+      ),
+    })
+  }
+
+  function removeOption(groupKey: string, optionKey: string) {
+    onUpdate({
+      modifierGroups: item.modifierGroups.map((group) => {
+        if (group.key !== groupKey) return group
+        const nextOptions = group.options.filter((option) => option.key !== optionKey)
+        return {
+          ...group,
+          options: nextOptions.length > 0 ? nextOptions : [newModifierOption()],
+        }
+      }),
+    })
+  }
 
   return (
     <Collapsible
@@ -190,6 +304,145 @@ function LocationMenuItemRow({
             />
           </Field>
         </FieldGroup>
+
+        <div className="flex flex-col gap-3 rounded-md border border-dashed border-border/80 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium">{t('fields.modifiers')}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={loading}
+              onClick={addGroup}
+            >
+              <Plus className="size-4" />
+              {t('actions.addModifierGroup')}
+            </Button>
+          </div>
+          {item.modifierGroups.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t('fields.modifiersEmpty')}</p>
+          ) : (
+            item.modifierGroups.map((group) => (
+              <div
+                key={group.key}
+                className="flex flex-col gap-3 rounded-md border border-border/60 bg-muted/20 p-3"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <Field className="min-w-0 flex-1">
+                    <FieldLabel htmlFor={`mod-group-${group.key}`}>
+                      {t('fields.modifierGroupName')}
+                    </FieldLabel>
+                    <Input
+                      id={`mod-group-${group.key}`}
+                      value={group.name}
+                      disabled={loading}
+                      onChange={(e) => updateGroup(group.key, { name: e.target.value })}
+                      placeholder={t('fields.modifierGroupNamePlaceholder')}
+                    />
+                  </Field>
+                  <Field className="w-full sm:w-24">
+                    <FieldLabel htmlFor={`mod-min-${group.key}`}>
+                      {t('fields.modifierMinSelect')}
+                    </FieldLabel>
+                    <Input
+                      id={`mod-min-${group.key}`}
+                      inputMode="numeric"
+                      value={group.minSelect}
+                      disabled={loading}
+                      onChange={(e) => updateGroup(group.key, { minSelect: e.target.value })}
+                      className="tabular-nums"
+                    />
+                  </Field>
+                  <Field className="w-full sm:w-24">
+                    <FieldLabel htmlFor={`mod-max-${group.key}`}>
+                      {t('fields.modifierMaxSelect')}
+                    </FieldLabel>
+                    <Input
+                      id={`mod-max-${group.key}`}
+                      inputMode="numeric"
+                      value={group.maxSelect}
+                      disabled={loading}
+                      onChange={(e) => updateGroup(group.key, { maxSelect: e.target.value })}
+                      className="tabular-nums"
+                    />
+                  </Field>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={loading}
+                    onClick={() => removeGroup(group.key)}
+                    aria-label={t('actions.removeModifierGroup')}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {group.options.map((option) => (
+                    <div
+                      key={option.key}
+                      className="flex flex-col gap-2 sm:flex-row sm:items-end"
+                    >
+                      <Field className="min-w-0 flex-1">
+                        <FieldLabel htmlFor={`mod-opt-${option.key}`}>
+                          {t('fields.modifierOptionName')}
+                        </FieldLabel>
+                        <Input
+                          id={`mod-opt-${option.key}`}
+                          value={option.name}
+                          disabled={loading}
+                          onChange={(e) =>
+                            updateOption(group.key, option.key, { name: e.target.value })
+                          }
+                          placeholder={t('fields.modifierOptionNamePlaceholder')}
+                        />
+                      </Field>
+                      <Field className="w-full sm:w-32">
+                        <FieldLabel htmlFor={`mod-delta-${option.key}`}>
+                          {t('fields.modifierPriceDelta', { currency: currencyCode })}
+                        </FieldLabel>
+                        <Input
+                          id={`mod-delta-${option.key}`}
+                          inputMode="decimal"
+                          value={option.priceDelta}
+                          disabled={loading}
+                          onChange={(e) =>
+                            updateOption(group.key, option.key, {
+                              priceDelta: e.target.value,
+                            })
+                          }
+                          placeholder="0"
+                          className="tabular-nums"
+                        />
+                      </Field>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={loading}
+                        onClick={() => removeOption(group.key, option.key)}
+                        aria-label={t('actions.removeModifierOption')}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={loading}
+                    onClick={() => addOption(group.key)}
+                  >
+                    <Plus className="size-4" />
+                    {t('actions.addModifierOption')}
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </CollapsibleContent>
     </Collapsible>
   )
@@ -264,7 +517,12 @@ export function LocationMenuForm({ locationId, currencyCode, initialCategories }
           const priceRaw = row.price.trim()
           const description = row.description.trim()
           const hasImage = Boolean(row.imageFilename)
-          if (!name && !priceRaw && !description && !hasImage) continue
+          const hasModifiers = row.modifierGroups.some(
+            (group) =>
+              group.name.trim() ||
+              group.options.some((option) => option.name.trim() || option.priceDelta.trim()),
+          )
+          if (!name && !priceRaw && !description && !hasImage && !hasModifiers) continue
           const price = Number(priceRaw)
           if (!name) {
             throw new Error(t('errors.nameRequired'))
@@ -272,12 +530,49 @@ export function LocationMenuForm({ locationId, currencyCode, initialCategories }
           if (!Number.isFinite(price) || price < 0) {
             throw new Error(t('errors.invalidPrice'))
           }
+
+          const modifierGroups: SavePayloadModifierGroup[] = []
+          for (const group of row.modifierGroups) {
+            const groupName = group.name.trim()
+            const options: SavePayloadModifierOption[] = []
+            for (const option of group.options) {
+              const optionName = option.name.trim()
+              const deltaRaw = option.priceDelta.trim() || '0'
+              if (!optionName && !deltaRaw) continue
+              if (!optionName) {
+                throw new Error(t('errors.modifierOptionNameRequired'))
+              }
+              const priceDelta = Number(deltaRaw)
+              if (!Number.isFinite(priceDelta)) {
+                throw new Error(t('errors.invalidModifierPriceDelta'))
+              }
+              options.push({ name: optionName, priceDelta, isAvailable: true })
+            }
+            if (!groupName && options.length === 0) continue
+            if (!groupName) {
+              throw new Error(t('errors.modifierGroupNameRequired'))
+            }
+            if (options.length === 0) {
+              throw new Error(t('errors.modifierOptionsRequired'))
+            }
+            const minSelect = Number(group.minSelect)
+            const maxSelect = Number(group.maxSelect)
+            if (!Number.isInteger(minSelect) || minSelect < 0) {
+              throw new Error(t('errors.invalidModifierSelect'))
+            }
+            if (!Number.isInteger(maxSelect) || maxSelect < 1 || minSelect > maxSelect) {
+              throw new Error(t('errors.invalidModifierSelect'))
+            }
+            modifierGroups.push({ name: groupName, minSelect, maxSelect, options })
+          }
+
           items.push({
             name,
             price,
             description,
             isAvailable: true,
             imageFilename: row.imageFilename,
+            modifierGroups,
           })
         }
         if (!categoryName && items.length === 0) continue

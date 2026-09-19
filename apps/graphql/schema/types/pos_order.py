@@ -23,6 +23,16 @@ class PosPaymentMethod(Enum):
     OTHER = "other"
 
 
+@strawberry.type(description="Selected modifier snapshot on a POS line.")
+class PosOrderLineModifierType:
+    id: int
+    pos_order_line_id: int
+    group_name_snapshot: str
+    name_snapshot: str
+    price_delta_snapshot: float
+    sort_order: int
+
+
 @strawberry.type(description="One line on a POS ticket with price/name snapshots.")
 class PosOrderLineType:
     id: int
@@ -34,7 +44,9 @@ class PosOrderLineType:
     qty: int
     unit_price: float
     line_total: float
+    note: str | None
     sort_order: int
+    modifiers: list[PosOrderLineModifierType]
 
 
 @strawberry.type(description="Native POS ticket (operational truth).")
@@ -52,3 +64,24 @@ class PosOrderType:
     note: str | None
     refunded_at: datetime | None
     lines: list[PosOrderLineType]
+
+
+@strawberry.type(description="Day close / Z-lite summary for native POS.")
+class PosDayPaymentTotalType:
+    payment_method: PosPaymentMethod
+    ticket_count: int
+    gross_total: float
+
+
+@strawberry.type(description="Native POS day summary for a location.")
+class PosDaySummaryType:
+    location_id: int
+    on_date: str
+    open_count: int
+    paid_count: int
+    void_count: int
+    refunded_count: int
+    paid_discount_total: float
+    paid_by_payment_method: list[PosDayPaymentTotalType]
+    refunded_gross_total: float
+    open_tickets_remaining: int

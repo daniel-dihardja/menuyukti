@@ -4,19 +4,50 @@ from __future__ import annotations
 
 import asyncio
 
-from graphql.data_sources import AnalyticsRun, Location, Node, OrderFact, SessionLocal
-from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
-from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+from graphql.data_sources import (
+    AnalyticsRun,
+    Location,
+    Node,
+    OrderFact,
+    SessionLocal,
+    Workspace,
+    WorkspaceMembership,
+)
+from graphql.data_sources.models.menu import (
+    Menu,
+    MenuCategory,
+    MenuItem,
+    MenuModifierGroup,
+    MenuModifierOption,
+)
+from graphql.data_sources.models.pos_order import (
+    PosOrder,
+    PosOrderLine,
+    PosOrderLineModifier,
+)
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
 OTHER_USER_ID = "clerk_other_user"
+MEMBER_USER_ID = "clerk_pos_member"
 
 REPLACE_MENU = """
 mutation ReplaceLocationMenuItems($locationId: Int!, $categories: [MenuCategoryInput!]!) {
   replaceLocationMenuItems(locationId: $locationId, categories: $categories) {
     categories {
-      items { id name price isAvailable }
+      items {
+        id
+        name
+        price
+        isAvailable
+        modifierGroups {
+          id
+          name
+          minSelect
+          maxSelect
+          options { id name priceDelta isAvailable }
+        }
+      }
     }
   }
 }
@@ -29,14 +60,27 @@ mutation OpenPosOrder($locationId: Int!) {
     billNumber
     status
     discountAmount
+    openedByClerkUserId
     lines { id }
   }
 }
 """
 
 ADD_LINE = """
-mutation AddPosOrderLine($orderId: Int!, $menuItemId: Int!, $qty: Int!) {
-  addPosOrderLine(orderId: $orderId, menuItemId: $menuItemId, qty: $qty) {
+mutation AddPosOrderLine(
+  $orderId: Int!
+  $menuItemId: Int!
+  $qty: Int!
+  $modifierOptionIds: [Int!]
+  $note: String
+) {
+  addPosOrderLine(
+    orderId: $orderId
+    menuItemId: $menuItemId
+    qty: $qty
+    modifierOptionIds: $modifierOptionIds
+    note: $note
+  ) {
     id
     status
     lines {
@@ -47,6 +91,12 @@ mutation AddPosOrderLine($orderId: Int!, $menuItemId: Int!, $qty: Int!) {
       qty
       unitPrice
       lineTotal
+      note
+      modifiers {
+        groupNameSnapshot
+        nameSnapshot
+        priceDeltaSnapshot
+      }
     }
   }
 }
@@ -106,14 +156,38 @@ mutation RefundPosOrder($orderId: Int!) {
 }
 """
 
+DAY_SUMMARY = """
+query PosDaySummary($locationId: Int!, $onDate: String) {
+  posDaySummary(locationId: $locationId, onDate: $onDate) {
+    locationId
+    onDate
+    openCount
+    paidCount
+    voidCount
+    refundedCount
+    paidDiscountTotal
+    refundedGrossTotal
+    openTicketsRemaining
+    paidByPaymentMethod {
+      paymentMethod
+      ticketCount
+      grossTotal
+    }
+  }
+}
+"""
+
 
 def _cleanup() -> None:
     session = SessionLocal()
     try:
         session.query(OrderFact).delete()
         session.query(AnalyticsRun).delete()
+        session.query(PosOrderLineModifier).delete()
         session.query(PosOrderLine).delete()
         session.query(PosOrder).delete()
+        session.query(MenuModifierOption).delete()
+        session.query(MenuModifierGroup).delete()
         session.query(MenuItem).delete()
         session.query(MenuCategory).delete()
         session.query(Menu).delete()
@@ -461,6 +535,110 @@ def test_set_and_clear_table_label_on_open():
     assert null_result.data["setPosOrderTableLabel"]["tableLabel"] is None
 
 
+def test_add_line_with_modifiers_and_note():
+    location_id, _, _ = _create_location_with_menu()
+    # Replace menu with a latte that requires size
+    replace = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [
+                    {
+                        "name": "Coffee",
+                        "items": [
+                            {
+                                "name": "Latte",
+                                "price": 4.0,
+                                "isAvailable": True,
+                                "modifierGroups": [
+                                    {
+                                        "name": "Size",
+                                        "minSelect": 1,
+                                        "maxSelect": 1,
+                                        "options": [
+                                            {"name": "Regular", "priceDelta": 0.0},
+                                            {"name": "Large", "priceDelta": 1.5},
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not replace.errors, replace.errors
+    item = replace.data["replaceLocationMenuItems"]["categories"][0]["items"][0]
+    item_id = item["id"]
+    large_id = next(
+        opt["id"]
+        for group in item["modifierGroups"]
+        for opt in group["options"]
+        if opt["name"] == "Large"
+    )
+
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+
+    missing = asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert missing.errors
+    assert "at least" in str(missing.errors[0]).lower()
+
+    added = asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={
+                "orderId": order_id,
+                "menuItemId": item_id,
+                "qty": 1,
+                "modifierOptionIds": [large_id],
+                "note": " oat milk ",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not added.errors, added.errors
+    line = added.data["addPosOrderLine"]["lines"][0]
+    assert line["unitPrice"] == 5.5
+    assert line["lineTotal"] == 5.5
+    assert line["note"] == "oat milk"
+    assert line["modifiers"][0]["nameSnapshot"] == "Large"
+    assert line["modifiers"][0]["priceDeltaSnapshot"] == 1.5
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not closed.errors, closed.errors
+    bill = closed.data["closePosOrder"]["billNumber"]
+    session = SessionLocal()
+    try:
+        facts = session.query(OrderFact).filter(OrderFact.bill_number == bill).all()
+        assert len(facts) == 1
+        assert facts[0].price == 5.5
+        assert facts[0].total_after_bill_discount == 5.5
+    finally:
+        session.close()
+
+
 def test_set_table_label_rejected_when_paid():
     location_id, item_id, _ = _create_location_with_menu()
     opened = asyncio.run(
@@ -569,3 +747,187 @@ def test_auth_denial_for_non_owner():
         )
     )
     assert denied.errors
+
+
+def test_pos_day_summary_counts_paid_and_open():
+    location_id, item_id, _ = _create_location_with_menu()
+
+    # Paid ticket
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    order_id = opened.data["openPosOrder"]["id"]
+    asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"orderId": order_id, "paymentMethod": "CASH"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not closed.errors, closed.errors
+
+    # Leave one open
+    asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    summary = asyncio.run(
+        schema.execute(
+            DAY_SUMMARY,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not summary.errors, summary.errors
+    data = summary.data["posDaySummary"]
+    assert data["paidCount"] == 1
+    assert data["openCount"] == 1
+    assert data["openTicketsRemaining"] == 1
+    assert data["paidByPaymentMethod"][0]["paymentMethod"] == "CASH"
+    assert data["paidByPaymentMethod"][0]["grossTotal"] == 4.0
+
+
+def test_workspace_member_can_sell_but_not_refund():
+    from datetime import UTC, datetime
+
+    _cleanup()
+    session = SessionLocal()
+    try:
+        session.query(WorkspaceMembership).delete()
+        session.query(Workspace).delete()
+        session.commit()
+        now = datetime.now(tz=UTC)
+        ws = Workspace(name="POS staff workspace", owner_clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(ws)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id=GRAPHQL_TEST_USER_ID,
+                role="owner",
+                invited_at=now,
+                accepted_at=now,
+            )
+        )
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id=MEMBER_USER_ID,
+                role="member",
+                invited_at=now,
+                accepted_at=now,
+            )
+        )
+        location = Location(
+            name="POS Staff Location",
+            clerk_user_id=GRAPHQL_TEST_USER_ID,
+            workspace_id=ws.id,
+        )
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+        workspace_id = ws.id
+    finally:
+        session.close()
+
+    replace = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [
+                    {
+                        "name": "Drinks",
+                        "items": [{"name": "Espresso", "price": 4.0, "isAvailable": True}],
+                    }
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not replace.errors, replace.errors
+    item_id = replace.data["replaceLocationMenuItems"]["categories"][0]["items"][0]["id"]
+
+    member_ctx = {"user_id": MEMBER_USER_ID}
+    opened = asyncio.run(
+        schema.execute(
+            OPEN,
+            variable_values={"locationId": location_id},
+            context_value=member_ctx,
+        )
+    )
+    assert not opened.errors, opened.errors
+    order_id = opened.data["openPosOrder"]["id"]
+    assert opened.data["openPosOrder"]["openedByClerkUserId"] == MEMBER_USER_ID
+
+    added = asyncio.run(
+        schema.execute(
+            ADD_LINE,
+            variable_values={"orderId": order_id, "menuItemId": item_id, "qty": 1},
+            context_value=member_ctx,
+        )
+    )
+    assert not added.errors, added.errors
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"orderId": order_id, "paymentMethod": "CARD"},
+            context_value=member_ctx,
+        )
+    )
+    assert not closed.errors, closed.errors
+
+    denied = asyncio.run(
+        schema.execute(
+            REFUND,
+            variable_values={"orderId": order_id},
+            context_value=member_ctx,
+        )
+    )
+    assert denied.errors
+
+    refunded = asyncio.run(
+        schema.execute(
+            REFUND,
+            variable_values={"orderId": order_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not refunded.errors, refunded.errors
+    assert refunded.data["refundPosOrder"]["status"] == "REFUNDED"
+
+    session = SessionLocal()
+    try:
+        session.query(PosOrderLineModifier).delete()
+        session.query(PosOrderLine).delete()
+        session.query(PosOrder).delete()
+        session.query(MenuModifierOption).delete()
+        session.query(MenuModifierGroup).delete()
+        session.query(MenuItem).delete()
+        session.query(MenuCategory).delete()
+        session.query(Menu).delete()
+        session.query(Location).filter(Location.id == location_id).delete()
+        session.query(WorkspaceMembership).filter(
+            WorkspaceMembership.workspace_id == workspace_id
+        ).delete()
+        session.query(Workspace).filter(Workspace.id == workspace_id).delete()
+        session.commit()
+    finally:
+        session.close()

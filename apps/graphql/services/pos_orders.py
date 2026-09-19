@@ -7,11 +7,11 @@ from collections.abc import Sequence
 from datetime import UTC, date, datetime
 
 from sqlalchemy import delete, insert, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from graphql.data_sources import AnalyticsRun, OrderFact
-from graphql.data_sources.models.menu import Menu, MenuItem
-from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+from graphql.data_sources.models.menu import Menu, MenuItem, MenuModifierGroup, MenuModifierOption
+from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 
 POS_SYSTEM = "menuyukti"
 POS_STATUS_OPEN = "open"
@@ -20,6 +20,7 @@ POS_STATUS_VOID = "void"
 POS_STATUS_REFUNDED = "refunded"
 PAYMENT_METHODS = frozenset({"cash", "card", "other"})
 TABLE_LABEL_MAX_LEN = 64
+LINE_NOTE_MAX_LEN = 256
 
 
 def _utcnow() -> datetime:
@@ -36,6 +37,54 @@ def normalize_table_label(label: str | None) -> str | None:
     if len(cleaned) > TABLE_LABEL_MAX_LEN:
         raise ValueError(f"table_label must be at most {TABLE_LABEL_MAX_LEN} characters")
     return cleaned
+
+
+def normalize_line_note(note: str | None) -> str | None:
+    if note is None:
+        return None
+    cleaned = note.strip()
+    if not cleaned:
+        return None
+    if len(cleaned) > LINE_NOTE_MAX_LEN:
+        raise ValueError(f"line note must be at most {LINE_NOTE_MAX_LEN} characters")
+    return cleaned
+
+
+def _order_load_options():
+    return selectinload(PosOrder.lines).selectinload(PosOrderLine.modifiers)
+
+
+def get_order(session: Session, order_id: int) -> PosOrder | None:
+    return (
+        session.execute(
+            select(PosOrder)
+            .options(_order_load_options())
+            .where(PosOrder.id == order_id)
+            .execution_options(populate_existing=True)
+        )
+        .unique()
+        .scalar_one_or_none()
+    )
+
+
+def list_orders(
+    session: Session,
+    location_id: int,
+    *,
+    status: str | None = None,
+    since: datetime | None = None,
+) -> list[PosOrder]:
+    stmt = (
+        select(PosOrder)
+        .options(_order_load_options())
+        .where(PosOrder.location_id == location_id)
+        .order_by(PosOrder.opened_at.desc())
+    )
+    if status is not None:
+        stmt = stmt.where(PosOrder.status == status)
+    if since is not None:
+        stmt = stmt.where(PosOrder.opened_at >= since)
+    return list(session.execute(stmt).unique().scalars().all())
 
 
 def next_bill_number(session: Session, location_id: int, when: datetime) -> str:
@@ -58,39 +107,6 @@ def next_bill_number(session: Session, location_id: int, when: datetime) -> str:
         if suffix.isdigit():
             max_seq = max(max_seq, int(suffix))
     return f"{prefix}{max_seq + 1:05d}"
-
-
-def get_order(session: Session, order_id: int) -> PosOrder | None:
-    return (
-        session.execute(
-            select(PosOrder)
-            .options(joinedload(PosOrder.lines))
-            .where(PosOrder.id == order_id)
-            .execution_options(populate_existing=True)
-        )
-        .unique()
-        .scalar_one_or_none()
-    )
-
-
-def list_orders(
-    session: Session,
-    location_id: int,
-    *,
-    status: str | None = None,
-    since: datetime | None = None,
-) -> list[PosOrder]:
-    stmt = (
-        select(PosOrder)
-        .options(joinedload(PosOrder.lines))
-        .where(PosOrder.location_id == location_id)
-        .order_by(PosOrder.opened_at.desc())
-    )
-    if status is not None:
-        stmt = stmt.where(PosOrder.status == status)
-    if since is not None:
-        stmt = stmt.where(PosOrder.opened_at >= since)
-    return list(session.execute(stmt).unique().scalars().all())
 
 
 def open_order(
@@ -121,7 +137,14 @@ def _require_open(order: PosOrder) -> None:
 
 
 def _menu_item_for_location(session: Session, *, location_id: int, menu_item_id: int) -> MenuItem:
-    item = session.get(MenuItem, menu_item_id)
+    item = session.scalar(
+        select(MenuItem)
+        .where(MenuItem.id == menu_item_id)
+        .options(
+            selectinload(MenuItem.modifier_groups).selectinload(MenuModifierGroup.options),
+            joinedload(MenuItem.category),
+        )
+    )
     if item is None:
         raise ValueError("Menu item not found")
     menu = session.get(Menu, item.menu_id)
@@ -129,9 +152,48 @@ def _menu_item_for_location(session: Session, *, location_id: int, menu_item_id:
         raise ValueError("Menu item does not belong to this location")
     if not item.is_available:
         raise ValueError("Menu item is not available")
-    # Ensure category is loaded for snapshot
-    _ = item.category
     return item
+
+
+def _resolve_selected_modifiers(
+    item: MenuItem,
+    modifier_option_ids: Sequence[int] | None,
+) -> list[tuple[MenuModifierGroup, MenuModifierOption]]:
+    selected_ids = list(modifier_option_ids or [])
+    if len(selected_ids) != len(set(selected_ids)):
+        raise ValueError("Duplicate modifier options are not allowed")
+
+    options_by_id: dict[int, tuple[MenuModifierGroup, MenuModifierOption]] = {}
+    for group in item.modifier_groups:
+        for opt in group.options:
+            options_by_id[opt.id] = (group, opt)
+
+    selected: list[tuple[MenuModifierGroup, MenuModifierOption]] = []
+    for opt_id in selected_ids:
+        pair = options_by_id.get(opt_id)
+        if pair is None:
+            raise ValueError(f"Modifier option {opt_id} does not belong to this menu item")
+        group, opt = pair
+        if not opt.is_available:
+            raise ValueError(f"Modifier option {opt.name} is not available")
+        selected.append((group, opt))
+
+    counts: dict[int, int] = {}
+    for group, _opt in selected:
+        counts[group.id] = counts.get(group.id, 0) + 1
+
+    for group in item.modifier_groups:
+        count = counts.get(group.id, 0)
+        if count < group.min_select:
+            raise ValueError(
+                f"Modifier group '{group.name}' requires at least {group.min_select} selection(s)"
+            )
+        if count > group.max_select:
+            raise ValueError(
+                f"Modifier group '{group.name}' allows at most {group.max_select} selection(s)"
+            )
+
+    return selected
 
 
 def add_line(
@@ -140,6 +202,8 @@ def add_line(
     order_id: int,
     menu_item_id: int,
     qty: int,
+    modifier_option_ids: Sequence[int] | None = None,
+    note: str | None = None,
 ) -> PosOrder:
     if qty < 1:
         raise ValueError("qty must be at least 1")
@@ -151,6 +215,9 @@ def add_line(
     item = _menu_item_for_location(
         session, location_id=order.location_id, menu_item_id=menu_item_id
     )
+    selected = _resolve_selected_modifiers(item, modifier_option_ids)
+    delta = sum(float(opt.price_delta) for _group, opt in selected)
+    unit_price = float(item.price) + delta
     category_name = item.category.name if item.category is not None else ""
     next_sort = max((line.sort_order for line in order.lines), default=-1) + 1
     line = PosOrderLine(
@@ -160,11 +227,36 @@ def add_line(
         menu_category_snapshot=category_name,
         menu_category_detail_snapshot=category_name,
         qty=qty,
-        unit_price=float(item.price),
-        line_total=float(item.price) * qty,
+        unit_price=unit_price,
+        line_total=unit_price * qty,
+        note=normalize_line_note(note),
         sort_order=next_sort,
     )
     session.add(line)
+    session.flush()
+    for index, (group, opt) in enumerate(selected):
+        session.add(
+            PosOrderLineModifier(
+                pos_order_line_id=line.id,
+                group_name_snapshot=group.name,
+                name_snapshot=opt.name,
+                price_delta_snapshot=float(opt.price_delta),
+                sort_order=index,
+            )
+        )
+    session.flush()
+    return get_order(session, order.id) or order
+
+
+def set_line_note(session: Session, *, line_id: int, note: str | None) -> PosOrder:
+    line = session.get(PosOrderLine, line_id)
+    if line is None:
+        raise ValueError("Order line not found")
+    order = get_order(session, line.pos_order_id)
+    if order is None:
+        raise ValueError("Order not found")
+    _require_open(order)
+    line.note = normalize_line_note(note)
     session.flush()
     return get_order(session, order.id) or order
 
@@ -418,3 +510,82 @@ def close_order(
     order.payment_method = payment_method
     session.flush()
     return get_order(session, order.id) or order
+
+
+def order_gross_total(order: PosOrder) -> float:
+    subtotal = sum(float(line.line_total) for line in order.lines)
+    return max(0.0, subtotal - float(order.discount_amount or 0))
+
+
+def day_summary(
+    session: Session,
+    *,
+    location_id: int,
+    on_date: date,
+) -> dict[str, object]:
+    """Aggregate POS ticket stats for a UTC calendar day."""
+    start = datetime.combine(on_date, datetime.min.time(), tzinfo=UTC)
+    orders = list_orders(session, location_id, since=start)
+
+    open_count = 0
+    paid_count = 0
+    void_count = 0
+    refunded_count = 0
+    paid_discount_total = 0.0
+    refunded_gross_total = 0.0
+    by_method: dict[str, dict[str, float | int]] = {
+        method: {"ticket_count": 0, "gross_total": 0.0} for method in sorted(PAYMENT_METHODS)
+    }
+
+    for order in orders:
+        if order.status == POS_STATUS_OPEN:
+            if order.opened_at.astimezone(UTC).date() == on_date:
+                open_count += 1
+            continue
+        if order.status == POS_STATUS_VOID:
+            closed = order.closed_at or order.opened_at
+            if closed.astimezone(UTC).date() == on_date:
+                void_count += 1
+            continue
+        if order.status == POS_STATUS_REFUNDED:
+            when = order.refunded_at or order.closed_at or order.opened_at
+            if when.astimezone(UTC).date() == on_date:
+                refunded_count += 1
+                refunded_gross_total += order_gross_total(order)
+            continue
+        if order.status == POS_STATUS_PAID:
+            closed = order.closed_at or order.opened_at
+            if closed.astimezone(UTC).date() != on_date:
+                continue
+            paid_count += 1
+            paid_discount_total += float(order.discount_amount or 0)
+            method = order.payment_method or "other"
+            if method not in by_method:
+                by_method[method] = {"ticket_count": 0, "gross_total": 0.0}
+            by_method[method]["ticket_count"] = int(by_method[method]["ticket_count"]) + 1
+            by_method[method]["gross_total"] = float(by_method[method]["gross_total"]) + (
+                order_gross_total(order)
+            )
+
+    open_remaining = len(list_orders(session, location_id, status=POS_STATUS_OPEN))
+
+    return {
+        "location_id": location_id,
+        "on_date": on_date.isoformat(),
+        "open_count": open_count,
+        "paid_count": paid_count,
+        "void_count": void_count,
+        "refunded_count": refunded_count,
+        "paid_discount_total": round(paid_discount_total, 2),
+        "paid_by_payment_method": [
+            {
+                "payment_method": method,
+                "ticket_count": int(stats["ticket_count"]),
+                "gross_total": round(float(stats["gross_total"]), 2),
+            }
+            for method, stats in by_method.items()
+            if int(stats["ticket_count"]) > 0
+        ],
+        "refunded_gross_total": round(refunded_gross_total, 2),
+        "open_tickets_remaining": open_remaining,
+    }

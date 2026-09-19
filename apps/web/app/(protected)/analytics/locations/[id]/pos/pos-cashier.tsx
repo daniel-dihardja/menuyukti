@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
+import { Checkbox } from '@workspace/ui/components/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -22,16 +23,24 @@ import {
   DialogTitle,
 } from '@workspace/ui/components/dialog'
 import { Input } from '@workspace/ui/components/input'
+import { Label } from '@workspace/ui/components/label'
+import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
-import type { LocationMenu, LocationMenuItem } from '@/lib/graphql/queries/location-menu'
 import type {
+  LocationMenu,
+  LocationMenuItem,
+  LocationMenuModifierGroup,
+} from '@/lib/graphql/queries/location-menu'
+import type {
+  PosDaySummary,
   PosOrder,
   PosOrderStatus,
   PosPaymentMethod,
 } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
 
+import { PosKitchenTicket } from './pos-kitchen-ticket'
 import { PosReceipt } from './pos-receipt'
 
 type TodayFilter = 'all' | PosOrderStatus
@@ -41,6 +50,28 @@ const TODAY_FILTERS: TodayFilter[] = ['all', 'OPEN', 'PAID', 'VOID', 'REFUNDED']
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100
+}
+
+function todayIsoDate(): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function truncateClerkId(id: string, max = 8): string {
+  if (id.length <= max) return id
+  return `${id.slice(0, max)}…`
+}
+
+function availableModifierGroups(item: LocationMenuItem): LocationMenuModifierGroup[] {
+  return (item.modifierGroups ?? [])
+    .map((group) => ({
+      ...group,
+      options: group.options.filter((option) => option.isAvailable),
+    }))
+    .filter((group) => group.options.length > 0)
 }
 
 type PosCashierProps = {
@@ -67,6 +98,19 @@ async function posAction(
   return payload.order
 }
 
+async function fetchDaySummary(
+  locationId: number,
+  onDate: string,
+): Promise<PosDaySummary | null> {
+  const params = new URLSearchParams({ daySummary: '1', onDate })
+  const res = await fetch(`/api/locations/${locationId}/pos?${params.toString()}`)
+  const payload = (await res.json()) as { summary?: PosDaySummary | null; error?: string }
+  if (!res.ok) {
+    throw new Error(payload.error || 'Failed to load day summary')
+  }
+  return payload.summary ?? null
+}
+
 export function PosCashier({
   locationId,
   locationName,
@@ -85,11 +129,25 @@ export function PosCashier({
   const [payOpen, setPayOpen] = useState(false)
   const [todayFilter, setTodayFilter] = useState<TodayFilter>('all')
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [kitchenOpen, setKitchenOpen] = useState(false)
   const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
+  const [customizeItem, setCustomizeItem] = useState<LocationMenuItem | null>(null)
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Record<number, number[]>>({})
+  const [lineNoteDraft, setLineNoteDraft] = useState('')
+  const [editingNoteLineId, setEditingNoteLineId] = useState<number | null>(null)
+  const [editNoteDraft, setEditNoteDraft] = useState('')
+  const [dayCloseDate, setDayCloseDate] = useState(todayIsoDate)
+  const [daySummary, setDaySummary] = useState<PosDaySummary | null>(null)
 
   const isEditable = currentOrder?.status === 'OPEN'
   const canShowReceipt =
     currentOrder != null && (currentOrder.status === 'PAID' || currentOrder.status === 'REFUNDED')
+  const canShowKitchen =
+    currentOrder != null &&
+    (currentOrder.status === 'OPEN' ||
+      currentOrder.status === 'PAID' ||
+      currentOrder.status === 'REFUNDED') &&
+    (currentOrder.lines?.length ?? 0) > 0
   const canRefund = currentOrder?.status === 'PAID'
   const categories = initialMenu?.categories ?? []
   const availableItems = categories.flatMap((category) =>
@@ -118,12 +176,16 @@ export function PosCashier({
       ? roundMoney((subtotal * discountInputValue) / 100)
       : null
 
+  const customizeGroups = customizeItem ? availableModifierGroups(customizeItem) : []
+
   const showOrder = (order: PosOrder | null) => {
     setCurrentOrder(order)
     setDiscountMode('amount')
     setDiscountInput(String(order?.discountAmount ?? 0))
     setTableLabelInput(order?.tableLabel ?? '')
     setPayOpen(false)
+    setEditingNoteLineId(null)
+    setEditNoteDraft('')
   }
 
   const handleDiscountModeChange = (mode: DiscountMode) => {
@@ -180,7 +242,23 @@ export function PosCashier({
     showOrder(order)
   }
 
-  const handleAddItem = (item: LocationMenuItem) => {
+  const openCustomizeDialog = (item: LocationMenuItem) => {
+    const groups = availableModifierGroups(item)
+    const initial: Record<number, number[]> = {}
+    for (const group of groups) {
+      initial[group.id] = []
+    }
+    setCustomizeItem(item)
+    setSelectedOptionIds(initial)
+    setLineNoteDraft('')
+  }
+
+  const handleAddItem = (item: LocationMenuItem, forceDialog = false) => {
+    const groups = availableModifierGroups(item)
+    if (groups.length > 0 || forceDialog) {
+      openCustomizeDialog(item)
+      return
+    }
     run(async () => {
       const order = await ensureOpenOrder()
       const updated = await posAction(locationId, {
@@ -188,6 +266,66 @@ export function PosCashier({
         orderId: order.id,
         menuItemId: item.id,
         qty: 1,
+      })
+      showOrder(updated)
+      await refreshToday(updated.id)
+    })
+  }
+
+  const toggleOption = (group: LocationMenuModifierGroup, optionId: number) => {
+    setSelectedOptionIds((prev) => {
+      const current = prev[group.id] ?? []
+      const isSelected = current.includes(optionId)
+      if (group.maxSelect <= 1) {
+        return { ...prev, [group.id]: isSelected ? [] : [optionId] }
+      }
+      if (isSelected) {
+        return { ...prev, [group.id]: current.filter((id) => id !== optionId) }
+      }
+      if (current.length >= group.maxSelect) {
+        toast.error(t('errors.modifierMax', { max: group.maxSelect, group: group.name }))
+        return prev
+      }
+      return { ...prev, [group.id]: [...current, optionId] }
+    })
+  }
+
+  const validateCustomizeSelection = (): number[] | null => {
+    if (!customizeItem) return null
+    const ids: number[] = []
+    for (const group of customizeGroups) {
+      const selected = selectedOptionIds[group.id] ?? []
+      if (selected.length < group.minSelect) {
+        toast.error(
+          t('errors.modifierMin', { min: group.minSelect, group: group.name }),
+        )
+        return null
+      }
+      if (selected.length > group.maxSelect) {
+        toast.error(t('errors.modifierMax', { max: group.maxSelect, group: group.name }))
+        return null
+      }
+      ids.push(...selected)
+    }
+    return ids
+  }
+
+  const handleConfirmCustomize = () => {
+    if (!customizeItem) return
+    const optionIds = validateCustomizeSelection()
+    if (optionIds === null) return
+    const note = lineNoteDraft.trim()
+    const itemId = customizeItem.id
+    setCustomizeItem(null)
+    run(async () => {
+      const order = await ensureOpenOrder()
+      const updated = await posAction(locationId, {
+        action: 'addLine',
+        orderId: order.id,
+        menuItemId: itemId,
+        qty: 1,
+        modifierOptionIds: optionIds,
+        note: note || null,
       })
       showOrder(updated)
       await refreshToday(updated.id)
@@ -214,6 +352,22 @@ export function PosCashier({
         action: 'removeLine',
         lineId,
       })
+      showOrder(updated)
+      await refreshToday(updated.id)
+    })
+  }
+
+  const handleSaveLineNote = (lineId: number) => {
+    if (!isEditable) return
+    const note = editNoteDraft.trim()
+    run(async () => {
+      const updated = await posAction(locationId, {
+        action: 'setLineNote',
+        lineId,
+        note: note || null,
+      })
+      setEditingNoteLineId(null)
+      setEditNoteDraft('')
       showOrder(updated)
       await refreshToday(updated.id)
     })
@@ -323,6 +477,13 @@ export function PosCashier({
     })
   }
 
+  const handleLoadDaySummary = () => {
+    run(async () => {
+      const summary = await fetchDaySummary(locationId, dayCloseDate)
+      setDaySummary(summary)
+    })
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(20rem,0.9fr)]">
       <section className="flex min-w-0 flex-col gap-4">
@@ -352,24 +513,47 @@ export function PosCashier({
           <p className="text-sm text-muted-foreground">{t('emptyMenu')}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-            {filteredItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                disabled={pending}
-                onClick={() => handleAddItem(item)}
-                className={cn(
-                  'flex min-h-24 flex-col items-start justify-between rounded-lg border bg-background p-3 text-left transition-colors',
-                  'hover:border-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  'disabled:opacity-50',
-                )}
-              >
-                <span className="text-sm font-medium leading-snug">{item.name}</span>
-                <span className="text-sm text-muted-foreground">
-                  {formatCurrency(item.price, currencyCode)}
-                </span>
-              </button>
-            ))}
+            {filteredItems.map((item) => {
+              const hasModifiers = availableModifierGroups(item).length > 0
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    'flex min-h-24 flex-col rounded-lg border bg-background text-left',
+                    'focus-within:ring-2 focus-within:ring-ring',
+                  )}
+                >
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => handleAddItem(item)}
+                    className={cn(
+                      'flex min-h-20 flex-1 flex-col items-start justify-between p-3 text-left transition-colors',
+                      'hover:bg-muted/40 focus-visible:outline-none',
+                      'disabled:opacity-50',
+                    )}
+                  >
+                    <span className="text-sm font-medium leading-snug">{item.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatCurrency(item.price, currencyCode)}
+                      {hasModifiers ? (
+                        <span className="ml-1 text-xs">{t('hasModifiers')}</span>
+                      ) : null}
+                    </span>
+                  </button>
+                  {!hasModifiers ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => handleAddItem(item, true)}
+                      className="border-t px-3 py-1.5 text-left text-xs text-muted-foreground hover:bg-muted/40 disabled:opacity-50"
+                    >
+                      {t('addWithNote')}
+                    </button>
+                  ) : null}
+                </div>
+              )
+            })}
           </div>
         )}
       </section>
@@ -450,55 +634,119 @@ export function PosCashier({
           {(currentOrder?.lines ?? []).map((line) => (
             <li
               key={line.id}
-              className="flex items-center justify-between gap-2 border-b border-border/60 py-2 last:border-0"
+              className="flex flex-col gap-1 border-b border-border/60 py-2 last:border-0"
             >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{line.nameSnapshot}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatCurrency(line.unitPrice, currencyCode)}
-                  {!isEditable ? ` × ${line.qty}` : null}
-                </p>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{line.nameSnapshot}</p>
+                  {(line.modifiers ?? []).length > 0 ? (
+                    <ul className="mt-0.5 space-y-0.5 text-xs text-muted-foreground">
+                      {(line.modifiers ?? []).map((modifier) => (
+                        <li key={modifier.id}>+ {modifier.nameSnapshot}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {line.note && editingNoteLineId !== line.id ? (
+                    <p className="mt-0.5 text-xs italic text-muted-foreground">
+                      {t('lineNote')}: {line.note}
+                    </p>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    {formatCurrency(line.unitPrice, currencyCode)}
+                    {!isEditable ? ` × ${line.qty}` : null}
+                  </p>
+                </div>
+                {isEditable ? (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      className="size-8"
+                      disabled={pending || line.qty <= 1}
+                      onClick={() => handleUpdateQty(line.id, line.qty - 1)}
+                      aria-label={t('decreaseQty')}
+                    >
+                      −
+                    </Button>
+                    <span className="w-6 text-center text-sm tabular-nums">{line.qty}</span>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      className="size-8"
+                      disabled={pending}
+                      onClick={() => handleUpdateQty(line.id, line.qty + 1)}
+                      aria-label={t('increaseQty')}
+                    >
+                      +
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={pending}
+                      onClick={() => handleRemoveLine(line.id)}
+                    >
+                      {t('remove')}
+                    </Button>
+                  </div>
+                ) : (
+                  <span className="shrink-0 text-sm tabular-nums">
+                    {formatCurrency(line.lineTotal, currencyCode)}
+                  </span>
+                )}
               </div>
               {isEditable ? (
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="size-8"
-                    disabled={pending || line.qty <= 1}
-                    onClick={() => handleUpdateQty(line.id, line.qty - 1)}
-                    aria-label={t('decreaseQty')}
-                  >
-                    −
-                  </Button>
-                  <span className="w-6 text-center text-sm tabular-nums">{line.qty}</span>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="size-8"
-                    disabled={pending}
-                    onClick={() => handleUpdateQty(line.id, line.qty + 1)}
-                    aria-label={t('increaseQty')}
-                  >
-                    +
-                  </Button>
+                editingNoteLineId === line.id ? (
+                  <div className="flex flex-col gap-1.5">
+                    <Textarea
+                      value={editNoteDraft}
+                      onChange={(e) => setEditNoteDraft(e.target.value)}
+                      disabled={pending}
+                      rows={2}
+                      placeholder={t('lineNotePlaceholder')}
+                      aria-label={t('lineNote')}
+                    />
+                    <div className="flex gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={pending}
+                        onClick={() => handleSaveLineNote(line.id)}
+                      >
+                        {t('saveLineNote')}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={pending}
+                        onClick={() => {
+                          setEditingNoteLineId(null)
+                          setEditNoteDraft('')
+                        }}
+                      >
+                        {t('cancelLineNote')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
+                    className="h-7 self-start px-2 text-xs"
                     disabled={pending}
-                    onClick={() => handleRemoveLine(line.id)}
+                    onClick={() => {
+                      setEditingNoteLineId(line.id)
+                      setEditNoteDraft(line.note ?? '')
+                    }}
                   >
-                    {t('remove')}
+                    {line.note ? t('editLineNote') : t('addLineNote')}
                   </Button>
-                </div>
-              ) : (
-                <span className="shrink-0 text-sm tabular-nums">
-                  {formatCurrency(line.lineTotal, currencyCode)}
-                </span>
-              )}
+                )
+              ) : null}
             </li>
           ))}
           {!currentOrder?.lines?.length ? (
@@ -604,15 +852,37 @@ export function PosCashier({
                 ))}
               </div>
             )}
+            {canShowKitchen ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => setKitchenOpen(true)}
+              >
+                {t('kitchenPrint')}
+              </Button>
+            ) : null}
             <Button type="button" variant="outline" disabled={!currentOrder || pending} onClick={handleVoid}>
               {t('void')}
             </Button>
           </div>
-        ) : canShowReceipt ? (
+        ) : canShowReceipt || canShowKitchen ? (
           <div className="flex flex-col gap-2">
-            <Button type="button" disabled={pending} onClick={() => setReceiptOpen(true)}>
-              {t('receipt')}
-            </Button>
+            {canShowReceipt ? (
+              <Button type="button" disabled={pending} onClick={() => setReceiptOpen(true)}>
+                {t('receipt')}
+              </Button>
+            ) : null}
+            {canShowKitchen ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => setKitchenOpen(true)}
+              >
+                {t('kitchenPrint')}
+              </Button>
+            ) : null}
             {canRefund ? (
               <Button
                 type="button"
@@ -666,14 +936,21 @@ export function PosCashier({
                         'disabled:opacity-50',
                       )}
                     >
-                      <span className="truncate font-medium">
+                      <span className="min-w-0 truncate font-medium">
                         {order.billNumber}
                         {order.tableLabel ? (
                           <span className="font-normal text-muted-foreground">
                             {' '}
-                            · {order.tableLabel.length > 12
+                            ·{' '}
+                            {order.tableLabel.length > 12
                               ? `${order.tableLabel.slice(0, 12)}…`
                               : order.tableLabel}
+                          </span>
+                        ) : null}
+                        {order.openedByClerkUserId ? (
+                          <span className="font-normal text-muted-foreground">
+                            {' '}
+                            · {truncateClerkId(order.openedByClerkUserId)}
                           </span>
                         ) : null}
                       </span>
@@ -687,7 +964,156 @@ export function PosCashier({
             )}
           </ul>
         </div>
+
+        <div className="border-t pt-3">
+          <h3 className="mb-2 text-sm font-semibold">{t('dayCloseTitle')}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              type="date"
+              value={dayCloseDate}
+              onChange={(e) => setDayCloseDate(e.target.value)}
+              disabled={pending}
+              aria-label={t('dayCloseDate')}
+              className="h-9 w-auto"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending || !dayCloseDate}
+              onClick={handleLoadDaySummary}
+            >
+              {t('dayCloseLoad')}
+            </Button>
+          </div>
+          {daySummary ? (
+            <div className="mt-3 space-y-1.5 text-xs">
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                <dt className="text-muted-foreground">{t('dayCloseOpen')}</dt>
+                <dd className="text-right tabular-nums">{daySummary.openCount}</dd>
+                <dt className="text-muted-foreground">{t('dayClosePaid')}</dt>
+                <dd className="text-right tabular-nums">{daySummary.paidCount}</dd>
+                <dt className="text-muted-foreground">{t('dayCloseVoid')}</dt>
+                <dd className="text-right tabular-nums">{daySummary.voidCount}</dd>
+                <dt className="text-muted-foreground">{t('dayCloseRefunded')}</dt>
+                <dd className="text-right tabular-nums">{daySummary.refundedCount}</dd>
+                <dt className="text-muted-foreground">{t('dayCloseDiscount')}</dt>
+                <dd className="text-right tabular-nums">
+                  {formatCurrency(daySummary.paidDiscountTotal, currencyCode)}
+                </dd>
+                <dt className="text-muted-foreground">{t('dayCloseRefundedGross')}</dt>
+                <dd className="text-right tabular-nums">
+                  {formatCurrency(daySummary.refundedGrossTotal, currencyCode)}
+                </dd>
+                <dt className="text-muted-foreground">{t('dayCloseOpenRemaining')}</dt>
+                <dd className="text-right tabular-nums">{daySummary.openTicketsRemaining}</dd>
+              </dl>
+              {daySummary.paidByPaymentMethod.length > 0 ? (
+                <ul className="space-y-1 border-t border-border/50 pt-1.5">
+                  {daySummary.paidByPaymentMethod.map((row) => (
+                    <li
+                      key={row.paymentMethod}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <span className="text-muted-foreground">
+                        {t(`payment.${row.paymentMethod.toLowerCase()}`)} ({row.ticketCount})
+                      </span>
+                      <span className="tabular-nums">
+                        {formatCurrency(row.grossTotal, currencyCode)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">{t('dayCloseEmpty')}</p>
+          )}
+        </div>
       </aside>
+
+      <Dialog
+        open={customizeItem != null}
+        onOpenChange={(open) => {
+          if (!open) setCustomizeItem(null)
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {customizeItem ? t('customizeTitle', { name: customizeItem.name }) : t('customizeTitleFallback')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            {customizeGroups.map((group) => (
+              <fieldset key={group.id} className="space-y-2">
+                <legend className="text-sm font-medium">
+                  {group.name}
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    {t('modifierSelectHint', { min: group.minSelect, max: group.maxSelect })}
+                  </span>
+                </legend>
+                <div className="flex flex-col gap-2">
+                  {group.options.map((option) => {
+                    const selected = (selectedOptionIds[group.id] ?? []).includes(option.id)
+                    const inputId = `mod-${group.id}-${option.id}`
+                    return (
+                      <div key={option.id} className="flex items-center gap-2">
+                        {group.maxSelect <= 1 ? (
+                          <input
+                            id={inputId}
+                            type="radio"
+                            name={`group-${group.id}`}
+                            checked={selected}
+                            disabled={pending}
+                            onChange={() => toggleOption(group, option.id)}
+                            className="size-4"
+                          />
+                        ) : (
+                          <Checkbox
+                            id={inputId}
+                            checked={selected}
+                            disabled={pending}
+                            onCheckedChange={() => toggleOption(group, option.id)}
+                          />
+                        )}
+                        <Label htmlFor={inputId} className="flex flex-1 cursor-pointer justify-between gap-2">
+                          <span>{option.name}</span>
+                          {option.priceDelta !== 0 ? (
+                            <span className="tabular-nums text-muted-foreground">
+                              {option.priceDelta > 0 ? '+' : ''}
+                              {formatCurrency(option.priceDelta, currencyCode)}
+                            </span>
+                          ) : null}
+                        </Label>
+                      </div>
+                    )
+                  })}
+                </div>
+              </fieldset>
+            ))}
+            <div className="space-y-1.5">
+              <Label htmlFor="pos-line-note">{t('lineNote')}</Label>
+              <Textarea
+                id="pos-line-note"
+                value={lineNoteDraft}
+                onChange={(e) => setLineNoteDraft(e.target.value)}
+                disabled={pending}
+                rows={2}
+                placeholder={t('lineNotePlaceholder')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCustomizeItem(null)}>
+              {t('customizeCancel')}
+            </Button>
+            <Button type="button" disabled={pending} onClick={handleConfirmCustomize}>
+              {t('customizeAdd')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={receiptOpen && canShowReceipt} onOpenChange={setReceiptOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md print:fixed print:inset-0 print:max-h-none print:max-w-none print:translate-x-0 print:translate-y-0 print:rounded-none print:border-0 print:shadow-none">
@@ -707,6 +1133,25 @@ export function PosCashier({
             </Button>
             <Button type="button" onClick={() => window.print()}>
               {t('receiptPrint')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={kitchenOpen && canShowKitchen} onOpenChange={setKitchenOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md print:fixed print:inset-0 print:max-h-none print:max-w-none print:translate-x-0 print:translate-y-0 print:rounded-none print:border-0 print:shadow-none">
+          <DialogHeader className="print:hidden">
+            <DialogTitle>{t('kitchenTitle')}</DialogTitle>
+          </DialogHeader>
+          {currentOrder && canShowKitchen ? (
+            <PosKitchenTicket order={currentOrder} locationName={locationName} />
+          ) : null}
+          <DialogFooter className="print:hidden sm:justify-between">
+            <Button type="button" variant="outline" onClick={() => setKitchenOpen(false)}>
+              {t('kitchenClose')}
+            </Button>
+            <Button type="button" onClick={() => window.print()}>
+              {t('kitchenPrintAction')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -744,10 +1189,13 @@ export function PosCashier({
             visibility: hidden !important;
           }
           .pos-receipt-print,
-          .pos-receipt-print * {
+          .pos-receipt-print *,
+          .pos-kitchen-print,
+          .pos-kitchen-print * {
             visibility: visible !important;
           }
-          .pos-receipt-print {
+          .pos-receipt-print,
+          .pos-kitchen-print {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;

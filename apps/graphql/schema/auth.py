@@ -10,6 +10,7 @@ from graphql.access import (
     is_workspace_member,
     is_workspace_owner_role,
     require_location_owner,
+    require_location_refund_manager,
     user_can_access_workspace,
     user_can_manage_workspace_members,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "is_workspace_member",
     "is_workspace_owner_role",
     "require_location_owner",
+    "require_location_refund_manager",
     "user_can_access_workspace",
     "user_can_manage_workspace_members",
     "user_id_from_info",

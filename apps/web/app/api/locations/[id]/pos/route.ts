@@ -6,21 +6,25 @@ import {
   ADD_POS_ORDER_LINE_MUTATION,
   CLOSE_POS_ORDER_MUTATION,
   OPEN_POS_ORDER_MUTATION,
+  POS_DAY_SUMMARY_QUERY,
   POS_ORDERS_QUERY,
   REFUND_POS_ORDER_MUTATION,
   REMOVE_POS_ORDER_LINE_MUTATION,
   SET_POS_ORDER_DISCOUNT_MUTATION,
+  SET_POS_ORDER_LINE_NOTE_MUTATION,
   SET_POS_ORDER_TABLE_LABEL_MUTATION,
   UPDATE_POS_ORDER_LINE_MUTATION,
   VOID_POS_ORDER_MUTATION,
   type AddPosOrderLineData,
   type ClosePosOrderData,
   type OpenPosOrderData,
+  type PosDaySummaryData,
   type PosOrdersData,
   type PosPaymentMethod,
   type RefundPosOrderData,
   type RemovePosOrderLineData,
   type SetPosOrderDiscountData,
+  type SetPosOrderLineNoteData,
   type SetPosOrderTableLabelData,
   type UpdatePosOrderLineData,
   type VoidPosOrderData,
@@ -31,7 +35,19 @@ function parseLocationId(param: string): number | null {
   return Number.isInteger(value) && value > 0 ? value : null
 }
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+function parseModifierOptionIds(raw: unknown): number[] | null {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) return null
+  const ids: number[] = []
+  for (const entry of raw) {
+    const id = Number(entry)
+    if (!Number.isInteger(id) || id < 1) return null
+    ids.push(id)
+  }
+  return ids
+}
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connection()
     const { isAuthenticated, userId } = await auth()
@@ -43,6 +59,23 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     const locationId = parseLocationId(id)
     if (!locationId) {
       return NextResponse.json({ error: 'Invalid locationId' }, { status: 400 })
+    }
+
+    const url = new URL(req.url)
+    const daySummary = url.searchParams.get('daySummary')
+    const onDate = url.searchParams.get('onDate')
+
+    if (daySummary === '1' || daySummary === 'true') {
+      if (onDate != null && !/^\d{4}-\d{2}-\d{2}$/.test(onDate)) {
+        return NextResponse.json({ error: 'Invalid onDate' }, { status: 400 })
+      }
+      const data = await graphqlQuery<PosDaySummaryData>(
+        POS_DAY_SUMMARY_QUERY,
+        { locationId, onDate: onDate ?? null },
+        userId,
+        'PosDaySummary',
+      )
+      return NextResponse.json({ summary: data.posDaySummary })
     }
 
     const data = await graphqlQuery<PosOrdersData>(
@@ -67,6 +100,9 @@ type PosActionBody = {
   amount?: unknown
   paymentMethod?: unknown
   tableLabel?: unknown
+  modifierOptionIds?: unknown
+  note?: unknown
+  onDate?: unknown
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -109,9 +145,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       if (!Number.isInteger(qty) || qty < 1) {
         return NextResponse.json({ error: 'Invalid qty' }, { status: 400 })
       }
+      const modifierOptionIds = parseModifierOptionIds(body.modifierOptionIds)
+      if (modifierOptionIds === null) {
+        return NextResponse.json({ error: 'Invalid modifierOptionIds' }, { status: 400 })
+      }
+      let note: string | null = null
+      if (body.note != null) {
+        if (typeof body.note !== 'string') {
+          return NextResponse.json({ error: 'Invalid note' }, { status: 400 })
+        }
+        note = body.note
+      }
       const data = await graphqlQuery<AddPosOrderLineData>(
         ADD_POS_ORDER_LINE_MUTATION,
-        { orderId, menuItemId, qty },
+        {
+          orderId,
+          menuItemId,
+          qty,
+          modifierOptionIds: modifierOptionIds.length > 0 ? modifierOptionIds : null,
+          note,
+        },
         userId,
         'AddPosOrderLine',
       )
@@ -134,6 +187,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         'UpdatePosOrderLine',
       )
       return NextResponse.json({ order: data.updatePosOrderLine })
+    }
+
+    if (action === 'setLineNote') {
+      const lineId = Number(body.lineId)
+      if (!Number.isInteger(lineId) || lineId < 1) {
+        return NextResponse.json({ error: 'Invalid lineId' }, { status: 400 })
+      }
+      let note: string | null = null
+      if (body.note != null) {
+        if (typeof body.note !== 'string') {
+          return NextResponse.json({ error: 'Invalid note' }, { status: 400 })
+        }
+        note = body.note
+      }
+      const data = await graphqlQuery<SetPosOrderLineNoteData>(
+        SET_POS_ORDER_LINE_NOTE_MUTATION,
+        { lineId, note },
+        userId,
+        'SetPosOrderLineNote',
+      )
+      return NextResponse.json({ order: data.setPosOrderLineNote })
     }
 
     if (action === 'removeLine') {
@@ -233,6 +307,23 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         'RefundPosOrder',
       )
       return NextResponse.json({ order: data.refundPosOrder })
+    }
+
+    if (action === 'daySummary') {
+      let onDate: string | null = null
+      if (body.onDate != null) {
+        if (typeof body.onDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.onDate)) {
+          return NextResponse.json({ error: 'Invalid onDate' }, { status: 400 })
+        }
+        onDate = body.onDate
+      }
+      const data = await graphqlQuery<PosDaySummaryData>(
+        POS_DAY_SUMMARY_QUERY,
+        { locationId, onDate },
+        userId,
+        'PosDaySummary',
+      )
+      return NextResponse.json({ summary: data.posDaySummary })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

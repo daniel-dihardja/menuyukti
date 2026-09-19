@@ -2,11 +2,48 @@
 
 from __future__ import annotations
 
-from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
-from graphql.schema.types.menu import MenuCategoryType, MenuItemType, MenuType
+from graphql.data_sources.models.menu import (
+    Menu,
+    MenuCategory,
+    MenuItem,
+    MenuModifierGroup,
+    MenuModifierOption,
+)
+from graphql.schema.types.menu import (
+    MenuCategoryType,
+    MenuItemType,
+    MenuModifierGroupType,
+    MenuModifierOptionType,
+    MenuType,
+)
+
+
+def menu_modifier_option_to_gql(row: MenuModifierOption) -> MenuModifierOptionType:
+    return MenuModifierOptionType(
+        id=row.id,
+        group_id=row.group_id,
+        name=row.name,
+        price_delta=float(row.price_delta or 0),
+        is_available=bool(row.is_available),
+        sort_order=row.sort_order,
+    )
+
+
+def menu_modifier_group_to_gql(row: MenuModifierGroup) -> MenuModifierGroupType:
+    options = sorted(row.options, key=lambda opt: (opt.sort_order, opt.id))
+    return MenuModifierGroupType(
+        id=row.id,
+        menu_item_id=row.menu_item_id,
+        name=row.name,
+        min_select=row.min_select,
+        max_select=row.max_select,
+        sort_order=row.sort_order,
+        options=[menu_modifier_option_to_gql(opt) for opt in options],
+    )
 
 
 def menu_item_to_gql(row: MenuItem) -> MenuItemType:
+    groups = sorted(row.modifier_groups, key=lambda g: (g.sort_order, g.id))
     return MenuItemType(
         id=row.id,
         menu_id=row.menu_id,
@@ -17,6 +54,7 @@ def menu_item_to_gql(row: MenuItem) -> MenuItemType:
         sort_order=row.sort_order,
         is_available=row.is_available,
         image_filename=row.image_filename,
+        modifier_groups=[menu_modifier_group_to_gql(g) for g in groups],
     )
 
 
