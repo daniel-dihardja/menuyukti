@@ -41,9 +41,7 @@ export function PosReceipt({ order, locationName, currencyCode }: PosReceiptProp
             {t('tableLabel')}: {order.tableLabel}
           </p>
         ) : null}
-        {isRefunded ? (
-          <p className="text-sm font-medium">{t('receiptRefundedNote')}</p>
-        ) : null}
+        {isRefunded ? <p className="text-sm font-medium">{t('receiptRefundedNote')}</p> : null}
       </header>
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
@@ -54,9 +52,7 @@ export function PosReceipt({ order, locationName, currencyCode }: PosReceiptProp
         {order.paymentMethod ? (
           <>
             <dt className="text-neutral-600">{t('receiptPayment')}</dt>
-            <dd className="text-right">
-              {t(`payment.${order.paymentMethod.toLowerCase()}`)}
-            </dd>
+            <dd className="text-right">{t(`payment.${order.paymentMethod.toLowerCase()}`)}</dd>
           </>
         ) : null}
         <dt className="text-neutral-600">{t('receiptStatus')}</dt>

@@ -276,7 +276,11 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
         ) : null}
       </div>
 
-      <div className="relative flex items-center gap-3" role="separator" aria-label={t('orContinueWithEmail')}>
+      <div
+        className="relative flex items-center gap-3"
+        role="separator"
+        aria-label={t('orContinueWithEmail')}
+      >
         <div className="bg-border h-px flex-1" />
         <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
           {t('orContinueWithEmail')}

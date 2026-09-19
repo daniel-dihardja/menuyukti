@@ -82,10 +82,7 @@ type PosCashierProps = {
   initialOrders: PosOrder[]
 }
 
-async function posAction(
-  locationId: number,
-  body: Record<string, unknown>,
-): Promise<PosOrder> {
+async function posAction(locationId: number, body: Record<string, unknown>): Promise<PosOrder> {
   const res = await fetch(`/api/locations/${locationId}/pos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -98,10 +95,7 @@ async function posAction(
   return payload.order
 }
 
-async function fetchDaySummary(
-  locationId: number,
-  onDate: string,
-): Promise<PosDaySummary | null> {
+async function fetchDaySummary(locationId: number, onDate: string): Promise<PosDaySummary | null> {
   const params = new URLSearchParams({ daySummary: '1', onDate })
   const res = await fetch(`/api/locations/${locationId}/pos?${params.toString()}`)
   const payload = (await res.json()) as { summary?: PosDaySummary | null; error?: string }
@@ -296,9 +290,7 @@ export function PosCashier({
     for (const group of customizeGroups) {
       const selected = selectedOptionIds[group.id] ?? []
       if (selected.length < group.minSelect) {
-        toast.error(
-          t('errors.modifierMin', { min: group.minSelect, group: group.name }),
-        )
+        toast.error(t('errors.modifierMin', { min: group.minSelect, group: group.name }))
         return null
       }
       if (selected.length > group.maxSelect) {
@@ -378,7 +370,9 @@ export function PosCashier({
     const raw = Number(discountInput)
     if (!Number.isFinite(raw) || raw < 0) {
       toast.error(
-        discountMode === 'percent' ? t('errors.invalidDiscountPercent') : t('errors.invalidDiscount'),
+        discountMode === 'percent'
+          ? t('errors.invalidDiscountPercent')
+          : t('errors.invalidDiscount'),
       )
       return
     }
@@ -862,7 +856,12 @@ export function PosCashier({
                 {t('kitchenPrint')}
               </Button>
             ) : null}
-            <Button type="button" variant="outline" disabled={!currentOrder || pending} onClick={handleVoid}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!currentOrder || pending}
+              onClick={handleVoid}
+            >
               {t('void')}
             </Button>
           </div>
@@ -908,9 +907,7 @@ export function PosCashier({
                 className="h-7 px-2 text-xs"
                 onClick={() => setTodayFilter(filter)}
               >
-                {filter === 'all'
-                  ? t('todayFilterAll')
-                  : t(`status.${filter.toLowerCase()}`)}
+                {filter === 'all' ? t('todayFilterAll') : t(`status.${filter.toLowerCase()}`)}
               </Button>
             ))}
           </div>
@@ -1011,10 +1008,7 @@ export function PosCashier({
               {daySummary.paidByPaymentMethod.length > 0 ? (
                 <ul className="space-y-1 border-t border-border/50 pt-1.5">
                   {daySummary.paidByPaymentMethod.map((row) => (
-                    <li
-                      key={row.paymentMethod}
-                      className="flex items-center justify-between gap-2"
-                    >
+                    <li key={row.paymentMethod} className="flex items-center justify-between gap-2">
                       <span className="text-muted-foreground">
                         {t(`payment.${row.paymentMethod.toLowerCase()}`)} ({row.ticketCount})
                       </span>
@@ -1041,7 +1035,9 @@ export function PosCashier({
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {customizeItem ? t('customizeTitle', { name: customizeItem.name }) : t('customizeTitleFallback')}
+              {customizeItem
+                ? t('customizeTitle', { name: customizeItem.name })
+                : t('customizeTitleFallback')}
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4">
@@ -1077,7 +1073,10 @@ export function PosCashier({
                             onCheckedChange={() => toggleOption(group, option.id)}
                           />
                         )}
-                        <Label htmlFor={inputId} className="flex flex-1 cursor-pointer justify-between gap-2">
+                        <Label
+                          htmlFor={inputId}
+                          className="flex flex-1 cursor-pointer justify-between gap-2"
+                        >
                           <span>{option.name}</span>
                           {option.priceDelta !== 0 ? (
                             <span className="tabular-nums text-muted-foreground">
