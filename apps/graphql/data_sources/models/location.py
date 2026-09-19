@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.menu import Menu
     from graphql.data_sources.models.node import Node
     from graphql.data_sources.models.playbook import Playbook
+    from graphql.data_sources.models.pos_order import PosOrder
     from graphql.data_sources.models.workspace import Workspace
 
 
@@ -117,6 +118,12 @@ class Location(Base):
         back_populates="location",
         uselist=False,
         cascade="all, delete-orphan",
+    )
+    pos_orders: Mapped[list[PosOrder]] = relationship(
+        "PosOrder",
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="PosOrder.opened_at.desc()",
     )
     inventory_stock: Mapped[list[InventoryStock]] = relationship(
         "InventoryStock",

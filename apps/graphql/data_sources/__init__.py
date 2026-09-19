@@ -26,6 +26,8 @@ __all__ = [
     "Menu",
     "MenuCategory",
     "MenuItem",
+    "PosOrder",
+    "PosOrderLine",
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",

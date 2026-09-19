@@ -4,29 +4,31 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyCode } from '@/lib/app-currency'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from '@/lib/app-layout'
 import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATION_MENU_QUERY, type LocationMenuData } from '@/lib/graphql/queries/location-menu'
+import { POS_ORDERS_QUERY, type PosOrdersData } from '@/lib/graphql/queries/pos-orders'
 import { routes } from '@/lib/routes'
 
-import { LocationMenuForm } from './location-menu-form'
+import { PosCashier } from './pos-cashier'
 
 type PageProps = {
   params: Promise<{ id: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const t = await getTranslations('analytics.locationMenu')
+  const t = await getTranslations('pos')
   const description = t('description')
   const { id } = await params
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
-    return { title: t('heading'), description, openGraph: { title: t('heading'), description } }
+    return { title: t('title'), description, openGraph: { title: t('title'), description } }
   }
   const data = await getCachedLocation(userId, id)
-  const title = data.location ? `${data.location.name} · ${t('heading')}` : t('heading')
+  const title = data.location ? `${data.location.name} · ${t('title')}` : t('title')
   return { title, description, openGraph: { title, description } }
 }
 
@@ -40,69 +42,38 @@ export default async function Page({ params }: PageProps) {
   const locationId = Number(id)
   if (!Number.isInteger(locationId) || locationId < 1) notFound()
 
-  const [locationData, menuData] = await Promise.all([
+  const [locationData, menuData, ordersData] = await Promise.all([
     getCachedLocation(userId, id),
     graphqlQuery<LocationMenuData>(LOCATION_MENU_QUERY, { locationId }, userId, 'LocationMenu'),
+    graphqlQuery<PosOrdersData>(POS_ORDERS_QUERY, { locationId }, userId, 'PosOrders'),
   ])
 
   const location = locationData.location
   if (!location) notFound()
 
-  const t = await getTranslations('analytics.locationMenu')
+  const t = await getTranslations('pos')
   const tBranches = await getTranslations('analytics.branches')
   const appCurrency = getAppCurrencyCode()
   const currencyCode = (location.currency?.trim() || appCurrency).toUpperCase() || appCurrency
 
-  const initialCategories =
-    menuData.locationMenu?.categories.map((category) => ({
-      key: `cat-${category.id}`,
-      name: category.name,
-      items:
-        category.items.length > 0
-          ? category.items.map((item) => ({
-              key: `item-${item.id}`,
-              name: item.name,
-              price: String(item.price),
-              description: item.description ?? '',
-              imageFilename: item.imageFilename ?? null,
-              modifierGroups: (item.modifierGroups ?? []).map((group) => ({
-                key: `grp-${group.id}`,
-                name: group.name,
-                minSelect: String(group.minSelect),
-                maxSelect: String(group.maxSelect),
-                options: group.options.map((option) => ({
-                  key: `opt-${option.id}`,
-                  name: option.name,
-                  priceDelta: String(option.priceDelta),
-                })),
-              })),
-            }))
-          : [
-              {
-                key: `item-empty-${category.id}`,
-                name: '',
-                price: '',
-                description: '',
-                imageFilename: null,
-                modifierGroups: [],
-              },
-            ],
-    })) ?? []
   return (
     <AnalyticsPageShell
-      title={t('heading')}
+      title={t('title')}
       breadcrumbs={[
         { label: tBranches('title'), href: routes.analytics.branches },
         { label: location.name, href: routes.analytics.branchesDetail(location.id) },
-        { label: t('heading') },
+        { label: t('title') },
       ]}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
     >
       <section className={LOCATION_DETAIL_SECTION_CLASS}>
-        <LocationMenuForm
+        <PageHeading title={t('title')} description={t('description')} />
+        <PosCashier
           locationId={locationId}
+          locationName={location.name}
           currencyCode={currencyCode}
-          initialCategories={initialCategories}
+          initialMenu={menuData.locationMenu}
+          initialOrders={ordersData.posOrders}
         />
       </section>
     </AnalyticsPageShell>

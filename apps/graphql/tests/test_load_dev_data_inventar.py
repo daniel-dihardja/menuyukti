@@ -14,8 +14,10 @@ from graphql.data_sources import (
     Workspace,
     WorkspaceMembership,
 )
+from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
-from graphql.scripts.load_dev_data import DEV_INVENTAR_LOCATION_NAME
+from graphql.scripts.generate_dev_mock_sales_excel import MOCK_CATALOG
+from graphql.scripts.load_dev_data import DEV_INVENTAR_LOCATION_NAME, seed_warung_sunda_menu
 
 SEED_USER = "clerk_dev_seed_inventar_test"
 
@@ -192,6 +194,79 @@ def test_inventar_seed_is_idempotent(inventar_seed_workspace):
             .count()
             == movement_n
         )
+    finally:
+        session.close()
+
+
+def test_warung_sunda_menu_seed(inventar_seed_workspace):
+    session = SessionLocal()
+    try:
+        inventar = session.get(Location, inventar_seed_workspace["inventar_id"])
+        assert inventar is not None
+
+        first = seed_warung_sunda_menu(session, inventar)
+        session.commit()
+
+        assert first["categories"] == 2
+        assert first["items"] == len(MOCK_CATALOG)
+        assert first["cleared_pos_orders"] == 0
+
+        menu = (
+            session.query(Menu)
+            .filter(Menu.location_id == inventar_seed_workspace["inventar_id"])
+            .one()
+        )
+        assert menu.title == DEV_INVENTAR_LOCATION_NAME
+        categories = (
+            session.query(MenuCategory)
+            .filter(MenuCategory.menu_id == menu.id)
+            .order_by(MenuCategory.sort_order)
+            .all()
+        )
+        assert [c.name for c in categories] == ["Makanan", "Minuman"]
+        items = session.query(MenuItem).filter(MenuItem.menu_id == menu.id).all()
+        item_names = {row.name for row in items}
+        assert item_names == {item.menu for item in MOCK_CATALOG}
+
+        # Simulate a POS ticket referencing a menu item (RESTRICT would block replace).
+        from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+
+        sample_item = items[0]
+        order = PosOrder(
+            location_id=inventar.id,
+            bill_number="MY-20260918-00001",
+            status="paid",
+            opened_by_clerk_user_id=SEED_USER,
+            payment_method="cash",
+            discount_amount=0.0,
+        )
+        session.add(order)
+        session.flush()
+        session.add(
+            PosOrderLine(
+                pos_order_id=order.id,
+                menu_item_id=sample_item.id,
+                name_snapshot=sample_item.name,
+                menu_category_snapshot="Makanan",
+                menu_category_detail_snapshot="Makanan",
+                qty=1,
+                unit_price=float(sample_item.price),
+                line_total=float(sample_item.price),
+                sort_order=0,
+            )
+        )
+        session.commit()
+
+        # Reseed must clear POS tickets then replace menu without FK errors.
+        second = seed_warung_sunda_menu(session, inventar)
+        session.commit()
+        assert second["categories"] == 2
+        assert second["items"] == len(MOCK_CATALOG)
+        assert second["cleared_pos_orders"] == 1
+        assert (
+            session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(MOCK_CATALOG)
+        )
+        assert session.query(PosOrder).filter(PosOrder.location_id == inventar.id).count() == 0
     finally:
         session.close()
 

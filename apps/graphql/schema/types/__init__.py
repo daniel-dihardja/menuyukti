@@ -3,6 +3,7 @@ from .location_area import LocationAreaType
 from .location_menu_item_cogs import LocationMenuItemCogsType
 from .menu import MenuCategoryType, MenuItemType, MenuType
 from .menu_item_cogs import MenuItemCogsType
+from .pos_order import PosOrderLineType, PosOrderStatus, PosOrderType, PosPaymentMethod
 from .post import PostType
 from .post_page import PostPageType
 from .post_page_media_version import PostPageMediaVersionType
@@ -19,6 +20,10 @@ __all__ = [
     "MenuCategoryType",
     "MenuItemType",
     "MenuItemCogsType",
+    "PosOrderType",
+    "PosOrderLineType",
+    "PosOrderStatus",
+    "PosPaymentMethod",
     "PublicHolidayType",
     "PostType",
     "PostPageType",

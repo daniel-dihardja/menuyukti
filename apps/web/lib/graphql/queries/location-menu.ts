@@ -1,3 +1,22 @@
+export type LocationMenuModifierOption = {
+  id: number
+  groupId: number
+  name: string
+  priceDelta: number
+  isAvailable: boolean
+  sortOrder: number
+}
+
+export type LocationMenuModifierGroup = {
+  id: number
+  menuItemId: number
+  name: string
+  minSelect: number
+  maxSelect: number
+  sortOrder: number
+  options: LocationMenuModifierOption[]
+}
+
 export type LocationMenuItem = {
   id: number
   menuId: number
@@ -8,6 +27,7 @@ export type LocationMenuItem = {
   sortOrder: number
   isAvailable: boolean
   imageFilename: string | null
+  modifierGroups: LocationMenuModifierGroup[]
 }
 
 export type LocationMenuCategory = {
@@ -25,6 +45,38 @@ export type LocationMenu = {
   categories: LocationMenuCategory[]
 }
 
+const MENU_MODIFIER_FIELDS = `
+  id
+  menuItemId
+  name
+  minSelect
+  maxSelect
+  sortOrder
+  options {
+    id
+    groupId
+    name
+    priceDelta
+    isAvailable
+    sortOrder
+  }
+`
+
+const MENU_ITEM_FIELDS = `
+  id
+  menuId
+  categoryId
+  name
+  description
+  price
+  sortOrder
+  isAvailable
+  imageFilename
+  modifierGroups {
+    ${MENU_MODIFIER_FIELDS}
+  }
+`
+
 export const LOCATION_MENU_QUERY = `
   query LocationMenu($locationId: Int!) {
     locationMenu(locationId: $locationId) {
@@ -37,15 +89,7 @@ export const LOCATION_MENU_QUERY = `
         name
         sortOrder
         items {
-          id
-          menuId
-          categoryId
-          name
-          description
-          price
-          sortOrder
-          isAvailable
-          imageFilename
+          ${MENU_ITEM_FIELDS}
         }
       }
     }
@@ -68,15 +112,7 @@ export const REPLACE_LOCATION_MENU_ITEMS_MUTATION = `
         name
         sortOrder
         items {
-          id
-          menuId
-          categoryId
-          name
-          description
-          price
-          sortOrder
-          isAvailable
-          imageFilename
+          ${MENU_ITEM_FIELDS}
         }
       }
     }

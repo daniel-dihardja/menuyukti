@@ -43,11 +43,9 @@ export function MainHeader() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const showChatNav = isNavKeyEnabled('chat')
   const showStudioNav = isNavKeyEnabled('posts')
-  const chatActive = pathname === routes.agent || pathname?.startsWith(`${routes.agent}/`)
   const igStudioActive = pathname === routes.igStudio || pathname?.startsWith(`${routes.igStudio}/`)
-  const showProductNavLinks = showChatNav || showStudioNav
+  const showProductNavLinks = showStudioNav
   const showMobileMainMenu = true
 
   const navLinkClass = (active: boolean) =>
@@ -85,11 +83,6 @@ export function MainHeader() {
               className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
               aria-label={t('navAria')}
             >
-              {showChatNav ? (
-                <Link href={routes.agent} className={navLinkClass(chatActive)}>
-                  {t('navChat')}
-                </Link>
-              ) : null}
               {showStudioNav ? (
                 <Link href={routes.igStudio} className={navLinkClass(igStudioActive)}>
                   {t('navStudio')}
@@ -129,27 +122,6 @@ export function MainHeader() {
                   </SheetHeader>
                   {!isLanding && showProductNavLinks ? (
                     <nav aria-label={t('navAria')} className="flex flex-col gap-2 px-4 pt-4">
-                      {showChatNav ? (
-                        <SheetClose asChild>
-                          <Button
-                            asChild
-                            variant="ghost"
-                            className={cn(
-                              'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                              chatActive
-                                ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
-                                : 'text-muted-foreground hover:text-foreground',
-                            )}
-                          >
-                            <Link
-                              href={routes.agent}
-                              aria-current={chatActive ? 'page' : undefined}
-                            >
-                              {t('navChat')}
-                            </Link>
-                          </Button>
-                        </SheetClose>
-                      ) : null}
                       {showStudioNav ? (
                         <SheetClose asChild>
                           <Button

@@ -19,6 +19,7 @@ from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
 from .operating_profile import OperatingProfileQuery
 from .playbooks import PlaybooksQuery
+from .pos_orders import PosOrdersQuery
 from .posts import PostsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
@@ -51,6 +52,7 @@ __all__ = [
     "MenuHeatmapsQuery",
     "PromotionMenuItemsQuery",
     "PlaybooksQuery",
+    "PosOrdersQuery",
     "SchedulerCalendarQuery",
     "PublicHolidaysQuery",
     "PublicLocationWallQuery",

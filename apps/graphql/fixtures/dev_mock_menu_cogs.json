@@ -1,0 +1,58 @@
+[
+  {
+    "menu": "Nasi Timbel",
+    "cogs": 3500.0
+  },
+  {
+    "menu": "Tahu Goreng",
+    "cogs": 2800.0
+  },
+  {
+    "menu": "Tumis Kangkung",
+    "cogs": 3200.0
+  },
+  {
+    "menu": "Pecel Sayuran",
+    "cogs": 5500.0
+  },
+  {
+    "menu": "Sayur Lodeh",
+    "cogs": 4800.0
+  },
+  {
+    "menu": "Nasi Putih",
+    "cogs": 2200.0
+  },
+  {
+    "menu": "Tahu Isi",
+    "cogs": 3500.0
+  },
+  {
+    "menu": "Gulai Tahu Santan",
+    "cogs": 7000.0
+  },
+  {
+    "menu": "Es Gula Aren",
+    "cogs": 3500.0
+  },
+  {
+    "menu": "Teh Manis Gula Aren",
+    "cogs": 2500.0
+  },
+  {
+    "menu": "Nasi Pecel",
+    "cogs": 6500.0
+  },
+  {
+    "menu": "Sambal Dadak",
+    "cogs": 1200.0
+  },
+  {
+    "menu": "Kerupuk Putih",
+    "cogs": 1000.0
+  },
+  {
+    "menu": "Air Mineral",
+    "cogs": 1500.0
+  }
+]

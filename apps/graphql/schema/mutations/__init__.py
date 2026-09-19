@@ -33,6 +33,7 @@ from .media_collection_members import (
     AddMediaToCollectionMutation,
     RemoveMediaFromCollectionMutation,
 )
+from .pos_orders import PosOrderMutations
 from .record_ai_usage_event import RecordAiUsageEventMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .replace_location_menu_items import ReplaceLocationMenuItemsMutation
@@ -86,6 +87,7 @@ __all__ = [
     "RecordAiUsageEventMutation",
     "RemoveWorkspaceMemberMutation",
     "ReplaceLocationMenuItemsMutation",
+    "PosOrderMutations",
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateLocationMutation",

@@ -14,17 +14,44 @@ function parseLocationId(param: string): number | null {
   return Number.isInteger(value) && value > 0 ? value : null
 }
 
+type MenuModifierOptionBody = {
+  name?: unknown
+  priceDelta?: unknown
+  isAvailable?: unknown
+}
+
+type MenuModifierGroupBody = {
+  name?: unknown
+  minSelect?: unknown
+  maxSelect?: unknown
+  options?: unknown
+}
+
 type MenuItemBody = {
   name?: unknown
   price?: unknown
   description?: unknown
   isAvailable?: unknown
   imageFilename?: unknown
+  modifierGroups?: unknown
 }
 
 type MenuCategoryBody = {
   name?: unknown
   items?: unknown
+}
+
+type ParsedModifierOption = {
+  name: string
+  priceDelta: number
+  isAvailable?: boolean
+}
+
+type ParsedModifierGroup = {
+  name: string
+  minSelect: number
+  maxSelect: number
+  options: ParsedModifierOption[]
 }
 
 type ParsedItem = {
@@ -33,11 +60,63 @@ type ParsedItem = {
   description?: string
   isAvailable?: boolean
   imageFilename?: string | null
+  modifierGroups?: ParsedModifierGroup[]
 }
 
 type ParsedCategory = {
   name: string
   items: ParsedItem[]
+}
+
+function parseModifierOptions(raw: unknown): ParsedModifierOption[] | null {
+  if (!Array.isArray(raw)) return null
+  const options: ParsedModifierOption[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') return null
+    const row = entry as MenuModifierOptionBody
+    if (typeof row.name !== 'string') return null
+    const priceDelta =
+      row.priceDelta === undefined
+        ? 0
+        : typeof row.priceDelta === 'number'
+          ? row.priceDelta
+          : Number(row.priceDelta)
+    if (!Number.isFinite(priceDelta)) return null
+    const option: ParsedModifierOption = { name: row.name, priceDelta }
+    if (typeof row.isAvailable === 'boolean') option.isAvailable = row.isAvailable
+    options.push(option)
+  }
+  return options
+}
+
+function parseModifierGroups(raw: unknown): ParsedModifierGroup[] | null {
+  if (raw === undefined) return []
+  if (!Array.isArray(raw)) return null
+  const groups: ParsedModifierGroup[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') return null
+    const row = entry as MenuModifierGroupBody
+    if (typeof row.name !== 'string') return null
+    const minSelect =
+      row.minSelect === undefined
+        ? 0
+        : typeof row.minSelect === 'number'
+          ? row.minSelect
+          : Number(row.minSelect)
+    const maxSelect =
+      row.maxSelect === undefined
+        ? 1
+        : typeof row.maxSelect === 'number'
+          ? row.maxSelect
+          : Number(row.maxSelect)
+    if (!Number.isInteger(minSelect) || minSelect < 0) return null
+    if (!Number.isInteger(maxSelect) || maxSelect < 1) return null
+    if (minSelect > maxSelect) return null
+    const options = parseModifierOptions(row.options)
+    if (!options) return null
+    groups.push({ name: row.name, minSelect, maxSelect, options })
+  }
+  return groups
 }
 
 function parseItems(raw: unknown): ParsedItem[] | null {
@@ -57,6 +136,9 @@ function parseItems(raw: unknown): ParsedItem[] | null {
     } else if (typeof row.imageFilename === 'string') {
       item.imageFilename = row.imageFilename
     }
+    const modifierGroups = parseModifierGroups(row.modifierGroups)
+    if (modifierGroups === null) return null
+    if (modifierGroups.length > 0) item.modifierGroups = modifierGroups
     items.push(item)
   }
   return items

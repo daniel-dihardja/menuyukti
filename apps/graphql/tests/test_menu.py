@@ -225,9 +225,7 @@ def test_non_owner_denied():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "categories": [
-                    {"name": "Denied", "items": [{"name": "Denied", "price": 1.0}]}
-                ],
+                "categories": [{"name": "Denied", "items": [{"name": "Denied", "price": 1.0}]}],
             },
             context_value=graphql_auth_context(),
         )
@@ -278,9 +276,7 @@ def test_validation_empty_name_and_negative_price():
             REPLACE_MENU,
             variable_values={
                 "locationId": location_id,
-                "categories": [
-                    {"name": "Drinks", "items": [{"name": "Bad Price", "price": -1.0}]}
-                ],
+                "categories": [{"name": "Drinks", "items": [{"name": "Bad Price", "price": -1.0}]}],
             },
             context_value=graphql_auth_context(),
         )
@@ -377,9 +373,7 @@ def test_replace_clears_image_filename():
     )
     assert not clear_result.errors, clear_result.errors
     assert (
-        clear_result.data["replaceLocationMenuItems"]["categories"][0]["items"][0][
-            "imageFilename"
-        ]
+        clear_result.data["replaceLocationMenuItems"]["categories"][0]["items"][0]["imageFilename"]
         is None
     )
 

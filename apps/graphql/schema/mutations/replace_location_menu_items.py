@@ -12,6 +12,8 @@ from graphql.schema.types.menu import MenuCategoryInput, MenuType
 from graphql.services.menu import (
     MenuCategoryReplaceInput,
     MenuItemReplaceInput,
+    MenuModifierGroupReplaceInput,
+    MenuModifierOptionReplaceInput,
     get_or_create_menu,
     replace_menu_categories,
 )
@@ -50,10 +52,28 @@ class ReplaceLocationMenuItemsMutation:
                             name=item.name,
                             price=item.price,
                             description=item.description or "",
-                            is_available=(
-                                True if item.is_available is None else item.is_available
-                            ),
+                            is_available=(True if item.is_available is None else item.is_available),
                             image_filename=item.image_filename,
+                            modifier_groups=[
+                                MenuModifierGroupReplaceInput(
+                                    name=group.name,
+                                    min_select=group.min_select,
+                                    max_select=group.max_select,
+                                    options=[
+                                        MenuModifierOptionReplaceInput(
+                                            name=opt.name,
+                                            price_delta=opt.price_delta,
+                                            is_available=(
+                                                True
+                                                if opt.is_available is None
+                                                else opt.is_available
+                                            ),
+                                        )
+                                        for opt in group.options
+                                    ],
+                                )
+                                for group in (item.modifier_groups or [])
+                            ],
                         )
                         for item in category.items
                     ],
@@ -62,5 +82,4 @@ class ReplaceLocationMenuItemsMutation:
             ]
             replace_menu_categories(session, menu, domain_categories)
             session.commit()
-            session.refresh(menu)
-            return menu_to_gql(menu)
+            return menu_to_gql(get_or_create_menu(session, location_id))
