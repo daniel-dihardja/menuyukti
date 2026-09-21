@@ -6,6 +6,7 @@ import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { routes } from '@/lib/routes'
 import { GoogleMark } from '@/components/clerk/google-mark'
+import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { cn } from '@workspace/ui/lib/utils'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -30,6 +31,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
   const [formError, setFormError] = useState<string | null>(null)
   const [oauthBusy, setOauthBusy] = useState(false)
   const finalizingRef = useRef(false)
+  const googleAvailable = isGoogleOauthAvailable(clerk)
 
   const finalizeAndRedirect = useCallback(async () => {
     if (!signUp || finalizingRef.current) return
@@ -256,36 +258,40 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
 
   return (
     <div className={cn('space-y-6', className)}>
-      <div className="space-y-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="w-full"
-          disabled={loading}
-          onClick={() => void handleGoogleSignUp()}
-        >
-          <GoogleMark />
-          {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
-        </Button>
-        {formError ? (
-          <p className="text-sm text-destructive" role="alert">
-            {formError}
-          </p>
-        ) : null}
-      </div>
+      {googleAvailable ? (
+        <>
+          <div className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              disabled={loading}
+              onClick={() => void handleGoogleSignUp()}
+            >
+              <GoogleMark />
+              {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
+            </Button>
+            {formError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {formError}
+              </p>
+            ) : null}
+          </div>
 
-      <div
-        className="relative flex items-center gap-3"
-        role="separator"
-        aria-label={t('orContinueWithEmail')}
-      >
-        <div className="bg-border h-px flex-1" />
-        <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
-          {t('orContinueWithEmail')}
-        </span>
-        <div className="bg-border h-px flex-1" />
-      </div>
+          <div
+            className="relative flex items-center gap-3"
+            role="separator"
+            aria-label={t('orContinueWithEmail')}
+          >
+            <div className="bg-border h-px flex-1" />
+            <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
+              {t('orContinueWithEmail')}
+            </span>
+            <div className="bg-border h-px flex-1" />
+          </div>
+        </>
+      ) : null}
 
       <form onSubmit={handleEmailSubmit} className="space-y-8">
         <FieldGroup>
