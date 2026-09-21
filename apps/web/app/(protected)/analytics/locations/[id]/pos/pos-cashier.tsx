@@ -30,12 +30,12 @@ import {
 } from '@workspace/ui/components/sheet'
 import { Spinner } from '@workspace/ui/components/spinner'
 
-import type { LocationMenu, LocationMenuItem, LocationMenuModifierGroup } from '@/lib/graphql/queries/location-menu'
 import type {
-  PosDaySummary,
-  PosOrder,
-  PosPaymentMethod,
-} from '@/lib/graphql/queries/pos-orders'
+  LocationMenu,
+  LocationMenuItem,
+  LocationMenuModifierGroup,
+} from '@/lib/graphql/queries/location-menu'
+import type { PosDaySummary, PosOrder, PosPaymentMethod } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
 
 import { PosCartPanel } from './pos-cart-panel'
@@ -524,21 +524,21 @@ export function PosCashier({
       <PosCollapseSidebar />
       {/* Fill viewport below the shell header (h-16); keep ticket actions pinned. */}
       <div className="flex min-h-0 flex-1 flex-col lg:h-full lg:overflow-hidden">
-      <div className="grid min-h-0 gap-4 pb-24 lg:h-full lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,0.9fr)] lg:gap-4 lg:overflow-hidden lg:pb-0">
-        <PosMenuGrid
-          categories={categories}
-          filteredItems={filteredItems}
-          selectedCategoryId={selectedCategoryId}
-          onCategoryChange={setSelectedCategoryId}
-          currencyCode={currencyCode}
-          pending={pending}
-          onAddItem={handleAddItem}
-        />
+        <div className="grid min-h-0 gap-4 pb-24 lg:h-full lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,0.9fr)] lg:gap-4 lg:overflow-hidden lg:pb-0">
+          <PosMenuGrid
+            categories={categories}
+            filteredItems={filteredItems}
+            selectedCategoryId={selectedCategoryId}
+            onCategoryChange={setSelectedCategoryId}
+            currencyCode={currencyCode}
+            pending={pending}
+            onAddItem={handleAddItem}
+          />
 
-        <aside className="hidden min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background p-4 lg:flex lg:h-full">
-          <PosCartPanel {...cartPanelProps} stickyActions />
-        </aside>
-      </div>
+          <aside className="hidden min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background p-4 lg:flex lg:h-full">
+            <PosCartPanel {...cartPanelProps} stickyActions />
+          </aside>
+        </div>
       </div>
 
       {/* Mobile sticky checkout strip */}
@@ -741,9 +741,7 @@ export function PosCashier({
           <AlertDialogHeader>
             <AlertDialogTitle>{t('voidConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {currentOrder
-                ? t('voidConfirmDescription', { bill: currentOrder.billNumber })
-                : null}
+              {currentOrder ? t('voidConfirmDescription', { bill: currentOrder.billNumber }) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

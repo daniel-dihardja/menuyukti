@@ -138,10 +138,7 @@ export function PosOpsSheet({
                               </span>
                             ) : null}
                           </span>
-                          <Badge
-                            variant={statusBadgeVariant(order.status)}
-                            className="shrink-0"
-                          >
+                          <Badge variant={statusBadgeVariant(order.status)} className="shrink-0">
                             {t(`status.${order.status.toLowerCase()}`)}
                           </Badge>
                         </button>

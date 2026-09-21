@@ -150,7 +150,13 @@ export function PosCartPanel({
             </div>
           )}
           {canShowKitchen ? (
-            <Button type="button" size="lg" variant="outline" disabled={pending} onClick={onKitchen}>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={pending}
+              onClick={onKitchen}
+            >
               {t('kitchenPrint')}
             </Button>
           ) : null}
@@ -172,7 +178,13 @@ export function PosCartPanel({
             </Button>
           ) : null}
           {canShowKitchen ? (
-            <Button type="button" size="lg" variant="outline" disabled={pending} onClick={onKitchen}>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={pending}
+              onClick={onKitchen}
+            >
               {t('kitchenPrint')}
             </Button>
           ) : null}
@@ -277,12 +289,7 @@ export function PosCartPanel({
         <p className="shrink-0 text-xs text-muted-foreground">{t('readOnlyHint')}</p>
       ) : null}
 
-      <ScrollArea
-        className={cn(
-          'min-h-0',
-          stickyActions ? 'flex-1 overflow-hidden' : 'max-h-72',
-        )}
-      >
+      <ScrollArea className={cn('min-h-0', stickyActions ? 'flex-1 overflow-hidden' : 'max-h-72')}>
         {lines.length === 0 ? (
           <Empty className="border-0 p-4 md:p-6">
             <EmptyHeader>
@@ -357,7 +364,9 @@ export function PosCartPanel({
                   editingNoteLineId === line.id ? (
                     <FieldGroup className="gap-2">
                       <Field>
-                        <FieldLabel htmlFor={`pos-line-note-${line.id}`}>{t('lineNote')}</FieldLabel>
+                        <FieldLabel htmlFor={`pos-line-note-${line.id}`}>
+                          {t('lineNote')}
+                        </FieldLabel>
                         <Textarea
                           id={`pos-line-note-${line.id}`}
                           value={editNoteDraft}
