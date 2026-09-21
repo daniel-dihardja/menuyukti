@@ -4,9 +4,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { PageHeading } from '@/components/page-heading'
 import { getAppCurrencyCode } from '@/lib/app-currency'
-import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from '@/lib/app-layout'
 import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATION_MENU_QUERY, type LocationMenuData } from '@/lib/graphql/queries/location-menu'
@@ -64,10 +62,10 @@ export default async function Page({ params }: PageProps) {
         { label: location.name, href: routes.analytics.branchesDetail(location.id) },
         { label: t('title') },
       ]}
-      mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
+      contentWidth="full"
+      mainClassName="gap-0 px-0 py-0 lg:min-h-0 lg:flex-1 lg:overflow-hidden"
     >
-      <section className={LOCATION_DETAIL_SECTION_CLASS}>
-        <PageHeading title={t('title')} description={t('description')} />
+      <section className="flex min-h-0 flex-1 flex-col gap-3 p-3 lg:h-[calc(100dvh-4rem)] lg:max-h-[calc(100dvh-4rem)] lg:gap-3 lg:overflow-hidden lg:p-4">
         <PosCashier
           locationId={locationId}
           locationName={location.name}
