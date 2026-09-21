@@ -4,7 +4,6 @@ import { useSignIn } from '@clerk/nextjs'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { cn } from '@workspace/ui/lib/utils'
@@ -53,7 +52,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         if (session?.currentTask) {
           return
         }
-        const url = decorateUrl(getDefaultAuthenticatedPath())
+        const url = decorateUrl(routes.authContinue)
         if (url.startsWith('http')) {
           window.location.href = url
         } else {
@@ -255,7 +254,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
     try {
       const { error } = await signIn.sso({
         strategy: 'oauth_google',
-        redirectUrl: getDefaultAuthenticatedPath(),
+        redirectUrl: routes.authContinue,
         redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {

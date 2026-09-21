@@ -16,8 +16,10 @@ import {
 } from '@workspace/ui/components/dropdown-menu'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
 import { withProfileImageParams } from '@/lib/clerk-profile-image'
 import { routes } from '@/lib/routes'
+import { isProPlan } from '@/lib/workspace-plan'
 
 const AVATAR_PX = 28
 
@@ -56,6 +58,9 @@ export function AccountMenu({ className }: AccountMenuProps) {
   const t = useTranslations('accountMenu')
   const { user, isLoaded } = useUser()
   const { signOut } = useClerk()
+  const workspacePlan = useOptionalWorkspacePlan()
+  // Hide team outside the app shell / on free; only pro shows it.
+  const showTeam = workspacePlan != null && isProPlan(workspacePlan.plan)
 
   if (!isLoaded) {
     return (
@@ -104,9 +109,11 @@ export function AccountMenu({ className }: AccountMenuProps) {
         <DropdownMenuItem asChild>
           <Link href={routes.profile}>{t('profile')}</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href={routes.profileTeam}>{t('team')}</Link>
-        </DropdownMenuItem>
+        {showTeam ? (
+          <DropdownMenuItem asChild>
+            <Link href={routes.profileTeam}>{t('team')}</Link>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

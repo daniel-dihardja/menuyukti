@@ -8,9 +8,8 @@ import { routes } from '@/lib/routes'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from '@/lib/app-layout'
-import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
-import { isProPlan } from '@/lib/workspace-plan'
+import { getDefaultPathForPlan, isProPlan } from '@/lib/workspace-plan'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('analytics.branches')
@@ -23,11 +22,9 @@ export default async function Page() {
   const t = await getTranslations('analytics.branches')
   const { userId } = await auth()
   const { plan } = await getWorkspacePlanForUser()
+  // Location create is an operator (pro) feature; guests stay on profile.
   if (userId && !isProPlan(plan)) {
-    const data = await getCachedLocationsData(userId)
-    if (data.locations.length >= 1) {
-      redirect(routes.analytics.branches)
-    }
+    redirect(getDefaultPathForPlan(plan))
   }
 
   return (

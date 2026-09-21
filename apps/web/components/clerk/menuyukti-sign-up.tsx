@@ -4,7 +4,6 @@ import { useAuth, useClerk, useSignUp } from '@clerk/nextjs'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { cn } from '@workspace/ui/lib/utils'
@@ -15,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 type Step = 'email' | 'code'
 
 function navigateHome(decorateUrl: (url: string) => string): void {
-  const url = decorateUrl(getDefaultAuthenticatedPath())
+  const url = decorateUrl(routes.authContinue)
   // Hard navigation so the session cookie is picked up by the Next.js proxy.
   window.location.assign(url)
 }
@@ -52,7 +51,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
   // If the session is already active (e.g. finalize set the cookie but soft nav failed).
   useEffect(() => {
     if (!clerk.loaded || !isSignedIn) return
-    window.location.assign(getDefaultAuthenticatedPath())
+    window.location.assign(routes.authContinue)
   }, [clerk.loaded, isSignedIn])
 
   // Complete sign-up if status reaches complete outside the submit handler.
@@ -139,7 +138,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
     try {
       const { error } = await signUp.sso({
         strategy: 'oauth_google',
-        redirectUrl: getDefaultAuthenticatedPath(),
+        redirectUrl: routes.authContinue,
         redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {

@@ -35,3 +35,8 @@ export function useWorkspacePlanContext(): WorkspacePlanContextValue {
   }
   return value
 }
+
+/** Returns null outside {@link WorkspacePlanProvider} (e.g. marketing header). */
+export function useOptionalWorkspacePlan(): WorkspacePlanContextValue | null {
+  return use(WorkspacePlanContext)
+}

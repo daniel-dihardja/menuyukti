@@ -82,11 +82,11 @@ def test_create_workspace_defaults_to_free(clean_user_workspaces):
     assert result.data["createWorkspace"]["plan"] == WORKSPACE_PLAN_FREE
 
 
-def test_create_location_second_fails_on_free(clean_user_workspaces):
+def test_create_location_blocked_on_free(clean_user_workspaces):
     created = asyncio.run(
         schema.execute(
             CREATE_WORKSPACE,
-            variable_values={"name": "Cap shop"},
+            variable_values={"name": "Guest shop"},
             context_value=graphql_auth_context(),
         )
     )
@@ -101,17 +101,8 @@ def test_create_location_second_fails_on_free(clean_user_workspaces):
             context_value=graphql_auth_context(),
         )
     )
-    assert first.errors is None
-
-    second = asyncio.run(
-        schema.execute(
-            CREATE_LOCATION,
-            variable_values={"workspaceId": wid, "name": "Two"},
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert second.errors is not None
-    assert any("Free plan allows one location" in str(e) for e in second.errors)
+    assert first.errors is not None
+    assert any("Free (guest) plan cannot create locations" in str(e) for e in first.errors)
 
 
 def test_create_location_second_ok_on_pro(clean_user_workspaces):
