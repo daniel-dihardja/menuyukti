@@ -1,12 +1,12 @@
 'use client'
 
-import { useSignIn } from '@clerk/nextjs'
+import { useClerk, useSignIn } from '@clerk/nextjs'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { GoogleMark } from '@/components/clerk/google-mark'
+import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { cn } from '@workspace/ui/lib/utils'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -35,6 +35,7 @@ function getPrimarySecondFactor(signIn: {
 export function CustomLoginForm({ className }: { className?: string }) {
   const t = useTranslations('login')
   const router = useRouter()
+  const clerk = useClerk()
   const { signIn, errors, fetchStatus } = useSignIn()
   const [step, setStep] = useState<Step>('email')
   const [busy, setBusy] = useState(false)
@@ -45,6 +46,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const [oauthBusy, setOauthBusy] = useState(false)
   const preparingSignInIdRef = useRef<string | null>(null)
   const preparedSignInIdRef = useRef<string | null>(null)
+  const googleAvailable = isGoogleOauthAvailable(clerk)
 
   const finalizeAndRedirect = useCallback(async () => {
     if (!signIn) return
@@ -53,7 +55,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         if (session?.currentTask) {
           return
         }
-        const url = decorateUrl(getDefaultAuthenticatedPath())
+        const url = decorateUrl(routes.authContinue)
         if (url.startsWith('http')) {
           window.location.href = url
         } else {
@@ -255,7 +257,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
     try {
       const { error } = await signIn.sso({
         strategy: 'oauth_google',
-        redirectUrl: getDefaultAuthenticatedPath(),
+        redirectUrl: routes.authContinue,
         redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {
@@ -522,36 +524,40 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
   return (
     <div className={cn('space-y-6', className)}>
-      <div className="space-y-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="w-full"
-          disabled={isSigningIn}
-          onClick={() => void handleGoogleSignIn()}
-        >
-          <GoogleMark />
-          {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
-        </Button>
-        {oauthError ? (
-          <p className="text-sm text-destructive" role="alert">
-            {oauthError}
-          </p>
-        ) : null}
-      </div>
+      {googleAvailable ? (
+        <>
+          <div className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              disabled={isSigningIn}
+              onClick={() => void handleGoogleSignIn()}
+            >
+              <GoogleMark />
+              {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
+            </Button>
+            {oauthError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {oauthError}
+              </p>
+            ) : null}
+          </div>
 
-      <div
-        className="relative flex items-center gap-3"
-        role="separator"
-        aria-label={t('orContinueWithEmail')}
-      >
-        <div className="bg-border h-px flex-1" />
-        <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
-          {t('orContinueWithEmail')}
-        </span>
-        <div className="bg-border h-px flex-1" />
-      </div>
+          <div
+            className="relative flex items-center gap-3"
+            role="separator"
+            aria-label={t('orContinueWithEmail')}
+          >
+            <div className="bg-border h-px flex-1" />
+            <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
+              {t('orContinueWithEmail')}
+            </span>
+            <div className="bg-border h-px flex-1" />
+          </div>
+        </>
+      ) : null}
 
       <form onSubmit={handleEmailSubmit} className="space-y-8">
         <FieldGroup>

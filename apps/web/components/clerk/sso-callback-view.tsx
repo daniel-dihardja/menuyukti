@@ -1,7 +1,6 @@
 'use client'
 
 import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs'
-import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
@@ -16,7 +15,7 @@ export function SsoCallbackView() {
   const { signUp } = useSignUp()
   const router = useRouter()
   const hasRun = useRef(false)
-  const homePath = getDefaultAuthenticatedPath()
+  const homePath = routes.authContinue
 
   const navigateToSignIn = () => {
     router.push(routes.login)

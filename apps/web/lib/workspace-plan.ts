@@ -5,19 +5,51 @@ export const WORKSPACE_PLAN_PRO = 'pro' as const
 
 export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_PRO
 
-/** Sidebar `NavItem.key` values visible on the free plan. */
-export const FREE_NAV_KEYS = new Set(['branches', 'inventar', 'team', 'usage'])
+/**
+ * Product tiers (Menuyukti = creative agency for restaurants, cafés, and bars):
+ *
+ * - **free** — guest / customer accounts (mainly PWA). Guest home + profile.
+ * - **pro** — restaurant-owner clients; agency-provisioned, typically complimentary.
+ *   Full operator product surface (everything free does not include).
+ */
 
 /**
- * Path prefixes allowed for free workspaces.
- * Report detail pages under `/analytics/<id>/…` are allowed separately.
+ * Sidebar `NavItem.key` values visible on the free plan.
+ * Profile stays in the account menu; Home is the only sidenav item.
  */
-export const FREE_ROUTE_PREFIXES = [
-  '/analytics/locations',
-  '/inventar',
-  '/profile',
-  '/usage',
-] as const
+export const FREE_NAV_KEYS = new Set<string>(['home'])
+
+/**
+ * Path prefixes allowed for free (guest) workspaces.
+ * `/continue` is the plan-aware post-auth redirect; `/profile/team` is blocked separately.
+ */
+export const FREE_ROUTE_PREFIXES = ['/home', '/continue', '/profile'] as const
+
+/** Paths under `/profile` that free workspaces must not access. */
+const FREE_PROFILE_BLOCKED_PREFIXES = ['/profile/team'] as const
+
+/**
+ * Operator sidebar keys that pro always receives (contrast with free’s Home-only nav).
+ * Kept for documentation and tests; {@link isNavKeyAllowedForPlan} allows all keys on pro
+ * except `home` (guest-only).
+ */
+export const PRO_NAV_KEYS = new Set([
+  'dashboard',
+  'chat',
+  'playbooks',
+  'posts',
+  'media',
+  'calendar',
+  'branches',
+  'crm',
+  'crmApps',
+  'crmRegistrations',
+  'printShop',
+  'inventar',
+  'team',
+  'usage',
+  // `staff` stays admin-gated separately
+])
 
 export function normalizeWorkspacePlan(plan: string | null | undefined): WorkspacePlan {
   return plan === WORKSPACE_PLAN_PRO ? WORKSPACE_PLAN_PRO : WORKSPACE_PLAN_FREE
@@ -28,6 +60,10 @@ export function isProPlan(plan: string | null | undefined): boolean {
 }
 
 export function isNavKeyAllowedForPlan(navKey: string, plan: string | null | undefined): boolean {
+  // Guest home is free-only — operators stay chat-first without a redundant Home entry.
+  if (navKey === 'home') {
+    return !isProPlan(plan)
+  }
   if (isProPlan(plan)) return true
   return FREE_NAV_KEYS.has(navKey)
 }
@@ -41,29 +77,33 @@ function normalizePathname(pathname: string): string {
   return base
 }
 
-/** `/analytics/123` or `/analytics/123/matrix` — sales report detail routes. */
-function isAnalyticsReportDetailPath(path: string): boolean {
-  return /^\/analytics\/\d+(\/|$)/.test(path)
-}
-
+/**
+ * Free: guest home, post-auth continue, and profile (+ account settings).
+ * Pro: unrestricted — full operator app (locations, inventar, advisor, usage, team, …).
+ */
 export function isPathnameAllowedForPlan(
   pathname: string,
   plan: string | null | undefined,
 ): boolean {
   if (isProPlan(plan)) return true
   const path = normalizePathname(pathname)
+  for (const blocked of FREE_PROFILE_BLOCKED_PREFIXES) {
+    if (path === blocked || path.startsWith(`${blocked}/`)) {
+      return false
+    }
+  }
   for (const prefix of FREE_ROUTE_PREFIXES) {
     if (path === prefix || path.startsWith(`${prefix}/`)) {
       return true
     }
   }
-  return isAnalyticsReportDetailPath(path)
+  return false
 }
 
-/** Post-login / brand home for the workspace plan. */
+/** Post-login / brand home: guests → `/home`; restaurant clients → advisor. */
 export function getDefaultPathForPlan(plan: string | null | undefined): string {
   if (isProPlan(plan)) {
     return routes.agent
   }
-  return routes.analytics.branches
+  return routes.home
 }

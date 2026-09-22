@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-import { getDefaultAuthenticatedPath, isPathnameFeatureEnabled } from '@/lib/feature-flags'
+import { isPathnameFeatureEnabled } from '@/lib/feature-flags'
 import { shouldRedirectPendingSession } from '@/lib/middleware-pending-session'
 import { routes } from '@/lib/routes'
 
@@ -19,6 +19,8 @@ const isProtectedRoute = createRouteMatcher([
   '/crm(.*)',
   '/print-orders(.*)',
   '/dashboard(.*)',
+  '/home(.*)',
+  '/continue(.*)',
   '/staff(.*)',
   '/usage(.*)',
   '/profile(.*)',
@@ -39,7 +41,8 @@ function nextWithPathname(req: Request, pathname: string): NextResponse {
 export default clerkMiddleware(async (auth, req) => {
   const { sessionStatus, userId } = await auth()
   const pathname = req.nextUrl.pathname
-  const homePath = getDefaultAuthenticatedPath()
+  /** Plan-aware post-auth landing (resolves free → `/home`, pro → `/advisor`). */
+  const continuePath = routes.authContinue
 
   // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
   if (shouldRedirectPendingSession(pathname, sessionStatus)) {
@@ -48,11 +51,11 @@ export default clerkMiddleware(async (auth, req) => {
 
   if (!isProtectedRoute(req)) {
     if (pathname === '/' && userId) {
-      return NextResponse.redirect(new URL(homePath, req.url))
+      return NextResponse.redirect(new URL(continuePath, req.url))
     }
     // Public surfaces (e.g. /shop) can still be feature-disabled.
-    if (userId && !isPathnameFeatureEnabled(pathname) && pathname !== homePath) {
-      return NextResponse.redirect(new URL(homePath, req.url))
+    if (userId && !isPathnameFeatureEnabled(pathname) && pathname !== continuePath) {
+      return NextResponse.redirect(new URL(continuePath, req.url))
     }
     return nextWithPathname(req, pathname)
   }
@@ -60,8 +63,8 @@ export default clerkMiddleware(async (auth, req) => {
   const signInUrl = new URL(routes.login, req.url).href
   await auth.protect({ unauthenticatedUrl: signInUrl })
 
-  if (!isPathnameFeatureEnabled(pathname) && pathname !== homePath) {
-    return NextResponse.redirect(new URL(homePath, req.url))
+  if (!isPathnameFeatureEnabled(pathname) && pathname !== continuePath) {
+    return NextResponse.redirect(new URL(continuePath, req.url))
   }
 
   return nextWithPathname(req, pathname)

@@ -14,7 +14,6 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
-import { Checkbox } from '@workspace/ui/components/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -22,57 +21,37 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@workspace/ui/components/dialog'
-import { Input } from '@workspace/ui/components/input'
-import { Label } from '@workspace/ui/components/label'
-import { Textarea } from '@workspace/ui/components/textarea'
-import { cn } from '@workspace/ui/lib/utils'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@workspace/ui/components/sheet'
+import { Spinner } from '@workspace/ui/components/spinner'
 
 import type {
   LocationMenu,
   LocationMenuItem,
   LocationMenuModifierGroup,
 } from '@/lib/graphql/queries/location-menu'
-import type {
-  PosDaySummary,
-  PosOrder,
-  PosOrderStatus,
-  PosPaymentMethod,
-} from '@/lib/graphql/queries/pos-orders'
+import type { PosDaySummary, PosOrder, PosPaymentMethod } from '@/lib/graphql/queries/pos-orders'
 import { formatCurrency } from '@/lib/currency'
 
+import { PosCartPanel } from './pos-cart-panel'
+import { PosCollapseSidebar } from './pos-collapse-sidebar'
+import { PosCustomizeDialog } from './pos-customize-dialog'
 import { PosKitchenTicket } from './pos-kitchen-ticket'
+import { PosMenuGrid } from './pos-menu-grid'
+import { PosOpsSheet } from './pos-ops-sheet'
 import { PosReceipt } from './pos-receipt'
-
-type TodayFilter = 'all' | PosOrderStatus
-type DiscountMode = 'amount' | 'percent'
-
-const TODAY_FILTERS: TodayFilter[] = ['all', 'OPEN', 'PAID', 'VOID', 'REFUNDED']
-
-function roundMoney(value: number): number {
-  return Math.round(value * 100) / 100
-}
-
-function todayIsoDate(): string {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-function truncateClerkId(id: string, max = 8): string {
-  if (id.length <= max) return id
-  return `${id.slice(0, max)}…`
-}
-
-function availableModifierGroups(item: LocationMenuItem): LocationMenuModifierGroup[] {
-  return (item.modifierGroups ?? [])
-    .map((group) => ({
-      ...group,
-      options: group.options.filter((option) => option.isAvailable),
-    }))
-    .filter((group) => group.options.length > 0)
-}
+import {
+  availableModifierGroups,
+  type DiscountMode,
+  roundMoney,
+  todayIsoDate,
+  type TodayFilter,
+} from './pos-utils'
 
 type PosCashierProps = {
   locationId: number
@@ -125,6 +104,9 @@ export function PosCashier({
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [kitchenOpen, setKitchenOpen] = useState(false)
   const [refundConfirmOpen, setRefundConfirmOpen] = useState(false)
+  const [voidConfirmOpen, setVoidConfirmOpen] = useState(false)
+  const [cartSheetOpen, setCartSheetOpen] = useState(false)
+  const [opsSheetOpen, setOpsSheetOpen] = useState(false)
   const [customizeItem, setCustomizeItem] = useState<LocationMenuItem | null>(null)
   const [selectedOptionIds, setSelectedOptionIds] = useState<Record<number, number[]>>({})
   const [lineNoteDraft, setLineNoteDraft] = useState('')
@@ -161,6 +143,7 @@ export function PosCashier({
   const subtotal = currentOrder?.lines.reduce((sum, line) => sum + line.lineTotal, 0) ?? 0
   const discount = currentOrder?.discountAmount ?? 0
   const total = Math.max(0, subtotal - discount)
+  const lineCount = currentOrder?.lines?.length ?? 0
   const discountInputValue = Number(discountInput)
   const percentPreviewAmount =
     discountMode === 'percent' &&
@@ -230,10 +213,6 @@ export function PosCashier({
     showOrder(order)
     await refreshToday(order.id)
     return order
-  }
-
-  const handleSelectTicket = (order: PosOrder) => {
-    showOrder(order)
   }
 
   const openCustomizeDialog = (item: LocationMenuItem) => {
@@ -432,6 +411,7 @@ export function PosCashier({
       toast.success(t('paidToast', { bill: paid.billNumber }))
       showOrder(paid)
       await refreshToday(paid.id)
+      setCartSheetOpen(false)
       setReceiptOpen(true)
     })
   }
@@ -444,6 +424,7 @@ export function PosCashier({
         orderId: currentOrder.id,
       })
       toast.success(t('voidedToast'))
+      setVoidConfirmOpen(false)
       showOrder(voided)
       await refreshToday(voided.id)
     })
@@ -478,641 +459,240 @@ export function PosCashier({
     })
   }
 
+  const cartPanelProps = {
+    currentOrder,
+    currencyCode,
+    pending,
+    isEditable,
+    canShowReceipt,
+    canShowKitchen,
+    canRefund,
+    subtotal,
+    discount,
+    total,
+    discountInput,
+    discountMode,
+    percentPreviewAmount,
+    tableLabelInput,
+    payOpen,
+    editingNoteLineId,
+    editNoteDraft,
+    onTableLabelInputChange: setTableLabelInput,
+    onDiscountInputChange: setDiscountInput,
+    onDiscountModeChange: handleDiscountModeChange,
+    onEditNoteDraftChange: setEditNoteDraft,
+    onStartEditNote: (lineId: number, note: string | null) => {
+      setEditingNoteLineId(lineId)
+      setEditNoteDraft(note ?? '')
+    },
+    onCancelEditNote: () => {
+      setEditingNoteLineId(null)
+      setEditNoteDraft('')
+    },
+    onNewTicket: handleNewTicket,
+    onApplyTableLabel: handleApplyTableLabel,
+    onClearTableLabel: handleClearTableLabel,
+    onUpdateQty: handleUpdateQty,
+    onRemoveLine: handleRemoveLine,
+    onSaveLineNote: handleSaveLineNote,
+    onApplyDiscount: handleApplyDiscount,
+    onPayOpen: () => setPayOpen(true),
+    onPayCancel: () => setPayOpen(false),
+    onPay: handlePay,
+    // Close cart sheet first so Dialog/AlertDialog (z-50) is not trapped under Sheet.
+    onKitchen: () => {
+      setCartSheetOpen(false)
+      setKitchenOpen(true)
+    },
+    onVoid: () => {
+      setCartSheetOpen(false)
+      setVoidConfirmOpen(true)
+    },
+    onReceipt: () => {
+      setCartSheetOpen(false)
+      setReceiptOpen(true)
+    },
+    onRefund: () => {
+      setCartSheetOpen(false)
+      setRefundConfirmOpen(true)
+    },
+    onOps: () => setOpsSheetOpen(true),
+  } as const
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(20rem,0.9fr)]">
-      <section className="flex min-w-0 flex-col gap-4">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant={selectedCategoryId === 'all' ? 'default' : 'outline'}
-            onClick={() => setSelectedCategoryId('all')}
-          >
-            {t('allCategories')}
-          </Button>
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              type="button"
-              size="sm"
-              variant={selectedCategoryId === category.id ? 'default' : 'outline'}
-              onClick={() => setSelectedCategoryId(category.id)}
-            >
-              {category.name}
-            </Button>
-          ))}
+    <>
+      <PosCollapseSidebar />
+      {/* Fill viewport below the shell header (h-16); keep ticket actions pinned. */}
+      <div className="flex min-h-0 flex-1 flex-col lg:h-full lg:overflow-hidden">
+        <div className="grid min-h-0 gap-4 pb-24 lg:h-full lg:grid-cols-[minmax(0,1.4fr)_minmax(22rem,0.9fr)] lg:gap-4 lg:overflow-hidden lg:pb-0">
+          <PosMenuGrid
+            categories={categories}
+            filteredItems={filteredItems}
+            selectedCategoryId={selectedCategoryId}
+            onCategoryChange={setSelectedCategoryId}
+            currencyCode={currencyCode}
+            pending={pending}
+            onAddItem={handleAddItem}
+          />
+
+          <aside className="hidden min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background p-4 lg:flex lg:h-full">
+            <PosCartPanel {...cartPanelProps} stickyActions />
+          </aside>
         </div>
+      </div>
 
-        {filteredItems.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('emptyMenu')}</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-            {filteredItems.map((item) => {
-              const hasModifiers = availableModifierGroups(item).length > 0
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    'flex min-h-24 flex-col rounded-lg border bg-background text-left',
-                    'focus-within:ring-2 focus-within:ring-ring',
-                  )}
-                >
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => handleAddItem(item)}
-                    className={cn(
-                      'flex min-h-20 flex-1 flex-col items-start justify-between p-3 text-left transition-colors',
-                      'hover:bg-muted/40 focus-visible:outline-none',
-                      'disabled:opacity-50',
-                    )}
-                  >
-                    <span className="text-sm font-medium leading-snug">{item.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {formatCurrency(item.price, currencyCode)}
-                      {hasModifiers ? (
-                        <span className="ml-1 text-xs">{t('hasModifiers')}</span>
-                      ) : null}
-                    </span>
-                  </button>
-                  {!hasModifiers ? (
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => handleAddItem(item, true)}
-                      className="border-t px-3 py-1.5 text-left text-xs text-muted-foreground hover:bg-muted/40 disabled:opacity-50"
-                    >
-                      {t('addWithNote')}
-                    </button>
-                  ) : null}
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
-
-      <aside className="flex min-w-0 flex-col gap-4 rounded-lg border bg-background p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-base font-semibold">{t('currentTicket')}</h2>
-            {currentOrder ? (
-              <p className="text-xs text-muted-foreground">
-                {currentOrder.billNumber}
-                {currentOrder.status !== 'OPEN'
-                  ? ` · ${t(`status.${currentOrder.status.toLowerCase()}`)}`
-                  : null}
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t('noOpenTicket')}</p>
-            )}
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            disabled={pending}
-            onClick={handleNewTicket}
-          >
-            {t('newTicket')}
-          </Button>
-        </div>
-
-        {currentOrder && isEditable ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('tableLabel')}</span>
-            <Input
-              type="text"
-              maxLength={64}
-              value={tableLabelInput}
-              onChange={(e) => setTableLabelInput(e.target.value)}
-              disabled={pending}
-              placeholder={t('tableLabelPlaceholder')}
-              aria-label={t('tableLabel')}
-              className="h-8 max-w-[10rem]"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-8"
-              disabled={pending}
-              onClick={handleApplyTableLabel}
-            >
-              {t('applyTableLabel')}
-            </Button>
-            {currentOrder.tableLabel ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="h-8"
-                disabled={pending}
-                onClick={handleClearTableLabel}
-              >
-                {t('clearTableLabel')}
-              </Button>
-            ) : null}
-          </div>
-        ) : currentOrder?.tableLabel ? (
-          <p className="text-xs text-muted-foreground">
-            {t('tableLabelReadOnly', { label: currentOrder.tableLabel })}
-          </p>
-        ) : null}
-
-        {currentOrder && currentOrder.status !== 'OPEN' ? (
-          <p className="text-xs text-muted-foreground">{t('readOnlyHint')}</p>
-        ) : null}
-
-        <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
-          {(currentOrder?.lines ?? []).map((line) => (
-            <li
-              key={line.id}
-              className="flex flex-col gap-1 border-b border-border/60 py-2 last:border-0"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{line.nameSnapshot}</p>
-                  {(line.modifiers ?? []).length > 0 ? (
-                    <ul className="mt-0.5 space-y-0.5 text-xs text-muted-foreground">
-                      {(line.modifiers ?? []).map((modifier) => (
-                        <li key={modifier.id}>+ {modifier.nameSnapshot}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {line.note && editingNoteLineId !== line.id ? (
-                    <p className="mt-0.5 text-xs italic text-muted-foreground">
-                      {t('lineNote')}: {line.note}
-                    </p>
-                  ) : null}
-                  <p className="text-xs text-muted-foreground">
-                    {formatCurrency(line.unitPrice, currencyCode)}
-                    {!isEditable ? ` × ${line.qty}` : null}
-                  </p>
-                </div>
-                {isEditable ? (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="outline"
-                      className="size-8"
-                      disabled={pending || line.qty <= 1}
-                      onClick={() => handleUpdateQty(line.id, line.qty - 1)}
-                      aria-label={t('decreaseQty')}
-                    >
-                      −
-                    </Button>
-                    <span className="w-6 text-center text-sm tabular-nums">{line.qty}</span>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="outline"
-                      className="size-8"
-                      disabled={pending}
-                      onClick={() => handleUpdateQty(line.id, line.qty + 1)}
-                      aria-label={t('increaseQty')}
-                    >
-                      +
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={pending}
-                      onClick={() => handleRemoveLine(line.id)}
-                    >
-                      {t('remove')}
-                    </Button>
-                  </div>
-                ) : (
-                  <span className="shrink-0 text-sm tabular-nums">
-                    {formatCurrency(line.lineTotal, currencyCode)}
-                  </span>
-                )}
-              </div>
-              {isEditable ? (
-                editingNoteLineId === line.id ? (
-                  <div className="flex flex-col gap-1.5">
-                    <Textarea
-                      value={editNoteDraft}
-                      onChange={(e) => setEditNoteDraft(e.target.value)}
-                      disabled={pending}
-                      rows={2}
-                      placeholder={t('lineNotePlaceholder')}
-                      aria-label={t('lineNote')}
-                    />
-                    <div className="flex gap-1.5">
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={pending}
-                        onClick={() => handleSaveLineNote(line.id)}
-                      >
-                        {t('saveLineNote')}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        disabled={pending}
-                        onClick={() => {
-                          setEditingNoteLineId(null)
-                          setEditNoteDraft('')
-                        }}
-                      >
-                        {t('cancelLineNote')}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 self-start px-2 text-xs"
-                    disabled={pending}
-                    onClick={() => {
-                      setEditingNoteLineId(line.id)
-                      setEditNoteDraft(line.note ?? '')
-                    }}
-                  >
-                    {line.note ? t('editLineNote') : t('addLineNote')}
-                  </Button>
-                )
-              ) : null}
-            </li>
-          ))}
-          {!currentOrder?.lines?.length ? (
-            <li className="py-6 text-center text-sm text-muted-foreground">{t('emptyCart')}</li>
-          ) : null}
-        </ul>
-
-        <div className="space-y-2 border-t pt-3">
-          <div className="flex items-center justify-between text-sm">
-            <span>{t('subtotal')}</span>
-            <span className="tabular-nums">{formatCurrency(subtotal, currencyCode)}</span>
-          </div>
-          {isEditable ? (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="shrink-0">{t('discount')}</span>
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <div className="flex rounded-md border p-0.5">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={discountMode === 'amount' ? 'secondary' : 'ghost'}
-                      className="h-7 px-2 text-xs"
-                      disabled={!currentOrder || pending}
-                      onClick={() => handleDiscountModeChange('amount')}
-                    >
-                      {t('discountAmount')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={discountMode === 'percent' ? 'secondary' : 'ghost'}
-                      className="h-7 px-2 text-xs"
-                      disabled={!currentOrder || pending}
-                      onClick={() => handleDiscountModeChange('percent')}
-                    >
-                      {t('discountPercent')}
-                    </Button>
-                  </div>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={discountMode === 'percent' ? 100 : undefined}
-                    step={discountMode === 'percent' ? '0.1' : '0.01'}
-                    value={discountInput}
-                    onChange={(e) => setDiscountInput(e.target.value)}
-                    disabled={!currentOrder || pending}
-                    aria-label={t('discount')}
-                    className="h-9 w-24 text-right tabular-nums"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={!currentOrder || pending}
-                    onClick={handleApplyDiscount}
-                  >
-                    {t('applyDiscount')}
-                  </Button>
-                </div>
-              </div>
-              {discountMode === 'percent' && percentPreviewAmount != null ? (
-                <p className="text-right text-xs text-muted-foreground">
-                  {t('discountPercentHint', {
-                    amount: formatCurrency(percentPreviewAmount, currencyCode),
-                  })}
-                </p>
-              ) : null}
-            </div>
-          ) : discount > 0 ? (
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{t('discount')}</span>
-              <span className="tabular-nums">−{formatCurrency(discount, currencyCode)}</span>
-            </div>
-          ) : null}
-          <div className="flex items-center justify-between text-base font-semibold">
-            <span>{t('total')}</span>
-            <span className="tabular-nums">{formatCurrency(total, currencyCode)}</span>
-          </div>
-        </div>
-
-        {isEditable ? (
-          <div className="flex flex-col gap-2">
-            {!payOpen ? (
-              <Button
-                type="button"
-                disabled={!currentOrder?.lines.length || pending}
-                onClick={() => setPayOpen(true)}
-              >
-                {t('pay')}
-              </Button>
-            ) : (
+      {/* Mobile sticky checkout strip */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+        <div className="mx-auto flex max-w-3xl flex-col gap-2">
+          {isEditable && payOpen ? (
+            <div className="flex flex-col gap-2">
               <div className="grid grid-cols-3 gap-2">
                 {(['CASH', 'CARD', 'OTHER'] as const).map((method) => (
                   <Button
                     key={method}
                     type="button"
-                    disabled={pending}
+                    size="lg"
+                    disabled={pending || !lineCount}
                     onClick={() => handlePay(method)}
                   >
+                    {pending ? <Spinner data-icon="inline-start" /> : null}
                     {t(`payment.${method.toLowerCase()}`)}
                   </Button>
                 ))}
               </div>
-            )}
-            {canShowKitchen ? (
               <Button
                 type="button"
+                size="lg"
                 variant="outline"
                 disabled={pending}
-                onClick={() => setKitchenOpen(true)}
+                onClick={() => setPayOpen(false)}
               >
-                {t('kitchenPrint')}
+                {t('payCancel')}
               </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!currentOrder || pending}
-              onClick={handleVoid}
-            >
-              {t('void')}
-            </Button>
-          </div>
-        ) : canShowReceipt || canShowKitchen ? (
-          <div className="flex flex-col gap-2">
-            {canShowReceipt ? (
-              <Button type="button" disabled={pending} onClick={() => setReceiptOpen(true)}>
-                {t('receipt')}
-              </Button>
-            ) : null}
-            {canShowKitchen ? (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pending}
-                onClick={() => setKitchenOpen(true)}
-              >
-                {t('kitchenPrint')}
-              </Button>
-            ) : null}
-            {canRefund ? (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pending}
-                onClick={() => setRefundConfirmOpen(true)}
-              >
-                {t('refund')}
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="border-t pt-3">
-          <h3 className="mb-2 text-sm font-semibold">{t('todayTitle')}</h3>
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {TODAY_FILTERS.map((filter) => (
-              <Button
-                key={filter}
-                type="button"
-                size="sm"
-                variant={todayFilter === filter ? 'default' : 'outline'}
-                className="h-7 px-2 text-xs"
-                onClick={() => setTodayFilter(filter)}
-              >
-                {filter === 'all' ? t('todayFilterAll') : t(`status.${filter.toLowerCase()}`)}
-              </Button>
-            ))}
-          </div>
-          <ul className="flex max-h-40 flex-col gap-1 overflow-y-auto text-sm">
-            {filteredTodayOrders.length === 0 ? (
-              <li className="text-muted-foreground">
-                {todayOrders.length === 0 ? t('todayEmpty') : t('todayFilterEmpty')}
-              </li>
-            ) : (
-              filteredTodayOrders.map((order) => {
-                const selected = currentOrder?.id === order.id
-                return (
-                  <li key={order.id}>
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => handleSelectTicket(order)}
-                      aria-pressed={selected}
-                      className={cn(
-                        'flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
-                        'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                        selected && 'bg-muted',
-                        'disabled:opacity-50',
-                      )}
-                    >
-                      <span className="min-w-0 truncate font-medium">
-                        {order.billNumber}
-                        {order.tableLabel ? (
-                          <span className="font-normal text-muted-foreground">
-                            {' '}
-                            ·{' '}
-                            {order.tableLabel.length > 12
-                              ? `${order.tableLabel.slice(0, 12)}…`
-                              : order.tableLabel}
-                          </span>
-                        ) : null}
-                        {order.openedByClerkUserId ? (
-                          <span className="font-normal text-muted-foreground">
-                            {' '}
-                            · {truncateClerkId(order.openedByClerkUserId)}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="shrink-0 text-muted-foreground">
-                        {t(`status.${order.status.toLowerCase()}`)}
-                      </span>
-                    </button>
-                  </li>
-                )
-              })
-            )}
-          </ul>
-        </div>
-
-        <div className="border-t pt-3">
-          <h3 className="mb-2 text-sm font-semibold">{t('dayCloseTitle')}</h3>
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              type="date"
-              value={dayCloseDate}
-              onChange={(e) => setDayCloseDate(e.target.value)}
-              disabled={pending}
-              aria-label={t('dayCloseDate')}
-              className="h-9 w-auto"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={pending || !dayCloseDate}
-              onClick={handleLoadDaySummary}
-            >
-              {t('dayCloseLoad')}
-            </Button>
-          </div>
-          {daySummary ? (
-            <div className="mt-3 space-y-1.5 text-xs">
-              <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                <dt className="text-muted-foreground">{t('dayCloseOpen')}</dt>
-                <dd className="text-right tabular-nums">{daySummary.openCount}</dd>
-                <dt className="text-muted-foreground">{t('dayClosePaid')}</dt>
-                <dd className="text-right tabular-nums">{daySummary.paidCount}</dd>
-                <dt className="text-muted-foreground">{t('dayCloseVoid')}</dt>
-                <dd className="text-right tabular-nums">{daySummary.voidCount}</dd>
-                <dt className="text-muted-foreground">{t('dayCloseRefunded')}</dt>
-                <dd className="text-right tabular-nums">{daySummary.refundedCount}</dd>
-                <dt className="text-muted-foreground">{t('dayCloseDiscount')}</dt>
-                <dd className="text-right tabular-nums">
-                  {formatCurrency(daySummary.paidDiscountTotal, currencyCode)}
-                </dd>
-                <dt className="text-muted-foreground">{t('dayCloseRefundedGross')}</dt>
-                <dd className="text-right tabular-nums">
-                  {formatCurrency(daySummary.refundedGrossTotal, currencyCode)}
-                </dd>
-                <dt className="text-muted-foreground">{t('dayCloseOpenRemaining')}</dt>
-                <dd className="text-right tabular-nums">{daySummary.openTicketsRemaining}</dd>
-              </dl>
-              {daySummary.paidByPaymentMethod.length > 0 ? (
-                <ul className="space-y-1 border-t border-border/50 pt-1.5">
-                  {daySummary.paidByPaymentMethod.map((row) => (
-                    <li key={row.paymentMethod} className="flex items-center justify-between gap-2">
-                      <span className="text-muted-foreground">
-                        {t(`payment.${row.paymentMethod.toLowerCase()}`)} ({row.ticketCount})
-                      </span>
-                      <span className="tabular-nums">
-                        {formatCurrency(row.grossTotal, currencyCode)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
             </div>
           ) : (
-            <p className="mt-2 text-xs text-muted-foreground">{t('dayCloseEmpty')}</p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="min-w-0 flex-1"
+                onClick={() => setCartSheetOpen(true)}
+              >
+                {t('cartSheetTrigger', {
+                  count: lineCount,
+                  total: formatCurrency(total, currencyCode),
+                })}
+              </Button>
+              {isEditable ? (
+                <Button
+                  type="button"
+                  size="lg"
+                  className="shrink-0"
+                  disabled={!lineCount || pending}
+                  onClick={() => setPayOpen(true)}
+                >
+                  {pending ? <Spinner data-icon="inline-start" /> : null}
+                  {t('pay')}
+                </Button>
+              ) : canShowReceipt ? (
+                <Button
+                  type="button"
+                  size="lg"
+                  className="shrink-0"
+                  disabled={pending}
+                  onClick={() => {
+                    setCartSheetOpen(false)
+                    setReceiptOpen(true)
+                  }}
+                >
+                  {t('receipt')}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="lg"
+                  variant="secondary"
+                  className="shrink-0"
+                  disabled={pending}
+                  onClick={handleNewTicket}
+                >
+                  {pending ? <Spinner data-icon="inline-start" /> : null}
+                  {t('newTicket')}
+                </Button>
+              )}
+              {canShowKitchen ? (
+                <Button
+                  type="button"
+                  size="lg"
+                  variant="outline"
+                  className="shrink-0"
+                  disabled={pending}
+                  onClick={() => {
+                    setCartSheetOpen(false)
+                    setKitchenOpen(true)
+                  }}
+                >
+                  {t('kitchenPrintShort')}
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => setOpsSheetOpen(true)}
+              >
+                {t('opsSheetTrigger')}
+              </Button>
+            </div>
           )}
         </div>
-      </aside>
+      </div>
 
-      <Dialog
-        open={customizeItem != null}
+      <Sheet open={cartSheetOpen} onOpenChange={setCartSheetOpen}>
+        <SheetContent side="bottom" className="flex max-h-[90dvh] flex-col gap-0 sm:max-w-none">
+          <SheetHeader>
+            <SheetTitle>{t('cartSheetTitle')}</SheetTitle>
+            <SheetDescription>{t('cartSheetDescription')}</SheetDescription>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+            <PosCartPanel {...cartPanelProps} showHeaderActions stickyActions={false} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <PosOpsSheet
+        open={opsSheetOpen}
+        onOpenChange={setOpsSheetOpen}
+        todayOrders={todayOrders}
+        filteredTodayOrders={filteredTodayOrders}
+        todayFilter={todayFilter}
+        onTodayFilterChange={setTodayFilter}
+        currentOrderId={currentOrder?.id ?? null}
+        pending={pending}
+        currencyCode={currencyCode}
+        dayCloseDate={dayCloseDate}
+        daySummary={daySummary}
+        onDayCloseDateChange={setDayCloseDate}
+        onLoadDaySummary={handleLoadDaySummary}
+        onSelectTicket={showOrder}
+      />
+
+      <PosCustomizeDialog
+        item={customizeItem}
+        groups={customizeGroups}
+        selectedOptionIds={selectedOptionIds}
+        lineNoteDraft={lineNoteDraft}
+        currencyCode={currencyCode}
+        pending={pending}
         onOpenChange={(open) => {
           if (!open) setCustomizeItem(null)
         }}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {customizeItem
-                ? t('customizeTitle', { name: customizeItem.name })
-                : t('customizeTitleFallback')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-4">
-            {customizeGroups.map((group) => (
-              <fieldset key={group.id} className="space-y-2">
-                <legend className="text-sm font-medium">
-                  {group.name}
-                  <span className="ml-1 font-normal text-muted-foreground">
-                    {t('modifierSelectHint', { min: group.minSelect, max: group.maxSelect })}
-                  </span>
-                </legend>
-                <div className="flex flex-col gap-2">
-                  {group.options.map((option) => {
-                    const selected = (selectedOptionIds[group.id] ?? []).includes(option.id)
-                    const inputId = `mod-${group.id}-${option.id}`
-                    return (
-                      <div key={option.id} className="flex items-center gap-2">
-                        {group.maxSelect <= 1 ? (
-                          <input
-                            id={inputId}
-                            type="radio"
-                            name={`group-${group.id}`}
-                            checked={selected}
-                            disabled={pending}
-                            onChange={() => toggleOption(group, option.id)}
-                            className="size-4"
-                          />
-                        ) : (
-                          <Checkbox
-                            id={inputId}
-                            checked={selected}
-                            disabled={pending}
-                            onCheckedChange={() => toggleOption(group, option.id)}
-                          />
-                        )}
-                        <Label
-                          htmlFor={inputId}
-                          className="flex flex-1 cursor-pointer justify-between gap-2"
-                        >
-                          <span>{option.name}</span>
-                          {option.priceDelta !== 0 ? (
-                            <span className="tabular-nums text-muted-foreground">
-                              {option.priceDelta > 0 ? '+' : ''}
-                              {formatCurrency(option.priceDelta, currencyCode)}
-                            </span>
-                          ) : null}
-                        </Label>
-                      </div>
-                    )
-                  })}
-                </div>
-              </fieldset>
-            ))}
-            <div className="space-y-1.5">
-              <Label htmlFor="pos-line-note">{t('lineNote')}</Label>
-              <Textarea
-                id="pos-line-note"
-                value={lineNoteDraft}
-                onChange={(e) => setLineNoteDraft(e.target.value)}
-                disabled={pending}
-                rows={2}
-                placeholder={t('lineNotePlaceholder')}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setCustomizeItem(null)}>
-              {t('customizeCancel')}
-            </Button>
-            <Button type="button" disabled={pending} onClick={handleConfirmCustomize}>
-              {t('customizeAdd')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onToggleOption={toggleOption}
+        onLineNoteChange={setLineNoteDraft}
+        onConfirm={handleConfirmCustomize}
+      />
 
       <Dialog open={receiptOpen && canShowReceipt} onOpenChange={setReceiptOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md print:fixed print:inset-0 print:max-h-none print:max-w-none print:translate-x-0 print:translate-y-0 print:rounded-none print:border-0 print:shadow-none">
@@ -1156,6 +736,31 @@ export function PosCashier({
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={voidConfirmOpen} onOpenChange={setVoidConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('voidConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {currentOrder ? t('voidConfirmDescription', { bill: currentOrder.billNumber }) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button" disabled={pending}>
+              {t('voidCancel')}
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={pending || !isEditable}
+              onClick={handleVoid}
+            >
+              {pending ? <Spinner data-icon="inline-start" /> : null}
+              {t('voidConfirm')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={refundConfirmOpen} onOpenChange={setRefundConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1176,6 +781,7 @@ export function PosCashier({
               disabled={pending || !canRefund}
               onClick={handleRefund}
             >
+              {pending ? <Spinner data-icon="inline-start" /> : null}
               {t('refundConfirm')}
             </Button>
           </AlertDialogFooter>
@@ -1204,6 +810,6 @@ export function PosCashier({
           }
         }
       `}</style>
-    </div>
+    </>
   )
 }

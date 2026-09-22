@@ -4,9 +4,9 @@ import { useAuth, useClerk, useSignUp } from '@clerk/nextjs'
 import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
-import { getDefaultAuthenticatedPath } from '@/lib/feature-flags'
 import { routes } from '@/lib/routes'
 import { GoogleMark } from '@/components/clerk/google-mark'
+import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { cn } from '@workspace/ui/lib/utils'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 type Step = 'email' | 'code'
 
 function navigateHome(decorateUrl: (url: string) => string): void {
-  const url = decorateUrl(getDefaultAuthenticatedPath())
+  const url = decorateUrl(routes.authContinue)
   // Hard navigation so the session cookie is picked up by the Next.js proxy.
   window.location.assign(url)
 }
@@ -31,6 +31,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
   const [formError, setFormError] = useState<string | null>(null)
   const [oauthBusy, setOauthBusy] = useState(false)
   const finalizingRef = useRef(false)
+  const googleAvailable = isGoogleOauthAvailable(clerk)
 
   const finalizeAndRedirect = useCallback(async () => {
     if (!signUp || finalizingRef.current) return
@@ -52,7 +53,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
   // If the session is already active (e.g. finalize set the cookie but soft nav failed).
   useEffect(() => {
     if (!clerk.loaded || !isSignedIn) return
-    window.location.assign(getDefaultAuthenticatedPath())
+    window.location.assign(routes.authContinue)
   }, [clerk.loaded, isSignedIn])
 
   // Complete sign-up if status reaches complete outside the submit handler.
@@ -139,7 +140,7 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
     try {
       const { error } = await signUp.sso({
         strategy: 'oauth_google',
-        redirectUrl: getDefaultAuthenticatedPath(),
+        redirectUrl: routes.authContinue,
         redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {
@@ -257,36 +258,40 @@ export function MenuyuktiSignUp({ className }: { className?: string }) {
 
   return (
     <div className={cn('space-y-6', className)}>
-      <div className="space-y-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="w-full"
-          disabled={loading}
-          onClick={() => void handleGoogleSignUp()}
-        >
-          <GoogleMark />
-          {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
-        </Button>
-        {formError ? (
-          <p className="text-sm text-destructive" role="alert">
-            {formError}
-          </p>
-        ) : null}
-      </div>
+      {googleAvailable ? (
+        <>
+          <div className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              disabled={loading}
+              onClick={() => void handleGoogleSignUp()}
+            >
+              <GoogleMark />
+              {oauthBusy ? t('signingInWithGoogle') : t('continueWithGoogle')}
+            </Button>
+            {formError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {formError}
+              </p>
+            ) : null}
+          </div>
 
-      <div
-        className="relative flex items-center gap-3"
-        role="separator"
-        aria-label={t('orContinueWithEmail')}
-      >
-        <div className="bg-border h-px flex-1" />
-        <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
-          {t('orContinueWithEmail')}
-        </span>
-        <div className="bg-border h-px flex-1" />
-      </div>
+          <div
+            className="relative flex items-center gap-3"
+            role="separator"
+            aria-label={t('orContinueWithEmail')}
+          >
+            <div className="bg-border h-px flex-1" />
+            <span className="text-muted-foreground shrink-0 text-xs uppercase tracking-wide">
+              {t('orContinueWithEmail')}
+            </span>
+            <div className="bg-border h-px flex-1" />
+          </div>
+        </>
+      ) : null}
 
       <form onSubmit={handleEmailSubmit} className="space-y-8">
         <FieldGroup>

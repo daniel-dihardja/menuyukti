@@ -88,14 +88,8 @@ async function LocationsPageData() {
 
 export default async function Page() {
   const t = await getTranslations('analytics.branches')
-  const { userId } = await auth()
   const { plan } = await getWorkspacePlanForUser()
-  let locationCount = 0
-  if (userId) {
-    const data = await getCachedLocationsData(userId)
-    locationCount = data.locations.length
-  }
-  const canCreateLocation = isProPlan(plan) || locationCount < 1
+  const canCreateLocation = isProPlan(plan)
 
   return (
     <AnalyticsPageShell

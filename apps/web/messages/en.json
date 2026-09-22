@@ -16,12 +16,15 @@
   "pos": {
     "title": "POS",
     "description": "Take counter orders and record payments. Paid tickets feed your location sales analytics.",
+    "loading": "Loading POS…",
     "allCategories": "All",
     "emptyMenu": "No available menu items. Add items under Manage menu first.",
+    "emptyMenuTitle": "No menu items",
     "currentTicket": "Current ticket",
     "noOpenTicket": "Tap an item or New ticket to start",
     "newTicket": "New ticket",
     "emptyCart": "Cart is empty",
+    "emptyCartTitle": "Empty cart",
     "decreaseQty": "Decrease quantity",
     "increaseQty": "Increase quantity",
     "remove": "Remove",
@@ -51,7 +54,18 @@
     "tableLabelReadOnly": "Table · {label}",
     "total": "Total",
     "pay": "Pay",
+    "payCancel": "Cancel",
+    "cartSheetTrigger": "Cart · {count} · {total}",
+    "cartSheetTitle": "Current ticket",
+    "cartSheetDescription": "Review lines, discounts, and pay.",
+    "opsSheetTrigger": "Ops",
+    "opsSheetTitle": "Today & day close",
+    "opsSheetDescription": "Browse today’s tickets and load a day-close summary.",
     "void": "Void ticket",
+    "voidConfirmTitle": "Void this ticket?",
+    "voidConfirmDescription": "This voids bill {bill} without recording a sale. This cannot be undone.",
+    "voidConfirm": "Void ticket",
+    "voidCancel": "Cancel",
     "payment": {
       "cash": "Cash",
       "card": "Card",
@@ -70,6 +84,7 @@
     "receiptPayment": "Payment",
     "receiptStatus": "Status",
     "kitchenPrint": "Kitchen ticket",
+    "kitchenPrintShort": "Kitchen",
     "kitchenTitle": "Kitchen",
     "kitchenNote": "Note",
     "kitchenPrintAction": "Print",
@@ -81,6 +96,7 @@
     "refundCancel": "Cancel",
     "todayTitle": "Today",
     "todayEmpty": "No tickets yet today",
+    "todayEmptyTitle": "No tickets today",
     "todayFilterAll": "All",
     "todayFilterEmpty": "No tickets match this filter",
     "dayCloseTitle": "Day close",
@@ -837,6 +853,7 @@
     "groupOperations": "Operations",
     "groupAccount": "Account",
     "toggleSectionAria": "Toggle {section}",
+    "home": "Home",
     "dashboard": "Dashboard",
     "branches": "Locations",
     "chat": "AI",
@@ -867,7 +884,7 @@
     "description": "Menuyukti platform tools for team members. Customers do not see this area.",
     "workspacePlan": {
       "title": "Workspace plan",
-      "description": "Manually set a workspace to free or pro. Free workspaces are limited to one location and a reduced product surface.",
+      "description": "Manually set a workspace to free (guest / PWA customer) or pro (restaurant client — full operator product). Free gets guest home and profile; pro unlocks locations, inventar, advisor, and the rest of the app.",
       "workspaceIdLabel": "Workspace ID",
       "workspaceIdPlaceholder": "e.g. 42",
       "yourWorkspaceId": "Your workspace ID: {id}",
@@ -1196,46 +1213,44 @@
       "columnEvents": "Events"
     }
   },
+  "pwaInstall": {
+    "sectionTitle": "Add to home screen",
+    "sectionHint": "Pick your device, then follow the steps.",
+    "installHint": "Opens full screen—like a native app. Sign in once.",
+    "platforms": {
+      "ios": {
+        "label": "iPhone",
+        "browser": "Use Safari",
+        "steps": {
+          "step1": "Open in Safari and sign in.",
+          "step2": "Share → Add to Home Screen.",
+          "step3": "Tap Add."
+        }
+      },
+      "android": {
+        "label": "Android",
+        "browser": "Use Chrome",
+        "steps": {
+          "step1": "Open in Chrome and sign in.",
+          "step2": "Menu (⋮) → Install app.",
+          "step3": "Confirm Install."
+        }
+      }
+    }
+  },
+  "guestHome": {
+    "title": "Home",
+    "description": "Your Menuyukti guest home — install the app and manage your profile.",
+    "headline": "Welcome",
+    "lead": "Install Menuyukti on your phone for a full-screen experience, then keep your profile up to date.",
+    "profileCta": "Open profile"
+  },
   "platform": {
     "dashboard": {
       "title": "Dashboard",
       "description": "AI-powered restaurant marketing on the go.",
       "headline": "Run campaigns from anywhere",
-      "lead": "AI turns your sales data into Instagram campaigns—built for busy floors, not just desks.",
-      "pwa": {
-        "sectionTitle": "Add to home screen",
-        "sectionHint": "Pick your device, then follow the steps.",
-        "installHint": "Opens full screen—like a native app. Sign in once.",
-        "platforms": {
-          "ios": {
-            "label": "iPhone",
-            "browser": "Use Safari",
-            "steps": {
-              "step1": "Open in Safari and sign in.",
-              "step2": "Share → Add to Home Screen.",
-              "step3": "Tap Add."
-            }
-          },
-          "android": {
-            "label": "Android",
-            "browser": "Use Chrome",
-            "steps": {
-              "step1": "Open in Chrome and sign in.",
-              "step2": "Menu (⋮) → Install app.",
-              "step3": "Confirm Install."
-            }
-          },
-          "desktop": {
-            "label": "Desktop",
-            "browser": "Chrome or Edge",
-            "steps": {
-              "step1": "Open in Chrome or Edge.",
-              "step2": "Click the install icon in the address bar.",
-              "step3": "Confirm Install."
-            }
-          }
-        }
-      }
+      "lead": "AI turns your sales data into Instagram campaigns—built for busy floors, not just desks."
     },
     "crm": {
       "title": "CRM",
@@ -2117,7 +2132,7 @@
         "salesCta": "Go to Sales Reports"
       },
       "create": "Create New Location",
-      "freePlanLocationLimit": "Free plan includes one location. Upgrade to Pro to add more.",
+      "freePlanLocationLimit": "Locations are part of Pro (restaurant clients). Guest accounts use Home and profile only.",
       "manageMenu": "Manage menu",
       "managePos": "POS",
       "manageCogs": "Manage COGS",

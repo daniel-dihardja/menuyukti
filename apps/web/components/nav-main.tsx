@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ChevronRight,
   Contact,
+  Home,
   Image,
   LayoutDashboard,
   MapPin,
@@ -69,9 +70,16 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 /**
  * Sidebar order follows daily product flow:
  * overview → create/plan → measure → operations → account.
- * Chat leads create (default authenticated home is `/advisor`).
+ * Chat leads create for pro (default home `/advisor`); free guests see Home only.
  */
 const NAV_WORKSPACE: NavItem[] = [
+  {
+    key: 'home',
+    labelKey: 'home',
+    href: routes.home,
+    icon: <Home />,
+    group: 'overview',
+  },
   {
     key: 'dashboard',
     labelKey: 'dashboard',
