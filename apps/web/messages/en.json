@@ -969,7 +969,7 @@
           "noLocationsCta": "Add location"
         },
         "workspace": {
-          "workspaceHint": "Run saves the settings above, then loads holidays. Confirmed picks are not saved yet.",
+          "workspaceHint": "Run saves the settings above, loads holidays, and suggests which ones fit Instagram stories for this venue. Review the checked candidates, then confirm. Confirmed picks are not saved yet.",
           "stepsAria": "Playbook steps",
           "steps": {
             "fetchDates": "Fetch dates",
@@ -978,7 +978,10 @@
           },
           "run": "Run",
           "running": "Running…",
-          "fetchError": "Could not load public holidays. Try again.",
+          "instructionsLabel": "Relevance notes (optional)",
+          "instructionsPlaceholder": "e.g. skip Nyepi; prioritize Chinese New Year for this neighborhood",
+          "instructionsHint": "Optional guidance for which holidays fit Instagram stories. Leave blank to use the default policy.",
+          "fetchError": "Could not load or score public holidays. Try again.",
           "candidatesTitle": "Candidates",
           "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
           "confirmSelected": "Confirm selected ({count})",

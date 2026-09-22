@@ -24,6 +24,11 @@ def _gateway_api_key() -> str:
     return key
 
 
+def gateway_api_key() -> str:
+    """Public accessor for AI Gateway bearer token (chat + Jev / TypeSafe)."""
+    return _gateway_api_key()
+
+
 def _gateway_model_id() -> str:
     """Map OPENAI_MODEL to a gateway model id (provider/model)."""
     raw = os.environ.get("OPENAI_MODEL", _DEFAULT_LOGICAL_MODEL).strip()

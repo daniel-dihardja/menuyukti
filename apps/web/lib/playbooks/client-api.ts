@@ -4,6 +4,13 @@ import type { Playbook } from '@/lib/graphql/queries/playbooks'
 
 export type { Playbook }
 
+export type HolidayRelevanceResult = {
+  id: string
+  date: string
+  name: string
+  relevant: boolean
+}
+
 export async function fetchHolidays(params: {
   locationId: number
   dateStart: string
@@ -18,6 +25,36 @@ export async function fetchHolidays(params: {
     `/api/holidays?${searchParams.toString()}`,
     { method: 'GET' },
     'Failed to load holidays',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data.holidays
+}
+
+export async function scoreHolidayRelevance(params: {
+  locationId: number
+  holidays: Array<{
+    id: string
+    date: string
+    name: string
+    localName?: string
+  }>
+  instructions?: string
+}): Promise<HolidayRelevanceResult[]> {
+  const instructions = params.instructions?.trim()
+  const result = await apiFetch<{ holidays: HolidayRelevanceResult[] }>(
+    '/api/playbooks/public-holidays/relevance',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        locationId: params.locationId,
+        holidays: params.holidays,
+        ...(instructions ? { instructions } : {}),
+      }),
+    },
+    'Failed to score holiday relevance',
   )
   if (!result.ok) {
     throw new Error(result.error)

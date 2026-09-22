@@ -15,10 +15,13 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { Label } from '@workspace/ui/components/label'
 import { Spinner } from '@workspace/ui/components/spinner'
+import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { fetchHolidays } from '@/lib/playbooks/client-api'
+import { fetchHolidays, scoreHolidayRelevance } from '@/lib/playbooks/client-api'
+import { relevantHolidayIds } from '@/lib/playbooks/relevant-holiday-ids'
 
 type HolidayItem = {
   id: string
@@ -61,6 +64,7 @@ export function PublicHolidaysWorkspace({
   const [lastFetchEmpty, setLastFetchEmpty] = useState(false)
   const [running, setRunning] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [relevanceInstructions, setRelevanceInstructions] = useState('')
 
   function setRunningState(next: boolean) {
     setRunning(next)
@@ -127,8 +131,26 @@ export function PublicHolidaysWorkspace({
           .filter((h) => !confirmedIds.has(h.id))
           .map((h) => ({ id: h.id, date: h.date, name: h.name })),
       )
+
+      let nextSelected = new Set<string>()
+      if (nextCandidates.length > 0) {
+        const scored = await scoreHolidayRelevance({
+          locationId: ctx.locationId,
+          holidays: holidays
+            .filter((h) => !confirmedIds.has(h.id))
+            .map((h) => ({
+              id: h.id,
+              date: h.date,
+              name: h.name,
+              localName: h.localName,
+            })),
+          instructions: relevanceInstructions,
+        })
+        nextSelected = relevantHolidayIds(scored, confirmedIds)
+      }
+
       setCandidates(nextCandidates)
-      setSelectedIds(new Set())
+      setSelectedIds(nextSelected)
       setHasRun(true)
       setLastFetchEmpty(holidays.length === 0)
     } catch (err) {
@@ -190,11 +212,33 @@ export function PublicHolidaysWorkspace({
             className="flex min-w-0 flex-col gap-4 rounded-xl border border-border/70 p-4"
             aria-labelledby="ph-candidates-heading"
           >
-            <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-end">
-              <Button type="button" onClick={() => void handleRun()} disabled={running}>
-                {running ? <Spinner data-icon="inline-start" /> : <Play data-icon="inline-start" />}
-                {running ? t('running') : t('run')}
-              </Button>
+            <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="ph-relevance-instructions" className="text-sm font-medium">
+                  {t('instructionsLabel')}
+                </Label>
+                <Textarea
+                  id="ph-relevance-instructions"
+                  value={relevanceInstructions}
+                  onChange={(e) => setRelevanceInstructions(e.target.value)}
+                  placeholder={t('instructionsPlaceholder')}
+                  disabled={running}
+                  maxLength={2000}
+                  rows={3}
+                  className="min-h-20 resize-y"
+                />
+                <p className="text-muted-foreground text-xs">{t('instructionsHint')}</p>
+              </div>
+              <div className="flex justify-end">
+                <Button type="button" onClick={() => void handleRun()} disabled={running}>
+                  {running ? (
+                    <Spinner data-icon="inline-start" />
+                  ) : (
+                    <Play data-icon="inline-start" />
+                  )}
+                  {running ? t('running') : t('run')}
+                </Button>
+              </div>
             </div>
 
             {fetchError ? (
