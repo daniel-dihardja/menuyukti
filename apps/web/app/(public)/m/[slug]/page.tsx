@@ -59,7 +59,9 @@ export default async function PublicLocationMenuPage({ params }: PageProps) {
             {menu.name}
           </h1>
           {menu.tagline ? (
-            <p className="text-muted-foreground mt-3 max-w-xl text-lg text-pretty">{menu.tagline}</p>
+            <p className="text-muted-foreground mt-3 max-w-xl text-lg text-pretty">
+              {menu.tagline}
+            </p>
           ) : null}
         </div>
       </header>
@@ -70,7 +72,10 @@ export default async function PublicLocationMenuPage({ params }: PageProps) {
         ) : (
           <div className="flex flex-col gap-12">
             {menu.categories.map((category) => (
-              <section key={category.name} aria-labelledby={`cat-${category.sortOrder}-${category.name}`}>
+              <section
+                key={category.name}
+                aria-labelledby={`cat-${category.sortOrder}-${category.name}`}
+              >
                 <h2
                   id={`cat-${category.sortOrder}-${category.name}`}
                   className="mb-4 text-sm font-semibold tracking-wide uppercase"

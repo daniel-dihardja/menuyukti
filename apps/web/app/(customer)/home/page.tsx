@@ -40,10 +40,7 @@ export default async function CustomerHomePage() {
         aria-labelledby="customer-home-rewards-heading"
         className="rounded-lg border border-border bg-canvas/40 px-4 py-5 sm:px-5"
       >
-        <h2
-          id="customer-home-rewards-heading"
-          className="text-base font-semibold tracking-tight"
-        >
+        <h2 id="customer-home-rewards-heading" className="text-base font-semibold tracking-tight">
           {t('rewardsTitle')}
         </h2>
         <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">

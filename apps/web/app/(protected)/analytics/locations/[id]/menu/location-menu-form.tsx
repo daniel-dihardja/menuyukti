@@ -284,9 +284,14 @@ function LocationMenuItemRow({
               className="tabular-nums"
             />
           </Field>
-          <Field orientation="horizontal" className="items-center justify-between gap-4 sm:col-span-2">
+          <Field
+            orientation="horizontal"
+            className="items-center justify-between gap-4 sm:col-span-2"
+          >
             <div className="flex flex-col gap-1">
-              <FieldLabel htmlFor={`menu-available-${item.key}`}>{t('fields.available')}</FieldLabel>
+              <FieldLabel htmlFor={`menu-available-${item.key}`}>
+                {t('fields.available')}
+              </FieldLabel>
               <p className="text-muted-foreground text-xs">{t('fields.availableHint')}</p>
             </div>
             <Switch
