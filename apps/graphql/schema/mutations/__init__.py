@@ -43,6 +43,7 @@ from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
 from .update_location_frontpage import UpdateLocationFrontpageMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
+from .update_location_public_menu import UpdateLocationPublicMenuMutation
 from .update_media_collection import UpdateMediaCollectionMutation
 from .update_playbook import UpdatePlaybookMutation
 from .update_post import UpdatePostMutation
@@ -93,6 +94,7 @@ __all__ = [
     "UpdateLocationMutation",
     "UpdateLocationFrontpageMutation",
     "UpdateLocationManualBriefInputMutation",
+    "UpdateLocationPublicMenuMutation",
     "UpdateMediaCollectionMutation",
     "UpdatePlaybookMutation",
     "UpdateStyleMutation",

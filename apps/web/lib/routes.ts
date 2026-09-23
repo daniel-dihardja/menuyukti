@@ -150,8 +150,10 @@ export const routes = {
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 
-  /** Public guest wall (curated location frontpage). */
+  /** Public location surfaces (digital menu frontpage; wall URL redirects). */
   public: {
+    locationMenu: (slug: string) => `/m/${encodeURIComponent(slug)}`,
+    /** @deprecated Use `locationMenu`; `/l/` redirects to `/m/`. */
     locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
   },
 }

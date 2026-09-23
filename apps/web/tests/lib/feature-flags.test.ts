@@ -11,7 +11,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('home')).toBe(true)
     expect(isNavKeyEnabled('dashboard')).toBe(false)
     expect(isNavKeyEnabled('media')).toBe(true)
-    expect(isNavKeyEnabled('posts')).toBe(true)
+    expect(isNavKeyEnabled('posts')).toBe(false)
     expect(isNavKeyEnabled('calendar')).toBe(true)
     expect(isNavKeyEnabled('printShop')).toBe(true)
     expect(isNavKeyEnabled('chat')).toBe(true)

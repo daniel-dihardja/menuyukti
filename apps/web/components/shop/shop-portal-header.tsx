@@ -31,12 +31,10 @@ export function ShopPortalHeader() {
   const workspaceLinks = [
     { href: routes.dashboard, label: t('backDashboard') },
     { href: routes.agent, label: t('backChat') },
-    { href: routes.igStudio, label: t('backStudio') },
   ] as const
 
   const productLinks = [
     { href: routes.agent, label: tMain('navChat'), active: false },
-    { href: routes.igStudio, label: tMain('navStudio'), active: false },
     { href: routes.shop, label: tMain('navShop'), active: shopActive },
   ] as const
 

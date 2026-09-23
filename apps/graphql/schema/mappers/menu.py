@@ -75,5 +75,6 @@ def menu_to_gql(row: Menu) -> MenuType:
         id=row.id,
         location_id=row.location_id,
         title=row.title,
+        public_enabled=bool(row.public_enabled),
         categories=[menu_category_to_gql(cat) for cat in categories],
     )

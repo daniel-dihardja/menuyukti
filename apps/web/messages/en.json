@@ -623,6 +623,12 @@
       "empty": "Nothing on the wall yet — check back soon.",
       "notFoundTitle": "Wall not found",
       "metaDescription": "Guest favorites and popular picks at {name}."
+    },
+    "menu": {
+      "eyebrow": "Menu",
+      "empty": "Nothing on the menu yet — check back soon.",
+      "notFoundTitle": "Menu not found",
+      "metaDescription": "Digital menu at {name}."
     }
   },
   "shop": {
@@ -3355,20 +3361,13 @@
     "locationFrontpage": {
       "heading": "Frontpage",
       "description": "Configure the guest-facing home for this location and preview what sales data will highlight.",
+      "publicMenuHint": "Publish the public digital menu and URL on the <link>Menu</link> page.",
       "configTitle": "Display settings",
       "fields": {
         "tagline": "Tagline",
         "taglinePlaceholder": "What guests should feel when they arrive",
         "showGuestFavorites": "Show guest favorites",
         "showPopularCombos": "Show popular combos",
-        "wallEnabled": "Publish guest wall",
-        "wallEnabledHint": "When on, guests can open the public wall at the link below.",
-        "publicSlug": "Public URL slug",
-        "publicSlugPlaceholder": "my-restaurant",
-        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required to publish.",
-        "publicUrl": "Public wall URL",
-        "copyPublicUrl": "Copy link",
-        "copiedPublicUrl": "Copied",
         "itemDescription": "Description",
         "itemDescriptionPlaceholder": "Optional short guest-facing description",
         "publish": "Publish",
@@ -3386,8 +3385,7 @@
         "collapseItem": "Collapse item"
       },
       "errors": {
-        "saveFailed": "Could not save frontpage settings",
-        "slugRequired": "Add a public URL slug before publishing the guest wall"
+        "saveFailed": "Could not save frontpage settings"
       },
       "previewTitle": "Guest preview",
       "previewFromRun": "Based on latest analytics: {runName}",
@@ -3413,6 +3411,20 @@
       "currencyHint": "Prices use this location’s currency ({currency}).",
       "categoryLabel": "Category {number}",
       "itemLabel": "Item {number}",
+      "publish": {
+        "title": "Public menu",
+        "enabled": "Publish public menu",
+        "enabledHint": "When on, anyone can open the digital menu at the link below.",
+        "publicSlug": "Public URL slug",
+        "publicSlugPlaceholder": "my-restaurant",
+        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required to publish.",
+        "publicUrl": "Public menu URL",
+        "copyPublicUrl": "Copy link",
+        "copiedPublicUrl": "Copied",
+        "save": "Save publish settings",
+        "saving": "Saving…",
+        "saved": "Publish settings saved"
+      },
       "fields": {
         "categoryName": "Category",
         "categoryNamePlaceholder": "Food",
@@ -3420,6 +3432,9 @@
         "namePlaceholder": "Espresso",
         "priceWithCurrency": "Price ({currency})",
         "pricePlaceholder": "0.00",
+        "available": "Available",
+        "availableHint": "Unavailable items stay off the public menu and POS grid.",
+        "unavailableBadge": "Unavailable",
         "description": "Description",
         "descriptionPlaceholder": "Optional short description",
         "image": "Image",
@@ -3463,6 +3478,8 @@
         "invalidModifierPriceDelta": "Enter a valid price delta for each option",
         "invalidModifierSelect": "Min/max select must be whole numbers with min ≤ max and max ≥ 1",
         "saveFailed": "Failed to save menu",
+        "publishFailed": "Failed to save publish settings",
+        "slugRequired": "Add a public URL slug before publishing",
         "unknown": "Unknown error"
       }
     },

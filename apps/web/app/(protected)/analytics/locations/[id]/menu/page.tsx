@@ -64,6 +64,7 @@ export default async function Page({ params }: PageProps) {
               name: item.name,
               price: String(item.price),
               description: item.description ?? '',
+              isAvailable: item.isAvailable,
               imageFilename: item.imageFilename ?? null,
               modifierGroups: (item.modifierGroups ?? []).map((group) => ({
                 key: `grp-${group.id}`,
@@ -83,6 +84,7 @@ export default async function Page({ params }: PageProps) {
                 name: '',
                 price: '',
                 description: '',
+                isAvailable: true,
                 imageFilename: null,
                 modifierGroups: [],
               },
@@ -101,8 +103,11 @@ export default async function Page({ params }: PageProps) {
       <section className={LOCATION_DETAIL_SECTION_CLASS}>
         <LocationMenuForm
           locationId={locationId}
+          locationName={location.name}
           currencyCode={currencyCode}
           initialCategories={initialCategories}
+          initialPublicEnabled={menuData.locationMenu?.publicEnabled ?? false}
+          initialPublicSlug={location.publicSlug ?? ''}
         />
       </section>
     </AnalyticsPageShell>
