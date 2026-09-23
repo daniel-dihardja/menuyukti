@@ -8,14 +8,18 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
 /**
  * Product tiers (Menuyukti = creative agency for restaurants, cafés, and bars):
  *
- * - **free** — guest / customer accounts (mainly PWA). Guest home + profile.
- * - **pro** — restaurant-owner clients; agency-provisioned, typically complimentary.
- *   Full operator product surface (everything free does not include).
+ * - **free** / no workspace — guest / customer accounts (mainly PWA). Sign-up is
+ *   Clerk-only until staff provisions a workspace. Customer shell: `/home` + `/profile`
+ *   under `app/(customer)/` (no operator sidebar).
+ * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
+ *   (`provisionWorkspace`). Full operator product surface (everything free does
+ *   not include). Self-serve workspace creation is disabled.
  */
 
 /**
- * Sidebar `NavItem.key` values visible on the free plan.
- * Profile stays in the account menu; Home is the only sidenav item.
+ * Sidebar `NavItem.key` values visible on the free plan when the operator shell
+ * is somehow rendered. Free users normally never enter `(protected)` — Home lives
+ * in the customer shell. Profile stays in the account menu.
  */
 export const FREE_NAV_KEYS = new Set<string>(['home'])
 
@@ -78,7 +82,7 @@ function normalizePathname(pathname: string): string {
 }
 
 /**
- * Free: guest home, post-auth continue, and profile (+ account settings).
+ * Free: customer home, post-auth continue, and profile (+ account settings).
  * Pro: unrestricted — full operator app (locations, inventar, advisor, usage, team, …).
  */
 export function isPathnameAllowedForPlan(

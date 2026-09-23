@@ -2,10 +2,12 @@
 
 Menuyukti is a creative agency for restaurants, cafés, and bars.
 
-- free: guest / customer accounts (mainly PWA). No operator product surface;
-  location creation is blocked.
-- pro: restaurant-owner clients (agency-provisioned). Full operator surface,
-  including unlimited locations.
+- free / no workspace: guest / customer accounts (mainly PWA). Sign-up creates a
+  Clerk user with no workspace; location creation is blocked. Existing free
+  workspaces stay location-blocked until staff upgrades them.
+- pro: restaurant-owner clients. Agency staff provision via provisionWorkspace
+  (staff BFF). Full operator surface, including locations. Self-serve
+  createWorkspace is disabled.
 """
 
 from __future__ import annotations

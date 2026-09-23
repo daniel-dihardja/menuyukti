@@ -321,6 +321,48 @@ type ExcelUploadResult {
   salesAnalytics: JSON!
 }
 
+"""
+Input for attaching an optional media image, description, and publish flag to a popular combo.
+"""
+input FrontpageComboImageInput {
+  menuA: String!
+  menuB: String!
+  imageFilename: String = null
+  description: String = null
+  published: Boolean! = true
+}
+
+"""
+Operator override for an often-ordered-together combo (optional image, description, and publish flag).
+"""
+type FrontpageComboImageType {
+  menuA: String!
+  menuB: String!
+  imageFilename: String
+  description: String
+  published: Boolean!
+}
+
+"""
+Input for attaching an optional media image, description, and publish flag to a guest favorite.
+"""
+input FrontpageFavoriteImageInput {
+  menu: String!
+  imageFilename: String = null
+  description: String = null
+  published: Boolean! = true
+}
+
+"""
+Operator override for a guest-favorite dish (optional image, description, and publish flag).
+"""
+type FrontpageFavoriteImageType {
+  menu: String!
+  imageFilename: String
+  description: String
+  published: Boolean!
+}
+
 type FundamentalSalesSignalsType {
   totalItemsSold: Int!
   totalRevenue: Float!
@@ -483,6 +525,9 @@ type LocationFrontpageType {
   tagline: String
   showGuestFavorites: Boolean!
   showPopularCombos: Boolean!
+  wallEnabled: Boolean!
+  favoriteImages: [FrontpageFavoriteImageType!]!
+  comboImages: [FrontpageComboImageType!]!
 }
 
 """Owner-provided click-first brief hints; not AI-generated."""
@@ -511,12 +556,21 @@ input LocationMenuItemCogsUpsertInput {
   currency: String = null
 }
 
+"""Result of updating public digital menu settings."""
+type LocationPublicMenuSettingsType {
+  locationId: Int!
+  publicEnabled: Boolean!
+  publicSlug: String
+  menu: MenuType!
+}
+
 """
 A restaurant location; ties POS data and product entities to a workspace or legacy owner.
 """
 type LocationType {
   id: ID!
   name: String!
+  publicSlug: String
   street: String
   city: String
   country: String
@@ -738,6 +792,7 @@ input MenuItemInput {
   description: String = null
   isAvailable: Boolean = null
   imageFilename: String = null
+  modifierGroups: [MenuModifierGroupInput!] = null
 }
 
 """One dish line on a location menu."""
@@ -751,6 +806,43 @@ type MenuItemType {
   sortOrder: Int!
   isAvailable: Boolean!
   imageFilename: String
+  modifierGroups: [MenuModifierGroupType!]!
+}
+
+"""Modifier group payload for replaceLocationMenuItems."""
+input MenuModifierGroupInput {
+  name: String!
+  minSelect: Int! = 0
+  maxSelect: Int! = 1
+  options: [MenuModifierOptionInput!]!
+}
+
+"""Named choice group on a menu item (e.g. Size, Milk)."""
+type MenuModifierGroupType {
+  id: Int!
+  menuItemId: Int!
+  name: String!
+  minSelect: Int!
+  maxSelect: Int!
+  sortOrder: Int!
+  options: [MenuModifierOptionType!]!
+}
+
+"""Option payload for replaceLocationMenuItems."""
+input MenuModifierOptionInput {
+  name: String!
+  priceDelta: Float! = 0
+  isAvailable: Boolean = null
+}
+
+"""One selectable option in a menu modifier group."""
+type MenuModifierOptionType {
+  id: Int!
+  groupId: Int!
+  name: String!
+  priceDelta: Float!
+  isAvailable: Boolean!
+  sortOrder: Int!
 }
 
 """Curated menu catalog for a location (one per location)."""
@@ -758,6 +850,7 @@ type MenuType {
   id: Int!
   locationId: Int!
   title: String!
+  publicEnabled: Boolean!
   categories: [MenuCategoryType!]!
 }
 
@@ -800,7 +893,16 @@ type Mutation {
 
   """Create a playbook instance for a location."""
   createPlaybook(locationId: Int!, name: String!, playbookType: String!, startDate: String!, endDate: String!): PlaybookType!
+
+  """
+  Disabled for self-serve. Workspaces are staff-provisioned via provisionWorkspace (Menuyukti admin BFF).
+  """
   createWorkspace(name: String!): WorkspaceType!
+
+  """
+  Create a workspace owned by the given Clerk user with the given plan. Intended for staff BFF only; not a customer self-serve path. Defaults to pro (agency-provisioned restaurant clients).
+  """
+  provisionWorkspace(ownerClerkUserId: String!, name: String!, plan: String = null): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
   upsertMenuItemCogsBulk(analyticsRunId: ID!, items: [MenuItemCogsUpsertInput!]!): [MenuItemCogsType!]!
@@ -816,6 +918,42 @@ type Mutation {
   Replace all categories and items on the location's curated menu (creates the menu if needed). Pass an empty list to clear categories.
   """
   replaceLocationMenuItems(locationId: Int!, categories: [MenuCategoryInput!]!): MenuType!
+
+  """Open a new POS ticket for a location."""
+  openPosOrder(locationId: Int!, tableLabel: String = null): PosOrderType!
+
+  """Add a menu item line to an open POS ticket."""
+  addPosOrderLine(orderId: Int!, menuItemId: Int!, qty: Int! = 1, modifierOptionIds: [Int!] = null, note: String = null): PosOrderType!
+
+  """Update quantity on an open POS ticket line."""
+  updatePosOrderLine(lineId: Int!, qty: Int!): PosOrderType!
+
+  """Set or clear the note on an open POS ticket line."""
+  setPosOrderLineNote(lineId: Int!, note: String = null): PosOrderType!
+
+  """Remove a line from an open POS ticket."""
+  removePosOrderLine(lineId: Int!): PosOrderType!
+
+  """Set bill-level discount on an open POS ticket."""
+  setPosOrderDiscount(orderId: Int!, amount: Float!): PosOrderType!
+
+  """
+  Set or clear the optional table label on an open POS ticket. Pass null or blank to clear.
+  """
+  setPosOrderTableLabel(orderId: Int!, tableLabel: String = null): PosOrderType!
+
+  """
+  Close (pay) an open POS ticket and project OrderFact rows onto the monthly Menuyukti POS analytics run.
+  """
+  closePosOrder(orderId: Int!, paymentMethod: PosPaymentMethod!): PosOrderType!
+
+  """Void an open POS ticket (no OrderFact projection)."""
+  voidPosOrder(orderId: Int!): PosOrderType!
+
+  """
+  Fully refund a paid POS ticket: delete projected OrderFact rows and set status to refunded. Open/void tickets cannot be refunded.
+  """
+  refundPosOrder(orderId: Int!): PosOrderType!
 
   """Add a pantry item to the workspace catalog."""
   createInventoryCatalogItem(workspaceId: Int!, name: String!, packageSize: Float!, packageUnit: String!, storageZone: InventoryStorageZone = null, category: InventoryCategory = null, price: Float = null): InventoryCatalogItemType!
@@ -919,14 +1057,19 @@ type Mutation {
   updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
 
   """
-  Upsert guest frontpage settings for a location (tagline and section toggles).
+  Upsert guest frontpage settings for a location (tagline, section toggles, wall publish settings, and optional media image / description / publish overrides).
   """
-  updateLocationFrontpage(locationId: Int!, showGuestFavorites: Boolean! = true, showPopularCombos: Boolean! = true, tagline: String = null): LocationFrontpageType!
+  updateLocationFrontpage(locationId: Int!, showGuestFavorites: Boolean! = true, showPopularCombos: Boolean! = true, tagline: String = null, wallEnabled: Boolean, publicSlug: String, favoriteImages: [FrontpageFavoriteImageInput!], comboImages: [FrontpageComboImageInput!]): LocationFrontpageType!
 
   """
   Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings.
   """
   updateLocationManualBriefInput(locationId: Int!, quickProfile: JSON!): LocationManualBriefInputType!
+
+  """
+  Publish or unpublish the location digital menu and set the public slug. Requires location ownership. Creates an empty menu when enabling if none exists.
+  """
+  updateLocationPublicMenu(locationId: Int!, publicEnabled: Boolean, publicSlug: String): LocationPublicMenuSettingsType!
 
   """Update a visual style pack in the caller's workspace."""
   updateStyle(id: Int!, name: String = null, referenceImageName: String = null, spec: JSON = null, isDefault: Boolean = null): StyleType!
@@ -1025,6 +1168,85 @@ type PlaybookType {
   endDate: String!
 }
 
+"""Day close / Z-lite summary for native POS."""
+type PosDayPaymentTotalType {
+  paymentMethod: PosPaymentMethod!
+  ticketCount: Int!
+  grossTotal: Float!
+}
+
+"""Native POS day summary for a location."""
+type PosDaySummaryType {
+  locationId: Int!
+  onDate: String!
+  openCount: Int!
+  paidCount: Int!
+  voidCount: Int!
+  refundedCount: Int!
+  paidDiscountTotal: Float!
+  paidByPaymentMethod: [PosDayPaymentTotalType!]!
+  refundedGrossTotal: Float!
+  openTicketsRemaining: Int!
+}
+
+"""Selected modifier snapshot on a POS line."""
+type PosOrderLineModifierType {
+  id: Int!
+  posOrderLineId: Int!
+  groupNameSnapshot: String!
+  nameSnapshot: String!
+  priceDeltaSnapshot: Float!
+  sortOrder: Int!
+}
+
+"""One line on a POS ticket with price/name snapshots."""
+type PosOrderLineType {
+  id: Int!
+  posOrderId: Int!
+  menuItemId: Int!
+  nameSnapshot: String!
+  menuCategorySnapshot: String!
+  menuCategoryDetailSnapshot: String!
+  qty: Int!
+  unitPrice: Float!
+  lineTotal: Float!
+  note: String
+  sortOrder: Int!
+  modifiers: [PosOrderLineModifierType!]!
+}
+
+"""Lifecycle status of a POS ticket."""
+enum PosOrderStatus {
+  OPEN
+  PAID
+  VOID
+  REFUNDED
+}
+
+"""Native POS ticket (operational truth)."""
+type PosOrderType {
+  id: Int!
+  locationId: Int!
+  billNumber: String!
+  status: PosOrderStatus!
+  openedAt: DateTime!
+  closedAt: DateTime
+  openedByClerkUserId: String!
+  paymentMethod: PosPaymentMethod
+  discountAmount: Float!
+  tableLabel: String
+  note: String
+  refundedAt: DateTime
+  lines: [PosOrderLineType!]!
+}
+
+"""Recorded payment method on close (no processor in v1)."""
+enum PosPaymentMethod {
+  CASH
+  CARD
+  OTHER
+}
+
 """A single generated image version for a post page."""
 type PostPageMediaVersionType {
   id: ID!
@@ -1109,6 +1331,54 @@ type PublicHolidayType {
   localName: String!
   holidayType: String!
   isTentative: Boolean!
+}
+
+"""
+Public digital menu for a location. Null when the slug is unknown or the menu is not published.
+"""
+type PublicLocationMenuType {
+  locationId: Int!
+  name: String!
+  tagline: String
+  publicSlug: String!
+  currency: String
+  categories: [PublicMenuCategoryType!]!
+}
+
+"""
+Public guest wall for a location (curated favorites/combos). Null when the slug is unknown or the wall is not enabled.
+"""
+type PublicLocationWallType {
+  locationId: Int!
+  name: String!
+  tagline: String
+  publicSlug: String!
+  workspaceId: ID
+  mediaOwnerClerkUserId: String
+  tiles: [PublicWallTileType!]!
+}
+
+"""One category section on the public digital menu."""
+type PublicMenuCategoryType {
+  name: String!
+  sortOrder: Int!
+  items: [PublicMenuItemType!]!
+}
+
+"""One available item on the public digital menu."""
+type PublicMenuItemType {
+  name: String!
+  price: Float!
+  sortOrder: Int!
+}
+
+"""One curated tile on the public guest wall."""
+type PublicWallTileType {
+  kind: String!
+  key: String!
+  title: String!
+  description: String
+  imageFilename: String
 }
 
 """
@@ -1221,12 +1491,33 @@ type Query {
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
 
   """
+  Public digital menu by location slug. Returns null when the slug is missing or the menu is not published. No authentication required.
+  """
+  publicLocationMenu(slug: String!): PublicLocationMenuType
+
+  """
+  Public curated guest wall by location slug. Returns null when the slug is missing or the wall is not enabled. No authentication required.
+  """
+  publicLocationWall(slug: String!): PublicLocationWallType
+
+  """
   Playbook instances of a given type for all locations the caller can access.
   """
   playbooks(playbookType: String!): [PlaybookType!]!
 
   """A single playbook instance by id, if the caller can access it."""
   playbook(id: Int!): PlaybookType
+
+  """Load a single POS ticket by id."""
+  posOrder(id: Int!): PosOrderType
+
+  """
+  List POS tickets for a location. Defaults to tickets opened since start of the current UTC day.
+  """
+  posOrders(locationId: Int!, status: PosOrderStatus = null, since: DateTime = null): [PosOrderType!]!
+
+  """Day close / Z-lite summary for native POS tickets."""
+  posDaySummary(locationId: Int!, onDate: String = null): PosDaySummaryType
 
   """
   Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries.

@@ -10,6 +10,7 @@ import httpx
 from agents_app.agents.core.chat.graph import compile_chat_graph
 from agents_app.routers.chat import router as chat_router
 from agents_app.routers.format_markdown import router as format_markdown_router
+from agents_app.routers.holiday_relevance import router as holiday_relevance_router
 from agents_app.routers.style_specs import router as style_specs_router
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -180,6 +181,7 @@ app = FastAPI(
 app.add_middleware(InternalApiKeyMiddleware)
 app.include_router(chat_router, tags=["chat"])
 app.include_router(format_markdown_router, tags=["core", "format-markdown"])
+app.include_router(holiday_relevance_router, tags=["playbooks", "holiday-relevance"])
 app.include_router(style_specs_router, tags=["style-specs"])
 
 

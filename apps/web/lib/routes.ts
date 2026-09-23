@@ -1,11 +1,10 @@
 /**
- * URL prefixes for the signed-in app shell (sidebar + inset + `AnalyticsPageShell`).
- * Primary nav and account live in `AppSidebar` / inset; `MainHeader` is hidden on these paths
- * (`AppChrome` uses `isProtectedAppShellPath`). Keep in sync with `proxy.ts` protected routes.
+ * Operator app shell (sidebar + inset + `AnalyticsPageShell`).
+ * `MainHeader` is hidden on these paths (`AppChrome` uses `isOperatorAppShellPath`).
  * Feature visibility (nav + route allowlist): `config/feature-flags.json`.
  * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
  */
-export const PROTECTED_APP_SHELL_PREFIXES = [
+export const OPERATOR_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflow',
   '/calendar',
@@ -17,17 +16,54 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/crm',
   '/print-orders',
   '/dashboard',
-  '/home',
-  '/continue',
   '/staff',
   '/usage',
-  '/profile',
   '/inventar',
 ] as const
 
-export function isProtectedAppShellPath(pathname: string | null): boolean {
+/**
+ * Auth-required customer shell (`app/(customer)/`): `/home`, `/continue`, `/profile`.
+ * Uses global `MainHeader` + `AccountMenu` — no operator sidebar.
+ */
+export const CUSTOMER_AUTH_PREFIXES = ['/home', '/continue', '/profile'] as const
+
+/**
+ * All Clerk-protected app prefixes (operator + customer). Keep in sync with `proxy.ts`.
+ * @deprecated Prefer `OPERATOR_APP_SHELL_PREFIXES` / `CUSTOMER_AUTH_PREFIXES` / `isClerkProtectedAppPath`.
+ */
+export const PROTECTED_APP_SHELL_PREFIXES = [
+  ...OPERATOR_APP_SHELL_PREFIXES,
+  ...CUSTOMER_AUTH_PREFIXES,
+] as const
+
+function matchesPathPrefix(pathname: string, prefixes: readonly string[]): boolean {
+  return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+}
+
+/** Operator sidebar shell — hides marketing `MainHeader`. */
+export function isOperatorAppShellPath(pathname: string | null): boolean {
   if (pathname == null) return false
-  return PROTECTED_APP_SHELL_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  return matchesPathPrefix(pathname, OPERATOR_APP_SHELL_PREFIXES)
+}
+
+/** Customer auth area (`/home`, `/continue`, `/profile`). */
+export function isCustomerAuthPath(pathname: string | null): boolean {
+  if (pathname == null) return false
+  return matchesPathPrefix(pathname, CUSTOMER_AUTH_PREFIXES)
+}
+
+/** Any signed-in app path that proxy must protect (operator or customer). */
+export function isClerkProtectedAppPath(pathname: string | null): boolean {
+  if (pathname == null) return false
+  return matchesPathPrefix(pathname, PROTECTED_APP_SHELL_PREFIXES)
+}
+
+/**
+ * @deprecated Use `isOperatorAppShellPath` (sidebar chrome) or `isClerkProtectedAppPath` (auth).
+ * Kept as an alias of operator shell so existing “hide MainHeader” call sites stay correct.
+ */
+export function isProtectedAppShellPath(pathname: string | null): boolean {
+  return isOperatorAppShellPath(pathname)
 }
 
 export const routes = {
@@ -123,7 +159,7 @@ export const routes = {
   agentThread: (threadId: string) => `/advisor/${encodeURIComponent(threadId)}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
-  /** Free-plan guest home (orientation + PWA). Pro redirects away. */
+  /** Free-plan customer home (customer shell). Pro redirects away. */
   home: '/home',
   /**
    * Post-auth landing: server resolves workspace plan and redirects to
@@ -150,8 +186,10 @@ export const routes = {
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 
-  /** Public guest wall (curated location frontpage). */
+  /** Public location surfaces (digital menu frontpage; wall URL redirects). */
   public: {
+    locationMenu: (slug: string) => `/m/${encodeURIComponent(slug)}`,
+    /** @deprecated Use `locationMenu`; `/l/` redirects to `/m/`. */
     locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
   },
 }

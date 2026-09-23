@@ -54,6 +54,7 @@ class MenuType:
     id: int
     location_id: int
     title: str
+    public_enabled: bool
     categories: list[MenuCategoryType]
 
 

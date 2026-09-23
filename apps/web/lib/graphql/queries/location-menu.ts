@@ -42,6 +42,7 @@ export type LocationMenu = {
   id: number
   locationId: number
   title: string
+  publicEnabled: boolean
   categories: LocationMenuCategory[]
 }
 
@@ -77,21 +78,26 @@ const MENU_ITEM_FIELDS = `
   }
 `
 
+const MENU_FIELDS = `
+  id
+  locationId
+  title
+  publicEnabled
+  categories {
+    id
+    menuId
+    name
+    sortOrder
+    items {
+      ${MENU_ITEM_FIELDS}
+    }
+  }
+`
+
 export const LOCATION_MENU_QUERY = `
   query LocationMenu($locationId: Int!) {
     locationMenu(locationId: $locationId) {
-      id
-      locationId
-      title
-      categories {
-        id
-        menuId
-        name
-        sortOrder
-        items {
-          ${MENU_ITEM_FIELDS}
-        }
-      }
+      ${MENU_FIELDS}
     }
   }
 `
@@ -103,22 +109,89 @@ export type LocationMenuData = {
 export const REPLACE_LOCATION_MENU_ITEMS_MUTATION = `
   mutation ReplaceLocationMenuItems($locationId: Int!, $categories: [MenuCategoryInput!]!) {
     replaceLocationMenuItems(locationId: $locationId, categories: $categories) {
-      id
-      locationId
-      title
-      categories {
-        id
-        menuId
-        name
-        sortOrder
-        items {
-          ${MENU_ITEM_FIELDS}
-        }
-      }
+      ${MENU_FIELDS}
     }
   }
 `
 
 export type ReplaceLocationMenuItemsData = {
   replaceLocationMenuItems: LocationMenu
+}
+
+export const UPDATE_LOCATION_PUBLIC_MENU_MUTATION = `
+  mutation UpdateLocationPublicMenu(
+    $locationId: Int!
+    $publicEnabled: Boolean
+    $publicSlug: String
+  ) {
+    updateLocationPublicMenu(
+      locationId: $locationId
+      publicEnabled: $publicEnabled
+      publicSlug: $publicSlug
+    ) {
+      locationId
+      publicEnabled
+      publicSlug
+      menu {
+        ${MENU_FIELDS}
+      }
+    }
+  }
+`
+
+export type UpdateLocationPublicMenuPayload = {
+  locationId: number
+  publicEnabled: boolean
+  publicSlug: string | null
+  menu: LocationMenu
+}
+
+export type UpdateLocationPublicMenuData = {
+  updateLocationPublicMenu: UpdateLocationPublicMenuPayload
+}
+
+export const PUBLIC_LOCATION_MENU_QUERY = `
+  query PublicLocationMenu($slug: String!) {
+    publicLocationMenu(slug: $slug) {
+      locationId
+      name
+      tagline
+      publicSlug
+      currency
+      categories {
+        name
+        sortOrder
+        items {
+          name
+          price
+          sortOrder
+        }
+      }
+    }
+  }
+`
+
+export type PublicMenuItem = {
+  name: string
+  price: number
+  sortOrder: number
+}
+
+export type PublicMenuCategory = {
+  name: string
+  sortOrder: number
+  items: PublicMenuItem[]
+}
+
+export type PublicLocationMenuPayload = {
+  locationId: number
+  name: string
+  tagline: string | null
+  publicSlug: string
+  currency: string | null
+  categories: PublicMenuCategory[]
+}
+
+export type PublicLocationMenuData = {
+  publicLocationMenu: PublicLocationMenuPayload | null
 }

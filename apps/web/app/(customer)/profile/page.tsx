@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 
-import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { CustomerPageShell } from '@/components/customer/customer-page-shell'
 import { routes } from '@/lib/routes'
 
 import { ProfileChangePasswordCard } from './_components/profile-change-password-card'
@@ -55,7 +55,7 @@ export default async function ProfilePage() {
   const passwordEnabledFromServer = user.passwordEnabled === true
 
   return (
-    <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('breadcrumb') }]}>
+    <CustomerPageShell maxWidth="lg">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground text-sm">{t('description')}</p>
@@ -69,6 +69,6 @@ export default async function ProfilePage() {
           <ProfileChangePasswordCard passwordEnabledFromServer={passwordEnabledFromServer} />
         </div>
       </div>
-    </AnalyticsPageShell>
+    </CustomerPageShell>
   )
 }

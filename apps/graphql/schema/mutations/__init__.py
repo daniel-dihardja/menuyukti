@@ -34,6 +34,7 @@ from .media_collection_members import (
     RemoveMediaFromCollectionMutation,
 )
 from .pos_orders import PosOrderMutations
+from .provision_workspace import ProvisionWorkspaceMutation
 from .record_ai_usage_event import RecordAiUsageEventMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .replace_location_menu_items import ReplaceLocationMenuItemsMutation
@@ -43,6 +44,7 @@ from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
 from .update_location_frontpage import UpdateLocationFrontpageMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
+from .update_location_public_menu import UpdateLocationPublicMenuMutation
 from .update_media_collection import UpdateMediaCollectionMutation
 from .update_playbook import UpdatePlaybookMutation
 from .update_post import UpdatePostMutation
@@ -68,6 +70,7 @@ __all__ = [
     "CreatePostMutation",
     "CreatePostPageMutation",
     "CreateWorkspaceMutation",
+    "ProvisionWorkspaceMutation",
     "DeleteAnalyticsRunMutation",
     "DeleteCalendarEntryMutation",
     "DeleteCrmAppMutation",
@@ -93,6 +96,7 @@ __all__ = [
     "UpdateLocationMutation",
     "UpdateLocationFrontpageMutation",
     "UpdateLocationManualBriefInputMutation",
+    "UpdateLocationPublicMenuMutation",
     "UpdateMediaCollectionMutation",
     "UpdatePlaybookMutation",
     "UpdateStyleMutation",

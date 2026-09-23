@@ -3,7 +3,7 @@
     "home": true,
     "dashboard": false,
     "media": true,
-    "posts": true,
+    "posts": false,
     "calendar": true,
     "playbooks": true,
     "branches": true,

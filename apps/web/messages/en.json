@@ -623,6 +623,12 @@
       "empty": "Nothing on the wall yet — check back soon.",
       "notFoundTitle": "Wall not found",
       "metaDescription": "Guest favorites and popular picks at {name}."
+    },
+    "menu": {
+      "eyebrow": "Menu",
+      "empty": "Nothing on the menu yet — check back soon.",
+      "notFoundTitle": "Menu not found",
+      "metaDescription": "Digital menu at {name}."
     }
   },
   "shop": {
@@ -882,6 +888,21 @@
   "staff": {
     "title": "Staff console",
     "description": "Menuyukti platform tools for team members. Customers do not see this area.",
+    "provisionWorkspace": {
+      "title": "Provision workspace",
+      "description": "Create an operator workspace for a Clerk user. Guests sign up with no workspace; staff provisions pro (restaurant client) so they can add locations and invite team members.",
+      "ownerClerkUserIdLabel": "Owner Clerk user ID",
+      "ownerClerkUserIdPlaceholder": "user_…",
+      "nameLabel": "Workspace name",
+      "namePlaceholder": "e.g. Café Nord",
+      "planLabel": "Plan",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Provision workspace",
+      "saving": "Provisioning…",
+      "success": "Workspace {id} created on {plan}.",
+      "error": "Could not provision workspace."
+    },
     "workspacePlan": {
       "title": "Workspace plan",
       "description": "Manually set a workspace to free (guest / PWA customer) or pro (restaurant client — full operator product). Free gets guest home and profile; pro unlocks locations, inventar, advisor, and the rest of the app.",
@@ -889,7 +910,7 @@
       "workspaceIdPlaceholder": "e.g. 42",
       "yourWorkspaceId": "Your workspace ID: {id}",
       "useYourWorkspaceId": "Use this ID",
-      "noWorkspaceYet": "You do not have a workspace yet. Create a location first, then return here.",
+      "noWorkspaceYet": "You do not have a workspace yet. Provision one above, or enter another workspace ID.",
       "planLabel": "Plan",
       "planFree": "Free",
       "planPro": "Pro",
@@ -969,7 +990,7 @@
           "noLocationsCta": "Add location"
         },
         "workspace": {
-          "workspaceHint": "Run saves the settings above, then loads holidays. Confirmed picks are not saved yet.",
+          "workspaceHint": "Run saves the settings above, loads holidays, and suggests which ones fit Instagram stories for this venue. Review the checked candidates, then confirm. Confirmed picks are not saved yet.",
           "stepsAria": "Playbook steps",
           "steps": {
             "fetchDates": "Fetch dates",
@@ -978,7 +999,10 @@
           },
           "run": "Run",
           "running": "Running…",
-          "fetchError": "Could not load public holidays. Try again.",
+          "instructionsLabel": "Relevance notes (optional)",
+          "instructionsPlaceholder": "e.g. skip Nyepi; prioritize Chinese New Year for this neighborhood",
+          "instructionsHint": "Optional guidance for which holidays fit Instagram stories. Leave blank to use the default policy.",
+          "fetchError": "Could not load or score public holidays. Try again.",
           "candidatesTitle": "Candidates",
           "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
           "confirmSelected": "Confirm selected ({count})",
@@ -1240,9 +1264,11 @@
   },
   "guestHome": {
     "title": "Home",
-    "description": "Your Menuyukti guest home — install the app and manage your profile.",
+    "description": "Your Menuyukti home — rewards, install the app, and manage your profile.",
     "headline": "Welcome",
-    "lead": "Install Menuyukti on your phone for a full-screen experience, then keep your profile up to date.",
+    "lead": "This is your customer space. Collect rewards at venues you visit, install the app for a full-screen experience, and keep your profile up to date.",
+    "rewardsTitle": "Rewards",
+    "rewardsLead": "Stamp cards and venue rewards are coming soon. When a café or restaurant offers a card, it will show up here.",
     "profileCta": "Open profile"
   },
   "platform": {
@@ -3352,20 +3378,13 @@
     "locationFrontpage": {
       "heading": "Frontpage",
       "description": "Configure the guest-facing home for this location and preview what sales data will highlight.",
+      "publicMenuHint": "Publish the public digital menu and URL on the <link>Menu</link> page.",
       "configTitle": "Display settings",
       "fields": {
         "tagline": "Tagline",
         "taglinePlaceholder": "What guests should feel when they arrive",
         "showGuestFavorites": "Show guest favorites",
         "showPopularCombos": "Show popular combos",
-        "wallEnabled": "Publish guest wall",
-        "wallEnabledHint": "When on, guests can open the public wall at the link below.",
-        "publicSlug": "Public URL slug",
-        "publicSlugPlaceholder": "my-restaurant",
-        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required to publish.",
-        "publicUrl": "Public wall URL",
-        "copyPublicUrl": "Copy link",
-        "copiedPublicUrl": "Copied",
         "itemDescription": "Description",
         "itemDescriptionPlaceholder": "Optional short guest-facing description",
         "publish": "Publish",
@@ -3383,8 +3402,7 @@
         "collapseItem": "Collapse item"
       },
       "errors": {
-        "saveFailed": "Could not save frontpage settings",
-        "slugRequired": "Add a public URL slug before publishing the guest wall"
+        "saveFailed": "Could not save frontpage settings"
       },
       "previewTitle": "Guest preview",
       "previewFromRun": "Based on latest analytics: {runName}",
@@ -3410,6 +3428,20 @@
       "currencyHint": "Prices use this location’s currency ({currency}).",
       "categoryLabel": "Category {number}",
       "itemLabel": "Item {number}",
+      "publish": {
+        "title": "Public menu",
+        "enabled": "Publish public menu",
+        "enabledHint": "When on, anyone can open the digital menu at the link below.",
+        "publicSlug": "Public URL slug",
+        "publicSlugPlaceholder": "my-restaurant",
+        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required to publish.",
+        "publicUrl": "Public menu URL",
+        "copyPublicUrl": "Copy link",
+        "copiedPublicUrl": "Copied",
+        "save": "Save publish settings",
+        "saving": "Saving…",
+        "saved": "Publish settings saved"
+      },
       "fields": {
         "categoryName": "Category",
         "categoryNamePlaceholder": "Food",
@@ -3417,6 +3449,9 @@
         "namePlaceholder": "Espresso",
         "priceWithCurrency": "Price ({currency})",
         "pricePlaceholder": "0.00",
+        "available": "Available",
+        "availableHint": "Unavailable items stay off the public menu and POS grid.",
+        "unavailableBadge": "Unavailable",
         "description": "Description",
         "descriptionPlaceholder": "Optional short description",
         "image": "Image",
@@ -3460,6 +3495,8 @@
         "invalidModifierPriceDelta": "Enter a valid price delta for each option",
         "invalidModifierSelect": "Min/max select must be whole numbers with min ≤ max and max ≥ 1",
         "saveFailed": "Failed to save menu",
+        "publishFailed": "Failed to save publish settings",
+        "slugRequired": "Add a public URL slug before publishing",
         "unknown": "Unknown error"
       }
     },

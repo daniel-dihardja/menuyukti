@@ -1,9 +1,9 @@
-import { PROTECTED_APP_SHELL_PREFIXES, routes } from '@/lib/routes'
+import { CUSTOMER_AUTH_PREFIXES, OPERATOR_APP_SHELL_PREFIXES, routes } from '@/lib/routes'
 
 /** Auth surfaces where pending sessions complete MFA / session tasks (see custom-login-form). */
 const AUTH_ROUTE_PREFIXES = [routes.login, routes.signUp, routes.ssoCallback] as const
 
-/** Protected in proxy but not listed in `PROTECTED_APP_SHELL_PREFIXES` (legacy / rewrite alias). */
+/** Protected in proxy but not listed in shell prefix arrays (legacy / rewrite alias). */
 const EXTRA_PROTECTED_PREFIXES = ['/agent'] as const
 
 function matchesRoutePrefix(pathname: string, prefixes: readonly string[]): boolean {
@@ -25,7 +25,8 @@ export function shouldRedirectPendingSession(
     return false
   }
   return matchesRoutePrefix(pathname, [
-    ...PROTECTED_APP_SHELL_PREFIXES,
+    ...OPERATOR_APP_SHELL_PREFIXES,
+    ...CUSTOMER_AUTH_PREFIXES,
     ...EXTRA_PROTECTED_PREFIXES,
   ])
 }

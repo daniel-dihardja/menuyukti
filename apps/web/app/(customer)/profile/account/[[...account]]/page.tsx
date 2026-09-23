@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
-import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { routes } from '@/lib/routes'
+import { CustomerPageShell } from '@/components/customer/customer-page-shell'
 
 import { ProfileUserProfile } from '../_components/profile-user-profile'
 
@@ -21,13 +20,7 @@ export default async function ProfileAccountPage() {
   const t = await getTranslations('profile')
 
   return (
-    <AnalyticsPageShell
-      title={t('accountTitle')}
-      breadcrumbs={[
-        { label: t('breadcrumb'), href: routes.profile },
-        { label: t('accountBreadcrumb') },
-      ]}
-    >
+    <CustomerPageShell maxWidth="lg">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">{t('accountTitle')}</h1>
         <p className="text-muted-foreground text-sm">{t('accountDescription')}</p>
@@ -35,6 +28,6 @@ export default async function ProfileAccountPage() {
           <ProfileUserProfile />
         </div>
       </div>
-    </AnalyticsPageShell>
+    </CustomerPageShell>
   )
 }

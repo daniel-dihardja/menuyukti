@@ -13,7 +13,6 @@ import {
   Package,
   Shield,
   Sparkles,
-  SquarePen,
   Store,
   Users,
 } from 'lucide-react'
@@ -99,13 +98,6 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'playbooks',
     href: routes.playbooks,
     icon: <BookOpen />,
-    group: 'create',
-  },
-  {
-    key: 'posts',
-    labelKey: 'posts',
-    href: routes.igStudio,
-    icon: <SquarePen />,
     group: 'create',
   },
   {

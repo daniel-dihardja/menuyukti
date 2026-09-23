@@ -23,6 +23,7 @@ from .pos_orders import PosOrdersQuery
 from .posts import PostsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
+from .public_location_menu import PublicLocationMenuQuery
 from .public_location_wall import PublicLocationWallQuery
 from .revenue_trends import RevenueTrendsQuery
 from .scheduler_calendar import SchedulerCalendarQuery
@@ -55,6 +56,7 @@ __all__ = [
     "PosOrdersQuery",
     "SchedulerCalendarQuery",
     "PublicHolidaysQuery",
+    "PublicLocationMenuQuery",
     "PublicLocationWallQuery",
     "OperatingProfileQuery",
     "PostsQuery",

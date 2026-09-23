@@ -1,16 +1,18 @@
 import type { MetadataRoute } from 'next'
 
-import { PROTECTED_APP_SHELL_PREFIXES } from '@/lib/routes'
+import { CUSTOMER_AUTH_PREFIXES, OPERATOR_APP_SHELL_PREFIXES } from '@/lib/routes'
 
 const baseUrl = 'https://menuyukti.com'
 
-/** Auth and internal paths that should not be crawled (in addition to protected app shell). */
+/** Auth and internal paths that should not be crawled (in addition to signed-in app paths). */
 const EXTRA_DISALLOW = ['/login', '/sign-up', '/sso-callback', '/agent', '/api/'] as const
+
+const SIGNED_IN_PREFIXES = [...OPERATOR_APP_SHELL_PREFIXES, ...CUSTOMER_AUTH_PREFIXES] as const
 
 export default function robots(): MetadataRoute.Robots {
   const disallow = [
-    ...PROTECTED_APP_SHELL_PREFIXES.map((prefix) => `${prefix}/`),
-    ...PROTECTED_APP_SHELL_PREFIXES,
+    ...SIGNED_IN_PREFIXES.map((prefix) => `${prefix}/`),
+    ...SIGNED_IN_PREFIXES,
     ...EXTRA_DISALLOW,
   ]
 
