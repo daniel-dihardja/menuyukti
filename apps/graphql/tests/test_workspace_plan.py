@@ -1,4 +1,4 @@
-"""Workspace plan (free/pro): defaults, location cap, update mutation."""
+"""Workspace plan (free/pro): staff provision, location cap, update mutation."""
 
 from __future__ import annotations
 
@@ -17,6 +17,17 @@ mutation CreateWorkspace($name: String!) {
     id
     name
     plan
+  }
+}
+"""
+
+PROVISION_WORKSPACE = """
+mutation ProvisionWorkspace($ownerClerkUserId: String!, $name: String!, $plan: String) {
+  provisionWorkspace(ownerClerkUserId: $ownerClerkUserId, name: $name, plan: $plan) {
+    id
+    name
+    plan
+    ownerClerkUserId
   }
 }
 """
@@ -69,7 +80,7 @@ def clean_user_workspaces():
         session.close()
 
 
-def test_create_workspace_defaults_to_free(clean_user_workspaces):
+def test_create_workspace_self_serve_blocked(clean_user_workspaces):
     result = asyncio.run(
         schema.execute(
             CREATE_WORKSPACE,
@@ -77,22 +88,61 @@ def test_create_workspace_defaults_to_free(clean_user_workspaces):
             context_value=graphql_auth_context(),
         )
     )
+    assert result.errors is not None
+    assert any("staff-provisioned" in str(e).lower() for e in result.errors)
+
+
+def test_provision_workspace_defaults_to_pro(clean_user_workspaces):
+    result = asyncio.run(
+        schema.execute(
+            PROVISION_WORKSPACE,
+            variable_values={
+                "ownerClerkUserId": GRAPHQL_TEST_USER_ID,
+                "name": "Agency client",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
     assert result.errors is None
     assert result.data is not None
-    assert result.data["createWorkspace"]["plan"] == WORKSPACE_PLAN_FREE
+    ws = result.data["provisionWorkspace"]
+    assert ws["plan"] == WORKSPACE_PLAN_PRO
+    assert ws["ownerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert ws["name"] == "Agency client"
+
+
+def test_provision_workspace_respects_plan(clean_user_workspaces):
+    result = asyncio.run(
+        schema.execute(
+            PROVISION_WORKSPACE,
+            variable_values={
+                "ownerClerkUserId": GRAPHQL_TEST_USER_ID,
+                "name": "Guest shop",
+                "plan": WORKSPACE_PLAN_FREE,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors is None
+    assert result.data is not None
+    assert result.data["provisionWorkspace"]["plan"] == WORKSPACE_PLAN_FREE
 
 
 def test_create_location_blocked_on_free(clean_user_workspaces):
     created = asyncio.run(
         schema.execute(
-            CREATE_WORKSPACE,
-            variable_values={"name": "Guest shop"},
+            PROVISION_WORKSPACE,
+            variable_values={
+                "ownerClerkUserId": GRAPHQL_TEST_USER_ID,
+                "name": "Guest shop",
+                "plan": WORKSPACE_PLAN_FREE,
+            },
             context_value=graphql_auth_context(),
         )
     )
     assert created.errors is None
     assert created.data is not None
-    wid = created.data["createWorkspace"]["id"]
+    wid = created.data["provisionWorkspace"]["id"]
 
     first = asyncio.run(
         schema.execute(
@@ -108,25 +158,18 @@ def test_create_location_blocked_on_free(clean_user_workspaces):
 def test_create_location_second_ok_on_pro(clean_user_workspaces):
     created = asyncio.run(
         schema.execute(
-            CREATE_WORKSPACE,
-            variable_values={"name": "Pro shop"},
+            PROVISION_WORKSPACE,
+            variable_values={
+                "ownerClerkUserId": GRAPHQL_TEST_USER_ID,
+                "name": "Pro shop",
+                "plan": WORKSPACE_PLAN_PRO,
+            },
             context_value=graphql_auth_context(),
         )
     )
     assert created.errors is None
     assert created.data is not None
-    wid = created.data["createWorkspace"]["id"]
-
-    upgraded = asyncio.run(
-        schema.execute(
-            UPDATE_WORKSPACE_PLAN,
-            variable_values={"workspaceId": wid, "plan": WORKSPACE_PLAN_PRO},
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert upgraded.errors is None
-    assert upgraded.data is not None
-    assert upgraded.data["updateWorkspacePlan"]["plan"] == WORKSPACE_PLAN_PRO
+    wid = created.data["provisionWorkspace"]["id"]
 
     first = asyncio.run(
         schema.execute(

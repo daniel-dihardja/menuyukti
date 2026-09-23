@@ -8,9 +8,11 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
 /**
  * Product tiers (Menuyukti = creative agency for restaurants, cafés, and bars):
  *
- * - **free** — guest / customer accounts (mainly PWA). Guest home + profile.
- * - **pro** — restaurant-owner clients; agency-provisioned, typically complimentary.
- *   Full operator product surface (everything free does not include).
+ * - **free** / no workspace — guest / customer accounts (mainly PWA). Sign-up is
+ *   Clerk-only until staff provisions a workspace. Guest home + profile.
+ * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
+ *   (`provisionWorkspace`). Full operator product surface (everything free does
+ *   not include). Self-serve workspace creation is disabled.
  */
 
 /**

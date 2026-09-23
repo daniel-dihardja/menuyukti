@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { requireMenuyuktiAdmin } from '@/lib/menuyukti-role-server'
 
+import { StaffProvisionWorkspaceForm } from './_components/staff-provision-workspace-form'
 import { StaffWorkspacePlanForm } from './_components/staff-workspace-plan-form'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,6 +26,7 @@ export default async function StaffPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground text-sm">{t('description')}</p>
         </div>
+        <StaffProvisionWorkspaceForm />
         <StaffWorkspacePlanForm />
       </div>
     </AnalyticsPageShell>

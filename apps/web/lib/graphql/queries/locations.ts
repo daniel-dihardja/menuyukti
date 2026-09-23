@@ -320,9 +320,9 @@ export type MyWorkspaceData = {
   } | null
 }
 
-export const CREATE_WORKSPACE_MUTATION = `
-  mutation CreateWorkspace($name: String!) {
-    createWorkspace(name: $name) {
+export const PROVISION_WORKSPACE_MUTATION = `
+  mutation ProvisionWorkspace($ownerClerkUserId: String!, $name: String!, $plan: String) {
+    provisionWorkspace(ownerClerkUserId: $ownerClerkUserId, name: $name, plan: $plan) {
       id
       name
       ownerClerkUserId
@@ -332,8 +332,8 @@ export const CREATE_WORKSPACE_MUTATION = `
   }
 `
 
-export type CreateWorkspaceData = {
-  createWorkspace: {
+export type ProvisionWorkspaceData = {
+  provisionWorkspace: {
     id: string
     name: string
     ownerClerkUserId: string

@@ -888,6 +888,21 @@
   "staff": {
     "title": "Staff console",
     "description": "Menuyukti platform tools for team members. Customers do not see this area.",
+    "provisionWorkspace": {
+      "title": "Provision workspace",
+      "description": "Create an operator workspace for a Clerk user. Guests sign up with no workspace; staff provisions pro (restaurant client) so they can add locations and invite team members.",
+      "ownerClerkUserIdLabel": "Owner Clerk user ID",
+      "ownerClerkUserIdPlaceholder": "user_…",
+      "nameLabel": "Workspace name",
+      "namePlaceholder": "e.g. Café Nord",
+      "planLabel": "Plan",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Provision workspace",
+      "saving": "Provisioning…",
+      "success": "Workspace {id} created on {plan}.",
+      "error": "Could not provision workspace."
+    },
     "workspacePlan": {
       "title": "Workspace plan",
       "description": "Manually set a workspace to free (guest / PWA customer) or pro (restaurant client — full operator product). Free gets guest home and profile; pro unlocks locations, inventar, advisor, and the rest of the app.",
@@ -895,7 +910,7 @@
       "workspaceIdPlaceholder": "e.g. 42",
       "yourWorkspaceId": "Your workspace ID: {id}",
       "useYourWorkspaceId": "Use this ID",
-      "noWorkspaceYet": "You do not have a workspace yet. Create a location first, then return here.",
+      "noWorkspaceYet": "You do not have a workspace yet. Provision one above, or enter another workspace ID.",
       "planLabel": "Plan",
       "planFree": "Free",
       "planPro": "Pro",
