@@ -78,7 +78,7 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          {!isLanding && showProductNavLinks ? (
+          {showProductNav && showProductNavLinks ? (
             <nav
               className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
               aria-label={t('navAria')}
@@ -120,7 +120,7 @@ export function MainHeader() {
                         : t('landingNav.mobileDescription')}
                     </SheetDescription>
                   </SheetHeader>
-                  {!isLanding && showProductNavLinks ? (
+                  {showProductNav && showProductNavLinks ? (
                     <nav aria-label={t('navAria')} className="flex flex-col gap-2 px-4 pt-4">
                       {showStudioNav ? (
                         <SheetClose asChild>
