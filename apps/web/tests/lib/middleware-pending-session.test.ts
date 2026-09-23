@@ -25,6 +25,8 @@ describe('shouldRedirectPendingSession', () => {
     expect(shouldRedirectPendingSession('/advisor/abc', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/dashboard', 'pending')).toBe(true)
     expect(shouldRedirectPendingSession('/agent', 'pending')).toBe(true)
+    expect(shouldRedirectPendingSession('/home', 'pending')).toBe(true)
+    expect(shouldRedirectPendingSession('/profile', 'pending')).toBe(true)
   })
 
   it('does not redirect pending sessions on public routes', () => {

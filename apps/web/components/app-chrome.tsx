@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 
 import { MainHeader } from '@/components/main-header'
-import { isProtectedAppShellPath } from '@/lib/routes'
+import { isOperatorAppShellPath } from '@/lib/routes'
 
 const HIDE_HEADER_PREFIXES = ['/sso-callback', '/privacy', '/terms']
 
@@ -12,7 +12,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const hideForAuthOrLegal =
     pathname != null &&
     HIDE_HEADER_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
-  const hideForAppShell = isProtectedAppShellPath(pathname)
+  /** Operator sidebar shell only — customer `/home` / `/profile` keep `MainHeader`. */
+  const hideForAppShell = isOperatorAppShellPath(pathname)
   const hideHeader = hideForAuthOrLegal || hideForAppShell
   const isLanding = pathname === '/'
 
