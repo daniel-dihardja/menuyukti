@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Play } from 'lucide-react'
 import { toast } from 'sonner'
@@ -17,9 +17,11 @@ import {
 } from '@workspace/ui/components/empty'
 import { Label } from '@workspace/ui/components/label'
 import { Spinner } from '@workspace/ui/components/spinner'
+import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { PublicHolidaysDraftStories } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
 import { fetchHolidays, scoreHolidayRelevance } from '@/lib/playbooks/client-api'
 import { relevantHolidayIds } from '@/lib/playbooks/relevant-holiday-ids'
 
@@ -31,11 +33,7 @@ type HolidayItem = {
 
 type StepId = 'fetchDates' | 'draftStories' | 'artwork'
 
-const STEPS: { id: StepId; enabled: boolean }[] = [
-  { id: 'fetchDates', enabled: true },
-  { id: 'draftStories', enabled: false },
-  { id: 'artwork', enabled: false },
-]
+const STEP_IDS: StepId[] = ['fetchDates', 'draftStories', 'artwork']
 
 function sortByDate(items: HolidayItem[]): HolidayItem[] {
   return [...items].toSorted((a, b) => a.date.localeCompare(b.date))
@@ -56,6 +54,8 @@ export function PublicHolidaysWorkspace({
   onRunningChange,
 }: PublicHolidaysWorkspaceProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace')
+  const aiRelevanceId = useId()
+  const aiRelevanceHintId = `${aiRelevanceId}-hint`
   const [activeStepId, setActiveStepId] = useState<StepId>('fetchDates')
   const [candidates, setCandidates] = useState<HolidayItem[]>([])
   const [confirmed, setConfirmed] = useState<HolidayItem[]>([])
@@ -64,7 +64,22 @@ export function PublicHolidaysWorkspace({
   const [lastFetchEmpty, setLastFetchEmpty] = useState(false)
   const [running, setRunning] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [useAiRelevance, setUseAiRelevance] = useState(true)
   const [relevanceInstructions, setRelevanceInstructions] = useState('')
+  const [draftInstructions, setDraftInstructions] = useState('')
+
+  const draftStoriesEnabled = confirmed.length > 0
+
+  const steps: { id: StepId; enabled: boolean }[] = STEP_IDS.map((id) => ({
+    id,
+    enabled: id === 'fetchDates' ? true : id === 'draftStories' ? draftStoriesEnabled : false,
+  }))
+
+  useEffect(() => {
+    if (confirmed.length === 0 && activeStepId === 'draftStories') {
+      setActiveStepId('fetchDates')
+    }
+  }, [confirmed.length, activeStepId])
 
   function setRunningState(next: boolean) {
     setRunning(next)
@@ -133,7 +148,7 @@ export function PublicHolidaysWorkspace({
       )
 
       let nextSelected = new Set<string>()
-      if (nextCandidates.length > 0) {
+      if (useAiRelevance && nextCandidates.length > 0) {
         const scored = await scoreHolidayRelevance({
           locationId: ctx.locationId,
           holidays: holidays
@@ -165,15 +180,16 @@ export function PublicHolidaysWorkspace({
   }
 
   const selectedCount = selectedIds.size
-  const showFetchWorkspace = activeStepId === 'fetchDates'
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-muted-foreground text-sm">{t('workspaceHint')}</p>
 
       <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('stepsAria')}>
-        {STEPS.map((step) => {
+        {steps.map((step) => {
           const isActive = activeStepId === step.id
+          const showBadge =
+            (step.id === 'fetchDates' || step.id === 'draftStories') && confirmed.length > 0
           return (
             <button
               key={step.id}
@@ -193,7 +209,7 @@ export function PublicHolidaysWorkspace({
               )}
             >
               {t(`steps.${step.id}`)}
-              {step.id === 'fetchDates' && confirmed.length > 0 ? (
+              {showBadge ? (
                 <Badge
                   variant={isActive ? 'secondary' : 'outline'}
                   className="h-5 min-w-5 justify-center px-1.5 font-normal"
@@ -206,13 +222,31 @@ export function PublicHolidaysWorkspace({
         })}
       </div>
 
-      {showFetchWorkspace ? (
+      {activeStepId === 'fetchDates' ? (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <section
             className="flex min-w-0 flex-col gap-4 rounded-xl border border-border/70 p-4"
             aria-labelledby="ph-candidates-heading"
           >
             <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <Label htmlFor={aiRelevanceId} className="text-sm font-medium">
+                    {t('aiRelevanceLabel')}
+                  </Label>
+                  <p id={aiRelevanceHintId} className="text-muted-foreground text-xs">
+                    {t('aiRelevanceHint')}
+                  </p>
+                </div>
+                <Switch
+                  id={aiRelevanceId}
+                  checked={useAiRelevance}
+                  onCheckedChange={setUseAiRelevance}
+                  disabled={running}
+                  aria-label={t('aiRelevanceAria')}
+                  aria-describedby={aiRelevanceHintId}
+                />
+              </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="ph-relevance-instructions" className="text-sm font-medium">
                   {t('instructionsLabel')}
@@ -222,7 +256,7 @@ export function PublicHolidaysWorkspace({
                   value={relevanceInstructions}
                   onChange={(e) => setRelevanceInstructions(e.target.value)}
                   placeholder={t('instructionsPlaceholder')}
-                  disabled={running}
+                  disabled={running || !useAiRelevance}
                   maxLength={2000}
                   rows={3}
                   className="min-h-20 resize-y"
@@ -380,6 +414,12 @@ export function PublicHolidaysWorkspace({
             )}
           </section>
         </div>
+      ) : activeStepId === 'draftStories' ? (
+        <PublicHolidaysDraftStories
+          holidays={confirmed}
+          instructions={draftInstructions}
+          onInstructionsChange={setDraftInstructions}
+        />
       ) : (
         <Empty className="border border-dashed border-border/70 py-12">
           <EmptyHeader>
