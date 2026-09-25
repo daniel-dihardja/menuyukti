@@ -4,12 +4,7 @@ import { useId } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '@workspace/ui/components/empty'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 import { Label } from '@workspace/ui/components/label'
 import { Textarea } from '@workspace/ui/components/textarea'
 

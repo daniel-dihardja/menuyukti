@@ -10,11 +10,7 @@ import * as React from 'react'
 
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
-import {
-  buildAuthContinueUrl,
-  buildLoginUrl,
-  rememberAuthReturnPath,
-} from '@/lib/auth-return-path'
+import { buildAuthContinueUrl, buildLoginUrl, rememberAuthReturnPath } from '@/lib/auth-return-path'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import {
