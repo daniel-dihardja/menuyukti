@@ -29,11 +29,13 @@ export function getSafeAuthReturnPath(raw: string | null | undefined): string | 
   return pathname
 }
 
-/** `/continue` or `/continue?next=/m/slug` for Clerk finish URLs. */
+/** Post-auth URL: public menu return path when safe, otherwise plan-aware `/continue`. */
 export function buildAuthContinueUrl(returnTo?: string | null): string {
   const safe = getSafeAuthReturnPath(returnTo)
-  if (!safe) return routes.authContinue
-  return `${routes.authContinue}?${AUTH_RETURN_TO_QUERY}=${encodeURIComponent(safe)}`
+  // Skip `/continue` for guest menus — that route is auth-gated and briefly
+  // redirects to `/login` when the session cookie is not visible yet (common on mobile).
+  if (safe) return safe
+  return routes.authContinue
 }
 
 /** `/login` or `/login?next=/m/slug` for email sign-in from a guest surface. */
@@ -51,6 +53,16 @@ export function rememberAuthReturnPath(pathname: string | null | undefined): voi
     sessionStorage.setItem(AUTH_RETURN_TO_STORAGE_KEY, safe)
   } catch {
     // private mode / disabled storage — query param on redirectUrl still works
+  }
+}
+
+/** Read a stored return path without clearing (e.g. SSO fallback to login). */
+export function peekAuthReturnPath(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return getSafeAuthReturnPath(sessionStorage.getItem(AUTH_RETURN_TO_STORAGE_KEY))
+  } catch {
+    return null
   }
 }
 

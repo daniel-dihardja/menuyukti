@@ -47,7 +47,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
   if (shouldRedirectPendingSession(pathname, sessionStatus)) {
-    return NextResponse.redirect(new URL(routes.login, req.url))
+    const loginUrl = new URL(routes.login, req.url)
+    const returnTo = getSafeAuthReturnPath(req.nextUrl.searchParams.get(AUTH_RETURN_TO_QUERY))
+    if (returnTo) {
+      loginUrl.searchParams.set(AUTH_RETURN_TO_QUERY, returnTo)
+    }
+    return NextResponse.redirect(loginUrl)
   }
 
   if (!isProtectedRoute(req)) {

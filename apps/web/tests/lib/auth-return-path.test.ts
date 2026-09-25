@@ -23,12 +23,12 @@ describe('getSafeAuthReturnPath', () => {
 })
 
 describe('buildAuthContinueUrl / buildLoginUrl', () => {
-  it('appends a safe next param', () => {
-    expect(buildAuthContinueUrl('/m/cafe')).toBe(`/continue?${AUTH_RETURN_TO_QUERY}=%2Fm%2Fcafe`)
+  it('returns the guest menu path directly (avoids /continue → /login race)', () => {
+    expect(buildAuthContinueUrl('/m/cafe')).toBe('/m/cafe')
     expect(buildLoginUrl('/m/cafe')).toBe(`/login?${AUTH_RETURN_TO_QUERY}=%2Fm%2Fcafe`)
   })
 
-  it('omits next when unsafe', () => {
+  it('falls back to /continue when no safe return path', () => {
     expect(buildAuthContinueUrl('/advisor')).toBe('/continue')
     expect(buildLoginUrl(null)).toBe('/login')
   })

@@ -13,6 +13,7 @@ import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = await auth()
   if (!isAuthenticated) {
+    // Prefer middleware `auth.protect`; this is defense-in-depth only.
     redirect(routes.login)
   }
 

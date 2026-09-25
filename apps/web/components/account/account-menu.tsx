@@ -123,11 +123,13 @@ export function AccountMenu({ className }: AccountMenuProps) {
         <DropdownMenuItem
           variant="destructive"
           onSelect={() => {
-            // Defer so Radix can close the menu before Clerk tears down session
-            // state (avoids "update on a component that hasn't mounted yet").
             const destination = signOutRedirectUrl
+            // Absolute redirectUrl forces a full page load. Relative paths go through
+            // Next soft navigation and race ClerkProvider remounts under Suspense
+            // ("update on a component that hasn't mounted yet").
             window.setTimeout(() => {
-              void signOut({ redirectUrl: destination })
+              const absolute = new URL(destination, window.location.origin).href
+              void signOut({ redirectUrl: absolute })
             }, 0)
           }}
         >

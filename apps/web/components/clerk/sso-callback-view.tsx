@@ -5,7 +5,9 @@ import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { routes } from '@/lib/routes'
 import {
   buildAuthContinueUrl,
+  buildLoginUrl,
   consumeAuthReturnPath,
+  peekAuthReturnPath,
 } from '@/lib/auth-return-path'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
@@ -63,7 +65,7 @@ export function SsoCallbackView() {
   }
 
   const navigateToSignIn = () => {
-    router.push(routes.login)
+    router.push(buildLoginUrl(peekAuthReturnPath()))
   }
 
   const navigateToSignUp = () => {
