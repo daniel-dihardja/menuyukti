@@ -37,6 +37,7 @@ class UpdateLocationPublicMenuMutation:
         location_id: int,
         public_enabled: bool | None = UNSET,
         public_slug: str | None = UNSET,
+        header_image_filename: str | None = UNSET,
     ) -> LocationPublicMenuSettingsType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -76,6 +77,10 @@ class UpdateLocationPublicMenuMutation:
 
             if public_enabled is not UNSET:
                 menu.public_enabled = next_enabled
+
+            if header_image_filename is not UNSET:
+                cleaned = (header_image_filename or "").strip() or None
+                menu.header_image_filename = cleaned
 
             session.commit()
             session.refresh(menu)

@@ -55,6 +55,7 @@ class MenuType:
     location_id: int
     title: str
     public_enabled: bool
+    header_image_filename: str | None
     categories: list[MenuCategoryType]
 
 

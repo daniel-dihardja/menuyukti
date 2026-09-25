@@ -35,4 +35,5 @@ class PublicLocationMenuType:
     currency: str | None
     workspace_id: strawberry.ID | None
     media_owner_clerk_user_id: str | None
+    header_image_filename: str | None
     categories: list[PublicMenuCategoryType]

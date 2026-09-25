@@ -3455,6 +3455,9 @@
         "publicUrl": "Public menu URL",
         "copyPublicUrl": "Copy link",
         "copiedPublicUrl": "Copied",
+        "headerImage": "Header image",
+        "headerImageHint": "Optional photo shown at the top of the public digital menu.",
+        "headerImagePickerAria": "Select a header photo from your media library",
         "save": "Save publish settings",
         "saving": "Saving…",
         "saved": "Publish settings saved"

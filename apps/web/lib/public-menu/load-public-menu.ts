@@ -21,6 +21,7 @@ export type PublicLocationMenuView = {
   tagline: string | null
   publicSlug: string
   currency: string | null
+  headerImageUrl: string | null
   categories: PublicMenuCategoryView[]
 }
 
@@ -39,12 +40,15 @@ export async function loadPublicLocationMenu(
   const menu = data.publicLocationMenu
   if (!menu) return null
 
-  const allowedNames = new Set(
-    menu.categories
-      .flatMap((category) => category.items)
-      .map((item) => item.imageFilename?.trim())
-      .filter((name): name is string => Boolean(name)),
-  )
+  const headerFilename = menu.headerImageFilename?.trim() || null
+  const itemFilenames = menu.categories
+    .flatMap((category) => category.items)
+    .map((item) => item.imageFilename?.trim())
+    .filter((name): name is string => Boolean(name))
+  const allowedNames = new Set([
+    ...itemFilenames,
+    ...(headerFilename ? [headerFilename] : []),
+  ])
   const urlByName = await presignPublicPhotos(
     menu.workspaceId,
     menu.mediaOwnerClerkUserId,
@@ -58,6 +62,10 @@ export async function loadPublicLocationMenu(
     tagline: menu.tagline,
     publicSlug: menu.publicSlug,
     currency: menu.currency,
+    headerImageUrl:
+      headerFilename && allowedNames.has(headerFilename)
+        ? (urlByName[headerFilename] ?? null)
+        : null,
     categories: menu.categories.map((category) => ({
       name: category.name,
       sortOrder: category.sortOrder,

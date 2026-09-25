@@ -20,12 +20,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       return { title: t('notFoundTitle') }
     }
     const title = menu.tagline ? `${menu.name} · ${menu.tagline}` : menu.name
+    const description = menu.tagline ?? t('metaDescription', { name: menu.name })
     return {
       title,
-      description: menu.tagline ?? t('metaDescription', { name: menu.name }),
+      description,
       openGraph: {
         title,
-        description: menu.tagline ?? t('metaDescription', { name: menu.name }),
+        description,
+        ...(menu.headerImageUrl ? { images: [{ url: menu.headerImageUrl }] } : {}),
       },
     }
   } catch {
@@ -47,10 +49,26 @@ export default async function PublicLocationMenuPage({ params }: PageProps) {
   return (
     <div className="bg-background text-foreground min-h-screen">
       <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.02_80)_0%,_transparent_55%),linear-gradient(to_bottom,_oklch(0.97_0.01_80),_oklch(0.94_0.02_70))]"
-        />
+        {menu.headerImageUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
+            <img
+              src={menu.headerImageUrl}
+              alt=""
+              className="absolute inset-0 size-full object-cover"
+              decoding="async"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/90 via-background/45 to-background/20"
+            />
+          </>
+        ) : (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.02_80)_0%,_transparent_55%),linear-gradient(to_bottom,_oklch(0.97_0.01_80),_oklch(0.94_0.02_70))]"
+          />
+        )}
         <div className="relative z-10 mx-auto w-full max-w-4xl">
           <p className="text-muted-foreground mb-3 text-xs font-medium tracking-[0.2em] uppercase">
             {t('eyebrow')}

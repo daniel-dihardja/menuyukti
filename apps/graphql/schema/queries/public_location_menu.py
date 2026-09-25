@@ -97,5 +97,6 @@ class PublicLocationMenuQuery:
                 currency=location.currency,
                 workspace_id=strawberry.ID(workspace_id) if workspace_id else None,
                 media_owner_clerk_user_id=media_owner,
+                header_image_filename=menu.header_image_filename,
                 categories=_public_categories(menu),
             )

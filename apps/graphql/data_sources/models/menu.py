@@ -50,6 +50,7 @@ class Menu(Base):
         default=False,
         server_default=text("false"),
     )
+    header_image_filename: Mapped[str | None] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

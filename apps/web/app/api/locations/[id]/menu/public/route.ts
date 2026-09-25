@@ -13,6 +13,7 @@ import {
 const updatePublicMenuSchema = z.object({
   publicEnabled: z.boolean(),
   publicSlug: z.string().max(128).nullable(),
+  headerImageFilename: z.string().max(512).nullable(),
 })
 
 type RouteContext = {
@@ -47,6 +48,7 @@ export async function PATCH(req: Request, context: RouteContext) {
         locationId: locId,
         publicEnabled: payload.publicEnabled,
         publicSlug: payload.publicSlug,
+        headerImageFilename: payload.headerImageFilename,
       },
       userId,
       'UpdateLocationPublicMenu',

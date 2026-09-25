@@ -108,6 +108,7 @@ export default async function Page({ params }: PageProps) {
           initialCategories={initialCategories}
           initialPublicEnabled={menuData.locationMenu?.publicEnabled ?? false}
           initialPublicSlug={location.publicSlug ?? ''}
+          initialHeaderImageFilename={menuData.locationMenu?.headerImageFilename ?? null}
         />
       </section>
     </AnalyticsPageShell>
