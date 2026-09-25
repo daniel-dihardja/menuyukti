@@ -7,6 +7,7 @@ import {
   isCustomerAuthPath,
   isOperatorAppShellPath,
   isProtectedAppShellPath,
+  isPublicLocationSurfacePath,
 } from '@/lib/routes'
 
 describe('routes shell helpers', () => {
@@ -32,6 +33,13 @@ describe('routes shell helpers', () => {
     expect(isClerkProtectedAppPath('/home')).toBe(true)
     expect(isClerkProtectedAppPath('/m/cafe')).toBe(false)
     expect(isClerkProtectedAppPath('/')).toBe(false)
+  })
+
+  it('treats public location menu paths as guest surfaces (no product mobile nav)', () => {
+    expect(isPublicLocationSurfacePath('/m/cafe')).toBe(true)
+    expect(isPublicLocationSurfacePath('/l/cafe')).toBe(true)
+    expect(isPublicLocationSurfacePath('/shop')).toBe(false)
+    expect(isPublicLocationSurfacePath('/')).toBe(false)
   })
 
   it('keeps isProtectedAppShellPath as operator-shell alias', () => {

@@ -10,6 +10,8 @@ class PublicMenuItemType:
     name: str
     price: float
     sort_order: int
+    description: str
+    image_filename: str | None
 
 
 @strawberry.type(description="One category section on the public digital menu.")
@@ -31,4 +33,6 @@ class PublicLocationMenuType:
     tagline: str | None
     public_slug: str
     currency: str | None
+    workspace_id: strawberry.ID | None
+    media_owner_clerk_user_id: str | None
     categories: list[PublicMenuCategoryType]

@@ -18,6 +18,8 @@ query PublicMenu($slug: String!) {
     tagline
     publicSlug
     currency
+    workspaceId
+    mediaOwnerClerkUserId
     categories {
       name
       sortOrder
@@ -25,6 +27,8 @@ query PublicMenu($slug: String!) {
         name
         price
         sortOrder
+        description
+        imageFilename
       }
     }
   }
@@ -144,19 +148,21 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
                     menu_id=menu.id,
                     category_id=cat.id,
                     name="Espresso",
-                    description="",
+                    description="Double shot",
                     price=2.5,
                     sort_order=0,
                     is_available=True,
+                    image_filename="espresso.webp",
                 ),
                 MenuItem(
                     menu_id=menu.id,
                     category_id=cat.id,
                     name="Sold Out Latte",
-                    description="",
+                    description="Oat milk",
                     price=4.0,
                     sort_order=1,
                     is_available=False,
+                    image_filename="latte.webp",
                 ),
             ]
         )
@@ -177,8 +183,13 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
     assert pub["name"] == "Menu Pub Loc"
     assert pub["tagline"] == "Lunch"
     assert pub["currency"] == "EUR"
+    assert pub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert pub["workspaceId"] is None
     assert len(pub["categories"]) == 1
-    assert [item["name"] for item in pub["categories"][0]["items"]] == ["Espresso"]
+    items = pub["categories"][0]["items"]
+    assert [item["name"] for item in items] == ["Espresso"]
+    assert items[0]["description"] == "Double shot"
+    assert items[0]["imageFilename"] == "espresso.webp"
 
 
 def test_enable_public_menu_requires_slug(menu_location_id):

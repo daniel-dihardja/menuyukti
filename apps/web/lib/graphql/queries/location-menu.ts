@@ -158,6 +158,8 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
       tagline
       publicSlug
       currency
+      workspaceId
+      mediaOwnerClerkUserId
       categories {
         name
         sortOrder
@@ -165,6 +167,8 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
           name
           price
           sortOrder
+          description
+          imageFilename
         }
       }
     }
@@ -175,6 +179,8 @@ export type PublicMenuItem = {
   name: string
   price: number
   sortOrder: number
+  description: string
+  imageFilename: string | null
 }
 
 export type PublicMenuCategory = {
@@ -189,6 +195,8 @@ export type PublicLocationMenuPayload = {
   tagline: string | null
   publicSlug: string
   currency: string | null
+  workspaceId: string | null
+  mediaOwnerClerkUserId: string | null
   categories: PublicMenuCategory[]
 }
 

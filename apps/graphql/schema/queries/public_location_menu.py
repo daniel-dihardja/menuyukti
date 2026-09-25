@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from graphql.context import request_session_scope
-from graphql.data_sources import Location
+from graphql.data_sources import Location, Workspace
 from graphql.data_sources.models.menu import Menu, MenuCategory
 from graphql.schema.types.public_location_menu import (
     PublicLocationMenuType,
@@ -35,6 +35,8 @@ def _public_categories(menu: Menu) -> list[PublicMenuCategoryType]:
                         name=item.name,
                         price=float(item.price),
                         sort_order=item.sort_order,
+                        description=item.description or "",
+                        image_filename=item.image_filename,
                     )
                     for item in available
                 ],
@@ -78,6 +80,14 @@ class PublicLocationMenuQuery:
             if menu is None or not bool(menu.public_enabled):
                 return None
 
+            media_owner: str | None = location.clerk_user_id
+            workspace_id: str | None = None
+            if location.workspace_id is not None:
+                workspace_id = str(location.workspace_id)
+                workspace = session.get(Workspace, location.workspace_id)
+                if workspace is not None:
+                    media_owner = workspace.owner_clerk_user_id
+
             tagline = location.frontpage.tagline if location.frontpage is not None else None
             return PublicLocationMenuType(
                 location_id=location.id,
@@ -85,5 +95,7 @@ class PublicLocationMenuQuery:
                 tagline=tagline,
                 public_slug=cleaned,
                 currency=location.currency,
+                workspace_id=strawberry.ID(workspace_id) if workspace_id else None,
+                media_owner_clerk_user_id=media_owner,
                 categories=_public_categories(menu),
             )

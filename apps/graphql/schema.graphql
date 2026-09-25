@@ -1342,6 +1342,8 @@ type PublicLocationMenuType {
   tagline: String
   publicSlug: String!
   currency: String
+  workspaceId: ID
+  mediaOwnerClerkUserId: String
   categories: [PublicMenuCategoryType!]!
 }
 
@@ -1370,6 +1372,8 @@ type PublicMenuItemType {
   name: String!
   price: Float!
   sortOrder: Int!
+  description: String!
+  imageFilename: String
 }
 
 """One curated tile on the public guest wall."""
