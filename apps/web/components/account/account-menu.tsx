@@ -3,6 +3,7 @@
 import { useClerk, useUser } from '@clerk/nextjs'
 import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar'
@@ -18,6 +19,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
 import { withProfileImageParams } from '@/lib/clerk-profile-image'
+import { getSafeAuthReturnPath } from '@/lib/auth-return-path'
 import { routes } from '@/lib/routes'
 import { isProPlan } from '@/lib/workspace-plan'
 
@@ -56,11 +58,14 @@ export type AccountMenuProps = {
 
 export function AccountMenu({ className }: AccountMenuProps) {
   const t = useTranslations('accountMenu')
+  const pathname = usePathname()
   const { user, isLoaded } = useUser()
   const { signOut } = useClerk()
   const workspacePlan = useOptionalWorkspacePlan()
   // Hide team outside the app shell / on free; only pro shows it.
   const showTeam = workspacePlan != null && isProPlan(workspacePlan.plan)
+  /** Stay on the public menu after sign-out; otherwise go to login. */
+  const signOutRedirectUrl = getSafeAuthReturnPath(pathname) ?? routes.login
 
   if (!isLoaded) {
     return (
@@ -118,7 +123,14 @@ export function AccountMenu({ className }: AccountMenuProps) {
         <DropdownMenuItem
           variant="destructive"
           onSelect={() => {
-            void signOut({ redirectUrl: routes.login })
+            const destination = signOutRedirectUrl
+            // Absolute redirectUrl forces a full page load. Relative paths go through
+            // Next soft navigation and race ClerkProvider remounts under Suspense
+            // ("update on a component that hasn't mounted yet").
+            window.setTimeout(() => {
+              const absolute = new URL(destination, window.location.origin).href
+              void signOut({ redirectUrl: absolute })
+            }, 0)
           }}
         >
           {t('signOut')}

@@ -4,6 +4,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 import { isPathnameFeatureEnabled } from '@/lib/feature-flags'
 import { shouldRedirectPendingSession } from '@/lib/middleware-pending-session'
+import { getSafeAuthReturnPath, AUTH_RETURN_TO_QUERY } from '@/lib/auth-return-path'
 import { routes } from '@/lib/routes'
 
 /** Next.js 16 proxy (network boundary). Keep aligned with operator + customer prefixes in `lib/routes.ts`. */
@@ -46,7 +47,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
   if (shouldRedirectPendingSession(pathname, sessionStatus)) {
-    return NextResponse.redirect(new URL(routes.login, req.url))
+    const loginUrl = new URL(routes.login, req.url)
+    const returnTo = getSafeAuthReturnPath(req.nextUrl.searchParams.get(AUTH_RETURN_TO_QUERY))
+    if (returnTo) {
+      loginUrl.searchParams.set(AUTH_RETURN_TO_QUERY, returnTo)
+    }
+    return NextResponse.redirect(loginUrl)
   }
 
   if (!isProtectedRoute(req)) {
@@ -60,8 +66,12 @@ export default clerkMiddleware(async (auth, req) => {
     return nextWithPathname(req, pathname)
   }
 
-  const signInUrl = new URL(routes.login, req.url).href
-  await auth.protect({ unauthenticatedUrl: signInUrl })
+  const signInUrl = new URL(routes.login, req.url)
+  const returnTo = getSafeAuthReturnPath(req.nextUrl.searchParams.get(AUTH_RETURN_TO_QUERY))
+  if (returnTo) {
+    signInUrl.searchParams.set(AUTH_RETURN_TO_QUERY, returnTo)
+  }
+  await auth.protect({ unauthenticatedUrl: signInUrl.href })
 
   if (!isPathnameFeatureEnabled(pathname) && pathname !== continuePath) {
     return NextResponse.redirect(new URL(continuePath, req.url))

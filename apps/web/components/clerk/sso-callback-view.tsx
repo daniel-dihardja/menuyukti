@@ -1,9 +1,31 @@
 'use client'
 
 import { useClerk, useSignIn, useSignUp } from '@clerk/nextjs'
+import { isClerkAPIResponseError } from '@clerk/nextjs/errors'
 import { routes } from '@/lib/routes'
+import {
+  buildAuthContinueUrl,
+  buildLoginUrl,
+  consumeAuthReturnPath,
+  peekAuthReturnPath,
+} from '@/lib/auth-return-path'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+
+function isSessionExistsError(error: unknown): boolean {
+  if (!error) return false
+  if (isClerkAPIResponseError(error)) {
+    return error.errors.some((e) => e.code === 'session_exists')
+  }
+  if (typeof error === 'object' && error !== null && 'errors' in error) {
+    const errors = (error as { errors?: Array<{ code?: string }> }).errors
+    return Boolean(errors?.some((e) => e.code === 'session_exists'))
+  }
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    return (error as { code?: string }).code === 'session_exists'
+  }
+  return false
+}
 
 /**
  * Completes OAuth / SSO redirects from {@link CustomLoginForm} `signIn.sso`.
@@ -15,10 +37,35 @@ export function SsoCallbackView() {
   const { signUp } = useSignUp()
   const router = useRouter()
   const hasRun = useRef(false)
-  const homePath = routes.authContinue
+
+  const resolveHomePath = () => buildAuthContinueUrl(consumeAuthReturnPath())
+
+  const navigateHome = () => {
+    // Hard navigation so the session cookie is visible to middleware on /continue.
+    window.location.assign(resolveHomePath())
+  }
+
+  const navigateAfterFinalize = async ({
+    session,
+    decorateUrl,
+  }: {
+    session: { currentTask?: unknown } | null | undefined
+    decorateUrl: (url: string) => string
+  }) => {
+    if (session?.currentTask) {
+      return
+    }
+    const homePath = resolveHomePath()
+    const url = decorateUrl(homePath)
+    if (url.startsWith('http')) {
+      window.location.href = url
+    } else {
+      window.location.assign(url)
+    }
+  }
 
   const navigateToSignIn = () => {
-    router.push(routes.login)
+    router.push(buildLoginUrl(peekAuthReturnPath()))
   }
 
   const navigateToSignUp = () => {
@@ -32,121 +79,92 @@ export function SsoCallbackView() {
       }
       hasRun.current = true
 
-      if (signIn.status === 'complete') {
-        await signIn.finalize({
-          navigate: async ({ session, decorateUrl }) => {
-            if (session?.currentTask) {
-              return
-            }
-            const url = decorateUrl(homePath)
-            if (url.startsWith('http')) {
-              window.location.href = url
-            } else {
-              router.push(url)
-            }
-          },
-        })
+      // OAuth often creates the session before this page runs. Treat that as success —
+      // do not start another sign-in (that yields session_exists → bounce to /login).
+      if (clerk.session) {
+        navigateHome()
         return
       }
 
-      if (signUp.isTransferable) {
-        await signIn.create({ transfer: true })
-        const signInStatus = signIn.status as typeof signIn.status | 'complete'
-        if (signInStatus === 'complete') {
+      const activateExistingSession = async (sessionId: string) => {
+        await clerk.setActive({
+          session: sessionId,
+          navigate: navigateAfterFinalize,
+        })
+      }
+
+      try {
+        if (signIn.status === 'complete') {
           await signIn.finalize({
-            navigate: async ({ session, decorateUrl }) => {
-              if (session?.currentTask) {
-                return
-              }
-              const url = decorateUrl(homePath)
-              if (url.startsWith('http')) {
-                window.location.href = url
-              } else {
-                router.push(url)
-              }
-            },
+            navigate: navigateAfterFinalize,
           })
           return
         }
-        navigateToSignIn()
-        return
-      }
 
-      if (
-        signIn.status === 'needs_first_factor' &&
-        !signIn.supportedFirstFactors?.every((f) => f.strategy === 'enterprise_sso')
-      ) {
-        navigateToSignIn()
-        return
-      }
+        // Prefer activating an existing session over transfer / first-factor fallbacks.
+        if (signIn.existingSession || signUp.existingSession) {
+          const sessionId = signIn.existingSession?.sessionId || signUp.existingSession?.sessionId
+          if (sessionId) {
+            await activateExistingSession(sessionId)
+            return
+          }
+        }
 
-      if (signIn.isTransferable) {
-        await signUp.create({ transfer: true })
+        if (signUp.isTransferable) {
+          await signIn.create({ transfer: true })
+          const signInStatus = signIn.status as typeof signIn.status | 'complete'
+          if (signInStatus === 'complete') {
+            await signIn.finalize({
+              navigate: navigateAfterFinalize,
+            })
+            return
+          }
+          navigateToSignIn()
+          return
+        }
+
+        if (
+          signIn.status === 'needs_first_factor' &&
+          !signIn.supportedFirstFactors?.every((f) => f.strategy === 'enterprise_sso')
+        ) {
+          navigateToSignIn()
+          return
+        }
+
+        if (signIn.isTransferable) {
+          await signUp.create({ transfer: true })
+          if (signUp.status === 'complete') {
+            await signUp.finalize({
+              navigate: navigateAfterFinalize,
+            })
+            return
+          }
+          navigateToSignUp()
+          return
+        }
+
         if (signUp.status === 'complete') {
           await signUp.finalize({
-            navigate: async ({ session, decorateUrl }) => {
-              if (session?.currentTask) {
-                return
-              }
-              const url = decorateUrl(homePath)
-              if (url.startsWith('http')) {
-                window.location.href = url
-              } else {
-                router.push(url)
-              }
-            },
+            navigate: navigateAfterFinalize,
           })
           return
         }
-        navigateToSignUp()
-        return
-      }
 
-      if (signUp.status === 'complete') {
-        await signUp.finalize({
-          navigate: async ({ session, decorateUrl }) => {
-            if (session?.currentTask) {
-              return
-            }
-            const url = decorateUrl(homePath)
-            if (url.startsWith('http')) {
-              window.location.href = url
-            } else {
-              router.push(url)
-            }
-          },
-        })
-        return
-      }
-
-      if (signIn.status === 'needs_second_factor' || signIn.status === 'needs_new_password') {
-        navigateToSignIn()
-        return
-      }
-
-      if (signIn.existingSession || signUp.existingSession) {
-        const sessionId = signIn.existingSession?.sessionId || signUp.existingSession?.sessionId
-        if (sessionId) {
-          await clerk.setActive({
-            session: sessionId,
-            navigate: async ({ session, decorateUrl }) => {
-              if (session?.currentTask) {
-                return
-              }
-              const url = decorateUrl(homePath)
-              if (url.startsWith('http')) {
-                window.location.href = url
-              } else {
-                router.push(url)
-              }
-            },
-          })
+        if (signIn.status === 'needs_second_factor' || signIn.status === 'needs_new_password') {
+          navigateToSignIn()
+          return
         }
+      } catch (error) {
+        if (isSessionExistsError(error) || clerk.session) {
+          navigateHome()
+          return
+        }
+        navigateToSignIn()
       }
     })()
-    // navigateToSignIn / navigateToSignUp are stable wrappers; including them retriggers on unrelated Clerk updates.
+    // navigate helpers are stable wrappers; including them retriggers on unrelated Clerk updates.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run once when Clerk + router are ready
-  }, [clerk, clerk.loaded, homePath, router, signIn, signUp])
+  }, [clerk, clerk.loaded, router, signIn, signUp])
 
   return (
     <div className="flex min-h-svh items-center justify-center p-6">

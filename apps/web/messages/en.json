@@ -248,7 +248,8 @@
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
     "mobileMenuDescription": "Studio for AI brand visuals and Print Shop for merch.",
-    "mobileMenuSignIn": "Sign in"
+    "mobileMenuSignIn": "Sign in",
+    "signInMenuTriggerAria": "Sign in options"
   },
   "accountMenu": {
     "triggerAria": "Open account menu",
@@ -990,7 +991,7 @@
           "noLocationsCta": "Add location"
         },
         "workspace": {
-          "workspaceHint": "Run saves the settings above, loads holidays, and suggests which ones fit Instagram stories for this venue. Review the checked candidates, then confirm. Confirmed picks are not saved yet.",
+          "workspaceHint": "Run saves the settings above and loads public holidays for that window. Optionally turn on AI to pre-check holidays that fit Instagram stories for this venue. Review candidates, then confirm — confirming unlocks Draft stories. Confirmed picks are not saved yet.",
           "stepsAria": "Playbook steps",
           "steps": {
             "fetchDates": "Fetch dates",
@@ -999,10 +1000,13 @@
           },
           "run": "Run",
           "running": "Running…",
+          "aiRelevanceLabel": "Suggest relevant holidays with AI",
+          "aiRelevanceAria": "Toggle AI holiday relevance suggestions",
+          "aiRelevanceHint": "When on, Run scores holidays and pre-checks likely story fits. When off, holidays load unchecked for manual selection.",
           "instructionsLabel": "Relevance notes (optional)",
           "instructionsPlaceholder": "e.g. skip Nyepi; prioritize Chinese New Year for this neighborhood",
           "instructionsHint": "Optional guidance for which holidays fit Instagram stories. Leave blank to use the default policy.",
-          "fetchError": "Could not load or score public holidays. Try again.",
+          "fetchError": "Could not load public holidays. Try again.",
           "candidatesTitle": "Candidates",
           "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
           "confirmSelected": "Confirm selected ({count})",
@@ -1021,7 +1025,20 @@
           "confirmedEmptyDescription": "Keep candidates here after you review them.",
           "remove": "Remove",
           "stepUnavailableTitle": "Step not available yet",
-          "stepUnavailableDescription": "This step is a placeholder for the playbook experiment."
+          "stepUnavailableDescription": "This step is a placeholder for the playbook experiment.",
+          "draft": {
+            "instructionsLabel": "Story instructions (optional)",
+            "instructionsPlaceholder": "e.g. warm tone; mention limited hours; keep captions under 80 characters",
+            "instructionsHint": "Optional guidance for drafting Instagram stories. Generation is not wired up yet.",
+            "candidatesTitle": "Candidates",
+            "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
+            "candidatesEmptyTitle": "No holidays to draft",
+            "candidatesEmptyDescription": "Confirm holidays on Fetch dates first, then return here.",
+            "confirmedTitle": "Confirmed",
+            "confirmedCount": "{count}",
+            "confirmedEmptyTitle": "No confirmed story drafts",
+            "confirmedEmptyDescription": "Confirmed story drafts will appear here after you review candidates."
+          }
         }
       }
     }

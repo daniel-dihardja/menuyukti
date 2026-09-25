@@ -1,6 +1,7 @@
 /**
  * Operator app shell (sidebar + inset + `AnalyticsPageShell`).
  * `MainHeader` is hidden on these paths (`AppChrome` uses `isOperatorAppShellPath`).
+ * Guest digital menu `/m/*` keeps `MainHeader` (guest sign-in / account only).
  * Feature visibility (nav + route allowlist): `config/feature-flags.json`.
  * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
  */
@@ -28,6 +29,12 @@ export const OPERATOR_APP_SHELL_PREFIXES = [
 export const CUSTOMER_AUTH_PREFIXES = ['/home', '/continue', '/profile'] as const
 
 /**
+ * Unauthenticated location guest surfaces (digital menu; legacy wall redirect).
+ * Keeps `MainHeader` brand chrome with guest sign-in (no operator product nav).
+ */
+export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
+
+/**
  * All Clerk-protected app prefixes (operator + customer). Keep in sync with `proxy.ts`.
  * @deprecated Prefer `OPERATOR_APP_SHELL_PREFIXES` / `CUSTOMER_AUTH_PREFIXES` / `isClerkProtectedAppPath`.
  */
@@ -44,6 +51,12 @@ function matchesPathPrefix(pathname: string, prefixes: readonly string[]): boole
 export function isOperatorAppShellPath(pathname: string | null): boolean {
   if (pathname == null) return false
   return matchesPathPrefix(pathname, OPERATOR_APP_SHELL_PREFIXES)
+}
+
+/** Guest digital menu / legacy wall — MainHeader uses guest sign-in instead of product chrome. */
+export function isPublicLocationSurfacePath(pathname: string | null): boolean {
+  if (pathname == null) return false
+  return matchesPathPrefix(pathname, PUBLIC_LOCATION_SURFACE_PREFIXES)
 }
 
 /** Customer auth area (`/home`, `/continue`, `/profile`). */

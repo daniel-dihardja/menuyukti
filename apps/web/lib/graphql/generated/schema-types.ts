@@ -1787,9 +1787,11 @@ export type PublicLocationMenuType = {
   categories: Array<PublicMenuCategoryType>
   currency?: Maybe<Scalars['String']['output']>
   locationId: Scalars['Int']['output']
+  mediaOwnerClerkUserId?: Maybe<Scalars['String']['output']>
   name: Scalars['String']['output']
   publicSlug: Scalars['String']['output']
   tagline?: Maybe<Scalars['String']['output']>
+  workspaceId?: Maybe<Scalars['ID']['output']>
 }
 
 /** Public guest wall for a location (curated favorites/combos). Null when the slug is unknown or the wall is not enabled. */
@@ -1815,6 +1817,8 @@ export type PublicMenuCategoryType = {
 /** One available item on the public digital menu. */
 export type PublicMenuItemType = {
   __typename?: 'PublicMenuItemType'
+  description: Scalars['String']['output']
+  imageFilename?: Maybe<Scalars['String']['output']>
   name: Scalars['String']['output']
   price: Scalars['Float']['output']
   sortOrder: Scalars['Int']['output']

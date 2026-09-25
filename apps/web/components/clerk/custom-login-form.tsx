@@ -5,11 +5,16 @@ import { Button } from '@workspace/ui/components/button'
 import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { routes } from '@/lib/routes'
+import {
+  AUTH_RETURN_TO_QUERY,
+  buildAuthContinueUrl,
+  rememberAuthReturnPath,
+} from '@/lib/auth-return-path'
 import { GoogleMark } from '@/components/clerk/google-mark'
 import { isGoogleOauthAvailable } from '@/components/clerk/is-google-oauth-available'
 import { cn } from '@workspace/ui/lib/utils'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -35,6 +40,9 @@ function getPrimarySecondFactor(signIn: {
 export function CustomLoginForm({ className }: { className?: string }) {
   const t = useTranslations('login')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get(AUTH_RETURN_TO_QUERY)
+  const continueUrl = buildAuthContinueUrl(returnTo)
   const clerk = useClerk()
   const { signIn, errors, fetchStatus } = useSignIn()
   const [step, setStep] = useState<Step>('email')
@@ -48,6 +56,10 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const preparedSignInIdRef = useRef<string | null>(null)
   const googleAvailable = isGoogleOauthAvailable(clerk)
 
+  useEffect(() => {
+    rememberAuthReturnPath(returnTo)
+  }, [returnTo])
+
   const finalizeAndRedirect = useCallback(async () => {
     if (!signIn) return
     await signIn.finalize({
@@ -55,7 +67,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         if (session?.currentTask) {
           return
         }
-        const url = decorateUrl(routes.authContinue)
+        const url = decorateUrl(continueUrl)
         if (url.startsWith('http')) {
           window.location.href = url
         } else {
@@ -63,7 +75,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         }
       },
     })
-  }, [router, signIn])
+  }, [continueUrl, router, signIn])
 
   const ensureVerificationCodeSent = useCallback(async () => {
     if (!signIn?.id) return
@@ -257,7 +269,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
     try {
       const { error } = await signIn.sso({
         strategy: 'oauth_google',
-        redirectUrl: routes.authContinue,
+        redirectUrl: continueUrl,
         redirectCallbackUrl: routes.ssoCallback,
       })
       if (error) {

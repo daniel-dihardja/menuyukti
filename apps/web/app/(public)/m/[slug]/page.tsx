@@ -51,7 +51,7 @@ export default async function PublicLocationMenuPage({ params }: PageProps) {
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.02_80)_0%,_transparent_55%),linear-gradient(to_bottom,_oklch(0.97_0.01_80),_oklch(0.94_0.02_70))]"
         />
-        <div className="relative z-10 mx-auto w-full max-w-2xl">
+        <div className="relative z-10 mx-auto w-full max-w-4xl">
           <p className="text-muted-foreground mb-3 text-xs font-medium tracking-[0.2em] uppercase">
             {t('eyebrow')}
           </p>
@@ -66,7 +66,7 @@ export default async function PublicLocationMenuPage({ params }: PageProps) {
         </div>
       </header>
 
-      <main id="menu-main" className="mx-auto w-full max-w-2xl px-6 pt-12 pb-20 sm:px-10 sm:pt-16">
+      <main id="menu-main" className="mx-auto w-full max-w-4xl px-6 pt-12 pb-20 sm:px-10 sm:pt-16">
         {!hasItems ? (
           <p className="text-muted-foreground py-12 text-center text-sm">{t('empty')}</p>
         ) : (
@@ -82,18 +82,42 @@ export default async function PublicLocationMenuPage({ params }: PageProps) {
                 >
                   {category.name}
                 </h2>
-                <ul className="divide-border divide-y">
-                  {category.items.map((item) => (
-                    <li
-                      key={`${category.name}-${item.sortOrder}-${item.name}`}
-                      className="flex items-baseline justify-between gap-4 py-3"
-                    >
-                      <span className="text-base font-medium tracking-tight">{item.name}</span>
-                      <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
-                        {formatCurrency(item.price, currencyCode, locale)}
-                      </span>
-                    </li>
-                  ))}
+                <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {category.items.map((item) => {
+                    const description = item.description.trim()
+                    return (
+                      <li
+                        key={`${category.name}-${item.sortOrder}-${item.name}`}
+                        className="bg-card text-card-foreground overflow-hidden rounded-xl border"
+                      >
+                        {item.imageUrl ? (
+                          <div className="bg-muted aspect-[4/3] overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="size-full object-cover"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                        ) : null}
+                        <div className="flex flex-col gap-1.5 p-4">
+                          <div className="flex items-baseline justify-between gap-3">
+                            <h3 className="text-base font-medium tracking-tight">{item.name}</h3>
+                            <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
+                              {formatCurrency(item.price, currencyCode, locale)}
+                            </span>
+                          </div>
+                          {description ? (
+                            <p className="text-muted-foreground line-clamp-3 text-sm text-pretty">
+                              {description}
+                            </p>
+                          ) : null}
+                        </div>
+                      </li>
+                    )
+                  })}
                 </ul>
               </section>
             ))}
