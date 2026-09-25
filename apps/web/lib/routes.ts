@@ -1,8 +1,7 @@
 /**
  * Operator app shell (sidebar + inset + `AnalyticsPageShell`).
  * `MainHeader` is hidden on these paths (`AppChrome` uses `isOperatorAppShellPath`).
- * Guest digital menu `/m/*` keeps `MainHeader` but suppresses product mobile nav
- * (`MainHeader` uses `isPublicLocationSurfacePath`).
+ * Guest digital menu `/m/*` keeps `MainHeader` (guest sign-in / account only).
  * Feature visibility (nav + route allowlist): `config/feature-flags.json`.
  * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
  */
@@ -31,7 +30,7 @@ export const CUSTOMER_AUTH_PREFIXES = ['/home', '/continue', '/profile'] as cons
 
 /**
  * Unauthenticated location guest surfaces (digital menu; legacy wall redirect).
- * Keeps `MainHeader` brand chrome; product mobile nav is suppressed in `MainHeader`.
+ * Keeps `MainHeader` brand chrome with guest sign-in (no operator product nav).
  */
 export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
 
@@ -54,7 +53,7 @@ export function isOperatorAppShellPath(pathname: string | null): boolean {
   return matchesPathPrefix(pathname, OPERATOR_APP_SHELL_PREFIXES)
 }
 
-/** Guest digital menu / legacy wall — suppress product mobile nav in `MainHeader`. */
+/** Guest digital menu / legacy wall — MainHeader uses guest sign-in instead of product chrome. */
 export function isPublicLocationSurfacePath(pathname: string | null): boolean {
   if (pathname == null) return false
   return matchesPathPrefix(pathname, PUBLIC_LOCATION_SURFACE_PREFIXES)

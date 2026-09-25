@@ -248,7 +248,8 @@
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
     "mobileMenuDescription": "Studio for AI brand visuals and Print Shop for merch.",
-    "mobileMenuSignIn": "Sign in"
+    "mobileMenuSignIn": "Sign in",
+    "signInMenuTriggerAria": "Sign in options"
   },
   "accountMenu": {
     "triggerAria": "Open account menu",
