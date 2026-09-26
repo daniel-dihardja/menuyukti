@@ -71,22 +71,24 @@ async function PublicLocationMenuContent({ params }: PageProps) {
   const currencyCode = (menu.currency?.trim() || getAppCurrencyCode()).toUpperCase()
   const locale = getCurrencyLocale(currencyCode)
   const hasItems = menu.categories.some((category) => category.items.length > 0)
+  const headerImageUrl = menu.headerImageUrl
+  const hasHeaderImage = Boolean(headerImageUrl)
 
   return (
     <div className="bg-background text-foreground min-h-screen">
       <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
-        {menu.headerImageUrl ? (
+        {headerImageUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
             <img
-              src={menu.headerImageUrl}
+              src={headerImageUrl}
               alt=""
               className="absolute inset-0 size-full object-cover"
               decoding="async"
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/90 via-background/45 to-background/20"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent"
             />
           </>
         ) : (
@@ -96,14 +98,26 @@ async function PublicLocationMenuContent({ params }: PageProps) {
           />
         )}
         <div className="relative z-10 mx-auto w-full max-w-4xl">
-          <p className="text-muted-foreground mb-3 text-xs font-medium tracking-[0.2em] uppercase">
+          <p
+            className={`mb-3 text-xs font-medium tracking-[0.2em] uppercase ${
+              hasHeaderImage ? 'text-white/75' : 'text-muted-foreground'
+            }`}
+          >
             {t('eyebrow')}
           </p>
-          <h1 className="font-heading text-4xl leading-tight tracking-tight sm:text-5xl">
+          <h1
+            className={`font-heading text-4xl leading-tight tracking-tight sm:text-5xl ${
+              hasHeaderImage ? 'text-white' : ''
+            }`}
+          >
             {menu.name}
           </h1>
           {menu.tagline ? (
-            <p className="text-muted-foreground mt-3 max-w-xl text-lg text-pretty">
+            <p
+              className={`mt-3 max-w-xl text-lg text-pretty ${
+                hasHeaderImage ? 'text-white/85' : 'text-muted-foreground'
+              }`}
+            >
               {menu.tagline}
             </p>
           ) : null}
