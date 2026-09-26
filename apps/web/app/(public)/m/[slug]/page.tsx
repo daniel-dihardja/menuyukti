@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { connection } from 'next/server'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { getAppCurrencyCode } from '@/lib/app-currency'
 import { formatCurrency, getCurrencyLocale } from '@/lib/currency'
@@ -35,7 +36,32 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export default async function PublicLocationMenuPage({ params }: PageProps) {
+function PublicMenuFallback() {
+  return (
+    <div className="bg-background text-foreground min-h-screen">
+      <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.02_80)_0%,_transparent_55%),linear-gradient(to_bottom,_oklch(0.97_0.01_80),_oklch(0.94_0.02_70))]"
+        />
+        <div className="relative z-10 mx-auto w-full max-w-4xl space-y-3">
+          <div className="bg-muted h-3 w-24 animate-pulse rounded" />
+          <div className="bg-muted h-10 w-2/3 max-w-md animate-pulse rounded" />
+          <div className="bg-muted h-5 w-1/2 max-w-sm animate-pulse rounded" />
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-4xl px-6 pt-12 pb-20 sm:px-10 sm:pt-16">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="bg-muted h-40 animate-pulse rounded-xl" />
+          ))}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+async function PublicLocationMenuContent({ params }: PageProps) {
   await connection()
   const t = await getTranslations('public.menu')
   const { slug } = await params
@@ -143,5 +169,13 @@ export default async function PublicLocationMenuPage({ params }: PageProps) {
         )}
       </main>
     </div>
+  )
+}
+
+export default function PublicLocationMenuPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={<PublicMenuFallback />}>
+      <PublicLocationMenuContent params={params} />
+    </Suspense>
   )
 }
