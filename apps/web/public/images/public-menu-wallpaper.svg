@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360" fill="none">
+  <!-- Seamless low-contrast doodle tile for public menu (WhatsApp-style paper) -->
+  <g stroke="#54656f" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" opacity="0.08" fill="none">
+    <!-- fork -->
+    <path d="M42 38v28M36 38v12c0 4 2.5 6 6 6s6-2 6-6V38M42 66v14"/>
+    <!-- bowl -->
+    <path d="M98 52c0 12 10 22 22 22s22-10 22-22"/>
+    <path d="M98 52h44"/>
+    <!-- leaf -->
+    <path d="M178 40c12 8 18 22 14 34-12-4-22-14-26-26 8-2 16-4 12-8z"/>
+    <path d="M178 48c6 6 12 14 14 22"/>
+    <!-- chat dots -->
+    <circle cx="248" cy="48" r="3.5"/>
+    <circle cx="260" cy="48" r="3.5"/>
+    <circle cx="272" cy="48" r="3.5"/>
+    <!-- spoon -->
+    <path d="M318 36c4 0 7 3 7 7s-3 7-7 7-7-3-7-7 3-7 7-7z"/>
+    <path d="M318 50v28"/>
+    <!-- cup -->
+    <path d="M48 118h28v22c0 8-6 14-14 14h0c-8 0-14-6-14-14v-22z"/>
+    <path d="M76 126h8c4 0 7 3 7 7s-3 7-7 7h-8"/>
+    <!-- plate -->
+    <ellipse cx="148" cy="138" rx="22" ry="14"/>
+    <ellipse cx="148" cy="138" rx="12" ry="7"/>
+    <!-- chopsticks -->
+    <path d="M208 118l18 36M220 116l12 38"/>
+    <!-- steam curls -->
+    <path d="M268 122c4-6 4-10 0-14M278 126c4-6 4-10 0-14M288 122c4-6 4-10 0-14"/>
+    <!-- star accent -->
+    <path d="M328 128l3 8 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z"/>
+    <!-- knife -->
+    <path d="M52 198v36"/>
+    <path d="M52 198c8 2 14 10 14 18H52"/>
+    <!-- coffee bean -->
+    <ellipse cx="138" cy="220" rx="10" ry="14" transform="rotate(-20 138 220)"/>
+    <path d="M132 210c6 4 10 12 8 20"/>
+    <!-- heart (subtle) -->
+    <path d="M208 208c0-6 5-10 10-10 4 0 8 2 10 6 2-4 6-6 10-6 5 0 10 4 10 10 0 12-20 22-20 22s-20-10-20-22z"/>
+    <!-- tiny fork cluster 2 -->
+    <path d="M288 198v20M284 198v8c0 2.5 1.5 4 4 4s4-1.5 4-4v-8M288 218v10"/>
+    <!-- napkin fold -->
+    <path d="M40 278l24-8 8 24-24 8z"/>
+    <path d="M48 282l16-5"/>
+    <!-- wine glass -->
+    <path d="M128 268c0 10 8 16 16 16s16-6 16-16"/>
+    <path d="M128 268h32"/>
+    <path d="M144 284v18M136 302h16"/>
+    <!-- bubbles -->
+    <circle cx="218" cy="278" r="5"/>
+    <circle cx="232" cy="288" r="3.5"/>
+    <circle cx="208" cy="292" r="2.5"/>
+    <!-- leaf 2 -->
+    <path d="M288 268c10 6 16 18 12 28-10-3-18-12-22-22 6-1 12-3 10-6z"/>
+    <path d="M288 276c5 5 10 12 12 18"/>
+    <!-- scattered dots for texture -->
+    <circle cx="88" cy="88" r="1.5"/>
+    <circle cx="196" cy="96" r="1.5"/>
+    <circle cx="300" cy="168" r="1.5"/>
+    <circle cx="72" cy="248" r="1.5"/>
+    <circle cx="176" cy="248" r="1.5"/>
+    <circle cx="340" cy="248" r="1.5"/>
+    <circle cx="100" cy="328" r="1.5"/>
+    <circle cx="252" cy="328" r="1.5"/>
+    <circle cx="340" cy="88" r="1.5"/>
+  </g>
+</svg>

@@ -36,14 +36,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
+const publicMenuShellClassName =
+  "text-foreground min-h-screen bg-[#efeae2] bg-[url('/images/public-menu-wallpaper.svg')] bg-repeat bg-[length:360px_360px]"
+
 function PublicMenuFallback() {
   return (
-    <div className="bg-background text-foreground min-h-screen">
+    <div className={publicMenuShellClassName}>
       <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.02_80)_0%,_transparent_55%),linear-gradient(to_bottom,_oklch(0.97_0.01_80),_oklch(0.94_0.02_70))]"
-        />
         <div className="relative z-10 mx-auto w-full max-w-4xl space-y-3">
           <div className="bg-muted h-3 w-24 animate-pulse rounded" />
           <div className="bg-muted h-10 w-2/3 max-w-md animate-pulse rounded" />
@@ -75,7 +74,7 @@ async function PublicLocationMenuContent({ params }: PageProps) {
   const hasHeaderImage = Boolean(headerImageUrl)
 
   return (
-    <div className="bg-background text-foreground min-h-screen">
+    <div className={publicMenuShellClassName}>
       <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
         {headerImageUrl ? (
           <>
@@ -91,12 +90,7 @@ async function PublicLocationMenuContent({ params }: PageProps) {
               className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent"
             />
           </>
-        ) : (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.02_80)_0%,_transparent_55%),linear-gradient(to_bottom,_oklch(0.97_0.01_80),_oklch(0.94_0.02_70))]"
-          />
-        )}
+        ) : null}
         <div className="relative z-10 mx-auto w-full max-w-4xl">
           <p
             className={`mb-3 text-xs font-medium tracking-[0.2em] uppercase ${
