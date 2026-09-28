@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next'
+import { ClerkProvider } from '@clerk/nextjs'
 import { Suspense } from 'react'
 
 import '@workspace/ui/globals.css'
-import { RootShell, RootShellFallback } from '@/app/_components/root-shell'
+import { RootIntlFallback, RootIntlShell } from '@/app/_components/root-shell'
 import { fontMono, fontSans } from '@/lib/fonts'
+import { routes } from '@/lib/routes'
 import { getTranslations } from 'next-intl/server'
 
 const siteUrl = 'https://menuyukti.com'
@@ -67,17 +69,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const shellProps = {
-    fontSansVariable: fontSans.variable,
-    fontMonoVariable: fontMono.variable,
-    children,
-  }
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <Suspense fallback={<RootShellFallback {...shellProps} />}>
-        <RootShell {...shellProps} />
-      </Suspense>
+      <body className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}>
+        {/*
+          Outer Suspense: Clerk cookie/auth reads (Cache Components).
+          Inner Suspense: next-intl getMessages/getLocale.
+          ClerkProvider sits between them so it mounts once and does not remount
+          when only the intl shell suspends (avoids sign-out state-update races).
+        */}
+        <Suspense fallback={<RootIntlFallback />}>
+          <ClerkProvider
+            signInUrl={routes.login}
+            signUpUrl={routes.signUp}
+            afterSignOutUrl={routes.login}
+          >
+            <Suspense fallback={<RootIntlFallback />}>
+              <RootIntlShell>{children}</RootIntlShell>
+            </Suspense>
+          </ClerkProvider>
+        </Suspense>
+      </body>
     </html>
   )
 }

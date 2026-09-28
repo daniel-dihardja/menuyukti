@@ -22,7 +22,17 @@ import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { PublicHolidaysDraftStories } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
-import { fetchHolidays, scoreHolidayRelevance } from '@/lib/playbooks/client-api'
+import type {
+  ConfirmedStoryDraft,
+  DraftHistoryEntry,
+  DraftItemStatus,
+} from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
+import {
+  draftHolidayStory,
+  fetchHolidays,
+  scoreHolidayRelevance,
+  type StoryDraftResult,
+} from '@/lib/playbooks/client-api'
 import { relevantHolidayIds } from '@/lib/playbooks/relevant-holiday-ids'
 
 type HolidayItem = {
@@ -35,7 +45,7 @@ type StepId = 'fetchDates' | 'draftStories' | 'artwork'
 
 const STEP_IDS: StepId[] = ['fetchDates', 'draftStories', 'artwork']
 
-function sortByDate(items: HolidayItem[]): HolidayItem[] {
+function sortByDate<T extends HolidayItem>(items: T[]): T[] {
   return [...items].toSorted((a, b) => a.date.localeCompare(b.date))
 }
 
@@ -67,12 +77,25 @@ export function PublicHolidaysWorkspace({
   const [useAiRelevance, setUseAiRelevance] = useState(true)
   const [relevanceInstructions, setRelevanceInstructions] = useState('')
   const [draftInstructions, setDraftInstructions] = useState('')
+  const [draftStatuses, setDraftStatuses] = useState<Record<string, DraftItemStatus>>({})
+  const [draftResults, setDraftResults] = useState<Record<string, StoryDraftResult>>({})
+  const [draftHistories, setDraftHistories] = useState<Record<string, DraftHistoryEntry[]>>({})
+  const [confirmedDrafts, setConfirmedDrafts] = useState<ConfirmedStoryDraft[]>([])
+  const [skippedDraftIds, setSkippedDraftIds] = useState<Set<string>>(() => new Set())
+  const [draftRunning, setDraftRunning] = useState(false)
 
   const draftStoriesEnabled = confirmed.length > 0
+  const artworkEnabled = confirmedDrafts.length > 0
+
+  const confirmedDraftIds = new Set(confirmedDrafts.map((d) => d.id))
+  const draftQueue = confirmed.filter(
+    (h) => !confirmedDraftIds.has(h.id) && !skippedDraftIds.has(h.id),
+  )
 
   const steps: { id: StepId; enabled: boolean }[] = STEP_IDS.map((id) => ({
     id,
-    enabled: id === 'fetchDates' ? true : id === 'draftStories' ? draftStoriesEnabled : false,
+    enabled:
+      id === 'fetchDates' ? true : id === 'draftStories' ? draftStoriesEnabled : artworkEnabled,
   }))
 
   useEffect(() => {
@@ -81,8 +104,49 @@ export function PublicHolidaysWorkspace({
     }
   }, [confirmed.length, activeStepId])
 
+  useEffect(() => {
+    if (confirmedDrafts.length === 0 && activeStepId === 'artwork') {
+      setActiveStepId('draftStories')
+    }
+  }, [confirmedDrafts.length, activeStepId])
+
+  useEffect(() => {
+    const confirmedIds = new Set(confirmed.map((h) => h.id))
+    setConfirmedDrafts((prev) => prev.filter((d) => confirmedIds.has(d.id)))
+    setSkippedDraftIds((prev) => {
+      const next = new Set([...prev].filter((id) => confirmedIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+    setDraftStatuses((prev) => {
+      const next: Record<string, DraftItemStatus> = {}
+      for (const [id, status] of Object.entries(prev)) {
+        if (confirmedIds.has(id)) next[id] = status
+      }
+      return next
+    })
+    setDraftResults((prev) => {
+      const next: Record<string, StoryDraftResult> = {}
+      for (const [id, result] of Object.entries(prev)) {
+        if (confirmedIds.has(id)) next[id] = result
+      }
+      return next
+    })
+    setDraftHistories((prev) => {
+      const next: Record<string, DraftHistoryEntry[]> = {}
+      for (const [id, history] of Object.entries(prev)) {
+        if (confirmedIds.has(id)) next[id] = history
+      }
+      return next
+    })
+  }, [confirmed])
+
   function setRunningState(next: boolean) {
     setRunning(next)
+    onRunningChange?.(next)
+  }
+
+  function setDraftRunningState(next: boolean) {
+    setDraftRunning(next)
     onRunningChange?.(next)
   }
 
@@ -179,6 +243,163 @@ export function PublicHolidaysWorkspace({
     }
   }
 
+  async function draftOne(locationId: number, holiday: HolidayItem): Promise<boolean> {
+    setDraftStatuses((prev) => ({ ...prev, [holiday.id]: 'loading' }))
+    try {
+      const item = await draftHolidayStory({
+        locationId,
+        holiday: { id: holiday.id, date: holiday.date, name: holiday.name },
+        instructions: draftInstructions,
+      })
+      setDraftResults((prev) => ({ ...prev, [holiday.id]: item.result }))
+      setDraftHistories((prev) => ({
+        ...prev,
+        [holiday.id]: [{ role: 'assistant', result: item.result }],
+      }))
+      setDraftStatuses((prev) => ({ ...prev, [holiday.id]: 'ready' }))
+      return true
+    } catch (err) {
+      setDraftStatuses((prev) => ({ ...prev, [holiday.id]: 'error' }))
+      toast.error(err instanceof Error ? err.message : t('draft.generateError'))
+      return false
+    }
+  }
+
+  async function handleGenerateDrafts() {
+    if (draftRunning || draftQueue.length === 0) return
+    setDraftRunningState(true)
+    try {
+      const ctx = await prepareRun()
+      for (const holiday of draftQueue) {
+        await draftOne(ctx.locationId, holiday)
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      toast.error(err instanceof Error ? err.message : t('draft.generateError'))
+    } finally {
+      setDraftRunningState(false)
+    }
+  }
+
+  async function handleRetryDraft(id: string) {
+    if (draftRunning) return
+    const holiday = draftQueue.find((h) => h.id === id)
+    if (!holiday) return
+    setDraftRunningState(true)
+    try {
+      const ctx = await prepareRun()
+      await draftOne(ctx.locationId, holiday)
+    } catch (err) {
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      toast.error(err instanceof Error ? err.message : t('draft.generateError'))
+    } finally {
+      setDraftRunningState(false)
+    }
+  }
+
+  async function handleRegenerateDraft(id: string, feedback: string) {
+    if (draftRunning) return
+    const holiday = draftQueue.find((h) => h.id === id)
+    const previousResult = draftResults[id]
+    if (!holiday || !previousResult) return
+    const feedbackTrimmed = feedback.trim()
+    if (!feedbackTrimmed) return
+
+    setDraftRunningState(true)
+    setDraftStatuses((prev) => ({ ...prev, [id]: 'loading' }))
+    try {
+      const ctx = await prepareRun()
+      const item = await draftHolidayStory({
+        locationId: ctx.locationId,
+        holiday: { id: holiday.id, date: holiday.date, name: holiday.name },
+        instructions: draftInstructions,
+        previousResult,
+        feedback: feedbackTrimmed,
+      })
+      setDraftResults((prev) => ({ ...prev, [id]: item.result }))
+      setDraftHistories((prev) => {
+        const existing = prev[id] ?? []
+        return {
+          ...prev,
+          [id]: [
+            ...existing,
+            { role: 'user', feedback: feedbackTrimmed },
+            { role: 'assistant', result: item.result },
+          ],
+        }
+      })
+      setDraftStatuses((prev) => ({ ...prev, [id]: 'ready' }))
+    } catch (err) {
+      setDraftStatuses((prev) => ({ ...prev, [id]: 'error' }))
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      toast.error(err instanceof Error ? err.message : t('draft.generateError'))
+    } finally {
+      setDraftRunningState(false)
+    }
+  }
+
+  function confirmDraft(id: string) {
+    const holiday = draftQueue.find((h) => h.id === id)
+    const result = draftResults[id]
+    if (!holiday || !result) return
+    setConfirmedDrafts((prev) =>
+      sortByDate([
+        ...prev.filter((d) => d.id !== id),
+        { id: holiday.id, date: holiday.date, name: holiday.name, result },
+      ]),
+    )
+    setDraftStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setDraftResults((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setDraftHistories((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  function skipDraft(id: string) {
+    setSkippedDraftIds((prev) => new Set(prev).add(id))
+    setDraftStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setDraftResults((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setDraftHistories((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  function removeConfirmedDraft(id: string) {
+    setConfirmedDrafts((prev) => prev.filter((d) => d.id !== id))
+    setSkippedDraftIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
   const selectedCount = selectedIds.size
 
   return (
@@ -188,8 +409,13 @@ export function PublicHolidaysWorkspace({
       <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('stepsAria')}>
         {steps.map((step) => {
           const isActive = activeStepId === step.id
-          const showBadge =
-            (step.id === 'fetchDates' || step.id === 'draftStories') && confirmed.length > 0
+          const badgeCount =
+            step.id === 'fetchDates'
+              ? confirmed.length
+              : step.id === 'draftStories'
+                ? confirmedDrafts.length
+                : 0
+          const showBadge = badgeCount > 0
           return (
             <button
               key={step.id}
@@ -214,7 +440,7 @@ export function PublicHolidaysWorkspace({
                   variant={isActive ? 'secondary' : 'outline'}
                   className="h-5 min-w-5 justify-center px-1.5 font-normal"
                 >
-                  {confirmed.length}
+                  {badgeCount}
                 </Badge>
               ) : null}
             </button>
@@ -416,9 +642,20 @@ export function PublicHolidaysWorkspace({
         </div>
       ) : activeStepId === 'draftStories' ? (
         <PublicHolidaysDraftStories
-          holidays={confirmed}
+          holidays={draftQueue}
+          statuses={draftStatuses}
+          results={draftResults}
+          histories={draftHistories}
+          confirmedDrafts={confirmedDrafts}
           instructions={draftInstructions}
           onInstructionsChange={setDraftInstructions}
+          running={draftRunning}
+          onGenerate={() => void handleGenerateDrafts()}
+          onConfirm={confirmDraft}
+          onSkip={skipDraft}
+          onRetry={(id) => void handleRetryDraft(id)}
+          onRegenerate={(id, feedback) => void handleRegenerateDraft(id, feedback)}
+          onRemoveConfirmed={removeConfirmedDraft}
         />
       ) : (
         <Empty className="border border-dashed border-border/70 py-12">

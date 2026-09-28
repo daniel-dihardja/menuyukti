@@ -20,6 +20,7 @@ query PublicMenu($slug: String!) {
     currency
     workspaceId
     mediaOwnerClerkUserId
+    headerImageFilename
     categories {
       name
       sortOrder
@@ -40,11 +41,13 @@ mutation UpdatePublicMenu(
   $locationId: Int!
   $publicEnabled: Boolean
   $publicSlug: String
+  $headerImageFilename: String
 ) {
   updateLocationPublicMenu(
     locationId: $locationId
     publicEnabled: $publicEnabled
     publicSlug: $publicSlug
+    headerImageFilename: $headerImageFilename
   ) {
     locationId
     publicEnabled
@@ -53,6 +56,7 @@ mutation UpdatePublicMenu(
       id
       locationId
       publicEnabled
+      headerImageFilename
     }
   }
 }
@@ -225,6 +229,7 @@ def test_enable_public_menu_round_trip(menu_location_id):
     assert payload["publicEnabled"] is True
     assert payload["publicSlug"] == "my-cool-cafe"
     assert payload["menu"]["publicEnabled"] is True
+    assert payload["menu"]["headerImageFilename"] is None
 
     public = asyncio.run(
         schema.execute(
@@ -236,3 +241,54 @@ def test_enable_public_menu_round_trip(menu_location_id):
     assert public.errors is None
     assert public.data["publicLocationMenu"]["name"] == "Menu Pub Loc"
     assert public.data["publicLocationMenu"]["categories"] == []
+    assert public.data["publicLocationMenu"]["headerImageFilename"] is None
+
+
+def test_header_image_filename_set_and_clear(menu_location_id):
+    enable = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": menu_location_id,
+                "publicEnabled": True,
+                "publicSlug": "header-img-cafe",
+                "headerImageFilename": "hero.webp",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert enable.errors is None
+    assert enable.data["updateLocationPublicMenu"]["menu"]["headerImageFilename"] == "hero.webp"
+
+    public = asyncio.run(
+        schema.execute(
+            _PUBLIC_MENU_QUERY,
+            variable_values={"slug": "header-img-cafe"},
+            context_value={},
+        )
+    )
+    assert public.errors is None
+    assert public.data["publicLocationMenu"]["headerImageFilename"] == "hero.webp"
+
+    clear = asyncio.run(
+        schema.execute(
+            _MUTATION,
+            variable_values={
+                "locationId": menu_location_id,
+                "headerImageFilename": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert clear.errors is None
+    assert clear.data["updateLocationPublicMenu"]["menu"]["headerImageFilename"] is None
+
+    public_cleared = asyncio.run(
+        schema.execute(
+            _PUBLIC_MENU_QUERY,
+            variable_values={"slug": "header-img-cafe"},
+            context_value={},
+        )
+    )
+    assert public_cleared.errors is None
+    assert public_cleared.data["publicLocationMenu"]["headerImageFilename"] is None

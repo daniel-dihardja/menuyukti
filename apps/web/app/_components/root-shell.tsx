@@ -1,4 +1,4 @@
-import { ClerkProvider } from '@clerk/nextjs'
+import { Suspense } from 'react'
 import { getLocale, getMessages } from 'next-intl/server'
 import { NextIntlClientProvider } from 'next-intl'
 
@@ -6,61 +6,32 @@ import { AppChrome } from '@/components/app-chrome'
 import { PwaRegister } from '@/components/pwa-register'
 import { Providers } from '@/components/providers'
 import { WebVitalsReporter } from '@/components/web-vitals-reporter'
-import { routes } from '@/lib/routes'
-import enMessages from '@/messages/en.json'
 
-const bodyClassName = (fontSansVar: string, fontMonoVar: string) =>
-  `${fontSansVar} ${fontMonoVar} font-sans antialiased `
-
-type RootShellProps = {
+type RootIntlProps = {
   children: React.ReactNode
-  fontSansVariable: string
-  fontMonoVariable: string
 }
 
-/** Static fallback while request locale/messages resolve (Cache Components + next-intl / headers). */
-export function RootShellFallback({
-  children,
-  fontSansVariable,
-  fontMonoVariable,
-}: RootShellProps) {
-  return (
-    <body className={bodyClassName(fontSansVariable, fontMonoVariable)}>
-      <ClerkProvider
-        signInUrl={routes.login}
-        signUpUrl={routes.signUp}
-        afterSignOutUrl={routes.login}
-      >
-        <NextIntlClientProvider locale="en" messages={enMessages}>
-          <Providers>
-            <PwaRegister />
-            <WebVitalsReporter />
-            <AppChrome>{children}</AppChrome>
-          </Providers>
-        </NextIntlClientProvider>
-      </ClerkProvider>
-    </body>
-  )
+/**
+ * Fully static Suspense fallback (Cache Components).
+ * Must not use navigation hooks, cookies, or `{children}` — those belong in
+ * Suspense-wrapped leaves of the resolved shell.
+ */
+export function RootIntlFallback() {
+  return null
 }
 
-export async function RootShell({ children, fontSansVariable, fontMonoVariable }: RootShellProps) {
+export async function RootIntlShell({ children }: RootIntlProps) {
   const messages = await getMessages()
   const locale = await getLocale()
   return (
-    <body className={bodyClassName(fontSansVariable, fontMonoVariable)}>
-      <ClerkProvider
-        signInUrl={routes.login}
-        signUpUrl={routes.signUp}
-        afterSignOutUrl={routes.login}
-      >
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers>
-            <PwaRegister />
-            <WebVitalsReporter />
-            <AppChrome>{children}</AppChrome>
-          </Providers>
-        </NextIntlClientProvider>
-      </ClerkProvider>
-    </body>
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <Providers>
+        <PwaRegister />
+        <Suspense fallback={null}>
+          <WebVitalsReporter />
+        </Suspense>
+        <AppChrome>{children}</AppChrome>
+      </Providers>
+    </NextIntlClientProvider>
   )
 }

@@ -58,6 +58,7 @@ type Props = {
   initialCategories: LocationMenuFormCategory[]
   initialPublicEnabled: boolean
   initialPublicSlug: string
+  initialHeaderImageFilename: string | null
 }
 
 type SavePayloadModifierOption = {
@@ -492,6 +493,7 @@ export function LocationMenuForm({
   initialCategories,
   initialPublicEnabled,
   initialPublicSlug,
+  initialHeaderImageFilename,
 }: Props) {
   const router = useRouter()
   const t = useTranslations('analytics.locationMenu')
@@ -501,6 +503,9 @@ export function LocationMenuForm({
   const [publicEnabled, setPublicEnabled] = useState(initialPublicEnabled)
   const [publicSlug, setPublicSlug] = useState(
     () => initialPublicSlug || suggestSlugFromName(locationName),
+  )
+  const [headerImageFilename, setHeaderImageFilename] = useState<string | null>(
+    initialHeaderImageFilename,
   )
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -573,18 +578,26 @@ export function LocationMenuForm({
         body: JSON.stringify({
           publicEnabled,
           publicSlug: slug || null,
+          headerImageFilename,
         }),
       })
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { message?: string } | null
         throw new Error(data?.message || t('errors.publishFailed'))
       }
-      const body = (await res.json()) as { publicSlug?: string | null; publicEnabled?: boolean }
+      const body = (await res.json()) as {
+        publicSlug?: string | null
+        publicEnabled?: boolean
+        menu?: { headerImageFilename?: string | null }
+      }
       if (typeof body.publicSlug === 'string') {
         setPublicSlug(body.publicSlug)
       }
       if (typeof body.publicEnabled === 'boolean') {
         setPublicEnabled(body.publicEnabled)
+      }
+      if (body.menu && 'headerImageFilename' in body.menu) {
+        setHeaderImageFilename(body.menu.headerImageFilename ?? null)
       }
       setPublishSaved(true)
       router.refresh()
@@ -742,6 +755,28 @@ export function LocationMenuForm({
               spellCheck={false}
             />
             <p className="text-muted-foreground text-xs">{t('publish.publicSlugHint')}</p>
+          </Field>
+          <Field className="gap-1.5">
+            <FieldLabel>{t('publish.headerImage')}</FieldLabel>
+            <p className="text-muted-foreground text-xs">{t('publish.headerImageHint')}</p>
+            <MediaCatalogPicker
+              selectedImage={
+                headerImageFilename
+                  ? {
+                      name: headerImageFilename,
+                      url: mediaDownloadHref(headerImageFilename),
+                    }
+                  : null
+              }
+              onSelect={(media: MediaCatalogItem) => setHeaderImageFilename(media.name)}
+              onClear={() => setHeaderImageFilename(null)}
+              disabled={publishLoading || loading}
+              pickLabel={t('fields.pickImage')}
+              pickerAriaLabel={t('publish.headerImagePickerAria')}
+              emptyLabel={t('fields.emptyMedia')}
+              removeLabel={t('fields.removeImage')}
+              fromMediaLabel={t('fields.fromMedia')}
+            />
           </Field>
           {publicEnabled && publicPath ? (
             <Field>

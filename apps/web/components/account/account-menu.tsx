@@ -125,11 +125,14 @@ export function AccountMenu({ className }: AccountMenuProps) {
           onSelect={() => {
             const destination = signOutRedirectUrl
             // Absolute redirectUrl forces a full page load. Relative paths go through
-            // Next soft navigation and race ClerkProvider remounts under Suspense
-            // ("update on a component that hasn't mounted yet").
+            // Next soft navigation and can race auth updates during layout refresh.
+            const absolute = new URL(destination, window.location.origin).href
             window.setTimeout(() => {
-              const absolute = new URL(destination, window.location.origin).href
-              void signOut({ redirectUrl: absolute })
+              void signOut({ redirectUrl: absolute }).finally(() => {
+                if (window.location.href.split('#')[0] !== absolute) {
+                  window.location.assign(absolute)
+                }
+              })
             }, 0)
           }}
         >
