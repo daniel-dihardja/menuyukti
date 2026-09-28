@@ -7,6 +7,7 @@ from typing import Any
 
 MAX_OPERATOR_INSTRUCTIONS_LEN = 2000
 MAX_FEEDBACK_LEN = 1000
+MAX_CRITIQUE_PROMPT_LEN = 2000
 
 STORY_DRAFT_SYSTEM = (
     "You draft Instagram story content for restaurants. "
@@ -19,6 +20,16 @@ STORY_DRAFT_SYSTEM = (
     "When a previous draft and user feedback are provided, revise that draft to "
     "address the feedback — do not ignore the previous draft and start from scratch. "
     "Return only the structured fields requested."
+)
+
+STORY_CRITIQUE_SYSTEM = (
+    "You critique Instagram story drafts for restaurants. "
+    "Score the draft from 1 (poor) to 10 (excellent) strictly against the "
+    "operator critique criteria provided. "
+    "Be concrete: when the score is below the passing threshold, feedback must "
+    "tell the writer exactly what to change (caption and/or visual brief). "
+    "When the draft already meets the criteria, give brief confirming feedback. "
+    "Do not invent venue facts. Return only the structured fields requested."
 )
 
 
@@ -40,6 +51,11 @@ def normalize_feedback(raw: str | None) -> str | None:
     if not text:
         return None
     return text[:MAX_FEEDBACK_LEN]
+
+
+def normalize_critique_prompt(raw: str) -> str:
+    """Trim and bound the operator critique prompt."""
+    return raw.strip()[:MAX_CRITIQUE_PROMPT_LEN]
 
 
 def holiday_payload(holiday: dict[str, Any]) -> dict[str, Any]:
@@ -101,4 +117,33 @@ def story_draft_user_text(
             "(it overrides conflicting defaults from the previous draft):\n\n"
         )
         parts.append(f"{revision_feedback}\n")
+    return "".join(parts)
+
+
+def story_critique_user_text(
+    *,
+    location_markdown: str,
+    holiday: dict[str, Any],
+    draft: dict[str, Any],
+    critique_prompt: str,
+    min_score: int,
+) -> str:
+    """Build the human message for scoring one story draft against critique criteria."""
+    holiday_json = json.dumps(holiday_payload(holiday), ensure_ascii=False, indent=2)
+    draft_json = json.dumps(draft, ensure_ascii=False, indent=2)
+    criteria = normalize_critique_prompt(critique_prompt)
+    parts = [
+        "## Venue context\n\n",
+        f"{location_markdown.strip()}\n\n",
+        "## Public holiday\n\n",
+        f"```json\n{holiday_json}\n```\n\n",
+        "## Draft to critique\n\n",
+        f"```json\n{draft_json}\n```\n\n",
+        "## Operator critique criteria\n\n",
+        "Score this draft from 1 to 10 against these criteria only:\n\n",
+        f"{criteria}\n\n",
+        f"Passing threshold is {min_score}/10. "
+        "If the score is below that threshold, feedback must be actionable "
+        "revision guidance the writer can apply next.\n",
+    ]
     return "".join(parts)

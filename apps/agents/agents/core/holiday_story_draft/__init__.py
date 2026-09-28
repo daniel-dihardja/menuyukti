@@ -5,12 +5,16 @@ from agents_app.agents.core.holiday_story_draft.draft import (
     draft_holiday_story,
 )
 from agents_app.agents.core.holiday_story_draft.models import (
+    CritiqueConfig,
+    CritiqueSummary,
     HolidayInput,
     StoryDraftItem,
     StoryDraftResult,
 )
 
 __all__ = [
+    "CritiqueConfig",
+    "CritiqueSummary",
     "HolidayInput",
     "LocationNotFoundError",
     "StoryDraftItem",
