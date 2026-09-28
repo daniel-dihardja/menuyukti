@@ -29,8 +29,7 @@ export const holidayStoryDraftBodySchema = z
       return hasPrev === hasFeedback
     },
     {
-      message:
-        'previousResult and feedback must both be provided for a revision, or both omitted',
+      message: 'previousResult and feedback must both be provided for a revision, or both omitted',
     },
   )
 

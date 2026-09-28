@@ -45,10 +45,7 @@ export async function loadPublicLocationMenu(
     .flatMap((category) => category.items)
     .map((item) => item.imageFilename?.trim())
     .filter((name): name is string => Boolean(name))
-  const allowedNames = new Set([
-    ...itemFilenames,
-    ...(headerFilename ? [headerFilename] : []),
-  ])
+  const allowedNames = new Set([...itemFilenames, ...(headerFilename ? [headerFilename] : [])])
   const urlByName = await presignPublicPhotos(
     menu.workspaceId,
     menu.mediaOwnerClerkUserId,

@@ -131,16 +131,8 @@ export function PublicHolidaysDraftStories({
           {t('instructionsHint')}
         </p>
         <div className="flex justify-end">
-          <Button
-            type="button"
-            onClick={onGenerate}
-            disabled={running || holidays.length === 0}
-          >
-            {running ? (
-              <Spinner data-icon="inline-start" />
-            ) : (
-              <Play data-icon="inline-start" />
-            )}
+          <Button type="button" onClick={onGenerate} disabled={running || holidays.length === 0}>
+            {running ? <Spinner data-icon="inline-start" /> : <Play data-icon="inline-start" />}
             {running ? t('generating') : t('generate')}
           </Button>
         </div>
