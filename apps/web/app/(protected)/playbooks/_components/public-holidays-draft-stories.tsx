@@ -140,9 +140,7 @@ export function PublicHolidaysDraftStories({
 
   const critiquePromptTrimmed = critique.prompt.trim()
   const generateDisabled =
-    running ||
-    holidays.length === 0 ||
-    (critique.enabled && critiquePromptTrimmed.length === 0)
+    running || holidays.length === 0 || (critique.enabled && critiquePromptTrimmed.length === 0)
 
   return (
     <div className="flex flex-col gap-4">
