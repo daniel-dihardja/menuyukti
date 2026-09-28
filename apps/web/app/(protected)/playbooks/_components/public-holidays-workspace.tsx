@@ -37,6 +37,11 @@ import { Switch } from '@workspace/ui/components/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 
+import {
+  PublicHolidaysArtwork,
+  type ArtworkItemStatus,
+  type ArtworkStyleReference,
+} from '@/app/(protected)/playbooks/_components/public-holidays-artwork'
 import { PublicHolidaysDraftStories } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
 import type {
   ConfirmedStoryDraft,
@@ -61,9 +66,9 @@ type HolidayItem = {
   name: string
 }
 
-type StepId = 'fetchDates' | 'draftStories'
+type StepId = 'fetchDates' | 'draftStories' | 'artwork'
 
-const STEP_IDS: StepId[] = ['fetchDates', 'draftStories']
+const STEP_IDS: StepId[] = ['fetchDates', 'draftStories', 'artwork']
 
 const DEFAULT_CRITIQUE: DraftCritiqueSettings = {
   enabled: false,
@@ -139,11 +144,18 @@ export function PublicHolidaysWorkspace({
   const [skippedDraftIds, setSkippedDraftIds] = useState<Set<string>>(() => new Set())
   const [draftRunning, setDraftRunning] = useState(false)
   const [draftProgress, setDraftProgress] = useState<DraftProgress | null>(null)
+  const [artworkInstructions, setArtworkInstructions] = useState('')
+  const [styleReference, setStyleReference] = useState<ArtworkStyleReference | null>(null)
+  const [artworkStatuses, setArtworkStatuses] = useState<Record<string, ArtworkItemStatus>>({})
+  const [confirmedArtworks, setConfirmedArtworks] = useState<ConfirmedStoryDraft[]>([])
+  const [skippedArtworkIds, setSkippedArtworkIds] = useState<Set<string>>(() => new Set())
 
   const draftStoriesEnabled = confirmed.length > 0
+  const artworkEnabled = confirmedDrafts.length > 0
   const hasSessionWork =
     confirmed.length > 0 ||
     confirmedDrafts.length > 0 ||
+    confirmedArtworks.length > 0 ||
     Object.keys(draftResults).length > 0 ||
     Object.keys(draftStatuses).length > 0
 
@@ -156,12 +168,25 @@ export function PublicHolidaysWorkspace({
   const draftQueue = confirmed.filter(
     (h) => !confirmedDraftIds.has(h.id) && !skippedDraftIds.has(h.id),
   )
+  const confirmedArtworkIds = useMemo(
+    () => new Set(confirmedArtworks.map((d) => d.id)),
+    [confirmedArtworks],
+  )
+  const artworkQueue = confirmedDrafts.filter(
+    (d) => !confirmedArtworkIds.has(d.id) && !skippedArtworkIds.has(d.id),
+  )
 
   useEffect(() => {
     if (confirmed.length === 0 && activeStepId === 'draftStories') {
       setActiveStepId('fetchDates')
     }
   }, [confirmed.length, activeStepId])
+
+  useEffect(() => {
+    if (confirmedDrafts.length === 0 && activeStepId === 'artwork') {
+      setActiveStepId(confirmed.length > 0 ? 'draftStories' : 'fetchDates')
+    }
+  }, [confirmedDrafts.length, confirmed.length, activeStepId])
 
   useEffect(() => {
     const confirmedIds = new Set(confirmed.map((h) => h.id))
@@ -192,6 +217,22 @@ export function PublicHolidaysWorkspace({
       return next
     })
   }, [confirmed])
+
+  useEffect(() => {
+    const draftIds = new Set(confirmedDrafts.map((d) => d.id))
+    setConfirmedArtworks((prev) => prev.filter((d) => draftIds.has(d.id)))
+    setSkippedArtworkIds((prev) => {
+      const next = new Set([...prev].filter((id) => draftIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+    setArtworkStatuses((prev) => {
+      const next: Record<string, ArtworkItemStatus> = {}
+      for (const [id, status] of Object.entries(prev)) {
+        if (draftIds.has(id)) next[id] = status
+      }
+      return next
+    })
+  }, [confirmedDrafts])
 
   function setRunningState(next: boolean) {
     setRunning(next)
@@ -539,6 +580,54 @@ export function PublicHolidaysWorkspace({
     })
   }
 
+  function confirmArtwork(id: string) {
+    const draft = artworkQueue.find((d) => d.id === id)
+    if (!draft) return
+    if ((artworkStatuses[id] ?? 'pending') !== 'ready') return
+    setConfirmedArtworks((prev) =>
+      sortByDate([...prev.filter((d) => d.id !== id), draft]),
+    )
+    setArtworkStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  function skipArtwork(id: string) {
+    const draft = artworkQueue.find((d) => d.id === id)
+    if (!draft) return
+    setSkippedArtworkIds((prev) => new Set(prev).add(id))
+    setArtworkStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    toast(t('artwork.skipUndoToast', { name: draft.name }), {
+      action: {
+        label: t('artwork.undo'),
+        onClick: () => {
+          setSkippedArtworkIds((prev) => {
+            if (!prev.has(id)) return prev
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+        },
+      },
+    })
+  }
+
+  function removeConfirmedArtwork(id: string) {
+    setConfirmedArtworks((prev) => prev.filter((d) => d.id !== id))
+    setSkippedArtworkIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
   const selectedCount = selectedIds.size
 
   return (
@@ -555,6 +644,7 @@ export function PublicHolidaysWorkspace({
         value={activeStepId}
         onValueChange={(value) => {
           if (value === 'draftStories' && !draftStoriesEnabled) return
+          if (value === 'artwork' && !artworkEnabled) return
           if (STEP_IDS.includes(value as StepId)) {
             setActiveStepId(value as StepId)
           }
@@ -563,9 +653,16 @@ export function PublicHolidaysWorkspace({
       >
         <TabsList aria-label={t('stepsAria')}>
           {STEP_IDS.map((stepId) => {
-            const enabled = stepId === 'fetchDates' || draftStoriesEnabled
+            const enabled =
+              stepId === 'fetchDates' ||
+              (stepId === 'draftStories' && draftStoriesEnabled) ||
+              (stepId === 'artwork' && artworkEnabled)
             const badgeCount =
-              stepId === 'fetchDates' ? confirmed.length : confirmedDrafts.length
+              stepId === 'fetchDates'
+                ? confirmed.length
+                : stepId === 'draftStories'
+                  ? confirmedDrafts.length
+                  : confirmedArtworks.length
             return (
               <TabsTrigger key={stepId} value={stepId} disabled={!enabled} className="gap-2">
                 {t(`steps.${stepId}`)}
@@ -837,6 +934,22 @@ export function PublicHolidaysWorkspace({
             onRetry={(id) => void handleRetryDraft(id)}
             onRegenerate={(id, feedback) => void handleRegenerateDraft(id, feedback)}
             onRemoveConfirmed={removeConfirmedDraft}
+          />
+        </TabsContent>
+
+        <TabsContent value="artwork">
+          <PublicHolidaysArtwork
+            holidays={artworkQueue}
+            confirmedArtworks={confirmedArtworks}
+            statuses={artworkStatuses}
+            instructions={artworkInstructions}
+            onInstructionsChange={setArtworkInstructions}
+            styleReference={styleReference}
+            onStyleReferenceChange={setStyleReference}
+            formatDate={(iso) => formatHolidayDate(iso, locale)}
+            onConfirm={confirmArtwork}
+            onSkip={skipArtwork}
+            onRemoveConfirmed={removeConfirmedArtwork}
           />
         </TabsContent>
       </Tabs>
