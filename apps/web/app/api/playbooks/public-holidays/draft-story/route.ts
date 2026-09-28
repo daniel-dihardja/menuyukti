@@ -7,7 +7,7 @@ import { getPythonAgentsUrl } from '@/lib/config'
 
 import { holidayStoryDraftBodySchema, holidayStoryDraftResponseSchema } from './schema'
 
-export const maxDuration = 120
+export const maxDuration = 180
 
 export async function POST(req: Request) {
   try {
@@ -39,6 +39,15 @@ export async function POST(req: Request) {
             ? {
                 previousResult: body.previousResult,
                 feedback: body.feedback,
+              }
+            : {}),
+          ...(body.critique
+            ? {
+                critique: {
+                  prompt: body.critique.prompt,
+                  maxIterations: body.critique.maxIterations,
+                  minScore: body.critique.minScore,
+                },
               }
             : {}),
         }),

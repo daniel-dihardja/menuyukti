@@ -24,6 +24,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { PublicHolidaysDraftStories } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
 import type {
   ConfirmedStoryDraft,
+  DraftCritiqueSettings,
   DraftHistoryEntry,
   DraftItemStatus,
 } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
@@ -31,6 +32,7 @@ import {
   draftHolidayStory,
   fetchHolidays,
   scoreHolidayRelevance,
+  type CritiqueSummary,
   type StoryDraftResult,
 } from '@/lib/playbooks/client-api'
 import { relevantHolidayIds } from '@/lib/playbooks/relevant-holiday-ids'
@@ -44,6 +46,27 @@ type HolidayItem = {
 type StepId = 'fetchDates' | 'draftStories' | 'artwork'
 
 const STEP_IDS: StepId[] = ['fetchDates', 'draftStories', 'artwork']
+
+const DEFAULT_CRITIQUE: DraftCritiqueSettings = {
+  enabled: false,
+  prompt: '',
+  maxIterations: 2,
+  minScore: 7,
+}
+
+function historyFromCritique(summary: CritiqueSummary): DraftHistoryEntry[] {
+  const entries: DraftHistoryEntry[] = []
+  for (const round of summary.rounds) {
+    entries.push({ role: 'assistant', result: round.draft })
+    entries.push({
+      role: 'critique',
+      feedback: round.verdict.feedback,
+      score: round.verdict.score,
+      passed: round.verdict.passed,
+    })
+  }
+  return entries
+}
 
 function sortByDate<T extends HolidayItem>(items: T[]): T[] {
   return [...items].toSorted((a, b) => a.date.localeCompare(b.date))
@@ -77,9 +100,13 @@ export function PublicHolidaysWorkspace({
   const [useAiRelevance, setUseAiRelevance] = useState(true)
   const [relevanceInstructions, setRelevanceInstructions] = useState('')
   const [draftInstructions, setDraftInstructions] = useState('')
+  const [draftCritique, setDraftCritique] = useState<DraftCritiqueSettings>(DEFAULT_CRITIQUE)
   const [draftStatuses, setDraftStatuses] = useState<Record<string, DraftItemStatus>>({})
   const [draftResults, setDraftResults] = useState<Record<string, StoryDraftResult>>({})
   const [draftHistories, setDraftHistories] = useState<Record<string, DraftHistoryEntry[]>>({})
+  const [draftCritiqueSummaries, setDraftCritiqueSummaries] = useState<
+    Record<string, CritiqueSummary>
+  >({})
   const [confirmedDrafts, setConfirmedDrafts] = useState<ConfirmedStoryDraft[]>([])
   const [skippedDraftIds, setSkippedDraftIds] = useState<Set<string>>(() => new Set())
   const [draftRunning, setDraftRunning] = useState(false)
@@ -246,16 +273,40 @@ export function PublicHolidaysWorkspace({
   async function draftOne(locationId: number, holiday: HolidayItem): Promise<boolean> {
     setDraftStatuses((prev) => ({ ...prev, [holiday.id]: 'loading' }))
     try {
+      const critiquePrompt = draftCritique.prompt.trim()
       const item = await draftHolidayStory({
         locationId,
         holiday: { id: holiday.id, date: holiday.date, name: holiday.name },
         instructions: draftInstructions,
+        ...(draftCritique.enabled && critiquePrompt
+          ? {
+              critique: {
+                prompt: critiquePrompt,
+                maxIterations: draftCritique.maxIterations,
+                minScore: draftCritique.minScore,
+              },
+            }
+          : {}),
       })
       setDraftResults((prev) => ({ ...prev, [holiday.id]: item.result }))
-      setDraftHistories((prev) => ({
-        ...prev,
-        [holiday.id]: [{ role: 'assistant', result: item.result }],
-      }))
+      const critiqueSummary = item.critique
+      if (critiqueSummary) {
+        setDraftCritiqueSummaries((prev) => ({ ...prev, [holiday.id]: critiqueSummary }))
+        setDraftHistories((prev) => ({
+          ...prev,
+          [holiday.id]: historyFromCritique(critiqueSummary),
+        }))
+      } else {
+        setDraftCritiqueSummaries((prev) => {
+          const next = { ...prev }
+          delete next[holiday.id]
+          return next
+        })
+        setDraftHistories((prev) => ({
+          ...prev,
+          [holiday.id]: [{ role: 'assistant', result: item.result }],
+        }))
+      }
       setDraftStatuses((prev) => ({ ...prev, [holiday.id]: 'ready' }))
       return true
     } catch (err) {
@@ -267,6 +318,7 @@ export function PublicHolidaysWorkspace({
 
   async function handleGenerateDrafts() {
     if (draftRunning || draftQueue.length === 0) return
+    if (draftCritique.enabled && !draftCritique.prompt.trim()) return
     setDraftRunningState(true)
     try {
       const ctx = await prepareRun()
@@ -285,6 +337,7 @@ export function PublicHolidaysWorkspace({
 
   async function handleRetryDraft(id: string) {
     if (draftRunning) return
+    if (draftCritique.enabled && !draftCritique.prompt.trim()) return
     const holiday = draftQueue.find((h) => h.id === id)
     if (!holiday) return
     setDraftRunningState(true)
@@ -321,6 +374,11 @@ export function PublicHolidaysWorkspace({
         feedback: feedbackTrimmed,
       })
       setDraftResults((prev) => ({ ...prev, [id]: item.result }))
+      setDraftCritiqueSummaries((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
       setDraftHistories((prev) => {
         const existing = prev[id] ?? []
         return {
@@ -369,6 +427,11 @@ export function PublicHolidaysWorkspace({
       delete next[id]
       return next
     })
+    setDraftCritiqueSummaries((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
   }
 
   function skipDraft(id: string) {
@@ -384,6 +447,11 @@ export function PublicHolidaysWorkspace({
       return next
     })
     setDraftHistories((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setDraftCritiqueSummaries((prev) => {
       const next = { ...prev }
       delete next[id]
       return next
@@ -646,9 +714,12 @@ export function PublicHolidaysWorkspace({
           statuses={draftStatuses}
           results={draftResults}
           histories={draftHistories}
+          critiqueSummaries={draftCritiqueSummaries}
           confirmedDrafts={confirmedDrafts}
           instructions={draftInstructions}
           onInstructionsChange={setDraftInstructions}
+          critique={draftCritique}
+          onCritiqueChange={setDraftCritique}
           running={draftRunning}
           onGenerate={() => void handleGenerateDrafts()}
           onConfirm={confirmDraft}

@@ -16,11 +16,35 @@ export type StoryDraftResult = {
   visualBrief: string
 }
 
+export type CritiqueConfig = {
+  prompt: string
+  maxIterations: number
+  minScore: number
+}
+
+export type CritiqueVerdict = {
+  score: number
+  feedback: string
+  passed: boolean
+}
+
+export type CritiqueRound = {
+  draft: StoryDraftResult
+  verdict: CritiqueVerdict
+}
+
+export type CritiqueSummary = {
+  rounds: CritiqueRound[]
+  finalScore: number
+  passed: boolean
+}
+
 export type HolidayStoryDraftItem = {
   id: string
   date: string
   name: string
   result: StoryDraftResult
+  critique?: CritiqueSummary
 }
 
 export async function fetchHolidays(params: {
@@ -85,9 +109,11 @@ export async function draftHolidayStory(params: {
   instructions?: string
   previousResult?: StoryDraftResult
   feedback?: string
+  critique?: CritiqueConfig
 }): Promise<HolidayStoryDraftItem> {
   const instructions = params.instructions?.trim()
   const feedback = params.feedback?.trim()
+  const critiquePrompt = params.critique?.prompt.trim()
   const result = await apiFetch<HolidayStoryDraftItem>(
     '/api/playbooks/public-holidays/draft-story',
     {
@@ -106,6 +132,15 @@ export async function draftHolidayStory(params: {
           ? {
               previousResult: params.previousResult,
               feedback,
+            }
+          : {}),
+        ...(params.critique && critiquePrompt
+          ? {
+              critique: {
+                prompt: critiquePrompt,
+                maxIterations: params.critique.maxIterations,
+                minScore: params.critique.minScore,
+              },
             }
           : {}),
       }),

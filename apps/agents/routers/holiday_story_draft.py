@@ -13,6 +13,7 @@ from agents_app.agents.core.holiday_story_draft import (
     StoryDraftResult,
     draft_holiday_story,
 )
+from agents_app.agents.core.holiday_story_draft.models import CritiqueConfig
 from agents_app.agents.core.llm_invoke import LLMInvokeError
 from agents_app.agents.graphql_base import GraphQLHttpError
 from agents_app.deps import get_http_client
@@ -30,11 +31,12 @@ class HolidayStoryDraftRequest(BaseModel):
     instructions: str | None = Field(default=None, max_length=2000)
     previous_result: StoryDraftResult | None = Field(default=None, alias="previousResult")
     feedback: str | None = Field(default=None, max_length=1000)
+    critique: CritiqueConfig | None = None
 
     model_config = {"populate_by_name": True}
 
     @model_validator(mode="after")
-    def revision_fields_together(self) -> Self:
+    def revision_and_critique_rules(self) -> Self:
         has_prev = self.previous_result is not None
         has_feedback = self.feedback is not None and bool(self.feedback.strip())
         if has_prev != has_feedback:
@@ -44,6 +46,11 @@ class HolidayStoryDraftRequest(BaseModel):
             )
         if self.feedback is not None:
             self.feedback = self.feedback.strip() or None
+        if self.critique is not None and (has_prev or has_feedback):
+            raise ValueError(
+                "critique cannot be combined with previousResult/feedback; "
+                "manual revise must omit critique"
+            )
         return self
 
 
@@ -51,6 +58,7 @@ class HolidayStoryDraftRequest(BaseModel):
     "/playbooks/public-holidays/draft-story",
     response_model=StoryDraftItem,
     response_model_by_alias=True,
+    response_model_exclude_none=True,
 )
 async def draft_public_holiday_story(
     body: HolidayStoryDraftRequest,
@@ -72,7 +80,10 @@ async def draft_public_holiday_story(
             operator_instructions=body.instructions,
             previous_result=body.previous_result,
             feedback=body.feedback,
+            critique=body.critique,
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except LocationNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except GraphQLHttpError as exc:

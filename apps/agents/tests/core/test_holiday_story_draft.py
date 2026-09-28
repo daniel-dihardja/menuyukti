@@ -11,11 +11,16 @@ from agents_app.agents.core.holiday_story_draft.draft import (
     draft_holiday_story,
 )
 from agents_app.agents.core.holiday_story_draft.models import (
+    CritiqueConfig,
+    CritiqueVerdictLlm,
     HolidayInput,
     StoryDraftItem,
     StoryDraftResult,
 )
-from agents_app.agents.core.holiday_story_draft.prompts import story_draft_user_text
+from agents_app.agents.core.holiday_story_draft.prompts import (
+    story_critique_user_text,
+    story_draft_user_text,
+)
 from agents_app.agents.core.llm_invoke import LLMInvokeError
 from agents_app.server import app
 from fastapi.testclient import TestClient
@@ -70,6 +75,28 @@ def test_story_draft_user_text_omits_revision_when_feedback_empty() -> None:
     assert "Draft one Instagram story" in text
 
 
+def test_story_critique_user_text_includes_criteria_and_threshold() -> None:
+    text = story_critique_user_text(
+        location_markdown="## Venue\n- Café",
+        holiday={"id": "A", "date": "2026-01-01", "name": "New Year"},
+        draft={"caption": "Happy NY!", "visualBrief": "Gold"},
+        critique_prompt="Must mention brunch hours",
+        min_score=7,
+    )
+    assert "Operator critique criteria" in text
+    assert "Must mention brunch hours" in text
+    assert "Passing threshold is 7/10" in text
+    assert "Happy NY!" in text
+
+
+_LOC = {
+    "name": "Café Test",
+    "city": "Jakarta",
+    "country": "Indonesia",
+    "openingHours": [],
+}
+
+
 @pytest.mark.asyncio
 async def test_draft_holiday_story_missing_location() -> None:
     client = AsyncMock(spec=httpx.AsyncClient)
@@ -100,16 +127,7 @@ async def test_draft_holiday_story_merges_llm_result() -> None:
     with (
         patch(
             "agents_app.agents.core.holiday_story_draft.draft.graphql_post",
-            new=AsyncMock(
-                return_value={
-                    "location": {
-                        "name": "Café Test",
-                        "city": "Jakarta",
-                        "country": "Indonesia",
-                        "openingHours": [],
-                    }
-                }
-            ),
+            new=AsyncMock(return_value={"location": _LOC}),
         ),
         patch(
             "agents_app.agents.core.holiday_story_draft.draft.structured_ainvoke_with_retry",
@@ -138,6 +156,7 @@ async def test_draft_holiday_story_merges_llm_result() -> None:
         date="2026-01-01",
         name="New Year",
         result=llm_result,
+        critique=None,
     )
 
 
@@ -151,16 +170,7 @@ async def test_draft_holiday_story_passes_revision_into_prompt() -> None:
     with (
         patch(
             "agents_app.agents.core.holiday_story_draft.draft.graphql_post",
-            new=AsyncMock(
-                return_value={
-                    "location": {
-                        "name": "Café Test",
-                        "city": "Jakarta",
-                        "country": "Indonesia",
-                        "openingHours": [],
-                    }
-                }
-            ),
+            new=AsyncMock(return_value={"location": _LOC}),
         ),
         patch(
             "agents_app.agents.core.holiday_story_draft.draft.structured_ainvoke_with_retry",
@@ -190,6 +200,131 @@ async def test_draft_holiday_story_passes_revision_into_prompt() -> None:
     assert "Previous draft" in human
     assert "Old caption" in human
     assert "Shorter please" in human
+
+
+@pytest.mark.asyncio
+async def test_draft_holiday_story_critique_stops_early_on_pass() -> None:
+    client = AsyncMock(spec=httpx.AsyncClient)
+    holiday = HolidayInput(id="A", date="2026-01-01", name="New Year")
+    draft = StoryDraftResult(caption="Strong caption", visualBrief="Strong brief")
+    verdict = CritiqueVerdictLlm(score=8, feedback="Meets criteria")
+
+    async def llm_side_effect(llm, schema, messages):  # noqa: ANN001, ARG001
+        if schema is StoryDraftResult:
+            return draft
+        if schema is CritiqueVerdictLlm:
+            return verdict
+        raise AssertionError(f"unexpected schema {schema}")
+
+    with (
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.graphql_post",
+            new=AsyncMock(return_value={"location": _LOC}),
+        ),
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.structured_ainvoke_with_retry",
+            new=AsyncMock(side_effect=llm_side_effect),
+        ) as mock_llm,
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.record_ai_usage_event",
+            new=AsyncMock(),
+        ),
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.get_llm_structured",
+            return_value=object(),
+        ),
+    ):
+        item = await draft_holiday_story(
+            client=client,
+            user_id="user_1",
+            location_id=1,
+            holiday=holiday,
+            critique=CritiqueConfig(
+                prompt="Warm tone and under 80 chars",
+                maxIterations=3,
+                minScore=7,
+            ),
+        )
+
+    assert item.result == draft
+    assert item.critique is not None
+    assert item.critique.passed is True
+    assert item.critique.final_score == 8
+    assert len(item.critique.rounds) == 1
+    # one draft + one critique
+    assert mock_llm.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_draft_holiday_story_critique_hits_max_iterations() -> None:
+    client = AsyncMock(spec=httpx.AsyncClient)
+    holiday = HolidayInput(id="A", date="2026-01-01", name="New Year")
+    drafts = [
+        StoryDraftResult(caption="Draft 1", visualBrief="Brief 1"),
+        StoryDraftResult(caption="Draft 2", visualBrief="Brief 2"),
+    ]
+    draft_iter = iter(drafts)
+    low = CritiqueVerdictLlm(score=4, feedback="Make it warmer")
+
+    async def llm_side_effect(llm, schema, messages):  # noqa: ANN001, ARG001
+        if schema is StoryDraftResult:
+            return next(draft_iter)
+        if schema is CritiqueVerdictLlm:
+            return low
+        raise AssertionError(f"unexpected schema {schema}")
+
+    with (
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.graphql_post",
+            new=AsyncMock(return_value={"location": _LOC}),
+        ),
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.structured_ainvoke_with_retry",
+            new=AsyncMock(side_effect=llm_side_effect),
+        ) as mock_llm,
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.record_ai_usage_event",
+            new=AsyncMock(),
+        ),
+        patch(
+            "agents_app.agents.core.holiday_story_draft.draft.get_llm_structured",
+            return_value=object(),
+        ),
+    ):
+        item = await draft_holiday_story(
+            client=client,
+            user_id="user_1",
+            location_id=1,
+            holiday=holiday,
+            critique=CritiqueConfig(
+                prompt="Must feel festive",
+                maxIterations=2,
+                minScore=8,
+            ),
+        )
+
+    assert item.result.caption == "Draft 2"
+    assert item.critique is not None
+    assert item.critique.passed is False
+    assert item.critique.final_score == 4
+    assert len(item.critique.rounds) == 2
+    # draft, critique, revise, critique
+    assert mock_llm.await_count == 4
+
+
+@pytest.mark.asyncio
+async def test_draft_holiday_story_rejects_critique_with_manual_revise() -> None:
+    client = AsyncMock(spec=httpx.AsyncClient)
+    with pytest.raises(ValueError, match="critique cannot be combined"):
+        await draft_holiday_story(
+            client=client,
+            user_id="user_1",
+            location_id=1,
+            holiday=HolidayInput(id="A", date="2026-01-01", name="New Year"),
+            previous_result=StoryDraftResult(caption="Old", visualBrief="Old"),
+            feedback="Shorter",
+            critique=CritiqueConfig(prompt="Warm", maxIterations=1, minScore=7),
+        )
 
 
 @pytest.fixture
@@ -323,3 +458,56 @@ def test_draft_story_endpoint_revise_happy_path(client: TestClient) -> None:
     assert kwargs["feedback"] == "Make it warmer"
     assert kwargs["previous_result"] is not None
     assert kwargs["previous_result"].caption == "Old caption"
+
+
+def test_draft_story_endpoint_rejects_critique_with_revision(client: TestClient) -> None:
+    response = client.post(
+        "/playbooks/public-holidays/draft-story",
+        headers={"X-Menuyukti-User-Id": "user_1"},
+        json={
+            "locationId": 7,
+            "holiday": {"id": "A", "date": "2026-01-01", "name": "New Year"},
+            "previousResult": {"caption": "Old", "visualBrief": "Old"},
+            "feedback": "Shorter",
+            "critique": {
+                "prompt": "Warm tone",
+                "maxIterations": 2,
+                "minScore": 7,
+            },
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_draft_story_endpoint_critique_happy_path(client: TestClient) -> None:
+    drafted = StoryDraftItem(
+        id="A",
+        date="2026-01-01",
+        name="New Year",
+        result=StoryDraftResult(caption="Final", visualBrief="Final brief"),
+    )
+    with patch(
+        "agents_app.routers.holiday_story_draft.draft_holiday_story",
+        new=AsyncMock(return_value=drafted),
+    ) as mock_draft:
+        response = client.post(
+            "/playbooks/public-holidays/draft-story",
+            headers={"X-Menuyukti-User-Id": "user_1"},
+            json={
+                "locationId": 7,
+                "holiday": {"id": "A", "date": "2026-01-01", "name": "New Year"},
+                "critique": {
+                    "prompt": "Warm tone; under 80 chars",
+                    "maxIterations": 2,
+                    "minScore": 7,
+                },
+            },
+        )
+    assert response.status_code == 200
+    kwargs = mock_draft.await_args.kwargs
+    assert kwargs["critique"] is not None
+    assert kwargs["critique"].prompt == "Warm tone; under 80 chars"
+    assert kwargs["critique"].max_iterations == 2
+    assert kwargs["critique"].min_score == 7
+    assert kwargs["previous_result"] is None
+    assert kwargs["feedback"] is None
