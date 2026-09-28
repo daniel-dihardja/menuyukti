@@ -9,7 +9,6 @@ export const holidayStoryDraftHolidaySchema = z.object({
 
 export const storyDraftResultSchema = z.object({
   caption: z.string().min(1).max(500),
-  visualBrief: z.string().min(1).max(1000),
 })
 
 export type StoryDraftResult = z.infer<typeof storyDraftResultSchema>

@@ -94,23 +94,15 @@ type PublicHolidaysDraftStoriesProps = {
 function DraftResultBody({
   result,
   captionLabel,
-  visualBriefLabel,
 }: {
   result: StoryDraftResult
   captionLabel: string
-  visualBriefLabel: string
 }) {
   return (
-    <>
-      <div>
-        <p className="text-muted-foreground text-xs font-medium">{captionLabel}</p>
-        <p className="text-sm whitespace-pre-wrap">{result.caption}</p>
-      </div>
-      <div>
-        <p className="text-muted-foreground text-xs font-medium">{visualBriefLabel}</p>
-        <p className="text-sm whitespace-pre-wrap">{result.visualBrief}</p>
-      </div>
-    </>
+    <div>
+      <p className="text-muted-foreground text-xs font-medium">{captionLabel}</p>
+      <p className="text-sm whitespace-pre-wrap">{result.caption}</p>
+    </div>
   )
 }
 
@@ -386,7 +378,6 @@ export function PublicHolidaysDraftStories({
                               <DraftResultBody
                                 result={result}
                                 captionLabel={t('captionLabel')}
-                                visualBriefLabel={t('visualBriefLabel')}
                               />
                             </div>
                           </TabsContent>
@@ -406,7 +397,6 @@ export function PublicHolidaysDraftStories({
                                       <DraftResultBody
                                         result={entry.result}
                                         captionLabel={t('captionLabel')}
-                                        visualBriefLabel={t('visualBriefLabel')}
                                       />
                                     </li>
                                   )
@@ -451,7 +441,6 @@ export function PublicHolidaysDraftStories({
                           <DraftResultBody
                             result={result}
                             captionLabel={t('captionLabel')}
-                            visualBriefLabel={t('visualBriefLabel')}
                           />
                         </div>
                       ) : null}
@@ -602,24 +591,6 @@ export function PublicHolidaysDraftStories({
                         {formatDate(item.date)}
                       </p>
                       <p className="mt-2 text-sm whitespace-pre-wrap">{item.result.caption}</p>
-                      <Collapsible className="mt-2">
-                        <CollapsibleTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto px-0 py-1 text-muted-foreground"
-                          >
-                            {t('visualBriefToggle')}
-                            <ChevronDown data-icon="inline-end" />
-                          </Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                            {item.result.visualBrief}
-                          </p>
-                        </CollapsibleContent>
-                      </Collapsible>
                     </div>
                     <Button
                       type="button"

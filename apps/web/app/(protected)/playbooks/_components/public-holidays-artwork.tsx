@@ -2,7 +2,7 @@
 
 import { useId } from 'react'
 import { useTranslations } from 'next-intl'
-import { ChevronDown, ImageIcon, Play } from 'lucide-react'
+import { ImageIcon, Play } from 'lucide-react'
 
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
@@ -14,11 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@workspace/ui/components/collapsible'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 import {
   Field,
@@ -191,12 +186,6 @@ export function PublicHolidaysArtwork({
                           </p>
                           <p className="text-sm whitespace-pre-wrap">{item.result.caption}</p>
                         </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs font-medium">
-                            {t('visualBriefLabel')}
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap">{item.result.visualBrief}</p>
-                        </div>
                       </div>
                     </div>
 
@@ -269,24 +258,6 @@ export function PublicHolidaysArtwork({
                       <ArtworkImagePlaceholder label={t('imagePlaceholder')} />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm whitespace-pre-wrap">{item.result.caption}</p>
-                        <Collapsible className="mt-2">
-                          <CollapsibleTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto px-0 py-1 text-muted-foreground"
-                            >
-                              {t('visualBriefToggle')}
-                              <ChevronDown data-icon="inline-end" />
-                            </Button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                              {item.result.visualBrief}
-                            </p>
-                          </CollapsibleContent>
-                        </Collapsible>
                       </div>
                     </div>
                   </li>

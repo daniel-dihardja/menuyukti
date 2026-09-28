@@ -24,12 +24,6 @@ class StoryDraftResult(BaseModel):
         max_length=500,
         description="Short Instagram story caption or overlay text for this holiday",
     )
-    visual_brief: str = Field(
-        min_length=1,
-        max_length=1000,
-        alias="visualBrief",
-        description="Concise art-direction brief for the story visual/artwork",
-    )
 
     model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 

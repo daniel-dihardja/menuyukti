@@ -11,8 +11,7 @@ MAX_CRITIQUE_PROMPT_LEN = 2000
 
 STORY_DRAFT_SYSTEM = (
     "You draft Instagram story content for restaurants. "
-    "Given venue context and one public holiday, produce a short story caption "
-    "and a concise visual art-direction brief. "
+    "Given venue context and one public holiday, produce a short story caption. "
     "Match the venue's cuisine, city, and tone. Keep captions scannable on mobile "
     "(prefer under ~120 characters unless operator notes say otherwise). "
     "Do not invent false promotions, hours, or claims not supported by venue context "
@@ -27,7 +26,7 @@ STORY_CRITIQUE_SYSTEM = (
     "Score the draft from 1 (poor) to 10 (excellent) strictly against the "
     "operator critique criteria provided. "
     "Be concrete: when the score is below the passing threshold, feedback must "
-    "tell the writer exactly what to change (caption and/or visual brief). "
+    "tell the writer exactly what to change in the caption. "
     "When the draft already meets the criteria, give brief confirming feedback. "
     "Do not invent venue facts. Return only the structured fields requested."
 )
@@ -103,8 +102,7 @@ def story_draft_user_text(
         )
     else:
         parts.append(
-            "Draft one Instagram story for this holiday: a short caption "
-            "and a visual brief for artwork.\n\n"
+            "Draft one Instagram story for this holiday: a short caption only.\n\n"
         )
     parts.append(f"```json\n{payload}\n```\n")
     if previous_result is not None and revision_feedback:
