@@ -11,6 +11,18 @@ export type HolidayRelevanceResult = {
   relevant: boolean
 }
 
+export type StoryDraftResult = {
+  caption: string
+  visualBrief: string
+}
+
+export type HolidayStoryDraftItem = {
+  id: string
+  date: string
+  name: string
+  result: StoryDraftResult
+}
+
 export async function fetchHolidays(params: {
   locationId: number
   dateStart: string
@@ -60,6 +72,41 @@ export async function scoreHolidayRelevance(params: {
     throw new Error(result.error)
   }
   return result.data.holidays
+}
+
+export async function draftHolidayStory(params: {
+  locationId: number
+  holiday: {
+    id: string
+    date: string
+    name: string
+    localName?: string
+  }
+  instructions?: string
+}): Promise<HolidayStoryDraftItem> {
+  const instructions = params.instructions?.trim()
+  const result = await apiFetch<HolidayStoryDraftItem>(
+    '/api/playbooks/public-holidays/draft-story',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        locationId: params.locationId,
+        holiday: {
+          id: params.holiday.id,
+          date: params.holiday.date,
+          name: params.holiday.name,
+          ...(params.holiday.localName ? { localName: params.holiday.localName } : {}),
+        },
+        ...(instructions ? { instructions } : {}),
+      }),
+    },
+    'Failed to draft holiday story',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data
 }
 
 export async function listPlaybooks(playbookType: string): Promise<Playbook[]> {

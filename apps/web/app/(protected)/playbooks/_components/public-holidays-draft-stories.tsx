@@ -2,28 +2,57 @@
 
 import { useId } from 'react'
 import { useTranslations } from 'next-intl'
+import { Play, RotateCcw } from 'lucide-react'
 
 import { Badge } from '@workspace/ui/components/badge'
+import { Button } from '@workspace/ui/components/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 import { Label } from '@workspace/ui/components/label'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-type HolidayItem = {
+import type { StoryDraftResult } from '@/lib/playbooks/client-api'
+
+export type DraftHolidayItem = {
   id: string
   date: string
   name: string
 }
 
+export type DraftItemStatus = 'pending' | 'loading' | 'ready' | 'error'
+
+export type ConfirmedStoryDraft = DraftHolidayItem & {
+  result: StoryDraftResult
+}
+
 type PublicHolidaysDraftStoriesProps = {
-  holidays: HolidayItem[]
+  holidays: DraftHolidayItem[]
+  statuses: Record<string, DraftItemStatus>
+  results: Record<string, StoryDraftResult>
+  confirmedDrafts: ConfirmedStoryDraft[]
   instructions: string
   onInstructionsChange: (value: string) => void
+  running: boolean
+  onGenerate: () => void
+  onConfirm: (id: string) => void
+  onSkip: (id: string) => void
+  onRetry: (id: string) => void
+  onRemoveConfirmed: (id: string) => void
 }
 
 export function PublicHolidaysDraftStories({
   holidays,
+  statuses,
+  results,
+  confirmedDrafts,
   instructions,
   onInstructionsChange,
+  running,
+  onGenerate,
+  onConfirm,
+  onSkip,
+  onRetry,
+  onRemoveConfirmed,
 }: PublicHolidaysDraftStoriesProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace.draft')
   const instructionsId = useId()
@@ -40,6 +69,7 @@ export function PublicHolidaysDraftStories({
           value={instructions}
           onChange={(e) => onInstructionsChange(e.target.value)}
           placeholder={t('instructionsPlaceholder')}
+          disabled={running}
           maxLength={2000}
           rows={3}
           className="min-h-20 resize-y"
@@ -48,6 +78,20 @@ export function PublicHolidaysDraftStories({
         <p id={instructionsHintId} className="text-muted-foreground text-xs">
           {t('instructionsHint')}
         </p>
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            onClick={onGenerate}
+            disabled={running || holidays.length === 0}
+          >
+            {running ? (
+              <Spinner data-icon="inline-start" />
+            ) : (
+              <Play data-icon="inline-start" />
+            )}
+            {running ? t('generating') : t('generate')}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -73,12 +117,88 @@ export function PublicHolidaysDraftStories({
             </Empty>
           ) : (
             <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
-              {holidays.map((item) => (
-                <li key={item.id} className="px-3 py-3">
-                  <p className="truncate text-sm font-medium">{item.name}</p>
-                  <p className="text-muted-foreground text-xs tabular-nums">{item.date}</p>
-                </li>
-              ))}
+              {holidays.map((item) => {
+                const status = statuses[item.id] ?? 'pending'
+                const result = results[item.id]
+                return (
+                  <li key={item.id} className="flex flex-col gap-3 px-3 py-3">
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{item.name}</p>
+                        <p className="text-muted-foreground text-xs tabular-nums">{item.date}</p>
+                      </div>
+                      {status === 'loading' ? (
+                        <Spinner className="size-4 shrink-0" />
+                      ) : status === 'pending' ? (
+                        <Badge variant="outline" className="shrink-0 font-normal">
+                          {t('statusPending')}
+                        </Badge>
+                      ) : status === 'error' ? (
+                        <Badge variant="destructive" className="shrink-0 font-normal">
+                          {t('statusError')}
+                        </Badge>
+                      ) : null}
+                    </div>
+
+                    {status === 'ready' && result ? (
+                      <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3">
+                        <div>
+                          <p className="text-muted-foreground text-xs font-medium">
+                            {t('captionLabel')}
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap">{result.caption}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs font-medium">
+                            {t('visualBriefLabel')}
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap">{result.visualBrief}</p>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {status === 'error' ? (
+                      <p className="text-destructive text-xs" role="alert">
+                        {t('draftError')}
+                      </p>
+                    ) : null}
+
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {status === 'error' ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={running}
+                          onClick={() => onRetry(item.id)}
+                        >
+                          <RotateCcw data-icon="inline-start" />
+                          {t('retry')}
+                        </Button>
+                      ) : null}
+                      {status === 'ready' ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={running}
+                          onClick={() => onConfirm(item.id)}
+                        >
+                          {t('confirm')}
+                        </Button>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={running || status === 'loading'}
+                        onClick={() => onSkip(item.id)}
+                      >
+                        {t('skip')}
+                      </Button>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           )}
         </section>
@@ -92,16 +212,42 @@ export function PublicHolidaysDraftStories({
               {t('confirmedTitle')}
             </h2>
             <Badge variant="outline" className="font-normal">
-              {t('confirmedCount', { count: 0 })}
+              {t('confirmedCount', { count: confirmedDrafts.length })}
             </Badge>
           </div>
 
-          <Empty className="border border-dashed border-border/70 py-8 md:py-10">
-            <EmptyHeader>
-              <EmptyTitle>{t('confirmedEmptyTitle')}</EmptyTitle>
-              <EmptyDescription>{t('confirmedEmptyDescription')}</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          {confirmedDrafts.length === 0 ? (
+            <Empty className="border border-dashed border-border/70 py-8 md:py-10">
+              <EmptyHeader>
+                <EmptyTitle>{t('confirmedEmptyTitle')}</EmptyTitle>
+                <EmptyDescription>{t('confirmedEmptyDescription')}</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
+              {confirmedDrafts.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-start sm:justify-between"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{item.name}</p>
+                    <p className="text-muted-foreground text-xs tabular-nums">{item.date}</p>
+                    <p className="mt-2 text-sm whitespace-pre-wrap">{item.result.caption}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={running}
+                    onClick={() => onRemoveConfirmed(item.id)}
+                  >
+                    {t('remove')}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </div>

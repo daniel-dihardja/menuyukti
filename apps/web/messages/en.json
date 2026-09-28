@@ -1029,15 +1029,27 @@
           "draft": {
             "instructionsLabel": "Story instructions (optional)",
             "instructionsPlaceholder": "e.g. warm tone; mention limited hours; keep captions under 80 characters",
-            "instructionsHint": "Optional guidance for drafting Instagram stories. Generation is not wired up yet.",
+            "instructionsHint": "Optional guidance for drafting Instagram stories. Then generate one draft per confirmed holiday.",
+            "generate": "Generate",
+            "generating": "Generating…",
             "candidatesTitle": "Candidates",
             "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
             "candidatesEmptyTitle": "No holidays to draft",
-            "candidatesEmptyDescription": "Confirm holidays on Fetch dates first, then return here.",
+            "candidatesEmptyDescription": "Confirm holidays on Fetch dates first, then return here. Skipped drafts also leave this list empty until you confirm more holidays.",
             "confirmedTitle": "Confirmed",
             "confirmedCount": "{count}",
             "confirmedEmptyTitle": "No confirmed story drafts",
-            "confirmedEmptyDescription": "Confirmed story drafts will appear here after you review candidates."
+            "confirmedEmptyDescription": "Confirmed story drafts will appear here after you review candidates.",
+            "captionLabel": "Caption",
+            "visualBriefLabel": "Visual brief",
+            "statusPending": "Not generated",
+            "statusError": "Failed",
+            "draftError": "Could not draft this story. Retry or skip.",
+            "confirm": "Confirm",
+            "skip": "Skip",
+            "retry": "Retry",
+            "remove": "Remove",
+            "generateError": "Could not draft stories. Try again."
           }
         }
       }
