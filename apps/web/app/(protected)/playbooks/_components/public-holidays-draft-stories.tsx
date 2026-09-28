@@ -1,6 +1,6 @@
 'use client'
 
-import { useId } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Play, RotateCcw } from 'lucide-react'
 
@@ -10,6 +10,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/
 import { Label } from '@workspace/ui/components/label'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Textarea } from '@workspace/ui/components/textarea'
+import { cn } from '@workspace/ui/lib/utils'
 
 import type { StoryDraftResult } from '@/lib/playbooks/client-api'
 
@@ -37,6 +38,7 @@ type PublicHolidaysDraftStoriesProps = {
   onConfirm: (id: string) => void
   onSkip: (id: string) => void
   onRetry: (id: string) => void
+  onRegenerate: (id: string, feedback: string) => void
   onRemoveConfirmed: (id: string) => void
 }
 
@@ -52,11 +54,31 @@ export function PublicHolidaysDraftStories({
   onConfirm,
   onSkip,
   onRetry,
+  onRegenerate,
   onRemoveConfirmed,
 }: PublicHolidaysDraftStoriesProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace.draft')
   const instructionsId = useId()
   const instructionsHintId = `${instructionsId}-hint`
+  const [revisingId, setRevisingId] = useState<string | null>(null)
+  const [feedbackById, setFeedbackById] = useState<Record<string, string>>({})
+  const statusesRef = useRef(statuses)
+  useEffect(() => {
+    const prevStatuses = statusesRef.current
+    statusesRef.current = statuses
+    if (revisingId === null) return
+    const prev = prevStatuses[revisingId]
+    const next = statuses[revisingId]
+    if (prev === 'loading' && next === 'ready') {
+      setRevisingId(null)
+      setFeedbackById((prevMap) => {
+        if (!(revisingId in prevMap)) return prevMap
+        const nextMap = { ...prevMap }
+        delete nextMap[revisingId]
+        return nextMap
+      })
+    }
+  }, [statuses, revisingId])
 
   return (
     <div className="flex flex-col gap-4">
@@ -120,6 +142,10 @@ export function PublicHolidaysDraftStories({
               {holidays.map((item) => {
                 const status = statuses[item.id] ?? 'pending'
                 const result = results[item.id]
+                const isRevising = revisingId === item.id
+                const feedback = feedbackById[item.id] ?? ''
+                const feedbackTrimmed = feedback.trim()
+                const showResult = Boolean(result) && (status === 'ready' || status === 'loading' || status === 'error')
                 return (
                   <li key={item.id} className="flex flex-col gap-3 px-3 py-3">
                     <div className="flex min-w-0 items-start justify-between gap-3">
@@ -140,8 +166,13 @@ export function PublicHolidaysDraftStories({
                       ) : null}
                     </div>
 
-                    {status === 'ready' && result ? (
-                      <div className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3">
+                    {showResult && result ? (
+                      <div
+                        className={cn(
+                          'flex flex-col gap-2 rounded-lg bg-muted/40 p-3',
+                          status === 'loading' && 'opacity-60',
+                        )}
+                      >
                         <div>
                           <p className="text-muted-foreground text-xs font-medium">
                             {t('captionLabel')}
@@ -163,6 +194,61 @@ export function PublicHolidaysDraftStories({
                       </p>
                     ) : null}
 
+                    {isRevising && (status === 'ready' || status === 'error') ? (
+                      <div className="flex flex-col gap-2 rounded-lg border border-border/60 p-3">
+                        <Label
+                          htmlFor={`ph-draft-feedback-${item.id}`}
+                          className="text-sm font-medium"
+                        >
+                          {t('feedbackLabel')}
+                        </Label>
+                        <Textarea
+                          id={`ph-draft-feedback-${item.id}`}
+                          value={feedback}
+                          onChange={(e) =>
+                            setFeedbackById((prev) => ({ ...prev, [item.id]: e.target.value }))
+                          }
+                          placeholder={t('feedbackPlaceholder')}
+                          disabled={running}
+                          maxLength={1000}
+                          rows={3}
+                          className="min-h-16 resize-y"
+                        />
+                        <p className="text-muted-foreground text-xs">{t('feedbackHint')}</p>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={running}
+                            onClick={() => {
+                              setRevisingId(null)
+                              setFeedbackById((prev) => {
+                                const next = { ...prev }
+                                delete next[item.id]
+                                return next
+                              })
+                            }}
+                          >
+                            {t('cancelRevise')}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={running || feedbackTrimmed.length === 0}
+                            onClick={() => onRegenerate(item.id, feedbackTrimmed)}
+                          >
+                            {running ? (
+                              <Spinner data-icon="inline-start" />
+                            ) : (
+                              <RotateCcw data-icon="inline-start" />
+                            )}
+                            {running ? t('regenerating') : t('regenerate')}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+
                     <div className="flex flex-wrap justify-end gap-2">
                       {status === 'error' ? (
                         <Button
@@ -176,7 +262,18 @@ export function PublicHolidaysDraftStories({
                           {t('retry')}
                         </Button>
                       ) : null}
-                      {status === 'ready' ? (
+                      {(status === 'ready' || (status === 'error' && result)) && !isRevising ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={running}
+                          onClick={() => setRevisingId(item.id)}
+                        >
+                          {t('revise')}
+                        </Button>
+                      ) : null}
+                      {status === 'ready' && !isRevising ? (
                         <Button
                           type="button"
                           size="sm"
@@ -191,7 +288,10 @@ export function PublicHolidaysDraftStories({
                         size="sm"
                         variant="ghost"
                         disabled={running || status === 'loading'}
-                        onClick={() => onSkip(item.id)}
+                        onClick={() => {
+                          if (revisingId === item.id) setRevisingId(null)
+                          onSkip(item.id)
+                        }}
                       >
                         {t('skip')}
                       </Button>

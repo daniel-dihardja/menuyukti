@@ -35,6 +35,12 @@ export async function POST(req: Request) {
             ...(body.holiday.localName ? { localName: body.holiday.localName } : {}),
           },
           ...(body.instructions ? { instructions: body.instructions } : {}),
+          ...(body.previousResult && body.feedback
+            ? {
+                previousResult: body.previousResult,
+                feedback: body.feedback,
+              }
+            : {}),
         }),
         signal: req.signal,
       })

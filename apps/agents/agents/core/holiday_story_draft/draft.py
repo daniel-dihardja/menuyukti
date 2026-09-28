@@ -13,6 +13,7 @@ from agents_app.agents.core.holiday_story_draft.models import (
 )
 from agents_app.agents.core.holiday_story_draft.prompts import (
     STORY_DRAFT_SYSTEM,
+    normalize_feedback,
     story_draft_user_text,
 )
 from agents_app.agents.core.llm_invoke import LLMInvokeError, structured_ainvoke_with_retry
@@ -37,11 +38,14 @@ async def draft_holiday_story(
     holiday: HolidayInput,
     reporting_user: str | None = None,
     operator_instructions: str | None = None,
+    previous_result: StoryDraftResult | None = None,
+    feedback: str | None = None,
 ) -> StoryDraftItem:
     """
     Draft Instagram story caption + visual brief for one holiday.
 
     Loads venue context from GraphQL, then runs a structured LLM call.
+    When ``previous_result`` and ``feedback`` are both set, revises the prior draft.
     """
     loc_data = await graphql_post(
         client,
@@ -55,10 +59,17 @@ async def draft_holiday_story(
 
     location_markdown = format_location_page_markdown(raw_loc)
     holiday_dict = holiday.model_dump(by_alias=True, exclude_none=True)
+    previous_dict = (
+        previous_result.model_dump(by_alias=True) if previous_result is not None else None
+    )
+    revision_feedback = normalize_feedback(feedback)
+    is_revision = previous_dict is not None and revision_feedback is not None
     user_text = story_draft_user_text(
         location_markdown=location_markdown,
         holiday=holiday_dict,
         operator_instructions=operator_instructions,
+        previous_result=previous_dict if is_revision else None,
+        feedback=revision_feedback if is_revision else None,
     )
 
     llm = get_llm_structured(
@@ -98,6 +109,7 @@ async def draft_holiday_story(
                     "has_operator_instructions": bool(
                         operator_instructions and operator_instructions.strip()
                     ),
+                    "is_revision": is_revision,
                 },
             )
         except Exception:  # noqa: BLE001

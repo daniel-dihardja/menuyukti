@@ -1048,6 +1048,13 @@
             "confirm": "Confirm",
             "skip": "Skip",
             "retry": "Retry",
+            "revise": "Revise",
+            "regenerate": "Regenerate",
+            "regenerating": "Regenerating…",
+            "cancelRevise": "Cancel",
+            "feedbackLabel": "What should change?",
+            "feedbackPlaceholder": "e.g. shorter; less salesy; mention brunch hours",
+            "feedbackHint": "Your feedback revises this draft. The previous result is sent with your notes.",
             "remove": "Remove",
             "generateError": "Could not draft stories. Try again."
           }

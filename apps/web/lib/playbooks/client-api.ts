@@ -83,8 +83,11 @@ export async function draftHolidayStory(params: {
     localName?: string
   }
   instructions?: string
+  previousResult?: StoryDraftResult
+  feedback?: string
 }): Promise<HolidayStoryDraftItem> {
   const instructions = params.instructions?.trim()
+  const feedback = params.feedback?.trim()
   const result = await apiFetch<HolidayStoryDraftItem>(
     '/api/playbooks/public-holidays/draft-story',
     {
@@ -99,6 +102,12 @@ export async function draftHolidayStory(params: {
           ...(params.holiday.localName ? { localName: params.holiday.localName } : {}),
         },
         ...(instructions ? { instructions } : {}),
+        ...(params.previousResult && feedback
+          ? {
+              previousResult: params.previousResult,
+              feedback,
+            }
+          : {}),
       }),
     },
     'Failed to draft holiday story',

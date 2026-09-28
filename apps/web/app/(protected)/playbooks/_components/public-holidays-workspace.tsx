@@ -288,6 +288,38 @@ export function PublicHolidaysWorkspace({
     }
   }
 
+  async function handleRegenerateDraft(id: string, feedback: string) {
+    if (draftRunning) return
+    const holiday = draftQueue.find((h) => h.id === id)
+    const previousResult = draftResults[id]
+    if (!holiday || !previousResult) return
+    const feedbackTrimmed = feedback.trim()
+    if (!feedbackTrimmed) return
+
+    setDraftRunningState(true)
+    setDraftStatuses((prev) => ({ ...prev, [id]: 'loading' }))
+    try {
+      const ctx = await prepareRun()
+      const item = await draftHolidayStory({
+        locationId: ctx.locationId,
+        holiday: { id: holiday.id, date: holiday.date, name: holiday.name },
+        instructions: draftInstructions,
+        previousResult,
+        feedback: feedbackTrimmed,
+      })
+      setDraftResults((prev) => ({ ...prev, [id]: item.result }))
+      setDraftStatuses((prev) => ({ ...prev, [id]: 'ready' }))
+    } catch (err) {
+      setDraftStatuses((prev) => ({ ...prev, [id]: 'error' }))
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      toast.error(err instanceof Error ? err.message : t('draft.generateError'))
+    } finally {
+      setDraftRunningState(false)
+    }
+  }
+
   function confirmDraft(id: string) {
     const holiday = draftQueue.find((h) => h.id === id)
     const result = draftResults[id]
@@ -587,6 +619,7 @@ export function PublicHolidaysWorkspace({
           onConfirm={confirmDraft}
           onSkip={skipDraft}
           onRetry={(id) => void handleRetryDraft(id)}
+          onRegenerate={(id, feedback) => void handleRegenerateDraft(id, feedback)}
           onRemoveConfirmed={removeConfirmedDraft}
         />
       ) : (
