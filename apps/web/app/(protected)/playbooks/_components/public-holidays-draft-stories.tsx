@@ -9,6 +9,7 @@ import { Button } from '@workspace/ui/components/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
 import { Label } from '@workspace/ui/components/label'
 import { Spinner } from '@workspace/ui/components/spinner'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -22,6 +23,10 @@ export type DraftHolidayItem = {
 
 export type DraftItemStatus = 'pending' | 'loading' | 'ready' | 'error'
 
+export type DraftHistoryEntry =
+  | { role: 'assistant'; result: StoryDraftResult }
+  | { role: 'user'; feedback: string }
+
 export type ConfirmedStoryDraft = DraftHolidayItem & {
   result: StoryDraftResult
 }
@@ -30,6 +35,7 @@ type PublicHolidaysDraftStoriesProps = {
   holidays: DraftHolidayItem[]
   statuses: Record<string, DraftItemStatus>
   results: Record<string, StoryDraftResult>
+  histories: Record<string, DraftHistoryEntry[]>
   confirmedDrafts: ConfirmedStoryDraft[]
   instructions: string
   onInstructionsChange: (value: string) => void
@@ -42,10 +48,34 @@ type PublicHolidaysDraftStoriesProps = {
   onRemoveConfirmed: (id: string) => void
 }
 
+function DraftResultBody({
+  result,
+  captionLabel,
+  visualBriefLabel,
+}: {
+  result: StoryDraftResult
+  captionLabel: string
+  visualBriefLabel: string
+}) {
+  return (
+    <>
+      <div>
+        <p className="text-muted-foreground text-xs font-medium">{captionLabel}</p>
+        <p className="text-sm whitespace-pre-wrap">{result.caption}</p>
+      </div>
+      <div>
+        <p className="text-muted-foreground text-xs font-medium">{visualBriefLabel}</p>
+        <p className="text-sm whitespace-pre-wrap">{result.visualBrief}</p>
+      </div>
+    </>
+  )
+}
+
 export function PublicHolidaysDraftStories({
   holidays,
   statuses,
   results,
+  histories,
   confirmedDrafts,
   instructions,
   onInstructionsChange,
@@ -142,10 +172,15 @@ export function PublicHolidaysDraftStories({
               {holidays.map((item) => {
                 const status = statuses[item.id] ?? 'pending'
                 const result = results[item.id]
+                const history = histories[item.id] ?? []
                 const isRevising = revisingId === item.id
                 const feedback = feedbackById[item.id] ?? ''
                 const feedbackTrimmed = feedback.trim()
-                const showResult = Boolean(result) && (status === 'ready' || status === 'loading' || status === 'error')
+                const showResult =
+                  Boolean(result) &&
+                  (status === 'ready' || status === 'loading' || status === 'error')
+                const showHistoryTabs = history.length > 0 && showResult && result
+
                 return (
                   <li key={item.id} className="flex flex-col gap-3 px-3 py-3">
                     <div className="flex min-w-0 items-start justify-between gap-3">
@@ -166,25 +201,72 @@ export function PublicHolidaysDraftStories({
                       ) : null}
                     </div>
 
-                    {showResult && result ? (
+                    {showHistoryTabs && result ? (
+                      <Tabs defaultValue="current" className="gap-3">
+                        <TabsList variant="line" className="w-full">
+                          <TabsTrigger value="current">{t('tabCurrent')}</TabsTrigger>
+                          <TabsTrigger value="history">{t('tabHistory')}</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="current">
+                          <div
+                            className={cn(
+                              'flex flex-col gap-2 rounded-lg bg-muted/40 p-3',
+                              status === 'loading' && 'opacity-60',
+                            )}
+                          >
+                            <DraftResultBody
+                              result={result}
+                              captionLabel={t('captionLabel')}
+                              visualBriefLabel={t('visualBriefLabel')}
+                            />
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="history">
+                          <ol className="flex flex-col gap-2" aria-label={t('tabHistory')}>
+                            {history.map((entry, index) =>
+                              entry.role === 'assistant' ? (
+                                <li
+                                  key={`assistant-${index}`}
+                                  className="flex flex-col gap-2 rounded-lg bg-muted/40 p-3"
+                                  aria-label={t('historyAssistantLabel')}
+                                >
+                                  <p className="text-muted-foreground text-xs font-medium">
+                                    {t('historyAssistantLabel')}
+                                  </p>
+                                  <DraftResultBody
+                                    result={entry.result}
+                                    captionLabel={t('captionLabel')}
+                                    visualBriefLabel={t('visualBriefLabel')}
+                                  />
+                                </li>
+                              ) : (
+                                <li
+                                  key={`user-${index}`}
+                                  className="ml-4 flex flex-col gap-1 rounded-lg border border-border/60 bg-background p-3"
+                                  aria-label={t('historyUserLabel')}
+                                >
+                                  <p className="text-muted-foreground text-xs font-medium">
+                                    {t('historyUserLabel')}
+                                  </p>
+                                  <p className="text-sm whitespace-pre-wrap">{entry.feedback}</p>
+                                </li>
+                              ),
+                            )}
+                          </ol>
+                        </TabsContent>
+                      </Tabs>
+                    ) : showResult && result ? (
                       <div
                         className={cn(
                           'flex flex-col gap-2 rounded-lg bg-muted/40 p-3',
                           status === 'loading' && 'opacity-60',
                         )}
                       >
-                        <div>
-                          <p className="text-muted-foreground text-xs font-medium">
-                            {t('captionLabel')}
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap">{result.caption}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs font-medium">
-                            {t('visualBriefLabel')}
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap">{result.visualBrief}</p>
-                        </div>
+                        <DraftResultBody
+                          result={result}
+                          captionLabel={t('captionLabel')}
+                          visualBriefLabel={t('visualBriefLabel')}
+                        />
                       </div>
                     ) : null}
 

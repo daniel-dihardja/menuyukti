@@ -24,6 +24,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { PublicHolidaysDraftStories } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
 import type {
   ConfirmedStoryDraft,
+  DraftHistoryEntry,
   DraftItemStatus,
 } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
 import {
@@ -78,6 +79,7 @@ export function PublicHolidaysWorkspace({
   const [draftInstructions, setDraftInstructions] = useState('')
   const [draftStatuses, setDraftStatuses] = useState<Record<string, DraftItemStatus>>({})
   const [draftResults, setDraftResults] = useState<Record<string, StoryDraftResult>>({})
+  const [draftHistories, setDraftHistories] = useState<Record<string, DraftHistoryEntry[]>>({})
   const [confirmedDrafts, setConfirmedDrafts] = useState<ConfirmedStoryDraft[]>([])
   const [skippedDraftIds, setSkippedDraftIds] = useState<Set<string>>(() => new Set())
   const [draftRunning, setDraftRunning] = useState(false)
@@ -126,6 +128,13 @@ export function PublicHolidaysWorkspace({
       const next: Record<string, StoryDraftResult> = {}
       for (const [id, result] of Object.entries(prev)) {
         if (confirmedIds.has(id)) next[id] = result
+      }
+      return next
+    })
+    setDraftHistories((prev) => {
+      const next: Record<string, DraftHistoryEntry[]> = {}
+      for (const [id, history] of Object.entries(prev)) {
+        if (confirmedIds.has(id)) next[id] = history
       }
       return next
     })
@@ -243,6 +252,10 @@ export function PublicHolidaysWorkspace({
         instructions: draftInstructions,
       })
       setDraftResults((prev) => ({ ...prev, [holiday.id]: item.result }))
+      setDraftHistories((prev) => ({
+        ...prev,
+        [holiday.id]: [{ role: 'assistant', result: item.result }],
+      }))
       setDraftStatuses((prev) => ({ ...prev, [holiday.id]: 'ready' }))
       return true
     } catch (err) {
@@ -308,6 +321,17 @@ export function PublicHolidaysWorkspace({
         feedback: feedbackTrimmed,
       })
       setDraftResults((prev) => ({ ...prev, [id]: item.result }))
+      setDraftHistories((prev) => {
+        const existing = prev[id] ?? []
+        return {
+          ...prev,
+          [id]: [
+            ...existing,
+            { role: 'user', feedback: feedbackTrimmed },
+            { role: 'assistant', result: item.result },
+          ],
+        }
+      })
       setDraftStatuses((prev) => ({ ...prev, [id]: 'ready' }))
     } catch (err) {
       setDraftStatuses((prev) => ({ ...prev, [id]: 'error' }))
@@ -340,6 +364,11 @@ export function PublicHolidaysWorkspace({
       delete next[id]
       return next
     })
+    setDraftHistories((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
   }
 
   function skipDraft(id: string) {
@@ -350,6 +379,11 @@ export function PublicHolidaysWorkspace({
       return next
     })
     setDraftResults((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setDraftHistories((prev) => {
       const next = { ...prev }
       delete next[id]
       return next
@@ -611,6 +645,7 @@ export function PublicHolidaysWorkspace({
           holidays={draftQueue}
           statuses={draftStatuses}
           results={draftResults}
+          histories={draftHistories}
           confirmedDrafts={confirmedDrafts}
           instructions={draftInstructions}
           onInstructionsChange={setDraftInstructions}
