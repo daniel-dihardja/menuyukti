@@ -584,9 +584,7 @@ export function PublicHolidaysWorkspace({
     const draft = artworkQueue.find((d) => d.id === id)
     if (!draft) return
     if ((artworkStatuses[id] ?? 'pending') !== 'ready') return
-    setConfirmedArtworks((prev) =>
-      sortByDate([...prev.filter((d) => d.id !== id), draft]),
-    )
+    setConfirmedArtworks((prev) => sortByDate([...prev.filter((d) => d.id !== id), draft]))
     setArtworkStatuses((prev) => {
       const next = { ...prev }
       delete next[id]
@@ -667,7 +665,10 @@ export function PublicHolidaysWorkspace({
               <TabsTrigger key={stepId} value={stepId} disabled={!enabled} className="gap-2">
                 {t(`steps.${stepId}`)}
                 {badgeCount > 0 ? (
-                  <Badge variant="outline" className="h-5 min-w-5 justify-center px-1.5 font-normal">
+                  <Badge
+                    variant="outline"
+                    className="h-5 min-w-5 justify-center px-1.5 font-normal"
+                  >
                     {badgeCount}
                   </Badge>
                 ) : null}
@@ -695,7 +696,9 @@ export function PublicHolidaysWorkspace({
                     />
                   </Field>
                   <Field data-disabled={!useAiRelevance || undefined}>
-                    <FieldLabel htmlFor={relevanceInstructionsId}>{t('instructionsLabel')}</FieldLabel>
+                    <FieldLabel htmlFor={relevanceInstructionsId}>
+                      {t('instructionsLabel')}
+                    </FieldLabel>
                     <Textarea
                       id={relevanceInstructionsId}
                       value={relevanceInstructions}
@@ -822,7 +825,9 @@ export function PublicHolidaysWorkspace({
                               className="mt-0.5"
                             />
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-medium">{item.name}</span>
+                              <span className="block truncate text-sm font-medium">
+                                {item.name}
+                              </span>
                               <span className="text-muted-foreground block text-xs tabular-nums">
                                 {formatHolidayDate(item.date, locale)}
                               </span>
@@ -889,7 +894,10 @@ export function PublicHolidaysWorkspace({
                 ) : (
                   <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
                     {confirmed.map((item) => (
-                      <li key={item.id} className="flex items-center justify-between gap-3 px-3 py-3">
+                      <li
+                        key={item.id}
+                        className="flex items-center justify-between gap-3 px-3 py-3"
+                      >
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{item.name}</p>
                           <p className="text-muted-foreground text-xs tabular-nums">

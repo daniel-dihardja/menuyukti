@@ -375,10 +375,7 @@ export function PublicHolidaysDraftStories({
                                 status === 'loading' && 'opacity-60',
                               )}
                             >
-                              <DraftResultBody
-                                result={result}
-                                captionLabel={t('captionLabel')}
-                              />
+                              <DraftResultBody result={result} captionLabel={t('captionLabel')} />
                             </div>
                           </TabsContent>
                           <TabsContent value="history">
@@ -411,7 +408,9 @@ export function PublicHolidaysDraftStories({
                                       <p className="text-muted-foreground text-xs font-medium">
                                         {t('historyCritiqueLabel', { score: entry.score })}
                                       </p>
-                                      <p className="text-sm whitespace-pre-wrap">{entry.feedback}</p>
+                                      <p className="text-sm whitespace-pre-wrap">
+                                        {entry.feedback}
+                                      </p>
                                     </li>
                                   )
                                 }
@@ -438,10 +437,7 @@ export function PublicHolidaysDraftStories({
                             status === 'loading' && 'opacity-60',
                           )}
                         >
-                          <DraftResultBody
-                            result={result}
-                            captionLabel={t('captionLabel')}
-                          />
+                          <DraftResultBody result={result} captionLabel={t('captionLabel')} />
                         </div>
                       ) : null}
 

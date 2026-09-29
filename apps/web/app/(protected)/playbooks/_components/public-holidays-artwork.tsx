@@ -15,12 +15,7 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from '@workspace/ui/components/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Textarea } from '@workspace/ui/components/textarea'
 
 import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
@@ -164,52 +159,52 @@ export function PublicHolidaysArtwork({
                   const status = statuses[item.id] ?? 'pending'
                   const canConfirm = status === 'ready'
                   return (
-                  <li key={item.id} className="flex flex-col gap-3 px-3 py-3">
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{item.name}</p>
-                        <p className="text-muted-foreground text-xs tabular-nums">
-                          {formatDate(item.date)}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="shrink-0 font-normal">
-                        {status === 'ready' ? t('statusReady') : t('statusPending')}
-                      </Badge>
-                    </div>
-
-                    <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-start">
-                      <ArtworkImagePlaceholder label={t('imagePlaceholder')} />
-                      <div className="flex min-w-0 flex-1 flex-col gap-2">
-                        <div>
-                          <p className="text-muted-foreground text-xs font-medium">
-                            {t('captionLabel')}
+                    <li key={item.id} className="flex flex-col gap-3 px-3 py-3">
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{item.name}</p>
+                          <p className="text-muted-foreground text-xs tabular-nums">
+                            {formatDate(item.date)}
                           </p>
-                          <p className="text-sm whitespace-pre-wrap">{item.result.caption}</p>
+                        </div>
+                        <Badge variant="outline" className="shrink-0 font-normal">
+                          {status === 'ready' ? t('statusReady') : t('statusPending')}
+                        </Badge>
+                      </div>
+
+                      <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-start">
+                        <ArtworkImagePlaceholder label={t('imagePlaceholder')} />
+                        <div className="flex min-w-0 flex-1 flex-col gap-2">
+                          <div>
+                            <p className="text-muted-foreground text-xs font-medium">
+                              {t('captionLabel')}
+                            </p>
+                            <p className="text-sm whitespace-pre-wrap">{item.result.caption}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={!canConfirm}
-                        title={canConfirm ? undefined : t('confirmDisabledHint')}
-                        onClick={() => onConfirm(item.id)}
-                      >
-                        {t('confirm')}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        disabled={status === 'loading'}
-                        onClick={() => onSkip(item.id)}
-                      >
-                        {t('skip')}
-                      </Button>
-                    </div>
-                  </li>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={!canConfirm}
+                          title={canConfirm ? undefined : t('confirmDisabledHint')}
+                          onClick={() => onConfirm(item.id)}
+                        >
+                          {t('confirm')}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={status === 'loading'}
+                          onClick={() => onSkip(item.id)}
+                        >
+                          {t('skip')}
+                        </Button>
+                      </div>
+                    </li>
                   )
                 })}
               </ul>
