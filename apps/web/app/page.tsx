@@ -1,13 +1,10 @@
-import Link from 'next/link'
 import { Badge } from '@workspace/ui/components/badge'
-import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
 import { Sparkles } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 
 import { LandingHeroHeadline } from '@/app/_components/landing/landing-hero-headline'
 import { LandingMenuMock } from '@/app/_components/landing/landing-menu-mock'
-import { routes } from '@/lib/routes'
 
 export default async function LandingPage() {
   const t = await getTranslations('landing')
@@ -54,12 +51,6 @@ export default async function LandingPage() {
               <p className="landing-hero-subtitle mt-4 max-w-xl text-pretty text-lg md:mt-5 md:text-xl">
                 {t('hero.subtitle')}
               </p>
-
-              <div className="mt-6 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center md:mt-7 lg:justify-start">
-                <Button size="lg" className="w-full sm:w-auto" asChild>
-                  <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
-                </Button>
-              </div>
             </div>
 
             <div className="landing-menu-mock-enter flex w-full shrink-0 justify-center lg:w-auto lg:justify-end">
