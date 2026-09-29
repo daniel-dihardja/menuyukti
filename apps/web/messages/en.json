@@ -432,10 +432,27 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "We read between the bites.",
-      "subtitle": "Know what to post, when to post, and which dish to feature — from your sales data.",
-      "badge": "Built on data. Inspired by food.",
-      "ctaSecondary": "Sign in"
+      "headline": "Creative for the dining room.",
+      "subtitle": "Menuyukti is the creative agency for restaurants, cafés, and bars — built around a living digital menu guests open, join, and help shape.",
+      "badge": "Creative agency for hospitality",
+      "ctaSecondary": "Sign in",
+      "mock": {
+        "ariaLabel": "Illustration of a venue digital menu frontpage",
+        "eyebrow": "Menu",
+        "venueName": "Harbor & Grain",
+        "tagline": "What our guests love right now",
+        "guestFavorite": "Guest favorite",
+        "category": "Tonight",
+        "dish1Name": "Roasted squash toast",
+        "dish1Price": "€12",
+        "dish1Desc": "Brown butter, sage, toasted seeds",
+        "dish2Name": "Citrus fennel salad",
+        "dish2Price": "€14",
+        "dish2Desc": "Blood orange, pistachio, soft herbs",
+        "dish3Name": "House spritz",
+        "dish3Price": "€9",
+        "dish3Desc": "Bitter citrus, soda, olive"
+      }
     },
     "why": {
       "title": "Why Menuyukti exists",
