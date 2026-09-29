@@ -66,8 +66,8 @@ describe('workspace-plan', () => {
     expect(isPathnameAllowedForPlan('/home', 'pro')).toBe(true)
   })
 
-  it('uses customer home for free and advisor for pro', () => {
-    expect(getDefaultPathForPlan('free')).toBe('/home')
+  it('uses landing for free and advisor for pro', () => {
+    expect(getDefaultPathForPlan('free')).toBe('/')
     expect(getDefaultPathForPlan('pro')).toBe('/advisor')
   })
 })

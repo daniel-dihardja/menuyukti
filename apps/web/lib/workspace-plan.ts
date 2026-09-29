@@ -9,8 +9,9 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
  * Product tiers (Menuyukti = creative agency for restaurants, cafés, and bars):
  *
  * - **free** / no workspace — guest / customer accounts (mainly PWA). Sign-up is
- *   Clerk-only until staff provisions a workspace. Customer shell: `/home` + `/profile`
- *   under `app/(customer)/` (no operator sidebar).
+ *   Clerk-only until staff provisions a workspace. Post-auth default is the marketing
+ *   landing (`/`); optional customer shell: `/home` + `/profile` under `app/(customer)/`
+ *   (no operator sidebar).
  * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
  *   (`provisionWorkspace`). Full operator product surface (everything free does
  *   not include). Self-serve workspace creation is disabled.
@@ -104,10 +105,10 @@ export function isPathnameAllowedForPlan(
   return false
 }
 
-/** Post-login / brand home: guests → `/home`; restaurant clients → advisor. */
+/** Post-login / brand home: guests → landing (`/`); restaurant clients → advisor. */
 export function getDefaultPathForPlan(plan: string | null | undefined): string {
   if (isProPlan(plan)) {
     return routes.agent
   }
-  return routes.home
+  return routes.root
 }

@@ -172,11 +172,13 @@ export const routes = {
   agentThread: (threadId: string) => `/advisor/${encodeURIComponent(threadId)}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
-  /** Free-plan customer home (customer shell). Pro redirects away. */
+  /** Marketing / QR landing — free-plan post-auth default. */
+  root: '/',
+  /** Free-plan customer home (customer shell; PWA guide). Pro redirects away. */
   home: '/home',
   /**
    * Post-auth landing: server resolves workspace plan and redirects to
-   * the plan home (`/home` free, `/advisor` pro).
+   * the plan home (`/` free, `/advisor` pro).
    */
   authContinue: '/continue',
   /** Menuyukti staff-only console (platform role `admin`). */

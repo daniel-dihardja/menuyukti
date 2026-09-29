@@ -42,7 +42,7 @@ function nextWithPathname(req: Request, pathname: string): NextResponse {
 export default clerkMiddleware(async (auth, req) => {
   const { sessionStatus, userId } = await auth()
   const pathname = req.nextUrl.pathname
-  /** Plan-aware post-auth landing (resolves free → `/home`, pro → `/advisor`). */
+  /** Plan-aware post-auth landing (resolves free → `/`, pro → `/advisor`). */
   const continuePath = routes.authContinue
 
   // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
@@ -56,10 +56,8 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   if (!isProtectedRoute(req)) {
-    if (pathname === '/' && userId) {
-      return NextResponse.redirect(new URL(continuePath, req.url))
-    }
-    // Public surfaces (e.g. /shop) can still be feature-disabled.
+    // Public surfaces (e.g. /shop, /) can still be feature-disabled.
+    // Authenticated users may stay on `/` (QR landing) — do not bounce to /continue.
     if (userId && !isPathnameFeatureEnabled(pathname) && pathname !== continuePath) {
       return NextResponse.redirect(new URL(continuePath, req.url))
     }

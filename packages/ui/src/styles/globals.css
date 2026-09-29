@@ -315,8 +315,14 @@
     animation: landing-menu-mock-enter 0.7s ease-out both;
   }
 
+  .landing-qr-enter {
+    animation: landing-menu-mock-enter 0.7s ease-out both;
+    animation-delay: 0.08s;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .landing-menu-mock-enter {
+    .landing-menu-mock-enter,
+    .landing-qr-enter {
       animation: none;
     }
   }

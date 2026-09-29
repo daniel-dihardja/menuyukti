@@ -432,14 +432,20 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Creative for the dining room.",
-      "subtitle": "Menuyukti is the creative agency for restaurants, cafés, and bars — built around a living digital menu guests open, join, and help shape.",
-      "badge": "Creative agency for hospitality",
+      "headline": "Open the menu on your phone.",
+      "subtitle": "Scan to open a living digital menu — no app required. This is a sample of the guest experience.",
+      "mobileCta": "Open a sample menu",
+      "qr": {
+        "ariaLabel": "QR code that opens a sample Menuyukti digital menu",
+        "caption": "Point your camera · no app required",
+        "sampleHint": "Opens a sample guest menu",
+        "linkLabel": "Open sample menu in this browser"
+      },
       "mock": {
         "ariaLabel": "Illustration of a venue digital menu frontpage",
         "eyebrow": "Menu",
-        "venueName": "Harbor & Grain",
-        "tagline": "What our guests love right now",
+        "venueName": "Sample kitchen",
+        "tagline": "What guests love right now",
         "guestFavorite": "Guest favorite",
         "category": "Tonight",
         "dish1Name": "Roasted squash toast",

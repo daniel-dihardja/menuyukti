@@ -75,7 +75,7 @@ const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'home',
     labelKey: 'home',
-    href: routes.home,
+    href: routes.root,
     icon: <Home />,
     group: 'overview',
   },

@@ -34,6 +34,16 @@ User uploads on the Assets page are stored under `AWS_S3_BUCKET` (default `menuy
 
 Objects are private; the API returns presigned GET URLs for display.
 
+## Landing sample menu QR
+
+The marketing landing (`/`) can show a QR (desktop) and “Open a sample menu” button (mobile) that open a published public digital menu. Set:
+
+```env
+NEXT_PUBLIC_LANDING_SAMPLE_MENU_SLUG=your-published-slug
+```
+
+The QR encodes `https://menuyukti.com/m/{slug}`. If unset, the landing still renders (headline + menu preview) without QR or CTA.
+
 ## Google Analytics
 
 GA4 runs **site-wide** (all routes) when this is set:
