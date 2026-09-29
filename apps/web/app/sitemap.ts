@@ -10,11 +10,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${baseUrl}/shop`,
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
       url: `${baseUrl}/privacy`,
       changeFrequency: 'monthly',
       priority: 0.4,

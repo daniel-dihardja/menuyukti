@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   CRM_CUSTOMER_QUERY,
@@ -17,7 +17,7 @@ type RouteContext = {
 
 export async function GET(_req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -40,7 +40,7 @@ export async function GET(_req: Request, context: RouteContext) {
 
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

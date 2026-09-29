@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import { CRM_CUSTOMERS_QUERY, type CrmCustomersData } from '@/lib/graphql/queries/crm-registrations'
 
 export async function GET(req: Request) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

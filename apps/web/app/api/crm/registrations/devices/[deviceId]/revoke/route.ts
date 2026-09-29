@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   REVOKE_CRM_DEVICE_MUTATION,
@@ -15,7 +15,7 @@ type RouteContext = {
 
 export async function POST(_req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

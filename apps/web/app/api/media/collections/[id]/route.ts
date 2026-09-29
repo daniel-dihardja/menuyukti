@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   ADD_MEDIA_TO_COLLECTION_MUTATION,
@@ -44,7 +44,7 @@ function parseId(raw: string): number | null {
 
 export async function GET(_req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -69,7 +69,7 @@ export async function GET(_req: Request, context: RouteContext) {
 
 export async function PATCH(req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -101,7 +101,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -123,7 +123,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
 
 export async function POST(req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

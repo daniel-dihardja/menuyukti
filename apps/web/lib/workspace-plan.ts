@@ -13,8 +13,10 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
  *   landing (`/`); optional customer shell: `/home` + `/profile` under `app/(customer)/`
  *   (no operator sidebar).
  * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
- *   (`provisionWorkspace`). Full operator product surface (everything free does
- *   not include). Self-serve workspace creation is disabled.
+ *   (`provisionWorkspace`). Operator surfaces that remain for clients: Branches,
+ *   Inventar, Team, Dashboard (when flagged). Chat, playbooks, media, calendar,
+ *   CRM, print shop, and usage are platform-admin only.
+ *   Self-serve workspace creation is disabled.
  */
 
 /**
@@ -34,9 +36,10 @@ export const FREE_ROUTE_PREFIXES = ['/home', '/continue', '/profile'] as const
 const FREE_PROFILE_BLOCKED_PREFIXES = ['/profile/team'] as const
 
 /**
- * Operator sidebar keys that pro always receives (contrast with free’s Home-only nav).
+ * Operator sidebar keys that pro plan unlocks vs free (contrast with free’s Home-only nav).
  * Kept for documentation and tests; {@link isNavKeyAllowedForPlan} allows all keys on pro
- * except `home` (guest-only).
+ * except `home` (guest-only). Admin-only keys (chat, playbooks, media, …) are filtered
+ * separately via `config/admin-only-features.json`.
  */
 export const PRO_NAV_KEYS = new Set([
   'dashboard',
@@ -53,7 +56,7 @@ export const PRO_NAV_KEYS = new Set([
   'inventar',
   'team',
   'usage',
-  // `staff` stays admin-gated separately
+  // `staff` and other admin-only keys stay role-gated separately
 ])
 
 export function normalizeWorkspacePlan(plan: string | null | undefined): WorkspacePlan {
@@ -84,7 +87,8 @@ function normalizePathname(pathname: string): string {
 
 /**
  * Free: customer home, post-auth continue, and profile (+ account settings).
- * Pro: unrestricted — full operator app (locations, inventar, advisor, usage, team, …).
+ * Pro: unrestricted by plan — admin-only paths are gated separately via
+ * `pathnameRequiresAdmin` / `config/admin-only-features.json`.
  */
 export function isPathnameAllowedForPlan(
   pathname: string,
@@ -105,10 +109,10 @@ export function isPathnameAllowedForPlan(
   return false
 }
 
-/** Post-login / brand home: guests → landing (`/`); restaurant clients → advisor. */
+/** Post-login / brand home: guests → landing (`/`); restaurant clients → Branches. */
 export function getDefaultPathForPlan(plan: string | null | undefined): string {
   if (isProPlan(plan)) {
-    return routes.agent
+    return routes.analytics.branches
   }
   return routes.root
 }

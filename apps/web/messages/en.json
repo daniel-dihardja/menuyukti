@@ -665,12 +665,13 @@
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
       "backChat": "Chat",
+      "backBranches": "Branches",
       "backStudio": "IG Studio",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, chat, or studio."
+      "workspaceMenuDescription": "Go to Branches or stay in the print shop."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",

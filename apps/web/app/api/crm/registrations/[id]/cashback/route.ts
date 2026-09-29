@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   AWARD_CRM_CASHBACK_MUTATION,
@@ -41,7 +41,7 @@ function mapAwardError(message: string): { message: string; status: number } {
 
 export async function POST(req: Request, context: RouteContext) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

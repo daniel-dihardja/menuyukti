@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { isSafePhotoFilename } from '@/lib/assets/storage'
 import {
   listWorkspaceMediaObjects,
@@ -17,7 +17,7 @@ import {
  * Safe to run repeatedly (ensureMediaAsset is idempotent).
  */
 export async function POST() {
-  const authz = await requireAuthenticatedApi()
+  const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 

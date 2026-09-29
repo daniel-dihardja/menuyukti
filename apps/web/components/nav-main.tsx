@@ -39,6 +39,7 @@ import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
 import { useWorkspacePlan } from '@/hooks/use-workspace-plan'
 import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
+import { orderClientFlatNav } from '@/lib/client-flat-nav'
 import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
@@ -67,9 +68,10 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 }
 
 /**
- * Sidebar order follows daily product flow:
+ * Sidebar order follows daily product flow for platform admins:
  * overview → create/plan → measure → operations → account.
- * Chat leads create for pro (default home `/advisor`); free guests see Home only.
+ * Non-admin clients get a flat unlabeled list (Locations → Inventory → Team).
+ * Free guests see Home only.
  */
 const NAV_WORKSPACE: NavItem[] = [
   {
@@ -278,6 +280,20 @@ export function NavMain() {
   }
 
   const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav, plan)
+
+  if (!showAdminNav) {
+    const flatItems = orderClientFlatNav(visibleWorkspaceItems)
+    return (
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <NavMenuItems items={flatItems} t={t} isActive={isActive} />
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    )
+  }
+
   const groups = groupVisibleItems(visibleWorkspaceItems)
 
   return (

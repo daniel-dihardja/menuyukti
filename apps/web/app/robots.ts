@@ -5,7 +5,7 @@ import { CUSTOMER_AUTH_PREFIXES, OPERATOR_APP_SHELL_PREFIXES } from '@/lib/route
 const baseUrl = 'https://menuyukti.com'
 
 /** Auth and internal paths that should not be crawled (in addition to signed-in app paths). */
-const EXTRA_DISALLOW = ['/login', '/sign-up', '/sso-callback', '/agent', '/api/'] as const
+const EXTRA_DISALLOW = ['/login', '/sign-up', '/sso-callback', '/agent', '/shop', '/api/'] as const
 
 const SIGNED_IN_PREFIXES = [...OPERATOR_APP_SHELL_PREFIXES, ...CUSTOMER_AUTH_PREFIXES] as const
 
@@ -20,7 +20,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/shop', '/shop/', '/privacy', '/terms'],
+        allow: ['/', '/privacy', '/terms'],
         disallow,
       },
     ],

@@ -74,3 +74,27 @@ describe('requireMenuyuktiAdminOrInternalApi', () => {
     }
   })
 })
+
+describe('requireMenuyuktiAdminApi', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns 403 for signed-in non-admin users', async () => {
+    const { auth } = await import('@clerk/nextjs/server')
+    const { resolveMenuyuktiRole } = await import('@/lib/menuyukti-role-server')
+    const { requireMenuyuktiAdminApi } = await import('@/lib/menuyukti-admin-api')
+
+    vi.mocked(auth).mockResolvedValue({
+      isAuthenticated: true,
+      userId: 'user_client',
+    } as Awaited<ReturnType<typeof auth>>)
+    vi.mocked(resolveMenuyuktiRole).mockResolvedValue('user')
+
+    const result = await requireMenuyuktiAdminApi()
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.response.status).toBe(403)
+    }
+  })
+})

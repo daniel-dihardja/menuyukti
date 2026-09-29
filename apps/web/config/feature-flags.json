@@ -32,5 +32,5 @@
     "/usage": true,
     "/staff": true
   },
-  "defaultAuthenticatedPath": "/advisor"
+  "defaultAuthenticatedPath": "/analytics/locations"
 }

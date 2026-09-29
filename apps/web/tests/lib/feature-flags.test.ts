@@ -51,7 +51,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('usage')).toBe(true)
   })
 
-  it('returns /advisor as default authenticated path', () => {
-    expect(getDefaultAuthenticatedPath()).toBe('/advisor')
+  it('returns /analytics/locations as default authenticated path', () => {
+    expect(getDefaultAuthenticatedPath()).toBe('/analytics/locations')
   })
 })

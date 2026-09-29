@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/lib/authenticated-api', () => ({
-  requireAuthenticatedApi: vi.fn(),
+vi.mock('@/lib/menuyukti-admin-api', () => ({
+  requireMenuyuktiAdminApi: vi.fn(),
 }))
 
 vi.mock('@/lib/graphql/client', () => ({
   graphqlQuery: vi.fn(),
 }))
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { POST } from '@/app/api/crm/registrations/devices/[deviceId]/revoke/route'
 import { NextResponse } from 'next/server'
@@ -17,7 +17,7 @@ const DEVICE_ID = '22222222-2222-4222-8222-222222222222'
 
 describe('POST /api/crm/registrations/devices/[deviceId]/revoke', () => {
   beforeEach(() => {
-    vi.mocked(requireAuthenticatedApi).mockReset()
+    vi.mocked(requireMenuyuktiAdminApi).mockReset()
     vi.mocked(graphqlQuery).mockReset()
   })
 
@@ -26,7 +26,7 @@ describe('POST /api/crm/registrations/devices/[deviceId]/revoke', () => {
   })
 
   it('returns 401 when unauthenticated', async () => {
-    vi.mocked(requireAuthenticatedApi).mockResolvedValue({
+    vi.mocked(requireMenuyuktiAdminApi).mockResolvedValue({
       ok: false,
       response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
     })
@@ -43,7 +43,7 @@ describe('POST /api/crm/registrations/devices/[deviceId]/revoke', () => {
   })
 
   it('revokes device on success', async () => {
-    vi.mocked(requireAuthenticatedApi).mockResolvedValue({ ok: true, userId: 'user_1' })
+    vi.mocked(requireMenuyuktiAdminApi).mockResolvedValue({ ok: true, userId: 'user_1' })
     vi.mocked(graphqlQuery).mockResolvedValue({
       revokeCrmDevice: {
         id: DEVICE_ID,
@@ -74,7 +74,7 @@ describe('POST /api/crm/registrations/devices/[deviceId]/revoke', () => {
   })
 
   it('returns 400 for invalid deviceId', async () => {
-    vi.mocked(requireAuthenticatedApi).mockResolvedValue({ ok: true, userId: 'user_1' })
+    vi.mocked(requireMenuyuktiAdminApi).mockResolvedValue({ ok: true, userId: 'user_1' })
 
     const response = await POST(
       new Request('http://localhost/api/crm/registrations/devices/not-a-uuid/revoke', {

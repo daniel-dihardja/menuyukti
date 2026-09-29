@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import {
@@ -25,7 +25,7 @@ function mapError(message: string): { message: string; status: number } {
 
 export async function GET() {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 
@@ -45,7 +45,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const authz = await requireAuthenticatedApi()
+    const authz = await requireMenuyuktiAdminApi()
     if (!authz.ok) return authz.response
     const { userId } = authz
 

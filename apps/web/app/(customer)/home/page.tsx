@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function CustomerHomePage() {
   const { plan } = await getWorkspacePlanForUser()
   if (isProPlan(plan)) {
-    redirect(routes.agent)
+    redirect(routes.analytics.branches)
   }
 
   const t = await getTranslations('guestHome')

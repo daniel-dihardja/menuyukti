@@ -35,12 +35,19 @@ export const CUSTOMER_AUTH_PREFIXES = ['/home', '/continue', '/profile'] as cons
 export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
 
 /**
- * All Clerk-protected app prefixes (operator + customer). Keep in sync with `proxy.ts`.
+ * Auth-required paths that are not operator sidebar shell and not customer shell
+ * (legacy `/agent` rewrite alias; admin-only print shop catalog).
+ */
+export const CLERK_AUTH_EXTRA_PREFIXES = ['/agent', '/shop'] as const
+
+/**
+ * All Clerk-protected app prefixes (operator + customer + extras). Keep in sync with `proxy.ts`.
  * @deprecated Prefer `OPERATOR_APP_SHELL_PREFIXES` / `CUSTOMER_AUTH_PREFIXES` / `isClerkProtectedAppPath`.
  */
 export const PROTECTED_APP_SHELL_PREFIXES = [
   ...OPERATOR_APP_SHELL_PREFIXES,
   ...CUSTOMER_AUTH_PREFIXES,
+  ...CLERK_AUTH_EXTRA_PREFIXES,
 ] as const
 
 function matchesPathPrefix(pathname: string, prefixes: readonly string[]): boolean {
@@ -178,7 +185,7 @@ export const routes = {
   home: '/home',
   /**
    * Post-auth landing: server resolves workspace plan and redirects to
-   * the plan home (`/` free, `/advisor` pro).
+   * the plan home (`/` free, `/analytics/locations` pro).
    */
   authContinue: '/continue',
   /** Menuyukti staff-only console (platform role `admin`). */
