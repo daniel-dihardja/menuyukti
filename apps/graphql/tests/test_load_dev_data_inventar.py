@@ -26,6 +26,19 @@ SEED_USER = "clerk_dev_seed_inventar_test"
 def inventar_seed_workspace():
     session = SessionLocal()
     try:
+        # SQLite tests often run without PRAGMA foreign_keys, so deleting a location
+        # can leave orphan PosOrder rows. Clear them before creating a new location
+        # so autoincrement id reuse cannot reattach stale tickets.
+        from graphql.data_sources.models.pos_order import (
+            PosOrder,
+            PosOrderLine,
+            PosOrderLineModifier,
+        )
+
+        session.query(PosOrderLineModifier).delete()
+        session.query(PosOrderLine).delete()
+        session.query(PosOrder).delete()
+
         now = datetime.now(tz=UTC)
         ws = Workspace(name="Dev Seed Inventar WS", owner_clerk_user_id=SEED_USER)
         session.add(ws)
@@ -60,6 +73,35 @@ def inventar_seed_workspace():
 
     session = SessionLocal()
     try:
+        from graphql.data_sources.models.pos_order import (
+            PosOrder,
+            PosOrderLine,
+            PosOrderLineModifier,
+        )
+
+        order_ids = [
+            row[0]
+            for row in session.query(PosOrder.id)
+            .filter(PosOrder.location_id == payload["inventar_id"])
+            .all()
+        ]
+        if order_ids:
+            line_ids = [
+                row[0]
+                for row in session.query(PosOrderLine.id)
+                .filter(PosOrderLine.pos_order_id.in_(order_ids))
+                .all()
+            ]
+            if line_ids:
+                session.query(PosOrderLineModifier).filter(
+                    PosOrderLineModifier.pos_order_line_id.in_(line_ids)
+                ).delete(synchronize_session=False)
+            session.query(PosOrderLine).filter(PosOrderLine.pos_order_id.in_(order_ids)).delete(
+                synchronize_session=False
+            )
+            session.query(PosOrder).filter(PosOrder.id.in_(order_ids)).delete(
+                synchronize_session=False
+            )
         reset_inventar(session, payload["workspace_id"])
         session.query(Location).filter(Location.workspace_id == payload["workspace_id"]).delete()
         session.query(WorkspaceMembership).filter(
