@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import sharp from 'sharp'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import {
   getPresignedGetUrl,
   getS3Bucket,
@@ -27,7 +27,7 @@ const ALLOWED_TYPES = new Set([
 ])
 
 export async function POST(req: Request) {
-  const authz = await requireAuthenticatedApi()
+  const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 

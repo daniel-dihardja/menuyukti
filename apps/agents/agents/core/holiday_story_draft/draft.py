@@ -191,7 +191,7 @@ async def draft_holiday_story(
     critique: CritiqueConfig | None = None,
 ) -> StoryDraftItem:
     """
-    Draft Instagram story caption + visual brief for one holiday.
+    Draft Instagram story caption for one holiday.
 
     Loads venue context from GraphQL, then runs a structured LLM call.
     When ``previous_result`` and ``feedback`` are both set, revises the prior draft.

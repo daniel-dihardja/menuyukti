@@ -13,7 +13,6 @@ export type HolidayRelevanceResult = {
 
 export type StoryDraftResult = {
   caption: string
-  visualBrief: string
 }
 
 export type CritiqueConfig = {

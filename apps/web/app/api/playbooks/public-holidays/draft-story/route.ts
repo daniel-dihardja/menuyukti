@@ -1,5 +1,6 @@
-import { NextResponse, connection } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { ZodError } from 'zod'
 
 import { buildAgentsHeaders } from '@/lib/agents/headers'
@@ -11,11 +12,9 @@ export const maxDuration = 180
 
 export async function POST(req: Request) {
   try {
-    await connection()
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const json = await req.json()
     const body = holidayStoryDraftBodySchema.parse(json)

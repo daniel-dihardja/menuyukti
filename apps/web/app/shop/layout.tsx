@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { connection } from 'next/server'
 
 import { CopyrightFooter } from '@/components/copyright-footer'
+import { requireMenuyuktiAdmin } from '@/lib/menuyukti-role-server'
 
 import '@/components/shop/shop.css'
 
@@ -18,6 +19,7 @@ export default async function ShopLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  await requireMenuyuktiAdmin()
   /** Presigned S3 URLs must not be frozen at build time (Cache Components). */
   await connection()
   const t = await getTranslations('shop')

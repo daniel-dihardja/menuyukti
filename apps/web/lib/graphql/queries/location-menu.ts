@@ -27,6 +27,8 @@ export type LocationMenuItem = {
   sortOrder: number
   isAvailable: boolean
   imageFilename: string | null
+  dietaryTags: string[]
+  allergens: string[]
   modifierGroups: LocationMenuModifierGroup[]
 }
 
@@ -74,6 +76,8 @@ const MENU_ITEM_FIELDS = `
   sortOrder
   isAvailable
   imageFilename
+  dietaryTags
+  allergens
   modifierGroups {
     ${MENU_MODIFIER_FIELDS}
   }
@@ -159,7 +163,6 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
     publicLocationMenu(slug: $slug) {
       locationId
       name
-      tagline
       publicSlug
       currency
       workspaceId
@@ -174,6 +177,8 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
           sortOrder
           description
           imageFilename
+          dietaryTags
+          allergens
         }
       }
     }
@@ -186,6 +191,8 @@ export type PublicMenuItem = {
   sortOrder: number
   description: string
   imageFilename: string | null
+  dietaryTags: string[]
+  allergens: string[]
 }
 
 export type PublicMenuCategory = {
@@ -197,7 +204,6 @@ export type PublicMenuCategory = {
 export type PublicLocationMenuPayload = {
   locationId: number
   name: string
-  tagline: string | null
   publicSlug: string
   currency: string | null
   workspaceId: string | null

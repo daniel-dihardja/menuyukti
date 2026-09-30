@@ -15,6 +15,9 @@ describe('routes shell helpers', () => {
     expect(isOperatorAppShellPath('/advisor')).toBe(true)
     expect(isOperatorAppShellPath('/analytics/locations')).toBe(true)
     expect(isOperatorAppShellPath('/staff')).toBe(true)
+    expect(isOperatorAppShellPath('/services')).toBe(true)
+    expect(isOperatorAppShellPath('/services/digital-menu')).toBe(true)
+    expect(isOperatorAppShellPath('/team')).toBe(true)
     expect(OPERATOR_APP_SHELL_PREFIXES).not.toContain('/home')
     expect(OPERATOR_APP_SHELL_PREFIXES).not.toContain('/profile')
   })
@@ -31,6 +34,7 @@ describe('routes shell helpers', () => {
   it('protects both shells for Clerk / robots', () => {
     expect(isClerkProtectedAppPath('/advisor')).toBe(true)
     expect(isClerkProtectedAppPath('/home')).toBe(true)
+    expect(isClerkProtectedAppPath('/shop')).toBe(true)
     expect(isClerkProtectedAppPath('/m/cafe')).toBe(false)
     expect(isClerkProtectedAppPath('/')).toBe(false)
   })

@@ -432,10 +432,32 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "We read between the bites.",
-      "subtitle": "Know what to post, when to post, and which dish to feature — from your sales data.",
-      "badge": "Built on data. Inspired by food.",
-      "ctaSecondary": "Sign in"
+      "headline": "Open the menu on your phone.",
+      "subtitle": "Scan to open a living digital menu — no app required. This is a sample of the guest experience.",
+      "mobileCta": "Open a sample menu",
+      "qr": {
+        "ariaLabel": "QR code that opens a sample Menuyukti digital menu",
+        "caption": "Point your camera · no app required",
+        "sampleHint": "Opens a sample guest menu",
+        "linkLabel": "Open sample menu in this browser"
+      },
+      "mock": {
+        "ariaLabel": "Illustration of a venue digital menu",
+        "eyebrow": "Menu",
+        "venueName": "Sample kitchen",
+        "tagline": "What guests love right now",
+        "guestFavorite": "Guest favorite",
+        "category": "Tonight",
+        "dish1Name": "Roasted squash toast",
+        "dish1Price": "€12",
+        "dish1Desc": "Brown butter, sage, toasted seeds",
+        "dish2Name": "Citrus fennel salad",
+        "dish2Price": "€14",
+        "dish2Desc": "Blood orange, pistachio, soft herbs",
+        "dish3Name": "House spritz",
+        "dish3Price": "€9",
+        "dish3Desc": "Bitter citrus, soda, olive"
+      }
     },
     "why": {
       "title": "Why Menuyukti exists",
@@ -629,7 +651,34 @@
       "eyebrow": "Menu",
       "empty": "Nothing on the menu yet — check back soon.",
       "notFoundTitle": "Menu not found",
-      "metaDescription": "Digital menu at {name}."
+      "metaDescription": "Digital menu at {name}.",
+      "filters": {
+        "dietary": "Dietary",
+        "allergens": "Exclude allergens",
+        "clear": "Clear filters",
+        "matchCount": "{count, plural, one {# dish matches} other {# dishes match}}",
+        "noMatches": "No dishes match these filters."
+      },
+      "dietary": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "pescatarian": "Pescatarian",
+        "gluten_free": "Gluten-free",
+        "dairy_free": "Dairy-free",
+        "halal": "Halal",
+        "spicy": "Spicy"
+      },
+      "allergens": {
+        "gluten": "Gluten",
+        "dairy": "Dairy",
+        "eggs": "Eggs",
+        "fish": "Fish",
+        "shellfish": "Shellfish",
+        "peanuts": "Peanuts",
+        "tree_nuts": "Tree nuts",
+        "soy": "Soy",
+        "sesame": "Sesame"
+      }
     }
   },
   "shop": {
@@ -643,12 +692,13 @@
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
       "backChat": "Chat",
+      "backBranches": "Branches",
       "backStudio": "IG Studio",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, chat, or studio."
+      "workspaceMenuDescription": "Go to Branches or stay in the print shop."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
@@ -859,6 +909,8 @@
     "groupAnalytics": "Analytics",
     "groupOperations": "Operations",
     "groupAccount": "Account",
+    "groupWorkspace": "Workspace",
+    "groupServices": "Services",
     "toggleSectionAria": "Toggle {section}",
     "home": "Home",
     "dashboard": "Dashboard",
@@ -869,6 +921,7 @@
     "posts": "IG Studio",
     "media": "Media",
     "printShop": "Print shop",
+    "services": "Services",
     "inventar": "Inventory",
     "crm": "CRM",
     "crmApps": "Apps",
@@ -991,7 +1044,9 @@
           "noLocationsCta": "Add location"
         },
         "workspace": {
-          "workspaceHint": "Run saves the settings above and loads public holidays for that window. Optionally turn on AI to pre-check holidays that fit Instagram stories for this venue. Review candidates, then confirm — confirming unlocks Draft stories. Confirmed picks are not saved yet.",
+          "workspaceHint": "Run saves the settings above and loads holidays for that window. Review candidates, confirm picks, draft Instagram stories, then prepare Artwork.",
+          "sessionAlertTitle": "Session only",
+          "sessionAlertDescription": "Confirmed holidays, story drafts, and artwork picks stay in this browser tab. Refresh or leave the page and they are lost.",
           "stepsAria": "Playbook steps",
           "steps": {
             "fetchDates": "Fetch dates",
@@ -1007,9 +1062,13 @@
           "instructionsPlaceholder": "e.g. skip Nyepi; prioritize Chinese New Year for this neighborhood",
           "instructionsHint": "Optional guidance for which holidays fit Instagram stories. Leave blank to use the default policy.",
           "fetchError": "Could not load public holidays. Try again.",
+          "fetchErrorTitle": "Could not load holidays",
           "candidatesTitle": "Candidates",
           "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
+          "candidatesCardDescription": "Review holidays in the date window, then keep the ones you want to draft.",
           "confirmSelected": "Confirm selected ({count})",
+          "selectAll": "Select all",
+          "clearSelection": "Clear selection",
           "candidatesEmptyTitle": "No candidates yet",
           "candidatesEmptyDescription": "Adjust the settings above, then run to load public holidays for that window.",
           "candidatesNoneTitle": "No holidays in this window",
@@ -1019,29 +1078,35 @@
           "selectItem": "Select {name}",
           "keep": "Keep",
           "skip": "Skip",
+          "undo": "Undo",
+          "skipUndoToast": "Skipped {name}",
           "confirmedTitle": "Confirmed",
           "confirmedCount": "{count}",
+          "confirmedCardDescription": "Holidays ready for Draft stories.",
           "confirmedEmptyTitle": "No confirmed holidays",
           "confirmedEmptyDescription": "Keep candidates here after you review them.",
           "remove": "Remove",
-          "stepUnavailableTitle": "Step not available yet",
-          "stepUnavailableDescription": "This step is a placeholder for the playbook experiment.",
           "draft": {
+            "settingsTitle": "Draft settings",
+            "settingsDescription": "Optional guidance and quality checks before generating story drafts.",
             "instructionsLabel": "Story instructions (optional)",
             "instructionsPlaceholder": "e.g. warm tone; mention limited hours; keep captions under 80 characters",
             "instructionsHint": "Optional guidance for drafting Instagram stories. Then generate one draft per confirmed holiday.",
-            "critiqueEnabledLabel": "Critique draft (optional)",
+            "critiquePanelLabel": "Quality check (optional)",
+            "critiqueEnabledLabel": "Critique draft",
             "critiqueEnabledHint": "After drafting, AI scores the story against your criteria and revises until it passes or hits the iteration limit.",
             "critiqueEnabledAria": "Enable automatic draft critique",
             "critiquePromptLabel": "Critique criteria",
             "critiquePromptPlaceholder": "e.g. warm local tone; mention hours if limited; caption under 80 characters; no invented promotions",
             "critiquePromptHint": "Describe what a successful story must satisfy. Used only when critique is on.",
             "critiqueMaxIterationsLabel": "Max critique rounds",
-            "critiqueMaxIterationsHint": "1–3. Stops early when the score meets the minimum.",
-            "critiqueMinScoreLabel": "Minimum score",
-            "critiqueMinScoreHint": "1–10. Drafts at or above this score are accepted.",
+            "critiqueMaxIterationsHint": "Stops early when the score meets the minimum.",
+            "critiqueMinScoreLabel": "Minimum score ({score}/10)",
+            "critiqueMinScoreHint": "Drafts at or above this score are accepted.",
             "generate": "Generate",
             "generating": "Generating…",
+            "progressStatus": "Drafting {name}… {current} of {total}",
+            "progressAria": "Draft generation progress",
             "candidatesTitle": "Candidates",
             "candidatesCount": "{count, plural, one {# holiday} other {# holidays}}",
             "candidatesEmptyTitle": "No holidays to draft",
@@ -1051,7 +1116,6 @@
             "confirmedEmptyTitle": "No confirmed story drafts",
             "confirmedEmptyDescription": "Confirmed story drafts will appear here after you review candidates.",
             "captionLabel": "Caption",
-            "visualBriefLabel": "Visual brief",
             "tabCurrent": "Current",
             "tabHistory": "History",
             "historyAssistantLabel": "Draft",
@@ -1061,9 +1125,13 @@
             "critiqueFailedBadge": "Best critique ({score}/10)",
             "statusPending": "Not generated",
             "statusError": "Failed",
+            "draftErrorTitle": "Draft failed",
             "draftError": "Could not draft this story. Retry or skip.",
+            "draftingAria": "Drafting story…",
             "confirm": "Confirm",
             "skip": "Skip",
+            "skipUndoToast": "Skipped draft for {name}",
+            "undo": "Undo",
             "retry": "Retry",
             "revise": "Revise",
             "regenerate": "Regenerate",
@@ -1074,7 +1142,179 @@
             "feedbackHint": "Your feedback revises this draft. The previous result is sent with your notes.",
             "remove": "Remove",
             "generateError": "Could not draft stories. Try again."
+          },
+          "artwork": {
+            "settingsTitle": "Artwork settings",
+            "settingsDescription": "Optional guidance and a style reference before generating story artwork.",
+            "instructionsLabel": "Artwork instructions (optional)",
+            "instructionsPlaceholder": "e.g. warm evening light; keep framing 9:16; no text overlays in the image",
+            "instructionsHint": "Optional art-direction notes applied when generation is available. Confirm drafts below for now.",
+            "styleReferenceLabel": "Style reference (optional)",
+            "styleReferenceHint": "Pick an image from Media for visual style orientation. Used when generation is wired.",
+            "styleReferencePick": "Select from Media",
+            "styleReferencePickerAria": "Select a style reference image from Media",
+            "styleReferenceEmpty": "No media images yet. Upload photos in Media first.",
+            "styleReferenceRemove": "Remove style reference",
+            "styleReferenceFromMedia": "From Media",
+            "generate": "Generate",
+            "generateDisabledHint": "Artwork generation is not available yet. You can still confirm drafts for review.",
+            "candidatesTitle": "Candidates",
+            "candidatesCount": "{count, plural, one {# draft} other {# drafts}}",
+            "candidatesEmptyTitle": "No drafts for artwork",
+            "candidatesEmptyDescription": "Confirm story drafts on Draft stories first, then return here. Skipped items also leave this list empty until you confirm more drafts.",
+            "confirmedTitle": "Confirmed",
+            "confirmedCount": "{count}",
+            "confirmedEmptyTitle": "No confirmed artwork",
+            "confirmedEmptyDescription": "Confirmed artwork picks will appear here after you review candidates.",
+            "captionLabel": "Caption",
+            "statusPending": "Not generated",
+            "statusReady": "Ready",
+            "imagePlaceholder": "Image pending",
+            "confirm": "Confirm",
+            "confirmDisabledHint": "Generate artwork before confirming",
+            "skip": "Skip",
+            "skipUndoToast": "Skipped artwork for {name}",
+            "undo": "Undo",
+            "remove": "Remove"
           }
+        }
+      }
+    }
+  },
+  "services": {
+    "title": "Services",
+    "description": "Turn on guest-facing capabilities for each location — like cloud services for your restaurant.",
+    "headline": "Services",
+    "subtitle": "Attach capabilities to a location. Turn them on when you need them, off when you don’t.",
+    "subscriptions": {
+      "title": "Your subscriptions",
+      "subtitle": "Active services for your locations.",
+      "billingNote": "Billing is not connected yet — activate and cancel freely while we prepare payments.",
+      "empty": "No active service subscriptions.",
+      "emptyHint": "Turn on Digital Menu for a location to start a subscription.",
+      "cancel": "Cancel",
+      "canceling": "Canceling…",
+      "cancelFailed": "Could not cancel this subscription.",
+      "pricePerMonth": "{amount}/month",
+      "serviceLabels": {
+        "digital_menu": "Digital Menu",
+        "stamp_card": "Stamp Card",
+        "cashback": "Cashback"
+      },
+      "prices": {
+        "digital_menu": "$9",
+        "stamp_card": "$7",
+        "cashback": "$12"
+      }
+    },
+    "catalog": {
+      "comingSoon": "Coming soon",
+      "viewCta": "View",
+      "pricingPeriod": "/ month",
+      "pricingNote": "Per location per month. Placeholder pricing — not billed yet.",
+      "digitalMenu": {
+        "title": "Digital Menu",
+        "benefit": "A live guest menu with a shareable link — no app required.",
+        "statusAvailable": "Available",
+        "statusOn": "On · {count, plural, one {# location} other {# locations}}",
+        "priceAmount": "$9"
+      },
+      "stampCard": {
+        "title": "Stamp Card",
+        "benefit": "Digital loyalty stamps guests collect toward a free item — classic punch-card rewards, without paper cards.",
+        "priceAmount": "$7"
+      },
+      "cashback": {
+        "title": "Cashback",
+        "benefit": "Reward returning guests with a cashback balance they can redeem on a later visit.",
+        "priceAmount": "$12"
+      }
+    },
+    "digitalMenu": {
+      "title": "Digital Menu",
+      "description": "Publish a guest-facing digital menu for a location. Guests open a link or QR code — no app required.",
+      "heroPitch": "Turn your location menu into a living guest experience with a public link you control.",
+      "pricing": {
+        "amount": "$9",
+        "period": "/ month",
+        "note": "Per location per month. Placeholder pricing — not billed yet."
+      },
+      "turnOnCta": "Turn on for a location",
+      "includedTitle": "What’s included",
+      "included": {
+        "link": "Public guest link and URL slug",
+        "catalog": "Live dishes from your Locations menu",
+        "qr": "Shareable URL ready for QR codes"
+      },
+      "addonsTitle": "Optional add-ons",
+      "addons": {
+        "header": {
+          "title": "Header image",
+          "description": "Show a photo at the top of the guest digital menu."
+        },
+        "favorites": {
+          "title": "Guest favorites & combos",
+          "description": "Highlight analytics-backed favorites on the guest menu.",
+          "comingSoon": "Coming soon"
+        }
+      },
+      "connectedTitle": "Connected locations",
+      "connectedEmpty": "Digital Menu isn’t on for any location yet.",
+      "connectedEmptyHint": "Pick a location to turn it on and configure the guest link.",
+      "connectedStatusOn": "On",
+      "manageCta": "Manage",
+      "enable": {
+        "title": "Turn on for a location",
+        "description": "Choose which location gets Digital Menu. We’ll activate the subscription, then you can set the guest link.",
+        "locationLabel": "Location",
+        "locationPlaceholder": "Select a location",
+        "noLocations": "Add a location first, then turn on Digital Menu.",
+        "createLocationCta": "Go to Locations",
+        "confirm": "Activate & continue",
+        "activating": "Activating…",
+        "activateFailed": "Could not activate Digital Menu for this location.",
+        "cancel": "Cancel"
+      },
+      "console": {
+        "heading": "Digital Menu",
+        "description": "Control the guest-facing menu for this location.",
+        "statusTitle": "Status",
+        "enabled": "Digital Menu is on",
+        "enabledHint": "When on, anyone can open the digital menu at the link below.",
+        "publicSlug": "Public URL slug",
+        "publicSlugPlaceholder": "my-restaurant",
+        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required when the menu is on.",
+        "publicUrl": "Public menu URL",
+        "copyPublicUrl": "Copy link",
+        "copiedPublicUrl": "Copied",
+        "openPublicUrl": "Open",
+        "saveToPublishHint": "Save to publish this link. Guests only see the menu after it’s saved as on.",
+        "appearanceTitle": "Appearance",
+        "headerImage": "Header image",
+        "headerImageHint": "Optional photo shown at the top of the public digital menu.",
+        "headerImagePickerAria": "Select a header photo from your media library",
+        "pickImage": "Choose from media",
+        "emptyMedia": "No photos in your media library yet.",
+        "removeImage": "Remove image",
+        "fromMedia": "From media library",
+        "menuDataTitle": "Menu data",
+        "menuDataHint": "Edit dishes, prices, and modifiers on the Locations menu page.",
+        "editMenuCta": "Edit dishes",
+        "previewTitle": "Guest preview",
+        "previewPlaceholder": "Turn on Digital Menu and save a slug to preview the guest page.",
+        "previewOpen": "Open live preview",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "disableTitle": "Turn off Digital Menu?",
+        "disableDescription": "The guest link will stop working. Your menu dishes on Locations are kept.",
+        "disableConfirm": "Turn off",
+        "disableCancel": "Cancel",
+        "errors": {
+          "slugRequired": "Add a public URL slug before turning the menu on",
+          "subscriptionRequired": "Activate Digital Menu for this location before publishing",
+          "saveFailed": "Failed to save Digital Menu settings",
+          "unknown": "Something went wrong"
         }
       }
     }
@@ -2216,7 +2456,6 @@
       "managePos": "POS",
       "manageCogs": "Manage COGS",
       "manageReports": "Sales reports",
-      "manageFrontpage": "Frontpage",
       "form": {
         "createTitle": "Create Location",
         "nameLabel": "Location name",
@@ -3428,75 +3667,19 @@
         "unknown": "Unknown error"
       }
     },
-    "locationFrontpage": {
-      "heading": "Frontpage",
-      "description": "Configure the guest-facing home for this location and preview what sales data will highlight.",
-      "publicMenuHint": "Publish the public digital menu and URL on the <link>Menu</link> page.",
-      "configTitle": "Display settings",
-      "fields": {
-        "tagline": "Tagline",
-        "taglinePlaceholder": "What guests should feel when they arrive",
-        "showGuestFavorites": "Show guest favorites",
-        "showPopularCombos": "Show popular combos",
-        "itemDescription": "Description",
-        "itemDescriptionPlaceholder": "Optional short guest-facing description",
-        "publish": "Publish",
-        "pickImage": "Choose from media",
-        "pickerAria": "Select a photo from your media library",
-        "emptyMedia": "No photos in your media library yet.",
-        "removeImage": "Remove image",
-        "fromMedia": "From media library"
-      },
-      "actions": {
-        "save": "Save frontpage",
-        "saving": "Saving…",
-        "saved": "Saved",
-        "expandItem": "Expand item",
-        "collapseItem": "Collapse item"
-      },
-      "errors": {
-        "saveFailed": "Could not save frontpage settings"
-      },
-      "previewTitle": "Guest preview",
-      "previewFromRun": "Based on latest analytics: {runName}",
-      "previewNoRun": "Upload a sales report to preview favorites and combos.",
-      "preview": {
-        "favoritesHeading": "Guest favorites",
-        "combosHeading": "Often ordered together",
-        "guestFavorite": "Guest favorite",
-        "oftenTogether": "Often ordered together",
-        "favoritesEmpty": "No star dishes in the latest run yet.",
-        "combosEmpty": "No strong combos in the latest run yet.",
-        "sectionHidden": "Hidden by your settings above.",
-        "venueNote": "Preview for {name}"
-      },
-      "empty": {
-        "noAnalytics": "This location has no sales analytics yet. Upload a POS report to power guest favorites and popular combos.",
-        "uploadCta": "Go to sales reports"
-      }
-    },
     "locationMenu": {
       "heading": "Menu",
       "description": "Create and edit the guest menu for this location. Organize dishes into categories like Food and Drink, then add names, prices, optional descriptions, and modifier groups (size, milk, extras).",
       "currencyHint": "Prices use this location’s currency ({currency}).",
       "categoryLabel": "Category {number}",
       "itemLabel": "Item {number}",
-      "publish": {
-        "title": "Public menu",
-        "enabled": "Publish public menu",
-        "enabledHint": "When on, anyone can open the digital menu at the link below.",
-        "publicSlug": "Public URL slug",
-        "publicSlugPlaceholder": "my-restaurant",
-        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required to publish.",
-        "publicUrl": "Public menu URL",
-        "copyPublicUrl": "Copy link",
-        "copiedPublicUrl": "Copied",
-        "headerImage": "Header image",
-        "headerImageHint": "Optional photo shown at the top of the public digital menu.",
-        "headerImagePickerAria": "Select a header photo from your media library",
-        "save": "Save publish settings",
-        "saving": "Saving…",
-        "saved": "Publish settings saved"
+      "serviceBanner": {
+        "offTitle": "Digital Menu isn’t on for this location",
+        "offHint": "Turn it on under Services to publish a guest link and header image. Dish editing stays here.",
+        "turnOnCta": "Open Digital Menu",
+        "onTitle": "Public menu is live",
+        "onHint": "Guest link, slug, and header image are managed in Digital Menu.",
+        "manageCta": "Manage Digital Menu"
       },
       "fields": {
         "categoryName": "Category",
@@ -3510,6 +3693,8 @@
         "unavailableBadge": "Unavailable",
         "description": "Description",
         "descriptionPlaceholder": "Optional short description",
+        "dietaryTags": "Dietary",
+        "allergens": "Contains allergens",
         "image": "Image",
         "pickImage": "Choose from media",
         "pickerAria": "Select a photo from your media library",
@@ -3541,6 +3726,26 @@
         "saving": "Saving…"
       },
       "untitledItem": "Untitled item",
+      "dietary": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "pescatarian": "Pescatarian",
+        "gluten_free": "Gluten-free",
+        "dairy_free": "Dairy-free",
+        "halal": "Halal",
+        "spicy": "Spicy"
+      },
+      "allergens": {
+        "gluten": "Gluten",
+        "dairy": "Dairy",
+        "eggs": "Eggs",
+        "fish": "Fish",
+        "shellfish": "Shellfish",
+        "peanuts": "Peanuts",
+        "tree_nuts": "Tree nuts",
+        "soy": "Soy",
+        "sesame": "Sesame"
+      },
       "errors": {
         "nameRequired": "Each item needs a name",
         "categoryNameRequired": "Each category needs a name",
@@ -3551,8 +3756,6 @@
         "invalidModifierPriceDelta": "Enter a valid price delta for each option",
         "invalidModifierSelect": "Min/max select must be whole numbers with min ≤ max and max ≥ 1",
         "saveFailed": "Failed to save menu",
-        "publishFailed": "Failed to save publish settings",
-        "slugRequired": "Add a public URL slug before publishing",
         "unknown": "Unknown error"
       }
     },

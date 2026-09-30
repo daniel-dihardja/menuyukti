@@ -9,7 +9,7 @@
     },
     {
       "id": "printOrders",
-      "description": "Internal print-on-demand fulfillment queue (admin)—distinct from the public /shop catalog.",
+      "description": "Internal print-on-demand fulfillment queue (admin)—distinct from the /shop catalog.",
       "routePrefixes": ["/print-orders"],
       "navKeys": [],
       "actionMenuKeys": []
@@ -19,6 +19,55 @@
       "description": "Menuyukti staff console.",
       "routePrefixes": ["/staff"],
       "navKeys": ["staff"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "chat",
+      "description": "AI advisor chat (/advisor).",
+      "routePrefixes": ["/advisor", "/agent"],
+      "navKeys": ["chat"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "playbooks",
+      "description": "Playbooks catalog and drafts.",
+      "routePrefixes": ["/playbooks"],
+      "navKeys": ["playbooks"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "media",
+      "description": "Media library (and legacy /content).",
+      "routePrefixes": ["/media", "/content"],
+      "navKeys": ["media"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "calendar",
+      "description": "Content calendar.",
+      "routePrefixes": ["/calendar"],
+      "navKeys": ["calendar"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "crm",
+      "description": "CRM apps and registrations (operator console).",
+      "routePrefixes": ["/crm"],
+      "navKeys": ["crm", "crmApps", "crmRegistrations"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "printShop",
+      "description": "Print shop catalog (/shop)—admin only; distinct from /print-orders fulfillment.",
+      "routePrefixes": ["/shop"],
+      "navKeys": ["printShop"],
+      "actionMenuKeys": []
+    },
+    {
+      "id": "usage",
+      "description": "Personal AI usage metering page.",
+      "routePrefixes": ["/usage"],
+      "navKeys": ["usage"],
       "actionMenuKeys": []
     },
     {

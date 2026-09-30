@@ -1,5 +1,6 @@
-import { NextResponse, connection } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { ZodError } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -14,11 +15,9 @@ import { createPlaybookBodySchema } from './schema'
 
 export async function GET(req: Request) {
   try {
-    await connection()
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const playbookType = new URL(req.url).searchParams.get('playbookType')?.trim()
     if (!playbookType) {
@@ -36,11 +35,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    await connection()
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const json = await req.json()
     const body = createPlaybookBodySchema.parse(json)

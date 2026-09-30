@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import strawberry
 
+from graphql.schema.types.menu_attributes import MenuAllergen, MenuDietaryTag
+
 
 @strawberry.type(description="One selectable option in a menu modifier group.")
 class MenuModifierOptionType:
@@ -37,6 +39,8 @@ class MenuItemType:
     sort_order: int
     is_available: bool
     image_filename: str | None
+    dietary_tags: list[MenuDietaryTag]
+    allergens: list[MenuAllergen]
     modifier_groups: list[MenuModifierGroupType]
 
 
@@ -81,10 +85,14 @@ class MenuItemInput:
     description: str | None = None
     is_available: bool | None = None
     image_filename: str | None = None
+    dietary_tags: list[MenuDietaryTag] | None = None
+    allergens: list[MenuAllergen] | None = None
     modifier_groups: list[MenuModifierGroupInput] | None = None
+    id: int | None = None
 
 
 @strawberry.input(description="Category payload for replaceLocationMenuItems.")
 class MenuCategoryInput:
     name: str
     items: list[MenuItemInput]
+    id: int | None = None

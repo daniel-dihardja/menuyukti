@@ -10,9 +10,13 @@ from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mappers.menu import menu_to_gql
-from graphql.schema.mutations.update_location_frontpage import normalize_public_slug
+from graphql.schema.mutations.public_slug import normalize_public_slug
 from graphql.schema.types.menu import MenuType
 from graphql.services.menu import get_or_create_menu
+from graphql.services.service_subscriptions import (
+    SERVICE_KEY_DIGITAL_MENU,
+    is_active_subscription,
+)
 
 
 @strawberry.type(description="Result of updating public digital menu settings.")
@@ -74,6 +78,19 @@ class UpdateLocationPublicMenuMutation:
             )
             if next_enabled and not location.public_slug:
                 raise ValueError("publicSlug is required when publicEnabled is true")
+
+            if (
+                public_enabled is not UNSET
+                and next_enabled
+                and not is_active_subscription(
+                    session, location_id, SERVICE_KEY_DIGITAL_MENU
+                )
+            ):
+                raise ValueError(
+                    "An active digital_menu subscription is required before "
+                    "publishing the public menu. Activate the service for this "
+                    "location first."
+                )
 
             if public_enabled is not UNSET:
                 menu.public_enabled = next_enabled

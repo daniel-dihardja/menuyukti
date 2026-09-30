@@ -1,33 +1,56 @@
 'use client'
 
-import { useEffect, useId, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { CalendarDays, Play } from 'lucide-react'
+import { useEffect, useId, useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import { CalendarDays, Info, Play } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card'
 import { Checkbox } from '@workspace/ui/components/checkbox'
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
-import { Label } from '@workspace/ui/components/label'
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@workspace/ui/components/field'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Switch } from '@workspace/ui/components/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
-import { cn } from '@workspace/ui/lib/utils'
 
+import {
+  PublicHolidaysArtwork,
+  type ArtworkItemStatus,
+  type ArtworkStyleReference,
+} from '@/app/(protected)/playbooks/_components/public-holidays-artwork'
 import { PublicHolidaysDraftStories } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
 import type {
   ConfirmedStoryDraft,
   DraftCritiqueSettings,
   DraftHistoryEntry,
   DraftItemStatus,
+  DraftProgress,
 } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 import {
   draftHolidayStory,
   fetchHolidays,
@@ -72,6 +95,15 @@ function sortByDate<T extends HolidayItem>(items: T[]): T[] {
   return [...items].toSorted((a, b) => a.date.localeCompare(b.date))
 }
 
+function formatHolidayDate(iso: string, locale: string): string {
+  const parts = iso.split('-').map(Number)
+  const y = parts[0]
+  const m = parts[1]
+  const d = parts[2]
+  if (!y || !m || !d) return iso
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(y, m - 1, d))
+}
+
 type PublicHolidaysWorkspaceProps = {
   /** Validate + persist form fields, then return the window to fetch. */
   prepareRun: () => Promise<{
@@ -87,8 +119,9 @@ export function PublicHolidaysWorkspace({
   onRunningChange,
 }: PublicHolidaysWorkspaceProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace')
+  const locale = useLocale()
   const aiRelevanceId = useId()
-  const aiRelevanceHintId = `${aiRelevanceId}-hint`
+  const relevanceInstructionsId = useId()
   const [activeStepId, setActiveStepId] = useState<StepId>('fetchDates')
   const [candidates, setCandidates] = useState<HolidayItem[]>([])
   const [confirmed, setConfirmed] = useState<HolidayItem[]>([])
@@ -110,20 +143,38 @@ export function PublicHolidaysWorkspace({
   const [confirmedDrafts, setConfirmedDrafts] = useState<ConfirmedStoryDraft[]>([])
   const [skippedDraftIds, setSkippedDraftIds] = useState<Set<string>>(() => new Set())
   const [draftRunning, setDraftRunning] = useState(false)
+  const [draftProgress, setDraftProgress] = useState<DraftProgress | null>(null)
+  const [artworkInstructions, setArtworkInstructions] = useState('')
+  const [styleReference, setStyleReference] = useState<ArtworkStyleReference | null>(null)
+  const [artworkStatuses, setArtworkStatuses] = useState<Record<string, ArtworkItemStatus>>({})
+  const [confirmedArtworks, setConfirmedArtworks] = useState<ConfirmedStoryDraft[]>([])
+  const [skippedArtworkIds, setSkippedArtworkIds] = useState<Set<string>>(() => new Set())
 
   const draftStoriesEnabled = confirmed.length > 0
   const artworkEnabled = confirmedDrafts.length > 0
+  const hasSessionWork =
+    confirmed.length > 0 ||
+    confirmedDrafts.length > 0 ||
+    confirmedArtworks.length > 0 ||
+    Object.keys(draftResults).length > 0 ||
+    Object.keys(draftStatuses).length > 0
 
-  const confirmedDraftIds = new Set(confirmedDrafts.map((d) => d.id))
+  useUnsavedChangesGuard(hasSessionWork)
+
+  const confirmedDraftIds = useMemo(
+    () => new Set(confirmedDrafts.map((d) => d.id)),
+    [confirmedDrafts],
+  )
   const draftQueue = confirmed.filter(
     (h) => !confirmedDraftIds.has(h.id) && !skippedDraftIds.has(h.id),
   )
-
-  const steps: { id: StepId; enabled: boolean }[] = STEP_IDS.map((id) => ({
-    id,
-    enabled:
-      id === 'fetchDates' ? true : id === 'draftStories' ? draftStoriesEnabled : artworkEnabled,
-  }))
+  const confirmedArtworkIds = useMemo(
+    () => new Set(confirmedArtworks.map((d) => d.id)),
+    [confirmedArtworks],
+  )
+  const artworkQueue = confirmedDrafts.filter(
+    (d) => !confirmedArtworkIds.has(d.id) && !skippedArtworkIds.has(d.id),
+  )
 
   useEffect(() => {
     if (confirmed.length === 0 && activeStepId === 'draftStories') {
@@ -133,9 +184,9 @@ export function PublicHolidaysWorkspace({
 
   useEffect(() => {
     if (confirmedDrafts.length === 0 && activeStepId === 'artwork') {
-      setActiveStepId('draftStories')
+      setActiveStepId(confirmed.length > 0 ? 'draftStories' : 'fetchDates')
     }
-  }, [confirmedDrafts.length, activeStepId])
+  }, [confirmedDrafts.length, confirmed.length, activeStepId])
 
   useEffect(() => {
     const confirmedIds = new Set(confirmed.map((h) => h.id))
@@ -167,6 +218,22 @@ export function PublicHolidaysWorkspace({
     })
   }, [confirmed])
 
+  useEffect(() => {
+    const draftIds = new Set(confirmedDrafts.map((d) => d.id))
+    setConfirmedArtworks((prev) => prev.filter((d) => draftIds.has(d.id)))
+    setSkippedArtworkIds((prev) => {
+      const next = new Set([...prev].filter((id) => draftIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+    setArtworkStatuses((prev) => {
+      const next: Record<string, ArtworkItemStatus> = {}
+      for (const [id, status] of Object.entries(prev)) {
+        if (draftIds.has(id)) next[id] = status
+      }
+      return next
+    })
+  }, [confirmedDrafts])
+
   function setRunningState(next: boolean) {
     setRunning(next)
     onRunningChange?.(next)
@@ -189,6 +256,14 @@ export function PublicHolidaysWorkspace({
     })
   }
 
+  function selectAllCandidates() {
+    setSelectedIds(new Set(candidates.map((c) => c.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
   function keepItems(ids: string[]) {
     if (ids.length === 0) return
     const idSet = new Set(ids)
@@ -204,12 +279,25 @@ export function PublicHolidaysWorkspace({
   }
 
   function skipItem(id: string) {
-    setCandidates((prev) => prev.filter((item) => item.id !== id))
+    const item = candidates.find((h) => h.id === id)
+    if (!item) return
+    setCandidates((prev) => prev.filter((h) => h.id !== id))
     setSelectedIds((prev) => {
       if (!prev.has(id)) return prev
       const next = new Set(prev)
       next.delete(id)
       return next
+    })
+    toast(t('skipUndoToast', { name: item.name }), {
+      action: {
+        label: t('undo'),
+        onClick: () => {
+          setCandidates((prev) => {
+            if (prev.some((h) => h.id === item.id)) return prev
+            return sortByDate([...prev, item])
+          })
+        },
+      },
     })
   }
 
@@ -320,9 +408,13 @@ export function PublicHolidaysWorkspace({
     if (draftRunning || draftQueue.length === 0) return
     if (draftCritique.enabled && !draftCritique.prompt.trim()) return
     setDraftRunningState(true)
+    const queue = [...draftQueue]
     try {
       const ctx = await prepareRun()
-      for (const holiday of draftQueue) {
+      for (let i = 0; i < queue.length; i++) {
+        const holiday = queue[i]
+        if (!holiday) continue
+        setDraftProgress({ current: i + 1, total: queue.length, name: holiday.name })
         await draftOne(ctx.locationId, holiday)
       }
     } catch (err) {
@@ -331,6 +423,7 @@ export function PublicHolidaysWorkspace({
       }
       toast.error(err instanceof Error ? err.message : t('draft.generateError'))
     } finally {
+      setDraftProgress(null)
       setDraftRunningState(false)
     }
   }
@@ -341,6 +434,7 @@ export function PublicHolidaysWorkspace({
     const holiday = draftQueue.find((h) => h.id === id)
     if (!holiday) return
     setDraftRunningState(true)
+    setDraftProgress({ current: 1, total: 1, name: holiday.name })
     try {
       const ctx = await prepareRun()
       await draftOne(ctx.locationId, holiday)
@@ -350,6 +444,7 @@ export function PublicHolidaysWorkspace({
       }
       toast.error(err instanceof Error ? err.message : t('draft.generateError'))
     } finally {
+      setDraftProgress(null)
       setDraftRunningState(false)
     }
   }
@@ -364,6 +459,7 @@ export function PublicHolidaysWorkspace({
 
     setDraftRunningState(true)
     setDraftStatuses((prev) => ({ ...prev, [id]: 'loading' }))
+    setDraftProgress({ current: 1, total: 1, name: holiday.name })
     try {
       const ctx = await prepareRun()
       const item = await draftHolidayStory({
@@ -398,6 +494,7 @@ export function PublicHolidaysWorkspace({
       }
       toast.error(err instanceof Error ? err.message : t('draft.generateError'))
     } finally {
+      setDraftProgress(null)
       setDraftRunningState(false)
     }
   }
@@ -435,6 +532,8 @@ export function PublicHolidaysWorkspace({
   }
 
   function skipDraft(id: string) {
+    const holiday = draftQueue.find((h) => h.id === id)
+    if (!holiday) return
     setSkippedDraftIds((prev) => new Set(prev).add(id))
     setDraftStatuses((prev) => {
       const next = { ...prev }
@@ -456,11 +555,70 @@ export function PublicHolidaysWorkspace({
       delete next[id]
       return next
     })
+    toast(t('draft.skipUndoToast', { name: holiday.name }), {
+      action: {
+        label: t('draft.undo'),
+        onClick: () => {
+          setSkippedDraftIds((prev) => {
+            if (!prev.has(id)) return prev
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+        },
+      },
+    })
   }
 
   function removeConfirmedDraft(id: string) {
     setConfirmedDrafts((prev) => prev.filter((d) => d.id !== id))
     setSkippedDraftIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
+  function confirmArtwork(id: string) {
+    const draft = artworkQueue.find((d) => d.id === id)
+    if (!draft) return
+    if ((artworkStatuses[id] ?? 'pending') !== 'ready') return
+    setConfirmedArtworks((prev) => sortByDate([...prev.filter((d) => d.id !== id), draft]))
+    setArtworkStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  function skipArtwork(id: string) {
+    const draft = artworkQueue.find((d) => d.id === id)
+    if (!draft) return
+    setSkippedArtworkIds((prev) => new Set(prev).add(id))
+    setArtworkStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    toast(t('artwork.skipUndoToast', { name: draft.name }), {
+      action: {
+        label: t('artwork.undo'),
+        onClick: () => {
+          setSkippedArtworkIds((prev) => {
+            if (!prev.has(id)) return prev
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+        },
+      },
+    })
+  }
+
+  function removeConfirmedArtwork(id: string) {
+    setConfirmedArtworks((prev) => prev.filter((d) => d.id !== id))
+    setSkippedArtworkIds((prev) => {
       if (!prev.has(id)) return prev
       const next = new Set(prev)
       next.delete(id)
@@ -474,268 +632,335 @@ export function PublicHolidaysWorkspace({
     <div className="flex flex-col gap-4">
       <p className="text-muted-foreground text-sm">{t('workspaceHint')}</p>
 
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('stepsAria')}>
-        {steps.map((step) => {
-          const isActive = activeStepId === step.id
-          const badgeCount =
-            step.id === 'fetchDates'
-              ? confirmed.length
-              : step.id === 'draftStories'
-                ? confirmedDrafts.length
-                : 0
-          const showBadge = badgeCount > 0
-          return (
-            <button
-              key={step.id}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              disabled={!step.enabled}
-              onClick={() => {
-                if (step.enabled) setActiveStepId(step.id)
-              }}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors',
-                isActive
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-border/70 bg-background text-foreground hover:bg-muted/50',
-                !step.enabled && 'cursor-not-allowed opacity-50 hover:bg-background',
-              )}
-            >
-              {t(`steps.${step.id}`)}
-              {showBadge ? (
-                <Badge
-                  variant={isActive ? 'secondary' : 'outline'}
-                  className="h-5 min-w-5 justify-center px-1.5 font-normal"
-                >
-                  {badgeCount}
-                </Badge>
-              ) : null}
-            </button>
-          )
-        })}
-      </div>
+      <Alert>
+        <Info />
+        <AlertTitle>{t('sessionAlertTitle')}</AlertTitle>
+        <AlertDescription>{t('sessionAlertDescription')}</AlertDescription>
+      </Alert>
 
-      {activeStepId === 'fetchDates' ? (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <section
-            className="flex min-w-0 flex-col gap-4 rounded-xl border border-border/70 p-4"
-            aria-labelledby="ph-candidates-heading"
-          >
-            <div className="flex flex-col gap-3 border-b border-border/60 pb-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <Label htmlFor={aiRelevanceId} className="text-sm font-medium">
-                    {t('aiRelevanceLabel')}
-                  </Label>
-                  <p id={aiRelevanceHintId} className="text-muted-foreground text-xs">
-                    {t('aiRelevanceHint')}
-                  </p>
-                </div>
-                <Switch
-                  id={aiRelevanceId}
-                  checked={useAiRelevance}
-                  onCheckedChange={setUseAiRelevance}
-                  disabled={running}
-                  aria-label={t('aiRelevanceAria')}
-                  aria-describedby={aiRelevanceHintId}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="ph-relevance-instructions" className="text-sm font-medium">
-                  {t('instructionsLabel')}
-                </Label>
-                <Textarea
-                  id="ph-relevance-instructions"
-                  value={relevanceInstructions}
-                  onChange={(e) => setRelevanceInstructions(e.target.value)}
-                  placeholder={t('instructionsPlaceholder')}
-                  disabled={running || !useAiRelevance}
-                  maxLength={2000}
-                  rows={3}
-                  className="min-h-20 resize-y"
-                />
-                <p className="text-muted-foreground text-xs">{t('instructionsHint')}</p>
-              </div>
-              <div className="flex justify-end">
-                <Button type="button" onClick={() => void handleRun()} disabled={running}>
-                  {running ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <Play data-icon="inline-start" />
-                  )}
-                  {running ? t('running') : t('run')}
-                </Button>
-              </div>
-            </div>
-
-            {fetchError ? (
-              <p className="text-destructive text-sm" role="alert">
-                {fetchError}
-              </p>
-            ) : null}
-
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <h2 id="ph-candidates-heading" className="text-sm font-semibold">
-                  {t('candidatesTitle')}
-                </h2>
-                {hasRun ? (
-                  <Badge variant="outline" className="font-normal">
-                    {t('candidatesCount', { count: candidates.length })}
+      <Tabs
+        value={activeStepId}
+        onValueChange={(value) => {
+          if (value === 'draftStories' && !draftStoriesEnabled) return
+          if (value === 'artwork' && !artworkEnabled) return
+          if (STEP_IDS.includes(value as StepId)) {
+            setActiveStepId(value as StepId)
+          }
+        }}
+        className="gap-4"
+      >
+        <TabsList aria-label={t('stepsAria')}>
+          {STEP_IDS.map((stepId) => {
+            const enabled =
+              stepId === 'fetchDates' ||
+              (stepId === 'draftStories' && draftStoriesEnabled) ||
+              (stepId === 'artwork' && artworkEnabled)
+            const badgeCount =
+              stepId === 'fetchDates'
+                ? confirmed.length
+                : stepId === 'draftStories'
+                  ? confirmedDrafts.length
+                  : confirmedArtworks.length
+            return (
+              <TabsTrigger key={stepId} value={stepId} disabled={!enabled} className="gap-2">
+                {t(`steps.${stepId}`)}
+                {badgeCount > 0 ? (
+                  <Badge
+                    variant="outline"
+                    className="h-5 min-w-5 justify-center px-1.5 font-normal"
+                  >
+                    {badgeCount}
                   </Badge>
                 ) : null}
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={selectedCount === 0 || running}
-                onClick={() => keepItems([...selectedIds])}
-              >
-                {t('confirmSelected', { count: selectedCount })}
-              </Button>
-            </div>
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
 
-            {!hasRun ? (
-              <Empty className="border border-dashed border-border/70 py-10 md:py-12">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CalendarDays />
-                  </EmptyMedia>
-                  <EmptyTitle>{t('candidatesEmptyTitle')}</EmptyTitle>
-                  <EmptyDescription>{t('candidatesEmptyDescription')}</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : candidates.length === 0 ? (
-              <Empty className="border border-dashed border-border/70 py-10 md:py-12">
-                <EmptyHeader>
-                  <EmptyTitle>
-                    {lastFetchEmpty ? t('candidatesNoneTitle') : t('candidatesClearedTitle')}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {lastFetchEmpty
-                      ? t('candidatesNoneDescription')
-                      : t('candidatesClearedDescription')}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
-                {candidates.map((item) => {
-                  const checked = selectedIds.has(item.id)
-                  return (
-                    <li
-                      key={item.id}
-                      className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="flex min-w-0 items-start gap-3">
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={() => toggleSelected(item.id)}
-                          aria-label={t('selectItem', { name: item.name })}
-                          className="mt-0.5"
-                        />
+        <TabsContent value="fetchDates" className="flex flex-col gap-4">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <Card className="gap-4 py-4">
+              <CardHeader className="gap-4 border-b pb-4">
+                <FieldGroup className="gap-4">
+                  <Field orientation="horizontal">
+                    <FieldContent>
+                      <FieldLabel htmlFor={aiRelevanceId}>{t('aiRelevanceLabel')}</FieldLabel>
+                      <FieldDescription>{t('aiRelevanceHint')}</FieldDescription>
+                    </FieldContent>
+                    <Switch
+                      id={aiRelevanceId}
+                      checked={useAiRelevance}
+                      onCheckedChange={setUseAiRelevance}
+                      disabled={running}
+                      aria-label={t('aiRelevanceAria')}
+                    />
+                  </Field>
+                  <Field data-disabled={!useAiRelevance || undefined}>
+                    <FieldLabel htmlFor={relevanceInstructionsId}>
+                      {t('instructionsLabel')}
+                    </FieldLabel>
+                    <Textarea
+                      id={relevanceInstructionsId}
+                      value={relevanceInstructions}
+                      onChange={(e) => setRelevanceInstructions(e.target.value)}
+                      placeholder={t('instructionsPlaceholder')}
+                      disabled={running || !useAiRelevance}
+                      maxLength={2000}
+                      rows={3}
+                      className="min-h-20 resize-y"
+                    />
+                    <FieldDescription>{t('instructionsHint')}</FieldDescription>
+                  </Field>
+                </FieldGroup>
+                <div className="flex justify-end">
+                  <Button type="button" onClick={() => void handleRun()} disabled={running}>
+                    {running ? (
+                      <Spinner data-icon="inline-start" />
+                    ) : (
+                      <Play data-icon="inline-start" />
+                    )}
+                    {running ? t('running') : t('run')}
+                  </Button>
+                </div>
+              </CardHeader>
+
+              <CardHeader className="border-b pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-sm">{t('candidatesTitle')}</CardTitle>
+                      {hasRun ? (
+                        <Badge variant="outline" className="font-normal">
+                          {t('candidatesCount', { count: candidates.length })}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <CardDescription>{t('candidatesCardDescription')}</CardDescription>
+                  </div>
+                  {candidates.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={running || selectedCount === candidates.length}
+                        onClick={selectAllCandidates}
+                      >
+                        {t('selectAll')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={running || selectedCount === 0}
+                        onClick={clearSelection}
+                      >
+                        {t('clearSelection')}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </CardHeader>
+
+              <CardContent className="flex flex-col gap-3">
+                {fetchError ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>{t('fetchErrorTitle')}</AlertTitle>
+                    <AlertDescription>{fetchError}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                {!hasRun ? (
+                  <Empty className="border border-dashed border-border/70 py-10 md:py-12">
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <CalendarDays />
+                      </EmptyMedia>
+                      <EmptyTitle>{t('candidatesEmptyTitle')}</EmptyTitle>
+                      <EmptyDescription>{t('candidatesEmptyDescription')}</EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>
+                      <Button type="button" onClick={() => void handleRun()} disabled={running}>
+                        {running ? (
+                          <Spinner data-icon="inline-start" />
+                        ) : (
+                          <Play data-icon="inline-start" />
+                        )}
+                        {running ? t('running') : t('run')}
+                      </Button>
+                    </EmptyContent>
+                  </Empty>
+                ) : candidates.length === 0 ? (
+                  <Empty className="border border-dashed border-border/70 py-10 md:py-12">
+                    <EmptyHeader>
+                      <EmptyTitle>
+                        {lastFetchEmpty ? t('candidatesNoneTitle') : t('candidatesClearedTitle')}
+                      </EmptyTitle>
+                      <EmptyDescription>
+                        {lastFetchEmpty
+                          ? t('candidatesNoneDescription')
+                          : t('candidatesClearedDescription')}
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                ) : (
+                  <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
+                    {candidates.map((item) => {
+                      const checked = selectedIds.has(item.id)
+                      const selectId = `ph-candidate-${item.id}`
+                      return (
+                        <li
+                          key={item.id}
+                          className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <label
+                            htmlFor={selectId}
+                            className="flex min-w-0 flex-1 cursor-pointer items-start gap-3"
+                          >
+                            <Checkbox
+                              id={selectId}
+                              checked={checked}
+                              onCheckedChange={() => toggleSelected(item.id)}
+                              aria-label={t('selectItem', { name: item.name })}
+                              className="mt-0.5"
+                            />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium">
+                                {item.name}
+                              </span>
+                              <span className="text-muted-foreground block text-xs tabular-nums">
+                                {formatHolidayDate(item.date, locale)}
+                              </span>
+                            </span>
+                          </label>
+                          <div className="flex shrink-0 gap-2 self-end sm:self-center">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => keepItems([item.id])}
+                            >
+                              {t('keep')}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => skipItem(item.id)}
+                            >
+                              {t('skip')}
+                            </Button>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </CardContent>
+
+              {candidates.length > 0 ? (
+                <CardFooter className="border-t pt-4">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="ml-auto"
+                    disabled={selectedCount === 0 || running}
+                    onClick={() => keepItems([...selectedIds])}
+                  >
+                    {t('confirmSelected', { count: selectedCount })}
+                  </Button>
+                </CardFooter>
+              ) : null}
+            </Card>
+
+            <Card className="gap-4 py-4">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-sm">{t('confirmedTitle')}</CardTitle>
+                  <Badge variant="outline" className="font-normal">
+                    {t('confirmedCount', { count: confirmed.length })}
+                  </Badge>
+                </div>
+                <CardDescription>{t('confirmedCardDescription')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {confirmed.length === 0 ? (
+                  <Empty className="border border-dashed border-border/70 py-8 md:py-10">
+                    <EmptyHeader>
+                      <EmptyTitle>{t('confirmedEmptyTitle')}</EmptyTitle>
+                      <EmptyDescription>{t('confirmedEmptyDescription')}</EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                ) : (
+                  <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
+                    {confirmed.map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex items-center justify-between gap-3 px-3 py-3"
+                      >
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{item.name}</p>
-                          <p className="text-muted-foreground text-xs tabular-nums">{item.date}</p>
+                          <p className="text-muted-foreground text-xs tabular-nums">
+                            {formatHolidayDate(item.date, locale)}
+                          </p>
                         </div>
-                      </div>
-                      <div className="flex shrink-0 gap-2 self-end sm:self-center">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => keepItems([item.id])}
-                        >
-                          {t('keep')}
-                        </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="ghost"
-                          onClick={() => skipItem(item.id)}
+                          onClick={() => removeConfirmed(item.id)}
                         >
-                          {t('skip')}
+                          {t('remove')}
                         </Button>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </section>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-          <section
-            className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 p-4"
-            aria-labelledby="ph-confirmed-heading"
-          >
-            <div className="flex items-center gap-2">
-              <h2 id="ph-confirmed-heading" className="text-sm font-semibold">
-                {t('confirmedTitle')}
-              </h2>
-              <Badge variant="outline" className="font-normal">
-                {t('confirmedCount', { count: confirmed.length })}
-              </Badge>
-            </div>
+        <TabsContent value="draftStories">
+          <PublicHolidaysDraftStories
+            holidays={draftQueue}
+            statuses={draftStatuses}
+            results={draftResults}
+            histories={draftHistories}
+            critiqueSummaries={draftCritiqueSummaries}
+            confirmedDrafts={confirmedDrafts}
+            instructions={draftInstructions}
+            onInstructionsChange={setDraftInstructions}
+            critique={draftCritique}
+            onCritiqueChange={setDraftCritique}
+            running={draftRunning}
+            progress={draftProgress}
+            formatDate={(iso) => formatHolidayDate(iso, locale)}
+            onGenerate={() => void handleGenerateDrafts()}
+            onConfirm={confirmDraft}
+            onSkip={skipDraft}
+            onRetry={(id) => void handleRetryDraft(id)}
+            onRegenerate={(id, feedback) => void handleRegenerateDraft(id, feedback)}
+            onRemoveConfirmed={removeConfirmedDraft}
+          />
+        </TabsContent>
 
-            {confirmed.length === 0 ? (
-              <Empty className="border border-dashed border-border/70 py-8 md:py-10">
-                <EmptyHeader>
-                  <EmptyTitle>{t('confirmedEmptyTitle')}</EmptyTitle>
-                  <EmptyDescription>{t('confirmedEmptyDescription')}</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
-                {confirmed.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between gap-3 px-3 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{item.name}</p>
-                      <p className="text-muted-foreground text-xs tabular-nums">{item.date}</p>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeConfirmed(item.id)}
-                    >
-                      {t('remove')}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      ) : activeStepId === 'draftStories' ? (
-        <PublicHolidaysDraftStories
-          holidays={draftQueue}
-          statuses={draftStatuses}
-          results={draftResults}
-          histories={draftHistories}
-          critiqueSummaries={draftCritiqueSummaries}
-          confirmedDrafts={confirmedDrafts}
-          instructions={draftInstructions}
-          onInstructionsChange={setDraftInstructions}
-          critique={draftCritique}
-          onCritiqueChange={setDraftCritique}
-          running={draftRunning}
-          onGenerate={() => void handleGenerateDrafts()}
-          onConfirm={confirmDraft}
-          onSkip={skipDraft}
-          onRetry={(id) => void handleRetryDraft(id)}
-          onRegenerate={(id, feedback) => void handleRegenerateDraft(id, feedback)}
-          onRemoveConfirmed={removeConfirmedDraft}
-        />
-      ) : (
-        <Empty className="border border-dashed border-border/70 py-12">
-          <EmptyHeader>
-            <EmptyTitle>{t('stepUnavailableTitle')}</EmptyTitle>
-            <EmptyDescription>{t('stepUnavailableDescription')}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      )}
+        <TabsContent value="artwork">
+          <PublicHolidaysArtwork
+            holidays={artworkQueue}
+            confirmedArtworks={confirmedArtworks}
+            statuses={artworkStatuses}
+            instructions={artworkInstructions}
+            onInstructionsChange={setArtworkInstructions}
+            styleReference={styleReference}
+            onStyleReferenceChange={setStyleReference}
+            formatDate={(iso) => formatHolidayDate(iso, locale)}
+            onConfirm={confirmArtwork}
+            onSkip={skipArtwork}
+            onRemoveConfirmed={removeConfirmedArtwork}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

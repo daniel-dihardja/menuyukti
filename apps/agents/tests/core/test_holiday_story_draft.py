@@ -53,7 +53,6 @@ def test_story_draft_user_text_includes_previous_and_feedback() -> None:
         holiday={"id": "A", "date": "2026-01-01", "name": "New Year"},
         previous_result={
             "caption": "Happy New Year!",
-            "visualBrief": "Gold confetti",
         },
         feedback="  Make it shorter.  ",
     )
@@ -68,7 +67,7 @@ def test_story_draft_user_text_omits_revision_when_feedback_empty() -> None:
     text = story_draft_user_text(
         location_markdown="## Venue\n",
         holiday={"id": "A", "date": "2026-01-01", "name": "New Year"},
-        previous_result={"caption": "Hi", "visualBrief": "Brief"},
+        previous_result={"caption": "Hi"},
         feedback="   ",
     )
     assert "Previous draft" not in text
@@ -79,7 +78,7 @@ def test_story_critique_user_text_includes_criteria_and_threshold() -> None:
     text = story_critique_user_text(
         location_markdown="## Venue\n- Café",
         holiday={"id": "A", "date": "2026-01-01", "name": "New Year"},
-        draft={"caption": "Happy NY!", "visualBrief": "Gold"},
+        draft={"caption": "Happy NY!"},
         critique_prompt="Must mention brunch hours",
         min_score=7,
     )
@@ -121,7 +120,6 @@ async def test_draft_holiday_story_merges_llm_result() -> None:
     holiday = HolidayInput(id="A", date="2026-01-01", name="New Year")
     llm_result = StoryDraftResult(
         caption="Happy New Year from Café!",
-        visualBrief="Warm gold overlay, fireworks soft-focus behind logo",
     )
 
     with (
@@ -164,8 +162,8 @@ async def test_draft_holiday_story_merges_llm_result() -> None:
 async def test_draft_holiday_story_passes_revision_into_prompt() -> None:
     client = AsyncMock(spec=httpx.AsyncClient)
     holiday = HolidayInput(id="A", date="2026-01-01", name="New Year")
-    previous = StoryDraftResult(caption="Old caption", visualBrief="Old brief")
-    llm_result = StoryDraftResult(caption="New caption", visualBrief="New brief")
+    previous = StoryDraftResult(caption="Old caption")
+    llm_result = StoryDraftResult(caption="New caption")
 
     with (
         patch(
@@ -206,7 +204,7 @@ async def test_draft_holiday_story_passes_revision_into_prompt() -> None:
 async def test_draft_holiday_story_critique_stops_early_on_pass() -> None:
     client = AsyncMock(spec=httpx.AsyncClient)
     holiday = HolidayInput(id="A", date="2026-01-01", name="New Year")
-    draft = StoryDraftResult(caption="Strong caption", visualBrief="Strong brief")
+    draft = StoryDraftResult(caption="Strong caption")
     verdict = CritiqueVerdictLlm(score=8, feedback="Meets criteria")
 
     async def llm_side_effect(llm, schema, messages):  # noqa: ANN001, ARG001
@@ -260,8 +258,8 @@ async def test_draft_holiday_story_critique_hits_max_iterations() -> None:
     client = AsyncMock(spec=httpx.AsyncClient)
     holiday = HolidayInput(id="A", date="2026-01-01", name="New Year")
     drafts = [
-        StoryDraftResult(caption="Draft 1", visualBrief="Brief 1"),
-        StoryDraftResult(caption="Draft 2", visualBrief="Brief 2"),
+        StoryDraftResult(caption="Draft 1"),
+        StoryDraftResult(caption="Draft 2"),
     ]
     draft_iter = iter(drafts)
     low = CritiqueVerdictLlm(score=4, feedback="Make it warmer")
@@ -321,7 +319,7 @@ async def test_draft_holiday_story_rejects_critique_with_manual_revise() -> None
             user_id="user_1",
             location_id=1,
             holiday=HolidayInput(id="A", date="2026-01-01", name="New Year"),
-            previous_result=StoryDraftResult(caption="Old", visualBrief="Old"),
+            previous_result=StoryDraftResult(caption="Old"),
             feedback="Shorter",
             critique=CritiqueConfig(prompt="Warm", maxIterations=1, minScore=7),
         )
@@ -351,7 +349,6 @@ def test_draft_story_endpoint_returns_item(client: TestClient) -> None:
         name="New Year",
         result=StoryDraftResult(
             caption="Happy New Year!",
-            visualBrief="Gold confetti, logo bottom-left",
         ),
     )
     with patch(
@@ -374,7 +371,6 @@ def test_draft_story_endpoint_returns_item(client: TestClient) -> None:
         "name": "New Year",
         "result": {
             "caption": "Happy New Year!",
-            "visualBrief": "Gold confetti, logo bottom-left",
         },
     }
 
@@ -431,7 +427,6 @@ def test_draft_story_endpoint_revise_happy_path(client: TestClient) -> None:
         name="New Year",
         result=StoryDraftResult(
             caption="Revised caption",
-            visualBrief="Revised brief",
         ),
     )
     with patch(
@@ -446,7 +441,6 @@ def test_draft_story_endpoint_revise_happy_path(client: TestClient) -> None:
                 "holiday": {"id": "A", "date": "2026-01-01", "name": "New Year"},
                 "previousResult": {
                     "caption": "Old caption",
-                    "visualBrief": "Old brief",
                 },
                 "feedback": "Make it warmer",
             },
@@ -467,7 +461,7 @@ def test_draft_story_endpoint_rejects_critique_with_revision(client: TestClient)
         json={
             "locationId": 7,
             "holiday": {"id": "A", "date": "2026-01-01", "name": "New Year"},
-            "previousResult": {"caption": "Old", "visualBrief": "Old"},
+            "previousResult": {"caption": "Old"},
             "feedback": "Shorter",
             "critique": {
                 "prompt": "Warm tone",
@@ -484,7 +478,7 @@ def test_draft_story_endpoint_critique_happy_path(client: TestClient) -> None:
         id="A",
         date="2026-01-01",
         name="New Year",
-        result=StoryDraftResult(caption="Final", visualBrief="Final brief"),
+        result=StoryDraftResult(caption="Final"),
     )
     with patch(
         "agents_app.routers.holiday_story_draft.draft_holiday_story",

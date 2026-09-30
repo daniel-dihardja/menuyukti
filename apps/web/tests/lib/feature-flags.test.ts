@@ -16,6 +16,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('printShop')).toBe(true)
     expect(isNavKeyEnabled('chat')).toBe(true)
     expect(isNavKeyEnabled('branches')).toBe(true)
+    expect(isNavKeyEnabled('services')).toBe(true)
     expect(isNavKeyEnabled('crm')).toBe(true)
     expect(isNavKeyEnabled('team')).toBe(true)
     expect(isNavKeyEnabled('usage')).toBe(true)
@@ -41,6 +42,10 @@ describe('feature-flags', () => {
     expect(isPathnameFeatureEnabled('/advisor/abc')).toBe(true)
     expect(isPathnameFeatureEnabled('/analytics/locations/reports')).toBe(true)
     expect(isPathnameFeatureEnabled('/analytics/locations/1/reports')).toBe(true)
+    expect(isPathnameFeatureEnabled('/inventar')).toBe(true)
+    expect(isPathnameFeatureEnabled('/services')).toBe(true)
+    expect(isPathnameFeatureEnabled('/services/digital-menu')).toBe(true)
+    expect(isPathnameFeatureEnabled('/team')).toBe(true)
     expect(isPathnameFeatureEnabled('/usage')).toBe(true)
   })
 
@@ -51,7 +56,7 @@ describe('feature-flags', () => {
     expect(isNavKeyEnabled('usage')).toBe(true)
   })
 
-  it('returns /advisor as default authenticated path', () => {
-    expect(getDefaultAuthenticatedPath()).toBe('/advisor')
+  it('returns /analytics/locations as default authenticated path', () => {
+    expect(getDefaultAuthenticatedPath()).toBe('/analytics/locations')
   })
 })

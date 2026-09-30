@@ -31,7 +31,7 @@ When implementing in **`apps/graphql`**, follow these skills in addition to this
 | Migrations      | [`apps/graphql/alembic/`](../../../apps/graphql/alembic/)                         | Alembic revisions; **only** here for product schema.                 |
 | Tests           | [`apps/graphql/tests/`](../../../apps/graphql/tests/)                             | Pytest.                                                              |
 
-Commands: [AGENTS.md](../../../AGENTS.md) § GraphQL API. Deep SQLAlchemy patterns: [`.agents/skills/sqlalchemy-postgres/SKILL.md`](../sqlalchemy-postgres/SKILL.md).
+Commands: [`apps/graphql/README.md`](../../../apps/graphql/README.md). Deep SQLAlchemy patterns: [`.agents/skills/sqlalchemy-postgres/SKILL.md`](../sqlalchemy-postgres/SKILL.md).
 
 ## Design rules
 
@@ -74,7 +74,6 @@ Example query/service touchpoints (not exhaustive): [`menu_heatmaps.py`](../../.
 
 - [`apps/graphql/README.md`](../../../apps/graphql/README.md)
 - [`packages/menuyukti/README.md`](../../../packages/menuyukti/README.md)
-- [`AGENTS.md`](../../../AGENTS.md)
 
 ## Progressive disclosure
 

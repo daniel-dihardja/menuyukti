@@ -1,9 +1,11 @@
 import strawberry
 
 from graphql.schema.mutations import (
+    ActivateServiceSubscriptionMutation,
     AddMediaToCollectionMutation,
     ApplyLocationCogsToAnalyticsRunMutation,
     AwardCrmCashbackMutation,
+    CancelServiceSubscriptionMutation,
     CreateCalendarEntryMutation,
     CreateCrmAppMutation,
     CreateCrmEnrollmentTokenMutation,
@@ -41,7 +43,6 @@ from graphql.schema.mutations import (
     SaveAnalyticsRunCogsToLocationMutation,
     UpdateCalendarEntryMutation,
     UpdateCrmAppMutation,
-    UpdateLocationFrontpageMutation,
     UpdateLocationManualBriefInputMutation,
     UpdateLocationMutation,
     UpdateLocationPublicMenuMutation,
@@ -62,7 +63,9 @@ from graphql.schema.mutations import (
 )
 class Mutation(
     UploadSalesReportMutation,
+    ActivateServiceSubscriptionMutation,
     AwardCrmCashbackMutation,
+    CancelServiceSubscriptionMutation,
     CreatePostMutation,
     CreatePostPageMutation,
     DeletePostMutation,
@@ -108,7 +111,6 @@ class Mutation(
     UpdatePlaybookMutation,
     UpdateCrmAppMutation,
     UpdateLocationMutation,
-    UpdateLocationFrontpageMutation,
     UpdateLocationManualBriefInputMutation,
     UpdateLocationPublicMenuMutation,
     UpdateStyleMutation,

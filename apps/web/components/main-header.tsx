@@ -9,20 +9,17 @@ import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
-import { Button } from '@workspace/ui/components/button'
-import { routes, isPublicLocationSurfacePath } from '@/lib/routes'
+import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
 export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
-  const isLanding = pathname === '/'
   const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
-  const isPublicLocation = isPublicLocationSurfacePath(pathname)
-  /** Product links are for signed-in app areas; hide on marketing + auth + guest menu. */
-  const showProductNav = !isLanding && !isLogin && !isSignUp && !isPublicLocation
+  /** Hide sign-in chrome on auth pages (user is already signing in / up). */
+  const showSignIn = !isLogin && !isSignUp
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   React.useEffect(() => {
@@ -55,15 +52,7 @@ export function MainHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">
-          <Show when="signed-out">
-            {isPublicLocation ? (
-              <GuestSignInMenu />
-            ) : showProductNav ? (
-              <Button asChild size="sm" variant="default">
-                <Link href={routes.login}>{t('mobileMenuSignIn')}</Link>
-              </Button>
-            ) : null}
-          </Show>
+          <Show when="signed-out">{showSignIn ? <GuestSignInMenu /> : null}</Show>
           <Show when="signed-in">
             <AccountMenu />
           </Show>

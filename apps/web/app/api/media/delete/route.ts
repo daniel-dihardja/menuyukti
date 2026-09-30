@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { isSafePhotoFilename } from '@/lib/assets/storage'
 import {
   deleteMediaFilename,
@@ -18,7 +18,7 @@ const bodySchema = z.object({
 })
 
 export async function DELETE(req: Request) {
-  const authz = await requireAuthenticatedApi()
+  const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 

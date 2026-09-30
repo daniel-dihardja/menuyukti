@@ -4,8 +4,8 @@ import { POST } from '@/app/api/crm/registrations/[id]/cashback/route'
 
 const CUSTOMER_ID = '11111111-1111-4111-8111-111111111111'
 
-vi.mock('@/lib/authenticated-api', () => ({
-  requireAuthenticatedApi: vi.fn(async () => ({ ok: true as const, userId: 'user_test' })),
+vi.mock('@/lib/menuyukti-admin-api', () => ({
+  requireMenuyuktiAdminApi: vi.fn(async () => ({ ok: true as const, userId: 'user_test' })),
 }))
 
 vi.mock('@/lib/graphql/client', () => ({

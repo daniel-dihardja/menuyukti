@@ -9,6 +9,7 @@
     "branches": true,
     "crm": true,
     "printShop": true,
+    "services": true,
     "inventar": true,
     "team": true,
     "usage": true,
@@ -27,10 +28,12 @@
     "/shop": true,
     "/print-orders": true,
     "/inventar": true,
+    "/services": true,
+    "/team": true,
     "/profile": true,
     "/advisor": true,
     "/usage": true,
     "/staff": true
   },
-  "defaultAuthenticatedPath": "/advisor"
+  "defaultAuthenticatedPath": "/analytics/locations"
 }

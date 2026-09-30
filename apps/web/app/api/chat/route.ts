@@ -1,11 +1,11 @@
-import { NextResponse, connection } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 import type { UIMessage } from 'ai'
 import { buildPythonUserMessage, ChatImageError } from '@/lib/chat/build-python-user-message'
 import { formatVisualizationDataMarkdownSection } from '@/lib/chat/format-visualization-for-chat'
 import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { pushPendingToolCallId, resolveToolEndCallId } from '@/lib/chat/pending-tool-call-ids'
 import { pythonStreamErrorText } from '@/lib/chat/python-stream-error'
 import { chatRequestBodySchema } from './schema'
@@ -209,14 +209,12 @@ async function parsePythonSSEAndForward(
 }
 
 export async function POST(req: Request) {
-  await connection()
-  const authPromise = auth()
   const bodyPromise = req.json().catch(() => null)
-
-  const { isAuthenticated, userId } = await authPromise
-  if (!isAuthenticated) {
-    return jsonError('Unauthorized', 401)
+  const authz = await requireMenuyuktiAdminApi()
+  if (!authz.ok) {
+    return authz.response
   }
+  const { userId } = authz
 
   const baseUrl = getPythonAgentsUrl()
 

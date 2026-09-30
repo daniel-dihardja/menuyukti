@@ -1,5 +1,4 @@
-import { NextResponse, connection } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 import type { UIMessage } from 'ai'
 import { z } from 'zod'
 
@@ -10,6 +9,7 @@ import {
   hydrateAttachedMediaInMessages,
 } from '@/lib/chat/hydrate-attached-media-urls'
 import { getPythonAgentsUrl } from '@/lib/config'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { presignPhotoUrlsByName } from '@/lib/media/presign-photo-urls'
 
 const uuidSchema = z.string().uuid()
@@ -50,11 +50,11 @@ async function agentsFetchError(
 }
 
 export async function GET(req: Request) {
-  await connection()
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated || !userId) {
-    return jsonError('Unauthorized', 401)
+  const authz = await requireMenuyuktiAdminApi()
+  if (!authz.ok) {
+    return authz.response
   }
+  const { userId } = authz
 
   const url = new URL(req.url)
   const parsed = agentThreadQuerySchema.safeParse({
@@ -111,11 +111,11 @@ export async function GET(req: Request) {
 
 /** Delete LangGraph chat checkpoints for an agent thread. */
 export async function DELETE(req: Request) {
-  await connection()
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated || !userId) {
-    return jsonError('Unauthorized', 401)
+  const authz = await requireMenuyuktiAdminApi()
+  if (!authz.ok) {
+    return authz.response
   }
+  const { userId } = authz
 
   const url = new URL(req.url)
   const parsed = agentThreadQuerySchema.safeParse({

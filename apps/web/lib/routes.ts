@@ -20,6 +20,8 @@ export const OPERATOR_APP_SHELL_PREFIXES = [
   '/staff',
   '/usage',
   '/inventar',
+  '/services',
+  '/team',
 ] as const
 
 /**
@@ -35,12 +37,19 @@ export const CUSTOMER_AUTH_PREFIXES = ['/home', '/continue', '/profile'] as cons
 export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
 
 /**
- * All Clerk-protected app prefixes (operator + customer). Keep in sync with `proxy.ts`.
+ * Auth-required paths that are not operator sidebar shell and not customer shell
+ * (legacy `/agent` rewrite alias; admin-only print shop catalog).
+ */
+export const CLERK_AUTH_EXTRA_PREFIXES = ['/agent', '/shop'] as const
+
+/**
+ * All Clerk-protected app prefixes (operator + customer + extras). Keep in sync with `proxy.ts`.
  * @deprecated Prefer `OPERATOR_APP_SHELL_PREFIXES` / `CUSTOMER_AUTH_PREFIXES` / `isClerkProtectedAppPath`.
  */
 export const PROTECTED_APP_SHELL_PREFIXES = [
   ...OPERATOR_APP_SHELL_PREFIXES,
   ...CUSTOMER_AUTH_PREFIXES,
+  ...CLERK_AUTH_EXTRA_PREFIXES,
 ] as const
 
 function matchesPathPrefix(pathname: string, prefixes: readonly string[]): boolean {
@@ -96,7 +105,6 @@ export const routes = {
     branchesCogs: (id: string | number) => `/analytics/locations/${id}/cogs`,
     branchesMenu: (id: string | number) => `/analytics/locations/${id}/menu`,
     branchesPos: (id: string | number) => `/analytics/locations/${id}/pos`,
-    branchesFrontpage: (id: string | number) => `/analytics/locations/${id}/frontpage`,
     /** Sales reports for a single location (Locations → venue → Reports). */
     branchesReports: (id: string | number) => `/analytics/locations/${id}/reports`,
     /**
@@ -172,11 +180,13 @@ export const routes = {
   agentThread: (threadId: string) => `/advisor/${encodeURIComponent(threadId)}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
-  /** Free-plan customer home (customer shell). Pro redirects away. */
+  /** Marketing / QR landing — free-plan post-auth default. */
+  root: '/',
+  /** Free-plan customer home (customer shell; PWA guide). Pro redirects away. */
   home: '/home',
   /**
    * Post-auth landing: server resolves workspace plan and redirects to
-   * the plan home (`/home` free, `/advisor` pro).
+   * the plan home (`/` free, `/analytics/locations` pro).
    */
   authContinue: '/continue',
   /** Menuyukti staff-only console (platform role `admin`). */
@@ -188,10 +198,17 @@ export const routes = {
   inventarWithLocation: (locationId: string | number) =>
     `/inventar?locationId=${encodeURIComponent(String(locationId))}`,
   inventarCatalog: '/inventar/catalog',
+  /** Cloud-style services catalog (Digital Menu, …). */
+  services: '/services',
+  servicesDigitalMenu: '/services/digital-menu',
+  servicesDigitalMenuLocation: (locationId: string | number) =>
+    `/services/digital-menu/${encodeURIComponent(String(locationId))}`,
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
-  /** Workspace team management (invite existing users). */
-  profileTeam: '/profile/team',
+  /** Workspace team management (invite existing users) — operator shell. */
+  team: '/team',
+  /** @deprecated Use `routes.team`. Kept for older links / account menu callers. */
+  profileTeam: '/team',
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 
@@ -199,7 +216,7 @@ export const routes = {
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 
-  /** Public location surfaces (digital menu frontpage; wall URL redirects). */
+  /** Public location surfaces (digital menu; legacy `/l/` redirects to `/m/`). */
   public: {
     locationMenu: (slug: string) => `/m/${encodeURIComponent(slug)}`,
     /** @deprecated Use `locationMenu`; `/l/` redirects to `/m/`. */

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { getPresignedGetUrl, isSafePhotoFilename } from '@/lib/assets/storage'
 import {
   listWorkspaceMediaObjects,
@@ -11,7 +11,7 @@ import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import { MEDIA_ASSETS_QUERY, type MediaAssetsData } from '@/lib/graphql/queries/media-collections'
 
 export async function GET(req: Request) {
-  const authz = await requireAuthenticatedApi()
+  const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 

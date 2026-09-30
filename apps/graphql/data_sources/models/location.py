@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.inventory_stock import InventoryStock
     from graphql.data_sources.models.location_area import LocationArea
-    from graphql.data_sources.models.location_frontpage import LocationFrontpage
     from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
     from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -22,6 +21,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.node import Node
     from graphql.data_sources.models.playbook import Playbook
     from graphql.data_sources.models.pos_order import PosOrder
+    from graphql.data_sources.models.service_subscription import ServiceSubscription
     from graphql.data_sources.models.workspace import Workspace
 
 
@@ -78,11 +78,6 @@ class Location(Base):
         back_populates="location",
         uselist=False,
     )
-    frontpage: Mapped[LocationFrontpage | None] = relationship(
-        "LocationFrontpage",
-        back_populates="location",
-        uselist=False,
-    )
     opening_hours: Mapped[list[LocationOpeningHour]] = relationship(
         "LocationOpeningHour",
         back_populates="location",
@@ -127,6 +122,11 @@ class Location(Base):
     )
     inventory_stock: Mapped[list[InventoryStock]] = relationship(
         "InventoryStock",
+        back_populates="location",
+        cascade="all, delete-orphan",
+    )
+    service_subscriptions: Mapped[list[ServiceSubscription]] = relationship(
+        "ServiceSubscription",
         back_populates="location",
         cascade="all, delete-orphan",
     )

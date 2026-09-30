@@ -5,9 +5,20 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from graphql.data_sources import Location, LocationFrontpage, SessionLocal
+from graphql.data_sources import (
+    Location,
+    ServiceSubscription,
+    SessionLocal,
+    Workspace,
+    WorkspaceMembership,
+)
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.schema import schema
+from graphql.services.service_subscriptions import (
+    SERVICE_KEY_DIGITAL_MENU,
+    SERVICE_STATUS_ACTIVE,
+)
+from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
 _PUBLIC_MENU_QUERY = """
@@ -15,7 +26,6 @@ query PublicMenu($slug: String!) {
   publicLocationMenu(slug: $slug) {
     locationId
     name
-    tagline
     publicSlug
     currency
     workspaceId
@@ -30,6 +40,8 @@ query PublicMenu($slug: String!) {
         sortOrder
         description
         imageFilename
+        dietaryTags
+        allergens
       }
     }
   }
@@ -67,21 +79,49 @@ mutation UpdatePublicMenu(
 def menu_location_id():
     session = SessionLocal()
     try:
+        ws = Workspace(
+            name="Menu Pub WS",
+            owner_clerk_user_id=GRAPHQL_TEST_USER_ID,
+            plan=WORKSPACE_PLAN_PRO,
+        )
+        session.add(ws)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id=GRAPHQL_TEST_USER_ID,
+                role="owner",
+            )
+        )
         loc = Location(
             name="Menu Pub Loc",
             clerk_user_id=GRAPHQL_TEST_USER_ID,
+            workspace_id=ws.id,
             currency="EUR",
             public_slug=None,
         )
         session.add(loc)
+        session.flush()
+        session.add(
+            ServiceSubscription(
+                workspace_id=ws.id,
+                location_id=loc.id,
+                service_key=SERVICE_KEY_DIGITAL_MENU,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
         session.commit()
         session.refresh(loc)
         lid = loc.id
+        wid = ws.id
     finally:
         session.close()
     yield lid
     session = SessionLocal()
     try:
+        session.query(ServiceSubscription).filter(
+            ServiceSubscription.location_id == lid
+        ).delete()
         session.query(MenuItem).filter(
             MenuItem.menu_id.in_(session.query(Menu.id).filter(Menu.location_id == lid))
         ).delete(synchronize_session=False)
@@ -89,8 +129,11 @@ def menu_location_id():
             MenuCategory.menu_id.in_(session.query(Menu.id).filter(Menu.location_id == lid))
         ).delete(synchronize_session=False)
         session.query(Menu).filter(Menu.location_id == lid).delete()
-        session.query(LocationFrontpage).filter(LocationFrontpage.location_id == lid).delete()
         session.query(Location).filter(Location.id == lid).delete()
+        session.query(WorkspaceMembership).filter(
+            WorkspaceMembership.workspace_id == wid
+        ).delete()
+        session.query(Workspace).filter(Workspace.id == wid).delete()
         session.commit()
     finally:
         session.close()
@@ -134,12 +177,6 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
         loc = session.get(Location, menu_location_id)
         assert loc is not None
         loc.public_slug = "menu-available-loc"
-        session.add(
-            LocationFrontpage(
-                location_id=menu_location_id,
-                tagline="Lunch",
-            )
-        )
         menu = Menu(location_id=menu_location_id, title="", public_enabled=True)
         session.add(menu)
         session.flush()
@@ -157,6 +194,8 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
                     sort_order=0,
                     is_available=True,
                     image_filename="espresso.webp",
+                    dietary_tags=["vegan", "dairy_free"],
+                    allergens=["gluten"],
                 ),
                 MenuItem(
                     menu_id=menu.id,
@@ -185,15 +224,16 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
     pub = result.data["publicLocationMenu"]
     assert pub is not None
     assert pub["name"] == "Menu Pub Loc"
-    assert pub["tagline"] == "Lunch"
     assert pub["currency"] == "EUR"
     assert pub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
-    assert pub["workspaceId"] is None
+    assert pub["workspaceId"] is not None
     assert len(pub["categories"]) == 1
     items = pub["categories"][0]["items"]
     assert [item["name"] for item in items] == ["Espresso"]
     assert items[0]["description"] == "Double shot"
     assert items[0]["imageFilename"] == "espresso.webp"
+    assert items[0]["dietaryTags"] == ["vegan", "dairy_free"]
+    assert items[0]["allergens"] == ["gluten"]
 
 
 def test_enable_public_menu_requires_slug(menu_location_id):

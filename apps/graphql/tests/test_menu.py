@@ -5,7 +5,14 @@ from __future__ import annotations
 import asyncio
 
 from graphql.data_sources import Location, Node, SessionLocal
-from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
+from graphql.data_sources.models.menu import (
+    Menu,
+    MenuCategory,
+    MenuItem,
+    MenuModifierGroup,
+    MenuModifierOption,
+)
+from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
@@ -32,6 +39,8 @@ mutation ReplaceLocationMenuItems($locationId: Int!, $categories: [MenuCategoryI
         sortOrder
         isAvailable
         imageFilename
+        dietaryTags
+        allergens
       }
     }
   }
@@ -53,6 +62,8 @@ query LocationMenu($locationId: Int!) {
         sortOrder
         isAvailable
         imageFilename
+        dietaryTags
+        allergens
         categoryId
       }
     }
@@ -64,6 +75,12 @@ query LocationMenu($locationId: Int!) {
 def _create_location(name: str, *, clerk_user_id: str = GRAPHQL_TEST_USER_ID) -> int:
     session = SessionLocal()
     try:
+        # Clear POS first so recycled menu_item ids are not treated as POS-referenced.
+        session.query(PosOrderLineModifier).delete()
+        session.query(PosOrderLine).delete()
+        session.query(PosOrder).delete()
+        session.query(MenuModifierOption).delete()
+        session.query(MenuModifierGroup).delete()
         session.query(MenuItem).delete()
         session.query(MenuCategory).delete()
         session.query(Menu).delete()
@@ -403,3 +420,71 @@ def test_validation_image_filename_too_long():
     )
     assert result.errors
     assert any("image" in str(err).lower() for err in result.errors)
+
+
+def test_replace_round_trips_dietary_tags_and_allergens():
+    location_id = _create_location("Dietary Menu Location")
+    replace_result = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [
+                    {
+                        "name": "Mains",
+                        "items": [
+                            {
+                                "name": "Tofu Bowl",
+                                "price": 9.5,
+                                "dietaryTags": ["vegan", "spicy", "vegan"],
+                                "allergens": ["soy", "sesame"],
+                            }
+                        ],
+                    }
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not replace_result.errors, replace_result.errors
+    item = replace_result.data["replaceLocationMenuItems"]["categories"][0]["items"][0]
+    assert item["dietaryTags"] == ["spicy", "vegan"]
+    assert item["allergens"] == ["sesame", "soy"]
+
+    query_result = asyncio.run(
+        schema.execute(
+            LOCATION_MENU_QUERY,
+            variable_values={"locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not query_result.errors, query_result.errors
+    loaded = query_result.data["locationMenu"]["categories"][0]["items"][0]
+    assert loaded["dietaryTags"] == ["spicy", "vegan"]
+    assert loaded["allergens"] == ["sesame", "soy"]
+
+
+def test_replace_rejects_unknown_dietary_tag():
+    location_id = _create_location("Bad Dietary Menu")
+    result = asyncio.run(
+        schema.execute(
+            REPLACE_MENU,
+            variable_values={
+                "locationId": location_id,
+                "categories": [
+                    {
+                        "name": "Mains",
+                        "items": [
+                            {
+                                "name": "Mystery",
+                                "price": 5.0,
+                                "dietaryTags": ["not_a_real_tag"],
+                            }
+                        ],
+                    }
+                ],
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors

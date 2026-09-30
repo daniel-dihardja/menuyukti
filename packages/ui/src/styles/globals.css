@@ -278,9 +278,9 @@
 
   .landing-hero-headline {
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-    font-size: clamp(2.75rem, 8vw, 7rem);
+    font-size: clamp(2.25rem, 6.5vw, 4.75rem);
     font-weight: 800;
-    line-height: 0.95;
+    line-height: 0.98;
     letter-spacing: -0.03em;
   }
 
@@ -298,6 +298,33 @@
     font-size: 0.75rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  @keyframes landing-menu-mock-enter {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .landing-menu-mock-enter {
+    animation: landing-menu-mock-enter 0.7s ease-out both;
+  }
+
+  .landing-qr-enter {
+    animation: landing-menu-mock-enter 0.7s ease-out both;
+    animation-delay: 0.08s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-menu-mock-enter,
+    .landing-qr-enter {
+      animation: none;
+    }
   }
 
   .hero-btn-primary {

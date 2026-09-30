@@ -357,42 +357,6 @@ export type ExcelUploadResult = {
   sizeBytes: Scalars['Int']['output']
 }
 
-/** Input for attaching an optional media image, description, and publish flag to a popular combo. */
-export type FrontpageComboImageInput = {
-  description?: InputMaybe<Scalars['String']['input']>
-  imageFilename?: InputMaybe<Scalars['String']['input']>
-  menuA: Scalars['String']['input']
-  menuB: Scalars['String']['input']
-  published?: Scalars['Boolean']['input']
-}
-
-/** Operator override for an often-ordered-together combo (optional image, description, and publish flag). */
-export type FrontpageComboImageType = {
-  __typename?: 'FrontpageComboImageType'
-  description?: Maybe<Scalars['String']['output']>
-  imageFilename?: Maybe<Scalars['String']['output']>
-  menuA: Scalars['String']['output']
-  menuB: Scalars['String']['output']
-  published: Scalars['Boolean']['output']
-}
-
-/** Input for attaching an optional media image, description, and publish flag to a guest favorite. */
-export type FrontpageFavoriteImageInput = {
-  description?: InputMaybe<Scalars['String']['input']>
-  imageFilename?: InputMaybe<Scalars['String']['input']>
-  menu: Scalars['String']['input']
-  published?: Scalars['Boolean']['input']
-}
-
-/** Operator override for a guest-favorite dish (optional image, description, and publish flag). */
-export type FrontpageFavoriteImageType = {
-  __typename?: 'FrontpageFavoriteImageType'
-  description?: Maybe<Scalars['String']['output']>
-  imageFilename?: Maybe<Scalars['String']['output']>
-  menu: Scalars['String']['output']
-  published: Scalars['Boolean']['output']
-}
-
 export type FundamentalSalesSignalsType = {
   __typename?: 'FundamentalSalesSignalsType'
   avgItemPrice: Scalars['Float']['output']
@@ -553,18 +517,6 @@ export type LocationAreaType = {
   sortOrder: Scalars['Int']['output']
 }
 
-/** Operator settings for the location guest frontpage: tagline and which sales-driven sections to show. */
-export type LocationFrontpageType = {
-  __typename?: 'LocationFrontpageType'
-  comboImages: Array<FrontpageComboImageType>
-  favoriteImages: Array<FrontpageFavoriteImageType>
-  locationId: Scalars['Int']['output']
-  showGuestFavorites: Scalars['Boolean']['output']
-  showPopularCombos: Scalars['Boolean']['output']
-  tagline?: Maybe<Scalars['String']['output']>
-  wallEnabled: Scalars['Boolean']['output']
-}
-
 /** Owner-provided click-first brief hints; not AI-generated. */
 export type LocationManualBriefInputType = {
   __typename?: 'LocationManualBriefInputType'
@@ -609,8 +561,6 @@ export type LocationType = {
   city?: Maybe<Scalars['String']['output']>
   country?: Maybe<Scalars['String']['output']>
   currency?: Maybe<Scalars['String']['output']>
-  /** Guest frontpage settings (tagline and sales-driven section toggles). Defaults when no row is stored. */
-  frontpage?: Maybe<LocationFrontpageType>
   id: Scalars['ID']['output']
   /** Owner-provided click-first brief hints. Not AI-generated. */
   manualBriefInput?: Maybe<LocationManualBriefInputType>
@@ -888,6 +838,7 @@ export type MenuModifierOptionType = {
 export type MenuType = {
   __typename?: 'MenuType'
   categories: Array<MenuCategoryType>
+  headerImageFilename?: Maybe<Scalars['String']['output']>
   id: Scalars['Int']['output']
   locationId: Scalars['Int']['output']
   publicEnabled: Scalars['Boolean']['output']
@@ -1001,8 +952,6 @@ export type Mutation = {
   updateLocation: LocationType
   /** Rename or reorder a location area. */
   updateLocationArea: LocationAreaType
-  /** Upsert guest frontpage settings for a location (tagline, section toggles, wall publish settings, and optional media image / description / publish overrides). */
-  updateLocationFrontpage: LocationFrontpageType
   /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
   updateLocationManualBriefInput: LocationManualBriefInputType
   /** Publish or unpublish the location digital menu and set the public slug. Requires location ownership. Creates an empty menu when enabling if none exists. */
@@ -1415,18 +1364,6 @@ export type MutationUpdateLocationAreaArgs = {
 }
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
-export type MutationUpdateLocationFrontpageArgs = {
-  comboImages?: InputMaybe<Array<FrontpageComboImageInput>>
-  favoriteImages?: InputMaybe<Array<FrontpageFavoriteImageInput>>
-  locationId: Scalars['Int']['input']
-  publicSlug?: InputMaybe<Scalars['String']['input']>
-  showGuestFavorites?: Scalars['Boolean']['input']
-  showPopularCombos?: Scalars['Boolean']['input']
-  tagline?: InputMaybe<Scalars['String']['input']>
-  wallEnabled?: InputMaybe<Scalars['Boolean']['input']>
-}
-
-/** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationManualBriefInputArgs = {
   locationId: Scalars['Int']['input']
   quickProfile: Scalars['JSON']['input']
@@ -1434,6 +1371,7 @@ export type MutationUpdateLocationManualBriefInputArgs = {
 
 /** Root mutation: sales uploads, workspace invites, and catalog writes. */
 export type MutationUpdateLocationPublicMenuArgs = {
+  headerImageFilename?: InputMaybe<Scalars['String']['input']>
   locationId: Scalars['Int']['input']
   publicEnabled?: InputMaybe<Scalars['Boolean']['input']>
   publicSlug?: InputMaybe<Scalars['String']['input']>
@@ -1786,23 +1724,11 @@ export type PublicLocationMenuType = {
   __typename?: 'PublicLocationMenuType'
   categories: Array<PublicMenuCategoryType>
   currency?: Maybe<Scalars['String']['output']>
+  headerImageFilename?: Maybe<Scalars['String']['output']>
   locationId: Scalars['Int']['output']
   mediaOwnerClerkUserId?: Maybe<Scalars['String']['output']>
   name: Scalars['String']['output']
   publicSlug: Scalars['String']['output']
-  tagline?: Maybe<Scalars['String']['output']>
-  workspaceId?: Maybe<Scalars['ID']['output']>
-}
-
-/** Public guest wall for a location (curated favorites/combos). Null when the slug is unknown or the wall is not enabled. */
-export type PublicLocationWallType = {
-  __typename?: 'PublicLocationWallType'
-  locationId: Scalars['Int']['output']
-  mediaOwnerClerkUserId?: Maybe<Scalars['String']['output']>
-  name: Scalars['String']['output']
-  publicSlug: Scalars['String']['output']
-  tagline?: Maybe<Scalars['String']['output']>
-  tiles: Array<PublicWallTileType>
   workspaceId?: Maybe<Scalars['ID']['output']>
 }
 
@@ -1822,16 +1748,6 @@ export type PublicMenuItemType = {
   name: Scalars['String']['output']
   price: Scalars['Float']['output']
   sortOrder: Scalars['Int']['output']
-}
-
-/** One curated tile on the public guest wall. */
-export type PublicWallTileType = {
-  __typename?: 'PublicWallTileType'
-  description?: Maybe<Scalars['String']['output']>
-  imageFilename?: Maybe<Scalars['String']['output']>
-  key: Scalars['String']['output']
-  kind: Scalars['String']['output']
-  title: Scalars['String']['output']
 }
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -1914,8 +1830,6 @@ export type Query = {
   publicHolidays: Array<PublicHolidayType>
   /** Public digital menu by location slug. Returns null when the slug is missing or the menu is not published. No authentication required. */
   publicLocationMenu?: Maybe<PublicLocationMenuType>
-  /** Public curated guest wall by location slug. Returns null when the slug is missing or the wall is not enabled. No authentication required. */
-  publicLocationWall?: Maybe<PublicLocationWallType>
   /** Compare per-menu revenue for an analytics run against the previous run for the same location (or an explicit previousRunId). Returns null when the current run has no order lines. */
   revenueTrends?: Maybe<RevenueTrendsPayloadType>
   /** Manual calendar entries for a location. Returns an empty payload when the caller is unauthenticated, does not own the location, or there are no manual entries. */
@@ -2145,11 +2059,6 @@ export type QueryPublicHolidaysArgs = {
 
 /** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryPublicLocationMenuArgs = {
-  slug: Scalars['String']['input']
-}
-
-/** Root query: locations, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryPublicLocationWallArgs = {
   slug: Scalars['String']['input']
 }
 

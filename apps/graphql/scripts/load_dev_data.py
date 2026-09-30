@@ -126,8 +126,8 @@ _CATEGORY_LABELS: dict[str, str] = {
 def seed_warung_sunda_menu(session: Session, location: Location) -> dict[str, int]:
     """Replace the curated location menu with the Warung Sunda mock catalog (POS + guest menu).
 
-    Clears POS tickets for this location first: ``replace_menu_categories`` deletes
-    ``menu_item`` rows, and ``pos_order_line.menu_item_id`` is ON DELETE RESTRICT.
+    Clears POS tickets for this location first so a full catalog reset stays
+    free of stale ``pos_order_line`` references.
     """
     deleted_orders = (
         session.query(PosOrder).filter(PosOrder.location_id == location.id).delete(

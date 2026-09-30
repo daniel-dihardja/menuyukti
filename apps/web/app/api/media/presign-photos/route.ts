@@ -4,12 +4,12 @@ import {
   PRESIGN_PHOTOS_MAX_NAMES,
   presignPhotosBodySchema,
 } from '@/app/api/media/presign-photos/schema'
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { requireWorkspaceMediaAccess } from '@/lib/assets/workspace-media-access'
 import { presignPhotoUrlsForAccess } from '@/lib/media/presign-photo-urls'
 
 export async function POST(req: Request) {
-  const authz = await requireAuthenticatedApi()
+  const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 

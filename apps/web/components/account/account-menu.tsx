@@ -64,8 +64,9 @@ export function AccountMenu({ className }: AccountMenuProps) {
   const workspacePlan = useOptionalWorkspacePlan()
   // Hide team outside the app shell / on free; only pro shows it.
   const showTeam = workspacePlan != null && isProPlan(workspacePlan.plan)
-  /** Stay on the public menu after sign-out; otherwise go to login. */
-  const signOutRedirectUrl = getSafeAuthReturnPath(pathname) ?? routes.login
+  /** Stay on guest surfaces (landing or public menu) after sign-out; otherwise go to login. */
+  const signOutRedirectUrl =
+    pathname === routes.root ? routes.root : (getSafeAuthReturnPath(pathname) ?? routes.login)
 
   if (!isLoaded) {
     return (

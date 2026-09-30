@@ -16,6 +16,7 @@ from graphql.schema.types.menu import (
     MenuModifierOptionType,
     MenuType,
 )
+from graphql.schema.types.menu_attributes import MenuAllergen, MenuDietaryTag
 
 
 def menu_modifier_option_to_gql(row: MenuModifierOption) -> MenuModifierOptionType:
@@ -42,6 +43,28 @@ def menu_modifier_group_to_gql(row: MenuModifierGroup) -> MenuModifierGroupType:
     )
 
 
+def dietary_tags_to_gql(raw: list[object] | None) -> list[MenuDietaryTag]:
+    result: list[MenuDietaryTag] = []
+    for value in raw or []:
+        key = str(value)
+        try:
+            result.append(MenuDietaryTag(key))
+        except ValueError:
+            continue
+    return result
+
+
+def allergens_to_gql(raw: list[object] | None) -> list[MenuAllergen]:
+    result: list[MenuAllergen] = []
+    for value in raw or []:
+        key = str(value)
+        try:
+            result.append(MenuAllergen(key))
+        except ValueError:
+            continue
+    return result
+
+
 def menu_item_to_gql(row: MenuItem) -> MenuItemType:
     groups = sorted(row.modifier_groups, key=lambda g: (g.sort_order, g.id))
     return MenuItemType(
@@ -54,6 +77,8 @@ def menu_item_to_gql(row: MenuItem) -> MenuItemType:
         sort_order=row.sort_order,
         is_available=row.is_available,
         image_filename=row.image_filename,
+        dietary_tags=dietary_tags_to_gql(row.dietary_tags),
+        allergens=allergens_to_gql(row.allergens),
         modifier_groups=[menu_modifier_group_to_gql(g) for g in groups],
     )
 

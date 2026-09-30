@@ -10,6 +10,7 @@ import {
   Image,
   LayoutDashboard,
   MapPin,
+  Cloud,
   Package,
   Shield,
   Sparkles,
@@ -39,6 +40,7 @@ import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
 import { useWorkspacePlan } from '@/hooks/use-workspace-plan'
 import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
+import { partitionClientNav } from '@/lib/client-flat-nav'
 import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
@@ -67,15 +69,16 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 }
 
 /**
- * Sidebar order follows daily product flow:
+ * Sidebar order follows daily product flow for platform admins:
  * overview → create/plan → measure → operations → account.
- * Chat leads create for pro (default home `/advisor`); free guests see Home only.
+ * Non-admin clients get two labeled blocks: Workspace (Locations → Inventory → Team)
+ * then Services (paid cloud modules). Free guests see Home only.
  */
 const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'home',
     labelKey: 'home',
-    href: routes.home,
+    href: routes.root,
     icon: <Home />,
     group: 'overview',
   },
@@ -150,6 +153,13 @@ const NAV_WORKSPACE: NavItem[] = [
     group: 'operations',
   },
   {
+    key: 'services',
+    labelKey: 'services',
+    href: routes.services,
+    icon: <Cloud />,
+    group: 'operations',
+  },
+  {
     key: 'inventar',
     labelKey: 'inventar',
     href: routes.inventar,
@@ -159,7 +169,7 @@ const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'team',
     labelKey: 'team',
-    href: routes.profileTeam,
+    href: routes.team,
     icon: <Users />,
     group: 'account',
   },
@@ -278,6 +288,44 @@ export function NavMain() {
   }
 
   const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav, plan)
+
+  if (!showAdminNav) {
+    const { core, services, other } = partitionClientNav(visibleWorkspaceItems)
+    return (
+      <>
+        {core.length > 0 ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>{t('groupWorkspace')}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NavMenuItems items={core} t={t} isActive={isActive} />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
+        {services.length > 0 ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>{t('groupServices')}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NavMenuItems items={services} t={t} isActive={isActive} />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
+        {other.length > 0 ? (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NavMenuItems items={other} t={t} isActive={isActive} />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
+      </>
+    )
+  }
+
   const groups = groupVisibleItems(visibleWorkspaceItems)
 
   return (

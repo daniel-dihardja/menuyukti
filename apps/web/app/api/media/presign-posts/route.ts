@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { presignPostsBodySchema } from '@/app/api/media/presign-posts/schema'
-import { requireAuthenticatedApi } from '@/lib/authenticated-api'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { getPresignedGetUrl } from '@/lib/assets/storage'
 import {
   isPostKeyAllowedForAccess,
@@ -9,7 +9,7 @@ import {
 } from '@/lib/assets/workspace-media-access'
 
 export async function POST(req: Request) {
-  const authz = await requireAuthenticatedApi()
+  const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 

@@ -28,13 +28,10 @@ export function ShopPortalHeader() {
 
   const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
 
-  const workspaceLinks = [
-    { href: routes.dashboard, label: t('backDashboard') },
-    { href: routes.agent, label: t('backChat') },
-  ] as const
+  const workspaceLinks = [{ href: routes.analytics.branches, label: t('backBranches') }] as const
 
   const productLinks = [
-    { href: routes.agent, label: tMain('navChat'), active: false },
+    { href: routes.analytics.branches, label: t('backBranches'), active: false },
     { href: routes.shop, label: tMain('navShop'), active: shopActive },
   ] as const
 

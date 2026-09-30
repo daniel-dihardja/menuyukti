@@ -1,8 +1,8 @@
-import { NextResponse, connection } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { ZodError } from 'zod'
 
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_CALENDAR_ENTRY_MUTATION,
@@ -23,11 +23,9 @@ type RouteContext = {
 
 export async function PATCH(req: Request, context: RouteContext) {
   try {
-    await connection()
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const { id: idParam } = await context.params
     const id = Number(idParam)
@@ -73,11 +71,9 @@ export async function PATCH(req: Request, context: RouteContext) {
 
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
-    await connection()
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const { id: idParam } = await context.params
     const id = Number(idParam)

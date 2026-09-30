@@ -8,6 +8,12 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react'
 
 import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
+import {
+  MENU_ALLERGENS,
+  MENU_DIETARY_TAGS,
+  type MenuAllergen,
+  type MenuDietaryTag,
+} from '@/lib/menu/menu-attributes'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -37,28 +43,29 @@ export type LocationMenuFormModifierGroup = {
 
 export type LocationMenuFormItem = {
   key: string
+  id?: number
   name: string
   price: string
   description: string
   isAvailable: boolean
   imageFilename: string | null
+  dietaryTags: MenuDietaryTag[]
+  allergens: MenuAllergen[]
   modifierGroups: LocationMenuFormModifierGroup[]
 }
 
 export type LocationMenuFormCategory = {
   key: string
+  id?: number
   name: string
   items: LocationMenuFormItem[]
 }
 
 type Props = {
   locationId: number
-  locationName: string
   currencyCode: string
   initialCategories: LocationMenuFormCategory[]
-  initialPublicEnabled: boolean
-  initialPublicSlug: string
-  initialHeaderImageFilename: string | null
+  publicMenuEnabled: boolean
 }
 
 type SavePayloadModifierOption = {
@@ -75,15 +82,19 @@ type SavePayloadModifierGroup = {
 }
 
 type SavePayloadItem = {
+  id?: number
   name: string
   price: number
   description: string
   isAvailable: boolean
   imageFilename: string | null
+  dietaryTags: MenuDietaryTag[]
+  allergens: MenuAllergen[]
   modifierGroups: SavePayloadModifierGroup[]
 }
 
 type SavePayloadCategory = {
+  id?: number
   name: string
   items: SavePayloadItem[]
 }
@@ -114,6 +125,8 @@ function newItem(): LocationMenuFormItem {
     description: '',
     isAvailable: true,
     imageFilename: null,
+    dietaryTags: [],
+    allergens: [],
     modifierGroups: [],
   }
 }
@@ -126,13 +139,60 @@ function newCategory(): LocationMenuFormCategory {
   }
 }
 
+function toggleInList<T extends string>(list: T[], value: T): T[] {
+  return list.includes(value) ? list.filter((entry) => entry !== value) : [...list, value]
+}
+
 function isBlankItem(item: LocationMenuFormItem): boolean {
   return (
     !item.name &&
     !item.price &&
     !item.description &&
     !item.imageFilename &&
+    item.dietaryTags.length === 0 &&
+    item.allergens.length === 0 &&
     item.modifierGroups.length === 0
+  )
+}
+
+function AttributeChipGroup<T extends string>({
+  label,
+  options,
+  selected,
+  disabled,
+  onToggle,
+  labelFor,
+}: {
+  label: string
+  options: readonly T[]
+  selected: readonly T[]
+  disabled: boolean
+  onToggle: (value: T) => void
+  labelFor: (value: T) => string
+}) {
+  return (
+    <Field className="sm:col-span-2 gap-2">
+      <FieldLabel>{label}</FieldLabel>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
+        {options.map((option) => {
+          const active = selected.includes(option)
+          return (
+            <Button
+              key={option}
+              type="button"
+              size="sm"
+              variant={active ? 'default' : 'outline'}
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => onToggle(option)}
+              className="h-8 rounded-full px-3 text-xs font-medium"
+            >
+              {labelFor(option)}
+            </Button>
+          )
+        })}
+      </div>
+    </Field>
   )
 }
 
@@ -313,6 +373,22 @@ function LocationMenuItemRow({
               rows={2}
             />
           </Field>
+          <AttributeChipGroup
+            label={t('fields.dietaryTags')}
+            options={MENU_DIETARY_TAGS}
+            selected={item.dietaryTags}
+            disabled={loading}
+            onToggle={(value) => onUpdate({ dietaryTags: toggleInList(item.dietaryTags, value) })}
+            labelFor={(value) => t(`dietary.${value}`)}
+          />
+          <AttributeChipGroup
+            label={t('fields.allergens')}
+            options={MENU_ALLERGENS}
+            selected={item.allergens}
+            disabled={loading}
+            onToggle={(value) => onUpdate({ allergens: toggleInList(item.allergens, value) })}
+            labelFor={(value) => t(`allergens.${value}`)}
+          />
           <Field className="sm:col-span-2 gap-1.5">
             <FieldLabel>{t('fields.image')}</FieldLabel>
             <MediaCatalogPicker
@@ -476,45 +552,19 @@ function LocationMenuItemRow({
   )
 }
 
-function suggestSlugFromName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 128)
-}
-
 export function LocationMenuForm({
   locationId,
-  locationName,
   currencyCode,
   initialCategories,
-  initialPublicEnabled,
-  initialPublicSlug,
-  initialHeaderImageFilename,
+  publicMenuEnabled,
 }: Props) {
   const router = useRouter()
   const t = useTranslations('analytics.locationMenu')
   const [categories, setCategories] = useState<LocationMenuFormCategory[]>(() =>
     initialCategories.length > 0 ? initialCategories : [newCategory()],
   )
-  const [publicEnabled, setPublicEnabled] = useState(initialPublicEnabled)
-  const [publicSlug, setPublicSlug] = useState(
-    () => initialPublicSlug || suggestSlugFromName(locationName),
-  )
-  const [headerImageFilename, setHeaderImageFilename] = useState<string | null>(
-    initialHeaderImageFilename,
-  )
-  const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [publishLoading, setPublishLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [publishError, setPublishError] = useState<string | null>(null)
-  const [publishSaved, setPublishSaved] = useState(false)
-
-  const publicPath = publicSlug.trim() ? routes.public.locationMenu(publicSlug.trim()) : null
 
   function updateCategory(key: string, patch: Partial<Pick<LocationMenuFormCategory, 'name'>>) {
     setCategories((prev) => prev.map((cat) => (cat.key === key ? { ...cat, ...patch } : cat)))
@@ -560,64 +610,6 @@ export function LocationMenuForm({
         return { ...cat, items: nextItems.length > 0 ? nextItems : [newItem()] }
       }),
     )
-  }
-
-  async function savePublishSettings() {
-    setPublishError(null)
-    setPublishSaved(false)
-    const slug = publicSlug.trim()
-    if (publicEnabled && !slug) {
-      setPublishError(t('errors.slugRequired'))
-      return
-    }
-    setPublishLoading(true)
-    try {
-      const res = await fetch(`/api/locations/${locationId}/menu/public`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          publicEnabled,
-          publicSlug: slug || null,
-          headerImageFilename,
-        }),
-      })
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { message?: string } | null
-        throw new Error(data?.message || t('errors.publishFailed'))
-      }
-      const body = (await res.json()) as {
-        publicSlug?: string | null
-        publicEnabled?: boolean
-        menu?: { headerImageFilename?: string | null }
-      }
-      if (typeof body.publicSlug === 'string') {
-        setPublicSlug(body.publicSlug)
-      }
-      if (typeof body.publicEnabled === 'boolean') {
-        setPublicEnabled(body.publicEnabled)
-      }
-      if (body.menu && 'headerImageFilename' in body.menu) {
-        setHeaderImageFilename(body.menu.headerImageFilename ?? null)
-      }
-      setPublishSaved(true)
-      router.refresh()
-    } catch (err) {
-      setPublishError(err instanceof Error ? err.message : t('errors.unknown'))
-    } finally {
-      setPublishLoading(false)
-    }
-  }
-
-  async function handleCopyUrl() {
-    if (!publicPath) return
-    try {
-      const absolute = `${window.location.origin}${publicPath}`
-      await navigator.clipboard.writeText(absolute)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setCopied(false)
-    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -684,11 +676,14 @@ export function LocationMenuForm({
           }
 
           items.push({
+            ...(typeof row.id === 'number' ? { id: row.id } : {}),
             name,
             price,
             description,
             isAvailable: row.isAvailable,
             imageFilename: row.imageFilename,
+            dietaryTags: row.dietaryTags,
+            allergens: row.allergens,
             modifierGroups,
           })
         }
@@ -696,7 +691,11 @@ export function LocationMenuForm({
         if (!categoryName) {
           throw new Error(t('errors.categoryNameRequired'))
         }
-        payload.push({ name: categoryName, items })
+        payload.push({
+          ...(typeof category.id === 'number' ? { id: category.id } : {}),
+          name: categoryName,
+          items,
+        })
       }
 
       const res = await fetch(`/api/locations/${locationId}/menu`, {
@@ -726,99 +725,26 @@ export function LocationMenuForm({
         </p>
       </section>
 
-      <section className="flex max-w-xl flex-col gap-4 rounded-lg border border-border p-4">
-        <h2 className="text-base font-semibold">{t('publish.title')}</h2>
-        <FieldGroup>
-          <Field orientation="horizontal" className="items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <FieldLabel htmlFor="menu-public-enabled">{t('publish.enabled')}</FieldLabel>
-              <p className="text-muted-foreground text-xs">{t('publish.enabledHint')}</p>
-            </div>
-            <Switch
-              id="menu-public-enabled"
-              checked={publicEnabled}
-              onCheckedChange={setPublicEnabled}
-              disabled={publishLoading || loading}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="menu-public-slug">{t('publish.publicSlug')}</FieldLabel>
-            <Input
-              id="menu-public-slug"
-              value={publicSlug}
-              onChange={(e) => setPublicSlug(e.target.value)}
-              placeholder={t('publish.publicSlugPlaceholder')}
-              maxLength={128}
-              disabled={publishLoading || loading}
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-            <p className="text-muted-foreground text-xs">{t('publish.publicSlugHint')}</p>
-          </Field>
-          <Field className="gap-1.5">
-            <FieldLabel>{t('publish.headerImage')}</FieldLabel>
-            <p className="text-muted-foreground text-xs">{t('publish.headerImageHint')}</p>
-            <MediaCatalogPicker
-              selectedImage={
-                headerImageFilename
-                  ? {
-                      name: headerImageFilename,
-                      url: mediaDownloadHref(headerImageFilename),
-                    }
-                  : null
-              }
-              onSelect={(media: MediaCatalogItem) => setHeaderImageFilename(media.name)}
-              onClear={() => setHeaderImageFilename(null)}
-              disabled={publishLoading || loading}
-              pickLabel={t('fields.pickImage')}
-              pickerAriaLabel={t('publish.headerImagePickerAria')}
-              emptyLabel={t('fields.emptyMedia')}
-              removeLabel={t('fields.removeImage')}
-              fromMediaLabel={t('fields.fromMedia')}
-            />
-          </Field>
-          {publicEnabled && publicPath ? (
-            <Field>
-              <FieldLabel htmlFor="menu-public-url">{t('publish.publicUrl')}</FieldLabel>
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  id="menu-public-url"
-                  value={publicPath}
-                  readOnly
-                  className="font-mono text-xs"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCopyUrl}
-                  disabled={publishLoading || loading}
-                >
-                  {copied ? t('publish.copiedPublicUrl') : t('publish.copyPublicUrl')}
-                </Button>
-                <Button asChild type="button" variant="ghost">
-                  <Link href={publicPath} target="_blank" rel="noreferrer">
-                    {publicPath}
-                  </Link>
-                </Button>
-              </div>
-            </Field>
-          ) : null}
-        </FieldGroup>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={savePublishSettings}
-            disabled={publishLoading || loading}
-          >
-            {publishLoading ? t('publish.saving') : t('publish.save')}
-          </Button>
-          {publishSaved ? (
-            <p className="text-muted-foreground text-sm">{t('publish.saved')}</p>
-          ) : null}
-          {publishError ? <p className="text-destructive text-sm">{publishError}</p> : null}
-        </div>
+      <section className="border-border bg-muted/30 flex max-w-xl flex-col gap-2 rounded-lg border p-4">
+        {publicMenuEnabled ? (
+          <>
+            <p className="text-sm font-medium">{t('serviceBanner.onTitle')}</p>
+            <p className="text-muted-foreground text-xs">{t('serviceBanner.onHint')}</p>
+            <Button asChild variant="outline" size="sm" className="mt-1 w-fit">
+              <Link href={routes.servicesDigitalMenuLocation(locationId)}>
+                {t('serviceBanner.manageCta')}
+              </Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-medium">{t('serviceBanner.offTitle')}</p>
+            <p className="text-muted-foreground text-xs">{t('serviceBanner.offHint')}</p>
+            <Button asChild variant="outline" size="sm" className="mt-1 w-fit">
+              <Link href={routes.servicesDigitalMenu}>{t('serviceBanner.turnOnCta')}</Link>
+            </Button>
+          </>
+        )}
       </section>
 
       <div className="flex flex-col gap-6">

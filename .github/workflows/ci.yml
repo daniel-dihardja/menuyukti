@@ -83,7 +83,7 @@ jobs:
         run: pnpm exec turbo run format-check lint check-types test
       # Top-level Markdown not owned by a workspace package format-check script
       - name: Prettier (repo root docs)
-        run: pnpm exec prettier --check README.md AGENTS.md
+        run: pnpm exec prettier --check README.md
 
   graphql:
     name: GraphQL (Ruff, mypy, pytest)

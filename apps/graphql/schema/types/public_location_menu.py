@@ -1,8 +1,10 @@
-"""Public GraphQL types for the location digital menu frontpage."""
+"""Public GraphQL types for the location digital menu."""
 
 from __future__ import annotations
 
 import strawberry
+
+from graphql.schema.types.menu_attributes import MenuAllergen, MenuDietaryTag
 
 
 @strawberry.type(description="One available item on the public digital menu.")
@@ -12,6 +14,8 @@ class PublicMenuItemType:
     sort_order: int
     description: str
     image_filename: str | None
+    dietary_tags: list[MenuDietaryTag]
+    allergens: list[MenuAllergen]
 
 
 @strawberry.type(description="One category section on the public digital menu.")
@@ -30,7 +34,6 @@ class PublicMenuCategoryType:
 class PublicLocationMenuType:
     location_id: int
     name: str
-    tagline: str | None
     public_slug: str
     currency: str | None
     workspace_id: strawberry.ID | None
