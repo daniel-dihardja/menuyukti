@@ -13,7 +13,9 @@ import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
+  SERVICE_KEY_CASHBACK,
   SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_KEY_STAMP_CARD,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
@@ -155,6 +157,7 @@ function CatalogCard({
 export default async function ServicesPage() {
   const t = await getTranslations('services')
   const tCatalog = await getTranslations('services.catalog')
+  const tSubs = await getTranslations('services.subscriptions')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
@@ -185,12 +188,21 @@ export default async function ServicesPage() {
   const overviewRows = activeSubscriptions.flatMap((row) => {
     const locationId = Number(row.locationId)
     if (!Number.isInteger(locationId) || locationId < 1) return []
+    const priceAmount =
+      row.serviceKey === SERVICE_KEY_DIGITAL_MENU
+        ? tSubs('prices.digital_menu')
+        : row.serviceKey === SERVICE_KEY_STAMP_CARD
+          ? tSubs('prices.stamp_card')
+          : row.serviceKey === SERVICE_KEY_CASHBACK
+            ? tSubs('prices.cashback')
+            : null
     return [
       {
         id: row.id,
         locationId,
         locationName: locationNameById.get(row.locationId) ?? row.locationId,
         serviceKey: row.serviceKey,
+        priceLabel: priceAmount ? tSubs('pricePerMonth', { amount: priceAmount }) : null,
       },
     ]
   })

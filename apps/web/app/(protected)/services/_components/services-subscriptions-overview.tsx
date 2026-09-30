@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
@@ -17,6 +17,8 @@ export type SubscriptionOverviewRow = {
   locationId: number
   locationName: string
   serviceKey: string
+  /** Pre-resolved catalog price label, e.g. "$9/month". */
+  priceLabel: string | null
 }
 
 type Props = {
@@ -41,6 +43,10 @@ export function ServicesSubscriptionsOverview({ subscriptions: initial }: Props)
   const [error, setError] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    setRows(initial)
+  }, [initial])
 
   async function handleCancel(row: SubscriptionOverviewRow) {
     setError(null)
@@ -93,8 +99,13 @@ export function ServicesSubscriptionsOverview({ subscriptions: initial }: Props)
                 key={row.id}
                 className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
               >
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-sm font-medium">{label}</span>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="text-sm font-medium">{label}</span>
+                    {row.priceLabel ? (
+                      <span className="text-sm font-semibold tracking-tight">{row.priceLabel}</span>
+                    ) : null}
+                  </div>
                   <span className="text-muted-foreground text-xs">{row.locationName}</span>
                 </div>
                 <Button
