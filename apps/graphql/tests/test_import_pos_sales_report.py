@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, date, datetime, timedelta
 
+import pytest
 from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
 from graphql.data_sources.models.pos_order import PosOrder
 from graphql.schema import schema
@@ -14,6 +15,7 @@ from graphql.tests.test_pos_orders import (
     CLOSE,
     OPEN,
     VOID,
+    _cleanup,
     _create_location_with_menu,
 )
 
@@ -27,6 +29,14 @@ mutation ImportPosSalesReport($locationId: ID!, $startDate: Date!, $endDate: Dat
   }
 }
 """
+
+
+@pytest.fixture(autouse=True)
+def _cleanup_pos_import_state():
+    """Avoid SQLite id-reuse attaching leftover POS rows to later tests."""
+    _cleanup()
+    yield
+    _cleanup()
 
 
 def _open_add_close(location_id: int, item_id: int, *, qty: int = 1) -> tuple[int, str]:
