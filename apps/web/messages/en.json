@@ -2584,10 +2584,10 @@
     },
     "sales": {
       "title": "Sales Reports",
-      "description": "Upload and manage sales report snapshots for each location to power analytics features.",
+      "description": "Import paid tickets from Menuyukti POS or upload an Excel sales file to power analytics for each location.",
       "uploadInfo": {
         "title": "Required Excel report by POS",
-        "description": "Upload the matching report file format below so the system can parse your sales data correctly.",
+        "description": "When uploading Excel, use the matching report file format below so the system can parse your sales data correctly.",
         "reportLabel": "Upload this report",
         "reports": {
           "esb": {
@@ -2636,6 +2636,21 @@
           }
         }
       },
+      "importPos": {
+        "title": "Import from Menuyukti POS",
+        "description": "Create a sales report snapshot from paid tickets in a date range (UTC).",
+        "startLabel": "Start date",
+        "endLabel": "End date",
+        "datePlaceholder": "Pick a date",
+        "cta": "Import data",
+        "importing": "Importing…",
+        "success": "Imported {orderCount, plural, one {# paid ticket} other {# paid tickets}} ({lineCount, plural, one {# line} other {# lines}}) as “{name}”.",
+        "errors": {
+          "missingLocation": "Please select a location first.",
+          "missingDates": "Please choose a start and end date.",
+          "invalidRange": "Start date must be on or before end date."
+        }
+      },
       "upload": {
         "cta": "Upload New Sales Report",
         "uploading": "Uploading…",
@@ -2643,12 +2658,12 @@
       },
       "noBranches": {
         "title": "No locations yet",
-        "description": "Please create a location before uploading sales reports.",
+        "description": "Please create a location before importing or uploading sales reports.",
         "cta": "Create Location"
       },
       "noAnalytics": {
         "title": "No sales reports yet",
-        "description": "Upload an Excel sales file to start analyzing menu performance.",
+        "description": "Import paid tickets from Menuyukti POS, or upload an Excel sales file, to start analyzing menu performance.",
         "cta": "Upload New Sales Report"
       },
       "delete": {

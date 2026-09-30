@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation'
 import { LocationSelect } from './location-select'
 import { SalesTable } from './sales-table'
 import { useDeleteAnalytics } from './use-delete-analytics'
+import ImportPosClient from './import-pos-client'
 import UploadExcelClient from './upload-xcel-client'
+import { useImportPosAnalytics } from './use-import-pos-analytics'
 import { useUploadAnalytics } from './use-upload-analytics'
 import { routes } from '@/lib/routes'
 import { useAnalytics } from '../use-analytics'
@@ -70,6 +72,13 @@ export function AnalyticsSalesClient({
   const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, () =>
     router.refresh(),
   )
+  const {
+    importPos,
+    importing,
+    status: importStatus,
+    errorMessage: importErrorMessage,
+    result: importResult,
+  } = useImportPosAnalytics(locationId, () => router.refresh())
   const { deleteAnalytics, deleting } = useDeleteAnalytics({
     locationId,
     onSuccess: () => router.refresh(),
@@ -90,6 +99,16 @@ export function AnalyticsSalesClient({
             className="w-full max-w-none sm:max-w-xs"
           />
         )}
+        <ImportPosClient
+          disabled={!locationId}
+          importing={importing}
+          status={importStatus}
+          errorMessage={importErrorMessage}
+          successName={importResult?.name ?? null}
+          successOrderCount={importResult?.orderCount ?? null}
+          successLineCount={importResult?.lineCount ?? null}
+          onImport={importPos}
+        />
         <UploadExcelClient
           disabled={!locationId}
           uploading={uploading}
