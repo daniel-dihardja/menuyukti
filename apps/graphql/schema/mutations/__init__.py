@@ -42,7 +42,6 @@ from .revoke_crm_device import RevokeCrmDeviceMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
-from .update_location_frontpage import UpdateLocationFrontpageMutation
 from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_location_public_menu import UpdateLocationPublicMenuMutation
 from .update_media_collection import UpdateMediaCollectionMutation
@@ -94,7 +93,6 @@ __all__ = [
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateLocationMutation",
-    "UpdateLocationFrontpageMutation",
     "UpdateLocationManualBriefInputMutation",
     "UpdateLocationPublicMenuMutation",
     "UpdateMediaCollectionMutation",

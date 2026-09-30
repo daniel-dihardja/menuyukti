@@ -442,7 +442,7 @@
         "linkLabel": "Open sample menu in this browser"
       },
       "mock": {
-        "ariaLabel": "Illustration of a venue digital menu frontpage",
+        "ariaLabel": "Illustration of a venue digital menu",
         "eyebrow": "Menu",
         "venueName": "Sample kitchen",
         "tagline": "What guests love right now",
@@ -882,6 +882,8 @@
     "groupAnalytics": "Analytics",
     "groupOperations": "Operations",
     "groupAccount": "Account",
+    "groupWorkspace": "Workspace",
+    "groupServices": "Services",
     "toggleSectionAria": "Toggle {section}",
     "home": "Home",
     "dashboard": "Dashboard",
@@ -892,6 +894,7 @@
     "posts": "IG Studio",
     "media": "Media",
     "printShop": "Print shop",
+    "services": "Services",
     "inventar": "Inventory",
     "crm": "CRM",
     "crmApps": "Apps",
@@ -1147,6 +1150,119 @@
             "undo": "Undo",
             "remove": "Remove"
           }
+        }
+      }
+    }
+  },
+  "services": {
+    "title": "Services",
+    "description": "Turn on guest-facing capabilities for each location — like cloud services for your restaurant.",
+    "headline": "Services",
+    "subtitle": "Attach capabilities to a location. Turn them on when you need them, off when you don’t.",
+    "catalog": {
+      "comingSoon": "Coming soon",
+      "viewCta": "View",
+      "pricingPeriod": "/ month",
+      "pricingNote": "Per location per month. Placeholder pricing — not billed yet.",
+      "digitalMenu": {
+        "title": "Digital Menu",
+        "benefit": "A live guest menu with a shareable link — no app required.",
+        "statusAvailable": "Available",
+        "statusOn": "On · {count, plural, one {# location} other {# locations}}",
+        "priceAmount": "$9"
+      },
+      "stampCard": {
+        "title": "Stamp Card",
+        "benefit": "Digital loyalty stamps guests collect toward a free item — classic punch-card rewards, without paper cards.",
+        "priceAmount": "$7"
+      },
+      "cashback": {
+        "title": "Cashback",
+        "benefit": "Reward returning guests with a cashback balance they can redeem on a later visit.",
+        "priceAmount": "$12"
+      }
+    },
+    "digitalMenu": {
+      "title": "Digital Menu",
+      "description": "Publish a guest-facing digital menu for a location. Guests open a link or QR code — no app required.",
+      "heroPitch": "Turn your location menu into a living guest experience with a public link you control.",
+      "pricing": {
+        "amount": "$9",
+        "period": "/ month",
+        "note": "Per location per month. Placeholder pricing — not billed yet."
+      },
+      "turnOnCta": "Turn on for a location",
+      "includedTitle": "What’s included",
+      "included": {
+        "link": "Public guest link and URL slug",
+        "catalog": "Live dishes from your Locations menu",
+        "qr": "Shareable URL ready for QR codes"
+      },
+      "addonsTitle": "Optional add-ons",
+      "addons": {
+        "header": {
+          "title": "Header image",
+          "description": "Show a photo at the top of the guest digital menu."
+        },
+        "favorites": {
+          "title": "Guest favorites & combos",
+          "description": "Highlight analytics-backed favorites on the guest menu.",
+          "comingSoon": "Coming soon"
+        }
+      },
+      "connectedTitle": "Connected locations",
+      "connectedEmpty": "Digital Menu isn’t on for any location yet.",
+      "connectedEmptyHint": "Pick a location to turn it on and configure the guest link.",
+      "connectedStatusOn": "On",
+      "manageCta": "Manage",
+      "enable": {
+        "title": "Turn on for a location",
+        "description": "Choose which location gets a public digital menu. You’ll set the guest link next.",
+        "locationLabel": "Location",
+        "locationPlaceholder": "Select a location",
+        "noLocations": "Add a location first, then turn on Digital Menu.",
+        "createLocationCta": "Go to Locations",
+        "confirm": "Continue",
+        "cancel": "Cancel"
+      },
+      "console": {
+        "heading": "Digital Menu",
+        "description": "Control the guest-facing menu for this location.",
+        "statusTitle": "Status",
+        "enabled": "Digital Menu is on",
+        "enabledHint": "When on, anyone can open the digital menu at the link below.",
+        "publicSlug": "Public URL slug",
+        "publicSlugPlaceholder": "my-restaurant",
+        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required when the menu is on.",
+        "publicUrl": "Public menu URL",
+        "copyPublicUrl": "Copy link",
+        "copiedPublicUrl": "Copied",
+        "openPublicUrl": "Open",
+        "appearanceTitle": "Appearance",
+        "headerImage": "Header image",
+        "headerImageHint": "Optional photo shown at the top of the public digital menu.",
+        "headerImagePickerAria": "Select a header photo from your media library",
+        "pickImage": "Choose from media",
+        "emptyMedia": "No photos in your media library yet.",
+        "removeImage": "Remove image",
+        "fromMedia": "From media library",
+        "menuDataTitle": "Menu data",
+        "menuDataHint": "Edit dishes, prices, and modifiers on the Locations menu page.",
+        "editMenuCta": "Edit dishes",
+        "previewTitle": "Guest preview",
+        "previewPlaceholder": "Turn on Digital Menu and save a slug to preview the guest page.",
+        "previewOpen": "Open live preview",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "disableTitle": "Turn off Digital Menu?",
+        "disableDescription": "The guest link will stop working. Your menu dishes on Locations are kept.",
+        "disableConfirm": "Turn off",
+        "disableCancel": "Cancel",
+        "errors": {
+          "slugRequired": "Add a public URL slug before turning the menu on",
+          "saveFailed": "Failed to save Digital Menu settings",
+          "unknown": "Something went wrong"
         }
       }
     }
@@ -2288,7 +2404,6 @@
       "managePos": "POS",
       "manageCogs": "Manage COGS",
       "manageReports": "Sales reports",
-      "manageFrontpage": "Frontpage",
       "form": {
         "createTitle": "Create Location",
         "nameLabel": "Location name",
@@ -3500,75 +3615,19 @@
         "unknown": "Unknown error"
       }
     },
-    "locationFrontpage": {
-      "heading": "Frontpage",
-      "description": "Configure the guest-facing home for this location and preview what sales data will highlight.",
-      "publicMenuHint": "Publish the public digital menu and URL on the <link>Menu</link> page.",
-      "configTitle": "Display settings",
-      "fields": {
-        "tagline": "Tagline",
-        "taglinePlaceholder": "What guests should feel when they arrive",
-        "showGuestFavorites": "Show guest favorites",
-        "showPopularCombos": "Show popular combos",
-        "itemDescription": "Description",
-        "itemDescriptionPlaceholder": "Optional short guest-facing description",
-        "publish": "Publish",
-        "pickImage": "Choose from media",
-        "pickerAria": "Select a photo from your media library",
-        "emptyMedia": "No photos in your media library yet.",
-        "removeImage": "Remove image",
-        "fromMedia": "From media library"
-      },
-      "actions": {
-        "save": "Save frontpage",
-        "saving": "Saving…",
-        "saved": "Saved",
-        "expandItem": "Expand item",
-        "collapseItem": "Collapse item"
-      },
-      "errors": {
-        "saveFailed": "Could not save frontpage settings"
-      },
-      "previewTitle": "Guest preview",
-      "previewFromRun": "Based on latest analytics: {runName}",
-      "previewNoRun": "Upload a sales report to preview favorites and combos.",
-      "preview": {
-        "favoritesHeading": "Guest favorites",
-        "combosHeading": "Often ordered together",
-        "guestFavorite": "Guest favorite",
-        "oftenTogether": "Often ordered together",
-        "favoritesEmpty": "No star dishes in the latest run yet.",
-        "combosEmpty": "No strong combos in the latest run yet.",
-        "sectionHidden": "Hidden by your settings above.",
-        "venueNote": "Preview for {name}"
-      },
-      "empty": {
-        "noAnalytics": "This location has no sales analytics yet. Upload a POS report to power guest favorites and popular combos.",
-        "uploadCta": "Go to sales reports"
-      }
-    },
     "locationMenu": {
       "heading": "Menu",
       "description": "Create and edit the guest menu for this location. Organize dishes into categories like Food and Drink, then add names, prices, optional descriptions, and modifier groups (size, milk, extras).",
       "currencyHint": "Prices use this location’s currency ({currency}).",
       "categoryLabel": "Category {number}",
       "itemLabel": "Item {number}",
-      "publish": {
-        "title": "Public menu",
-        "enabled": "Publish public menu",
-        "enabledHint": "When on, anyone can open the digital menu at the link below.",
-        "publicSlug": "Public URL slug",
-        "publicSlugPlaceholder": "my-restaurant",
-        "publicSlugHint": "Lowercase letters, numbers, and hyphens. Required to publish.",
-        "publicUrl": "Public menu URL",
-        "copyPublicUrl": "Copy link",
-        "copiedPublicUrl": "Copied",
-        "headerImage": "Header image",
-        "headerImageHint": "Optional photo shown at the top of the public digital menu.",
-        "headerImagePickerAria": "Select a header photo from your media library",
-        "save": "Save publish settings",
-        "saving": "Saving…",
-        "saved": "Publish settings saved"
+      "serviceBanner": {
+        "offTitle": "Digital Menu isn’t on for this location",
+        "offHint": "Turn it on under Services to publish a guest link and header image. Dish editing stays here.",
+        "turnOnCta": "Open Digital Menu",
+        "onTitle": "Public menu is live",
+        "onHint": "Guest link, slug, and header image are managed in Digital Menu.",
+        "manageCta": "Manage Digital Menu"
       },
       "fields": {
         "categoryName": "Category",
@@ -3623,8 +3682,6 @@
         "invalidModifierPriceDelta": "Enter a valid price delta for each option",
         "invalidModifierSelect": "Min/max select must be whole numbers with min ≤ max and max ≥ 1",
         "saveFailed": "Failed to save menu",
-        "publishFailed": "Failed to save publish settings",
-        "slugRequired": "Add a public URL slug before publishing",
         "unknown": "Unknown error"
       }
     },

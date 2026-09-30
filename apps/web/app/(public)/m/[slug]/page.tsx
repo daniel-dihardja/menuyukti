@@ -20,8 +20,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     if (!menu) {
       return { title: t('notFoundTitle') }
     }
-    const title = menu.tagline ? `${menu.name} · ${menu.tagline}` : menu.name
-    const description = menu.tagline ?? t('metaDescription', { name: menu.name })
+    const title = menu.name
+    const description = t('metaDescription', { name: menu.name })
     return {
       title,
       description,
@@ -106,15 +106,6 @@ async function PublicLocationMenuContent({ params }: PageProps) {
           >
             {menu.name}
           </h1>
-          {menu.tagline ? (
-            <p
-              className={`mt-3 max-w-xl text-lg text-pretty ${
-                hasHeaderImage ? 'text-white/85' : 'text-muted-foreground'
-              }`}
-            >
-              {menu.tagline}
-            </p>
-          ) : null}
         </div>
       </header>
 

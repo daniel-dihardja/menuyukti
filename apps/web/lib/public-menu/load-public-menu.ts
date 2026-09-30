@@ -18,7 +18,6 @@ export type PublicMenuCategoryView = Omit<PublicMenuCategory, 'items'> & {
 export type PublicLocationMenuView = {
   locationId: number
   name: string
-  tagline: string | null
   publicSlug: string
   currency: string | null
   headerImageUrl: string | null
@@ -56,7 +55,6 @@ export async function loadPublicLocationMenu(
   return {
     locationId: menu.locationId,
     name: menu.name,
-    tagline: menu.tagline,
     publicSlug: menu.publicSlug,
     currency: menu.currency,
     headerImageUrl:

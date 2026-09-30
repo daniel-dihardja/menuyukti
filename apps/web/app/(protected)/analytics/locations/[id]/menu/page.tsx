@@ -103,12 +103,9 @@ export default async function Page({ params }: PageProps) {
       <section className={LOCATION_DETAIL_SECTION_CLASS}>
         <LocationMenuForm
           locationId={locationId}
-          locationName={location.name}
           currencyCode={currencyCode}
           initialCategories={initialCategories}
-          initialPublicEnabled={menuData.locationMenu?.publicEnabled ?? false}
-          initialPublicSlug={location.publicSlug ?? ''}
-          initialHeaderImageFilename={menuData.locationMenu?.headerImageFilename ?? null}
+          publicMenuEnabled={menuData.locationMenu?.publicEnabled ?? false}
         />
       </section>
     </AnalyticsPageShell>

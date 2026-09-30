@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from graphql.data_sources import Location, LocationFrontpage, SessionLocal
+from graphql.data_sources import Location, SessionLocal
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
@@ -15,7 +15,6 @@ query PublicMenu($slug: String!) {
   publicLocationMenu(slug: $slug) {
     locationId
     name
-    tagline
     publicSlug
     currency
     workspaceId
@@ -89,7 +88,6 @@ def menu_location_id():
             MenuCategory.menu_id.in_(session.query(Menu.id).filter(Menu.location_id == lid))
         ).delete(synchronize_session=False)
         session.query(Menu).filter(Menu.location_id == lid).delete()
-        session.query(LocationFrontpage).filter(LocationFrontpage.location_id == lid).delete()
         session.query(Location).filter(Location.id == lid).delete()
         session.commit()
     finally:
@@ -134,12 +132,6 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
         loc = session.get(Location, menu_location_id)
         assert loc is not None
         loc.public_slug = "menu-available-loc"
-        session.add(
-            LocationFrontpage(
-                location_id=menu_location_id,
-                tagline="Lunch",
-            )
-        )
         menu = Menu(location_id=menu_location_id, title="", public_enabled=True)
         session.add(menu)
         session.flush()
@@ -185,7 +177,6 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
     pub = result.data["publicLocationMenu"]
     assert pub is not None
     assert pub["name"] == "Menu Pub Loc"
-    assert pub["tagline"] == "Lunch"
     assert pub["currency"] == "EUR"
     assert pub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
     assert pub["workspaceId"] is None

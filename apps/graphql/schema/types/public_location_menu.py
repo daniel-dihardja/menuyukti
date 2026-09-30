@@ -1,4 +1,4 @@
-"""Public GraphQL types for the location digital menu frontpage."""
+"""Public GraphQL types for the location digital menu."""
 
 from __future__ import annotations
 
@@ -30,7 +30,6 @@ class PublicMenuCategoryType:
 class PublicLocationMenuType:
     location_id: int
     name: str
-    tagline: str | None
     public_slug: str
     currency: str | None
     workspace_id: strawberry.ID | None

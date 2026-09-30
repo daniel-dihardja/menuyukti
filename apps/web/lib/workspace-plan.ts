@@ -28,11 +28,12 @@ export const FREE_NAV_KEYS = new Set<string>(['home'])
 
 /**
  * Path prefixes allowed for free (guest) workspaces.
- * `/continue` is the plan-aware post-auth redirect; `/profile/team` is blocked separately.
+ * `/continue` is the plan-aware post-auth redirect; legacy `/profile/team` is blocked
+ * separately (Team now lives at `/team` in the operator shell).
  */
 export const FREE_ROUTE_PREFIXES = ['/home', '/continue', '/profile'] as const
 
-/** Paths under `/profile` that free workspaces must not access. */
+/** Legacy team URL under `/profile` — free workspaces must not access. */
 const FREE_PROFILE_BLOCKED_PREFIXES = ['/profile/team'] as const
 
 /**
@@ -53,6 +54,7 @@ export const PRO_NAV_KEYS = new Set([
   'crmApps',
   'crmRegistrations',
   'printShop',
+  'services',
   'inventar',
   'team',
   'usage',

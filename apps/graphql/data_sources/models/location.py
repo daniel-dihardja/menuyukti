@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.instagram import InstagramPost
     from graphql.data_sources.models.inventory_stock import InventoryStock
     from graphql.data_sources.models.location_area import LocationArea
-    from graphql.data_sources.models.location_frontpage import LocationFrontpage
     from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
     from graphql.data_sources.models.location_menu_item_cogs import LocationMenuItemCogs
     from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
@@ -75,11 +74,6 @@ class Location(Base):
     )
     manual_brief_input: Mapped[LocationManualBriefInput | None] = relationship(
         "LocationManualBriefInput",
-        back_populates="location",
-        uselist=False,
-    )
-    frontpage: Mapped[LocationFrontpage | None] = relationship(
-        "LocationFrontpage",
         back_populates="location",
         uselist=False,
     )

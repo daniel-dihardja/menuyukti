@@ -47,6 +47,7 @@ describe('admin-only-features', () => {
     expect(pathnameRequiresAdmin('/analytics/locations/1/reports')).toBe(false)
     expect(pathnameRequiresAdmin('/inventar')).toBe(false)
     expect(pathnameRequiresAdmin('/profile/team')).toBe(false)
+    expect(pathnameRequiresAdmin('/team')).toBe(false)
     expect(pathnameRequiresAdmin('/home')).toBe(false)
   })
 

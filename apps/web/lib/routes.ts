@@ -20,6 +20,8 @@ export const OPERATOR_APP_SHELL_PREFIXES = [
   '/staff',
   '/usage',
   '/inventar',
+  '/services',
+  '/team',
 ] as const
 
 /**
@@ -103,7 +105,6 @@ export const routes = {
     branchesCogs: (id: string | number) => `/analytics/locations/${id}/cogs`,
     branchesMenu: (id: string | number) => `/analytics/locations/${id}/menu`,
     branchesPos: (id: string | number) => `/analytics/locations/${id}/pos`,
-    branchesFrontpage: (id: string | number) => `/analytics/locations/${id}/frontpage`,
     /** Sales reports for a single location (Locations → venue → Reports). */
     branchesReports: (id: string | number) => `/analytics/locations/${id}/reports`,
     /**
@@ -197,10 +198,17 @@ export const routes = {
   inventarWithLocation: (locationId: string | number) =>
     `/inventar?locationId=${encodeURIComponent(String(locationId))}`,
   inventarCatalog: '/inventar/catalog',
+  /** Cloud-style services catalog (Digital Menu, …). */
+  services: '/services',
+  servicesDigitalMenu: '/services/digital-menu',
+  servicesDigitalMenuLocation: (locationId: string | number) =>
+    `/services/digital-menu/${encodeURIComponent(String(locationId))}`,
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
-  /** Workspace team management (invite existing users). */
-  profileTeam: '/profile/team',
+  /** Workspace team management (invite existing users) — operator shell. */
+  team: '/team',
+  /** @deprecated Use `routes.team`. Kept for older links / account menu callers. */
+  profileTeam: '/team',
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 
@@ -208,7 +216,7 @@ export const routes = {
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 
-  /** Public location surfaces (digital menu frontpage; wall URL redirects). */
+  /** Public location surfaces (digital menu; legacy `/l/` redirects to `/m/`). */
   public: {
     locationMenu: (slug: string) => `/m/${encodeURIComponent(slug)}`,
     /** @deprecated Use `locationMenu`; `/l/` redirects to `/m/`. */

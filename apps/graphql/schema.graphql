@@ -321,48 +321,6 @@ type ExcelUploadResult {
   salesAnalytics: JSON!
 }
 
-"""
-Input for attaching an optional media image, description, and publish flag to a popular combo.
-"""
-input FrontpageComboImageInput {
-  menuA: String!
-  menuB: String!
-  imageFilename: String = null
-  description: String = null
-  published: Boolean! = true
-}
-
-"""
-Operator override for an often-ordered-together combo (optional image, description, and publish flag).
-"""
-type FrontpageComboImageType {
-  menuA: String!
-  menuB: String!
-  imageFilename: String
-  description: String
-  published: Boolean!
-}
-
-"""
-Input for attaching an optional media image, description, and publish flag to a guest favorite.
-"""
-input FrontpageFavoriteImageInput {
-  menu: String!
-  imageFilename: String = null
-  description: String = null
-  published: Boolean! = true
-}
-
-"""
-Operator override for a guest-favorite dish (optional image, description, and publish flag).
-"""
-type FrontpageFavoriteImageType {
-  menu: String!
-  imageFilename: String
-  description: String
-  published: Boolean!
-}
-
 type FundamentalSalesSignalsType {
   totalItemsSold: Int!
   totalRevenue: Float!
@@ -517,19 +475,6 @@ type LocationAreaType {
   sortOrder: Int!
 }
 
-"""
-Operator settings for the location guest frontpage: tagline and which sales-driven sections to show.
-"""
-type LocationFrontpageType {
-  locationId: Int!
-  tagline: String
-  showGuestFavorites: Boolean!
-  showPopularCombos: Boolean!
-  wallEnabled: Boolean!
-  favoriteImages: [FrontpageFavoriteImageType!]!
-  comboImages: [FrontpageComboImageType!]!
-}
-
 """Owner-provided click-first brief hints; not AI-generated."""
 type LocationManualBriefInputType {
   locationId: Int!
@@ -582,11 +527,6 @@ type LocationType {
 
   """Owner-provided click-first brief hints. Not AI-generated."""
   manualBriefInput: LocationManualBriefInputType
-
-  """
-  Guest frontpage settings (tagline and sales-driven section toggles). Defaults when no row is stored.
-  """
-  frontpage: LocationFrontpageType
 }
 
 type MatrixSignalItemType {
@@ -851,6 +791,7 @@ type MenuType {
   locationId: Int!
   title: String!
   publicEnabled: Boolean!
+  headerImageFilename: String
   categories: [MenuCategoryType!]!
 }
 
@@ -1057,11 +998,6 @@ type Mutation {
   updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
 
   """
-  Upsert guest frontpage settings for a location (tagline, section toggles, wall publish settings, and optional media image / description / publish overrides).
-  """
-  updateLocationFrontpage(locationId: Int!, showGuestFavorites: Boolean! = true, showPopularCombos: Boolean! = true, tagline: String = null, wallEnabled: Boolean, publicSlug: String, favoriteImages: [FrontpageFavoriteImageInput!], comboImages: [FrontpageComboImageInput!]): LocationFrontpageType!
-
-  """
   Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings.
   """
   updateLocationManualBriefInput(locationId: Int!, quickProfile: JSON!): LocationManualBriefInputType!
@@ -1069,7 +1005,7 @@ type Mutation {
   """
   Publish or unpublish the location digital menu and set the public slug. Requires location ownership. Creates an empty menu when enabling if none exists.
   """
-  updateLocationPublicMenu(locationId: Int!, publicEnabled: Boolean, publicSlug: String): LocationPublicMenuSettingsType!
+  updateLocationPublicMenu(locationId: Int!, publicEnabled: Boolean, publicSlug: String, headerImageFilename: String): LocationPublicMenuSettingsType!
 
   """Update a visual style pack in the caller's workspace."""
   updateStyle(id: Int!, name: String = null, referenceImageName: String = null, spec: JSON = null, isDefault: Boolean = null): StyleType!
@@ -1339,25 +1275,12 @@ Public digital menu for a location. Null when the slug is unknown or the menu is
 type PublicLocationMenuType {
   locationId: Int!
   name: String!
-  tagline: String
   publicSlug: String!
   currency: String
   workspaceId: ID
   mediaOwnerClerkUserId: String
+  headerImageFilename: String
   categories: [PublicMenuCategoryType!]!
-}
-
-"""
-Public guest wall for a location (curated favorites/combos). Null when the slug is unknown or the wall is not enabled.
-"""
-type PublicLocationWallType {
-  locationId: Int!
-  name: String!
-  tagline: String
-  publicSlug: String!
-  workspaceId: ID
-  mediaOwnerClerkUserId: String
-  tiles: [PublicWallTileType!]!
 }
 
 """One category section on the public digital menu."""
@@ -1373,15 +1296,6 @@ type PublicMenuItemType {
   price: Float!
   sortOrder: Int!
   description: String!
-  imageFilename: String
-}
-
-"""One curated tile on the public guest wall."""
-type PublicWallTileType {
-  kind: String!
-  key: String!
-  title: String!
-  description: String
   imageFilename: String
 }
 
@@ -1498,11 +1412,6 @@ type Query {
   Public digital menu by location slug. Returns null when the slug is missing or the menu is not published. No authentication required.
   """
   publicLocationMenu(slug: String!): PublicLocationMenuType
-
-  """
-  Public curated guest wall by location slug. Returns null when the slug is missing or the wall is not enabled. No authentication required.
-  """
-  publicLocationWall(slug: String!): PublicLocationWallType
 
   """
   Playbook instances of a given type for all locations the caller can access.

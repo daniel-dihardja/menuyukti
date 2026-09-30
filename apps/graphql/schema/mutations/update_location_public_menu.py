@@ -10,7 +10,7 @@ from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mappers.menu import menu_to_gql
-from graphql.schema.mutations.update_location_frontpage import normalize_public_slug
+from graphql.schema.mutations.public_slug import normalize_public_slug
 from graphql.schema.types.menu import MenuType
 from graphql.services.menu import get_or_create_menu
 

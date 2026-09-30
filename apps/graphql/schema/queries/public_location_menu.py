@@ -66,7 +66,6 @@ class PublicLocationMenuQuery:
             location = session.scalars(
                 select(Location)
                 .options(
-                    selectinload(Location.frontpage),
                     selectinload(Location.menu)
                     .selectinload(Menu.categories)
                     .selectinload(MenuCategory.items),
@@ -88,11 +87,9 @@ class PublicLocationMenuQuery:
                 if workspace is not None:
                     media_owner = workspace.owner_clerk_user_id
 
-            tagline = location.frontpage.tagline if location.frontpage is not None else None
             return PublicLocationMenuType(
                 location_id=location.id,
                 name=location.name,
-                tagline=tagline,
                 public_slug=cleaned,
                 currency=location.currency,
                 workspace_id=strawberry.ID(workspace_id) if workspace_id else None,

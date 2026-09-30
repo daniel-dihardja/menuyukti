@@ -6,7 +6,7 @@ type PageProps = {
   params: Promise<{ slug: string }>
 }
 
-/** Legacy guest wall URL — public frontpage is now the digital menu. */
+/** Legacy guest wall URL — redirects to the public digital menu. */
 export default async function PublicLocationWallRedirectPage({ params }: PageProps) {
   const { slug } = await params
   redirect(routes.public.locationMenu(decodeURIComponent(slug)))

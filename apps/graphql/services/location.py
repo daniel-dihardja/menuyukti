@@ -15,7 +15,6 @@ from graphql.data_sources import (
     InventoryStockMovement,
     Location,
     LocationArea,
-    LocationFrontpage,
     LocationManualBriefInput,
     LocationMenuItemCogs,
     LocationOpeningHour,
@@ -190,9 +189,6 @@ def delete_location_row(session: Session, location_id: int) -> bool:
     session.query(LocationManualBriefInput).filter(
         LocationManualBriefInput.location_id == location_id
     ).delete(synchronize_session=False)
-    session.query(LocationFrontpage).filter(LocationFrontpage.location_id == location_id).delete(
-        synchronize_session=False
-    )
 
     session.delete(loc)
     session.flush()

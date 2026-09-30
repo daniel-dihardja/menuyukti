@@ -159,7 +159,6 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
     publicLocationMenu(slug: $slug) {
       locationId
       name
-      tagline
       publicSlug
       currency
       workspaceId
@@ -197,7 +196,6 @@ export type PublicMenuCategory = {
 export type PublicLocationMenuPayload = {
   locationId: number
   name: string
-  tagline: string | null
   publicSlug: string
   currency: string | null
   workspaceId: string | null
