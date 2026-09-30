@@ -5,7 +5,14 @@ from __future__ import annotations
 import asyncio
 
 from graphql.data_sources import Location, Node, SessionLocal
-from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
+from graphql.data_sources.models.menu import (
+    Menu,
+    MenuCategory,
+    MenuItem,
+    MenuModifierGroup,
+    MenuModifierOption,
+)
+from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine, PosOrderLineModifier
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
@@ -68,6 +75,12 @@ query LocationMenu($locationId: Int!) {
 def _create_location(name: str, *, clerk_user_id: str = GRAPHQL_TEST_USER_ID) -> int:
     session = SessionLocal()
     try:
+        # Clear POS first so recycled menu_item ids are not treated as POS-referenced.
+        session.query(PosOrderLineModifier).delete()
+        session.query(PosOrderLine).delete()
+        session.query(PosOrder).delete()
+        session.query(MenuModifierOption).delete()
+        session.query(MenuModifierGroup).delete()
         session.query(MenuItem).delete()
         session.query(MenuCategory).delete()
         session.query(Menu).delete()
