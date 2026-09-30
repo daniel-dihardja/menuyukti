@@ -60,10 +60,7 @@ export async function POST(req: Request) {
       )
     }
     if (body.startDate > body.endDate) {
-      return NextResponse.json(
-        { error: 'startDate must be on or before endDate' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'startDate must be on or before endDate' }, { status: 400 })
     }
 
     const data = await graphqlQuery<ImportPosSalesReportData>(
