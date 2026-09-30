@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import strawberry
 
+from graphql.schema.types.menu_attributes import MenuAllergen, MenuDietaryTag
+
 
 @strawberry.type(description="One available item on the public digital menu.")
 class PublicMenuItemType:
@@ -12,6 +14,8 @@ class PublicMenuItemType:
     sort_order: int
     description: str
     image_filename: str | None
+    dietary_tags: list[MenuDietaryTag]
+    allergens: list[MenuAllergen]
 
 
 @strawberry.type(description="One category section on the public digital menu.")

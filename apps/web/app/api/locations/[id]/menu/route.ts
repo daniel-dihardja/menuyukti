@@ -8,6 +8,12 @@ import {
   type LocationMenuData,
   type ReplaceLocationMenuItemsData,
 } from '@/lib/graphql/queries/location-menu'
+import {
+  isMenuAllergen,
+  isMenuDietaryTag,
+  normalizeAllergens,
+  normalizeDietaryTags,
+} from '@/lib/menu/menu-attributes'
 
 function parseLocationId(param: string): number | null {
   const value = Number(param)
@@ -28,15 +34,19 @@ type MenuModifierGroupBody = {
 }
 
 type MenuItemBody = {
+  id?: unknown
   name?: unknown
   price?: unknown
   description?: unknown
   isAvailable?: unknown
   imageFilename?: unknown
+  dietaryTags?: unknown
+  allergens?: unknown
   modifierGroups?: unknown
 }
 
 type MenuCategoryBody = {
+  id?: unknown
   name?: unknown
   items?: unknown
 }
@@ -55,15 +65,19 @@ type ParsedModifierGroup = {
 }
 
 type ParsedItem = {
+  id?: number
   name: string
   price: number
   description?: string
   isAvailable?: boolean
   imageFilename?: string | null
+  dietaryTags?: string[]
+  allergens?: string[]
   modifierGroups?: ParsedModifierGroup[]
 }
 
 type ParsedCategory = {
+  id?: number
   name: string
   items: ParsedItem[]
 }
@@ -119,6 +133,31 @@ function parseModifierGroups(raw: unknown): ParsedModifierGroup[] | null {
   return groups
 }
 
+function parseAttributeList(
+  raw: unknown,
+  isValid: (value: string) => boolean,
+): string[] | null {
+  if (raw === undefined) return []
+  if (!Array.isArray(raw)) return null
+  const values: string[] = []
+  for (const entry of raw) {
+    if (typeof entry !== 'string') return null
+    const key = entry.trim()
+    if (!key) continue
+    if (!isValid(key)) return null
+    values.push(key)
+  }
+  return values
+}
+
+function parseOptionalId(raw: unknown): number | null | undefined {
+  if (raw === undefined) return undefined
+  if (raw === null) return null
+  const value = typeof raw === 'number' ? raw : Number(raw)
+  if (!Number.isInteger(value) || value < 1) return null
+  return value
+}
+
 function parseItems(raw: unknown): ParsedItem[] | null {
   if (!Array.isArray(raw)) return null
   const items: ParsedItem[] = []
@@ -129,6 +168,9 @@ function parseItems(raw: unknown): ParsedItem[] | null {
     const price = typeof row.price === 'number' ? row.price : Number(row.price)
     if (!Number.isFinite(price)) return null
     const item: ParsedItem = { name: row.name, price }
+    const itemId = parseOptionalId(row.id)
+    if (itemId === null) return null
+    if (typeof itemId === 'number') item.id = itemId
     if (typeof row.description === 'string') item.description = row.description
     if (typeof row.isAvailable === 'boolean') item.isAvailable = row.isAvailable
     if (row.imageFilename === null) {
@@ -136,6 +178,12 @@ function parseItems(raw: unknown): ParsedItem[] | null {
     } else if (typeof row.imageFilename === 'string') {
       item.imageFilename = row.imageFilename
     }
+    const dietaryTags = parseAttributeList(row.dietaryTags, isMenuDietaryTag)
+    if (dietaryTags === null) return null
+    item.dietaryTags = normalizeDietaryTags(dietaryTags)
+    const allergens = parseAttributeList(row.allergens, isMenuAllergen)
+    if (allergens === null) return null
+    item.allergens = normalizeAllergens(allergens)
     const modifierGroups = parseModifierGroups(row.modifierGroups)
     if (modifierGroups === null) return null
     if (modifierGroups.length > 0) item.modifierGroups = modifierGroups
@@ -153,7 +201,11 @@ function parseCategories(raw: unknown): ParsedCategory[] | null {
     if (typeof row.name !== 'string') return null
     const items = parseItems(row.items)
     if (!items) return null
-    categories.push({ name: row.name, items })
+    const category: ParsedCategory = { name: row.name, items }
+    const categoryId = parseOptionalId(row.id)
+    if (categoryId === null) return null
+    if (typeof categoryId === 'number') category.id = categoryId
+    categories.push(category)
   }
   return categories
 }

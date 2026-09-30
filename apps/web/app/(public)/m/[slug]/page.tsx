@@ -5,8 +5,9 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { getAppCurrencyCode } from '@/lib/app-currency'
-import { formatCurrency, getCurrencyLocale } from '@/lib/currency'
 import { loadPublicLocationMenu } from '@/lib/public-menu/load-public-menu'
+
+import { PublicMenuCatalog } from './public-menu-catalog'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -68,7 +69,6 @@ async function PublicLocationMenuContent({ params }: PageProps) {
   if (!menu) notFound()
 
   const currencyCode = (menu.currency?.trim() || getAppCurrencyCode()).toUpperCase()
-  const locale = getCurrencyLocale(currencyCode)
   const hasItems = menu.categories.some((category) => category.items.length > 0)
   const headerImageUrl = menu.headerImageUrl
   const hasHeaderImage = Boolean(headerImageUrl)
@@ -113,58 +113,7 @@ async function PublicLocationMenuContent({ params }: PageProps) {
         {!hasItems ? (
           <p className="text-muted-foreground py-12 text-center text-sm">{t('empty')}</p>
         ) : (
-          <div className="flex flex-col gap-12">
-            {menu.categories.map((category) => (
-              <section
-                key={category.name}
-                aria-labelledby={`cat-${category.sortOrder}-${category.name}`}
-              >
-                <h2
-                  id={`cat-${category.sortOrder}-${category.name}`}
-                  className="mb-4 text-sm font-semibold tracking-wide uppercase"
-                >
-                  {category.name}
-                </h2>
-                <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {category.items.map((item) => {
-                    const description = item.description.trim()
-                    return (
-                      <li
-                        key={`${category.name}-${item.sortOrder}-${item.name}`}
-                        className="bg-card text-card-foreground overflow-hidden rounded-xl border"
-                      >
-                        {item.imageUrl ? (
-                          <div className="bg-muted aspect-[4/3] overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element -- presigned S3 URLs */}
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="size-full object-cover"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          </div>
-                        ) : null}
-                        <div className="flex flex-col gap-1.5 p-4">
-                          <div className="flex items-baseline justify-between gap-3">
-                            <h3 className="text-base font-medium tracking-tight">{item.name}</h3>
-                            <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
-                              {formatCurrency(item.price, currencyCode, locale)}
-                            </span>
-                          </div>
-                          {description ? (
-                            <p className="text-muted-foreground line-clamp-3 text-sm text-pretty">
-                              {description}
-                            </p>
-                          ) : null}
-                        </div>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
-            ))}
-          </div>
+          <PublicMenuCatalog categories={menu.categories} currencyCode={currencyCode} />
         )}
       </main>
     </div>

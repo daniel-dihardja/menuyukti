@@ -47,13 +47,17 @@ class ReplaceLocationMenuItemsMutation:
             domain_categories = [
                 MenuCategoryReplaceInput(
                     name=category.name,
+                    id=category.id,
                     items=[
                         MenuItemReplaceInput(
+                            id=item.id,
                             name=item.name,
                             price=item.price,
                             description=item.description or "",
                             is_available=(True if item.is_available is None else item.is_available),
                             image_filename=item.image_filename,
+                            dietary_tags=[tag.value for tag in (item.dietary_tags or [])],
+                            allergens=[allergen.value for allergen in (item.allergens or [])],
                             modifier_groups=[
                                 MenuModifierGroupReplaceInput(
                                     name=group.name,

@@ -8,6 +8,12 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react'
 
 import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
+import {
+  MENU_ALLERGENS,
+  MENU_DIETARY_TAGS,
+  type MenuAllergen,
+  type MenuDietaryTag,
+} from '@/lib/menu/menu-attributes'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -37,16 +43,20 @@ export type LocationMenuFormModifierGroup = {
 
 export type LocationMenuFormItem = {
   key: string
+  id?: number
   name: string
   price: string
   description: string
   isAvailable: boolean
   imageFilename: string | null
+  dietaryTags: MenuDietaryTag[]
+  allergens: MenuAllergen[]
   modifierGroups: LocationMenuFormModifierGroup[]
 }
 
 export type LocationMenuFormCategory = {
   key: string
+  id?: number
   name: string
   items: LocationMenuFormItem[]
 }
@@ -72,15 +82,19 @@ type SavePayloadModifierGroup = {
 }
 
 type SavePayloadItem = {
+  id?: number
   name: string
   price: number
   description: string
   isAvailable: boolean
   imageFilename: string | null
+  dietaryTags: MenuDietaryTag[]
+  allergens: MenuAllergen[]
   modifierGroups: SavePayloadModifierGroup[]
 }
 
 type SavePayloadCategory = {
+  id?: number
   name: string
   items: SavePayloadItem[]
 }
@@ -111,6 +125,8 @@ function newItem(): LocationMenuFormItem {
     description: '',
     isAvailable: true,
     imageFilename: null,
+    dietaryTags: [],
+    allergens: [],
     modifierGroups: [],
   }
 }
@@ -123,13 +139,60 @@ function newCategory(): LocationMenuFormCategory {
   }
 }
 
+function toggleInList<T extends string>(list: T[], value: T): T[] {
+  return list.includes(value) ? list.filter((entry) => entry !== value) : [...list, value]
+}
+
 function isBlankItem(item: LocationMenuFormItem): boolean {
   return (
     !item.name &&
     !item.price &&
     !item.description &&
     !item.imageFilename &&
+    item.dietaryTags.length === 0 &&
+    item.allergens.length === 0 &&
     item.modifierGroups.length === 0
+  )
+}
+
+function AttributeChipGroup<T extends string>({
+  label,
+  options,
+  selected,
+  disabled,
+  onToggle,
+  labelFor,
+}: {
+  label: string
+  options: readonly T[]
+  selected: readonly T[]
+  disabled: boolean
+  onToggle: (value: T) => void
+  labelFor: (value: T) => string
+}) {
+  return (
+    <Field className="sm:col-span-2 gap-2">
+      <FieldLabel>{label}</FieldLabel>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
+        {options.map((option) => {
+          const active = selected.includes(option)
+          return (
+            <Button
+              key={option}
+              type="button"
+              size="sm"
+              variant={active ? 'default' : 'outline'}
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => onToggle(option)}
+              className="h-8 rounded-full px-3 text-xs font-medium"
+            >
+              {labelFor(option)}
+            </Button>
+          )
+        })}
+      </div>
+    </Field>
   )
 }
 
@@ -310,6 +373,24 @@ function LocationMenuItemRow({
               rows={2}
             />
           </Field>
+          <AttributeChipGroup
+            label={t('fields.dietaryTags')}
+            options={MENU_DIETARY_TAGS}
+            selected={item.dietaryTags}
+            disabled={loading}
+            onToggle={(value) =>
+              onUpdate({ dietaryTags: toggleInList(item.dietaryTags, value) })
+            }
+            labelFor={(value) => t(`dietary.${value}`)}
+          />
+          <AttributeChipGroup
+            label={t('fields.allergens')}
+            options={MENU_ALLERGENS}
+            selected={item.allergens}
+            disabled={loading}
+            onToggle={(value) => onUpdate({ allergens: toggleInList(item.allergens, value) })}
+            labelFor={(value) => t(`allergens.${value}`)}
+          />
           <Field className="sm:col-span-2 gap-1.5">
             <FieldLabel>{t('fields.image')}</FieldLabel>
             <MediaCatalogPicker
@@ -597,11 +678,14 @@ export function LocationMenuForm({
           }
 
           items.push({
+            ...(typeof row.id === 'number' ? { id: row.id } : {}),
             name,
             price,
             description,
             isAvailable: row.isAvailable,
             imageFilename: row.imageFilename,
+            dietaryTags: row.dietaryTags,
+            allergens: row.allergens,
             modifierGroups,
           })
         }
@@ -609,7 +693,11 @@ export function LocationMenuForm({
         if (!categoryName) {
           throw new Error(t('errors.categoryNameRequired'))
         }
-        payload.push({ name: categoryName, items })
+        payload.push({
+          ...(typeof category.id === 'number' ? { id: category.id } : {}),
+          name: categoryName,
+          items,
+        })
       }
 
       const res = await fetch(`/api/locations/${locationId}/menu`, {

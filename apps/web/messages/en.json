@@ -651,7 +651,34 @@
       "eyebrow": "Menu",
       "empty": "Nothing on the menu yet — check back soon.",
       "notFoundTitle": "Menu not found",
-      "metaDescription": "Digital menu at {name}."
+      "metaDescription": "Digital menu at {name}.",
+      "filters": {
+        "dietary": "Dietary",
+        "allergens": "Exclude allergens",
+        "clear": "Clear filters",
+        "matchCount": "{count, plural, one {# dish matches} other {# dishes match}}",
+        "noMatches": "No dishes match these filters."
+      },
+      "dietary": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "pescatarian": "Pescatarian",
+        "gluten_free": "Gluten-free",
+        "dairy_free": "Dairy-free",
+        "halal": "Halal",
+        "spicy": "Spicy"
+      },
+      "allergens": {
+        "gluten": "Gluten",
+        "dairy": "Dairy",
+        "eggs": "Eggs",
+        "fish": "Fish",
+        "shellfish": "Shellfish",
+        "peanuts": "Peanuts",
+        "tree_nuts": "Tree nuts",
+        "soy": "Soy",
+        "sesame": "Sesame"
+      }
     }
   },
   "shop": {
@@ -1261,6 +1288,7 @@
         "copyPublicUrl": "Copy link",
         "copiedPublicUrl": "Copied",
         "openPublicUrl": "Open",
+        "saveToPublishHint": "Save to publish this link. Guests only see the menu after it’s saved as on.",
         "appearanceTitle": "Appearance",
         "headerImage": "Header image",
         "headerImageHint": "Optional photo shown at the top of the public digital menu.",
@@ -3665,6 +3693,8 @@
         "unavailableBadge": "Unavailable",
         "description": "Description",
         "descriptionPlaceholder": "Optional short description",
+        "dietaryTags": "Dietary",
+        "allergens": "Contains allergens",
         "image": "Image",
         "pickImage": "Choose from media",
         "pickerAria": "Select a photo from your media library",
@@ -3696,6 +3726,26 @@
         "saving": "Saving…"
       },
       "untitledItem": "Untitled item",
+      "dietary": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "pescatarian": "Pescatarian",
+        "gluten_free": "Gluten-free",
+        "dairy_free": "Dairy-free",
+        "halal": "Halal",
+        "spicy": "Spicy"
+      },
+      "allergens": {
+        "gluten": "Gluten",
+        "dairy": "Dairy",
+        "eggs": "Eggs",
+        "fish": "Fish",
+        "shellfish": "Shellfish",
+        "peanuts": "Peanuts",
+        "tree_nuts": "Tree nuts",
+        "soy": "Soy",
+        "sesame": "Sesame"
+      },
       "errors": {
         "nameRequired": "Each item needs a name",
         "categoryNameRequired": "Each category needs a name",

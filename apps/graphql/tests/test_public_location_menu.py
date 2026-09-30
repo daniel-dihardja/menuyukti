@@ -40,6 +40,8 @@ query PublicMenu($slug: String!) {
         sortOrder
         description
         imageFilename
+        dietaryTags
+        allergens
       }
     }
   }
@@ -192,6 +194,8 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
                     sort_order=0,
                     is_available=True,
                     image_filename="espresso.webp",
+                    dietary_tags=["vegan", "dairy_free"],
+                    allergens=["gluten"],
                 ),
                 MenuItem(
                     menu_id=menu.id,
@@ -228,6 +232,8 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
     assert [item["name"] for item in items] == ["Espresso"]
     assert items[0]["description"] == "Double shot"
     assert items[0]["imageFilename"] == "espresso.webp"
+    assert items[0]["dietaryTags"] == ["vegan", "dairy_free"]
+    assert items[0]["allergens"] == ["gluten"]
 
 
 def test_enable_public_menu_requires_slug(menu_location_id):

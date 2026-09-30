@@ -48,6 +48,8 @@ export function DigitalMenuConsole({
   const [headerImageFilename, setHeaderImageFilename] = useState<string | null>(
     initialHeaderImageFilename,
   )
+  const [persistedPublicEnabled, setPersistedPublicEnabled] = useState(initialPublicEnabled)
+  const [persistedPublicSlug, setPersistedPublicSlug] = useState(initialPublicSlug)
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -55,7 +57,14 @@ export function DigitalMenuConsole({
   const [disableOpen, setDisableOpen] = useState(false)
   const [pendingDisable, setPendingDisable] = useState(false)
 
-  const publicPath = publicSlug.trim() ? routes.public.locationMenu(publicSlug.trim()) : null
+  const draftPublicPath = publicSlug.trim() ? routes.public.locationMenu(publicSlug.trim()) : null
+  const livePublicPath =
+    persistedPublicEnabled && persistedPublicSlug.trim()
+      ? routes.public.locationMenu(persistedPublicSlug.trim())
+      : null
+  const needsPublishSave = publicEnabled && !persistedPublicEnabled
+  // Show the draft URL while editing; Open/Copy only use livePublicPath.
+  const displayPublicPath = livePublicPath ?? draftPublicPath
 
   function handleEnabledChange(next: boolean) {
     if (!next && publicEnabled) {
@@ -113,9 +122,13 @@ export function DigitalMenuConsole({
       }
       if (typeof body.publicSlug === 'string') {
         setPublicSlug(body.publicSlug)
+        setPersistedPublicSlug(body.publicSlug)
+      } else if (body.publicSlug === null) {
+        setPersistedPublicSlug('')
       }
       if (typeof body.publicEnabled === 'boolean') {
         setPublicEnabled(body.publicEnabled)
+        setPersistedPublicEnabled(body.publicEnabled)
       }
       if (body.menu && 'headerImageFilename' in body.menu) {
         setHeaderImageFilename(body.menu.headerImageFilename ?? null)
@@ -130,9 +143,9 @@ export function DigitalMenuConsole({
   }
 
   async function handleCopyUrl() {
-    if (!publicPath) return
+    if (!livePublicPath) return
     try {
-      const absolute = `${window.location.origin}${publicPath}`
+      const absolute = `${window.location.origin}${livePublicPath}`
       await navigator.clipboard.writeText(absolute)
       setCopied(true)
       window.setTimeout(() => setCopied(false), 2000)
@@ -182,13 +195,16 @@ export function DigitalMenuConsole({
               />
               <p className="text-muted-foreground text-xs">{t('publicSlugHint')}</p>
             </Field>
-            {publicEnabled && publicPath ? (
+            {publicEnabled && displayPublicPath ? (
               <Field>
                 <FieldLabel htmlFor="digital-menu-url">{t('publicUrl')}</FieldLabel>
+                {needsPublishSave ? (
+                  <p className="text-muted-foreground text-xs">{t('saveToPublishHint')}</p>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-2">
                   <Input
                     id="digital-menu-url"
-                    value={publicPath}
+                    value={displayPublicPath}
                     readOnly
                     className="font-mono text-xs"
                   />
@@ -196,15 +212,21 @@ export function DigitalMenuConsole({
                     type="button"
                     variant="outline"
                     onClick={handleCopyUrl}
-                    disabled={loading}
+                    disabled={loading || !livePublicPath}
                   >
                     {copied ? t('copiedPublicUrl') : t('copyPublicUrl')}
                   </Button>
-                  <Button asChild type="button" variant="ghost">
-                    <Link href={publicPath} target="_blank" rel="noreferrer">
+                  {livePublicPath ? (
+                    <Button asChild type="button" variant="ghost">
+                      <Link href={livePublicPath} target="_blank" rel="noreferrer">
+                        {t('openPublicUrl')}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button type="button" variant="ghost" disabled>
                       {t('openPublicUrl')}
-                    </Link>
-                  </Button>
+                    </Button>
+                  )}
                 </div>
               </Field>
             ) : null}
@@ -263,21 +285,21 @@ export function DigitalMenuConsole({
       <aside className="border-border flex w-full max-w-sm flex-col gap-3 rounded-lg border p-4 lg:sticky lg:top-4">
         <h2 className="text-base font-semibold">{t('previewTitle')}</h2>
         <div className="bg-muted mx-auto flex aspect-[9/16] w-full max-w-[220px] items-center justify-center overflow-hidden rounded-2xl border border-border">
-          {publicEnabled && publicPath ? (
+          {livePublicPath ? (
             <iframe
               title={t('previewTitle')}
-              src={publicPath}
+              src={livePublicPath}
               className="h-full w-full bg-background"
             />
           ) : (
             <p className="text-muted-foreground px-4 text-center text-xs">
-              {t('previewPlaceholder')}
+              {needsPublishSave ? t('saveToPublishHint') : t('previewPlaceholder')}
             </p>
           )}
         </div>
-        {publicEnabled && publicPath ? (
+        {livePublicPath ? (
           <Button asChild variant="secondary" className="w-full">
-            <Link href={publicPath} target="_blank" rel="noreferrer">
+            <Link href={livePublicPath} target="_blank" rel="noreferrer">
               {t('previewOpen')}
             </Link>
           </Button>

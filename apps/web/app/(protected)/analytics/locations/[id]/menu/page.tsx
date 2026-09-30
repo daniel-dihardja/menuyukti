@@ -9,6 +9,7 @@ import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from
 import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATION_MENU_QUERY, type LocationMenuData } from '@/lib/graphql/queries/location-menu'
+import { normalizeAllergens, normalizeDietaryTags } from '@/lib/menu/menu-attributes'
 import { routes } from '@/lib/routes'
 
 import { LocationMenuForm } from './location-menu-form'
@@ -56,16 +57,20 @@ export default async function Page({ params }: PageProps) {
   const initialCategories =
     menuData.locationMenu?.categories.map((category) => ({
       key: `cat-${category.id}`,
+      id: category.id,
       name: category.name,
       items:
         category.items.length > 0
           ? category.items.map((item) => ({
               key: `item-${item.id}`,
+              id: item.id,
               name: item.name,
               price: String(item.price),
               description: item.description ?? '',
               isAvailable: item.isAvailable,
               imageFilename: item.imageFilename ?? null,
+              dietaryTags: normalizeDietaryTags(item.dietaryTags ?? []),
+              allergens: normalizeAllergens(item.allergens ?? []),
               modifierGroups: (item.modifierGroups ?? []).map((group) => ({
                 key: `grp-${group.id}`,
                 name: group.name,
@@ -86,6 +91,8 @@ export default async function Page({ params }: PageProps) {
                 description: '',
                 isAvailable: true,
                 imageFilename: null,
+                dietaryTags: [],
+                allergens: [],
                 modifierGroups: [],
               },
             ],

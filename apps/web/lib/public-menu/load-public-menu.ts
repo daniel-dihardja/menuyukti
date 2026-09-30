@@ -74,6 +74,8 @@ export async function loadPublicLocationMenu(
           sortOrder: item.sortOrder,
           description: item.description,
           imageFilename: filename,
+          dietaryTags: item.dietaryTags ?? [],
+          allergens: item.allergens ?? [],
           imageUrl,
         }
       }),

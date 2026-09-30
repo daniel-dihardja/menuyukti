@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from graphql.context import request_session_scope
 from graphql.data_sources import Location, Workspace
 from graphql.data_sources.models.menu import Menu, MenuCategory
+from graphql.schema.mappers.menu import allergens_to_gql, dietary_tags_to_gql
 from graphql.schema.types.public_location_menu import (
     PublicLocationMenuType,
     PublicMenuCategoryType,
@@ -37,6 +38,8 @@ def _public_categories(menu: Menu) -> list[PublicMenuCategoryType]:
                         sort_order=item.sort_order,
                         description=item.description or "",
                         image_filename=item.image_filename,
+                        dietary_tags=dietary_tags_to_gql(item.dietary_tags),
+                        allergens=allergens_to_gql(item.allergens),
                     )
                     for item in available
                 ],
