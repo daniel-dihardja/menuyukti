@@ -47,7 +47,7 @@ When implementing in **`apps/mobile-app`**, follow these skills in addition to t
 | Mock / demo data  | [`data/mockRestaurant.ts`](../../../apps/mobile-app/data/mockRestaurant.ts)                                                                                                                                     |
 | Expo config       | [`app.json`](../../../apps/mobile-app/app.json), [`package.json`](../../../apps/mobile-app/package.json)                                                                                                        |
 
-Commands: [AGENTS.md](../../../AGENTS.md) § Mobile.
+Commands: [`apps/mobile-app/package.json`](../../../apps/mobile-app/package.json) scripts (`pnpm --filter mobile-app …`).
 
 ## Boundaries
 
@@ -81,7 +81,6 @@ Brand theming uses **`BrandProvider`** + Warm Editorial tokens in `theme/tokens.
 
 ## Canonical docs
 
-- [`AGENTS.md`](../../../AGENTS.md)
 - Expo docs matching the app’s SDK (see `apps/mobile-app/package.json` `expo` version)
 
 ## Progressive disclosure

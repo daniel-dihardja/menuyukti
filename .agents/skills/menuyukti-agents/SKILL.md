@@ -39,7 +39,7 @@ When implementing in **`apps/agents`**, follow these skills in addition to this 
 
 Chat helpers under `core/chat/` also include `tools_registry.py`, `middleware.py`, `sse_stream.py`, `chat_run_config.py`, `limits.py`, `allowed_models.py`, `story_assets.py`, `history_messages.py`, `http_context.py`, `chart_data.py`, `present_weekly_instagram_schedule.py`, `generate_instagram_post_image.py`, and `generate_confirmation_gate.py`.
 
-Commands and ports: [AGENTS.md](../../../AGENTS.md).
+Commands and ports: [`apps/agents/README.md`](../../../apps/agents/README.md).
 
 ## Chat (primary product surface)
 
@@ -81,6 +81,5 @@ See [`apps/agents/README.md`](../../../apps/agents/README.md) and [`.env.example
 
 ## Canonical docs
 
-- [`AGENTS.md`](../../../AGENTS.md)
 - [`apps/agents/README.md`](../../../apps/agents/README.md)
 - [`.cursor/rules/agents-conventions.mdc`](../../../.cursor/rules/agents-conventions.mdc)

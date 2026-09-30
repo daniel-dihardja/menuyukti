@@ -54,7 +54,7 @@ See [`menuyukti-agents`](../menuyukti-agents/SKILL.md) and [`menuyukti-web`](../
 
 - **Schema, migrations, and SQLAlchemy** live **only** in **`apps/graphql`**.
 - **`apps/web`**, **`apps/mobile-app`**, and **`apps/agents`** must **not** add DB drivers, connection strings for app data, or migration scripts for product data.
-- Turbo may expose `db:*` scripts when the GraphQL package defines them; **ownership** stays in GraphQL — see [AGENTS.md](../../../AGENTS.md) and `apps/graphql` README / Makefile.
+- Turbo may expose `db:*` scripts when the GraphQL package defines them; **ownership** stays in GraphQL — see `apps/graphql` README / Makefile.
 
 ## pnpm versus uv
 
@@ -67,14 +67,14 @@ See [`menuyukti-agents`](../menuyukti-agents/SKILL.md) and [`menuyukti-web`](../
 
 ## Canonical references
 
-- [AGENTS.md](../../../AGENTS.md) — commands, ports, layout table.
 - [`.cursor/rules/project-overview.mdc`](../../../.cursor/rules/project-overview.mdc) — product context and layering.
 - [`.cursor/rules/monorepo-conventions.mdc`](../../../.cursor/rules/monorepo-conventions.mdc) — pnpm, Turbo, uv, formatting.
 - [`.agents/skills/turborepo/SKILL.md`](../turborepo/SKILL.md) — Turbo pipelines, caching, `--filter`.
+- App READMEs: `apps/web`, `apps/graphql`, `apps/agents`, `apps/mobile-app`.
 
 ## Non-goals
 
-- **Duplicating** full command matrices — link **AGENTS.md** instead.
+- **Duplicating** full command matrices — link app READMEs / monorepo conventions instead.
 - **Per-app implementation detail** — use the domain skills above.
 
 ## Progressive disclosure

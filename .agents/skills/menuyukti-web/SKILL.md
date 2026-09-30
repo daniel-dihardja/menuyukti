@@ -48,7 +48,7 @@ When improving an existing implementation (not only greenfield features), also r
 
 Named product features: see [`.agents/menuyukti-features.md`](../../menuyukti-features.md).
 
-Commands: [AGENTS.md](../../../AGENTS.md) § Web.
+Commands: [`apps/web/README.md`](../../../apps/web/README.md).
 
 ## Chat (`/advisor`)
 
@@ -76,7 +76,6 @@ Default authenticated path is **`/advisor`** (`defaultAuthenticatedPath`). Legac
 ## Canonical docs
 
 - [`apps/web/README.md`](../../../apps/web/README.md)
-- [`AGENTS.md`](../../../AGENTS.md)
 
 ## Progressive disclosure
 
