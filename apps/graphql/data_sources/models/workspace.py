@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.inventory_catalog_item import InventoryCatalogItem
     from graphql.data_sources.models.location import Location
     from graphql.data_sources.models.media_asset import MediaAsset, MediaCollection
+    from graphql.data_sources.models.service_subscription import ServiceSubscription
     from graphql.data_sources.models.visual_style import VisualStyle
 
 
@@ -70,6 +71,10 @@ class Workspace(Base):
         back_populates="workspace",
         cascade="all, delete-orphan",
         order_by="InventoryCatalogItem.name",
+    )
+    service_subscriptions: Mapped[list[ServiceSubscription]] = relationship(
+        back_populates="workspace",
+        cascade="all, delete-orphan",
     )
 
 

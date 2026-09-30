@@ -39,6 +39,10 @@ from .record_ai_usage_event import RecordAiUsageEventMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .replace_location_menu_items import ReplaceLocationMenuItemsMutation
 from .revoke_crm_device import RevokeCrmDeviceMutation
+from .service_subscriptions import (
+    ActivateServiceSubscriptionMutation,
+    CancelServiceSubscriptionMutation,
+)
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
@@ -54,8 +58,10 @@ from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
 __all__ = [
+    "ActivateServiceSubscriptionMutation",
     "AwardCrmCashbackMutation",
     "AddMediaToCollectionMutation",
+    "CancelServiceSubscriptionMutation",
     "InventoryCatalogMutations",
     "InventoryStockMutations",
     "LocationAreaMutations",

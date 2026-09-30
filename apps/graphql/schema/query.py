@@ -29,6 +29,7 @@ from graphql.schema.queries import (
     PublicLocationMenuQuery,
     RevenueTrendsQuery,
     SchedulerCalendarQuery,
+    ServiceSubscriptionsQuery,
     StylesQuery,
     WorkspaceQuery,
 )
@@ -66,6 +67,7 @@ class Query(
     CategoryMixQuery,
     RevenueTrendsQuery,
     WorkspaceQuery,
+    ServiceSubscriptionsQuery,
     InventoryCatalogQuery,
     InventoryStockQuery,
     InventoryStockMovementQuery,

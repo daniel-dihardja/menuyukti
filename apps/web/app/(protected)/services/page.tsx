@@ -5,12 +5,18 @@ import type { Metadata } from 'next'
 import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { ServicesSubscriptionsOverview } from '@/app/(protected)/services/_components/services-subscriptions-overview'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { LOCATION_MENU_QUERY, type LocationMenuData } from '@/lib/graphql/queries/location-menu'
+import {
+  MY_SERVICE_SUBSCRIPTIONS_QUERY,
+  SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_STATUS_ACTIVE,
+  type MyServiceSubscriptionsData,
+} from '@/lib/graphql/queries/service-subscriptions'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -154,31 +160,50 @@ export default async function ServicesPage() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const locationsData = await getCachedLocationsListData(userId)
-  const menuStatuses = await Promise.all(
-    locationsData.locations.map(async (location) => {
-      const locationId = Number(location.id)
-      if (!Number.isInteger(locationId) || locationId < 1) {
-        return false
-      }
-      const menuData = await graphqlQuery<LocationMenuData>(
-        LOCATION_MENU_QUERY,
-        { locationId },
-        userId,
-        'LocationMenu',
-      )
-      return menuData.locationMenu?.publicEnabled === true
-    }),
+  const [locationsData, subscriptionsData] = await Promise.all([
+    getCachedLocationsListData(userId),
+    graphqlQuery<MyServiceSubscriptionsData>(
+      MY_SERVICE_SUBSCRIPTIONS_QUERY,
+      { includeCanceled: false },
+      userId,
+      'MyServiceSubscriptions',
+    ),
+  ])
+
+  const locationNameById = new Map(
+    locationsData.locations.map((location) => [String(location.id), location.name]),
   )
-  const connectedCount = menuStatuses.filter(Boolean).length
+
+  const activeSubscriptions = subscriptionsData.myServiceSubscriptions.filter(
+    (row) => row.status === SERVICE_STATUS_ACTIVE,
+  )
+
+  const digitalMenuSubCount = activeSubscriptions.filter(
+    (row) => row.serviceKey === SERVICE_KEY_DIGITAL_MENU,
+  ).length
+
+  const overviewRows = activeSubscriptions.flatMap((row) => {
+    const locationId = Number(row.locationId)
+    if (!Number.isInteger(locationId) || locationId < 1) return []
+    return [
+      {
+        id: row.id,
+        locationId,
+        locationName: locationNameById.get(row.locationId) ?? row.locationId,
+        serviceKey: row.serviceKey,
+      },
+    ]
+  })
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">{t('headline')}</h1>
           <p className="text-muted-foreground max-w-2xl text-sm">{t('subtitle')}</p>
         </div>
+
+        <ServicesSubscriptionsOverview subscriptions={overviewRows} />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <CatalogCard
@@ -186,8 +211,8 @@ export default async function ServicesPage() {
             benefit={tCatalog('digitalMenu.benefit')}
             status={
               <Badge variant="secondary">
-                {connectedCount > 0
-                  ? tCatalog('digitalMenu.statusOn', { count: connectedCount })
+                {digitalMenuSubCount > 0
+                  ? tCatalog('digitalMenu.statusOn', { count: digitalMenuSubCount })
                   : tCatalog('digitalMenu.statusAvailable')}
               </Badge>
             }

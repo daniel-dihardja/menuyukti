@@ -10,6 +10,7 @@ from .post_page_media_version import PostPageMediaVersionType
 from .public_holiday import PublicHolidayType
 from .workspace import WorkspaceType
 from .workspace_membership import WorkspaceMembershipType
+from .service_subscription import ServiceSubscriptionType
 
 __all__ = [
     "LocationType",
@@ -28,6 +29,7 @@ __all__ = [
     "PostType",
     "PostPageType",
     "PostPageMediaVersionType",
+    "ServiceSubscriptionType",
     "WorkspaceType",
     "WorkspaceMembershipType",
 ]

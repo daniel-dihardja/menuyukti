@@ -100,7 +100,11 @@ export function DigitalMenuConsole({
       })
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { message?: string } | null
-        throw new Error(data?.message || t('errors.saveFailed'))
+        const message = data?.message || t('errors.saveFailed')
+        if (message.toLowerCase().includes('digital_menu subscription')) {
+          throw new Error(t('errors.subscriptionRequired'))
+        }
+        throw new Error(message)
       }
       const body = (await res.json()) as {
         publicSlug?: string | null

@@ -5,9 +5,20 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-from graphql.data_sources import Location, SessionLocal
+from graphql.data_sources import (
+    Location,
+    SessionLocal,
+    ServiceSubscription,
+    Workspace,
+    WorkspaceMembership,
+)
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.schema import schema
+from graphql.services.service_subscriptions import (
+    SERVICE_KEY_DIGITAL_MENU,
+    SERVICE_STATUS_ACTIVE,
+)
+from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
 _PUBLIC_MENU_QUERY = """
@@ -66,21 +77,49 @@ mutation UpdatePublicMenu(
 def menu_location_id():
     session = SessionLocal()
     try:
+        ws = Workspace(
+            name="Menu Pub WS",
+            owner_clerk_user_id=GRAPHQL_TEST_USER_ID,
+            plan=WORKSPACE_PLAN_PRO,
+        )
+        session.add(ws)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=ws.id,
+                clerk_user_id=GRAPHQL_TEST_USER_ID,
+                role="owner",
+            )
+        )
         loc = Location(
             name="Menu Pub Loc",
             clerk_user_id=GRAPHQL_TEST_USER_ID,
+            workspace_id=ws.id,
             currency="EUR",
             public_slug=None,
         )
         session.add(loc)
+        session.flush()
+        session.add(
+            ServiceSubscription(
+                workspace_id=ws.id,
+                location_id=loc.id,
+                service_key=SERVICE_KEY_DIGITAL_MENU,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
         session.commit()
         session.refresh(loc)
         lid = loc.id
+        wid = ws.id
     finally:
         session.close()
     yield lid
     session = SessionLocal()
     try:
+        session.query(ServiceSubscription).filter(
+            ServiceSubscription.location_id == lid
+        ).delete()
         session.query(MenuItem).filter(
             MenuItem.menu_id.in_(session.query(Menu.id).filter(Menu.location_id == lid))
         ).delete(synchronize_session=False)
@@ -89,6 +128,10 @@ def menu_location_id():
         ).delete(synchronize_session=False)
         session.query(Menu).filter(Menu.location_id == lid).delete()
         session.query(Location).filter(Location.id == lid).delete()
+        session.query(WorkspaceMembership).filter(
+            WorkspaceMembership.workspace_id == wid
+        ).delete()
+        session.query(Workspace).filter(Workspace.id == wid).delete()
         session.commit()
     finally:
         session.close()
@@ -179,7 +222,7 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
     assert pub["name"] == "Menu Pub Loc"
     assert pub["currency"] == "EUR"
     assert pub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
-    assert pub["workspaceId"] is None
+    assert pub["workspaceId"] is not None
     assert len(pub["categories"]) == 1
     items = pub["categories"][0]["items"]
     assert [item["name"] for item in items] == ["Espresso"]

@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { SERVICE_KEY_DIGITAL_MENU } from '@/lib/graphql/queries/service-subscriptions'
 import { routes } from '@/lib/routes'
 
 export type EnableLocationOption = {
@@ -41,12 +42,35 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
   const [locationId, setLocationId] = useState<string>(
     locations.length === 1 ? String(locations[0]!.id) : '',
   )
+  const [isActivating, setIsActivating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleConfirm() {
+  async function handleConfirm() {
     const id = Number(locationId)
     if (!Number.isInteger(id) || id < 1) return
-    onOpenChange(false)
-    router.push(routes.servicesDigitalMenuLocation(id))
+    setError(null)
+    setIsActivating(true)
+    try {
+      const res = await fetch('/api/services/subscriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locationId: id,
+          serviceKey: SERVICE_KEY_DIGITAL_MENU,
+        }),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null
+        throw new Error(body?.message || t('activateFailed'))
+      }
+      onOpenChange(false)
+      router.push(routes.servicesDigitalMenuLocation(id))
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('activateFailed'))
+    } finally {
+      setIsActivating(false)
+    }
   }
 
   return (
@@ -67,7 +91,7 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
         ) : (
           <Field>
             <FieldLabel htmlFor="enable-digital-menu-location">{t('locationLabel')}</FieldLabel>
-            <Select value={locationId} onValueChange={setLocationId}>
+            <Select value={locationId} onValueChange={setLocationId} disabled={isActivating}>
               <SelectTrigger id="enable-digital-menu-location" className="w-full">
                 <SelectValue placeholder={t('locationPlaceholder')} />
               </SelectTrigger>
@@ -82,13 +106,24 @@ export function EnableLocationDialog({ open, onOpenChange, locations }: Props) {
           </Field>
         )}
 
+        {error ? <p className="text-destructive text-sm">{error}</p> : null}
+
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isActivating}
+          >
             {t('cancel')}
           </Button>
           {locations.length > 0 ? (
-            <Button type="button" onClick={handleConfirm} disabled={!locationId}>
-              {t('confirm')}
+            <Button
+              type="button"
+              onClick={() => void handleConfirm()}
+              disabled={!locationId || isActivating}
+            >
+              {isActivating ? t('activating') : t('confirm')}
             </Button>
           ) : null}
         </DialogFooter>
