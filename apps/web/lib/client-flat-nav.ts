@@ -32,7 +32,9 @@ function sortByRank<T extends FlatNavItem>(
  * Split client sidebar into core workspace vs paid Services, preserving relative
  * order for any unexpected leftover keys after Services.
  */
-export function partitionClientNav<T extends FlatNavItem>(items: readonly T[]): {
+export function partitionClientNav<T extends FlatNavItem>(
+  items: readonly T[],
+): {
   core: T[]
   services: T[]
   other: T[]

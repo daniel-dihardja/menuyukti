@@ -107,7 +107,9 @@ export function DigitalMenuPdpClient({ locations, connectedLocations }: Props) {
                   <Badge variant="secondary">{t('connectedStatusOn')}</Badge>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href={routes.servicesDigitalMenuLocation(location.id)}>{t('manageCta')}</Link>
+                  <Link href={routes.servicesDigitalMenuLocation(location.id)}>
+                    {t('manageCta')}
+                  </Link>
                 </Button>
               </li>
             ))}

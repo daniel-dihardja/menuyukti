@@ -23,7 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function ServicePreviewFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-muted flex aspect-[16/9] items-center justify-center rounded-md">{children}</div>
+    <div className="bg-muted flex aspect-[16/9] items-center justify-center rounded-md">
+      {children}
+    </div>
   )
 }
 

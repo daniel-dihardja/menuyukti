@@ -188,7 +188,12 @@ export function DigitalMenuConsole({
                     readOnly
                     className="font-mono text-xs"
                   />
-                  <Button type="button" variant="outline" onClick={handleCopyUrl} disabled={loading}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCopyUrl}
+                    disabled={loading}
+                  >
                     {copied ? t('copiedPublicUrl') : t('copyPublicUrl')}
                   </Button>
                   <Button asChild type="button" variant="ghost">
@@ -261,7 +266,9 @@ export function DigitalMenuConsole({
               className="h-full w-full bg-background"
             />
           ) : (
-            <p className="text-muted-foreground px-4 text-center text-xs">{t('previewPlaceholder')}</p>
+            <p className="text-muted-foreground px-4 text-center text-xs">
+              {t('previewPlaceholder')}
+            </p>
           )}
         </div>
         {publicEnabled && publicPath ? (

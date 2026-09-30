@@ -28,9 +28,7 @@ export function ShopPortalHeader() {
 
   const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
 
-  const workspaceLinks = [
-    { href: routes.analytics.branches, label: t('backBranches') },
-  ] as const
+  const workspaceLinks = [{ href: routes.analytics.branches, label: t('backBranches') }] as const
 
   const productLinks = [
     { href: routes.analytics.branches, label: t('backBranches'), active: false },

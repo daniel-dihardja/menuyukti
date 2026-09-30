@@ -51,10 +51,7 @@ export default async function DigitalMenuServicePage() {
   return (
     <AnalyticsPageShell
       title={t('title')}
-      breadcrumbs={[
-        { label: tServices('title'), href: routes.services },
-        { label: t('title') },
-      ]}
+      breadcrumbs={[{ label: tServices('title'), href: routes.services }, { label: t('title') }]}
     >
       <DigitalMenuPdpClient locations={locations} connectedLocations={connectedLocations} />
     </AnalyticsPageShell>
