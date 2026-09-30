@@ -378,9 +378,7 @@ function LocationMenuItemRow({
             options={MENU_DIETARY_TAGS}
             selected={item.dietaryTags}
             disabled={loading}
-            onToggle={(value) =>
-              onUpdate({ dietaryTags: toggleInList(item.dietaryTags, value) })
-            }
+            onToggle={(value) => onUpdate({ dietaryTags: toggleInList(item.dietaryTags, value) })}
             labelFor={(value) => t(`dietary.${value}`)}
           />
           <AttributeChipGroup

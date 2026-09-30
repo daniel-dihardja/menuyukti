@@ -72,10 +72,7 @@ export function PublicMenuCatalog({ categories, currencyCode }: Props) {
   const [dietaryInclude, setDietaryInclude] = useState<Set<string>>(() => new Set())
   const [allergenExclude, setAllergenExclude] = useState<Set<string>>(() => new Set())
 
-  const allItems = useMemo(
-    () => categories.flatMap((category) => category.items),
-    [categories],
-  )
+  const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories])
   const present = useMemo(() => collectPresentMenuAttributes(allItems), [allItems])
 
   const filteredCategories = useMemo(() => {

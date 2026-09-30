@@ -133,10 +133,7 @@ function parseModifierGroups(raw: unknown): ParsedModifierGroup[] | null {
   return groups
 }
 
-function parseAttributeList(
-  raw: unknown,
-  isValid: (value: string) => boolean,
-): string[] | null {
+function parseAttributeList(raw: unknown, isValid: (value: string) => boolean): string[] | null {
   if (raw === undefined) return []
   if (!Array.isArray(raw)) return null
   const values: string[] = []
