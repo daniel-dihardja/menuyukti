@@ -45,6 +45,8 @@ describe('workspace-plan', () => {
     expect(PRO_NAV_KEYS.has('services')).toBe(true)
     expect(PRO_NAV_KEYS.has('inventar')).toBe(true)
     expect(PRO_NAV_KEYS.has('usage')).toBe(true)
+    expect(PRO_NAV_KEYS.has('chat')).toBe(true)
+    expect(PRO_NAV_KEYS.has('media')).toBe(true)
   })
 
   it('allows home, continue, and profile on free; pro allows operator routes', () => {

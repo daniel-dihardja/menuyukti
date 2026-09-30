@@ -8,9 +8,9 @@ import {
 
 describe('admin-only-features', () => {
   it('marks operator product nav keys as admin-only', () => {
-    expect(isNavItemHiddenFromNonAdmin('chat')).toBe(true)
+    expect(isNavItemHiddenFromNonAdmin('chat')).toBe(false)
     expect(isNavItemHiddenFromNonAdmin('playbooks')).toBe(true)
-    expect(isNavItemHiddenFromNonAdmin('media')).toBe(true)
+    expect(isNavItemHiddenFromNonAdmin('media')).toBe(false)
     expect(isNavItemHiddenFromNonAdmin('calendar')).toBe(true)
     expect(isNavItemHiddenFromNonAdmin('crm')).toBe(true)
     expect(isNavItemHiddenFromNonAdmin('crmApps')).toBe(true)
@@ -24,13 +24,13 @@ describe('admin-only-features', () => {
   })
 
   it('requires admin for newly gated route prefixes', () => {
-    expect(pathnameRequiresAdmin('/advisor')).toBe(true)
-    expect(pathnameRequiresAdmin('/advisor/thread-1')).toBe(true)
-    expect(pathnameRequiresAdmin('/agent')).toBe(true)
+    expect(pathnameRequiresAdmin('/advisor')).toBe(false)
+    expect(pathnameRequiresAdmin('/advisor/thread-1')).toBe(false)
+    expect(pathnameRequiresAdmin('/agent')).toBe(false)
     expect(pathnameRequiresAdmin('/playbooks')).toBe(true)
     expect(pathnameRequiresAdmin('/playbooks/holiday')).toBe(true)
-    expect(pathnameRequiresAdmin('/media')).toBe(true)
-    expect(pathnameRequiresAdmin('/content/legacy')).toBe(true)
+    expect(pathnameRequiresAdmin('/media')).toBe(false)
+    expect(pathnameRequiresAdmin('/content/legacy')).toBe(false)
     expect(pathnameRequiresAdmin('/calendar')).toBe(true)
     expect(pathnameRequiresAdmin('/crm')).toBe(true)
     expect(pathnameRequiresAdmin('/crm/apps')).toBe(true)
@@ -49,6 +49,8 @@ describe('admin-only-features', () => {
     expect(pathnameRequiresAdmin('/profile/team')).toBe(false)
     expect(pathnameRequiresAdmin('/team')).toBe(false)
     expect(pathnameRequiresAdmin('/home')).toBe(false)
+    expect(pathnameRequiresAdmin('/advisor')).toBe(false)
+    expect(pathnameRequiresAdmin('/media')).toBe(false)
   })
 
   it('keeps analytics action menu admin keys', () => {

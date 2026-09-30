@@ -13,10 +13,10 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
  *   landing (`/`); optional customer shell: `/home` + `/profile` under `app/(customer)/`
  *   (no operator sidebar).
  * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
- *   (`provisionWorkspace`). Operator surfaces that remain for clients: Branches,
- *   Inventar, Team, Dashboard (when flagged). Chat, playbooks, media, calendar,
- *   CRM, print shop, and usage are platform-admin only.
- *   Self-serve workspace creation is disabled.
+ *   (`provisionWorkspace`). Operator surfaces for clients include Branches,
+ *   Inventar, Team, Dashboard (when flagged), AI chat (`/advisor`), and media.
+ *   Playbooks, calendar, CRM, print shop, and usage remain platform-admin only
+ *   (see `config/admin-only-features.json`). Self-serve workspace creation is disabled.
  */
 
 /**
@@ -39,7 +39,7 @@ const FREE_PROFILE_BLOCKED_PREFIXES = ['/profile/team'] as const
 /**
  * Operator sidebar keys that pro plan unlocks vs free (contrast with free’s Home-only nav).
  * Kept for documentation and tests; {@link isNavKeyAllowedForPlan} allows all keys on pro
- * except `home` (guest-only). Admin-only keys (chat, playbooks, media, …) are filtered
+ * except `home` (guest-only). Admin-only keys (playbooks, calendar, CRM, …) are filtered
  * separately via `config/admin-only-features.json`.
  */
 export const PRO_NAV_KEYS = new Set([

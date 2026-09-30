@@ -2,7 +2,7 @@ import { GetObjectCommand, NoSuchKey } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 import { Readable } from 'node:stream'
 
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireProPlanApi } from '@/lib/pro-plan-api'
 import {
   getS3Bucket,
   getS3Client,
@@ -12,7 +12,7 @@ import {
 import { requireWorkspaceMediaAccess, resolveObjectKey } from '@/lib/assets/workspace-media-access'
 
 export async function GET(req: Request) {
-  const authz = await requireMenuyuktiAdminApi()
+  const authz = await requireProPlanApi()
   if (!authz.ok) return authz.response
   const { userId } = authz
 
