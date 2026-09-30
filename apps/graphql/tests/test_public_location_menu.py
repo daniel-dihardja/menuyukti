@@ -7,8 +7,8 @@ import asyncio
 import pytest
 from graphql.data_sources import (
     Location,
-    SessionLocal,
     ServiceSubscription,
+    SessionLocal,
     Workspace,
     WorkspaceMembership,
 )
