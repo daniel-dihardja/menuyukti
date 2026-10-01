@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
+import { SiteFooter } from '@/components/site-footer'
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('about')
   return {
@@ -40,10 +42,10 @@ export default async function AboutPage() {
   const serviceItems = t.raw('serviceItems') as Array<{ name: string; price: string }>
 
   return (
-    <div className="relative min-h-full bg-background text-foreground">
+    <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-grid-light" aria-hidden />
       <div className="pointer-events-none absolute inset-0 landing-atmosphere" aria-hidden />
-      <div className="relative mx-auto max-w-2xl px-6 py-12 md:py-16">
+      <div className="relative mx-auto w-full max-w-2xl flex-1 px-6 py-12 md:py-16">
         <article className="space-y-10">
           <header className="space-y-4">
             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{t('title')}</h1>
@@ -99,6 +101,8 @@ export default async function AboutPage() {
           </section>
         </article>
       </div>
+
+      <SiteFooter />
     </div>
   )
 }

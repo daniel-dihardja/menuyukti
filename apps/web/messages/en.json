@@ -252,6 +252,9 @@
     "mobileMenuSignIn": "Sign in",
     "signInMenuTriggerAria": "Sign in options"
   },
+  "siteFooter": {
+    "copyright": "© {year} Menuyukti"
+  },
   "about": {
     "metaTitle": "About Menuyukti",
     "metaDescription": "One platform for restaurant tools and services—activate what is needed, spend less, and stop juggling a fragmented stack.",
