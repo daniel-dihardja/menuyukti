@@ -8,12 +8,7 @@ import { MapPinIcon } from 'lucide-react'
 import { EnableLocationDialog } from '@/app/(protected)/services/digital-menu/_components/enable-location-dialog'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import {
   Empty,
   EmptyDescription,

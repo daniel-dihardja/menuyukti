@@ -31,11 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-function StackList({
-  items,
-}: {
-  items: ReadonlyArray<{ name: string; price: string }>
-}) {
+function StackList({ items }: { items: ReadonlyArray<{ name: string; price: string }> }) {
   return (
     <ul className="space-y-2">
       {items.map((item) => (
