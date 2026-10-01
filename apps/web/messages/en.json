@@ -237,6 +237,7 @@
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
+    "navAbout": "About",
     "navStudio": "IG Studio",
     "navChat": "Advisor",
     "navShop": "Print Shop",
@@ -250,6 +251,62 @@
     "mobileMenuDescription": "Studio for AI brand visuals and Print Shop for merch.",
     "mobileMenuSignIn": "Sign in",
     "signInMenuTriggerAria": "Sign in options"
+  },
+  "about": {
+    "metaTitle": "About Menuyukti",
+    "metaDescription": "One platform for restaurant tools and services—activate what is needed, spend less, and stop juggling a fragmented stack.",
+    "title": "Built for restaurant owners",
+    "intro": "Running a restaurant already means enough vendors. Most operators still pay separately for POS, inventory, loyalty, and marketing—with little that ties those tools together.",
+    "problemTitle": "This is a common scenario for restaurants:",
+    "problemItems": [
+      "A monthly POS subscription",
+      "Inventory tracked by hand in spreadsheets",
+      "A separate app for stamp cards or cashback",
+      "Someone else handling social media"
+    ],
+    "problemClose": "Different providers. Different invoices. Almost nothing working as one system.",
+    "solutionTitle": "One platform. Services restaurant owners can turn on or off.",
+    "solutionBody": "Menuyukti brings these pieces together under one provider—without forcing a rigid all-in-one suite. Restaurant owners activate what they need, combine services as they like, and switch them off when they don’t. Think of it like cloud services for a restaurant.",
+    "costTitle": "Designed to cost less",
+    "costBody": "Menuyukti exists to help restaurants spend less on operational software, marketing, and social media. Development stays lean, overhead stays low, and AI is used where it actually reduces cost—so those savings reach restaurant owners, not a bloated stack of tools.",
+    "stackTitle": "Start with the core",
+    "coreItems": [
+      {
+        "name": "POS + Inventory",
+        "price": "Free"
+      }
+    ],
+    "addonsTitle": "Add only what is needed",
+    "addonItems": [
+      {
+        "name": "Digital Menu",
+        "price": "Paid"
+      },
+      {
+        "name": "Stamp Card",
+        "price": "Paid"
+      },
+      {
+        "name": "Cashback",
+        "price": "Paid"
+      }
+    ],
+    "addonsMore": "More services are on the way.",
+    "servicesTitle": "Hands-on support when needed",
+    "serviceItems": [
+      {
+        "name": "Creative Services",
+        "price": "Paid"
+      },
+      {
+        "name": "Social Media Services",
+        "price": "Paid"
+      }
+    ],
+    "flexibility": "Everything runs on a monthly cycle—so a restaurant owner can turn a service on, pause another, and reshape the stack as the restaurant changes.",
+    "goalTitle": "The goal is simple",
+    "goalBody": "Spend less on fragmented tools and services—without giving up quality.",
+    "tagline": "Small services. One platform. The restaurant stack."
   },
   "accountMenu": {
     "triggerAria": "Open account menu",
@@ -433,7 +490,7 @@
     "skipToContent": "Skip to content",
     "hero": {
       "headline": "Open the menu on your phone.",
-      "subtitle": "Scan to open a living digital menu — no app required. This is a sample of the guest experience.",
+      "subtitle": "Scan to open a living digital menu — no app required.",
       "mobileCta": "Open a sample menu",
       "qr": {
         "ariaLabel": "QR code that opens a sample Menuyukti digital menu",
