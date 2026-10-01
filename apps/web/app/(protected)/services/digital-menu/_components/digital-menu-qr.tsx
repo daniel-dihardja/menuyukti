@@ -127,7 +127,7 @@ export function DigitalMenuQr({
       window.focus();
       window.print();
     });
-  <\/script>
+  </script>
 </body>
 </html>`)
     win.document.close()
