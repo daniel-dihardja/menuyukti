@@ -295,7 +295,7 @@
       }
     ],
     "addonsMore": "More services are on the way.",
-    "servicesTitle": "Hands-on support when needed",
+    "servicesTitle": "Hands-on and technical services when needed",
     "serviceItems": [
       {
         "name": "Creative Services",
@@ -303,6 +303,10 @@
       },
       {
         "name": "Social Media Services",
+        "price": "Paid"
+      },
+      {
+        "name": "Custom Development",
         "price": "Paid"
       }
     ],
