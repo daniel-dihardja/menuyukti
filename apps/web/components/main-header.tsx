@@ -18,6 +18,7 @@ export function MainHeader() {
   const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
+  const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
   const showSignIn = !isLogin && !isSignUp
   const [isScrolled, setIsScrolled] = React.useState(false)
@@ -49,6 +50,19 @@ export function MainHeader() {
             <Leaf className="size-5 shrink-0 text-primary" aria-hidden />
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
+
+          <nav aria-label={t('navAria')} className="flex min-w-0 items-center gap-1">
+            <Link
+              href={routes.about}
+              aria-current={isAbout ? 'page' : undefined}
+              className={cn(
+                'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                isAbout ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {t('navAbout')}
+            </Link>
+          </nav>
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">

@@ -9,6 +9,8 @@ import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
 import { routes } from '@/lib/routes'
 import { suggestMenuSlugFromName } from '@/lib/services/suggest-menu-slug'
+
+import { DigitalMenuQr, useClientAbsoluteUrl } from './digital-menu-qr'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +67,10 @@ export function DigitalMenuConsole({
   const needsPublishSave = publicEnabled && !persistedPublicEnabled
   // Show the draft URL while editing; Open/Copy only use livePublicPath.
   const displayPublicPath = livePublicPath ?? draftPublicPath
+  const absoluteLiveUrl = useClientAbsoluteUrl(livePublicPath)
+  const slugDraftChanged =
+    Boolean(livePublicPath) && publicSlug.trim() !== persistedPublicSlug.trim()
+  const qrDownloadFileName = `${persistedPublicSlug.trim() || 'menu'}-menu-qr.png`
 
   function handleEnabledChange(next: boolean) {
     if (!next && publicEnabled) {
@@ -228,6 +234,21 @@ export function DigitalMenuConsole({
                     </Button>
                   )}
                 </div>
+                {absoluteLiveUrl ? (
+                  <DigitalMenuQr
+                    absoluteUrl={absoluteLiveUrl}
+                    locationName={locationName}
+                    downloadFileName={qrDownloadFileName}
+                    showSlugChangedHint={slugDraftChanged}
+                    title={t('qrTitle')}
+                    cta={t('qrCta')}
+                    downloadPngLabel={t('qrDownloadPng')}
+                    printLabel={t('qrPrint')}
+                    ariaLabel={t('qrAriaLabel')}
+                    slugChangedHint={t('qrSlugChangedHint')}
+                    printTitle={t('qrPrintTitle', { locationName })}
+                  />
+                ) : null}
               </Field>
             ) : null}
           </FieldGroup>
@@ -282,9 +303,9 @@ export function DigitalMenuConsole({
         </div>
       </div>
 
-      <aside className="border-border flex w-full max-w-sm flex-col gap-3 rounded-lg border p-4 lg:sticky lg:top-4">
-        <h2 className="text-base font-semibold">{t('previewTitle')}</h2>
-        <div className="bg-muted mx-auto flex aspect-[9/16] w-full max-w-[220px] items-center justify-center overflow-hidden rounded-2xl border border-border">
+      <aside className="border-border flex h-[calc(100svh-6rem)] w-full max-w-md flex-col gap-3 rounded-lg border p-4 lg:sticky lg:top-4 lg:h-[calc(100svh-5.5rem)] lg:w-[22rem] lg:max-w-none lg:shrink-0">
+        <h2 className="shrink-0 text-base font-semibold">{t('previewTitle')}</h2>
+        <div className="bg-muted flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden rounded-2xl border border-border">
           {livePublicPath ? (
             <iframe
               title={t('previewTitle')}
@@ -298,7 +319,7 @@ export function DigitalMenuConsole({
           )}
         </div>
         {livePublicPath ? (
-          <Button asChild variant="secondary" className="w-full">
+          <Button asChild variant="secondary" className="w-full shrink-0">
             <Link href={livePublicPath} target="_blank" rel="noreferrer">
               {t('previewOpen')}
             </Link>

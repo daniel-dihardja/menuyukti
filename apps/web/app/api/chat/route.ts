@@ -5,7 +5,7 @@ import { formatVisualizationDataMarkdownSection } from '@/lib/chat/format-visual
 import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
 import { buildAgentsHeaders } from '@/lib/agents/headers'
 import { getPythonAgentsUrl } from '@/lib/config'
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireProPlanApi } from '@/lib/pro-plan-api'
 import { pushPendingToolCallId, resolveToolEndCallId } from '@/lib/chat/pending-tool-call-ids'
 import { pythonStreamErrorText } from '@/lib/chat/python-stream-error'
 import { chatRequestBodySchema } from './schema'
@@ -210,7 +210,7 @@ async function parsePythonSSEAndForward(
 
 export async function POST(req: Request) {
   const bodyPromise = req.json().catch(() => null)
-  const authz = await requireMenuyuktiAdminApi()
+  const authz = await requireProPlanApi()
   if (!authz.ok) {
     return authz.response
   }

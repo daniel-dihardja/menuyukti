@@ -3,10 +3,19 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { MapPinIcon } from 'lucide-react'
 
 import { EnableLocationDialog } from '@/app/(protected)/services/digital-menu/_components/enable-location-dialog'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
 import { routes } from '@/lib/routes'
 
 export type ConnectedLocation = {
@@ -46,15 +55,7 @@ export function DigitalMenuPdpClient({ locations, connectedLocations }: Props) {
           <div className="flex flex-col gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
             <p className="text-muted-foreground max-w-xl text-sm">{t('heroPitch')}</p>
-            <div className="flex flex-col gap-0.5 pt-1">
-              <p className="text-lg font-semibold tracking-tight">
-                {t('pricing.amount')}
-                <span className="text-muted-foreground text-sm font-normal">
-                  {t('pricing.period')}
-                </span>
-              </p>
-              <p className="text-muted-foreground text-xs">{t('pricing.note')}</p>
-            </div>
+            <p className="text-muted-foreground pt-1 text-sm">{t('pricingComingSoon')}</p>
           </div>
           <Button type="button" className="w-fit" onClick={() => setEnableOpen(true)}>
             {t('turnOnCta')}
@@ -64,7 +65,7 @@ export function DigitalMenuPdpClient({ locations, connectedLocations }: Props) {
 
       <section className="flex max-w-xl flex-col gap-3">
         <h2 className="text-base font-semibold">{t('includedTitle')}</h2>
-        <ul className="text-muted-foreground list-disc space-y-1.5 pl-5 text-sm">
+        <ul className="text-muted-foreground flex list-disc flex-col gap-1.5 pl-5 text-sm">
           <li>{t('included.link')}</li>
           <li>{t('included.catalog')}</li>
           <li>{t('included.qr')}</li>
@@ -74,27 +75,40 @@ export function DigitalMenuPdpClient({ locations, connectedLocations }: Props) {
       <section className="flex max-w-2xl flex-col gap-4">
         <h2 className="text-base font-semibold">{t('addonsTitle')}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="border-border flex flex-col gap-2 rounded-lg border p-4">
-            <h3 className="text-sm font-medium">{t('addons.header.title')}</h3>
-            <p className="text-muted-foreground text-xs">{t('addons.header.description')}</p>
-          </div>
-          <div className="border-border flex flex-col gap-2 rounded-lg border p-4 opacity-80">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-sm font-medium">{t('addons.favorites.title')}</h3>
-              <Badge variant="outline">{t('addons.favorites.comingSoon')}</Badge>
-            </div>
-            <p className="text-muted-foreground text-xs">{t('addons.favorites.description')}</p>
-          </div>
+          <Card className="gap-2 py-4 shadow-none">
+            <CardHeader className="px-4">
+              <CardTitle className="text-sm font-medium">{t('addons.header.title')}</CardTitle>
+              <CardDescription className="text-xs">
+                {t('addons.header.description')}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+          <Card className="gap-2 py-4 shadow-none">
+            <CardHeader className="px-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="text-sm font-medium">{t('addons.favorites.title')}</CardTitle>
+                <Badge variant="outline">{t('addons.favorites.comingSoon')}</Badge>
+              </div>
+              <CardDescription className="text-xs">
+                {t('addons.favorites.description')}
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
       </section>
 
       <section className="flex max-w-2xl flex-col gap-4">
         <h2 className="text-base font-semibold">{t('connectedTitle')}</h2>
         {connectedLocations.length === 0 ? (
-          <div className="border-border flex flex-col gap-2 rounded-lg border border-dashed p-4">
-            <p className="text-sm">{t('connectedEmpty')}</p>
-            <p className="text-muted-foreground text-xs">{t('connectedEmptyHint')}</p>
-          </div>
+          <Empty className="border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MapPinIcon />
+              </EmptyMedia>
+              <EmptyTitle>{t('connectedEmpty')}</EmptyTitle>
+              <EmptyDescription>{t('connectedEmptyHint')}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <ul className="border-border divide-border divide-y rounded-lg border">
             {connectedLocations.map((location) => (

@@ -9,13 +9,21 @@ import { ServicesSubscriptionsOverview } from '@/app/(protected)/services/_compo
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card'
+import { Separator } from '@workspace/ui/components/separator'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
-  SERVICE_KEY_CASHBACK,
   SERVICE_KEY_DIGITAL_MENU,
-  SERVICE_KEY_STAMP_CARD,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
@@ -87,77 +95,65 @@ type CatalogCardProps = {
   title: string
   benefit: string
   status: ReactNode
-  priceAmount: string
-  pricingPeriod: string
-  pricingNote: string
+  pricingComingSoon: string
   preview: ReactNode
   href?: string
   ctaLabel?: string
-  muted?: boolean
 }
 
 function CatalogCard({
   title,
   benefit,
   status,
-  priceAmount,
-  pricingPeriod,
-  pricingNote,
+  pricingComingSoon,
   preview,
   href,
   ctaLabel,
-  muted = false,
 }: CatalogCardProps) {
-  const body = (
-    <>
-      <ServicePreviewFrame>{preview}</ServicePreviewFrame>
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          {status}
-        </div>
-        <p className="text-muted-foreground text-sm">{benefit}</p>
-        <div className="flex flex-col gap-0.5">
-          <p className="text-sm font-semibold tracking-tight">
-            {priceAmount}
-            <span className="text-muted-foreground font-normal">{pricingPeriod}</span>
-          </p>
-          <p className="text-muted-foreground text-xs">{pricingNote}</p>
-        </div>
-        {href && ctaLabel ? (
-          <Button asChild variant="secondary" className="mt-1 w-fit" tabIndex={-1}>
+  const card = (
+    <Card
+      className={cn(
+        'h-full gap-4 py-0',
+        href &&
+          'hover:bg-muted/40 focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none',
+      )}
+    >
+      <CardContent className="pt-5">
+        <ServicePreviewFrame>{preview}</ServicePreviewFrame>
+      </CardContent>
+      <CardHeader className="pt-0">
+        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardAction>{status}</CardAction>
+        <CardDescription className="text-pretty">{benefit}</CardDescription>
+        <p className="text-muted-foreground text-sm">{pricingComingSoon}</p>
+      </CardHeader>
+      {href && ctaLabel ? (
+        <CardFooter className="pb-5">
+          <Button asChild variant="secondary" className="w-fit" tabIndex={-1}>
             <span>
               {ctaLabel}
-              <ChevronRight className="size-4" />
+              <ChevronRight data-icon="inline-end" />
             </span>
           </Button>
-        ) : null}
-      </div>
-    </>
-  )
-
-  const className = cn(
-    'border-border flex flex-col gap-4 rounded-lg border p-5',
-    muted && 'opacity-90',
-    href &&
-      'hover:bg-muted/40 focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none',
+        </CardFooter>
+      ) : null}
+    </Card>
   )
 
   if (href) {
     return (
-      <Link href={href} className={className}>
-        {body}
+      <Link href={href} className="block h-full rounded-xl focus-visible:outline-none">
+        {card}
       </Link>
     )
   }
 
-  return <div className={className}>{body}</div>
+  return card
 }
 
 export default async function ServicesPage() {
   const t = await getTranslations('services')
   const tCatalog = await getTranslations('services.catalog')
-  const tSubs = await getTranslations('services.subscriptions')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
@@ -188,24 +184,17 @@ export default async function ServicesPage() {
   const overviewRows = activeSubscriptions.flatMap((row) => {
     const locationId = Number(row.locationId)
     if (!Number.isInteger(locationId) || locationId < 1) return []
-    const priceAmount =
-      row.serviceKey === SERVICE_KEY_DIGITAL_MENU
-        ? tSubs('prices.digital_menu')
-        : row.serviceKey === SERVICE_KEY_STAMP_CARD
-          ? tSubs('prices.stamp_card')
-          : row.serviceKey === SERVICE_KEY_CASHBACK
-            ? tSubs('prices.cashback')
-            : null
     return [
       {
         id: row.id,
         locationId,
         locationName: locationNameById.get(row.locationId) ?? row.locationId,
         serviceKey: row.serviceKey,
-        priceLabel: priceAmount ? tSubs('pricePerMonth', { amount: priceAmount }) : null,
       },
     ]
   })
+
+  const pricingComingSoon = tCatalog('pricingComingSoon')
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
@@ -216,6 +205,8 @@ export default async function ServicesPage() {
         </div>
 
         <ServicesSubscriptionsOverview subscriptions={overviewRows} />
+
+        <Separator />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <CatalogCard
@@ -228,9 +219,7 @@ export default async function ServicesPage() {
                   : tCatalog('digitalMenu.statusAvailable')}
               </Badge>
             }
-            priceAmount={tCatalog('digitalMenu.priceAmount')}
-            pricingPeriod={tCatalog('pricingPeriod')}
-            pricingNote={tCatalog('pricingNote')}
+            pricingComingSoon={pricingComingSoon}
             preview={<DigitalMenuPreview />}
             href={routes.servicesDigitalMenu}
             ctaLabel={tCatalog('viewCta')}
@@ -239,21 +228,15 @@ export default async function ServicesPage() {
             title={tCatalog('stampCard.title')}
             benefit={tCatalog('stampCard.benefit')}
             status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
-            priceAmount={tCatalog('stampCard.priceAmount')}
-            pricingPeriod={tCatalog('pricingPeriod')}
-            pricingNote={tCatalog('pricingNote')}
+            pricingComingSoon={pricingComingSoon}
             preview={<StampCardPreview />}
-            muted
           />
           <CatalogCard
             title={tCatalog('cashback.title')}
             benefit={tCatalog('cashback.benefit')}
             status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
-            priceAmount={tCatalog('cashback.priceAmount')}
-            pricingPeriod={tCatalog('pricingPeriod')}
-            pricingNote={tCatalog('pricingNote')}
+            pricingComingSoon={pricingComingSoon}
             preview={<CashbackPreview />}
-            muted
           />
         </div>
       </div>

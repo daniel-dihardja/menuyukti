@@ -9,7 +9,7 @@ import {
   hydrateAttachedMediaInMessages,
 } from '@/lib/chat/hydrate-attached-media-urls'
 import { getPythonAgentsUrl } from '@/lib/config'
-import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
+import { requireProPlanApi } from '@/lib/pro-plan-api'
 import { presignPhotoUrlsByName } from '@/lib/media/presign-photo-urls'
 
 const uuidSchema = z.string().uuid()
@@ -50,7 +50,7 @@ async function agentsFetchError(
 }
 
 export async function GET(req: Request) {
-  const authz = await requireMenuyuktiAdminApi()
+  const authz = await requireProPlanApi()
   if (!authz.ok) {
     return authz.response
   }
@@ -111,7 +111,7 @@ export async function GET(req: Request) {
 
 /** Delete LangGraph chat checkpoints for an agent thread. */
 export async function DELETE(req: Request) {
-  const authz = await requireMenuyuktiAdminApi()
+  const authz = await requireProPlanApi()
   if (!authz.ok) {
     return authz.response
   }

@@ -95,6 +95,7 @@ export const routes = {
   ssoCallback: '/sso-callback',
 
   /** Public marketing / legal (not behind app shell). */
+  about: '/about',
   privacy: '/privacy',
   terms: '/terms',
 

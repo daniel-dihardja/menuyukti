@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 
 import { LandingHeroHeadline } from '@/app/_components/landing/landing-hero-headline'
 import { LandingSampleMenuQr } from '@/app/_components/landing/landing-sample-menu-qr'
+import { SiteFooter } from '@/components/site-footer'
 import { getLandingSampleMenu } from '@/lib/landing/sample-menu'
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
@@ -23,10 +24,10 @@ export default async function LandingPage() {
         {t('skipToContent')}
       </a>
 
-      <main id="main-content" className="flex min-h-full min-w-0 w-full flex-1 flex-col">
+      <main id="main-content" className="flex min-w-0 w-full flex-1 flex-col">
         <section
           className={cn(
-            'relative flex min-h-full w-full min-w-0 flex-1 flex-col justify-center',
+            'relative flex w-full min-w-0 flex-1 flex-col justify-center',
             'bg-background font-sans',
             horizontalPadding,
             'py-12 md:py-16',
@@ -87,6 +88,8 @@ export default async function LandingPage() {
           </div>
         </section>
       </main>
+
+      <SiteFooter />
     </div>
   )
 }
