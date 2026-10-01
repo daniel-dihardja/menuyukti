@@ -3,8 +3,35 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { InfoIcon, PackageIcon } from 'lucide-react'
 
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
+import { Spinner } from '@workspace/ui/components/spinner'
 import {
   SERVICE_KEY_CASHBACK,
   SERVICE_KEY_DIGITAL_MENU,
@@ -17,8 +44,6 @@ export type SubscriptionOverviewRow = {
   locationId: number
   locationName: string
   serviceKey: string
-  /** Pre-resolved catalog price label, e.g. "$9/month". */
-  priceLabel: string | null
 }
 
 type Props = {
@@ -42,6 +67,7 @@ export function ServicesSubscriptionsOverview({ subscriptions: initial }: Props)
   const [rows, setRows] = useState(initial)
   const [error, setError] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [confirmRow, setConfirmRow] = useState<SubscriptionOverviewRow | null>(null)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -51,6 +77,7 @@ export function ServicesSubscriptionsOverview({ subscriptions: initial }: Props)
   async function handleCancel(row: SubscriptionOverviewRow) {
     setError(null)
     setPendingId(row.id)
+    setConfirmRow(null)
     try {
       const res = await fetch('/api/services/subscriptions', {
         method: 'DELETE',
@@ -75,55 +102,111 @@ export function ServicesSubscriptionsOverview({ subscriptions: initial }: Props)
     }
   }
 
+  const confirmServiceKey = confirmRow ? serviceLabelKey(confirmRow.serviceKey) : null
+  const confirmServiceLabel = confirmRow
+    ? confirmServiceKey
+      ? t(`serviceLabels.${confirmServiceKey}`)
+      : confirmRow.serviceKey
+    : ''
+
   return (
-    <section className="flex max-w-2xl flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold">{t('title')}</h2>
-        <p className="text-muted-foreground text-sm">{t('subtitle')}</p>
-        <p className="text-muted-foreground text-xs">{t('billingNote')}</p>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{t('title')}</CardTitle>
+        <CardDescription>{t('subtitle')}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <Alert>
+          <InfoIcon />
+          <AlertTitle>{t('billingNoteTitle')}</AlertTitle>
+          <AlertDescription>{t('billingNote')}</AlertDescription>
+        </Alert>
 
-      {rows.length === 0 ? (
-        <div className="border-border flex flex-col gap-1 rounded-lg border border-dashed p-4">
-          <p className="text-sm">{t('empty')}</p>
-          <p className="text-muted-foreground text-xs">{t('emptyHint')}</p>
-        </div>
-      ) : (
-        <ul className="border-border divide-border divide-y rounded-lg border">
-          {rows.map((row) => {
-            const key = serviceLabelKey(row.serviceKey)
-            const label = key ? t(`serviceLabels.${key}`) : row.serviceKey
-            const busy = isPending || pendingId === row.id
-            return (
-              <li
-                key={row.id}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-              >
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span className="text-sm font-medium">{label}</span>
-                    {row.priceLabel ? (
-                      <span className="text-sm font-semibold tracking-tight">{row.priceLabel}</span>
-                    ) : null}
-                  </div>
-                  <span className="text-muted-foreground text-xs">{row.locationName}</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => void handleCancel(row)}
+        {rows.length === 0 ? (
+          <Empty className="border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <PackageIcon />
+              </EmptyMedia>
+              <EmptyTitle>{t('empty')}</EmptyTitle>
+              <EmptyDescription>{t('emptyHint')}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <ul className="border-border divide-border divide-y rounded-lg border">
+            {rows.map((row) => {
+              const key = serviceLabelKey(row.serviceKey)
+              const label = key ? t(`serviceLabels.${key}`) : row.serviceKey
+              const busy = isPending || pendingId === row.id
+              return (
+                <li
+                  key={row.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
                 >
-                  {pendingId === row.id ? t('canceling') : t('cancel')}
-                </Button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-sm font-medium">{label}</span>
+                    <span className="text-muted-foreground text-xs">{row.locationName}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => setConfirmRow(row)}
+                  >
+                    {pendingId === row.id ? (
+                      <>
+                        <Spinner data-icon="inline-start" />
+                        {t('canceling')}
+                      </>
+                    ) : (
+                      t('cancel')
+                    )}
+                  </Button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
 
-      {error ? <p className="text-destructive text-sm">{error}</p> : null}
-    </section>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertTitle>{t('cancelFailed')}</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
+      </CardContent>
+
+      <AlertDialog
+        open={confirmRow !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmRow(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('cancelConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmRow
+                ? t('cancelConfirmDescription', {
+                    service: confirmServiceLabel,
+                    location: confirmRow.locationName,
+                  })
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancelConfirmCancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmRow) void handleCancel(confirmRow)
+              }}
+            >
+              {t('cancelConfirmAction')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   )
 }

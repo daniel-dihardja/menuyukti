@@ -1189,56 +1189,47 @@
     "subscriptions": {
       "title": "Your subscriptions",
       "subtitle": "Active services for your locations.",
+      "billingNoteTitle": "Billing not connected",
       "billingNote": "Billing is not connected yet — activate and cancel freely while we prepare payments.",
       "empty": "No active service subscriptions.",
       "emptyHint": "Turn on Digital Menu for a location to start a subscription.",
       "cancel": "Cancel",
       "canceling": "Canceling…",
       "cancelFailed": "Could not cancel this subscription.",
-      "pricePerMonth": "{amount}/month",
+      "cancelConfirmTitle": "Cancel this subscription?",
+      "cancelConfirmDescription": "This turns off {service} for {location}. You can turn it back on later.",
+      "cancelConfirmAction": "Cancel subscription",
+      "cancelConfirmCancel": "Keep subscription",
       "serviceLabels": {
         "digital_menu": "Digital Menu",
         "stamp_card": "Stamp Card",
         "cashback": "Cashback"
-      },
-      "prices": {
-        "digital_menu": "$9",
-        "stamp_card": "$7",
-        "cashback": "$12"
       }
     },
     "catalog": {
       "comingSoon": "Coming soon",
       "viewCta": "View",
-      "pricingPeriod": "/ month",
-      "pricingNote": "Per location per month. Placeholder pricing — not billed yet.",
+      "pricingComingSoon": "Pricing coming soon",
       "digitalMenu": {
         "title": "Digital Menu",
         "benefit": "A live guest menu with a shareable link — no app required.",
         "statusAvailable": "Available",
-        "statusOn": "On · {count, plural, one {# location} other {# locations}}",
-        "priceAmount": "$9"
+        "statusOn": "On · {count, plural, one {# location} other {# locations}}"
       },
       "stampCard": {
         "title": "Stamp Card",
-        "benefit": "Digital loyalty stamps guests collect toward a free item — classic punch-card rewards, without paper cards.",
-        "priceAmount": "$7"
+        "benefit": "Digital loyalty stamps guests collect toward a free item — classic punch-card rewards, without paper cards."
       },
       "cashback": {
         "title": "Cashback",
-        "benefit": "Reward returning guests with a cashback balance they can redeem on a later visit.",
-        "priceAmount": "$12"
+        "benefit": "Reward returning guests with a cashback balance they can redeem on a later visit."
       }
     },
     "digitalMenu": {
       "title": "Digital Menu",
       "description": "Publish a guest-facing digital menu for a location. Guests open a link or QR code — no app required.",
       "heroPitch": "Turn your location menu into a living guest experience with a public link you control.",
-      "pricing": {
-        "amount": "$9",
-        "period": "/ month",
-        "note": "Per location per month. Placeholder pricing — not billed yet."
-      },
+      "pricingComingSoon": "Pricing coming soon",
       "turnOnCta": "Turn on for a location",
       "includedTitle": "What’s included",
       "included": {
