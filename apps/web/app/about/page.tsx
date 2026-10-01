@@ -2,13 +2,32 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
 import { SiteFooter } from '@/components/site-footer'
+import { routes } from '@/lib/routes'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('about')
+  const title = t('metaTitle')
+  const description = t('metaDescription')
+
   return {
-    title: t('metaTitle'),
-    description: t('metaDescription'),
+    title,
+    description,
     robots: { index: true, follow: true },
+    alternates: {
+      canonical: routes.about,
+    },
+    openGraph: {
+      title,
+      description,
+      url: routes.about,
+      siteName: 'Menuyukti',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
   }
 }
 
