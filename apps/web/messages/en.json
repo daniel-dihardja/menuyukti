@@ -253,7 +253,9 @@
     "signInMenuTriggerAria": "Sign in options"
   },
   "siteFooter": {
-    "copyright": "© {year} Menuyukti"
+    "copyright": "© {year} Menuyukti",
+    "navAria": "Site",
+    "about": "About"
   },
   "about": {
     "metaTitle": "About Menuyukti — Restaurant tools in one platform",
