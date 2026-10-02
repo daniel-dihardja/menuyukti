@@ -3543,10 +3543,6 @@
           "generateError": "Couldn't generate the image. Try again."
         }
       },
-      "sidePanel": {
-        "chatTab": "Chat",
-        "visualizationsTab": "Visualizations"
-      },
       "visualizations": {
         "panelTitle": "Charts",
         "emptyTitle": "No charts yet",
@@ -5276,15 +5272,11 @@
       "generate": "Generate",
       "generateError": "Couldn't generate the image. Try again."
     },
-    "sidePanel": {
-      "chatTab": "Chat",
-      "visualizationsTab": "Visualizations",
-      "openVisualizationsAria": "Open visualizations",
-      "visualizationsDrawerDescription": "Explore sales analytics charts alongside your chat.",
-      "closeVisualizations": "Close"
-    },
     "visualizations": {
       "panelTitle": "Charts",
+      "artifactTitle": "Charts",
+      "artifactHint": "Open sales analytics charts",
+      "artifactDescription": "Add and explore sales analytics charts alongside your chat.",
       "emptyTitle": "No charts yet",
       "emptyDescription": "Add a chart from the catalog to explore sales analytics alongside your plan.",
       "addButton": "Add visualization",

@@ -14,8 +14,8 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
  *   (no operator sidebar).
  * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
  *   (`provisionWorkspace`). Operator surfaces for clients include Branches,
- *   Inventar, Team, Dashboard (when flagged), AI chat (`/advisor`), and media.
- *   Playbooks, calendar, CRM, print shop, and usage remain platform-admin only
+ *   Inventar, Team, Dashboard (when flagged), AI chat (`/advisor`), media, and AI usage.
+ *   Playbooks, calendar, CRM, and print shop remain platform-admin only
  *   (see `config/admin-only-features.json`). Self-serve workspace creation is disabled.
  */
 
