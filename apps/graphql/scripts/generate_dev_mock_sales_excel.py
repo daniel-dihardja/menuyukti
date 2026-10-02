@@ -1,12 +1,12 @@
 """Generate a synthetic 1-month ESB sales mock for make dev-data.
 
 Uses a SNABB Sales Recapitulation Detail Report only for workbook shell
-(A1 title, metadata row layout, header columns). Menu items are Warung Sunda
-dishes aligned with inventar pantry seeds (Beras, Tahu, Kangkung, Pecel,
-Santan, Gula Aren) — not a copy of live SNABB cafe sales.
+(A1 title, metadata row layout, header columns). Menu items are a typical
+Berlin cafe catalog (Kaffeestube Mitte) — not inventar-aligned Warung dishes
+and not a copy of live SNABB cafe sales.
 
 Also writes a matching ``dev_mock_menu_cogs.json`` so menu-engineering stars
-and combo lift work with the analytics seed on Warung Sunda Lembur.
+and combo lift work with the analytics seed on Kaffeestube Mitte.
 """
 
 from __future__ import annotations
@@ -44,6 +44,20 @@ PERIOD_END = date(2026, 7, 31)
 RNG_SEED = 20260701
 STRONG_LIFT_THRESHOLD = 1.5
 BILLS_PER_DAY = 55
+LOCATION_NAME = "Kaffeestube Mitte"
+LOCATION_CITY = "Berlin"
+LOCATION_BRAND = "Kaffeestube"
+
+# Mon=0 … Sun=6 — Sat busy, Tue/Sun softer for clear slot contrast.
+WEEKDAY_BILL_MULTIPLIER: dict[int, float] = {
+    0: 1.0,  # Mon
+    1: 0.75,  # Tue
+    2: 0.95,  # Wed
+    3: 1.05,  # Thu
+    4: 1.15,  # Fri
+    5: 1.35,  # Sat
+    6: 0.7,  # Sun
+}
 
 # Column order copied from SNABB ESB exports (structure only).
 ESB_HEADERS: list[str] = [
@@ -96,6 +110,9 @@ ESB_HEADERS: list[str] = [
 ]
 
 
+Daypart = str  # breakfast | lunch | afternoon | any
+
+
 @dataclass(frozen=True)
 class MockMenuItem:
     menu: str
@@ -105,172 +122,177 @@ class MockMenuItem:
     price: float
     cogs: float
     role: str  # star | plow | puzzle | filler | side
-    # Inventar catalog ingredient(s) this dish is meant to consume (dev_seed_inventar).
-    inventar_ingredients: tuple[str, ...]
+    # Preferred dayparts for heatmap contrast (empty / {"any"} = all dayparts).
+    daypart_bias: frozenset[Daypart] = frozenset({"any"})
 
 
-# Warung Sunda dishes aligned with inventar pantry seeds:
-# Beras Cianjur, Tahu Bandung, Kangkung, Bumbu Pecel, Santan Kelapa, Gula Aren.
+def _bias(*parts: Daypart) -> frozenset[Daypart]:
+    return frozenset(parts)
+
+
+# Berlin cafe catalog (EUR). Roles tuned so smoke checks yield stars + strong lift.
 MOCK_CATALOG: tuple[MockMenuItem, ...] = (
     MockMenuItem(
-        "Nasi Timbel",
-        "MAKANAN",
-        "NASI",
-        "WSL-FD-001",
-        12000.0,
-        3500.0,
+        "Flat White",
+        "COFFEE",
+        "ESPRESSO",
+        "KSM-CF-001",
+        3.8,
+        0.9,
         "star",
-        ("Beras Cianjur",),
+        _bias("breakfast"),
     ),
     MockMenuItem(
-        "Tahu Goreng",
-        "MAKANAN",
-        "LAUK",
-        "WSL-FD-002",
-        10000.0,
-        2800.0,
+        "Cappuccino",
+        "COFFEE",
+        "ESPRESSO",
+        "KSM-CF-002",
+        3.6,
+        0.85,
         "star",
-        ("Tahu Bandung",),
+        _bias("breakfast"),
     ),
     MockMenuItem(
-        "Tumis Kangkung",
-        "MAKANAN",
-        "SAYUR",
-        "WSL-FD-003",
-        12000.0,
-        3200.0,
+        "Avocado Toast",
+        "FOOD",
+        "TOAST",
+        "KSM-FD-001",
+        9.5,
+        3.2,
         "star",
-        ("Kangkung",),
+        _bias("breakfast", "lunch"),
     ),
     MockMenuItem(
-        "Pecel Sayuran",
-        "MAKANAN",
-        "SAYUR",
-        "WSL-FD-004",
-        18000.0,
-        5500.0,
-        "star",
-        ("Bumbu Pecel", "Kangkung"),
-    ),
-    MockMenuItem(
-        "Sayur Lodeh",
-        "MAKANAN",
-        "SAYUR",
-        "WSL-FD-005",
-        15000.0,
-        4800.0,
-        "star",
-        ("Santan Kelapa",),
-    ),
-    MockMenuItem(
-        "Nasi Putih",
-        "MAKANAN",
-        "NASI",
-        "WSL-FD-006",
-        8000.0,
-        2200.0,
+        "Filter Coffee",
+        "COFFEE",
+        "BREW",
+        "KSM-CF-003",
+        3.2,
+        2.2,  # thin margin → plow_horse when volume is high
         "plow",
-        ("Beras Cianjur",),
+        _bias("breakfast"),
     ),
     MockMenuItem(
-        "Tahu Isi",
-        "MAKANAN",
-        "LAUK",
-        "WSL-FD-007",
-        9000.0,
-        3500.0,
+        "Espresso",
+        "COFFEE",
+        "ESPRESSO",
+        "KSM-CF-004",
+        2.4,
+        1.6,
         "plow",
-        ("Tahu Bandung",),
+        _bias("breakfast"),
     ),
     MockMenuItem(
-        "Gulai Tahu Santan",
-        "MAKANAN",
-        "LAUK",
-        "WSL-FD-008",
-        22000.0,
-        7000.0,
+        "Buttercroissant",
+        "BAKERY",
+        "PASTRY",
+        "KSM-BK-001",
+        2.8,
+        2.0,
+        "plow",
+        _bias("breakfast"),
+    ),
+    MockMenuItem(
+        "Banana Bread",
+        "BAKERY",
+        "CAKE",
+        "KSM-BK-002",
+        3.5,
+        0.9,
+        "side",
+        _bias("afternoon"),
+    ),
+    MockMenuItem(
+        "Cheesecake",
+        "BAKERY",
+        "CAKE",
+        "KSM-BK-003",
+        4.8,
+        1.4,
+        "side",
+        _bias("afternoon"),
+    ),
+    MockMenuItem(
+        "Matcha Latte",
+        "TEA",
+        "LATTE",
+        "KSM-TE-001",
+        4.5,
+        1.1,
         "puzzle",
-        ("Tahu Bandung", "Santan Kelapa"),
+        _bias("afternoon"),
     ),
     MockMenuItem(
-        "Es Gula Aren",
-        "MINUMAN",
-        "ES",
-        "WSL-BVG-001",
-        14000.0,
-        3500.0,
+        "Chai Latte",
+        "TEA",
+        "LATTE",
+        "KSM-TE-002",
+        4.2,
+        1.0,
+        "filler",
+        _bias("afternoon"),
+    ),
+    MockMenuItem(
+        "Granola Bowl",
+        "FOOD",
+        "BOWL",
+        "KSM-FD-002",
+        8.5,
+        2.8,
         "puzzle",
-        ("Gula Aren",),
+        _bias("breakfast", "lunch"),
     ),
     MockMenuItem(
-        "Teh Manis Gula Aren",
-        "MINUMAN",
-        "TEH",
-        "WSL-BVG-002",
-        10000.0,
-        2500.0,
+        "Toastie",
+        "FOOD",
+        "TOAST",
+        "KSM-FD-003",
+        7.5,
+        2.4,
         "filler",
-        ("Gula Aren",),
+        _bias("lunch"),
     ),
     MockMenuItem(
-        "Nasi Pecel",
-        "MAKANAN",
-        "NASI",
-        "WSL-FD-009",
-        20000.0,
-        6500.0,
-        "filler",
-        ("Beras Cianjur", "Bumbu Pecel"),
-    ),
-    MockMenuItem(
-        "Sambal Dadak",
-        "MAKANAN",
-        "SAMBAL",
-        "WSL-FD-010",
-        5000.0,
-        1200.0,
+        "Fresh OJ",
+        "SOFTDRINKS",
+        "JUICE",
+        "KSM-SD-001",
+        4.0,
+        1.2,
         "side",
-        (),
+        _bias("breakfast", "lunch"),
     ),
     MockMenuItem(
-        "Kerupuk Putih",
-        "MAKANAN",
-        "SIDE",
-        "WSL-FD-011",
-        4000.0,
-        1000.0,
-        "side",
-        (),
-    ),
-    MockMenuItem(
-        "Air Mineral",
-        "MINUMAN",
-        "AIR",
-        "WSL-BVG-003",
-        5000.0,
-        1500.0,
-        "side",
-        (),
+        "Still Water",
+        "SOFTDRINKS",
+        "WATER",
+        "KSM-SD-002",
+        2.5,
+        1.9,
+        "plow",
+        _bias("any"),
     ),
 )
 
 # Intentional co-purchase pairs (both must appear on many shared bills).
 COMBO_PAIRS: tuple[tuple[str, str], ...] = (
-    ("Nasi Timbel", "Tumis Kangkung"),
-    ("Nasi Timbel", "Tahu Goreng"),
-    ("Nasi Putih", "Pecel Sayuran"),
-    ("Gulai Tahu Santan", "Nasi Putih"),
+    ("Cappuccino", "Buttercroissant"),
+    ("Flat White", "Banana Bread"),
+    ("Matcha Latte", "Cheesecake"),
+    ("Avocado Toast", "Fresh OJ"),
 )
 
-# Inventar catalog names from graphql.scripts.dev_seed_inventar._CATALOG_SEEDS.
-INVENTAR_CATALOG_NAMES = frozenset(
+# Reject leftover inventar / Warung dish names if generation regresses.
+WARUNG_DISH_NAMES = frozenset(
     {
-        "Beras Cianjur",
-        "Tahu Bandung",
-        "Kangkung",
-        "Bumbu Pecel",
-        "Santan Kelapa",
-        "Gula Aren",
+        "Nasi Timbel",
+        "Tahu Goreng",
+        "Tumis Kangkung",
+        "Pecel Sayuran",
+        "Sayur Lodeh",
+        "Nasi Putih",
+        "Gulai Tahu Santan",
+        "Es Gula Aren",
     }
 )
 
@@ -281,6 +303,14 @@ def _items_by_role(role: str) -> list[MockMenuItem]:
 
 def _catalog_by_name() -> dict[str, MockMenuItem]:
     return {item.menu: item for item in MOCK_CATALOG}
+
+
+def _daypart_for_hour(hour: int) -> str:
+    if hour < 11:
+        return "breakfast"
+    if hour < 15:
+        return "lunch"
+    return "afternoon"
 
 
 def _write_shell(ws: Worksheet, source_path: Path | None) -> list[str]:
@@ -299,9 +329,9 @@ def _write_shell(ws: Worksheet, source_path: Path | None) -> list[str]:
         source_wb.close()
 
     ws["A1"] = "Sales Recapitulation Detail Report"
-    ws["A2"] = "Warung Sunda Lembur"
+    ws["A2"] = LOCATION_NAME
     ws["A4"] = "Generated"
-    ws["B4"] = "dev-mock-warung-sunda"
+    ws["B4"] = "dev-mock-berlin-cafe"
     ws["A5"] = "Period"
     ws["B5"] = f"{PERIOD_START.strftime('%d-%m-%Y')} - {PERIOD_END.strftime('%d-%m-%Y')}"
     ws["A6"] = "Branch"
@@ -319,12 +349,12 @@ def _write_shell(ws: Worksheet, source_path: Path | None) -> list[str]:
 
 
 def _pick_order_time(rng: random.Random, day: date) -> datetime:
-    # Skew toward lunch and afternoon coffee hours.
+    # Berlin cafe: strong breakfast + Kaffee & Kuchen afternoon; lunch steady; soft close.
     hour_weights = (
-        [(h, 1) for h in range(8, 11)]
-        + [(h, 4) for h in range(11, 14)]
-        + [(h, 2) for h in range(14, 17)]
-        + [(h, 3) for h in range(17, 20)]
+        [(h, 5) for h in range(8, 11)]
+        + [(h, 3) for h in range(11, 14)]
+        + [(h, 4) for h in range(14, 17)]
+        + [(h, 2) for h in range(17, 19)]
     )
     hours = [h for h, w in hour_weights for _ in range(w)]
     hour = rng.choice(hours)
@@ -333,36 +363,83 @@ def _pick_order_time(rng: random.Random, day: date) -> datetime:
     return datetime(day.year, day.month, day.day, hour, minute, second)
 
 
-def _pick_line_items(rng: random.Random) -> list[MockMenuItem]:
-    """Build 1–3 line items; bias stars and force combo pairs often."""
+# Soft daypart preference: peaks stay clear, but off-peak hours still get some sales.
+DAYPART_WEIGHT_ON = 6
+DAYPART_WEIGHT_OFF = 1
+
+
+def _matches_daypart(item: MockMenuItem, daypart: str) -> bool:
+    bias = item.daypart_bias
+    return "any" in bias or daypart in bias
+
+
+def _item_daypart_weight(item: MockMenuItem, daypart: str) -> int:
+    return DAYPART_WEIGHT_ON if _matches_daypart(item, daypart) else DAYPART_WEIGHT_OFF
+
+
+def _weighted_choice(rng: random.Random, candidates: list[MockMenuItem], daypart: str) -> MockMenuItem:
+    weights = [_item_daypart_weight(item, daypart) for item in candidates]
+    return rng.choices(candidates, weights=weights, k=1)[0]
+
+
+def _pick_line_items(rng: random.Random, order_time: datetime) -> list[MockMenuItem]:
+    """Build 1–3 line items; soft daypart weights + forced combo pairs.
+
+    Volume mix is tuned so menu-engineering yields stars *and* plow_horses:
+    high-volume thin-margin plow SKUs must sell enough to clear avg qty while
+    staying below avg contribution margin.
+    """
     by_name = _catalog_by_name()
     stars = _items_by_role("star")
     plows = _items_by_role("plow")
     puzzles = _items_by_role("puzzle")
     fillers = _items_by_role("filler")
     sides = _items_by_role("side")
+    daypart = _daypart_for_hour(order_time.hour)
+    catalog = list(MOCK_CATALOG)
 
     roll = rng.random()
-    if roll < 0.35:
-        pair = rng.choice(COMBO_PAIRS)
+    if roll < 0.28:
+        # Soft-prefer combo pairs that fit the daypart (never hard-exclude).
+        pair_weights = [
+            (
+                DAYPART_WEIGHT_ON
+                if (
+                    _matches_daypart(by_name[a], daypart)
+                    or _matches_daypart(by_name[b], daypart)
+                )
+                else DAYPART_WEIGHT_OFF
+            )
+            for a, b in COMBO_PAIRS
+        ]
+        pair = rng.choices(list(COMBO_PAIRS), weights=pair_weights, k=1)[0]
         items = [by_name[pair[0]], by_name[pair[1]]]
-        if rng.random() < 0.25:
-            items.append(rng.choice(sides + plows))
+        if rng.random() < 0.3:
+            items.append(_weighted_choice(rng, plows + sides, daypart))
         return items
 
-    if roll < 0.7:
-        primary = rng.choice(stars)
+    if roll < 0.52:
+        primary = _weighted_choice(rng, stars, daypart)
         extras: list[MockMenuItem] = []
         if rng.random() < 0.55:
-            extras.append(rng.choice(sides + plows + fillers))
+            extras.append(_weighted_choice(rng, plows + sides + fillers, daypart))
         if rng.random() < 0.2:
-            extras.append(rng.choice(puzzles + fillers))
+            extras.append(_weighted_choice(rng, puzzles + fillers, daypart))
         return [primary, *extras]
 
-    if roll < 0.85:
-        return [rng.choice(plows + fillers)]
+    # Dedicated plow path — high volume, thin margin items for plow_horse quadrant.
+    if roll < 0.78:
+        primary = _weighted_choice(rng, plows, daypart)
+        extras: list[MockMenuItem] = []
+        if rng.random() < 0.35:
+            extras.append(_weighted_choice(rng, plows + sides + fillers, daypart))
+        return [primary, *extras]
 
-    return [rng.choice(puzzles + fillers + sides)]
+    if roll < 0.88:
+        return [_weighted_choice(rng, fillers + puzzles, daypart)]
+
+    # Ambient noise: any catalog item, still soft-weighted — fills sparse hours.
+    return [_weighted_choice(rng, catalog, daypart)]
 
 
 def _line_row(
@@ -375,7 +452,7 @@ def _line_row(
     qty: int,
     payment: str,
 ) -> list[object]:
-    subtotal = item.price * qty
+    subtotal = round(item.price * qty, 2)
     sales_date = datetime(order_time.year, order_time.month, order_time.day)
     values: dict[str, object] = {
         "Sales Number": sales_number,
@@ -387,10 +464,10 @@ def _line_row(
         "Sales Date": sales_date,
         "Sales Date In": order_time,
         "Sales Date Out": order_time,
-        "Branch": "Warung Sunda Lembur",
-        "Brand": "Warung Sunda Lembur",
-        "City": "Bandung",
-        "Area": None,
+        "Branch": LOCATION_NAME,
+        "Brand": LOCATION_BRAND,
+        "City": LOCATION_CITY,
+        "Area": "Mitte",
         "Visit Purpose": "DINE IN",
         "Regular Member Code": None,
         "Regular Member Name": None,
@@ -428,20 +505,25 @@ def _line_row(
     return [values.get(header) for header in headers]
 
 
+def _bills_for_day(day: date) -> int:
+    multiplier = WEEKDAY_BILL_MULTIPLIER.get(day.weekday(), 1.0)
+    return max(15, int(round(BILLS_PER_DAY * multiplier)))
+
+
 def _synthesize_rows(headers: list[str], rng: random.Random) -> list[list[object]]:
     rows: list[list[object]] = []
     bill_seq = 0
     day = PERIOD_START
-    payments = ("QRIS", "Cash", "Debit Card")
+    payments = ("Card", "Cash", "Apple Pay")
 
     while day <= PERIOD_END:
-        for _ in range(BILLS_PER_DAY):
+        for _ in range(_bills_for_day(day)):
             bill_seq += 1
-            bill_number = f"DEV-SCM{bill_seq:010d}"
-            sales_number = f"DEV-SSCM{bill_seq:010d}"
+            bill_number = f"DEV-KSM{bill_seq:010d}"
+            sales_number = f"DEV-SSKM{bill_seq:010d}"
             order_time = _pick_order_time(rng, day)
             payment = rng.choice(payments)
-            for item in _pick_line_items(rng):
+            for item in _pick_line_items(rng, order_time):
                 qty = 1 if item.role in {"puzzle", "side"} else rng.choice((1, 1, 1, 2))
                 rows.append(
                     _line_row(
@@ -475,27 +557,9 @@ def _smoke_check(output_path: Path, cogs_path: Path) -> None:
     if df.empty:
         raise SystemExit("ERROR: normalize_esb_excel returned no rows")
 
-    snabb_cafe_names = {
-        "Es Kopi Susu Aren",
-        "Ice Americano",
-        "Lembur Signature Latte",
-        "Crispy Tempeh Wrap",
-    }
-    overlap = snabb_cafe_names.intersection(set(df["menu"].unique()))
+    overlap = WARUNG_DISH_NAMES.intersection(set(df["menu"].unique()))
     if overlap:
-        raise SystemExit(f"ERROR: mock contains unexpected cafe menus: {sorted(overlap)}")
-
-    linked = {ingredient for item in MOCK_CATALOG for ingredient in item.inventar_ingredients}
-    missing_inventar = linked - INVENTAR_CATALOG_NAMES
-    if missing_inventar:
-        raise SystemExit(
-            f"ERROR: dish ingredients not in inventar seed catalog: {sorted(missing_inventar)}"
-        )
-    unused_inventar = INVENTAR_CATALOG_NAMES - linked
-    if unused_inventar:
-        raise SystemExit(
-            f"ERROR: inventar ingredients unused by any dish: {sorted(unused_inventar)}"
-        )
+        raise SystemExit(f"ERROR: mock contains unexpected Warung dishes: {sorted(overlap)}")
 
     order_times = df["order_time"]
     print(
@@ -517,10 +581,23 @@ def _smoke_check(output_path: Path, cogs_path: Path) -> None:
         for row in df.to_dict("records")
     ]
     matrix = compute_menu_engineering_from_orders(order_rows, cogs_by_menu)
-    stars = [item for item in matrix["items"] if item.get("category") == "star"]
+    by_cat: dict[str, list[str]] = {}
+    for item in matrix["items"]:
+        by_cat.setdefault(str(item.get("category")), []).append(str(item["menu"]))
+    stars = by_cat.get("star", [])
+    plows = by_cat.get("plow_horse", [])
     if len(stars) < 1:
         raise SystemExit("ERROR: expected at least one menu-engineering star")
-    print(f"Smoke: stars={len(stars)} sample={[s['menu'] for s in stars[:5]]}")
+    if len(plows) < 1:
+        raise SystemExit(
+            "ERROR: expected at least one menu-engineering plow_horse "
+            f"(got categories={{{', '.join(f'{k}:{len(v)}' for k, v in sorted(by_cat.items()))}}})"
+        )
+    print(
+        f"Smoke: stars={len(stars)} sample={stars[:5]}; "
+        f"plow_horses={len(plows)} sample={plows[:5]}; "
+        f"puzzles={len(by_cat.get('puzzle', []))} low_end={len(by_cat.get('low_end', []))}"
+    )
 
     basket_rows = [
         {
@@ -573,7 +650,8 @@ def generate(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate a synthetic ESB mock sales Excel (SNABB structure only) for make dev-data."
+            "Generate a synthetic Berlin cafe ESB mock sales Excel "
+            "(SNABB structure only) for make dev-data."
         )
     )
     parser.add_argument(

@@ -27,7 +27,7 @@ from graphql.data_sources import (
 from graphql.data_sources.models.pos_order import PosOrder
 from graphql.reports import normalize_sales_report, persist_sales_report
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
-from graphql.scripts.generate_dev_mock_sales_excel import MOCK_CATALOG
+from graphql.scripts.dev_seed_warung_menu import WARUNG_CATEGORY_LABELS, WARUNG_MENU_CATALOG
 from graphql.services.location_cogs import (
     LocationCogsUpsertItem,
     seed_run_cogs_from_location,
@@ -51,17 +51,10 @@ LEGACY_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
 DEV_SEED_PREFIX = "dev-seed-"
 PRIMARY_LOCATION_NAME = "SNABB"
 DEV_INVENTAR_LOCATION_NAME = "Warung Sunda Lembur"
+DEV_ANALYTICS_LOCATION_NAME = "Kaffeestube Mitte"
 DEV_WORKSPACE_NAME = "Dev Workspace"
 
 SCOPES = ("inventar", "analytics", "all", "clear-inventar")
-
-
-@dataclass(frozen=True)
-class WorkspaceContext:
-    workspace: Workspace
-    primary_location: Location
-    inventar_location: Location
-    created_primary: bool
 
 
 def _resolve_clerk_user_id(cli_value: str | None) -> str:
@@ -87,8 +80,19 @@ def _load_cogs_by_menu(cogs_path: Path) -> dict[str, float]:
     return by_menu
 
 
-def _add_default_opening_hours(session: Session, location_id: int) -> None:
-    for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
+def _add_default_opening_hours(
+    session: Session,
+    location_id: int,
+    *,
+    days: tuple[str, ...] = (
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+    ),
+) -> None:
+    for day in days:
         session.add(
             LocationOpeningHour(
                 location_id=location_id,
@@ -97,6 +101,19 @@ def _add_default_opening_hours(session: Session, location_id: int) -> None:
                 close_time=time(hour=18, minute=0),
             )
         )
+
+
+def _replace_opening_hours(
+    session: Session,
+    location_id: int,
+    *,
+    days: tuple[str, ...],
+) -> None:
+    """Replace opening hours so managed seed locations stay aligned with mock traffic."""
+    session.query(LocationOpeningHour).filter(
+        LocationOpeningHour.location_id == location_id
+    ).delete(synchronize_session=False)
+    _add_default_opening_hours(session, location_id, days=days)
 
 
 def _add_sample_manual_brief(session: Session, location_id: int) -> None:
@@ -117,12 +134,6 @@ def _add_sample_manual_brief(session: Session, location_id: int) -> None:
     )
 
 
-_CATEGORY_LABELS: dict[str, str] = {
-    "MAKANAN": "Makanan",
-    "MINUMAN": "Minuman",
-}
-
-
 def seed_warung_sunda_menu(session: Session, location: Location) -> dict[str, int]:
     """Replace the curated location menu with the Warung Sunda mock catalog (POS + guest menu).
 
@@ -130,14 +141,14 @@ def seed_warung_sunda_menu(session: Session, location: Location) -> dict[str, in
     free of stale ``pos_order_line`` references.
     """
     deleted_orders = (
-        session.query(PosOrder).filter(PosOrder.location_id == location.id).delete(
-            synchronize_session=False
-        )
+        session.query(PosOrder)
+        .filter(PosOrder.location_id == location.id)
+        .delete(synchronize_session=False)
     )
 
     by_category: dict[str, list[MenuItemReplaceInput]] = {}
-    for item in MOCK_CATALOG:
-        label = _CATEGORY_LABELS.get(item.menu_category, item.menu_category.title())
+    for item in WARUNG_MENU_CATALOG:
+        label = WARUNG_CATEGORY_LABELS.get(item.menu_category, item.menu_category.title())
         by_category.setdefault(label, []).append(
             MenuItemReplaceInput(
                 name=item.menu,
@@ -168,8 +179,51 @@ def seed_warung_sunda_menu(session: Session, location: Location) -> dict[str, in
     }
 
 
+@dataclass(frozen=True)
+class WorkspaceContext:
+    workspace: Workspace
+    primary_location: Location
+    inventar_location: Location
+    analytics_location: Location
+    created_primary: bool
+
+
+def _ensure_location(
+    session: Session,
+    *,
+    workspace: Workspace,
+    clerk_user_id: str,
+    name: str,
+    city: str,
+    country: str,
+    currency: str,
+    opening_days: tuple[str, ...],
+) -> Location:
+    location = (
+        session.query(Location)
+        .filter(Location.workspace_id == workspace.id, Location.name == name)
+        .first()
+    )
+    if location is None:
+        location = Location(
+            name=name,
+            city=city,
+            country=country,
+            currency=currency,
+            workspace_id=workspace.id,
+            clerk_user_id=clerk_user_id,
+        )
+        session.add(location)
+        session.flush()
+    elif not location.clerk_user_id:
+        location.clerk_user_id = clerk_user_id
+    # Keep seed-managed hours in sync (e.g. Berlin cafe open Sunday like the mock).
+    _replace_opening_hours(session, location.id, days=opening_days)
+    return location
+
+
 def ensure_workspace_context(session: Session, clerk_user_id: str) -> WorkspaceContext:
-    """Find or create workspace, SNABB primary, and inventar seed location."""
+    """Find or create workspace, SNABB primary, inventar, and Berlin analytics locations."""
     now = datetime.now(tz=UTC)
 
     workspace = (
@@ -260,34 +314,41 @@ def ensure_workspace_context(session: Session, clerk_user_id: str) -> WorkspaceC
         if not primary.clerk_user_id:
             primary.clerk_user_id = clerk_user_id
 
-    inventar = (
-        session.query(Location)
-        .filter(
-            Location.workspace_id == workspace.id,
-            Location.name == DEV_INVENTAR_LOCATION_NAME,
-        )
-        .first()
+    inventar = _ensure_location(
+        session,
+        workspace=workspace,
+        clerk_user_id=clerk_user_id,
+        name=DEV_INVENTAR_LOCATION_NAME,
+        city="Jakarta",
+        country="Indonesia",
+        currency="IDR",
+        opening_days=("monday", "tuesday", "wednesday", "thursday", "friday"),
     )
-    if inventar is None:
-        inventar = Location(
-            name=DEV_INVENTAR_LOCATION_NAME,
-            city="Jakarta",
-            country="Indonesia",
-            currency="IDR",
-            workspace_id=workspace.id,
-            clerk_user_id=clerk_user_id,
-        )
-        session.add(inventar)
-        session.flush()
-        _add_default_opening_hours(session, inventar.id)
-    elif not inventar.clerk_user_id:
-        inventar.clerk_user_id = clerk_user_id
+    analytics = _ensure_location(
+        session,
+        workspace=workspace,
+        clerk_user_id=clerk_user_id,
+        name=DEV_ANALYTICS_LOCATION_NAME,
+        city="Berlin",
+        country="Germany",
+        currency="EUR",
+        opening_days=(
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ),
+    )
 
     session.flush()
     return WorkspaceContext(
         workspace=workspace,
         primary_location=primary,
         inventar_location=inventar,
+        analytics_location=analytics,
         created_primary=created_primary,
     )
 
@@ -475,14 +536,14 @@ def main(
                 cogs_file = None
             result = seed_analytics(
                 session,
-                location=ctx.inventar_location,
+                location=ctx.analytics_location,
                 excel_path=excel,
                 cogs_path=cogs_file,
             )
             session.commit()
             print(
-                f"Analytics seed: location_id={ctx.inventar_location.id} "
-                f"location_name={ctx.inventar_location.name!r} "
+                f"Analytics seed: location_id={ctx.analytics_location.id} "
+                f"location_name={ctx.analytics_location.name!r} "
                 f"run_id={result['analytics_run_id']} "
                 f"orders={result['order_rows']} location_cogs={result['location_cogs']} "
                 f"replaced_seed_runs={result['deleted_seed_runs']} "

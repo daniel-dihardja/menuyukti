@@ -16,7 +16,7 @@ from graphql.data_sources import (
 )
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
-from graphql.scripts.generate_dev_mock_sales_excel import MOCK_CATALOG
+from graphql.scripts.dev_seed_warung_menu import WARUNG_MENU_CATALOG
 from graphql.scripts.load_dev_data import DEV_INVENTAR_LOCATION_NAME, seed_warung_sunda_menu
 
 SEED_USER = "clerk_dev_seed_inventar_test"
@@ -250,7 +250,7 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
         session.commit()
 
         assert first["categories"] == 2
-        assert first["items"] == len(MOCK_CATALOG)
+        assert first["items"] == len(WARUNG_MENU_CATALOG)
         assert first["cleared_pos_orders"] == 0
 
         menu = (
@@ -268,7 +268,7 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
         assert [c.name for c in categories] == ["Makanan", "Minuman"]
         items = session.query(MenuItem).filter(MenuItem.menu_id == menu.id).all()
         item_names = {row.name for row in items}
-        assert item_names == {item.menu for item in MOCK_CATALOG}
+        assert item_names == {item.menu for item in WARUNG_MENU_CATALOG}
 
         # Simulate a POS ticket referencing a menu item (RESTRICT would block replace).
         from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
@@ -303,10 +303,10 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
         second = seed_warung_sunda_menu(session, inventar)
         session.commit()
         assert second["categories"] == 2
-        assert second["items"] == len(MOCK_CATALOG)
+        assert second["items"] == len(WARUNG_MENU_CATALOG)
         assert second["cleared_pos_orders"] == 1
         assert (
-            session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(MOCK_CATALOG)
+            session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(WARUNG_MENU_CATALOG)
         )
         assert session.query(PosOrder).filter(PosOrder.location_id == inventar.id).count() == 0
     finally:

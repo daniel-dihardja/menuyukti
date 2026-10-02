@@ -1,58 +1,58 @@
 [
   {
-    "menu": "Nasi Timbel",
-    "cogs": 3500.0
+    "menu": "Flat White",
+    "cogs": 0.9
   },
   {
-    "menu": "Tahu Goreng",
-    "cogs": 2800.0
+    "menu": "Cappuccino",
+    "cogs": 0.85
   },
   {
-    "menu": "Tumis Kangkung",
-    "cogs": 3200.0
+    "menu": "Avocado Toast",
+    "cogs": 3.2
   },
   {
-    "menu": "Pecel Sayuran",
-    "cogs": 5500.0
+    "menu": "Filter Coffee",
+    "cogs": 2.2
   },
   {
-    "menu": "Sayur Lodeh",
-    "cogs": 4800.0
+    "menu": "Espresso",
+    "cogs": 1.6
   },
   {
-    "menu": "Nasi Putih",
-    "cogs": 2200.0
+    "menu": "Buttercroissant",
+    "cogs": 2.0
   },
   {
-    "menu": "Tahu Isi",
-    "cogs": 3500.0
+    "menu": "Banana Bread",
+    "cogs": 0.9
   },
   {
-    "menu": "Gulai Tahu Santan",
-    "cogs": 7000.0
+    "menu": "Cheesecake",
+    "cogs": 1.4
   },
   {
-    "menu": "Es Gula Aren",
-    "cogs": 3500.0
+    "menu": "Matcha Latte",
+    "cogs": 1.1
   },
   {
-    "menu": "Teh Manis Gula Aren",
-    "cogs": 2500.0
+    "menu": "Chai Latte",
+    "cogs": 1.0
   },
   {
-    "menu": "Nasi Pecel",
-    "cogs": 6500.0
+    "menu": "Granola Bowl",
+    "cogs": 2.8
   },
   {
-    "menu": "Sambal Dadak",
-    "cogs": 1200.0
+    "menu": "Toastie",
+    "cogs": 2.4
   },
   {
-    "menu": "Kerupuk Putih",
-    "cogs": 1000.0
+    "menu": "Fresh OJ",
+    "cogs": 1.2
   },
   {
-    "menu": "Air Mineral",
-    "cogs": 1500.0
+    "menu": "Still Water",
+    "cogs": 1.9
   }
 ]
