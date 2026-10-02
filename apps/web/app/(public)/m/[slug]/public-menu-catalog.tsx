@@ -233,10 +233,7 @@ export function PublicMenuCatalog({ locationId, publicSlug, categories, currency
   return (
     <div className={cn('flex flex-col gap-8', hasCart || successBillNumber ? 'pb-28' : undefined)}>
       {successBillNumber ? (
-        <div
-          role="status"
-          className="bg-card border-border rounded-xl border px-4 py-3 text-sm"
-        >
+        <div role="status" className="bg-card border-border rounded-xl border px-4 py-3 text-sm">
           <p className="font-medium">{t('order.successTitle')}</p>
           <p className="text-muted-foreground mt-1">
             {t('order.successBody', { billNumber: successBillNumber })}

@@ -51,10 +51,7 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          <nav
-            aria-label={t('navAria')}
-            className="hidden min-w-0 items-center gap-1 md:flex"
-          >
+          <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
             <Link
               href={routes.about}
               aria-current={isAbout ? 'page' : undefined}

@@ -7,10 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 
 import { useChatComposerState } from '@/components/chat/chat-context'
-import {
-  ChatWithMobileArtifactLayout,
-  ChatWithPreviewLayout,
-} from '@/components/chat/chat-layout'
+import { ChatWithMobileArtifactLayout, ChatWithPreviewLayout } from '@/components/chat/chat-layout'
 import { ChatMentionProvider } from '@/components/chat/chat-mention-context'
 import { ChatSidePanel } from '@/components/chat/chat-side-panel'
 import { ChatVisualizationsProvider } from '@/components/chat/visualizations/chat-visualizations-context'
