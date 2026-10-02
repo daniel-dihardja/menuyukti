@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@clerk/nextjs'
-import { Minus, Plus } from 'lucide-react'
+import { CheckCircle2, Minus, Plus, UtensilsCrossed } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
@@ -14,17 +14,34 @@ import {
   type MenuAllergen,
   type MenuDietaryTag,
 } from '@/lib/menu/menu-attributes'
+import {
+  clearPublicMenuCart,
+  loadPublicMenuCart,
+  savePublicMenuCart,
+} from '@/lib/public-menu/cart-storage'
 import type { PublicMenuCategoryView, PublicMenuItemView } from '@/lib/public-menu/load-public-menu'
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@workspace/ui/components/sheet'
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@workspace/ui/components/drawer'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
+import { ScrollArea } from '@workspace/ui/components/scroll-area'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { cn } from '@workspace/ui/lib/utils'
 
 type Props = {
@@ -43,48 +60,86 @@ type CartLine = {
   qty: number
 }
 
-function toggleSetValue(prev: Set<string>, value: string): Set<string> {
-  const next = new Set(prev)
-  if (next.has(value)) next.delete(value)
-  else next.add(value)
-  return next
+function categorySectionId(category: PublicMenuCategoryView): string {
+  return `cat-${category.sortOrder}-${encodeURIComponent(category.name)}`
 }
 
 function FilterChipRow({
   label,
   options,
   selected,
-  onToggle,
+  onChange,
   labelFor,
 }: {
   label: string
   options: readonly string[]
   selected: ReadonlySet<string>
-  onToggle: (value: string) => void
+  onChange: (next: string[]) => void
   labelFor: (value: string) => string
 }) {
   if (options.length === 0) return null
   return (
     <div className="flex flex-col gap-2">
       <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</p>
-      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
-        {options.map((option) => {
-          const active = selected.has(option)
-          return (
-            <Button
-              key={option}
-              type="button"
-              size="sm"
-              variant={active ? 'default' : 'outline'}
-              aria-pressed={active}
-              onClick={() => onToggle(option)}
-              className="h-8 rounded-full px-3 text-xs font-medium"
-            >
-              {labelFor(option)}
-            </Button>
-          )
-        })}
-      </div>
+      <ToggleGroup
+        type="multiple"
+        value={[...selected]}
+        onValueChange={onChange}
+        className="flex flex-wrap justify-start gap-2"
+        aria-label={label}
+      >
+        {options.map((option) => (
+          <ToggleGroupItem
+            key={option}
+            value={option}
+            className="h-11 min-h-11 touch-manipulation rounded-full px-3 text-xs font-medium sm:h-9 sm:min-h-9"
+          >
+            {labelFor(option)}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  )
+}
+
+function QtyStepper({
+  qty,
+  onDecrease,
+  onIncrease,
+  decreaseLabel,
+  increaseLabel,
+  removeLabel,
+}: {
+  qty: number
+  onDecrease: () => void
+  onIncrease: () => void
+  decreaseLabel: string
+  increaseLabel: string
+  removeLabel: string
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="size-10 touch-manipulation sm:size-9"
+        aria-label={qty <= 1 ? removeLabel : decreaseLabel}
+        onClick={onDecrease}
+      >
+        <Minus />
+      </Button>
+      <span className="min-w-6 text-center text-sm tabular-nums">{qty}</span>
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="size-10 touch-manipulation sm:size-9"
+        aria-label={increaseLabel}
+        onClick={onIncrease}
+      >
+        <Plus />
+      </Button>
     </div>
   )
 }
@@ -103,6 +158,7 @@ export function PublicMenuCatalog({
   const [dietaryInclude, setDietaryInclude] = useState<Set<string>>(() => new Set())
   const [allergenExclude, setAllergenExclude] = useState<Set<string>>(() => new Set())
   const [cart, setCart] = useState<Record<number, CartLine>>({})
+  const [cartHydrated, setCartHydrated] = useState(false)
   const [basketOpen, setBasketOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -126,11 +182,23 @@ export function PublicMenuCatalog({
   const matchCount = filteredCategories.reduce((sum, category) => sum + category.items.length, 0)
   const filtersActive = dietaryInclude.size > 0 || allergenExclude.size > 0
   const showFilters = present.dietaryTags.length > 0 || present.allergens.length > 0
+  const showCategoryJump = filteredCategories.length > 2
+  const showStickyChrome = showFilters || showCategoryJump
 
   const cartLines = useMemo(() => Object.values(cart), [cart])
   const cartItemCount = cartLines.reduce((sum, line) => sum + line.qty, 0)
   const cartTotal = cartLines.reduce((sum, line) => sum + line.price * line.qty, 0)
   const hasCart = cartItemCount > 0
+
+  useEffect(() => {
+    setCart(loadPublicMenuCart(locationId))
+    setCartHydrated(true)
+  }, [locationId])
+
+  useEffect(() => {
+    if (!cartHydrated) return
+    savePublicMenuCart(locationId, cart)
+  }, [cart, cartHydrated, locationId])
 
   useEffect(() => {
     if (!hasCart && basketOpen) {
@@ -179,6 +247,7 @@ export function PublicMenuCatalog({
   }
 
   const redirectToSignIn = () => {
+    savePublicMenuCart(locationId, cart)
     const returnPath = pathname || `/m/${encodeURIComponent(publicSlug)}`
     rememberAuthReturnPath(returnPath)
     window.location.assign(buildLoginUrl(returnPath))
@@ -226,6 +295,7 @@ export function PublicMenuCatalog({
         return
       }
       setCart({})
+      clearPublicMenuCart(locationId)
       setBasketOpen(false)
       setSuccessBillNumber(body.billNumber)
     } catch {
@@ -235,67 +305,125 @@ export function PublicMenuCatalog({
     }
   }
 
+  const scrollToCategory = (category: PublicMenuCategoryView) => {
+    const el = document.getElementById(categorySectionId(category))
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <div className={cn('flex flex-col gap-8', hasCart || successBillNumber ? 'pb-28' : undefined)}>
+    <div
+      className={cn(
+        'flex flex-col gap-8',
+        hasCart ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : undefined,
+      )}
+    >
       {successBillNumber ? (
-        <div role="status" className="bg-card border-border rounded-xl border px-4 py-3 text-sm">
-          <p className="font-medium">{t('order.successTitle')}</p>
-          <p className="text-muted-foreground mt-1">
+        <Alert role="status">
+          <CheckCircle2 />
+          <AlertTitle>{t('order.successTitle')}</AlertTitle>
+          <AlertDescription>
             {t('order.successBody', { billNumber: successBillNumber })}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
-      {showFilters ? (
-        <div className="bg-card/90 sticky top-0 z-20 -mx-6 space-y-4 border-b px-6 py-4 backdrop-blur-sm sm:-mx-10 sm:px-10">
-          <FilterChipRow
-            label={t('filters.dietary')}
-            options={present.dietaryTags}
-            selected={dietaryInclude}
-            onToggle={(value) => setDietaryInclude((prev) => toggleSetValue(prev, value))}
-            labelFor={(value) => t(`dietary.${value as MenuDietaryTag}`)}
-          />
-          <FilterChipRow
-            label={t('filters.allergens')}
-            options={present.allergens}
-            selected={allergenExclude}
-            onToggle={(value) => setAllergenExclude((prev) => toggleSetValue(prev, value))}
-            labelFor={(value) => t(`allergens.${value as MenuAllergen}`)}
-          />
-          {filtersActive ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-muted-foreground text-sm">
-                {matchCount === 0
-                  ? t('filters.noMatches')
-                  : t('filters.matchCount', { count: matchCount })}
-              </p>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setDietaryInclude(new Set())
-                  setAllergenExclude(new Set())
-                }}
-              >
-                {t('filters.clear')}
-              </Button>
+      {showStickyChrome ? (
+        <div className="bg-card/90 sticky top-14 z-20 -mx-6 flex flex-col gap-4 border-b px-6 py-4 backdrop-blur-sm sm:-mx-10 sm:px-10">
+          {showFilters ? (
+            <>
+              <FilterChipRow
+                label={t('filters.dietary')}
+                options={present.dietaryTags}
+                selected={dietaryInclude}
+                onChange={(next) => setDietaryInclude(new Set(next))}
+                labelFor={(value) => t(`dietary.${value as MenuDietaryTag}`)}
+              />
+              <FilterChipRow
+                label={t('filters.allergens')}
+                options={present.allergens}
+                selected={allergenExclude}
+                onChange={(next) => setAllergenExclude(new Set(next))}
+                labelFor={(value) => t(`allergens.${value as MenuAllergen}`)}
+              />
+              {filtersActive ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-muted-foreground text-sm">
+                    {matchCount === 0
+                      ? t('filters.noMatches')
+                      : t('filters.matchCount', { count: matchCount })}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="min-h-11 touch-manipulation sm:min-h-8"
+                    onClick={() => {
+                      setDietaryInclude(new Set())
+                      setAllergenExclude(new Set())
+                    }}
+                  >
+                    {t('filters.clear')}
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+
+          {showCategoryJump ? (
+            <div className="-mx-1 overflow-x-auto px-1 pb-1">
+              <nav aria-label={t('categoriesNavAria')} className="flex w-max flex-nowrap gap-2">
+                {filteredCategories.map((category) => (
+                  <Button
+                    key={categorySectionId(category)}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-11 min-h-11 shrink-0 touch-manipulation snap-start rounded-full px-4 text-xs font-medium sm:h-9 sm:min-h-9"
+                    onClick={() => scrollToCategory(category)}
+                  >
+                    {category.name}
+                  </Button>
+                ))}
+              </nav>
             </div>
           ) : null}
         </div>
       ) : null}
 
       {filtersActive && matchCount === 0 ? (
-        <p className="text-muted-foreground py-8 text-center text-sm">{t('filters.noMatches')}</p>
+        <Empty className="border border-dashed py-10">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <UtensilsCrossed />
+            </EmptyMedia>
+            <EmptyTitle>{t('filters.noMatchesTitle')}</EmptyTitle>
+            <EmptyDescription>{t('filters.noMatches')}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 touch-manipulation"
+              onClick={() => {
+                setDietaryInclude(new Set())
+                setAllergenExclude(new Set())
+              }}
+            >
+              {t('filters.clear')}
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-12">
           {filteredCategories.map((category) => (
             <section
               key={category.name}
-              aria-labelledby={`cat-${category.sortOrder}-${category.name}`}
+              id={categorySectionId(category)}
+              aria-labelledby={`${categorySectionId(category)}-heading`}
+              className="scroll-mt-[calc(3.5rem+5.5rem)]"
             >
               <h2
-                id={`cat-${category.sortOrder}-${category.name}`}
+                id={`${categorySectionId(category)}-heading`}
                 className="mb-4 text-sm font-semibold tracking-wide uppercase"
               >
                 {category.name}
@@ -339,7 +467,7 @@ export function PublicMenuCatalog({
                               <Badge
                                 key={`diet-${tag}`}
                                 variant="secondary"
-                                className={cn('rounded-full px-2 py-0 text-[11px] font-medium')}
+                                className="rounded-full px-2 py-0 text-[11px] font-medium"
                               >
                                 {t(`dietary.${tag as MenuDietaryTag}`)}
                               </Badge>
@@ -355,38 +483,22 @@ export function PublicMenuCatalog({
                             ))}
                           </div>
                         ) : null}
-                        <div className="mt-3 flex items-center justify-between gap-2">
+                        <div className="mt-3 flex items-center justify-end gap-2">
                           {inCart > 0 ? (
-                            <div className="flex items-center gap-1">
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="outline"
-                                className="size-8"
-                                aria-label={t('order.decreaseQty', { name: item.name })}
-                                onClick={() => decrementItem(item.id)}
-                              >
-                                <Minus className="size-3.5" />
-                              </Button>
-                              <span className="min-w-6 text-center text-sm tabular-nums">
-                                {inCart}
-                              </span>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="outline"
-                                className="size-8"
-                                aria-label={t('order.increaseQty', { name: item.name })}
-                                onClick={() => addItem(item)}
-                              >
-                                <Plus className="size-3.5" />
-                              </Button>
-                            </div>
+                            <QtyStepper
+                              qty={inCart}
+                              onDecrease={() => decrementItem(item.id)}
+                              onIncrease={() => addItem(item)}
+                              decreaseLabel={t('order.decreaseQty', { name: item.name })}
+                              increaseLabel={t('order.increaseQty', { name: item.name })}
+                              removeLabel={t('order.removeItem', { name: item.name })}
+                            />
                           ) : (
                             <Button
                               type="button"
                               size="sm"
                               variant="outline"
+                              className="min-h-11 touch-manipulation px-4 sm:min-h-8"
                               onClick={() => addItem(item)}
                             >
                               {t('order.add')}
@@ -404,7 +516,7 @@ export function PublicMenuCatalog({
       )}
 
       {hasCart ? (
-        <div className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 py-3 backdrop-blur-sm sm:px-6">
+        <div className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:px-6">
           <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-medium">
@@ -414,22 +526,22 @@ export function PublicMenuCatalog({
                 {formatCurrency(cartTotal, currencyCode, locale)}
               </p>
             </div>
-            <Button type="button" onClick={() => setBasketOpen(true)}>
+            <Button
+              type="button"
+              className="min-h-11 touch-manipulation sm:min-h-9"
+              onClick={() => setBasketOpen(true)}
+            >
               {t('order.viewBasket')}
             </Button>
           </div>
         </div>
       ) : null}
 
-      <Sheet open={basketOpen} onOpenChange={setBasketOpen}>
-        <SheetContent
-          side="bottom"
-          closeLabel={t('order.closeBasket')}
-          className="flex max-h-[min(90dvh,40rem)] flex-col gap-0 rounded-t-2xl p-0"
-        >
-          <SheetHeader className="shrink-0 border-b pr-12 text-left">
-            <SheetTitle>{t('order.basketTitle')}</SheetTitle>
-            <SheetDescription>{t('order.basketDescription')}</SheetDescription>
+      <Drawer open={basketOpen} onOpenChange={setBasketOpen}>
+        <DrawerContent className="flex max-h-[min(90dvh,40rem)] flex-col gap-0 overflow-hidden">
+          <DrawerHeader className="shrink-0 border-b text-left">
+            <DrawerTitle>{t('order.basketTitle')}</DrawerTitle>
+            <DrawerDescription>{t('order.basketDescription')}</DrawerDescription>
             {hasCart ? (
               <p className="text-muted-foreground text-sm">
                 {t('order.cartSummary', { count: cartItemCount })} ·{' '}
@@ -438,66 +550,52 @@ export function PublicMenuCatalog({
                 </span>
               </p>
             ) : null}
-          </SheetHeader>
+          </DrawerHeader>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-            {cartLines.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center text-sm">
-                {t('order.emptyBasket')}
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {cartLines.map((line) => {
-                  const lineTotal = line.price * line.qty
-                  return (
-                    <li
-                      key={line.menuItemId}
-                      className="border-border flex items-start justify-between gap-3 rounded-lg border p-3"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{line.name}</p>
-                        <p className="text-muted-foreground text-xs tabular-nums">
-                          {formatCurrency(line.price, currencyCode, locale)} × {line.qty}
-                        </p>
-                        <p className="mt-1 text-sm font-medium tabular-nums">
-                          {formatCurrency(lineTotal, currencyCode, locale)}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="outline"
-                          className="size-8"
-                          aria-label={
-                            line.qty <= 1
-                              ? t('order.removeItem', { name: line.name })
-                              : t('order.decreaseQty', { name: line.name })
-                          }
-                          onClick={() => decrementItem(line.menuItemId)}
-                        >
-                          <Minus className="size-3.5" />
-                        </Button>
-                        <span className="min-w-6 text-center text-sm tabular-nums">{line.qty}</span>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="outline"
-                          className="size-8"
-                          aria-label={t('order.increaseQty', { name: line.name })}
-                          onClick={() => increaseCartLine(line.menuItemId)}
-                        >
-                          <Plus className="size-3.5" />
-                        </Button>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
+          <ScrollArea className="min-h-0 flex-1 overflow-hidden">
+            <div className="px-4 py-3">
+              {cartLines.length === 0 ? (
+                <Empty className="border-0 py-8">
+                  <EmptyHeader>
+                    <EmptyTitle>{t('order.emptyBasketTitle')}</EmptyTitle>
+                    <EmptyDescription>{t('order.emptyBasket')}</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                <ul className="flex flex-col gap-3">
+                  {cartLines.map((line) => {
+                    const lineTotal = line.price * line.qty
+                    return (
+                      <li
+                        key={line.menuItemId}
+                        className="border-border flex items-start justify-between gap-3 rounded-lg border p-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">{line.name}</p>
+                          <p className="text-muted-foreground text-xs tabular-nums">
+                            {formatCurrency(line.price, currencyCode, locale)} × {line.qty}
+                          </p>
+                          <p className="mt-1 text-sm font-medium tabular-nums">
+                            {formatCurrency(lineTotal, currencyCode, locale)}
+                          </p>
+                        </div>
+                        <QtyStepper
+                          qty={line.qty}
+                          onDecrease={() => decrementItem(line.menuItemId)}
+                          onIncrease={() => increaseCartLine(line.menuItemId)}
+                          decreaseLabel={t('order.decreaseQty', { name: line.name })}
+                          increaseLabel={t('order.increaseQty', { name: line.name })}
+                          removeLabel={t('order.removeItem', { name: line.name })}
+                        />
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+          </ScrollArea>
 
-          <SheetFooter className="shrink-0 border-t">
+          <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
             <div className="flex w-full flex-col gap-3">
               <div className="flex items-end justify-between gap-3">
                 <div>
@@ -513,16 +611,18 @@ export function PublicMenuCatalog({
                 ) : null}
               </div>
               {submitError ? (
-                <p role="alert" className="text-destructive text-sm">
-                  {submitError}
-                </p>
+                <Alert variant="destructive">
+                  <AlertTitle>{t('order.submitFailedTitle')}</AlertTitle>
+                  <AlertDescription>{submitError}</AlertDescription>
+                </Alert>
               ) : null}
               <Button
                 type="button"
-                className="w-full"
+                className="min-h-11 w-full touch-manipulation"
                 disabled={submitting || !isLoaded || !hasCart}
                 onClick={() => void submitOrder()}
               >
+                {!isLoaded || submitting ? <Spinner /> : null}
                 {!isLoaded
                   ? t('order.sending')
                   : !isSignedIn
@@ -532,9 +632,9 @@ export function PublicMenuCatalog({
                       : t('order.send')}
               </Button>
             </div>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

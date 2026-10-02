@@ -270,6 +270,8 @@
       "Someone else handling social media"
     ],
     "problemClose": "Different providers. Different invoices. Almost nothing working as one system.",
+    "whyTitle": "Why we start at the register",
+    "whyBody": "Sales, menu, and stock live at the POS. When that data sits in one place, inventory stays accurate, loyalty and marketing match real tickets, and owners stop reconciling spreadsheets across vendors. That is why Menuyukti begins with POS and inventory—then every other service builds on the same truth.",
     "solutionTitle": "One platform. Services restaurant owners can turn on or off.",
     "solutionBody": "Menuyukti brings these pieces together under one provider—without forcing a rigid all-in-one suite. Restaurant owners activate what they need, combine services as they like, and switch them off when they don’t. Think of it like cloud services for a restaurant.",
     "costTitle": "Designed to cost less",
@@ -716,13 +718,16 @@
     "menu": {
       "eyebrow": "Menu",
       "empty": "Nothing on the menu yet — check back soon.",
+      "emptyTitle": "Menu coming soon",
       "notFoundTitle": "Menu not found",
       "metaDescription": "Digital menu at {name}.",
+      "categoriesNavAria": "Jump to category",
       "filters": {
         "dietary": "Dietary",
         "allergens": "Exclude allergens",
         "clear": "Clear filters",
         "matchCount": "{count, plural, one {# dish matches} other {# dishes match}}",
+        "noMatchesTitle": "No matching dishes",
         "noMatches": "No dishes match these filters."
       },
       "order": {
@@ -735,12 +740,14 @@
         "basketTitle": "Your basket",
         "basketDescription": "Review your items before sending the order.",
         "basketTotal": "Total",
+        "emptyBasketTitle": "Basket empty",
         "emptyBasket": "Your basket is empty.",
         "closeBasket": "Close",
         "tableLabelReadOnly": "Table · {label}",
         "send": "Send order",
         "sending": "Sending…",
         "signInToOrder": "Sign in to send order",
+        "submitFailedTitle": "Order not sent",
         "submitFailed": "Could not send your order. Please try again.",
         "successTitle": "Order sent",
         "successBody": "Your ticket is {billNumber}. Staff will take it from here."
@@ -3844,6 +3851,9 @@
         "tree_nuts": "Tree nuts",
         "soy": "Soy",
         "sesame": "Sesame"
+      },
+      "toast": {
+        "saved": "Menu saved"
       },
       "errors": {
         "nameRequired": "Each item needs a name",
