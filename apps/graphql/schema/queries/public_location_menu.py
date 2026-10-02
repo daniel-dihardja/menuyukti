@@ -33,6 +33,7 @@ def _public_categories(menu: Menu) -> list[PublicMenuCategoryType]:
                 sort_order=cat.sort_order,
                 items=[
                     PublicMenuItemType(
+                        id=item.id,
                         name=item.name,
                         price=float(item.price),
                         sort_order=item.sort_order,

@@ -253,7 +253,9 @@
     "signInMenuTriggerAria": "Sign in options"
   },
   "siteFooter": {
-    "copyright": "© {year} Menuyukti"
+    "copyright": "© {year} Menuyukti",
+    "navAria": "Site",
+    "about": "About"
   },
   "about": {
     "metaTitle": "About Menuyukti — Restaurant tools in one platform",
@@ -722,6 +724,27 @@
         "clear": "Clear filters",
         "matchCount": "{count, plural, one {# dish matches} other {# dishes match}}",
         "noMatches": "No dishes match these filters."
+      },
+      "order": {
+        "add": "Add",
+        "increaseQty": "Add another {name}",
+        "decreaseQty": "Remove one {name}",
+        "removeItem": "Remove {name} from basket",
+        "cartSummary": "{count, plural, one {# item} other {# items}}",
+        "viewBasket": "View basket",
+        "basketTitle": "Your basket",
+        "basketDescription": "Review your items before sending the order.",
+        "basketTotal": "Total",
+        "emptyBasket": "Your basket is empty.",
+        "closeBasket": "Close",
+        "tableLabel": "Table",
+        "tableLabelPlaceholder": "Optional",
+        "send": "Send order",
+        "sending": "Sending…",
+        "signInToOrder": "Sign in to send order",
+        "submitFailed": "Could not send your order. Please try again.",
+        "successTitle": "Order sent",
+        "successBody": "Your ticket is {billNumber}. Staff will take it from here."
       },
       "dietary": {
         "vegan": "Vegan",
@@ -3543,10 +3566,6 @@
           "generateError": "Couldn't generate the image. Try again."
         }
       },
-      "sidePanel": {
-        "chatTab": "Chat",
-        "visualizationsTab": "Visualizations"
-      },
       "visualizations": {
         "panelTitle": "Charts",
         "emptyTitle": "No charts yet",
@@ -5276,15 +5295,11 @@
       "generate": "Generate",
       "generateError": "Couldn't generate the image. Try again."
     },
-    "sidePanel": {
-      "chatTab": "Chat",
-      "visualizationsTab": "Visualizations",
-      "openVisualizationsAria": "Open visualizations",
-      "visualizationsDrawerDescription": "Explore sales analytics charts alongside your chat.",
-      "closeVisualizations": "Close"
-    },
     "visualizations": {
       "panelTitle": "Charts",
+      "artifactTitle": "Charts",
+      "artifactHint": "Open sales analytics charts",
+      "artifactDescription": "Add and explore sales analytics charts alongside your chat.",
       "emptyTitle": "No charts yet",
       "emptyDescription": "Add a chart from the catalog to explore sales analytics alongside your plan.",
       "addButton": "Add visualization",

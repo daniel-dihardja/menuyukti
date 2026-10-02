@@ -16,7 +16,7 @@ from graphql.data_sources.models.menu import (
     MenuModifierOption,
 )
 from graphql.data_sources.models.pos_order import PosOrderLine
-from graphql.schema.types.menu_attributes import normalize_allergens, normalize_dietary_tags
+from graphql.domain.menu_attributes import normalize_allergens, normalize_dietary_tags
 
 NAME_MAX_LEN = 256
 DESCRIPTION_MAX_LEN = 4000

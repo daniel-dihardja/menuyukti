@@ -50,13 +50,6 @@
       "actionMenuKeys": []
     },
     {
-      "id": "usage",
-      "description": "Personal AI usage metering page.",
-      "routePrefixes": ["/usage"],
-      "navKeys": ["usage"],
-      "actionMenuKeys": []
-    },
-    {
       "id": "analyticsHeatmap",
       "description": "Menu sales heatmap report from the sales actions menu (admin).",
       "routePrefixes": [],

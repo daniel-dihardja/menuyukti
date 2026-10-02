@@ -6,6 +6,22 @@ from enum import StrEnum
 
 import strawberry
 
+from graphql.domain.menu_attributes import (
+    ALLERGEN_VALUES,
+    DIETARY_TAG_VALUES,
+    normalize_allergens,
+    normalize_dietary_tags,
+)
+
+__all__ = [
+    "ALLERGEN_VALUES",
+    "DIETARY_TAG_VALUES",
+    "MenuAllergen",
+    "MenuDietaryTag",
+    "normalize_allergens",
+    "normalize_dietary_tags",
+]
+
 
 @strawberry.enum(description="Dietary or lifestyle tag on a menu item.")
 class MenuDietaryTag(StrEnum):
@@ -31,35 +47,6 @@ class MenuAllergen(StrEnum):
     sesame = "sesame"
 
 
-DIETARY_TAG_VALUES: frozenset[str] = frozenset(tag.value for tag in MenuDietaryTag)
-ALLERGEN_VALUES: frozenset[str] = frozenset(allergen.value for allergen in MenuAllergen)
-
-
-def normalize_dietary_tags(raw: list[str] | None) -> list[str]:
-    """Validate, dedupe, and sort dietary tag keys. Raises ValueError on unknown keys."""
-    if not raw:
-        return []
-    seen: set[str] = set()
-    for value in raw:
-        key = str(value).strip()
-        if not key:
-            continue
-        if key not in DIETARY_TAG_VALUES:
-            raise ValueError(f"Unknown dietary tag: {key}")
-        seen.add(key)
-    return sorted(seen)
-
-
-def normalize_allergens(raw: list[str] | None) -> list[str]:
-    """Validate, dedupe, and sort allergen keys. Raises ValueError on unknown keys."""
-    if not raw:
-        return []
-    seen: set[str] = set()
-    for value in raw:
-        key = str(value).strip()
-        if not key:
-            continue
-        if key not in ALLERGEN_VALUES:
-            raise ValueError(f"Unknown allergen: {key}")
-        seen.add(key)
-    return sorted(seen)
+# Keep GraphQL enums aligned with the domain catalogs used by services.
+assert frozenset(tag.value for tag in MenuDietaryTag) == DIETARY_TAG_VALUES
+assert frozenset(allergen.value for allergen in MenuAllergen) == ALLERGEN_VALUES

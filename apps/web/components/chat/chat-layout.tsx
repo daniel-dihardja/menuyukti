@@ -89,6 +89,7 @@ export function ChatWithMobileArtifactLayout({
   mobileArtifactOpen,
   onMobileArtifactOpenChange,
   mobileArtifactTitle,
+  mobileArtifactDescription,
   mobileArtifactHint,
 }: {
   chatPane: ReactNode
@@ -96,6 +97,7 @@ export function ChatWithMobileArtifactLayout({
   mobileArtifactOpen: boolean
   onMobileArtifactOpenChange: (open: boolean) => void
   mobileArtifactTitle?: string | null
+  mobileArtifactDescription?: string | null
   mobileArtifactHint?: string | null
 }) {
   return (
@@ -107,6 +109,7 @@ export function ChatWithMobileArtifactLayout({
         <ChatColumnWithKeyboardInset className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{chatPane}</div>
           <ChatMobileArtifactSheet
+            description={mobileArtifactDescription}
             onOpenChange={onMobileArtifactOpenChange}
             open={mobileArtifactOpen}
             title={mobileArtifactTitle}

@@ -72,7 +72,7 @@ load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
 
-# Regenerate Warung Sunda analytics mock (ESB shell from SNABB; inventar-aligned dishes).
+# Regenerate Berlin cafe analytics mock (ESB shell from SNABB; Kaffeestube Mitte menu).
 #   make generate-dev-mock-excel
 #   make generate-dev-mock-excel SOURCE=/path/to/snabb.xlsx
 generate-dev-mock-excel:

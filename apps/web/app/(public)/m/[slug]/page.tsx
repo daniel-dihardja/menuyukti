@@ -113,7 +113,12 @@ async function PublicLocationMenuContent({ params }: PageProps) {
         {!hasItems ? (
           <p className="text-muted-foreground py-12 text-center text-sm">{t('empty')}</p>
         ) : (
-          <PublicMenuCatalog categories={menu.categories} currencyCode={currencyCode} />
+          <PublicMenuCatalog
+            locationId={menu.locationId}
+            publicSlug={menu.publicSlug}
+            categories={menu.categories}
+            currencyCode={currencyCode}
+          />
         )}
       </main>
     </div>

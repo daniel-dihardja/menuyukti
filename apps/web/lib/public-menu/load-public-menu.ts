@@ -69,6 +69,7 @@ export async function loadPublicLocationMenu(
         const imageUrl =
           filename && allowedNames.has(filename) ? (urlByName[filename] ?? null) : null
         return {
+          id: item.id,
           name: item.name,
           price: item.price,
           sortOrder: item.sortOrder,

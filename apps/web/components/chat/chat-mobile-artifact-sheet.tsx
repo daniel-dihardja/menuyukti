@@ -24,6 +24,8 @@ export type ChatMobileArtifactSheetProps = {
   children: ReactNode
   /** Optional drawer title override. */
   title?: string | null
+  /** Optional drawer description override (sr-only). */
+  description?: string | null
 }
 
 export function ChatMobileArtifactSheet({
@@ -31,9 +33,11 @@ export function ChatMobileArtifactSheet({
   onOpenChange,
   children,
   title,
+  description,
 }: ChatMobileArtifactSheetProps) {
   const t = useTranslations('chat')
   const drawerTitle = title?.trim() || t('mobileArtifactSheetTitle')
+  const drawerDescription = description?.trim() || t('mobileArtifactSheetDescription')
 
   return (
     <Drawer
@@ -59,9 +63,7 @@ export function ChatMobileArtifactSheet({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <DrawerTitle className="truncate text-sm">{drawerTitle}</DrawerTitle>
-              <DrawerDescription className="sr-only">
-                {t('mobileArtifactSheetDescription')}
-              </DrawerDescription>
+              <DrawerDescription className="sr-only">{drawerDescription}</DrawerDescription>
             </div>
             <DrawerClose asChild>
               <Button

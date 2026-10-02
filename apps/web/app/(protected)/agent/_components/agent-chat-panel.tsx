@@ -4,14 +4,10 @@ import { usePanelRef } from '@workspace/ui/components/resizable'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 
 import { useChatComposerState } from '@/components/chat/chat-context'
-import {
-  ChatOnlyLayout,
-  ChatWithMobileArtifactLayout,
-  ChatWithPreviewLayout,
-} from '@/components/chat/chat-layout'
+import { ChatWithMobileArtifactLayout, ChatWithPreviewLayout } from '@/components/chat/chat-layout'
 import { ChatMentionProvider } from '@/components/chat/chat-mention-context'
 import { ChatSidePanel } from '@/components/chat/chat-side-panel'
 import { ChatVisualizationsProvider } from '@/components/chat/visualizations/chat-visualizations-context'
@@ -23,6 +19,17 @@ import { AgentChatHost } from './agent-chat-host'
 
 const ChatPreviewPanelBodyLazy = dynamic(
   () => import('@/components/chat/chat-preview-panel-body').then((m) => m.ChatPreviewPanelBody),
+  {
+    ssr: false,
+    loading: () => <ChatPreviewPanelSkeleton className="h-full w-full" />,
+  },
+)
+
+const ChatVisualizationsPaneLazy = dynamic(
+  () =>
+    import('@/components/chat/visualizations/chat-visualizations-pane').then(
+      (m) => m.ChatVisualizationsPane,
+    ),
   {
     ssr: false,
     loading: () => <ChatPreviewPanelSkeleton className="h-full w-full" />,
@@ -43,6 +50,7 @@ export function AgentChatPanel({
   onAnalyticsRunIdChange,
 }: AgentChatPanelProps) {
   const t = useTranslations('chat')
+  const tViz = useTranslations('chat.visualizations')
   const router = useRouter()
   const [mobileArtifactOpen, setMobileArtifactOpen] = useState(false)
   const previewPanelRef = usePanelRef()
@@ -69,6 +77,9 @@ export function AgentChatPanel({
       >
         <ChatMentionProvider>
           <AgentChatPanelLayout
+            chartsArtifactDescription={tViz('artifactDescription')}
+            chartsArtifactHint={tViz('artifactHint')}
+            chartsArtifactTitle={tViz('artifactTitle')}
             mobileArtifactOpen={mobileArtifactOpen}
             onMobileArtifactOpenChange={setMobileArtifactOpen}
             previewPanelRef={previewPanelRef}
@@ -85,47 +96,53 @@ type AgentChatPanelLayoutProps = {
   mobileArtifactOpen: boolean
   onMobileArtifactOpenChange: (open: boolean) => void
   previewPanelRef: ReturnType<typeof usePanelRef>
+  chartsArtifactDescription: string
+  chartsArtifactHint: string
+  chartsArtifactTitle: string
   storyArtifactHint: string
   storyArtifactTitle: string
 }
 
-function GeneralAdvisorLayout() {
-  return <ChatOnlyLayout chatPane={<ChatSidePanel />} />
-}
-
-function ImageAssistantDesktopLayout({
+function ModeDesktopLayout({
+  previewPane,
   previewPanelRef,
 }: {
+  previewPane: ReactNode
   previewPanelRef: ReturnType<typeof usePanelRef>
 }) {
   return (
     <ChatWithPreviewLayout
       chatPane={<ChatSidePanel />}
-      previewPane={<ChatPreviewPanelBodyLazy />}
+      previewPane={previewPane}
       previewPanelRef={previewPanelRef}
     />
   )
 }
 
-function ImageAssistantMobileLayout({
+function ModeMobileLayout({
+  previewPane,
   mobileArtifactOpen,
   onMobileArtifactOpenChange,
-  storyArtifactHint,
-  storyArtifactTitle,
+  artifactDescription,
+  artifactHint,
+  artifactTitle,
 }: {
+  previewPane: ReactNode
   mobileArtifactOpen: boolean
   onMobileArtifactOpenChange: (open: boolean) => void
-  storyArtifactHint: string
-  storyArtifactTitle: string
+  artifactDescription?: string | null
+  artifactHint: string
+  artifactTitle: string
 }) {
   return (
     <ChatWithMobileArtifactLayout
       chatPane={<ChatSidePanel />}
-      mobileArtifactHint={storyArtifactHint}
+      mobileArtifactDescription={artifactDescription}
+      mobileArtifactHint={artifactHint}
       mobileArtifactOpen={mobileArtifactOpen}
-      mobileArtifactTitle={storyArtifactTitle}
+      mobileArtifactTitle={artifactTitle}
       onMobileArtifactOpenChange={onMobileArtifactOpenChange}
-      previewPane={<ChatPreviewPanelBodyLazy />}
+      previewPane={previewPane}
     />
   )
 }
@@ -134,33 +151,42 @@ function AgentChatPanelLayout({
   mobileArtifactOpen,
   onMobileArtifactOpenChange,
   previewPanelRef,
+  chartsArtifactDescription,
+  chartsArtifactHint,
+  chartsArtifactTitle,
   storyArtifactHint,
   storyArtifactTitle,
 }: AgentChatPanelLayoutProps) {
   const { chatMode } = useChatComposerState()
   const isDesktop = useDesktopLayout()
 
-  // Close mobile artifact when leaving image assistant.
+  // Close mobile artifact when switching modes.
   useEffect(() => {
-    if (chatMode !== 'image_assistant') {
-      onMobileArtifactOpenChange(false)
-    }
+    onMobileArtifactOpenChange(false)
   }, [chatMode, onMobileArtifactOpenChange])
 
-  if (chatMode !== 'image_assistant') {
-    return <GeneralAdvisorLayout />
-  }
+  const isImageAssistant = chatMode === 'image_assistant'
+  const previewPane = isImageAssistant ? (
+    <ChatPreviewPanelBodyLazy />
+  ) : (
+    <ChatVisualizationsPaneLazy />
+  )
+  const artifactHint = isImageAssistant ? storyArtifactHint : chartsArtifactHint
+  const artifactTitle = isImageAssistant ? storyArtifactTitle : chartsArtifactTitle
+  const artifactDescription = isImageAssistant ? null : chartsArtifactDescription
 
   if (!isDesktop) {
     return (
-      <ImageAssistantMobileLayout
+      <ModeMobileLayout
+        artifactDescription={artifactDescription}
+        artifactHint={artifactHint}
+        artifactTitle={artifactTitle}
         mobileArtifactOpen={mobileArtifactOpen}
         onMobileArtifactOpenChange={onMobileArtifactOpenChange}
-        storyArtifactHint={storyArtifactHint}
-        storyArtifactTitle={storyArtifactTitle}
+        previewPane={previewPane}
       />
     )
   }
 
-  return <ImageAssistantDesktopLayout previewPanelRef={previewPanelRef} />
+  return <ModeDesktopLayout previewPane={previewPane} previewPanelRef={previewPanelRef} />
 }

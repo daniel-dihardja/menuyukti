@@ -44,6 +44,7 @@ from .service_subscriptions import (
     ActivateServiceSubscriptionMutation,
     CancelServiceSubscriptionMutation,
 )
+from .submit_public_menu_order import SubmitPublicMenuOrderMutation
 from .update_calendar_entry import UpdateCalendarEntryMutation
 from .update_crm_app import UpdateCrmAppMutation
 from .update_location import UpdateLocationMutation
@@ -98,6 +99,7 @@ __all__ = [
     "RemoveWorkspaceMemberMutation",
     "ReplaceLocationMenuItemsMutation",
     "PosOrderMutations",
+    "SubmitPublicMenuOrderMutation",
     "UpdateCalendarEntryMutation",
     "UpdateCrmAppMutation",
     "UpdateLocationMutation",
