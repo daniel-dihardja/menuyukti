@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { ChevronDown, Plus, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
@@ -15,16 +16,33 @@ import {
   type MenuDietaryTag,
 } from '@/lib/menu/menu-attributes'
 import { routes } from '@/lib/routes'
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
+import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from '@workspace/ui/components/card'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@workspace/ui/components/collapsible'
-import { Field, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '@workspace/ui/components/input-group'
 import { Input } from '@workspace/ui/components/input'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { cn } from '@workspace/ui/lib/utils'
 
 export type LocationMenuFormModifierOption = {
@@ -139,10 +157,6 @@ function newCategory(): LocationMenuFormCategory {
   }
 }
 
-function toggleInList<T extends string>(list: T[], value: T): T[] {
-  return list.includes(value) ? list.filter((entry) => entry !== value) : [...list, value]
-}
-
 function isBlankItem(item: LocationMenuFormItem): boolean {
   return (
     !item.name &&
@@ -160,38 +174,33 @@ function AttributeChipGroup<T extends string>({
   options,
   selected,
   disabled,
-  onToggle,
+  onChange,
   labelFor,
 }: {
   label: string
   options: readonly T[]
   selected: readonly T[]
   disabled: boolean
-  onToggle: (value: T) => void
+  onChange: (next: T[]) => void
   labelFor: (value: T) => string
 }) {
   return (
     <Field className="sm:col-span-2 gap-2">
       <FieldLabel>{label}</FieldLabel>
-      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
-        {options.map((option) => {
-          const active = selected.includes(option)
-          return (
-            <Button
-              key={option}
-              type="button"
-              size="sm"
-              variant={active ? 'default' : 'outline'}
-              disabled={disabled}
-              aria-pressed={active}
-              onClick={() => onToggle(option)}
-              className="h-8 rounded-full px-3 text-xs font-medium"
-            >
-              {labelFor(option)}
-            </Button>
-          )
-        })}
-      </div>
+      <ToggleGroup
+        type="multiple"
+        value={[...selected]}
+        onValueChange={(next) => onChange(next as T[])}
+        disabled={disabled}
+        aria-label={label}
+        className="justify-start"
+      >
+        {options.map((option) => (
+          <ToggleGroupItem key={option} value={option} className="rounded-full px-3 text-xs">
+            {labelFor(option)}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
     </Field>
   )
 }
@@ -216,6 +225,11 @@ function LocationMenuItemRow({
   const t = useTranslations('analytics.locationMenu')
   const [open, setOpen] = useState(defaultOpen)
   const displayName = item.name.trim() || t('untitledItem')
+  const priceLabel = item.price.trim()
+  const summaryBadges = [
+    ...item.dietaryTags.map((tag) => ({ key: `dietary-${tag}`, label: t(`dietary.${tag}`) })),
+    ...item.allergens.map((tag) => ({ key: `allergen-${tag}`, label: t(`allergens.${tag}`) })),
+  ].slice(0, 4)
 
   function updateGroup(groupKey: string, patch: Partial<LocationMenuFormModifierGroup>) {
     onUpdate({
@@ -281,9 +295,9 @@ function LocationMenuItemRow({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="rounded-md border border-border/70 p-3"
+      className="rounded-lg border border-border/70 bg-card"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 p-3">
         <CollapsibleTrigger asChild>
           <Button
             type="button"
@@ -294,17 +308,30 @@ function LocationMenuItemRow({
           >
             <ChevronDown
               aria-hidden
+              data-icon="inline-start"
               className={cn(
-                'size-4 shrink-0 text-muted-foreground transition-transform',
+                'shrink-0 text-muted-foreground transition-transform',
                 open && 'rotate-180',
               )}
             />
-            <span className="truncate">{displayName}</span>
-            {!item.isAvailable ? (
-              <span className="text-muted-foreground shrink-0 text-xs font-normal">
-                {t('fields.unavailableBadge')}
-              </span>
-            ) : null}
+            <span className="min-w-0 flex-1 truncate">{displayName}</span>
+            <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+              {priceLabel ? (
+                <span className="text-muted-foreground text-xs font-normal tabular-nums">
+                  {currencyCode} {priceLabel}
+                </span>
+              ) : null}
+              {!item.isAvailable ? (
+                <Badge variant="secondary">{t('fields.unavailableBadge')}</Badge>
+              ) : null}
+              {!open
+                ? summaryBadges.map((badge) => (
+                    <Badge key={badge.key} variant="outline" className="font-normal">
+                      {badge.label}
+                    </Badge>
+                  ))
+                : null}
+            </span>
           </Button>
         </CollapsibleTrigger>
         <Button
@@ -315,11 +342,11 @@ function LocationMenuItemRow({
           onClick={onRemove}
           aria-label={t('actions.remove')}
         >
-          <Trash2 className="size-4" />
+          <Trash2 />
         </Button>
       </div>
 
-      <CollapsibleContent className="flex flex-col gap-3 pt-3">
+      <CollapsibleContent className="flex flex-col gap-3 border-t border-border/60 px-3 pb-3 pt-3">
         <FieldGroup className="grid gap-3 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor={`menu-name-${item.key}`}>{t('fields.name')}</FieldLabel>
@@ -335,15 +362,20 @@ function LocationMenuItemRow({
             <FieldLabel htmlFor={`menu-price-${item.key}`}>
               {t('fields.priceWithCurrency', { currency: currencyCode })}
             </FieldLabel>
-            <Input
-              id={`menu-price-${item.key}`}
-              inputMode="decimal"
-              value={item.price}
-              disabled={loading}
-              onChange={(e) => onUpdate({ price: e.target.value })}
-              placeholder={t('fields.pricePlaceholder')}
-              className="tabular-nums"
-            />
+            <InputGroup>
+              <InputGroupAddon>
+                <InputGroupText>{currencyCode}</InputGroupText>
+              </InputGroupAddon>
+              <InputGroupInput
+                id={`menu-price-${item.key}`}
+                inputMode="decimal"
+                value={item.price}
+                disabled={loading}
+                onChange={(e) => onUpdate({ price: e.target.value })}
+                placeholder={t('fields.pricePlaceholder')}
+                className="tabular-nums"
+              />
+            </InputGroup>
           </Field>
           <Field
             orientation="horizontal"
@@ -353,7 +385,7 @@ function LocationMenuItemRow({
               <FieldLabel htmlFor={`menu-available-${item.key}`}>
                 {t('fields.available')}
               </FieldLabel>
-              <p className="text-muted-foreground text-xs">{t('fields.availableHint')}</p>
+              <FieldDescription>{t('fields.availableHint')}</FieldDescription>
             </div>
             <Switch
               id={`menu-available-${item.key}`}
@@ -378,7 +410,7 @@ function LocationMenuItemRow({
             options={MENU_DIETARY_TAGS}
             selected={item.dietaryTags}
             disabled={loading}
-            onToggle={(value) => onUpdate({ dietaryTags: toggleInList(item.dietaryTags, value) })}
+            onChange={(next) => onUpdate({ dietaryTags: next })}
             labelFor={(value) => t(`dietary.${value}`)}
           />
           <AttributeChipGroup
@@ -386,7 +418,7 @@ function LocationMenuItemRow({
             options={MENU_ALLERGENS}
             selected={item.allergens}
             disabled={loading}
-            onToggle={(value) => onUpdate({ allergens: toggleInList(item.allergens, value) })}
+            onChange={(next) => onUpdate({ allergens: next })}
             labelFor={(value) => t(`allergens.${value}`)}
           />
           <Field className="sm:col-span-2 gap-1.5">
@@ -422,12 +454,12 @@ function LocationMenuItemRow({
               disabled={loading}
               onClick={addGroup}
             >
-              <Plus className="size-4" />
+              <Plus data-icon="inline-start" />
               {t('actions.addModifierGroup')}
             </Button>
           </div>
           {item.modifierGroups.length === 0 ? (
-            <p className="text-xs text-muted-foreground">{t('fields.modifiersEmpty')}</p>
+            <FieldDescription>{t('fields.modifiersEmpty')}</FieldDescription>
           ) : (
             item.modifierGroups.map((group) => (
               <div
@@ -481,7 +513,7 @@ function LocationMenuItemRow({
                     onClick={() => removeGroup(group.key)}
                     aria-label={t('actions.removeModifierGroup')}
                   >
-                    <Trash2 className="size-4" />
+                    <Trash2 />
                   </Button>
                 </div>
 
@@ -502,23 +534,28 @@ function LocationMenuItemRow({
                           placeholder={t('fields.modifierOptionNamePlaceholder')}
                         />
                       </Field>
-                      <Field className="w-full sm:w-32">
+                      <Field className="w-full sm:w-40">
                         <FieldLabel htmlFor={`mod-delta-${option.key}`}>
                           {t('fields.modifierPriceDelta', { currency: currencyCode })}
                         </FieldLabel>
-                        <Input
-                          id={`mod-delta-${option.key}`}
-                          inputMode="decimal"
-                          value={option.priceDelta}
-                          disabled={loading}
-                          onChange={(e) =>
-                            updateOption(group.key, option.key, {
-                              priceDelta: e.target.value,
-                            })
-                          }
-                          placeholder="0"
-                          className="tabular-nums"
-                        />
+                        <InputGroup>
+                          <InputGroupAddon>
+                            <InputGroupText>{currencyCode}</InputGroupText>
+                          </InputGroupAddon>
+                          <InputGroupInput
+                            id={`mod-delta-${option.key}`}
+                            inputMode="decimal"
+                            value={option.priceDelta}
+                            disabled={loading}
+                            onChange={(e) =>
+                              updateOption(group.key, option.key, {
+                                priceDelta: e.target.value,
+                              })
+                            }
+                            placeholder="0"
+                            className="tabular-nums"
+                          />
+                        </InputGroup>
                       </Field>
                       <Button
                         type="button"
@@ -528,7 +565,7 @@ function LocationMenuItemRow({
                         onClick={() => removeOption(group.key, option.key)}
                         aria-label={t('actions.removeModifierOption')}
                       >
-                        <Trash2 className="size-4" />
+                        <Trash2 />
                       </Button>
                     </div>
                   ))}
@@ -539,7 +576,7 @@ function LocationMenuItemRow({
                     disabled={loading}
                     onClick={() => addOption(group.key)}
                   >
-                    <Plus className="size-4" />
+                    <Plus data-icon="inline-start" />
                     {t('actions.addModifierOption')}
                   </Button>
                 </div>
@@ -707,9 +744,12 @@ export function LocationMenuForm({
         const data = (await res.json().catch(() => null)) as { message?: string } | null
         throw new Error(data?.message || t('errors.saveFailed'))
       }
+      toast.success(t('toast.saved'))
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.unknown'))
+      const message = err instanceof Error ? err.message : t('errors.unknown')
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -718,43 +758,37 @@ export function LocationMenuForm({
   return (
     <form className="flex flex-col gap-4" onSubmit={onSubmit}>
       <section className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{t('heading')}</h1>
         <p className="text-sm text-muted-foreground">{t('description')}</p>
         <p className="text-sm text-muted-foreground">
           {t('currencyHint', { currency: currencyCode })}
         </p>
       </section>
 
-      <section className="border-border bg-muted/30 flex max-w-xl flex-col gap-2 rounded-lg border p-4">
-        {publicMenuEnabled ? (
-          <>
-            <p className="text-sm font-medium">{t('serviceBanner.onTitle')}</p>
-            <p className="text-muted-foreground text-xs">{t('serviceBanner.onHint')}</p>
-            <Button asChild variant="outline" size="sm" className="mt-1 w-fit">
-              <Link href={routes.servicesDigitalMenuLocation(locationId)}>
-                {t('serviceBanner.manageCta')}
-              </Link>
-            </Button>
-          </>
-        ) : (
-          <>
-            <p className="text-sm font-medium">{t('serviceBanner.offTitle')}</p>
-            <p className="text-muted-foreground text-xs">{t('serviceBanner.offHint')}</p>
-            <Button asChild variant="outline" size="sm" className="mt-1 w-fit">
-              <Link href={routes.servicesDigitalMenu}>{t('serviceBanner.turnOnCta')}</Link>
-            </Button>
-          </>
-        )}
-      </section>
+      <Alert>
+        <AlertTitle>
+          {publicMenuEnabled ? t('serviceBanner.onTitle') : t('serviceBanner.offTitle')}
+        </AlertTitle>
+        <AlertDescription className="flex flex-col gap-2">
+          <p>{publicMenuEnabled ? t('serviceBanner.onHint') : t('serviceBanner.offHint')}</p>
+          <Button asChild variant="outline" size="sm" className="w-fit">
+            <Link
+              href={
+                publicMenuEnabled
+                  ? routes.servicesDigitalMenuLocation(locationId)
+                  : routes.servicesDigitalMenu
+              }
+            >
+              {publicMenuEnabled ? t('serviceBanner.manageCta') : t('serviceBanner.turnOnCta')}
+            </Link>
+          </Button>
+        </AlertDescription>
+      </Alert>
 
       <div className="flex flex-col gap-6">
         {categories.map((category) => (
-          <section
-            key={category.key}
-            className="flex flex-col gap-4 rounded-lg border border-border p-4"
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <Field className="min-w-0 flex-1">
+          <Card key={category.key} className="gap-4 py-4 hover:border-card-border">
+            <CardHeader className="border-b pb-4">
+              <Field className="min-w-0">
                 <FieldLabel htmlFor={`menu-category-${category.key}`}>
                   {t('fields.categoryName')}
                 </FieldLabel>
@@ -766,19 +800,21 @@ export function LocationMenuForm({
                   placeholder={t('fields.categoryNamePlaceholder')}
                 />
               </Field>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={loading}
-                onClick={() => removeCategory(category.key)}
-                aria-label={t('actions.removeCategory')}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
+              <CardAction>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={loading}
+                  onClick={() => removeCategory(category.key)}
+                  aria-label={t('actions.removeCategory')}
+                >
+                  <Trash2 />
+                </Button>
+              </CardAction>
+            </CardHeader>
 
-            <div className="flex flex-col gap-4">
+            <CardContent className="flex flex-col gap-4">
               {category.items.map((item) => (
                 <LocationMenuItemRow
                   key={item.key}
@@ -790,31 +826,37 @@ export function LocationMenuForm({
                   onRemove={() => removeItem(category.key, item.key)}
                 />
               ))}
-            </div>
+            </CardContent>
 
-            <div className="flex flex-wrap gap-2">
+            <CardFooter className="border-t pt-4">
               <Button
                 type="button"
                 variant="secondary"
                 disabled={loading}
                 onClick={() => addItem(category.key)}
               >
-                <Plus className="size-4" />
+                <Plus data-icon="inline-start" />
                 {t('actions.add')}
               </Button>
-            </div>
-          </section>
+            </CardFooter>
+          </Card>
         ))}
       </div>
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTitle>{t('errors.saveFailed')}</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+      <div className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-2 border-t border-border bg-background/95 px-1 py-3 backdrop-blur-sm sm:flex-row sm:justify-between">
         <Button type="button" variant="secondary" disabled={loading} onClick={addCategory}>
-          <Plus className="size-4" />
+          <Plus data-icon="inline-start" />
           {t('actions.addCategory')}
         </Button>
         <Button type="submit" disabled={loading}>
+          {loading ? <Spinner data-icon="inline-start" /> : null}
           {loading ? t('actions.saving') : t('actions.save')}
         </Button>
       </div>
