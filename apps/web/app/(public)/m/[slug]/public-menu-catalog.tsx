@@ -328,7 +328,7 @@ export function PublicMenuCatalog({
       ) : null}
 
       {showStickyChrome ? (
-        <div className="bg-card/90 sticky top-14 z-20 -mx-6 flex flex-col gap-4 border-b px-6 py-4 shadow-sm backdrop-blur-sm sm:-mx-10 sm:px-10">
+        <div className="bg-card/90 sticky top-14 z-20 -mx-6 flex flex-col gap-4 border-b px-6 py-4 backdrop-blur-sm sm:-mx-10 sm:px-10">
           {showFilters ? (
             <>
               <FilterChipRow
