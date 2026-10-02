@@ -109,6 +109,9 @@ def next_bill_number(session: Session, location_id: int, when: datetime) -> str:
     return f"{prefix}{max_seq + 1:05d}"
 
 
+PUBLIC_MENU_ORDER_NOTE = "digital_menu"
+
+
 def open_order(
     session: Session,
     *,
@@ -128,6 +131,49 @@ def open_order(
     )
     session.add(order)
     session.flush()
+    return get_order(session, order.id) or order
+
+
+def submit_public_menu_order(
+    session: Session,
+    *,
+    location_id: int,
+    clerk_user_id: str,
+    lines: Sequence[tuple[int, int]],
+    table_label: str | None = None,
+) -> PosOrder:
+    """Open a guest digital-menu ticket and add lines (no modifiers / no payment).
+
+    ``lines`` is a sequence of ``(menu_item_id, qty)``. The location menu must be
+    published (``public_enabled``). The ticket is tagged with
+    ``note == PUBLIC_MENU_ORDER_NOTE`` for staff visibility.
+    """
+    if not lines:
+        raise ValueError("At least one line is required")
+
+    menu = session.scalar(select(Menu).where(Menu.location_id == location_id))
+    if menu is None or not bool(menu.public_enabled):
+        raise ValueError("Public digital menu is not published for this location")
+
+    order = open_order(
+        session,
+        location_id=location_id,
+        clerk_user_id=clerk_user_id,
+        table_label=table_label,
+    )
+    order.note = PUBLIC_MENU_ORDER_NOTE
+    session.flush()
+
+    for menu_item_id, qty in lines:
+        add_line(
+            session,
+            order_id=order.id,
+            menu_item_id=menu_item_id,
+            qty=qty,
+            modifier_option_ids=None,
+            note=None,
+        )
+
     return get_order(session, order.id) or order
 
 

@@ -723,6 +723,20 @@
         "matchCount": "{count, plural, one {# dish matches} other {# dishes match}}",
         "noMatches": "No dishes match these filters."
       },
+      "order": {
+        "add": "Add",
+        "increaseQty": "Add another {name}",
+        "decreaseQty": "Remove one {name}",
+        "cartSummary": "{count, plural, one {# item} other {# items}}",
+        "tableLabel": "Table",
+        "tableLabelPlaceholder": "Optional",
+        "send": "Send order",
+        "sending": "Sending…",
+        "signInToOrder": "Sign in to send order",
+        "submitFailed": "Could not send your order. Please try again.",
+        "successTitle": "Order sent",
+        "successBody": "Your ticket is {billNumber}. Staff will take it from here."
+      },
       "dietary": {
         "vegan": "Vegan",
         "vegetarian": "Vegetarian",

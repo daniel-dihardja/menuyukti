@@ -1,8 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
+import { Minus, Plus } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { useMemo, useState } from 'react'
 
+import { buildLoginUrl, rememberAuthReturnPath } from '@/lib/auth-return-path'
 import { formatCurrency, getCurrencyLocale } from '@/lib/currency'
 import {
   collectPresentMenuAttributes,
@@ -10,14 +14,24 @@ import {
   type MenuAllergen,
   type MenuDietaryTag,
 } from '@/lib/menu/menu-attributes'
-import type { PublicMenuCategoryView } from '@/lib/public-menu/load-public-menu'
+import type { PublicMenuCategoryView, PublicMenuItemView } from '@/lib/public-menu/load-public-menu'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { Input } from '@workspace/ui/components/input'
 import { cn } from '@workspace/ui/lib/utils'
 
 type Props = {
+  locationId: number
+  publicSlug: string
   categories: PublicMenuCategoryView[]
   currencyCode: string
+}
+
+type CartLine = {
+  menuItemId: number
+  name: string
+  price: number
+  qty: number
 }
 
 function toggleSetValue(prev: Set<string>, value: string): Set<string> {
@@ -66,11 +80,18 @@ function FilterChipRow({
   )
 }
 
-export function PublicMenuCatalog({ categories, currencyCode }: Props) {
+export function PublicMenuCatalog({ locationId, publicSlug, categories, currencyCode }: Props) {
   const t = useTranslations('public.menu')
+  const pathname = usePathname()
+  const { isSignedIn, isLoaded } = useAuth()
   const locale = getCurrencyLocale(currencyCode)
   const [dietaryInclude, setDietaryInclude] = useState<Set<string>>(() => new Set())
   const [allergenExclude, setAllergenExclude] = useState<Set<string>>(() => new Set())
+  const [cart, setCart] = useState<Record<number, CartLine>>({})
+  const [tableLabel, setTableLabel] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [successBillNumber, setSuccessBillNumber] = useState<string | null>(null)
 
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories])
   const present = useMemo(() => collectPresentMenuAttributes(allItems), [allItems])
@@ -90,8 +111,117 @@ export function PublicMenuCatalog({ categories, currencyCode }: Props) {
   const filtersActive = dietaryInclude.size > 0 || allergenExclude.size > 0
   const showFilters = present.dietaryTags.length > 0 || present.allergens.length > 0
 
+  const cartLines = useMemo(() => Object.values(cart), [cart])
+  const cartItemCount = cartLines.reduce((sum, line) => sum + line.qty, 0)
+  const cartTotal = cartLines.reduce((sum, line) => sum + line.price * line.qty, 0)
+  const hasCart = cartItemCount > 0
+
+  const addItem = (item: PublicMenuItemView) => {
+    setSuccessBillNumber(null)
+    setSubmitError(null)
+    setCart((prev) => {
+      const existing = prev[item.id]
+      const qty = (existing?.qty ?? 0) + 1
+      return {
+        ...prev,
+        [item.id]: {
+          menuItemId: item.id,
+          name: item.name,
+          price: item.price,
+          qty,
+        },
+      }
+    })
+  }
+
+  const decrementItem = (menuItemId: number) => {
+    setSubmitError(null)
+    setCart((prev) => {
+      const existing = prev[menuItemId]
+      if (!existing) return prev
+      if (existing.qty <= 1) {
+        const next = { ...prev }
+        delete next[menuItemId]
+        return next
+      }
+      return {
+        ...prev,
+        [menuItemId]: { ...existing, qty: existing.qty - 1 },
+      }
+    })
+  }
+
+  const redirectToSignIn = () => {
+    const returnPath = pathname || `/m/${encodeURIComponent(publicSlug)}`
+    rememberAuthReturnPath(returnPath)
+    window.location.assign(buildLoginUrl(returnPath))
+  }
+
+  const submitOrder = async () => {
+    if (!hasCart || submitting) return
+    setSubmitError(null)
+
+    if (!isLoaded) return
+    if (!isSignedIn) {
+      redirectToSignIn()
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/public-menu/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locationId,
+          lines: cartLines.map((line) => ({
+            menuItemId: line.menuItemId,
+            qty: line.qty,
+          })),
+          tableLabel: tableLabel.trim() || null,
+        }),
+      })
+      const body = (await res.json().catch(() => ({}))) as {
+        billNumber?: string
+        message?: string
+        error?: string
+      }
+      if (res.status === 401) {
+        redirectToSignIn()
+        return
+      }
+      if (!res.ok) {
+        setSubmitError(body.message || body.error || t('order.submitFailed'))
+        return
+      }
+      if (!body.billNumber) {
+        setSubmitError(t('order.submitFailed'))
+        return
+      }
+      setCart({})
+      setTableLabel('')
+      setSuccessBillNumber(body.billNumber)
+    } catch {
+      setSubmitError(t('order.submitFailed'))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className={cn('flex flex-col gap-8', hasCart || successBillNumber ? 'pb-36' : undefined)}>
+      {successBillNumber ? (
+        <div
+          role="status"
+          className="bg-card border-border rounded-xl border px-4 py-3 text-sm"
+        >
+          <p className="font-medium">{t('order.successTitle')}</p>
+          <p className="text-muted-foreground mt-1">
+            {t('order.successBody', { billNumber: successBillNumber })}
+          </p>
+        </div>
+      ) : null}
+
       {showFilters ? (
         <div className="bg-card/90 sticky top-0 z-20 -mx-6 space-y-4 border-b px-6 py-4 backdrop-blur-sm sm:-mx-10 sm:px-10">
           <FilterChipRow
@@ -149,9 +279,10 @@ export function PublicMenuCatalog({ categories, currencyCode }: Props) {
               <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {category.items.map((item) => {
                   const description = item.description.trim()
+                  const inCart = cart[item.id]?.qty ?? 0
                   return (
                     <li
-                      key={`${category.name}-${item.sortOrder}-${item.name}`}
+                      key={item.id}
                       className="bg-card text-card-foreground overflow-hidden rounded-xl border"
                     >
                       {item.imageUrl ? (
@@ -200,6 +331,44 @@ export function PublicMenuCatalog({ categories, currencyCode }: Props) {
                             ))}
                           </div>
                         ) : null}
+                        <div className="mt-3 flex items-center justify-between gap-2">
+                          {inCart > 0 ? (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                className="size-8"
+                                aria-label={t('order.decreaseQty', { name: item.name })}
+                                onClick={() => decrementItem(item.id)}
+                              >
+                                <Minus className="size-3.5" />
+                              </Button>
+                              <span className="min-w-6 text-center text-sm tabular-nums">
+                                {inCart}
+                              </span>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                className="size-8"
+                                aria-label={t('order.increaseQty', { name: item.name })}
+                                onClick={() => addItem(item)}
+                              >
+                                <Plus className="size-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => addItem(item)}
+                            >
+                              {t('order.add')}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </li>
                   )
@@ -209,6 +378,55 @@ export function PublicMenuCatalog({ categories, currencyCode }: Props) {
           ))}
         </div>
       )}
+
+      {hasCart ? (
+        <div className="border-border bg-card/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 py-3 backdrop-blur-sm sm:px-6">
+          <div className="mx-auto flex w-full max-w-4xl flex-col gap-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">
+                  {t('order.cartSummary', { count: cartItemCount })}
+                </p>
+                <p className="text-muted-foreground text-sm tabular-nums">
+                  {formatCurrency(cartTotal, currencyCode, locale)}
+                </p>
+              </div>
+              <div className="flex w-full max-w-xs flex-col gap-1 sm:w-40">
+                <label htmlFor="guest-table-label" className="text-muted-foreground text-xs">
+                  {t('order.tableLabel')}
+                </label>
+                <Input
+                  id="guest-table-label"
+                  value={tableLabel}
+                  onChange={(e) => setTableLabel(e.target.value)}
+                  placeholder={t('order.tableLabelPlaceholder')}
+                  maxLength={64}
+                  className="h-9"
+                />
+              </div>
+            </div>
+            {submitError ? (
+              <p role="alert" className="text-destructive text-sm">
+                {submitError}
+              </p>
+            ) : null}
+            <Button
+              type="button"
+              className="w-full sm:w-auto sm:self-end"
+              disabled={submitting || !isLoaded}
+              onClick={() => void submitOrder()}
+            >
+              {!isLoaded
+                ? t('order.sending')
+                : !isSignedIn
+                  ? t('order.signInToOrder')
+                  : submitting
+                    ? t('order.sending')
+                    : t('order.send')}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

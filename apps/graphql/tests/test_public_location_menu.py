@@ -35,6 +35,7 @@ query PublicMenu($slug: String!) {
       name
       sortOrder
       items {
+        id
         name
         price
         sortOrder
@@ -230,6 +231,8 @@ def test_public_menu_hides_unavailable_items(menu_location_id):
     assert len(pub["categories"]) == 1
     items = pub["categories"][0]["items"]
     assert [item["name"] for item in items] == ["Espresso"]
+    assert isinstance(items[0]["id"], int)
+    assert items[0]["id"] > 0
     assert items[0]["description"] == "Double shot"
     assert items[0]["imageFilename"] == "espresso.webp"
     assert items[0]["dietaryTags"] == ["vegan", "dairy_free"]

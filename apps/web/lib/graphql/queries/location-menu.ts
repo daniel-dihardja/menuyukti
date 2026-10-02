@@ -172,6 +172,7 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
         name
         sortOrder
         items {
+          id
           name
           price
           sortOrder
@@ -186,6 +187,7 @@ export const PUBLIC_LOCATION_MENU_QUERY = `
 `
 
 export type PublicMenuItem = {
+  id: number
   name: string
   price: number
   sortOrder: number
@@ -214,4 +216,52 @@ export type PublicLocationMenuPayload = {
 
 export type PublicLocationMenuData = {
   publicLocationMenu: PublicLocationMenuPayload | null
+}
+
+export const SUBMIT_PUBLIC_MENU_ORDER_MUTATION = `
+  mutation SubmitPublicMenuOrder(
+    $locationId: Int!
+    $lines: [PublicMenuOrderLineInput!]!
+    $tableLabel: String
+  ) {
+    submitPublicMenuOrder(
+      locationId: $locationId
+      lines: $lines
+      tableLabel: $tableLabel
+    ) {
+      id
+      billNumber
+      status
+      note
+      tableLabel
+      openedByClerkUserId
+      lines {
+        menuItemId
+        nameSnapshot
+        qty
+        unitPrice
+        lineTotal
+      }
+    }
+  }
+`
+
+export type SubmitPublicMenuOrderResult = {
+  id: number
+  billNumber: string
+  status: string
+  note: string | null
+  tableLabel: string | null
+  openedByClerkUserId: string
+  lines: Array<{
+    menuItemId: number
+    nameSnapshot: string
+    qty: number
+    unitPrice: number
+    lineTotal: number
+  }>
+}
+
+export type SubmitPublicMenuOrderData = {
+  submitPublicMenuOrder: SubmitPublicMenuOrderResult
 }

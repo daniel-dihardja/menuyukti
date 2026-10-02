@@ -9,6 +9,7 @@ from graphql.schema.types.menu_attributes import MenuAllergen, MenuDietaryTag
 
 @strawberry.type(description="One available item on the public digital menu.")
 class PublicMenuItemType:
+    id: int
     name: str
     price: float
     sort_order: int
