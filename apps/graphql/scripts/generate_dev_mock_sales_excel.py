@@ -15,7 +15,6 @@ import argparse
 import json
 import random
 import sys
-from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -27,6 +26,17 @@ from menuyukti.core.analytics.esb import normalize_esb_excel
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
+
+from graphql.scripts.dev_seed_kaffeestube_menu import (
+    COMBO_PAIRS,
+    KAFFEESTUBE_MENU_CATALOG,
+    WARUNG_DISH_NAMES,
+    KaffeestubeMenuItem,
+)
+
+# Alias kept so generator helpers stay readable.
+MOCK_CATALOG = KAFFEESTUBE_MENU_CATALOG
+MockMenuItem = KaffeestubeMenuItem
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_SOURCE = (
@@ -108,193 +118,6 @@ ESB_HEADERS: list[str] = [
     "Waiter",
     "Order Time",
 ]
-
-
-Daypart = str  # breakfast | lunch | afternoon | any
-
-
-@dataclass(frozen=True)
-class MockMenuItem:
-    menu: str
-    menu_category: str
-    menu_category_detail: str
-    menu_code: str
-    price: float
-    cogs: float
-    role: str  # star | plow | puzzle | filler | side
-    # Preferred dayparts for heatmap contrast (empty / {"any"} = all dayparts).
-    daypart_bias: frozenset[Daypart] = frozenset({"any"})
-
-
-def _bias(*parts: Daypart) -> frozenset[Daypart]:
-    return frozenset(parts)
-
-
-# Berlin cafe catalog (EUR). Roles tuned so smoke checks yield stars + strong lift.
-MOCK_CATALOG: tuple[MockMenuItem, ...] = (
-    MockMenuItem(
-        "Flat White",
-        "COFFEE",
-        "ESPRESSO",
-        "KSM-CF-001",
-        3.8,
-        0.9,
-        "star",
-        _bias("breakfast"),
-    ),
-    MockMenuItem(
-        "Cappuccino",
-        "COFFEE",
-        "ESPRESSO",
-        "KSM-CF-002",
-        3.6,
-        0.85,
-        "star",
-        _bias("breakfast"),
-    ),
-    MockMenuItem(
-        "Avocado Toast",
-        "FOOD",
-        "TOAST",
-        "KSM-FD-001",
-        9.5,
-        3.2,
-        "star",
-        _bias("breakfast", "lunch"),
-    ),
-    MockMenuItem(
-        "Filter Coffee",
-        "COFFEE",
-        "BREW",
-        "KSM-CF-003",
-        3.2,
-        2.2,  # thin margin → plow_horse when volume is high
-        "plow",
-        _bias("breakfast"),
-    ),
-    MockMenuItem(
-        "Espresso",
-        "COFFEE",
-        "ESPRESSO",
-        "KSM-CF-004",
-        2.4,
-        1.6,
-        "plow",
-        _bias("breakfast"),
-    ),
-    MockMenuItem(
-        "Buttercroissant",
-        "BAKERY",
-        "PASTRY",
-        "KSM-BK-001",
-        2.8,
-        2.0,
-        "plow",
-        _bias("breakfast"),
-    ),
-    MockMenuItem(
-        "Banana Bread",
-        "BAKERY",
-        "CAKE",
-        "KSM-BK-002",
-        3.5,
-        0.9,
-        "side",
-        _bias("afternoon"),
-    ),
-    MockMenuItem(
-        "Cheesecake",
-        "BAKERY",
-        "CAKE",
-        "KSM-BK-003",
-        4.8,
-        1.4,
-        "side",
-        _bias("afternoon"),
-    ),
-    MockMenuItem(
-        "Matcha Latte",
-        "TEA",
-        "LATTE",
-        "KSM-TE-001",
-        4.5,
-        1.1,
-        "puzzle",
-        _bias("afternoon"),
-    ),
-    MockMenuItem(
-        "Chai Latte",
-        "TEA",
-        "LATTE",
-        "KSM-TE-002",
-        4.2,
-        1.0,
-        "filler",
-        _bias("afternoon"),
-    ),
-    MockMenuItem(
-        "Granola Bowl",
-        "FOOD",
-        "BOWL",
-        "KSM-FD-002",
-        8.5,
-        2.8,
-        "puzzle",
-        _bias("breakfast", "lunch"),
-    ),
-    MockMenuItem(
-        "Toastie",
-        "FOOD",
-        "TOAST",
-        "KSM-FD-003",
-        7.5,
-        2.4,
-        "filler",
-        _bias("lunch"),
-    ),
-    MockMenuItem(
-        "Fresh OJ",
-        "SOFTDRINKS",
-        "JUICE",
-        "KSM-SD-001",
-        4.0,
-        1.2,
-        "side",
-        _bias("breakfast", "lunch"),
-    ),
-    MockMenuItem(
-        "Still Water",
-        "SOFTDRINKS",
-        "WATER",
-        "KSM-SD-002",
-        2.5,
-        1.9,
-        "plow",
-        _bias("any"),
-    ),
-)
-
-# Intentional co-purchase pairs (both must appear on many shared bills).
-COMBO_PAIRS: tuple[tuple[str, str], ...] = (
-    ("Cappuccino", "Buttercroissant"),
-    ("Flat White", "Banana Bread"),
-    ("Matcha Latte", "Cheesecake"),
-    ("Avocado Toast", "Fresh OJ"),
-)
-
-# Reject leftover inventar / Warung dish names if generation regresses.
-WARUNG_DISH_NAMES = frozenset(
-    {
-        "Nasi Timbel",
-        "Tahu Goreng",
-        "Tumis Kangkung",
-        "Pecel Sayuran",
-        "Sayur Lodeh",
-        "Nasi Putih",
-        "Gulai Tahu Santan",
-        "Es Gula Aren",
-    }
-)
 
 
 def _items_by_role(role: str) -> list[MockMenuItem]:

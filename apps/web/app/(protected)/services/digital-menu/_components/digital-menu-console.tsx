@@ -303,9 +303,9 @@ export function DigitalMenuConsole({
         </div>
       </div>
 
-      <aside className="border-border flex h-[calc(100svh-6rem)] w-full max-w-md flex-col gap-3 rounded-lg border p-4 lg:sticky lg:top-4 lg:h-[calc(100svh-5.5rem)] lg:w-[22rem] lg:max-w-none lg:shrink-0">
+      <aside className="border-border flex h-[calc(100svh-6rem)] w-full max-w-xl flex-col gap-3 rounded-lg border p-4 lg:sticky lg:top-4 lg:h-[calc(100svh-5.5rem)] lg:w-[min(42vw,36rem)] lg:max-w-none lg:shrink-0">
         <h2 className="shrink-0 text-base font-semibold">{t('previewTitle')}</h2>
-        <div className="bg-muted flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden rounded-2xl border border-border">
+        <div className="bg-muted flex min-h-0 w-full flex-1 items-stretch justify-center overflow-hidden rounded-2xl border border-border">
           {livePublicPath ? (
             <iframe
               title={t('previewTitle')}

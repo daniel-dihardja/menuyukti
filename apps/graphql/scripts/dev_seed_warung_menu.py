@@ -20,6 +20,8 @@ class WarungMenuItem:
     cogs: float
     role: str  # star | plow | puzzle | filler | side
     inventar_ingredients: tuple[str, ...]
+    dietary_tags: tuple[str, ...] = ()
+    allergens: tuple[str, ...] = ()
 
 
 # Warung Sunda dishes aligned with inventar pantry seeds:
@@ -34,6 +36,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         3500.0,
         "star",
         ("Beras Cianjur",),
+        dietary_tags=("halal", "dairy_free", "gluten_free"),
     ),
     WarungMenuItem(
         "Tahu Goreng",
@@ -44,6 +47,8 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         2800.0,
         "star",
         ("Tahu Bandung",),
+        dietary_tags=("vegetarian", "halal", "dairy_free"),
+        allergens=("soy",),
     ),
     WarungMenuItem(
         "Tumis Kangkung",
@@ -54,6 +59,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         3200.0,
         "star",
         ("Kangkung",),
+        dietary_tags=("vegan", "halal", "dairy_free", "gluten_free", "spicy"),
     ),
     WarungMenuItem(
         "Pecel Sayuran",
@@ -64,6 +70,8 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         5500.0,
         "star",
         ("Bumbu Pecel", "Kangkung"),
+        dietary_tags=("vegan", "halal", "dairy_free"),
+        allergens=("peanuts",),
     ),
     WarungMenuItem(
         "Sayur Lodeh",
@@ -74,6 +82,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         4800.0,
         "star",
         ("Santan Kelapa",),
+        dietary_tags=("vegan", "halal", "dairy_free", "gluten_free"),
     ),
     WarungMenuItem(
         "Nasi Putih",
@@ -84,6 +93,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         2200.0,
         "plow",
         ("Beras Cianjur",),
+        dietary_tags=("vegan", "halal", "dairy_free", "gluten_free"),
     ),
     WarungMenuItem(
         "Tahu Isi",
@@ -94,6 +104,8 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         3500.0,
         "plow",
         ("Tahu Bandung",),
+        dietary_tags=("vegetarian", "halal", "dairy_free"),
+        allergens=("soy", "gluten"),
     ),
     WarungMenuItem(
         "Gulai Tahu Santan",
@@ -104,6 +116,8 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         7000.0,
         "puzzle",
         ("Tahu Bandung", "Santan Kelapa"),
+        dietary_tags=("vegetarian", "halal", "dairy_free", "spicy"),
+        allergens=("soy",),
     ),
     WarungMenuItem(
         "Es Gula Aren",
@@ -114,6 +128,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         3500.0,
         "puzzle",
         ("Gula Aren",),
+        dietary_tags=("vegan", "halal", "dairy_free", "gluten_free"),
     ),
     WarungMenuItem(
         "Teh Manis Gula Aren",
@@ -124,6 +139,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         2500.0,
         "filler",
         ("Gula Aren",),
+        dietary_tags=("vegan", "halal", "dairy_free", "gluten_free"),
     ),
     WarungMenuItem(
         "Nasi Pecel",
@@ -134,6 +150,8 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         6500.0,
         "filler",
         ("Beras Cianjur", "Bumbu Pecel"),
+        dietary_tags=("vegan", "halal", "dairy_free"),
+        allergens=("peanuts",),
     ),
     WarungMenuItem(
         "Sambal Dadak",
@@ -144,6 +162,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         1200.0,
         "side",
         (),
+        dietary_tags=("vegan", "halal", "dairy_free", "gluten_free", "spicy"),
     ),
     WarungMenuItem(
         "Kerupuk Putih",
@@ -154,6 +173,8 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         1000.0,
         "side",
         (),
+        dietary_tags=("vegetarian", "halal", "dairy_free"),
+        allergens=("gluten",),
     ),
     WarungMenuItem(
         "Air Mineral",
@@ -164,6 +185,7 @@ WARUNG_MENU_CATALOG: tuple[WarungMenuItem, ...] = (
         1500.0,
         "side",
         (),
+        dietary_tags=("vegan", "halal", "dairy_free", "gluten_free"),
     ),
 )
 

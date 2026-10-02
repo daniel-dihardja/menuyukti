@@ -16,8 +16,14 @@ from graphql.data_sources import (
 )
 from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
+from graphql.scripts.dev_seed_kaffeestube_menu import KAFFEESTUBE_MENU_CATALOG
 from graphql.scripts.dev_seed_warung_menu import WARUNG_MENU_CATALOG
-from graphql.scripts.load_dev_data import DEV_INVENTAR_LOCATION_NAME, seed_warung_sunda_menu
+from graphql.scripts.load_dev_data import (
+    DEV_ANALYTICS_LOCATION_NAME,
+    DEV_INVENTAR_LOCATION_NAME,
+    seed_kaffeestube_menu,
+    seed_warung_sunda_menu,
+)
 
 SEED_USER = "clerk_dev_seed_inventar_test"
 
@@ -269,6 +275,13 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
         items = session.query(MenuItem).filter(MenuItem.menu_id == menu.id).all()
         item_names = {row.name for row in items}
         assert item_names == {item.menu for item in WARUNG_MENU_CATALOG}
+        by_name = {row.name: row for row in items}
+        for catalog_item in WARUNG_MENU_CATALOG:
+            row = by_name[catalog_item.menu]
+            assert set(row.dietary_tags or []) == set(catalog_item.dietary_tags)
+            assert set(row.allergens or []) == set(catalog_item.allergens)
+        assert any(row.allergens for row in items)
+        assert any("dairy_free" in (row.dietary_tags or []) for row in items)
 
         # Simulate a POS ticket referencing a menu item (RESTRICT would block replace).
         from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
@@ -309,6 +322,96 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
             session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(WARUNG_MENU_CATALOG)
         )
         assert session.query(PosOrder).filter(PosOrder.location_id == inventar.id).count() == 0
+    finally:
+        session.close()
+
+
+def test_kaffeestube_menu_seed(inventar_seed_workspace):
+    session = SessionLocal()
+    try:
+        analytics = Location(
+            name=DEV_ANALYTICS_LOCATION_NAME,
+            workspace_id=inventar_seed_workspace["workspace_id"],
+            clerk_user_id=SEED_USER,
+            currency="EUR",
+            city="Berlin",
+            country="DE",
+        )
+        session.add(analytics)
+        session.commit()
+        session.refresh(analytics)
+
+        first = seed_kaffeestube_menu(session, analytics)
+        session.commit()
+
+        assert first["categories"] == 5
+        assert first["items"] == len(KAFFEESTUBE_MENU_CATALOG)
+        assert first["cleared_pos_orders"] == 0
+
+        menu = session.query(Menu).filter(Menu.location_id == analytics.id).one()
+        assert menu.title == DEV_ANALYTICS_LOCATION_NAME
+        categories = (
+            session.query(MenuCategory)
+            .filter(MenuCategory.menu_id == menu.id)
+            .order_by(MenuCategory.sort_order)
+            .all()
+        )
+        assert [c.name for c in categories] == [
+            "Coffee",
+            "Tea",
+            "Soft Drinks",
+            "Bakery",
+            "Food",
+        ]
+        items = session.query(MenuItem).filter(MenuItem.menu_id == menu.id).all()
+        item_names = {row.name for row in items}
+        assert item_names == {item.menu for item in KAFFEESTUBE_MENU_CATALOG}
+        by_name = {row.name: row for row in items}
+        for catalog_item in KAFFEESTUBE_MENU_CATALOG:
+            row = by_name[catalog_item.menu]
+            assert set(row.dietary_tags or []) == set(catalog_item.dietary_tags)
+            assert set(row.allergens or []) == set(catalog_item.allergens)
+        assert any("dairy" in (row.allergens or []) for row in items)
+        assert any("dairy_free" in (row.dietary_tags or []) for row in items)
+
+        from graphql.data_sources.models.pos_order import PosOrder, PosOrderLine
+
+        sample_item = items[0]
+        order = PosOrder(
+            location_id=analytics.id,
+            bill_number="KS-20260701-00001",
+            status="paid",
+            opened_by_clerk_user_id=SEED_USER,
+            payment_method="cash",
+            discount_amount=0.0,
+        )
+        session.add(order)
+        session.flush()
+        session.add(
+            PosOrderLine(
+                pos_order_id=order.id,
+                menu_item_id=sample_item.id,
+                name_snapshot=sample_item.name,
+                menu_category_snapshot="Coffee",
+                menu_category_detail_snapshot="Espresso",
+                qty=1,
+                unit_price=float(sample_item.price),
+                line_total=float(sample_item.price),
+                sort_order=0,
+            )
+        )
+        session.commit()
+
+        second = seed_kaffeestube_menu(session, analytics)
+        session.commit()
+        assert second["categories"] == 5
+        assert second["items"] == len(KAFFEESTUBE_MENU_CATALOG)
+        assert second["cleared_pos_orders"] == 1
+        assert (
+            session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count()
+            == len(KAFFEESTUBE_MENU_CATALOG)
+        )
+        assert session.query(PosOrder).filter(PosOrder.location_id == analytics.id).count() == 0
     finally:
         session.close()
 
