@@ -1,15 +1,19 @@
-import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google'
+import localFont from 'next/font/local'
 
-export const fontSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
+/**
+ * Self-hosted variable fonts (latin). Using `next/font/local` avoids
+ * build-time fetches to Google Fonts, which fail intermittently in Docker CI.
+ */
+export const fontSans = localFont({
+  src: '../fonts/PlusJakartaSans-latin-wght-normal.woff2',
   display: 'swap',
   variable: '--font-sans',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: '400 800',
 })
 
-export const fontMono = JetBrains_Mono({
-  subsets: ['latin'],
+export const fontMono = localFont({
+  src: '../fonts/JetBrainsMono-latin-wght-normal.woff2',
   display: 'swap',
   variable: '--font-mono',
-  weight: ['400', '500'],
+  weight: '400 500',
 })

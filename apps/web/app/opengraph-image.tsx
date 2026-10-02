@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
+
 import { ImageResponse } from 'next/og'
 import { getTranslations } from 'next-intl/server'
 
@@ -5,32 +8,20 @@ export const alt = 'Menuyukti — Restaurant Marketing Agency | AI Strategy & Co
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
-  const css = await fetch(
-    `https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@${weight}&display=swap`,
-    {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    },
-  ).then((res) => res.text())
+const fontsDir = path.join(process.cwd(), 'fonts')
 
-  const match = css.match(/src: url\((.+?)\) format\('(?:opentype|truetype|woff2?)'\)/)
-  if (!match?.[1]) {
-    throw new Error(`Plus Jakarta Sans (${weight}) font URL not found`)
-  }
-
-  return fetch(match[1]).then((res) => res.arrayBuffer())
-}
-
-/** Module-level promises — fonts load once per warm instance, not per OG request. */
-const fontBoldPromise = loadGoogleFont(800)
-const fontSemiboldPromise = loadGoogleFont(600)
+/** Static TTFs for Satori (`next/og` does not support WOFF2 / variable fonts). */
+const fontMediumPromise = readFile(path.join(fontsDir, 'PlusJakartaSans-Medium.ttf'))
+const fontSemiboldPromise = readFile(path.join(fontsDir, 'PlusJakartaSans-SemiBold.ttf'))
+const fontBoldPromise = readFile(path.join(fontsDir, 'PlusJakartaSans-ExtraBold.ttf'))
 
 export default async function Image() {
   const t = await getTranslations('metadata')
-  const [fontBold, fontSemibold] = await Promise.all([fontBoldPromise, fontSemiboldPromise])
+  const [fontMedium, fontSemibold, fontBold] = await Promise.all([
+    fontMediumPromise,
+    fontSemiboldPromise,
+    fontBoldPromise,
+  ])
 
   return new ImageResponse(
     <div
@@ -122,8 +113,9 @@ export default async function Image() {
     {
       ...size,
       fonts: [
-        { name: 'Plus Jakarta Sans', data: fontBold, weight: 800, style: 'normal' },
+        { name: 'Plus Jakarta Sans', data: fontMedium, weight: 500, style: 'normal' },
         { name: 'Plus Jakarta Sans', data: fontSemibold, weight: 600, style: 'normal' },
+        { name: 'Plus Jakarta Sans', data: fontBold, weight: 800, style: 'normal' },
       ],
     },
   )
