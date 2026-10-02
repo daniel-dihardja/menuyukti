@@ -22,8 +22,11 @@ export function parsePublicMenuTableLabel(raw: string | null | undefined): strin
   const cleaned = decoded.trim()
   if (!cleaned) return null
   if (cleaned.length > PUBLIC_MENU_TABLE_LABEL_MAX_LEN) return null
-  // Reject control characters (and other non-printable C0/C1) that should never be in a label.
-  if (/[\u0000-\u001f\u007f-\u009f]/.test(cleaned)) return null
+  // Reject C0/C1 controls and DEL — never valid in a table label.
+  for (let i = 0; i < cleaned.length; i++) {
+    const code = cleaned.charCodeAt(i)
+    if (code <= 0x1f || (code >= 0x7f && code <= 0x9f)) return null
+  }
 
   return cleaned
 }
