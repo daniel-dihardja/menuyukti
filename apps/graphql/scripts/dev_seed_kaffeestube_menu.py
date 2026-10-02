@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 Daypart = str  # breakfast | lunch | afternoon | any
 
 

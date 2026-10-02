@@ -48,5 +48,5 @@ class MenuAllergen(StrEnum):
 
 
 # Keep GraphQL enums aligned with the domain catalogs used by services.
-assert DIETARY_TAG_VALUES == frozenset(tag.value for tag in MenuDietaryTag)
-assert ALLERGEN_VALUES == frozenset(allergen.value for allergen in MenuAllergen)
+assert frozenset(tag.value for tag in MenuDietaryTag) == DIETARY_TAG_VALUES
+assert frozenset(allergen.value for allergen in MenuAllergen) == ALLERGEN_VALUES
