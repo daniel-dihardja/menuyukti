@@ -78,6 +78,11 @@ export default async function AboutPage() {
           </section>
 
           <section className="space-y-3">
+            <h2 className="text-xl font-semibold">{t('whyTitle')}</h2>
+            <p className="text-pretty leading-relaxed text-foreground/90">{t('whyBody')}</p>
+          </section>
+
+          <section className="space-y-3">
             <h2 className="text-xl font-semibold">{t('solutionTitle')}</h2>
             <p className="text-pretty leading-relaxed text-foreground/90">{t('solutionBody')}</p>
           </section>

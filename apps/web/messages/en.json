@@ -270,6 +270,8 @@
       "Someone else handling social media"
     ],
     "problemClose": "Different providers. Different invoices. Almost nothing working as one system.",
+    "whyTitle": "Why we start at the register",
+    "whyBody": "Sales, menu, and stock live at the POS. When that data sits in one place, inventory stays accurate, loyalty and marketing match real tickets, and owners stop reconciling spreadsheets across vendors. That is why Menuyukti begins with POS and inventory—then every other service builds on the same truth.",
     "solutionTitle": "One platform. Services restaurant owners can turn on or off.",
     "solutionBody": "Menuyukti brings these pieces together under one provider—without forcing a rigid all-in-one suite. Restaurant owners activate what they need, combine services as they like, and switch them off when they don’t. Think of it like cloud services for a restaurant.",
     "costTitle": "Designed to cost less",
