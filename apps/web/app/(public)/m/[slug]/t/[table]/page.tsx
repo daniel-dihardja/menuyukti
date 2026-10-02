@@ -6,10 +6,7 @@ import { Suspense } from 'react'
 import { loadPublicLocationMenu } from '@/lib/public-menu/load-public-menu'
 import { parsePublicMenuTableLabel } from '@/lib/public-menu/table-label'
 
-import {
-  PublicLocationMenuBody,
-  PublicMenuFallback,
-} from '../../public-menu-page-body'
+import { PublicLocationMenuBody, PublicMenuFallback } from '../../public-menu-page-body'
 
 type PageProps = {
   params: Promise<{ slug: string; table: string }>
