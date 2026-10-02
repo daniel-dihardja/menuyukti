@@ -41,6 +41,7 @@ describe('routes shell helpers', () => {
 
   it('treats public location menu paths as guest surfaces (no product mobile nav)', () => {
     expect(isPublicLocationSurfacePath('/m/cafe')).toBe(true)
+    expect(isPublicLocationSurfacePath('/m/cafe/t/12')).toBe(true)
     expect(isPublicLocationSurfacePath('/l/cafe')).toBe(true)
     expect(isPublicLocationSurfacePath('/shop')).toBe(false)
     expect(isPublicLocationSurfacePath('/')).toBe(false)

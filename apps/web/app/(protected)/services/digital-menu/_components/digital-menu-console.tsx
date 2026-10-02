@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 
 import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
 import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
+import { parsePublicMenuTableLabel } from '@/lib/public-menu/table-label'
 import { routes } from '@/lib/routes'
 import { suggestMenuSlugFromName } from '@/lib/services/suggest-menu-slug'
 
@@ -58,6 +59,7 @@ export function DigitalMenuConsole({
   const [error, setError] = useState<string | null>(null)
   const [disableOpen, setDisableOpen] = useState(false)
   const [pendingDisable, setPendingDisable] = useState(false)
+  const [tableLabelInput, setTableLabelInput] = useState('')
 
   const draftPublicPath = publicSlug.trim() ? routes.public.locationMenu(publicSlug.trim()) : null
   const livePublicPath =
@@ -67,10 +69,18 @@ export function DigitalMenuConsole({
   const needsPublishSave = publicEnabled && !persistedPublicEnabled
   // Show the draft URL while editing; Open/Copy only use livePublicPath.
   const displayPublicPath = livePublicPath ?? draftPublicPath
-  const absoluteLiveUrl = useClientAbsoluteUrl(livePublicPath)
   const slugDraftChanged =
     Boolean(livePublicPath) && publicSlug.trim() !== persistedPublicSlug.trim()
-  const qrDownloadFileName = `${persistedPublicSlug.trim() || 'menu'}-menu-qr.png`
+
+  const validatedTableLabel = parsePublicMenuTableLabel(tableLabelInput)
+  const liveTablePath =
+    livePublicPath && validatedTableLabel && persistedPublicSlug.trim()
+      ? routes.public.locationMenuTable(persistedPublicSlug.trim(), validatedTableLabel)
+      : null
+  const absoluteTableUrl = useClientAbsoluteUrl(liveTablePath)
+  const qrDownloadFileName = validatedTableLabel
+    ? `${persistedPublicSlug.trim() || 'menu'}-table-${validatedTableLabel.replaceAll(/[^\w.-]+/g, '-')}-qr.png`
+    : `${persistedPublicSlug.trim() || 'menu'}-table-qr.png`
 
   function handleEnabledChange(next: boolean) {
     if (!next && publicEnabled) {
@@ -234,9 +244,26 @@ export function DigitalMenuConsole({
                     </Button>
                   )}
                 </div>
-                {absoluteLiveUrl ? (
+              </Field>
+            ) : null}
+            {publicEnabled && livePublicPath ? (
+              <Field>
+                <FieldLabel htmlFor="digital-menu-table-label">{t('tableLabel')}</FieldLabel>
+                <p className="text-muted-foreground text-xs">{t('tableLabelHint')}</p>
+                <Input
+                  id="digital-menu-table-label"
+                  value={tableLabelInput}
+                  onChange={(e) => setTableLabelInput(e.target.value)}
+                  placeholder={t('tableLabelPlaceholder')}
+                  maxLength={64}
+                  disabled={loading}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                {absoluteTableUrl && validatedTableLabel ? (
                   <DigitalMenuQr
-                    absoluteUrl={absoluteLiveUrl}
+                    absoluteUrl={absoluteTableUrl}
                     locationName={locationName}
                     downloadFileName={qrDownloadFileName}
                     showSlugChangedHint={slugDraftChanged}
@@ -244,11 +271,16 @@ export function DigitalMenuConsole({
                     cta={t('qrCta')}
                     downloadPngLabel={t('qrDownloadPng')}
                     printLabel={t('qrPrint')}
-                    ariaLabel={t('qrAriaLabel')}
+                    ariaLabel={t('qrAriaLabel', { label: validatedTableLabel })}
                     slugChangedHint={t('qrSlugChangedHint')}
-                    printTitle={t('qrPrintTitle', { locationName })}
+                    printTitle={t('qrPrintTitle', {
+                      locationName,
+                      label: validatedTableLabel,
+                    })}
                   />
-                ) : null}
+                ) : (
+                  <p className="text-muted-foreground text-xs">{t('qrTableRequiredHint')}</p>
+                )}
               </Field>
             ) : null}
           </FieldGroup>
