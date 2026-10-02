@@ -220,6 +220,9 @@ export const routes = {
   /** Public location surfaces (digital menu; legacy `/l/` redirects to `/m/`). */
   public: {
     locationMenu: (slug: string) => `/m/${encodeURIComponent(slug)}`,
+    /** Per-table dine-in menu URL used by table QR stickers. */
+    locationMenuTable: (slug: string, tableLabel: string) =>
+      `/m/${encodeURIComponent(slug)}/t/${encodeURIComponent(tableLabel)}`,
     /** @deprecated Use `locationMenu`; `/l/` redirects to `/m/`. */
     locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
   },

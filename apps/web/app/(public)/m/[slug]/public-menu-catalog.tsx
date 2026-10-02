@@ -17,7 +17,6 @@ import {
 import type { PublicMenuCategoryView, PublicMenuItemView } from '@/lib/public-menu/load-public-menu'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Input } from '@workspace/ui/components/input'
 import {
   Sheet,
   SheetContent,
@@ -33,6 +32,8 @@ type Props = {
   publicSlug: string
   categories: PublicMenuCategoryView[]
   currencyCode: string
+  /** Locked table from `/m/{slug}/t/{label}`; null on the shared menu URL. */
+  tableLabel: string | null
 }
 
 type CartLine = {
@@ -88,7 +89,13 @@ function FilterChipRow({
   )
 }
 
-export function PublicMenuCatalog({ locationId, publicSlug, categories, currencyCode }: Props) {
+export function PublicMenuCatalog({
+  locationId,
+  publicSlug,
+  categories,
+  currencyCode,
+  tableLabel,
+}: Props) {
   const t = useTranslations('public.menu')
   const pathname = usePathname()
   const { isSignedIn, isLoaded } = useAuth()
@@ -96,7 +103,6 @@ export function PublicMenuCatalog({ locationId, publicSlug, categories, currency
   const [dietaryInclude, setDietaryInclude] = useState<Set<string>>(() => new Set())
   const [allergenExclude, setAllergenExclude] = useState<Set<string>>(() => new Set())
   const [cart, setCart] = useState<Record<number, CartLine>>({})
-  const [tableLabel, setTableLabel] = useState('')
   const [basketOpen, setBasketOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -199,7 +205,7 @@ export function PublicMenuCatalog({ locationId, publicSlug, categories, currency
             menuItemId: line.menuItemId,
             qty: line.qty,
           })),
-          tableLabel: tableLabel.trim() || null,
+          tableLabel,
         }),
       })
       const body = (await res.json().catch(() => ({}))) as {
@@ -220,7 +226,6 @@ export function PublicMenuCatalog({ locationId, publicSlug, categories, currency
         return
       }
       setCart({})
-      setTableLabel('')
       setBasketOpen(false)
       setSuccessBillNumber(body.billNumber)
     } catch {
@@ -501,19 +506,11 @@ export function PublicMenuCatalog({ locationId, publicSlug, categories, currency
                     {formatCurrency(cartTotal, currencyCode, locale)}
                   </p>
                 </div>
-                <div className="flex w-full max-w-xs flex-col gap-1 sm:w-40">
-                  <label htmlFor="guest-table-label" className="text-muted-foreground text-xs">
-                    {t('order.tableLabel')}
-                  </label>
-                  <Input
-                    id="guest-table-label"
-                    value={tableLabel}
-                    onChange={(e) => setTableLabel(e.target.value)}
-                    placeholder={t('order.tableLabelPlaceholder')}
-                    maxLength={64}
-                    className="h-9"
-                  />
-                </div>
+                {tableLabel ? (
+                  <p className="text-muted-foreground text-sm font-medium">
+                    {t('order.tableLabelReadOnly', { label: tableLabel })}
+                  </p>
+                ) : null}
               </div>
               {submitError ? (
                 <p role="alert" className="text-destructive text-sm">

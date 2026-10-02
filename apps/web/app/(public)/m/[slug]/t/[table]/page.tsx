@@ -1,24 +1,27 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
+import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { loadPublicLocationMenu } from '@/lib/public-menu/load-public-menu'
+import { parsePublicMenuTableLabel } from '@/lib/public-menu/table-label'
 
-import { PublicLocationMenuBody, PublicMenuFallback } from './public-menu-page-body'
+import { PublicLocationMenuBody, PublicMenuFallback } from '../../public-menu-page-body'
 
 type PageProps = {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string; table: string }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const t = await getTranslations('public.menu')
-  const { slug } = await params
+  const { slug, table } = await params
+  const tableLabel = parsePublicMenuTableLabel(table)
   try {
     const menu = await loadPublicLocationMenu(decodeURIComponent(slug))
     if (!menu) {
       return { title: t('notFoundTitle') }
     }
-    const title = menu.name
+    const title = tableLabel ? `${menu.name} · ${tableLabel}` : menu.name
     const description = t('metaDescription', { name: menu.name })
     return {
       title,
@@ -34,15 +37,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-async function PublicLocationMenuContent({ params }: PageProps) {
-  const { slug } = await params
-  return <PublicLocationMenuBody slug={slug} tableLabel={null} />
+async function PublicLocationMenuTableContent({ params }: PageProps) {
+  const { slug, table } = await params
+  const tableLabel = parsePublicMenuTableLabel(table)
+  if (!tableLabel) notFound()
+  return <PublicLocationMenuBody slug={slug} tableLabel={tableLabel} />
 }
 
-export default function PublicLocationMenuPage({ params }: PageProps) {
+export default function PublicLocationMenuTablePage({ params }: PageProps) {
   return (
     <Suspense fallback={<PublicMenuFallback />}>
-      <PublicLocationMenuContent params={params} />
+      <PublicLocationMenuTableContent params={params} />
     </Suspense>
   )
 }
