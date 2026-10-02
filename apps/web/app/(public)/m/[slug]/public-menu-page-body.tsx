@@ -1,9 +1,18 @@
 import { connection } from 'next/server'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { UtensilsCrossed } from 'lucide-react'
 
 import { getAppCurrencyCode } from '@/lib/app-currency'
 import { loadPublicLocationMenu } from '@/lib/public-menu/load-public-menu'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@workspace/ui/components/empty'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 
 import { PublicMenuCatalog } from './public-menu-catalog'
 
@@ -14,16 +23,16 @@ export function PublicMenuFallback() {
   return (
     <div className={publicMenuShellClassName}>
       <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
-        <div className="relative z-10 mx-auto w-full max-w-4xl space-y-3">
-          <div className="bg-muted h-3 w-24 animate-pulse rounded" />
-          <div className="bg-muted h-10 w-2/3 max-w-md animate-pulse rounded" />
-          <div className="bg-muted h-5 w-1/2 max-w-sm animate-pulse rounded" />
+        <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col gap-3">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-10 w-2/3 max-w-md" />
+          <Skeleton className="h-5 w-1/2 max-w-sm" />
         </div>
       </header>
       <main className="mx-auto w-full max-w-4xl px-6 pt-12 pb-20 sm:px-10 sm:pt-16">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="bg-muted h-40 animate-pulse rounded-xl" />
+            <Skeleton key={i} className="h-40 rounded-xl" />
           ))}
         </div>
       </main>
@@ -74,7 +83,7 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
             {t('eyebrow')}
           </p>
           <h1
-            className={`font-heading text-4xl leading-tight tracking-tight sm:text-5xl ${
+            className={`font-heading text-4xl leading-tight tracking-tight text-pretty sm:text-5xl ${
               hasHeaderImage ? 'text-white' : ''
             }`}
           >
@@ -85,7 +94,15 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
 
       <main id="menu-main" className="mx-auto w-full max-w-4xl px-6 pt-12 pb-20 sm:px-10 sm:pt-16">
         {!hasItems ? (
-          <p className="text-muted-foreground py-12 text-center text-sm">{t('empty')}</p>
+          <Empty className="border border-dashed py-12">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <UtensilsCrossed />
+              </EmptyMedia>
+              <EmptyTitle>{t('emptyTitle')}</EmptyTitle>
+              <EmptyDescription>{t('empty')}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <PublicMenuCatalog
             locationId={menu.locationId}

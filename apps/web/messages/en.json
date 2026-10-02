@@ -716,13 +716,16 @@
     "menu": {
       "eyebrow": "Menu",
       "empty": "Nothing on the menu yet — check back soon.",
+      "emptyTitle": "Menu coming soon",
       "notFoundTitle": "Menu not found",
       "metaDescription": "Digital menu at {name}.",
+      "categoriesNavAria": "Jump to category",
       "filters": {
         "dietary": "Dietary",
         "allergens": "Exclude allergens",
         "clear": "Clear filters",
         "matchCount": "{count, plural, one {# dish matches} other {# dishes match}}",
+        "noMatchesTitle": "No matching dishes",
         "noMatches": "No dishes match these filters."
       },
       "order": {
@@ -735,12 +738,14 @@
         "basketTitle": "Your basket",
         "basketDescription": "Review your items before sending the order.",
         "basketTotal": "Total",
+        "emptyBasketTitle": "Basket empty",
         "emptyBasket": "Your basket is empty.",
         "closeBasket": "Close",
         "tableLabelReadOnly": "Table · {label}",
         "send": "Send order",
         "sending": "Sending…",
         "signInToOrder": "Sign in to send order",
+        "submitFailedTitle": "Order not sent",
         "submitFailed": "Could not send your order. Please try again.",
         "successTitle": "Order sent",
         "successBody": "Your ticket is {billNumber}. Staff will take it from here."
