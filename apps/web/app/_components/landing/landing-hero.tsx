@@ -68,11 +68,7 @@ export function LandingHero({
 
           {sampleMenu ? (
             <>
-              <Button
-                asChild
-                size="lg"
-                className="hero-btn-primary mt-8 w-full max-w-xs lg:hidden"
-              >
+              <Button asChild size="lg" className="hero-btn-primary mt-8 w-full max-w-xs lg:hidden">
                 <Link href={sampleMenu.path}>{mobileCta}</Link>
               </Button>
 
