@@ -277,6 +277,7 @@
     "guestFrictionTitle": "Low friction for guests",
     "guestFrictionBody": "Many competing tools ask diners to download an app from the App Store before they can open the menu. Menuyukti does not. Guests scan a QR code and browse the digital menu in the phone’s browser—no install, no account required to look.",
     "guestFrictionBodyFollow": "If they later want rewards, orders, or a saved profile, they can sign in with Google or email in a few taps—and return to where they left off. Fewer steps at the table means more people actually open the menu.",
+    "guestFrictionBodyInstall": "Guests who come back often can add Menuyukti to their home screen so it opens full screen like an app—without an App Store download.",
     "costTitle": "Designed to cost less",
     "costBody": "Menuyukti exists to help restaurants spend less on operational software, marketing, and social media. Development stays lean, overhead stays low, and AI is used where it actually reduces cost—so those savings reach restaurant owners, not a bloated stack of tools.",
     "stackTitle": "Start with the core",
