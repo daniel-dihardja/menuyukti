@@ -14,8 +14,9 @@ export async function SiteFooter() {
   return (
     <footer className="mt-auto bg-surface text-foreground">
       <div className="h-px w-full bg-border-strong" aria-hidden />
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-6 py-5 sm:flex-row sm:justify-center sm:gap-6">
-        <nav aria-label={t('navAria')} className="text-sm">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-6 py-5">
+        {/* About lives in the header from md up — keep footer link for mobile only. */}
+        <nav aria-label={t('navAria')} className="text-sm md:hidden">
           <Link href={routes.about} className={linkClassName}>
             {t('about')}
           </Link>
