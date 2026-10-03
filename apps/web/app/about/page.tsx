@@ -96,6 +96,9 @@ export default async function AboutPage() {
             <p className="text-pretty text-lg leading-relaxed text-foreground/90">
               {t('guestFrictionBody')}
             </p>
+            <p className="text-pretty text-lg leading-relaxed text-foreground/90">
+              {t('guestFrictionBodyFollow')}
+            </p>
           </section>
 
           <section className="space-y-3">
