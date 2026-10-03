@@ -88,6 +88,11 @@ export default async function AboutPage() {
           </section>
 
           <section className="space-y-3">
+            <h2 className="text-xl font-semibold">{t('guestFrictionTitle')}</h2>
+            <p className="text-pretty leading-relaxed text-foreground/90">{t('guestFrictionBody')}</p>
+          </section>
+
+          <section className="space-y-3">
             <h2 className="text-xl font-semibold">{t('costTitle')}</h2>
             <p className="text-pretty leading-relaxed text-foreground/90">{t('costBody')}</p>
           </section>
