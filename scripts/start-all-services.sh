@@ -74,7 +74,7 @@ fi
 log "starting analytics + agents + web"
 start_bg "analytics" uv run --project apps/analytics uvicorn app.main:app --host "$ANALYTICS_HOST" --port "$ANALYTICS_PORT"
 start_bg "agents" uv run --project apps/agents uvicorn agent.api:app --app-dir apps/agents/src --host "$AGENTS_HOST" --port "$AGENTS_PORT"
-start_bg "web" pnpm -C apps/web exec next dev --turbopack --hostname "$WEB_HOST" --port "$WEB_PORT"
+start_bg "web" pnpm -C apps/web exec next dev --webpack --hostname "$WEB_HOST" --port "$WEB_PORT"
 
 log "services are up (logs stream in this terminal). Press Ctrl+C to stop all."
 wait

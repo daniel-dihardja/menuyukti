@@ -67,22 +67,24 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 
 **Clerk user id is required:** pass `USER_ID=...` on the make command, or export `DEV_CLERK_USER_ID`. Use the same id as the signed-in web user (`X-User-Id`).
 
-| Command                                                                     | What it does                                                                                                                                                                  |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command                                                                     | What it does                                                                                                                                                                                                   |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `make dev-data USER_ID=user_xxx`                                            | Default `SCOPE=inventar`: reset inventar for that workspace, ensure `Warung Sunda Lembur`, seed Sundanese catalog/stock/movements **and curated location menu** (also ensures `SNABB` and `Kaffeestube Mitte`) |
-| `make dev-data SCOPE=clear-inventar USER_ID=user_xxx`                       | Delete inventar catalog/stock/movements for that workspace only (locations left intact; no reseed)                                                                            |
-| `make dev-data SCOPE=analytics USER_ID=user_xxx`                            | Replace only `dev-seed-*` analytics runs on **Kaffeestube Mitte**; upsert location COGS; seed curated cafe location menu; load order facts from the committed 1-month Berlin cafe mock |
-| `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Same as above, but use a custom Excel instead of the default mock                                                                                                              |
-| `make dev-data SCOPE=all USER_ID=user_xxx`                                  | Inventar (Warung) + analytics (Berlin cafe default mock)                                                                                                                       |
-| `make generate-dev-mock-excel`                                              | Regenerate Berlin cafe `fixtures/dev_mock_….xlsx` + `dev_mock_menu_cogs.json` (ESB structure from SNABB; Kaffeestube Mitte menu)                                               |
-| `make db-reset-dev`                                                         | Destructive: `drop-db` + `db-upgrade` (Alembic)                                                                                                                               |
-| `make db-reset-dev SEED=1 USER_ID=user_xxx`                                 | Hard schema reset, then inventar seed                                                                                                                                         |
+| `make dev-data SCOPE=clear-inventar USER_ID=user_xxx`                       | Delete inventar catalog/stock/movements for that workspace only (locations left intact; no reseed)                                                                                                             |
+| `make dev-data SCOPE=analytics USER_ID=user_xxx`                            | Replace only `dev-seed-*` analytics runs on **Kaffeestube Mitte**; upsert location COGS; seed curated cafe location menu; load order facts from the committed 1-month Berlin cafe mock                         |
+| `make dev-data SCOPE=analytics USER_ID=user_xxx EXCEL=/path/to/report.xlsx` | Same as above, but use a custom Excel instead of the default mock                                                                                                                                              |
+| `make dev-data SCOPE=all USER_ID=user_xxx`                                  | Inventar (Warung) + analytics (Berlin cafe default mock)                                                                                                                                                       |
+| `make generate-dev-mock-excel`                                              | Regenerate Berlin cafe `fixtures/dev_mock_….xlsx` + `dev_mock_menu_cogs.json` (ESB structure from SNABB; Kaffeestube Mitte menu)                                                                               |
+| `make db-reset-dev`                                                         | Destructive: `drop-db` + `db-upgrade` (Alembic)                                                                                                                                                                |
+| `make db-reset-dev SEED=1 USER_ID=user_xxx`                                 | Hard schema reset, then inventar seed                                                                                                                                                                          |
 
 Optional: `COGS=/path/to/menu_cogs.json` (defaults to [`fixtures/dev_mock_menu_cogs.json`](fixtures/dev_mock_menu_cogs.json)). Analytics scopes default to the committed Berlin cafe mock at [`fixtures/dev_mock_SalesRecapitulationDetailReport_1mo.xlsx`](fixtures/dev_mock_SalesRecapitulationDetailReport_1mo.xlsx) — ESB column layout from SNABB, with EUR cafe items (coffee, bakery, brunch). Analytics attach to **Kaffeestube Mitte** (`Berlin` / `EUR`). Inventar remains on **Warung Sunda Lembur**. Raw dumps under `/sales-reports/` are gitignored and used only as an optional header template when regenerating.
 
 When a primary location is created for the first time, the script also adds weekday opening hours and a sample `location_manual_brief_input` (not overwritten on later runs).
 
 From the repo root: `make -C apps/graphql dev-data USER_ID=user_xxx`.
+
+**Staff console:** platform admins can run the same seed from `/staff` (Mock data seed). The web BFF calls GraphQL `ingestDevData`. In production-like environments the mutation is blocked unless `ALLOW_DEV_DATA_INGEST=1`.
 
 ## Orders fact schema (next step)
 

@@ -1,5 +1,9 @@
 # Web
 
+## Local development
+
+`pnpm dev` runs **`next dev --webpack`** (faster Ready on this monorepo). Use **`pnpm dev:turbo`** for Turbopack when experimenting.
+
 ## PWA (Serwist)
 
 Production builds use **`pnpm build`** → `next build --webpack` so `@serwist/next` can emit `public/sw.js` (Turbopack does not run the Serwist webpack plugin). The generated service worker is gitignored; CI/Docker must run a full web build to produce it.

@@ -33,6 +33,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarSeparator,
 } from '@workspace/ui/components/sidebar'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -47,7 +48,7 @@ import { routes } from '@/lib/routes'
 import { isNavKeyAllowedForPlan } from '@/lib/workspace-plan'
 import type { ReactNode } from 'react'
 
-type NavGroupId = 'overview' | 'create' | 'analytics' | 'operations' | 'account'
+type NavGroupId = 'overview' | 'create' | 'analytics' | 'operations' | 'account' | 'platform'
 
 type NavItem = {
   key: string
@@ -58,7 +59,14 @@ type NavItem = {
   group: NavGroupId
 }
 
-const NAV_GROUP_ORDER: NavGroupId[] = ['overview', 'create', 'analytics', 'operations', 'account']
+const NAV_GROUP_ORDER: NavGroupId[] = [
+  'overview',
+  'create',
+  'analytics',
+  'operations',
+  'account',
+  'platform',
+]
 
 const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
   overview: 'groupOverview',
@@ -66,6 +74,7 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
   analytics: 'groupAnalytics',
   operations: 'groupOperations',
   account: 'groupAccount',
+  platform: 'groupPlatform',
 }
 
 /**
@@ -185,7 +194,7 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'staff',
     href: routes.staff,
     icon: <Shield />,
-    group: 'account',
+    group: 'platform',
   },
 ]
 
@@ -331,14 +340,17 @@ export function NavMain() {
   return (
     <>
       {groups.map((group) => (
-        <SidebarGroup key={group.id}>
-          <SidebarGroupLabel>{t(NAV_GROUP_LABEL_KEYS[group.id])}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <NavMenuItems items={group.items} t={t} isActive={isActive} />
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <div key={group.id} className="contents">
+          {group.id === 'platform' ? <SidebarSeparator className="my-2" /> : null}
+          <SidebarGroup>
+            <SidebarGroupLabel>{t(NAV_GROUP_LABEL_KEYS[group.id])}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NavMenuItems items={group.items} t={t} isActive={isActive} />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </div>
       ))}
     </>
   )

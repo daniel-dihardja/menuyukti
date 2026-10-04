@@ -18,7 +18,7 @@ from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.scripts.dev_seed_inventar import reset_inventar, seed_inventar
 from graphql.scripts.dev_seed_kaffeestube_menu import KAFFEESTUBE_MENU_CATALOG
 from graphql.scripts.dev_seed_warung_menu import WARUNG_MENU_CATALOG
-from graphql.scripts.load_dev_data import (
+from graphql.services.dev_data_seed import (
     DEV_ANALYTICS_LOCATION_NAME,
     DEV_INVENTAR_LOCATION_NAME,
     seed_kaffeestube_menu,

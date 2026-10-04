@@ -17,8 +17,8 @@ const withSerwist = withSerwistInit({
 })
 
 const nextConfig = {
-  // Cache Components in production only — avoids stale RSC/i18n during local iteration.
-  cacheComponents: process.env.NODE_ENV === 'production',
+  // Required for `'use cache'` in lib/graphql/cached-queries.ts (and related helpers).
+  cacheComponents: true,
   output: 'standalone',
   transpilePackages: ['@workspace/ui'],
   async redirects() {
