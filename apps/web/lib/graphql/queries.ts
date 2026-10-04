@@ -12,6 +12,7 @@ export * from './queries/analytics'
 export * from './queries/workspace'
 export * from './queries/posts'
 export * from './queries/service-subscriptions'
+export * from './queries/staff'
 export {
   SCHEDULER_CALENDAR_QUERY,
   type CalendarDisplaySlot,

@@ -21,6 +21,7 @@ from .delete_post_page import DeletePostPageMutation
 from .delete_post_page_media_version import DeletePostPageMediaVersionMutation
 from .delete_style import DeleteStyleMutation
 from .import_pos_sales_report import ImportPosSalesReportMutation
+from .ingest_dev_data import IngestDevDataMutation
 from .inventory import InventoryCatalogMutations, InventoryStockMutations
 from .invite_workspace_member import InviteWorkspaceMemberMutation
 from .location_area import LocationAreaMutations
@@ -93,6 +94,7 @@ __all__ = [
     "DeletePostPageMediaVersionMutation",
     "EnsureMediaAssetMutation",
     "ImportPosSalesReportMutation",
+    "IngestDevDataMutation",
     "InviteWorkspaceMemberMutation",
     "RemoveMediaFromCollectionMutation",
     "RecordAiUsageEventMutation",
