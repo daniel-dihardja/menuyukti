@@ -18,7 +18,7 @@ const HAS_ANALYTICS_TOOLING = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
 type CookieConsentState = {
   /** True only after we've read localStorage on the client. */
   hydrated: boolean
-  /** Legacy: was true when optional analytics were accepted. Kept for API stability; shop GA is always on. */
+  /** Legacy: was true when optional analytics were accepted. Kept for API stability; site GA (non-shop) is always on when configured. */
   analyticsGranted: boolean
   /** Whether the bottom banner should be visible right now. */
   isBannerOpen: boolean

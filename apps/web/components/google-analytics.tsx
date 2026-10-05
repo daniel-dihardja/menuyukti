@@ -10,6 +10,11 @@ declare global {
   }
 }
 
+/** Print shop routes are excluded from GA (no page views or custom events). */
+export function isShopAnalyticsPath(pathname: string): boolean {
+  return pathname === '/shop' || pathname.startsWith('/shop/')
+}
+
 function buildPagePath(pathname: string, searchParams: URLSearchParams): string {
   const query = searchParams.toString()
   return query ? `${pathname}?${query}` : pathname
@@ -21,7 +26,7 @@ function GoogleAnalyticsPageView({ gaId }: { gaId: string }) {
   const isFirstRender = useRef(true)
 
   useEffect(() => {
-    if (pathname == null) return
+    if (pathname == null || isShopAnalyticsPath(pathname)) return
 
     const pagePath = buildPagePath(pathname, searchParams)
 
@@ -36,13 +41,25 @@ function GoogleAnalyticsPageView({ gaId }: { gaId: string }) {
   return null
 }
 
-export function SiteGoogleAnalytics({ gaId }: { gaId: string }) {
+function SiteGoogleAnalyticsInner({ gaId }: { gaId: string }) {
+  const pathname = usePathname()
+
+  if (pathname != null && isShopAnalyticsPath(pathname)) {
+    return null
+  }
+
   return (
     <>
       <GoogleAnalytics gaId={gaId} />
-      <Suspense fallback={null}>
-        <GoogleAnalyticsPageView gaId={gaId} />
-      </Suspense>
+      <GoogleAnalyticsPageView gaId={gaId} />
     </>
+  )
+}
+
+export function SiteGoogleAnalytics({ gaId }: { gaId: string }) {
+  return (
+    <Suspense fallback={null}>
+      <SiteGoogleAnalyticsInner gaId={gaId} />
+    </Suspense>
   )
 }

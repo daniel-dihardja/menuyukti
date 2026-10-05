@@ -258,70 +258,121 @@
     "about": "About"
   },
   "about": {
-    "metaTitle": "About Menuyukti — Restaurant tools in one platform",
-    "metaDescription": "Menuyukti brings POS, inventory, digital menu, loyalty, and marketing services together for restaurant owners—modular, monthly, and built to cost less than a fragmented stack.",
-    "title": "Built for restaurant owners",
-    "intro": "Running a restaurant already means enough vendors. Most operators still pay separately for POS, inventory, loyalty, and marketing—with little that ties those tools together.",
-    "problemTitle": "This is a common scenario for restaurants:",
-    "problemItems": [
-      "A monthly POS subscription",
-      "Inventory tracked by hand in spreadsheets",
-      "A separate app for stamp cards or cashback",
-      "Someone else handling social media"
-    ],
-    "problemClose": "Different providers. Different invoices. Almost nothing working as one system.",
-    "whyTitle": "Why we start at the register",
-    "whyBody": "Sales, menu, and stock live at the POS. When that data sits in one place, inventory stays accurate, loyalty and marketing match real tickets, and owners stop reconciling spreadsheets across vendors. That is why Menuyukti begins with POS and inventory—then every other service builds on the same truth.",
-    "solutionTitle": "One platform. Services restaurant owners can turn on or off.",
-    "solutionBody": "Menuyukti brings these pieces together under one provider—without forcing a rigid all-in-one suite. Restaurant owners activate what they need, combine services as they like, and switch them off when they don’t. Think of it like cloud services for a restaurant.",
-    "guestFrictionTitle": "Low friction for guests",
-    "guestFrictionBody": "Many competing tools ask diners to download an app from the App Store before they can open the menu. Menuyukti does not. Guests scan a QR code and browse the digital menu in the phone’s browser—no install, no account required to look.",
-    "guestFrictionBodyFollow": "If they later want rewards, orders, or a saved profile, they can sign in with Google or email in a few taps—and return to where they left off. Fewer steps at the table means more people actually open the menu.",
-    "guestFrictionBodyInstall": "Guests who come back often can add Menuyukti to their home screen so it opens full screen like an app—without an App Store download.",
-    "costTitle": "Designed to cost less",
-    "costBody": "Menuyukti exists to help restaurants spend less on operational software, marketing, and social media. Development stays lean, overhead stays low, and AI is used where it actually reduces cost—so those savings reach restaurant owners, not a bloated stack of tools.",
-    "stackTitle": "Start with the core",
+    "metaTitle": "About Menuyukti — Build your restaurant stack",
+    "metaDescription": "One platform for restaurant owners: free POS and inventory, then modular digital menu, landing page, loyalty, and hands-on services—without a fragmented stack of providers.",
+    "title": "Build your restaurant stack",
+    "intro": "Running a restaurant shouldn’t mean managing a different provider for every part of the business.",
+    "introFollow": "Menuyukti gives restaurant owners one platform for the services they need to run, grow, and market their restaurant—from POS and inventory to digital menus, loyalty, online presence, marketing, and more.",
+    "introClose": "Start with the core. Add what you need. Turn services on or off as your restaurant changes.",
+    "heroTagline": "One platform. Your restaurant stack.",
+    "fragmentedTitle": "Restaurant software has become fragmented",
+    "fragmentedBody": "A typical restaurant might have one company for POS, spreadsheets for inventory, another app for loyalty, a separate website provider, and someone else handling social media.",
+    "fragmentedBodyFollow": "That means more subscriptions, more logins, more invoices—and important parts of the restaurant operating with different information.",
+    "fragmentedBodyClose": "Menuyukti takes a different approach.",
+    "fragmentedBodyApproach": "Instead of adding another disconnected tool, we are building a platform where restaurant services work from the same foundation.",
+    "foundationTitle": "It starts with the restaurant itself",
+    "foundationBody": "The menu, sales, products, locations, staff, and stock are at the center of restaurant operations.",
+    "foundationBodyWhy": "That is why Menuyukti starts with <strong>POS and inventory</strong>.",
+    "foundationBodyOps": "A sale can update stock. Locations can transfer inventory without separate spreadsheets. Owners and staff can have their own access. And services added later can work with the same restaurant data instead of creating another isolated system.",
+    "foundationBodyMenu": "Update a menu item once, and that information can be used across the POS, digital menu, restaurant website, and other services.",
+    "foundationBodyClose": "The result is one foundation that becomes more useful as you build on it.",
+    "modularTitle": "Build the stack your restaurant needs",
+    "modularBody": "Every restaurant is different.",
+    "modularBodyFollow": "A small café does not need the same technology as a busy restaurant group with multiple locations. And what a restaurant needs today may be different six months from now.",
+    "modularBodyWhy": "That is why Menuyukti is modular.",
+    "modularBodyHow": "Start with the foundation. Add services when they make sense. Pause what you no longer need. Add something new when your restaurant grows.",
+    "modularBodyClose": "Think of it like cloud services for a restaurant: <strong>one foundation with services you can turn on as you need them.</strong>",
+    "coreTitle": "Your foundation",
     "coreItems": [
       {
         "name": "POS + Inventory",
-        "price": "Free"
+        "price": "Free",
+        "paragraphs": [
+          "The free core of Menuyukti for everyday restaurant operations.",
+          "Run the register, manage stock, transfer inventory between locations, and give owners and staff access to the same operational workspace.",
+          "Because POS and inventory share the same foundation, stock can stay connected to what is actually being sold instead of relying on disconnected spreadsheets and manual catch-up."
+        ]
       }
     ],
-    "addonsTitle": "Add only what is needed",
+    "addonsTitle": "Add what your restaurant needs",
     "addonItems": [
       {
         "name": "Digital Menu",
-        "price": "Paid"
+        "paragraphs": [
+          "Guests scan a QR code and open your menu directly in their browser.",
+          "No App Store download. No account required just to see the menu."
+        ]
+      },
+      {
+        "name": "Restaurant Landing Page",
+        "paragraphs": [
+          "Turn the menu you already manage in Menuyukti into an SEO-optimized restaurant landing page designed to help people find your restaurant on Google.",
+          "Menu items, categories, descriptions, prices, opening information, and other restaurant details can be used to create a search-friendly online presence—so guests can discover you when they search—without maintaining the same information in another system.",
+          "Update your menu in Menuyukti, and your online presence can stay connected to the same source."
+        ],
+        "emphasis": "Manage the menu once. Use it everywhere."
       },
       {
         "name": "Stamp Card",
-        "price": "Paid"
+        "paragraphs": [
+          "Give returning guests a simple digital stamp card without introducing another standalone loyalty platform."
+        ]
       },
       {
         "name": "Cashback",
-        "price": "Paid"
+        "paragraphs": [
+          "Reward returning guests with cashback connected to the same customer experience."
+        ]
       }
     ],
-    "addonsMore": "More services are on the way.",
-    "servicesTitle": "Hands-on and technical services when needed",
+    "addonsMore": "More services can be added over time without changing the foundation underneath them.",
+    "guestTitle": "Simple for guests, too",
+    "guestBody": "Restaurant technology should remove friction—not move it from the owner to the customer.",
+    "guestBodyMenu": "Guests can scan a QR code and open a Menuyukti digital menu immediately in their browser. There is nothing to install and no account required to browse.",
+    "guestBodySignIn": "If they later want rewards, ordering, or a saved profile, they can sign in with Google or email and continue where they left off.",
+    "guestBodyInstall": "Regular guests can also add Menuyukti to their home screen for an app-like experience without downloading another restaurant app.",
+    "servicesIntroTitle": "More than software",
+    "servicesIntroBody": "Not everything a restaurant needs can be solved with another piece of software.",
+    "servicesIntroFollow": "Sometimes you need people.",
     "serviceItems": [
       {
         "name": "Creative Services",
-        "price": "Paid"
+        "paragraphs": [
+          "Photography and creative work for menus, campaigns, and your restaurant brand."
+        ]
       },
       {
         "name": "Social Media Services",
-        "price": "Paid"
+        "paragraphs": [
+          "Content and posting support without needing to build an in-house marketing team."
+        ]
       },
       {
         "name": "Custom Development",
-        "price": "Paid"
+        "paragraphs": [
+          "Custom technology for restaurants that need something beyond the standard Menuyukti services."
+        ]
       }
     ],
-    "flexibility": "Everything runs on a monthly cycle—so a restaurant owner can turn a service on, pause another, and reshape the stack as the restaurant changes.",
-    "goalTitle": "The goal is simple",
-    "goalBody": "Spend less on fragmented tools and services—without giving up quality.",
-    "tagline": "Small services. One platform. The restaurant stack."
+    "servicesClose": "Software and hands-on services can live under the same relationship instead of requiring another collection of providers.",
+    "costTitle": "Built to keep restaurant technology affordable",
+    "costBody": "Restaurant owners should not have to assemble an expensive collection of software subscriptions just to run a modern restaurant.",
+    "costBodyFollow": "Menuyukti is built with a lean technology stack, low overhead, and automation and AI where they genuinely help reduce the cost of providing a service.",
+    "costBodyNot": "The goal is not to sell restaurants as much software as possible.",
+    "costBodyGoal": "The goal is to give each restaurant the stack it actually needs—at a cost that makes sense.",
+    "costBodyCore": "POS + Inventory is the free core. Additional services can be added as needed on a monthly basis.",
+    "growTitle": "Start small. Build as you grow.",
+    "growItems": [
+      "Start with POS and inventory.",
+      "Add a digital menu.",
+      "Turn your existing menu into an SEO-optimized restaurant landing page.",
+      "Turn on loyalty when it makes sense.",
+      "Bring in creative or social media support when you need help growing.",
+      "Add custom technology when your operation demands it."
+    ],
+    "growBody": "One restaurant might need three Menuyukti services. Another might need ten.",
+    "growEmphasis": "Menuyukti adapts to the restaurant—not the other way around.",
+    "tagline": "Small services. One platform. Your restaurant stack."
   },
   "accountMenu": {
     "triggerAria": "Open account menu",
@@ -464,7 +515,7 @@
         },
         "cookies": {
           "title": "Cookies and analytics",
-          "body": "Menuyukti uses Google Analytics 4 across the site for basic usage measurement (page views) so we can understand how the product is used. This includes public pages, the signed-in workspace, and the print shop. You can review or dismiss the cookie notice via the Cookie settings link in the footer."
+          "body": "Menuyukti uses Google Analytics 4 for basic usage measurement (page views) on public pages and the signed-in workspace so we can understand how the product is used. The print shop is not included. You can review or dismiss the cookie notice via the Cookie settings link in the footer."
         },
         "contact": {
           "title": "Contact",
@@ -700,13 +751,13 @@
   },
   "cookieConsent": {
     "title": "Essential tracking",
-    "description": "Menuyukti uses Google Analytics 4 across the site to count page views so we can see how the product is used. On the print shop we also measure digital image downloads.",
+    "description": "Menuyukti uses Google Analytics 4 to count page views on public pages and the signed-in workspace so we can see how the product is used. The print shop is not tracked.",
     "privacyLink": "Read the Privacy Policy",
     "dismiss": "Got it",
     "settingsLink": "Cookie settings",
     "preferences": {
       "essentialTitle": "Essential",
-      "essentialDescription": "Includes sign-in, security, core platform functionality, and site usage measurement (page views across Menuyukti and download events on the print shop). Always on.",
+      "essentialDescription": "Includes sign-in, security, core platform functionality, and site usage measurement (page views on public pages and the workspace). Always on. The print shop is not included.",
       "essentialAria": "Essential cookies (always on)"
     }
   },
