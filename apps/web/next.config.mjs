@@ -64,8 +64,6 @@ const nextConfig = {
     ],
     // Reel video uploads (up to 50 MB) pass through Clerk proxy; default buffer is 10 MB.
     proxyClientMaxBodySize: '52mb',
-    // Avoid stale Turbopack chunks for messages/*.json and similar during local edits.
-    turbopackFileSystemCacheForDev: false,
   },
   images: {
     remotePatterns: [

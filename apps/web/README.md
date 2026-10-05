@@ -2,7 +2,7 @@
 
 ## Local development
 
-`pnpm dev` runs **`next dev --webpack`** (faster Ready on this monorepo). Use **`pnpm dev:turbo`** for Turbopack when experimenting.
+`pnpm dev` runs **`next dev --turbopack`** (Next 16.3+ filesystem cache on by default for faster warm restarts). Use **`pnpm dev:webpack`** if you need webpack. If `messages/*.json` edits look stale, delete `apps/web/.next` once and restart.
 
 ## PWA (Serwist)
 
