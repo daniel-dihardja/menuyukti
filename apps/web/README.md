@@ -50,14 +50,12 @@ The QR encodes `https://menuyukti.com/m/{slug}`. If unset, the landing still ren
 
 ## Google Analytics
 
-GA4 runs **site-wide** (all routes) when this is set:
+GA4 runs on public pages and the signed-in workspace when this is set:
 
 ```env
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
-Basic page views are tracked on initial load and on client-side App Router navigations via `components/google-analytics.tsx`.
+Basic page views are tracked on initial load and on client-side App Router navigations via `components/google-analytics.tsx`. The print shop (`/shop`) is excluded—no page views and no download events.
 
 Docker image builds (GitHub Actions) pass the same ID via repository secret **`NEXT_PUBLIC_GA_MEASUREMENT_ID`** → build-arg in `apps/web/Dockerfile`; see `.github/workflows/docker-build-push.reusable.yml`.
-
-On the print shop, digital full-resolution downloads (PDP CTA) also send **`shop_digital_download`** with **`file_name`**, **`product_slug`**, and **`link_url`**. Register those event parameters as custom dimensions in GA4 if you want them as default breakdowns in Explorations.
