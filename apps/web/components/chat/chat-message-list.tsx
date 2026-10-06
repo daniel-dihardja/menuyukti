@@ -40,7 +40,7 @@ import {
   messageHasGenerateInstagramPostImage,
 } from '@/lib/chat/story-generate-confirmation'
 
-const QUICK_PROMPT_KEYS = ['weeklyPlan', 'featureTopDishes', 'storiesAndReels'] as const
+const QUICK_PROMPT_KEYS = ['locationOverview', 'weeklyPlan', 'featureTopDishes'] as const
 
 function ChatEmptyState() {
   const t = useTranslations('chat')

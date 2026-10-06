@@ -5,10 +5,12 @@ import { notFound } from 'next/navigation'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { getAppCurrencyCode } from '@/lib/app-currency'
+import { requireWorkspaceMediaAccess } from '@/lib/assets/workspace-media-access'
 import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATION_MENU_QUERY, type LocationMenuData } from '@/lib/graphql/queries/location-menu'
 import { POS_ORDERS_QUERY, type PosOrdersData } from '@/lib/graphql/queries/pos-orders'
+import { presignPhotoUrlsForAccess } from '@/lib/media/presign-photo-urls'
 import { routes } from '@/lib/routes'
 
 import { PosCashier } from './pos-cashier'
@@ -49,6 +51,24 @@ export default async function Page({ params }: PageProps) {
   const location = locationData.location
   if (!location) notFound()
 
+  const menu = menuData.locationMenu
+  const imageFilenames = [
+    ...new Set(
+      (menu?.categories ?? []).flatMap((category) =>
+        category.items
+          .map((item) => item.imageFilename?.trim())
+          .filter((name): name is string => Boolean(name)),
+      ),
+    ),
+  ]
+  let itemImageUrls: Record<string, string> = {}
+  if (imageFilenames.length > 0) {
+    const mediaAccess = await requireWorkspaceMediaAccess(userId, 'read')
+    if (mediaAccess.ok) {
+      itemImageUrls = await presignPhotoUrlsForAccess(mediaAccess.access, imageFilenames)
+    }
+  }
+
   const t = await getTranslations('pos')
   const tBranches = await getTranslations('analytics.branches')
   const appCurrency = getAppCurrencyCode()
@@ -70,8 +90,9 @@ export default async function Page({ params }: PageProps) {
           locationId={locationId}
           locationName={location.name}
           currencyCode={currencyCode}
-          initialMenu={menuData.locationMenu}
+          initialMenu={menu}
           initialOrders={ordersData.posOrders}
+          itemImageUrls={itemImageUrls}
         />
       </section>
     </AnalyticsPageShell>

@@ -18,6 +18,8 @@
     "description": "Take counter orders and record payments. Paid tickets feed your location sales analytics.",
     "loading": "Loading POS…",
     "allCategories": "All",
+    "showItemImages": "Show photos",
+    "itemImageAlt": "{name}",
     "emptyMenu": "No available menu items. Add items under Manage menu first.",
     "emptyMenuTitle": "No menu items",
     "currentTicket": "Current ticket",
@@ -2916,24 +2918,28 @@
       "chat": {
         "pageLoadingTitle": "Loading chat…",
         "pageTitle": "Chat #{id}",
-        "emptyTitle": "Instagram assistant",
-        "emptyDescription": "Ask about busy hours, bestsellers, what dishes sell well together, and campaign ideas — or switch to Image assistant to create images.",
+        "emptyTitle": "Ask about this location",
+        "emptyDescription": "See how demand, menu, and hours look right now — or switch to Image assistant to create images.",
         "waitHint": "Usually takes about 30 seconds.",
         "quickPrompts": {
+          "locationOverview": {
+            "label": "Location overview",
+            "prompt": "Start with a general description of this location: name, cuisine, address, and opening hours. Then summarize the current situation from sales charts when available: strong and weak day × meal-period demand, which dishes to feature (evergreen vs daily highlights vs day specialties), and interesting menu combos. End with at most two practical next steps. Use a short markdown brief (Demand, Menu, Combos, Hours, Next). Do not build a weekly Instagram schedule unless I ask."
+          },
           "weeklyPlan": {
             "label": "Weekly Instagram plan",
             "prompt": "Create a weekly Instagram plan for this venue. First load location opening hours, then present the plan with the weekly schedule tool (one entry per posting slot). Prefer open days and posting times during or shortly before service. For each slot include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on open hours and sales or demand when available."
           },
           "featureTopDishes": {
             "label": "Feature top dishes",
-            "prompt": "Suggest this week’s Instagram posts featuring our strongest menu items. Include day, format, dish names, and a short caption angle for each."
+            "prompt": "From this location’s current menu performance, which dishes should we feature and why? Mention timing (day or meal period) when the charts support it, and keep Instagram as optional — not a full week plan."
           },
           "storiesAndReels": {
             "label": "Stories & Reels mix",
             "prompt": "Draft a weekly mix of Instagram Stories and Reels with specific menu items for each slot and a brief creative direction."
           }
         },
-        "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
+        "placeholder": "Ask about demand, menu, hours, or a weekly plan…",
         "placeholderImageAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
         "placeholderStoryAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
         "thinking": "Thinking…",
@@ -4635,24 +4641,28 @@
   "chat": {
     "pageLoadingTitle": "Loading chat…",
     "pageTitle": "Chat #{id}",
-    "emptyTitle": "Instagram assistant",
-    "emptyDescription": "Ask about busy hours, bestsellers, what dishes sell well together, and campaign ideas — or switch to Image assistant to create images.",
+    "emptyTitle": "Ask about this location",
+    "emptyDescription": "See how demand, menu, and hours look right now — or switch to Image assistant to create images.",
     "waitHint": "Usually takes about 30 seconds.",
     "quickPrompts": {
+      "locationOverview": {
+        "label": "Location overview",
+        "prompt": "Start with a general description of this location: name, cuisine, address, and opening hours. Then summarize the current situation from sales charts when available: strong and weak day × meal-period demand, which dishes to feature (evergreen vs daily highlights vs day specialties), and interesting menu combos. End with at most two practical next steps. Use a short markdown brief (Demand, Menu, Combos, Hours, Next). Do not build a weekly Instagram schedule unless I ask."
+      },
       "weeklyPlan": {
         "label": "Weekly Instagram plan",
         "prompt": "Create a weekly Instagram plan for this venue. First load location opening hours, then present the plan with the weekly schedule tool (one entry per posting slot). Prefer open days and posting times during or shortly before service. For each slot include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on open hours and sales or demand when available."
       },
       "featureTopDishes": {
         "label": "Feature top dishes",
-        "prompt": "Suggest this week’s Instagram posts featuring our strongest menu items. Include day, format, dish names, and a short caption angle for each."
+        "prompt": "From this location’s current menu performance, which dishes should we feature and why? Mention timing (day or meal period) when the charts support it, and keep Instagram as optional — not a full week plan."
       },
       "storiesAndReels": {
         "label": "Stories & Reels mix",
         "prompt": "Draft a weekly mix of Instagram Stories and Reels with specific menu items for each slot and a brief creative direction."
       }
     },
-    "placeholder": "Create posts from peak slots, feature top dishes, or update Instagram drafts…",
+    "placeholder": "Ask about demand, menu, hours, or a weekly plan…",
     "placeholderImageAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
     "placeholderStoryAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
     "thinking": "Thinking…",

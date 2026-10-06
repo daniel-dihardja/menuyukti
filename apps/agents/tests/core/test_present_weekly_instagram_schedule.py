@@ -99,7 +99,8 @@ def test_system_prompt_mentions_weekly_schedule_tool() -> None:
     out = build_system_prompt()
     assert "present_weekly_instagram_schedule" in out
     assert "multi-column markdown tables" in out
-    assert "Do **not** call the tool for open-ended advice" in out
+    assert "Do **not** call it for a location" in out
+    assert "open-ended advice" in out
     assert "normal markdown instead" in out
     assert "Fewer than 7" in out
     assert "entries is fine" in out
