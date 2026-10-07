@@ -35,6 +35,7 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import {
   SERVICE_KEY_CASHBACK,
   SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_STAMP_CARD,
   type ServiceKey,
 } from '@/lib/graphql/queries/service-subscriptions'
@@ -53,6 +54,7 @@ type Props = {
 function serviceLabelKey(serviceKey: string): ServiceKey | null {
   if (
     serviceKey === SERVICE_KEY_DIGITAL_MENU ||
+    serviceKey === SERVICE_KEY_POINT_SYSTEM ||
     serviceKey === SERVICE_KEY_STAMP_CARD ||
     serviceKey === SERVICE_KEY_CASHBACK
   ) {

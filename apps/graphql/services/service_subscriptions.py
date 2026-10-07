@@ -11,12 +11,14 @@ from graphql.data_sources.models.menu import Menu
 from graphql.data_sources.models.service_subscription import ServiceSubscription
 
 SERVICE_KEY_DIGITAL_MENU = "digital_menu"
+SERVICE_KEY_POINT_SYSTEM = "point_system"
 SERVICE_KEY_STAMP_CARD = "stamp_card"
 SERVICE_KEY_CASHBACK = "cashback"
 
 KNOWN_SERVICE_KEYS = frozenset(
     {
         SERVICE_KEY_DIGITAL_MENU,
+        SERVICE_KEY_POINT_SYSTEM,
         SERVICE_KEY_STAMP_CARD,
         SERVICE_KEY_CASHBACK,
     }

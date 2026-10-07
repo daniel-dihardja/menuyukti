@@ -1451,6 +1451,7 @@
       "cancelConfirmCancel": "Keep subscription",
       "serviceLabels": {
         "digital_menu": "Digital Menu",
+        "point_system": "Point System",
         "stamp_card": "Stamp Card",
         "cashback": "Cashback"
       }
@@ -1465,6 +1466,12 @@
         "statusAvailable": "Available",
         "statusOn": "On · {count, plural, one {# location} other {# locations}}"
       },
+      "pointSystem": {
+        "title": "Point System",
+        "benefit": "Reward guests with points they earn and redeem — loyalty you control per location.",
+        "statusAvailable": "Available",
+        "statusOn": "On · {count, plural, one {# location} other {# locations}}"
+      },
       "stampCard": {
         "title": "Stamp Card",
         "benefit": "Digital loyalty stamps guests collect toward a free item — classic punch-card rewards, without paper cards."
@@ -1472,6 +1479,43 @@
       "cashback": {
         "title": "Cashback",
         "benefit": "Reward returning guests with a cashback balance they can redeem on a later visit."
+      }
+    },
+    "pointSystem": {
+      "title": "Point System",
+      "description": "Turn on a points-based loyalty program for a location. Rules and guest balances come next.",
+      "heroPitch": "Enable Point System for a location so you can reward returning guests with points — configuration arrives soon.",
+      "pricingComingSoon": "Pricing coming soon",
+      "turnOnCta": "Turn on for a location",
+      "includedTitle": "What’s included",
+      "included": {
+        "enable": "Per-location enablement and subscription",
+        "earn": "Earn rules (coming soon)",
+        "redeem": "Redeem and guest balances (coming soon)"
+      },
+      "connectedTitle": "Connected locations",
+      "connectedEmpty": "Point System isn’t on for any location yet.",
+      "connectedEmptyHint": "Pick a location to turn it on. Setup for rules will follow.",
+      "connectedStatusOn": "On",
+      "manageCta": "Manage",
+      "enable": {
+        "title": "Turn on for a location",
+        "description": "Choose which location gets Point System. We’ll activate the subscription.",
+        "locationLabel": "Location",
+        "locationPlaceholder": "Select a location",
+        "noLocations": "Add a location first, then turn on Point System.",
+        "createLocationCta": "Go to Locations",
+        "confirm": "Activate & continue",
+        "activating": "Activating…",
+        "activateFailed": "Could not activate Point System for this location.",
+        "cancel": "Cancel"
+      },
+      "console": {
+        "heading": "Point System",
+        "description": "Point System is on for this location. Earn and redeem rules are coming soon.",
+        "enabled": "Point System is on",
+        "enabledHint": "This location has an active Point System subscription. Configuration for points rules will appear here.",
+        "backCta": "Back to Point System"
       }
     },
     "digitalMenu": {

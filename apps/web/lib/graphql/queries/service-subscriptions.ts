@@ -1,11 +1,13 @@
 /** Service subscription GraphQL docs and shared catalog keys (no Stripe yet). */
 
 export const SERVICE_KEY_DIGITAL_MENU = 'digital_menu' as const
+export const SERVICE_KEY_POINT_SYSTEM = 'point_system' as const
 export const SERVICE_KEY_STAMP_CARD = 'stamp_card' as const
 export const SERVICE_KEY_CASHBACK = 'cashback' as const
 
 export const SERVICE_KEYS = [
   SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_KEY_POINT_SYSTEM,
   SERVICE_KEY_STAMP_CARD,
   SERVICE_KEY_CASHBACK,
 ] as const

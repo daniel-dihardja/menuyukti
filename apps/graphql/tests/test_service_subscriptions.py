@@ -16,6 +16,7 @@ from graphql.data_sources.models.menu import Menu
 from graphql.schema import schema
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_DIGITAL_MENU,
+    SERVICE_KEY_POINT_SYSTEM,
     SERVICE_STATUS_ACTIVE,
     SERVICE_STATUS_CANCELED,
 )
@@ -167,6 +168,32 @@ def test_activate_and_query(subscription_location):
     assert listed.errors is None
     assert len(listed.data["myServiceSubscriptions"]) == 1
     assert listed.data["myServiceSubscriptions"][0]["serviceKey"] == SERVICE_KEY_DIGITAL_MENU
+
+
+def test_activate_and_cancel_point_system(subscription_location):
+    lid = subscription_location["location_id"]
+    activate = asyncio.run(
+        schema.execute(
+            ACTIVATE,
+            variable_values={"locationId": lid, "serviceKey": SERVICE_KEY_POINT_SYSTEM},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert activate.errors is None
+    row = activate.data["activateServiceSubscription"]
+    assert row["serviceKey"] == SERVICE_KEY_POINT_SYSTEM
+    assert row["status"] == SERVICE_STATUS_ACTIVE
+
+    cancel = asyncio.run(
+        schema.execute(
+            CANCEL,
+            variable_values={"locationId": lid, "serviceKey": SERVICE_KEY_POINT_SYSTEM},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert cancel.errors is None
+    assert cancel.data["cancelServiceSubscription"]["status"] == SERVICE_STATUS_CANCELED
+    assert cancel.data["cancelServiceSubscription"]["canceledAt"] is not None
 
 
 def test_activate_is_idempotent_upsert(subscription_location):

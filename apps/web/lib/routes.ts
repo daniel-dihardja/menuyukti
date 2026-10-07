@@ -204,6 +204,9 @@ export const routes = {
   servicesDigitalMenu: '/services/digital-menu',
   servicesDigitalMenuLocation: (locationId: string | number) =>
     `/services/digital-menu/${encodeURIComponent(String(locationId))}`,
+  servicesPointSystem: '/services/point-system',
+  servicesPointSystemLocation: (locationId: string | number) =>
+    `/services/point-system/${encodeURIComponent(String(locationId))}`,
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */

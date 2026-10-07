@@ -24,6 +24,7 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
   SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_KEY_POINT_SYSTEM,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
@@ -54,6 +55,20 @@ function DigitalMenuPreview() {
         <div className="bg-muted h-2 w-1/2 rounded" />
         <div className="bg-muted mt-auto h-2 w-full rounded" />
       </div>
+    </div>
+  )
+}
+
+function PointSystemPreview() {
+  return (
+    <div className="border-border bg-background flex w-44 flex-col gap-3 rounded-xl border p-4 shadow-sm">
+      <div className="bg-muted h-2 w-1/2 rounded" />
+      <div className="flex items-end gap-1.5">
+        <span className="text-2xl font-semibold tracking-tight">1,240</span>
+        <span className="text-muted-foreground pb-0.5 text-xs">pts</span>
+      </div>
+      <div className="bg-muted h-2 w-full rounded" />
+      <div className="bg-muted h-2 w-2/3 rounded" />
     </div>
   )
 }
@@ -181,6 +196,10 @@ export default async function ServicesPage() {
     (row) => row.serviceKey === SERVICE_KEY_DIGITAL_MENU,
   ).length
 
+  const pointSystemSubCount = activeSubscriptions.filter(
+    (row) => row.serviceKey === SERVICE_KEY_POINT_SYSTEM,
+  ).length
+
   const overviewRows = activeSubscriptions.flatMap((row) => {
     const locationId = Number(row.locationId)
     if (!Number.isInteger(locationId) || locationId < 1) return []
@@ -222,6 +241,21 @@ export default async function ServicesPage() {
             pricingComingSoon={pricingComingSoon}
             preview={<DigitalMenuPreview />}
             href={routes.servicesDigitalMenu}
+            ctaLabel={tCatalog('viewCta')}
+          />
+          <CatalogCard
+            title={tCatalog('pointSystem.title')}
+            benefit={tCatalog('pointSystem.benefit')}
+            status={
+              <Badge variant="secondary">
+                {pointSystemSubCount > 0
+                  ? tCatalog('pointSystem.statusOn', { count: pointSystemSubCount })
+                  : tCatalog('pointSystem.statusAvailable')}
+              </Badge>
+            }
+            pricingComingSoon={pricingComingSoon}
+            preview={<PointSystemPreview />}
+            href={routes.servicesPointSystem}
             ctaLabel={tCatalog('viewCta')}
           />
           <CatalogCard
