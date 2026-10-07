@@ -27,6 +27,8 @@ const isProtectedRoute = createRouteMatcher([
   '/usage(.*)',
   '/profile(.*)',
   '/inventar(.*)',
+  '/services(.*)',
+  '/team(.*)',
 ])
 
 function nextWithPathname(req: Request, pathname: string): NextResponse {

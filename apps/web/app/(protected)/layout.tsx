@@ -20,10 +20,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect(routes.login)
   }
 
+  // cookies() is independent of the plan GraphQL gate — start both together.
+  const cookieStorePromise = cookies()
   await enforceWorkspacePlanRoute()
-  const { plan, workspaceId } = await getWorkspacePlanForUser()
-
-  const cookieStore = await cookies()
+  const [{ plan, workspaceId }, cookieStore] = await Promise.all([
+    getWorkspacePlanForUser(),
+    cookieStorePromise,
+  ])
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false'
 
   return (
