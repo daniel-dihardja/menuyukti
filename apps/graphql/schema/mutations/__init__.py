@@ -59,9 +59,11 @@ from .update_style import UpdateStyleMutation
 from .update_workspace_plan import UpdateWorkspacePlanMutation
 from .upload_sales_report import UploadSalesReportMutation
 from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
+from .upsert_point_earn_rules import UpsertPointEarnRulesMutation
 
 __all__ = [
     "ActivateServiceSubscriptionMutation",
+    "UpsertPointEarnRulesMutation",
     "AwardCrmCashbackMutation",
     "AddMediaToCollectionMutation",
     "CancelServiceSubscriptionMutation",

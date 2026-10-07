@@ -22,6 +22,7 @@ __all__ = [
     "CrmEnrollmentToken",
     "CalendarEntry",
     "Playbook",
+    "PointEarnRule",
     "Menu",
     "MenuCategory",
     "MenuItem",

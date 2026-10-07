@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from graphql.data_sources.models.menu import Menu
     from graphql.data_sources.models.node import Node
     from graphql.data_sources.models.playbook import Playbook
+    from graphql.data_sources.models.point_earn_rule import PointEarnRule
     from graphql.data_sources.models.pos_order import PosOrder
     from graphql.data_sources.models.service_subscription import ServiceSubscription
     from graphql.data_sources.models.workspace import Workspace
@@ -127,6 +128,11 @@ class Location(Base):
     )
     service_subscriptions: Mapped[list[ServiceSubscription]] = relationship(
         "ServiceSubscription",
+        back_populates="location",
+        cascade="all, delete-orphan",
+    )
+    point_earn_rules: Mapped[list[PointEarnRule]] = relationship(
+        "PointEarnRule",
         back_populates="location",
         cascade="all, delete-orphan",
     )

@@ -1484,18 +1484,18 @@
     "pointSystem": {
       "title": "Point System",
       "description": "Turn on a points-based loyalty program for a location. Rules and guest balances come next.",
-      "heroPitch": "Enable Point System for a location so you can reward returning guests with points — configuration arrives soon.",
+      "heroPitch": "Enable Point System for a location, then set how many points guests earn for each action.",
       "pricingComingSoon": "Pricing coming soon",
       "turnOnCta": "Turn on for a location",
       "includedTitle": "What’s included",
       "included": {
         "enable": "Per-location enablement and subscription",
-        "earn": "Earn rules (coming soon)",
+        "earn": "Configurable earn rules for guest actions",
         "redeem": "Redeem and guest balances (coming soon)"
       },
       "connectedTitle": "Connected locations",
       "connectedEmpty": "Point System isn’t on for any location yet.",
-      "connectedEmptyHint": "Pick a location to turn it on. Setup for rules will follow.",
+      "connectedEmptyHint": "Pick a location to turn it on and configure earn rules.",
       "connectedStatusOn": "On",
       "manageCta": "Manage",
       "enable": {
@@ -1512,10 +1512,33 @@
       },
       "console": {
         "heading": "Point System",
-        "description": "Point System is on for this location. Earn and redeem rules are coming soon.",
+        "description": "Configure how guests earn points at this location.",
         "enabled": "Point System is on",
-        "enabledHint": "This location has an active Point System subscription. Configuration for points rules will appear here.",
-        "backCta": "Back to Point System"
+        "enabledHint": "This location has an active Point System subscription. Set earn rules below. Awarding points comes next.",
+        "backCta": "Back to Point System",
+        "rulesTitle": "Earn rules",
+        "rulesSubtitle": "Choose which actions award points and how many. Rules apply only while Point System is on for this location.",
+        "pointsLabel": "Points",
+        "pointsHelp": "Whole number of points awarded when this action happens.",
+        "pointsInvalid": "Enter a whole number of 0 or more.",
+        "enabledLabel": "On",
+        "disabledLabel": "Off",
+        "save": "Save rules",
+        "saving": "Saving…",
+        "saved": "Earn rules saved",
+        "saveFailed": "Could not save earn rules.",
+        "actions": {
+          "open_menu_qr": {
+            "title": "Open menu via QR",
+            "description": "Guest opens the digital menu by scanning a table QR code.",
+            "toggleAria": "Enable points for opening the menu via QR"
+          },
+          "complete_order": {
+            "title": "Complete order",
+            "description": "Guest completes or pays an order at this location.",
+            "toggleAria": "Enable points for completing an order"
+          }
+        }
       }
     },
     "digitalMenu": {

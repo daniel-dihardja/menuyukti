@@ -8,6 +8,7 @@ from .post import PostType
 from .post_page import PostPageType
 from .post_page_media_version import PostPageMediaVersionType
 from .public_holiday import PublicHolidayType
+from .point_earn_rule import PointEarnRuleInput, PointEarnRuleType
 from .service_subscription import ServiceSubscriptionType
 from .workspace import WorkspaceType
 from .workspace_membership import WorkspaceMembershipType
@@ -29,6 +30,8 @@ __all__ = [
     "PostType",
     "PostPageType",
     "PostPageMediaVersionType",
+    "PointEarnRuleInput",
+    "PointEarnRuleType",
     "ServiceSubscriptionType",
     "WorkspaceType",
     "WorkspaceMembershipType",

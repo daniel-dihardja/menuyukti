@@ -58,6 +58,7 @@ from graphql.schema.mutations import (
     UploadSalesReportMutation,
     UpsertLocationMenuItemCogsBulkMutation,
     UpsertMenuItemCogsBulkMutation,
+    UpsertPointEarnRulesMutation,
 )
 
 
@@ -90,6 +91,7 @@ class Mutation(
     InviteWorkspaceMemberMutation,
     RemoveWorkspaceMemberMutation,
     UpsertMenuItemCogsBulkMutation,
+    UpsertPointEarnRulesMutation,
     UpsertLocationMenuItemCogsBulkMutation,
     ApplyLocationCogsToAnalyticsRunMutation,
     SaveAnalyticsRunCogsToLocationMutation,
