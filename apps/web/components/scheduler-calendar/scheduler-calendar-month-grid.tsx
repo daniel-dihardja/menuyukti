@@ -58,7 +58,7 @@ export function SchedulerCalendarMonthGrid({
   onSlotClick,
   showCreateAffordance = false,
 }: SchedulerCalendarMonthGridProps) {
-  const t = useTranslations('analytics.workflows.chat')
+  const t = useTranslations('chat')
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd),
     [monthStartIso, windowEnd, windowStart],

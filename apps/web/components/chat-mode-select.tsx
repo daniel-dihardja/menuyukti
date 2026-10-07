@@ -32,7 +32,7 @@ const CHAT_MODE_TRIGGER_CLASS: Partial<Record<ChatModeId, string | undefined>> =
 }
 
 export function ChatModeSelect({ value, onValueChange, disabled, className }: ChatModeSelectProps) {
-  const t = useTranslations('analytics.workflows.chat.modes')
+  const t = useTranslations('chat.modes')
   const allowed = new Set<string>(ADVISOR_CHAT_MODE_IDS)
   const selectValue: AdvisorChatModeId = allowed.has(value)
     ? (value as AdvisorChatModeId)

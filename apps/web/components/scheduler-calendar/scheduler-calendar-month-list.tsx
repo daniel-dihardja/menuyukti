@@ -63,7 +63,7 @@ export function SchedulerCalendarMonthList({
   onSlotClick,
   showCreateAffordance = false,
 }: SchedulerCalendarMonthListProps) {
-  const t = useTranslations('analytics.workflows.chat')
+  const t = useTranslations('chat')
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd).filter((day) => day.inMonth),
     [monthStartIso, windowEnd, windowStart],
