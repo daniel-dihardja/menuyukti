@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-KNOWN_PLAYBOOK_TYPES = frozenset({"public_holidays"})
+KNOWN_PLAYBOOK_TYPES = frozenset({"public_holidays", "nearby_locations"})
 
 
 def validate_playbook_fields(

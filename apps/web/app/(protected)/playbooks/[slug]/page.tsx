@@ -67,6 +67,7 @@ export default async function PlaybookOverviewPage({ params }: PlaybookOverviewP
   }))
   const instances = playbooksData.playbooks
   const isEmpty = instances.length === 0
+  const canCreate = catalog.supportsCreate
 
   return (
     <AnalyticsPageShell
@@ -76,7 +77,7 @@ export default async function PlaybookOverviewPage({ params }: PlaybookOverviewP
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <PageHeading title={title} description={isEmpty ? undefined : description} />
-          {!isEmpty ? (
+          {!isEmpty && canCreate ? (
             <Button asChild className="w-full shrink-0 sm:w-auto">
               <Link href={routes.playbookNew(catalog.slug)}>{t('createPlaybook')}</Link>
             </Button>
@@ -91,11 +92,13 @@ export default async function PlaybookOverviewPage({ params }: PlaybookOverviewP
               <EmptyTitle>{t(`items.${catalog.id}.emptyTitle`)}</EmptyTitle>
               <EmptyDescription>{t(`items.${catalog.id}.emptyDescription`)}</EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button asChild>
-                <Link href={routes.playbookNew(catalog.slug)}>{t('createPlaybook')}</Link>
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button asChild>
+                  <Link href={routes.playbookNew(catalog.slug)}>{t('createPlaybook')}</Link>
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : (
           <PlaybookInstancesList slug={catalog.slug} instances={instances} branches={branches} />

@@ -147,7 +147,7 @@ export const routes = {
   calendarWithLocation: (locationId: string | number) =>
     `/calendar?locationId=${encodeURIComponent(String(locationId))}`,
 
-  /** Reusable Instagram strategy components (playbook library). */
+  /** Dedicated location-task pipelines (playbook library). */
   playbooks: '/playbooks',
   playbookDetail: (slug: string) => `/playbooks/${encodeURIComponent(slug)}`,
   playbookNew: (slug: string) => `/playbooks/${encodeURIComponent(slug)}/new`,

@@ -1155,7 +1155,7 @@
   },
   "playbooks": {
     "title": "Playbooks",
-    "description": "Reusable Instagram strategy components—like holiday stories or menu posts—that you configure and run.",
+    "description": "Reusable strategy pipelines for dedicated location tasks—configure once, run when you need them.",
     "catalogAria": "Available playbooks",
     "start": "Start",
     "createPlaybook": "Create Playbook",
@@ -1421,6 +1421,12 @@
             "generateBatchError": "Could not generate artwork. Try again."
           }
         }
+      },
+      "nearbyLocations": {
+        "title": "Nearby Locations",
+        "description": "Map offices, schools, colleges, and other demand nodes near a restaurant location for local marketing context.",
+        "emptyTitle": "Coming soon",
+        "emptyDescription": "Nearby Locations playbooks will help you discover and save interesting places around each restaurant. Create and run will be available in a future update."
       }
     }
   },
