@@ -10,6 +10,9 @@ import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
  * Auth-required customer shell (no operator sidebar).
  * Chrome: global `MainHeader` via `AppChrome`. Plan gates: free → `/home` | `/profile`.
  */
+/** Auth + workspace-plan GraphQL gate; layout is allowed to block navigations. */
+export const instant = false
+
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = await auth()
   if (!isAuthenticated) {

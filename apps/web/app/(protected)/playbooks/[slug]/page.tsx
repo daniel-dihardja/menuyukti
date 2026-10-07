@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { BookOpen } from 'lucide-react'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
@@ -22,25 +23,22 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@workspace/ui/components/empty'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 
 type PlaybookOverviewPageProps = {
   params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: PlaybookOverviewPageProps): Promise<Metadata> {
-  const { slug } = await params
-  const playbook = getPlaybookBySlug(slug)
-  if (!playbook) {
-    return {}
-  }
-
-  const t = await getTranslations('playbooks')
-  const title = t(`items.${playbook.id}.title`)
-  const description = t(`items.${playbook.id}.description`)
-  return { title, description, openGraph: { title, description } }
+function PlaybookOverviewSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <Skeleton className="h-10 w-64" />
+      <Skeleton className="h-40 w-full rounded-lg" />
+    </div>
+  )
 }
 
-export default async function PlaybookOverviewPage({ params }: PlaybookOverviewPageProps) {
+async function PlaybookOverviewContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const catalog = getPlaybookBySlug(slug)
   if (!catalog) {
@@ -70,40 +68,63 @@ export default async function PlaybookOverviewPage({ params }: PlaybookOverviewP
   const canCreate = catalog.supportsCreate
 
   return (
-    <AnalyticsPageShell
-      title={title}
-      breadcrumbs={[{ label: t('title'), href: routes.playbooks }, { label: title }]}
-    >
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <PageHeading title={title} description={isEmpty ? undefined : description} />
-          {!isEmpty && canCreate ? (
-            <Button asChild className="w-full shrink-0 sm:w-auto">
-              <Link href={routes.playbookNew(catalog.slug)}>{t('createPlaybook')}</Link>
-            </Button>
-          ) : null}
-        </div>
-        {isEmpty ? (
-          <Empty className="border border-dashed">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BookOpen aria-hidden />
-              </EmptyMedia>
-              <EmptyTitle>{t(`items.${catalog.id}.emptyTitle`)}</EmptyTitle>
-              <EmptyDescription>{t(`items.${catalog.id}.emptyDescription`)}</EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button asChild>
-                  <Link href={routes.playbookNew(catalog.slug)}>{t('createPlaybook')}</Link>
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : (
-          <PlaybookInstancesList slug={catalog.slug} instances={instances} branches={branches} />
-        )}
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <PageHeading title={title} description={isEmpty ? undefined : description} />
+        {!isEmpty && canCreate ? (
+          <Button asChild className="w-full shrink-0 sm:w-auto">
+            <Link href={routes.playbookNew(catalog.slug)}>{t('createPlaybook')}</Link>
+          </Button>
+        ) : null}
       </div>
+      {isEmpty ? (
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle>{t(`items.${catalog.id}.emptyTitle`)}</EmptyTitle>
+            <EmptyDescription>{t(`items.${catalog.id}.emptyDescription`)}</EmptyDescription>
+          </EmptyHeader>
+          {canCreate ? (
+            <EmptyContent>
+              <Button asChild>
+                <Link href={routes.playbookNew(catalog.slug)}>{t('createPlaybook')}</Link>
+              </Button>
+            </EmptyContent>
+          ) : null}
+        </Empty>
+      ) : (
+        <PlaybookInstancesList slug={catalog.slug} instances={instances} branches={branches} />
+      )}
+    </div>
+  )
+}
+
+export async function generateMetadata({ params }: PlaybookOverviewPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const playbook = getPlaybookBySlug(slug)
+  if (!playbook) {
+    return {}
+  }
+
+  const t = await getTranslations('playbooks')
+  const title = t(`items.${playbook.id}.title`)
+  const description = t(`items.${playbook.id}.description`)
+  return { title, description, openGraph: { title, description } }
+}
+
+export default async function PlaybookOverviewPage({ params }: PlaybookOverviewPageProps) {
+  const t = await getTranslations('playbooks')
+
+  return (
+    <AnalyticsPageShell
+      title={t('title')}
+      breadcrumbs={[{ label: t('title'), href: routes.playbooks }]}
+    >
+      <Suspense fallback={<PlaybookOverviewSkeleton />}>
+        <PlaybookOverviewContent params={params} />
+      </Suspense>
     </AnalyticsPageShell>
   )
 }

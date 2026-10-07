@@ -11,6 +11,9 @@ import { enforceWorkspacePlanRoute } from '@/lib/workspace-plan-route'
 import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
 import { AnalyticsProvider } from './analytics/analytics-provider'
 
+/** Auth + workspace-plan GraphQL gate; layout is allowed to block navigations. */
+export const instant = false
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = await auth()
   if (!isAuthenticated) {

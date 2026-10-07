@@ -1,9 +1,11 @@
+import { Suspense } from 'react'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 
 import { PointSystemPdpClient } from '@/app/(protected)/services/point-system/_components/point-system-pdp-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getCachedLocationsListData } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
@@ -21,9 +23,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title, description, openGraph: { title, description } }
 }
 
-export default async function PointSystemServicePage() {
-  const tServices = await getTranslations('services')
-  const t = await getTranslations('services.pointSystem')
+function PointSystemPdpSkeleton() {
+  return (
+    <div className="flex flex-col gap-10">
+      <Skeleton className="aspect-[4/3] w-full max-w-md rounded-lg" />
+      <Skeleton className="h-40 w-full max-w-xl rounded-lg" />
+    </div>
+  )
+}
+
+async function PointSystemPdpData() {
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
@@ -61,12 +70,21 @@ export default async function PointSystemServicePage() {
       return [{ id, name }]
     })
 
+  return <PointSystemPdpClient locations={locations} connectedLocations={connectedLocations} />
+}
+
+export default async function PointSystemServicePage() {
+  const tServices = await getTranslations('services')
+  const t = await getTranslations('services.pointSystem')
+
   return (
     <AnalyticsPageShell
       title={t('title')}
       breadcrumbs={[{ label: tServices('title'), href: routes.services }, { label: t('title') }]}
     >
-      <PointSystemPdpClient locations={locations} connectedLocations={connectedLocations} />
+      <Suspense fallback={<PointSystemPdpSkeleton />}>
+        <PointSystemPdpData />
+      </Suspense>
     </AnalyticsPageShell>
   )
 }
