@@ -52,15 +52,15 @@
     },
     "pointSystem": {
       "title": "Point System",
-      "description": "Turn on a points-based loyalty program for a location. Rules and guest balances come next.",
-      "heroPitch": "Enable Point System for a location, then set how many points guests earn for each action.",
+      "description": "Turn on a points-based loyalty program for a location. Guests earn points from menu opens and completed digital-menu orders.",
+      "heroPitch": "Enable Point System for a location, set earn rules, and guests see balances on their home.",
       "pricingComingSoon": "Pricing coming soon",
       "turnOnCta": "Turn on for a location",
       "includedTitle": "What’s included",
       "included": {
         "enable": "Per-location enablement and subscription",
         "earn": "Configurable earn rules for guest actions",
-        "redeem": "Redeem and guest balances (coming soon)"
+        "redeem": "Guest balances on their home (redeem coming soon)"
       },
       "connectedTitle": "Connected locations",
       "connectedEmpty": "Point System isn’t on for any location yet.",
@@ -83,7 +83,7 @@
         "heading": "Point System",
         "description": "Configure how guests earn points at this location.",
         "enabled": "Point System is on",
-        "enabledHint": "This location has an active Point System subscription. Set earn rules below. Awarding points comes next.",
+        "enabledHint": "This location has an active Point System subscription. Guests earn points when enabled rules fire (menu open and completed digital-menu orders).",
         "backCta": "Back to Point System",
         "rulesTitle": "Earn rules",
         "rulesSubtitle": "Choose which actions award points and how many. Rules apply only while Point System is on for this location.",

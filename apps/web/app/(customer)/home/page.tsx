@@ -1,10 +1,21 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 
+import { CustomerPointsSection } from '@/app/(customer)/home/_components/customer-points-section'
+import { CustomerPointsSkeleton } from '@/app/(customer)/home/_components/customer-points-skeleton'
 import { CustomerPageShell } from '@/components/customer/customer-page-shell'
 import { PwaInstallGuide } from '@/components/pwa/pwa-install-guide'
+import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  MY_POINT_BALANCES_QUERY,
+  MY_POINT_ENTRIES_QUERY,
+  type MyPointBalancesData,
+  type MyPointEntriesData,
+} from '@/lib/graphql/queries/point-ledger'
 import { routes } from '@/lib/routes'
 import { isProPlan } from '@/lib/workspace-plan'
 import { getWorkspacePlanForUser } from '@/lib/workspace-plan-server'
@@ -15,6 +26,34 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = t('title')
   const description = t('description')
   return { title, description, openGraph: { title, description } }
+}
+
+async function CustomerPointsData() {
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    return <CustomerPointsSection balances={[]} entries={[]} loadError />
+  }
+
+  try {
+    const [balancesData, entriesData] = await Promise.all([
+      graphqlQuery<MyPointBalancesData>(MY_POINT_BALANCES_QUERY, {}, userId, 'MyPointBalances'),
+      graphqlQuery<MyPointEntriesData>(
+        MY_POINT_ENTRIES_QUERY,
+        { limit: 20 },
+        userId,
+        'MyPointEntries',
+      ),
+    ])
+    return (
+      <CustomerPointsSection
+        balances={balancesData.myPointBalances}
+        entries={entriesData.myPointEntries}
+      />
+    )
+  } catch (error) {
+    console.error('[customer/home] points', error)
+    return <CustomerPointsSection balances={[]} entries={[]} loadError />
+  }
 }
 
 export default async function CustomerHomePage() {
@@ -36,17 +75,9 @@ export default async function CustomerHomePage() {
         </p>
       </div>
 
-      <section
-        aria-labelledby="customer-home-rewards-heading"
-        className="rounded-lg border border-border bg-canvas/40 px-4 py-5 sm:px-5"
-      >
-        <h2 id="customer-home-rewards-heading" className="text-base font-semibold tracking-tight">
-          {t('rewardsTitle')}
-        </h2>
-        <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
-          {t('rewardsLead')}
-        </p>
-      </section>
+      <Suspense fallback={<CustomerPointsSkeleton />}>
+        <CustomerPointsData />
+      </Suspense>
 
       <PwaInstallGuide headingId="guest-home-pwa-heading" />
 

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { buildLoginUrl, rememberAuthReturnPath } from '@/lib/auth-return-path'
 import { formatCurrency, getCurrencyLocale } from '@/lib/currency'
+import { POINT_EARN_ACTION_OPEN_MENU_QR } from '@/lib/graphql/queries/point-ledger'
 import {
   collectPresentMenuAttributes,
   itemMatchesMenuAttributeFilters,
@@ -205,6 +206,21 @@ export function PublicMenuCatalog({
       setBasketOpen(false)
     }
   }, [basketOpen, hasCart])
+
+  // Fire-and-forget: credit open_menu_qr when a signed-in guest opens the menu.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return
+    void fetch('/api/public-menu/point-earn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        locationId,
+        actionKey: POINT_EARN_ACTION_OPEN_MENU_QR,
+      }),
+    }).catch(() => {
+      // Menu UX must not depend on Point System availability.
+    })
+  }, [isLoaded, isSignedIn, locationId])
 
   const addItem = (item: PublicMenuItemView) => {
     setSuccessBillNumber(null)

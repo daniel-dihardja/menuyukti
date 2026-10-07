@@ -26,6 +26,7 @@ from .public_holidays import PublicHolidaysQuery
 from .public_location_menu import PublicLocationMenuQuery
 from .revenue_trends import RevenueTrendsQuery
 from .scheduler_calendar import SchedulerCalendarQuery
+from .my_points import MyPointsQuery
 from .point_earn_rules import PointEarnRulesQuery
 from .service_subscriptions import ServiceSubscriptionsQuery
 from .styles import StylesQuery
@@ -56,6 +57,7 @@ __all__ = [
     "PlaybooksQuery",
     "PosOrdersQuery",
     "SchedulerCalendarQuery",
+    "MyPointsQuery",
     "PointEarnRulesQuery",
     "ServiceSubscriptionsQuery",
     "PublicHolidaysQuery",

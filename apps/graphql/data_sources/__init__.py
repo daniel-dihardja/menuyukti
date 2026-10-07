@@ -23,6 +23,7 @@ __all__ = [
     "CalendarEntry",
     "Playbook",
     "PointEarnRule",
+    "PointLedgerEntry",
     "Menu",
     "MenuCategory",
     "MenuItem",

@@ -555,6 +555,12 @@ def close_order(
     order.closed_at = closed_at
     order.payment_method = payment_method
     session.flush()
+
+    # Guest Point System: credit complete_order for digital-menu tickets only.
+    from graphql.services.point_ledger import award_for_digital_menu_order_paid
+
+    award_for_digital_menu_order_paid(session, order)
+
     return get_order(session, order.id) or order
 
 

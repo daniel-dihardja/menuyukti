@@ -4,8 +4,19 @@
     "description": "Your Menuyukti home — rewards, install the app, and manage your profile.",
     "headline": "Welcome",
     "lead": "This is your customer space. Collect rewards at venues you visit, install the app for a full-screen experience, and keep your profile up to date.",
-    "rewardsTitle": "Rewards",
-    "rewardsLead": "Stamp cards and venue rewards are coming soon. When a café or restaurant offers a card, it will show up here.",
+    "rewardsTitle": "Your points",
+    "rewardsLead": "Points you earn at venues with Point System appear here.",
+    "rewardsEmpty": "No points yet. Open a digital menu while signed in, or complete an order at a venue with Point System on.",
+    "rewardsLoadError": "Could not load your points right now. Try again later.",
+    "rewardsTotalLabel": "Total",
+    "rewardsTotalUnit": "pts",
+    "rewardsByVenueTitle": "By venue",
+    "rewardsHistoryTitle": "Recent activity",
+    "rewardsHistoryEmpty": "No activity yet.",
+    "actions": {
+      "open_menu_qr": "Opened menu",
+      "complete_order": "Completed order"
+    },
     "profileCta": "Open profile"
   }
 }
