@@ -12,6 +12,8 @@ from agents_app.routers.chat import router as chat_router
 from agents_app.routers.format_markdown import router as format_markdown_router
 from agents_app.routers.holiday_relevance import router as holiday_relevance_router
 from agents_app.routers.holiday_story_draft import router as holiday_story_draft_router
+from agents_app.routers.holiday_style_analysis import router as holiday_style_analysis_router
+from agents_app.routers.holiday_visual_brief import router as holiday_visual_brief_router
 from agents_app.routers.style_specs import router as style_specs_router
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -184,6 +186,8 @@ app.include_router(chat_router, tags=["chat"])
 app.include_router(format_markdown_router, tags=["core", "format-markdown"])
 app.include_router(holiday_relevance_router, tags=["playbooks", "holiday-relevance"])
 app.include_router(holiday_story_draft_router, tags=["playbooks", "holiday-story-draft"])
+app.include_router(holiday_style_analysis_router, tags=["playbooks", "holiday-style-analysis"])
+app.include_router(holiday_visual_brief_router, tags=["playbooks", "holiday-visual-brief"])
 app.include_router(style_specs_router, tags=["style-specs"])
 
 

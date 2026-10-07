@@ -40,7 +40,8 @@ import { Textarea } from '@workspace/ui/components/textarea'
 import {
   PublicHolidaysArtwork,
   type ArtworkItemStatus,
-  type ArtworkStyleReference,
+  type ArtworkProgress,
+  type ConfirmedArtwork,
 } from '@/app/(protected)/playbooks/_components/public-holidays-artwork'
 import { PublicHolidaysDraftStories } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
 import type {
@@ -50,13 +51,28 @@ import type {
   DraftItemStatus,
   DraftProgress,
 } from '@/app/(protected)/playbooks/_components/public-holidays-draft-stories'
+import {
+  PublicHolidaysVisualBriefs,
+  type BriefHistoryEntry,
+  type BriefItemStatus,
+  type BriefProgress,
+  type ConfirmedVisualBrief,
+  type StyleReference,
+} from '@/app/(protected)/playbooks/_components/public-holidays-visual-briefs'
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard'
 import {
+  analyzeHolidayStyle,
   draftHolidayStory,
+  draftHolidayVisualBrief,
   fetchHolidays,
+  generateHolidayArtwork,
   scoreHolidayRelevance,
+  LEONARDO_PROMPT_MAX_CHARS,
+  type ArtworkGenerateResult,
   type CritiqueSummary,
   type StoryDraftResult,
+  type StyleAnalysisResult,
+  type VisualBriefResult,
 } from '@/lib/playbooks/client-api'
 import { relevantHolidayIds } from '@/lib/playbooks/relevant-holiday-ids'
 
@@ -66,9 +82,9 @@ type HolidayItem = {
   name: string
 }
 
-type StepId = 'fetchDates' | 'draftStories' | 'artwork'
+type StepId = 'fetchDates' | 'draftStories' | 'visualBriefs' | 'artwork'
 
-const STEP_IDS: StepId[] = ['fetchDates', 'draftStories', 'artwork']
+const STEP_IDS: StepId[] = ['fetchDates', 'draftStories', 'visualBriefs', 'artwork']
 
 const DEFAULT_CRITIQUE: DraftCritiqueSettings = {
   enabled: false,
@@ -144,20 +160,40 @@ export function PublicHolidaysWorkspace({
   const [skippedDraftIds, setSkippedDraftIds] = useState<Set<string>>(() => new Set())
   const [draftRunning, setDraftRunning] = useState(false)
   const [draftProgress, setDraftProgress] = useState<DraftProgress | null>(null)
-  const [artworkInstructions, setArtworkInstructions] = useState('')
-  const [styleReference, setStyleReference] = useState<ArtworkStyleReference | null>(null)
+
+  const [briefInstructions, setBriefInstructions] = useState('')
+  const [styleReference, setStyleReference] = useState<StyleReference | null>(null)
+  const [styleAnalysis, setStyleAnalysis] = useState<StyleAnalysisResult | null>(null)
+  const [styleAnalyzing, setStyleAnalyzing] = useState(false)
+  const [briefStatuses, setBriefStatuses] = useState<Record<string, BriefItemStatus>>({})
+  const [briefResults, setBriefResults] = useState<Record<string, VisualBriefResult>>({})
+  const [briefHistories, setBriefHistories] = useState<Record<string, BriefHistoryEntry[]>>({})
+  const [confirmedBriefs, setConfirmedBriefs] = useState<ConfirmedVisualBrief[]>([])
+  const [skippedBriefIds, setSkippedBriefIds] = useState<Set<string>>(() => new Set())
+  const [briefRunning, setBriefRunning] = useState(false)
+  const [briefProgress, setBriefProgress] = useState<BriefProgress | null>(null)
+
   const [artworkStatuses, setArtworkStatuses] = useState<Record<string, ArtworkItemStatus>>({})
-  const [confirmedArtworks, setConfirmedArtworks] = useState<ConfirmedStoryDraft[]>([])
+  const [artworkResults, setArtworkResults] = useState<Record<string, ArtworkGenerateResult>>({})
+  const [confirmedArtworks, setConfirmedArtworks] = useState<ConfirmedArtwork[]>([])
   const [skippedArtworkIds, setSkippedArtworkIds] = useState<Set<string>>(() => new Set())
+  const [artworkRunning, setArtworkRunning] = useState(false)
+  const [artworkProgress, setArtworkProgress] = useState<ArtworkProgress | null>(null)
 
   const draftStoriesEnabled = confirmed.length > 0
-  const artworkEnabled = confirmedDrafts.length > 0
+  const visualBriefsEnabled = confirmedDrafts.length > 0
+  const artworkEnabled = confirmedBriefs.length > 0
   const hasSessionWork =
     confirmed.length > 0 ||
     confirmedDrafts.length > 0 ||
+    confirmedBriefs.length > 0 ||
     confirmedArtworks.length > 0 ||
     Object.keys(draftResults).length > 0 ||
-    Object.keys(draftStatuses).length > 0
+    Object.keys(draftStatuses).length > 0 ||
+    Object.keys(briefResults).length > 0 ||
+    Object.keys(briefStatuses).length > 0 ||
+    Object.keys(artworkResults).length > 0 ||
+    styleAnalysis !== null
 
   useUnsavedChangesGuard(hasSessionWork)
 
@@ -168,13 +204,31 @@ export function PublicHolidaysWorkspace({
   const draftQueue = confirmed.filter(
     (h) => !confirmedDraftIds.has(h.id) && !skippedDraftIds.has(h.id),
   )
+  const confirmedBriefIds = useMemo(
+    () => new Set(confirmedBriefs.map((d) => d.id)),
+    [confirmedBriefs],
+  )
+  const briefQueue = confirmedDrafts
+    .filter((d) => !confirmedBriefIds.has(d.id) && !skippedBriefIds.has(d.id))
+    .map((d) => ({
+      id: d.id,
+      date: d.date,
+      name: d.name,
+      storyDraft: d.result,
+    }))
   const confirmedArtworkIds = useMemo(
     () => new Set(confirmedArtworks.map((d) => d.id)),
     [confirmedArtworks],
   )
-  const artworkQueue = confirmedDrafts.filter(
-    (d) => !confirmedArtworkIds.has(d.id) && !skippedArtworkIds.has(d.id),
-  )
+  const artworkQueue = confirmedBriefs
+    .filter((d) => !confirmedArtworkIds.has(d.id) && !skippedArtworkIds.has(d.id))
+    .map((d) => ({
+      id: d.id,
+      date: d.date,
+      name: d.name,
+      brief: d.result,
+      caption: d.storyDraft.caption,
+    }))
 
   useEffect(() => {
     if (confirmed.length === 0 && activeStepId === 'draftStories') {
@@ -183,10 +237,22 @@ export function PublicHolidaysWorkspace({
   }, [confirmed.length, activeStepId])
 
   useEffect(() => {
-    if (confirmedDrafts.length === 0 && activeStepId === 'artwork') {
+    if (confirmedDrafts.length === 0 && activeStepId === 'visualBriefs') {
       setActiveStepId(confirmed.length > 0 ? 'draftStories' : 'fetchDates')
     }
   }, [confirmedDrafts.length, confirmed.length, activeStepId])
+
+  useEffect(() => {
+    if (confirmedBriefs.length === 0 && activeStepId === 'artwork') {
+      if (confirmedDrafts.length > 0) {
+        setActiveStepId('visualBriefs')
+      } else if (confirmed.length > 0) {
+        setActiveStepId('draftStories')
+      } else {
+        setActiveStepId('fetchDates')
+      }
+    }
+  }, [confirmedBriefs.length, confirmedDrafts.length, confirmed.length, activeStepId])
 
   useEffect(() => {
     const confirmedIds = new Set(confirmed.map((h) => h.id))
@@ -220,19 +286,74 @@ export function PublicHolidaysWorkspace({
 
   useEffect(() => {
     const draftIds = new Set(confirmedDrafts.map((d) => d.id))
-    setConfirmedArtworks((prev) => prev.filter((d) => draftIds.has(d.id)))
-    setSkippedArtworkIds((prev) => {
+    setConfirmedBriefs((prev) => prev.filter((d) => draftIds.has(d.id)))
+    setSkippedBriefIds((prev) => {
       const next = new Set([...prev].filter((id) => draftIds.has(id)))
       return next.size === prev.size ? prev : next
     })
-    setArtworkStatuses((prev) => {
-      const next: Record<string, ArtworkItemStatus> = {}
+    setBriefStatuses((prev) => {
+      const next: Record<string, BriefItemStatus> = {}
       for (const [id, status] of Object.entries(prev)) {
         if (draftIds.has(id)) next[id] = status
       }
       return next
     })
+    setBriefResults((prev) => {
+      const next: Record<string, VisualBriefResult> = {}
+      for (const [id, result] of Object.entries(prev)) {
+        if (draftIds.has(id)) next[id] = result
+      }
+      return next
+    })
+    setBriefHistories((prev) => {
+      const next: Record<string, BriefHistoryEntry[]> = {}
+      for (const [id, history] of Object.entries(prev)) {
+        if (draftIds.has(id)) next[id] = history
+      }
+      return next
+    })
   }, [confirmedDrafts])
+
+  useEffect(() => {
+    const briefIds = new Set(confirmedBriefs.map((d) => d.id))
+    setConfirmedArtworks((prev) => prev.filter((d) => briefIds.has(d.id)))
+    setSkippedArtworkIds((prev) => {
+      const next = new Set([...prev].filter((id) => briefIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+    setArtworkStatuses((prev) => {
+      const next: Record<string, ArtworkItemStatus> = {}
+      for (const [id, status] of Object.entries(prev)) {
+        if (briefIds.has(id)) next[id] = status
+      }
+      return next
+    })
+    setArtworkResults((prev) => {
+      const next: Record<string, ArtworkGenerateResult> = {}
+      for (const [id, result] of Object.entries(prev)) {
+        if (briefIds.has(id)) next[id] = result
+      }
+      return next
+    })
+  }, [confirmedBriefs])
+
+  function clearStyleDependentState() {
+    setStyleAnalysis(null)
+    setBriefStatuses({})
+    setBriefResults({})
+    setBriefHistories({})
+    setConfirmedBriefs([])
+    setSkippedBriefIds(new Set())
+    setArtworkStatuses({})
+    setArtworkResults({})
+    setConfirmedArtworks([])
+    setSkippedArtworkIds(new Set())
+  }
+
+  function handleStyleReferenceChange(value: StyleReference | null) {
+    setStyleReference(value)
+    clearStyleDependentState()
+  }
 
   function setRunningState(next: boolean) {
     setRunning(next)
@@ -241,6 +362,21 @@ export function PublicHolidaysWorkspace({
 
   function setDraftRunningState(next: boolean) {
     setDraftRunning(next)
+    onRunningChange?.(next)
+  }
+
+  function setBriefRunningState(next: boolean) {
+    setBriefRunning(next)
+    onRunningChange?.(next)
+  }
+
+  function setArtworkRunningState(next: boolean) {
+    setArtworkRunning(next)
+    onRunningChange?.(next)
+  }
+
+  function setStyleAnalyzingState(next: boolean) {
+    setStyleAnalyzing(next)
     onRunningChange?.(next)
   }
 
@@ -580,12 +716,304 @@ export function PublicHolidaysWorkspace({
     })
   }
 
+  async function handleAnalyzeStyle() {
+    if (styleAnalyzing || briefRunning || !styleReference) return
+    setStyleAnalyzingState(true)
+    try {
+      const analysis = await analyzeHolidayStyle({
+        styleImageName: styleReference.name,
+        instructions: briefInstructions,
+      })
+      setStyleAnalysis(analysis)
+      setBriefStatuses({})
+      setBriefResults({})
+      setBriefHistories({})
+      setConfirmedBriefs([])
+      setSkippedBriefIds(new Set())
+      setArtworkStatuses({})
+      setArtworkResults({})
+      setConfirmedArtworks([])
+      setSkippedArtworkIds(new Set())
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('visualBriefs.analyzeError'))
+    } finally {
+      setStyleAnalyzingState(false)
+    }
+  }
+
+  async function briefOne(
+    locationId: number,
+    item: { id: string; date: string; name: string; storyDraft: StoryDraftResult },
+  ): Promise<boolean> {
+    if (!styleAnalysis) return false
+    setBriefStatuses((prev) => ({ ...prev, [item.id]: 'loading' }))
+    try {
+      const drafted = await draftHolidayVisualBrief({
+        locationId,
+        holiday: { id: item.id, date: item.date, name: item.name },
+        storyDraft: item.storyDraft,
+        styleAnalysis,
+        instructions: briefInstructions,
+      })
+      setBriefResults((prev) => ({ ...prev, [item.id]: drafted.result }))
+      setBriefHistories((prev) => ({
+        ...prev,
+        [item.id]: [{ role: 'assistant', result: drafted.result }],
+      }))
+      setBriefStatuses((prev) => ({ ...prev, [item.id]: 'ready' }))
+      return true
+    } catch (err) {
+      setBriefStatuses((prev) => ({ ...prev, [item.id]: 'error' }))
+      toast.error(err instanceof Error ? err.message : t('visualBriefs.generateError'))
+      return false
+    }
+  }
+
+  async function handleGenerateBriefs() {
+    if (briefRunning || !styleAnalysis || briefQueue.length === 0) return
+    setBriefRunningState(true)
+    const queue = [...briefQueue]
+    try {
+      const ctx = await prepareRun()
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i]
+        if (!item) continue
+        setBriefProgress({ current: i + 1, total: queue.length, name: item.name })
+        await briefOne(ctx.locationId, item)
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      toast.error(err instanceof Error ? err.message : t('visualBriefs.generateError'))
+    } finally {
+      setBriefProgress(null)
+      setBriefRunningState(false)
+    }
+  }
+
+  async function handleRetryBrief(id: string) {
+    if (briefRunning || !styleAnalysis) return
+    const item = briefQueue.find((h) => h.id === id)
+    if (!item) return
+    setBriefRunningState(true)
+    setBriefProgress({ current: 1, total: 1, name: item.name })
+    try {
+      const ctx = await prepareRun()
+      await briefOne(ctx.locationId, item)
+    } catch (err) {
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      toast.error(err instanceof Error ? err.message : t('visualBriefs.generateError'))
+    } finally {
+      setBriefProgress(null)
+      setBriefRunningState(false)
+    }
+  }
+
+  async function handleRegenerateBrief(id: string, feedback: string) {
+    if (briefRunning || !styleAnalysis) return
+    const item = briefQueue.find((h) => h.id === id)
+    const previousResult = briefResults[id]
+    if (!item || !previousResult) return
+    const feedbackTrimmed = feedback.trim()
+    if (!feedbackTrimmed) return
+
+    setBriefRunningState(true)
+    setBriefStatuses((prev) => ({ ...prev, [id]: 'loading' }))
+    setBriefProgress({ current: 1, total: 1, name: item.name })
+    try {
+      const ctx = await prepareRun()
+      const drafted = await draftHolidayVisualBrief({
+        locationId: ctx.locationId,
+        holiday: { id: item.id, date: item.date, name: item.name },
+        storyDraft: item.storyDraft,
+        styleAnalysis,
+        instructions: briefInstructions,
+        previousResult,
+        feedback: feedbackTrimmed,
+      })
+      setBriefResults((prev) => ({ ...prev, [id]: drafted.result }))
+      setBriefHistories((prev) => {
+        const existing = prev[id] ?? []
+        return {
+          ...prev,
+          [id]: [
+            ...existing,
+            { role: 'user', feedback: feedbackTrimmed },
+            { role: 'assistant', result: drafted.result },
+          ],
+        }
+      })
+      setBriefStatuses((prev) => ({ ...prev, [id]: 'ready' }))
+    } catch (err) {
+      setBriefStatuses((prev) => ({ ...prev, [id]: 'error' }))
+      if (err instanceof Error && err.message === 'validation') {
+        return
+      }
+      toast.error(err instanceof Error ? err.message : t('visualBriefs.generateError'))
+    } finally {
+      setBriefProgress(null)
+      setBriefRunningState(false)
+    }
+  }
+
+  function confirmBrief(id: string) {
+    const item = briefQueue.find((h) => h.id === id)
+    const result = briefResults[id]
+    if (!item || !result) return
+    setConfirmedBriefs((prev) =>
+      sortByDate([
+        ...prev.filter((d) => d.id !== id),
+        {
+          id: item.id,
+          date: item.date,
+          name: item.name,
+          storyDraft: item.storyDraft,
+          result,
+        },
+      ]),
+    )
+    setBriefStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setBriefResults((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setBriefHistories((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  function skipBrief(id: string) {
+    const item = briefQueue.find((h) => h.id === id)
+    if (!item) return
+    setSkippedBriefIds((prev) => new Set(prev).add(id))
+    setBriefStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setBriefResults((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setBriefHistories((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    toast(t('visualBriefs.skipUndoToast', { name: item.name }), {
+      action: {
+        label: t('visualBriefs.undo'),
+        onClick: () => {
+          setSkippedBriefIds((prev) => {
+            if (!prev.has(id)) return prev
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+        },
+      },
+    })
+  }
+
+  function removeConfirmedBrief(id: string) {
+    setConfirmedBriefs((prev) => prev.filter((d) => d.id !== id))
+    setSkippedBriefIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
+  async function artworkOne(item: {
+    id: string
+    date: string
+    name: string
+    brief: VisualBriefResult
+    caption: string
+  }): Promise<boolean> {
+    if (!styleReference) return false
+    setArtworkStatuses((prev) => ({ ...prev, [item.id]: 'loading' }))
+    try {
+      // Leonardo rejects prompts over LEONARDO_PROMPT_MAX_CHARS.
+      const prompt =
+        item.brief.leonardoPrompt.length > LEONARDO_PROMPT_MAX_CHARS
+          ? item.brief.leonardoPrompt.slice(0, LEONARDO_PROMPT_MAX_CHARS).trimEnd()
+          : item.brief.leonardoPrompt
+      const image = await generateHolidayArtwork({
+        prompt,
+        styleImageName: styleReference.name,
+      })
+      setArtworkResults((prev) => ({ ...prev, [item.id]: image }))
+      setArtworkStatuses((prev) => ({ ...prev, [item.id]: 'ready' }))
+      return true
+    } catch (err) {
+      setArtworkStatuses((prev) => ({ ...prev, [item.id]: 'error' }))
+      toast.error(err instanceof Error ? err.message : t('artwork.generateBatchError'))
+      return false
+    }
+  }
+
+  async function handleGenerateArtwork() {
+    if (artworkRunning || !styleReference || artworkQueue.length === 0) return
+    setArtworkRunningState(true)
+    const queue = [...artworkQueue]
+    try {
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i]
+        if (!item) continue
+        setArtworkProgress({ current: i + 1, total: queue.length, name: item.name })
+        await artworkOne(item)
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('artwork.generateBatchError'))
+    } finally {
+      setArtworkProgress(null)
+      setArtworkRunningState(false)
+    }
+  }
+
+  async function handleRetryArtwork(id: string) {
+    if (artworkRunning || !styleReference) return
+    const item = artworkQueue.find((h) => h.id === id)
+    if (!item) return
+    setArtworkRunningState(true)
+    setArtworkProgress({ current: 1, total: 1, name: item.name })
+    try {
+      await artworkOne(item)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('artwork.generateBatchError'))
+    } finally {
+      setArtworkProgress(null)
+      setArtworkRunningState(false)
+    }
+  }
+
   function confirmArtwork(id: string) {
-    const draft = artworkQueue.find((d) => d.id === id)
-    if (!draft) return
+    const item = artworkQueue.find((d) => d.id === id)
+    const image = artworkResults[id]
+    if (!item || !image) return
     if ((artworkStatuses[id] ?? 'pending') !== 'ready') return
-    setConfirmedArtworks((prev) => sortByDate([...prev.filter((d) => d.id !== id), draft]))
+    setConfirmedArtworks((prev) =>
+      sortByDate([...prev.filter((d) => d.id !== id), { ...item, image }]),
+    )
     setArtworkStatuses((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setArtworkResults((prev) => {
       const next = { ...prev }
       delete next[id]
       return next
@@ -593,15 +1021,20 @@ export function PublicHolidaysWorkspace({
   }
 
   function skipArtwork(id: string) {
-    const draft = artworkQueue.find((d) => d.id === id)
-    if (!draft) return
+    const item = artworkQueue.find((d) => d.id === id)
+    if (!item) return
     setSkippedArtworkIds((prev) => new Set(prev).add(id))
     setArtworkStatuses((prev) => {
       const next = { ...prev }
       delete next[id]
       return next
     })
-    toast(t('artwork.skipUndoToast', { name: draft.name }), {
+    setArtworkResults((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    toast(t('artwork.skipUndoToast', { name: item.name }), {
       action: {
         label: t('artwork.undo'),
         onClick: () => {
@@ -642,6 +1075,7 @@ export function PublicHolidaysWorkspace({
         value={activeStepId}
         onValueChange={(value) => {
           if (value === 'draftStories' && !draftStoriesEnabled) return
+          if (value === 'visualBriefs' && !visualBriefsEnabled) return
           if (value === 'artwork' && !artworkEnabled) return
           if (STEP_IDS.includes(value as StepId)) {
             setActiveStepId(value as StepId)
@@ -654,13 +1088,16 @@ export function PublicHolidaysWorkspace({
             const enabled =
               stepId === 'fetchDates' ||
               (stepId === 'draftStories' && draftStoriesEnabled) ||
+              (stepId === 'visualBriefs' && visualBriefsEnabled) ||
               (stepId === 'artwork' && artworkEnabled)
             const badgeCount =
               stepId === 'fetchDates'
                 ? confirmed.length
                 : stepId === 'draftStories'
                   ? confirmedDrafts.length
-                  : confirmedArtworks.length
+                  : stepId === 'visualBriefs'
+                    ? confirmedBriefs.length
+                    : confirmedArtworks.length
             return (
               <TabsTrigger key={stepId} value={stepId} disabled={!enabled} className="gap-2">
                 {t(`steps.${stepId}`)}
@@ -945,18 +1382,45 @@ export function PublicHolidaysWorkspace({
           />
         </TabsContent>
 
+        <TabsContent value="visualBriefs">
+          <PublicHolidaysVisualBriefs
+            holidays={briefQueue}
+            statuses={briefStatuses}
+            results={briefResults}
+            histories={briefHistories}
+            confirmedBriefs={confirmedBriefs}
+            instructions={briefInstructions}
+            onInstructionsChange={setBriefInstructions}
+            styleReference={styleReference}
+            onStyleReferenceChange={handleStyleReferenceChange}
+            styleAnalysis={styleAnalysis}
+            styleAnalyzing={styleAnalyzing}
+            onAnalyzeStyle={() => void handleAnalyzeStyle()}
+            running={briefRunning}
+            progress={briefProgress}
+            formatDate={(iso) => formatHolidayDate(iso, locale)}
+            onGenerate={() => void handleGenerateBriefs()}
+            onConfirm={confirmBrief}
+            onSkip={skipBrief}
+            onRetry={(id) => void handleRetryBrief(id)}
+            onRegenerate={(id, feedback) => void handleRegenerateBrief(id, feedback)}
+            onRemoveConfirmed={removeConfirmedBrief}
+          />
+        </TabsContent>
+
         <TabsContent value="artwork">
           <PublicHolidaysArtwork
             holidays={artworkQueue}
             confirmedArtworks={confirmedArtworks}
             statuses={artworkStatuses}
-            instructions={artworkInstructions}
-            onInstructionsChange={setArtworkInstructions}
-            styleReference={styleReference}
-            onStyleReferenceChange={setStyleReference}
+            results={artworkResults}
+            running={artworkRunning}
+            progress={artworkProgress}
             formatDate={(iso) => formatHolidayDate(iso, locale)}
+            onGenerate={() => void handleGenerateArtwork()}
             onConfirm={confirmArtwork}
             onSkip={skipArtwork}
+            onRetry={(id) => void handleRetryArtwork(id)}
             onRemoveConfirmed={removeConfirmedArtwork}
           />
         </TabsContent>
