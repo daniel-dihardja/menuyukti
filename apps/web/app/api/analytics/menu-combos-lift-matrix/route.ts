@@ -1,7 +1,7 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
-import { loadPairLiftMatrixForWorkflow } from '@/lib/analytics/load-pair-lift-matrix-for-workflow'
+import { loadPairLiftMatrixForChat } from '@/lib/analytics/load-pair-lift-matrix-for-chat'
 
 function isPrerenderInterrupt(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -17,7 +17,7 @@ function parsePositiveInt(value: string | null): number | null {
 
 /**
  * GET /api/analytics/menu-combos-lift-matrix?analyticsRunId=...&locationId=...
- * Pair lift matrix for workflow visualizations. When the linked run is empty,
+ * Pair lift matrix for chat visualizations. When the linked run is empty,
  * falls back to other analytics runs for the location (newest first).
  */
 export async function GET(req: Request) {
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
       )
     }
 
-    const result = await loadPairLiftMatrixForWorkflow({
+    const result = await loadPairLiftMatrixForChat({
       userId,
       analyticsRunId,
       locationId,

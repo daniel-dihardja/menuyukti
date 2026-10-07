@@ -1,0 +1,65 @@
+{
+  "staff": {
+    "title": "Staff console",
+    "description": "Menuyukti platform tools for team members. Customers do not see this area.",
+    "tabsAria": "Staff console sections",
+    "tabs": {
+      "workspaces": "Workspaces",
+      "mockData": "Mock data"
+    },
+    "provisionWorkspace": {
+      "title": "Provision workspace",
+      "description": "Create an operator workspace for a Clerk user. Guests sign up with no workspace; staff provisions pro (restaurant client) so they can add locations and invite team members.",
+      "ownerClerkUserIdLabel": "Owner Clerk user ID",
+      "ownerClerkUserIdPlaceholder": "user_…",
+      "nameLabel": "Workspace name",
+      "namePlaceholder": "e.g. Café Nord",
+      "planLabel": "Plan",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Provision workspace",
+      "saving": "Provisioning…",
+      "success": "Workspace {id} created on {plan}.",
+      "error": "Could not provision workspace."
+    },
+    "workspacePlan": {
+      "title": "Workspace plan",
+      "description": "Manually set a workspace to free (guest / PWA customer) or pro (restaurant client — full operator product). Free gets guest home and profile; pro unlocks locations, inventar, advisor, and the rest of the app.",
+      "workspaceIdLabel": "Workspace ID",
+      "workspaceIdPlaceholder": "e.g. 42",
+      "yourWorkspaceId": "Your workspace ID: {id}",
+      "useYourWorkspaceId": "Use this ID",
+      "noWorkspaceYet": "You do not have a workspace yet. Provision one above, or enter another workspace ID.",
+      "planLabel": "Plan",
+      "planFree": "Free",
+      "planPro": "Pro",
+      "save": "Update plan",
+      "saving": "Updating…",
+      "success": "Workspace plan updated to {plan}.",
+      "error": "Could not update workspace plan."
+    },
+    "devData": {
+      "title": "Mock data seed",
+      "description": "Ingest the same selective seed as make dev-data into a Clerk user’s workspace. Uses committed fixtures (Warung inventar, Kaffeestube analytics). Does not wipe CRM, media, or styles. Disabled in production unless ALLOW_DEV_DATA_INGEST=1.",
+      "targetClerkUserIdLabel": "Target Clerk user ID",
+      "targetClerkUserIdPlaceholder": "user_…",
+      "yourUserId": "Your user ID: {id}",
+      "useYourUserId": "Use this ID",
+      "scopeLabel": "Scope",
+      "scopes": {
+        "inventar": "Inventar (Warung Sunda)",
+        "analytics": "Analytics (Kaffeestube Mitte)",
+        "all": "All (inventar + analytics)",
+        "clear-inventar": "Clear inventar only"
+      },
+      "confirm": "Run “{scope}” for this user? This may reset inventar or replace dev-seed analytics runs.",
+      "save": "Ingest seed data",
+      "saving": "Seeding…",
+      "successInventar": "Inventar seeded for workspace {workspaceId} ({catalog} catalog, {stock} stock).",
+      "successAnalytics": "Analytics seeded for workspace {workspaceId} ({orders} orders, run {runId}).",
+      "successAll": "Inventar + analytics seeded for workspace {workspaceId} ({catalog} catalog, {orders} orders).",
+      "successClear": "Cleared inventar for workspace {workspaceId}. Locations left intact.",
+      "error": "Could not ingest mock seed data."
+    }
+  }
+}

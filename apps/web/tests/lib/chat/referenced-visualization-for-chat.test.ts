@@ -3,22 +3,22 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { loadReferencedVisualizationForChat } from '@/lib/chat/referenced-visualization-for-chat'
 
 vi.mock('@/lib/analytics/load-slot-demand-profile', () => ({
-  loadSlotDemandProfileForWorkflow: vi.fn(),
+  loadSlotDemandProfileForChat: vi.fn(),
 }))
 
-vi.mock('@/lib/analytics/load-menu-heatmaps-for-workflow', () => ({
-  loadMenuHeatmapsForWorkflow: vi.fn(),
+vi.mock('@/lib/analytics/load-menu-heatmaps-for-chat', () => ({
+  loadMenuHeatmapsForChat: vi.fn(),
 }))
 
-vi.mock('@/lib/analytics/load-pair-lift-matrix-for-workflow', () => ({
-  loadPairLiftMatrixForWorkflow: vi.fn(),
+vi.mock('@/lib/analytics/load-pair-lift-matrix-for-chat', () => ({
+  loadPairLiftMatrixForChat: vi.fn(),
 }))
 
-import { loadSlotDemandProfileForWorkflow } from '@/lib/analytics/load-slot-demand-profile'
+import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile'
 
 describe('loadReferencedVisualizationForChat', () => {
   beforeEach(() => {
-    vi.mocked(loadSlotDemandProfileForWorkflow).mockReset()
+    vi.mocked(loadSlotDemandProfileForChat).mockReset()
   })
 
   it('returns 400 for invalid locationId', async () => {
@@ -31,11 +31,11 @@ describe('loadReferencedVisualizationForChat', () => {
   })
 
   it('loads slot demand profile for venue slot strength', async () => {
-    vi.mocked(loadSlotDemandProfileForWorkflow).mockResolvedValue({
+    vi.mocked(loadSlotDemandProfileForChat).mockResolvedValue({
       slotDemandProfile: [{ day: 'mon' }],
       analyticsRunId: '99',
       usedFallbackRun: false,
-    } as Awaited<ReturnType<typeof loadSlotDemandProfileForWorkflow>>)
+    } as Awaited<ReturnType<typeof loadSlotDemandProfileForChat>>)
 
     const result = await loadReferencedVisualizationForChat('user-1', {
       locationId: 10,
@@ -52,7 +52,7 @@ describe('loadReferencedVisualizationForChat', () => {
         analyticsRunId: '99',
       })
     }
-    expect(loadSlotDemandProfileForWorkflow).toHaveBeenCalledWith({
+    expect(loadSlotDemandProfileForChat).toHaveBeenCalledWith({
       userId: 'user-1',
       locationId: 10,
       analyticsRunId: 99,

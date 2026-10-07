@@ -1,0 +1,39 @@
+{
+  "workspaceTeam": {
+    "title": "Team",
+    "breadcrumb": "Team",
+    "description": "Invite people to your workspace and manage members.",
+    "membersTitle": "Members",
+    "membersEmpty": "No members yet.",
+    "inviteTitle": "Invite member",
+    "inviteDescription": "Enter the email address of the person you want to invite.",
+    "inviteEmailLabel": "Email address",
+    "inviteEmailPlaceholder": "colleague@example.com",
+    "inviteSubmit": "Send invite",
+    "inviteSubmitting": "Inviting…",
+    "inviteSuccess": "Member added to your workspace.",
+    "removeMember": "Remove",
+    "removeMemberSubmitting": "Removing…",
+    "removeMemberConfirmTitle": "Remove member?",
+    "removeMemberConfirmDescription": "This person will lose access to your workspace data.",
+    "removeMemberConfirmAction": "Remove member",
+    "removeMemberCancel": "Cancel",
+    "ownerOnlyNotice": "Only the workspace owner can invite or remove members.",
+    "loadError": "Could not load team members. Please try again.",
+    "tableName": "Name",
+    "tableEmail": "Email",
+    "tableRole": "Role",
+    "tableInvited": "Invited",
+    "tableActions": "Actions",
+    "roleOwner": "Owner",
+    "roleMember": "Member",
+    "noEmail": "No email",
+    "unknownName": "Unknown user",
+    "errors": {
+      "inviteUnavailable": "We couldn't add this person to your workspace. Check the email address and try again.",
+      "alreadyMember": "This person is already a member of your workspace.",
+      "forbidden": "Only the workspace owner can manage team members.",
+      "generic": "Something went wrong. Please try again."
+    }
+  }
+}

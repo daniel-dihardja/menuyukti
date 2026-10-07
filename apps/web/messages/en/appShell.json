@@ -1,0 +1,7 @@
+{
+  "appShell": {
+    "skipToContent": "Skip to content",
+    "toggleSidebarAria": "Toggle sidebar",
+    "openBreadcrumbNavAria": "Open breadcrumb navigation"
+  }
+}

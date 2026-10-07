@@ -1,0 +1,130 @@
+{
+  "agents": {
+    "title": "Agents",
+    "description": "Marketing agents that transform sales data into actionable insights.",
+    "detail": {
+      "cards": {
+        "inputs": "Inputs",
+        "outputs": "Outputs"
+      },
+      "outputHelp": {
+        "open": "Show output details",
+        "items": {
+          "top_items": "The menu items with the highest demand or strongest performance in the selected analysis context.",
+          "peak_hours": "The hourly windows where demand is highest and audience attention is most concentrated.",
+          "weekday_bias": "A directional signal showing whether demand is stronger on weekdays or weekends.",
+          "daypart_demand_distribution": "Relative demand split across dayparts (morning, lunch, afternoon, evening).",
+          "weekday_demand_distribution": "Relative demand split across days of the week.",
+          "audience_intent_clusters": "Behavior-based groupings of customer intent inferred from ordering patterns.",
+          "party_size_signal": "A derived indicator of likely order context (solo, pair, or group) from basket behavior.",
+          "social_dining_probability": "An estimate of how likely orders are associated with shared or social consumption.",
+          "audience_mix_summary": "A concise summary of dominant audience behavior segments in the selected dataset.",
+          "analysis_window": "The effective time range of data used to compute the audience outputs.",
+          "popularity_index_summary": "A summary of item popularity scores used to detect preference concentration.",
+          "top_item_revenue_share": "The share of total revenue contributed by top-performing menu items.",
+          "category_mix": "The relative demand or revenue contribution of each menu category.",
+          "tone_profile": "The overall voice and personality to apply across Instagram posts and reels.",
+          "language_guidelines": "Rules for language choice, tone, and readability for your audience.",
+          "caption_style": "Recommended structure and style for Instagram captions.",
+          "hashtag_style": "Guidelines for hashtag selection, volume, and mix.",
+          "content_dos_donts": "Content do's and don'ts to keep posts on-brand and effective.",
+          "post_concepts": "Short concepts or themes to shape upcoming Instagram posts.",
+          "cta_phrases": "Suggested call-to-action phrases aligned with the audience.",
+          "emoji_guidelines": "Emoji usage guidance to match tone without overusing."
+        }
+      },
+      "status": {
+        "ready": "Ready",
+        "draft": "Draft"
+      },
+      "backToAgents": "Back to Agents",
+      "filters": {
+        "branch": {
+          "label": "Location",
+          "placeholder": "Select location"
+        },
+        "report": {
+          "label": "Analytics report",
+          "placeholder": {
+            "selectBranchFirst": "Select location first",
+            "loading": "Loading reports…",
+            "select": "Select report"
+          }
+        }
+      },
+      "audienceRunner": {
+        "title": "Agent Runner",
+        "description": "Run the Audience agent and preview mocked output.",
+        "actions": {
+          "run": "Run Agent",
+          "rerun": "Re-run Agent",
+          "clear": "Clear Output",
+          "clearing": "Clearing…",
+          "running": "Running…"
+        },
+        "output": {
+          "title": "Agent Output",
+          "empty": "No output yet. Click \"Run Agent\" to generate outputs.",
+          "topItemsLabel": "Top items:",
+          "peakHoursLabel": "Peak hours:",
+          "weekdayBiasLabel": "Weekday bias:",
+          "weekdayBiasValue": "Weekend-heavy demand with strongest uplift on Saturday",
+          "audienceIntentLabel": "Audience intent:",
+          "audienceIntentValue": "Fast lunch decision, after-work treat, and weekend social sharing.",
+          "daypartDistributionLabel": "Daypart demand distribution:",
+          "daypartDistributionValue": "Morning 14%, Lunch 39%, Afternoon 21%, Evening 26%",
+          "weekdayDistributionLabel": "Weekday demand distribution:",
+          "weekdayDistributionValue": "Mon 13%, Tue 12%, Wed 14%, Thu 15%, Fri 19%, Sat 17%, Sun 10%",
+          "partySizeSignalLabel": "Party-size signal:",
+          "partySizeSignalValue": "Mostly pair orders, with solo orders during weekdays and group orders on weekend evenings.",
+          "socialDiningProbabilityLabel": "Social dining probability:",
+          "socialDiningProbabilityValue": "High on Friday and Saturday dinner periods.",
+          "audienceMixSummaryLabel": "Audience mix summary:",
+          "audienceMixSummaryValue": "Primary audience is weekday professionals and weekend social groups.",
+          "analysisWindowLabel": "Analysis window:",
+          "analysisWindowValue": "2026-01-01 to 2026-01-31",
+          "popularityIndexSummaryLabel": "Popularity index summary:",
+          "popularityIndexSummaryValue": "Demand is concentrated in beverages, with a long tail across food items.",
+          "topItemRevenueShareLabel": "Top-item revenue share:",
+          "topItemRevenueShareValue": "Top 3 items contribute 44% of total revenue.",
+          "categoryMixLabel": "Category mix:",
+          "categoryMixValue": "Beverages 52%, Pastry 28%, Snacks 20%",
+          "mock": {
+            "topItems": {
+              "item1": "Iced Latte",
+              "item2": "Croissant",
+              "item3": "Matcha Latte"
+            },
+            "peakHours": {
+              "slot1": "11:00 - 13:00",
+              "slot2": "17:00 - 19:00"
+            }
+          }
+        }
+      },
+      "toneRunner": {
+        "title": "Agent Runner",
+        "description": "Run the Tone agent and review generated output.",
+        "actions": {
+          "run": "Run Agent",
+          "rerun": "Re-run Agent",
+          "clear": "Clear Output",
+          "clearing": "Clearing…",
+          "running": "Running…"
+        },
+        "output": {
+          "title": "Agent Output",
+          "empty": "No output yet. Click \"Run Agent\" to generate outputs.",
+          "toneProfileLabel": "Tone profile:",
+          "languageGuidelinesLabel": "Language guidelines:",
+          "captionStyleLabel": "Caption style:",
+          "hashtagStyleLabel": "Hashtag style:",
+          "contentDosDontsLabel": "Content do's & don'ts:",
+          "postConceptsLabel": "Post concepts:",
+          "ctaPhrasesLabel": "CTA phrases:",
+          "emojiGuidelinesLabel": "Emoji guidelines:"
+        }
+      }
+    }
+  }
+}

@@ -8,13 +8,13 @@ import {
 
 export type PairLiftMatrixPayload = NonNullable<MenuCombosLiftMatrixData['menuCombos']>
 
-export type LoadPairLiftMatrixForWorkflowOptions = {
+export type LoadPairLiftMatrixForChatOptions = {
   userId: string
   locationId?: number | null
   analyticsRunId?: number | string | null
 }
 
-export type LoadPairLiftMatrixForWorkflowResult = {
+export type LoadPairLiftMatrixForChatResult = {
   focusMenus: string[]
   matrixLift: Array<Array<number | null>>
   totalOrders: number
@@ -59,7 +59,7 @@ function toResult(
   payload: PairLiftMatrixPayload,
   analyticsRunId: string,
   usedFallbackRun: boolean,
-): LoadPairLiftMatrixForWorkflowResult {
+): LoadPairLiftMatrixForChatResult {
   return {
     focusMenus: payload.focusMenus,
     matrixLift: payload.matrixLift,
@@ -71,7 +71,7 @@ function toResult(
   }
 }
 
-function emptyResult(preferredRunId: string | null): LoadPairLiftMatrixForWorkflowResult {
+function emptyResult(preferredRunId: string | null): LoadPairLiftMatrixForChatResult {
   return {
     focusMenus: [],
     matrixLift: [],
@@ -84,12 +84,12 @@ function emptyResult(preferredRunId: string | null): LoadPairLiftMatrixForWorkfl
 }
 
 /**
- * Load pair lift matrix data for workflow visualizations.
- * Tries the workflow-linked run first, then newer runs for the location when empty.
+ * Load pair lift matrix data for chat visualizations.
+ * Tries the preferred analytics run first, then newer runs for the location when empty.
  */
-export async function loadPairLiftMatrixForWorkflow(
-  options: LoadPairLiftMatrixForWorkflowOptions,
-): Promise<LoadPairLiftMatrixForWorkflowResult> {
+export async function loadPairLiftMatrixForChat(
+  options: LoadPairLiftMatrixForChatOptions,
+): Promise<LoadPairLiftMatrixForChatResult> {
   const preferredRunId =
     options.analyticsRunId != null && String(options.analyticsRunId).length > 0
       ? String(options.analyticsRunId)

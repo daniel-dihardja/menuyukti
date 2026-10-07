@@ -2,7 +2,7 @@
 
 ## Local development
 
-`pnpm dev` runs **`next dev --turbopack`** (Next 16.3+ filesystem cache on by default for faster warm restarts). Use **`pnpm dev:webpack`** if you need webpack. If `messages/*.json` edits look stale, delete `apps/web/.next` once and restart.
+`pnpm dev` runs **`next dev --turbopack`** (Next 16.3+ filesystem cache on by default for faster warm restarts). Use **`pnpm dev:webpack`** if you need webpack. Message catalogs live under `messages/en/<namespace>.json` (merged by `i18n/load-messages.ts`). If message edits look stale, delete `apps/web/.next` once and restart.
 
 ## PWA (Serwist)
 

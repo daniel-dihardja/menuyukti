@@ -1,0 +1,233 @@
+{
+  "postCreator": {
+    "title": "Post Creator",
+    "description": "Generate post images with AI from a text prompt.",
+    "thumbnailsPane": "Post page thumbnails",
+    "thumbnails": {
+      "ariaLabel": "Post page thumbnails",
+      "pageLabel": "Page {number}",
+      "empty": "No pages yet",
+      "addPage": "Add page",
+      "addingPage": "Adding page…",
+      "duplicatePage": "Duplicate",
+      "duplicatingPage": "Duplicating…"
+    },
+    "tabs": {
+      "prompt": "Prompt",
+      "chat": "Chat",
+      "settings": "Settings",
+      "history": "History"
+    },
+    "chat": {
+      "emptyTitle": "Analyze this preview",
+      "emptyDescription": "Type @ to attach the large preview or a media library image, then ask about composition, styling, or what to change next. You can also ask the assistant to generate a new post image.",
+      "placeholder": "Ask about attached images or generate a new post… Type @ to attach preview or media",
+      "thinking": "Thinking…",
+      "errorTitle": "Something went wrong",
+      "errorDescription": "The request could not be completed. Please try again.",
+      "retry": "Retry",
+      "clearChatAriaLabel": "Clear chat",
+      "clearChatLabel": "Clear chat",
+      "clearChatTooltip": "Clear messages and start a fresh chat thread",
+      "previewChipLabel": "Current preview",
+      "previewChipAriaLabel": "Images attached for chat",
+      "sentWithAttachments": "Sent with attachments",
+      "mentionMenu": {
+        "ariaLabel": "Attach preview or media image",
+        "empty": "No matching preview or media to attach",
+        "previewGroup": "Preview",
+        "mediaGroup": "Media",
+        "mediaAriaLabel": "Attach image from Media library",
+        "mediaLoading": "Loading media…",
+        "mediaEmpty": "No media files yet. Upload images on the Media page.",
+        "collectionsGroup": "Collections",
+        "collectionsAriaLabel": "Browse media collections",
+        "collectionMemberCount": "{count, plural, one {# item} other {# items}}",
+        "backToMedia": "Back to all media",
+        "collectionLoading": "Loading collection…",
+        "collectionEmpty": "No images in this collection."
+      }
+    },
+    "settings": {
+      "title": "Generation settings",
+      "format": "Format",
+      "model": "Model",
+      "modelValue": "Leonardo",
+      "safeZoneTitle": "Safe zone guide",
+      "safeZoneHelper": "Preview margins only — they are not applied to the generated image. Toggle the guide in the preview footer.",
+      "safeZoneHorizontal": "Horizontal gap (px)",
+      "safeZoneVertical": "Vertical gap (px)",
+      "solidBackgroundTitle": "Solid background canvas",
+      "solidBackgroundHelper": "When enabled and no previous image is used, a flat color canvas at the current output size is sent as the first reference.",
+      "solidBackgroundToggle": "Use solid background",
+      "solidBackgroundColor": "Background color"
+    },
+    "history": {
+      "emptyTitle": "No history here yet",
+      "emptyDescription": "Generation history for this page appears in the preview when you have multiple versions."
+    },
+    "previewPane": "Generated post image",
+    "promptPane": "Prompt",
+    "prompt": {
+      "label": "Creative direction",
+      "placeholder": "headline: Setiap Hari\nproducts: Ref 2 → Roti Bluder, Ref 3 → Ice Americano\n\nType @ to attach product photos in order.",
+      "generate": "Generate image",
+      "generating": "Generating…",
+      "style": {
+        "label": "Style pack",
+        "placeholder": "Select style",
+        "none": "No style",
+        "defaultSuffix": "default",
+        "description": "Applied automatically to this generation — you don’t need to repeat style rules in the prompt.",
+        "create": "Create style",
+        "manage": "Manage styles",
+        "loadError": "Failed to load style packs.",
+        "usage": {
+          "title": "How to use this style",
+          "intro": "Override properties in the brief with tags like [property=value]. Multi-word params use quotes.",
+          "copyExample": "Copy example",
+          "copied": "Example copied",
+          "copyFailed": "Could not copy example",
+          "valuesLabel": "Values",
+          "fallbackEnum": "Choose one of the listed values.",
+          "fallbackBoolean": "Toggle on or off.",
+          "fallbackNumber": "Set a numeric value.",
+          "fallbackText": "Set a short text token (no spaces in the main value)."
+        }
+      },
+      "model": {
+        "label": "Image model",
+        "description": "Leonardo model used for this generation.",
+        "options": {
+          "flash": {
+            "name": "Nano Banana",
+            "blurb": "Fast and cost-efficient. Strong at multi-reference edits; good default for iteration."
+          },
+          "nanoBanana2": {
+            "name": "Nano Banana 2",
+            "blurb": "Balanced speed and quality. Better texture, text, and consistency than original Nano Banana."
+          },
+          "pro": {
+            "name": "Nano Banana Pro",
+            "blurb": "Highest instruction following for complex multi-reference edits. Slower and uses more tokens."
+          }
+        }
+      },
+      "format": {
+        "label": "Format",
+        "description": "Aspect ratio for this generation.",
+        "options": {
+          "feed": {
+            "name": "Feed",
+            "ratio": "4:5"
+          },
+          "tall": {
+            "name": "Tall",
+            "ratio": "3:4"
+          },
+          "square": {
+            "name": "Square",
+            "ratio": "1:1"
+          },
+          "story": {
+            "name": "Story",
+            "ratio": "9:16"
+          },
+          "wide": {
+            "name": "Wide",
+            "ratio": "16:9"
+          }
+        }
+      },
+      "quality": {
+        "label": "Quality",
+        "resolvedHint": "{width} × {height} · ~{cost}× cost for this model",
+        "options": {
+          "standard": {
+            "name": "Standard"
+          },
+          "high": {
+            "name": "High"
+          },
+          "ultra": {
+            "name": "Ultra"
+          }
+        }
+      },
+      "picker": {
+        "ariaLabel": "Reference photo picker",
+        "empty": "No matching media. Upload one or add files in Media.",
+        "upload": "Upload file",
+        "uploading": "Uploading…",
+        "uploadError": "Couldn’t upload that file. Try again.",
+        "maxReached": "Maximum reference photos reached (5). Remove one to add another."
+      },
+      "references": {
+        "ariaLabel": "Reference images for generation",
+        "remove": "Remove reference image",
+        "include": "Include in generation",
+        "indexLabel": "Ref {index}"
+      },
+      "generation": {
+        "referenceSummaryTextOnly": "Next generation: creative direction only (no references).",
+        "referenceSummaryFilledEdit": "Next generation: edit the image in preview only.",
+        "referenceSummaryPreviousOnly": "Next generation: edit the image in preview.",
+        "referenceSummaryPhotosOnly": "Next generation: {count, plural, one {# checked photo} other {# checked photos}}.",
+        "referenceSummaryPreviousAndPhotos": "Next generation: image in preview + {count, plural, one {# checked photo} other {# checked photos}}.",
+        "referenceSummarySolidBackgroundOnly": "Next generation: solid background canvas ({color}).",
+        "referenceSummarySolidBackgroundAndPhotos": "Next generation: solid background ({color}) + {count, plural, one {# checked photo} other {# checked photos}}.",
+        "tooManyReferences": "Too many references selected. Use at most 5 checked product photos (plus previous image or solid background when used)."
+      },
+      "tip": {
+        "title": "Tip",
+        "description": "The image in the preview is used as the edit reference. Pick a generated version to edit that result. Optionally add product photos with @, then describe changes in creative direction."
+      }
+    },
+    "preview": {
+      "ariaLabel": "Generated post image preview",
+      "emptyTitle": "No post image yet",
+      "emptyDescription": "Enter a prompt in the panel on the right and generate an image.",
+      "formatLabel": "{format}",
+      "dimensionsLabel": "Output size",
+      "dimensions": "{width} × {height}",
+      "formatQualitySummary": "{format} · {quality} · {width} × {height}",
+      "safeZoneToggle": "Safe zone guide",
+      "safeZoneDescription": "Shows preview margins of {insetX}px from the left and right edges and {insetY}px from the top and bottom edges so you can check that important content stays inside the safe area.",
+      "previousVersion": "Previous generated image",
+      "nextVersion": "Next generated image",
+      "versionIndicator": "{current} of {total}",
+      "versionsAriaLabel": "Generated image versions",
+      "versionOptionLabel": "Generated image {current} of {total}",
+      "versionOptionPreviewLabel": "Generated image {current} of {total}, previewing",
+      "versionOptionPostImageLabel": "Generated image {current} of {total}, post image",
+      "versionOptionPostImagePreviewLabel": "Generated image {current} of {total}, post image and previewing",
+      "useAsPostImage": "Use as post image",
+      "useAsPostImageCommitting": "Setting post image…",
+      "committingPostImage": "Setting post image…",
+      "previewImageAlt": "Generated post preview",
+      "generating": "Generating…",
+      "deleteImage": "Delete image",
+      "removePage": "Remove page",
+      "deleteConfirmTitle": "Delete this generated image?",
+      "deleteConfirmDescription": "This removes the image from this page's version history. This cannot be undone.",
+      "removePageConfirmTitle": "Remove this page?",
+      "removePageConfirmDescription": "This removes the empty page from your post. This cannot be undone.",
+      "removePageConfirmAction": "Remove page",
+      "deleteConfirmCancel": "Cancel",
+      "deleteConfirmAction": "Delete image",
+      "deleteImageDeleting": "Deleting…"
+    },
+    "toast": {
+      "loadError": "Failed to load post. Please refresh and try again.",
+      "generateError": "Failed to generate post image. Please try again.",
+      "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
+      "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
+      "imageSelectError": "Failed to update post image. Please try again.",
+      "saveSettingsError": "Failed to save post settings. Please try again.",
+      "deleteImageError": "Failed to delete image. Please try again.",
+      "deletePageError": "Failed to remove page. Please try again.",
+      "addPageError": "Failed to add page. Please try again.",
+      "maxPagesReached": "Instagram carousels support up to 10 images."
+    }
+  }
+}

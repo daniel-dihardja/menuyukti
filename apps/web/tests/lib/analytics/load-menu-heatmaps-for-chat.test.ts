@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { loadMenuHeatmapsForWorkflow } from '@/lib/analytics/load-menu-heatmaps-for-workflow'
+import { loadMenuHeatmapsForChat } from '@/lib/analytics/load-menu-heatmaps-for-chat'
 
 const graphqlQuery = vi.fn()
 
@@ -37,7 +37,7 @@ const sampleMatrixItems = [
   },
 ]
 
-describe('loadMenuHeatmapsForWorkflow', () => {
+describe('loadMenuHeatmapsForChat', () => {
   beforeEach(() => {
     graphqlQuery.mockReset()
   })
@@ -63,7 +63,7 @@ describe('loadMenuHeatmapsForWorkflow', () => {
       return {}
     })
 
-    const result = await loadMenuHeatmapsForWorkflow({
+    const result = await loadMenuHeatmapsForChat({
       userId: 'user-1',
       analyticsRunId: 42,
       locationId: 7,
@@ -99,7 +99,7 @@ describe('loadMenuHeatmapsForWorkflow', () => {
       return {}
     })
 
-    const result = await loadMenuHeatmapsForWorkflow({
+    const result = await loadMenuHeatmapsForChat({
       userId: 'user-1',
       analyticsRunId: 10,
       locationId: 7,
@@ -125,7 +125,7 @@ describe('loadMenuHeatmapsForWorkflow', () => {
       return {}
     })
 
-    const result = await loadMenuHeatmapsForWorkflow({
+    const result = await loadMenuHeatmapsForChat({
       userId: 'user-1',
       analyticsRunId: 99,
       locationId: 7,

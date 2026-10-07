@@ -4,9 +4,6 @@ export const CLIENT_CORE_ORDER = ['branches', 'inventar', 'team'] as const
 /** Paid cloud services nav for restaurant clients. */
 export const CLIENT_SERVICES_ORDER = ['services'] as const
 
-/** @deprecated Prefer {@link CLIENT_CORE_ORDER} + {@link CLIENT_SERVICES_ORDER}. */
-export const CLIENT_FLAT_ORDER = [...CLIENT_CORE_ORDER, ...CLIENT_SERVICES_ORDER] as const
-
 type FlatNavItem = { key: string }
 
 const CORE_RANK = new Map<string, number>(CLIENT_CORE_ORDER.map((key, index) => [key, index]))

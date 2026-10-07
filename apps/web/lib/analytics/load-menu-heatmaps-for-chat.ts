@@ -14,13 +14,13 @@ export type MenuHeatmapMatrixItem = NonNullable<
   MenuEngineeringMatrixData['menuEngineeringMatrix']
 >['items'][number]
 
-export type LoadMenuHeatmapsForWorkflowOptions = {
+export type LoadMenuHeatmapsForChatOptions = {
   userId: string
   locationId?: number | null
   analyticsRunId?: number | string | null
 }
 
-export type LoadMenuHeatmapsForWorkflowResult = {
+export type LoadMenuHeatmapsForChatResult = {
   menuHeatmaps: MenuHeatmapsData['menuHeatmaps']
   matrixItems: MenuHeatmapMatrixItem[] | null
   dailyStartHour: number
@@ -82,12 +82,12 @@ async function fetchDailyHourRange(
 }
 
 /**
- * Load menu heatmaps (and optional matrix items) for workflow visualizations.
- * Tries the workflow-linked run first, then newer runs for the location when empty.
+ * Load menu heatmaps (and optional matrix items) for chat visualizations.
+ * Tries the preferred analytics run first, then newer runs for the location when empty.
  */
-export async function loadMenuHeatmapsForWorkflow(
-  options: LoadMenuHeatmapsForWorkflowOptions,
-): Promise<LoadMenuHeatmapsForWorkflowResult> {
+export async function loadMenuHeatmapsForChat(
+  options: LoadMenuHeatmapsForChatOptions,
+): Promise<LoadMenuHeatmapsForChatResult> {
   const preferredRunId =
     options.analyticsRunId != null && String(options.analyticsRunId).length > 0
       ? String(options.analyticsRunId)

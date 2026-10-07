@@ -80,14 +80,6 @@ export function isClerkProtectedAppPath(pathname: string | null): boolean {
   return matchesPathPrefix(pathname, PROTECTED_APP_SHELL_PREFIXES)
 }
 
-/**
- * @deprecated Use `isOperatorAppShellPath` (sidebar chrome) or `isClerkProtectedAppPath` (auth).
- * Kept as an alias of operator shell so existing “hide MainHeader” call sites stay correct.
- */
-export function isProtectedAppShellPath(pathname: string | null): boolean {
-  return isOperatorAppShellPath(pathname)
-}
-
 export const routes = {
   login: '/login',
   signUp: '/sign-up',
@@ -211,8 +203,6 @@ export const routes = {
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */
   team: '/team',
-  /** @deprecated Use `routes.team`. Kept for older links / account menu callers. */
-  profileTeam: '/team',
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 

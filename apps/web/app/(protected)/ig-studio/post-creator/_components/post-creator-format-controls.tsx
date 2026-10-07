@@ -11,11 +11,10 @@ import { cn } from '@workspace/ui/lib/utils'
 import {
   formatAspectCss,
   isQualityAvailable,
-  POST_IMAGE_EXPLICIT_FORMAT_IDS,
+  POST_IMAGE_FORMAT_IDS,
   POST_IMAGE_QUALITY_COST_MULTIPLIER,
   POST_IMAGE_QUALITY_IDS,
   resolveLeonardoOutputDimensions,
-  type PostImageExplicitFormatId,
   type PostImageFormatId,
   type PostImageQualityId,
 } from '@/lib/posts/leonardo-post-dimensions'
@@ -39,7 +38,7 @@ const optionChipClassName = cn(
   'data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground data-[state=on]:ring-2 data-[state=on]:ring-ring/40',
 )
 
-function FormatPreviewFrame({ format }: { format: PostImageExplicitFormatId }) {
+function FormatPreviewFrame({ format }: { format: PostImageFormatId }) {
   const aspect = formatAspectCss(format)
   return (
     <span
@@ -86,7 +85,7 @@ export function PostCreatorFormatControls({
           className="gap-1.5"
           aria-label={t('format.label')}
         >
-          {POST_IMAGE_EXPLICIT_FORMAT_IDS.map((formatId) => {
+          {POST_IMAGE_FORMAT_IDS.map((formatId) => {
             const name = t(`format.options.${formatId}.name`)
             const ratio = t(`format.options.${formatId}.ratio`)
             return (

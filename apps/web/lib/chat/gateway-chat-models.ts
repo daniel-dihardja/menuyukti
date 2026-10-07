@@ -1,5 +1,5 @@
 /**
- * Allowlisted Vercel AI Gateway model ids for workflow / advisor chat.
+ * Allowlisted Vercel AI Gateway model ids for advisor chat.
  *
  * Keep in sync with apps/agents/agents/core/chat/allowed_models.py (CHAT_GATEWAY_MODEL_ALLOWLIST).
  * Verified against https://ai-gateway.vercel.sh/v1/models (May 2026).

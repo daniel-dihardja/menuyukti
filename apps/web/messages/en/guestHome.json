@@ -1,0 +1,11 @@
+{
+  "guestHome": {
+    "title": "Home",
+    "description": "Your Menuyukti home — rewards, install the app, and manage your profile.",
+    "headline": "Welcome",
+    "lead": "This is your customer space. Collect rewards at venues you visit, install the app for a full-screen experience, and keep your profile up to date.",
+    "rewardsTitle": "Rewards",
+    "rewardsLead": "Stamp cards and venue rewards are coming soon. When a café or restaurant offers a card, it will show up here.",
+    "profileCta": "Open profile"
+  }
+}

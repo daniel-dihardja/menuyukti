@@ -1,0 +1,199 @@
+{
+  "landing": {
+    "skipToContent": "Skip to content",
+    "hero": {
+      "headline": "Open the menu on your phone.",
+      "subtitle": "Scan to open a living digital menu — no app required.",
+      "mobileCta": "Open a sample menu",
+      "qr": {
+        "ariaLabel": "QR code that opens a sample Menuyukti digital menu",
+        "caption": "Point your camera · no app required",
+        "sampleHint": "Opens a sample guest menu",
+        "linkLabel": "Open sample menu in this browser"
+      },
+      "mock": {
+        "ariaLabel": "Illustration of a venue digital menu",
+        "eyebrow": "Menu",
+        "venueName": "Sample kitchen",
+        "tagline": "What guests love right now",
+        "guestFavorite": "Guest favorite",
+        "category": "Tonight",
+        "dish1Name": "Roasted squash toast",
+        "dish1Price": "€12",
+        "dish1Desc": "Brown butter, sage, toasted seeds",
+        "dish2Name": "Citrus fennel salad",
+        "dish2Price": "€14",
+        "dish2Desc": "Blood orange, pistachio, soft herbs",
+        "dish3Name": "House spritz",
+        "dish3Price": "€9",
+        "dish3Desc": "Bitter citrus, soda, olive"
+      }
+    },
+    "why": {
+      "title": "Why Menuyukti exists",
+      "subtitle": "Restaurants sell in the dining room—not a checkout cart. Instagram still expects a constant stream of posts. Menuyukti’s AI takes the repetitive decisions off your plate so you can stay on food.",
+      "item1Title": "Offline businesses need a different playbook",
+      "item1Description": "Online brands optimize for clicks and carts. Restaurants optimize for foot traffic, tables, and reputation—so generic social playbooks miss how hospitality actually grows.",
+      "item2Title": "Instagram never stops asking for posts",
+      "item2Description": "Today’s feed rewards cadence: what to say, when to post, and which dish to feature—again and again. That cognitive load competes with the kitchen and the floor.",
+      "item3Title": "AI for the repetitive decisions",
+      "item3Description": "Menuyukti uses your sales data to choose the right time, topic, and menu item—so Instagram stays full while your team stays focused on food."
+    },
+    "foundation": {
+      "title": "Built on a unique foundation",
+      "subtitle": "Menuyukti is built on enterprise engineering and proprietary AI—bringing Chat campaigns, sales reports, and location insights together in one workspace.",
+      "item1Title": "Enterprise-grade engineering",
+      "item1Description": "More than a decade building platforms for banking, industrial companies, and the public sector—enterprise-grade software engineering behind how your marketing runs.",
+      "item2Title": "Proprietary AI platform",
+      "item2Description": "An AI platform built for restaurant marketing: sales analysis, campaign planning in Chat, and growth opportunity discovery grounded in your orders—not generic social tools.",
+      "item3Title": "Built for operators and teams",
+      "item3Description": "Owners, marketers, and partners work in one workspace—invite your Team, share locations, and keep campaigns and reports aligned across the floor."
+    },
+    "differentiators": {
+      "title": "What makes Menuyukti different",
+      "items": [
+        {
+          "value": "Integrated",
+          "label": "Chat campaigns, Reports, and Locations in one workspace—planning and performance under the same roof."
+        },
+        {
+          "value": "Consistent",
+          "label": "AI-supported Chat workflows keep campaign planning grounded in the same sales signals every time."
+        },
+        {
+          "value": "Data-driven",
+          "label": "Campaigns and reports grounded in your sales and location analytics."
+        },
+        {
+          "value": "Focused",
+          "label": "Restaurant-only marketing software—every plan built for cafés, bars, and dining rooms."
+        },
+        {
+          "value": "Evolving",
+          "label": "Your workspace benefits as the platform evolves—new capabilities without added complexity."
+        }
+      ]
+    },
+    "services": {
+      "title": "What’s in the workspace",
+      "subtitle": "The Menuyukti app today—Chat for campaigns, Reports and Locations for sales insight, and Team for who can access it.",
+      "items": {
+        "analysis": {
+          "title": "Reports",
+          "description": "Turn sales data into clear reports—see what’s selling, when demand peaks, and where growth opportunities hide in every order.",
+          "bullets": [
+            "Sales performance reports",
+            "Menu and demand patterns",
+            "Peak-slot insights",
+            "Growth opportunity identification",
+            "Data-backed recommendations"
+          ]
+        },
+        "content": {
+          "title": "Chat",
+          "description": "Plan marketing campaigns with an AI chat grounded in your restaurant data—from briefs to next steps, without starting from a blank page.",
+          "bullets": [
+            "Campaign planning in Chat",
+            "Data-informed briefs",
+            "Promotion ideas from sales signals",
+            "Menu-led storytelling angles",
+            "Iterate with your team in one thread"
+          ]
+        },
+        "social": {
+          "title": "Locations",
+          "description": "Manage venues and compare performance across locations—so multi-site teams see the same picture.",
+          "bullets": [
+            "Location directory",
+            "Per-venue sales context",
+            "Compare branches side by side",
+            "Keep campaigns tied to the right site",
+            "Share access with your Team"
+          ]
+        },
+        "strategy": {
+          "title": "Campaign strategy",
+          "description": "Longer-horizon marketing plans that start from sales reality—feeding Chat campaigns and Reports with a clear direction.",
+          "bullets": [
+            "Guest growth angles from demand data",
+            "Promotional planning",
+            "Location-aware campaigns",
+            "Prioritize what already sells",
+            "Align Team on the same plan"
+          ]
+        },
+        "technical": {
+          "title": "Team",
+          "description": "Invite people to your workspace and manage who can work with Chat, Reports, and Locations.",
+          "bullets": [
+            "Invite workspace members",
+            "Owner and member roles",
+            "Shared access to campaigns and reports",
+            "Keep operators and marketers aligned",
+            "One workspace per restaurant group"
+          ]
+        }
+      }
+    },
+    "platform": {
+      "title": "The AI platform behind the workspace",
+      "subtitle": "Every session runs on in-house technology—Chat, Reports, and Locations backed by proprietary software for restaurant marketing.",
+      "bullets": {
+        "analysis": {
+          "title": "Reports that surface opportunity",
+          "description": "Sales analysis that highlights demand patterns, menu strength, and growth opportunities from your orders."
+        },
+        "content": {
+          "title": "Chat campaigns at the speed of service",
+          "description": "Plan and refine campaigns in Chat with AI that stays grounded in your restaurant context—you stay in control of what ships."
+        },
+        "campaigns": {
+          "title": "Smarter planning by location",
+          "description": "Tie campaign work to the right Locations and the Reports that show when guests actually buy."
+        }
+      }
+    },
+    "vision": {
+      "title": "Agentic restaurant marketing built for operators",
+      "description": "Menuyukti turns sales data into Chat campaigns and clear Reports—so restaurants, cafés, and bars act on what’s already selling, across every Location, with the Team who runs the floor."
+    },
+    "faq": {
+      "title": "Common questions",
+      "q1": "Who is Menuyukti for?",
+      "a1": "Restaurant owners, operators, and marketers at restaurants, cafés, and bars who want campaigns and reports grounded in their sales data.",
+      "q2": "How is Menuyukti different from a typical marketing tool?",
+      "a2": "Menuyukti is restaurant-only software with proprietary AI. Chat, Reports, Locations, and Team live in one workspace—built for hospitality marketing, not generic social posting.",
+      "q3": "What does “AI-assisted” mean in practice?",
+      "a3": "Chat helps plan campaigns from your sales context; Reports surface patterns and opportunities in your orders. You review and decide—AI speeds the work; your judgment shapes the strategy.",
+      "q4": "What can I do in the app today?",
+      "a4": "Use Chat for campaign planning, Reports for sales insight, Locations to manage venues, and Team to invite people to your workspace.",
+      "q5": "How do we get started?",
+      "a5": "Menuyukti is preparing for launch. If you already have platform access, sign in from the header or the buttons on this page.",
+      "q6": "I already use the Menuyukti platform. Where do I sign in?",
+      "a6": "Existing platform users can sign in from the header to access Chat, Reports, Locations, and Team.",
+      "q7": "How does Menuyukti compare on cost?",
+      "a7": "Menuyukti focuses exclusively on restaurants and runs on a proprietary AI platform built for hospitality marketing. Packages are designed for restaurant economics; pricing details will be shared when onboarding opens for new clients.",
+      "q8": "Who can sign in today?",
+      "a8": "The platform is currently available to existing customers and early partners only. A broader public launch is in preparation—check back soon for when sign-up opens more widely."
+    },
+    "cta": {
+      "title": "Ready for restaurant marketing that starts from your sales data?",
+      "description": "Discover how Chat, Reports, and Locations can help you turn every order into the next campaign.",
+      "secondary": "Sign in"
+    },
+    "footer": {
+      "navLabel": "Footer",
+      "why": "Why Menuyukti",
+      "services": "Services",
+      "platform": "Platform",
+      "faq": "FAQ",
+      "privacyPolicy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "copyrightName": "Menuyukti"
+    },
+    "mobileCta": {
+      "primary": "Sign in",
+      "secondary": "Services"
+    }
+  }
+}

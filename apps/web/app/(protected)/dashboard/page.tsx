@@ -2,8 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-
-import { DashboardPwaGuide } from './_components/dashboard-pwa-guide'
+import { PwaInstallGuide } from '@/components/pwa/pwa-install-guide'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('platform.dashboard')
@@ -29,7 +28,7 @@ export default async function Page() {
           </p>
         </div>
 
-        <DashboardPwaGuide />
+        <PwaInstallGuide headingId="dashboard-pwa-heading" />
       </div>
     </AnalyticsPageShell>
   )

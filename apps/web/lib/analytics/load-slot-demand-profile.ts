@@ -46,10 +46,10 @@ async function listAnalyticsRunIdsForLocation(
 }
 
 /**
- * Load slot demand for workflow visualizations.
- * Tries the workflow-linked run first, then newer runs for the location when empty.
+ * Load slot demand for chat visualizations.
+ * Tries the preferred analytics run first, then newer runs for the location when empty.
  */
-export async function loadSlotDemandProfileForWorkflow(
+export async function loadSlotDemandProfileForChat(
   options: LoadSlotDemandProfileOptions,
 ): Promise<LoadSlotDemandProfileResult> {
   const preferredRunId =

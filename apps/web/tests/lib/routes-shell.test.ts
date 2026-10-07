@@ -6,7 +6,6 @@ import {
   isClerkProtectedAppPath,
   isCustomerAuthPath,
   isOperatorAppShellPath,
-  isProtectedAppShellPath,
   isPublicLocationSurfacePath,
 } from '@/lib/routes'
 
@@ -45,10 +44,5 @@ describe('routes shell helpers', () => {
     expect(isPublicLocationSurfacePath('/l/cafe')).toBe(true)
     expect(isPublicLocationSurfacePath('/shop')).toBe(false)
     expect(isPublicLocationSurfacePath('/')).toBe(false)
-  })
-
-  it('keeps isProtectedAppShellPath as operator-shell alias', () => {
-    expect(isProtectedAppShellPath('/advisor')).toBe(true)
-    expect(isProtectedAppShellPath('/home')).toBe(false)
   })
 })

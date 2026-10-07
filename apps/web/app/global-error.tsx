@@ -2,9 +2,9 @@
 
 import { ErrorFallback } from '@/components/error-fallback'
 import { fontMono, fontSans } from '@/lib/fonts'
-import messages from '@/messages/en.json'
+import errorBoundaryMessages from '@/messages/en/errorBoundary.json'
 
-const copy = messages.errorBoundary
+const copy = errorBoundaryMessages.errorBoundary
 
 export default function RootGlobalError({
   error,

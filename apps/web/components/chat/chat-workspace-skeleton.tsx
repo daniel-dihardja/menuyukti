@@ -17,7 +17,7 @@ function TimelineToolbarSkeleton() {
   )
 }
 
-function MilestoneCardSkeleton({ showMobilePreview }: { showMobilePreview?: boolean }) {
+function ChatPreviewCardSkeleton({ showMobilePreview }: { showMobilePreview?: boolean }) {
   return (
     <div className="min-w-0 w-full pb-8">
       <div className="flex flex-col overflow-hidden rounded-md bg-card py-4 dark:bg-muted">
@@ -36,7 +36,7 @@ function MilestoneCardSkeleton({ showMobilePreview }: { showMobilePreview?: bool
         </div>
         <div className="mt-4 flex gap-2 border-t px-3 pt-4 md:px-6">
           {Array.from({ length: 5 }, (_, i) => (
-            <Skeleton className="h-8 w-16 shrink-0 rounded-md" key={`milestone-tab-${i}`} />
+            <Skeleton className="h-8 w-16 shrink-0 rounded-md" key={`chat-preview-tab-${i}`} />
           ))}
         </div>
       </div>
@@ -59,12 +59,12 @@ export function ChatTimelineSkeleton({ className }: { className?: string }) {
       <div className="min-h-0 flex-1 overflow-hidden px-0 py-2 md:p-4">
         <div className="flex flex-col gap-0">
           <div className="lg:hidden">
-            <MilestoneCardSkeleton showMobilePreview />
-            <MilestoneCardSkeleton showMobilePreview />
+            <ChatPreviewCardSkeleton showMobilePreview />
+            <ChatPreviewCardSkeleton showMobilePreview />
           </div>
           <div className="hidden flex-col lg:flex">
-            <MilestoneCardSkeleton />
-            <MilestoneCardSkeleton />
+            <ChatPreviewCardSkeleton />
+            <ChatPreviewCardSkeleton />
           </div>
         </div>
       </div>

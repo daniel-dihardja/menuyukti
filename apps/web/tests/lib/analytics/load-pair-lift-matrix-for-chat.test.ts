@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   hasLiftMatrixData,
-  loadPairLiftMatrixForWorkflow,
-} from '@/lib/analytics/load-pair-lift-matrix-for-workflow'
+  loadPairLiftMatrixForChat,
+} from '@/lib/analytics/load-pair-lift-matrix-for-chat'
 
 const graphqlQuery = vi.fn()
 
@@ -33,7 +33,7 @@ describe('hasLiftMatrixData', () => {
   })
 })
 
-describe('loadPairLiftMatrixForWorkflow', () => {
+describe('loadPairLiftMatrixForChat', () => {
   beforeEach(() => {
     graphqlQuery.mockReset()
   })
@@ -46,7 +46,7 @@ describe('loadPairLiftMatrixForWorkflow', () => {
       return {}
     })
 
-    const result = await loadPairLiftMatrixForWorkflow({
+    const result = await loadPairLiftMatrixForChat({
       userId: 'user-1',
       analyticsRunId: 42,
       locationId: 7,
@@ -72,7 +72,7 @@ describe('loadPairLiftMatrixForWorkflow', () => {
       return {}
     })
 
-    const result = await loadPairLiftMatrixForWorkflow({
+    const result = await loadPairLiftMatrixForChat({
       userId: 'user-1',
       analyticsRunId: 10,
       locationId: 7,
@@ -94,7 +94,7 @@ describe('loadPairLiftMatrixForWorkflow', () => {
       return {}
     })
 
-    const result = await loadPairLiftMatrixForWorkflow({
+    const result = await loadPairLiftMatrixForChat({
       userId: 'user-1',
       analyticsRunId: 99,
       locationId: 7,

@@ -1,0 +1,70 @@
+{
+  "public": {
+    "wall": {
+      "eyebrow": "Tonight’s wall",
+      "favoritesHeading": "Guest favorites",
+      "combosHeading": "Often ordered together",
+      "empty": "Nothing on the wall yet — check back soon.",
+      "notFoundTitle": "Wall not found",
+      "metaDescription": "Guest favorites and popular picks at {name}."
+    },
+    "menu": {
+      "eyebrow": "Menu",
+      "empty": "Nothing on the menu yet — check back soon.",
+      "emptyTitle": "Menu coming soon",
+      "notFoundTitle": "Menu not found",
+      "metaDescription": "Digital menu at {name}.",
+      "categoriesNavAria": "Jump to category",
+      "filters": {
+        "dietary": "Dietary",
+        "allergens": "Exclude allergens",
+        "clear": "Clear filters",
+        "matchCount": "{count, plural, one {# dish matches} other {# dishes match}}",
+        "noMatchesTitle": "No matching dishes",
+        "noMatches": "No dishes match these filters."
+      },
+      "order": {
+        "add": "Add",
+        "increaseQty": "Add another {name}",
+        "decreaseQty": "Remove one {name}",
+        "removeItem": "Remove {name} from basket",
+        "cartSummary": "{count, plural, one {# item} other {# items}}",
+        "viewBasket": "View basket",
+        "basketTitle": "Your basket",
+        "basketDescription": "Review your items before sending the order.",
+        "basketTotal": "Total",
+        "emptyBasketTitle": "Basket empty",
+        "emptyBasket": "Your basket is empty.",
+        "closeBasket": "Close",
+        "tableLabelReadOnly": "Table · {label}",
+        "send": "Send order",
+        "sending": "Sending…",
+        "signInToOrder": "Sign in to send order",
+        "submitFailedTitle": "Order not sent",
+        "submitFailed": "Could not send your order. Please try again.",
+        "successTitle": "Order sent",
+        "successBody": "Your ticket is {billNumber}. Staff will take it from here."
+      },
+      "dietary": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "pescatarian": "Pescatarian",
+        "gluten_free": "Gluten-free",
+        "dairy_free": "Dairy-free",
+        "halal": "Halal",
+        "spicy": "Spicy"
+      },
+      "allergens": {
+        "gluten": "Gluten",
+        "dairy": "Dairy",
+        "eggs": "Eggs",
+        "fish": "Fish",
+        "shellfish": "Shellfish",
+        "peanuts": "Peanuts",
+        "tree_nuts": "Tree nuts",
+        "soy": "Soy",
+        "sesame": "Sesame"
+      }
+    }
+  }
+}

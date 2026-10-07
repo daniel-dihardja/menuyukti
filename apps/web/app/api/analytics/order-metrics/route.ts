@@ -1,7 +1,7 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
-import { loadSlotDemandProfileForWorkflow } from '@/lib/analytics/load-slot-demand-profile'
+import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile'
 
 function isPrerenderInterrupt(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -17,7 +17,7 @@ function parsePositiveInt(value: string | null): number | null {
 
 /**
  * GET /api/analytics/order-metrics?analyticsRunId=...&locationId=...
- * Slot demand profile for workflow visualizations. When the linked run is empty,
+ * Slot demand profile for chat visualizations. When the linked run is empty,
  * falls back to other analytics runs for the location (newest first).
  */
 export async function GET(req: Request) {
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
       )
     }
 
-    const result = await loadSlotDemandProfileForWorkflow({
+    const result = await loadSlotDemandProfileForChat({
       userId,
       analyticsRunId,
       locationId,

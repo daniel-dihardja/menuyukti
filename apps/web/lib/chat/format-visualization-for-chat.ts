@@ -236,7 +236,7 @@ export function formatVisualizationDataMarkdownSection(args: {
   const lines = [`## Visualization data — ${args.title}`]
   if (args.usedFallbackRun) {
     lines.push(
-      '*(Data from a newer sales report for this location because the workflow-linked report had no data for this chart.)*',
+      '*(Data from a newer sales report for this location because the selected report had no data for this chart.)*',
     )
   }
   lines.push(formatVisualizationPayload(args.visualizationId, args.payload))

@@ -1,0 +1,8 @@
+{
+  "accountMenu": {
+    "triggerAria": "Open account menu",
+    "profile": "Profile",
+    "team": "Team",
+    "signOut": "Sign out"
+  }
+}

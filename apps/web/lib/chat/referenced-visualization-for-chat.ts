@@ -1,6 +1,6 @@
-import { loadMenuHeatmapsForWorkflow } from '@/lib/analytics/load-menu-heatmaps-for-workflow'
-import { loadPairLiftMatrixForWorkflow } from '@/lib/analytics/load-pair-lift-matrix-for-workflow'
-import { loadSlotDemandProfileForWorkflow } from '@/lib/analytics/load-slot-demand-profile'
+import { loadMenuHeatmapsForChat } from '@/lib/analytics/load-menu-heatmaps-for-chat'
+import { loadPairLiftMatrixForChat } from '@/lib/analytics/load-pair-lift-matrix-for-chat'
+import { loadSlotDemandProfileForChat } from '@/lib/analytics/load-slot-demand-profile'
 import type { ChatVisualizationId } from '@/lib/chat/visualization-ids'
 
 export type ReferencedVisualizationLoadResult =
@@ -13,7 +13,7 @@ export type ReferencedVisualizationLoadResult =
     }
   | { ok: false; status: 400 | 404; message: string }
 
-export const WORKFLOW_VISUALIZATION_CHAT_TITLES: Record<ChatVisualizationId, string> = {
+export const CHAT_VISUALIZATION_TITLES: Record<ChatVisualizationId, string> = {
   venue_slot_strength_heatmap: 'Venue slot strength',
   menu_item_heatmap: 'Menu item heatmap',
   pair_lift_matrix_heatmap: 'Pair lift matrix',
@@ -36,7 +36,7 @@ export async function loadReferencedVisualizationForChat(
     return { ok: false, status: 400, message: 'Invalid locationId' }
   }
 
-  const title = WORKFLOW_VISUALIZATION_CHAT_TITLES[referencedVisualizationId]
+  const title = CHAT_VISUALIZATION_TITLES[referencedVisualizationId]
   const loaderOptions = {
     userId,
     locationId,
@@ -45,7 +45,7 @@ export async function loadReferencedVisualizationForChat(
 
   switch (referencedVisualizationId) {
     case 'venue_slot_strength_heatmap': {
-      const result = await loadSlotDemandProfileForWorkflow(loaderOptions)
+      const result = await loadSlotDemandProfileForChat(loaderOptions)
       return {
         ok: true,
         title,
@@ -58,7 +58,7 @@ export async function loadReferencedVisualizationForChat(
       }
     }
     case 'menu_item_heatmap': {
-      const result = await loadMenuHeatmapsForWorkflow(loaderOptions)
+      const result = await loadMenuHeatmapsForChat(loaderOptions)
       return {
         ok: true,
         title,
@@ -74,7 +74,7 @@ export async function loadReferencedVisualizationForChat(
       }
     }
     case 'pair_lift_matrix_heatmap': {
-      const result = await loadPairLiftMatrixForWorkflow(loaderOptions)
+      const result = await loadPairLiftMatrixForChat(loaderOptions)
       return {
         ok: true,
         title,

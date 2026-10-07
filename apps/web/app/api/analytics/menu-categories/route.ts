@@ -17,7 +17,7 @@ function isPrerenderInterrupt(error: unknown): boolean {
 
 /**
  * GET /api/analytics/menu-categories?locationId=...&analyticsRunId=...
- * Distinct POS menu categories with item counts for milestone input pickers.
+ * Distinct POS menu categories with item counts for analytics pickers.
  */
 export async function GET(req: Request) {
   try {

@@ -117,7 +117,7 @@ export function AccountMenu({ className }: AccountMenuProps) {
         </DropdownMenuItem>
         {showTeam ? (
           <DropdownMenuItem asChild>
-            <Link href={routes.profileTeam}>{t('team')}</Link>
+            <Link href={routes.team}>{t('team')}</Link>
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuSeparator />

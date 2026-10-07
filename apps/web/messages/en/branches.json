@@ -1,0 +1,31 @@
+{
+  "branches": {
+    "fixedCosts": {
+      "title": "Fixed Costs",
+      "description": "Manage fixed costs for this location.",
+      "breadcrumbs": {
+        "branches": "Locations",
+        "fixedCosts": "Fixed Costs"
+      },
+      "table": {
+        "name": "Name",
+        "amount": "Amount",
+        "category": "Category",
+        "notes": "Notes",
+        "active": "Active",
+        "actions": "Actions",
+        "empty": "No fixed costs yet."
+      },
+      "form": {
+        "addTitle": "Add Fixed Cost",
+        "namePlaceholder": "Cost name (e.g. Rent)",
+        "amountPlaceholder": "Amount",
+        "categoryPlaceholder": "Category (e.g. Salaries)",
+        "notesPlaceholder": "Notes",
+        "addButton": "Add",
+        "saveButton": "Save",
+        "deleteButton": "Delete"
+      }
+    }
+  }
+}
