@@ -12,10 +12,20 @@ from graphql.data_sources import Location
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.predictions import prediction_to_gql
 from graphql.schema.types.prediction import PredictionType
-from graphql.schema.types.public_location import PublicLocationServiceType, PublicLocationType
+from graphql.schema.types.public_location import (
+    PublicLocationPredictionTeaserType,
+    PublicLocationServiceType,
+    PublicLocationType,
+)
 
 
 def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
+    teaser = None
+    if view.prediction_teaser is not None:
+        teaser = PublicLocationPredictionTeaserType(
+            question=view.prediction_teaser.question,
+            open_count=view.prediction_teaser.open_count,
+        )
     return PublicLocationType(
         id=view.id,
         name=view.name,
@@ -28,6 +38,11 @@ def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:
             )
             for s in view.services
         ],
+        header_image_filename=view.header_image_filename,
+        workspace_id=strawberry.ID(view.workspace_id) if view.workspace_id else None,
+        media_owner_clerk_user_id=view.media_owner_clerk_user_id,
+        menu_dish_count=view.menu_dish_count,
+        prediction_teaser=teaser,
     )
 
 

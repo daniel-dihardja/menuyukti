@@ -56,6 +56,7 @@ async function loadEnglishMessages(): Promise<AbstractIntlMessages> {
  * Load next-intl message catalogs for a locale.
  * Catalogs live under `messages/<locale>/<namespace>.json` (one top-level key each).
  * Falls back to English when the locale is missing (only `en` is shipped today).
+ * Touch this module when message JSON changes fail to hot-reload under Turbopack.
  */
 export async function loadMessages(locale: string): Promise<AbstractIntlMessages> {
   // Future locales: branch on locale and load messages/<locale>/*.json.

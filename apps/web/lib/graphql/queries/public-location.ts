@@ -8,11 +8,21 @@ export type PublicLocationService = {
   available: boolean
 }
 
+export type PublicLocationPredictionTeaser = {
+  question: string
+  openCount: number
+}
+
 export type PublicLocation = {
   id: number
   name: string
   publicSlug: string
   services: PublicLocationService[]
+  headerImageFilename: string | null
+  workspaceId: string | null
+  mediaOwnerClerkUserId: string | null
+  menuDishCount: number | null
+  predictionTeaser: PublicLocationPredictionTeaser | null
 }
 
 export const PUBLIC_LOCATION_QUERY = `
@@ -25,6 +35,14 @@ export const PUBLIC_LOCATION_QUERY = `
         key
         hrefSegment
         available
+      }
+      headerImageFilename
+      workspaceId
+      mediaOwnerClerkUserId
+      menuDishCount
+      predictionTeaser {
+        question
+        openCount
       }
     }
   }

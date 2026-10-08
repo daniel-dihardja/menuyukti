@@ -13,7 +13,7 @@ from graphql.data_sources import (
     Workspace,
     WorkspaceMembership,
 )
-from graphql.data_sources.models.menu import Menu
+from graphql.data_sources.models.menu import Menu, MenuCategory, MenuItem
 from graphql.data_sources.models.prediction import Prediction, PredictionOutcome
 from graphql.schema import schema
 from graphql.services.service_subscriptions import (
@@ -31,6 +31,11 @@ query Hub($slug: String!) {
     name
     publicSlug
     services { key hrefSegment available }
+    headerImageFilename
+    workspaceId
+    mediaOwnerClerkUserId
+    menuDishCount
+    predictionTeaser { question openCount }
   }
 }
 """
@@ -163,6 +168,11 @@ def test_public_location_greeting_only_no_services(hub_venue):
     assert by_key["prediction"]["available"] is False
     assert by_key["digital_menu"]["hrefSegment"] == "menu"
     assert by_key["prediction"]["hrefSegment"] == "prediction"
+    assert hub["headerImageFilename"] is None
+    assert hub["workspaceId"] is None
+    assert hub["mediaOwnerClerkUserId"] is None
+    assert hub["menuDishCount"] is None
+    assert hub["predictionTeaser"] is None
 
 
 def test_public_location_menu_and_prediction_flags(hub_venue):
@@ -193,9 +203,102 @@ def test_public_location_menu_and_prediction_flags(hub_venue):
 
     result = asyncio.run(schema.execute(HUB, variable_values={"slug": hub_venue["slug"]}))
     assert result.errors is None, result.errors
-    by_key = {s["key"]: s for s in result.data["publicLocation"]["services"]}
+    hub = result.data["publicLocation"]
+    by_key = {s["key"]: s for s in hub["services"]}
     assert by_key["digital_menu"]["available"] is True
     assert by_key["prediction"]["available"] is True
+    assert hub["menuDishCount"] == 0
+    assert hub["workspaceId"] == str(wid)
+    assert hub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert hub["headerImageFilename"] is None
+    assert hub["predictionTeaser"] is None
+
+
+def test_public_location_hub_presentation_fields(hub_venue):
+    lid = hub_venue["location_id"]
+    wid = hub_venue["workspace_id"]
+    session = SessionLocal()
+    try:
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_DIGITAL_MENU,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_PREDICTION,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        menu = Menu(
+            location_id=lid,
+            title="",
+            public_enabled=True,
+            header_image_filename="hero.webp",
+        )
+        session.add(menu)
+        session.flush()
+        cat = MenuCategory(menu_id=menu.id, name="Mains", sort_order=0)
+        session.add(cat)
+        session.flush()
+        session.add_all(
+            [
+                MenuItem(
+                    menu_id=menu.id,
+                    category_id=cat.id,
+                    name="Burger",
+                    description="",
+                    price=12.0,
+                    sort_order=0,
+                    is_available=True,
+                ),
+                MenuItem(
+                    menu_id=menu.id,
+                    category_id=cat.id,
+                    name="Hidden",
+                    description="",
+                    price=9.0,
+                    sort_order=1,
+                    is_available=False,
+                ),
+            ]
+        )
+        pred_early = Prediction(
+            location_id=lid,
+            question="First open?",
+            status="open",
+            closes_at=datetime.now(UTC) + timedelta(hours=2),
+            reward_mode="social",
+        )
+        pred_later = Prediction(
+            location_id=lid,
+            question="Second open?",
+            status="open",
+            closes_at=datetime.now(UTC) + timedelta(hours=8),
+            reward_mode="social",
+        )
+        session.add_all([pred_early, pred_later])
+        session.flush()
+        for pred in (pred_early, pred_later):
+            session.add(PredictionOutcome(prediction_id=pred.id, label="A", sort_order=0))
+            session.add(PredictionOutcome(prediction_id=pred.id, label="B", sort_order=1))
+        session.commit()
+    finally:
+        session.close()
+
+    result = asyncio.run(schema.execute(HUB, variable_values={"slug": hub_venue["slug"]}))
+    assert result.errors is None, result.errors
+    hub = result.data["publicLocation"]
+    assert hub["headerImageFilename"] == "hero.webp"
+    assert hub["menuDishCount"] == 1
+    assert hub["workspaceId"] == str(wid)
+    assert hub["mediaOwnerClerkUserId"] == GRAPHQL_TEST_USER_ID
+    assert hub["predictionTeaser"] == {"question": "First open?", "openCount": 2}
 
 
 def test_public_location_predictions(hub_venue):

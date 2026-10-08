@@ -91,7 +91,9 @@ export function PublicPredictionsClient({ slug, locationName, predictions: initi
         <h1 className="text-pretty text-2xl font-semibold tracking-tight sm:text-3xl">
           {t('title')}
         </h1>
-        <p className="text-pretty text-sm leading-relaxed text-muted-foreground">{t('lead')}</p>
+        <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+          {isLoaded && !isSignedIn ? t('leadSignedOut') : t('lead')}
+        </p>
       </div>
 
       {predictions.length === 0 ? (

@@ -3,17 +3,19 @@
     "locationHome": {
       "notFoundTitle": "Location not found",
       "metaDescription": "Visit {name} on Menuyukti.",
-      "lead": "Choose where to go.",
-      "greetingLead": "Welcome to {name}.",
-      "greetingEmpty": "More coming soon.",
-      "services": {
-        "digital_menu": "Menu",
-        "prediction": "Predictions"
-      }
+      "greetingMorning": "Good morning at {name}.",
+      "greetingAfternoon": "Good afternoon at {name}.",
+      "greetingEvening": "Good evening at {name}.",
+      "greetingEmpty": "Nothing live for guests yet — ask the staff or check back soon.",
+      "menuTitle": "See what’s cooking",
+      "menuDishCount": "{count, plural, one {# dish on the menu} other {# dishes on the menu}}",
+      "predictionTitle": "Tonight’s prediction",
+      "predictionOpenCount": "{count, plural, one {# open prediction} other {# open predictions}}"
     },
     "prediction": {
       "title": "Predictions",
-      "lead": "Pick an outcome before voting closes, then check back for the result. Sign in to cast your vote.",
+      "lead": "Pick an outcome before voting closes, then check back for the result.",
+      "leadSignedOut": "Pick an outcome before voting closes, then check back for the result. Sign in to cast your vote.",
       "empty": "No predictions right now.",
       "notFoundTitle": "Predictions not found",
       "metaTitle": "Predictions · {name}",

@@ -14,14 +14,13 @@ import {
 } from '@workspace/ui/components/empty'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
-import { PublicMenuCatalog } from './public-menu-catalog'
+import { PublicGuestShell } from '@/app/(public)/_components/public-guest-shell'
 
-export const publicMenuShellClassName =
-  "text-foreground min-h-screen bg-[#efeae2] bg-[url('/images/public-menu-wallpaper.svg')] bg-repeat bg-[length:360px_360px]"
+import { PublicMenuCatalog } from './public-menu-catalog'
 
 export function PublicMenuFallback() {
   return (
-    <div className={publicMenuShellClassName}>
+    <PublicGuestShell>
       <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
         <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col gap-3">
           <Skeleton className="h-3 w-24" />
@@ -36,7 +35,7 @@ export function PublicMenuFallback() {
           ))}
         </div>
       </main>
-    </div>
+    </PublicGuestShell>
   )
 }
 
@@ -57,7 +56,7 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
   const hasHeaderImage = Boolean(headerImageUrl)
 
   return (
-    <div className={publicMenuShellClassName}>
+    <PublicGuestShell>
       <header className="relative flex min-h-[28vh] flex-col justify-end overflow-hidden px-6 pb-10 pt-16 sm:px-10 sm:pb-12">
         {headerImageUrl ? (
           <>
@@ -113,6 +112,6 @@ export async function PublicLocationMenuBody({ slug, tableLabel }: PublicLocatio
           />
         )}
       </main>
-    </div>
+    </PublicGuestShell>
   )
 }
