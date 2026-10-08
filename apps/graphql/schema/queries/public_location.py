@@ -52,7 +52,8 @@ class PublicLocationQuery:
 
     @strawberry.field(
         description=(
-            "Open predictions for a public location slug when Prediction is active. "
+            "Guest-visible predictions for a public location slug when Prediction is active: "
+            "open, closed (awaiting result), and recently resolved. "
             "Empty when the slug is unknown or Prediction is off. "
             "Includes myVote when the caller is authenticated."
         )

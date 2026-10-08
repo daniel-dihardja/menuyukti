@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -32,6 +32,15 @@ from graphql.services.service_subscriptions import (
 
 ACTION_KEY_PREDICTION_VOTE = "prediction_vote"
 ACTION_KEY_PREDICTION_CORRECT = "prediction_correct"
+
+# How long resolved predictions stay visible on guest surfaces.
+GUEST_RESOLVED_RETENTION_DAYS = 14
+
+_STATUS_SORT_RANK = {
+    PREDICTION_STATUS_OPEN: 0,
+    PREDICTION_STATUS_CLOSED: 1,
+    PREDICTION_STATUS_RESOLVED: 2,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -192,45 +201,108 @@ def _guest_touched_location_ids(session: Session, clerk_user_id: str) -> set[int
     return {int(x) for x in (from_ledger | from_orders)}
 
 
+def _resolved_retention_cutoff() -> datetime:
+    return _now() - timedelta(days=GUEST_RESOLVED_RETENTION_DAYS)
+
+
+def _is_recently_resolved(prediction: Prediction) -> bool:
+    if prediction.status != PREDICTION_STATUS_RESOLVED:
+        return False
+    resolved = prediction.resolved_at
+    if resolved is None:
+        return False
+    if resolved.tzinfo is None:
+        resolved = resolved.replace(tzinfo=UTC)
+    return resolved >= _resolved_retention_cutoff()
+
+
+def _guest_has_vote(prediction: Prediction, clerk_user_id: str) -> bool:
+    return any(vote.clerk_user_id == clerk_user_id for vote in prediction.votes)
+
+
+def _sort_guest_prediction_views(views: list[PredictionView]) -> list[PredictionView]:
+    """Open first (by closes_at), then closed, then resolved (newest resolved_at first)."""
+
+    def key(view: PredictionView) -> tuple[int, float]:
+        rank = _STATUS_SORT_RANK.get(view.status, 99)
+        closes = view.closes_at
+        if closes.tzinfo is None:
+            closes = closes.replace(tzinfo=UTC)
+        if view.status == PREDICTION_STATUS_RESOLVED:
+            resolved = view.resolved_at or closes
+            if resolved.tzinfo is None:
+                resolved = resolved.replace(tzinfo=UTC)
+            return (rank, -resolved.timestamp())
+        return (rank, closes.timestamp())
+
+    return sorted(views, key=key)
+
+
+def _load_guest_predictions_for_location(
+    session: Session,
+    *,
+    location_id: int,
+) -> list[Prediction]:
+    rows = list(
+        session.scalars(
+            select(Prediction)
+            .where(
+                Prediction.location_id == location_id,
+                Prediction.status.in_(
+                    [
+                        PREDICTION_STATUS_OPEN,
+                        PREDICTION_STATUS_CLOSED,
+                        PREDICTION_STATUS_RESOLVED,
+                    ]
+                ),
+            )
+            .options(
+                selectinload(Prediction.outcomes),
+                selectinload(Prediction.votes),
+                selectinload(Prediction.location),
+            )
+        ).all()
+    )
+    for row in rows:
+        _maybe_auto_close(session, row)
+    session.flush()
+    return rows
+
+
 def list_open_predictions_for_location(
     session: Session,
     *,
     location_id: int,
     clerk_user_id: str | None = None,
 ) -> list[PredictionView]:
-    """Open predictions at one location when Prediction is active (public venue surface)."""
+    """Guest-visible predictions at one location (public venue surface).
+
+    Includes open, closed (awaiting result), and resolved within the retention window.
+    """
     if not is_active_subscription(session, location_id, SERVICE_KEY_PREDICTION):
         return []
 
     user_id = (clerk_user_id or "").strip() or None
-    rows = session.scalars(
-        select(Prediction)
-        .where(
-            Prediction.location_id == location_id,
-            Prediction.status.in_([PREDICTION_STATUS_OPEN, PREDICTION_STATUS_CLOSED]),
-        )
-        .options(
-            selectinload(Prediction.outcomes),
-            selectinload(Prediction.votes),
-            selectinload(Prediction.location),
-        )
-        .order_by(Prediction.closes_at.asc())
-    ).all()
+    rows = _load_guest_predictions_for_location(session, location_id=location_id)
 
-    open_views: list[PredictionView] = []
+    views: list[PredictionView] = []
     for row in rows:
-        _maybe_auto_close(session, row)
-        if row.status != PREDICTION_STATUS_OPEN:
+        if row.status == PREDICTION_STATUS_RESOLVED and not _is_recently_resolved(row):
             continue
-        open_views.append(
+        if row.status not in (
+            PREDICTION_STATUS_OPEN,
+            PREDICTION_STATUS_CLOSED,
+            PREDICTION_STATUS_RESOLVED,
+        ):
+            continue
+        views.append(
             _to_view(
                 row,
                 location_name=row.location.name if row.location else "",
                 clerk_user_id=user_id,
             )
         )
-    session.flush()
-    return open_views
+    return _sort_guest_prediction_views(views)
 
 
 def list_open_predictions_for_guest(
@@ -238,6 +310,10 @@ def list_open_predictions_for_guest(
     *,
     clerk_user_id: str,
 ) -> list[PredictionView]:
+    """Guest home predictions at touched venues with an active Prediction subscription.
+
+    Includes all open predictions, plus closed/recently-resolved only when the guest voted.
+    """
     user_id = (clerk_user_id or "").strip()
     if not user_id:
         return []
@@ -260,15 +336,41 @@ def list_open_predictions_for_guest(
 
     views: list[PredictionView] = []
     for location_id in sorted(int(x) for x in active_prediction_locations):
-        views.extend(
-            list_open_predictions_for_location(
-                session,
-                location_id=location_id,
-                clerk_user_id=user_id,
-            )
-        )
-    views.sort(key=lambda v: v.closes_at)
-    return views
+        rows = _load_guest_predictions_for_location(session, location_id=location_id)
+        for row in rows:
+            if row.status == PREDICTION_STATUS_OPEN:
+                views.append(
+                    _to_view(
+                        row,
+                        location_name=row.location.name if row.location else "",
+                        clerk_user_id=user_id,
+                    )
+                )
+                continue
+            if row.status == PREDICTION_STATUS_CLOSED:
+                if not _guest_has_vote(row, user_id):
+                    continue
+                views.append(
+                    _to_view(
+                        row,
+                        location_name=row.location.name if row.location else "",
+                        clerk_user_id=user_id,
+                    )
+                )
+                continue
+            if row.status == PREDICTION_STATUS_RESOLVED:
+                if not _is_recently_resolved(row):
+                    continue
+                if not _guest_has_vote(row, user_id):
+                    continue
+                views.append(
+                    _to_view(
+                        row,
+                        location_name=row.location.name if row.location else "",
+                        clerk_user_id=user_id,
+                    )
+                )
+    return _sort_guest_prediction_views(views)
 
 
 def create_prediction(

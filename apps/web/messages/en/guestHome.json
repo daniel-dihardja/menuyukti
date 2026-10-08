@@ -19,15 +19,22 @@
       "prediction_vote": "Voted on prediction",
       "prediction_correct": "Correct prediction"
     },
-    "predictionsTitle": "Open predictions",
-    "predictionsLead": "Vote on outcomes at venues you’ve visited. Rewards may be social or points, depending on the venue.",
-    "predictionsEmpty": "No open predictions yet. Visit a venue with Prediction on, then check back here.",
+    "predictionsTitle": "Predictions",
+    "predictionsLead": "Vote on outcomes at venues you’ve visited, then check back for results. Rewards may be social or points, depending on the venue.",
+    "predictionsEmpty": "No predictions yet. Visit a venue with Prediction on, cast a vote, then check back here for results.",
     "predictionsLoadError": "Could not load predictions right now. Try again later.",
     "predictionsRewardSocial": "Social reward — bragging rights",
     "predictionsRewardPoints": "+{vote} for voting · +{correct} if correct",
     "predictionsYourPick": "Your pick",
     "predictionsVoting": "Voting…",
     "predictionsVoteFailed": "Could not cast your vote.",
+    "predictionsStatusClosed": "Closed",
+    "predictionsStatusResolved": "Resolved",
+    "predictionsAwaitingResult": "Voting closed — result soon.",
+    "predictionsYouWereCorrect": "You were right",
+    "predictionsYouWereIncorrect": "You were incorrect",
+    "predictionsWinnerLabel": "Winner",
+    "predictionsVoteCount": "{count, plural, one {# vote} other {# votes}}",
     "profileCta": "Open profile"
   }
 }

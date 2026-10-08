@@ -18,6 +18,7 @@ import {
 } from '@workspace/ui/components/select'
 
 type DateTimePickerProps = {
+  id?: string
   /** Local datetime `YYYY-MM-DDTHH:mm`, or empty/undefined when unset. */
   value?: string
   onChange: (value: string) => void
@@ -59,6 +60,7 @@ function joinValue(date: string, hour: string, minute: string): string {
 }
 
 function DateTimePicker({
+  id,
   value,
   onChange,
   disabled,
@@ -80,6 +82,7 @@ function DateTimePicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           type="button"
           variant="outline"
           disabled={disabled}
@@ -88,7 +91,7 @@ function DateTimePicker({
             !selected && 'text-muted-foreground',
           )}
         >
-          <CalendarIcon className="mr-2 size-4 shrink-0" />
+          <CalendarIcon data-icon="inline-start" />
           <span className="truncate">{display ?? placeholder}</span>
         </Button>
       </PopoverTrigger>

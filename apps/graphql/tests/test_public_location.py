@@ -41,7 +41,29 @@ query Preds($slug: String!) {
     id
     question
     status
+    winningOutcomeId
+    resolvedAt
+    voteCount
     outcomes { id label }
+  }
+}
+"""
+
+CLOSE = """
+mutation Close($predictionId: Int!) {
+  closePrediction(predictionId: $predictionId) {
+    id
+    status
+  }
+}
+"""
+
+RESOLVE = """
+mutation Resolve($predictionId: Int!, $winningOutcomeId: Int!) {
+  resolvePrediction(predictionId: $predictionId, winningOutcomeId: $winningOutcomeId) {
+    id
+    status
+    winningOutcomeId
   }
 }
 """
@@ -211,6 +233,84 @@ def test_public_location_predictions(hub_venue):
     assert listed.errors is None, listed.errors
     assert len(listed.data["publicLocationPredictions"]) == 1
     assert listed.data["publicLocationPredictions"][0]["question"] == "Who wins?"
+
+
+def test_public_predictions_include_closed_and_recent_resolved(hub_venue):
+    lid = hub_venue["location_id"]
+    wid = hub_venue["workspace_id"]
+    slug = hub_venue["slug"]
+    session = SessionLocal()
+    try:
+        session.add(
+            ServiceSubscription(
+                workspace_id=wid,
+                location_id=lid,
+                service_key=SERVICE_KEY_PREDICTION,
+                status=SERVICE_STATUS_ACTIVE,
+            )
+        )
+        pred = Prediction(
+            location_id=lid,
+            question="Public result?",
+            status="open",
+            closes_at=datetime.now(UTC) + timedelta(hours=6),
+            reward_mode="social",
+        )
+        session.add(pred)
+        session.flush()
+        outcome_a = PredictionOutcome(prediction_id=pred.id, label="A", sort_order=0)
+        outcome_b = PredictionOutcome(prediction_id=pred.id, label="B", sort_order=1)
+        session.add(outcome_a)
+        session.add(outcome_b)
+        session.commit()
+        pred_id = int(pred.id)
+        winning_id = int(outcome_a.id)
+    finally:
+        session.close()
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"predictionId": pred_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert closed.errors is None, closed.errors
+
+    listed_closed = asyncio.run(schema.execute(PREDS, variable_values={"slug": slug}))
+    assert listed_closed.errors is None, listed_closed.errors
+    assert len(listed_closed.data["publicLocationPredictions"]) == 1
+    assert listed_closed.data["publicLocationPredictions"][0]["status"] == "closed"
+
+    resolved = asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={"predictionId": pred_id, "winningOutcomeId": winning_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert resolved.errors is None, resolved.errors
+
+    listed_resolved = asyncio.run(schema.execute(PREDS, variable_values={"slug": slug}))
+    assert listed_resolved.errors is None, listed_resolved.errors
+    card = listed_resolved.data["publicLocationPredictions"][0]
+    assert card["status"] == "resolved"
+    assert card["winningOutcomeId"] == winning_id
+
+    from graphql.services.predictions import GUEST_RESOLVED_RETENTION_DAYS
+
+    session = SessionLocal()
+    try:
+        row = session.get(Prediction, pred_id)
+        assert row is not None
+        row.resolved_at = datetime.now(UTC) - timedelta(days=GUEST_RESOLVED_RETENTION_DAYS + 1)
+        session.commit()
+    finally:
+        session.close()
+
+    listed_old = asyncio.run(schema.execute(PREDS, variable_values={"slug": slug}))
+    assert listed_old.errors is None, listed_old.errors
+    assert listed_old.data["publicLocationPredictions"] == []
 
 
 def test_update_public_slug_without_digital_menu(hub_venue):

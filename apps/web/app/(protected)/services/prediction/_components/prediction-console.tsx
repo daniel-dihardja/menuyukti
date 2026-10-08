@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
+import { DateTimePicker } from '@workspace/ui/components/date-time-picker'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import {
@@ -300,12 +301,13 @@ export function PredictionConsole({
           </Field>
           <Field>
             <FieldLabel htmlFor="pred-closes">{t('closesAtLabel')}</FieldLabel>
-            <Input
+            <DateTimePicker
               id="pred-closes"
-              type="datetime-local"
               value={closesAt}
-              onChange={(e) => setClosesAt(e.target.value)}
+              onChange={setClosesAt}
               disabled={creating}
+              placeholder={t('closesAtPlaceholder')}
+              timeLabel={t('closesAtTimeLabel')}
             />
           </Field>
           <div className="flex flex-col gap-2">

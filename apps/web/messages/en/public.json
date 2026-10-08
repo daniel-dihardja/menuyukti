@@ -13,8 +13,8 @@
     },
     "prediction": {
       "title": "Predictions",
-      "lead": "Pick an outcome before voting closes. Sign in to cast your vote.",
-      "empty": "No open predictions right now.",
+      "lead": "Pick an outcome before voting closes, then check back for the result. Sign in to cast your vote.",
+      "empty": "No predictions right now.",
       "notFoundTitle": "Predictions not found",
       "metaTitle": "Predictions · {name}",
       "metaDescription": "Vote on predictions at {name}.",
@@ -23,7 +23,14 @@
       "yourPick": "Your pick",
       "voting": "Voting…",
       "voteFailed": "Could not cast your vote.",
-      "signInHint": "Sign in to vote."
+      "signInHint": "Sign in to vote.",
+      "statusClosed": "Closed",
+      "statusResolved": "Resolved",
+      "awaitingResult": "Voting closed — result soon.",
+      "youWereCorrect": "You were right",
+      "youWereIncorrect": "You were incorrect",
+      "winnerLabel": "Winner",
+      "voteCount": "{count, plural, one {# vote} other {# votes}}"
     },
     "wall": {
       "eyebrow": "Tonight’s wall",

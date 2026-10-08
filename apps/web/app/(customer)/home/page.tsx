@@ -77,7 +77,12 @@ async function CustomerPredictionsData() {
     )
     return (
       <CustomerPredictionsSection
-        key={data.myOpenPredictions.map((p) => `${p.id}:${p.myVote?.outcomeId ?? ''}`).join('|')}
+        key={data.myOpenPredictions
+          .map(
+            (p) =>
+              `${p.id}:${p.status}:${p.winningOutcomeId ?? ''}:${p.resolvedAt ?? ''}:${p.myVote?.outcomeId ?? ''}`,
+          )
+          .join('|')}
         predictions={data.myOpenPredictions}
       />
     )

@@ -4,8 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
-import { Button } from '@workspace/ui/components/button'
-import { REWARD_MODE_POINTS, type Prediction } from '@/lib/graphql/queries/predictions'
+import {
+  PredictionOutcomeCard,
+  type PredictionOutcomeCardLabels,
+} from '@/components/predictions/prediction-outcome-card'
+import { type Prediction } from '@/lib/graphql/queries/predictions'
 
 type Props = {
   predictions: Prediction[]
@@ -43,6 +46,25 @@ export function CustomerPredictionsSection({ predictions: initial, loadError = f
     }
   }
 
+  function labelsFor(prediction: Prediction): PredictionOutcomeCardLabels {
+    return {
+      yourPick: t('predictionsYourPick'),
+      voting: t('predictionsVoting'),
+      rewardSocial: t('predictionsRewardSocial'),
+      rewardPoints: t('predictionsRewardPoints', {
+        correct: prediction.pointsForCorrect,
+        vote: prediction.pointsForVote,
+      }),
+      statusClosed: t('predictionsStatusClosed'),
+      statusResolved: t('predictionsStatusResolved'),
+      awaitingResult: t('predictionsAwaitingResult'),
+      youWereCorrect: t('predictionsYouWereCorrect'),
+      youWereIncorrect: t('predictionsYouWereIncorrect'),
+      winnerLabel: t('predictionsWinnerLabel'),
+      voteCount: t('predictionsVoteCount', { count: prediction.voteCount }),
+    }
+  }
+
   return (
     <section
       aria-labelledby="customer-home-predictions-heading"
@@ -61,43 +83,16 @@ export function CustomerPredictionsSection({ predictions: initial, loadError = f
         <p className="mt-4 text-sm text-muted-foreground">{t('predictionsEmpty')}</p>
       ) : (
         <ul className="mt-4 flex flex-col gap-4">
-          {predictions.map((prediction) => {
-            const votedOutcomeId = prediction.myVote?.outcomeId ?? null
-            return (
-              <li key={prediction.id} className="rounded-md border border-border px-3 py-3">
-                <p className="text-sm font-medium">{prediction.question}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {prediction.locationName}
-                  {' · '}
-                  {prediction.rewardMode === REWARD_MODE_POINTS
-                    ? t('predictionsRewardPoints', {
-                        correct: prediction.pointsForCorrect,
-                        vote: prediction.pointsForVote,
-                      })
-                    : t('predictionsRewardSocial')}
-                </p>
-                <div className="mt-3 flex flex-col gap-2">
-                  {prediction.outcomes.map((outcome) => {
-                    const selected = votedOutcomeId === outcome.id
-                    const busy = busyKey === `${prediction.id}:${outcome.id}`
-                    return (
-                      <Button
-                        key={outcome.id}
-                        type="button"
-                        variant={selected ? 'default' : 'outline'}
-                        className="h-auto min-h-10 justify-start whitespace-normal text-left"
-                        disabled={votedOutcomeId != null || busyKey != null}
-                        onClick={() => void handleVote(prediction.id, outcome.id)}
-                      >
-                        {busy ? t('predictionsVoting') : outcome.label}
-                        {selected ? ` · ${t('predictionsYourPick')}` : ''}
-                      </Button>
-                    )
-                  })}
-                </div>
-              </li>
-            )
-          })}
+          {predictions.map((prediction) => (
+            <PredictionOutcomeCard
+              key={prediction.id}
+              prediction={prediction}
+              labels={labelsFor(prediction)}
+              locationLine={prediction.locationName}
+              busyKey={busyKey}
+              onVote={(outcomeId) => void handleVote(prediction.id, outcomeId)}
+            />
+          ))}
         </ul>
       )}
 

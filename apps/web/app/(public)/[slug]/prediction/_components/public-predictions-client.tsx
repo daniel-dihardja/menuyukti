@@ -6,9 +6,12 @@ import { useAuth } from '@clerk/nextjs'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 
-import { Button } from '@workspace/ui/components/button'
+import {
+  PredictionOutcomeCard,
+  type PredictionOutcomeCardLabels,
+} from '@/components/predictions/prediction-outcome-card'
 import { buildLoginUrl } from '@/lib/auth-return-path'
-import { REWARD_MODE_POINTS, type Prediction } from '@/lib/graphql/queries/predictions'
+import { type Prediction } from '@/lib/graphql/queries/predictions'
 import { routes } from '@/lib/routes'
 
 type Props = {
@@ -55,6 +58,25 @@ export function PublicPredictionsClient({ slug, locationName, predictions: initi
     }
   }
 
+  function labelsFor(prediction: Prediction): PredictionOutcomeCardLabels {
+    return {
+      yourPick: t('yourPick'),
+      voting: t('voting'),
+      rewardSocial: t('rewardSocial'),
+      rewardPoints: t('rewardPoints', {
+        correct: prediction.pointsForCorrect,
+        vote: prediction.pointsForVote,
+      }),
+      statusClosed: t('statusClosed'),
+      statusResolved: t('statusResolved'),
+      awaitingResult: t('awaitingResult'),
+      youWereCorrect: t('youWereCorrect'),
+      youWereIncorrect: t('youWereIncorrect'),
+      winnerLabel: t('winnerLabel'),
+      voteCount: t('voteCount', { count: prediction.voteCount }),
+    }
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-10 sm:px-6 sm:py-14">
       <div className="space-y-2">
@@ -76,44 +98,21 @@ export function PublicPredictionsClient({ slug, locationName, predictions: initi
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
       ) : (
         <ul className="flex flex-col gap-4">
-          {predictions.map((prediction) => {
-            const votedOutcomeId = prediction.myVote?.outcomeId ?? null
-            return (
-              <li key={prediction.id} className="rounded-md border border-border px-3 py-3">
-                <p className="text-sm font-medium">{prediction.question}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {prediction.rewardMode === REWARD_MODE_POINTS
-                    ? t('rewardPoints', {
-                        correct: prediction.pointsForCorrect,
-                        vote: prediction.pointsForVote,
-                      })
-                    : t('rewardSocial')}
-                </p>
-                <div className="mt-3 flex flex-col gap-2">
-                  {prediction.outcomes.map((outcome) => {
-                    const selected = votedOutcomeId === outcome.id
-                    const busy = busyKey === `${prediction.id}:${outcome.id}`
-                    return (
-                      <Button
-                        key={outcome.id}
-                        type="button"
-                        variant={selected ? 'default' : 'outline'}
-                        className="h-auto min-h-10 justify-start whitespace-normal text-left"
-                        disabled={!isLoaded || votedOutcomeId != null || busyKey != null}
-                        onClick={() => void handleVote(prediction.id, outcome.id)}
-                      >
-                        {busy ? t('voting') : outcome.label}
-                        {selected ? ` · ${t('yourPick')}` : ''}
-                      </Button>
-                    )
-                  })}
-                </div>
-                {isLoaded && !isSignedIn ? (
-                  <p className="mt-2 text-xs text-muted-foreground">{t('signInHint')}</p>
-                ) : null}
-              </li>
-            )
-          })}
+          {predictions.map((prediction) => (
+            <PredictionOutcomeCard
+              key={prediction.id}
+              prediction={prediction}
+              labels={labelsFor(prediction)}
+              busyKey={busyKey}
+              voteDisabled={!isLoaded}
+              onVote={(outcomeId) => void handleVote(prediction.id, outcomeId)}
+              footer={
+                isLoaded && !isSignedIn && prediction.status === 'open' && !prediction.myVote ? (
+                  <p className="text-xs text-muted-foreground">{t('signInHint')}</p>
+                ) : null
+              }
+            />
+          ))}
         </ul>
       )}
 

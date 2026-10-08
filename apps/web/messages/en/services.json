@@ -109,6 +109,8 @@
         "questionLabel": "Question",
         "questionPlaceholder": "Who wins tonight?",
         "closesAtLabel": "Closes at",
+        "closesAtPlaceholder": "Pick date and time",
+        "closesAtTimeLabel": "Time",
         "outcomesLabel": "Outcomes",
         "outcomePlaceholder": "Outcome {index}",
         "addOutcome": "Add outcome",

@@ -98,6 +98,10 @@ query MyOpen {
     id
     question
     locationId
+    status
+    winningOutcomeId
+    resolvedAt
+    voteCount
     myVote { outcomeId }
   }
 }
@@ -576,3 +580,131 @@ def test_owner_list(pred_venue):
     )
     assert listed.errors is None, listed.errors
     assert len(listed.data["predictions"]) == 1
+
+
+def test_guest_home_closed_and_resolved_only_when_voted(pred_venue):
+    """Home keeps closed/resolved cards only for guests who voted."""
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_PREDICTION)
+    _touch_guest(lid, GUEST_A)
+    _touch_guest(lid, GUEST_B)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Result visibility?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["Yes", "No"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    pred_id = created.data["createPrediction"]["id"]
+    outcome_yes = created.data["createPrediction"]["outcomes"][0]["id"]
+
+    vote_a = asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"predictionId": pred_id, "outcomeId": outcome_yes},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    assert vote_a.errors is None, vote_a.errors
+
+    closed = asyncio.run(
+        schema.execute(
+            CLOSE,
+            variable_values={"predictionId": pred_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert closed.errors is None, closed.errors
+
+    home_voter = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert home_voter.errors is None, home_voter.errors
+    assert len(home_voter.data["myOpenPredictions"]) == 1
+    assert home_voter.data["myOpenPredictions"][0]["status"] == "closed"
+    assert home_voter.data["myOpenPredictions"][0]["myVote"]["outcomeId"] == outcome_yes
+
+    home_non_voter = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_B}))
+    assert home_non_voter.errors is None, home_non_voter.errors
+    assert home_non_voter.data["myOpenPredictions"] == []
+
+    resolved = asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={"predictionId": pred_id, "winningOutcomeId": outcome_yes},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert resolved.errors is None, resolved.errors
+
+    home_after = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert home_after.errors is None, home_after.errors
+    assert len(home_after.data["myOpenPredictions"]) == 1
+    card = home_after.data["myOpenPredictions"][0]
+    assert card["status"] == "resolved"
+    assert card["winningOutcomeId"] == outcome_yes
+
+    home_b_after = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_B}))
+    assert home_b_after.data["myOpenPredictions"] == []
+
+
+def test_guest_home_drops_resolved_outside_retention(pred_venue):
+    lid = pred_venue["location_id"]
+    _activate(lid, SERVICE_KEY_PREDICTION)
+    _touch_guest(lid, GUEST_A)
+
+    created = asyncio.run(
+        schema.execute(
+            CREATE,
+            variable_values={
+                "input": {
+                    "locationId": lid,
+                    "question": "Old result?",
+                    "closesAt": _closes_at(),
+                    "outcomes": ["A", "B"],
+                    "rewardMode": "social",
+                }
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    pred_id = created.data["createPrediction"]["id"]
+    outcome_a = created.data["createPrediction"]["outcomes"][0]["id"]
+
+    asyncio.run(
+        schema.execute(
+            VOTE,
+            variable_values={"predictionId": pred_id, "outcomeId": outcome_a},
+            context_value={"user_id": GUEST_A},
+        )
+    )
+    asyncio.run(
+        schema.execute(
+            RESOLVE,
+            variable_values={"predictionId": pred_id, "winningOutcomeId": outcome_a},
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    from graphql.data_sources.models.prediction import Prediction
+    from graphql.services.predictions import GUEST_RESOLVED_RETENTION_DAYS
+
+    session = SessionLocal()
+    try:
+        row = session.get(Prediction, pred_id)
+        assert row is not None
+        row.resolved_at = datetime.now(UTC) - timedelta(days=GUEST_RESOLVED_RETENTION_DAYS + 1)
+        session.commit()
+    finally:
+        session.close()
+
+    home = asyncio.run(schema.execute(MY_OPEN, context_value={"user_id": GUEST_A}))
+    assert home.errors is None, home.errors
+    assert home.data["myOpenPredictions"] == []
