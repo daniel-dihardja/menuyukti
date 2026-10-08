@@ -1,6 +1,7 @@
 import { apiFetch } from '@/lib/api/client-fetch'
 import type { PublicHolidayItem } from '@/lib/graphql/queries/analytics'
 import type { Playbook } from '@/lib/graphql/queries/playbooks'
+import type { NearbyFocusId, NearbyScanResult } from '@/lib/playbooks/nearby-locations'
 
 export type { Playbook }
 
@@ -284,6 +285,56 @@ export async function generateHolidayArtwork(params: {
     throw new Error(result.error)
   }
   return result.data
+}
+
+export async function scanNearbyLocations(params: {
+  locationId: number
+  address: string
+  instructions?: string
+  focus: NearbyFocusId[]
+}): Promise<NearbyScanResult> {
+  const instructions = params.instructions?.trim()
+  const result = await apiFetch<NearbyScanResult>(
+    '/api/playbooks/nearby-locations/scan',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        locationId: params.locationId,
+        address: params.address,
+        focus: params.focus,
+        ...(instructions ? { instructions } : {}),
+      }),
+    },
+    'Failed to scan nearby locations',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return {
+    origin: {
+      ...result.data.origin,
+      placeId: result.data.origin.placeId ?? null,
+      types: result.data.origin.types ?? [],
+      rating: result.data.origin.rating ?? null,
+      address: result.data.origin.address ?? null,
+      distanceMeters: result.data.origin.distanceMeters ?? null,
+      signals: result.data.origin.signals ?? [],
+      marketingHook: result.data.origin.marketingHook ?? null,
+      sources: result.data.origin.sources ?? [],
+    },
+    nodes: result.data.nodes.map((n) => ({
+      ...n,
+      placeId: n.placeId ?? null,
+      types: n.types ?? [],
+      rating: n.rating ?? null,
+      address: n.address ?? null,
+      distanceMeters: n.distanceMeters ?? null,
+      signals: n.signals ?? [],
+      marketingHook: n.marketingHook ?? null,
+      sources: n.sources ?? [],
+    })),
+  }
 }
 
 export async function listPlaybooks(playbookType: string): Promise<Playbook[]> {

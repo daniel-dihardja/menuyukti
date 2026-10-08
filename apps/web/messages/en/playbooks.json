@@ -32,7 +32,9 @@
       "locationRequired": "Select a location",
       "startRequired": "Select a start date",
       "endRequired": "Select an end date",
-      "endBeforeStart": "End date must be on or after the start date"
+      "endBeforeStart": "End date must be on or after the start date",
+      "addressRequired": "Enter an address to scan from",
+      "focusRequired": "Select at least one focus"
     },
     "deleteDialog": {
       "title": "Remove playbook?",
@@ -283,8 +285,82 @@
       "nearbyLocations": {
         "title": "Nearby Locations",
         "description": "Map offices, schools, colleges, and other demand nodes near a restaurant location for local marketing context.",
-        "emptyTitle": "Coming soon",
-        "emptyDescription": "Nearby Locations playbooks will help you discover and save interesting places around each restaurant. Create and run will be available in a future update."
+        "emptyTitle": "No playbook yet",
+        "emptyDescription": "Create a Nearby Locations playbook to scan demand nodes and competitors around a restaurant.",
+        "createTitle": "New Nearby Locations playbook",
+        "createDescription": "Set the address and marketing focus, then scan nearby places for local campaign ideas.",
+        "form": {
+          "nameLabel": "Playbook name",
+          "namePlaceholder": "e.g. Lunch demand · office park",
+          "locationLabel": "Location",
+          "locationPlaceholder": "Select a location",
+          "locationDescription": "Scan is scoped to this restaurant location.",
+          "addressLabel": "Address",
+          "addressPlaceholder": "Street, city, country",
+          "addressDescription": "Starting point for the nearby scan. Prefills from the location when available.",
+          "instructionsLabel": "Instructions",
+          "instructionsPlaceholder": "e.g. Focus on weekday lunch offices within walking distance; flag direct competitors with similar cuisine",
+          "instructionsDescription": "Tell the scanner what kinds of places matter for your marketing goals.",
+          "focusLabel": "Focus",
+          "focusDescription": "Pick one or more themes to guide Places search.",
+          "focus": {
+            "lunch_demand": "Lunch demand",
+            "competitors": "Competitors",
+            "schools": "Schools",
+            "hotels": "Hotels"
+          },
+          "noLocationsTitle": "Create a location first",
+          "noLocationsDescription": "Add a location before creating a Nearby Locations playbook.",
+          "noLocationsCta": "Add location"
+        },
+        "workspace": {
+          "workspaceHint": "Scan saves the playbook settings, then finds nearby places from the address and focus. Results stay in this browser tab.",
+          "sessionAlertTitle": "Session only",
+          "sessionAlertDescription": "Scan results stay in this browser tab. Refresh or leave the page and they are lost.",
+          "run": "Scan",
+          "running": "Scanning…",
+          "progress": {
+            "idle": "Ready to scan",
+            "geocoding": "Resolving address…",
+            "places": "Finding nearby places…",
+            "enriching": "Enriching with web context…",
+            "done": "Scan complete"
+          },
+          "filterLabel": "Show on map",
+          "filter": {
+            "all": "All",
+            "demand": "Demand",
+            "competitor": "Competitors",
+            "landmark": "Landmarks",
+            "origin": "Restaurant"
+          },
+          "mapTitle": "Nearby map",
+          "mapEmptyTitle": "No scan yet",
+          "mapEmptyDescription": "Adjust the settings above, then scan to load nearby places on the map.",
+          "mapMissingKeyTitle": "Map unavailable",
+          "mapMissingKeyDescription": "Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to show the map.",
+          "panelTitle": "Place details",
+          "panelEmptyTitle": "Select a place",
+          "panelEmptyDescription": "Click a marker on the map to see details and marketing notes.",
+          "panelKind": "Type",
+          "panelAddress": "Address",
+          "panelRating": "Rating",
+          "panelDistance": "Distance",
+          "panelDistanceValue": "{meters} m",
+          "panelSignals": "Signals",
+          "panelHook": "Marketing angle",
+          "panelSources": "Sources",
+          "panelOpenMaps": "Open in Google Maps",
+          "scanErrorTitle": "Scan failed",
+          "scanError": "Could not complete the nearby scan. Try again.",
+          "nodesCount": "{count, plural, one {# place} other {# places}}",
+          "kind": {
+            "demand": "Demand",
+            "competitor": "Competitor",
+            "landmark": "Landmark",
+            "origin": "Restaurant"
+          }
+        }
       }
     }
   }

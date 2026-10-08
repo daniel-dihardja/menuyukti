@@ -50,6 +50,7 @@ This app is a **uv workspace member** (see root `pyproject.toml`). Use `uv sync`
 
 ## Optional web search
 
-| Variable         | Default   | Purpose                                                       |
-| ---------------- | --------- | ------------------------------------------------------------- |
-| `TAVILY_API_KEY` | _(unset)_ | Optional. Enables Tavily **`search_web`** in chat ReAct only. |
+| Variable              | Default   | Purpose                                                                                                                                                    |
+| --------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TAVILY_API_KEY`      | _(unset)_ | Optional. Enables Tavily **`search_web`** in chat ReAct and Nearby Locations enrichment.                                                                   |
+| `GOOGLE_MAPS_API_KEY` | _(unset)_ | Required for Nearby Locations playbook scan (`POST /playbooks/nearby-locations/scan`). Places API (New). `GOOGLE_API_KEY` is accepted as a fallback alias. |
