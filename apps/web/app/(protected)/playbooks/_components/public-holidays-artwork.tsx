@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ImageIcon, Play, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ImageIcon, Play, RotateCcw } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
@@ -15,11 +16,15 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Progress } from '@workspace/ui/components/progress'
 import { Spinner } from '@workspace/ui/components/spinner'
+import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
 import type { ArtworkGenerateResult, VisualBriefResult } from '@/lib/playbooks/client-api'
+
+export const MAX_ARTWORK_VERSIONS = 3
 
 export type ArtworkProgress = {
   current: number
@@ -45,7 +50,8 @@ type PublicHolidaysArtworkProps = {
   holidays: ArtworkHolidayItem[]
   confirmedArtworks: ConfirmedArtwork[]
   statuses: Record<string, ArtworkItemStatus>
-  results: Record<string, ArtworkGenerateResult>
+  versionsById: Record<string, ArtworkGenerateResult[]>
+  selectedIndexById: Record<string, number>
   running: boolean
   progress: ArtworkProgress | null
   formatDate: (iso: string) => string
@@ -53,6 +59,8 @@ type PublicHolidaysArtworkProps = {
   onConfirm: (id: string) => void
   onSkip: (id: string) => void
   onRetry: (id: string) => void
+  onRegenerate: (id: string, feedback: string) => void
+  onSelectVersion: (id: string, index: number) => void
   onRemoveConfirmed: (id: string) => void
 }
 
@@ -95,7 +103,8 @@ export function PublicHolidaysArtwork({
   holidays,
   confirmedArtworks,
   statuses,
-  results,
+  versionsById,
+  selectedIndexById,
   running,
   progress,
   formatDate,
@@ -103,9 +112,13 @@ export function PublicHolidaysArtwork({
   onConfirm,
   onSkip,
   onRetry,
+  onRegenerate,
+  onSelectVersion,
   onRemoveConfirmed,
 }: PublicHolidaysArtworkProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace.artwork')
+  const [revisingId, setRevisingId] = useState<string | null>(null)
+  const [feedbackById, setFeedbackById] = useState<Record<string, string>>({})
 
   const generateDisabled = running || holidays.length === 0
   const progressValue =
@@ -164,8 +177,18 @@ export function PublicHolidaysArtwork({
               <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
                 {holidays.map((item) => {
                   const status = statuses[item.id] ?? 'pending'
-                  const image = results[item.id]
+                  const versions = versionsById[item.id] ?? []
+                  const selectedIndex = Math.min(
+                    selectedIndexById[item.id] ?? 0,
+                    Math.max(versions.length - 1, 0),
+                  )
+                  const image = versions[selectedIndex]
                   const canConfirm = status === 'ready' && Boolean(image)
+                  const isRevising = revisingId === item.id
+                  const feedback = feedbackById[item.id] ?? ''
+                  const feedbackTrimmed = feedback.trim()
+                  const atVersionCap = versions.length >= MAX_ARTWORK_VERSIONS
+                  const showVersionNav = versions.length > 1
 
                   return (
                     <li key={item.id} className="flex flex-col gap-3 px-3 py-3">
@@ -199,11 +222,47 @@ export function PublicHolidaysArtwork({
                           status === 'loading' && 'opacity-60',
                         )}
                       >
-                        <ArtworkImagePreview
-                          url={image?.url}
-                          alt={item.name}
-                          placeholderLabel={t('imagePlaceholder')}
-                        />
+                        <div className="flex flex-col items-center gap-2">
+                          <ArtworkImagePreview
+                            url={image?.url}
+                            alt={item.name}
+                            placeholderLabel={t('imagePlaceholder')}
+                          />
+                          {showVersionNav ? (
+                            <div
+                              className="flex items-center gap-1"
+                              role="group"
+                              aria-label={t('versionNavAria')}
+                            >
+                              <Button
+                                type="button"
+                                size="icon-sm"
+                                variant="ghost"
+                                disabled={running || selectedIndex <= 0}
+                                aria-label={t('versionPrevAria')}
+                                onClick={() => onSelectVersion(item.id, selectedIndex - 1)}
+                              >
+                                <ChevronLeft />
+                              </Button>
+                              <span className="text-muted-foreground min-w-10 text-center text-xs tabular-nums">
+                                {t('versionOf', {
+                                  current: selectedIndex + 1,
+                                  total: versions.length,
+                                })}
+                              </span>
+                              <Button
+                                type="button"
+                                size="icon-sm"
+                                variant="ghost"
+                                disabled={running || selectedIndex >= versions.length - 1}
+                                aria-label={t('versionNextAria')}
+                                onClick={() => onSelectVersion(item.id, selectedIndex + 1)}
+                              >
+                                <ChevronRight />
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
                         <div className="flex min-w-0 flex-1 flex-col gap-2">
                           <div>
                             <p className="text-muted-foreground text-xs font-medium">
@@ -227,6 +286,74 @@ export function PublicHolidaysArtwork({
                         </Alert>
                       ) : null}
 
+                      {isRevising && (status === 'ready' || status === 'error') ? (
+                        <FieldGroup className="gap-2 rounded-lg border border-border/60 p-3">
+                          <Field>
+                            <FieldLabel htmlFor={`ph-artwork-feedback-${item.id}`}>
+                              {t('feedbackLabel')}
+                            </FieldLabel>
+                            <Textarea
+                              id={`ph-artwork-feedback-${item.id}`}
+                              value={feedback}
+                              onChange={(e) =>
+                                setFeedbackById((prev) => ({ ...prev, [item.id]: e.target.value }))
+                              }
+                              placeholder={t('feedbackPlaceholder')}
+                              disabled={running}
+                              maxLength={1000}
+                              rows={3}
+                              className="min-h-16 resize-y"
+                            />
+                            <FieldDescription>
+                              {atVersionCap
+                                ? t('reviseDisabledMax', { max: MAX_ARTWORK_VERSIONS })
+                                : t('feedbackHint')}
+                            </FieldDescription>
+                          </Field>
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={running}
+                              onClick={() => {
+                                setRevisingId(null)
+                                setFeedbackById((prev) => {
+                                  const next = { ...prev }
+                                  delete next[item.id]
+                                  return next
+                                })
+                              }}
+                            >
+                              {t('cancelRevise')}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={
+                                running || feedbackTrimmed.length === 0 || atVersionCap || !image
+                              }
+                              onClick={() => {
+                                onRegenerate(item.id, feedbackTrimmed)
+                                setRevisingId(null)
+                                setFeedbackById((prev) => {
+                                  const next = { ...prev }
+                                  delete next[item.id]
+                                  return next
+                                })
+                              }}
+                            >
+                              {running ? (
+                                <Spinner data-icon="inline-start" />
+                              ) : (
+                                <RotateCcw data-icon="inline-start" />
+                              )}
+                              {running ? t('regenerating') : t('regenerate')}
+                            </Button>
+                          </div>
+                        </FieldGroup>
+                      ) : null}
+
                       <div className="flex flex-wrap justify-end gap-2">
                         {status === 'error' ? (
                           <Button
@@ -240,15 +367,33 @@ export function PublicHolidaysArtwork({
                             {t('retry')}
                           </Button>
                         ) : null}
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={!canConfirm || running}
-                          title={canConfirm ? undefined : t('confirmDisabledHint')}
-                          onClick={() => onConfirm(item.id)}
-                        >
-                          {t('confirm')}
-                        </Button>
+                        {(status === 'ready' || (status === 'error' && image)) && !isRevising ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={running || atVersionCap}
+                            title={
+                              atVersionCap
+                                ? t('reviseDisabledMax', { max: MAX_ARTWORK_VERSIONS })
+                                : undefined
+                            }
+                            onClick={() => setRevisingId(item.id)}
+                          >
+                            {t('revise')}
+                          </Button>
+                        ) : null}
+                        {!isRevising ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!canConfirm || running}
+                            title={canConfirm ? undefined : t('confirmDisabledHint')}
+                            onClick={() => onConfirm(item.id)}
+                          >
+                            {t('confirm')}
+                          </Button>
+                        ) : null}
                         <Button
                           type="button"
                           size="sm"

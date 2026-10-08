@@ -259,6 +259,8 @@ export async function draftHolidayVisualBrief(params: {
 export async function generateHolidayArtwork(params: {
   prompt: string
   styleImageName: string
+  previousImageName?: string
+  feedback?: string
 }): Promise<ArtworkGenerateResult> {
   const result = await apiFetch<ArtworkGenerateResult>(
     '/api/playbooks/public-holidays/generate-artwork',
@@ -268,6 +270,12 @@ export async function generateHolidayArtwork(params: {
       body: JSON.stringify({
         prompt: params.prompt,
         styleImageName: params.styleImageName,
+        ...(params.previousImageName !== undefined && params.feedback !== undefined
+          ? {
+              previousImageName: params.previousImageName,
+              feedback: params.feedback,
+            }
+          : {}),
       }),
     },
     'Failed to generate artwork',
