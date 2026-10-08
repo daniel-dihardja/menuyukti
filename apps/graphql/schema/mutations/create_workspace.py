@@ -21,6 +21,5 @@ class CreateWorkspaceMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createWorkspace")
         raise PermissionError(
-            "Self-serve workspace creation is disabled. "
-            "Workspaces are staff-provisioned only."
+            "Self-serve workspace creation is disabled. Workspaces are staff-provisioned only."
         )

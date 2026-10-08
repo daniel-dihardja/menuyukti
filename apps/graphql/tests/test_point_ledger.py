@@ -140,15 +140,11 @@ def _clear(session) -> None:
         )
     ).delete(synchronize_session=False)
     session.query(PosOrder).filter(
-        PosOrder.opened_by_clerk_user_id.in_(
-            [GUEST_USER_ID, OTHER_GUEST_ID, GRAPHQL_TEST_USER_ID]
-        )
+        PosOrder.opened_by_clerk_user_id.in_([GUEST_USER_ID, OTHER_GUEST_ID, GRAPHQL_TEST_USER_ID])
     ).delete(synchronize_session=False)
     session.query(PointEarnRule).filter(
         PointEarnRule.location_id.in_(
-            session.query(Location.id).filter(
-                Location.clerk_user_id.in_([GRAPHQL_TEST_USER_ID])
-            )
+            session.query(Location.id).filter(Location.clerk_user_id.in_([GRAPHQL_TEST_USER_ID]))
         )
     ).delete(synchronize_session=False)
     session.query(OrderFact).filter(
@@ -205,9 +201,7 @@ def _clear(session) -> None:
     session.query(WorkspaceMembership).filter(
         WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
     ).delete()
-    session.query(Workspace).filter(
-        Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
+    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
     session.commit()
 
 
@@ -407,9 +401,7 @@ def test_complete_order_awards_digital_menu_guest(points_venue):
     assert closed.errors is None, closed.errors
     assert closed.data["closePosOrder"]["status"] == "PAID"
 
-    balances = asyncio.run(
-        schema.execute(BALANCES, context_value={"user_id": GUEST_USER_ID})
-    )
+    balances = asyncio.run(schema.execute(BALANCES, context_value={"user_id": GUEST_USER_ID}))
     assert balances.errors is None, balances.errors
     rows = balances.data["myPointBalances"]
     assert len(rows) == 1
@@ -426,9 +418,7 @@ def test_complete_order_awards_digital_menu_guest(points_venue):
     )
     assert closed_again.errors is None, closed_again.errors
 
-    balances2 = asyncio.run(
-        schema.execute(BALANCES, context_value={"user_id": GUEST_USER_ID})
-    )
+    balances2 = asyncio.run(schema.execute(BALANCES, context_value={"user_id": GUEST_USER_ID}))
     assert balances2.data["myPointBalances"][0]["balance"] == 25
 
 
@@ -467,9 +457,7 @@ def test_staff_pos_close_does_not_award(points_venue):
     )
     assert closed.errors is None, closed.errors
 
-    owner_balances = asyncio.run(
-        schema.execute(BALANCES, context_value=graphql_auth_context())
-    )
+    owner_balances = asyncio.run(schema.execute(BALANCES, context_value=graphql_auth_context()))
     assert owner_balances.errors is None
     assert owner_balances.data["myPointBalances"] == []
 

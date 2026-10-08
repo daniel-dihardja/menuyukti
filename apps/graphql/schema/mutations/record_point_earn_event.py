@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import strawberry
 
+import graphql.services.point_ledger as ledger_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.types.point_ledger import RecordPointEarnEventResultType
-from graphql.services import point_ledger as ledger_svc
 
 
 @strawberry.type

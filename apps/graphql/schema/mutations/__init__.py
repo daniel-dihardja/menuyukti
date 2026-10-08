@@ -1,14 +1,14 @@
 from .award_crm_cashback import AwardCrmCashbackMutation
+from .close_prediction import ClosePredictionMutation
 from .create_calendar_entry import CreateCalendarEntryMutation
 from .create_crm_app import CreateCrmAppMutation
 from .create_crm_enrollment_token import CreateCrmEnrollmentTokenMutation
 from .create_location import CreateLocationMutation
 from .create_media_collection import CreateMediaCollectionMutation
-from .close_prediction import ClosePredictionMutation
 from .create_playbook import CreatePlaybookMutation
-from .create_prediction import CreatePredictionMutation
 from .create_post import CreatePostMutation
 from .create_post_page import CreatePostPageMutation
+from .create_prediction import CreatePredictionMutation
 from .create_style import CreateStyleMutation
 from .create_workspace import CreateWorkspaceMutation
 from .delete_analytics_run import DeleteAnalyticsRunMutation
@@ -42,8 +42,8 @@ from .provision_workspace import ProvisionWorkspaceMutation
 from .record_ai_usage_event import RecordAiUsageEventMutation
 from .record_point_earn_event import RecordPointEarnEventMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
-from .resolve_prediction import ResolvePredictionMutation
 from .replace_location_menu_items import ReplaceLocationMenuItemsMutation
+from .resolve_prediction import ResolvePredictionMutation
 from .revoke_crm_device import RevokeCrmDeviceMutation
 from .service_subscriptions import (
     ActivateServiceSubscriptionMutation,

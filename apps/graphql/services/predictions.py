@@ -173,10 +173,7 @@ def list_predictions_for_location(
     for row in rows:
         _maybe_auto_close(session, row)
     session.flush()
-    return [
-        _to_view(row, location_name=row.location.name if row.location else "")
-        for row in rows
-    ]
+    return [_to_view(row, location_name=row.location.name if row.location else "") for row in rows]
 
 
 def _guest_touched_location_ids(session: Session, clerk_user_id: str) -> set[int]:
@@ -189,9 +186,7 @@ def _guest_touched_location_ids(session: Session, clerk_user_id: str) -> set[int
     )
     from_orders = set(
         session.scalars(
-            select(PosOrder.location_id).where(
-                PosOrder.opened_by_clerk_user_id == clerk_user_id
-            )
+            select(PosOrder.location_id).where(PosOrder.opened_by_clerk_user_id == clerk_user_id)
         ).all()
     )
     return {int(x) for x in (from_ledger | from_orders)}
@@ -308,9 +303,7 @@ def create_prediction(
 
     if mode == REWARD_MODE_POINTS:
         if not is_active_subscription(session, location_id, SERVICE_KEY_POINT_SYSTEM):
-            raise ValueError(
-                "point_system subscription is required when reward_mode is points"
-            )
+            raise ValueError("point_system subscription is required when reward_mode is points")
         if correct_pts <= 0 and vote_pts <= 0:
             raise ValueError(
                 "points_for_correct or points_for_vote must be > 0 when reward_mode is points"
@@ -412,10 +405,7 @@ def vote_prediction(
     except IntegrityError as exc:
         raise ValueError("You have already voted on this prediction") from exc
 
-    if (
-        prediction.reward_mode == REWARD_MODE_POINTS
-        and int(prediction.points_for_vote) > 0
-    ):
+    if prediction.reward_mode == REWARD_MODE_POINTS and int(prediction.points_for_vote) > 0:
         award_fixed_amount(
             session,
             clerk_user_id=user_id,
@@ -458,10 +448,7 @@ def resolve_prediction(
     prediction.resolved_at = _now()
     session.flush()
 
-    if (
-        prediction.reward_mode == REWARD_MODE_POINTS
-        and int(prediction.points_for_correct) > 0
-    ):
+    if prediction.reward_mode == REWARD_MODE_POINTS and int(prediction.points_for_correct) > 0:
         for vote in prediction.votes:
             if int(vote.outcome_id) != int(winning_outcome_id):
                 continue

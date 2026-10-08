@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import strawberry
 
+import graphql.services.predictions as pred_svc
 from graphql.context import request_session_scope
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.predictions import prediction_to_gql
 from graphql.schema.types.prediction import PredictionType
-from graphql.services import predictions as pred_svc
 
 
 @strawberry.type

@@ -75,20 +75,17 @@ def balance_for_location(session: Session, *, clerk_user_id: str, location_id: i
 
 
 def list_balances_for_user(session: Session, *, clerk_user_id: str) -> list[PointBalanceView]:
-    rows = (
-        session.execute(
-            select(
-                PointLedgerEntry.location_id,
-                Location.name,
-                func.coalesce(func.sum(PointLedgerEntry.amount), 0),
-            )
-            .join(Location, Location.id == PointLedgerEntry.location_id)
-            .where(PointLedgerEntry.clerk_user_id == clerk_user_id)
-            .group_by(PointLedgerEntry.location_id, Location.name)
-            .order_by(Location.name.asc())
+    rows = session.execute(
+        select(
+            PointLedgerEntry.location_id,
+            Location.name,
+            func.coalesce(func.sum(PointLedgerEntry.amount), 0),
         )
-        .all()
-    )
+        .join(Location, Location.id == PointLedgerEntry.location_id)
+        .where(PointLedgerEntry.clerk_user_id == clerk_user_id)
+        .group_by(PointLedgerEntry.location_id, Location.name)
+        .order_by(Location.name.asc())
+    ).all()
     return [
         PointBalanceView(
             location_id=int(location_id),
@@ -106,16 +103,13 @@ def list_entries_for_user(
     limit: int = 20,
 ) -> list[PointEntryView]:
     capped = max(1, min(int(limit), 100))
-    rows = (
-        session.execute(
-            select(PointLedgerEntry, Location.name)
-            .join(Location, Location.id == PointLedgerEntry.location_id)
-            .where(PointLedgerEntry.clerk_user_id == clerk_user_id)
-            .order_by(PointLedgerEntry.created_at.desc())
-            .limit(capped)
-        )
-        .all()
-    )
+    rows = session.execute(
+        select(PointLedgerEntry, Location.name)
+        .join(Location, Location.id == PointLedgerEntry.location_id)
+        .where(PointLedgerEntry.clerk_user_id == clerk_user_id)
+        .order_by(PointLedgerEntry.created_at.desc())
+        .limit(capped)
+    ).all()
     return [
         PointEntryView(
             id=str(entry.id),
@@ -205,9 +199,7 @@ def _insert_ledger_entry(
 
     return PointEarnResult(
         awarded=True,
-        balance=balance_for_location(
-            session, clerk_user_id=clerk_user_id, location_id=location_id
-        ),
+        balance=balance_for_location(session, clerk_user_id=clerk_user_id, location_id=location_id),
         entry=entry,
     )
 

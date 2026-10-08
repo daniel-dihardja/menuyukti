@@ -307,9 +307,7 @@ def replace_menu_categories(
 
     existing_categories = {cat.id: cat for cat in menu.categories}
     # Prefer the selectinloaded category tree over Menu.items (passive_deletes).
-    existing_items = {
-        item.id: item for cat in menu.categories for item in cat.items
-    }
+    existing_items = {item.id: item for cat in menu.categories for item in cat.items}
     referenced_item_ids = _menu_item_ids_referenced_by_pos(session, menu.id)
 
     keep_category_ids: set[int] = set()

@@ -40,9 +40,7 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         return None
 
     location = session.scalars(
-        select(Location)
-        .options(selectinload(Location.menu))
-        .where(Location.public_slug == cleaned)
+        select(Location).options(selectinload(Location.menu)).where(Location.public_slug == cleaned)
     ).one_or_none()
     if location is None or not location.public_slug:
         return None
@@ -53,9 +51,7 @@ def get_public_location(session: Session, slug: str) -> PublicLocationView | Non
         and menu.public_enabled
         and is_active_subscription(session, int(location.id), SERVICE_KEY_DIGITAL_MENU)
     )
-    prediction_available = is_active_subscription(
-        session, int(location.id), SERVICE_KEY_PREDICTION
-    )
+    prediction_available = is_active_subscription(session, int(location.id), SERVICE_KEY_PREDICTION)
 
     return PublicLocationView(
         id=int(location.id),

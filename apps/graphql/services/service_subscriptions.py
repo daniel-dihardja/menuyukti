@@ -35,8 +35,7 @@ def normalize_service_key(service_key: str | None) -> str:
     value = (service_key or "").strip().lower()
     if value not in KNOWN_SERVICE_KEYS:
         raise ValueError(
-            f"Invalid service key: {service_key!r}. "
-            f"Expected one of {sorted(KNOWN_SERVICE_KEYS)}."
+            f"Invalid service key: {service_key!r}. Expected one of {sorted(KNOWN_SERVICE_KEYS)}."
         )
     return value
 

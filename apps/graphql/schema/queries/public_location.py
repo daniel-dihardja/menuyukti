@@ -5,14 +5,14 @@ from __future__ import annotations
 import strawberry
 from sqlalchemy import select
 
+import graphql.services.predictions as pred_svc
+import graphql.services.public_location as hub_svc
 from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.predictions import prediction_to_gql
 from graphql.schema.types.prediction import PredictionType
 from graphql.schema.types.public_location import PublicLocationServiceType, PublicLocationType
-from graphql.services import predictions as pred_svc
-from graphql.services import public_location as hub_svc
 
 
 def _hub_to_gql(view: hub_svc.PublicLocationView) -> PublicLocationType:

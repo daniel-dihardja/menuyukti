@@ -19,7 +19,6 @@ from graphql.schema import schema
 from graphql.services.service_subscriptions import (
     SERVICE_KEY_POINT_SYSTEM,
     SERVICE_KEY_PREDICTION,
-    SERVICE_STATUS_ACTIVE,
 )
 from graphql.services.workspace_plan import WORKSPACE_PLAN_PRO
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
@@ -131,25 +130,19 @@ def _clear(session) -> None:
     )
     session.query(PredictionOutcome).delete(synchronize_session=False)
     session.query(Prediction).delete(synchronize_session=False)
-    session.query(PosOrder).filter(
-        PosOrder.opened_by_clerk_user_id.in_([GUEST_A, GUEST_B])
-    ).delete(synchronize_session=False)
+    session.query(PosOrder).filter(PosOrder.opened_by_clerk_user_id.in_([GUEST_A, GUEST_B])).delete(
+        synchronize_session=False
+    )
     session.query(ServiceSubscription).filter(
         ServiceSubscription.location_id.in_(
-            session.query(Location.id).filter(
-                Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-            )
+            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
         )
     ).delete(synchronize_session=False)
-    session.query(Location).filter(
-        Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
+    session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
     session.query(WorkspaceMembership).filter(
         WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
     ).delete()
-    session.query(Workspace).filter(
-        Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
+    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
     session.commit()
 
 
@@ -406,12 +399,8 @@ def test_points_mode_awards_on_resolve(pred_venue):
         )
     )
 
-    bal_a = asyncio.run(
-        schema.execute(BALANCES, context_value={"user_id": GUEST_A})
-    )
-    bal_b = asyncio.run(
-        schema.execute(BALANCES, context_value={"user_id": GUEST_B})
-    )
+    bal_a = asyncio.run(schema.execute(BALANCES, context_value={"user_id": GUEST_A}))
+    bal_b = asyncio.run(schema.execute(BALANCES, context_value={"user_id": GUEST_B}))
     assert bal_a.errors is None, bal_a.errors
     assert bal_b.errors is None, bal_b.errors
     assert bal_a.data["myPointBalances"][0]["balance"] == 30  # 5 vote + 25 correct

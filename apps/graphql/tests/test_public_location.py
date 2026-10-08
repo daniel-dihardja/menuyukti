@@ -65,27 +65,19 @@ def _clear(session) -> None:
     session.query(Prediction).delete(synchronize_session=False)
     session.query(Menu).filter(
         Menu.location_id.in_(
-            session.query(Location.id).filter(
-                Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-            )
+            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
         )
     ).delete(synchronize_session=False)
     session.query(ServiceSubscription).filter(
         ServiceSubscription.location_id.in_(
-            session.query(Location.id).filter(
-                Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-            )
+            session.query(Location.id).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID)
         )
     ).delete(synchronize_session=False)
-    session.query(Location).filter(
-        Location.clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
+    session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
     session.query(WorkspaceMembership).filter(
         WorkspaceMembership.clerk_user_id == GRAPHQL_TEST_USER_ID
     ).delete()
-    session.query(Workspace).filter(
-        Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID
-    ).delete()
+    session.query(Workspace).filter(Workspace.owner_clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
     session.commit()
 
 
@@ -133,17 +125,13 @@ def hub_venue():
 
 
 def test_public_location_unknown_slug():
-    result = asyncio.run(
-        schema.execute(HUB, variable_values={"slug": "does-not-exist-xyz"})
-    )
+    result = asyncio.run(schema.execute(HUB, variable_values={"slug": "does-not-exist-xyz"}))
     assert result.errors is None, result.errors
     assert result.data["publicLocation"] is None
 
 
 def test_public_location_greeting_only_no_services(hub_venue):
-    result = asyncio.run(
-        schema.execute(HUB, variable_values={"slug": hub_venue["slug"]})
-    )
+    result = asyncio.run(schema.execute(HUB, variable_values={"slug": hub_venue["slug"]}))
     assert result.errors is None, result.errors
     hub = result.data["publicLocation"]
     assert hub["name"] == "Hub Cafe"
@@ -181,9 +169,7 @@ def test_public_location_menu_and_prediction_flags(hub_venue):
     finally:
         session.close()
 
-    result = asyncio.run(
-        schema.execute(HUB, variable_values={"slug": hub_venue["slug"]})
-    )
+    result = asyncio.run(schema.execute(HUB, variable_values={"slug": hub_venue["slug"]}))
     assert result.errors is None, result.errors
     by_key = {s["key"]: s for s in result.data["publicLocation"]["services"]}
     assert by_key["digital_menu"]["available"] is True
@@ -218,14 +204,10 @@ def test_public_location_predictions(hub_venue):
     finally:
         session.close()
 
-    empty = asyncio.run(
-        schema.execute(PREDS, variable_values={"slug": "nope"})
-    )
+    empty = asyncio.run(schema.execute(PREDS, variable_values={"slug": "nope"}))
     assert empty.data["publicLocationPredictions"] == []
 
-    listed = asyncio.run(
-        schema.execute(PREDS, variable_values={"slug": hub_venue["slug"]})
-    )
+    listed = asyncio.run(schema.execute(PREDS, variable_values={"slug": hub_venue["slug"]}))
     assert listed.errors is None, listed.errors
     assert len(listed.data["publicLocationPredictions"]) == 1
     assert listed.data["publicLocationPredictions"][0]["question"] == "Who wins?"

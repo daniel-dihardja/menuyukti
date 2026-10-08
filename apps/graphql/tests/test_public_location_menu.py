@@ -120,9 +120,7 @@ def menu_location_id():
     yield lid
     session = SessionLocal()
     try:
-        session.query(ServiceSubscription).filter(
-            ServiceSubscription.location_id == lid
-        ).delete()
+        session.query(ServiceSubscription).filter(ServiceSubscription.location_id == lid).delete()
         session.query(MenuItem).filter(
             MenuItem.menu_id.in_(session.query(Menu.id).filter(Menu.location_id == lid))
         ).delete(synchronize_session=False)
@@ -131,9 +129,7 @@ def menu_location_id():
         ).delete(synchronize_session=False)
         session.query(Menu).filter(Menu.location_id == lid).delete()
         session.query(Location).filter(Location.id == lid).delete()
-        session.query(WorkspaceMembership).filter(
-            WorkspaceMembership.workspace_id == wid
-        ).delete()
+        session.query(WorkspaceMembership).filter(WorkspaceMembership.workspace_id == wid).delete()
         session.query(Workspace).filter(Workspace.id == wid).delete()
         session.commit()
     finally:

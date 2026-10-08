@@ -59,9 +59,7 @@ class UpdateLocationPublicMenuMutation:
             menu = get_or_create_menu(session, location_id)
 
             next_enabled = (
-                bool(public_enabled)
-                if public_enabled is not UNSET
-                else bool(menu.public_enabled)
+                bool(public_enabled) if public_enabled is not UNSET else bool(menu.public_enabled)
             )
             if next_enabled and not location.public_slug:
                 raise ValueError("publicSlug is required when publicEnabled is true")
@@ -69,9 +67,7 @@ class UpdateLocationPublicMenuMutation:
             if (
                 public_enabled is not UNSET
                 and next_enabled
-                and not is_active_subscription(
-                    session, location_id, SERVICE_KEY_DIGITAL_MENU
-                )
+                and not is_active_subscription(session, location_id, SERVICE_KEY_DIGITAL_MENU)
             ):
                 raise ValueError(
                     "An active digital_menu subscription is required before "

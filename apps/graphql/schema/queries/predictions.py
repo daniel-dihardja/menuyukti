@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import strawberry
 
+import graphql.services.predictions as pred_svc
 from graphql.context import request_session_scope
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types.prediction import (
@@ -11,7 +12,6 @@ from graphql.schema.types.prediction import (
     PredictionType,
     PredictionVoteType,
 )
-from graphql.services import predictions as pred_svc
 
 
 def _vote_to_gql(vote: pred_svc.VoteView) -> PredictionVoteType:
@@ -88,7 +88,5 @@ class PredictionsQuery:
         with request_session_scope(info) as session:
             return [
                 prediction_to_gql(view)
-                for view in pred_svc.list_open_predictions_for_guest(
-                    session, clerk_user_id=user_id
-                )
+                for view in pred_svc.list_open_predictions_for_guest(session, clerk_user_id=user_id)
             ]

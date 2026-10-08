@@ -69,11 +69,7 @@ def require_active_point_system(session: Session, location_id: int) -> None:
 
 
 def list_rules_for_location(session: Session, location_id: int) -> list[PointEarnRuleView]:
-    rows = (
-        session.query(PointEarnRule)
-        .filter(PointEarnRule.location_id == location_id)
-        .all()
-    )
+    rows = session.query(PointEarnRule).filter(PointEarnRule.location_id == location_id).all()
     by_key = {row.action_key: row for row in rows}
     result: list[PointEarnRuleView] = []
     for entry in KNOWN_POINT_EARN_ACTIONS:

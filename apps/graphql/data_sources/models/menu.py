@@ -245,7 +245,9 @@ class MenuModifierOption(Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False)
-    price_delta: Mapped[float] = mapped_column(Float, nullable=False, default=0.0, server_default="0")
+    price_delta: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0, server_default="0"
+    )
     is_available: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
