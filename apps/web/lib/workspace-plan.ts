@@ -9,11 +9,11 @@ export type WorkspacePlan = typeof WORKSPACE_PLAN_FREE | typeof WORKSPACE_PLAN_P
  * Product tiers (Menuyukti = creative agency for restaurants, cafés, and bars):
  *
  * - **free** / no workspace — guest / customer accounts (mainly PWA). Sign-up is
- *   Clerk-only until staff provisions a workspace. Post-auth default is the marketing
- *   landing (`/`); optional customer shell: `/home` + `/profile` under `app/(customer)/`
+ *   Clerk-only until staff provisions a workspace. Post-auth default is the customer
+ *   hub (`/home`); customer shell also includes `/profile` under `app/(customer)/`
  *   (no operator sidebar).
  * - **pro** — restaurant-owner clients; staff-provisioned via the staff console
- *   (`provisionWorkspace`). Operator surfaces for clients include Branches,
+ *   (`provisionWorkspace`). Operator surfaces for clients include Home (Locations),
  *   Inventar, Team, Dashboard (when flagged), AI chat (`/advisor`), media, and AI usage.
  *   Playbooks, calendar, CRM, and print shop remain platform-admin only
  *   (see `config/admin-only-features.json`). Self-serve workspace creation is disabled.
@@ -38,18 +38,18 @@ const FREE_PROFILE_BLOCKED_PREFIXES = ['/profile/team'] as const
 
 /**
  * Operator sidebar keys that pro plan unlocks vs free (contrast with free’s Home-only nav).
- * Kept for documentation and tests; {@link isNavKeyAllowedForPlan} allows all keys on pro
- * except `home` (guest-only). Admin-only keys (playbooks, calendar, CRM, …) are filtered
- * separately via `config/admin-only-features.json`.
+ * Kept for documentation and tests; {@link isNavKeyAllowedForPlan} allows `home` on both
+ * plans and hides `branches` (Home replaces Locations in the sidebar). Admin-only keys
+ * (playbooks, calendar, CRM, …) are filtered separately via `config/admin-only-features.json`.
  */
 export const PRO_NAV_KEYS = new Set([
+  'home',
   'dashboard',
   'chat',
   'playbooks',
   'posts',
   'media',
   'calendar',
-  'branches',
   'crm',
   'crmApps',
   'crmRegistrations',
@@ -70,9 +70,12 @@ export function isProPlan(plan: string | null | undefined): boolean {
 }
 
 export function isNavKeyAllowedForPlan(navKey: string, plan: string | null | undefined): boolean {
-  // Guest home is free-only — operators stay chat-first without a redundant Home entry.
+  // Home is the plan-aware entry for everyone; Locations (`branches`) is reached via Home.
+  if (navKey === 'branches') {
+    return false
+  }
   if (navKey === 'home') {
-    return !isProPlan(plan)
+    return true
   }
   if (isProPlan(plan)) return true
   return FREE_NAV_KEYS.has(navKey)
@@ -111,10 +114,10 @@ export function isPathnameAllowedForPlan(
   return false
 }
 
-/** Post-login / brand home: guests → landing (`/`); restaurant clients → Branches. */
+/** Post-login / brand home: guests → customer hub (`/home`); restaurant clients → Locations. */
 export function getDefaultPathForPlan(plan: string | null | undefined): string {
   if (isProPlan(plan)) {
     return routes.analytics.branches
   }
-  return routes.root
+  return routes.home
 }
