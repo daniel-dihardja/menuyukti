@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
@@ -7,7 +8,10 @@ import type { Metadata } from 'next'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { getCachedLocation } from '@/lib/graphql/cached-queries'
+import { graphqlQuery } from '@/lib/graphql/client'
+import { LOCATION_QUERY, type LocationData } from '@/lib/graphql/queries/locations'
 import { ANALYTICS_REPORT_SHELL_MAIN_CLASS, LOCATION_DETAIL_SECTION_CLASS } from '@/lib/app-layout'
 import { routes } from '@/lib/routes'
 import { LocationForm, type Weekday } from '../location-form'
@@ -16,27 +20,23 @@ type PageProps = {
   params: Promise<{ id: string }>
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const t = await getTranslations('analytics.branches')
-  const description = t('description')
-  const { id } = await params
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated || !userId) {
-    return { title: t('title'), description, openGraph: { title: t('title'), description } }
-  }
-  const data = await getCachedLocation(userId, id)
-  const title = data.location?.name ?? t('title')
-  return { title, description, openGraph: { title, description } }
+function LocationDetailSkeleton() {
+  return (
+    <section className={LOCATION_DETAIL_SECTION_CLASS}>
+      <Skeleton className="h-10 w-64" />
+      <Skeleton className="mt-4 h-80 w-full rounded-lg" />
+    </section>
+  )
 }
 
-export default async function Page({ params }: PageProps) {
+async function LocationDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await getCachedLocation(userId, id)
+  const data = await graphqlQuery<LocationData>(LOCATION_QUERY, { id }, userId, 'Location')
   const location = data.location
   if (!location) {
     notFound()
@@ -60,57 +60,78 @@ export default async function Page({ params }: PageProps) {
   ]
 
   return (
+    <section className={LOCATION_DETAIL_SECTION_CLASS}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <PageHeading title={location.name} />
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href={routes.analytics.branchesReports(location.id)}>{t('manageReports')}</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={routes.analytics.branchesMenu(location.id)}>{t('manageMenu')}</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={routes.analytics.branchesPos(location.id)}>{t('managePos')}</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={routes.analytics.branchesCogs(location.id)}>{t('manageCogs')}</Link>
+          </Button>
+        </div>
+      </div>
+      <LocationForm
+        key={`${location.id}-${JSON.stringify(location.manualBriefInput?.quickProfile ?? {})}`}
+        mode="edit"
+        locationId={location.id}
+        initialManualQuickProfile={location.manualBriefInput?.quickProfile ?? null}
+        initialAreas={location.areas ?? []}
+        initialValues={{
+          name: location.name,
+          street: location.street ?? '',
+          city: location.city ?? '',
+          country: location.country ?? '',
+          currency: location.currency ?? '',
+          publicSlug: location.publicSlug ?? '',
+          openingHours: weekdays.map((day) => {
+            const slot = openingHoursByDay.get(day)
+            const hasSlot = Boolean(slot?.open && slot?.close)
+            return {
+              dayOfWeek: day,
+              closed: !hasSlot,
+              openTime: hasSlot ? (slot?.open ?? '') : '',
+              closeTime: hasSlot ? (slot?.close ?? '') : '',
+            }
+          }),
+        }}
+      />
+    </section>
+  )
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const t = await getTranslations('analytics.branches')
+  const description = t('description')
+  const { id } = await params
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    return { title: t('title'), description, openGraph: { title: t('title'), description } }
+  }
+  const data = await getCachedLocation(userId, id)
+  const title = data.location?.name ?? t('title')
+  return { title, description, openGraph: { title, description } }
+}
+
+export default async function Page({ params }: PageProps) {
+  const t = await getTranslations('analytics.branches')
+
+  return (
     <AnalyticsPageShell
-      title={location.name}
-      breadcrumbs={[
-        { label: t('title'), href: routes.analytics.branches },
-        { label: location.name },
-      ]}
+      title={t('title')}
+      breadcrumbs={[{ label: t('title'), href: routes.analytics.branches }]}
       mainClassName={ANALYTICS_REPORT_SHELL_MAIN_CLASS}
     >
-      <section className={LOCATION_DETAIL_SECTION_CLASS}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <PageHeading title={location.name} />
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
-              <Link href={routes.analytics.branchesReports(location.id)}>{t('manageReports')}</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={routes.analytics.branchesMenu(location.id)}>{t('manageMenu')}</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={routes.analytics.branchesPos(location.id)}>{t('managePos')}</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={routes.analytics.branchesCogs(location.id)}>{t('manageCogs')}</Link>
-            </Button>
-          </div>
-        </div>
-        <LocationForm
-          key={`${location.id}-${JSON.stringify(location.manualBriefInput?.quickProfile ?? {})}`}
-          mode="edit"
-          locationId={location.id}
-          initialManualQuickProfile={location.manualBriefInput?.quickProfile ?? null}
-          initialAreas={location.areas ?? []}
-          initialValues={{
-            name: location.name,
-            street: location.street ?? '',
-            city: location.city ?? '',
-            country: location.country ?? '',
-            currency: location.currency ?? '',
-            openingHours: weekdays.map((day) => {
-              const slot = openingHoursByDay.get(day)
-              const hasSlot = Boolean(slot?.open && slot?.close)
-              return {
-                dayOfWeek: day,
-                closed: !hasSlot,
-                openTime: hasSlot ? (slot?.open ?? '') : '',
-                closeTime: hasSlot ? (slot?.close ?? '') : '',
-              }
-            }),
-          }}
-        />
-      </section>
+      <Suspense fallback={<LocationDetailSkeleton />}>
+        <LocationDetailContent params={params} />
+      </Suspense>
     </AnalyticsPageShell>
   )
 }

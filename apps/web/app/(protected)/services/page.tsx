@@ -24,9 +24,18 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import {
   MY_SERVICE_SUBSCRIPTIONS_QUERY,
   SERVICE_KEY_DIGITAL_MENU,
+  SERVICE_KEY_POINT_SYSTEM,
+  SERVICE_KEY_PREDICTION,
   SERVICE_STATUS_ACTIVE,
   type MyServiceSubscriptionsData,
 } from '@/lib/graphql/queries/service-subscriptions'
+import {
+  SERVICE_CATEGORIES,
+  SERVICE_CATEGORY_GAMIFICATION,
+  SERVICE_CATEGORY_GUEST_EXPERIENCE,
+  SERVICE_CATEGORY_LOYALTY,
+  type ServiceCategory,
+} from '@/lib/services/catalog'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -54,6 +63,20 @@ function DigitalMenuPreview() {
         <div className="bg-muted h-2 w-1/2 rounded" />
         <div className="bg-muted mt-auto h-2 w-full rounded" />
       </div>
+    </div>
+  )
+}
+
+function PointSystemPreview() {
+  return (
+    <div className="border-border bg-background flex w-44 flex-col gap-3 rounded-xl border p-4 shadow-sm">
+      <div className="bg-muted h-2 w-1/2 rounded" />
+      <div className="flex items-end gap-1.5">
+        <span className="text-2xl font-semibold tracking-tight">1,240</span>
+        <span className="text-muted-foreground pb-0.5 text-xs">pts</span>
+      </div>
+      <div className="bg-muted h-2 w-full rounded" />
+      <div className="bg-muted h-2 w-2/3 rounded" />
     </div>
   )
 }
@@ -87,6 +110,24 @@ function CashbackPreview() {
       </div>
       <div className="bg-muted h-2 w-full rounded" />
       <div className="bg-muted h-2 w-3/4 rounded" />
+    </div>
+  )
+}
+
+function PredictionPreview() {
+  return (
+    <div className="border-border bg-background flex w-48 flex-col gap-3 rounded-xl border p-4 shadow-sm">
+      <div className="bg-muted h-2 w-3/4 rounded" />
+      <div className="flex flex-col gap-2">
+        <div className="border-border flex items-center gap-2 rounded-md border px-2 py-1.5">
+          <div className="bg-muted size-3 rounded-full" />
+          <div className="bg-muted h-2 flex-1 rounded" />
+        </div>
+        <div className="border-border flex items-center gap-2 rounded-md border px-2 py-1.5">
+          <div className="border-border size-3 rounded-full border" />
+          <div className="bg-muted h-2 w-2/3 rounded" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -181,6 +222,14 @@ export default async function ServicesPage() {
     (row) => row.serviceKey === SERVICE_KEY_DIGITAL_MENU,
   ).length
 
+  const pointSystemSubCount = activeSubscriptions.filter(
+    (row) => row.serviceKey === SERVICE_KEY_POINT_SYSTEM,
+  ).length
+
+  const predictionSubCount = activeSubscriptions.filter(
+    (row) => row.serviceKey === SERVICE_KEY_PREDICTION,
+  ).length
+
   const overviewRows = activeSubscriptions.flatMap((row) => {
     const locationId = Number(row.locationId)
     if (!Number.isInteger(locationId) || locationId < 1) return []
@@ -196,6 +245,79 @@ export default async function ServicesPage() {
 
   const pricingComingSoon = tCatalog('pricingComingSoon')
 
+  const categoryCards: Record<ServiceCategory, ReactNode[]> = {
+    [SERVICE_CATEGORY_GUEST_EXPERIENCE]: [
+      <CatalogCard
+        key="digital_menu"
+        title={tCatalog('digitalMenu.title')}
+        benefit={tCatalog('digitalMenu.benefit')}
+        status={
+          <Badge variant="secondary">
+            {digitalMenuSubCount > 0
+              ? tCatalog('digitalMenu.statusOn', { count: digitalMenuSubCount })
+              : tCatalog('digitalMenu.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<DigitalMenuPreview />}
+        href={routes.servicesDigitalMenu}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+    ],
+    [SERVICE_CATEGORY_LOYALTY]: [
+      <CatalogCard
+        key="point_system"
+        title={tCatalog('pointSystem.title')}
+        benefit={tCatalog('pointSystem.benefit')}
+        status={
+          <Badge variant="secondary">
+            {pointSystemSubCount > 0
+              ? tCatalog('pointSystem.statusOn', { count: pointSystemSubCount })
+              : tCatalog('pointSystem.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<PointSystemPreview />}
+        href={routes.servicesPointSystem}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+      <CatalogCard
+        key="stamp_card"
+        title={tCatalog('stampCard.title')}
+        benefit={tCatalog('stampCard.benefit')}
+        status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
+        pricingComingSoon={pricingComingSoon}
+        preview={<StampCardPreview />}
+      />,
+      <CatalogCard
+        key="cashback"
+        title={tCatalog('cashback.title')}
+        benefit={tCatalog('cashback.benefit')}
+        status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
+        pricingComingSoon={pricingComingSoon}
+        preview={<CashbackPreview />}
+      />,
+    ],
+    [SERVICE_CATEGORY_GAMIFICATION]: [
+      <CatalogCard
+        key="prediction"
+        title={tCatalog('prediction.title')}
+        benefit={tCatalog('prediction.benefit')}
+        status={
+          <Badge variant="secondary">
+            {predictionSubCount > 0
+              ? tCatalog('prediction.statusOn', { count: predictionSubCount })
+              : tCatalog('prediction.statusAvailable')}
+          </Badge>
+        }
+        pricingComingSoon={pricingComingSoon}
+        preview={<PredictionPreview />}
+        href={routes.servicesPrediction}
+        ctaLabel={tCatalog('viewCta')}
+      />,
+    ],
+  }
+
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
       <div className="flex flex-col gap-8">
@@ -208,36 +330,17 @@ export default async function ServicesPage() {
 
         <Separator />
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <CatalogCard
-            title={tCatalog('digitalMenu.title')}
-            benefit={tCatalog('digitalMenu.benefit')}
-            status={
-              <Badge variant="secondary">
-                {digitalMenuSubCount > 0
-                  ? tCatalog('digitalMenu.statusOn', { count: digitalMenuSubCount })
-                  : tCatalog('digitalMenu.statusAvailable')}
-              </Badge>
-            }
-            pricingComingSoon={pricingComingSoon}
-            preview={<DigitalMenuPreview />}
-            href={routes.servicesDigitalMenu}
-            ctaLabel={tCatalog('viewCta')}
-          />
-          <CatalogCard
-            title={tCatalog('stampCard.title')}
-            benefit={tCatalog('stampCard.benefit')}
-            status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
-            pricingComingSoon={pricingComingSoon}
-            preview={<StampCardPreview />}
-          />
-          <CatalogCard
-            title={tCatalog('cashback.title')}
-            benefit={tCatalog('cashback.benefit')}
-            status={<Badge variant="outline">{tCatalog('comingSoon')}</Badge>}
-            pricingComingSoon={pricingComingSoon}
-            preview={<CashbackPreview />}
-          />
+        <div className="flex flex-col gap-10">
+          {SERVICE_CATEGORIES.map((category) => (
+            <section key={category} className="flex flex-col gap-4">
+              <h2 className="text-base font-semibold tracking-tight">
+                {tCatalog(`categories.${category}`)}
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {categoryCards[category]}
+              </div>
+            </section>
+          ))}
         </div>
       </div>
     </AnalyticsPageShell>

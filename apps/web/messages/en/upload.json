@@ -1,0 +1,7 @@
+{
+  "upload": {
+    "NO_FILE_UPLOADED": "Please upload a file.",
+    "INVALID_FILE_TYPE": "Only .xlsx files are allowed.",
+    "UPLOAD_FAILED": "Upload failed. Please try again."
+  }
+}

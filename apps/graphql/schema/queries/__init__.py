@@ -17,12 +17,16 @@ from .menu_catalog import MenuCatalogQuery
 from .menu_combos import MenuCombosQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
+from .my_points import MyPointsQuery
 from .operating_profile import OperatingProfileQuery
 from .playbooks import PlaybooksQuery
+from .point_earn_rules import PointEarnRulesQuery
 from .pos_orders import PosOrdersQuery
 from .posts import PostsQuery
+from .predictions import PredictionsQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
+from .public_location import PublicLocationQuery
 from .public_location_menu import PublicLocationMenuQuery
 from .revenue_trends import RevenueTrendsQuery
 from .scheduler_calendar import SchedulerCalendarQuery
@@ -55,8 +59,12 @@ __all__ = [
     "PlaybooksQuery",
     "PosOrdersQuery",
     "SchedulerCalendarQuery",
+    "MyPointsQuery",
+    "PointEarnRulesQuery",
+    "PredictionsQuery",
     "ServiceSubscriptionsQuery",
     "PublicHolidaysQuery",
+    "PublicLocationQuery",
     "PublicLocationMenuQuery",
     "OperatingProfileQuery",
     "PostsQuery",

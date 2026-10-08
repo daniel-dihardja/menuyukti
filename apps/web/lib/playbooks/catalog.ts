@@ -3,6 +3,13 @@ export const PLAYBOOK_CATALOG = [
     id: 'publicHolidays',
     slug: 'public-holidays',
     playbookType: 'public_holidays',
+    supportsCreate: true,
+  },
+  {
+    id: 'nearbyLocations',
+    slug: 'nearby-locations',
+    playbookType: 'nearby_locations',
+    supportsCreate: false,
   },
 ] as const
 

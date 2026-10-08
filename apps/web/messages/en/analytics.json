@@ -1,0 +1,1101 @@
+{
+  "analytics": {
+    "branches": {
+      "title": "Locations",
+      "description": "Power analytics and Instagram campaigns for each venue. Configure basics here, then upload POS sales reports.",
+      "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
+      "table": {
+        "index": "#",
+        "branchName": "Location Name",
+        "city": "City",
+        "action": "Actions",
+        "view": "Edit Location",
+        "viewAnalytics": "View Latest Analytics",
+        "uploadSales": "Upload Sales Report",
+        "delete": "Delete",
+        "deleteConfirmTitle": "Delete this location?",
+        "deleteConfirmDescription": "This permanently removes “{name}” and its sales analytics, inventory stock, and calendar entries. This cannot be undone.",
+        "deleteConfirmCancel": "Cancel",
+        "deleteConfirmAction": "Delete location",
+        "deleting": "Deleting…",
+        "deleteSuccessToast": "Location deleted",
+        "deleteErrorToast": "Could not delete location",
+        "empty": "No locations available yet.",
+        "mobile": {
+          "actionsTrigger": "Actions",
+          "sheetDescription": "Choose an action for this location."
+        },
+        "status": {
+          "incomplete": "Setup incomplete",
+          "readyForSales": "Ready for sales",
+          "analyticsActive": "Analytics active"
+        }
+      },
+      "empty": {
+        "title": "Add your first location",
+        "description": "Locations unlock sales uploads, menu analytics, and AI-powered Instagram campaigns.",
+        "createCta": "Create New Location",
+        "salesHint": "Then upload a POS sales report to start analytics.",
+        "salesCta": "Go to Sales Reports"
+      },
+      "create": "Create New Location",
+      "freePlanLocationLimit": "Locations are part of Pro (restaurant clients). Guest accounts use Home and profile only.",
+      "manageMenu": "Manage menu",
+      "managePos": "POS",
+      "manageCogs": "Manage COGS",
+      "manageReports": "Sales reports",
+      "form": {
+        "createTitle": "Create Location",
+        "nameLabel": "Location name",
+        "namePlaceholder": "Berlin Mitte",
+        "publicSlugLabel": "Public URL slug",
+        "publicSlugPlaceholder": "berlin-mitte",
+        "publicSlugHint": "Guest home, menu, and predictions use this as the first URL path segment. Lowercase letters, numbers, and hyphens.",
+        "streetLabel": "Street address",
+        "streetPlaceholder": "Rosenthaler Str. 1",
+        "cityLabel": "City",
+        "cityPlaceholder": "Berlin",
+        "countryLabel": "Country",
+        "countrySelectPlaceholder": "Select country",
+        "currencyLabel": "Currency",
+        "currencySelectPlaceholder": "Select currency",
+        "noneOption": "Not set",
+        "countryOptions": {
+          "id": "Indonesia",
+          "de": "Germany"
+        },
+        "currencyOptions": {
+          "IDR": "IDR",
+          "EUR": "Euro (EUR)"
+        },
+        "openingHoursTitle": "Opening hours",
+        "openingHoursDescription": "Mark days as closed, or set open and close times only on days you serve guests. You can use a preset for common patterns.",
+        "openingHoursPresetsAria": "Quick presets for opening hours",
+        "presetWeekdays": "Mon–Fri, 9:00–22:00 (weekends closed)",
+        "presetAllClosed": "Mark every day closed",
+        "presetCopyMonday": "Copy Monday to weekdays",
+        "tabs": {
+          "basics": "Basics",
+          "hours": "Hours",
+          "areas": "Areas",
+          "marketing": "Marketing profile"
+        },
+        "areas": {
+          "title": "Areas",
+          "description": "Optional rooms or stations (e.g. Main room, Bar). When you use stock, you can tag which area consumed it.",
+          "empty": "No areas yet. Add one if you want to track where stock is used.",
+          "nameLabel": "Area name",
+          "namePlaceholder": "Bar",
+          "addAction": "Add area",
+          "saveName": "Save",
+          "cancelEdit": "Cancel",
+          "deleteConfirm": "Delete area “{name}”? Past stock uses keep their history without this area.",
+          "moveUpAria": "Move {name} up",
+          "moveDownAria": "Move {name} down",
+          "deleteAria": "Delete {name}",
+          "toast": {
+            "created": "Area added",
+            "updated": "Area updated",
+            "deleted": "Area deleted"
+          },
+          "errors": {
+            "nameRequired": "Enter an area name",
+            "saveFailed": "Could not save area",
+            "deleteFailed": "Could not delete area"
+          }
+        },
+        "currencyAutoHint": "Currency is set from country — change if needed.",
+        "toast": {
+          "savedTitle": "Location saved",
+          "savedDescription": "Your changes are ready for analytics and campaigns.",
+          "createdTitle": "Location created",
+          "createdDescription": "Upload a sales report to start analytics.",
+          "uploadSalesAction": "Upload sales report"
+        },
+        "stickySaveAria": "Save location form",
+        "profileCompleteness": "{filled} of {total} profile fields complete",
+        "collapsible": {
+          "bookAndOrder": "Book & order links",
+          "socialAndWeb": "Social & web",
+          "maps": "Maps & directions"
+        },
+        "dayClosed": "Closed",
+        "dayOpen": "Open",
+        "opensAt": "Opens",
+        "closesAt": "Closes",
+        "openDaySwitchAria": "Open on {day}",
+        "createAction": "Create Location",
+        "saveAction": "Save Changes",
+        "creating": "Creating…",
+        "saving": "Saving…",
+        "errors": {
+          "saveFailed": "Failed to save location.",
+          "openingHoursIncomplete": "On {day}, add both open and close times or mark the day closed.",
+          "openingHoursOrder": "On {day}, close time must be after open time."
+        },
+        "weekdays": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "manualBrief": {
+          "resetHints": "Clear all brief hints",
+          "sections": {
+            "profile": {
+              "title": "Profile & contact links",
+              "description": "Identity, contact methods, and link-in-bio destinations the AI can reference."
+            }
+          },
+          "notesLabel": "Additional location information",
+          "notesPlaceholder": "Write any important location details for AI.",
+          "instagramHandleLabel": "Instagram handle",
+          "instagramHandlePlaceholder": "menuyukti (without @)",
+          "neighborhoodLabel": "Neighborhood / district",
+          "neighborhoodPlaceholder": "Mitte, Menteng, …",
+          "phoneLabel": "Phone",
+          "phonePlaceholder": "+49 30 1234 567",
+          "contactEmailLabel": "Contact email",
+          "contactEmailPlaceholder": "hello@yourvenue.com",
+          "websiteUrlLabel": "Website",
+          "websiteUrlPlaceholder": "https://yourvenue.com",
+          "reservationUrlLabel": "Reservation link",
+          "reservationUrlPlaceholder": "https://book.yourvenue.com",
+          "onlineOrderUrlLabel": "Online order link",
+          "onlineOrderUrlPlaceholder": "https://order.yourvenue.com",
+          "menuUrlLabel": "Menu link",
+          "menuUrlPlaceholder": "https://yourvenue.com/menu",
+          "googleMapsUrlLabel": "Google Maps / directions",
+          "googleMapsUrlPlaceholder": "https://maps.google.com/?q=Your+Venue"
+        }
+      }
+    },
+    "sales": {
+      "title": "Sales Reports",
+      "description": "Import paid tickets from Menuyukti POS or upload an Excel sales file to power analytics for each location.",
+      "uploadInfo": {
+        "title": "Required Excel report by POS",
+        "description": "When uploading Excel, use the matching report file format below so the system can parse your sales data correctly.",
+        "reportLabel": "Upload this report",
+        "reports": {
+          "esb": {
+            "pos": "ESB",
+            "report": "SalesRecapitulationDetail.xlsx"
+          },
+          "quino": {
+            "pos": "Quino",
+            "report": "TransactionItemDetailReport.xlsx"
+          }
+        }
+      },
+      "branchLabel": "Location",
+      "branchPlaceholder": "Select a location",
+      "branchDescription": "Select a location to load and manage its sales reports.",
+      "selectBranch": "Please select a location to view sales reports.",
+      "loading": "Loading sales reports…",
+      "table": {
+        "index": "#",
+        "fileName": "File Name",
+        "action": "Actions",
+        "askAi": "Chat",
+        "cogs": "COGS",
+        "report": "Report",
+        "delete": "Delete",
+        "matrix": "Matrix",
+        "attribution": "Attribution",
+        "scheduler": "Scheduler",
+        "finance": "Finance",
+        "heatmap": "Heatmap",
+        "menuCombos": "Menu Combos",
+        "menuItems": "Menu Items",
+        "orderMetrics": "Order Metrics",
+        "campaignSignals": "Campaign Signals",
+        "mobile": {
+          "actionsTrigger": "Reports & actions",
+          "sheetDescription": "Choose a report or action for this sales upload."
+        },
+        "readiness": {
+          "badges": {
+            "ready": "Ready",
+            "needs_cogs": "Needs COGS",
+            "needs_attribution_data": "Needs Attribution",
+            "degraded": "Degraded",
+            "blocked": "Blocked"
+          }
+        }
+      },
+      "importPos": {
+        "title": "Import from Menuyukti POS",
+        "description": "Create a sales report snapshot from paid tickets in a date range (UTC).",
+        "startLabel": "Start date",
+        "endLabel": "End date",
+        "datePlaceholder": "Pick a date",
+        "cta": "Import data",
+        "importing": "Importing…",
+        "success": "Imported {orderCount, plural, one {# paid ticket} other {# paid tickets}} ({lineCount, plural, one {# line} other {# lines}}) as “{name}”.",
+        "errors": {
+          "missingLocation": "Please select a location first.",
+          "missingDates": "Please choose a start and end date.",
+          "invalidRange": "Start date must be on or before end date."
+        }
+      },
+      "upload": {
+        "cta": "Upload New Sales Report",
+        "uploading": "Uploading…",
+        "detectedPos": "Detected POS:"
+      },
+      "noBranches": {
+        "title": "No locations yet",
+        "description": "Please create a location before importing or uploading sales reports.",
+        "cta": "Create Location"
+      },
+      "noAnalytics": {
+        "title": "No sales reports yet",
+        "description": "Import paid tickets from Menuyukti POS, or upload an Excel sales file, to start analyzing menu performance.",
+        "cta": "Upload New Sales Report"
+      },
+      "delete": {
+        "title": "Delete this sales report?",
+        "description": "This permanently removes the report and related generated insights. You can't undo this action.",
+        "confirm": "Delete report",
+        "cancel": "Cancel",
+        "error": "Could not delete the sales report. Please try again."
+      }
+    },
+    "cogs": {
+      "title": "COGS",
+      "pageLoadingTitle": "Loading COGS…",
+      "description": "Manage ingredient costs and COGS data for each analytics snapshot.",
+      "menuName": "Menu Name",
+      "menuCost": "Menu Cost",
+      "create": "Create New COGS",
+      "edit": "Edit COGS",
+      "delete": "Delete"
+    },
+    "cogsForm": {
+      "heading": "COGS Editor",
+      "description": "Update cost of goods sold per menu item. You can import COGS values from another analytics file in the same location.",
+      "completeness": {
+        "title": "COGS Completeness",
+        "kpi": {
+          "totalItems": "Total menu items",
+          "validItems": "Items with valid COGS",
+          "itemCoverage": "Item coverage",
+          "revenueCoverage": "Revenue coverage"
+        },
+        "watchlist": {
+          "title": "Priority missing/invalid COGS watchlist",
+          "empty": "All menu items currently have valid COGS values."
+        }
+      },
+      "import": {
+        "label": "Import COGS from analytics",
+        "placeholder": "Select analytics",
+        "noOptions": "No other analytics available",
+        "action": "Import",
+        "importing": "Importing…"
+      },
+      "table": {
+        "title": "Edit COGS per menu item",
+        "menuName": "Menu Item",
+        "cogs": "COGS",
+        "we": "COGS ratio (we)",
+        "weAria": "COGS ratio for {menu}",
+        "categoryWe": {
+          "enable": "Enable category WE slider",
+          "aria": "Category WE slider for {category}",
+          "hint": "When enabled, moving this slider updates WE and COGS for all menu items in this category."
+        },
+        "uncategorizedTitle": "Uncategorized Menu Items",
+        "sortNameAsc": "Name A–Z",
+        "sortNameDesc": "Name Z–A",
+        "sortNameHint": "Sort menu items by name",
+        "sortNameButtonAriaAsc": "Menu items sorted A to Z. Activate to sort Z to A.",
+        "sortNameButtonAriaDesc": "Menu items sorted Z to A. Activate to sort A to Z."
+      },
+      "actions": {
+        "save": "Save COGS",
+        "saving": "Saving…"
+      },
+      "locationSync": {
+        "loadFromLocation": "Load from location catalog",
+        "saveToLocation": "Save to location catalog",
+        "manageCatalog": "Manage location COGS",
+        "working": "Syncing…"
+      },
+      "errors": {
+        "updateFailed": "Failed to update COGS",
+        "loadImportFailed": "Failed to load COGS from analytics",
+        "loadFromLocationFailed": "Failed to load COGS from location catalog",
+        "saveToLocationFailed": "Failed to save COGS to location catalog",
+        "unknown": "Unknown error"
+      }
+    },
+    "locationCogs": {
+      "heading": "Location COGS",
+      "description": "Maintain menu costs for this location. New sales reports seed matching COGS from this catalog automatically.",
+      "currencyHint": "Amounts use this location’s currency ({currency}).",
+      "empty": "No COGS yet. Import from an analytics run or wait for a sales report to list menu items.",
+      "import": {
+        "label": "Import COGS from analytics run",
+        "placeholder": "Select analytics",
+        "action": "Import into catalog",
+        "importing": "Importing…"
+      },
+      "table": {
+        "menuName": "Menu item",
+        "cogs": "COGS",
+        "cogsWithCurrency": "COGS ({currency})"
+      },
+      "actions": {
+        "save": "Save catalog",
+        "saving": "Saving…"
+      },
+      "errors": {
+        "saveFailed": "Failed to save location COGS",
+        "importFailed": "Failed to import COGS from analytics",
+        "unknown": "Unknown error"
+      }
+    },
+    "locationMenu": {
+      "heading": "Menu",
+      "description": "Create and edit the guest menu for this location. Organize dishes into categories like Food and Drink, then add names, prices, optional descriptions, and modifier groups (size, milk, extras).",
+      "currencyHint": "Prices use this location’s currency ({currency}).",
+      "categoryLabel": "Category {number}",
+      "itemLabel": "Item {number}",
+      "serviceBanner": {
+        "offTitle": "Digital Menu isn’t on for this location",
+        "offHint": "Turn it on under Services to publish a guest link and header image. Dish editing stays here.",
+        "turnOnCta": "Open Digital Menu",
+        "onTitle": "Public menu is live",
+        "onHint": "Guest link, slug, and header image are managed in Digital Menu.",
+        "manageCta": "Manage Digital Menu"
+      },
+      "fields": {
+        "categoryName": "Category",
+        "categoryNamePlaceholder": "Food",
+        "name": "Name",
+        "namePlaceholder": "Espresso",
+        "priceWithCurrency": "Price ({currency})",
+        "pricePlaceholder": "0.00",
+        "available": "Available",
+        "availableHint": "Unavailable items stay off the public menu and POS grid.",
+        "unavailableBadge": "Unavailable",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional short description",
+        "dietaryTags": "Dietary",
+        "allergens": "Contains allergens",
+        "image": "Image",
+        "pickImage": "Choose from media",
+        "pickerAria": "Select a photo from your media library",
+        "emptyMedia": "No photos in your media library yet.",
+        "removeImage": "Remove image",
+        "fromMedia": "From media library",
+        "modifiers": "Modifiers",
+        "modifiersEmpty": "No modifier groups yet. Add groups like Size or Milk for POS choices.",
+        "modifierGroupName": "Group name",
+        "modifierGroupNamePlaceholder": "Size",
+        "modifierMinSelect": "Min",
+        "modifierMaxSelect": "Max",
+        "modifierOptionName": "Option",
+        "modifierOptionNamePlaceholder": "Large",
+        "modifierPriceDelta": "Price delta ({currency})"
+      },
+      "actions": {
+        "add": "Add item",
+        "addCategory": "Add category",
+        "addModifierGroup": "Add group",
+        "addModifierOption": "Add option",
+        "remove": "Remove item",
+        "removeCategory": "Remove category",
+        "removeModifierGroup": "Remove group",
+        "removeModifierOption": "Remove option",
+        "expandItem": "Expand item",
+        "collapseItem": "Collapse item",
+        "save": "Save menu",
+        "saving": "Saving…"
+      },
+      "untitledItem": "Untitled item",
+      "dietary": {
+        "vegan": "Vegan",
+        "vegetarian": "Vegetarian",
+        "pescatarian": "Pescatarian",
+        "gluten_free": "Gluten-free",
+        "dairy_free": "Dairy-free",
+        "halal": "Halal",
+        "spicy": "Spicy"
+      },
+      "allergens": {
+        "gluten": "Gluten",
+        "dairy": "Dairy",
+        "eggs": "Eggs",
+        "fish": "Fish",
+        "shellfish": "Shellfish",
+        "peanuts": "Peanuts",
+        "tree_nuts": "Tree nuts",
+        "soy": "Soy",
+        "sesame": "Sesame"
+      },
+      "toast": {
+        "saved": "Menu saved"
+      },
+      "errors": {
+        "nameRequired": "Each item needs a name",
+        "categoryNameRequired": "Each category needs a name",
+        "invalidPrice": "Enter a valid non-negative price",
+        "modifierGroupNameRequired": "Each modifier group needs a name",
+        "modifierOptionNameRequired": "Each modifier option needs a name",
+        "modifierOptionsRequired": "Each modifier group needs at least one option",
+        "invalidModifierPriceDelta": "Enter a valid price delta for each option",
+        "invalidModifierSelect": "Min/max select must be whole numbers with min ≤ max and max ≥ 1",
+        "saveFailed": "Failed to save menu",
+        "unknown": "Unknown error"
+      }
+    },
+    "shared": {
+      "backToSales": "Back to sales",
+      "createWorkflowFromReport": "Create workflow",
+      "createWorkflowFromReportHint": "Open workflows with this report context to plan promos from these insights.",
+      "breadcrumbRunLoading": "Report",
+      "orderMetrics": {
+        "avgOrderSize": "Avg Order Size",
+        "avgOrderRevenue": "Avg Order Revenue",
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        }
+      }
+    },
+    "campaignSignals": {
+      "reportTitle": "Campaign Signals",
+      "pageLoadingTitle": "Loading campaign signals…",
+      "breadcrumb": "Campaign Signals",
+      "heading": "Campaign Signals",
+      "description": "Deterministic analytics inputs used when generating campaign briefs — sales fundamentals, timing, menu guardrails, and planning recommendations for this location.",
+      "emptyTitle": "No campaign signals yet",
+      "emptyDescription": "This report has no parsed order data. Upload a sales file with line items so signals can be computed.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "coverageNotesTitle": "Data coverage notes",
+      "sections": {
+        "coverage": "Data coverage",
+        "fundamental": "Fundamental signals",
+        "order": "Order signals",
+        "timing": "Timing & posting",
+        "matrix": "Menu matrix guardrails",
+        "planning": "Campaign planning"
+      },
+      "capabilities": {
+        "orderId": "Order-level data",
+        "noOrderId": "No order-level data",
+        "datetime": "Datetime data",
+        "noDatetime": "No datetime data",
+        "enabledBlocks": "Enabled blocks: {blocks}"
+      },
+      "confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
+      },
+      "sales": {
+        "totalRevenue": "Total revenue",
+        "totalItemsSold": "Items sold",
+        "uniqueMenuItems": "Unique menu items",
+        "avgItemPrice": "Avg item price"
+      },
+      "categoryFocus": {
+        "title": "Top revenue category",
+        "revenueShare": "Revenue share",
+        "quantityShare": "Quantity share"
+      },
+      "trending": {
+        "title": "Rising items",
+        "description": "Menu items with rising revenue vs the prior period",
+        "menuColumn": "Menu item",
+        "currentRevenue": "Current revenue",
+        "changePct": "Change",
+        "rank": "Rank",
+        "wasRank": "was {rank}"
+      },
+      "order": {
+        "totalOrders": "Total orders",
+        "avgOrderRevenue": "Avg order revenue",
+        "avgOrderItems": "Avg items per order",
+        "revenueRange": "Order revenue range"
+      },
+      "timing": {
+        "peakDay": "Peak demand day",
+        "peakRevenueDay": "Peak revenue day",
+        "primaryMealPeriod": "Primary meal period",
+        "peakRevenueMealPeriod": "Peak revenue meal period",
+        "peakHour": "Peak hour",
+        "periodHeadline": "Reporting period",
+        "periodRevenue": "Period revenue",
+        "previousRevenue": "Previous period",
+        "vsPrevious": "Vs previous period"
+      },
+      "matrix": {
+        "heroesTitle": "Content heroes",
+        "heroesDescription": "Star items recommended for spotlight content",
+        "heroesEmpty": "No hero items identified",
+        "avoidTitle": "Use cautiously",
+        "avoidDescription": "Low-end matrix items to avoid over-promoting",
+        "avoidEmpty": "No avoid items flagged",
+        "empty": "Menu engineering signals need COGS data. Add costs to unlock hero and avoid lists.",
+        "menuColumn": "Menu item",
+        "categoryColumn": "Matrix",
+        "revenueColumn": "Revenue"
+      },
+      "planning": {
+        "title": "Planning recommendations",
+        "description": "Derived posting and objective hints for campaign briefs",
+        "objective": "Recommended objective",
+        "primaryCta": "Primary CTA channel",
+        "postingDays": "Recommended posting days",
+        "dayparts": "Recommended dayparts"
+      },
+      "objectives": {
+        "awareness": "Awareness",
+        "consideration": "Consideration",
+        "conversion": "Conversion",
+        "unknown": "Unknown objective"
+      },
+      "cta": {
+        "profileVisit": "Profile visit",
+        "dm": "Direct message",
+        "orderOrReservation": "Order or reservation",
+        "unknown": "Unknown CTA"
+      },
+      "unavailable": {
+        "orderSignals": "Order-level signals are unavailable because this report lacks order identifiers.",
+        "datetimeSignals": "Timing signals are unavailable because this report lacks order timestamps."
+      },
+      "links": {
+        "heatmap": "View heatmap",
+        "cogs": "Add COGS",
+        "matrix": "View matrix"
+      }
+    },
+    "orderMetrics": {
+      "reportTitle": "Order Metrics",
+      "pageLoadingTitle": "Loading order metrics…",
+      "breadcrumb": "Order Metrics",
+      "heading": "Order Metrics",
+      "description": "Average order size and revenue for this sales report, with venue demand by day and meal period.",
+      "empty": "No order metrics for this run.",
+      "emptyTitle": "No order metrics yet",
+      "emptyDescription": "This report does not include enough order data to calculate averages. Try another upload or check that the sales file contains order-level detail.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "kpi": {
+        "orderSizeHint": "Items per order on average",
+        "orderRevenueHint": "Average ticket value"
+      },
+      "venueHeatmap": {
+        "title": "Venue slot strength",
+        "description": "How busy each weekday and meal period is for this location, based on order count (unique bills), compared to the average slot.",
+        "collapsibleTrigger": "Venue slot strength",
+        "menuColumn": "Meal period",
+        "legendLow": "Weaker (light)",
+        "legendHigh": "Stronger (dark)",
+        "unitsLabel": "Demand index — each cell shows orders in that slot vs the average (1.0× = average)",
+        "totalsRowLabel": "Total",
+        "sortHint": "Click a column header to sort meal periods by day.",
+        "scrollHint": "Swipe sideways to see all days →",
+        "explainTitle": "How venue slot strength is calculated",
+        "explainBody": "The grid has 35 slots (7 weekdays × 5 meal periods). Each order is counted once by bill number and placed in the slot of its order time. The demand index is that slot's share of all orders divided by the average slot share (1/35). 1.0× is average traffic; below 1.0 is quieter; above 1.0 is busier. Darker cells mean more orders relative to other slots. This uses order count only — not revenue or item quantity.",
+        "cellAriaLabel": "{mealPeriod} on {day} · {orderCount, plural, one {# order} other {# orders}} · demand {index}×",
+        "cellTooltip": "{mealPeriod} on {day} · {orderCount, plural, one {# order} other {# orders}} · demand {index}× · {tier}",
+        "gauge": {
+          "tierLow": "Below average",
+          "tierAverage": "Average",
+          "tierHigh": "Above average"
+        }
+      }
+    },
+    "menuCombos": {
+      "reportTitle": "Menu Combos",
+      "pageLoadingTitle": "Loading menu combos…",
+      "breadcrumb": "Menu Combos",
+      "heading": "Menu Combos",
+      "description": "See which dishes guests order together to inspire bundles and promotions.",
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "linkToMatrix": "View menu engineering matrix",
+      "linkToCogs": "Add COGS for star filtering",
+      "linkToCampaignSignals": "View campaign signals",
+      "createCampaignCta": "Turn into campaign",
+      "matrixUnavailable": "Add COGS to classify star items and focus combo analysis on your best performers. Top sellers are used until then.",
+      "insightTitle": "Key insight",
+      "insightTopPair": "Guests who order {menuA} often add {menuB} — lift {lift}× above chance. Consider a bundle or \"complete your meal\" promo.",
+      "hero": {
+        "liftLabel": "{lift}× lift"
+      },
+      "relatedReports": {
+        "trigger": "Related reports"
+      },
+      "mobile": {
+        "sortLabel": "Sort by",
+        "sortAriaLabel": "Sort combo pairs",
+        "sortLift": "Lift",
+        "sortCoOrders": "Co-orders",
+        "sortSupport": "Support",
+        "sortAscending": "Sort ascending",
+        "sortDescending": "Sort descending",
+        "confidenceSummary": "Up to {percent} of guests who order {menu} also add {other}",
+        "showConfidence": "Why this pair",
+        "hideConfidence": "Hide details"
+      },
+      "tabs": {
+        "pairs": "Top combos",
+        "matrix": "Lift matrix",
+        "timing": "Timing",
+        "scrollHint": "Swipe sideways to see all tabs →"
+      },
+      "kpi": {
+        "totalOrders": "Total orders",
+        "totalOrdersHint": "Orders with bill numbers in this period",
+        "multiItemShare": "Multi-item orders",
+        "multiItemShareHint": "Guests ordering more than one dish",
+        "avgItems": "Avg items per order",
+        "avgItemsHint": "Higher averages suggest more bundle potential",
+        "scope": "Analysis scope",
+        "scopeStarsHint": "Pairs focus on star performers from your menu matrix",
+        "scopeTopSellersHint": "Pairs focus on top-selling items until COGS is added"
+      },
+      "insights": {
+        "totalOrders": "{count, plural, one {# order} other {# orders}}",
+        "multiItemShare": "{percent} multi-item orders",
+        "avgItems": "Avg {count} items per order",
+        "scopeStars": "Star items",
+        "scopeTopSellers": "Top sellers"
+      },
+      "filters": {
+        "categoryLabel": "Menu category",
+        "categoryAriaLabel": "Filter pairs by menu category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All categories",
+        "minLiftLabel": "Minimum lift",
+        "minLiftAriaLabel": "Filter pairs by minimum lift",
+        "minLiftAll": "All pairs",
+        "minLiftAbove1": "Lift 1.0+",
+        "minLiftAbove1_5": "Lift 1.5+",
+        "showingCount": "Showing {count, plural, one {# pair} other {# pairs}}"
+      },
+      "bundleIdeas": {
+        "title": "Bundle ideas",
+        "description": "Suggested pairings based on menu engineering categories",
+        "premiumTitle": "Premium bundle candidates",
+        "premiumDescription": "Star + star pairings — your best performers guests already combine",
+        "upsellTitle": "Upsell opportunities",
+        "upsellDescription": "Star + puzzle pairings — promote high-margin stars alongside slower movers"
+      },
+      "table": {
+        "title": "Top combo opportunities",
+        "description": "Ranked by how often guests order items together vs. chance alone",
+        "pair": "Pair",
+        "coOrders": "Co-orders",
+        "lift": "Lift",
+        "support": "Support",
+        "confidence": "Confidence",
+        "confidenceLineA": "When guests order {menu}, {percent} also order {other}",
+        "confidenceLineB": "When guests order {menu}, {percent} also order {other}",
+        "liftTooltip": "How much more often this pair appears together vs. random chance. Above 1 = stronger than expected.",
+        "supportTooltip": "Share of all orders that include both items",
+        "confidenceTooltip": "Directional add-on rate for each item in the pair",
+        "strongLiftBadge": "Strong affinity"
+      },
+      "matrix": {
+        "title": "Pair lift matrix",
+        "menuColumn": "Menu",
+        "legendLow": "Lower lift",
+        "legendHigh": "Higher lift",
+        "unitsLabel": "Lift (association strength vs chance)",
+        "totalsRowLabel": "Total",
+        "sortHint": "Click a column header to sort rows by lift with that item.",
+        "scrollHint": "Swipe sideways to see more →",
+        "explainTitle": "How to read this matrix",
+        "explainBody": "Lift above 1 means the pair appears together more often than popularity alone would predict. Diagonal cells are hidden. Values below the minimum co-order threshold may be blank.",
+        "showExplanation": "How to read this matrix",
+        "hideExplanation": "Hide explanation",
+        "cellAriaLabel": "{menu} with {other} · lift {lift}",
+        "cellTooltip": "{menu} + {other} · lift {lift}"
+      },
+      "empty": {
+        "title": "No combo data yet",
+        "description": "This report does not include order lines with bill numbers. Upload a sales file with order-level detail to analyze menu pairs."
+      },
+      "emptyMultiItem": {
+        "title": "Not enough multi-item orders",
+        "description": "Guests mostly ordered single items in this period. Try a longer date range or check that line items group correctly by bill number."
+      },
+      "emptyMatrix": {
+        "title": "Matrix needs more items",
+        "description": "At least two focus menu items are required to show the lift matrix."
+      },
+      "emptyFiltered": {
+        "title": "No pairs match your filters",
+        "description": "Try a different category or a lower minimum lift."
+      },
+      "timing": {
+        "panelTitle": "Combo timing",
+        "panelDescription": "When guests order each pair together, by day, meal period, and hour.",
+        "pairSelectorLabel": "Combo pair",
+        "pairSelectorAriaLabel": "Select combo pair for timing analysis",
+        "pairSelectorPlaceholder": "Select a combo pair",
+        "pairSelectorOption": "{pair} · {lift}× lift",
+        "peakSummary": "Peak: {day} · {mealPeriod} · busiest hour {hour}",
+        "peakSummaryNoHour": "Peak: {day} · {mealPeriod}",
+        "peakSummaryHourOnly": "Busiest hour: {hour}",
+        "noPeakData": "No co-orders recorded for this pair in the report period.",
+        "peakExplanationIntro": "The peak line above combines two views: the strongest day and meal period for this pair, and the single hour with the most co-orders across the whole report. They can differ — for example, Wed · Lunch may stand out relative to lunch traffic while 18:00 has the highest total volume when all days are added together.",
+        "peakExplanationDayMeal": "Shows how often this pair appears in each day and meal period compared with overall traffic in that slot. Values above 1× mean the pair shows up more often than average. Darker cells highlight where the pair over-indexes.",
+        "peakExplanationHourly": "Shows the raw number of checks that included both items in each hour, summed across every day in the report. The busiest hour here is not limited to the peak day or meal period above.",
+        "weekdays": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        },
+        "empty": {
+          "title": "No strong affinity pairs for timing",
+          "description": "Only pairs with lift of 1.5× or higher (strong affinity) appear here. Check the Top combos tab for other pairings."
+        },
+        "strategy": {
+          "pairIndexLabel": "Pair index",
+          "venueDemandLabel": "Venue demand",
+          "posture": {
+            "support": "Support",
+            "promote": "Promote",
+            "maintain": "Maintain"
+          },
+          "gauge": {
+            "pairAtPeak": "Pair fit at peak",
+            "venueAtPeak": "Venue load at peak",
+            "tierLow": "Below average",
+            "tierAverage": "Average",
+            "tierHigh": "Above average"
+          },
+          "venueHeatmap": {
+            "title": "Venue slot strength",
+            "description": "How busy each weekday and meal period is for this location, based on order count (unique bills), compared to the average slot. The ring marks the selected pair's peak window.",
+            "collapsibleTrigger": "Venue slot strength",
+            "menuColumn": "Meal period",
+            "legendLow": "Weaker (light)",
+            "legendHigh": "Stronger (dark)",
+            "unitsLabel": "Demand index — each cell shows orders in that slot vs the average (1.0× = average)",
+            "totalsRowLabel": "Total",
+            "sortHint": "Click a column header to sort meal periods by day.",
+            "scrollHint": "Swipe sideways to see all days →",
+            "explainTitle": "How venue slot strength is calculated",
+            "explainBody": "The grid has 35 slots (7 weekdays × 5 meal periods). Each order is counted once by bill number and placed in the slot of its order time. The demand index is that slot's share of all orders divided by the average slot share (1/35). 1.0× is average traffic; below 1.0 is quieter; above 1.0 is busier. Darker cells mean more orders relative to other slots. This uses order count only — not revenue or item quantity.",
+            "cellAriaLabel": "{mealPeriod} on {day} · {orderCount, plural, one {# order} other {# orders}} · demand {index}×",
+            "cellTooltip": "{mealPeriod} on {day} · {orderCount, plural, one {# order} other {# orders}} · demand {index}× · {tier}"
+          },
+          "dayExplorer": {
+            "title": "Slot day explorer",
+            "description": "Pick a day to compare pair timing and venue demand for each meal period.",
+            "noData": "No activity in this slot.",
+            "sheetDescription": "Pair timing and venue demand for this slot.",
+            "coOrdersLabel": "Co-orders",
+            "venueDemandTierLabel": "Venue tier"
+          }
+        }
+      }
+    },
+    "heatmap": {
+      "reportTitle": "Heatmaps",
+      "pageLoadingTitle": "Loading heatmap…",
+      "breadcrumb": "Heatmaps",
+      "heading": "Menu Sales Heatmap",
+      "description": "Visualize sales volume by menu and time",
+      "empty": "No heatmap data for this run.",
+      "emptyDaily": "No daily heatmap data.",
+      "emptyWeekly": "No weekly heatmap data.",
+      "emptyFiltered": "No heatmap items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter heatmap items by menu category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories",
+        "matrixLabel": "Menu engineering filter",
+        "matrixAriaLabel": "Filter heatmap items by menu engineering matrix category",
+        "matrixHelp": "Choose which menu engineering quadrants appear in the heatmap. When all are selected, every heatmap item is shown.",
+        "emptyMatrixFiltered": "No heatmap items match the selected menu engineering categories. Select at least one quadrant to continue."
+      },
+      "tabs": {
+        "daily": "Daily",
+        "weekly": "Weekly"
+      },
+      "dailyTitle": "Hourly Sales ({startHour}:00 – {endHour}:00)",
+      "weeklyTitle": "Weekly Sales (Mon–Sun)",
+      "uncategorized": "Uncategorized",
+      "linkToMatrix": "View menu engineering matrix",
+      "insights": {
+        "peakHour": "Busiest hour: {window}",
+        "peakDay": "Busiest day: {window}",
+        "topItem": "Top item: {item} ({count, plural, one {# unit} other {# units}})",
+        "itemCount": "Showing {count, plural, one {# item} other {# items}}",
+        "reportingPeriod": "Period: {period}"
+      },
+      "matrix": {
+        "menuColumn": "Menu"
+      },
+      "legend": {
+        "low": "Low",
+        "high": "High",
+        "units": "Units sold"
+      },
+      "totals": {
+        "label": "Total"
+      },
+      "sort": {
+        "hint": "Click a column header to sort by that hour or day. Click again to reverse; a third click clears the column and sorts items by total units sold."
+      },
+      "scroll": {
+        "hint": "Swipe sideways to see all hours →"
+      },
+      "cellAriaLabel": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
+      "tooltip": "{menu} · {window} · {count, plural, one {# unit} other {# units}}",
+      "explain": {
+        "title": "How to read this heatmap",
+        "body": "Cell color shows relative units sold within the current view. Numbers are order-line quantities by hour or weekday from your sales data—not forecasts. Daily view shows your location's opening hours ({startHour}:00–{endHour}:00)."
+      }
+    },
+    "ai": {
+      "reportTitle": "Workflow Planner",
+      "breadcrumb": "Workflow Planner",
+      "heading": "Workflow Planner",
+      "description": "Ask questions about this analytics snapshot."
+    },
+    "finance": {
+      "reportTitle": "Finance Report",
+      "breadcrumb": "Finance",
+      "heading": "Finance Summary",
+      "description": "Profit calculation based on analytics snapshot and location fixed costs",
+      "overview": {
+        "title": "Period & Sales Overview",
+        "period": {
+          "title": "Period",
+          "start": "Start:",
+          "end": "End:"
+        },
+        "orders": {
+          "title": "Orders",
+          "total": "Total:"
+        },
+        "itemsSold": {
+          "title": "Items Sold",
+          "total": "Total:"
+        },
+        "avgRevenuePerOrder": "Avg Revenue / Order",
+        "avgItemsPerOrder": "Avg Items / Order"
+      },
+      "profit": {
+        "title": "Profit Calculation",
+        "table": {
+          "metric": "Metric",
+          "amount": "Amount",
+          "totalRevenue": "Total Revenue",
+          "totalCogs": "Total COGS",
+          "totalProfit": "Total Profit",
+          "netProfit": "Net Profit"
+        }
+      }
+    },
+    "matrix": {
+      "reportTitle": "Menu Engineering Report",
+      "pageLoadingTitle": "Loading matrix…",
+      "breadcrumb": "Matrix",
+      "heading": "Menu Engineering Matrix",
+      "description": "See which menu items to promote, improve, or retire with clear sales and profitability signals from your data.",
+      "actionsLabel": "Recommended actions:",
+      "actions": {
+        "promote": "Promote",
+        "improve": "Improve",
+        "remove": "Remove"
+      },
+      "empty": {
+        "title": "Matrix not ready",
+        "description": "Matrix data is not available yet for this analytics file. Please update COGS first to generate matrix results.",
+        "cta": "Go to COGS setup"
+      },
+      "reportPeriod": "Report period",
+      "reportPos": "POS",
+      "tabs": {
+        "matrix": "Matrix chart",
+        "items": "Item list"
+      },
+      "kpi": {
+        "totalProfit": "Total profit",
+        "totalProfitHint": "Revenue minus COGS across the full menu",
+        "portfolioMargin": "Portfolio margin",
+        "portfolioMarginHint": "Profit as a share of total revenue",
+        "itemsAnalyzed": "Items analyzed",
+        "itemsAnalyzedHint": "Menu items with COGS and revenue in this run",
+        "avgPopularity": "Avg popularity threshold",
+        "avgPopularityHint": "Items at or above this quantity sold count as popular"
+      },
+      "quadrantHelp": {
+        "star": "High popularity and high margin — protect and feature these winners.",
+        "plow_horse": "High popularity but lower margin — optimize cost or price carefully.",
+        "puzzle": "Strong margin but lower volume — promote and increase visibility.",
+        "low_end": "Lower popularity and margin — review, reprice, or retire."
+      },
+      "uncategorized": "Uncategorized",
+      "links": {
+        "heatmap": "View heatmap",
+        "menuCombos": "View menu combos",
+        "cogs": "COGS setup"
+      },
+      "chart": {
+        "ariaLabel": "Menu engineering matrix scatter plot showing popularity versus contribution margin",
+        "xAxis": "Popularity (units sold)",
+        "yAxis": "Contribution margin",
+        "thresholdPopularity": "Avg popularity",
+        "thresholdMargin": "Avg margin",
+        "empty": "No items to plot for the current filters."
+      },
+      "distributionGrid": {
+        "title": "Menu performance distribution",
+        "marginShareLabel": "Margin share",
+        "toggleAriaLabel": "Toggle {category} quadrant visibility"
+      },
+      "filteredStatsAlert": "Portfolio shares below reflect the selected menu category, not the full run.",
+      "quadrantFilterEmpty": "Select at least one quadrant to view the matrix.",
+      "overview": {
+        "title": "Sales Overview",
+        "period": {
+          "title": "Period",
+          "start": "Start:",
+          "end": "End:"
+        },
+        "ordersAndItems": {
+          "title": "Orders & Items",
+          "orders": "Orders:",
+          "itemsSold": "Items Sold:"
+        },
+        "averages": {
+          "title": "Averages",
+          "avgRevenue": "Avg Revenue:",
+          "avgItems": "Avg Items:"
+        }
+      },
+      "distribution": {
+        "title": "Menu Performance Distribution",
+        "items": "Items:",
+        "share": "Share:",
+        "margin": "Margin:"
+      },
+      "analysis": {
+        "title": "Menu Item Analysis"
+      },
+      "portfolio": {
+        "itemCount": "{count, plural, one {# item} other {# items}}",
+        "itemShare": "{value} of items",
+        "marginShare": "{value} of margin",
+        "filteredShowing": "Showing {visible} of {total}",
+        "noItems": "No items in this category."
+      },
+      "emptyFiltered": "No matrix items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter matrix items by menu category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories",
+        "matrixLabel": "Quadrants",
+        "matrixAriaLabel": "Filter by menu engineering quadrant",
+        "matrixHelp": "Show or hide Stars, Plow Horses, Puzzles, and Low End items.",
+        "showingCount": "Showing {count, plural, one {# item} other {# items}}"
+      },
+      "categories": {
+        "star": "Stars",
+        "plow_horse": "Plow Horses",
+        "puzzle": "Puzzles",
+        "low_end": "Low End"
+      },
+      "categoriesShort": {
+        "star": "Star",
+        "plow_horse": "Plow",
+        "puzzle": "Puzzle",
+        "low_end": "Low"
+      },
+      "lowEndHighlight": {
+        "sliderLabel": "Margin share threshold",
+        "sliderAriaLabel": "Highlight bottom margin share up to {value}% of total margin",
+        "sliderHelp": "Highlights low-end items (lowest margin share first) whose cumulative margin share is within this threshold.",
+        "sliderValue": "{value}% of total margin",
+        "rowIncludedInBand": "Within cumulative margin-share threshold.",
+        "shareCellDescription": "{percent}% of total margin, within cumulative margin-share threshold band."
+      },
+      "table": {
+        "menu": "Menu",
+        "category": "Category",
+        "qty": "Qty",
+        "revenue": "Revenue",
+        "cogs": "COGS",
+        "margin": "Margin",
+        "shareOfTotalMargin": "% of total margin",
+        "caption": "{category} menu items: Menu, Units sold, Margin, Share of total margin.",
+        "action": "Action",
+        "actionReasonLabel": "Why this action",
+        "actions": {
+          "remove": "REMOVE",
+          "reprice": "REPRICE",
+          "promote": "PROMOTE",
+          "keep": "KEEP"
+        }
+      }
+    },
+    "menuItems": {
+      "reportTitle": "Menu Items Report",
+      "breadcrumb": "Menu Items",
+      "heading": "Menu Items",
+      "description": "Review menu items grouped by name with quantity and revenue signals from this analytics run.",
+      "backToSales": "Back to Sales Reports",
+      "tabs": {
+        "table": "Table",
+        "bubbleChart": "Bubble Chart"
+      },
+      "qty": "Qty",
+      "empty": "No menu item data for this run.",
+      "emptyFiltered": "No menu items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter menu items by category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories"
+      },
+      "table": {
+        "menuItem": "Menu Item",
+        "category": "Category",
+        "subCategory": "Sub Category",
+        "qty": "Qty",
+        "revenue": "Revenue",
+        "empty": "No menu items found.",
+        "caption": "Menu items table with category, sub category, quantity, and revenue."
+      },
+      "chart": {
+        "sizeMetricLabel": "Bubble size by",
+        "sizeMetricQuantity": "Quantity",
+        "sizeMetricRevenue": "Revenue",
+        "ariaLabelQuantity": "Bubble chart of menu items sized by quantity sold",
+        "ariaLabelRevenue": "Bubble chart of menu items sized by total revenue",
+        "captionQuantity": "Bubble size represents quantity sold. Color indicates menu category.",
+        "captionRevenue": "Bubble size represents total revenue. Color indicates menu category.",
+        "empty": "No menu items available for the selected category."
+      }
+    }
+  }
+}

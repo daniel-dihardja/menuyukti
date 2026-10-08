@@ -264,9 +264,6 @@ export function parsePropertyOverrides(prompt: string): ParsePropertyOverridesRe
   return { overrides, cleanedPrompt }
 }
 
-/** @deprecated Use parsePropertyOverrides */
-export const parseStyleControlOverrides = parsePropertyOverrides
-
 function fillTemplate(template: string, params: Record<string, string | undefined>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_m, name: string) => {
     const value = params[name]

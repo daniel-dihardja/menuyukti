@@ -1,0 +1,31 @@
+{
+  "sidebar": {
+    "groupLabel": "Menuyukti",
+    "groupOverview": "Overview",
+    "groupCreate": "Create",
+    "groupAnalytics": "Analytics",
+    "groupOperations": "Operations",
+    "groupAccount": "Account",
+    "groupPlatform": "Platform",
+    "groupWorkspace": "Workspace",
+    "groupServices": "Services",
+    "toggleSectionAria": "Toggle {section}",
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "branches": "Locations",
+    "chat": "AI",
+    "calendar": "Calendar",
+    "playbooks": "Playbooks",
+    "posts": "IG Studio",
+    "media": "Media",
+    "printShop": "Print shop",
+    "services": "Services",
+    "inventar": "Inventory",
+    "crm": "CRM",
+    "crmApps": "Apps",
+    "crmRegistrations": "Registrations",
+    "team": "Team",
+    "usage": "AI usage",
+    "staff": "Staff"
+  }
+}

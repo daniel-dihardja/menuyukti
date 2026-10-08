@@ -64,8 +64,12 @@ const nextConfig = {
     ],
     // Reel video uploads (up to 50 MB) pass through Clerk proxy; default buffer is 10 MB.
     proxyClientMaxBodySize: '52mb',
-    // Avoid stale Turbopack chunks for messages/*.json and similar during local edits.
-    turbopackFileSystemCacheForDev: false,
+    // Default Cache Components validation flags every page that awaits uncached
+    // GraphQL outside <Suspense>. Opt in per route with `export const instant = true`
+    // when that page is migrated; until then keep the console quiet.
+    instantInsights: {
+      validationLevel: 'manual-warning',
+    },
   },
   images: {
     remotePatterns: [

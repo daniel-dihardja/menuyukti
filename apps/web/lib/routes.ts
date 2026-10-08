@@ -1,7 +1,9 @@
+import { isReservedPublicSlug } from '@/lib/public-location/reserved-slugs'
+
 /**
  * Operator app shell (sidebar + inset + `AnalyticsPageShell`).
  * `MainHeader` is hidden on these paths (`AppChrome` uses `isOperatorAppShellPath`).
- * Guest digital menu `/m/*` keeps `MainHeader` (guest sign-in / account only).
+ * Guest location surfaces keep `MainHeader` (guest sign-in / account only).
  * Feature visibility (nav + route allowlist): `config/feature-flags.json`.
  * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
  */
@@ -31,8 +33,8 @@ export const OPERATOR_APP_SHELL_PREFIXES = [
 export const CUSTOMER_AUTH_PREFIXES = ['/home', '/continue', '/profile'] as const
 
 /**
- * Unauthenticated location guest surfaces (digital menu; legacy wall redirect).
- * Keeps `MainHeader` brand chrome with guest sign-in (no operator product nav).
+ * Legacy unauthenticated location prefixes (redirect to `/{slug}/menu`).
+ * Kept for auth-return and chrome during transition.
  */
 export const PUBLIC_LOCATION_SURFACE_PREFIXES = ['/m', '/l'] as const
 
@@ -62,10 +64,33 @@ export function isOperatorAppShellPath(pathname: string | null): boolean {
   return matchesPathPrefix(pathname, OPERATOR_APP_SHELL_PREFIXES)
 }
 
-/** Guest digital menu / legacy wall — MainHeader uses guest sign-in instead of product chrome. */
+/**
+ * Guest location surfaces — MainHeader uses guest sign-in instead of product chrome.
+ * Includes `/{slug}`, `/{slug}/menu…`, `/{slug}/prediction`, plus legacy `/m` and `/l`.
+ */
 export function isPublicLocationSurfacePath(pathname: string | null): boolean {
   if (pathname == null) return false
-  return matchesPathPrefix(pathname, PUBLIC_LOCATION_SURFACE_PREFIXES)
+  if (matchesPathPrefix(pathname, PUBLIC_LOCATION_SURFACE_PREFIXES)) return true
+
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length === 0) return false
+
+  let first: string
+  try {
+    first = decodeURIComponent(segments[0]!).toLowerCase()
+  } catch {
+    return false
+  }
+  if (isReservedPublicSlug(first)) return false
+
+  if (segments.length === 1) return true
+  if (segments.length === 2 && (segments[1] === 'menu' || segments[1] === 'prediction')) {
+    return true
+  }
+  if (segments.length === 4 && segments[1] === 'menu' && segments[2] === 't') {
+    return true
+  }
+  return false
 }
 
 /** Customer auth area (`/home`, `/continue`, `/profile`). */
@@ -78,14 +103,6 @@ export function isCustomerAuthPath(pathname: string | null): boolean {
 export function isClerkProtectedAppPath(pathname: string | null): boolean {
   if (pathname == null) return false
   return matchesPathPrefix(pathname, PROTECTED_APP_SHELL_PREFIXES)
-}
-
-/**
- * @deprecated Use `isOperatorAppShellPath` (sidebar chrome) or `isClerkProtectedAppPath` (auth).
- * Kept as an alias of operator shell so existing “hide MainHeader” call sites stay correct.
- */
-export function isProtectedAppShellPath(pathname: string | null): boolean {
-  return isOperatorAppShellPath(pathname)
 }
 
 export const routes = {
@@ -147,7 +164,7 @@ export const routes = {
   calendarWithLocation: (locationId: string | number) =>
     `/calendar?locationId=${encodeURIComponent(String(locationId))}`,
 
-  /** Reusable Instagram strategy components (playbook library). */
+  /** Dedicated location-task pipelines (playbook library). */
   playbooks: '/playbooks',
   playbookDetail: (slug: string) => `/playbooks/${encodeURIComponent(slug)}`,
   playbookNew: (slug: string) => `/playbooks/${encodeURIComponent(slug)}/new`,
@@ -204,12 +221,16 @@ export const routes = {
   servicesDigitalMenu: '/services/digital-menu',
   servicesDigitalMenuLocation: (locationId: string | number) =>
     `/services/digital-menu/${encodeURIComponent(String(locationId))}`,
+  servicesPointSystem: '/services/point-system',
+  servicesPointSystemLocation: (locationId: string | number) =>
+    `/services/point-system/${encodeURIComponent(String(locationId))}`,
+  servicesPrediction: '/services/prediction',
+  servicesPredictionLocation: (locationId: string | number) =>
+    `/services/prediction/${encodeURIComponent(String(locationId))}`,
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Workspace team management (invite existing users) — operator shell. */
   team: '/team',
-  /** @deprecated Use `routes.team`. Kept for older links / account menu callers. */
-  profileTeam: '/team',
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 
@@ -217,13 +238,15 @@ export const routes = {
   shopProduct: (slug: string) => `/shop/${slug}`,
   shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 
-  /** Public location surfaces (digital menu; legacy `/l/` redirects to `/m/`). */
+  /** Public location surfaces (`/{slug}`, menu, prediction; legacy `/m` `/l` redirect). */
   public: {
-    locationMenu: (slug: string) => `/m/${encodeURIComponent(slug)}`,
+    locationHome: (slug: string) => `/${encodeURIComponent(slug)}`,
+    locationMenu: (slug: string) => `/${encodeURIComponent(slug)}/menu`,
     /** Per-table dine-in menu URL used by table QR stickers. */
     locationMenuTable: (slug: string, tableLabel: string) =>
-      `/m/${encodeURIComponent(slug)}/t/${encodeURIComponent(tableLabel)}`,
-    /** @deprecated Use `locationMenu`; `/l/` redirects to `/m/`. */
+      `/${encodeURIComponent(slug)}/menu/t/${encodeURIComponent(tableLabel)}`,
+    locationPrediction: (slug: string) => `/${encodeURIComponent(slug)}/prediction`,
+    /** @deprecated Use `locationMenu`; `/l/` redirects to `/{slug}/menu`. */
     locationWall: (slug: string) => `/l/${encodeURIComponent(slug)}`,
   },
 }

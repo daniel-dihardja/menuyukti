@@ -1,11 +1,8 @@
-/** Included workspace nav for restaurant clients (locations, stock, people). */
-export const CLIENT_CORE_ORDER = ['branches', 'inventar', 'team'] as const
+/** Included workspace nav for restaurant clients (home/locations, stock, people). */
+export const CLIENT_CORE_ORDER = ['home', 'inventar', 'team'] as const
 
 /** Paid cloud services nav for restaurant clients. */
 export const CLIENT_SERVICES_ORDER = ['services'] as const
-
-/** @deprecated Prefer {@link CLIENT_CORE_ORDER} + {@link CLIENT_SERVICES_ORDER}. */
-export const CLIENT_FLAT_ORDER = [...CLIENT_CORE_ORDER, ...CLIENT_SERVICES_ORDER] as const
 
 type FlatNavItem = { key: string }
 
@@ -55,7 +52,7 @@ export function partitionClientNav<T extends FlatNavItem>(
 }
 
 /**
- * Sort client sidebar items into Locations → Inventory → Team → Services.
+ * Sort client sidebar items into Home → Inventory → Team → Services.
  * Other keys keep their relative input order after those.
  */
 export function orderClientFlatNav<T extends FlatNavItem>(items: readonly T[]): T[] {

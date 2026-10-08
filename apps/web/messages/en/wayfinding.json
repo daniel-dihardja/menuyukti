@@ -1,0 +1,11 @@
+{
+  "wayfinding": {
+    "shopFromWorkflow": {
+      "title": "You opened the shop from a workflow.",
+      "backToWorkflow": "Back to that workflow"
+    },
+    "shopPdp": {
+      "signInToContinue": "Sign in to open the app"
+    }
+  }
+}

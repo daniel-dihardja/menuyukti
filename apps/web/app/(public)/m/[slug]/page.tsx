@@ -1,48 +1,13 @@
-import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
-import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 
-import { loadPublicLocationMenu } from '@/lib/public-menu/load-public-menu'
-
-import { PublicLocationMenuBody, PublicMenuFallback } from './public-menu-page-body'
+import { routes } from '@/lib/routes'
 
 type PageProps = {
   params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const t = await getTranslations('public.menu')
+/** Legacy `/m/[slug]` — redirects to `/{slug}/menu`. */
+export default async function LegacyPublicMenuRedirectPage({ params }: PageProps) {
   const { slug } = await params
-  try {
-    const menu = await loadPublicLocationMenu(decodeURIComponent(slug))
-    if (!menu) {
-      return { title: t('notFoundTitle') }
-    }
-    const title = menu.name
-    const description = t('metaDescription', { name: menu.name })
-    return {
-      title,
-      description,
-      openGraph: {
-        title,
-        description,
-        ...(menu.headerImageUrl ? { images: [{ url: menu.headerImageUrl }] } : {}),
-      },
-    }
-  } catch {
-    return { title: t('notFoundTitle') }
-  }
-}
-
-async function PublicLocationMenuContent({ params }: PageProps) {
-  const { slug } = await params
-  return <PublicLocationMenuBody slug={slug} tableLabel={null} />
-}
-
-export default function PublicLocationMenuPage({ params }: PageProps) {
-  return (
-    <Suspense fallback={<PublicMenuFallback />}>
-      <PublicLocationMenuContent params={params} />
-    </Suspense>
-  )
+  redirect(routes.public.locationMenu(decodeURIComponent(slug)))
 }

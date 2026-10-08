@@ -27,9 +27,6 @@ export function isChatImageAssistantFormatId(value: unknown): value is ChatImage
   )
 }
 
-/** @deprecated Use POST_IMAGE_FORMAT_IDS — kept as an alias for call sites that listed explicit formats. */
-export const POST_IMAGE_EXPLICIT_FORMAT_IDS = POST_IMAGE_FORMAT_IDS
-
 export type PostImageExplicitFormatId = PostImageFormatId
 
 export const POST_IMAGE_QUALITY_IDS = ['standard', 'high', 'ultra'] as const

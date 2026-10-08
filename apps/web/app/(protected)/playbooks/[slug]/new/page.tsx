@@ -17,7 +17,7 @@ type PlaybookInstancePageProps = {
 export async function generateMetadata({ params }: PlaybookInstancePageProps): Promise<Metadata> {
   const { slug } = await params
   const playbook = getPlaybookBySlug(slug)
-  if (!playbook) {
+  if (!playbook || !playbook.supportsCreate) {
     return {}
   }
 
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PlaybookInstancePageProps): P
 export default async function PlaybookInstanceNewPage({ params }: PlaybookInstancePageProps) {
   const { slug } = await params
   const playbook = getPlaybookBySlug(slug)
-  if (!playbook) {
+  if (!playbook || !playbook.supportsCreate) {
     notFound()
   }
 

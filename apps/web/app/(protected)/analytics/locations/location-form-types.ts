@@ -21,6 +21,8 @@ export type LocationFormValues = {
   countryId?: string
   country: string
   currency: string
+  /** Guest URL slug (`/{slug}`); empty means unset. */
+  publicSlug: string
   openingHours: OpeningHourRow[]
 }
 

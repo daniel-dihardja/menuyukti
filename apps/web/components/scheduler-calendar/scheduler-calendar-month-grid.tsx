@@ -46,6 +46,14 @@ function formatDayNumber(isoDate: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { day: 'numeric' }).format(date)
 }
 
+function formatDayAriaLabel(isoDate: string, locale: string, holidayName?: string): string {
+  const date = parseIsoDateOnly(isoDate)
+  const dateLabel = date
+    ? new Intl.DateTimeFormat(locale, { dateStyle: 'full' }).format(date)
+    : isoDate
+  return holidayName ? `${dateLabel}, ${holidayName}` : dateLabel
+}
+
 export function SchedulerCalendarMonthGrid({
   monthStartIso,
   windowStart,
@@ -58,7 +66,7 @@ export function SchedulerCalendarMonthGrid({
   onSlotClick,
   showCreateAffordance = false,
 }: SchedulerCalendarMonthGridProps) {
-  const t = useTranslations('analytics.workflows.chat')
+  const t = useTranslations('chat')
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd),
     [monthStartIso, windowEnd, windowStart],
@@ -124,7 +132,7 @@ export function SchedulerCalendarMonthGrid({
               key={day.isoDate}
               role="gridcell"
               aria-disabled={!day.inWindow}
-              aria-label={dayNumber}
+              aria-label={formatDayAriaLabel(day.isoDate, locale, holidayName)}
               className={cn(
                 'group/day flex min-h-0 flex-col border-b border-r border-border/60 p-1.5 last:border-r-0',
                 !day.inMonth && 'text-muted-foreground/70',

@@ -15,7 +15,8 @@ from agents_app.agents.core.chat.prompts import (
 
 
 def test_system_prompt_template_has_complete_structure() -> None:
-    assert "Instagram content assistant" in SYSTEM_PROMPT_TEMPLATE
+    assert "location marketing advisor" in SYSTEM_PROMPT_TEMPLATE
+    assert "Location situation (default)" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_section}" in SYSTEM_PROMPT_TEMPLATE
     assert "{chart_catalog_block}" in SYSTEM_PROMPT_TEMPLATE
     assert "{workflow_catalog_block}" not in SYSTEM_PROMPT_TEMPLATE
@@ -28,12 +29,22 @@ def test_system_prompt_template_has_complete_structure() -> None:
     assert "get_location_data" in SYSTEM_PROMPT_TEMPLATE
     assert "venue_slot_strength_heatmap" in CHART_ANALYTICS_SECTION
     assert "posting frequency" in CHART_ANALYTICS_SECTION
+    assert "Visualization data" in CHART_ANALYTICS_SECTION
     assert "No sales report is attached" in NO_SALES_REPORT_SECTION
 
 
 def test_build_system_prompt_without_optional_blocks() -> None:
     out = build_system_prompt()
-    assert "Instagram content assistant" in out
+    assert "location marketing advisor" in out
+    assert "Instagram content assistant" not in out
+    assert "## Location situation (default)" in out
+    assert "## Demand" in out
+    assert "## Menu" in out
+    assert "## Combos" in out
+    assert "## Hours" in out
+    assert "## Next" in out
+    assert "present_weekly_instagram_schedule" in out
+    assert "Do **not** call `present_weekly_instagram_schedule` for this default job" in out
     assert "## Sales report" in out
     assert "No sales report is attached" in out
     assert "## Workflow chart catalog" not in out
@@ -63,7 +74,10 @@ def test_build_system_prompt_with_chart_catalog() -> None:
     assert "Daily highlights" in out
     assert "Day specialties" in out
     assert "get_chart_data" in out
+    assert "typically all three" in out
+    assert "Visualization data" in out
     assert "No sales report is attached" not in out
+    assert "Do **not** call `present_weekly_instagram_schedule` for this default job" in out
 
 
 def test_build_system_prompt_with_leonardo_image_generation() -> None:
@@ -147,6 +161,7 @@ def test_build_system_prompt_inventar_mode() -> None:
     assert "summary" in out.lower()
     assert "get_chart_data" not in out
     assert "Instagram content assistant" not in out
+    assert "location marketing advisor" not in out
 
 
 def test_build_system_prompt_image_assistant_legacy_alias() -> None:

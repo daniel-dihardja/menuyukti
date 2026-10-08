@@ -1,0 +1,21 @@
+{
+  "mainHeader": {
+    "brand": "Menuyukti",
+    "brandAria": "Menuyukti home",
+    "navAria": "Main navigation",
+    "navAbout": "About",
+    "navStudio": "IG Studio",
+    "navChat": "Advisor",
+    "navShop": "Print Shop",
+    "landingNav": {
+      "services": "Services",
+      "why": "Why Menuyukti",
+      "mobileDescription": "Agentic restaurant marketing—Chat campaigns, sales reports, and location insights built exclusively for hospitality."
+    },
+    "mobileMenuTriggerAria": "Open main navigation menu",
+    "mobileMenuTitle": "Navigation",
+    "mobileMenuDescription": "Studio for AI brand visuals and Print Shop for merch.",
+    "mobileMenuSignIn": "Sign in",
+    "signInMenuTriggerAria": "Sign in options"
+  }
+}

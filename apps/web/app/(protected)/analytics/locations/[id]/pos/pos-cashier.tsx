@@ -59,6 +59,8 @@ type PosCashierProps = {
   currencyCode: string
   initialMenu: LocationMenu | null
   initialOrders: PosOrder[]
+  /** Presigned photo URLs keyed by `imageFilename` (same source as media / public menu). */
+  itemImageUrls: Record<string, string>
 }
 
 async function posAction(locationId: number, body: Record<string, unknown>): Promise<PosOrder> {
@@ -90,6 +92,7 @@ export function PosCashier({
   currencyCode,
   initialMenu,
   initialOrders,
+  itemImageUrls,
 }: PosCashierProps) {
   const t = useTranslations('pos')
   const [pending, startTransition] = useTransition()
@@ -532,6 +535,7 @@ export function PosCashier({
             onCategoryChange={setSelectedCategoryId}
             currencyCode={currencyCode}
             pending={pending}
+            itemImageUrls={itemImageUrls}
             onAddItem={handleAddItem}
           />
 

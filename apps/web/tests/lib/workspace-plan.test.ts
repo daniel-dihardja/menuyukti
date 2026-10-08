@@ -23,25 +23,26 @@ describe('workspace-plan', () => {
     expect(isProPlan('free')).toBe(false)
   })
 
-  it('allows home nav on free only; pro unlocks operator nav', () => {
+  it('allows home nav on both plans; hides branches; pro unlocks operator nav', () => {
     expect(isNavKeyAllowedForPlan('home', 'free')).toBe(true)
-    expect(isNavKeyAllowedForPlan('home', 'pro')).toBe(false)
+    expect(isNavKeyAllowedForPlan('home', 'pro')).toBe(true)
+    expect(isNavKeyAllowedForPlan('branches', 'pro')).toBe(false)
+    expect(isNavKeyAllowedForPlan('branches', 'free')).toBe(false)
     expect(isNavKeyAllowedForPlan('chat', 'pro')).toBe(true)
-    expect(isNavKeyAllowedForPlan('branches', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('services', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('inventar', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('usage', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('team', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('posts', 'pro')).toBe(true)
     expect(isNavKeyAllowedForPlan('chat', 'free')).toBe(false)
-    expect(isNavKeyAllowedForPlan('branches', 'free')).toBe(false)
     expect(isNavKeyAllowedForPlan('services', 'free')).toBe(false)
     expect(isNavKeyAllowedForPlan('inventar', 'free')).toBe(false)
     expect(isNavKeyAllowedForPlan('usage', 'free')).toBe(false)
     expect(isNavKeyAllowedForPlan('team', 'free')).toBe(false)
     expect(FREE_NAV_KEYS.has('home')).toBe(true)
     expect(FREE_NAV_KEYS.size).toBe(1)
-    expect(PRO_NAV_KEYS.has('branches')).toBe(true)
+    expect(PRO_NAV_KEYS.has('home')).toBe(true)
+    expect(PRO_NAV_KEYS.has('branches')).toBe(false)
     expect(PRO_NAV_KEYS.has('services')).toBe(true)
     expect(PRO_NAV_KEYS.has('inventar')).toBe(true)
     expect(PRO_NAV_KEYS.has('usage')).toBe(true)
@@ -75,8 +76,8 @@ describe('workspace-plan', () => {
     expect(isPathnameAllowedForPlan('/home', 'pro')).toBe(true)
   })
 
-  it('uses landing for free and Branches for pro', () => {
-    expect(getDefaultPathForPlan('free')).toBe('/')
+  it('uses customer home for free and Locations for pro', () => {
+    expect(getDefaultPathForPlan('free')).toBe('/home')
     expect(getDefaultPathForPlan('pro')).toBe('/analytics/locations')
   })
 })

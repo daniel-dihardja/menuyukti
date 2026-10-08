@@ -1,6 +1,6 @@
 'use client'
 
-import { Show } from '@clerk/nextjs'
+import { Show, useAuth } from '@clerk/nextjs'
 import { Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -9,19 +9,31 @@ import * as React from 'react'
 
 import { AccountMenu } from '@/components/account/account-menu'
 import { GuestSignInMenu } from '@/components/guest-sign-in-menu'
-import { routes } from '@/lib/routes'
+import { useOptionalWorkspacePlan } from '@/components/workspace-plan-provider'
+import { isPublicLocationSurfacePath, routes } from '@/lib/routes'
+import { getDefaultPathForPlan } from '@/lib/workspace-plan'
 import { cn } from '@workspace/ui/lib/utils'
 
 export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
+  const { isSignedIn } = useAuth()
+  const planCtx = useOptionalWorkspacePlan()
   const isLogin = pathname === routes.login || (pathname?.startsWith(`${routes.login}/`) ?? false)
   const isSignUp =
     pathname === routes.signUp || (pathname?.startsWith(`${routes.signUp}/`) ?? false)
   const isAbout = pathname === routes.about || (pathname?.startsWith(`${routes.about}/`) ?? false)
+  const isGuestLocation = isPublicLocationSurfacePath(pathname)
   /** Hide sign-in chrome on auth pages (user is already signing in / up). */
   const showSignIn = !isLogin && !isSignUp
   const [isScrolled, setIsScrolled] = React.useState(false)
+
+  /** Signed-out → marketing `/`; signed-in → plan home (fallback `/home` outside provider). */
+  const brandHref = !isSignedIn
+    ? routes.root
+    : planCtx
+      ? getDefaultPathForPlan(planCtx.plan)
+      : routes.home
 
   React.useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8)
@@ -41,7 +53,7 @@ export function MainHeader() {
       <div className="box-border flex h-14 w-full min-w-0 items-center justify-between gap-3 sm:gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
           <Link
-            href="/"
+            href={brandHref}
             className={cn(
               'flex shrink-0 items-center gap-2 whitespace-nowrap py-2 ps-3 text-foreground transition-opacity hover:opacity-90 sm:ps-4',
             )}
@@ -51,18 +63,20 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
-            <Link
-              href={routes.about}
-              aria-current={isAbout ? 'page' : undefined}
-              className={cn(
-                'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
-                isAbout ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t('navAbout')}
-            </Link>
-          </nav>
+          {!isGuestLocation ? (
+            <nav aria-label={t('navAria')} className="hidden min-w-0 items-center gap-1 md:flex">
+              <Link
+                href={routes.about}
+                aria-current={isAbout ? 'page' : undefined}
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                  isAbout ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {t('navAbout')}
+              </Link>
+            </nav>
+          ) : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">

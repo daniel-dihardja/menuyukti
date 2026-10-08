@@ -20,6 +20,7 @@ import {
   resolveCountrySelection,
 } from '@/lib/locations/country-config'
 import { routes } from '@/lib/routes'
+import { suggestMenuSlugFromName } from '@/lib/services/suggest-menu-slug'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
@@ -77,6 +78,15 @@ export function LocationForm({
   const [name, setName] = useState(initialValues?.name ?? '')
   const [street, setStreet] = useState(initialValues?.street ?? '')
   const [city, setCity] = useState(initialValues?.city ?? '')
+  /** When true, name edits may suggest a slug (create, or edit with empty initial slug). */
+  const [slugFollowsName, setSlugFollowsName] = useState(
+    () => !(initialValues?.publicSlug ?? '').trim(),
+  )
+  const [publicSlug, setPublicSlug] = useState(() => {
+    const initial = (initialValues?.publicSlug ?? '').trim()
+    if (initial) return initial
+    return suggestMenuSlugFromName(initialValues?.name ?? '')
+  })
   const [countryId, setCountryId] = useState(() => {
     const initialCountryId = normalizeCountryId(initialValues?.countryId)
     if (initialCountryId) return initialCountryId
@@ -245,6 +255,7 @@ export function LocationForm({
         countryId,
         country,
         currency,
+        publicSlug,
         openingHours,
       }
       const body =
@@ -319,6 +330,7 @@ export function LocationForm({
     city,
     countryId,
     currency,
+    publicSlug,
     showCurrencyAutoHint,
     openingHours,
     hints,
@@ -333,6 +345,9 @@ export function LocationForm({
     setName: (value) => {
       markDirty()
       setName(value)
+      if (slugFollowsName) {
+        setPublicSlug(suggestMenuSlugFromName(value))
+      }
     },
     setStreet: (value) => {
       markDirty()
@@ -353,6 +368,11 @@ export function LocationForm({
       markDirty()
       setCurrency(nextCurrency)
       setHasManualCurrencyOverride(hasManualOverride)
+    },
+    setPublicSlug: (value) => {
+      markDirty()
+      setSlugFollowsName(false)
+      setPublicSlug(value)
     },
     setRowClosed,
     updateOpeningHour,

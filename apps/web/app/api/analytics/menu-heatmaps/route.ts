@@ -1,7 +1,7 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 
-import { loadMenuHeatmapsForWorkflow } from '@/lib/analytics/load-menu-heatmaps-for-workflow'
+import { loadMenuHeatmapsForChat } from '@/lib/analytics/load-menu-heatmaps-for-chat'
 
 function isPrerenderInterrupt(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -17,7 +17,7 @@ function parsePositiveInt(value: string | null): number | null {
 
 /**
  * GET /api/analytics/menu-heatmaps?analyticsRunId=...&locationId=...
- * Menu heatmaps (and optional matrix items) for workflow visualizations.
+ * Menu heatmaps (and optional matrix items) for chat visualizations.
  * When the linked run is empty, falls back to other analytics runs for the location.
  */
 export async function GET(req: Request) {
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
       )
     }
 
-    const result = await loadMenuHeatmapsForWorkflow({
+    const result = await loadMenuHeatmapsForChat({
       userId,
       analyticsRunId,
       locationId,

@@ -1,9 +1,9 @@
 'use client'
 
-import { useId } from 'react'
 import { useTranslations } from 'next-intl'
-import { ImageIcon, Play } from 'lucide-react'
+import { ImageIcon, Play, RotateCcw } from 'lucide-react'
 
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -15,41 +15,47 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@workspace/ui/components/empty'
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
-import { Textarea } from '@workspace/ui/components/textarea'
+import { Progress } from '@workspace/ui/components/progress'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { cn } from '@workspace/ui/lib/utils'
 
-import { MediaCatalogPicker } from '@/components/media/media-catalog-picker'
-import { mediaDownloadHref, type MediaCatalogItem } from '@/lib/media/client-api'
-import type { StoryDraftResult } from '@/lib/playbooks/client-api'
+import type { ArtworkGenerateResult, VisualBriefResult } from '@/lib/playbooks/client-api'
+
+export type ArtworkProgress = {
+  current: number
+  total: number
+  name: string
+}
 
 export type ArtworkHolidayItem = {
   id: string
   date: string
   name: string
-  result: StoryDraftResult
-}
-
-export type ArtworkStyleReference = {
-  name: string
+  brief: VisualBriefResult
+  caption: string
 }
 
 export type ArtworkItemStatus = 'pending' | 'loading' | 'ready' | 'error'
 
+export type ConfirmedArtwork = ArtworkHolidayItem & {
+  image: ArtworkGenerateResult
+}
+
 type PublicHolidaysArtworkProps = {
   holidays: ArtworkHolidayItem[]
-  confirmedArtworks: ArtworkHolidayItem[]
+  confirmedArtworks: ConfirmedArtwork[]
   statuses: Record<string, ArtworkItemStatus>
-  instructions: string
-  onInstructionsChange: (value: string) => void
-  styleReference: ArtworkStyleReference | null
-  onStyleReferenceChange: (value: ArtworkStyleReference | null) => void
+  results: Record<string, ArtworkGenerateResult>
+  running: boolean
+  progress: ArtworkProgress | null
   formatDate: (iso: string) => string
+  onGenerate: () => void
   onConfirm: (id: string) => void
   onSkip: (id: string) => void
+  onRetry: (id: string) => void
   onRemoveConfirmed: (id: string) => void
 }
 
-/** Instagram story frame (9:16 portrait) until generation is wired. */
 function ArtworkImagePlaceholder({ label }: { label: string }) {
   return (
     <div
@@ -63,29 +69,47 @@ function ArtworkImagePlaceholder({ label }: { label: string }) {
   )
 }
 
+function ArtworkImagePreview({
+  url,
+  alt,
+  placeholderLabel,
+}: {
+  url?: string
+  alt: string
+  placeholderLabel: string
+}) {
+  if (!url) {
+    return <ArtworkImagePlaceholder label={placeholderLabel} />
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- short-lived / generated asset URLs
+    <img
+      src={url}
+      alt={alt}
+      className="mx-auto aspect-[9/16] h-56 w-auto shrink-0 rounded-md border border-border/70 object-cover"
+    />
+  )
+}
+
 export function PublicHolidaysArtwork({
   holidays,
   confirmedArtworks,
   statuses,
-  instructions,
-  onInstructionsChange,
-  styleReference,
-  onStyleReferenceChange,
+  results,
+  running,
+  progress,
   formatDate,
+  onGenerate,
   onConfirm,
   onSkip,
+  onRetry,
   onRemoveConfirmed,
 }: PublicHolidaysArtworkProps) {
   const t = useTranslations('playbooks.items.publicHolidays.workspace.artwork')
-  const instructionsId = useId()
 
-  const selectedImage = styleReference
-    ? { name: styleReference.name, url: mediaDownloadHref(styleReference.name) }
-    : null
-
-  function handleSelectMedia(item: MediaCatalogItem) {
-    onStyleReferenceChange({ name: item.name })
-  }
+  const generateDisabled = running || holidays.length === 0
+  const progressValue =
+    progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
 
   return (
     <div className="flex flex-col gap-4">
@@ -95,42 +119,25 @@ export function PublicHolidaysArtwork({
           <CardDescription>{t('settingsDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <FieldGroup className="gap-4">
-            <Field>
-              <FieldLabel htmlFor={instructionsId}>{t('instructionsLabel')}</FieldLabel>
-              <Textarea
-                id={instructionsId}
-                value={instructions}
-                onChange={(e) => onInstructionsChange(e.target.value)}
-                placeholder={t('instructionsPlaceholder')}
-                maxLength={2000}
-                rows={3}
-                className="min-h-20 resize-y"
-              />
-              <FieldDescription>{t('instructionsHint')}</FieldDescription>
-            </Field>
-
-            <Field>
-              <FieldLabel>{t('styleReferenceLabel')}</FieldLabel>
-              <MediaCatalogPicker
-                selectedImage={selectedImage}
-                onSelect={handleSelectMedia}
-                onClear={() => onStyleReferenceChange(null)}
-                pickLabel={t('styleReferencePick')}
-                pickerAriaLabel={t('styleReferencePickerAria')}
-                emptyLabel={t('styleReferenceEmpty')}
-                removeLabel={t('styleReferenceRemove')}
-                fromMediaLabel={t('styleReferenceFromMedia')}
-              />
-              <FieldDescription>{t('styleReferenceHint')}</FieldDescription>
-            </Field>
-          </FieldGroup>
+          {progress ? (
+            <div className="flex flex-col gap-2" aria-live="polite">
+              <p className="text-muted-foreground text-sm">
+                {t('progressStatus', {
+                  name: progress.name,
+                  current: progress.current,
+                  total: progress.total,
+                })}
+              </p>
+              <Progress value={progressValue} aria-label={t('progressAria')} />
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">{t('generateHint')}</p>
+          )}
         </CardContent>
-        <CardFooter className="flex flex-col items-stretch gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-muted-foreground text-sm">{t('generateDisabledHint')}</p>
-          <Button type="button" disabled className="sm:ml-auto">
-            <Play data-icon="inline-start" />
-            {t('generate')}
+        <CardFooter className="justify-end border-t pt-4">
+          <Button type="button" onClick={onGenerate} disabled={generateDisabled}>
+            {running ? <Spinner data-icon="inline-start" /> : <Play data-icon="inline-start" />}
+            {running ? t('generating') : t('generate')}
           </Button>
         </CardFooter>
       </Card>
@@ -157,7 +164,9 @@ export function PublicHolidaysArtwork({
               <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
                 {holidays.map((item) => {
                   const status = statuses[item.id] ?? 'pending'
-                  const canConfirm = status === 'ready'
+                  const image = results[item.id]
+                  const canConfirm = status === 'ready' && Boolean(image)
+
                   return (
                     <li key={item.id} className="flex flex-col gap-3 px-3 py-3">
                       <div className="flex min-w-0 items-start justify-between gap-3">
@@ -167,28 +176,74 @@ export function PublicHolidaysArtwork({
                             {formatDate(item.date)}
                           </p>
                         </div>
-                        <Badge variant="outline" className="shrink-0 font-normal">
-                          {status === 'ready' ? t('statusReady') : t('statusPending')}
-                        </Badge>
+                        {status === 'loading' ? (
+                          <Spinner className="size-4 shrink-0" aria-label={t('generatingAria')} />
+                        ) : status === 'pending' ? (
+                          <Badge variant="outline" className="shrink-0 font-normal">
+                            {t('statusPending')}
+                          </Badge>
+                        ) : status === 'error' ? (
+                          <Badge variant="destructive" className="shrink-0 font-normal">
+                            {t('statusError')}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="shrink-0 font-normal">
+                            {t('statusReady')}
+                          </Badge>
+                        )}
                       </div>
 
-                      <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-start">
-                        <ArtworkImagePlaceholder label={t('imagePlaceholder')} />
+                      <div
+                        className={cn(
+                          'flex flex-col gap-3 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-start',
+                          status === 'loading' && 'opacity-60',
+                        )}
+                      >
+                        <ArtworkImagePreview
+                          url={image?.url}
+                          alt={item.name}
+                          placeholderLabel={t('imagePlaceholder')}
+                        />
                         <div className="flex min-w-0 flex-1 flex-col gap-2">
                           <div>
                             <p className="text-muted-foreground text-xs font-medium">
                               {t('captionLabel')}
                             </p>
-                            <p className="text-sm whitespace-pre-wrap">{item.result.caption}</p>
+                            <p className="text-sm whitespace-pre-wrap">{item.caption}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-xs font-medium">
+                              {t('sceneLabel')}
+                            </p>
+                            <p className="text-sm whitespace-pre-wrap">{item.brief.scene}</p>
                           </div>
                         </div>
                       </div>
 
+                      {status === 'error' ? (
+                        <Alert variant="destructive">
+                          <AlertTitle>{t('generateErrorTitle')}</AlertTitle>
+                          <AlertDescription>{t('generateError')}</AlertDescription>
+                        </Alert>
+                      ) : null}
+
                       <div className="flex flex-wrap justify-end gap-2">
+                        {status === 'error' ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={running}
+                            onClick={() => onRetry(item.id)}
+                          >
+                            <RotateCcw data-icon="inline-start" />
+                            {t('retry')}
+                          </Button>
+                        ) : null}
                         <Button
                           type="button"
                           size="sm"
-                          disabled={!canConfirm}
+                          disabled={!canConfirm || running}
                           title={canConfirm ? undefined : t('confirmDisabledHint')}
                           onClick={() => onConfirm(item.id)}
                         >
@@ -198,7 +253,7 @@ export function PublicHolidaysArtwork({
                           type="button"
                           size="sm"
                           variant="ghost"
-                          disabled={status === 'loading'}
+                          disabled={running || status === 'loading'}
                           onClick={() => onSkip(item.id)}
                         >
                           {t('skip')}
@@ -244,15 +299,20 @@ export function PublicHolidaysArtwork({
                         type="button"
                         size="sm"
                         variant="ghost"
+                        disabled={running}
                         onClick={() => onRemoveConfirmed(item.id)}
                       >
                         {t('remove')}
                       </Button>
                     </div>
                     <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3 sm:flex-row sm:items-start">
-                      <ArtworkImagePlaceholder label={t('imagePlaceholder')} />
+                      <ArtworkImagePreview
+                        url={item.image.url}
+                        alt={item.name}
+                        placeholderLabel={t('imagePlaceholder')}
+                      />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm whitespace-pre-wrap">{item.result.caption}</p>
+                        <p className="text-sm whitespace-pre-wrap">{item.caption}</p>
                       </div>
                     </div>
                   </li>

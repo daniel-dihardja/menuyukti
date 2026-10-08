@@ -11,14 +11,18 @@ from graphql.data_sources.models.menu import Menu
 from graphql.data_sources.models.service_subscription import ServiceSubscription
 
 SERVICE_KEY_DIGITAL_MENU = "digital_menu"
+SERVICE_KEY_POINT_SYSTEM = "point_system"
 SERVICE_KEY_STAMP_CARD = "stamp_card"
 SERVICE_KEY_CASHBACK = "cashback"
+SERVICE_KEY_PREDICTION = "prediction"
 
 KNOWN_SERVICE_KEYS = frozenset(
     {
         SERVICE_KEY_DIGITAL_MENU,
+        SERVICE_KEY_POINT_SYSTEM,
         SERVICE_KEY_STAMP_CARD,
         SERVICE_KEY_CASHBACK,
+        SERVICE_KEY_PREDICTION,
     }
 )
 
@@ -31,8 +35,7 @@ def normalize_service_key(service_key: str | None) -> str:
     value = (service_key or "").strip().lower()
     if value not in KNOWN_SERVICE_KEYS:
         raise ValueError(
-            f"Invalid service key: {service_key!r}. "
-            f"Expected one of {sorted(KNOWN_SERVICE_KEYS)}."
+            f"Invalid service key: {service_key!r}. Expected one of {sorted(KNOWN_SERVICE_KEYS)}."
         )
     return value
 

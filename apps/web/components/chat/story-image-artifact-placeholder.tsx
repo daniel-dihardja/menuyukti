@@ -110,8 +110,3 @@ export function StoryImageArtifact({ imageUrl }: StoryImageArtifactProps) {
     </section>
   )
 }
-
-/** @deprecated Prefer StoryImageArtifact */
-export function StoryImageArtifactPlaceholder() {
-  return <StoryImageArtifact />
-}

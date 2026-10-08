@@ -45,7 +45,7 @@ import { partitionClientNav } from '@/lib/client-flat-nav'
 import { isNavKeyEnabled } from '@/lib/feature-flags'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
-import { isNavKeyAllowedForPlan } from '@/lib/workspace-plan'
+import { getDefaultPathForPlan, isNavKeyAllowedForPlan } from '@/lib/workspace-plan'
 import type { ReactNode } from 'react'
 
 type NavGroupId = 'overview' | 'create' | 'analytics' | 'operations' | 'account' | 'platform'
@@ -80,14 +80,15 @@ const NAV_GROUP_LABEL_KEYS: Record<NavGroupId, string> = {
 /**
  * Sidebar order follows daily product flow for platform admins:
  * overview → create/plan → measure → operations → account.
- * Non-admin clients get two labeled blocks: Workspace (Locations → Inventory → Team)
+ * Non-admin clients get two labeled blocks: Workspace (Home → Inventory → Team)
  * then Services (paid cloud modules). Free guests see Home only.
+ * Home href is plan-aware (resolved in {@link NavMain}).
  */
 const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'home',
     labelKey: 'home',
-    href: routes.root,
+    href: routes.home,
     icon: <Home />,
     group: 'overview',
   },
@@ -296,7 +297,9 @@ export function NavMain() {
     return pathname.startsWith(url)
   }
 
-  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav, plan)
+  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav, plan).map(
+    (item) => (item.key === 'home' ? { ...item, href: getDefaultPathForPlan(plan) } : item),
+  )
 
   if (!showAdminNav) {
     const { core, services, other } = partitionClientNav(visibleWorkspaceItems)

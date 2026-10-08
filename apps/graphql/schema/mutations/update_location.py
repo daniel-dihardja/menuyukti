@@ -7,6 +7,7 @@ from graphql.context import request_session_scope
 from graphql.data_sources import Location
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.mappers.location import location_to_gql
+from graphql.schema.mutations.public_slug import apply_location_public_slug
 from graphql.schema.types import LocationType
 from graphql.services.location import normalize_opening_hours, replace_opening_hours
 
@@ -30,6 +31,7 @@ class UpdateLocationMutation:
         city: str | None = UNSET,
         country: str | None = UNSET,
         currency: str | None = UNSET,
+        public_slug: str | None = UNSET,
         opening_hours: list[OpeningHourInput] | None = UNSET,
     ) -> LocationType:
         user_id = user_id_from_info(info)
@@ -58,6 +60,8 @@ class UpdateLocationMutation:
                 row.country = country.strip() if country else None
             if currency is not UNSET:
                 row.currency = currency.strip().upper() if currency else None
+            if public_slug is not UNSET:
+                apply_location_public_slug(session, row, public_slug)
 
             if opening_hours is not UNSET:
                 triples = [

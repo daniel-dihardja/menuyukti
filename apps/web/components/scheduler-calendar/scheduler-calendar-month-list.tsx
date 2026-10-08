@@ -36,6 +36,14 @@ export type SchedulerCalendarMonthListProps = {
   showCreateAffordance?: boolean
 }
 
+function formatDayAriaLabel(isoDate: string, locale: string, holidayName?: string): string {
+  const date = parseIsoDateOnly(isoDate)
+  const dateLabel = date
+    ? new Intl.DateTimeFormat(locale, { dateStyle: 'full' }).format(date)
+    : isoDate
+  return holidayName ? `${dateLabel}, ${holidayName}` : dateLabel
+}
+
 function formatDayHeader(isoDate: string, locale: string): { weekday: string; day: string } {
   const date = parseIsoDateOnly(isoDate)
   if (!date) {
@@ -63,7 +71,7 @@ export function SchedulerCalendarMonthList({
   onSlotClick,
   showCreateAffordance = false,
 }: SchedulerCalendarMonthListProps) {
-  const t = useTranslations('analytics.workflows.chat')
+  const t = useTranslations('chat')
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd).filter((day) => day.inMonth),
     [monthStartIso, windowEnd, windowStart],
@@ -106,6 +114,7 @@ export function SchedulerCalendarMonthList({
               key={day.isoDate}
               role="listitem"
               aria-disabled={!day.inWindow}
+              aria-label={formatDayAriaLabel(day.isoDate, locale, holidayName)}
               tabIndex={clickable ? 0 : undefined}
               className={cn(
                 'flex min-w-0 items-start gap-3 px-3 py-2.5',

@@ -1,0 +1,27 @@
+{
+  "pwaInstall": {
+    "sectionTitle": "Add to home screen",
+    "sectionHint": "Pick your device, then follow the steps.",
+    "installHint": "Opens full screen—like a native app. Sign in once.",
+    "platforms": {
+      "ios": {
+        "label": "iPhone",
+        "browser": "Use Safari",
+        "steps": {
+          "step1": "Open in Safari and sign in.",
+          "step2": "Share → Add to Home Screen.",
+          "step3": "Tap Add."
+        }
+      },
+      "android": {
+        "label": "Android",
+        "browser": "Use Chrome",
+        "steps": {
+          "step1": "Open in Chrome and sign in.",
+          "step2": "Menu (⋮) → Install app.",
+          "step3": "Confirm Install."
+        }
+      }
+    }
+  }
+}

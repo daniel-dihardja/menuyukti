@@ -2,7 +2,7 @@ import type { UIMessage } from 'ai'
 
 /**
  * Phrases that indicate the user asked for a weekly Instagram plan.
- * Keep aligned with `chat.quickPrompts.weeklyPlan.prompt` in messages/en.json.
+ * Keep aligned with `chat.quickPrompts.weeklyPlan.prompt` in messages/en/chat.json.
  */
 const WEEKLY_PLAN_REQUEST_PATTERNS = [
   /weekly instagram plan/i,

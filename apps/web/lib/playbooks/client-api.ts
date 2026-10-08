@@ -46,6 +46,39 @@ export type HolidayStoryDraftItem = {
   critique?: CritiqueSummary
 }
 
+export type StyleAnalysisResult = {
+  summary: string
+  palette: string
+  lighting: string
+  medium: string
+  avoid: string
+}
+
+export type VisualBriefResult = {
+  scene: string
+  mood: string
+  composition: string
+  leonardoPrompt: string
+}
+
+export type VisualBriefItem = {
+  id: string
+  date: string
+  name: string
+  result: VisualBriefResult
+}
+
+export type ArtworkGenerateResult = {
+  url: string
+  name: string
+  mediaS3Key: string
+  size: number
+  createdAt: string
+}
+
+/** Leonardo generation API rejects prompts over this length. */
+export const LEONARDO_PROMPT_MAX_CHARS = 1500
+
 export async function fetchHolidays(params: {
   locationId: number
   dateStart: string
@@ -145,6 +178,99 @@ export async function draftHolidayStory(params: {
       }),
     },
     'Failed to draft holiday story',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data
+}
+
+export async function analyzeHolidayStyle(params: {
+  styleImageName: string
+  instructions?: string
+}): Promise<StyleAnalysisResult> {
+  const instructions = params.instructions?.trim()
+  const result = await apiFetch<StyleAnalysisResult>(
+    '/api/playbooks/public-holidays/analyze-style',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        styleImageName: params.styleImageName,
+        ...(instructions ? { instructions } : {}),
+      }),
+    },
+    'Failed to analyze style',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data
+}
+
+export async function draftHolidayVisualBrief(params: {
+  locationId: number
+  holiday: {
+    id: string
+    date: string
+    name: string
+    localName?: string
+  }
+  storyDraft: StoryDraftResult
+  styleAnalysis: StyleAnalysisResult
+  instructions?: string
+  previousResult?: VisualBriefResult
+  feedback?: string
+}): Promise<VisualBriefItem> {
+  const instructions = params.instructions?.trim()
+  const feedback = params.feedback?.trim()
+  const result = await apiFetch<VisualBriefItem>(
+    '/api/playbooks/public-holidays/visual-brief',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        locationId: params.locationId,
+        holiday: {
+          id: params.holiday.id,
+          date: params.holiday.date,
+          name: params.holiday.name,
+          ...(params.holiday.localName ? { localName: params.holiday.localName } : {}),
+        },
+        storyDraft: params.storyDraft,
+        styleAnalysis: params.styleAnalysis,
+        ...(instructions ? { instructions } : {}),
+        ...(params.previousResult && feedback
+          ? {
+              previousResult: params.previousResult,
+              feedback,
+            }
+          : {}),
+      }),
+    },
+    'Failed to draft visual brief',
+  )
+  if (!result.ok) {
+    throw new Error(result.error)
+  }
+  return result.data
+}
+
+export async function generateHolidayArtwork(params: {
+  prompt: string
+  styleImageName: string
+}): Promise<ArtworkGenerateResult> {
+  const result = await apiFetch<ArtworkGenerateResult>(
+    '/api/playbooks/public-holidays/generate-artwork',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: params.prompt,
+        styleImageName: params.styleImageName,
+      }),
+    },
+    'Failed to generate artwork',
   )
   if (!result.ok) {
     throw new Error(result.error)

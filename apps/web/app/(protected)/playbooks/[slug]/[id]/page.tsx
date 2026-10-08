@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PlaybookInstancePageProps): P
   const { slug, id: idParam } = await params
   const catalog = getPlaybookBySlug(slug)
   const id = Number(idParam)
-  if (!catalog || !Number.isInteger(id) || id < 1) {
+  if (!catalog || !catalog.supportsCreate || !Number.isInteger(id) || id < 1) {
     return {}
   }
 
@@ -45,7 +45,7 @@ export default async function PlaybookInstancePage({ params }: PlaybookInstanceP
   const { slug, id: idParam } = await params
   const catalog = getPlaybookBySlug(slug)
   const id = Number(idParam)
-  if (!catalog || !Number.isInteger(id) || id < 1) {
+  if (!catalog || !catalog.supportsCreate || !Number.isInteger(id) || id < 1) {
     notFound()
   }
 

@@ -1,0 +1,105 @@
+{
+  "chatTools": {
+    "searchWeb": {
+      "running": "Searching the web…",
+      "runningDetail": "Looking up current sources online",
+      "done": "Searched the web"
+    },
+    "generateInstagramPostImage": {
+      "running": "Generating post image…",
+      "runningDetail": "Creating your image…",
+      "done": "Generated post image",
+      "error": "Image generation failed",
+      "imageAlt": "Generated image"
+    },
+    "getChartData": {
+      "runningGeneric": "Reading your sales charts…",
+      "doneGeneric": "Reviewed sales charts",
+      "error": "Couldn’t load chart data",
+      "charts": {
+        "venue_slot_strength_heatmap": {
+          "running": "Checking venue rhythm, peak slots, and posting frequency…",
+          "done": "Reviewed venue slot strength"
+        },
+        "menu_item_heatmap": {
+          "running": "Checking which menu items sell best and when…",
+          "done": "Reviewed menu heatmap"
+        },
+        "pair_lift_matrix_heatmap": {
+          "running": "Checking menu combos and pair-lift opportunities…",
+          "done": "Reviewed pair lift matrix"
+        }
+      }
+    },
+    "getLocationData": {
+      "running": "Loading location context…",
+      "done": "Loaded location context",
+      "error": "Couldn’t load location context"
+    },
+    "saveStoryAsset": {
+      "running": "Saving Story reference…",
+      "done": "Saved Story reference",
+      "error": "Couldn’t save Story reference"
+    },
+    "clearStoryAssets": {
+      "running": "Updating Story references…",
+      "done": "Updated Story references",
+      "error": "Couldn’t update Story references"
+    },
+    "requestStoryGenerateConfirmation": {
+      "running": "Preparing confirmation…",
+      "done": "Waiting for confirmation",
+      "ready": "Ready to generate when you confirm",
+      "error": "Couldn’t prepare confirmation",
+      "generate": "Generate",
+      "change": "Change"
+    },
+    "presentWeeklyInstagramSchedule": {
+      "running": "Building weekly Instagram plan…",
+      "error": "Couldn’t show weekly schedule",
+      "titleFallback": "Weekly Instagram plan",
+      "timeLabel": "Time",
+      "menusLabel": "Feature",
+      "captionLabel": "Caption",
+      "whyLabel": "Why",
+      "expandDayAria": "Expand {day} at {time} details",
+      "slotHeadingAria": "{day} at {time}",
+      "exportButton": "Export to calendar",
+      "exportButtonShort": "Calendar",
+      "shareButton": "Share",
+      "shareCopied": "Plan copied — paste into chat",
+      "shareShared": "Plan shared",
+      "shareError": "Couldn’t share this plan",
+      "shareBusy": "Sharing…",
+      "actionsGroupAria": "Plan actions",
+      "exportDialogTitle": "Export to calendar",
+      "exportDialogDescription": "Download an .ics file you can open in Google Calendar, Apple Calendar, or Outlook.",
+      "weekLabel": "Week",
+      "weekHint": "Events land on the weekdays of the week that contains this date.",
+      "repeatLabel": "Repeat",
+      "repeatOnce": "This week only",
+      "repeatWeekly": "Every week",
+      "timezoneLabel": "Timezone",
+      "timezoneHint": "Times use your browser timezone ({timeZone}).",
+      "downloadButton": "Download .ics",
+      "cancelButton": "Cancel",
+      "exportSuccess": "Calendar file downloaded",
+      "exportError": "Couldn’t build a calendar file from this plan",
+      "weekdays": {
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      },
+      "formats": {
+        "story": "Story",
+        "post": "Post",
+        "carousel": "Carousel",
+        "reel": "Reel"
+      }
+    }
+  }
+}

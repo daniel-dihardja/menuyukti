@@ -1,0 +1,303 @@
+{
+  "services": {
+    "title": "Services",
+    "description": "Turn on guest-facing capabilities for each location — like cloud services for your restaurant.",
+    "headline": "Services",
+    "subtitle": "Attach capabilities to a location. Turn them on when you need them, off when you don’t.",
+    "subscriptions": {
+      "title": "Your subscriptions",
+      "subtitle": "Active services for your locations.",
+      "billingNoteTitle": "Billing not connected",
+      "billingNote": "Billing is not connected yet — activate and cancel freely while we prepare payments.",
+      "empty": "No active service subscriptions.",
+      "emptyHint": "Turn on Digital Menu for a location to start a subscription.",
+      "cancel": "Cancel",
+      "canceling": "Canceling…",
+      "cancelFailed": "Could not cancel this subscription.",
+      "cancelConfirmTitle": "Cancel this subscription?",
+      "cancelConfirmDescription": "This turns off {service} for {location}. You can turn it back on later.",
+      "cancelConfirmAction": "Cancel subscription",
+      "cancelConfirmCancel": "Keep subscription",
+      "serviceLabels": {
+        "digital_menu": "Digital Menu",
+        "point_system": "Point System",
+        "stamp_card": "Stamp Card",
+        "cashback": "Cashback",
+        "prediction": "Prediction"
+      }
+    },
+    "catalog": {
+      "comingSoon": "Coming soon",
+      "viewCta": "View",
+      "pricingComingSoon": "Pricing coming soon",
+      "categories": {
+        "guest_experience": "Guest experience",
+        "loyalty": "Loyalty",
+        "gamification": "Gamification"
+      },
+      "digitalMenu": {
+        "title": "Digital Menu",
+        "benefit": "A live guest menu with a shareable link — no app required.",
+        "statusAvailable": "Available",
+        "statusOn": "On · {count, plural, one {# location} other {# locations}}"
+      },
+      "pointSystem": {
+        "title": "Point System",
+        "benefit": "Reward guests with points they earn and redeem — loyalty you control per location.",
+        "statusAvailable": "Available",
+        "statusOn": "On · {count, plural, one {# location} other {# locations}}"
+      },
+      "stampCard": {
+        "title": "Stamp Card",
+        "benefit": "Digital loyalty stamps guests collect toward a free item — classic punch-card rewards, without paper cards."
+      },
+      "cashback": {
+        "title": "Cashback",
+        "benefit": "Reward returning guests with a cashback balance they can redeem on a later visit."
+      },
+      "prediction": {
+        "title": "Prediction",
+        "benefit": "Guests vote on outcomes — sports nights, house questions, and more.",
+        "statusAvailable": "Available",
+        "statusOn": "On · {count, plural, one {# location} other {# locations}}"
+      }
+    },
+    "prediction": {
+      "title": "Prediction",
+      "description": "Create predictions guests vote on — sports nights, house questions, and more. Reward with points or bragging rights.",
+      "heroPitch": "Enable Prediction for a location, publish questions, and let guests pick an outcome before the reveal.",
+      "pricingComingSoon": "Pricing coming soon",
+      "turnOnCta": "Turn on for a location",
+      "includedTitle": "What’s included",
+      "included": {
+        "enable": "Per-location enablement and subscription",
+        "create": "Create predictions with outcomes and a close time",
+        "reward": "Choose social rewards or Point System payouts"
+      },
+      "connectedTitle": "Connected locations",
+      "connectedEmpty": "Prediction isn’t on for any location yet.",
+      "connectedEmptyHint": "Pick a location to turn it on and create your first prediction.",
+      "connectedStatusOn": "On",
+      "manageCta": "Manage",
+      "enable": {
+        "title": "Turn on for a location",
+        "description": "Choose which location gets Prediction. We’ll activate the subscription.",
+        "locationLabel": "Location",
+        "locationPlaceholder": "Select a location",
+        "noLocations": "Add a location first, then turn on Prediction.",
+        "createLocationCta": "Go to Locations",
+        "confirm": "Activate & continue",
+        "activating": "Activating…",
+        "activateFailed": "Could not activate Prediction for this location.",
+        "cancel": "Cancel"
+      },
+      "console": {
+        "heading": "Prediction",
+        "description": "Create predictions and resolve winners for this location.",
+        "enabled": "Prediction is on",
+        "enabledHint": "Guests can vote from this location’s public page and from their home while a prediction is open.",
+        "backCta": "Back to Prediction",
+        "publicLinksTitle": "Guest links",
+        "slugMissingHint": "Set a public URL slug on the location Basics tab so guests can open this location’s page.",
+        "editLocationBasics": "Edit location Basics",
+        "locationHomeUrl": "Location home",
+        "predictionUrl": "Predictions page",
+        "copyLink": "Copy link",
+        "copiedLink": "Copied",
+        "openLink": "Open",
+        "createTitle": "New prediction",
+        "questionLabel": "Question",
+        "questionPlaceholder": "Who wins tonight?",
+        "closesAtLabel": "Closes at",
+        "outcomesLabel": "Outcomes",
+        "outcomePlaceholder": "Outcome {index}",
+        "addOutcome": "Add outcome",
+        "removeOutcome": "Remove",
+        "rewardModeLabel": "Reward",
+        "rewardModeSocial": "Social (bragging rights)",
+        "rewardModePoints": "Points",
+        "pointsForVoteLabel": "Points for voting",
+        "pointsForCorrectLabel": "Points for correct pick",
+        "pointsHelp": "Whole number of 0 or more. Points mode requires Point System on this location.",
+        "pointsRequiredHint": "Turn on Point System for this location before using points rewards.",
+        "createCta": "Create prediction",
+        "creating": "Creating…",
+        "createFailed": "Could not create prediction.",
+        "listTitle": "Predictions",
+        "listEmpty": "No predictions yet.",
+        "statusOpen": "Open",
+        "statusClosed": "Closed",
+        "statusResolved": "Resolved",
+        "voteCount": "{count, plural, one {# vote} other {# votes}}",
+        "closeCta": "Close voting",
+        "closing": "Closing…",
+        "closeFailed": "Could not close prediction.",
+        "resolveCta": "Resolve",
+        "resolving": "Resolving…",
+        "resolveFailed": "Could not resolve prediction.",
+        "winningOutcomeLabel": "Winning outcome",
+        "winningOutcomePlaceholder": "Select winner",
+        "questionRequired": "Enter a question.",
+        "outcomesRequired": "Add at least two outcomes.",
+        "closesAtRequired": "Pick a future close time.",
+        "pointsModePointsRequired": "Set points for voting or a correct pick when using Points rewards."
+      }
+    },
+    "pointSystem": {
+      "title": "Point System",
+      "description": "Turn on a points-based loyalty program for a location. Guests earn points from menu opens and completed digital-menu orders.",
+      "heroPitch": "Enable Point System for a location, set earn rules, and guests see balances on their home.",
+      "pricingComingSoon": "Pricing coming soon",
+      "turnOnCta": "Turn on for a location",
+      "includedTitle": "What’s included",
+      "included": {
+        "enable": "Per-location enablement and subscription",
+        "earn": "Configurable earn rules for guest actions",
+        "redeem": "Guest balances on their home (redeem coming soon)"
+      },
+      "connectedTitle": "Connected locations",
+      "connectedEmpty": "Point System isn’t on for any location yet.",
+      "connectedEmptyHint": "Pick a location to turn it on and configure earn rules.",
+      "connectedStatusOn": "On",
+      "manageCta": "Manage",
+      "enable": {
+        "title": "Turn on for a location",
+        "description": "Choose which location gets Point System. We’ll activate the subscription.",
+        "locationLabel": "Location",
+        "locationPlaceholder": "Select a location",
+        "noLocations": "Add a location first, then turn on Point System.",
+        "createLocationCta": "Go to Locations",
+        "confirm": "Activate & continue",
+        "activating": "Activating…",
+        "activateFailed": "Could not activate Point System for this location.",
+        "cancel": "Cancel"
+      },
+      "console": {
+        "heading": "Point System",
+        "description": "Configure how guests earn points at this location.",
+        "enabled": "Point System is on",
+        "enabledHint": "This location has an active Point System subscription. Guests earn points when enabled rules fire (menu open and completed digital-menu orders).",
+        "backCta": "Back to Point System",
+        "rulesTitle": "Earn rules",
+        "rulesSubtitle": "Choose which actions award points and how many. Rules apply only while Point System is on for this location.",
+        "pointsLabel": "Points",
+        "pointsHelp": "Whole number of points awarded when this action happens.",
+        "pointsInvalid": "Enter a whole number of 0 or more.",
+        "enabledLabel": "On",
+        "disabledLabel": "Off",
+        "save": "Save rules",
+        "saving": "Saving…",
+        "saved": "Earn rules saved",
+        "saveFailed": "Could not save earn rules.",
+        "actions": {
+          "open_menu_qr": {
+            "title": "Open menu via QR",
+            "description": "Guest opens the digital menu by scanning a table QR code.",
+            "toggleAria": "Enable points for opening the menu via QR"
+          },
+          "complete_order": {
+            "title": "Complete order",
+            "description": "Guest completes or pays an order at this location.",
+            "toggleAria": "Enable points for completing an order"
+          }
+        }
+      }
+    },
+    "digitalMenu": {
+      "title": "Digital Menu",
+      "description": "Publish a guest-facing digital menu for a location. Guests open a link or QR code — no app required.",
+      "heroPitch": "Turn your location menu into a living guest experience with a public link you control.",
+      "pricingComingSoon": "Pricing coming soon",
+      "turnOnCta": "Turn on for a location",
+      "includedTitle": "What’s included",
+      "included": {
+        "link": "Public guest link and URL slug",
+        "catalog": "Live dishes from your Locations menu",
+        "qr": "Shareable URL ready for QR codes"
+      },
+      "addonsTitle": "Optional add-ons",
+      "addons": {
+        "header": {
+          "title": "Header image",
+          "description": "Show a photo at the top of the guest digital menu."
+        },
+        "favorites": {
+          "title": "Guest favorites & combos",
+          "description": "Highlight analytics-backed favorites on the guest menu.",
+          "comingSoon": "Coming soon"
+        }
+      },
+      "connectedTitle": "Connected locations",
+      "connectedEmpty": "Digital Menu isn’t on for any location yet.",
+      "connectedEmptyHint": "Pick a location to turn it on and configure the guest link.",
+      "connectedStatusOn": "On",
+      "manageCta": "Manage",
+      "enable": {
+        "title": "Turn on for a location",
+        "description": "Choose which location gets Digital Menu. We’ll activate the subscription, then you can set the guest link.",
+        "locationLabel": "Location",
+        "locationPlaceholder": "Select a location",
+        "noLocations": "Add a location first, then turn on Digital Menu.",
+        "createLocationCta": "Go to Locations",
+        "confirm": "Activate & continue",
+        "activating": "Activating…",
+        "activateFailed": "Could not activate Digital Menu for this location.",
+        "cancel": "Cancel"
+      },
+      "console": {
+        "heading": "Digital Menu",
+        "description": "Control the guest-facing menu for this location.",
+        "statusTitle": "Status",
+        "enabled": "Digital Menu is on",
+        "enabledHint": "When on, anyone can open the digital menu at the link below.",
+        "publicUrl": "Public menu URL",
+        "locationHomeUrl": "Location home",
+        "slugMissingHint": "Set a public URL slug on the location Basics tab before publishing the menu.",
+        "editLocationBasics": "Edit location Basics",
+        "copyPublicUrl": "Copy link",
+        "copiedPublicUrl": "Copied",
+        "openPublicUrl": "Open",
+        "openLocationHome": "Open home",
+        "saveToPublishHint": "Save to publish this link. Guests only see the menu after it’s saved as on.",
+        "tableLabel": "Table for QR",
+        "tableLabelPlaceholder": "e.g. 12 or Patio 2",
+        "tableLabelHint": "Enter a table label, then download or print a sticker QR for that table. Guests who scan it skip entering a table number.",
+        "qrTitle": "Table QR code",
+        "qrCta": "Scan to order at this table",
+        "qrDownloadPng": "Download PNG",
+        "qrPrint": "Print",
+        "qrAriaLabel": "QR code for table {label}",
+        "qrSlugChangedHint": "URL changed — download a new QR after you save.",
+        "qrTableRequiredHint": "Enter a table label to generate a QR sticker.",
+        "qrPrintTitle": "{locationName} · Table {label}",
+        "appearanceTitle": "Appearance",
+        "headerImage": "Header image",
+        "headerImageHint": "Optional photo shown at the top of the public digital menu.",
+        "headerImagePickerAria": "Select a header photo from your media library",
+        "pickImage": "Choose from media",
+        "emptyMedia": "No photos in your media library yet.",
+        "removeImage": "Remove image",
+        "fromMedia": "From media library",
+        "menuDataTitle": "Menu data",
+        "menuDataHint": "Edit dishes, prices, and modifiers on the Locations menu page.",
+        "editMenuCta": "Edit dishes",
+        "previewTitle": "Guest preview",
+        "previewPlaceholder": "Turn on Digital Menu and save a slug to preview the guest page.",
+        "previewOpen": "Open live preview",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "disableTitle": "Turn off Digital Menu?",
+        "disableDescription": "The guest link will stop working. Your menu dishes on Locations are kept.",
+        "disableConfirm": "Turn off",
+        "disableCancel": "Cancel",
+        "errors": {
+          "slugRequired": "Set a public URL slug on location Basics before turning the menu on",
+          "subscriptionRequired": "Activate Digital Menu for this location before publishing",
+          "saveFailed": "Failed to save Digital Menu settings",
+          "unknown": "Something went wrong"
+        }
+      }
+    }
+  }
+}

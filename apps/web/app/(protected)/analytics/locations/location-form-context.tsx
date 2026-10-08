@@ -16,6 +16,7 @@ export type LocationFormState = {
   city: string
   countryId: string
   currency: string
+  publicSlug: string
   showCurrencyAutoHint: boolean
   openingHours: OpeningHourRow[]
   hints: BriefHintsState
@@ -32,6 +33,7 @@ export type LocationFormActions = {
   setCity: (value: string) => void
   setCountryId: (countryId: string) => void
   setCurrency: (currency: string, hasManualOverride: boolean) => void
+  setPublicSlug: (value: string) => void
   setRowClosed: (dayOfWeek: Weekday, closed: boolean) => void
   updateOpeningHour: (dayOfWeek: Weekday, field: 'openTime' | 'closeTime', value: string) => void
   presetWeekdaysOnly: () => void

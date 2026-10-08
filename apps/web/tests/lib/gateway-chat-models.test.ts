@@ -15,7 +15,7 @@ describe('gateway-chat-models', () => {
     expect(isAllowedChatGatewayModel(DEFAULT_CHAT_GATEWAY_MODEL)).toBe(true)
   })
 
-  it('derives stable i18n keys for en.json chatGatewayModels.*', () => {
+  it('derives stable i18n keys for chatGatewayModels.*', () => {
     expect(gatewayModelToMessageKey('openai/gpt-4.1-mini')).toBe('openai_gpt_4_1_mini')
     expect(gatewayModelToMessageKey('mistral/mistral-large-3')).toBe('mistral_mistral_large_3')
   })

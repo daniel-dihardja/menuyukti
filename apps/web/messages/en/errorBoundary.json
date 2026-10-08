@@ -1,0 +1,8 @@
+{
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "tryAgain": "Try again",
+    "digestLabel": "Reference: {digest}"
+  }
+}

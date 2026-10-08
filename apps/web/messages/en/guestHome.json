@@ -1,0 +1,33 @@
+{
+  "guestHome": {
+    "title": "Home",
+    "description": "Your Menuyukti home — rewards, install the app, and manage your profile.",
+    "headline": "Welcome",
+    "lead": "This is your customer space. Collect rewards at venues you visit, install the app for a full-screen experience, and keep your profile up to date.",
+    "rewardsTitle": "Your points",
+    "rewardsLead": "Points you earn at venues with Point System appear here.",
+    "rewardsEmpty": "No points yet. Open a digital menu while signed in, or complete an order at a venue with Point System on.",
+    "rewardsLoadError": "Could not load your points right now. Try again later.",
+    "rewardsTotalLabel": "Total",
+    "rewardsTotalUnit": "pts",
+    "rewardsByVenueTitle": "By venue",
+    "rewardsHistoryTitle": "Recent activity",
+    "rewardsHistoryEmpty": "No activity yet.",
+    "actions": {
+      "open_menu_qr": "Opened menu",
+      "complete_order": "Completed order",
+      "prediction_vote": "Voted on prediction",
+      "prediction_correct": "Correct prediction"
+    },
+    "predictionsTitle": "Open predictions",
+    "predictionsLead": "Vote on outcomes at venues you’ve visited. Rewards may be social or points, depending on the venue.",
+    "predictionsEmpty": "No open predictions yet. Visit a venue with Prediction on, then check back here.",
+    "predictionsLoadError": "Could not load predictions right now. Try again later.",
+    "predictionsRewardSocial": "Social reward — bragging rights",
+    "predictionsRewardPoints": "+{vote} for voting · +{correct} if correct",
+    "predictionsYourPick": "Your pick",
+    "predictionsVoting": "Voting…",
+    "predictionsVoteFailed": "Could not cast your vote.",
+    "profileCta": "Open profile"
+  }
+}

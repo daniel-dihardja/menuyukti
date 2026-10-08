@@ -37,9 +37,9 @@ describe('parsePublicMenuTableLabel', () => {
 
 describe('routes.public.locationMenuTable', () => {
   it('builds an encoded per-table menu path', () => {
-    expect(routes.public.locationMenuTable('cafe', '12')).toBe('/m/cafe/t/12')
+    expect(routes.public.locationMenuTable('cafe', '12')).toBe('/cafe/menu/t/12')
     expect(routes.public.locationMenuTable('my cafe', 'Patio 2')).toBe(
-      `/m/${encodeURIComponent('my cafe')}/t/${encodeURIComponent('Patio 2')}`,
+      `/${encodeURIComponent('my cafe')}/menu/t/${encodeURIComponent('Patio 2')}`,
     )
   })
 })

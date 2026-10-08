@@ -280,7 +280,7 @@ export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
     if (!list) {
       return
     }
-    const active = list.querySelector<HTMLElement>('[data-workflow-chat-menu-active="true"]')
+    const active = list.querySelector<HTMLElement>('[data-chat-composer-menu-active="true"]')
     if (!active) {
       return
     }
@@ -438,7 +438,7 @@ export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
                       'flex w-full flex-col items-start gap-1',
                       i === slashActiveIndex && 'bg-accent text-accent-foreground',
                     )}
-                    data-workflow-chat-menu-active={i === slashActiveIndex ? 'true' : undefined}
+                    data-chat-composer-menu-active={i === slashActiveIndex ? 'true' : undefined}
                     onSelect={() => onSelectSlashCommand(`/${cmd.id}`)}
                     value={cmd.id}
                   >
@@ -467,7 +467,7 @@ export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
                                   activeIndex === mentionActiveIndex &&
                                     'bg-accent text-accent-foreground',
                                 )}
-                                data-workflow-chat-menu-active={
+                                data-chat-composer-menu-active={
                                   activeIndex === mentionActiveIndex ? 'true' : undefined
                                 }
                                 onSelect={() => selectMentionEntry({ kind: 'back' })}
@@ -510,7 +510,7 @@ export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
                                     activeIndex === mentionActiveIndex &&
                                       'bg-accent text-accent-foreground',
                                   )}
-                                  data-workflow-chat-menu-active={
+                                  data-chat-composer-menu-active={
                                     activeIndex === mentionActiveIndex ? 'true' : undefined
                                   }
                                   onSelect={() => onSelectMediaMention(item)}
@@ -549,7 +549,7 @@ export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
                                     activeIndex === mentionActiveIndex &&
                                       'bg-accent text-accent-foreground',
                                   )}
-                                  data-workflow-chat-menu-active={
+                                  data-chat-composer-menu-active={
                                     activeIndex === mentionActiveIndex ? 'true' : undefined
                                   }
                                   onSelect={() =>
@@ -582,7 +582,7 @@ export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
                                     activeIndex === mentionActiveIndex &&
                                       'bg-accent text-accent-foreground',
                                   )}
-                                  data-workflow-chat-menu-active={
+                                  data-chat-composer-menu-active={
                                     activeIndex === mentionActiveIndex ? 'true' : undefined
                                   }
                                   onSelect={() =>
@@ -633,7 +633,7 @@ export function ChatComposerMenus({ children }: ChatComposerMenusProps) {
                                     activeIndex === mentionActiveIndex &&
                                       'bg-accent text-accent-foreground',
                                   )}
-                                  data-workflow-chat-menu-active={
+                                  data-chat-composer-menu-active={
                                     activeIndex === mentionActiveIndex ? 'true' : undefined
                                   }
                                   onSelect={() => onSelectMediaMention(item)}

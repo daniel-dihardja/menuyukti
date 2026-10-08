@@ -215,6 +215,7 @@ export const CREATE_LOCATION_MUTATION = `
     $city: String
     $country: String
     $currency: String
+    $publicSlug: String
   ) {
     createLocation(
       workspaceId: $workspaceId
@@ -223,16 +224,23 @@ export const CREATE_LOCATION_MUTATION = `
       city: $city
       country: $country
       currency: $currency
+      publicSlug: $publicSlug
     ) {
       id
       name
+      publicSlug
       nodeId
     }
   }
 `
 
 export type CreateLocationData = {
-  createLocation: { id: string; name: string; nodeId: string | null }
+  createLocation: {
+    id: string
+    name: string
+    publicSlug: string | null
+    nodeId: string | null
+  }
 }
 
 export const UPDATE_LOCATION_MUTATION = `
@@ -243,6 +251,7 @@ export const UPDATE_LOCATION_MUTATION = `
     $city: String
     $country: String
     $currency: String
+    $publicSlug: String
     $openingHours: [OpeningHourInput!]
   ) {
     updateLocation(
@@ -252,6 +261,7 @@ export const UPDATE_LOCATION_MUTATION = `
       city: $city
       country: $country
       currency: $currency
+      publicSlug: $publicSlug
       openingHours: $openingHours
     ) {
       id
@@ -260,6 +270,7 @@ export const UPDATE_LOCATION_MUTATION = `
       city
       country
       currency
+      publicSlug
       nodeId
       openingHours {
         dayOfWeek
@@ -278,6 +289,7 @@ export type UpdateLocationData = {
     city: string | null
     country: string | null
     currency: string | null
+    publicSlug: string | null
     nodeId: string | null
     openingHours: Array<{
       dayOfWeek: string

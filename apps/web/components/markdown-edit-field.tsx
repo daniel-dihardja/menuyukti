@@ -380,7 +380,7 @@ export function MarkdownFullscreenExpandControl({
   title?: string
   disabled?: boolean
 }) {
-  const t = useTranslations('analytics.workflows.chat')
+  const t = useTranslations('chat')
   const panelCtx = usePanelFullscreen()
   const { disabled: fieldDisabled, expandButtonRef, openFullscreen } = useMarkdownEditFullscreen()
 
@@ -427,7 +427,7 @@ export function MarkdownEditField({
   headerTrailing,
   manualSave,
 }: MarkdownEditFieldProps) {
-  const t = useTranslations('analytics.workflows.chat')
+  const t = useTranslations('chat')
   const panelCtx = usePanelFullscreen()
   const expandButtonRef = useRef<HTMLButtonElement>(null)
   const panelCtxRef = useRef(panelCtx)

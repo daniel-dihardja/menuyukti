@@ -200,7 +200,9 @@ def _item_daypart_weight(item: MockMenuItem, daypart: str) -> int:
     return DAYPART_WEIGHT_ON if _matches_daypart(item, daypart) else DAYPART_WEIGHT_OFF
 
 
-def _weighted_choice(rng: random.Random, candidates: list[MockMenuItem], daypart: str) -> MockMenuItem:
+def _weighted_choice(
+    rng: random.Random, candidates: list[MockMenuItem], daypart: str
+) -> MockMenuItem:
     weights = [_item_daypart_weight(item, daypart) for item in candidates]
     return rng.choices(candidates, weights=weights, k=1)[0]
 
@@ -227,10 +229,7 @@ def _pick_line_items(rng: random.Random, order_time: datetime) -> list[MockMenuI
         pair_weights = [
             (
                 DAYPART_WEIGHT_ON
-                if (
-                    _matches_daypart(by_name[a], daypart)
-                    or _matches_daypart(by_name[b], daypart)
-                )
+                if (_matches_daypart(by_name[a], daypart) or _matches_daypart(by_name[b], daypart))
                 else DAYPART_WEIGHT_OFF
             )
             for a, b in COMBO_PAIRS

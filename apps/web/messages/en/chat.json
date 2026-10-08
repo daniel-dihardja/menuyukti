@@ -1,0 +1,178 @@
+{
+  "chat": {
+    "pageLoadingTitle": "Loading chat…",
+    "pageTitle": "Chat #{id}",
+    "emptyTitle": "Ask about this location",
+    "emptyDescription": "See how demand, menu, and hours look right now — or switch to Image assistant to create images.",
+    "waitHint": "Usually takes about 30 seconds.",
+    "quickPrompts": {
+      "locationOverview": {
+        "label": "Location overview",
+        "prompt": "Start with a general description of this location: name, cuisine, address, and opening hours. Then summarize the current situation from sales charts when available: strong and weak day × meal-period demand, which dishes to feature (evergreen vs daily highlights vs day specialties), and interesting menu combos. End with at most two practical next steps. Use a short markdown brief (Demand, Menu, Combos, Hours, Next). Do not build a weekly Instagram schedule unless I ask."
+      },
+      "weeklyPlan": {
+        "label": "Weekly Instagram plan",
+        "prompt": "Create a weekly Instagram plan for this venue. First load location opening hours, then present the plan with the weekly schedule tool (one entry per posting slot). Prefer open days and posting times during or shortly before service. For each slot include a suggested posting time, the format (Story, post, carousel, or Reel), the menu items to feature, a short caption angle, and a one-line why based on open hours and sales or demand when available."
+      },
+      "featureTopDishes": {
+        "label": "Feature top dishes",
+        "prompt": "From this location’s current menu performance, which dishes should we feature and why? Mention timing (day or meal period) when the charts support it, and keep Instagram as optional — not a full week plan."
+      },
+      "storiesAndReels": {
+        "label": "Stories & Reels mix",
+        "prompt": "Draft a weekly mix of Instagram Stories and Reels with specific menu items for each slot and a brief creative direction."
+      }
+    },
+    "placeholder": "Ask about demand, menu, hours, or a weekly plan…",
+    "placeholderImageAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
+    "placeholderStoryAssistant": "Describe the image: dish, offer, mood, and any text on the image…",
+    "thinking": "Thinking…",
+    "errorTitle": "Something went wrong",
+    "errorDescription": "The request could not be completed. Please try again.",
+    "retry": "Retry",
+    "sentWithAttachments": "Sent with attachments",
+    "clearChatAriaLabel": "Clear chat",
+    "clearChatLabel": "Clear chat",
+    "clearChatTooltip": "Clear messages and start a fresh chat thread",
+    "clearChatConfirmTitle": "Clear this chat?",
+    "clearChatConfirmDescription": "Messages in this thread will be cleared and a new chat thread will start. This cannot be undone.",
+    "clearChatConfirmCancel": "Cancel",
+    "clearChatConfirmAction": "Clear chat",
+    "composerMoreAriaLabel": "More chat options",
+    "composerMoreTooltip": "Mode, models, and clear chat",
+    "stopChatAriaLabel": "Stop generating",
+    "submitChatAriaLabel": "Send message",
+    "attachImageAriaLabel": "Attach image",
+    "attachImageTooltip": "Attach an image from your device",
+    "attachImageMaxReachedTooltip": "You can attach up to 4 images per message",
+    "mobileArtifactOpenLabel": "Preview",
+    "mobileArtifactOpenAriaLabel": "Open preview",
+    "mobileArtifactCloseAriaLabel": "Close preview",
+    "mobileArtifactSheetTitle": "Preview",
+    "mobileArtifactSheetDescription": "View generated Instagram image preview.",
+    "mobileArtifactEmptyHint": "View generated content",
+    "modes": {
+      "ariaLabel": "Chat mode",
+      "general": "General chat",
+      "image_assistant": "Image assistant"
+    },
+    "salesReport": {
+      "ariaLabel": "Sales report",
+      "placeholder": "Sales report",
+      "none": "No sales report",
+      "attachHint": "Attach a sales report to use charts and sales-grounded advice."
+    },
+    "storyArtifact": {
+      "ariaLabel": "Instagram image preview",
+      "placeholderLabel": "No image yet",
+      "formatAriaLabel": "Image size"
+    },
+    "storyAssets": {
+      "title": "Saved for this image",
+      "roleStyle": "Style",
+      "roleContent": "Content",
+      "roleResult": "Result",
+      "resultLabel": "Last generated",
+      "removeAriaLabel": "Remove {role} reference"
+    },
+    "slashCommands": {
+      "ariaLabel": "Slash commands",
+      "image": {
+        "label": "image",
+        "description": "Switch to Image assistant mode."
+      },
+      "story": {
+        "label": "story",
+        "description": "Switch to Image assistant with Story (9:16) size."
+      }
+    },
+    "mentionMenu": {
+      "ariaLabel": "Insert chart or media reference",
+      "empty": "No charts or media match your filter.",
+      "visualizationsGroup": "Attached charts",
+      "visualizationsAriaLabel": "Insert attached chart data",
+      "noAttachedCharts": "No attached charts match your filter. Add charts on the Visualizations tab first.",
+      "mediaGroup": "Media",
+      "mediaAriaLabel": "Attach image from Media library",
+      "mediaLoading": "Loading media…",
+      "mediaEmpty": "No media files yet. Upload images on the Media page, or use the paperclip to attach from your device.",
+      "collectionsGroup": "Collections",
+      "collectionsAriaLabel": "Browse media collections",
+      "collectionMemberCount": "{count, plural, one {# item} other {# items}}",
+      "backToMedia": "Back to all media",
+      "collectionLoading": "Loading collection…",
+      "collectionEmpty": "No images in this collection."
+    },
+    "artifactTitle": "Artifact",
+    "milestoneSchedulerPreviewHolidayBadge": "Holiday",
+    "milestoneDataLabel": "Data for this milestone",
+    "milestoneDataFullscreen": "Expand to full view",
+    "milestoneDataCloseFullscreen": "Close full view",
+    "formatMarkdownButton": "Format Markdown",
+    "formatMarkdownFormatting": "Formatting…",
+    "formatMarkdownError": "Could not format text. Please try again.",
+    "fieldSaveStatusSaving": "Saving…",
+    "fieldSaveStatusSaved": "Saved",
+    "fieldSaveStatusUnsaved": "Changed",
+    "fieldSaveButton": "Save",
+    "contentImageDialog": {
+      "title": "New design",
+      "descriptionSelect": "Choose a product image and a background, then continue.",
+      "descriptionReview": "Review your selections before generating.",
+      "loadError": "Couldn't load images. Try again.",
+      "productsLabel": "Product image",
+      "productsSelectedCount": "{count, plural, =0 {None selected} one {# selected} other {# selected}}",
+      "productsEmpty": "No product images yet. Upload one in Studio.",
+      "backgroundLabel": "Background",
+      "backgroundSelected": "Selected",
+      "backgroundNotSelected": "None",
+      "backgroundsEmpty": "No backgrounds available.",
+      "flowLabel": "AI flow",
+      "flowPlaceholder": "Choose AI flow",
+      "flowsEmpty": "No design AI flows available.",
+      "formatLabel": "Format",
+      "formatPlaceholder": "Choose format",
+      "reviewHeading": "Your selections",
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "back": "Back",
+      "generating": "Generating…",
+      "generate": "Generate",
+      "generateError": "Couldn't generate the image. Try again."
+    },
+    "visualizations": {
+      "panelTitle": "Charts",
+      "artifactTitle": "Charts",
+      "artifactHint": "Open sales analytics charts",
+      "artifactDescription": "Add and explore sales analytics charts alongside your chat.",
+      "emptyTitle": "No charts yet",
+      "emptyDescription": "Add a chart from the catalog to explore sales analytics alongside your plan.",
+      "addButton": "Add visualization",
+      "addMenuAriaLabel": "Add visualization",
+      "removeAriaLabel": "Remove {title}",
+      "noAnalyticsRunTitle": "Link a sales report",
+      "noAnalyticsRunDescription": "Attach a sales report in the chat composer to explore charts and sales-grounded advice.",
+      "loadErrorTitle": "Could not load chart",
+      "loadErrorDescription": "The chart data could not be loaded. Please try again.",
+      "retry": "Retry",
+      "emptyDataDescription": "No slot demand data is available for this sales report.",
+      "emptyMenuHeatmapDescription": "No menu heatmap data is available for this sales report.",
+      "emptyPairLiftMatrixDescription": "At least two focus menu items are required to show the lift matrix.",
+      "fallbackRunHint": "Showing data from a newer sales report for this location because the workflow's linked report has no slot demand data.",
+      "catalog": {
+        "venue_slot_strength_heatmap": {
+          "title": "Venue slot strength",
+          "description": "Weekday and meal-period demand heatmap for this location."
+        },
+        "menu_item_heatmap": {
+          "title": "Menu item heatmap",
+          "description": "When each menu item sells by hour and day of week."
+        },
+        "pair_lift_matrix_heatmap": {
+          "title": "Pair lift matrix",
+          "description": "How strongly menu items are ordered together vs. chance alone."
+        }
+      }
+    }
+  }
+}

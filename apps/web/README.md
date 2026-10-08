@@ -2,7 +2,7 @@
 
 ## Local development
 
-`pnpm dev` runs **`next dev --webpack`** (faster Ready on this monorepo). Use **`pnpm dev:turbo`** for Turbopack when experimenting.
+`pnpm dev` runs **`next dev --turbopack`** (Next 16.3+ filesystem cache on by default for faster warm restarts). Use **`pnpm dev:webpack`** if you need webpack. Message catalogs live under `messages/en/<namespace>.json` (merged by `i18n/load-messages.ts`). If message edits look stale, delete `apps/web/.next` once and restart.
 
 ## PWA (Serwist)
 
@@ -46,7 +46,7 @@ The marketing landing (`/`) can show a QR (desktop) and “Open a sample menu”
 NEXT_PUBLIC_LANDING_SAMPLE_MENU_SLUG=your-published-slug
 ```
 
-The QR encodes `https://menuyukti.com/m/{slug}`. If unset, the landing still renders (headline + menu preview) without QR or CTA.
+The QR encodes `https://menuyukti.com/{slug}/menu`. If unset, the landing still renders (headline + menu preview) without QR or CTA.
 
 ## Google Analytics
 

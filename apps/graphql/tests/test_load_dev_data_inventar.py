@@ -318,8 +318,8 @@ def test_warung_sunda_menu_seed(inventar_seed_workspace):
         assert second["categories"] == 2
         assert second["items"] == len(WARUNG_MENU_CATALOG)
         assert second["cleared_pos_orders"] == 1
-        assert (
-            session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(WARUNG_MENU_CATALOG)
+        assert session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(
+            WARUNG_MENU_CATALOG
         )
         assert session.query(PosOrder).filter(PosOrder.location_id == inventar.id).count() == 0
     finally:
@@ -407,9 +407,8 @@ def test_kaffeestube_menu_seed(inventar_seed_workspace):
         assert second["categories"] == 5
         assert second["items"] == len(KAFFEESTUBE_MENU_CATALOG)
         assert second["cleared_pos_orders"] == 1
-        assert (
-            session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count()
-            == len(KAFFEESTUBE_MENU_CATALOG)
+        assert session.query(MenuItem).filter(MenuItem.menu_id == menu.id).count() == len(
+            KAFFEESTUBE_MENU_CATALOG
         )
         assert session.query(PosOrder).filter(PosOrder.location_id == analytics.id).count() == 0
     finally:

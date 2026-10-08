@@ -2,7 +2,7 @@
 
 import type { UIMessage } from 'ai'
 import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/prompt-input'
-import { createContext, use, useMemo, type ReactNode } from 'react'
+import { createContext, use, type ReactNode } from 'react'
 
 import type { PendingMediaAttachment, ChatSlashCommand } from '@/components/chat/chat-types'
 import { DEFAULT_CHAT_MODE, type ChatModeId } from '@/lib/chat/chat-modes'
@@ -49,13 +49,6 @@ export type ChatStoryAssetsState = {
   assets: StoryAssetRef[]
   onRemove: (name: string) => void
 }
-
-/** @deprecated Prefer useChatMessages + useChatComposerState */
-export type ChatState = ChatMessagesState &
-  ChatComposerState & {
-    messages: UIMessage[]
-    savedStoryAssets: StoryAssetRef[]
-  }
 
 export type ChatActions = {
   setText: (value: string) => void
@@ -151,22 +144,6 @@ export function useChatActions(): ChatActions {
     throw new Error('useChatActions must be used within ChatProvider')
   }
   return ctx
-}
-
-/** Convenience hook combining messages + composer slices. */
-export function useChatState(): ChatState {
-  const messagesState = useChatMessages()
-  const composerState = useChatComposerState()
-  const { assets: savedStoryAssets } = useChatStoryAssets()
-  return useMemo(
-    () => ({
-      ...messagesState,
-      ...composerState,
-      savedStoryAssets,
-      messages: messagesState.visibleMessages,
-    }),
-    [messagesState, composerState, savedStoryAssets],
-  )
 }
 
 export { DEFAULT_CHAT_GATEWAY_MODEL, DEFAULT_CHAT_MODE }

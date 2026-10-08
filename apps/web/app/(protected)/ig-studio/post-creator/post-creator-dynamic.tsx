@@ -20,12 +20,4 @@ const EphemeralPostCreator = dynamic(
   { ssr: false, loading: () => loadingFallback },
 )
 
-/** @deprecated Use PersistedPostCreator or EphemeralPostCreator instead. */
-export function PostCreatorDynamic({ postId }: { postId: string | null }) {
-  if (postId) {
-    return <PersistedPostCreator postId={postId} />
-  }
-  return <EphemeralPostCreator />
-}
-
 export { PersistedPostCreator, EphemeralPostCreator }

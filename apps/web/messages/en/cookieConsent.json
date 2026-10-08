@@ -1,0 +1,14 @@
+{
+  "cookieConsent": {
+    "title": "Essential tracking",
+    "description": "Menuyukti uses Google Analytics 4 to count page views on public pages and the signed-in workspace so we can see how the product is used. The print shop is not tracked.",
+    "privacyLink": "Read the Privacy Policy",
+    "dismiss": "Got it",
+    "settingsLink": "Cookie settings",
+    "preferences": {
+      "essentialTitle": "Essential",
+      "essentialDescription": "Includes sign-in, security, core platform functionality, and site usage measurement (page views on public pages and the workspace). Always on. The print shop is not included.",
+      "essentialAria": "Essential cookies (always on)"
+    }
+  }
+}

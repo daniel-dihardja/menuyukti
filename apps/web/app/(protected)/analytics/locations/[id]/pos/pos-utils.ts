@@ -9,6 +9,29 @@ export type DiscountMode = 'amount' | 'percent'
 
 export const TODAY_FILTERS: TodayFilter[] = ['all', 'OPEN', 'PAID', 'VOID', 'REFUNDED']
 
+const SHOW_ITEM_IMAGES_STORAGE_KEY = 'menuyukti:posShowItemImages:v1'
+
+export function readPosShowItemImages(): boolean | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const value = window.localStorage.getItem(SHOW_ITEM_IMAGES_STORAGE_KEY)
+    if (value === '0') return false
+    if (value === '1') return true
+  } catch {
+    /* ignore quota / private mode */
+  }
+  return null
+}
+
+export function writePosShowItemImages(show: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(SHOW_ITEM_IMAGES_STORAGE_KEY, show ? '1' : '0')
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100
 }
